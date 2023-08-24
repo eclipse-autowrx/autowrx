@@ -1,0 +1,23 @@
+.Node {
+    stroke: #98B0B8 !important;
+    stroke-width: 3px;
+    &.selected {
+        stroke: #AEBD38 !important;
+    }
+
+    &.branch{
+        stroke: #7c3aed !important;
+    }
+
+    &.sensor{
+        stroke: #10b981 !important;
+    }
+
+    &.actuator{
+        stroke: #eab308 !important;
+    }
+
+    &.attribute{
+        stroke: #3b82f6 !important;
+    }
+}

@@ -1,0 +1,33 @@
+$editor-bg-dark: #1e1e1e;
+$editor-bg-light: #fffffe;
+$editor-bg: $editor-bg-light;
+
+.PreEditorPadding {
+    background-color: $editor-bg;
+    padding-bottom: 10px;
+}
+.PostEditorPadding {
+    margin-top: -1px;
+    height: 100%;
+    flex: 1;
+    background-color: $editor-bg;
+}
+.Loading {
+    background-color: $editor-bg;
+}
+
+:global(.monaco-editor a) {
+    font-weight: unset;
+    &:hover {
+        text-decoration: unset;
+    }
+}
+.HideCursor :global(.monaco-editor .cursors-layer > .cursor) {
+    display: none !important;
+}
+:global(.monaco-editor .margin) {
+    user-select: none !important;
+}
+:global(.monaco-editor-overlaymessage) {
+    display: none !important;
+}

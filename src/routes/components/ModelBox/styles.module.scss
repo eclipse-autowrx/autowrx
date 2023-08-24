@@ -1,0 +1,46 @@
+:global(#model-box.loading) > :global(.model-box-button) {
+    box-shadow: none;
+    cursor: default;
+    pointer-events: none;
+}
+:global(.model-box-button) {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border-radius: 100%;
+    bottom: 20px;
+    left: 20px;
+    background-color: white;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: black;
+    box-shadow: rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px;
+    & > :global(.Loader__Box) > :global(.Loader__Loader) {
+        font-size: 12px;
+        color: gray;
+        border-width: 0.15em;
+    }
+}
+:global(.model-box-pin-div) {
+    position: relative;
+    z-index: 1000;
+    &:hover::before {
+        transform: scale(1) translate(-50%, -50%);
+    }
+    &::before {
+        z-index: 100000;
+        content: attr(data-api);
+        transition: scale .4s;
+        font-size: 15px;
+        color: #e2e8f0;
+        position: absolute;
+        transform: scale(0) translate(-50%, -50%);
+        left: 10px;
+        top: calc(-80%);
+        background: #334155;
+        padding: 2px 10px;
+        border-radius: 5px;
+    }
+}

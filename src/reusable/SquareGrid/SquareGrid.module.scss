@@ -1,0 +1,25 @@
+.SquareGrid {
+    // The content width you use on your website
+    --content-width: 100vw;
+    
+    // The size of the gutter  
+    --gutter: 0;
+    
+    // The amount of columns
+    --columns: 5;
+    
+    
+    // This is the calculation for the row height.   
+    --row-size: calc( var(--content-width) / var(--columns) );
+    
+    display: grid;
+  
+    width: 100%;
+    max-width: var(--content-width);
+    
+    grid-template-columns: repeat(var(--columns), var(--row-size));
+    grid-auto-rows: var(--row-size);
+  
+    grid-column-gap: var(--gutter);
+    grid-row-gap: var(--gutter);
+}

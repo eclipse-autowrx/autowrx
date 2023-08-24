@@ -1,0 +1,7 @@
+.SnackbarRoot {
+    user-select: none !important;
+    font-family: inherit !important;
+    & > :global(.MuiPaper-root) {
+        font-family: inherit !important;
+    }
+}

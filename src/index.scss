@@ -1,0 +1,39 @@
+@use "./assets/fonts/fonts.scss";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    margin: 0;
+    font-family: 'Lato';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+
+#root {
+    height: 100vh;
+    width: 100vw;
+}
+
+.scroll::-webkit-scrollbar, .scroll-gray::-webkit-scrollbar, body::-webkit-scrollbar {
+    height: 3px;
+    width: 3px;
+}
+
+.scroll::-webkit-scrollbar-thumb, .scroll-gray::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+}
+
+.scroll::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb {
+    background-color: #005072;
+}
+
+.scroll-gray::-webkit-scrollbar-thumb {
+    background-color: #61666e;
+}
