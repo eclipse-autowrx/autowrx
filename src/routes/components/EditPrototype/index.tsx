@@ -1,48 +1,51 @@
-import { FC, useState } from "react"
-import { MdImage } from "react-icons/md"
-import { MediaFile, Prototype } from "../../../apis/models"
-import Button from "../../../reusable/Button"
-import Input from "../../../reusable/Input/Input"
-import DisplayImage from "../PrototypeOverview/DisplayImage"
-import SelectMedia from "./SelectMedia"
-import { useNavigate } from "react-router-dom"
-import { useCurrentModel } from "../../../reusable/hooks/useCurrentModel"
+import { FC, useState } from "react";
+import { MdImage } from "react-icons/md";
+import { MediaFile, Prototype } from "../../../apis/models";
+import Button from "../../../reusable/Button";
+import Input from "../../../reusable/Input/Input";
+import DisplayImage from "../PrototypeOverview/DisplayImage";
+import SelectMedia from "./SelectMedia";
+import { useNavigate } from "react-router-dom";
+import { useCurrentModel } from "../../../reusable/hooks/useCurrentModel";
 
 interface EditPrototypeProps {
-    prototype: Prototype
-    updatePrototypes: () => void
+    prototype: Prototype;
+    updatePrototypes: () => void;
 }
 
-const EditPrototype: FC<EditPrototypeProps> = ({prototype, updatePrototypes}) => {
+const EditPrototype: FC<EditPrototypeProps> = ({ prototype, updatePrototypes }) => {
     const State = {
         selectedMedia: useState<MediaFile | undefined>(),
-        name: useState(prototype?.name ?? "")
-    }
-    
-    const selectMediaPopup = useState(false)
-    const [submitting, setSubmitting] = useState(false)
+        name: useState(prototype?.name ?? ""),
+    };
 
-    const navigate = useNavigate()
-    const model = useCurrentModel()
+    const selectMediaPopup = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+
+    const navigate = useNavigate();
+    const model = useCurrentModel();
 
     const onSubmit = async () => {
-        setSubmitting(true)
-        setSubmitting(false)
-        updatePrototypes()
-        navigate(`/model/${model?.id}/library/prototype/${prototype.id}`)
-    }
+        setSubmitting(true);
+        setSubmitting(false);
+        updatePrototypes();
+        navigate(`/model/${model?.id}/library/prototype/${prototype.id}`);
+    };
 
     return (
         <div className="flex flex-col h-full">
             {typeof prototype === "undefined" ? (
                 <div className="px-4 py-2 text-gray-600 select-none">New Prototype</div>
             ) : (
-                <div className="px-4 py-2 text-gray-600 select-none">Editing <strong>{prototype?.name}</strong></div>
+                <div className="px-4 py-2 text-gray-600 select-none">
+                    Editing <strong>{prototype?.name}</strong>
+                </div>
             )}
-            {((typeof prototype === "undefined" || prototype.image_file === "") && typeof State.selectedMedia[0] === "undefined") ? (
+            {(typeof prototype === "undefined" || prototype.image_file === "") &&
+            typeof State.selectedMedia[0] === "undefined" ? (
                 <div
-                className="flex h-48 bg-gray-100 items-center justify-center cursor-pointer"
-                onClick={() => selectMediaPopup[1](true)}
+                    className="flex h-48 bg-gray-100 items-center justify-center cursor-pointer"
+                    onClick={() => selectMediaPopup[1](true)}
                 >
                     <MdImage className="text-gray-400 text-5xl" />
                 </div>
@@ -57,9 +60,9 @@ const EditPrototype: FC<EditPrototypeProps> = ({prototype, updatePrototypes}) =>
                 </div>
             )}
             <SelectMedia
-            filter={["image"]}
-            state={selectMediaPopup}
-            selectMedia={async media => State.selectedMedia[1](media)}
+                filter={["image"]}
+                state={selectMediaPopup}
+                selectMedia={async (media) => State.selectedMedia[1](media)}
             />
             <div className="flex flex-col p-5 flex-1">
                 <div className="mb-4">
@@ -72,7 +75,7 @@ const EditPrototype: FC<EditPrototypeProps> = ({prototype, updatePrototypes}) =>
                 </div>
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default EditPrototype
+export default EditPrototype;

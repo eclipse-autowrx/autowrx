@@ -1,11 +1,11 @@
-import { MODEL } from "./MODEL"
-import { PROTOTYPE } from "./PROTOTYPE"
-import { TENANT } from "./TENANT"
+import { MODEL } from "./MODEL";
+import { PROTOTYPE } from "./PROTOTYPE";
+import { TENANT } from "./TENANT";
 
 const permissions = {
     MODEL,
     TENANT,
-    PROTOTYPE
-}
+    PROTOTYPE,
+};
 
-export default permissions
+export default permissions;

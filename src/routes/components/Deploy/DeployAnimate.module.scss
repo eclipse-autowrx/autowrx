@@ -1,0 +1,11 @@
+.animate {
+    stroke-dashoffset: 0; // Starting point
+    /* sum of dash + gap */
+    animation: marchAnts 0.3s linear infinite;
+}
+
+@keyframes marchAnts {
+    to {
+        stroke-dashoffset: 10.5; // Ending point
+    }
+}

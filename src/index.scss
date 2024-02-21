@@ -4,36 +4,64 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+    img {
+        @apply inline-block;
+    }
+}
+
+:root {
+    --line-limit: 2;
+}
+
 body {
     margin: 0;
-    font-family: 'Lato';
+    font-family: "Lato";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
 code {
-    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
-
 
 #root {
     height: 100vh;
     width: 100vw;
 }
 
-.scroll::-webkit-scrollbar, .scroll-gray::-webkit-scrollbar, body::-webkit-scrollbar {
+.scroll::-webkit-scrollbar,
+body::-webkit-scrollbar {
     height: 3px;
-    width: 3px;
+    width: 5px;
 }
 
-.scroll::-webkit-scrollbar-thumb, .scroll-gray::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb {
+.scroll-gray::-webkit-scrollbar {
+    width: 9px;
+}
+
+.scroll::-webkit-scrollbar-thumb,
+.scroll-gray::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
     border-radius: 10px;
 }
 
-.scroll::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb {
+.scroll::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb { 
     background-color: #005072;
 }
 
 .scroll-gray::-webkit-scrollbar-thumb {
-    background-color: #61666e;
+    border: 2px solid rgba(0, 0, 0, 0);
+    background-clip: padding-box;
+    background-color: #AAAAAA;
 }
+
+// Default is 2 lines limit
+.lines-ellipsis {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: var(--line-limit);
+    -webkit-box-orient: vertical;
+}    

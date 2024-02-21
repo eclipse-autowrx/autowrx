@@ -1,3 +1,3 @@
 export interface AnyObject {
-    [key: string]: any
+    [key: string]: any;
 }

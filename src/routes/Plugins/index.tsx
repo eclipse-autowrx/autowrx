@@ -1,28 +1,24 @@
-import clsx from "clsx"
-import { FC, useState } from "react"
-import { getPlugins } from "../../apis"
-import { Model } from "../../apis/models"
-import useAsyncRefresh from "../../reusable/hooks/useAsyncRefresh"
-import { useCurrentModel } from "../../reusable/hooks/useCurrentModel"
-import LoadingPage from "../components/LoadingPage"
-import PluginsList from "./PluginsList"
+import clsx from "clsx";
+import { FC, useState } from "react";
+import { getPlugins } from "../../apis";
+import { Model } from "../../apis/models";
+import useAsyncRefresh from "../../reusable/hooks/useAsyncRefresh";
+import { useCurrentModel } from "../../reusable/hooks/useCurrentModel";
+import LoadingPage from "../components/LoadingPage";
+import PluginsList from "./PluginsList";
 
 interface PluginsProps {
-    tab: "list" | "dashboard"
+    tab: "list" | "dashboard";
 }
 
-const Plugins: FC<PluginsProps> = ({tab}) => {
-    const model = useCurrentModel() as Model
+const Plugins: FC<PluginsProps> = ({ tab }) => {
+    const model = useCurrentModel() as Model;
 
-    const [refreshCounter, setRefreshCounter] = useState(0)
+    const [refreshCounter, setRefreshCounter] = useState(0);
 
-    const {value: plugins} = useAsyncRefresh(
-        () => getPlugins(model.id),
-        [model.id, refreshCounter],
-        5 * 60 * 1000
-    )
+    const { value: plugins } = useAsyncRefresh(() => getPlugins(model.id), [model.id, refreshCounter], 5 * 60 * 1000);
     if (typeof plugins === "undefined") {
-        return <LoadingPage />
+        return <LoadingPage />;
     }
 
     return (
@@ -34,7 +30,7 @@ const Plugins: FC<PluginsProps> = ({tab}) => {
             </div> */}
             <PluginsList plugins={plugins} />
         </div>
-    )
-}
+    );
+};
 
-export default Plugins
+export default Plugins;

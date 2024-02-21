@@ -1,21 +1,24 @@
-import clsx from "clsx"
-import { useState } from "react"
-import { IconType } from "react-icons"
+import clsx from "clsx";
+import { useState } from "react";
+import { IconType } from "react-icons";
 
 interface InputProps {
-    state?: [string, (s: string) => void]
-    type?: "text" | "email" | "password"
-    form?: "input" | "textarea"
-    disabled?: boolean
-    placeholder?: string
-    containerClassName?: string
-    className?: string
+    state?: [string, (s: string) => void];
+    type?: "text" | "email" | "password";
+    form?: "input" | "textarea";
+    disabled?: boolean;
+    placeholder?: string;
+    containerClassName?: string;
+    className?: string;
 
-    defaultValue?: string
-    
-    Icon?: IconType
-    iconBefore?: boolean
-    IconOnClick?: () => void
+    defaultValue?: string;
+
+    Icon?: IconType;
+    iconBefore?: boolean;
+    IconOnClick?: () => void;
+    iconSize?: number;
+    iconColor?: string;
+    iconColorOnFocus?: string;
 }
 
 const Input = ({
@@ -28,50 +31,66 @@ const Input = ({
     className,
 
     defaultValue,
-    
+
     Icon,
     iconBefore = false,
-    IconOnClick
+    IconOnClick,
+    iconSize,
+    iconColor = "#6b7280",
+    iconColorOnFocus = "#005072",
 }: InputProps) => {
-    const [focused, setFocused] = useState(false)
-    const selfManaged = useState(defaultValue)
-    const searchState = state ?? selfManaged
+    const [focused, setFocused] = useState(false);
+    const selfManaged = useState(defaultValue);
+    const searchState = state ?? selfManaged;
 
-    const InputForm = form
+    const InputForm = form;
 
     return (
         <div
-        className={clsx(
-        "flex w-full border-2 rounded-sm bg-gray-100 border-transparent p-3 transition",
-        focused && "border-aiot-blue bg-transparent",
-        disabled && "opacity-40",
-        containerClassName
-        )}>
-            {(Icon && iconBefore) && <Icon className={clsx("h-full w-auto text-gray-400 transition pr-2", focused && "text-aiot-blue")} />}
-            <InputForm
-            value={searchState[0]}
-            disabled={disabled}
-            type={type}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
-            className={clsx("flex w-full outline-0 placeholder:select-none pr-2 bg-transparent resize-none", className)}
-            placeholder={placeholder}
-            onChange={((event) => {
-                searchState[1](event.target.value)
-            })}
-            />
-            {(Icon && !iconBefore) &&
-            <Icon
             className={clsx(
-                "h-full w-auto text-gray-400 transition",
-                focused && "text-aiot-blue",
-                IconOnClick && "cursor-pointer"
+                "w-full h-10 border rounded p-3 transition inline-flex justify-center items-center",
+                !focused && "bg-gray-100",
+                focused && "border-gray-400 bg-transparent text-sm text-gray-600 p-3 h-10",
+                disabled && "opacity-40",
+                containerClassName
             )}
-            onClick={IconOnClick}
+        >
+            {Icon && iconBefore && (
+                <Icon
+                    size={iconSize}
+                    color={focused ? iconColorOnFocus : iconColor}
+                    className={clsx("w-auto text-gray-400 transition pr-3", focused && "text-aiot-blue")}
+                />
+            )}
+            <InputForm
+                value={searchState[0]}
+                disabled={disabled}
+                type={type}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
+                className={clsx(
+                    "flex w-full outline-0 placeholder:select-none pr-2 bg-transparent resize-none",
+                    className
+                )}
+                placeholder={placeholder}
+                onChange={(event) => {
+                    searchState[1](event.target.value);
+                }}
             />
-            }
+            {Icon && !iconBefore && (
+                <Icon
+                    size={iconSize}
+                    color={iconColor}
+                    className={clsx(
+                        "w-auto text-gray-400 transition pr-1",
+                        focused && "text-aiot-blue",
+                        IconOnClick && "cursor-pointer"
+                    )}
+                    onClick={IconOnClick}
+                />
+            )}
         </div>
-    )
-}
+    );
+};
 
-export default Input
+export default Input;

@@ -1,7 +1,7 @@
 import { DependencyList, useEffect } from "react";
 import { useInterval } from "react-use";
-import { FunctionReturningPromise } from "react-use/lib/misc/types"
-import useAsyncFn from "react-use/lib/useAsyncFn"
+import { FunctionReturningPromise } from "react-use/lib/misc/types";
+import useAsyncFn from "react-use/lib/useAsyncFn";
 
 const useAsyncRefresh = <T extends FunctionReturningPromise>(
     fn: T,
@@ -13,13 +13,13 @@ const useAsyncRefresh = <T extends FunctionReturningPromise>(
     });
 
     useInterval(() => {
-        callback()
-    }, refreshMs )
+        callback();
+    }, refreshMs);
 
     useEffect(() => {
         callback();
     }, [callback]);
 
     return state;
-}
-export default useAsyncRefresh
+};
+export default useAsyncRefresh;

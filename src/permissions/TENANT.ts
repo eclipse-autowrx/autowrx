@@ -1,18 +1,18 @@
-import { User } from "../apis/models"
-import { TENANT_ID } from "../constants"
-import { hasRole } from "./general"
+import { User } from "../apis/models";
+import { TENANT_ID } from "../constants";
+import { hasRole } from "./general";
 
 export const TENANT = (profile: User | null) => {
     return {
-        canRead () {
-            return true
+        canRead() {
+            return true;
         },
-        canEdit () {
+        canEdit() {
             if (profile === null) {
-                return false
+                return false;
             } else {
-                return hasRole(profile, "tenant_admin", TENANT_ID)
+                return hasRole(profile, "tenant_admin", TENANT_ID);
             }
-        }
-    }
-}
+        },
+    };
+};

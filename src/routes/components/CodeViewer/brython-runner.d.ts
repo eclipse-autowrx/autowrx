@@ -1,1 +1,1 @@
-declare module 'brython-runner/lib/brython-runner.js';
+declare module "brython-runner/lib/brython-runner.js";

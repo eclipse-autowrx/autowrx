@@ -1,17 +1,24 @@
-import React, { FC } from "react"
-import styles from "./SquareGrid.module.scss"
+import React, { FC } from "react";
+import styles from "./SquareGrid.module.scss";
 
 const SquareGrid: FC<{
-    columns: number
-    fixedWidth: string
-    children: React.ReactNode
-}> = ({columns, children, fixedWidth}) => {
+    columns: number;
+    fixedWidth: string;
+    children: React.ReactNode;
+}> = ({ columns, children, fixedWidth }) => {
     return (
-        <div className={styles.SquareGrid} style={{
-            "--content-width": fixedWidth,
-            "--columns": columns,
-        } as any}>{children}</div>
-    )
-}
+        <div
+            className={styles.SquareGrid}
+            style={
+                {
+                    "--content-width": fixedWidth,
+                    "--columns": columns,
+                } as any
+            }
+        >
+            {children}
+        </div>
+    );
+};
 
-export default SquareGrid
+export default SquareGrid;

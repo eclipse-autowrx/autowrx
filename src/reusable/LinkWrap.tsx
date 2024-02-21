@@ -1,24 +1,25 @@
 import clsx from "clsx";
-import { generatePath, Link, useMatch, useResolvedPath } from "react-router-dom"
+import { generatePath, Link, LinkProps, useMatch, useResolvedPath } from "react-router-dom";
 import { useParamsX } from "./hooks/useUpdateNavigate";
 
-interface LinkWrapProps {
-    to: string
-    children: React.ReactNode
-    className?: string
-    activeClassName?: string
+export interface LinkWrapProps extends LinkProps {
+    to: string;
+    children?: React.ReactNode;
+    className?: string;
+    activeClassName?: string;
 }
 
-const LinkWrap = ({to, children, className, activeClassName}: LinkWrapProps) => {
+const LinkWrap = ({ to, children, className, activeClassName, ...props }: LinkWrapProps) => {
     const resolved = useResolvedPath(to);
-    const dynamicPath = generatePath(resolved.pathname, useParamsX())
+    // console.log('resolved', resolved)
+    const dynamicPath = generatePath(resolved.pathname, useParamsX());
     const active = useMatch({ path: dynamicPath + "/*", end: true });
 
     return (
-        <Link to={dynamicPath} className={clsx(className, active && activeClassName)}>
+        <Link {...props} to={dynamicPath} className={clsx(className, active && activeClassName)}>
             {children}
         </Link>
-    )
-}
+    );
+};
 
-export default LinkWrap
+export default LinkWrap;

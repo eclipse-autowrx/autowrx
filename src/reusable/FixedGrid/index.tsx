@@ -1,12 +1,12 @@
-import clsx from "clsx"
-import { FC } from "react"
-import styles from "./FixedGrid.module.scss"
+import clsx from "clsx";
+import { FC } from "react";
+import styles from "./FixedGrid.module.scss";
 
 interface FixedGridProps {
-    className?: string
+    className?: string;
 }
 
-const FixedGrid: FC<FixedGridProps> = ({className}) => {
+const FixedGrid: FC<FixedGridProps> = ({ className }) => {
     return (
         <div className={clsx(styles.FixedGrid, className)}>
             <div>1</div>
@@ -20,7 +20,7 @@ const FixedGrid: FC<FixedGridProps> = ({className}) => {
             <div>8</div>
             <div>10</div>
         </div>
-    )
-}
+    );
+};
 
-export default FixedGrid
+export default FixedGrid;

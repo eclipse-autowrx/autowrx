@@ -1,5 +1,3 @@
-const UploadMedia = () => {
+const UploadMedia = () => {};
 
-}
-
-export default UploadMedia
+export default UploadMedia;

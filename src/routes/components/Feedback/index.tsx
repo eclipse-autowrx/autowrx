@@ -1,132 +1,283 @@
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { Model } from "../../../apis/models"
-import { useCurrentModel } from "../../../reusable/hooks/useCurrentModel"
-import Stars from "../../../reusable/Stars"
-import Tab from "../../../reusable/Tabs/Tab"
-import { FiExternalLink } from "react-icons/fi"
-import LinkWrap from "../../../reusable/LinkWrap"
+import React, { useEffect, useState } from "react";
+import Paginate from "../../../reusable/Paginate/Paginate";
+import Starss from "../../../reusable/Stars";
+import Rating from "react-rating";
+import { HiStar } from "react-icons/hi";
+import { TbPlus, TbChartDots, TbX } from "react-icons/tb";
+import PrototypeFeedbackForm from "./PrototypeFeedbackForm";
+import Button from "../../../reusable/Button";
+import axios from "axios";
+import Popup from "../../../reusable/Popup/Popup";
+import useCurrentPrototype from "../../../hooks/useCurrentPrototype";
+import { useCurrentModel } from "../../../reusable/hooks/useCurrentModel";
+import { Model } from "../../../apis/models";
+import LinkWrap from "../../../reusable/LinkWrap";
 
-interface DisplayDescriptionProps {
-    name: string
-    value?: React.ReactNode
+interface UserReview {
+    id: string;
+    interviewee: {
+        name: string;
+        org?: string;
+    };
+    recommendation: string;
+    question: string;
+    model_id: string;
+    score: {
+        easyToUse?: number;
+        needAddress?: number;
+        relevance?: number;
+    };
+    created: {
+        created_time: {
+            _seconds: number;
+            _nanoseconds: number;
+        };
+        user_id: string;
+        user_fullname: string;
+    };
 }
 
-const DisplayDescription = ({name, value}: DisplayDescriptionProps) => {
-    return (
-        <tr>
-            <td className="py-2 font-bold select-none pr-2 whitespace-nowrap align-top">{name}</td>
-            <td className="py-2 " style={{whiteSpace: "break-spaces"}} >{value}</td>
-        </tr>
-    )
+interface UserReviewsProps {
+    prototype_id: string | null;
 }
 
-interface FeedbackModel {
-    needs_addressed: number
-    relevance: number
-    ease_of_use: number
-    questions: string
-    recommendations: string
-    interview: {
-        interviewer: string
-        interviewee: string
-        date: "6/15/2022"
-    }
-}
-
-const feedbacks: FeedbackModel[] = [
-    {
-        needs_addressed: 3.96,
-        relevance: 4.35,
-        ease_of_use: 4.7,
-        questions: "Does this work automatically?",
-        recommendations: "Might also include doors",
-        interview: {
-            interviewer: "Tom Jones",
-            interviewee: "Jannet Jackson",
-            date: "6/15/2022"
-        }
-    },
-    {
-        needs_addressed: 5,
-        relevance: 2.82,
-        ease_of_use: 1.7,
-        questions: "Does this work automatically?",
-        recommendations: "",
-        interview: {
-            interviewer: "Tom Jones",
-            interviewee: "Tom Cruise",
-            date: "6/15/2022"
-        }
-    },
-    {
-        needs_addressed: 1,
-        relevance: 2.3,
-        ease_of_use: 4.7,
-        questions: "Does this work automatically?",
-        recommendations: "Something you could do is....",
-        interview: {
-            interviewer: "Tom Jones",
-            interviewee: "Manuel Neuer",
-            date: "6/15/2022"
-        }
-    },
-    {
-        needs_addressed: 3.1,
-        relevance: 4.7,
-        ease_of_use: 2.6,
-        questions: "How can I get this to work?",
-        recommendations: "Recommendation Example",
-        interview: {
-            interviewer: "Tom Jones",
-            interviewee: "Example Interviewee",
-            date: "6/15/2022"
-        }
-    },
-]
-
-const Feedback = () => {
-    const [activeFeedback, setActiveFeedback] = useState(0)
-    const feedback = feedbacks[activeFeedback]
-    const navigate = useNavigate()
-    const model = useCurrentModel() as Model
-
-    if (typeof feedback === "undefined") {
-        return null
-    }
-    
-    return (
-        <div className="flex flex-col p-3 w-full">
-            <div className="flex pb-2 relative">
-                {feedbacks.map((feedback, i) => (
-                    <Tab
-                    label={i+1}
-                    className="flex h-full text-xl items-center px-4 !w-fit text-gray-400"
-                    active={activeFeedback === i}
-                    onClick={() => setActiveFeedback(i)}
-                    />
-                ))}
-                <LinkWrap to={`/model/${model.id}/library/portfolio`} className="text-gray-400 flex items-center ml-auto mb-4 mr-2">
-                    <FiExternalLink className="mr-1" />
-                    Portfolio
-                </LinkWrap>
-            </div>
-            <div className="flex px-4">
-                <table className="table-auto leading-relaxed w-full h-fit">
-                    <DisplayDescription name="Needs addressed?" value={<Stars rating={feedback.needs_addressed} />} />
-                    <DisplayDescription name="Relevance" value={<Stars  rating={feedback.relevance} />} />
-                    <DisplayDescription name="Ease of use" value={<Stars rating={feedback.ease_of_use}/>} />
-                    <DisplayDescription name="Questions" value={feedback.questions} />
-                    <DisplayDescription name="Recommendations" value={feedback.recommendations} />
-                </table>
-            </div>
-            <div className="flex flex-col px-4 mt-8">
-                <div><strong>Interviewer:</strong> {feedback.interview.interviewer}</div>
-                <div><strong>Interviewee:</strong> {feedback.interview.interviewee}</div>
-                <div><strong>Date:</strong> {feedback.interview.date}</div>
-            </div>
+const mockRecommendation = () => {
+    <div className="text-sm">
+        <div>
+            "I had the opportunity to test this prototype, and it left a positive impression on me. The user interface
+            is clean, modern, and intuitive. It requires minimal effort to navigate through different sections, and the
+            learning curve is practically non-existent. The prototype is easy to use, even for individuals with limited
+            technical expertise. In terms of relevance, this prototype ticks all the boxes. It aligns perfectly with our
+            organization's requirements and effectively addresses our needs. However, I feel that some additional
+            features could be incorporated to better handle specific scenarios.", question: "Would you recommend this
+            prototype to others?"
         </div>
-    )
-}
+    </div>;
+};
 
-export default Feedback
+const UserReviews = ({ prototype_id }: UserReviewsProps) => {
+    const [reviews, setReviews] = useState<UserReview[]>([]);
+    const [itemsOffset, setItemsOffset] = useState(0);
+    const RatingComponent = Rating as any;
+    const itemsPerPage = 5;
+    const feedbackPopupState = useState(false); // for popup
+    const prototype = useCurrentPrototype(); // fetch current prototype to add user feedback
+
+    const [rating, setRating] = useState(0);
+    const [ratingCount, setRatingCount] = useState(0);
+
+    const model = useCurrentModel() as Model;
+
+    if (typeof prototype === "undefined") {
+        return null;
+    }
+
+    const currentItems = reviews.slice(itemsOffset, itemsOffset + itemsPerPage);
+
+    useEffect(() => {
+        if (!prototype_id) return;
+        fetchFeedbackInfo();
+    }, [prototype_id]);
+
+    const fetchRatingInfo = async (prototypeId: string) => {
+        if (!prototypeId) return;
+        setRatingCount(0);
+        setRating(0);
+        try {
+            let res = await axios.get(`/.netlify/functions/listFeedback?masterType=Prototype&&masterId=${prototypeId}`);
+            // console.log("listFeedback", res.data)
+            if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
+                let rateValue =
+                    res.data.map((f: any) => f.avg_score).reduce((partialSum, a) => partialSum + a, 0) /
+                    res.data.length;
+                setRatingCount(res.data.length);
+                setRating(rateValue);
+            } else {
+                setRatingCount(0);
+                setRating(0);
+            }
+            // console.log(res.data)
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
+    useEffect(() => {
+        if (!prototype) {
+            setRating(0);
+            setRatingCount(0);
+        }
+        fetchRatingInfo(prototype.id);
+    }, [prototype]);
+
+    const fetchFeedbackInfo = async () => {
+        let reviews = [] as any[];
+        try {
+            let res = await axios.get(
+                `/.netlify/functions/listFeedback?masterType=Prototype&&masterId=${prototype_id}`
+            );
+            if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
+                reviews = res.data;
+            }
+        } catch (err) {
+            console.log(err);
+        }
+        console.log(reviews);
+        reviews.forEach((review: any) => {
+            review.created_at = new Date(
+                review.created.created_time._seconds * 1000 + review.created.created_time._nanoseconds / 1000000
+            );
+        });
+        reviews = reviews.sort((a, b) => {
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+        setItemsOffset(0);
+        setReviews(reviews);
+    };
+
+    // Refresh the page when user submit feedback
+    const [refreshCounter, setRefreshCounter] = useState<number>(0);
+    useEffect(() => {
+        if (refreshCounter !== 0) {
+            window.location.reload();
+        }
+    }, [refreshCounter]);
+
+    // Total number of feedbacks
+    const totalFeedback = reviews.length;
+
+    // Avarage rating of this prototype
+    const avarageFeedbackRating = rating;
+
+    return (
+        <div className="w-full bg-white h-screen overflow-y-auto">
+            <div className="flex flex-col items-center justify-center mb-3 mt-10">
+                {/* <div className="text-2xl mb-3 bg-red-500">{prototype.name}</div>
+        <div className="text-2xl mb-3 bg-blue-500">{prototype.id}</div> */}
+                <div className="w-36"></div>
+                <div className="inline-flex justify-between items-center w-full max-w-[1024px]">
+                    <p className="text-3xl font-bold text-aiot-blue">END-USER FEEDBACK</p>
+                    <div className="flex w-fit">
+                        <Popup
+                            state={feedbackPopupState}
+                            trigger={
+                                <Button variant="white" icon={TbPlus} className="mr-3">
+                                    Add Feedback
+                                </Button>
+                            }
+                        >
+                            <PrototypeFeedbackForm
+                                prototype={prototype}
+                                requestClose={() => {
+                                    feedbackPopupState[1](false);
+                                    fetchRatingInfo(prototype.id);
+                                    setRefreshCounter(refreshCounter + 1);
+                                }}
+                            />
+                        </Popup>
+                        <LinkWrap to={`/model/${model.id}/library/portfolio`}>
+                            <Button variant="white" icon={TbChartDots}>
+                                View Portfolio
+                            </Button>
+                        </LinkWrap>
+                    </div>
+                </div>
+                {/* Avarage rating of this prototype */}
+                <div className="inline-flex items-center w-full max-w-[1024px]">
+                    <div className="flex items-center text-l font-semibold text-gray-600 ">Overall: </div>
+                    <RatingComponent
+                        className="pl-2 pt-1"
+                        readonly
+                        emptySymbol={<HiStar className="text-gray-300" size={24} />}
+                        initialRating={avarageFeedbackRating}
+                        fullSymbol={<HiStar className="text-[#FFDB58]" size={24} />}
+                    />
+                    <div className=" pl-1 text-sm text-gray-400">({totalFeedback})</div>
+                </div>
+            </div>
+            <div className="flex flex-col items-center justify-center">
+                {currentItems.map((review) => (
+                    <div
+                        key={review.id}
+                        className="w-full max-w-[1024px] bg-white p-5 m-3 rounded-md border shadow border-aiot-blue-ml/20 text-gray-600 text-sm"
+                    >
+                        <div className="inline-flex items-end justify-end">
+                            <h3 className="text-xl text-aiot-blue font-bold">
+                                {review.interviewee?.name || "Anonymous"}
+                            </h3>
+                            {review.interviewee && review.interviewee.org && (
+                                <h4 className="text-xs ml-3 mb-1 text-aiot-blue">@{review.interviewee.org}</h4>
+                            )}
+                        </div>
+                        <p className="text-sm text-gray-400">
+                            {review.created &&
+                                new Date(
+                                    review.created.created_time._seconds * 1000 +
+                                        review.created.created_time._nanoseconds / 1000000
+                                ).toLocaleString()}
+                        </p>
+                        <div className="flex mt-5">
+                            <div className="font-semibold min-w-[250px]">
+                                <div className="flex">
+                                    <div className="flex-1">Need Address: </div>
+                                    <RatingComponent
+                                        readonly
+                                        emptySymbol={<HiStar className="text-gray-300" size={24} />}
+                                        initialRating={review.score?.needAddress || 0}
+                                        fullSymbol={<HiStar className="text-[#FFDB58]" size={24} />}
+                                    />
+                                </div>
+                                <div className="flex">
+                                    <div className="flex-1">Relevance:</div>
+                                    <RatingComponent
+                                        readonly
+                                        emptySymbol={<HiStar className="text-gray-300" size={24} />}
+                                        initialRating={review.score?.relevance || 0}
+                                        fullSymbol={<HiStar className="text-[#FFDB58]" size={24} />}
+                                    />
+                                </div>
+                                <div className="flex">
+                                    <div className="flex-1">Ease of use:</div>
+                                    <RatingComponent
+                                        readonly
+                                        emptySymbol={<HiStar className="text-gray-300" size={24} />}
+                                        initialRating={review.score?.easyToUse || 0}
+                                        fullSymbol={<HiStar className="text-[#FFDB58]" size={24} />}
+                                    />
+                                </div>
+                            </div>
+                            <div className="pl-44 font-semibold grow">
+                                <div className="flex">
+                                    <div className="min-w-[160px]">Question:</div>
+                                    <div className="grow font-normal whitespace-pre-wrap text-gray-600">
+                                        {review.question}
+                                    </div>
+                                </div>
+                                <div className="flex  pt-5">
+                                    <div className="min-w-[160px]">Recommendation:</div>
+                                    <div className="grow font-normal whitespace-pre-wrap text-gray-600">
+                                        {review.recommendation}
+                                    </div>
+                                </div>
+
+                                <div className="flex  pt-5">
+                                    <div className="min-w-[160px]">Interviewer:</div>
+                                    <div className="grow font-normal text-gray-600">
+                                        {review.created?.user_fullname}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+            {reviews.length > itemsPerPage && (
+                <div className="mt-3 mb-5">
+                    <Paginate itemsPerPage={itemsPerPage} items={reviews} setItemsOffset={setItemsOffset} />
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default UserReviews;

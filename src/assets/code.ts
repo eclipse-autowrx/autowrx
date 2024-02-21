@@ -1,5 +1,4 @@
-export default
-`from gasoline.gasoline import GasPortion, Gasoline
+export default `from gasoline.gasoline import GasPortion, Gasoline
 
 
 class Engine:
