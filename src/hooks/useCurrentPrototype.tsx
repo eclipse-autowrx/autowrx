@@ -1,13 +1,18 @@
 import { createContext, useContext } from "react";
-import { Prototype } from "../apis/models";
+import { Prototype, PrototypeGetSet } from "../apis/models";
 
-export const Context = createContext<Prototype | undefined>(undefined);
+export const Context = createContext<PrototypeGetSet | undefined | null>(undefined);
 
-export const CurrentPrototypeProvider = Context.Provider
+export const CurrentPrototypeProvider = Context.Provider;
 
 const useCurrentPrototype = () => {
-    const prototype = useContext(Context)
-    return prototype
-}
+    const protoSetGet = useContext(Context);
+    return protoSetGet?.prototype;
+};
 
-export default useCurrentPrototype
+export const useCurrentPrototypeGetSet = () => {
+    const protoSetGet = useContext(Context);
+    return protoSetGet;
+};
+
+export default useCurrentPrototype;

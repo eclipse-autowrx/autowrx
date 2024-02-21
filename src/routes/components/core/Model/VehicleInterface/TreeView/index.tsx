@@ -1,7 +1,7 @@
-import { AnyNode, Branch } from "../Spec"
-import Tree from 'react-d3-tree';
+import { AnyNode, Branch } from "../Spec";
+import Tree from "react-d3-tree";
 import buildTreeNode from "./buildTreeView";
-import styles from "./TreeView.module.scss"
+import styles from "./TreeView.module.scss";
 import RenderRectSvgNode from "./RenderRectSvgNode";
 import { PathFunction } from "react-d3-tree/lib/types/types/common";
 import { useNavigate } from "react-router-dom";
@@ -9,7 +9,6 @@ import { Model } from "../../../../../../apis/models";
 import useCurrentPrototype from "../../../../../../hooks/useCurrentPrototype";
 
 const getDynamicPathClass: PathFunction = ({ source, target }, orientation) => {
-
     const targetData: any = target.data;
 
     if (!target.data.__rd3t.collapsed) {
@@ -50,25 +49,24 @@ const getDynamicPathClass: PathFunction = ({ source, target }, orientation) => {
     }
 
     return styles.Node;
-}
-
+};
 
 interface TreeViewProps {
-    model: Model
-    node_name: string
-    activeNode: AnyNode | null
-    onlyShow?: string[]
+    model: Model;
+    node_name: string;
+    activeNode: AnyNode | null;
+    onlyShow?: string[];
 }
 
 const TreeView = ({ node_name, activeNode, model }: TreeViewProps) => {
-    const navigate = useNavigate()
-    const prototype = useCurrentPrototype()
+    const navigate = useNavigate();
+    const prototype = useCurrentPrototype();
 
     const cvi = JSON.parse(model.cvi) as {
-        [key: string]: Branch
-    }
+        [key: string]: Branch;
+    };
 
-    const orgChart = buildTreeNode(model.main_api, "", cvi[model.main_api])
+    const orgChart = buildTreeNode(model.main_api, "", cvi[model.main_api]);
 
     return (
         <div className="h-full w-full">
@@ -83,6 +81,6 @@ const TreeView = ({ node_name, activeNode, model }: TreeViewProps) => {
             />
         </div>
     );
-}
+};
 
-export default TreeView
+export default TreeView;

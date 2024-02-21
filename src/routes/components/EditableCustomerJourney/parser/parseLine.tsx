@@ -1,35 +1,37 @@
-import { TableCellType } from "./parseCJFromInput"
-import tokenizeText from "./tokenizeText"
+import { TableCellType } from "./parseCJFromInput";
+import tokenizeText from "./tokenizeText";
 
-type ParsedLine = {
-    type: "cell"
-    key: string
-    value: TableCellType
-} | {
-    type: "header"
-    value: string
-}
+type ParsedLine =
+    | {
+          type: "cell";
+          key: string;
+          value: TableCellType;
+      }
+    | {
+          type: "header";
+          value: string;
+      };
 
 const parseLine = (line: string): ParsedLine | undefined => {
     if (line.trim() === "") {
         // Line is blank
-        return
+        return;
     } else if (line.startsWith("#")) {
         return {
             type: "header",
-            value: line.split("#")[1]
-        }
+            value: line.split("#")[1],
+        };
     } else if (line.includes(":")) {
-        const [key, value] = line.split(/:(.*)/g, 2)
+        const [key, value] = line.split(/:(.*)/g, 2);
 
         return {
             type: "cell",
             key,
-            value: tokenizeText(value)
-        }
+            value: tokenizeText(value),
+        };
     } else {
-        return
+        return;
     }
-}
+};
 
-export default parseLine
+export default parseLine;

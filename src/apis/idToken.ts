@@ -1,10 +1,10 @@
-import { auth } from "./firebase"
+import { auth } from "./firebase";
 
 const idTokenHeaders = async () => {
-    const idToken = await auth.currentUser?.getIdToken() ?? ""
+    const idToken = (await auth.currentUser?.getIdToken()) ?? "";
     return {
-        "X-Id-Token": idToken
-    } as const
-}
+        "X-Id-Token": idToken,
+    } as const;
+};
 
-export default idTokenHeaders
+export default idTokenHeaders;

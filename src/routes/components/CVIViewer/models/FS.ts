@@ -1,3 +1,3 @@
 export interface FS {
-    [key: string]: string
+    [key: string]: string;
 }

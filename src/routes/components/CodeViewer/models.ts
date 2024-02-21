@@ -1,8 +1,8 @@
 export interface OutputPart {
-    text: string
-    type: "error" | "string"
+    text: string;
+    type: "error" | "string";
 }
 
 export interface Line {
-    parts: OutputPart[]
+    parts: OutputPart[];
 }
