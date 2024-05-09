@@ -8,10 +8,10 @@ interface ProgressBarProps {
 
 export const ProgressBar: React.FC<ProgressBarProps> = ({ progress, indicatorPosition = "moving", indicator }) => {
     return (
-        <div className="mt-1.5 flex items-center justify-center">
-            <div className="relative w-[80px] h-[3px] rounded-full bg-gray-200/80 z-10">
+        <div className="flex items-center justify-center">
+            <div className="relative w-[100px] h-[5px] rounded-full bg-gray-200/80 z-10">
                 <div
-                    className="absolute left-0 h-[3px] bg-aiot-gradient-6 rounded-full transition-width"
+                    className="absolute left-0 h-[5px] bg-aiot-gradient-6 rounded-full transition-width"
                     style={{ width: `${progress}%` }}
                 ></div>
             </div>

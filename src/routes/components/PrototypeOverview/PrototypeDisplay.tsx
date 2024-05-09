@@ -221,17 +221,23 @@ const PrototypeDisplay = ({ prototype }: PrototypeDisplayProps) => {
                                 .filter(([prototype_type, apis]) => prototype_type !== "VSC")
                                 .map(([prototype_type, apis]) => (
                                     <tr className="" key={prototype_type}>
-                                        <td className="pr-2 align-top text-gray-700 pt-1.5 w-12">{prototype_type}</td>
+                                        <td className="pr-2 align-top text-xl text-gray-700 pt-1.5 w-12">
+                                            {prototype_type}
+                                        </td>
                                         <td className="align-top">
                                             <div className="flex flex-wrap text-xs">
-                                                {apis.map((api) => (
-                                                    <div
-                                                        key={api}
-                                                        className="rounded-md bg-aiot-blue text-white mt-2 mr-2 py-0.5 px-3 select-none text-xs"
-                                                    >
-                                                        {api}
-                                                    </div>
-                                                ))}
+                                                {apis.map((api) => {
+                                                    const key =
+                                                        typeof api === "string" ? api : (api as { name: string }).name;
+                                                    return (
+                                                        <div
+                                                            key={key}
+                                                            className="rounded-md bg-aiot-blue text-white mt-2 mr-2 py-0.5 px-3 select-none text-sm"
+                                                        >
+                                                            {key}
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
                                         </td>
                                     </tr>

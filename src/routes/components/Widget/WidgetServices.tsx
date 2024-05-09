@@ -103,33 +103,42 @@ export const loadWidgetReviews = async (widgetId) => {
     }
 };
 
-export const fetchMarketAddOns = async (type) => {
+export const fetchMarketAddOns = async (type: string): Promise<AddOn[] | null> => {
     try {
-        let res = await axios.get(`https://store-be.digitalauto.tech/package?type=${type}`);
-        console.log(`fetchMarketAddOns https://store-be.digitalauto.tech/package?type=${type}`)
-        let parsedAddOns: AddOn[] = [];
-        if (res.status === 200 && res.data && res.data.data) {
-            console.log("res.data.data", res.data.data);
-            res.data.data.map((addon: any) => {
-                let parsedAddon: AddOn = {
-                    id: addon.version._id,
-                    type: addon.type,
-                    name: addon.name,
-                    image_file: addon.image_file,
-                    description: addon.description,
-                    apiKey: addon.version.apiKey,
-                    endpointUrl: addon.version.endpointUrl,
-                    samples: addon.version.samples,
-                    rating: addon.rating,
-                };
-                console.log(`parsedAddon`, parsedAddon)
-                // only return if the type matches
-                if (parsedAddon.type === type) {
-                    parsedAddOns.push(parsedAddon);
+        const response = await axios.get(
+            `https://store-be.digitalauto.tech/package?type=${type}&exposeCredentials=true`
+        );
+
+        if (response.status === 200 && response.data && response.data.data) {
+            const parsedAddOns: AddOn[] = response.data.data.reduce((addons: AddOn[], addon: any) => {
+                if (addon.version && typeof addon.version === "object") {
+                    const parsedAddon: AddOn = {
+                        id: addon.version._id,
+                        type: addon.type,
+                        name: addon.name,
+                        image_file: addon.thumbnail,
+                        description: addon.shortDesc,
+                        apiKey: addon.team?.accessKey
+                            ? `${addon.team?.accessKey}@${addon.team?.secretKey}`
+                            : addon.version.apiKey,
+                        endpointUrl: addon.version.endpointUrl,
+                        samples: addon.version.samples,
+                        rating: addon.rating,
+                        team: addon.team ? addon.team.name : null,
+                    };
+                    if (parsedAddon.type === type) {
+                        addons.push(parsedAddon);
+                    }
+                } else {
+                    console.warn("Skipping addon due to missing version information:", addon.name);
                 }
-            });
+                return addons;
+            }, []);
+
             return parsedAddOns;
         }
+        // Ensure a value is returned even when conditions are not met or status is not 200
+        return [];
     } catch (err) {
         console.error("Error in fetchAddOns:", err);
         return null;

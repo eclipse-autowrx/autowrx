@@ -14,6 +14,7 @@ type GenAI_WidgetProps = {
     onDashboardConfigChanged?: (config: any) => void;
     onCodeChanged?: (code: string) => void;
     type: AddOn["type"];
+    pythonCode: string;
 };
 
 const GenAI_ProtoPilot = ({
@@ -23,6 +24,7 @@ const GenAI_ProtoPilot = ({
     onDashboardConfigChanged,
     onCodeChanged,
     type,
+    pythonCode,
 }: GenAI_WidgetProps) => {
     const [marketplaceAddOns, setMarketplaceAddOns] = useState<AddOn[]>([]);
 
@@ -32,11 +34,11 @@ const GenAI_ProtoPilot = ({
                 setMarketplaceAddOns(res);
             }
         });
-    }, []);
+    }, [type]);
 
     return (
         <CustomModal isOpen={isOpen} className="flex w-[1000px] h-[500px]" onClose={() => {}}>
-            <div className="flex flex-col w-full h-full bg-white rounded p-4 text-gray-600 text-sm">
+            <div className="flex flex-col w-full h-full bg-white rounded-lg p-4 text-gray-600 text-sm">
                 {/* Conditionally render based on the type prop */}
                 {type === "GenAI_Python" && (
                     <>
@@ -53,6 +55,7 @@ const GenAI_ProtoPilot = ({
                             <GenAIDashboard
                                 onDashboardConfigChanged={onDashboardConfigChanged}
                                 marketplaceAddOns={marketplaceAddOns}
+                                pythonCode={pythonCode}
                             />
                         </div>
                     </>

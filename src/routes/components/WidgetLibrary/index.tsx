@@ -316,6 +316,7 @@ const WidgetLibrary = ({
                 </div>
             }
             width="85%"
+            className="rounded-lg"
         >
             <div className="select-none text-gray-600">
                 <div className="flex text-aiot-blue text-2xl font-bold mb-2">Place new widget to dashboard</div>
@@ -355,19 +356,21 @@ const WidgetLibrary = ({
                             Widget ProtoPilot
                         </Button>
                     </div>
-                    <Button
-                        variant="white"
-                        className="w-52 h-8"
-                        onClick={() => {
-                            setIsWidgetGenAI(false);
-                            handleCreateFromScratch();
-                        }}
-                        icon={TbExternalLink}
-                        showProgress={projectCreating}
-                        progressColor="#4b5563"
-                    >
-                        Create widget with Studio
-                    </Button>
+                    {activeTab !== "genAI" && (
+                        <Button
+                            variant="white"
+                            className="w-52 h-8"
+                            onClick={() => {
+                                setIsWidgetGenAI(false);
+                                handleCreateFromScratch();
+                            }}
+                            icon={TbExternalLink}
+                            showProgress={projectCreating}
+                            progressColor="#4b5563"
+                        >
+                            Create widget with Studio
+                        </Button>
+                    )}
                 </div>
 
                 {(activeTab == "builtin" || activeTab == "market") && (
@@ -499,7 +502,7 @@ const WidgetLibrary = ({
                         />
                     </div>
                 )}
-                <div className="flex w-full h-fit justify-between items-center mt-4">
+                <div className="flex w-full h-full justify-between items-center pt-10">
                     <div className="grow"></div>
                     <div className="flex">
                         <Button

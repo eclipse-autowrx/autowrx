@@ -12,6 +12,10 @@ export const backendAxios = axios.create({
     withCredentials: true,
 });
 
+export const cacheAxios = axios.create({
+    baseURL: config.cacheBaseUrl,
+});
+
 // Automatically add access token to all requests
 backendAxios.interceptors.request.use(
     async (apiConfig) => {

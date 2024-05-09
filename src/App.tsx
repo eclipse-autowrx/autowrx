@@ -57,6 +57,12 @@ const Inner = () => {
                 // console.log(res.data)
                 models = res.data;
             }
+            // Cache only model.id and model.visibility
+            const visibilityMap = models.reduce((acc, model) => {
+                acc[model.id] = model.visibility;
+                return acc;
+            }, {});
+            localStorage.setItem("modelVisibility", JSON.stringify(visibilityMap));
         } catch (err) {
             console.log(err);
         }

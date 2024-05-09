@@ -46,6 +46,10 @@ import {
 } from "react-share";
 import SideNav from "../reusable/SideNav/SideNav";
 import PrototypeRunMode from "./Plugins/PrototypeRunMode";
+import { matchPath, useLocation } from "react-router-dom";
+import { generateNewRunner, runner } from "./components/CodeViewer/runCode";
+import { saveRecentPrototype } from "../apis/backend/prototypeApi";
+import useCurrentUser from "../reusable/hooks/useCurrentUser";
 
 interface IconTabProps {
     Icon: IconType;
@@ -145,7 +149,7 @@ const ViewPrototypeInner = ({ prototype_tab, display = "list" }: ViewPrototypePr
     const [lastestSavedCode, setLastestSavedCode] = useState(prototype?.code ?? "");
     const [saving, setSaving] = useState(false);
     const [ticker, setTicker] = useState(0);
-    const [editable,setEditable] = useState(false);
+    const [editable, setEditable] = useState(false);
     const [shareUrl, setShareUrl] = useState("");
     const canEdit = useCurrentProtototypePermissions().canEdit();
     const [isEditing, setEditing] = useState(false);
@@ -337,6 +341,8 @@ const ViewPrototypeInner = ({ prototype_tab, display = "list" }: ViewPrototypePr
 
 const ViewPrototype = ({ prototype_tab, display = "list" }: ViewPrototypeProps) => {
     const model = useCurrentModel() as Model;
+    const location = useLocation();
+    const isOnDashboardTab = useRef(false);
 
     const { prototype_id = "" } = useParamsX();
 
@@ -345,6 +351,7 @@ const ViewPrototype = ({ prototype_tab, display = "list" }: ViewPrototypeProps) 
     //     return prototypes.find(prototype => prototype.id === prototype_id)
     // }, [model.id])
 
+    const { user } = useCurrentUser();
     const [prototype, setPrototype] = useState<Prototype>();
     const [loading, setLoading] = useState(true);
 
@@ -363,6 +370,29 @@ const ViewPrototype = ({ prototype_tab, display = "list" }: ViewPrototypeProps) 
                 setLoading(false);
             });
     };
+
+    // Cancel any code execution if user leaving the run code page
+    useEffect(() => {
+        if (!!matchPath("/model/:model_id/library/prototype/:prototype_id/view/run", location.pathname)) {
+            isOnDashboardTab.current = true;
+        } else {
+            if (isOnDashboardTab.current) {
+                document.querySelector(`iframe#${runner.id}`)?.remove();
+                generateNewRunner();
+            }
+            isOnDashboardTab.current = false;
+        }
+    }, [location]);
+
+    useEffect(() => {
+        if (loading) {
+            return;
+        }
+
+        if (user && prototype && prototype_tab) {
+            saveRecentPrototype(user.uid, prototype.id, "prototype", prototype_tab);
+        }
+    }, [loading, prototype, prototype_tab, user]);
 
     useEffect(() => {
         downloadPrototype();

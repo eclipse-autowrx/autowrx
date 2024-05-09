@@ -17,6 +17,7 @@ import { CVI, CVI_system, CVI_v4_0, CVI_v4_1, TENANT_ID } from "../constants";
 import { REFS } from "./firebase";
 import { Model, Prototype, Plugin, User, TagCategory } from "./models";
 import axios from "axios";
+import { config } from "../configs/config";
 
 const getMany = async <T extends any>(q: Query<DocumentData>) => {
     const result: T[] = [];
@@ -299,7 +300,7 @@ export const addLog = async (
             parent_id,
             project_id: TENANT_ID,
         };
-        await axios.post(import.meta.env.LOGS_DOMAIN || "https://logs.digitalauto.asia", data);
+        await axios.post(config.logBaseUrl, data);
     } catch (err) {
         console.log("addLog", err);
     }

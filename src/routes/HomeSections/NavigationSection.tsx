@@ -16,7 +16,7 @@ const NavigationSection = () => {
                 <img className="w-full h-auto object-contain" src={NewHomeCover} alt="home-cover"></img>
             </div> */}
 
-            <div className="flex flex-col px-12 h-[40%] justify-center items-center ">
+            <div className="flex flex-col px-12 h-[40%] justify-center items-center pt-12">
                 <div className="flex w-full h-full">
                     <GridBox
                         to="/model/STLWzk1WyqVVLbfymb4f/cvi/list"
@@ -42,7 +42,7 @@ const NavigationSection = () => {
                 </div>
             </div>
 
-            <div className="flex flex-col w-full h-[10%] justify-end items-end">
+            <div className="flex flex-col w-full h-[10%] justify-end items-end py-12">
                 {/* List of partners */}
                 <div className="flex flex-col w-full h-auto pb-4 justify-bottom">
                     {/* <div className="flex w-full text-3xl text-aiot-blue justify-center">Partners</div> */}

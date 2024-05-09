@@ -1,3 +1,4 @@
+/*
 import { useEffect, useState } from "react";
 import { Bar } from "react-chartjs-2";
 import { Chart, registerables, ChartOptions } from "chart.js";
@@ -141,3 +142,7 @@ const FeatureAnalysis = ({ data, rawLogData }: FeatureAnalysisProps) => {
 };
 
 export default FeatureAnalysis;
+
+*/
+
+export default {}

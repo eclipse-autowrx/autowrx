@@ -5,7 +5,8 @@ import Button from "../../reusable/Button";
 import { TbUsersPlus, TbStar, TbStarFilled, TbSelector } from "react-icons/tb";
 import { saveFeatureUids } from "./featureUtils";
 import CustomModal from "../../reusable/Popup/CustomModal";
-import { ENDUSER_FEATURES } from ".";
+import { ENDUSER_FEATURES_KEYS } from ".";
+import { supportFeatures } from "./featureUtils";
 
 export interface FeatureDetailProps {
     feature: any;
@@ -75,9 +76,11 @@ const FeatureDetails = ({
     const userIdToNameMap = new Map(users.map((user) => [user.uid, user.name || "Unknown User"]));
 
     const getActiveUsers = (featureKey, timeFrame) => {
-        let activityType = Object.keys(ENDUSER_FEATURES).find((key) => ENDUSER_FEATURES[key] === featureKey);
+        let activityType = Object.keys(supportFeatures).find((key) => ENDUSER_FEATURES_KEYS[key] === featureKey);
         const filteredData = filterDataByTimeFrame(data, timeFrame);
         const activities = countUserActivities(filteredData, activityType);
+        console.log("activities", activities);
+        console.log("filteredData", filteredData);
         return Object.entries(activities)
             .map(([userId, count]) => ({
                 name: userIdToNameMap.get(userId) || "Unknown User",
@@ -203,7 +206,7 @@ const FeatureDetails = ({
                             </div>
                             <div className="flex flex-col w-full max-h-[300px] overflow-y-auto scroll-gray">
                                 {feature &&
-                                    Object.values(ENDUSER_FEATURES).includes(feature.key) &&
+                                    Object.values(ENDUSER_FEATURES_KEYS).includes(feature.key) &&
                                     getActiveUsers(feature.key, timeFilter).map((user, index) => (
                                         <div
                                             key={index}

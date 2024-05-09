@@ -47,7 +47,7 @@ const DisplayImage: FC<DisplayImageProps> = ({
                 style={{ display: loading ? "none" : "block", objectFit: objectFit, maxHeight }}
                 src={image_file}
                 alt=""
-                className="w-full h-100 select-none"
+                className="w-full h-full select-none"
                 onLoad={() => {
                     setLoading(false);
                 }}

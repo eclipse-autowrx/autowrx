@@ -302,9 +302,20 @@ export interface AddOn {
     image_file?: string;
     apiKey: string;
     endpointUrl: string;
-    version?: string;
+    version?: any;
     visibility?: "public" | "private";
     customPayload?: any;
     rating?: number;
     samples?: string;
+    team?: any;
+}
+
+export interface API {
+    description: string;
+    name: string;
+    parent: string;
+    shortName: string;
+    type: string;
+    isWishlist: boolean;
+    uuid: string;
 }

@@ -1,4 +1,4 @@
-# playground-frontend
+# playground-fe
 
 1. Login to Github Packages registry to access the "eclipse-velocitas" packages.
 

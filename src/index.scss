@@ -38,23 +38,36 @@ body::-webkit-scrollbar {
 
 .scroll-gray::-webkit-scrollbar {
     width: 9px;
+    height: 9px;
+}
+
+.scroll-gray-small::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
 }
 
 .scroll::-webkit-scrollbar-thumb,
+.scroll-gray-small::-webkit-scrollbar-thumb,
 .scroll-gray::-webkit-scrollbar-thumb,
 body::-webkit-scrollbar-thumb {
     border-radius: 10px;
 }
 
 .scroll::-webkit-scrollbar-thumb,
-body::-webkit-scrollbar-thumb { 
+body::-webkit-scrollbar-thumb {
     background-color: #005072;
 }
 
 .scroll-gray::-webkit-scrollbar-thumb {
     border: 2px solid rgba(0, 0, 0, 0);
     background-clip: padding-box;
-    background-color: #AAAAAA;
+    background-color: #aaaaaa;
+}
+
+.scroll-gray-small::-webkit-scrollbar-thumb {
+    border: 2px solid rgba(0, 0, 0, 0);
+    background-clip: padding-box;
+    background-color: #aaaaaa;
 }
 
 // Default is 2 lines limit
@@ -64,4 +77,5 @@ body::-webkit-scrollbar-thumb {
     display: -webkit-box;
     -webkit-line-clamp: var(--line-limit);
     -webkit-box-orient: vertical;
-}    
+}
+
