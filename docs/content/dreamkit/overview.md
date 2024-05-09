@@ -7,6 +7,8 @@ weight: 5
 
 The digital.auto dreamKIT is a proof-of-concept (PoC) hardware, providing a hands-on, physical experience for SDV applications. With the dreamKIT you can try out your digitally developed SDV features on a physical device. Therefore, it allows you to transfer your use case from the virtual exploration phase into the productization phase.
 
+dreamKIT is a candidate for [SDV Alliance Integration Blueprint](https://www.covesa.global/sites/default/files/SDV%20alliance%20announcement%20-%2020230109.pdf). Check it out the latest COVESA white paper release [here](https://covesa.global/sites/default/files/SDV%20Alliance%20Integration%20Blueprint%2020240109.pdf)
+
 The digital.auto dreamKIT includes a vehicle computing unit, a central gateway, and a mock-up in-vehicle infotainment touch screen. dreamKIT has CAN and Ethernet interfaces to connect with external devices, that can form a Zonal E/E Architecture network topology.
 
 The dreamKIT is a proven PoC device, which is used in multiple international show cases, as well as in different co-innovation challenges for software engineers.

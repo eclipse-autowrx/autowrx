@@ -116,9 +116,9 @@ const PluginsDashboard: FC<PluginsDashboardProps> = ({ plugins, grid, code, auto
             {/* {(!(grid instanceof Error) && permissions.PROTOTYPE(profile, model, prototype).canEdit()) && (
                 <UsedWidgetsStatus plugins={plugins} widgetsLibrary={widgetsLibrary} grid={grid} />
             )} */}
-            <div className="flex flex-col h-full w-full mr-10">
+            <div className="flex flex-col h-full w-full mr-10 ">
                 <PluginsDashboardGrid widgetsLibrary={widgetsLibrary} grid={grid} />
-                <div className="flex h-full text-gray-400 bg-gray-100 items-center justify-center select-none font-bold overflow-hidden relative">
+                <div className="flex h-full max-h-[100px] text-gray-400 bg-gray-100 items-center justify-center select-none font-bold overflow-hidden relative">
                     <div className="flex w-full h-full absolute px-4">
                         <div className="flex h-full text-2xl items-center pr-6">playground.digital.auto</div>
                         <div className="flex w-fit relative ml-auto text-xs">

@@ -97,7 +97,7 @@ const APIMappingKit = ({
         console.log("isDeploying", isDeploying);
         if (!isDeploying) return;
 
-        const timeoutDuration = 15000; // 15 seconds, can be dynamic or configurable
+        const timeoutDuration = 90000; // 90 seconds, can be dynamic or configurable
         const timeout = setTimeout(() => {
             console.log("Deploy/Reload Timeout");
             setIsDeploying(false);
@@ -108,13 +108,12 @@ const APIMappingKit = ({
         return () => clearTimeout(timeout);
     }, [isDeploying]);
 
-
     // Timeout for showTimeoutWarning
     useEffect(() => {
         (async () => {
             await new Promise((resolve) => setTimeout(resolve, 3000));
             setShowTimeoutWarning(false);
-        })()
+        })();
     }, [showTimeoutWarning]);
 
     // Timeout for justDeployed
@@ -122,14 +121,14 @@ const APIMappingKit = ({
         (async () => {
             await new Promise((resolve) => setTimeout(resolve, 3000));
             setIsJustDeployed(false);
-        })()
+        })();
     }, [isJustDeployed]);
 
     const onConnect = () => {
         registerClient();
     };
 
-    const onDisconnect = () => { };
+    const onDisconnect = () => {};
 
     const onGetAllKitData = (data) => {
         // console.log("list-all-kits-result", data)
@@ -246,14 +245,12 @@ const APIMappingKit = ({
 
     return (
         <div
-            className={`flex flex-col text-sm text-gray-500 items-center outline-none ring-0 relatvie ${isDeploying ? "opacity-80 pointer-events-none" : ""
-                }`}
+            className={`flex flex-col text-sm text-gray-500 items-center outline-none ring-0 relatvie ${
+                isDeploying ? "opacity-80 pointer-events-none" : ""
+            }`}
         >
             <div className="flex w-full">
                 <DeploySelect
-                    customStyle="h-7 w-40 text-xs rounded border bg-white text-gray-500 border-gray-200 shawdow-sm"
-                    customDropdownContainerStyle="text-xs"
-                    customDropdownItemStyle="hover:bg-gray-100 h-7 border-slate-200 px-1 h-5 w-36"
                     options={kitOptions}
                     selectedValue={activeKitId}
                     onValueChange={(value) => {
@@ -266,41 +263,43 @@ const APIMappingKit = ({
                 />
                 {isReloadOriginalConfig
                     ? socketio &&
-                    socketio.connected &&
-                    kitOptions &&
-                    activeKitId && (
-                        <Button
-                            className="h-7 w-[6rem] ml-1"
-                            variant="red"
-                            onClick={handleReloadOriginal}
-                            showProgress={isDeploying}
-                            icon={TbRotateClockwise2}
-                            iconClassName="w-4 h-4 mr-1"
-                            progressText="Reload"
-                        >
-                            {!isDeploying && "Reload"}
-                        </Button>
-                    )
+                      socketio.connected &&
+                      kitOptions &&
+                      activeKitId && (
+                          <Button
+                              className="h-7 w-[6rem] ml-1"
+                              variant="red"
+                              onClick={handleReloadOriginal}
+                              showProgress={isDeploying}
+                              icon={TbRotateClockwise2}
+                              iconClassName="w-4 h-4 mr-1"
+                              progressText="Reload"
+                          >
+                              {!isDeploying && "Reload"}
+                          </Button>
+                      )
                     : socketio &&
-                    socketio.connected &&
-                    kitOptions &&
-                    activeKitId && (
-                        <Button
-                            className={`h-7 w-[6rem] ml-1 bg-aiot-gradient-6 shadow-aiot-blue/40 shadow select-none  ${isActiveKitCompatible ? "opacity-100" : "opacity-40"
-                                } ${valid
-                                    ? "opacity-100 cursor-pointer hover:opacity-90"
-                                    : "opacity-40 pointer-events-none"
-                                }`}
-                            variant="blue"
-                            onClick={handleDeploy}
-                            showProgress={isDeploying}
-                            icon={TbRocket}
-                            iconClassName="w-5 h-5 mr-1"
-                            progressText="Deploy"
-                        >
-                            {!isDeploying && "Deploy"}
-                        </Button>
-                    )}
+                      socketio.connected &&
+                      kitOptions &&
+                      activeKitId && (
+                          <Button
+                              className={`h-7 w-[6rem] ml-1 bg-aiot-gradient-6 shadow-aiot-blue/40 shadow select-none  ${
+                                  isActiveKitCompatible ? "opacity-100" : "opacity-40"
+                              } ${
+                                  valid
+                                      ? "opacity-100 cursor-pointer hover:opacity-90"
+                                      : "opacity-40 pointer-events-none"
+                              }`}
+                              variant="blue"
+                              onClick={handleDeploy}
+                              showProgress={isDeploying}
+                              icon={TbRocket}
+                              iconClassName="w-5 h-5 mr-1"
+                              progressText="Deploy"
+                          >
+                              {!isDeploying && "Deploy"}
+                          </Button>
+                      )}
             </div>
             <div className="flex mt-2">
                 {!isJustDeployed && !showTimeoutWarning && !isDeploying ? (
@@ -311,24 +310,22 @@ const APIMappingKit = ({
                         iconClassName="!w-4 !h-4"
                         colorVariant="red"
                     />
-                ) : (
-                    showTimeoutWarning ?
-                        (<div className="flex w-full items-center text-gray-600">
-                            <TbExclamationMark className="h-5 w-5 text-orange-500"></TbExclamationMark>The deployment is timed out
-                        </div>)
-                        :
-                        !isDeploying ?
-                            (isDeployFailed ?
-                                <div className="flex w-full items-center text-gray-600">
-                                    <TbExclamationMark className="h-5 w-5 mr-1 text-red-500"></TbExclamationMark>Failed
-                                </div>
-                                :
-                                <div className="flex w-full items-center text-gray-600">
-                                    <TbCheck className="h-5 w-5 mr-1 text-green-500"></TbCheck>Successful
-                                </div>
-                            )
-                            : null
-                )}
+                ) : showTimeoutWarning ? (
+                    <div className="flex w-full items-center text-gray-600">
+                        <TbExclamationMark className="h-5 w-5 text-orange-500"></TbExclamationMark>The deployment is
+                        timed out
+                    </div>
+                ) : !isDeploying ? (
+                    isDeployFailed ? (
+                        <div className="flex w-full items-center text-gray-600">
+                            <TbExclamationMark className="h-5 w-5 mr-1 text-red-500"></TbExclamationMark>Failed
+                        </div>
+                    ) : (
+                        <div className="flex w-full items-center text-gray-600">
+                            <TbCheck className="h-5 w-5 mr-1 text-green-500"></TbCheck>Successful
+                        </div>
+                    )
+                ) : null}
             </div>
         </div>
     );

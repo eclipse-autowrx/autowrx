@@ -7,18 +7,16 @@ import { getUsers } from "../../apis";
 import FeatureDetails from "./FeatureDetails";
 import { TbChevronRight, TbChartHistogram, TbStack2, TbLockAccess } from "react-icons/tb";
 import Button from "../../reusable/Button";
-import FeatureAnalysis from "./FeatureAnalysis";
+// import FeatureAnalysis from "./FeatureAnalysis";
 import { fetchLog } from "./featureUtils";
 
-export const ENDUSER_FEATURES_NAME = {
-    genAI: "GenAI: Python",
-    apiMapping: "VSS2CAN Mapping",
-}; // Map feature key from log to display name
-
-export const ENDUSER_FEATURES = {
-    genAI: "GEN_AI_PYTHON",
-    apiMapping: "VIEW_API_MAPPING",
-}; // Map feature key from log to Firebase feature key
+export const ENDUSER_FEATURES_KEYS = [
+    "GEN_AI_PYTHON",
+    "VIEW_API_MAPPING",
+    "DEPLOY_TO_DREAMKIT",
+    "DEPLOY_TO_VM",
+    "DEPLOY_TO_PILOT",
+];
 
 type TabType = "Feature" | "Management" | "Analytics";
 
@@ -70,15 +68,8 @@ const ManageFeatures = () => {
                 updateUserListForFeature(feature, tmpUses);
             });
 
-            // Logic to filter endUserFeature and managementFeatures for each tab
-            const featureTabFeatures = res.filter(
-                (feature: any) =>
-                    feature.name === supportFeatures.GEN_AI_PYTHON || feature.name === supportFeatures.VIEW_API_MAPPING
-            );
-            const managementTabFeatures = res.filter(
-                (feature: any) =>
-                    feature.name !== supportFeatures.GEN_AI_PYTHON && feature.name !== supportFeatures.VIEW_API_MAPPING
-            );
+            const featureTabFeatures = res.filter((feature: any) => ENDUSER_FEATURES_KEYS.includes(feature.key));
+            const managementTabFeatures = res.filter((feature: any) => !ENDUSER_FEATURES_KEYS.includes(feature.key));
 
             setEndUserFeature(featureTabFeatures || []);
             setManagementFeatures(managementTabFeatures || []);
@@ -227,11 +218,11 @@ const ManageFeatures = () => {
                                     />
                                 </div>
                             )}
-                            {activeTab === "Analytics" && (
+                            {/* {activeTab === "Analytics" && (
                                 <div className="flex w-full h-full rounded border border-gray-100 shadow-sm">
                                     <FeatureAnalysis data={featureData} rawLogData={rawLogData} />
                                 </div>
-                            )}
+                            )} */}
                         </div>
                     )}
                 </>

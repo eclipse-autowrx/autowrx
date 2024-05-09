@@ -1,10 +1,10 @@
 import { certivityAxios } from "./axios";
 
-export interface CertivityCredentials {
-    access_token: string;
-    token_type: string;
-    expires_in: number;
-}
+// export interface CertivityCredentials {
+//     access_token: string;
+//     token_type: string;
+//     expires_in: number;
+// }
 
 export interface Regulation {
     key: string;
@@ -88,15 +88,12 @@ export const supportedCertivityApis = new Set([
     "Vehicle.Cabin.Door.Row2.Right.Shade.Position",
 ]);
 
-export const getCertivityCredentialsService = async () =>
-    (await certivityAxios.get<CertivityCredentials>("/certivity/credentials")).data;
+// export const getCertivityCredentialsService = async () =>
+//     (await certivityAxios.get<CertivityCredentials>("/certivity/credentials")).data;
 
-export const getCertivityRegulationsService = async (token: string, apis: string[]) =>
+export const getCertivityRegulationsService = async (apis: string[]) =>
     (
         await certivityAxios.get<Regulation[]>("/certivity/regulations", {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
             params: {
                 vehicleApis: apis.join(","),
             },

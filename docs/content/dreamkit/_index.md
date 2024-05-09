@@ -1,12 +1,12 @@
 +++
 title = "dreamKIT"
 date = 2023-08-01T07:12:12+07:00
-weight = 8
+weight = 9
 chapter = true
-pre = "<b>5. </b>"
+pre = "<b>6. </b>"
 +++
 
-### Chapter 5
+### Chapter 6
 
 # dreamKit
 

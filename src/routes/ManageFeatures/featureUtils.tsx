@@ -1,5 +1,6 @@
 import axios from "axios";
 import idTokenHeaders from "../../apis/idToken";
+import { config } from "../../configs/config";
 
 const supportFeatures = {
     GEN_AI_PYTHON: "Gen AI: Python",
@@ -8,6 +9,8 @@ const supportFeatures = {
     MANAGE_USERS: "Manage Users",
     UNLIMITED_MODEL_CREATION: "Unlimited Model Creation",
     DEPLOY_TO_DREAMKIT: "Deploy to DreamKit",
+    DEPLOY_TO_VM: "Deploy to Virtual Machine",
+    DEPLOY_TO_PILOT: "Deploy to Pilot Vehicle",
     VIEW_API_MAPPING: "View: VSS2CAN Mapping",
     // 'FREE_MODEL_CREATION': "Free model creation (3)",
     // 'FREE_PROTOTYPE_CREATION': "Free model creation (3)",
@@ -57,7 +60,7 @@ const saveFeatureUids = async (featureId: string, uids: string[]) => {
 
 const fetchLog = async () => {
     try {
-        const response = await axios.get("https://logs.digitalauto.asia/?unlimited=1");
+        const response = await axios.get(`${config.logBaseUrl}/?unlimited=1`);
         const data = response.data.data;
         const nonVisitData = data.filter((entry) => entry.type !== "visit");
 

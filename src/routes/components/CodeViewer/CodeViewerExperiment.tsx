@@ -2,7 +2,6 @@ import clsx from "clsx";
 import { VscGithubInverted, VscSave } from "react-icons/vsc";
 import { Model, Prototype, PrototypeGetSet } from "../../../apis/models";
 import { useCurrentModel } from "../../../reusable/hooks/useCurrentModel";
-import Tab from "../../../reusable/Tabs/Tab";
 import CodeEditor, { CodeEditorProps } from "./CodeEditor";
 import TriggerPopup from "../../../reusable/triggerPopup/triggerPopup";
 import CreateRepo from "./CreateRepo";
@@ -10,7 +9,6 @@ import useCurrentUser from "../../../reusable/hooks/useCurrentUser";
 import { useState, useEffect, useCallback } from "react";
 import { saveWidgetConfig } from "../../../apis";
 import useCurrentPrototype, { useCurrentPrototypeGetSet } from "../../../hooks/useCurrentPrototype";
-import copyText from "../../../reusable/copyText";
 import { useCurrentProtototypePermissions } from "../../../permissions/hooks";
 import deployToEPAM from "./deployToEPAM";
 import { IoRocket, IoRocketSharp } from "react-icons/io5";
@@ -21,7 +19,6 @@ import ListHalfMemoized from "../core/Model/VehicleInterface/ListView/ListHalf";
 import ApiListItem from "../CVIViewer/models/ApiListItem";
 import Popup from "../../../reusable/Popup/Popup";
 import DeployPopup from "../Deploy/DeployPopup";
-import WidgetLibrary from "../WidgetLibrary";
 import { IoIosWarning } from "react-icons/io";
 import { fetchTagsInAPI } from "../../TagsFilter/ApiTagUtilities";
 import { useGetUserFeatures } from "../../../reusable/hooks/useGetUserFeatures";
@@ -33,18 +30,16 @@ import {
     TbCloudCheck,
     TbCloudX,
     TbRocket,
-    TbCategory,
     TbDotsVertical,
 } from "react-icons/tb";
 import Button from "../../../reusable/Button";
 import { CircularProgress } from "@mui/material";
 import { BsStars } from "react-icons/bs";
-
 import { WEB_STUDIO_API, convertProjectPublicLinkToEditorLink } from "../../../services/webStudio";
-import CodeAssistant from "./CodeAssistant";
-
 import APIDetails from "./APIDetails";
 import GenAI_ProtoPilot from "../GenAI/GenAIProtoPilot";
+import axios from "axios";
+import debounce from "lodash/debounce";
 
 interface CodeViewerProps extends CodeEditorProps {
     saving: boolean;
@@ -61,10 +56,12 @@ const CodeViewerExperiment = ({ saving, saveCode, ...props }: CodeViewerProps) =
     const [lastestWidgetConfig, setLastestWidgetConfig] = useState(prototype?.widget_config ?? "");
     const [savingWidgetConfig, setSavingWidgetConfig] = useState(false);
     const prototypePermissions = useCurrentProtototypePermissions();
+    const CAN_EDIT = permissions.PROTOTYPE(profile, model, prototype).canEdit();
     const [deployingToEpam, setDeployingToEpam] = useState(false);
     const [ticker, setTicker] = useState(0);
 
     const [allAPIs, setAllApis] = useState<any[]>([]);
+    const [isAllAPIsUpdated, setIsAllAPIsUpdated] = useState(false);
     const [useApis, setUseApis] = useState<string[]>([]);
     const [activeTab, setActiveTab] = useState("All APIs");
 
@@ -171,20 +168,61 @@ const CodeViewerExperiment = ({ saving, saveCode, ...props }: CodeViewerProps) =
 
     useEffect(() => {
         if (!props.code || !allAPIs || allAPIs.length === 0) {
-            setUseApis([]);
             return;
         }
-        // console.log("code", props.code)
-        let useList: any[] = [];
-        allAPIs.forEach((item: any) => {
+
+        let newUsedAPIsList = [] as string[];
+        allAPIs.forEach((item) => {
             if (props.code.includes(item.shortName)) {
-                // console.log(item)
-                useList.push(item);
+                newUsedAPIsList.push(item); // Assuming item is the object you showed
             }
         });
-        // console.log("useList", useList)
-        setUseApis(useList);
+
+        // Only update useApis if there's an actual change
+        if (!arraysAreEqual(newUsedAPIsList, useApis)) {
+            setUseApis(newUsedAPIsList);
+        }
     }, [props.code, allAPIs]);
+
+    // Prevent unnecessary updates when user typing code
+    const arraysAreEqual = (array1, array2) => {
+        if (array1.length !== array2.length) return false;
+        const ids1 = array1.map((item) => item.uuid).sort();
+        const ids2 = array2.map((item) => item.uuid).sort();
+        return ids1.every((id, index) => id === ids2[index]);
+    };
+
+    useEffect(() => {
+        // Debounce function to prevent multiple updates in quick succession
+        const debounceUpdate = debounce(() => {
+            // console.log("Update used APIs to backend", useApis);
+            const source = axios.CancelToken.source();
+            axios
+                .post(
+                    "/.netlify/functions/updatePrototypeUsedAPIs",
+                    {
+                        id: prototype.id,
+                        usedAPIs: useApis,
+                    },
+                    {
+                        cancelToken: source.token,
+                    }
+                )
+                .catch((thrown) => {
+                    if (axios.isCancel(thrown)) {
+                        console.log("Request canceled", thrown.message);
+                    } else {
+                        console.error("Error updating used APIs", thrown);
+                    }
+                });
+
+            return () => source.cancel("Component unmounted or request replaced");
+        }, 500); // Adjust debounce time as needed
+
+        debounceUpdate();
+
+        return () => debounceUpdate.cancel();
+    }, [useApis, prototype.id]);
 
     const onApiClick = async (api: any) => {
         setActiveApi(api);
@@ -193,8 +231,12 @@ const CodeViewerExperiment = ({ saving, saveCode, ...props }: CodeViewerProps) =
     };
 
     const updateAllAPIs = (apis: any[]) => {
+        if (isAllAPIsUpdated) {
+            return;
+        }
         if (!apis) {
             setAllApis([]);
+            setIsAllAPIsUpdated(true);
             return;
         }
         let retItems: any[] = [];
@@ -207,6 +249,7 @@ const CodeViewerExperiment = ({ saving, saveCode, ...props }: CodeViewerProps) =
             }
         });
         setAllApis(retItems);
+        setIsAllAPIsUpdated(true);
     };
 
     // DashboardEditor change immediately save the config to backend
@@ -263,7 +306,7 @@ const CodeViewerExperiment = ({ saving, saveCode, ...props }: CodeViewerProps) =
                                 variant="white"
                                 icon={TbDotsVertical}
                                 iconClassName="text-aiot-blue"
-                                className=" bg-white"
+                                className={`bg-white ${CAN_EDIT ? "" : "opacity-30 pointer-events-none"}`}
                             >
                                 Actions
                             </Button>
@@ -334,8 +377,9 @@ const CodeViewerExperiment = ({ saving, saveCode, ...props }: CodeViewerProps) =
                         </div>
                         <button
                             onClick={() => setIsOpenGenAIPython(true)}
-                            className="bg-white ml-2 rounded px-3 py-1 flex items-center justify-center hover:bg-gray-100 border border-gray-200 shadow-sm text-sm text-gray-600 hover:text-gray-800"
-                            disabled={!permissions.PROTOTYPE(profile, model, prototype).canEdit()}
+                            className={`bg-white ml-2 rounded px-3 py-1 flex items-center justify-center hover:bg-gray-100 border border-gray-200 shadow-sm text-sm text-gray-600 hover:text-gray-800 select-none ${
+                                CAN_EDIT ? "" : "opacity-30 pointer-events-none"
+                            }`}
                         >
                             <BsStars className="w-4 h-auto text-aiot-blue mr-1" />
                             SDV ProtoPilot
@@ -361,6 +405,7 @@ const CodeViewerExperiment = ({ saving, saveCode, ...props }: CodeViewerProps) =
                                 handleOnCodeChanged(e);
                                 setIsOpenGenAIPython(false);
                             }}
+                            pythonCode={props.code}
                         />
                         <DeployPopup
                             onClose={() => setIsDeployPopupOpen(false)}
@@ -533,7 +578,7 @@ const CodeViewerExperiment = ({ saving, saveCode, ...props }: CodeViewerProps) =
                                 onDashboardConfigChanged={onDashboardConfigChanged}
                             />
                         </div>
-                        <div className="flex flex-col h-full w-full items-center px-2 py-1 text-xs text-gray-600rounded cursor-pointer">
+                        <div className="flex flex-col h-full w-full items-center px-2 py-1 text-xs text-gray-600rounded">
                             <div className="flex w-full">
                                 <Button
                                     variant="white"
@@ -549,8 +594,9 @@ const CodeViewerExperiment = ({ saving, saveCode, ...props }: CodeViewerProps) =
                                 </Button>
                                 <button
                                     onClick={() => setIsOpenGenAIDashboard(true)}
-                                    className="bg-white ml-2 rounded px-3 py-1 flex items-center justify-center hover:bg-gray-100 border border-gray-200 shadow-sm text-sm text-gray-600 hover:text-gray-800"
-                                    disabled={!permissions.PROTOTYPE(profile, model, prototype).canEdit()}
+                                    className={`bg-white ml-2 rounded px-3 py-1 flex items-center justify-center hover:bg-gray-100 border border-gray-200 shadow-sm text-sm text-gray-600 hover:text-gray-800 select-none ${
+                                        CAN_EDIT ? "" : "opacity-30 pointer-events-none"
+                                    }`}
                                 >
                                     <BsStars className="w-4 h-auto text-aiot-blue mr-1" />
                                     Dashboard ProtoPilot
@@ -562,6 +608,7 @@ const CodeViewerExperiment = ({ saving, saveCode, ...props }: CodeViewerProps) =
                                 isOpen={isOpenGenAIDashboard}
                                 widgetConfig={widgetConfig}
                                 onDashboardConfigChanged={onDashboardConfigChanged}
+                                pythonCode={props.code}
                             />
                             <div className={`flex w-full h-full ${isExpanded ? "visible" : "invisible"}`}>
                                 <CodeEditor

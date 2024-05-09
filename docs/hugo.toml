@@ -4,6 +4,7 @@ title = 'digital.auto playground documentation'
 
 theme = 'learn'
 [params]
+  custom_css = ["css/playground.css"]
 # Change default color scheme with a variant one. Can be "red", "blue", "green".
 themeVariant = "green"
 disableLandingPageButton = true

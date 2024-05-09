@@ -2,10 +2,17 @@ import { OutputPart } from "./models";
 import BrythonRunner from "../../../brython-runner/BrythonRunner";
 import { LIBRARY_FILE } from "../../../constants";
 
-export const runner = new BrythonRunner({
+export let runner = new BrythonRunner({
     brythonUrl: "https://cdnjs.cloudflare.com/ajax/libs/brython/3.10.5/brython.js",
     brythonLibraries: ["https://cdnjs.cloudflare.com/ajax/libs/brython/3.10.5/brython_stdlib.min.js", LIBRARY_FILE],
 });
+
+export const generateNewRunner = () => {
+    runner = new BrythonRunner({
+        brythonUrl: "https://cdnjs.cloudflare.com/ajax/libs/brython/3.10.5/brython.js",
+        brythonLibraries: ["https://cdnjs.cloudflare.com/ajax/libs/brython/3.10.5/brython_stdlib.min.js", LIBRARY_FILE],
+    });
+};
 
 const isValidLine = (line: string) => {
     return (

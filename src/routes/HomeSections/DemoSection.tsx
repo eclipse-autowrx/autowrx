@@ -6,6 +6,7 @@ import useAccessiblePrototypes from "../../reusable/hooks/useAccessiblePrototype
 import { SlTag } from "react-icons/sl";
 import { FaCircleCheck } from "react-icons/fa6";
 import axios from "axios";
+import PersonalizeRelevance from "./PersonalizeRelevance";
 
 const DemoSection = () => {
     const ITEMS_PER_PAGE = 8;
@@ -121,7 +122,7 @@ const DemoSection = () => {
     };
 
     return (
-        <div className="flex w-full h-full flex-col overflow-y-auto scroll-gray">
+        <div className="flex w-full h-full items-center justify-center flex-col overflow-y-auto scroll-gray">
             <div className=" w-full h-auto text-2xl font-bold text-aiot-blue text-center mb-4">Prototype Gallery</div>
             <div className="flex justify-center space-x-4 mb-6">
                 {["LandingAI", "Mercedes", "Mobis", "Ansys"].map((tag) => {

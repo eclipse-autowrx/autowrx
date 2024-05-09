@@ -1,15 +1,15 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import LoadingPage from "../LoadingPage";
 import {
-    CertivityCredentials,
+    // CertivityCredentials,
     Regulation,
-    getCertivityCredentialsService,
+    // getCertivityCredentialsService,
     getCertivityRegulationsService,
     supportedCertivityApis,
 } from "../../../apis/backend/certivityApi";
 import { headerHeight } from "./constants";
 import clsx from "clsx";
-import dayjs, { Dayjs } from "dayjs";
+// import dayjs, { Dayjs } from "dayjs";
 import { RegulationRegion } from "./types";
 import { API } from "../../../apis/backend/vehicleApi";
 import HomologationRegulationResultList from "./HomologationRegulationResultList";
@@ -74,28 +74,28 @@ const HomologationRegulationResult = ({ selectedAPIs }: HomologationRegulationRe
         return formattedRegulations;
     };
 
-    const retrieveCertivityCredentials = useCallback(async () => {
-        let cre: CertivityCredentials | null = null;
-        let lastCredentialsTime: Dayjs | null = null;
+    // const retrieveCertivityCredentials = useCallback(async () => {
+    //     let cre: CertivityCredentials | null = null;
+    //     let lastCredentialsTime: Dayjs | null = null;
 
-        // Try to retrieve data from local storage
-        const localCre = localStorage.getItem("certivity-credentials");
-        if (localCre) {
-            cre = JSON.parse(localCre);
-        }
-        const localCreTime = localStorage.getItem("certivity-credentials-time");
-        if (localCreTime) {
-            lastCredentialsTime = dayjs(localCreTime);
-        }
+    //     // Try to retrieve data from local storage
+    //     const localCre = localStorage.getItem("certivity-credentials");
+    //     if (localCre) {
+    //         cre = JSON.parse(localCre);
+    //     }
+    //     const localCreTime = localStorage.getItem("certivity-credentials-time");
+    //     if (localCreTime) {
+    //         lastCredentialsTime = dayjs(localCreTime);
+    //     }
 
-        if (!cre || !lastCredentialsTime || lastCredentialsTime.add(cre.expires_in - 5, "seconds").isBefore(dayjs())) {
-            cre = await getCertivityCredentialsService();
-            localStorage.setItem("certivity-credentials", JSON.stringify(cre));
-            localStorage.setItem("certivity-credentials-time", dayjs().toISOString());
-        }
-        if (!cre) throw new Error("No credentials found");
-        return cre;
-    }, []);
+    //     if (!cre || !lastCredentialsTime || lastCredentialsTime.add(cre.expires_in - 5, "seconds").isBefore(dayjs())) {
+    //         cre = await getCertivityCredentialsService();
+    //         localStorage.setItem("certivity-credentials", JSON.stringify(cre));
+    //         localStorage.setItem("certivity-credentials-time", dayjs().toISOString());
+    //     }
+    //     if (!cre) throw new Error("No credentials found");
+    //     return cre;
+    // }, []);
 
     useEffect(() => {
         (async () => {
@@ -104,10 +104,9 @@ const HomologationRegulationResult = ({ selectedAPIs }: HomologationRegulationRe
 
                 // Fetch regulations based on used APIs
                 if (selectedAPIs.size > 0) {
-                    const credentials = await retrieveCertivityCredentials();
+                    // const credentials = await retrieveCertivityCredentials();
 
                     const regulationsResponse = await getCertivityRegulationsService(
-                        credentials.access_token,
                         Array.from(selectedAPIs.values())
                             .map((api) => api.name)
                             .filter((value) => supportedCertivityApis.has(value))
@@ -126,7 +125,7 @@ const HomologationRegulationResult = ({ selectedAPIs }: HomologationRegulationRe
                 setLoading(false);
             }
         })();
-    }, [retrieveCertivityCredentials, selectedAPIs]);
+    }, [selectedAPIs]);
 
     return (
         <div
