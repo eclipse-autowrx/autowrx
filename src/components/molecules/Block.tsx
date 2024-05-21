@@ -7,21 +7,16 @@ interface BlockProps {
   className?: string;
 }
 
-const Block: FC<BlockProps> = ({
-  title,
-  variant = "solid",
-  height = "200px",
-  className = "",
-}) => {
+const Block = ({ title, variant, height, className }: BlockProps) => {
   const [variantStyle, setVariantStyle] = useState<string>("");
   useEffect(() => {
     let style = "px-4 py-2 flex items-center justify-center text-bold";
     switch (variant) {
       case "outline":
-        style += " text-primary-700 border border-primary-500";
+        style += " text-primary-700 border border-primary";
         break;
       default:
-        style += " text-white bg-primary-500";
+        style += " text-white bg-primary";
     }
     setVariantStyle(style);
   }, [variant]);
