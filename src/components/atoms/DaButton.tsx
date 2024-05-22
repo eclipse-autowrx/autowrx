@@ -4,39 +4,30 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
-const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-md da-txt-regular font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
-  {
-    variants: {
-      variant: {
-        default:
-          "bg-da-primary-500 text-da-white shadow hover:bg-da-primary-500/90",
-        destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
-        outline:
-          "border text-da-primary-500 border-da-primary-500 shadow-sm hover:bg-da-primary-500/10",
-        "outline-nocolor":
-          "border text-da-gray-dark border-da-gray-dark shadow-sm hover:bg-da-gray-dark/10",
-        gradient:
-          "bg-gradient-to-r from-da-gradient-from to-da-gradient-to text-da-white shadow-sm hover:opacity-90",
-        secondary:
-          "bg-da-gray-dark text-da-white shadow-sm hover:bg-da-gray-dark/80",
-        ghost: "hover:bg-da-primary-500 hover:text-da-white",
-        link: "text-da-primary-500 underline-offset-4 hover:underline",
-      },
-      size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-8",
-        icon: "h-9 w-9",
-      },
+const buttonVariants = cva("da-btn", {
+  variants: {
+    variant: {
+      default: "da-btn-default",
+      destructive: "da-btn-destructive",
+      outline: "da-btn-outline",
+      "outline-nocolor": "da-btn-outline-nocolor",
+      gradient: "da-btn-gradient",
+      secondary: "da-btn-secondary",
+      ghost: "da-btn-ghost",
+      link: "da-btn-link",
     },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
+    size: {
+      default: "da-btn-sz-default",
+      sm: "da-btn-sz-sm",
+      lg: "da-btn-sz-lg",
+      icon: "da-btn-sz-icon",
     },
-  }
-);
+  },
+  defaultVariants: {
+    variant: "default",
+    size: "default",
+  },
+});
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,

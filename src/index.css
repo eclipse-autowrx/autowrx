@@ -76,6 +76,55 @@
   }
 }
 
+/*********** For Button Component ********************/
+.da-btn {
+  @apply px-4 py-2 select-none cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md da-txt-regular font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
+}
+
+.da-btn-default {
+  @apply bg-da-primary-500 text-da-white shadow hover:bg-da-primary-500/90;
+}
+
+.da-btn-destructive {
+  @apply bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90;
+}
+
+.da-btn-outline {
+  @apply border text-da-primary-500 border-da-primary-500 shadow-sm hover:bg-da-primary-500/10;
+}
+
+.da-btn-outline-nocolor {
+  @apply border text-da-gray-dark border-da-gray-dark shadow-sm hover:bg-da-gray-dark/10;
+}
+
+.da-btn-gradient {
+  @apply bg-gradient-to-r from-da-gradient-from to-da-gradient-to text-da-white shadow-sm hover:opacity-90;
+}
+
+.da-btn-secondary {
+  @apply bg-da-gray-dark text-da-white shadow-sm hover:bg-da-gray-dark/80;
+}
+
+.da-btn-ghost {
+  @apply hover:bg-da-primary-500 hover:text-da-white;
+}
+
+.da-btn-link {
+  @apply text-da-primary-500 underline-offset-4 hover:underline;
+}
+
+.da-btn-sz-sm {
+  @apply h-8 rounded-md px-3 text-xs;
+}
+
+.da-btn-sz-lg {
+  @apply h-10 rounded-md px-8;
+}
+
+.da-btn-sz-icon {
+  @apply h-9 w-9;
+}
+
 /*********** For Block Component ********************/
 .da-block-bare {
   @apply px-4 py-2 flex items-center justify-center;
@@ -110,7 +159,7 @@
 
 /* Define font weights as CSS variables */
 body {
-  font-family: 'Geist Variable';
+  font-family: "Geist Variable";
 }
 
 :root {
