@@ -1,8 +1,8 @@
 import RootLayout from "@/layouts/RootLayout";
 import PageHome from "@/pages/PageHome";
 import PageAbout from "@/pages/PageAbout";
-import PageLogin from "@/pages/LoginPage";
-import PageComponent from "@/pages/ComponentPage";
+import PageLogin from "@/pages/PageLogin";
+import PageComponent from "@/pages/PageComponent";
 import { RouteObject } from "react-router-dom";
 
 const routesConfig: RouteObject[] = [

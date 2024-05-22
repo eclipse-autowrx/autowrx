@@ -1,5 +1,4 @@
 import { DaButton } from "@/components/atoms/DaButton";
-import { DaButton2 } from "@/components/atoms/DaButton2";
 import { DaText } from "@/components/atoms/DaText";
 import { DaInput } from "@/components/atoms/DaInput";
 import { DaTag } from "@/components/atoms/DaTag";
@@ -26,28 +25,26 @@ const PageHome = () => {
   return (
     <div className="grid grid-cols-12 gap-4 p-4 bg-da-white">
       <div className="col-span-full space-x-4 p-4 border rounded-lg">
-        <DaButton asChild={true} variant={"default"}>
-          <span>Default Button</span>
-        </DaButton>
-
-        <DaButton variant={"outline"}>Outline Button</DaButton>
-        <DaButton variant={"gradient"}>Gradient Button</DaButton>
-        <DaButton variant={"outline-nocolor"}>Outline-nocolor Button</DaButton>
-        <DaButton variant={"destructive"}>Destructive Button</DaButton>
-        <DaButton variant={"secondary"}>Secondary Button</DaButton>
+        <DaButton>Default</DaButton>
+        <DaButton variant="outline">Outline</DaButton>
+        <DaButton variant="gradient">Gradient</DaButton>
+        <DaButton variant="outline-nocolor">Outline-nocolor</DaButton>
+        <DaButton variant="secondary">Secondary</DaButton>
       </div>
 
       <div className="col-span-full space-x-4 p-4 border rounded-lg">
-        <DaButton2 variant={"default"}>
-          <DaText>Default Button</DaText>
-        </DaButton2>
-        {/* <DaButton2 variant={"outline"}>Outline Button</DaButton2>
-        <DaButton2 variant={"gradient"}>Gradient Button</DaButton2>
-        <DaButton2 variant={"outline-nocolor"}>
-          Outline-nocolor Button
-        </DaButton2>
-        <DaButton2 variant={"destructive"}>Destructive Button</DaButton2>
-        <DaButton2 variant={"secondary"}>Secondary Button</DaButton2> */}
+        <DaButton size="sm">Default</DaButton>
+        <DaButton size="sm" variant="outline">Outline</DaButton>
+        <DaButton size="sm" variant="gradient">Gradient</DaButton>
+        <DaButton size="sm" variant="outline-nocolor">Outline-nocolor</DaButton>
+        <DaButton size="sm" variant="secondary">Secondary</DaButton>
+      </div>
+      <div className="col-span-full space-x-4 p-4 border rounded-lg">
+        <DaButton size="lg">Default</DaButton>
+        <DaButton size="lg" variant="outline">Outline</DaButton>
+        <DaButton size="lg" variant="gradient">Gradient</DaButton>
+        <DaButton size="lg" variant="outline-nocolor">Outline-nocolor</DaButton>
+        <DaButton size="lg" variant="secondary">Secondary</DaButton>
       </div>
       <div className="col-span-full space-x-4 p-4 border rounded-lg">
         <DaText variant="default">This is a text</DaText>
