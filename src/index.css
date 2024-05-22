@@ -70,6 +70,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -81,9 +82,47 @@
 }
 
 .da-block-default {
-  @apply text-white bg-primary-500;
+  @apply text-white bg-da-primary-500;
 }
 
 .da-block-outline {
-  @apply text-primary-700 border border-primary-500;
+  @apply text-da-primary-500 border border-da-primary-500;
+}
+
+/* Define colors as CSS variables */
+:root {
+  --da-primary-100: 174 41 79;
+  --da-primary-300: 174 42 51;
+  --da-primary-500: 174 100 27;
+
+  --da-accent-100: 36 100 85;
+  --da-accent-300: 36 100 65;
+  --da-accent-500: 36 100 50;
+
+  --da-white: 0 0 100;
+  --da-black: 0 0 0;
+  --da-gray-light: 0 0 85;
+  --da-gray-dark: 0 0 40;
+
+  --da-gradient-from: 171 100 21;
+  --da-gradient-to: 174 42 51;
+}
+
+/* Define font weights as CSS variables */
+body {
+  font-family: 'Geist Variable';
+}
+
+:root {
+  --font-weight-thin: 100;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+  --font-weight-huge: 900;
+
+  --font-size-small: 0.75rem;
+  --font-size-regular: 1rem;
+  --font-size-medium: 1.25rem;
+  --font-size-large: 1.5rem;
+  --font-size-huge: 2rem;
 }

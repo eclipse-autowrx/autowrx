@@ -2,6 +2,7 @@ import RootLayout from "@/layouts/RootLayout";
 import PageHome from "@/pages/PageHome";
 import PageAbout from "@/pages/PageAbout";
 import PageLogin from "@/pages/LoginPage";
+import PageComponent from "@/pages/ComponentPage";
 import { RouteObject } from "react-router-dom";
 
 const routesConfig: RouteObject[] = [
@@ -19,6 +20,11 @@ const routesConfig: RouteObject[] = [
     path: "/login",
     element: <RootLayout />,
     children: [{ index: true, element: <PageLogin /> }],
+  },
+  {
+    path: "/components",
+    element: <PageComponent />,
+    children: [{ index: true, element: <PageComponent /> }],
   },
 ];
 

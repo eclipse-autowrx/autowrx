@@ -1,4 +1,4 @@
-import { Button } from "@/components/atoms/Button";
+import { DaButton } from "@/components/atoms/DaButton";
 import { loginService } from "@/services/auth.service";
 import useAuthStore from "@/stores/authStore";
 import { isAxiosError } from "axios";
@@ -31,7 +31,7 @@ const PageLogin = () => {
     return (
       <div>
         Logged in
-        <Button onClick={logOut}>Log out</Button>
+        <DaButton onClick={logOut}>Log out</DaButton>
       </div>
     );
   }
@@ -59,7 +59,7 @@ const PageLogin = () => {
           className="border"
         />
         <br />
-        <Button className="w-40 mt-5">Login</Button>
+        <DaButton className="w-40 mt-5">Login</DaButton>
       </form>
     </div>
   );
