@@ -75,8 +75,15 @@
   }
 }
 
-@layer components {
-  .da-block {
-    @apply px-4 py-2 flex items-center justify-center align-middle text-primary-700 border border-primary-500;
-  }
+/*********** For Block Component ********************/
+.da-block-bare {
+  @apply px-4 py-2 flex items-center justify-center;
+}
+
+.da-block-default {
+  @apply text-white bg-primary-500;
+}
+
+.da-block-outline {
+  @apply text-primary-700 border border-primary-500;
 }
