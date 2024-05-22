@@ -1,4 +1,4 @@
-import { Button } from "@/components/atoms/ui/button";
+import { Button } from "@/components/atoms/Button";
 import { loginService } from "@/services/auth.service";
 import useAuthStore from "@/stores/authStore";
 import { isAxiosError } from "axios";
