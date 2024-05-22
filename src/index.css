@@ -99,46 +99,39 @@ body {
   font-size: 32px;
 }
 
+/*********** For Text Component ********************/
 
-
-.da-txt-bold-small {
-  @apply da-txt-small font-bold;
-}
-.da-txt-thin-small {
-  @apply da-txt-small font-thin;
+.da-label-regular {
+  @apply da-txt-regular font-medium;
 }
 
-.da-txt-bold-regular {
-  @apply da-txt-regular font-bold;
-}
-.da-txt-thin-regular {
-  @apply da-txt-regular font-thin;
+.da-label-small {
+  @apply da-txt-small font-medium; 
 }
 
-.da-txt-bold-medium {
-  @apply da-txt-medium font-bold;
-}
-.da-txt-thin-medium {
-  @apply da-txt-medium font-thin;
+.da-label-small-bold {
+  @apply da-txt-small font-bold; 
 }
 
-.da-txt-bold-large {
-  @apply da-txt-large font-bold;
-}
-.da-txt-thin-large {
-  @apply da-txt-large font-thin;
+.da-label-sub-title {
+  @apply da-txt-medium font-bold; 
 }
 
-.da-txt-bold-huge {
-  @apply da-txt-huge font-bold;
+.da-label-title {
+  @apply da-txt-large font-bold; 
 }
-.da-txt-thin-huge {
-  @apply da-txt-huge font-thin;
+
+.da-label-huge {
+  @apply da-txt-huge; 
+}
+
+.da-label-huge-bold {
+  @apply da-txt-huge font-bold; 
 }
 
 /*********** For Button Component ********************/
 .da-btn {
-  @apply px-2 py-2 select-none cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
+  @apply select-none cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
 }
 
 .da-btn-solid {
@@ -162,15 +155,15 @@ body {
 }
 
 .da-btn-sm {
-  @apply h-6 rounded-md px-2 da-txt-small;
+  @apply h-6 rounded-md px-2 py-1 da-txt-small;
 }
 
 .da-btn-md {
-  @apply h-8 rounded-md px-3 da-txt-regular;
+  @apply h-8 rounded-md px-3 py-1 da-txt-regular;
 }
 
 .da-btn-lg {
-  @apply h-10 rounded-md px-3 da-txt-medium;
+  @apply h-10 rounded-md px-3 py-1 da-txt-medium;
 }
 
 

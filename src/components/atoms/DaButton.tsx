@@ -7,11 +7,10 @@ interface DaButtonProps {
   className?: string;
   variant?: "solid"  | "outline" | "outline-nocolor" | "gradient" | "secondary" | "destructive";
   size?: "sm" | "md" | "lg";
-  asChild?: boolean;
 }
 
 const DaButton = React.forwardRef<HTMLButtonElement, DaButtonProps>(
-  ({ className, variant="solid", size="md", asChild = false, ...props }, ref) => {
+  ({ className, variant="solid", size="md", ...props }, ref) => {
     return (
       <button
         className={cn(`da-btn`, `da-btn-${variant}`, `da-btn-${size}`, className)}
