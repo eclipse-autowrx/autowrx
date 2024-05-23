@@ -32,7 +32,7 @@ const HomePartners: React.FC = () => {
       <DaText variant="title" className="text-center text-da-primary-500 mb-4">
         Partners
       </DaText>
-      <div className="grid grid-cols-3 gap-12">
+      <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-3 gap-12">
         {partnersData.map((categoryData, index) => (
           <div key={index} className="text-center">
             <DaText
