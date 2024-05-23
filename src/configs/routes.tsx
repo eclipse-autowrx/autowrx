@@ -4,6 +4,7 @@ import PageAbout from "@/pages/PageAbout";
 import PageLogin from "@/pages/PageLogin";
 import PageComponent from "@/pages/PageComponent";
 import PageMolecules from "@/pages/PageMolecules";
+import PageOrganisms from "@/pages/PageOrganisms";
 import { RouteObject } from "react-router-dom";
 
 const routesConfig: RouteObject[] = [
@@ -31,6 +32,11 @@ const routesConfig: RouteObject[] = [
     path: "/molecules",
     element: <PageMolecules />,
     children: [{ index: true, element: <PageMolecules /> }],
+  },
+  {
+    path: "/organisms",
+    element: <PageOrganisms />,
+    children: [{ index: true, element: <PageOrganisms /> }],
   },
 ];
 
