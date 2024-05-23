@@ -7,10 +7,7 @@ interface DaTablePropertyItemProps {
 
 const DaTablePropertyItem = ({ property, value }: DaTablePropertyItemProps) => {
   return (
-    <div
-      className="grid grid-cols-4 gap-4 py-2 text-da-gray-dark"
-      style={{ minWidth: "500px" }}
-    >
+    <div className="grid grid-cols-4 gap-4 py-2 text-da-gray-dark">
       <div className="col-span-1">
         <DaText variant="regular-bold">{property}</DaText>
       </div>
@@ -23,11 +20,18 @@ const DaTablePropertyItem = ({ property, value }: DaTablePropertyItemProps) => {
 
 interface DaTablePropertyProps {
   properties: { property: string; value: string }[];
+  maxWidth: string;
 }
 
-export const DaTableProperty = ({ properties }: DaTablePropertyProps) => {
+export const DaTableProperty = ({
+  properties,
+  maxWidth = "500px",
+}: DaTablePropertyProps) => {
   return (
-    <div className="p-4 border border-da-gray-dark rounded-lg shadow-md bg-da-white">
+    <div
+      className="p-4 border border-da-gray-dark rounded-lg shadow-md bg-da-white"
+      style={{ maxWidth: maxWidth }}
+    >
       {properties.map((item, index) => (
         <DaTablePropertyItem
           key={index}

@@ -25,8 +25,8 @@ const DaItemStandard: React.FC<DaItemStandardProps> = ({
 }) => {
   return (
     <div
-      className="flex p-4 border border-da-gray-dark rounded-lg shadow-md bg-da-white max-w-lg space-x-4 text-da-gray-dark overflow-hidden"
-      style={{ maxWidth: maxWidth, minWidth: "300px" }}
+      className="flex w-full p-4 border border-da-gray-dark rounded-lg shadow-md bg-da-white max-w-lg space-x-4 text-da-gray-dark overflow-hidden"
+      style={{ maxWidth: maxWidth }}
     >
       <DaImage
         src={imageUrl}
@@ -53,7 +53,9 @@ const DaItemStandard: React.FC<DaItemStandardProps> = ({
         </div>
         <div className="flex space-x-2">
           {tags.map((tag, index) => (
-            <DaTag key={index}>{tag}</DaTag>
+            <DaTag variant={"secondary"} key={index}>
+              {tag}
+            </DaTag>
           ))}
         </div>
       </div>

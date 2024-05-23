@@ -19,7 +19,7 @@ const DaItemVerticalType2: React.FC<DaItemVerticalType2Props> = ({
   return (
     <div
       className="flex flex-col w-full p-4 border border-da-gray-dark rounded-lg shadow-md bg-da-white space-y-2 text-da-gray-dark overflow-hidden"
-      style={{ maxWidth: maxWidth, minWidth: "300px" }}
+      style={{ maxWidth: maxWidth }}
     >
       <DaText variant="title">{title}</DaText>
       <DaImage
@@ -31,7 +31,9 @@ const DaItemVerticalType2: React.FC<DaItemVerticalType2Props> = ({
       />
       <div className="flex space-x-2 pt-2">
         {tags.map((tag, index) => (
-          <DaTag key={index}>{tag}</DaTag>
+          <DaTag variant={"secondary"} key={index}>
+            {tag}
+          </DaTag>
         ))}
       </div>
     </div>

@@ -7,10 +7,7 @@ interface DaApiListItemProps {
 
 const DaApiListItem = ({ api, type }: DaApiListItemProps) => {
   return (
-    <div
-      className="grid grid-cols-4 gap-4 py-2 text-da-gray-dark"
-      style={{ minWidth: "500px" }}
-    >
+    <div className="grid grid-cols-4 gap-4 py-2 text-da-gray-dark">
       <div className="col-span-3">
         <DaText variant="regular">{api}</DaText>
       </div>
@@ -23,11 +20,15 @@ const DaApiListItem = ({ api, type }: DaApiListItemProps) => {
 
 interface DaApiListProps {
   apis: { api: string; type: string }[];
+  maxWidth?: string;
 }
 
-export const DaApiList = ({ apis }: DaApiListProps) => {
+export const DaApiList = ({ apis, maxWidth = "500px" }: DaApiListProps) => {
   return (
-    <div className="p-4 border border-da-gray-dark rounded-lg shadow-md bg-da-white">
+    <div
+      className="p-4 w-full border border-da-gray-dark rounded-lg shadow-md bg-da-white"
+      style={{ maxWidth: maxWidth }}
+    >
       {apis.map((item, index) => (
         <DaApiListItem key={index} api={item.api} type={item.type} />
       ))}

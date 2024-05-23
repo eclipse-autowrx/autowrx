@@ -17,8 +17,8 @@ const DaItemVerticalStandard: React.FC<DaItemVerticalStandardProps> = ({
 }) => {
   return (
     <div
-      className="flex flex-col items-center p-4 border border-da-gray-dark rounded-lg shadow-md bg-da-white space-y-2 text-da-gray-dark overflow-hidden"
-      style={{ maxWidth: maxWidth, minWidth: "300px" }}
+      className="flex w-full flex-col items-center p-4 border border-da-gray-dark rounded-lg shadow-md bg-da-white space-y-2 text-da-gray-dark overflow-hidden"
+      style={{ maxWidth: maxWidth }}
     >
       <DaImage
         src={imageUrl}

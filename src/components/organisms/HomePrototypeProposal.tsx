@@ -59,7 +59,7 @@ const HomePrototypeProposal: React.FC = () => {
       <DaText variant="title" className="text-da-primary-500 py-6">
         Popular Prototypes
       </DaText>
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {items.map((item, index) => (
           <DaItemVerticalStandard
             key={index}

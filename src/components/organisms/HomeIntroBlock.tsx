@@ -3,7 +3,7 @@ import { DaCardIntroBig } from "../molecules/DaCardIntroBig";
 
 const HomeIntroBlock = () => {
   return (
-    <div className="flex w-full justify-between space-x-4">
+    <div className="grid w-full items-center grid-cols-1 md:grid-cols-3 gap-4">
       <DaCardIntroBig
         title="Vehcile APIs"
         content="It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout"
