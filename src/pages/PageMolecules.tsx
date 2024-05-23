@@ -113,7 +113,7 @@ const PageMolecules = () => {
           DaItemVerticalType2
         </DaText>
         <div className="flex mt-2 space-x-4 p-4 border rounded-lg">
-          <DaTableProperty properties={properties} />
+          <DaTableProperty properties={properties} maxWidth="500px" />
         </div>
         <DaText variant="sub-title" className="text-da-gray-dark pt-4">
           DaApiList
