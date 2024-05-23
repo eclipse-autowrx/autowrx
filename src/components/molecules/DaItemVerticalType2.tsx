@@ -1,5 +1,5 @@
 import * as React from "react";
-import { DaImage } from "../atoms/DaImage";
+import { DaImageRatio } from "../atoms/DaImageRatio";
 import { DaText } from "../atoms/DaText";
 import { DaTag } from "../atoms/DaTag";
 
@@ -22,7 +22,7 @@ const DaItemVerticalType2: React.FC<DaItemVerticalType2Props> = ({
       style={{ maxWidth: maxWidth, minWidth: "300px" }}
     >
       <DaText variant="title">{title}</DaText>
-      <DaImage
+      <DaImageRatio
         src={imageUrl}
         alt="Image"
         className="w-full h-auto rounded-lg"
