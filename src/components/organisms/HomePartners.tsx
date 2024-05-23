@@ -1,6 +1,6 @@
 import * as React from "react";
 import { DaText } from "../atoms/DaText";
-import { DaImage } from "../atoms/DaImage";
+import { DaImageRatio } from "../atoms/DaImageRatio";
 
 const partnersData = [
   {
@@ -43,7 +43,7 @@ const HomePartners: React.FC = () => {
             </DaText>
             <div className="flex justify-center space-x-4">
               {categoryData.partners.map((partner, idx) => (
-                <DaImage
+                <DaImageRatio
                   key={idx}
                   src={partner.imageUrl}
                   alt={partner.alt}

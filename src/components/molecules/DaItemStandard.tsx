@@ -1,5 +1,5 @@
 import * as React from "react";
-import { DaImage } from "../atoms/DaImage";
+import { DaImageRatio } from "../atoms/DaImageRatio";
 import { DaTag } from "../atoms/DaTag";
 import { DaText } from "../atoms/DaText";
 import { DaAvatar } from "../atoms/DaAvatar";
@@ -28,7 +28,7 @@ const DaItemStandard: React.FC<DaItemStandardProps> = ({
       className="flex w-full p-4 border border-da-gray-dark rounded-lg shadow-md bg-da-white max-w-lg space-x-4 text-da-gray-dark overflow-hidden"
       style={{ maxWidth: maxWidth }}
     >
-      <DaImage
+      <DaImageRatio
         src={imageUrl}
         alt="Image"
         className="w-full h-full rounded-lg"

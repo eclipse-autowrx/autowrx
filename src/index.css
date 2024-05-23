@@ -174,7 +174,6 @@ body {
   @apply h-10 rounded-md px-3 py-1 da-txt-medium;
 }
 
-
 /*********** For Block Component ********************/
 .da-block-bare {
   @apply px-4 py-2 flex items-center justify-center;
@@ -186,4 +185,14 @@ body {
 
 .da-block-outline {
   @apply text-da-primary-500 border border-da-primary-500;
+}
+
+/*********** NAV BAR ********************/
+.da-nav-bar {
+  height: 48px;
+  max-height: 48px;
+  @apply px-2 md:px-4 py-2 flex items-center w-full;
+}
+.da-nav-bar-logo {
+  height: 30px;
 }

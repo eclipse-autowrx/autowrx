@@ -1,36 +1,14 @@
-import * as AspectRatioPrimitive from "@radix-ui/react-aspect-ratio";
+import React, { HTMLAttributes } from "react";
 
-const AspectRatio = AspectRatioPrimitive.Root;
-
-interface DaImageProps {
-  src: string;
-  alt?: string;
-  ratio: number;
-  maxWidth: string;
-  className?: string;
+interface DaImageProps extends HTMLAttributes<HTMLImageElement> {
+  //   children?: React.ReactNode;
+  src?: string | undefined;
 }
 
-const DaImage = ({
-  src,
-  alt,
-  ratio,
-  maxWidth,
-  className = "",
-}: DaImageProps) => {
-  return (
-    <div
-      className={`${className} h-full w-full`}
-      style={{ maxWidth: maxWidth }}
-    >
-      <AspectRatio ratio={ratio}>
-        <img
-          src={src}
-          alt={alt ? alt : "Image"}
-          className="rounded-md object-cover h-full w-full"
-        />
-      </AspectRatio>
-    </div>
-  );
-};
+const DaImage = React.forwardRef<HTMLImageElement, DaImageProps>(
+  ({ className, src, ...props }, ref) => {
+    return <img ref={ref} src={src || ""} {...props} className={className} />;
+  }
+);
 
 export { DaImage };
