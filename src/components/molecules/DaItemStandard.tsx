@@ -26,7 +26,7 @@ const DaItemStandard: React.FC<DaItemStandardProps> = ({
   return (
     <div
       className="flex p-4 border border-da-gray-dark rounded-lg shadow-md bg-da-white max-w-lg space-x-4 text-da-gray-dark overflow-hidden"
-      style={{ maxWidth: maxWidth, minWidth: "500px" }}
+      style={{ maxWidth: maxWidth, minWidth: "300px" }}
     >
       <DaImage
         src={imageUrl}

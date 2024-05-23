@@ -83,18 +83,22 @@ body {
 }
 
 /*********** Font size and weight ********************/
-.da-txt-small  {
+.da-txt-small {
   font-size: 11px;
 }
+
 .da-txt-regular {
   font-size: 14px;
 }
+
 .da-txt-medium {
   font-size: 18px;
 }
+
 .da-txt-large {
   font-size: 24px;
 }
+
 .da-txt-huge {
   font-size: 32px;
 }
@@ -105,28 +109,32 @@ body {
   @apply da-txt-regular font-medium;
 }
 
+.da-label-regular-bold {
+  @apply da-txt-regular font-bold;
+}
+
 .da-label-small {
-  @apply da-txt-small font-medium; 
+  @apply da-txt-small font-medium;
 }
 
 .da-label-small-bold {
-  @apply da-txt-small font-bold; 
+  @apply da-txt-small font-bold;
 }
 
 .da-label-sub-title {
-  @apply da-txt-medium font-bold; 
+  @apply da-txt-medium font-bold;
 }
 
 .da-label-title {
-  @apply da-txt-large font-bold; 
+  @apply da-txt-large font-bold;
 }
 
 .da-label-huge {
-  @apply da-txt-huge; 
+  @apply da-txt-huge;
 }
 
 .da-label-huge-bold {
-  @apply da-txt-huge font-bold; 
+  @apply da-txt-huge font-bold;
 }
 
 /*********** For Button Component ********************/
