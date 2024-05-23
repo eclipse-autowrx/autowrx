@@ -24,7 +24,7 @@ import {
 const PageHome = () => {
   return (
     <div className="grid place-items-center">
-      <div className="px-2 max-w-[1024px]">
+      <div className="px-2 max-w-[1024px] space-y-4">
         <div className="mt-4 flex space-x-4 p-4 border rounded-lg">
           <DaButton>Default</DaButton>
           <DaButton variant="outline">Outline</DaButton>
@@ -99,9 +99,9 @@ const PageHome = () => {
           <DaTag variant="secondary">Secondary Tag</DaTag>
         </div>
         <div className="flex col-span-full space-x-4 p-4 border rounded-lg">
-          <DaImage src="imgs/1.jpg" width={400} ratio={16 / 9} />
-          <DaImage src="imgs/2.jpg" width={400} ratio={16 / 9} />
-          <DaImage src="imgs/3.jpg" width={400} ratio={16 / 9} />
+          <DaImage src="imgs/1.jpg" maxWidth={"400px"} ratio={16 / 9} />
+          <DaImage src="imgs/2.jpg" maxWidth={"400px"} ratio={16 / 9} />
+          <DaImage src="imgs/3.jpg" maxWidth={"400px"} ratio={16 / 9} />
         </div>
         <div className="flex col-span-full space-x-4 p-4 border rounded-lg">
           <DaAvatar src="imgs/1.jpg" />

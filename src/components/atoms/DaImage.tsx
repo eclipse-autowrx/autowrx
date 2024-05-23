@@ -6,13 +6,22 @@ interface DaImageProps {
   src: string;
   alt?: string;
   ratio: number;
-  width: number;
+  maxWidth: string;
   className?: string;
 }
 
-const DaImage = ({ src, alt, ratio, width, className = "" }: DaImageProps) => {
+const DaImage = ({
+  src,
+  alt,
+  ratio,
+  maxWidth,
+  className = "",
+}: DaImageProps) => {
   return (
-    <div className={`${className} `} style={{ width: width }}>
+    <div
+      className={`${className} h-full w-full`}
+      style={{ maxWidth: maxWidth }}
+    >
       <AspectRatio ratio={ratio}>
         <img
           src={src}

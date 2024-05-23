@@ -62,6 +62,13 @@ module.exports = {
       //   "accordion-down": "accordion-down 0.2s ease-out",
       //   "accordion-up": "accordion-up 0.2s ease-out",
       // },
+      maxHeight: {
+        'xs': '20rem', // Same as tailwind defined value
+        'sm': '24rem',
+        'md': '28rem',
+        'lg': '32rem',
+        'xl': '36rem',
+      },
     },
   },
   plugins: [require("tailwindcss-animate")
