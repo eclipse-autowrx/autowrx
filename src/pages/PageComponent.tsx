@@ -35,36 +35,64 @@ const PageHome = () => {
 
         <div className="mt-4 flex space-x-4 p-4 border rounded-lg">
           <DaButton size="sm">Default</DaButton>
-          <DaButton size="sm" variant="outline">Outline</DaButton>
-          <DaButton size="sm" variant="gradient">Gradient</DaButton>
-          <DaButton size="sm" variant="outline-nocolor">Outline-nocolor</DaButton>
-          <DaButton size="sm" variant="secondary">Secondary</DaButton>
+          <DaButton size="sm" variant="outline">
+            Outline
+          </DaButton>
+          <DaButton size="sm" variant="gradient">
+            Gradient
+          </DaButton>
+          <DaButton size="sm" variant="outline-nocolor">
+            Outline-nocolor
+          </DaButton>
+          <DaButton size="sm" variant="secondary">
+            Secondary
+          </DaButton>
         </div>
+
         <div className="mt-4 flex space-x-4 p-4 border rounded-lg">
           <DaButton size="lg">Default</DaButton>
-          <DaButton size="lg" variant="outline">Outline</DaButton>
-          <DaButton size="lg" variant="gradient">Gradient</DaButton>
-          <DaButton size="lg" variant="outline-nocolor">Outline-nocolor</DaButton>
-          <DaButton size="lg" variant="secondary">Secondary</DaButton>
+          <DaButton size="lg" variant="outline">
+            Outline
+          </DaButton>
+          <DaButton size="lg" variant="gradient">
+            Gradient
+          </DaButton>
+          <DaButton size="lg" variant="outline-nocolor">
+            Outline-nocolor
+          </DaButton>
+          <DaButton size="lg" variant="secondary">
+            Secondary
+          </DaButton>
         </div>
+
         <div className="mt-4 flex flex-col p-4 border rounded-lg">
-            <DaText variant="small">This is a text</DaText>
+          <DaText variant="small">This is a text</DaText>
 
-            <DaText variant="small-bold">This is a text</DaText>
+          <DaText variant="small-bold">This is a text</DaText>
 
-            <DaText variant="regular">This is a text</DaText>
-          
-            <DaText variant="sub-title">This is a text</DaText>
+          <DaText variant="regular">This is a text</DaText>
 
-            <DaText variant="title">This is a text</DaText>
+          <DaText variant="sub-title">This is a text</DaText>
 
-            <DaText variant="huge">This is a text</DaText>
+          <DaText variant="title">This is a text</DaText>
 
-            <DaText variant="huge-bold">This is a text</DaText>
+          <DaText variant="huge">This is a text</DaText>
+
+          <DaText variant="huge-bold">This is a text</DaText>
         </div>
-        <div className="col-span-full space-x-4 p-4 border rounded-lg">
-          <DaInput placeholder="Input" />
+
+        <div className="mt-4 p-4 border rounded-lg">
+          <div className="max-w-[360px]">
+            <DaInput placeholder="Email" label="Email address" />
+            <div className="mt-2"></div>
+            <DaInput
+              placeholder="Password"
+              label="Give me password"
+              type="password"
+            />
+          </div>
         </div>
+
         <div className="col-span-full space-x-4 p-4 border rounded-lg">
           <DaTag variant="outline">Outline Tag</DaTag>
           <DaTag variant="default">Default Tag</DaTag>
