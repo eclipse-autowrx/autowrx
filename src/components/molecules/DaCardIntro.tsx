@@ -13,11 +13,13 @@ const DaCardIntro = ({
 }: CardIntroProps) => {
   return (
     <div
-      className={`flex flex-col p-4 w-full bg-da-white rounded-lg shadow-md space-y-2 border border-da-gray-dark text-da-gray-dark`}
+      className={`flex flex-col p-4 w-full bg-da-white rounded-lg space-y-2 border border-da-gray-dark/10 text-da-gray-dark`}
       style={{ maxWidth: maxWidth }}
     >
-      <DaText variant="title">{title}</DaText>
-      <DaText variant="regular">{content}</DaText>
+      <DaText variant="sub-title">{title}</DaText>
+      <DaText variant="small" className="text-da-gray-dark/75">
+        {content}
+      </DaText>
     </div>
   );
 };

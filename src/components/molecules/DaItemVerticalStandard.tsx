@@ -17,7 +17,7 @@ const DaItemVerticalStandard: React.FC<DaItemVerticalStandardProps> = ({
 }) => {
   return (
     <div
-      className="flex w-full flex-col items-center p-4 border border-da-gray-dark rounded-lg shadow-md bg-da-white space-y-2 text-da-gray-dark overflow-hidden"
+      className="flex w-full flex-col items-center rounded-lg bg-da-white space-y-2 text-da-gray-dark overflow-hidden"
       style={{ maxWidth: maxWidth }}
     >
       <DaImageRatio
@@ -27,9 +27,11 @@ const DaItemVerticalStandard: React.FC<DaItemVerticalStandardProps> = ({
         ratio={16 / 9}
         maxWidth={maxWidth}
       />
-      <div className="flex flex-col items-start w-full space-y-2">
-        <DaText variant="title">{title}</DaText>
-        <DaText variant="regular" className="line-clamp-2">
+      <div className="flex flex-col items-start w-full space-y-1">
+        <DaText variant="sub-title" className="line-clamp-1">
+          {title}
+        </DaText>
+        <DaText variant="small" className="line-clamp-2 text-da-gray-dark/75">
           {content}
         </DaText>
       </div>

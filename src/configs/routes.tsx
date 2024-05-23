@@ -6,7 +6,7 @@ import PageLogin from "@/pages/PageLogin";
 import PageComponent from "@/pages/PageComponent";
 import PageMolecules from "@/pages/PageMolecules";
 import PageOrganisms from "@/pages/PageOrganisms";
-
+import PageTestHome from "@/pages/test-ui/PageTestHome";
 import PageTestForm from "@/pages/test-ui/PageTestForm";
 
 const routesConfig: RouteObject[] = [
@@ -29,6 +29,11 @@ const routesConfig: RouteObject[] = [
     path: "/test-ui/forms",
     element: <RootLayout />,
     children: [{ index: true, element: <PageTestForm /> }],
+  },
+  {
+    path: "/test-ui/home",
+    element: <RootLayout />,
+    children: [{ index: true, element: <PageTestHome /> }],
   },
   {
     path: "/components",

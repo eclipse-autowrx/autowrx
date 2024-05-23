@@ -25,10 +25,7 @@ interface DaApiListProps {
 
 export const DaApiList = ({ apis, maxWidth = "500px" }: DaApiListProps) => {
   return (
-    <div
-      className="p-4 w-full border border-da-gray-dark rounded-lg shadow-md bg-da-white"
-      style={{ maxWidth: maxWidth }}
-    >
+    <div className="p-4 w-full bg-da-white" style={{ maxWidth: maxWidth }}>
       {apis.map((item, index) => (
         <DaApiListItem key={index} api={item.api} type={item.type} />
       ))}

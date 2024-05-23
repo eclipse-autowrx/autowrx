@@ -18,7 +18,7 @@ const DaItemVerticalType2: React.FC<DaItemVerticalType2Props> = ({
 }) => {
   return (
     <div
-      className="flex flex-col w-full p-4 border border-da-gray-dark rounded-lg shadow-md bg-da-white space-y-2 text-da-gray-dark overflow-hidden"
+      className="flex flex-col w-full rounded-lg  bg-da-white space-y-2 text-da-gray-dark overflow-hidden"
       style={{ maxWidth: maxWidth }}
     >
       <DaText variant="title">{title}</DaText>

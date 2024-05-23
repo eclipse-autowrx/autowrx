@@ -67,7 +67,7 @@ body {
 :root {
   --da-primary-100: 174 41 79;
   --da-primary-300: 174 42 51;
-  --da-primary-500: 174 100 27;
+  --da-primary-500: 198 100 22;
 
   --da-accent-100: 36 100 85;
   --da-accent-300: 36 100 65;
@@ -75,20 +75,20 @@ body {
 
   --da-white: 0 0 100;
   --da-black: 0 0 0;
-  --da-gray-light: 0 0 85;
-  --da-gray-dark: 0 0 40;
+  --da-gray-light: 220 9 46;
+  --da-gray-dark: 215 28 17;
 
-  --da-gradient-from: 171 100 21;
-  --da-gradient-to: 174 42 51;
+  --da-gradient-from: 198 100 22;
+  --da-gradient-to: 67 54 48;
 }
 
 /*********** Font size and weight ********************/
 .da-txt-small {
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .da-txt-regular {
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .da-txt-medium {
@@ -96,11 +96,11 @@ body {
 }
 
 .da-txt-large {
-  font-size: 24px;
+  font-size: 20px;
 }
 
 .da-txt-huge {
-  font-size: 32px;
+  font-size: 24px;
 }
 
 /*********** For Text Component ********************/
@@ -151,7 +151,7 @@ body {
 }
 
 .da-btn-outline-nocolor {
-  @apply border text-da-gray-dark border-da-gray-dark shadow-sm hover:bg-da-gray-dark/10;
+  @apply border text-da-gray-dark border-da-gray-dark/10 hover:bg-da-gray-dark/10;
 }
 
 .da-btn-plain {
@@ -201,10 +201,11 @@ body {
 
 /*********** NAV BAR ********************/
 .da-nav-bar {
-  height: 48px;
-  max-height: 48px;
+  height: 56px;
+  max-height: 56px;
   @apply px-2 md:px-4 py-2 flex items-center w-full;
 }
+
 .da-nav-bar-logo {
   height: 30px;
 }

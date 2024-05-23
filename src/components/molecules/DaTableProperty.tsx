@@ -28,10 +28,7 @@ export const DaTableProperty = ({
   maxWidth = "500px",
 }: DaTablePropertyProps) => {
   return (
-    <div
-      className="p-4 border border-da-gray-dark rounded-lg shadow-md bg-da-white"
-      style={{ maxWidth: maxWidth }}
-    >
+    <div className="p-4 rounded-lg bg-da-white" style={{ maxWidth: maxWidth }}>
       {properties.map((item, index) => (
         <DaTablePropertyItem
           key={index}
