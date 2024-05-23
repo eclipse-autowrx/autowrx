@@ -1,19 +1,29 @@
-import * as React from "react";
+import React, { HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-
-interface DaButtonProps {
+interface DaButtonProps extends HTMLAttributes<HTMLButtonElement> {
   children?: React.ReactNode;
-  className?: string;
-  variant?: "solid"  | "outline" | "outline-nocolor" | "gradient" | "secondary" | "destructive";
+  className?: string | undefined;
+  variant?:
+    | "solid"
+    | "outline"
+    | "outline-nocolor"
+    | "gradient"
+    | "secondary"
+    | "destructive";
   size?: "sm" | "md" | "lg";
 }
 
 const DaButton = React.forwardRef<HTMLButtonElement, DaButtonProps>(
-  ({ className, variant="solid", size="md", ...props }, ref) => {
+  ({ className, variant = "solid", size = "md", ...props }, ref) => {
     return (
       <button
-        className={cn(`da-btn`, `da-btn-${variant}`, `da-btn-${size}`, className)}
+        className={cn(
+          `da-btn`,
+          `da-btn-${variant}`,
+          `da-btn-${size}`,
+          className
+        )}
         ref={ref}
         {...props}
       />

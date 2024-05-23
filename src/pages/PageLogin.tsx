@@ -31,7 +31,7 @@ const PageLogin = () => {
     return (
       <div>
         Logged in
-        <DaButton onClick={logOut}>Log out</DaButton>
+        {/* <DaButton onClick={logOut}>Log out</DaButton> */}
       </div>
     );
   }

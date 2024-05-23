@@ -4,29 +4,19 @@ import { DaInput } from "@/components/atoms/DaInput";
 import { DaTag } from "@/components/atoms/DaTag";
 import { DaImage } from "@/components/atoms/DaImage";
 import { DaAvatar } from "@/components/atoms/DaAvatar";
-import {
-  DaPaging,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/atoms/DaPaging";
-import {
-  DaDropdown,
-  DropdownContent,
-  DropdownTrigger,
-  DropdownValue,
-  DropdownItem,
-} from "@/components/atoms/DaDropdown";
 
 const PageHome = () => {
   return (
     <div className="grid place-items-center">
       <div className="px-2 max-w-[1024px] space-y-4">
         <div className="mt-4 flex space-x-4 p-4 border rounded-lg">
-          <DaButton>Default</DaButton>
+          <DaButton
+            onClick={() => {
+              console.log("Btn default clicked");
+            }}
+          >
+            Default
+          </DaButton>
           <DaButton variant="outline">Outline</DaButton>
           <DaButton variant="gradient">Gradient</DaButton>
           <DaButton variant="outline-nocolor">Outline-nocolor</DaButton>
@@ -84,18 +74,17 @@ const PageHome = () => {
         <div className="mt-4 p-4 border rounded-lg">
           <div className="max-w-[360px]">
             <DaInput placeholder="Email" label="Email address" />
-            <div className="mt-2"></div>
             <DaInput
               placeholder="Password"
               label="Give me password"
               type="password"
+              className="mt-4"
             />
           </div>
         </div>
 
         <div className="col-span-full space-x-4 p-4 border rounded-lg">
-          <DaTag variant="outline">Outline Tag</DaTag>
-          <DaTag variant="default">Default Tag</DaTag>
+          <DaTag>Default Tag</DaTag>
           <DaTag variant="secondary">Secondary Tag</DaTag>
         </div>
         <div className="flex col-span-full space-x-4 p-4 border rounded-lg">
@@ -108,7 +97,8 @@ const PageHome = () => {
           <DaAvatar src="imgs/2.jpg" className="w-16 h-16" />
           <DaAvatar src="imgs/3.jpg" className="w-24 h-24" />
         </div>
-        <div className="flex col-span-full space-x-4 p-4 border rounded-lg">
+
+        {/* <div className="flex col-span-full space-x-4 p-4 border rounded-lg">
           <DaPaging>
             <PaginationContent>
               <PaginationItem>
@@ -133,8 +123,9 @@ const PageHome = () => {
               </PaginationItem>
             </PaginationContent>
           </DaPaging>
-        </div>
-        <div className="flex col-span-full space-x-4 p-4 border rounded-lg">
+        </div> */}
+
+        {/* <div className="flex col-span-full space-x-4 p-4 border rounded-lg">
           <DaDropdown>
             <DropdownTrigger className="w-[180px]">
               <DropdownValue placeholder="Theme" />
@@ -145,7 +136,7 @@ const PageHome = () => {
               <DropdownItem value="system">System</DropdownItem>
             </DropdownContent>
           </DaDropdown>
-        </div>
+        </div> */}
       </div>
     </div>
   );

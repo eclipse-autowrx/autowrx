@@ -6,12 +6,13 @@ import { DaText } from "./DaText";
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
+  inputClassName?: string;
 }
 
 const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, type, ...props }, ref) => {
+  ({ className, inputClassName, label, type, ...props }, ref) => {
     return (
-      <div className="block">
+      <div className={cn("block", className)}>
         {label && <DaText className="text-da-gray-dark">{label}</DaText>}
         <input
           type={type}
@@ -21,7 +22,7 @@ const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
                     placeholder:text-light-gray focus-visible:outline-none 
                     focus-visible:ring-1 focus-visible:ring-ring 
                     disabled:cursor-not-allowed disabled:opacity-50`,
-            className
+            inputClassName
           )}
           ref={ref}
           {...props}
