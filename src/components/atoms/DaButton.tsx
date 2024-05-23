@@ -8,6 +8,9 @@ interface DaButtonProps extends HTMLAttributes<HTMLButtonElement> {
     | "solid"
     | "outline"
     | "outline-nocolor"
+    | "text"
+    | "plain"
+    | "link"
     | "gradient"
     | "secondary"
     | "destructive";

@@ -1,3 +1,4 @@
+import { RouteObject } from "react-router-dom";
 import RootLayout from "@/layouts/RootLayout";
 import PageHome from "@/pages/PageHome";
 import PageAbout from "@/pages/PageAbout";
@@ -5,7 +6,8 @@ import PageLogin from "@/pages/PageLogin";
 import PageComponent from "@/pages/PageComponent";
 import PageMolecules from "@/pages/PageMolecules";
 import PageOrganisms from "@/pages/PageOrganisms";
-import { RouteObject } from "react-router-dom";
+
+import PageTestForm from "@/pages/test-ui/PageTestForm";
 
 const routesConfig: RouteObject[] = [
   {
@@ -22,6 +24,11 @@ const routesConfig: RouteObject[] = [
     path: "/login",
     element: <RootLayout />,
     children: [{ index: true, element: <PageLogin /> }],
+  },
+  {
+    path: "/test-ui/forms",
+    element: <RootLayout />,
+    children: [{ index: true, element: <PageTestForm /> }],
   },
   {
     path: "/components",

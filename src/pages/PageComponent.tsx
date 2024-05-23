@@ -20,6 +20,7 @@ const PageHome = () => {
           <DaButton variant="outline">Outline</DaButton>
           <DaButton variant="gradient">Gradient</DaButton>
           <DaButton variant="outline-nocolor">Outline-nocolor</DaButton>
+          <DaButton variant="plain">Plain</DaButton>
           <DaButton variant="secondary">Secondary</DaButton>
         </div>
 

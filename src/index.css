@@ -154,6 +154,18 @@ body {
   @apply border text-da-gray-dark border-da-gray-dark shadow-sm hover:bg-da-gray-dark/10;
 }
 
+.da-btn-plain {
+  @apply text-da-gray-dark hover:bg-da-primary-100 hover:text-da-primary-500;
+}
+
+.da-btn-text {
+  @apply text-da-primary-500 hover:underline;
+}
+
+.da-btn-link {
+  @apply text-da-gray-dark hover:underline;
+}
+
 .da-btn-gradient {
   @apply bg-gradient-to-r from-da-gradient-from to-da-gradient-to text-da-white shadow-sm hover:opacity-90;
 }
