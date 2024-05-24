@@ -89,14 +89,14 @@ const PageHome = () => {
           <DaTag variant="secondary">Secondary Tag</DaTag>
         </div>
         <div className="flex col-span-full space-x-4 p-4 border rounded-lg">
-          <DaImageRatio src="imgs/1.jpg" maxWidth={"400px"} ratio={16 / 9} />
-          <DaImageRatio src="imgs/2.jpg" maxWidth={"400px"} ratio={16 / 9} />
-          <DaImageRatio src="imgs/3.jpg" maxWidth={"400px"} ratio={16 / 9} />
+          <DaImageRatio src="/imgs/1.jpg" maxWidth={"400px"} ratio={16 / 9} />
+          <DaImageRatio src="/imgs/2.jpg" maxWidth={"400px"} ratio={16 / 9} />
+          <DaImageRatio src="/imgs/3.jpg" maxWidth={"400px"} ratio={16 / 9} />
         </div>
         <div className="flex col-span-full space-x-4 p-4 border rounded-lg">
-          <DaAvatar src="imgs/1.jpg" />
-          <DaAvatar src="imgs/2.jpg" className="w-16 h-16" />
-          <DaAvatar src="imgs/3.jpg" className="w-24 h-24" />
+          <DaAvatar src="/imgs/1.jpg" />
+          <DaAvatar src="/imgs/2.jpg" className="w-16 h-16" />
+          <DaAvatar src="/imgs/3.jpg" className="w-24 h-24" />
         </div>
 
         {/* <div className="flex col-span-full space-x-4 p-4 border rounded-lg">

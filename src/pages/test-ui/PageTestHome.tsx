@@ -1,4 +1,3 @@
-import { Block } from "@/components/molecules/Block";
 import { HomeIntroBlock } from "@/components/organisms/HomeIntroBlock";
 import { HomePrototypeProposal } from "@/components/organisms/HomePrototypeProposal";
 import classNames from "classnames";

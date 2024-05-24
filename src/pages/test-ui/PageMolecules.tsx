@@ -82,8 +82,8 @@ const PageMolecules = () => {
             content="It is a long
                 established fact that a reader will be distracted by the readable content of a page when looking at its layout"
             tags={["Tag1", "Tag2"]}
-            imageUrl="imgs/1.jpg"
-            avatarUrl="imgs/2.jpg"
+            imageUrl="/imgs/1.jpg"
+            avatarUrl="/imgs/2.jpg"
             maxWidth="500px"
           />
         </div>
@@ -94,7 +94,7 @@ const PageMolecules = () => {
           <DaItemVerticalStandard
             title="Prototypes"
             content="It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout"
-            imageUrl="imgs/1.jpg"
+            imageUrl="/imgs/1.jpg"
             maxWidth="500px"
           />
         </div>
@@ -104,7 +104,7 @@ const PageMolecules = () => {
         <div className="flex mt-2 space-x-4 p-4 border rounded-lg">
           <DaItemVerticalType2
             title="Prototypes"
-            imageUrl="imgs/1.jpg"
+            imageUrl="/imgs/1.jpg"
             tags={["Tag1", "Tag2"]}
             maxWidth="500px"
           />

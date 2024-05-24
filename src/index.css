@@ -65,8 +65,8 @@ body {
 
 /* Define colors as CSS variables */
 :root {
-  --da-primary-100: 174 41 79;
-  --da-primary-300: 174 42 51;
+  --da-primary-100: 198 100 90;
+  --da-primary-300: 198 100 51;
   --da-primary-500: 198 100 22;
 
   --da-accent-100: 36 100 85;

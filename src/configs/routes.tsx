@@ -3,9 +3,9 @@ import RootLayout from "@/layouts/RootLayout";
 import PageHome from "@/pages/PageHome";
 import PageAbout from "@/pages/PageAbout";
 import PageLogin from "@/pages/PageLogin";
-import PageComponent from "@/pages/PageComponent";
-import PageMolecules from "@/pages/PageMolecules";
-import PageOrganisms from "@/pages/PageOrganisms";
+import PageComponent from "@/pages/test-ui/PageComponent";
+import PageMolecules from "@/pages/test-ui/PageMolecules";
+import PageOrganisms from "@/pages/test-ui/PageOrganisms";
 import PageTestHome from "@/pages/test-ui/PageTestHome";
 import PageTestForm from "@/pages/test-ui/PageTestForm";
 
@@ -36,17 +36,17 @@ const routesConfig: RouteObject[] = [
     children: [{ index: true, element: <PageTestHome /> }],
   },
   {
-    path: "/components",
+    path: "/test-ui/components",
     element: <PageComponent />,
     children: [{ index: true, element: <PageComponent /> }],
   },
   {
-    path: "/molecules",
+    path: "/test-ui/molecules",
     element: <PageMolecules />,
     children: [{ index: true, element: <PageMolecules /> }],
   },
   {
-    path: "/organisms",
+    path: "/test-ui/organisms",
     element: <PageOrganisms />,
     children: [{ index: true, element: <PageOrganisms /> }],
   },
