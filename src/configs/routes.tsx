@@ -1,16 +1,17 @@
-import { RouteObject } from "react-router-dom";
-import RootLayout from "@/layouts/RootLayout";
-import PageHome from "@/pages/PageHome";
-import PageAbout from "@/pages/PageAbout";
-import PageLogin from "@/pages/PageLogin";
-import PageModelList from "@/pages/PageModelList";
+import { RouteObject } from "react-router-dom"
+import RootLayout from "@/layouts/RootLayout"
+import PageHome from "@/pages/PageHome"
+import PageAbout from "@/pages/PageAbout"
+import PageLogin from "@/pages/PageLogin"
+import PageModelList from "@/pages/PageModelList"
+import PageModelDetail from "@/pages/PageModelDetail"
 
 // test-ui
-import PageComponent from "@/pages/test-ui/PageComponent";
-import PageMolecules from "@/pages/test-ui/PageMolecules";
-import PageOrganisms from "@/pages/test-ui/PageOrganisms";
-import PageTestHome from "@/pages/test-ui/PageTestHome";
-import PageTestForm from "@/pages/test-ui/PageTestForm";
+import PageComponent from "@/pages/test-ui/PageComponent"
+import PageMolecules from "@/pages/test-ui/PageMolecules"
+import PageOrganisms from "@/pages/test-ui/PageOrganisms"
+import PageTestHome from "@/pages/test-ui/PageTestHome"
+import PageTestForm from "@/pages/test-ui/PageTestForm"
 
 const routesConfig: RouteObject[] = [
   {
@@ -32,6 +33,11 @@ const routesConfig: RouteObject[] = [
     path: "/model",
     element: <RootLayout />,
     children: [{ index: true, element: <PageModelList /> }],
+  },
+  {
+    path: "/model/:id",
+    element: <RootLayout />,
+    children: [{ index: true, element: <PageModelDetail /> }],
   },
   {
     path: "/test-ui/forms",
@@ -58,6 +64,6 @@ const routesConfig: RouteObject[] = [
     element: <PageOrganisms />,
     children: [{ index: true, element: <PageOrganisms /> }],
   },
-];
+]
 
-export default routesConfig;
+export default routesConfig
