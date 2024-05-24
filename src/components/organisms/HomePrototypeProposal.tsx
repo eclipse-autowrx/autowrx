@@ -62,7 +62,7 @@ const HomePrototypeProposal: React.FC = () => {
 
   return (
     <div className="container flex flex-col w-full items-center">
-      <DaText variant="sub-title" className="text-da-primary-500 py-6">
+      <DaText variant="sub-title" className="text-da-primary-500 pt-6 pb-10">
         Popular Prototypes
       </DaText>
       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

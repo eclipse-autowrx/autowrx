@@ -43,7 +43,7 @@ const partnersData = [
 
 const HomePartners: React.FC = () => {
   return (
-    <div className="flex flex-col items-center w-full pb-10">
+    <div className="flex flex-col items-center w-full pb-10 mt-12">
       {/* <DaText
         variant="sub-title"
         className="text-center text-da-primary-500 mb-4"

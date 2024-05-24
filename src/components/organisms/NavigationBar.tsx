@@ -11,7 +11,7 @@ const NavigationBar = ({}) => {
   return (
     <div className="da-nav-bar ">
       <Link to="/">
-        <DaImage src="/imgs/logo-wide.png" className="da-nav-bar-logo" />
+        <DaImage src="/imgs/logo.jpg" className="da-nav-bar-logo" />
       </Link>
 
       <div className="grow"></div>

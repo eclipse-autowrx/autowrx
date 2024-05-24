@@ -31,7 +31,7 @@ const DaItemVerticalStandard: React.FC<DaItemVerticalStandardProps> = ({
         <DaText variant="sub-title" className="line-clamp-1">
           {title}
         </DaText>
-        <DaText variant="small" className="line-clamp-2 text-da-gray-dark/75">
+        <DaText variant="small" className="line-clamp-2 text-da-gray-light">
           {content}
         </DaText>
       </div>

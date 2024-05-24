@@ -17,7 +17,7 @@ const DaCardIntro = ({
       style={{ maxWidth: maxWidth }}
     >
       <DaText variant="sub-title">{title}</DaText>
-      <DaText variant="small" className="text-da-gray-dark/75">
+      <DaText variant="small" className="text-da-gray-light">
         {content}
       </DaText>
     </div>
