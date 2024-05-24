@@ -4,7 +4,7 @@ import PageHome from "@/pages/PageHome";
 import PageAbout from "@/pages/PageAbout";
 import PageLogin from "@/pages/PageLogin";
 import PageModelList from "@/pages/PageModelList";
-import PageModel from "@/pages/PageModel";
+import PageModelDetail from "@/pages/PageModelDetail";
 
 // test-ui
 import PageComponent from "@/pages/test-ui/PageComponent";
@@ -34,8 +34,13 @@ const routesConfig: RouteObject[] = [
     element: <RootLayout />,
     children: [
       { index: true, element: <PageModelList /> },
-      { path: ":model_id", element: <PageModel /> },
+      { path: ":model_id", element: <PageModelDetail /> },
     ],
+  },
+  {
+    path: "/model/:id",
+    element: <RootLayout />,
+    children: [{ index: true, element: <PageModelDetail /> }],
   },
   {
     path: "/test-ui/forms",
