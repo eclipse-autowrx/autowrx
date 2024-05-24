@@ -18,10 +18,12 @@ const DaItemVerticalType2: React.FC<DaItemVerticalType2Props> = ({
 }) => {
   return (
     <div
-      className="flex flex-col w-full rounded-lg  bg-da-white space-y-2 text-da-gray-dark overflow-hidden"
+      className="py-2 flex flex-col w-full rounded-lg  bg-da-white space-y-1 text-da-gray-dark overflow-hidden hover:border hover:border-da-gray-light"
       style={{ maxWidth: maxWidth }}
     >
-      <DaText variant="title">{title}</DaText>
+      <DaText variant="sub-title" className="px-2 py-1 line-clamp-1">
+        {title}
+      </DaText>
       <DaImageRatio
         src={imageUrl}
         alt="Image"
@@ -29,7 +31,7 @@ const DaItemVerticalType2: React.FC<DaItemVerticalType2Props> = ({
         ratio={16 / 9}
         maxWidth={maxWidth}
       />
-      <div className="flex space-x-2 pt-2">
+      <div className="flex space-x-2 pt-2 px-2">
         {tags.map((tag, index) => (
           <DaTag variant={"secondary"} key={index}>
             {tag}

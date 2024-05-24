@@ -103,7 +103,7 @@ body {
 }
 
 .da-txt-huge {
-  font-size: 24px;
+  font-size: 28px;
 }
 
 /*********** For Text Component ********************/
@@ -113,7 +113,7 @@ body {
 }
 
 .da-label-regular-bold {
-  @apply da-txt-regular font-bold;
+  @apply da-txt-regular font-semibold;
 }
 
 .da-label-small {
@@ -125,11 +125,11 @@ body {
 }
 
 .da-label-sub-title {
-  @apply da-txt-medium font-bold;
+  @apply da-txt-medium font-semibold;
 }
 
 .da-label-title {
-  @apply da-txt-large font-bold;
+  @apply da-txt-large font-semibold;
 }
 
 .da-label-huge {
@@ -137,7 +137,7 @@ body {
 }
 
 .da-label-huge-bold {
-  @apply da-txt-huge font-bold;
+  @apply da-txt-huge font-semibold;
 }
 
 /*********** For Button Component ********************/
