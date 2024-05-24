@@ -17,7 +17,7 @@ const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
         <input
           type={type}
           className={cn(
-            ` flex px-3 py-1 h-9 w-full rounded-md border border-da-gray-dark bg-da-white  
+            ` flex px-3 py-1 h-10 w-full rounded-md border border-da-gray-dark bg-da-white  
                     da-txt-regular shadow-sm transition-colors 
                     placeholder:text-light-gray focus-visible:outline-none 
                     focus-visible:ring-1 focus-visible:ring-ring 
