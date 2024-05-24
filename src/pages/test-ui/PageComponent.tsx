@@ -7,7 +7,7 @@ import { DaAvatar } from "@/components/atoms/DaAvatar";
 
 const PageHome = () => {
   return (
-    <div className="grid place-items-center">
+    <div className="grid place-items-center bg-white">
       <div className="px-2 max-w-[1024px] space-y-4">
         <div className="mt-4 flex space-x-4 p-4 border rounded-lg">
           <DaButton

@@ -49,7 +49,7 @@ const DaItemStandard: React.FC<DaItemStandardProps> = ({
           </div>
           <DaText
             variant="small"
-            className="w-full line-clamp-2 text-da-gray-dark/75"
+            className="w-full line-clamp-2 text-da-gray-light"
           >
             {content}
           </DaText>

@@ -1,7 +1,7 @@
 type Tag = {
     tag: string
-    tagCategoryId: string
-    tagCategoryName: string
+    tagCategoryId?: string
+    tagCategoryName?: string
 }
 
 export type ModelLite = {

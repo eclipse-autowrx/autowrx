@@ -1,10 +1,10 @@
 import { HomeIntroBlock } from "@/components/organisms/HomeIntroBlock";
 import { HomePrototypeProposal } from "@/components/organisms/HomePrototypeProposal";
+import { cn } from "@/lib/utils";
 import { DaButton } from "@/components/atoms/DaButton";
 import { TbExternalLink } from "react-icons/tb";
 import { DaText } from "@/components/atoms/DaText";
 import { HomePartners } from "@/components/organisms/HomePartners";
-import { cn } from "@/lib/utils";
 
 const PageHome = () => {
   return (
@@ -33,7 +33,7 @@ const PageHome = () => {
         <div className="absolute flex h-full items-center justify-end w-full">
           <div className="lg:w-[50%] lg:px-24 px-12 z-30">
             <div className="flex flex-col sm:text-xs">
-              <div className="flex relative text-2xl lg:text-4xl  font text-white font-bold">
+              <div className="flex relative text-2xl lg:text-4xl font-bold text-white">
                 Welcome to digital.auto playground for virtual exploration
               </div>
               <div className="flex text-white pt-2 text-sm lg:text-normal">
@@ -58,7 +58,7 @@ const PageHome = () => {
         <HomePrototypeProposal />
       </div>
 
-      <div className="col-span-12 my-12">
+      <div className="col-span-12 mt-12">
         <div className="flex flex-col space-y-3 items-center justify-center min-h-fit text-white bg-da-primary-500 py-6">
           <DaText variant="title" className="text-3xl font-bold">
             digital.auto

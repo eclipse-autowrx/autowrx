@@ -11,7 +11,7 @@ function App() {
   return (
     <>
       <NavigationBar />
-      <div className="w-full h-full min-h-[90vh] bg-slate-100">{routes}</div>
+      <div className="w-full h-full min-h-[90vh] bg-white">{routes}</div>
       <SiteFooter />
     </>
   );

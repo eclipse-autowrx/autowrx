@@ -15,10 +15,7 @@ const ModelGrid: React.FC = () => {
             <DaItemVerticalType2
               title={item.name}
               imageUrl={item.model_home_image_file}
-              tags={
-                item.tags?.map((tag) => `${tag.tagCategoryName}/${tag.tag}`) ||
-                []
-              }
+              tags={item.tags?.map((tag) => `${tag.tag}`) || []}
               maxWidth="800px"
             />
           </Link>
@@ -27,5 +24,4 @@ const ModelGrid: React.FC = () => {
     </div>
   );
 };
-
 export { ModelGrid };
