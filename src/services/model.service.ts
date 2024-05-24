@@ -1,8 +1,20 @@
 import { List } from "@/types/common.type"
 import { serverAxios } from "./base"
 import { Model, ModelLite } from "@/types/model.type"
+import { models } from "@/data/models_mock"
+
+const IS_MOCK = true
 
 export const listModelsLite = async () => {
+  if(IS_MOCK) {
+    return {
+      results: models,
+      page: 1,
+      limit: 10,
+      totalPages: 1,
+      totalResults: models.length
+    }
+  }
   return (
     await serverAxios.get<List<ModelLite>>("/models", {
       params: {
