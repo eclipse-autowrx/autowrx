@@ -7,6 +7,7 @@ interface CardIntroProps {
   content: string;
   buttonText: string;
   maxWidth?: string;
+  onClick?: () => void;
 }
 
 const DaCardIntroBig = ({
@@ -14,6 +15,7 @@ const DaCardIntroBig = ({
   content,
   buttonText,
   maxWidth = "320px",
+  onClick,
 }: CardIntroProps) => {
   return (
     <div
@@ -28,7 +30,11 @@ const DaCardIntroBig = ({
           {content}
         </DaText>
       </div>
-      <DaButton variant="outline-nocolor" className="flex w-fit !mt-auto">
+      <DaButton
+        variant="outline-nocolor"
+        className="flex w-fit !mt-auto"
+        onClick={onClick}
+      >
         {buttonText}
         <TbArrowRight className="ml-2 w-4 h-4" />
       </DaButton>
