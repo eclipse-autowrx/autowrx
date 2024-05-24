@@ -3,6 +3,9 @@ import RootLayout from "@/layouts/RootLayout";
 import PageHome from "@/pages/PageHome";
 import PageAbout from "@/pages/PageAbout";
 import PageLogin from "@/pages/PageLogin";
+import PageModelList from "@/pages/PageModelList";
+
+// test-ui
 import PageComponent from "@/pages/test-ui/PageComponent";
 import PageMolecules from "@/pages/test-ui/PageMolecules";
 import PageOrganisms from "@/pages/test-ui/PageOrganisms";
@@ -24,6 +27,11 @@ const routesConfig: RouteObject[] = [
     path: "/login",
     element: <RootLayout />,
     children: [{ index: true, element: <PageLogin /> }],
+  },
+  {
+    path: "/model",
+    element: <RootLayout />,
+    children: [{ index: true, element: <PageModelList /> }],
   },
   {
     path: "/test-ui/forms",

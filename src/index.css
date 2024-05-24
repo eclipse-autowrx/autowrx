@@ -79,7 +79,7 @@ body {
   --da-white: 0 0 100;
   --da-black: 0 0 0;
   --da-gray-light: 220 9 46;
-  --da-gray-dark: 215 28 17;
+  --da-gray-dark: 215 28 38;
 
   --da-gradient-from: 198 100 22;
   --da-gradient-to: 67 54 48;
@@ -158,7 +158,7 @@ body {
 }
 
 .da-btn-plain {
-  @apply text-da-gray-dark hover:bg-da-primary-100 hover:text-da-primary-500;
+  @apply text-da-gray-dark hover:bg-da-primary-100;
 }
 
 .da-btn-text {
