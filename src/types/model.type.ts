@@ -27,6 +27,7 @@ export type Model = {
     vehicle_category: string
     property?: string
     created_by: string
+    created_at?: Date,
     skeleton?: string
     tags?: Tag[]
 }

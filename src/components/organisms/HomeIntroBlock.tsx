@@ -35,7 +35,7 @@ const HomeIntroBlock = () => {
     <div className="flex container justify-center w-full">
       <div className="grid w-full grid-cols-1 md:grid-cols-3 gap-12">
         {cardData.map((card, index) => (
-          <div className="flex w-full items-center justify-center">
+          <div key={index} className="flex w-full items-center justify-center">
             <DaCardIntroBig
               key={index}
               title={card.title}

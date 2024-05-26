@@ -20,7 +20,7 @@ const DaText = React.forwardRef<HTMLLabelElement, DaTextProps>(
   ({ className, variant = "regular", ...props }, ref) => {
     return (
       <label
-        className={cn(`da-label-${variant}`, className)}
+        className={cn(` da-label-${variant}`, className)}
         ref={ref}
         {...props}
       />

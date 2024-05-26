@@ -1,11 +1,12 @@
-import React from "react";
+import { FC, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { models } from "@/data/models_mock";
+import useModelStore from "@/stores/modelStore";
 
-const PageModelDetail: React.FC = () => {
+const PageModelDetail: FC = () => {
+  const [model] = useModelStore(
+    (state) => [state.model]
+  );
   const { model_id } = useParams<{ model_id: string }>();
-
-  const model = models.find((model) => model.id === model_id);
 
   if (!model) {
     return <div>Model not found</div>;
@@ -45,7 +46,7 @@ const PageModelDetail: React.FC = () => {
             <strong>Created By:</strong> {model.created_by}
           </p>
           <p>
-            <strong>Created At:</strong> {model.created_at.toString()}
+            <strong>Created At:</strong> {model.created_at?.toString()}
           </p>
           <p>{/* <strong>Tags:</strong> {model.tags.join(", ")} */}</p>
         </div>

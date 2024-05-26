@@ -5,6 +5,7 @@ import { loginService, registerService } from "@/services/auth.service"
 import { isAxiosError } from "axios"
 import { useState } from "react"
 import { TbLoader } from "react-icons/tb"
+import { TbAt, TbLock } from "react-icons/tb"
 
 interface FormSignInProps {
   setAuthType: (type: "sign-in" | "register" | "forgot") => void
@@ -43,8 +44,10 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
 
       <div className='mt-6'></div>
       {/* Content */}
-      <DaInput name='email' placeholder='Email' label='Email' className='mt-4' />
-      <DaInput name='password' placeholder='Password' label='Password' type='password' className='mt-4' />
+      <DaInput name='email' placeholder='Email' label='Email' className='mt-4' 
+         Icon={TbAt} iconBefore iconSize={18}/>
+      <DaInput name='password' placeholder='Password' label='Password' type='password' className='mt-4' 
+        Icon={TbLock} iconBefore iconSize={18}/>
 
       <div className='flex items-center justify-end mt-1'>
         <DaButton variant='link'>Forget Password</DaButton>
