@@ -80,7 +80,7 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
 
       {/* Error */}
       {error && (
-        <DaText variant='small' className='mt-3 block text-red-500'>
+        <DaText variant='small' className='mt-3 block text-da-accent-500'>
           {error}
         </DaText>
       )}

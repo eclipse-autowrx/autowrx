@@ -52,7 +52,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
 
       {/* Error */}
       {error && (
-        <DaText variant='small' className='mt-2 text-red-500'>
+        <DaText variant='small' className='mt-2 text-da-accent-500'>
           {error}
         </DaText>
       )}

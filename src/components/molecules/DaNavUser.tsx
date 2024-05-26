@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { DaButton } from "../atoms/DaButton"
-import Popup from "../atoms/Popup"
+import DaPopup from "../atoms/DaPopup"
 import FormSignIn from "./forms/FormSignIn"
 import FormRegister from "./forms/FormRegister"
 import useSelfProfileQuery from "@/hooks/useSelfProfile"
@@ -26,10 +26,10 @@ const DaNavUser = () => {
         </DaButton>
       )}
 
-      <Popup state={openState} trigger={<span></span>}>
+      <DaPopup state={openState} trigger={<span></span>}>
         {authType === "sign-in" && <FormSignIn setAuthType={setAuthType} />}
         {authType === "register" && <FormRegister setAuthType={setAuthType} />}
-      </Popup>
+      </DaPopup>
     </div>
   )
 }

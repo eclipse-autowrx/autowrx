@@ -4,5 +4,6 @@ export type Token = {
 }
 
 export type AuthToken = {
-    access: Token
+    access: Token,
+    tokens: any
 }

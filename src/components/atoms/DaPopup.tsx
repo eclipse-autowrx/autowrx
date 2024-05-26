@@ -10,7 +10,7 @@ interface PopupProps {
   className?: string;
 }
 
-const Popup = forwardRef<HTMLDivElement, PopupProps>(
+const DaPopup = forwardRef<HTMLDivElement, PopupProps>(
   ({ trigger, children, state, width, className }, ref) => {
     const selfManaged = useState(false);
     const [open, setOpen] = state ?? selfManaged;
@@ -37,6 +37,6 @@ const Popup = forwardRef<HTMLDivElement, PopupProps>(
   }
 );
 
-Popup.displayName = "Popup";
+DaPopup.displayName = "Popup";
 
-export default Popup;
+export default DaPopup;
