@@ -12,6 +12,7 @@ import PageMolecules from "@/pages/test-ui/PageMolecules";
 import PageOrganisms from "@/pages/test-ui/PageOrganisms";
 import PageTestHome from "@/pages/test-ui/PageTestHome";
 import PageTestForm from "@/pages/test-ui/PageTestForm";
+import PagePrototypeList from "@/pages/PagePrototypeList";
 
 const routesConfig: RouteObject[] = [
   {
@@ -32,16 +33,22 @@ const routesConfig: RouteObject[] = [
   {
     path: "/model",
     element: <RootLayout />,
-    children: [
-      { index: true, element: <PageModelList /> },
-    ],
+    children: [{ index: true, element: <PageModelList /> }],
   },
   {
     path: "/model/:model_id",
     element: <RootLayout />,
-    children: [
-      { index: true, element: <PageModelDetail /> },
-    ],
+    children: [{ index: true, element: <PageModelDetail /> }],
+  },
+  {
+    path: "/model/:model_id",
+    element: <RootLayout />,
+    children: [{ index: true, element: <PageModelDetail /> }],
+  },
+  {
+    path: "/model/:model_id/prototypes",
+    element: <RootLayout />,
+    children: [{ index: true, element: <PagePrototypeList /> }],
   },
   {
     path: "/test-ui/forms",
@@ -71,7 +78,6 @@ const routesConfig: RouteObject[] = [
 ];
 
 export default routesConfig;
-
 
 // v1 route
 // const routes: RouteObject[] = [
