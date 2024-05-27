@@ -1,6 +1,8 @@
-import * as React from "react";
+import { FC } from "react";
 import { DaText } from "../atoms/DaText";
 import { DaImage } from "../atoms/DaImage";
+import { useParnerList } from "@/hooks/useInstanceCfg";
+import { Link } from "react-router-dom";
 
 const partnersData = [
   {
@@ -41,31 +43,31 @@ const partnersData = [
   },
 ];
 
-const HomePartners: React.FC = () => {
+const HomePartners: FC = () => {
+  const partners = useParnerList();
   return (
     <div className="flex flex-col items-center w-full pb-10 mt-12">
-      {/* <DaText
-        variant="sub-title"
-        className="text-center text-da-primary-500 mb-4"
-      >
+      <DaText variant="sub-title" className="text-da-gray-dark">
         Partners
-      </DaText> */}
+      </DaText>
       <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-3 gap-24">
-        {partnersData.map((categoryData, index) => (
-          <div key={index} className="text-center">
+        {partners.map((groups: any, gIndex: number) => (
+          <div key={gIndex} className="text-center">
             <DaText
               variant="regular"
               className="flex my-2 justify-center text-da-gray-dark"
             >
-              {categoryData.category}
+              {groups.category}
             </DaText>
             <div className="flex justify-center space-x-4">
-              {categoryData.partners.map((partner, idx) => (
-                <DaImage
-                  key={idx}
-                  src={partner.imageUrl}
-                  className="w-32 h-20 rounded-lg object-contain"
-                />
+              {groups.items.map((partner: any, pIndex: number) => (
+                <a key={pIndex} href={partner.url} target="_blank">
+                  <DaImage
+                    src={partner.img}
+                    alt={partner.name}
+                    className="w-32 h-20 rounded-lg object-contain"
+                  />
+                </a>
               ))}
             </div>
           </div>
