@@ -43,7 +43,7 @@ const PageModelDetail: React.FC = () => {
 
         {cardIntro.map((card, index) => (
           <Link key={index} to={`${location.pathname}/${card.path}`}>
-            <div className="space-y-3 mt-3">
+            <div className="space-y-3 mt-3 da-clickable">
               <DaCardIntro
                 key={index}
                 title={card.title}
