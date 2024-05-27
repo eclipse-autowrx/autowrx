@@ -5,6 +5,7 @@ import { registerService } from "@/services/auth.service"
 import { isAxiosError } from "axios"
 import { useState } from "react"
 import { TbLoader } from "react-icons/tb"
+import { usePolicy } from "@/hooks/useInstanceCfg"
 
 interface FormRegisterProps {
   setAuthType: (type: "sign-in" | "register" | "forgot") => void
@@ -13,6 +14,8 @@ interface FormRegisterProps {
 const FormRegister = ({ setAuthType }: FormRegisterProps) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>("")
+
+  const policy_url = usePolicy()
 
   const validate = (name: string, email: string, password: string, confirmPassword: string) => {
     const errors: string[] = []
@@ -77,6 +80,12 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
         type='password'
         className='mt-4'
       />
+
+      { policy_url && <div className="my-2 da-label-small">
+          By click on Register button below, I agree to 
+            <a href={policy_url} target='_blank' className="ml-2 da-clickable hover:text-da-primary-500"><u>Privacy Policy</u></a>
+        </div>
+      }
 
       {/* Error */}
       {error && (

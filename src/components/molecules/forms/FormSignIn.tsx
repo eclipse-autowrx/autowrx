@@ -6,7 +6,6 @@ import { isAxiosError } from "axios"
 import { useState } from "react"
 import { TbLoader } from "react-icons/tb"
 import { TbAt, TbLock } from "react-icons/tb"
-import { usePolicy } from "@/hooks/useInstanceCfg"
 
 interface FormSignInProps {
   setAuthType: (type: "sign-in" | "register" | "forgot") => void
@@ -15,8 +14,6 @@ interface FormSignInProps {
 const FormSignIn = ({ setAuthType }: FormSignInProps) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>("")
-
-  const policy_url = usePolicy()
 
   const signIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -55,12 +52,6 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
       <div className='flex items-center justify-end mt-1'>
         <DaButton variant='link'>Forget Password</DaButton>
       </div>
-
-      { policy_url && <div className="my-1 da-label-small">
-          By click on Register button, I agree to 
-            <a href={policy_url} target='_blank' className="ml-2 da-clickable hover:text-da-primary-500"><u>Privacy Policy</u></a>
-      </div>
-      }
 
       {/* Error */}
       {error && (
