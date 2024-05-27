@@ -23,7 +23,7 @@ module.exports = {
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
-        foreground: "hsl(var(--da-gray-dark))",
+        foreground: "hsl(var(--da-gray-medium))",
         "da-primary": {
           100: "hsl(var(--da-primary-100))",
           300: "hsl(var(--da-primary-300))",
@@ -37,7 +37,7 @@ module.exports = {
         "da-white": "hsl(var(--da-white))",
         "da-black": "hsl(var(--da-black))",
         'da-gray-light': 'hsl(var(--da-gray-light))',
-        'da-gray-dark': 'hsl(var(--da-gray-dark))',
+        'da-gray-medium': 'hsl(var(--da-gray-medium))',
         'da-gradient-from': 'hsl(var(--da-gradient-from))',
         'da-gradient-to': 'hsl(var(--da-gradient-to))',
         primary: colors.teal,

@@ -11,8 +11,9 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          "text-da-gray-dark border-da-gray-dark  hover:bg-da-gray-dark/10",
-        secondary: "border-transparent bg-da-gray-dark/10 text-da-gray-dark ",
+          "text-da-gray-medium border-da-gray-medium  hover:bg-da-gray-medium/10",
+        secondary:
+          "border-transparent bg-da-gray-medium/10 text-da-gray-medium ",
       },
     },
     defaultVariants: {

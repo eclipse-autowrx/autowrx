@@ -23,7 +23,7 @@ const PrototypeSummary = ({
   prototypeAuthorAvatarUrl,
 }: PrototypeSummaryProps) => {
   return (
-    <div className="border rounded-lg p-4 w-full">
+    <div className="rounded-lg p-4 w-full">
       <DaImage src={prototypeImageUrl} className="w-full" />
       <div className="flex justify-between items-center mt-4">
         <DaText variant="huge-bold">{prototypeName}</DaText>
