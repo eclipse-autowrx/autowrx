@@ -56,26 +56,6 @@ const PageHome = () => {
         <HomePrototypeProposal />
       </div>
 
-      <div className="col-span-12 mt-12">
-        <div className="flex flex-col space-y-3 items-center justify-center min-h-fit text-white bg-da-primary-500 py-6">
-          <DaText variant="title" className="text-3xl font-bold">
-            digital.auto
-          </DaText>
-          <DaText variant="regular">Working together to create</DaText>
-          <DaText variant="regular">
-            the software-defined vehicle experience
-          </DaText>
-          <DaButton
-            className="border border-white rounded-lg text-white py-2 my-4 px-4"
-            onClick={() => {
-              window.open("https://www.digital.auto/", "_blank");
-            }}
-          >
-            <TbExternalLink className="mr-2" /> About digital.auto
-          </DaButton>
-        </div>
-      </div>
-
       <div className="col-span-12">
         <HomePartners />
       </div>
