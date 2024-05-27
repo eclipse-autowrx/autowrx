@@ -18,4 +18,12 @@ const useTextLib = () => {
     return text
 }
 
-export { useParnerList, useTextLib }
+const usePolicy = () => {
+    if(instance && instance.policy_url &&  instance.policy_url.length > 0) {
+        return instance.policy_url
+    }
+
+    return ""
+}
+
+export { useParnerList, useTextLib, usePolicy }

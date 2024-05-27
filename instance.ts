@@ -1,6 +1,6 @@
 const instance = {
   name: "ETAS",
-  policy_url: "https://etas.com/policy",
+  policy_url: "https://www.etas.com/en/company/terms_of_use.php",
   partners: [
     {
       category: "Industry Partners",

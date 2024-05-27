@@ -68,9 +68,9 @@ body {
 
 /* Define colors as CSS variables */
 :root {
-  --da-primary-100: 211 45 90;
-  --da-primary-300: 211 45 51;
-  --da-primary-500: 211 45 37;
+  --da-primary-100: 198 100 90;
+  --da-primary-300: 198 100 51;
+  --da-primary-500: 198 100 37;
 
   --da-accent-100: 36 100 85;
   --da-accent-300: 36 100 65;
@@ -81,8 +81,8 @@ body {
   --da-gray-light: 0 0 85;
   --da-gray-dark: 0 0 55;
 
-  --da-gradient-from: 211 45 37;
-  --da-gradient-to: 186 100 38;
+  --da-gradient-from: 198 100 22;
+  --da-gradient-to: 67 54 48;
 }
 
 /*********** Font size and weight ********************/
