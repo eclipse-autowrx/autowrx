@@ -1,5 +1,4 @@
-
-export const models= [
+export const models = [
   {
     id: "1231",
     cvi: "ACME Car (ICE) v0.1",
@@ -12,7 +11,7 @@ export const models= [
     vehicle_category: "Sedan",
     created_by: "creator_1",
     created_at: new Date(),
-    tags: [{tag: "EV Car"}],
+    tags: [{ tag: "EV Car" }],
   },
   {
     id: "1232",
@@ -26,7 +25,7 @@ export const models= [
     vehicle_category: "SUV",
     created_by: "creator_2",
     created_at: new Date(),
-    tags: [{tag:"AI Car"}],
+    tags: [{ tag: "AI Car" }],
   },
   {
     id: "1233",
@@ -40,7 +39,7 @@ export const models= [
     vehicle_category: "Hatchback",
     created_by: "creator_3",
     created_at: new Date(),
-    tags: [{tag:"Combustion Car"}],
+    tags: [{ tag: "Combustion Car" }],
   },
   {
     id: "1234",
@@ -54,7 +53,7 @@ export const models= [
     vehicle_category: "Convertible",
     created_by: "creator_4",
     created_at: new Date(),
-    tags: [{tag:"Hydrogen Car"}],
+    tags: [{ tag: "Hydrogen Car" }],
   },
 ];
 
@@ -81,6 +80,12 @@ export const prototypes = [
     state: "development",
     tags: [],
     widget_config: "",
+    description: {
+      problems: "Manual control of wipers is inconvenient.",
+      says_who: "Driver",
+      solution: "Automatic control of wipers based on door/trunk open status.",
+      status: "In Development",
+    },
   },
   {
     apis: {
@@ -104,6 +109,12 @@ export const prototypes = [
     state: "development",
     tags: [],
     widget_config: "",
+    description: {
+      problems: "Driver needs to manually adjust settings.",
+      says_who: "Driver",
+      solution: "Automatically apply individual settings when recognized.",
+      status: "In Development",
+    },
   },
   {
     apis: {
@@ -127,6 +138,12 @@ export const prototypes = [
     state: "development",
     tags: [],
     widget_config: "",
+    description: {
+      problems: "Driver needs to manually adjust settings.",
+      says_who: "Driver",
+      solution: "Automatically apply individual settings when recognized.",
+      status: "In Development",
+    },
   },
   {
     apis: {
@@ -150,6 +167,12 @@ export const prototypes = [
     state: "development",
     tags: [],
     widget_config: "",
+    description: {
+      problems: "Battery usage is inefficient.",
+      says_who: "Driver",
+      solution: "Optimize power usage based on system suggestions.",
+      status: "In Development",
+    },
   },
   {
     apis: {
@@ -173,6 +196,12 @@ export const prototypes = [
     state: "development",
     tags: [],
     widget_config: "",
+    description: {
+      problems: "Passenger does not feel welcomed.",
+      says_who: "Passenger",
+      solution: "Automatically welcome passenger when approaching vehicle.",
+      status: "In Development",
+    },
   },
   {
     apis: {
@@ -196,6 +225,12 @@ export const prototypes = [
     state: "development",
     tags: [],
     widget_config: "",
+    description: {
+      problems: "Driver gets distracted easily.",
+      says_who: "System",
+      solution: "Detect driver distraction using AI and TensorFlow.js.",
+      status: "In Development",
+    },
   },
   {
     apis: {
@@ -219,6 +254,12 @@ export const prototypes = [
     state: "development",
     tags: [],
     widget_config: "",
+    description: {
+      problems: "Passenger feels dizzy during the ride.",
+      says_who: "Passenger",
+      solution: "Adjust settings to reduce dizziness using AI.",
+      status: "In Development",
+    },
   },
   {
     apis: {
@@ -242,5 +283,11 @@ export const prototypes = [
     state: "development",
     tags: [],
     widget_config: "",
+    description: {
+      problems: "Manual opening of car doors is inconvenient.",
+      says_who: "Driver/Passenger",
+      solution: "Automatically open car doors when the handle is touched.",
+      status: "In Development",
+    },
   },
 ];
