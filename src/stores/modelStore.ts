@@ -1,23 +1,31 @@
 import { mountStoreDevtool } from 'simple-zustand-devtools'
 import { immer } from 'zustand/middleware/immer'
 import { create } from 'zustand'
-import { Model } from '@/types/model.type'
+import { Model, Prototype } from '@/types/model.type'
 
 type ModelState = {
     // access?: Token | null
-    model?: Model | null
+    model?: Model | null,
+    prototype?: Prototype | null
+
 }
 
 type Actions = {
     setActiveModel: (_: Model) => void
+    setActivePrototype: (_: Prototype) => void
 }
 
 const useModelStore = create<ModelState & Actions>()(
     immer((set) => ({
         model: undefined,
+        prototype: undefined,
         setActiveModel: (model) =>
             set((state) => {
                 state.model = model
+            }),
+        setActivePrototype: (prototype) =>
+            set((state) => {
+                state.prototype = prototype
             }),
     }))
 )

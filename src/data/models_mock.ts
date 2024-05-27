@@ -59,6 +59,7 @@ export const models = [
 
 export const prototypes = [
   {
+    id: 'efbkd-sdfjvbn-dfbv',
     apis: {
       VSC: [],
       VSS: [],
@@ -88,6 +89,7 @@ export const prototypes = [
     },
   },
   {
+    id: 'fdgdfk-dfkgbf-89rg',
     apis: {
       VSC: [],
       VSS: [],
@@ -117,6 +119,7 @@ export const prototypes = [
     },
   },
   {
+    id: '94jkbjkgnkj-reiuf-eriuer',
     apis: {
       VSC: [],
       VSS: [],
@@ -146,6 +149,7 @@ export const prototypes = [
     },
   },
   {
+    id: 'bv74vbhjbvjd-erivbhjgdvg-efe',
     apis: {
       VSC: [],
       VSS: [],
@@ -175,6 +179,7 @@ export const prototypes = [
     },
   },
   {
+    id: 'dfbr-rfevrjf-bfhbvhj',
     apis: {
       VSC: [],
       VSS: [],
@@ -204,6 +209,7 @@ export const prototypes = [
     },
   },
   {
+    id: '487gbiuf-euryfghjefe-eriug4ief',
     apis: {
       VSC: [],
       VSS: [],
@@ -233,6 +239,7 @@ export const prototypes = [
     },
   },
   {
+    id: 're87bfhjbd-efuy3egb-efjhebg',
     apis: {
       VSC: [],
       VSS: [],
@@ -262,6 +269,7 @@ export const prototypes = [
     },
   },
   {
+    id: '84bhjfeh-e8fegd-efgieu3',
     apis: {
       VSC: [],
       VSS: [],

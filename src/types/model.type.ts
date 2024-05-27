@@ -31,3 +31,22 @@ export type Model = {
     skeleton?: string
     tags?: Tag[]
 }
+
+export type Prototype = {
+    id: string
+    apis: any,
+    model_id: string
+    name: string
+    code: string
+    complexity_level: string
+    customer_journey: string
+    portfolio: any
+    skeleton: any
+    state: string
+    widget_config: string
+    image_file: string
+    created_by: string
+    description: any
+    created_at?: Date,
+    tags?: Tag[]
+}

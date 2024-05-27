@@ -1,17 +1,21 @@
-import React from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
-import { models } from "@/data/models_mock";
+import { FC } from "react";
+import { Link } from "react-router-dom";
 import { DaText } from "@/components/atoms/DaText";
 import { DaCardIntro } from "@/components/molecules/DaCardIntro";
+import useModelStore from "@/stores/modelStore";
+import { Model } from "@/types/model.type";
 
-const PageModelDetail: React.FC = () => {
-  const { model_id } = useParams<{ model_id: string }>();
-  const location = useLocation();
-
-  const model = models.find((model) => model.id === model_id);
+const PageModelDetail: FC = () => {
+  const [model] = useModelStore((state) => [state.model as Model]);
 
   if (!model) {
-    return <div>Model not found</div>;
+    return (
+      <div className="container grid place-items-center">
+        <div className="p-8 text-da-gray-dark da-label-huge">
+          Model not found
+        </div>
+      </div>
+    );
   }
 
   const cardIntro = [
@@ -24,7 +28,7 @@ const PageModelDetail: React.FC = () => {
       title: "Prototype Library",
       content:
         "Build up, evaluate and prioritize your portfolio of connected vehicle applications",
-      path: "prototypes",
+      path: "library",
     },
     {
       title: "Vehicle APIs",
@@ -35,14 +39,14 @@ const PageModelDetail: React.FC = () => {
   ];
 
   return (
-    <div className="container grid grid-cols-12">
+    <div className="container grid grid-cols-12 pt-8">
       <div className="col-span-7">
         <DaText variant="title" className="text-da-primary-500">
           {model.name}
         </DaText>
 
         {cardIntro.map((card, index) => (
-          <Link key={index} to={`${location.pathname}/${card.path}`}>
+          <Link key={index} to={card.path}>
             <div className="space-y-3 mt-3 da-clickable">
               <DaCardIntro
                 key={index}

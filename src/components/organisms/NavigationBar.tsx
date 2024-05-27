@@ -23,21 +23,37 @@ const NavigationBar = ({ }) => {
 
       <div className="grow"></div>
       {/* Model selection */}
-      <Link to="/model">
-        <DaButton variant="plain">
-          <div className="flex items-center">
-            {
-              model ? (<>
-                <FiGrid style={{ transform: "scale(1.5)" }} className="mr-3" />
-                <div className="truncate max-w-[180px]">{model.name || "no-name"}</div>
-              </>) : (<>
-                <FaCar style={{ transform: "scale(1.5)" }} className="mr-3" />
-                Select Model
-              </>)
-            }
-          </div>
-        </DaButton>
-      </Link>
+      {
+        model?(
+          <>
+          <Link to="/model">
+            <DaButton variant="plain">
+              <div className="flex items-center">
+                <FiGrid style={{ transform: "scale(1.4)" }} className="" />
+              </div>
+            </DaButton>
+          </Link>
+          <Link to={`/model/${model.id}`}>
+            <DaButton variant="plain">
+              <div className="flex items-center">
+                  <FaCar style={{ transform: "scale(1.4)" }} className="mr-3" />
+                  <div className="truncate max-w-[180px]">{model.name || "no-name"}</div>
+              </div>
+            </DaButton>
+          </Link>
+          </>
+        ):(
+          <Link to="/model">
+            <DaButton variant="plain">
+              <div className="flex items-center">
+                  <FaCar style={{ transform: "scale(1.5)" }} className="mr-3" />
+                  Select Model
+              </div>
+            </DaButton>
+          </Link>
+        )
+      }
+      
 
       {/* <DaMenu trigger={<div className="da-clickable flex h-full items-center px-4 text-da-gray-dark">
         <HiMenu size={22}/></div>}>

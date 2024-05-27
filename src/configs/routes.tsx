@@ -5,6 +5,7 @@ import PageAbout from "@/pages/PageAbout";
 import PageLogin from "@/pages/PageLogin";
 import PageModelList from "@/pages/PageModelList";
 import PageModelDetail from "@/pages/PageModelDetail";
+import PagePrototypeDetail from "@/pages/PagePrototypeDetail"
 
 // test-ui
 import PageComponent from "@/pages/test-ui/PageComponent";
@@ -33,22 +34,12 @@ const routesConfig: RouteObject[] = [
   {
     path: "/model",
     element: <RootLayout />,
-    children: [{ index: true, element: <PageModelList /> }],
-  },
-  {
-    path: "/model/:model_id",
-    element: <RootLayout />,
-    children: [{ index: true, element: <PageModelDetail /> }],
-  },
-  {
-    path: "/model/:model_id",
-    element: <RootLayout />,
-    children: [{ index: true, element: <PageModelDetail /> }],
-  },
-  {
-    path: "/model/:model_id/prototypes",
-    element: <RootLayout />,
-    children: [{ index: true, element: <PagePrototypeList /> }],
+    children: [
+      { index: true, element: <PageModelList /> },
+      { path: ":model_id", element: <PageModelDetail /> },
+      { path: ":model_id/library", element: <PagePrototypeList /> },
+      { path: ":model_id/library/prototype/:prototype_id/view", element: <PagePrototypeDetail /> }
+    ],
   },
   {
     path: "/test-ui/forms",
