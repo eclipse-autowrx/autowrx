@@ -1,7 +1,7 @@
 import { DaButton } from "@/components/atoms/DaButton"
 import { DaInput } from "@/components/atoms/DaInput"
 import { DaText } from "@/components/atoms/DaText"
-import { loginService, registerService } from "@/services/auth.service"
+import { loginService } from "@/services/auth.service"
 import { isAxiosError } from "axios"
 import { useState } from "react"
 import { TbLoader } from "react-icons/tb"
@@ -44,13 +44,22 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
 
       <div className='mt-6'></div>
       {/* Content */}
-      <DaInput name='email' placeholder='Email' label='Email' className='mt-4' 
-         Icon={TbAt} iconBefore iconSize={18}/>
-      <DaInput name='password' placeholder='Password' label='Password' type='password' className='mt-4' 
-        Icon={TbLock} iconBefore iconSize={18}/>
+      <DaInput name='email' placeholder='Email' label='Email' className='mt-4' Icon={TbAt} iconBefore iconSize={18} />
+      <DaInput
+        name='password'
+        placeholder='Password'
+        label='Password'
+        type='password'
+        className='mt-4'
+        Icon={TbLock}
+        iconBefore
+        iconSize={18}
+      />
 
       <div className='flex items-center justify-end mt-1'>
-        <DaButton variant='link'>Forget Password</DaButton>
+        <DaButton type='button' variant='link' onClick={() => setAuthType("forgot")}>
+          Forget Password
+        </DaButton>
       </div>
 
       {/* Error */}
