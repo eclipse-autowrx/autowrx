@@ -8,32 +8,36 @@ const PagePrototypeList = () => {
   const [selectedPrototype, setSelectedPrototype] = useState(prototypes[0]);
 
   return (
-    <div className="grid grid-cols-12 gap-4">
-      <div className="col-span-4 px-4">
+    <div className="grid grid-cols-12 h-full">
+      <div className="col-span-full h-12 bg-da-primary-500/10"></div>
+      <div className="col-span-3 px-4 y mt-2 h-full overflow-y-auto">
         <DaInput
           type="text"
           placeholder="Enter to search"
-          className="w-full pl-4 mb-4"
+          className="w-full mb-4"
         />
-        {prototypes.map((prototype, index) => (
-          <div
-            key={index}
-            onClick={() => setSelectedPrototype(prototype)}
-            className="cursor-pointer mb-4"
-          >
-            <DaItemStandard
-              title={prototype.name}
-              author={"John Doe"}
-              content={prototype.description.problems}
-              tags={prototype.tags}
-              imageUrl={prototype.image_file}
-              avatarUrl="/imgs/2.jpg"
-              maxWidth="1000px"
-            />
-          </div>
-        ))}
+        <div className="overflow-y-auto h-[500px]">
+          {prototypes.map((prototype, index) => (
+            <div
+              key={index}
+              onClick={() => setSelectedPrototype(prototype)}
+              className="cursor-pointer mb-2 "
+            >
+              <DaItemStandard
+                title={prototype.name}
+                author={"John Doe"}
+                content={prototype.description.problems}
+                tags={prototype.tags}
+                imageUrl={prototype.image_file}
+                avatarUrl="/imgs/2.jpg"
+                maxWidth="1000px"
+                imageMaxWidth="100px"
+              />
+            </div>
+          ))}
+        </div>
       </div>
-      <div className="col-span-8">
+      <div className="col-span-9 h-full overflow-y-auto border-l">
         {selectedPrototype && (
           <PrototypeSummary
             prototypeName={selectedPrototype.name}
@@ -42,9 +46,23 @@ const PagePrototypeList = () => {
             prototypeAuthorName="John Doe"
             prototypeTags={["tag1", "tag2", "tag3"]}
             prototypeProperties={[
-              { property: "property1", value: "value1" },
-              { property: "property2", value: "value2" },
-              { property: "property3", value: "value3" },
+              {
+                property: "Problem",
+                value: selectedPrototype.description.problems,
+              },
+              {
+                property: "Says who?",
+                value: selectedPrototype.description.says_who,
+              },
+              {
+                property: "Solution",
+                value: selectedPrototype.description.solution,
+              },
+              {
+                property: "Status",
+                value: selectedPrototype.description.status,
+              },
+              { property: "Complexity", value: "5" },
             ]}
           />
         )}

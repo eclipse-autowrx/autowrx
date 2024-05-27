@@ -29,7 +29,7 @@ const PageMolecules = () => {
   return (
     <div className="grid grid-cols-12 gap-4 p-4 bg-white">
       <div className="col-span-full flex flex-col px-2 container space-y-2">
-        <DaText variant="sub-title" className="text-da-gray-dark">
+        <DaText variant="sub-title" className="text-da-gray-medium">
           DaCardIntro
         </DaText>
         <div className="flex mt-2 space-x-4 p-4 border rounded-lg">
@@ -49,7 +49,7 @@ const PageMolecules = () => {
             maxWidth="320px"
           />
         </div>
-        <DaText variant="sub-title" className="text-da-gray-dark pt-4">
+        <DaText variant="sub-title" className="text-da-gray-medium pt-4">
           DaCardIntroBig
         </DaText>
         <div className="flex mt-2 space-x-4 p-4 border rounded-lg">
@@ -72,7 +72,7 @@ const PageMolecules = () => {
             buttonText="Learn More"
           />
         </div>
-        <DaText variant="sub-title" className="text-da-gray-dark pt-4">
+        <DaText variant="sub-title" className="text-da-gray-medium pt-4">
           DaItemStandard
         </DaText>
         <div className="flex mt-2 space-x-4 p-4 border rounded-lg">
@@ -87,7 +87,7 @@ const PageMolecules = () => {
             maxWidth="500px"
           />
         </div>
-        <DaText variant="sub-title" className="text-da-gray-dark pt-4">
+        <DaText variant="sub-title" className="text-da-gray-medium pt-4">
           DaItemVerticalStandard
         </DaText>
         <div className="flex mt-2 space-x-4 p-4 border rounded-lg">
@@ -98,7 +98,7 @@ const PageMolecules = () => {
             maxWidth="500px"
           />
         </div>
-        <DaText variant="sub-title" className="text-da-gray-dark pt-4">
+        <DaText variant="sub-title" className="text-da-gray-medium pt-4">
           DaItemVerticalType2
         </DaText>
         <div className="flex mt-2 space-x-4 p-4 border rounded-lg">
@@ -109,13 +109,13 @@ const PageMolecules = () => {
             maxWidth="500px"
           />
         </div>
-        <DaText variant="sub-title" className="text-da-gray-dark pt-4">
+        <DaText variant="sub-title" className="text-da-gray-medium pt-4">
           DaTableProperty
         </DaText>
         <div className="flex mt-2 space-x-4 p-4 border rounded-lg">
           <DaTableProperty properties={properties} maxWidth="500px" />
         </div>
-        <DaText variant="sub-title" className="text-da-gray-dark pt-4">
+        <DaText variant="sub-title" className="text-da-gray-medium pt-4">
           DaApiList
         </DaText>
         <div className="flex mt-2 space-x-4 p-4 border rounded-lg">

@@ -10,10 +10,8 @@ import { HiMenu } from "react-icons/hi";
 import useModelStore from "@/stores/modelStore";
 import { Model } from "@/types/model.type";
 
-const NavigationBar = ({ }) => {
-  const [model] = useModelStore(
-    (state) => [state.model as Model]
-  );
+const NavigationBar = ({}) => {
+  const [model] = useModelStore((state) => [state.model as Model]);
 
   return (
     <div className="da-nav-bar ">
@@ -55,7 +53,7 @@ const NavigationBar = ({ }) => {
       }
       
 
-      {/* <DaMenu trigger={<div className="da-clickable flex h-full items-center px-4 text-da-gray-dark">
+      {/* <DaMenu trigger={<div className="da-clickable flex h-full items-center px-4 text-da-gray-medium">
         <HiMenu size={22}/></div>}>
         <div className="px-4 py-2 da-menu-item ">Menu item 1</div>
         <div className="px-4 py-2 da-menu-item ">Menu item 2</div>

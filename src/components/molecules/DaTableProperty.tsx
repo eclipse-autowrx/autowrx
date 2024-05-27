@@ -7,7 +7,7 @@ interface DaTablePropertyItemProps {
 
 const DaTablePropertyItem = ({ property, value }: DaTablePropertyItemProps) => {
   return (
-    <div className="grid grid-cols-4 gap-4 py-2 text-da-gray-dark">
+    <div className="grid grid-cols-4 gap-4 py-2 text-da-gray-medium">
       <div className="col-span-1">
         <DaText variant="regular-bold">{property}</DaText>
       </div>

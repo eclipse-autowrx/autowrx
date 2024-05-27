@@ -7,7 +7,7 @@ const HomePartners: FC = () => {
   const partners = useParnerList();
   return (
     <div className="flex flex-col items-center w-full pb-10 mt-12">
-      <DaText variant="sub-title" className="text-da-gray-dark">
+      <DaText variant="sub-title" className="text-da-gray-medium">
         Partners
       </DaText>
       <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-3 gap-24">
@@ -15,7 +15,7 @@ const HomePartners: FC = () => {
           <div key={gIndex} className="text-center">
             <DaText
               variant="regular"
-              className="flex my-2 justify-center text-da-gray-dark"
+              className="flex my-2 justify-center text-da-gray-medium"
             >
               {groups.category}
             </DaText>

@@ -15,21 +15,37 @@ export interface InputProps
 }
 
 const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, inputClassName, label, type,
-    Icon,
-    iconBefore = false,
-    IconOnClick,
-    iconSize,
-    ...props }, ref) => {
+  (
+    {
+      className,
+      inputClassName,
+      label,
+      type,
+      Icon,
+      iconBefore = false,
+      IconOnClick,
+      iconSize,
+      ...props
+    },
+    ref
+  ) => {
     const [focused, setFocused] = useState(false);
     return (
       <div className={cn("block", className)}>
-        {label && <DaText className={focused?`text-da-primary-500`:`text-da-gray-dark`}>{label}</DaText>}
-        <div className={cn(
-          `h-10 py-1 flex items-center rounded-md border bg-da-white 
+        {label && (
+          <DaText
+            className={focused ? `text-da-primary-500` : `text-da-gray-medium`}
+          >
+            {label}
+          </DaText>
+        )}
+        <div
+          className={cn(
+            `h-10 py-1 flex items-center rounded-md border bg-da-white 
           da-txt-regular shadow-sm transition-colors text-da-gray-gray`,
-          !focused && "border-da-gray-light",
-          focused && "border-da-primary-500 text-da-primary-500",)}
+            !focused && "border-da-gray-light",
+            focused && "border-da-primary-500 text-da-primary-500"
+          )}
         >
           {Icon && iconBefore && (
             <Icon

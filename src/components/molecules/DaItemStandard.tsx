@@ -12,6 +12,7 @@ interface DaItemStandardProps {
   imageUrl: string;
   avatarUrl: string;
   maxWidth?: string;
+  imageMaxWidth?: string;
 }
 
 const DaItemStandard: React.FC<DaItemStandardProps> = ({
@@ -22,10 +23,11 @@ const DaItemStandard: React.FC<DaItemStandardProps> = ({
   imageUrl,
   avatarUrl,
   maxWidth = "500px",
+  imageMaxWidth = "300px",
 }) => {
   return (
     <div
-      className="flex w-full p-4 border border-da-gray-dark/10 rounded-lg bg-da-white max-w-lg space-x-4 text-da-gray-dark overflow-hidden"
+      className="flex w-full p-4 border border-da-gray-medium/10 rounded-lg bg-da-white max-w-lg space-x-4 text-da-gray-medium overflow-hidden"
       style={{ maxWidth: maxWidth }}
     >
       <DaImageRatio
@@ -33,23 +35,23 @@ const DaItemStandard: React.FC<DaItemStandardProps> = ({
         alt="Image"
         className="w-full h-full rounded-lg"
         ratio={1 / 1}
-        maxWidth={"300px"}
+        maxWidth={imageMaxWidth}
       />
 
       <div className="flex flex-col justify-between overflow-hidden w-ful">
         <div className="flex flex-col space-y-2">
-          <DaText variant="sub-title">{title}</DaText>
+          <DaText>{title}</DaText>
           <div className="flex items-center space-x-2">
             <DaAvatar
               src={avatarUrl}
               alt="Author"
-              className="w-6 h-6 rounded-full"
+              className="w-5 h-5 rounded-full"
             />
-            <DaText variant="regular">{author}</DaText>
+            <DaText variant="small">{author}</DaText>
           </div>
           <DaText
             variant="small"
-            className="w-full line-clamp-2 text-da-gray-light"
+            className="w-full line-clamp-2 text-da-gray-medium"
           >
             {content}
           </DaText>

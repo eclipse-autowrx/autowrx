@@ -25,21 +25,21 @@ const PageOrganisms = () => {
             ]}
           />
         </div>
-        <DaText variant="sub-title" className="text-da-gray-dark mt-8">
+        <DaText variant="sub-title" className="text-da-gray-medium mt-8">
           HomeIntroBlock
         </DaText>
         <div className="flex w-full mt-2 space-x-4 p-4 border rounded-lg">
           <HomeIntroBlock />
         </div>
 
-        <DaText variant="sub-title" className="text-da-gray-dark mt-8">
+        <DaText variant="sub-title" className="text-da-gray-medium mt-8">
           HomePrototypeProposal
         </DaText>
         <div className="flex w-full mt-2 space-x-4 border rounded-lg">
           <HomePrototypeProposal />
         </div>
 
-        <DaText variant="sub-title" className="text-da-gray-dark mt-8">
+        <DaText variant="sub-title" className="text-da-gray-medium mt-8">
           HomePartners
         </DaText>
         <div className="flex w-full mt-2 space-x-4 border rounded-lg">
