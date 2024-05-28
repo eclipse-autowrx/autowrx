@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { DaText } from "../atoms/DaText";
 
 interface DaTablePropertyItemProps {
@@ -21,14 +22,19 @@ const DaTablePropertyItem = ({ property, value }: DaTablePropertyItemProps) => {
 interface DaTablePropertyProps {
   properties: { property: string; value: string }[];
   maxWidth: string;
+  className?: string;
 }
 
 export const DaTableProperty = ({
   properties,
   maxWidth = "500px",
+  className,
 }: DaTablePropertyProps) => {
   return (
-    <div className="p-4 rounded-lg bg-da-white" style={{ maxWidth: maxWidth }}>
+    <div
+      className={cn("rounded-lg bg-da-white", className)}
+      style={{ maxWidth: maxWidth }}
+    >
       {properties.map((item, index) => (
         <DaTablePropertyItem
           key={index}

@@ -27,7 +27,7 @@ const DaItemStandard: React.FC<DaItemStandardProps> = ({
 }) => {
   return (
     <div
-      className="flex w-full p-4 border border-da-gray-medium/10 rounded-lg bg-da-white max-w-lg space-x-4 text-da-gray-medium overflow-hidden"
+      className="flex w-full p-4 border border-da-gray-light rounded-lg bg-da-white max-w-lg space-x-4 text-da-gray-medium overflow-hidden"
       style={{ maxWidth: maxWidth }}
     >
       <DaImageRatio
@@ -40,14 +40,16 @@ const DaItemStandard: React.FC<DaItemStandardProps> = ({
 
       <div className="flex flex-col justify-between overflow-hidden w-ful">
         <div className="flex flex-col space-y-2">
-          <DaText>{title}</DaText>
+          <DaText className="text-da-gray-dark">{title}</DaText>
           <div className="flex items-center space-x-2">
             <DaAvatar
               src={avatarUrl}
               alt="Author"
               className="w-5 h-5 rounded-full"
             />
-            <DaText variant="small">{author}</DaText>
+            <DaText variant="small" className="text-da-gray-">
+              {author}
+            </DaText>
           </div>
           <DaText
             variant="small"
