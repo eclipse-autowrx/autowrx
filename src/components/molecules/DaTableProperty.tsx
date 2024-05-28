@@ -21,7 +21,7 @@ const DaTablePropertyItem = ({ property, value }: DaTablePropertyItemProps) => {
 
 interface DaTablePropertyProps {
   properties: { property: string; value: string }[];
-  maxWidth: string;
+  maxWidth?: string;
   className?: string;
 }
 

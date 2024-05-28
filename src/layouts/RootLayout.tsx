@@ -7,13 +7,13 @@ import { Outlet } from "react-router-dom";
 const RootLayout = () => {
   useSelfProfileQuery();
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col h-screen">
       <ActiveObjectManagement />
       <NavigationBar />
-      <div className="flex flex-col flex-1 justify-between overflow-y-auto">
+      <div className="flex flex-col h-full overflow-y-auto">
         <Outlet />
+        <SiteFooter />
       </div>
-      <SiteFooter />
     </div>
   );
 };

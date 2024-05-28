@@ -10,15 +10,15 @@ const PagePrototypeList = () => {
   const [selectedPrototype, setSelectedPrototype] = useState(prototypes[0]);
 
   return (
-    <div className="grid grid-cols-12">
+    <div className="grid grid-cols-12 h-full">
       <div className="col-span-full h-12 bg-da-primary-100 sticky top-0 z-10"></div>
-      <div className="col-span-5 xl:col-span-4 mt-2">
+      <div className="col-span-5 xl:col-span-4 h-[calc(100%-10px)] overflow-y-auto mt-2">
         <DaInput
           type="text"
           placeholder="Enter to search"
-          className="w-full py-2 px-4"
+          className="w-full py-2 px-4 sticky top-0 !bg-white z-10"
         />
-        <div className="flex flex-col px-4 mt-2 overflow-y-auto max-h-[1000px]">
+        <div className="flex flex-col px-4 mt-2">
           {prototypes.map((prototype, index) => (
             <div
               key={index}
@@ -39,7 +39,7 @@ const PagePrototypeList = () => {
           ))}
           <div className="grow"></div>
         </div>
-        <div className="grid grid-cols-1 2xl:grid-cols-2 mt-2 gap-2 px-4">
+        <div className="grid sticky bottom-0 bg-white grid-cols-1 2xl:grid-cols-2 mt-2 gap-2 px-4 py-1">
           <DaButton variant="outline-nocolor">
             <TbFileImport className="w-5 h-5 mr-2" />
             Import Prototype

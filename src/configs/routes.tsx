@@ -5,6 +5,7 @@ import PageAbout from "@/pages/PageAbout";
 import PageLogin from "@/pages/PageLogin";
 import PageModelList from "@/pages/PageModelList";
 import PageModelDetail from "@/pages/PageModelDetail";
+import PageVehicleApi from "@/pages/PageVehicleApi";
 
 // test-ui
 import PageComponent from "@/pages/test-ui/PageComponent";
@@ -44,6 +45,11 @@ const routesConfig: RouteObject[] = [
     path: "/model/:model_id",
     element: <RootLayout />,
     children: [{ index: true, element: <PageModelDetail /> }],
+  },
+  {
+    path: "/model/:model_id/api",
+    element: <RootLayout />,
+    children: [{ index: true, element: <PageVehicleApi /> }],
   },
   {
     path: "/model/:model_id/prototypes",
