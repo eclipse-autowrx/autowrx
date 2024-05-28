@@ -4,6 +4,7 @@ import ApiList from "@/components/organisms/ApiList";
 import ApiDetail from "@/components/organisms/ApiDetail";
 
 interface Node {
+  api: string;
   datatype?: string;
   description: string;
   type: string;
@@ -20,6 +21,12 @@ interface Cvi {
   Vehicle: Node;
 }
 
+interface ApiItem {
+  api: string;
+  type: string;
+  details: any;
+}
+
 const parseCvi = (cvi: Cvi) => {
   const traverse = (
     node: Node,
@@ -29,6 +36,7 @@ const parseCvi = (cvi: Cvi) => {
     if (node.children) {
       for (const [key, child] of Object.entries(node.children)) {
         const newPrefix = `${prefix}.${key}`;
+        node.children[key].api = newPrefix;
         result.push({ api: newPrefix, type: child.type, details: child });
         result = result.concat(traverse(child, newPrefix));
       }
@@ -39,10 +47,8 @@ const parseCvi = (cvi: Cvi) => {
 };
 
 const PageVehicleApi = () => {
-  const [apiList, setApiList] = useState<
-    { api: string; type: string; details: Node }[]
-  >([]);
-  const [selectedApi, setSelectedApi] = useState<Node | null>(null);
+  const [apiList, setApiList] = useState<ApiItem[]>([]);
+  const [selectedApi, setSelectedApi] = useState<ApiItem | null>(null);
 
   useEffect(() => {
     const cviData: Cvi = JSON.parse(CVI_v4_1);
@@ -51,18 +57,25 @@ const PageVehicleApi = () => {
     console.log("CVI_v4_1", cviData);
   }, []);
 
-  const handleApiClick = (apiDetails: Node) => {
-    console.log("Selected API", apiDetails);
-    setSelectedApi(apiDetails);
-  };
+  // const handleApiClick = (apiDetails: ApiItem) => {
+  //   // console.log("Selected API", apiDetails);
+  //   setSelectedApi(apiDetails);
+  // };
 
   return (
-    <div className="grid grid-cols-12 h-full w-full">
-      <div className="col-span-6 overflow-auto">
-        <ApiList apiList={apiList} onApiClick={handleApiClick} />
-      </div>
-      <div className="col-span-6">
-        {selectedApi && <ApiDetail apiDetails={selectedApi} />}
+    <div className="flex flex-col h-full w-full">
+      <div className="flex w-full h-12 bg-da-primary-100 sticky top-0 z-20 shrink-0"></div>
+      <div className="flex h-full w-full">
+        <div className="flex w-full overflow-auto border-r">
+          <ApiList
+            apiList={apiList}
+            onApiClick={setSelectedApi}
+            selectedApi={selectedApi}
+          />
+        </div>
+        <div className="flex w-full h-full overflow-auto p-4">
+          {selectedApi && <ApiDetail apiDetails={selectedApi} />}
+        </div>
       </div>
     </div>
   );

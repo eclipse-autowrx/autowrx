@@ -1,5 +1,5 @@
 import { DaText } from "@/components/atoms/DaText";
-import { DaApiList } from "@/components/molecules/DaApiList";
+// import { DaApiList } from "@/components/molecules/DaApiList";
 import { DaCardIntro } from "@/components/molecules/DaCardIntro";
 import { DaCardIntroBig } from "@/components/molecules/DaCardIntroBig";
 import { DaItemStandard } from "@/components/molecules/DaItemStandard";
@@ -119,7 +119,7 @@ const PageMolecules = () => {
           DaApiList
         </DaText>
         <div className="flex mt-2 space-x-4 p-4 border rounded-lg">
-          <DaApiList apis={apis} />
+          {/* <DaApiList apis={apis} /> */}
         </div>
       </div>
     </div>

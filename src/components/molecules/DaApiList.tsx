@@ -4,6 +4,7 @@ interface DaApiListItemProps {
   api: string;
   type: string;
   onClick: () => void;
+  isSelected: boolean;
 }
 
 const getTypeClassName = (type: string) => {
@@ -21,20 +22,30 @@ const getTypeClassName = (type: string) => {
   }
 };
 
-const DaApiListItem = ({ api, type, onClick }: DaApiListItemProps) => {
+const DaApiListItem = ({
+  api,
+  type,
+  onClick,
+  isSelected,
+}: DaApiListItemProps) => {
   return (
     <div
-      className="grid grid-cols-4 gap-4 py-2 text-da-gray-medium cursor-pointer"
+      className={`grid grid-cols-4 gap-4 py-1.5 text-da-gray-medium cursor-pointer hover:bg-da-gray-light items-center justify-center px-2 rounded ${
+        isSelected ? "bg-da-gray-light" : ""
+      }`}
       onClick={onClick}
     >
-      <div className="col-span-3">
-        <DaText variant="regular">{api}</DaText>
+      <div className="col-span-3 cursor-pointer">
+        <DaText variant="regular" className="cursor-pointer !text-xs">
+          {api}
+        </DaText>
       </div>
-      <div className="col-span-1 flex justify-end">
+      <div className="col-span-1 flex justify-end cursor-pointer">
         <DaText
           variant="regular-bold"
           className={
-            getTypeClassName(type) + " uppercase !text-xs !font-medium"
+            getTypeClassName(type) +
+            " uppercase !text-[10px] !font-medium cursor-pointer"
           }
         >
           {type}
@@ -47,22 +58,28 @@ const DaApiListItem = ({ api, type, onClick }: DaApiListItemProps) => {
 interface DaApiListProps {
   apis: { api: string; type: string; details: any }[];
   onApiClick: (details: any) => void;
+  selectedApi?: { api: string; type: string; details: any } | null;
   maxWidth?: string;
 }
 
 const DaApiList = ({
   apis,
   onApiClick,
-  maxWidth = "1200px",
+  selectedApi,
+  maxWidth = "1500px",
 }: DaApiListProps) => {
   return (
-    <div className="w-full bg-da-white" style={{ maxWidth: maxWidth }}>
+    <div
+      className="flex flex-col w-full h-full overflow-y-auto bg-da-white"
+      style={{ maxWidth: maxWidth }}
+    >
       {apis.map((item, index) => (
         <DaApiListItem
           key={index}
           api={item.api}
           type={item.type}
           onClick={() => onApiClick(item.details)}
+          isSelected={selectedApi?.api === item.api}
         />
       ))}
     </div>
