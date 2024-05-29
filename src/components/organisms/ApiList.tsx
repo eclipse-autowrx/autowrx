@@ -1,33 +1,33 @@
-import { useState, useEffect, useCallback } from "react";
-import DaApiList from "../molecules/DaApiList";
-import { DaInput } from "../atoms/DaInput";
-import { debounce } from "@/lib/utils";
+import { useState, useEffect, useCallback } from 'react'
+import DaApiList from '../molecules/DaApiList'
+import { DaInput } from '../atoms/DaInput'
+import { debounce } from '@/lib/utils'
 
 interface ApiListProps {
-  apiList: { api: string; type: string; details: any }[];
-  onApiClick: (details: any) => void;
-  selectedApi?: { api: string; type: string; details: any } | null;
+  apiList: { api: string; type: string; details: any }[]
+  onApiClick: (details: any) => void
+  selectedApi?: { api: string; type: string; details: any } | null
 }
 
 const ApiList = ({ apiList, onApiClick, selectedApi }: ApiListProps) => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filteredApiList, setFilteredApiList] = useState(apiList);
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filteredApiList, setFilteredApiList] = useState(apiList)
 
   useEffect(() => {
     setFilteredApiList(
       apiList.filter((apiItem) =>
-        apiItem.api.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    );
-  }, [searchTerm, apiList]);
+        apiItem.api.toLowerCase().includes(searchTerm.toLowerCase()),
+      ),
+    )
+  }, [searchTerm, apiList])
 
   const handleSearchChange = useCallback(
     debounce((term: string) => {
-      setSearchTerm(term);
+      setSearchTerm(term)
       // console.log("searchTerm", term);
     }, 500),
-    []
-  );
+    [],
+  )
 
   // useEffect(() => {
   //   console.log("filteredApiList", filteredApiList);
@@ -48,7 +48,7 @@ const ApiList = ({ apiList, onApiClick, selectedApi }: ApiListProps) => {
         />
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ApiList;
+export default ApiList

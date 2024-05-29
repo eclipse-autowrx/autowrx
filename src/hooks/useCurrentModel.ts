@@ -1,5 +1,5 @@
-import { useParams } from "react-router-dom"
-import useGetModel from "./useGetModel"
+import { useParams } from 'react-router-dom'
+import useGetModel from './useGetModel'
 
 const useCurrentModel = () => {
   const { id } = useParams()

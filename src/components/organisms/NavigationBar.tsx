@@ -1,17 +1,17 @@
-import { useState } from "react";
-import { DaImage } from "../atoms/DaImage";
-import { DaButton } from "../atoms/DaButton";
-import DaMenu from "../atoms/DaMenu";
-import DaNavUser from "../molecules/DaNavUser";
-import { Link } from "react-router-dom";
-import { FaCar } from "react-icons/fa";
-import { FiGrid } from "react-icons/fi";
-import { HiMenu } from "react-icons/hi";
-import useModelStore from "@/stores/modelStore";
-import { Model } from "@/types/model.type";
+import { useState } from 'react'
+import { DaImage } from '../atoms/DaImage'
+import { DaButton } from '../atoms/DaButton'
+import DaMenu from '../atoms/DaMenu'
+import DaNavUser from '../molecules/DaNavUser'
+import { Link } from 'react-router-dom'
+import { FaCar } from 'react-icons/fa'
+import { FiGrid } from 'react-icons/fi'
+import { HiMenu } from 'react-icons/hi'
+import useModelStore from '@/stores/modelStore'
+import { Model } from '@/types/model.type'
 
 const NavigationBar = ({}) => {
-  const [model] = useModelStore((state) => [state.model as Model]);
+  const [model] = useModelStore((state) => [state.model as Model])
 
   return (
     <header className="da-nav-bar ">
@@ -26,14 +26,14 @@ const NavigationBar = ({}) => {
           <div className="flex items-center">
             {model ? (
               <>
-                <FiGrid style={{ transform: "scale(1.5)" }} className="mr-3" />
+                <FiGrid style={{ transform: 'scale(1.5)' }} className="mr-3" />
                 <div className="truncate max-w-[180px]">
-                  {model.name || "no-name"}
+                  {model.name || 'no-name'}
                 </div>
               </>
             ) : (
               <>
-                <FaCar style={{ transform: "scale(1.5)" }} className="mr-3" />
+                <FaCar style={{ transform: 'scale(1.5)' }} className="mr-3" />
                 Select Model
               </>
             )}
@@ -49,7 +49,7 @@ const NavigationBar = ({}) => {
 
       <DaNavUser />
     </header>
-  );
-};
+  )
+}
 
-export { NavigationBar };
+export { NavigationBar }

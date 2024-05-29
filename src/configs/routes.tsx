@@ -1,79 +1,79 @@
-import { RouteObject } from "react-router-dom"
-import RootLayout from "@/layouts/RootLayout"
-import PageHome from "@/pages/PageHome"
-import PageAbout from "@/pages/PageAbout"
-import PageLogin from "@/pages/PageLogin"
-import PageModelList from "@/pages/PageModelList"
-import PageModelDetail from "@/pages/PageModelDetail"
-import PageVehicleApi from "@/pages/PageVehicleApi"
+import { RouteObject } from 'react-router-dom'
+import RootLayout from '@/layouts/RootLayout'
+import PageHome from '@/pages/PageHome'
+import PageAbout from '@/pages/PageAbout'
+import PageLogin from '@/pages/PageLogin'
+import PageModelList from '@/pages/PageModelList'
+import PageModelDetail from '@/pages/PageModelDetail'
+import PageVehicleApi from '@/pages/PageVehicleApi'
 
 // test-ui
-import PageComponent from "@/pages/test-ui/PageComponent"
-import PageMolecules from "@/pages/test-ui/PageMolecules"
-import PageOrganisms from "@/pages/test-ui/PageOrganisms"
-import PageTestHome from "@/pages/test-ui/PageTestHome"
-import PageTestForm from "@/pages/test-ui/PageTestForm"
-import PagePrototypeList from "@/pages/PagePrototypeList"
-import PageResetPassword from "@/pages/PageResetPassword"
+import PageComponent from '@/pages/test-ui/PageComponent'
+import PageMolecules from '@/pages/test-ui/PageMolecules'
+import PageOrganisms from '@/pages/test-ui/PageOrganisms'
+import PageTestHome from '@/pages/test-ui/PageTestHome'
+import PageTestForm from '@/pages/test-ui/PageTestForm'
+import PagePrototypeList from '@/pages/PagePrototypeList'
+import PageResetPassword from '@/pages/PageResetPassword'
 
 const routesConfig: RouteObject[] = [
   {
-    path: "/",
+    path: '/',
     element: <RootLayout />,
     children: [{ index: true, element: <PageHome /> }],
   },
   {
-    path: "/about",
+    path: '/about',
     element: <RootLayout />,
     children: [{ index: true, element: <PageAbout /> }],
   },
   {
-    path: "/reset-password",
+    path: '/reset-password',
     element: <RootLayout />,
     children: [{ index: true, element: <PageResetPassword /> }],
   },
   {
-    path: "/model",
+    path: '/model',
     element: <RootLayout />,
     children: [{ index: true, element: <PageModelList /> }],
   },
   {
-    path: "/model/:model_id",
+    path: '/model/:model_id',
     element: <RootLayout />,
     children: [{ index: true, element: <PageModelDetail /> }],
   },
   {
-    path: "/model/:model_id/api",
+    path: '/model/:model_id/api',
     element: <RootLayout />,
     children: [{ index: true, element: <PageVehicleApi /> }],
   },
   {
-    path: "/model/:model_id/prototypes",
+    path: '/model/:model_id/prototypes',
     element: <RootLayout />,
     children: [{ index: true, element: <PagePrototypeList /> }],
   },
   {
-    path: "/test-ui/forms",
+    path: '/test-ui/forms',
     element: <RootLayout />,
     children: [{ index: true, element: <PageTestForm /> }],
   },
   {
-    path: "/test-ui/home",
+    path: '/test-ui/home',
     element: <RootLayout />,
     children: [{ index: true, element: <PageTestHome /> }],
   },
   {
-    path: "/test-ui/components",
+    path: '/test-ui/components',
     element: <PageComponent />,
     children: [{ index: true, element: <PageComponent /> }],
   },
   {
-    path: "/test-ui/molecules",
+    path: '/test-ui/molecules',
     element: <PageMolecules />,
     children: [{ index: true, element: <PageMolecules /> }],
   },
   {
-    path: "/test-ui/organisms",
+    path: '/test-ui/organisms',
     element: <PageOrganisms />,
     children: [{ index: true, element: <PageOrganisms /> }],
   },

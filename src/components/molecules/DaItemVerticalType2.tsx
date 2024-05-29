@@ -1,21 +1,21 @@
-import * as React from "react";
-import { DaImageRatio } from "../atoms/DaImageRatio";
-import { DaText } from "../atoms/DaText";
-import { DaTag } from "../atoms/DaTag";
+import * as React from 'react'
+import { DaImageRatio } from '../atoms/DaImageRatio'
+import { DaText } from '../atoms/DaText'
+import { DaTag } from '../atoms/DaTag'
 
 interface DaItemVerticalType2Props {
-  title: string;
-  imageUrl: string;
-  tags: string[];
-  maxWidth?: string;
-  onClick?: () => void;
+  title: string
+  imageUrl: string
+  tags: string[]
+  maxWidth?: string
+  onClick?: () => void
 }
 
 const DaItemVerticalType2: React.FC<DaItemVerticalType2Props> = ({
   title,
   imageUrl,
   tags,
-  maxWidth = "500px",
+  maxWidth = '500px',
   onClick,
 }) => {
   return (
@@ -36,13 +36,13 @@ const DaItemVerticalType2: React.FC<DaItemVerticalType2Props> = ({
       />
       <div className="flex space-x-2 pt-2 px-2">
         {tags.map((tag, index) => (
-          <DaTag variant={"secondary"} key={index}>
+          <DaTag variant={'secondary'} key={index}>
             {tag}
           </DaTag>
         ))}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export { DaItemVerticalType2 };
+export { DaItemVerticalType2 }

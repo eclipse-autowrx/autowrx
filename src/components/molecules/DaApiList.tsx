@@ -1,26 +1,26 @@
-import { DaText } from "../atoms/DaText";
+import { DaText } from '../atoms/DaText'
 
 interface DaApiListItemProps {
-  api: string;
-  type: string;
-  onClick: () => void;
-  isSelected: boolean;
+  api: string
+  type: string
+  onClick: () => void
+  isSelected: boolean
 }
 
 const getTypeClassName = (type: string) => {
   switch (type) {
-    case "branch":
-      return "text-purple-500";
-    case "actuator":
-      return "text-yellow-500";
-    case "sensor":
-      return "text-emerald-500";
-    case "attribute":
-      return "text-sky-500";
+    case 'branch':
+      return 'text-purple-500'
+    case 'actuator':
+      return 'text-yellow-500'
+    case 'sensor':
+      return 'text-emerald-500'
+    case 'attribute':
+      return 'text-sky-500'
     default:
-      return "text-da-gray-medium";
+      return 'text-da-gray-medium'
   }
-};
+}
 
 const DaApiListItem = ({
   api,
@@ -31,7 +31,7 @@ const DaApiListItem = ({
   return (
     <div
       className={`grid grid-cols-4 gap-4 py-1.5 text-da-gray-medium cursor-pointer hover:bg-da-gray-light items-center justify-center px-2 rounded ${
-        isSelected ? "bg-da-gray-light" : ""
+        isSelected ? 'bg-da-gray-light' : ''
       }`}
       onClick={onClick}
     >
@@ -45,28 +45,28 @@ const DaApiListItem = ({
           variant="regular-bold"
           className={
             getTypeClassName(type) +
-            " uppercase !text-[10px] !font-medium cursor-pointer"
+            ' uppercase !text-[10px] !font-medium cursor-pointer'
           }
         >
           {type}
         </DaText>
       </div>
     </div>
-  );
-};
+  )
+}
 
 interface DaApiListProps {
-  apis: { api: string; type: string; details: any }[];
-  onApiClick: (details: any) => void;
-  selectedApi?: { api: string; type: string; details: any } | null;
-  maxWidth?: string;
+  apis: { api: string; type: string; details: any }[]
+  onApiClick: (details: any) => void
+  selectedApi?: { api: string; type: string; details: any } | null
+  maxWidth?: string
 }
 
 const DaApiList = ({
   apis,
   onApiClick,
   selectedApi,
-  maxWidth = "1500px",
+  maxWidth = '1500px',
 }: DaApiListProps) => {
   return (
     <div
@@ -83,7 +83,7 @@ const DaApiList = ({
         />
       ))}
     </div>
-  );
-};
+  )
+}
 
-export default DaApiList;
+export default DaApiList

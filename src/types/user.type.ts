@@ -12,7 +12,7 @@ interface UserInfo {
 export interface User extends Document {
   name: string
   email: string
-  role: "admin" | "user"
+  role: 'admin' | 'user'
   roles: Roles
   emailVerified: boolean
   isSystemAdmin: boolean

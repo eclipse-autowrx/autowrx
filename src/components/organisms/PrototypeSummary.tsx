@@ -1,18 +1,18 @@
-import { DaText } from "../atoms/DaText";
-import { DaImage } from "../atoms/DaImage";
-import { DaTag } from "../atoms/DaTag";
-import { DaTableProperty } from "../molecules/DaTableProperty";
-import { DaAvatar } from "../atoms/DaAvatar";
-import { DaButton } from "../atoms/DaButton";
-import { TbArrowRight } from "react-icons/tb";
+import { DaText } from '../atoms/DaText'
+import { DaImage } from '../atoms/DaImage'
+import { DaTag } from '../atoms/DaTag'
+import { DaTableProperty } from '../molecules/DaTableProperty'
+import { DaAvatar } from '../atoms/DaAvatar'
+import { DaButton } from '../atoms/DaButton'
+import { TbArrowRight } from 'react-icons/tb'
 
 interface PrototypeSummaryProps {
-  prototypeName: string;
-  prototypeAuthorName: string;
-  prototypeTags: string[];
-  prototypeProperties: { property: string; value: string }[];
-  prototypeImageUrl: string;
-  prototypeAuthorAvatarUrl: string;
+  prototypeName: string
+  prototypeAuthorName: string
+  prototypeTags: string[]
+  prototypeProperties: { property: string; value: string }[]
+  prototypeImageUrl: string
+  prototypeAuthorAvatarUrl: string
 }
 
 const PrototypeSummary = ({
@@ -50,7 +50,7 @@ const PrototypeSummary = ({
 
         <div className="flex flex-wrap mt-4">
           {prototypeTags.map((tag) => (
-            <DaTag variant={"secondary"} className="mr-2 mb-2">
+            <DaTag variant={'secondary'} className="mr-2 mb-2">
               {tag}
             </DaTag>
           ))}
@@ -63,7 +63,7 @@ const PrototypeSummary = ({
         />
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default PrototypeSummary;
+export default PrototypeSummary
