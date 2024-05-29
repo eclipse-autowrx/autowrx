@@ -6,6 +6,7 @@ import PageLogin from '@/pages/PageLogin'
 import PageModelList from '@/pages/PageModelList'
 import PageModelDetail from '@/pages/PageModelDetail'
 import PageVehicleApi from '@/pages/PageVehicleApi'
+import PagePrototypeDetail from '@/pages/PagePrototypeDetail'
 
 // test-ui
 import PageComponent from '@/pages/test-ui/PageComponent'
@@ -39,6 +40,7 @@ const routesConfig: RouteObject[] = [
       { index: true, element: <PageModelList /> },
       { path: ":model_id", element: <PageModelDetail /> },
       { path: ":model_id/library", element: <PagePrototypeList /> },
+      { path: ":model_id/api", element: <PageVehicleApi /> },
       { path: ":model_id/library/prototype/:prototype_id/view", element: <PagePrototypeDetail /> }
     ],
   },
