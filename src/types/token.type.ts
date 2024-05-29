@@ -1,9 +1,9 @@
 export type Token = {
-    token: string
-    expires: Date
+  token: string
+  expires: Date
 }
 
 export type AuthToken = {
-    access: Token,
-    tokens: any
+  access: Token
+  tokens: any
 }

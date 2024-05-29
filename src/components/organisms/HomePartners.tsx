@@ -1,10 +1,10 @@
-import { FC } from "react";
-import { DaText } from "../atoms/DaText";
-import { DaImage } from "../atoms/DaImage";
-import { useParnerList } from "@/hooks/useInstanceCfg";
+import { FC } from 'react'
+import { DaText } from '../atoms/DaText'
+import { DaImage } from '../atoms/DaImage'
+import { useParnerList } from '@/hooks/useInstanceCfg'
 
 const HomePartners: FC = () => {
-  const partners = useParnerList();
+  const partners = useParnerList()
   return (
     <div className="flex flex-col items-center w-full pb-10 mt-12">
       <DaText variant="sub-title" className="text-da-gray-medium">
@@ -34,7 +34,7 @@ const HomePartners: FC = () => {
         ))}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export { HomePartners };
+export { HomePartners }

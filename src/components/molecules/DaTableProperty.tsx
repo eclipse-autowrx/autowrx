@@ -1,9 +1,9 @@
-import { cn } from "@/lib/utils";
-import { DaText } from "../atoms/DaText";
+import { cn } from '@/lib/utils'
+import { DaText } from '../atoms/DaText'
 
 interface DaTablePropertyItemProps {
-  property: string;
-  value: string;
+  property: string
+  value: string
 }
 
 const DaTablePropertyItem = ({ property, value }: DaTablePropertyItemProps) => {
@@ -20,23 +20,23 @@ const DaTablePropertyItem = ({ property, value }: DaTablePropertyItemProps) => {
         </DaText>
       </div>
     </div>
-  );
-};
+  )
+}
 
 interface DaTablePropertyProps {
-  properties: { property: string; value: string }[];
-  maxWidth?: string;
-  className?: string;
+  properties: { property: string; value: string }[]
+  maxWidth?: string
+  className?: string
 }
 
 export const DaTableProperty = ({
   properties,
-  maxWidth = "1500px",
+  maxWidth = '1500px',
   className,
 }: DaTablePropertyProps) => {
   return (
     <div
-      className={cn("rounded-lg bg-da-white", className)}
+      className={cn('rounded-lg bg-da-white', className)}
       style={{ maxWidth: maxWidth }}
     >
       {properties.map((item, index) => (
@@ -47,5 +47,5 @@ export const DaTableProperty = ({
         />
       ))}
     </div>
-  );
-};
+  )
+}

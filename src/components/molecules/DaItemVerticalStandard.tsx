@@ -1,19 +1,19 @@
-import * as React from "react";
-import { DaImageRatio } from "../atoms/DaImageRatio";
-import { DaText } from "../atoms/DaText";
+import * as React from 'react'
+import { DaImageRatio } from '../atoms/DaImageRatio'
+import { DaText } from '../atoms/DaText'
 
 interface DaItemVerticalStandardProps {
-  title: string;
-  content: string;
-  imageUrl: string;
-  maxWidth?: string;
+  title: string
+  content: string
+  imageUrl: string
+  maxWidth?: string
 }
 
 const DaItemVerticalStandard: React.FC<DaItemVerticalStandardProps> = ({
   title,
   content,
   imageUrl,
-  maxWidth = "500px",
+  maxWidth = '500px',
 }) => {
   return (
     <div className="p-2 border border-transparent hover:border-da-gray-light bg-da-white rounded-lg cursor-pointer">
@@ -41,7 +41,7 @@ const DaItemVerticalStandard: React.FC<DaItemVerticalStandardProps> = ({
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export { DaItemVerticalStandard };
+export { DaItemVerticalStandard }

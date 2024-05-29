@@ -1,10 +1,10 @@
-import { ModelGrid } from "@/components/organisms/ModelGrid";
-import { DaText } from "@/components/atoms/DaText";
-import { DaButton } from "@/components/atoms/DaButton";
-import { HiPlus } from "react-icons/hi";
-import DaPopup from "@/components/atoms/DaPopup";
-import { Form } from "react-router-dom";
-import FormCreateModel from "@/components/molecules/forms/FormCreateModel";
+import { ModelGrid } from '@/components/organisms/ModelGrid'
+import { DaText } from '@/components/atoms/DaText'
+import { DaButton } from '@/components/atoms/DaButton'
+import { HiPlus } from 'react-icons/hi'
+import DaPopup from '@/components/atoms/DaPopup'
+import { Form } from 'react-router-dom'
+import FormCreateModel from '@/components/molecules/forms/FormCreateModel'
 
 const PageModelList = () => {
   return (
@@ -28,7 +28,7 @@ const PageModelList = () => {
 
       <ModelGrid />
     </div>
-  );
-};
+  )
+}
 
-export default PageModelList;
+export default PageModelList

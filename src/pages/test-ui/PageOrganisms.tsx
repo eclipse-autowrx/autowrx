@@ -1,8 +1,8 @@
-import { HomeIntroBlock } from "@/components/organisms/HomeIntroBlock";
-import { HomePrototypeProposal } from "@/components/organisms/HomePrototypeProposal";
-import { DaText } from "@/components/atoms/DaText";
-import { HomePartners } from "@/components/organisms/HomePartners";
-import PrototypeSummary from "@/components/organisms/PrototypeSummary";
+import { HomeIntroBlock } from '@/components/organisms/HomeIntroBlock'
+import { HomePrototypeProposal } from '@/components/organisms/HomePrototypeProposal'
+import { DaText } from '@/components/atoms/DaText'
+import { HomePartners } from '@/components/organisms/HomePartners'
+import PrototypeSummary from '@/components/organisms/PrototypeSummary'
 
 const PageOrganisms = () => {
   return (
@@ -17,11 +17,11 @@ const PageOrganisms = () => {
             prototypeImageUrl="https://firebasestorage.googleapis.com/v0/b/digital-auto.appspot.com/o/media%2Fshutterstock_2076658843O_mod.jpg?alt=media&token=b0018688-29b1-4df1-a633-85bbff84a52e"
             prototypeAuthorAvatarUrl="https://avatars.githubusercontent.com/u/115630638?v=4"
             prototypeAuthorName="John Doe"
-            prototypeTags={["tag1", "tag2", "tag3"]}
+            prototypeTags={['tag1', 'tag2', 'tag3']}
             prototypeProperties={[
-              { property: "property1", value: "value1" },
-              { property: "property2", value: "value2" },
-              { property: "property3", value: "value3" },
+              { property: 'property1', value: 'value1' },
+              { property: 'property2', value: 'value2' },
+              { property: 'property3', value: 'value3' },
             ]}
           />
         </div>
@@ -47,7 +47,7 @@ const PageOrganisms = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default PageOrganisms;
+export default PageOrganisms

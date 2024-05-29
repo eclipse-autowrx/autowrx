@@ -1,9 +1,9 @@
-import { DaButton } from "@/components/atoms/DaButton";
-import { DaText } from "@/components/atoms/DaText";
-import { DaInput } from "@/components/atoms/DaInput";
-import { DaTag } from "@/components/atoms/DaTag";
-import { DaImageRatio } from "@/components/atoms/DaImageRatio";
-import { DaAvatar } from "@/components/atoms/DaAvatar";
+import { DaButton } from '@/components/atoms/DaButton'
+import { DaText } from '@/components/atoms/DaText'
+import { DaInput } from '@/components/atoms/DaInput'
+import { DaTag } from '@/components/atoms/DaTag'
+import { DaImageRatio } from '@/components/atoms/DaImageRatio'
+import { DaAvatar } from '@/components/atoms/DaAvatar'
 
 const PageHome = () => {
   return (
@@ -12,7 +12,7 @@ const PageHome = () => {
         <div className="mt-4 flex space-x-4 p-4 border rounded-lg">
           <DaButton
             onClick={() => {
-              console.log("Btn default clicked");
+              console.log('Btn default clicked')
             }}
           >
             Default
@@ -89,9 +89,9 @@ const PageHome = () => {
           <DaTag variant="secondary">Secondary Tag</DaTag>
         </div>
         <div className="flex col-span-full space-x-4 p-4 border rounded-lg">
-          <DaImageRatio src="/imgs/1.jpg" maxWidth={"400px"} ratio={16 / 9} />
-          <DaImageRatio src="/imgs/2.jpg" maxWidth={"400px"} ratio={16 / 9} />
-          <DaImageRatio src="/imgs/3.jpg" maxWidth={"400px"} ratio={16 / 9} />
+          <DaImageRatio src="/imgs/1.jpg" maxWidth={'400px'} ratio={16 / 9} />
+          <DaImageRatio src="/imgs/2.jpg" maxWidth={'400px'} ratio={16 / 9} />
+          <DaImageRatio src="/imgs/3.jpg" maxWidth={'400px'} ratio={16 / 9} />
         </div>
         <div className="flex col-span-full space-x-4 p-4 border rounded-lg">
           <DaAvatar src="/imgs/1.jpg" />
@@ -140,7 +140,7 @@ const PageHome = () => {
         </div> */}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default PageHome;
+export default PageHome

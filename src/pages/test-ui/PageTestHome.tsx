@@ -1,10 +1,10 @@
-import { HomeIntroBlock } from "@/components/organisms/HomeIntroBlock";
-import { HomePrototypeProposal } from "@/components/organisms/HomePrototypeProposal";
-import { cn } from "@/lib/utils";
-import { DaButton } from "@/components/atoms/DaButton";
-import { TbExternalLink } from "react-icons/tb";
-import { DaText } from "@/components/atoms/DaText";
-import { HomePartners } from "@/components/organisms/HomePartners";
+import { HomeIntroBlock } from '@/components/organisms/HomeIntroBlock'
+import { HomePrototypeProposal } from '@/components/organisms/HomePrototypeProposal'
+import { cn } from '@/lib/utils'
+import { DaButton } from '@/components/atoms/DaButton'
+import { TbExternalLink } from 'react-icons/tb'
+import { DaText } from '@/components/atoms/DaText'
+import { HomePartners } from '@/components/organisms/HomePartners'
 
 const PageHome = () => {
   return (
@@ -12,15 +12,15 @@ const PageHome = () => {
       <div className="flex col-span-12 relative min-h-[400px] max-h-[400px] w-full justify-between  scale z-10 overflow-hidden">
         <div
           className={cn(
-            "absolute top-0 left-0 w-full h-full bg-gradient-to-r z-0",
-            "from-da-gradient-from to-da-gradient-to"
+            'absolute top-0 left-0 w-full h-full bg-gradient-to-r z-0',
+            'from-da-gradient-from to-da-gradient-to',
           )}
         ></div>
 
         <div
           className={cn(
-            "absolute top-0 left-0 w-full h-full bg-gradient-to-r z-10 opacity-80",
-            "from-da-gradient-from to-da-gradient-to"
+            'absolute top-0 left-0 w-full h-full bg-gradient-to-r z-10 opacity-80',
+            'from-da-gradient-from to-da-gradient-to',
           )}
         ></div>
 
@@ -70,7 +70,7 @@ const PageHome = () => {
           <DaButton
             className="border border-white rounded-lg text-white py-2 my-4 px-4"
             onClick={() => {
-              window.open("https://www.digital.auto/", "_blank");
+              window.open('https://www.digital.auto/', '_blank')
             }}
           >
             <TbExternalLink className="mr-2" /> About digital.auto
@@ -82,7 +82,7 @@ const PageHome = () => {
         <HomePartners />
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default PageHome;
+export default PageHome

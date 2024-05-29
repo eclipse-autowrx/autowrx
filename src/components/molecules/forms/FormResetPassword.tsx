@@ -1,20 +1,21 @@
-import { DaButton } from "@/components/atoms/DaButton"
-import { DaInput } from "@/components/atoms/DaInput"
-import { DaText } from "@/components/atoms/DaText"
-import { resetPasswordService } from "@/services/auth.service"
-import { isAxiosError } from "axios"
-import { useState } from "react"
-import { TbCircleCheckFilled, TbLoader, TbLock } from "react-icons/tb"
-import { Link } from "react-router-dom"
+import { DaButton } from '@/components/atoms/DaButton'
+import { DaInput } from '@/components/atoms/DaInput'
+import { DaText } from '@/components/atoms/DaText'
+import { resetPasswordService } from '@/services/auth.service'
+import { isAxiosError } from 'axios'
+import { useState } from 'react'
+import { TbCircleCheckFilled, TbLoader, TbLock } from 'react-icons/tb'
+import { Link } from 'react-router-dom'
 
 const FormResetPassword = () => {
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string>("")
+  const [error, setError] = useState<string>('')
   const [changed, setChanged] = useState(false)
 
   const validate = (password: string, confirmPassword: string) => {
     const errors = []
-    if (password !== confirmPassword) errors.push('"password" and "confirm password" must be the same')
+    if (password !== confirmPassword)
+      errors.push('"password" and "confirm password" must be the same')
     return errors
   }
 
@@ -22,34 +23,37 @@ const FormResetPassword = () => {
     e.preventDefault()
     try {
       setLoading(true)
-      const [password, confirmPassword] = [e.currentTarget.password.value, e.currentTarget.confirmPassword.value]
+      const [password, confirmPassword] = [
+        e.currentTarget.password.value,
+        e.currentTarget.confirmPassword.value,
+      ]
       const results = validate(password, confirmPassword)
       if (results.length > 0) {
-        setError(results.join(", "))
+        setError(results.join(', '))
         return
       }
 
-      const token = new URLSearchParams(window.location.search).get("token")
+      const token = new URLSearchParams(window.location.search).get('token')
       if (!token) {
-        setError("Token not found")
+        setError('Token not found')
         return
       }
 
       await resetPasswordService(password, token)
       setChanged(true)
-      setError("")
+      setError('')
       await new Promise(() =>
         setTimeout(() => {
           // eslint-disable-next-line no-self-assign
-          window.location.href = "/"
-        }, 3000)
+          window.location.href = '/'
+        }, 3000),
       )
     } catch (error) {
       if (isAxiosError(error)) {
-        setError(error.response?.data.message || "Something went wrong")
+        setError(error.response?.data.message || 'Something went wrong')
         return
       }
-      setError("Something went wrong")
+      setError('Something went wrong')
     } finally {
       setLoading(false)
     }
@@ -58,59 +62,68 @@ const FormResetPassword = () => {
   return (
     <form
       onSubmit={resetPassword}
-      className='w-[400px] min-w-[400px] min-h-[300px] block px-2 md:px-6 py-2 bg-da-white'
+      className="w-[400px] min-w-[400px] min-h-[300px] block px-2 md:px-6 py-2 bg-da-white"
     >
       {/* Title */}
-      <DaText variant='title' className='text-da-primary-500'>
+      <DaText variant="title" className="text-da-primary-500">
         Reset Password
       </DaText>
 
       {changed ? (
         <>
-          <DaText className='block mt-4'>Reset password success! Please login with your new password.</DaText>
-          <TbCircleCheckFilled className='text-8xl text-green-500 mx-auto mt-10' />
+          <DaText className="block mt-4">
+            Reset password success! Please login with your new password.
+          </DaText>
+          <TbCircleCheckFilled className="text-8xl text-green-500 mx-auto mt-10" />
         </>
       ) : (
         <>
           {/* Content */}
           <DaInput
-            name='password'
-            placeholder='Password'
-            label='Password'
-            className='mt-4'
+            name="password"
+            placeholder="Password"
+            label="Password"
+            className="mt-4"
             Icon={TbLock}
             iconBefore
-            type='password'
+            type="password"
             iconSize={18}
           />
 
           <DaInput
-            name='confirmPassword'
-            placeholder='Confirm password'
-            label='Confirm password'
-            className='mt-4'
+            name="confirmPassword"
+            placeholder="Confirm password"
+            label="Confirm password"
+            className="mt-4"
             Icon={TbLock}
             iconBefore
-            type='password'
+            type="password"
             iconSize={18}
           />
 
           {/* Error */}
           {error && (
-            <DaText variant='small' className='mt-2 block text-da-accent-500'>
+            <DaText variant="small" className="mt-2 block text-da-accent-500">
               {error}
             </DaText>
           )}
           {/* Action */}
-          <DaButton disabled={loading} type='submit' variant='gradient' className='w-full mt-6'>
-            {loading && <TbLoader className='animate-spin text-lg mr-2' />}
+          <DaButton
+            disabled={loading}
+            type="submit"
+            variant="gradient"
+            className="w-full mt-6"
+          >
+            {loading && <TbLoader className="animate-spin text-lg mr-2" />}
             Reset Password
           </DaButton>
 
           {/* More */}
-          <div className='mt-4 flex items-center'>
-            <Link to='/' className='cursor-pointer'>
-              <DaText className='text-da-primary-500 cursor-pointer'>Go Home</DaText>
+          <div className="mt-4 flex items-center">
+            <Link to="/" className="cursor-pointer">
+              <DaText className="text-da-primary-500 cursor-pointer">
+                Go Home
+              </DaText>
             </Link>
           </div>
         </>

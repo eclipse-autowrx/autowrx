@@ -1,18 +1,18 @@
-import * as React from "react";
-import { DaImageRatio } from "../atoms/DaImageRatio";
-import { DaTag } from "../atoms/DaTag";
-import { DaText } from "../atoms/DaText";
-import { DaAvatar } from "../atoms/DaAvatar";
+import * as React from 'react'
+import { DaImageRatio } from '../atoms/DaImageRatio'
+import { DaTag } from '../atoms/DaTag'
+import { DaText } from '../atoms/DaText'
+import { DaAvatar } from '../atoms/DaAvatar'
 
 interface DaItemStandardProps {
-  title: string;
-  author: string;
-  content: string;
-  tags: string[];
-  imageUrl: string;
-  avatarUrl: string;
-  maxWidth?: string;
-  imageMaxWidth?: string;
+  title: string
+  author: string
+  content: string
+  tags: string[]
+  imageUrl: string
+  avatarUrl: string
+  maxWidth?: string
+  imageMaxWidth?: string
 }
 
 const DaItemStandard: React.FC<DaItemStandardProps> = ({
@@ -22,8 +22,8 @@ const DaItemStandard: React.FC<DaItemStandardProps> = ({
   tags,
   imageUrl,
   avatarUrl,
-  maxWidth = "500px",
-  imageMaxWidth = "300px",
+  maxWidth = '500px',
+  imageMaxWidth = '300px',
 }) => {
   return (
     <div
@@ -60,14 +60,14 @@ const DaItemStandard: React.FC<DaItemStandardProps> = ({
         </div>
         <div className="flex space-x-2">
           {tags.map((tag, index) => (
-            <DaTag variant={"secondary"} key={index}>
+            <DaTag variant={'secondary'} key={index}>
               {tag}
             </DaTag>
           ))}
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export { DaItemStandard };
+export { DaItemStandard }

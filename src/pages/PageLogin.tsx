@@ -1,31 +1,31 @@
-import { DaButton } from "@/components/atoms/DaButton";
-import { loginService } from "@/services/auth.service";
-import useAuthStore from "@/stores/authStore";
-import { isAxiosError } from "axios";
-import { useState } from "react";
-import { shallow } from "zustand/shallow";
+import { DaButton } from '@/components/atoms/DaButton'
+import { loginService } from '@/services/auth.service'
+import useAuthStore from '@/stores/authStore'
+import { isAxiosError } from 'axios'
+import { useState } from 'react'
+import { shallow } from 'zustand/shallow'
 
 const PageLogin = () => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
   const [access, setAccess, logOut] = useAuthStore(
     (state) => [state.access, state.setAccess, state.logOut],
-    shallow
-  );
+    shallow,
+  )
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     try {
-      const response = await loginService(username, password);
-      setAccess(response.tokens.access);
+      const response = await loginService(username, password)
+      setAccess(response.tokens.access)
     } catch (error) {
       if (isAxiosError(error)) {
-        console.error(error.response?.data.message || "An error occurred");
+        console.error(error.response?.data.message || 'An error occurred')
       } else {
-        console.error("An error occurred");
+        console.error('An error occurred')
       }
     }
-  };
+  }
 
   if (access) {
     return (
@@ -33,7 +33,7 @@ const PageLogin = () => {
         Logged in
         {/* <DaButton onClick={logOut}>Log out</DaButton> */}
       </div>
-    );
+    )
   }
 
   return (
@@ -62,7 +62,7 @@ const PageLogin = () => {
         <DaButton className="w-40 mt-5">Login</DaButton>
       </form>
     </div>
-  );
-};
+  )
+}
 
-export default PageLogin;
+export default PageLogin

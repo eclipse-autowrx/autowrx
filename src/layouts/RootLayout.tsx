@@ -1,11 +1,11 @@
-import ActiveObjectManagement from "@/components/organisms/ActiveObjectManagement";
-import { NavigationBar } from "@/components/organisms/NavigationBar";
-import { SiteFooter } from "@/components/organisms/SiteFooter";
-import useSelfProfileQuery from "@/hooks/useSelfProfile";
-import { Outlet } from "react-router-dom";
+import ActiveObjectManagement from '@/components/organisms/ActiveObjectManagement'
+import { NavigationBar } from '@/components/organisms/NavigationBar'
+import { SiteFooter } from '@/components/organisms/SiteFooter'
+import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { Outlet } from 'react-router-dom'
 
 const RootLayout = () => {
-  useSelfProfileQuery();
+  useSelfProfileQuery()
   return (
     <div className="flex flex-col h-screen">
       <ActiveObjectManagement />
@@ -15,7 +15,7 @@ const RootLayout = () => {
         <SiteFooter />
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default RootLayout;
+export default RootLayout

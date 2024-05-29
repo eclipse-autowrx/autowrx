@@ -1,13 +1,13 @@
-import { useState } from "react";
-import PrototypeSummary from "@/components/organisms/PrototypeSummary";
-import { DaInput } from "@/components/atoms/DaInput";
-import { DaItemStandard } from "@/components/molecules/DaItemStandard";
-import { prototypes } from "@/data/models_mock";
-import { DaButton } from "@/components/atoms/DaButton";
-import { TbFileImport, TbPlus } from "react-icons/tb";
+import { useState } from 'react'
+import PrototypeSummary from '@/components/organisms/PrototypeSummary'
+import { DaInput } from '@/components/atoms/DaInput'
+import { DaItemStandard } from '@/components/molecules/DaItemStandard'
+import { prototypes } from '@/data/models_mock'
+import { DaButton } from '@/components/atoms/DaButton'
+import { TbFileImport, TbPlus } from 'react-icons/tb'
 
 const PagePrototypeList = () => {
-  const [selectedPrototype, setSelectedPrototype] = useState(prototypes[0]);
+  const [selectedPrototype, setSelectedPrototype] = useState(prototypes[0])
 
   return (
     <div className="grid grid-cols-12 h-full">
@@ -27,7 +27,7 @@ const PagePrototypeList = () => {
             >
               <DaItemStandard
                 title={prototype.name}
-                author={"John Doe"}
+                author={'John Doe'}
                 content={prototype.description.problems}
                 tags={prototype.tags}
                 imageUrl={prototype.image_file}
@@ -57,31 +57,31 @@ const PagePrototypeList = () => {
             prototypeImageUrl={selectedPrototype.image_file}
             prototypeAuthorAvatarUrl="https://avatars.githubusercontent.com/u/115630638?v=4"
             prototypeAuthorName="John Doe"
-            prototypeTags={["tag1", "tag2", "tag3"]}
+            prototypeTags={['tag1', 'tag2', 'tag3']}
             prototypeProperties={[
               {
-                property: "Problem",
+                property: 'Problem',
                 value: selectedPrototype.description.problems,
               },
               {
-                property: "Says who?",
+                property: 'Says who?',
                 value: selectedPrototype.description.says_who,
               },
               {
-                property: "Solution",
+                property: 'Solution',
                 value: selectedPrototype.description.solution,
               },
               {
-                property: "Status",
+                property: 'Status',
                 value: selectedPrototype.description.status,
               },
-              { property: "Complexity", value: "5" },
+              { property: 'Complexity', value: '5' },
             ]}
           />
         )}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default PagePrototypeList;
+export default PagePrototypeList
