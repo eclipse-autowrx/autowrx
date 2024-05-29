@@ -12,8 +12,8 @@ const RootLayout = () => {
       <NavigationBar />
       <div className="flex flex-col h-full overflow-y-auto">
         <Outlet />
-        <SiteFooter />
       </div>
+      <SiteFooter />
     </div>
   )
 }
