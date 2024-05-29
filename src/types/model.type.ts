@@ -23,13 +23,33 @@ export type Model = {
   name: string
   visibility: 'public' | 'private'
   vehicle_category: string
-  property?: string
+  property: {
+    [key: string]: string | number | undefined
+  }
   created_by: string
   created_at?: Date
   skeleton?: string
   tags?: Tag[]
 }
 
+export type Prototype = {
+  id: string
+  apis: any
+  model_id: string
+  name: string
+  code: string
+  complexity_level: string
+  customer_journey: string
+  portfolio: any
+  skeleton: any
+  state: string
+  widget_config: string
+  image_file: string
+  created_by: string
+  description: any
+  created_at?: Date
+  tags?: Tag[]
+}
 export type ModelCreate = {
   name: string
   cvi: string

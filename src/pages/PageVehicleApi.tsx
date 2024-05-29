@@ -63,21 +63,18 @@ const PageVehicleApi = () => {
   // };
 
   return (
-    <div className="flex flex-col h-full w-full">
-      <div className="flex w-full h-12 bg-da-primary-100 sticky top-0 z-20 shrink-0"></div>
-      <div className="flex h-full w-full">
-        <div className="flex w-full overflow-auto border-r">
-          <ApiList
-            apiList={apiList}
-            onApiClick={setSelectedApi}
-            selectedApi={selectedApi}
-          />
-        </div>
-        <div className="flex w-full h-full overflow-auto p-4">
-          {selectedApi && <ApiDetail apiDetails={selectedApi} />}
-        </div>
+    <>
+      <div className="flex col-span-6  w-full overflow-auto border-r">
+        <ApiList
+          apiList={apiList}
+          onApiClick={setSelectedApi}
+          selectedApi={selectedApi}
+        />
       </div>
-    </div>
+      <div className="flex col-span-6 w-full h-full overflow-auto">
+        {selectedApi && <ApiDetail apiDetails={selectedApi} />}
+      </div>
+    </>
   )
 }
 

@@ -10,8 +10,16 @@ export const models = [
     tenant_id: 'tenant_123',
     vehicle_category: 'Sedan',
     created_by: 'creator_1',
-    created_at: new Date(),
+    created_at: 'new Date()',
     tags: [{ tag: 'EV Car' }],
+    property: {
+      'Number of cylinders': 6,
+      'Power (kW)': '283 kW',
+      Length: '4.519 mm',
+      Width: '1.852 mm',
+      Height: '1.298 mm',
+      'Maximum Load': '455 kg',
+    },
   },
   {
     id: '1232',
@@ -265,94 +273,6 @@ export const prototypes = [
       problems: 'Passenger feels dizzy during the ride.',
       says_who: 'Passenger',
       solution: 'Adjust settings to reduce dizziness using AI.',
-      status: 'In Development',
-    },
-  },
-  {
-    id: '84bhjfeh-e8fegd-efgieu3',
-    apis: {
-      VSC: [],
-      VSS: [],
-    },
-    code: 'from sdv_model import Vehicle import plugins from browser import aio vehicle = Vehicle() # write your code here',
-    complexity_level: 3,
-    customer_journey:
-      ' #Step 1 Who: Driver/Passenger What: Opens car door Customer TouchPoints: Car door handle #Step 2 Who: System What: Opens door automatically Customer TouchPoints: Vehicle system',
-    image_file:
-      "https://firebasestorage.googleapis.com/v0/b/digital-auto.appspot.com/o/media%2FDALL%C2%B7E%202024-01-18%2011.02.32%20-%20A%20professional%20demonstration%20image%20of%20a%20vehicle's%20auto-door%20opening%20feature%20in%20a%20minimalistic%20style.%20The%20scene%20shows%20a%20regular%20car%20with%20the%20driver's%20s.png?alt=media&token=13df7bff-f0ea-4ccf-b802-61bf2daf6e7f",
-    model_id: '1234',
-    name: 'Smart Door',
-    portfolio: {
-      effort_estimation: 0,
-      needs_addressed: 0,
-      relevance: 0,
-    },
-    skeleton: '',
-    state: 'development',
-    tags: [],
-    widget_config: '',
-    description: {
-      problems: 'Manual opening of car doors is inconvenient.',
-      says_who: 'Driver/Passenger',
-      solution: 'Automatically open car doors when the handle is touched.',
-      status: 'In Development',
-    },
-  },
-  {
-    apis: {
-      VSC: [],
-      VSS: [],
-    },
-    code: 'from sdv_model import Vehicle import plugins from browser import aio vehicle = Vehicle() # write your code here',
-    complexity_level: 3,
-    customer_journey:
-      ' #Step 1 Who: Driver/Passenger What: Opens car door Customer TouchPoints: Car door handle #Step 2 Who: System What: Opens door automatically Customer TouchPoints: Vehicle system',
-    image_file:
-      "https://firebasestorage.googleapis.com/v0/b/digital-auto.appspot.com/o/media%2FDALL%C2%B7E%202024-01-18%2011.02.32%20-%20A%20professional%20demonstration%20image%20of%20a%20vehicle's%20auto-door%20opening%20feature%20in%20a%20minimalistic%20style.%20The%20scene%20shows%20a%20regular%20car%20with%20the%20driver's%20s.png?alt=media&token=13df7bff-f0ea-4ccf-b802-61bf2daf6e7f",
-    model_id: '1234',
-    name: 'Smart Door',
-    portfolio: {
-      effort_estimation: 0,
-      needs_addressed: 0,
-      relevance: 0,
-    },
-    skeleton: '',
-    state: 'development',
-    tags: [],
-    widget_config: '',
-    description: {
-      problems: 'Manual opening of car doors is inconvenient.',
-      says_who: 'Driver/Passenger',
-      solution: 'Automatically open car doors when the handle is touched.',
-      status: 'In Development',
-    },
-  },
-  {
-    apis: {
-      VSC: [],
-      VSS: [],
-    },
-    code: 'from sdv_model import Vehicle import plugins from browser import aio vehicle = Vehicle() # write your code here',
-    complexity_level: 3,
-    customer_journey:
-      ' #Step 1 Who: Driver/Passenger What: Opens car door Customer TouchPoints: Car door handle #Step 2 Who: System What: Opens door automatically Customer TouchPoints: Vehicle system',
-    image_file:
-      "https://firebasestorage.googleapis.com/v0/b/digital-auto.appspot.com/o/media%2FDALL%C2%B7E%202024-01-18%2011.02.32%20-%20A%20professional%20demonstration%20image%20of%20a%20vehicle's%20auto-door%20opening%20feature%20in%20a%20minimalistic%20style.%20The%20scene%20shows%20a%20regular%20car%20with%20the%20driver's%20s.png?alt=media&token=13df7bff-f0ea-4ccf-b802-61bf2daf6e7f",
-    model_id: '1234',
-    name: 'Smart Door',
-    portfolio: {
-      effort_estimation: 0,
-      needs_addressed: 0,
-      relevance: 0,
-    },
-    skeleton: '',
-    state: 'development',
-    tags: [],
-    widget_config: '',
-    description: {
-      problems: 'Manual opening of car doors is inconvenient.',
-      says_who: 'Driver/Passenger',
-      solution: 'Automatically open car doors when the handle is touched.',
       status: 'In Development',
     },
   },

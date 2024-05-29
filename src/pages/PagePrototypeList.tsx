@@ -10,7 +10,7 @@ const PagePrototypeList = () => {
   const [selectedPrototype, setSelectedPrototype] = useState(prototypes[0])
 
   return (
-    <div className="grid grid-cols-12 h-full">
+    <>
       <div className="col-span-full h-12 bg-da-primary-100 sticky top-0 z-20"></div>
       <div className="col-span-5 xl:col-span-4 h-[calc(100%-10px)] overflow-y-auto mt-2">
         <DaInput
@@ -80,7 +80,7 @@ const PagePrototypeList = () => {
           />
         )}
       </div>
-    </div>
+    </>
   )
 }
 

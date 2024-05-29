@@ -10,7 +10,7 @@ import { useTextLib } from '@/hooks/useInstanceCfg'
 const PageHome = () => {
   const txtLib = useTextLib()
   return (
-    <div className="grid grid-cols-12 bg-white">
+    <>
       <div className="flex col-span-12 relative min-h-[400px] max-h-[400px] w-full justify-between  scale z-10 overflow-hidden">
         <div
           className={cn(
@@ -59,7 +59,7 @@ const PageHome = () => {
       <div className="col-span-12">
         <HomePartners />
       </div>
-    </div>
+    </>
   )
 }
 
