@@ -12,7 +12,6 @@ interface UserInfo {
 export interface User extends Document {
   name: string
   email: string
-  password: string
   role: "admin" | "user"
   roles: Roles
   emailVerified: boolean
@@ -23,5 +22,4 @@ export interface User extends Document {
   provider_data?: UserInfo[]
   createdAt?: Date
   updatedAt?: Date
-  isPasswordMatch(password: string): Promise<boolean>
 }
