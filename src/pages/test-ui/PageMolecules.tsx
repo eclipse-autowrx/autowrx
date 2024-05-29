@@ -1,30 +1,30 @@
-import { DaText } from "@/components/atoms/DaText";
-import { DaApiList } from "@/components/molecules/DaApiList";
-import { DaCardIntro } from "@/components/molecules/DaCardIntro";
-import { DaCardIntroBig } from "@/components/molecules/DaCardIntroBig";
-import { DaItemStandard } from "@/components/molecules/DaItemStandard";
-import { DaItemVerticalStandard } from "@/components/molecules/DaItemVerticalStandard";
-import { DaItemVerticalType2 } from "@/components/molecules/DaItemVerticalType2";
-import { DaTableProperty } from "@/components/molecules/DaTableProperty";
+import { DaText } from '@/components/atoms/DaText'
+// import { DaApiList } from "@/components/molecules/DaApiList";
+import { DaCardIntro } from '@/components/molecules/DaCardIntro'
+import { DaCardIntroBig } from '@/components/molecules/DaCardIntroBig'
+import { DaItemStandard } from '@/components/molecules/DaItemStandard'
+import { DaItemVerticalStandard } from '@/components/molecules/DaItemVerticalStandard'
+import { DaItemVerticalType2 } from '@/components/molecules/DaItemVerticalType2'
+import { DaTableProperty } from '@/components/molecules/DaTableProperty'
 
 const PageMolecules = () => {
   const properties = [
     {
-      property: "Property #1",
+      property: 'Property #1',
       value:
-        "It is a long established fact a reader will be distracted by the readable content of a page",
+        'It is a long established fact a reader will be distracted by the readable content of a page',
     },
-    { property: "Property #2", value: "Property Value 2" },
-    { property: "Property #3", value: "Property Value 3" },
-    { property: "Property #4", value: "Property Value 4" },
-  ];
+    { property: 'Property #2', value: 'Property Value 2' },
+    { property: 'Property #3', value: 'Property Value 3' },
+    { property: 'Property #4', value: 'Property Value 4' },
+  ]
 
   const apis = [
-    { api: "Vehicle.ADAS", type: "Branch" },
-    { api: "Vehicle.ADAS.ABS.IsEnabled", type: "Actuator" },
-    { api: "Vehicle.ADAS.ABS.IsError", type: "Sensor" },
-    { api: "Vehicle.ADAS.CruiseControl.IsEnabled", type: "Actuator" },
-  ];
+    { api: 'Vehicle.ADAS', type: 'Branch' },
+    { api: 'Vehicle.ADAS.ABS.IsEnabled', type: 'Actuator' },
+    { api: 'Vehicle.ADAS.ABS.IsError', type: 'Sensor' },
+    { api: 'Vehicle.ADAS.CruiseControl.IsEnabled', type: 'Actuator' },
+  ]
 
   return (
     <div className="grid grid-cols-12 gap-4 p-4 bg-white">
@@ -81,7 +81,7 @@ const PageMolecules = () => {
             author="John Doe"
             content="It is a long
                 established fact that a reader will be distracted by the readable content of a page when looking at its layout"
-            tags={["Tag1", "Tag2"]}
+            tags={['Tag1', 'Tag2']}
             imageUrl="/imgs/1.jpg"
             avatarUrl="/imgs/2.jpg"
             maxWidth="500px"
@@ -105,7 +105,7 @@ const PageMolecules = () => {
           <DaItemVerticalType2
             title="Prototypes"
             imageUrl="/imgs/1.jpg"
-            tags={["Tag1", "Tag2"]}
+            tags={['Tag1', 'Tag2']}
             maxWidth="500px"
           />
         </div>
@@ -119,11 +119,11 @@ const PageMolecules = () => {
           DaApiList
         </DaText>
         <div className="flex mt-2 space-x-4 p-4 border rounded-lg">
-          <DaApiList apis={apis} />
+          {/* <DaApiList apis={apis} /> */}
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default PageMolecules;
+export default PageMolecules

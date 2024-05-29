@@ -20,26 +20,26 @@ const PageModelDetail: FC = () => {
 
   const cardIntro = [
     {
-      title: "Architecture",
-      content: "Provide the big picture of the vehicle model",
-      path: "architecture",
+      title: 'Architecture',
+      content: 'Provide the big picture of the vehicle model',
+      path: 'architecture',
     },
     {
-      title: "Prototype Library",
+      title: 'Prototype Library',
       content:
         "Build up, evaluate and prioritize your portfolio of connected vehicle applications",
       path: "library",
     },
     {
-      title: "Vehicle APIs",
+      title: 'Vehicle APIs',
       content:
-        "Browse, explore and enhance the catalogue of Connected Vehicle Interfaces",
-      path: "vehicle-apis",
+        'Browse, explore and enhance the catalogue of Connected Vehicle Interfaces',
+      path: 'api',
     },
-  ];
+  ]
 
   return (
-    <div className="container grid grid-cols-12 pt-8">
+    <div className="grid grid-cols-12 h-full px-2 py-4 container space-y-2">
       <div className="col-span-7">
         <DaText variant="title" className="text-da-primary-500">
           {model.name}
@@ -52,7 +52,7 @@ const PageModelDetail: FC = () => {
                 key={index}
                 title={card.title}
                 content={card.content}
-                maxWidth={"600px"}
+                maxWidth={'600px'}
               />
             </div>
           </Link>
@@ -62,7 +62,7 @@ const PageModelDetail: FC = () => {
         <img src={model.model_home_image_file} alt={model.name} />
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default PageModelDetail;
+export default PageModelDetail

@@ -41,7 +41,7 @@ const HomePrototypeProposal: FC = () => {
         ))}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export { HomePrototypeProposal };
+export { HomePrototypeProposal }

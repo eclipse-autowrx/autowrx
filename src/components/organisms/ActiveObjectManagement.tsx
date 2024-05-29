@@ -24,7 +24,7 @@ const ActiveObjectManagement : FC = () => {
         setActivePrototype(fetchedPrototype as Prototype)
     }, [fetchedPrototype])
 
-    return <span></span>
+  return <span></span>
 }
 
 export default ActiveObjectManagement

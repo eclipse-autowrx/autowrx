@@ -1,42 +1,42 @@
-import { DaButton } from "@/components/atoms/DaButton";
-import { DaInput } from "@/components/atoms/DaInput";
-import { DaText } from "@/components/atoms/DaText";
-import { loginService, registerService } from "@/services/auth.service";
-import { isAxiosError } from "axios";
-import { useState } from "react";
-import { TbLoader } from "react-icons/tb";
-import { TbAt, TbLock } from "react-icons/tb";
+import { DaButton } from '@/components/atoms/DaButton'
+import { DaInput } from '@/components/atoms/DaInput'
+import { DaText } from '@/components/atoms/DaText'
+import { loginService } from '@/services/auth.service'
+import { isAxiosError } from 'axios'
+import { useState } from 'react'
+import { TbLoader } from 'react-icons/tb'
+import { TbAt, TbLock } from 'react-icons/tb'
 
 interface FormSignInProps {
-  setAuthType: (type: "sign-in" | "register" | "forgot") => void;
+  setAuthType: (type: 'sign-in' | 'register' | 'forgot') => void
 }
 
 const FormSignIn = ({ setAuthType }: FormSignInProps) => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string>('')
 
   const signIn = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+    e.preventDefault()
     try {
-      setLoading(true);
+      setLoading(true)
       const [email, password] = [
         e.currentTarget.email.value,
         e.currentTarget.password.value,
-      ];
-      await loginService(email, password);
-      setError("");
+      ]
+      await loginService(email, password)
+      setError('')
       // eslint-disable-next-line no-self-assign
-      window.location.href = window.location.href;
+      window.location.href = window.location.href
     } catch (error) {
       if (isAxiosError(error)) {
-        setError(error.response?.data.message || "Something went wrong");
-        return;
+        setError(error.response?.data.message || 'Something went wrong')
+        return
       }
-      setError("Something went wrong");
+      setError('Something went wrong')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <form
@@ -71,7 +71,13 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
       />
 
       <div className="flex items-center justify-end mt-1">
-        <DaButton variant="link">Forget Password</DaButton>
+        <DaButton
+          type="button"
+          variant="link"
+          onClick={() => setAuthType('forgot')}
+        >
+          Forget Password
+        </DaButton>
       </div>
 
       {/* Error */}
@@ -95,7 +101,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
         <DaText className="text-da-gray-medium">Don't have an account?</DaText>
         <DaButton
           type="button"
-          onClick={() => setAuthType("register")}
+          onClick={() => setAuthType('register')}
           variant="text"
           className="text-da-primary-500"
         >
@@ -103,7 +109,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
         </DaButton>
       </div>
     </form>
-  );
-};
+  )
+}
 
-export default FormSignIn;
+export default FormSignIn

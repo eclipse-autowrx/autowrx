@@ -1,17 +1,17 @@
-import React, { useState } from "react";
-import { IconType } from "react-icons";
+import React, { useState } from 'react'
+import { IconType } from 'react-icons'
 
-import { cn } from "@/lib/utils";
-import { DaText } from "./DaText";
+import { cn } from '@/lib/utils'
+import { DaText } from './DaText'
 
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
-  inputClassName?: string;
-  Icon?: IconType;
-  iconBefore?: boolean;
-  IconOnClick?: () => void;
-  iconSize?: number;
+  label?: string
+  inputClassName?: string
+  Icon?: IconType
+  iconBefore?: boolean
+  IconOnClick?: () => void
+  iconSize?: number
 }
 
 const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
@@ -27,11 +27,11 @@ const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
       iconSize,
       ...props
     },
-    ref
+    ref,
   ) => {
-    const [focused, setFocused] = useState(false);
+    const [focused, setFocused] = useState(false)
     return (
-      <div className={cn("block", className)}>
+      <div className={cn('block', className)}>
         {label && (
           <DaText
             className={focused ? `text-da-primary-500` : `text-da-gray-medium`}
@@ -43,8 +43,8 @@ const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
           className={cn(
             `h-10 py-1 flex items-center rounded-md border bg-da-white 
           da-txt-regular shadow-sm transition-colors text-da-gray-gray`,
-            !focused && "border-da-gray-light",
-            focused && "border-da-primary-500 text-da-primary-500"
+            !focused && 'border-da-gray-light',
+            focused && 'border-da-primary-500 text-da-primary-500',
           )}
         >
           {Icon && iconBefore && (
@@ -64,7 +64,7 @@ const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
                 placeholder:text-da-light-gray
                 focus-visible:ring-0 focus-visible:ring-0 focus-visible:outline-none
                 disabled:cursor-not-allowed`,
-              inputClassName
+              inputClassName,
             )}
             ref={ref}
             {...props}
@@ -79,9 +79,9 @@ const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
       </div>
-    );
-  }
-);
-DaInput.displayName = "Input";
+    )
+  },
+)
+DaInput.displayName = 'Input'
 
-export { DaInput };
+export { DaInput }

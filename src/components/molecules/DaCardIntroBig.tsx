@@ -1,26 +1,26 @@
-import { DaText } from "../atoms/DaText";
-import { DaButton } from "../atoms/DaButton";
-import { TbArrowRight } from "react-icons/tb";
+import { DaText } from '../atoms/DaText'
+import { DaButton } from '../atoms/DaButton'
+import { TbArrowRight } from 'react-icons/tb'
 
 interface CardIntroProps {
-  title: string;
-  content: string;
-  buttonText: string;
-  maxWidth?: string;
-  onClick?: () => void;
+  title: string
+  content: string
+  buttonText: string
+  maxWidth?: string
+  onClick?: () => void
 }
 
 const DaCardIntroBig = ({
   title,
   content,
   buttonText,
-  maxWidth = "320px",
+  maxWidth = '320px',
   onClick,
 }: CardIntroProps) => {
   return (
     <div
       className={`flex flex-col p-4 w-full bg-da-white rounded-lg border border-da-gray-medium/10 items-center justify-between`}
-      style={{ maxWidth: maxWidth, maxHeight: maxWidth, minHeight: "250px" }}
+      style={{ maxWidth: maxWidth, maxHeight: maxWidth, minHeight: '250px' }}
     >
       <div className="flex flex-col items-center">
         <DaText variant="sub-title" className="text-da-gray-medium ">
@@ -39,7 +39,7 @@ const DaCardIntroBig = ({
         <TbArrowRight className="ml-2 w-4 h-4" />
       </DaButton>
     </div>
-  );
-};
+  )
+}
 
-export { DaCardIntroBig };
+export { DaCardIntroBig }

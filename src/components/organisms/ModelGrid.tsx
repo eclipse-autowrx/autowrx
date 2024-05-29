@@ -1,11 +1,11 @@
-import { DaItemVerticalStandard } from "../molecules/DaItemVerticalStandard";
-import { DaItemVerticalType2 } from "../molecules/DaItemVerticalType2";
-import { DaText } from "../atoms/DaText";
-import useListModelLite from "@/hooks/useListModelLite";
-import { Link } from "react-router-dom";
+import { DaItemVerticalStandard } from '../molecules/DaItemVerticalStandard'
+import { DaItemVerticalType2 } from '../molecules/DaItemVerticalType2'
+import { DaText } from '../atoms/DaText'
+import useListModelLite from '@/hooks/useListModelLite'
+import { Link } from 'react-router-dom'
 
 const ModelGrid: React.FC = () => {
-  const { data: data } = useListModelLite();
+  const { data: data } = useListModelLite()
 
   return (
     <div className="flex flex-col w-full items-center">
@@ -22,6 +22,6 @@ const ModelGrid: React.FC = () => {
         ))}
       </div>
     </div>
-  );
-};
-export { ModelGrid };
+  )
+}
+export { ModelGrid }

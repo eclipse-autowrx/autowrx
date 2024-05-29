@@ -31,7 +31,7 @@ const useModelStore = create<ModelState & Actions>()(
 )
 
 if (process.env.NODE_ENV === 'development') {
-    mountStoreDevtool('ModelStore', useModelStore)
+  mountStoreDevtool('ModelStore', useModelStore)
 }
 
 export default useModelStore

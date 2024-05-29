@@ -1,15 +1,15 @@
-import { DaText } from "../atoms/DaText";
+import { DaText } from '../atoms/DaText'
 
 interface CardIntroProps {
-  title: string;
-  content: string;
-  maxWidth?: string;
+  title: string
+  content: string
+  maxWidth?: string
 }
 
 const DaCardIntro = ({
   title,
   content,
-  maxWidth = "320px",
+  maxWidth = '320px',
 }: CardIntroProps) => {
   return (
     <div
@@ -21,7 +21,7 @@ const DaCardIntro = ({
         {content}
       </DaText>
     </div>
-  );
-};
+  )
+}
 
-export { DaCardIntro };
+export { DaCardIntro }

@@ -1,38 +1,39 @@
-import { RouteObject } from "react-router-dom";
-import RootLayout from "@/layouts/RootLayout";
-import PageHome from "@/pages/PageHome";
-import PageAbout from "@/pages/PageAbout";
-import PageLogin from "@/pages/PageLogin";
-import PageModelList from "@/pages/PageModelList";
-import PageModelDetail from "@/pages/PageModelDetail";
-import PagePrototypeDetail from "@/pages/PagePrototypeDetail"
+import { RouteObject } from 'react-router-dom'
+import RootLayout from '@/layouts/RootLayout'
+import PageHome from '@/pages/PageHome'
+import PageAbout from '@/pages/PageAbout'
+import PageLogin from '@/pages/PageLogin'
+import PageModelList from '@/pages/PageModelList'
+import PageModelDetail from '@/pages/PageModelDetail'
+import PageVehicleApi from '@/pages/PageVehicleApi'
 
 // test-ui
-import PageComponent from "@/pages/test-ui/PageComponent";
-import PageMolecules from "@/pages/test-ui/PageMolecules";
-import PageOrganisms from "@/pages/test-ui/PageOrganisms";
-import PageTestHome from "@/pages/test-ui/PageTestHome";
-import PageTestForm from "@/pages/test-ui/PageTestForm";
-import PagePrototypeList from "@/pages/PagePrototypeList";
+import PageComponent from '@/pages/test-ui/PageComponent'
+import PageMolecules from '@/pages/test-ui/PageMolecules'
+import PageOrganisms from '@/pages/test-ui/PageOrganisms'
+import PageTestHome from '@/pages/test-ui/PageTestHome'
+import PageTestForm from '@/pages/test-ui/PageTestForm'
+import PagePrototypeList from '@/pages/PagePrototypeList'
+import PageResetPassword from '@/pages/PageResetPassword'
 
 const routesConfig: RouteObject[] = [
   {
-    path: "/",
+    path: '/',
     element: <RootLayout />,
     children: [{ index: true, element: <PageHome /> }],
   },
   {
-    path: "/about",
+    path: '/about',
     element: <RootLayout />,
     children: [{ index: true, element: <PageAbout /> }],
   },
   {
-    path: "/login",
+    path: '/reset-password',
     element: <RootLayout />,
-    children: [{ index: true, element: <PageLogin /> }],
+    children: [{ index: true, element: <PageResetPassword /> }],
   },
   {
-    path: "/model",
+    path: '/model',
     element: <RootLayout />,
     children: [
       { index: true, element: <PageModelList /> },
@@ -42,33 +43,33 @@ const routesConfig: RouteObject[] = [
     ],
   },
   {
-    path: "/test-ui/forms",
+    path: '/test-ui/forms',
     element: <RootLayout />,
     children: [{ index: true, element: <PageTestForm /> }],
   },
   {
-    path: "/test-ui/home",
+    path: '/test-ui/home',
     element: <RootLayout />,
     children: [{ index: true, element: <PageTestHome /> }],
   },
   {
-    path: "/test-ui/components",
+    path: '/test-ui/components',
     element: <PageComponent />,
     children: [{ index: true, element: <PageComponent /> }],
   },
   {
-    path: "/test-ui/molecules",
+    path: '/test-ui/molecules',
     element: <PageMolecules />,
     children: [{ index: true, element: <PageMolecules /> }],
   },
   {
-    path: "/test-ui/organisms",
+    path: '/test-ui/organisms',
     element: <PageOrganisms />,
     children: [{ index: true, element: <PageOrganisms /> }],
   },
-];
+]
 
-export default routesConfig;
+export default routesConfig
 
 // v1 route
 // const routes: RouteObject[] = [
