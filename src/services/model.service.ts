@@ -1,6 +1,6 @@
 import { List } from '@/types/common.type'
 import { serverAxios } from './base'
-import { Model, ModelLite } from '@/types/model.type'
+import { Model, ModelCreate, ModelLite } from '@/types/model.type'
 import { models } from '@/data/models_mock'
 
 const IS_MOCK = true
@@ -38,4 +38,8 @@ export const getModel = async (model_id: string) => {
     return model
   }
   return (await serverAxios.get<Model>(`/models/${model_id}`)).data
+}
+
+export const createModelService = async (model: ModelCreate) => {
+  return (await serverAxios.post<Model>('/models', model)).data
 }
