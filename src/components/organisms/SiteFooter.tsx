@@ -1,6 +1,6 @@
 const SiteFooter = ({}) => {
   return (
-    <div className="w-full min-h-[100px] px-8 py-4 flex justify-center items-center border text-white bg-da-gray-medium">
+    <div className="flex w-full min-h-[50px] justify-center items-center text-white bg-da-gray-medium">
       Site Footer
     </div>
   );

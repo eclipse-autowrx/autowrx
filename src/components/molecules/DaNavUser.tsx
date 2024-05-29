@@ -4,7 +4,8 @@ import DaPopup from "../atoms/DaPopup"
 import FormSignIn from "./forms/FormSignIn"
 import FormRegister from "./forms/FormRegister"
 import useSelfProfileQuery from "@/hooks/useSelfProfile"
-import DaUserDropdown from "./DaUserDropdown"
+import DaUserMenu from "./DaUserMenu"
+import FormForgotPassword from "./forms/FormForgotPassword"
 
 const DaNavUser = () => {
   const openState = useState(false)
@@ -14,7 +15,7 @@ const DaNavUser = () => {
   return (
     <div>
       {user ? (
-        <DaUserDropdown user={user} />
+        <DaUserMenu user={user} />
       ) : (
         <DaButton
           variant='plain'
@@ -29,6 +30,7 @@ const DaNavUser = () => {
       <DaPopup state={openState} trigger={<span></span>}>
         {authType === "sign-in" && <FormSignIn setAuthType={setAuthType} />}
         {authType === "register" && <FormRegister setAuthType={setAuthType} />}
+        {authType === "forgot" && <FormForgotPassword setAuthType={setAuthType} />}
       </DaPopup>
     </div>
   )

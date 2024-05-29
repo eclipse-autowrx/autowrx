@@ -68,13 +68,13 @@ body {
 
 /* Define colors as CSS variables */
 :root {
-  --da-primary-100: 198 100 90;
+  --da-primary-100: 196 28 92;
   --da-primary-300: 198 100 51;
   --da-primary-500: 198 100 22;
 
-  --da-accent-100: 36 100 85;
-  --da-accent-300: 36 100 65;
-  --da-accent-500: 36 100 50;
+  --da-accent-100: 67 54 92;
+  --da-accent-300: 67 54 68;
+  --da-accent-500: 67 54 48;
 
   --da-white: 0 0 100;
   --da-black: 0 0 0;
@@ -155,7 +155,7 @@ body {
 }
 
 .da-btn-outline-nocolor {
-  @apply border text-da-gray-medium border-da-gray-medium/10 hover:bg-da-gray-medium/10;
+  @apply border text-da-gray-medium border-da-gray-medium/10 hover:bg-da-gray-medium/10 shadow;
 }
 
 .da-btn-plain {
@@ -183,11 +183,11 @@ body {
 }
 
 .da-btn-md {
-  @apply h-10 rounded-md px-3 py-1 da-txt-regular;
+  @apply h-10 rounded-md px-4 py-1 da-txt-regular;
 }
 
 .da-btn-lg {
-  @apply h-12 rounded-md px-3 py-1 da-txt-medium;
+  @apply h-12 rounded-md px-4 py-1 da-txt-medium;
 }
 
 /*********** For Block Component ********************/
@@ -250,4 +250,41 @@ body {
   :global(.MuiMenuItem-root) {
     font-family: inherit !important;
   }
+}
+
+*::-webkit-scrollbar-track {
+  border-radius: 4px;
+  background-color: #f5f5f5;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  background-color: #f5f5f5;
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.scroll::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+}
+
+.scroll-gray::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(0, 0, 0, 0);
+  background-clip: padding-box;
+  background-color: #aaaaaa;
+}
+
+.scroll-gray-small::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(0, 0, 0, 0);
+  background-clip: padding-box;
+  background-color: #aaaaaa;
 }

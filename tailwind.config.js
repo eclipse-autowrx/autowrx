@@ -38,6 +38,7 @@ module.exports = {
         "da-black": "hsl(var(--da-black))",
         'da-gray-light': 'hsl(var(--da-gray-light))',
         'da-gray-medium': 'hsl(var(--da-gray-medium))',
+        'da-gray-dark': 'hsl(var(--da-gray-dark))',
         'da-gradient-from': 'hsl(var(--da-gradient-from))',
         'da-gradient-to': 'hsl(var(--da-gradient-to))',
         primary: colors.teal,

@@ -14,7 +14,7 @@ const NavigationBar = ({}) => {
   const [model] = useModelStore((state) => [state.model as Model]);
 
   return (
-    <div className="da-nav-bar ">
+    <header className="da-nav-bar ">
       <Link to="/">
         <DaImage src="/imgs/logo-wide.png" className="da-nav-bar-logo" />
       </Link>
@@ -48,7 +48,7 @@ const NavigationBar = ({}) => {
       </DaMenu> */}
 
       <DaNavUser />
-    </div>
+    </header>
   );
 };
 

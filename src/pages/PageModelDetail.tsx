@@ -30,12 +30,12 @@ const PageModelDetail: React.FC = () => {
       title: "Vehicle APIs",
       content:
         "Browse, explore and enhance the catalogue of Connected Vehicle Interfaces",
-      path: "vehicle-apis",
+      path: "api",
     },
   ];
 
   return (
-    <div className="container grid grid-cols-12">
+    <div className="grid grid-cols-12 h-full px-2 py-4 container space-y-2">
       <div className="col-span-7">
         <DaText variant="title" className="text-da-primary-500">
           {model.name}
