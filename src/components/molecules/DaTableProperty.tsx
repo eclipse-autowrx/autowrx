@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { DaText } from "../atoms/DaText";
 
 interface DaTablePropertyItemProps {
@@ -7,12 +8,16 @@ interface DaTablePropertyItemProps {
 
 const DaTablePropertyItem = ({ property, value }: DaTablePropertyItemProps) => {
   return (
-    <div className="grid grid-cols-4 gap-4 py-2 text-da-gray-dark">
+    <div className="grid grid-cols-4 gap-4 py-2 text-da-gray-medium">
       <div className="col-span-1">
-        <DaText variant="regular-bold">{property}</DaText>
+        <DaText variant="regular" className="!text-sm text-da-accent-500">
+          {property}
+        </DaText>
       </div>
       <div className="col-span-3">
-        <DaText variant="regular">{value}</DaText>
+        <DaText variant="regular" className="!text-sm">
+          {value}
+        </DaText>
       </div>
     </div>
   );
@@ -20,15 +25,20 @@ const DaTablePropertyItem = ({ property, value }: DaTablePropertyItemProps) => {
 
 interface DaTablePropertyProps {
   properties: { property: string; value: string }[];
-  maxWidth: string;
+  maxWidth?: string;
+  className?: string;
 }
 
 export const DaTableProperty = ({
   properties,
-  maxWidth = "500px",
+  maxWidth = "1500px",
+  className,
 }: DaTablePropertyProps) => {
   return (
-    <div className="p-4 rounded-lg bg-da-white" style={{ maxWidth: maxWidth }}>
+    <div
+      className={cn("rounded-lg bg-da-white", className)}
+      style={{ maxWidth: maxWidth }}
+    >
       {properties.map((item, index) => (
         <DaTablePropertyItem
           key={index}

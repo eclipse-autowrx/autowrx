@@ -18,10 +18,7 @@ const DaImageRatio = ({
   className = "",
 }: DaImageRatioProps) => {
   return (
-    <div
-      className={`${className} h-full w-full`}
-      style={{ maxWidth: maxWidth }}
-    >
+    <div className={`${className} h-fit w-full`} style={{ maxWidth: maxWidth }}>
       <AspectRatio ratio={ratio}>
         <img
           src={src}

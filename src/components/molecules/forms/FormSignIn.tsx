@@ -75,7 +75,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
       </DaButton>
       {/* More */}
       <div className='mt-4 flex items-center'>
-        <DaText className='text-da-gray-dark'>Don't have an account?</DaText>
+        <DaText className='text-da-gray-medium'>Don't have an account?</DaText>
         <DaButton type='button' onClick={() => setAuthType("register")} variant='text' className='text-da-primary-500'>
           Register
         </DaButton>

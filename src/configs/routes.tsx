@@ -2,8 +2,10 @@ import { RouteObject } from "react-router-dom"
 import RootLayout from "@/layouts/RootLayout"
 import PageHome from "@/pages/PageHome"
 import PageAbout from "@/pages/PageAbout"
+import PageLogin from "@/pages/PageLogin"
 import PageModelList from "@/pages/PageModelList"
 import PageModelDetail from "@/pages/PageModelDetail"
+import PageVehicleApi from "@/pages/PageVehicleApi"
 
 // test-ui
 import PageComponent from "@/pages/test-ui/PageComponent"
@@ -11,6 +13,7 @@ import PageMolecules from "@/pages/test-ui/PageMolecules"
 import PageOrganisms from "@/pages/test-ui/PageOrganisms"
 import PageTestHome from "@/pages/test-ui/PageTestHome"
 import PageTestForm from "@/pages/test-ui/PageTestForm"
+import PagePrototypeList from "@/pages/PagePrototypeList"
 import PageResetPassword from "@/pages/PageResetPassword"
 
 const routesConfig: RouteObject[] = [
@@ -38,6 +41,16 @@ const routesConfig: RouteObject[] = [
     path: "/model/:model_id",
     element: <RootLayout />,
     children: [{ index: true, element: <PageModelDetail /> }],
+  },
+  {
+    path: "/model/:model_id/api",
+    element: <RootLayout />,
+    children: [{ index: true, element: <PageVehicleApi /> }],
+  },
+  {
+    path: "/model/:model_id/prototypes",
+    element: <RootLayout />,
+    children: [{ index: true, element: <PagePrototypeList /> }],
   },
   {
     path: "/test-ui/forms",

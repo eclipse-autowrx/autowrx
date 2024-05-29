@@ -8,22 +8,25 @@ import FormCreateModel from "@/components/molecules/forms/FormCreateModel";
 
 const PageModelList = () => {
   return (
-    <div className="col-span-full flex flex-col px-2 py-4 container space-y-2">
+    <div className="col-span-full h-full flex flex-col px-2 py-4 container space-y-2">
       <div className="flex mb-2">
         <DaText variant="title" className="text-da-primary-500">
           Model List
         </DaText>
         <div className="grow"></div>
-        <DaPopup trigger={<DaButton variant="outline">
-            <HiPlus className="mr-1 text-lg" />
-            Create New Model
-          </DaButton>}>
-            <FormCreateModel />
+        <DaPopup
+          trigger={
+            <DaButton variant="outline">
+              <HiPlus className="mr-1 text-lg" />
+              Create New Model
+            </DaButton>
+          }
+        >
+          <FormCreateModel />
         </DaPopup>
       </div>
-      
 
-      <ModelGrid/>
+      <ModelGrid />
     </div>
   );
 };

@@ -10,13 +10,11 @@ import { HiMenu } from "react-icons/hi";
 import useModelStore from "@/stores/modelStore";
 import { Model } from "@/types/model.type";
 
-const NavigationBar = ({ }) => {
-  const [model] = useModelStore(
-    (state) => [state.model as Model]
-  );
+const NavigationBar = ({}) => {
+  const [model] = useModelStore((state) => [state.model as Model]);
 
   return (
-    <div className="da-nav-bar ">
+    <header className="da-nav-bar ">
       <Link to="/">
         <DaImage src="/imgs/logo-wide.png" className="da-nav-bar-logo" />
       </Link>
@@ -26,27 +24,31 @@ const NavigationBar = ({ }) => {
       <Link to="/model">
         <DaButton variant="plain">
           <div className="flex items-center">
-            {
-              model ? (<>
+            {model ? (
+              <>
                 <FiGrid style={{ transform: "scale(1.5)" }} className="mr-3" />
-                <div className="truncate max-w-[180px]">{model.name || "no-name"}</div>
-              </>) : (<>
+                <div className="truncate max-w-[180px]">
+                  {model.name || "no-name"}
+                </div>
+              </>
+            ) : (
+              <>
                 <FaCar style={{ transform: "scale(1.5)" }} className="mr-3" />
                 Select Model
-              </>)
-            }
+              </>
+            )}
           </div>
         </DaButton>
       </Link>
 
-      {/* <DaMenu trigger={<div className="da-clickable flex h-full items-center px-4 text-da-gray-dark">
+      {/* <DaMenu trigger={<div className="da-clickable flex h-full items-center px-4 text-da-gray-medium">
         <HiMenu size={22}/></div>}>
         <div className="px-4 py-2 da-menu-item ">Menu item 1</div>
         <div className="px-4 py-2 da-menu-item ">Menu item 2</div>
       </DaMenu> */}
 
       <DaNavUser />
-    </div>
+    </header>
   );
 };
 

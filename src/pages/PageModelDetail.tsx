@@ -1,55 +1,61 @@
-import { FC, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import useModelStore from "@/stores/modelStore";
+import React from "react";
+import { Link, useLocation, useParams } from "react-router-dom";
+import { models } from "@/data/models_mock";
+import { DaText } from "@/components/atoms/DaText";
+import { DaCardIntro } from "@/components/molecules/DaCardIntro";
 
-const PageModelDetail: FC = () => {
-  const [model] = useModelStore(
-    (state) => [state.model]
-  );
+const PageModelDetail: React.FC = () => {
   const { model_id } = useParams<{ model_id: string }>();
+  const location = useLocation();
+
+  const model = models.find((model) => model.id === model_id);
 
   if (!model) {
     return <div>Model not found</div>;
   }
 
+  const cardIntro = [
+    {
+      title: "Architecture",
+      content: "Provide the big picture of the vehicle model",
+      path: "architecture",
+    },
+    {
+      title: "Prototype Library",
+      content:
+        "Build up, evaluate and prioritize your portfolio of connected vehicle applications",
+      path: "prototypes",
+    },
+    {
+      title: "Vehicle APIs",
+      content:
+        "Browse, explore and enhance the catalogue of Connected Vehicle Interfaces",
+      path: "api",
+    },
+  ];
+
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">
-        Model Detail for ID: {model_id}
-      </h1>
-      <div className="bg-white shadow-md rounded-lg p-6">
-        <img
-          src={model.model_home_image_file}
-          alt={model.name}
-          className="w-full h-auto mb-4 rounded"
-        />
-        <div className="text-lg">
-          <p>
-            <strong>Name:</strong> {model.name}
-          </p>
-          <p>
-            <strong>CVI:</strong> {model.cvi}
-          </p>
-          <p>
-            <strong>Main API:</strong> {model.main_api}
-          </p>
-          <p>
-            <strong>Visibility:</strong> {model.visibility}
-          </p>
-          <p>
-            <strong>Tenant ID:</strong> {model.tenant_id}
-          </p>
-          <p>
-            <strong>Vehicle Category:</strong> {model.vehicle_category}
-          </p>
-          <p>
-            <strong>Created By:</strong> {model.created_by}
-          </p>
-          <p>
-            <strong>Created At:</strong> {model.created_at?.toString()}
-          </p>
-          <p>{/* <strong>Tags:</strong> {model.tags.join(", ")} */}</p>
-        </div>
+    <div className="grid grid-cols-12 h-full px-2 py-4 container space-y-2">
+      <div className="col-span-7">
+        <DaText variant="title" className="text-da-primary-500">
+          {model.name}
+        </DaText>
+
+        {cardIntro.map((card, index) => (
+          <Link key={index} to={`${location.pathname}/${card.path}`}>
+            <div className="space-y-3 mt-3 da-clickable">
+              <DaCardIntro
+                key={index}
+                title={card.title}
+                content={card.content}
+                maxWidth={"600px"}
+              />
+            </div>
+          </Link>
+        ))}
+      </div>
+      <div className="col-span-5">
+        <img src={model.model_home_image_file} alt={model.name} />
       </div>
     </div>
   );

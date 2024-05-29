@@ -68,30 +68,31 @@ body {
 
 /* Define colors as CSS variables */
 :root {
-  --da-primary-100: 211 45 90;
-  --da-primary-300: 211 45 51;
-  --da-primary-500: 211 45 37;
+  --da-primary-100: 196 28 92;
+  --da-primary-300: 198 100 51;
+  --da-primary-500: 198 100 22;
 
-  --da-accent-100: 36 100 85;
-  --da-accent-300: 36 100 65;
-  --da-accent-500: 36 100 50;
+  --da-accent-100: 67 54 92;
+  --da-accent-300: 67 54 68;
+  --da-accent-500: 67 54 48;
 
   --da-white: 0 0 100;
   --da-black: 0 0 0;
-  --da-gray-light: 0 0 85;
-  --da-gray-dark: 0 0 55;
+  --da-gray-light: 214 32 91;
+  --da-gray-medium: 215 16 47;
+  --da-gray-dark: 217 33 17;
 
-  --da-gradient-from: 211 45 37;
-  --da-gradient-to: 186 100 38;
+  --da-gradient-from: 198 100 22;
+  --da-gradient-to: 67 54 48;
 }
 
 /*********** Font size and weight ********************/
 .da-txt-small {
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .da-txt-regular {
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .da-txt-medium {
@@ -103,50 +104,41 @@ body {
 }
 
 .da-txt-huge {
-  font-size: 28px;
+  font-size: 24px;
 }
 
 /*********** For Text Component ********************/
 
 .da-label-regular {
-  @apply da-txt-regular font-normal;
+  @apply da-txt-regular font-medium;
 }
 
 .da-label-regular-bold {
-  @apply da-txt-regular font-semibold;
+  @apply da-txt-regular font-bold;
 }
 
 .da-label-small {
-  @apply da-txt-small font-normal;
+  @apply da-txt-small font-medium;
 }
 
 .da-label-small-bold {
-  @apply da-txt-small font-semibold;
+  @apply da-txt-small font-bold;
 }
 
 .da-label-sub-title {
-  @apply da-txt-medium font-semibold;
+  @apply da-txt-medium font-bold;
 }
 
 .da-label-title {
-  @apply da-txt-large font-semibold;
+  @apply da-txt-large font-bold;
 }
 
 .da-label-huge {
-  @apply da-txt-huge font-normal;
+  @apply da-txt-huge;
 }
 
 .da-label-huge-bold {
-  @apply da-txt-huge font-semibold;
-}
-
-/*********** Class for bare style ********************/
-.da-clickable {
-  @apply cursor-pointer hover:opacity-70;
-}
-
-.da-menu-item {
-  @apply da-clickable hover:bg-da-gray-light;
+  @apply da-txt-huge font-bold;
 }
 
 /*********** For Button Component ********************/
@@ -163,11 +155,11 @@ body {
 }
 
 .da-btn-outline-nocolor {
-  @apply border text-da-gray-dark border-da-gray-dark/10 hover:bg-da-gray-dark/10;
+  @apply border text-da-gray-medium border-da-gray-medium/10 hover:bg-da-gray-medium/10 shadow;
 }
 
 .da-btn-plain {
-  @apply text-da-gray-dark hover:bg-da-primary-100;
+  @apply text-da-gray-medium hover:bg-da-primary-100;
 }
 
 .da-btn-text {
@@ -175,7 +167,7 @@ body {
 }
 
 .da-btn-link {
-  @apply text-da-gray-dark hover:underline;
+  @apply text-da-gray-medium hover:underline;
 }
 
 .da-btn-gradient {
@@ -183,7 +175,7 @@ body {
 }
 
 .da-btn-secondary {
-  @apply bg-da-gray-dark text-da-white shadow-sm hover:bg-da-gray-dark/80;
+  @apply bg-da-gray-medium text-da-white shadow-sm hover:bg-da-gray-medium/80;
 }
 
 .da-btn-sm {
@@ -191,11 +183,11 @@ body {
 }
 
 .da-btn-md {
-  @apply h-10 rounded-md px-3 py-1 da-txt-regular;
+  @apply h-10 rounded-md px-4 py-1 da-txt-regular;
 }
 
 .da-btn-lg {
-  @apply h-12 rounded-md px-3 py-1 da-txt-medium;
+  @apply h-12 rounded-md px-4 py-1 da-txt-medium;
 }
 
 /*********** For Block Component ********************/
@@ -246,14 +238,53 @@ body {
 /*********** For Dropdown Component ********************/
 .da-menu-popup {
   :global(.MuiList-root) {
-      padding: 0;
-      font-family: inherit !important;
-      box-shadow: none !important;
+    padding: 0;
+    font-family: inherit !important;
+    box-shadow: none !important;
   }
+
   :global(.MuiPaper-root) {
-      box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px !important;
+    box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px !important;
   }
+
   :global(.MuiMenuItem-root) {
-      font-family: inherit !important;
+    font-family: inherit !important;
   }
+}
+
+*::-webkit-scrollbar-track {
+  border-radius: 4px;
+  background-color: #f5f5f5;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  background-color: #f5f5f5;
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.scroll::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+}
+
+.scroll-gray::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(0, 0, 0, 0);
+  background-clip: padding-box;
+  background-color: #aaaaaa;
+}
+
+.scroll-gray-small::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(0, 0, 0, 0);
+  background-clip: padding-box;
+  background-color: #aaaaaa;
 }
