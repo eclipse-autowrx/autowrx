@@ -10,9 +10,11 @@ import { HiMenu } from 'react-icons/hi'
 import useModelStore from '@/stores/modelStore'
 import { Model } from '@/types/model.type'
 import { TbUsers } from 'react-icons/tb'
+import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
 const NavigationBar = ({}) => {
   const [model] = useModelStore((state) => [state.model as Model])
+  const { data: user } = useSelfProfileQuery()
 
   return (
     <header className="da-nav-bar ">
@@ -53,20 +55,22 @@ const NavigationBar = ({}) => {
         </Link>
       )}
 
-      <DaMenu
-        trigger={
-          <div className="da-clickable flex h-full items-center px-4 text-da-gray-medium">
-            <HiMenu size={22} />
-          </div>
-        }
-      >
-        <Link
-          to="/manage-users"
-          className="flex items-center px-4 py-2 gap-2 da-menu-item"
+      {user?.role === 'admin' && (
+        <DaMenu
+          trigger={
+            <div className="da-clickable flex h-full items-center px-4 text-da-gray-medium">
+              <HiMenu size={22} />
+            </div>
+          }
         >
-          <TbUsers className="text-base" /> Manage Users
-        </Link>
-      </DaMenu>
+          <Link
+            to="/manage-users"
+            className="flex items-center px-4 py-2 gap-2 da-menu-item"
+          >
+            <TbUsers className="text-base" /> Manage Users
+          </Link>
+        </DaMenu>
+      )}
 
       <DaNavUser />
     </header>
