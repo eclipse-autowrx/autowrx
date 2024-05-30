@@ -31,10 +31,13 @@ const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
   ) => {
     const [focused, setFocused] = useState(false)
     return (
-      <div className={cn('block', className)}>
+      <div className={cn('flex flex-col', className)}>
         {label && (
           <DaText
-            className={focused ? `text-da-primary-500` : `text-da-gray-medium`}
+            className={cn(
+              'mb-1',
+              focused ? `text-da-primary-500` : `text-da-gray-medium`,
+            )}
           >
             {label}
           </DaText>
@@ -62,7 +65,7 @@ const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
             className={cn(
               `grow flex px-2 py-1 h-8 w-full
                 placeholder:text-da-light-gray
-                focus-visible:ring-0 focus-visible:ring-0 focus-visible:outline-none
+                focus-visible:ring-0 focus-visible:outline-none
                 disabled:cursor-not-allowed`,
               inputClassName,
             )}

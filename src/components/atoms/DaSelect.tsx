@@ -3,6 +3,7 @@ import { CaretSortIcon, CheckIcon } from '@radix-ui/react-icons'
 import * as SelectPrimitive from '@radix-ui/react-select'
 import clsx from 'clsx'
 import { DaText } from './DaText'
+import { cn } from '@/lib/utils'
 
 const DaSelect = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
@@ -34,9 +35,9 @@ const DaSelect = React.forwardRef<
       value={value}
       onValueChange={onValueChange}
     >
-      <div className={wrapperClassName}>
-        <DaText className="focus-within:text-da-primary-500 text-da-gray-medium">
-          {label}
+      <div className={cn('flex, flex-col', wrapperClassName)}>
+        <DaText className="flex flex-col focus-within:text-da-primary-500 text-da-gray-medium">
+          <DaText className="mb-1">{label}</DaText>
           <SelectTrigger ref={ref} {...props} className="font-normal">
             <SelectValue />
           </SelectTrigger>

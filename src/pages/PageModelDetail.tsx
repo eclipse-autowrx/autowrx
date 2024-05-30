@@ -5,14 +5,15 @@ import { DaCardIntro } from '@/components/molecules/DaCardIntro'
 import useModelStore from '@/stores/modelStore'
 import { Model } from '@/types/model.type'
 import DaVehicleProperties from '@/components/molecules/DaVehicleProperties'
-import ContributorList from '@/components/molecules/DaContributorList'
+import DaContributorList from '@/components/molecules/DaContributorList'
+import { DaButton } from '@/components/atoms/DaButton'
 
 interface VisibilityControlProps {
   initialVisibility: string
   onVisibilityChange: (newVisibility: string) => void
 }
 
-const VisibilityControl: React.FC<VisibilityControlProps> = ({
+const DaVisibilityControl: React.FC<VisibilityControlProps> = ({
   initialVisibility,
   onVisibilityChange,
 }) => {
@@ -28,11 +29,16 @@ const VisibilityControl: React.FC<VisibilityControlProps> = ({
     <div className="flex justify-between items-center border px-4 py-2.5 mt-3 rounded-lg">
       <DaText variant="sub-title" className="text-da-gray-medium">
         Visibility:{' '}
-        <span className="text-da-accent-500 font-normal">{visibility}</span>
+        <DaText className="text-da-accent-500 capitalize ">{visibility}</DaText>
       </DaText>
-      <button onClick={toggleVisibility} className="text-da-primary-500">
+      <DaButton
+        onClick={toggleVisibility}
+        variant="outline-nocolor"
+        size="sm"
+        className="text-da-primary-500"
+      >
         Change to {visibility === 'public' ? 'private' : 'public'}
-      </button>
+      </DaButton>
     </div>
   )
 }
@@ -118,17 +124,17 @@ const PageModelDetail = () => {
 
         <DaVehicleProperties
           key={model.id}
-          category={model.vehicle_category}
-          properties={model.property}
+          category={model.vehicle_category ? model.vehicle_category : ''}
+          properties={model.property ? model.property : {}}
           className="mt-3"
         />
 
-        <VisibilityControl
+        <DaVisibilityControl
           initialVisibility={model.visibility}
           onVisibilityChange={() => {}}
         />
 
-        <ContributorList
+        <DaContributorList
           className="mt-3"
           contributors={contributors}
           members={members}

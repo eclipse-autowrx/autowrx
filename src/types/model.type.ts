@@ -55,3 +55,17 @@ export type ModelCreate = {
   cvi: string
   main_api: string
 }
+
+export type VehicleApi = {
+  api: string
+  datatype?: string
+  description: string
+  type: string
+  uuid: string
+  allowed?: string[]
+  comment?: string
+  unit?: string
+  max?: number
+  min?: number
+  children?: { [key: string]: VehicleApi }
+}

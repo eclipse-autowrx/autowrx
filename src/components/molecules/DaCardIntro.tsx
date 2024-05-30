@@ -13,7 +13,7 @@ const DaCardIntro = ({
 }: CardIntroProps) => {
   return (
     <div
-      className={`flex flex-col p-4 w-full bg-da-white rounded-lg space-y-2 border border-da-gray-light text-da-gray-mediume`}
+      className={`flex flex-col p-4 w-full bg-da-white rounded-lg space-y-2 border border-da-gray-light text-da-gray-medium hover:border-da-primary-500`}
       style={{ maxWidth: maxWidth }}
     >
       <DaText variant="sub-title">{title}</DaText>

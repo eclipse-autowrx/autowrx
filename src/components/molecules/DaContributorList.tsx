@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { DaText } from '@/components/atoms/DaText'
 import { TbMinus, TbUserPlus } from 'react-icons/tb'
 import { DaButton } from '../atoms/DaButton'
@@ -23,7 +24,7 @@ interface UserItemProps {
 }
 
 const UserItem = ({ user, onRemoveUser }: UserItemProps) => (
-  <div className="flex items-center justify-between p-2 border my-2 rounded-lg border-da-gray-light bg-da-gray-light/25">
+  <div className="flex items-center justify-between p-2 border my-2 rounded-lg border-da-gray-light bg-da-gray-light/25 cursor-pointer">
     <div className="flex items-center">
       <DaAvatar
         src="https://firebasestorage.googleapis.com/v0/b/digital-auto.appspot.com/o/users%2Fperson.png?alt=media&token=df7759f6-37d2-4d57-a684-5463b9e4e86c"
@@ -48,13 +49,15 @@ const UserItem = ({ user, onRemoveUser }: UserItemProps) => (
   </div>
 )
 
-const ContributorList = ({
+const DaContributorList = ({
   contributors,
   members,
   onAddUser,
   onRemoveUser,
   className,
 }: ContributorListProps) => {
+  const [activeTab, setActiveTab] = useState('contributors')
+
   return (
     <div
       className={cn(
@@ -64,18 +67,32 @@ const ContributorList = ({
     >
       <div className="flex justify-between items-center mb-4">
         <div className="flex space-x-4">
-          <DaText
-            variant="regular"
-            className="text-da-primary-500 cursor-pointer border-b-2 border-da-primary-500 pb-1"
-          >
-            Contributor ({contributors.length})
-          </DaText>
-          <DaText
-            variant="regular"
-            className="cursor-pointer text-da-gray-dark pb-1"
-          >
-            Member ({members.length})
-          </DaText>
+          <div onClick={() => setActiveTab('contributors')}>
+            <DaText
+              variant="regular"
+              className={cn(
+                'cursor-pointer pb-1',
+                activeTab === 'contributors'
+                  ? 'text-da-primary-500 border-b-2 border-da-primary-500'
+                  : 'text-da-gray-medium',
+              )}
+            >
+              Contributor ({contributors.length})
+            </DaText>
+          </div>
+          <div onClick={() => setActiveTab('members')}>
+            <DaText
+              variant="regular"
+              className={cn(
+                'cursor-pointer pb-1',
+                activeTab === 'members'
+                  ? 'text-da-primary-500 border-b-2 border-da-primary-500'
+                  : 'text-da-gray-medium',
+              )}
+            >
+              Member ({members.length})
+            </DaText>
+          </div>
         </div>
         <DaButton
           size="sm"
@@ -86,12 +103,16 @@ const ContributorList = ({
         </DaButton>
       </div>
       <div>
-        {contributors.map((user, index) => (
-          <UserItem key={index} user={user} onRemoveUser={onRemoveUser} />
-        ))}
+        {activeTab === 'contributors'
+          ? contributors.map((user, index) => (
+              <UserItem key={index} user={user} onRemoveUser={onRemoveUser} />
+            ))
+          : members.map((user, index) => (
+              <UserItem key={index} user={user} onRemoveUser={onRemoveUser} />
+            ))}
       </div>
     </div>
   )
 }
 
-export default ContributorList
+export default DaContributorList

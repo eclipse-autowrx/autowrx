@@ -5,6 +5,8 @@ import { DaItemStandard } from '@/components/molecules/DaItemStandard'
 import { prototypes } from '@/data/models_mock'
 import { DaButton } from '@/components/atoms/DaButton'
 import { TbFileImport, TbPlus } from 'react-icons/tb'
+import FormCreatePrototype from '@/components/molecules/forms/FormCreatePrototype'
+import DaPopup from '@/components/atoms/DaPopup'
 
 const PagePrototypeList = () => {
   const [selectedPrototype, setSelectedPrototype] = useState(prototypes[0])
@@ -34,6 +36,7 @@ const PagePrototypeList = () => {
                 avatarUrl="/imgs/2.jpg"
                 maxWidth="2000px"
                 imageMaxWidth="100px"
+                isSelected={selectedPrototype === prototype} // Pass the selected prop
               />
             </div>
           ))}
@@ -44,10 +47,17 @@ const PagePrototypeList = () => {
             <TbFileImport className="w-5 h-5 mr-2" />
             Import Prototype
           </DaButton>
-          <DaButton variant="outline-nocolor">
-            <TbPlus className="w-5 h-5 mr-2" />
-            Create New Prototype
-          </DaButton>
+
+          <DaPopup
+            trigger={
+              <DaButton variant="outline-nocolor">
+                <TbPlus className="w-5 h-5 mr-2" />
+                Create New Prototype
+              </DaButton>
+            }
+          >
+            <FormCreatePrototype />
+          </DaPopup>
         </div>
       </div>
       <div className="col-span-7 xl:col-span-8 border-l">

@@ -1,38 +1,26 @@
 import { useEffect, useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { CVI_v4_1 } from '@/data/CVI_v4.1'
 import ApiList from '@/components/organisms/ApiList'
 import ApiDetail from '@/components/organisms/ApiDetail'
-
-interface Node {
-  api: string
-  datatype?: string
-  description: string
-  type: string
-  uuid: string
-  allowed?: string[]
-  comment?: string
-  unit?: string
-  max?: number
-  min?: number
-  children?: { [key: string]: Node }
-}
+import { VehicleApi } from '@/types/model.type'
 
 interface Cvi {
-  Vehicle: Node
+  Vehicle: VehicleApi
 }
 
 interface ApiItem {
   api: string
   type: string
-  details: any
+  details: VehicleApi
 }
 
 const parseCvi = (cvi: Cvi) => {
   const traverse = (
-    node: Node,
+    node: VehicleApi,
     prefix: string = 'Vehicle',
-  ): { api: string; type: string; details: Node }[] => {
-    let result: { api: string; type: string; details: Node }[] = []
+  ): { api: string; type: string; details: VehicleApi }[] => {
+    let result: { api: string; type: string; details: VehicleApi }[] = []
     if (node.children) {
       for (const [key, child] of Object.entries(node.children)) {
         const newPrefix = `${prefix}.${key}`
@@ -47,6 +35,8 @@ const parseCvi = (cvi: Cvi) => {
 }
 
 const PageVehicleApi = () => {
+  const { model_id, api } = useParams()
+  const navigate = useNavigate()
   const [apiList, setApiList] = useState<ApiItem[]>([])
   const [selectedApi, setSelectedApi] = useState<ApiItem | null>(null)
 
@@ -54,20 +44,34 @@ const PageVehicleApi = () => {
     const cviData: Cvi = JSON.parse(CVI_v4_1)
     const parsedApiList = parseCvi(cviData)
     setApiList(parsedApiList)
-    console.log('CVI_v4_1', cviData)
+    // console.log('CVI_v4_1', cviData)
+    // console.log('parsedApiList', parsedApiList)
   }, [])
 
-  // const handleApiClick = (apiDetails: ApiItem) => {
-  //   // console.log("Selected API", apiDetails);
-  //   setSelectedApi(apiDetails);
-  // };
+  useEffect(() => {
+    if (api) {
+      const foundApi = apiList.find((apiItem) => apiItem.api === api)
+      if (foundApi) {
+        setSelectedApi(foundApi)
+      }
+    }
+  }, [api, apiList])
+
+  // useEffect(() => {
+  //   console.log('selectedApi', selectedApi)
+  // }, [selectedApi])
+
+  const handleApiClick = (apiDetails: ApiItem) => {
+    setSelectedApi(apiDetails)
+    navigate(`/model/${model_id}/api/${apiDetails.api}`)
+  }
 
   return (
     <>
-      <div className="flex col-span-6  w-full overflow-auto border-r">
+      <div className="flex col-span-6 w-full overflow-auto border-r">
         <ApiList
           apiList={apiList}
-          onApiClick={setSelectedApi}
+          onApiClick={handleApiClick}
           selectedApi={selectedApi}
         />
       </div>

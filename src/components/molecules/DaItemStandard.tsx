@@ -13,6 +13,7 @@ interface DaItemStandardProps {
   avatarUrl: string
   maxWidth?: string
   imageMaxWidth?: string
+  isSelected?: boolean
 }
 
 const DaItemStandard: React.FC<DaItemStandardProps> = ({
@@ -24,10 +25,13 @@ const DaItemStandard: React.FC<DaItemStandardProps> = ({
   avatarUrl,
   maxWidth = '500px',
   imageMaxWidth = '300px',
+  isSelected = false,
 }) => {
   return (
     <div
-      className="flex w-full p-4 border border-da-gray-light rounded-lg bg-da-white max-w-lg space-x-4 text-da-gray-medium overflow-hidden"
+      className={`flex w-full p-4 border border-da-gray-light rounded-lg bg-da-white max-w-lg space-x-4 text-da-gray-medium hover:border-da-primary-500 overflow-hidden ${
+        isSelected ? 'border-da-primary-500 bg-da-primary-500/10' : ''
+      }`}
       style={{ maxWidth: maxWidth }}
     >
       <DaImageRatio

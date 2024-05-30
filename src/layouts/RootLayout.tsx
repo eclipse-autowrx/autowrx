@@ -12,8 +12,8 @@ const RootLayout = () => {
       <NavigationBar />
       <div className="grid grid-cols-12 h-full overflow-y-auto ">
         <Outlet />
+        <SiteFooter />
       </div>
-      <SiteFooter />
     </div>
   )
 }

@@ -38,10 +38,14 @@ const routesConfig: RouteObject[] = [
     element: <RootLayout />,
     children: [
       { index: true, element: <PageModelList /> },
-      { path: ":model_id", element: <PageModelDetail /> },
-      { path: ":model_id/library", element: <PagePrototypeList /> },
-      { path: ":model_id/api", element: <PageVehicleApi /> },
-      { path: ":model_id/library/prototype/:prototype_id/view", element: <PagePrototypeDetail /> }
+      { path: ':model_id', element: <PageModelDetail /> },
+      { path: ':model_id/library', element: <PagePrototypeList /> },
+      { path: ':model_id/api', element: <PageVehicleApi /> },
+      { path: ':model_id/api/:api', element: <PageVehicleApi /> },
+      {
+        path: ':model_id/library/prototype/:prototype_id/view',
+        element: <PagePrototypeDetail />,
+      },
     ],
   },
   {

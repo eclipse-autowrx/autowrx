@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { DaText } from '../atoms/DaText'
 import { DaTableProperty } from './DaTableProperty'
 import { DaButton } from '../atoms/DaButton'
-import { TbChevronDown, TbChevronRight, TbChevronUp } from 'react-icons/tb'
+import { TbChevronDown, TbChevronRight } from 'react-icons/tb'
 import { cn } from '@/lib/utils'
 
 interface VehiclePropertiesProps {
@@ -18,7 +18,7 @@ const DaVehicleProperties = ({
   properties,
   className,
 }: VehiclePropertiesProps) => {
-  const [isVisible, setIsVisible] = useState(true)
+  const [isVisible, setIsVisible] = useState(false)
 
   const toggleVisibility = () => {
     setIsVisible(!isVisible)
@@ -37,22 +37,28 @@ const DaVehicleProperties = ({
           Vehicle Properties
         </DaText>
         <div>
-          <button
-            className="text-da-primary-500 mr-4"
+          <DaButton
+            className="text-da-primary-500 mr-2"
+            variant="outline-nocolor"
+            size="sm"
             onClick={() => alert('Update property clicked')}
           >
             Update property
-          </button>
-          <DaButton size={'sm'} onClick={toggleVisibility}>
-            <div className="pr-1">{isVisible ? 'Hide' : 'Show'} </div>
+          </DaButton>
+          <DaButton size="sm" onClick={toggleVisibility}>
+            <div className="pr-1 w-12">{isVisible ? 'Hide' : 'Show'}</div>
             {isVisible ? <TbChevronRight /> : <TbChevronDown />}
           </DaButton>
         </div>
       </div>
       {isVisible && (
-        <div className="mt-2">
+        <div className="mt-2 flex flex-col">
           <DaText className="font-semibold">Category: {category}</DaText>
-          <DaTableProperty properties={propertiesArray} />
+          {propertiesArray.length > 0 ? (
+            <DaTableProperty properties={propertiesArray} />
+          ) : (
+            <DaText>No properties available.</DaText>
+          )}
         </div>
       )}
     </div>

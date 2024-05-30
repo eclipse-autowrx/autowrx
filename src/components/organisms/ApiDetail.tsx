@@ -1,16 +1,20 @@
 import { DaTableProperty } from '../molecules/DaTableProperty'
 import { DaText } from '../atoms/DaText'
 import { DaImage } from '../atoms/DaImage'
+import { DaCopy } from '../atoms/DaCopy'
+import { cn, getApiTypeClasses } from '@/lib/utils'
 
 interface ApiDetailProps {
   apiDetails: any
 }
 
+// Randomly select one of the items from the list based on the name length
 const OneOfFromName = (list: string[], name: string) => {
   return list[name.length % list.length]
 }
 
 const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
+  const { bgClass } = getApiTypeClasses(apiDetails.type)
   const implementationProperties = [
     {
       property: 'Implementation Status',
@@ -65,10 +69,19 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
   ].filter(Boolean)
 
   const vssSpecificationProperties = [
-    { property: 'API', value: apiDetails.api },
-    { property: 'UUID', value: apiDetails.uuid },
-    { property: 'Type', value: apiDetails.type },
-    { property: 'Description', value: apiDetails.description },
+    { property: 'API', value: apiDetails.api || 'N/A' },
+    {
+      property: 'UUID',
+      value: (apiDetails.details && apiDetails.details.uuid) || 'N/A',
+    },
+    {
+      property: 'Type',
+      value: (apiDetails.details && apiDetails.details.type) || 'N/A',
+    },
+    {
+      property: 'Description',
+      value: (apiDetails.details && apiDetails.details.description) || 'N/A',
+    },
     apiDetails.datatype && {
       property: 'Data Type',
       value: apiDetails.datatype,
@@ -90,19 +103,31 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
   ].filter(Boolean)
 
   return (
-    <div className="">
+    <div>
       <DaImage
         src="https://bewebstudio.digitalauto.tech/data/projects/OezCm7PTy8FT/a/E-Car_Full_Vehicle.png"
         className="object-cover"
       />
-      <div className="bg-da-primary-100 py-2 px-2">
-        <DaText className="text-da-primary-500">{apiDetails.api}</DaText>
+      <div className="w-full py-2 px-4 bg-da-primary-100 justify-between flex">
+        <DaCopy textToCopy={apiDetails.api}>
+          <DaText className="text-da-primary-500">{apiDetails.api}</DaText>
+        </DaCopy>
+        <div className={cn('px-3 rounded', bgClass)}>
+          <DaText variant="small" className="text-da-white uppercase">
+            {apiDetails.type}
+          </DaText>
+        </div>
       </div>
 
       <div className="p-4">
         <DaText className="flex">VSS Specification</DaText>
         <DaTableProperty
           properties={vssSpecificationProperties}
+          maxWidth="700px"
+        />
+        <DaText className="flex !mt-6">Dependencies</DaText>
+        <DaTableProperty
+          properties={[{ property: 'Used by these vehicle app', value: 'N/A' }]}
           maxWidth="700px"
         />
         <DaText className="flex text-xl font-bold !mt-6">Implementation</DaText>

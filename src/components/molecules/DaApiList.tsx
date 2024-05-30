@@ -1,4 +1,5 @@
 import { DaText } from '../atoms/DaText'
+import { getApiTypeClasses } from '@/lib/utils'
 
 interface DaApiListItemProps {
   api: string
@@ -7,46 +8,29 @@ interface DaApiListItemProps {
   isSelected: boolean
 }
 
-const getTypeClassName = (type: string) => {
-  switch (type) {
-    case 'branch':
-      return 'text-purple-500'
-    case 'actuator':
-      return 'text-yellow-500'
-    case 'sensor':
-      return 'text-emerald-500'
-    case 'attribute':
-      return 'text-sky-500'
-    default:
-      return 'text-da-gray-medium'
-  }
-}
-
 const DaApiListItem = ({
   api,
   type,
   onClick,
   isSelected,
 }: DaApiListItemProps) => {
+  const { textClass } = getApiTypeClasses(type)
   return (
     <div
       className={`grid grid-cols-4 gap-4 py-1.5 text-da-gray-medium cursor-pointer hover:bg-da-gray-light items-center justify-center px-2 rounded ${
-        isSelected ? 'bg-da-gray-light' : ''
+        isSelected ? 'bg-da-primary-100 text-da-primary-500' : ''
       }`}
       onClick={onClick}
     >
       <div className="col-span-3 cursor-pointer">
-        <DaText variant="regular" className="cursor-pointer !text-xs">
+        <DaText variant="small" className="cursor-pointer">
           {api}
         </DaText>
       </div>
       <div className="col-span-1 flex justify-end cursor-pointer">
         <DaText
-          variant="regular-bold"
-          className={
-            getTypeClassName(type) +
-            ' uppercase !text-[10px] !font-medium cursor-pointer'
-          }
+          variant="small"
+          className={textClass + ' uppercase !font-medium cursor-pointer'}
         >
           {type}
         </DaText>
@@ -70,7 +54,7 @@ const DaApiList = ({
 }: DaApiListProps) => {
   return (
     <div
-      className="flex flex-col w-full h-full overflow-y-auto bg-da-white"
+      className="flex flex-col w-full h-full overflow-y-auto overflow-x-hidden bg-da-white"
       style={{ maxWidth: maxWidth }}
     >
       {apis.map((item, index) => (
