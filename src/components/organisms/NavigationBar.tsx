@@ -9,6 +9,7 @@ import { FiGrid } from 'react-icons/fi'
 import { HiMenu } from 'react-icons/hi'
 import useModelStore from '@/stores/modelStore'
 import { Model } from '@/types/model.type'
+import { TbUsers } from 'react-icons/tb'
 
 const NavigationBar = ({}) => {
   const [model] = useModelStore((state) => [state.model as Model])
@@ -21,43 +22,51 @@ const NavigationBar = ({}) => {
 
       <div className="grow"></div>
       {/* Model selection */}
-      {
-        model?(
-          <>
+      {model ? (
+        <>
           <Link to="/model">
             <DaButton variant="plain">
               <div className="flex items-center">
-                <FiGrid style={{ transform: "scale(1.4)" }} className="" />
+                <FiGrid style={{ transform: 'scale(1.4)' }} className="" />
               </div>
             </DaButton>
           </Link>
           <Link to={`/model/${model.id}`}>
             <DaButton variant="plain">
               <div className="flex items-center">
-                  <FaCar style={{ transform: "scale(1.4)" }} className="mr-3" />
-                  <div className="truncate max-w-[180px]">{model.name || "no-name"}</div>
+                <FaCar style={{ transform: 'scale(1.4)' }} className="mr-3" />
+                <div className="truncate max-w-[180px]">
+                  {model.name || 'no-name'}
+                </div>
               </div>
             </DaButton>
           </Link>
-          </>
-        ):(
-          <Link to="/model">
-            <DaButton variant="plain">
-              <div className="flex items-center">
-                  <FaCar style={{ transform: "scale(1.5)" }} className="mr-3" />
-                  Select Model
-              </div>
-            </DaButton>
-          </Link>
-        )
-      }
-      
+        </>
+      ) : (
+        <Link to="/model">
+          <DaButton variant="plain">
+            <div className="flex items-center">
+              <FaCar style={{ transform: 'scale(1.5)' }} className="mr-3" />
+              Select Model
+            </div>
+          </DaButton>
+        </Link>
+      )}
 
-      {/* <DaMenu trigger={<div className="da-clickable flex h-full items-center px-4 text-da-gray-medium">
-        <HiMenu size={22}/></div>}>
-        <div className="px-4 py-2 da-menu-item ">Menu item 1</div>
-        <div className="px-4 py-2 da-menu-item ">Menu item 2</div>
-      </DaMenu> */}
+      <DaMenu
+        trigger={
+          <div className="da-clickable flex h-full items-center px-4 text-da-gray-medium">
+            <HiMenu size={22} />
+          </div>
+        }
+      >
+        <Link
+          to="/manage-users"
+          className="flex items-center px-4 py-2 gap-2 da-menu-item"
+        >
+          <TbUsers className="text-base" /> Manage Users
+        </Link>
+      </DaMenu>
 
       <DaNavUser />
     </header>

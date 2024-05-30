@@ -9,17 +9,17 @@ interface UserInfo {
   providerId: string
 }
 
-export interface User extends Document {
+export interface User {
   name: string
   email: string
   role: 'admin' | 'user'
   roles: Roles
-  emailVerified: boolean
-  isSystemAdmin: boolean
+  email_verified: boolean
+  is_system_admin: boolean
   image_file?: string
   provider: string
   uid?: string
   provider_data?: UserInfo[]
-  createdAt?: Date
-  updatedAt?: Date
+  created_at: Date
+  id: string
 }
