@@ -3,7 +3,7 @@ import { serverAxios } from './base'
 import { Model, ModelCreate, ModelLite } from '@/types/model.type'
 import { models } from '@/data/models_mock'
 
-const IS_MOCK = true
+const IS_MOCK = false
 
 export const listModelsLite = async () => {
   if (IS_MOCK) {

@@ -44,12 +44,8 @@ const DaVisibilityControl: React.FC<VisibilityControlProps> = ({
 }
 
 const initialContributors = [
-  { name: 'Dirk Slama', email: 'xxxxxxlama@bosch.com' },
-  { name: 'Chris', email: 'xxxxxx17@gmail.com' },
-  { name: 'Dennis Meister', email: 'xxxxxx.Meister@etas.com' },
-  { name: 'Hoang Phan', email: 'xxxxxxphanthanh@vn.bosch.com' },
-  { name: 'Phan Thanh Hoang', email: 'xxxxxxphanthanh@vn.bosch.com' },
-  { name: 'Louis Jackman', email: 'xxxxxxackman00@gmail.com' },
+  { name: 'Member One', email: 'member.one@example.com' },
+  { name: 'Member Two', email: 'member.two@example.com' },
 ]
 
 const initialMembers = [

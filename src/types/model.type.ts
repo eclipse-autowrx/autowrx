@@ -1,4 +1,4 @@
-type Tag = {
+export type Tag = {
   tag: string
   tagCategoryId?: string
   tagCategoryName?: string
