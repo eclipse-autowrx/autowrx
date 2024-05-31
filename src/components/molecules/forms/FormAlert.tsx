@@ -28,7 +28,9 @@ const FormAlert = ({
           Cancel
         </DaButton>
         <DaButton disabled={loading} onClick={onConfirm}>
-          {loading && <TbLoader className="animate-spin text-lg mr-2" />}
+          {loading && (
+            <TbLoader className="animate-spin da-label-regular mr-2" />
+          )}
           Confirm
         </DaButton>
       </div>

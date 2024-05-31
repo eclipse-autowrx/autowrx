@@ -85,7 +85,7 @@ const DaUser = ({ user }: { user: User }) => {
             <FormCreateUser updateData={user} onClose={() => setOpen(false)} />
           </DaPopup>
           <DaButton onClick={() => setOpen(true)} variant="plain" size="sm">
-            <TbPencil className="text-lg" />
+            <TbPencil className="da-label-regular" />
           </DaButton>
 
           <DaPopup state={[openDelete, setOpenDelete]} trigger={<span></span>}>
@@ -104,7 +104,7 @@ const DaUser = ({ user }: { user: User }) => {
             variant="destructive"
             size="sm"
           >
-            <TbTrash className="text-lg" />
+            <TbTrash className="da-label-regular" />
           </DaButton>
         </div>
         <DaText variant="small" className="block">

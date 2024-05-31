@@ -165,7 +165,9 @@ const FormCreateUser = ({ onClose, updateData }: FormCreateUserProps) => {
           Cancel
         </DaButton>
         <DaButton disabled={loading} type="submit" className="w-fit mt-8">
-          {loading && <TbLoader className="animate-spin text-lg mr-2" />}
+          {loading && (
+            <TbLoader className="animate-spin da-label-regular mr-2" />
+          )}
           {isCreate ? 'Create User' : 'Update User'}
         </DaButton>
       </div>

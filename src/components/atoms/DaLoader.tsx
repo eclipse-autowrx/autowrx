@@ -8,7 +8,10 @@ interface DaLoaderProps {
 const DaLoader = ({ className }: DaLoaderProps) => {
   return (
     <TbLoader
-      className={clsx('text-3xl text-da-primary-500 animate-spin', className)}
+      className={clsx(
+        'da-label-huge text-da-primary-500 animate-spin',
+        className,
+      )}
     />
   )
 }
