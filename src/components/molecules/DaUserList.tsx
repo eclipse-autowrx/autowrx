@@ -20,7 +20,7 @@ const DaUserList = ({ users }: DaUserListProps) => {
   return (
     <div className="flex-1 min-h-0 overflow-y-auto">
       {users.map((user) => (
-        <DaUser user={user} />
+        <DaUser user={user} key={user.id} />
       ))}
     </div>
   )

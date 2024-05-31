@@ -8,11 +8,39 @@ import DaPopup from '../atoms/DaPopup'
 import FormCreateUser from '../molecules/forms/FormCreateUser'
 import DaLoader from '../atoms/DaLoader'
 import { isAxiosError } from 'axios'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import _ from 'lodash'
 
 const UsersManagement = () => {
   const { data, isLoading, error } = useListUsers()
+  const [filteredUsers, setFilteredUsers] = useState(data?.results || [])
+  const [search, setSearch] = useState('')
+
   const [open, setOpen] = useState(false)
+
+  const filter = useMemo(() => {
+    return _.debounce((search: string) => {
+      if (!data) return
+
+      if (search === '') {
+        setFilteredUsers(data.results)
+        return
+      }
+
+      const keyword = search.toLowerCase()
+      const filtered = data.results.filter(
+        (user) =>
+          user.name.toLowerCase().includes(keyword) ||
+          user.email.toLowerCase().includes(keyword),
+      )
+
+      setFilteredUsers(filtered)
+    }, 500)
+  }, [data])
+
+  useEffect(() => {
+    filter(search)
+  }, [data, search, filter])
 
   if (isLoading)
     return (
@@ -48,6 +76,8 @@ const UsersManagement = () => {
           <TbPlus className="mr-2" /> Create new user
         </DaButton>
         <DaInput
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
           className="ml-auto"
           placeholder="Search name or email"
           iconBefore={true}
@@ -56,7 +86,7 @@ const UsersManagement = () => {
       </div>
 
       {/* List */}
-      <DaUserList users={data?.results || []} />
+      <DaUserList users={filteredUsers} />
     </div>
   )
 }
