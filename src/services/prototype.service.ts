@@ -19,9 +19,10 @@ export const listProposalPrototype = async () => {
     await serverAxios.get<List<Prototype>>('/prototypes', {
       params: {
         fields: [
+          'model_id',
           'name',
           'visibility',
-          'model_home_image_file',
+          'image_file',
           'id',
           'created_at',
           'created_by',

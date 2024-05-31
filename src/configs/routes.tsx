@@ -43,12 +43,16 @@ const routesConfig: RouteObject[] = [
     children: [
       { index: true, element: <PageModelList /> },
       { path: ':model_id', element: <PageModelDetail /> },
-      { path: ':model_id/library', element: <PagePrototypeList /> },
       { path: ':model_id/api', element: <PageVehicleApi /> },
       { path: ':model_id/api/:api', element: <PageVehicleApi /> },
+      { path: ':model_id/library', element: <PagePrototypeList /> },
       {
-        path: ':model_id/library/prototype/:prototype_id/view',
-        element: <PagePrototypeDetail />,
+        path: ':model_id/library/prototype/:prototype_id',
+        element: <PagePrototypeDetail/>,
+      },
+      {
+        path: ':model_id/library/prototype/:prototype_id/:tab',
+        element: <PagePrototypeDetail/>,
       },
     ],
   },
