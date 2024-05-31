@@ -5,6 +5,7 @@ import { DaButton } from '@/components/atoms/DaButton'
 import { useParams } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import { DaText } from '@/components/atoms/DaText'
+import PrototypeTabCode from '@/components/organisms/PrototypeTabCode'
 
 interface TabItemProps {
   children: any
@@ -36,9 +37,9 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
   const [prototype] = useModelStore((state) => [state.prototype as Prototype])
   const [isDefaultTab, setIsDefaultTab] = useState(false)
   useEffect(() => {
-    if(!tab || tab =='journey' || tab=='view' ) {
-        setIsDefaultTab(true)
-        return
+    if (!tab || tab == 'journey' || tab == 'view') {
+      setIsDefaultTab(true)
+      return
     }
     setIsDefaultTab(false)
   }, [tab])
@@ -54,7 +55,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
   }
 
   return (
-    <div className="col-span-12">
+    <div className="col-span-12 flex flex-col">
       <div className="px-4 py-2 flex bg-da-primary-500 text-da-white da-label-sub-title">
         {prototype.name}
         <div className="grow"></div>
@@ -82,32 +83,40 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           Feedback
         </TabItem>
       </div>
-      <div className='w-full min-h-[400px] grid place-items-center'>
-            {
-                isDefaultTab && <div className='p-8'><DaText variant='huge'>Journey Page</DaText></div>
-            }
-            {
-                tab=='architecture' && <div className='p-8'><DaText variant='huge'>Architecture Page</DaText></div>
-            }
-            {
-                tab=='code' && <div className='p-8'><DaText variant='huge'>Code Page</DaText></div>
-            }
-            {
-                tab=='flow' && <div className='p-8'><DaText variant='huge'>Flow Page</DaText></div>
-            }
-            {
-                tab=='dashboard' && <div className='p-8'><DaText variant='huge'>Dashboard Page</DaText></div>
-            }
-            {
-                tab=='homologation' && <div className='p-8'><DaText variant='huge'>Homologation Page</DaText></div>
-            }
-            {
-                tab=='feedback' && <div className='p-8'><DaText variant='huge'>Feedback Page</DaText></div>
-            }
-        
+      <div className="w-full min-h-[100px] grow border-2 border-black">
+        {isDefaultTab && (
+          <div className="p-8">
+            <DaText variant="huge">Journey Page</DaText>
+          </div>
+        )}
+        {tab == 'architecture' && (
+          <div className="p-8">
+            <DaText variant="huge">Architecture Page</DaText>
+          </div>
+        )}
+        {tab == 'code' && <PrototypeTabCode />}
+        {tab == 'flow' && (
+          <div className="p-8">
+            <DaText variant="huge">Flow Page</DaText>
+          </div>
+        )}
+        {tab == 'dashboard' && (
+          <div className="p-8">
+            <DaText variant="huge">Dashboard Page</DaText>
+          </div>
+        )}
+        {tab == 'homologation' && (
+          <div className="p-8">
+            <DaText variant="huge">Homologation Page</DaText>
+          </div>
+        )}
+        {tab == 'feedback' && (
+          <div className="p-8">
+            <DaText variant="huge">Feedback Page</DaText>
+          </div>
+        )}
       </div>
     </div>
-    
   )
 }
 

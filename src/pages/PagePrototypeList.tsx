@@ -10,6 +10,7 @@ import FormCreatePrototype from '@/components/molecules/forms/FormCreatePrototyp
 import DaPopup from '@/components/atoms/DaPopup'
 import useListModelPrototypes from '@/hooks/useListModelPrototypes'
 import { useParams } from 'react-router-dom'
+import PrototypeTabCode from '@/components/organisms/PrototypeTabCode'
 
 const PagePrototypeList = () => {
   const { model_id } = useParams()

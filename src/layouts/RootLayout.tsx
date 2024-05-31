@@ -10,10 +10,10 @@ const RootLayout = () => {
     <div className="flex flex-col h-screen">
       <ActiveObjectManagement />
       <NavigationBar />
-      <div className="grid grid-cols-12 h-full overflow-y-auto ">
+      <div className="grid grid-cols-12 auto-cols-max h-full overflow-y-auto ">
         <Outlet />
-        <SiteFooter />
       </div>
+      {/* <SiteFooter /> */}
     </div>
   )
 }

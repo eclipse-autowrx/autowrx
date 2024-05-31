@@ -21,10 +21,12 @@ const useModelStore = create<ModelState & Actions>()(
         prototype: undefined,
         setActiveModel: (model) =>
             set((state) => {
+                console.log(`set active model`, model)
                 state.model = model
             }),
         setActivePrototype: (prototype) =>
             set((state) => {
+                console.log(`set active prototype`, prototype)
                 state.prototype = prototype
             }),
     }))
