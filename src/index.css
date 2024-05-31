@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -81,6 +81,7 @@ body {
   --da-gray-light: 214 32 91;
   --da-gray-medium: 215 16 47;
   --da-gray-dark: 217 33 17;
+  --da-destructive: 0 84 60;
 
   --da-gradient-from: 198 100 22;
   --da-gradient-to: 67 54 48;
@@ -176,6 +177,10 @@ body {
 
 .da-btn-secondary {
   @apply bg-da-gray-medium text-da-white shadow-sm hover:bg-da-gray-medium/80;
+}
+
+.da-btn-destructive {
+  @apply text-da-destructive hover:bg-da-destructive/10;
 }
 
 .da-btn-sm {

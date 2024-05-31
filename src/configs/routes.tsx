@@ -16,12 +16,16 @@ import PageTestHome from '@/pages/test-ui/PageTestHome'
 import PageTestForm from '@/pages/test-ui/PageTestForm'
 import PagePrototypeList from '@/pages/PagePrototypeList'
 import PageResetPassword from '@/pages/PageResetPassword'
+import PageManageUsers from '@/pages/PageManageUsers'
 
 const routesConfig: RouteObject[] = [
   {
     path: '/',
     element: <RootLayout />,
-    children: [{ index: true, element: <PageHome /> }],
+    children: [
+      { index: true, element: <PageHome /> },
+      { path: 'manage-users', element: <PageManageUsers /> },
+    ],
   },
   {
     path: '/about',

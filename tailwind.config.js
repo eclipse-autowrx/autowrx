@@ -41,6 +41,7 @@ module.exports = {
         'da-gray-dark': 'hsl(var(--da-gray-dark))',
         'da-gradient-from': 'hsl(var(--da-gradient-from))',
         'da-gradient-to': 'hsl(var(--da-gradient-to))',
+        'da-destructive': 'hsl(var(--da-destructive))',
         primary: colors.teal,
         secondary: colors.gray,
         accent: colors.orange,
