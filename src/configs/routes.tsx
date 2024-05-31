@@ -16,6 +16,7 @@ import PageTestHome from '@/pages/test-ui/PageTestHome'
 import PageTestForm from '@/pages/test-ui/PageTestForm'
 import PagePrototypeList from '@/pages/PagePrototypeList'
 import PageResetPassword from '@/pages/PageResetPassword'
+import DaDiscussions from '@/components/molecules/DaDiscussions'
 
 const routesConfig: RouteObject[] = [
   {
@@ -72,6 +73,10 @@ const routesConfig: RouteObject[] = [
     path: '/test-ui/organisms',
     element: <PageOrganisms />,
     children: [{ index: true, element: <PageOrganisms /> }],
+  },
+  {
+    path: '/test-ui/discussion',
+    element: <DaDiscussions />,
   },
 ]
 
