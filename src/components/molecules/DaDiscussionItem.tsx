@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { TbArrowBack, TbChevronDown, TbChevronUp } from 'react-icons/tb'
 import { DaAvatar } from '../atoms/DaAvatar'
 import { DaButton } from '../atoms/DaButton'
+import clsx from 'clsx'
 
 type DaDiscussionItemProps = {
   data: Discussion
@@ -17,8 +18,8 @@ const DaDiscussionItem = ({ data }: DaDiscussionItemProps) => {
         <DaAvatar
           src={data?.created_by.image_file || '/imgs/user.png'}
           alt={data?.created_by.name}
-          fallback={<img src="/imgs/user.png" alt="User" />}
-          className="select-none w-8 h-8 rounded-md overflow-hidden "
+          fallback={<img src="/imgs/user.png" className="p-1" alt="User" />}
+          className="select-none w-8 h-8 overflow-hidden "
         />
 
         <div className="pl-2 da-label-regular-bold text-da-gray-dark font-bold">
@@ -86,12 +87,16 @@ const DaDiscussionItem = ({ data }: DaDiscussionItemProps) => {
       </div>
 
       {!collapsed && data.children && data.children.length > 0 && (
-        <div className="ml-12 space-y-7">
+        <div className="ml-12 space-y-3">
           {data.children.map((child: any, index: number) => (
             <DaDiscussionItem key={index} data={child} />
           ))}
         </div>
       )}
+
+      {/* {data.children && data.children.length > 0 && !collapsed && (
+        <div className="my-12"></div>
+      )} */}
     </div>
   )
 }

@@ -2,6 +2,7 @@ import useListDiscussions from '@/hooks/useListDiscussions'
 import { DaText } from '../atoms/DaText'
 import FormCreateDiscussion from './forms/FormCreateDiscussion'
 import DaDiscussionItem from './DaDiscussionItem'
+import { Fragment } from 'react'
 
 const DaDiscussions = () => {
   const { data } = useListDiscussions('', '')
@@ -12,9 +13,14 @@ const DaDiscussions = () => {
         Discussions
       </DaText>
       {data?.results && (
-        <div className="my-4 space-y-10">
-          {data.results.map((discussion) => (
-            <DaDiscussionItem key={discussion.id} data={discussion} />
+        <div className="my-4">
+          {data.results.map((discussion, index) => (
+            <Fragment key={discussion.id}>
+              <DaDiscussionItem data={discussion} />
+              {index < data.results.length - 1 && (
+                <div className="my-4 border-t border-da-gray-light" />
+              )}
+            </Fragment>
           ))}
         </div>
       )}
