@@ -50,7 +50,7 @@ const DaUser = ({ user }: { user: User }) => {
   }
 
   return (
-    <div key={user.id} className="flex w-full px-2 py-3">
+    <div key={user.id} className="flex w-full p-4 border rounded-lg my-3">
       {/* Avatar */}
       <div className="flex-shrink-0">
         <DaAvatar
@@ -66,14 +66,14 @@ const DaUser = ({ user }: { user: User }) => {
       </div>
 
       {/* Information */}
-      <div>
+      <div className="space-y-1">
         <DaText className="block text-da-black">{user.name}</DaText>
         <DaText variant="small" className="block">
           {user.email}
         </DaText>
         {user.role === 'admin' && (
           <div className="block rounded-full bg-da-primary-100 w-fit px-2">
-            <DaText variant="small">Is Admin</DaText>
+            <DaText variant="small">Admin</DaText>
           </div>
         )}
       </div>
@@ -85,7 +85,7 @@ const DaUser = ({ user }: { user: User }) => {
             <FormCreateUser updateData={user} onClose={() => setOpen(false)} />
           </DaPopup>
           <DaButton onClick={() => setOpen(true)} variant="plain" size="sm">
-            <TbPencil className="da-label-regular" />
+            <TbPencil className="w-5 h-5" />
           </DaButton>
 
           <DaPopup state={[openDelete, setOpenDelete]} trigger={<span></span>}>
@@ -104,7 +104,7 @@ const DaUser = ({ user }: { user: User }) => {
             variant="destructive"
             size="sm"
           >
-            <TbTrash className="da-label-regular" />
+            <TbTrash className="w-5 h-5" />
           </DaButton>
         </div>
         <DaText variant="small" className="block">

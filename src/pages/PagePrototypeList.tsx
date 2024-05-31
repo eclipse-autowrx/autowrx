@@ -30,7 +30,7 @@ const PagePrototypeList = () => {
   return (
     <>
       <div className="col-span-full h-12 bg-da-primary-100 sticky top-0 z-20"></div>
-      <div className="col-span-5 xl:col-span-4 h-[calc(80vh)] overflow-y-auto mt-2">
+      <div className="col-span-5 xl:col-span-4 h-[80vh] overflow-y-auto mt-2">
         <DaInput
           type="text"
           placeholder="Enter to search"
@@ -82,32 +82,7 @@ const PagePrototypeList = () => {
       </div>
       <div className="col-span-7 xl:col-span-8 border-l">
         {selectedPrototype && (
-          <PrototypeSummary
-            prototype={selectedPrototype as Prototype}
-            prototypeImageUrl={selectedPrototype.image_file}
-            prototypeAuthorAvatarUrl="https://avatars.githubusercontent.com/u/115630638?v=4"
-            prototypeAuthorName="John Doe"
-            prototypeTags={['tag1', 'tag2', 'tag3']}
-            prototypeProperties={[
-              {
-                property: 'Problem',
-                value: selectedPrototype.description.problems,
-              },
-              {
-                property: 'Says who?',
-                value: selectedPrototype.description.says_who,
-              },
-              {
-                property: 'Solution',
-                value: selectedPrototype.description.solution,
-              },
-              {
-                property: 'Status',
-                value: selectedPrototype.description.status,
-              },
-              { property: 'Complexity', value: '5' },
-            ]}
-          />
+          <PrototypeSummary prototype={selectedPrototype as Prototype} />
         )}
       </div>
     </>
