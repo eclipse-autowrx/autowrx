@@ -1,4 +1,4 @@
-type Tag = {
+export type Tag = {
   tag: string
   tagCategoryId?: string
   tagCategoryName?: string
@@ -50,6 +50,7 @@ export type Prototype = {
   created_at?: Date
   tags?: Tag[]
 }
+
 export type ModelCreate = {
   name: string
   cvi: string

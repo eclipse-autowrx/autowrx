@@ -3,12 +3,13 @@ import { DaImageRatio } from '../atoms/DaImageRatio'
 import { DaTag } from '../atoms/DaTag'
 import { DaText } from '../atoms/DaText'
 import { DaAvatar } from '../atoms/DaAvatar'
+import { Tag } from '@/types/model.type'
 
 interface DaItemStandardProps {
   title: string
   author: string
   content: string
-  tags: string[]
+  tags: Tag[]
   imageUrl: string
   avatarUrl: string
   maxWidth?: string
@@ -62,13 +63,15 @@ const DaItemStandard: React.FC<DaItemStandardProps> = ({
             {content}
           </DaText>
         </div>
-        <div className="flex space-x-2">
-          {tags.map((tag, index) => (
-            <DaTag variant={'secondary'} key={index}>
-              {tag}
-            </DaTag>
-          ))}
-        </div>
+        {tags && (
+          <div className="flex space-x-2">
+            {tags.map((tag, index) => (
+              <DaTag variant={'secondary'} key={index}>
+                {tag.tag}
+              </DaTag>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

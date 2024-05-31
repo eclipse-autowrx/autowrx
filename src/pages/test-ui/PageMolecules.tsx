@@ -81,7 +81,7 @@ const PageMolecules = () => {
             author="John Doe"
             content="It is a long
                 established fact that a reader will be distracted by the readable content of a page when looking at its layout"
-            tags={['Tag1', 'Tag2']}
+            tags={[{ tag: 'Tag1'}, {tag: 'Tag2'}]}
             imageUrl="/imgs/1.jpg"
             avatarUrl="/imgs/2.jpg"
             maxWidth="500px"

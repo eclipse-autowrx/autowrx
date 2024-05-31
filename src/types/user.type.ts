@@ -9,17 +9,25 @@ interface UserInfo {
   providerId: string
 }
 
-export interface User extends Document {
+export type UserCreate = {
   name: string
   email: string
+  password: string
   role: 'admin' | 'user'
+}
+
+export type User = Omit<UserCreate, 'password'> & {
   roles: Roles
-  emailVerified: boolean
-  isSystemAdmin: boolean
+  email_verified: boolean
   image_file?: string
   provider: string
-  uid?: string
   provider_data?: UserInfo[]
-  createdAt?: Date
-  updatedAt?: Date
+  created_at: Date
+  id: string
+}
+
+export type UserUpdate = Partial<
+  Omit<User, 'email_verified' | 'created_at' | 'id'>
+> & {
+  password?: string
 }
