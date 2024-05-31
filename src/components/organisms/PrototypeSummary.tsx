@@ -5,9 +5,11 @@ import { DaTableProperty } from '../molecules/DaTableProperty'
 import { DaAvatar } from '../atoms/DaAvatar'
 import { DaButton } from '../atoms/DaButton'
 import { TbArrowRight } from 'react-icons/tb'
+import { Link } from 'react-router-dom'
+import { Prototype } from '@/types/model.type'
 
 interface PrototypeSummaryProps {
-  prototypeName: string
+  prototype: Prototype,
   prototypeAuthorName: string
   prototypeTags: string[]
   prototypeProperties: { property: string; value: string }[]
@@ -16,7 +18,7 @@ interface PrototypeSummaryProps {
 }
 
 const PrototypeSummary = ({
-  prototypeName,
+  prototype,
   prototypeAuthorName,
   prototypeTags,
   prototypeProperties,
@@ -32,12 +34,14 @@ const PrototypeSummary = ({
       <div className="p-5">
         <div className="flex justify-between items-center">
           <DaText variant="title" className="text-gray-600">
-            {prototypeName}
+            {prototype.name}
           </DaText>
-          <DaButton variant="solid" className="text-sm">
-            Open
-            <TbArrowRight className="w-5 h-5 ml-1" />
-          </DaButton>
+          <Link to={`/model/${prototype.model_id}/library/prototype/${prototype.id}/view`}>
+            <DaButton variant="solid" className="text-sm">
+              Open
+              <TbArrowRight className="w-5 h-5 ml-1" />
+            </DaButton>
+          </Link>
         </div>
         <div className="flex items-center pt-2">
           <DaAvatar

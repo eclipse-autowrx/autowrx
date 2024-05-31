@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Prototype } from '@/types/model.type'
 import PrototypeSummary from '@/components/organisms/PrototypeSummary'
 import { DaInput } from '@/components/atoms/DaInput'
 import { DaItemStandard } from '@/components/molecules/DaItemStandard'
@@ -82,7 +83,7 @@ const PagePrototypeList = () => {
       <div className="col-span-7 xl:col-span-8 border-l">
         {selectedPrototype && (
           <PrototypeSummary
-            prototypeName={selectedPrototype.name}
+            prototype={selectedPrototype as Prototype}
             prototypeImageUrl={selectedPrototype.image_file}
             prototypeAuthorAvatarUrl="https://avatars.githubusercontent.com/u/115630638?v=4"
             prototypeAuthorName="John Doe"
