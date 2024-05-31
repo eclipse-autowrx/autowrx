@@ -1,3 +1,5 @@
+import { User } from './user.type'
+
 export type Tag = {
   tag: string
   tagCategoryId?: string
@@ -30,6 +32,8 @@ export type Model = {
   created_at?: Date
   skeleton?: string
   tags?: Tag[]
+  contributors?: User[]
+  members?: User[]
 }
 
 export type Prototype = {

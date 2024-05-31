@@ -43,3 +43,23 @@ export const getModel = async (model_id: string) => {
 export const createModelService = async (model: ModelCreate) => {
   return (await serverAxios.post<Model>('/models', model)).data
 }
+
+export const updateModelPermissionService = async (
+  model_id: string,
+  role: string,
+  userId: string,
+) => {
+  return (
+    await serverAxios.post<Model>(`/models/${model_id}/permissions`, {
+      role,
+      userId,
+    })
+  ).data
+}
+
+export const updateModelService = async (
+  model_id: string,
+  data: Partial<Model>,
+) => {
+  return (await serverAxios.patch<Model>(`/models/${model_id}`, data)).data
+}

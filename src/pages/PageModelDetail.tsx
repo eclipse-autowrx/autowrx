@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DaText } from '@/components/atoms/DaText'
 import { DaCardIntro } from '@/components/molecules/DaCardIntro'
@@ -7,10 +7,12 @@ import { Model } from '@/types/model.type'
 import DaVehicleProperties from '@/components/molecules/DaVehicleProperties'
 import DaContributorList from '@/components/molecules/DaContributorList'
 import { DaButton } from '@/components/atoms/DaButton'
+import { updateModelService } from '@/services/model.service'
+import { useParams } from 'react-router-dom'
 
 interface VisibilityControlProps {
-  initialVisibility: string
-  onVisibilityChange: (newVisibility: string) => void
+  initialVisibility: 'public' | 'private' | undefined
+  onVisibilityChange: (newVisibility: 'public' | 'private') => void
 }
 
 const DaVisibilityControl: React.FC<VisibilityControlProps> = ({
@@ -43,16 +45,6 @@ const DaVisibilityControl: React.FC<VisibilityControlProps> = ({
   )
 }
 
-const initialContributors = [
-  { name: 'Member One', email: 'member.one@example.com' },
-  { name: 'Member Two', email: 'member.two@example.com' },
-]
-
-const initialMembers = [
-  { name: 'Member One', email: 'member.one@example.com' },
-  { name: 'Member Two', email: 'member.two@example.com' },
-]
-
 const cardIntro = [
   {
     title: 'Architecture',
@@ -74,11 +66,14 @@ const cardIntro = [
 ]
 
 const PageModelDetail = () => {
+  const { model_id } = useParams()
   const [model] = useModelStore((state) => [state.model as Model])
-  const [contributors, setContributors] = useState(initialContributors)
-  const [members, setMembers] = useState(initialMembers)
 
-  if (!model) {
+  useEffect(() => {
+    console.log(model)
+  }, [model])
+
+  if (!model || !model_id) {
     return (
       <div className="container grid place-items-center">
         <div className="p-8 text-da-gray-dark da-label-huge">
@@ -86,16 +81,6 @@ const PageModelDetail = () => {
         </div>
       </div>
     )
-  }
-
-  const handleAddUser = () => {
-    // Logic to add user
-    const newUser = { name: 'New User', email: 'new.user@example.com' }
-    setContributors([...contributors, newUser])
-  }
-
-  const handleRemoveUser = (email: string) => {
-    setContributors(contributors.filter((user) => user.email !== email))
   }
 
   return (
@@ -127,15 +112,17 @@ const PageModelDetail = () => {
 
         <DaVisibilityControl
           initialVisibility={model.visibility}
-          onVisibilityChange={() => {}}
+          onVisibilityChange={(newVisibility) => {
+            updateModelService(model_id, {
+              visibility: newVisibility,
+            })
+          }}
         />
 
         <DaContributorList
           className="mt-3"
-          contributors={contributors}
-          members={members}
-          onAddUser={handleAddUser}
-          onRemoveUser={handleRemoveUser}
+          contributors={model.contributors ? model.contributors : []}
+          members={model.members ? model.members : []}
         />
       </div>
       <div className="col-span-6">
