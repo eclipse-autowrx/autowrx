@@ -50,6 +50,7 @@ export type Prototype = {
   created_at?: Date
   tags?: Tag[]
 }
+
 export type ModelCreate = {
   name: string
   cvi: string
