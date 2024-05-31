@@ -9,10 +9,6 @@ import { useNavigate } from 'react-router-dom'
 
 const initialState = {
   name: '',
-  problem: '',
-  saysWho: '',
-  solution: '',
-  complexity: 3,
 }
 
 const complexityLevels = ['Lowest', 'Low', 'Medium', 'High', 'Highest']
@@ -60,12 +56,12 @@ import plugins
 from browser import aio
 
 vehicle = Vehicle()`,
-        complexity_level: data.complexity,
+        complexity_level: 3,
         customer_journey: MockDefaultJourney,
         description: {
-          problem: data.problem,
-          says_who: data.saysWho,
-          solution: data.solution,
+          problem: '',
+          says_who: '',
+          solution: '',
           status: '',
         },
         image_file: 'https://placehold.co/600x400',
@@ -88,7 +84,7 @@ vehicle = Vehicle()`,
   return (
     <form
       onSubmit={createNewModel}
-      className="flex flex-col w-[400px] min-w-[400px] min-h-[300px] px-2 md:px-6 py-4 bg-da-white"
+      className="flex flex-col w-[400px] min-w-[400px]  px-2 md:px-6 py-4 bg-da-white"
     >
       <DaText variant="title" className="text-da-primary-500">
         Create New Prototype
@@ -102,46 +98,6 @@ vehicle = Vehicle()`,
         label="Name *"
         className="mt-4"
       />
-      <DaInput
-        name="problem"
-        value={data.problem}
-        onChange={(e) => handleChange('problem', e.target.value)}
-        placeholder="Problem"
-        label="Problem"
-        className="mt-4"
-      />
-      <DaInput
-        name="saysWho"
-        value={data.saysWho}
-        onChange={(e) => handleChange('saysWho', e.target.value)}
-        placeholder="Says who?"
-        label="Says who?"
-        className="mt-4"
-      />
-      <DaInput
-        name="solution"
-        value={data.solution}
-        onChange={(e) => handleChange('solution', e.target.value)}
-        placeholder="Solution"
-        label="Solution"
-        className="mt-4"
-      />
-      <DaSelect
-        value={complexityLevels[data.complexity - 1]}
-        label="Complexity"
-        wrapperClassName="mt-4"
-        onValueChange={(value) =>
-          handleChange('complexity', complexityLevels.indexOf(value) + 1)
-        }
-      >
-        {complexityLevels.map((level, index) => (
-          <DaSelectItem key={index} value={level}>
-            {level}
-          </DaSelectItem>
-        ))}
-      </DaSelect>
-
-      <div className="grow"></div>
 
       {error && (
         <DaText variant="small" className="mt-4 text-da-accent-500">
