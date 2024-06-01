@@ -72,5 +72,17 @@ export type VehicleApi = {
   unit?: string
   max?: number
   min?: number
-  children?: { [key: string]: VehicleApi }
+  children?: { [key: string]: VehicleApi },
+  shortName?: string;
 }
+
+export interface Cvi {
+  Vehicle: VehicleApi
+}
+
+export interface ApiItem {
+  api: string
+  type: string
+  details: VehicleApi
+}
+

@@ -5,6 +5,16 @@ import { prototypes } from '@/data/models_mock'
 
 const IS_MOCK = false
 
+const DEFAULT_PY_CODE = `from sdv_model import Vehicle
+import plugins
+from browser import aio
+
+vehicle = Vehicle()
+
+# write your code here
+
+`;
+
 export const listProposalPrototype = async () => {
   if (IS_MOCK) {
     return {
@@ -39,6 +49,9 @@ export const getPrototype = async (prototype_id: string) => {
     const prototype = prototypes.find(
       (prototype) => prototype.id === prototype_id,
     )
+    if(prototype && !prototype.code) {
+      prototype.code = DEFAULT_PY_CODE
+    }
     return prototype
   }
   return (await serverAxios.get<Prototype>(`/prototypes/${prototype_id}`)).data

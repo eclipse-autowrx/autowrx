@@ -29,7 +29,7 @@ const PagePrototypeList = () => {
   // console.log('fetchedPrototypes: ', fetchedPrototypes)
 
   return (
-    <>
+    <div className="grid grid-cols-12 auto-cols-max">
       <div className="col-span-full h-12 bg-da-primary-100 sticky top-0 z-20"></div>
       <div className="col-span-5 xl:col-span-4 h-[80vh] overflow-y-auto mt-2">
         <DaInput
@@ -86,7 +86,7 @@ const PagePrototypeList = () => {
           <PrototypeSummary prototype={selectedPrototype as Prototype} />
         )}
       </div>
-    </>
+    </div>
   )
 }
 

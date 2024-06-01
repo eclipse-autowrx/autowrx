@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import { Cvi, VehicleApi } from '@/types/model.type'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -26,4 +27,23 @@ export const getApiTypeClasses = (type: string) => {
     default:
       return { bgClass: 'bg-da-gray-medium', textClass: 'text-da-gray-medium' }
   }
+}
+
+export const parseCvi = (cvi: Cvi) => {
+  const traverse = (
+    node: VehicleApi,
+    prefix: string = 'Vehicle',
+  ): { api: string; type: string; details: VehicleApi }[] => {
+    let result: { api: string; type: string; details: VehicleApi }[] = []
+    if (node.children) {
+      for (const [key, child] of Object.entries(node.children)) {
+        const newPrefix = `${prefix}.${key}`
+        node.children[key].api = newPrefix
+        result.push({ api: newPrefix, type: child.type, details: child })
+        result = result.concat(traverse(child, newPrefix))
+      }
+    }
+    return result
+  }
+  return traverse(cvi.Vehicle)
 }

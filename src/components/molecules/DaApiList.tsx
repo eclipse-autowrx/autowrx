@@ -1,30 +1,28 @@
+import { VehicleApi } from '@/types/model.type'
 import { DaText } from '../atoms/DaText'
 import { getApiTypeClasses } from '@/lib/utils'
 
 interface DaApiListItemProps {
-  api: string
-  type: string
+  api: VehicleApi
   onClick: () => void
-  isSelected: boolean
+  isSelected?: boolean
 }
 
 const DaApiListItem = ({
   api,
-  type,
   onClick,
   isSelected,
 }: DaApiListItemProps) => {
-  const { textClass } = getApiTypeClasses(type)
+  const { textClass } = getApiTypeClasses(api.type)
   return (
     <div
-      className={`grid grid-cols-4 gap-4 py-1.5 text-da-gray-medium cursor-pointer hover:bg-da-gray-light items-center justify-center px-2 rounded ${
-        isSelected ? 'bg-da-primary-100 text-da-primary-500' : ''
-      }`}
+      className={`grid grid-cols-4 gap-4 py-1.5 text-da-gray-medium cursor-pointer hover:bg-da-gray-light items-center justify-center px-2 rounded ${isSelected ? 'bg-da-primary-100 text-da-primary-500' : ''
+        }`}
       onClick={onClick}
     >
       <div className="col-span-3 cursor-pointer">
         <DaText variant="small" className="cursor-pointer">
-          {api}
+          {api.api}
         </DaText>
       </div>
       <div className="col-span-1 flex justify-end cursor-pointer">
@@ -32,7 +30,7 @@ const DaApiListItem = ({
           variant="small"
           className={textClass + ' uppercase !font-medium cursor-pointer'}
         >
-          {type}
+          {api.type}
         </DaText>
       </div>
     </div>
@@ -40,8 +38,8 @@ const DaApiListItem = ({
 }
 
 interface DaApiListProps {
-  apis: { api: string; type: string; details: any }[]
-  onApiClick: (details: any) => void
+  apis: any[]
+  onApiClick?: (api: VehicleApi) => void
   selectedApi?: { api: string; type: string; details: any } | null
   maxWidth?: string
 }
@@ -60,9 +58,8 @@ const DaApiList = ({
       {apis.map((item, index) => (
         <DaApiListItem
           key={index}
-          api={item.api}
-          type={item.type}
-          onClick={() => onApiClick(item.details)}
+          api={item}
+          onClick={() => { if (onApiClick) { onApiClick(item) } }}
           isSelected={selectedApi?.api === item.api}
         />
       ))}
@@ -70,4 +67,4 @@ const DaApiList = ({
   )
 }
 
-export default DaApiList
+export { DaApiList, DaApiListItem }

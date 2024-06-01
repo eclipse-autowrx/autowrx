@@ -10,7 +10,8 @@ const RootLayout = () => {
     <div className="flex flex-col h-screen">
       <ActiveObjectManagement />
       <NavigationBar />
-      <div className="grid grid-cols-12 auto-cols-max h-full overflow-y-auto ">
+      {/* "grid grid-cols-12 auto-cols-max" */}
+      <div className="h-full overflow-y-auto ">
         <Outlet />
       </div>
       {/* <SiteFooter /> */}

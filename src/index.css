@@ -115,35 +115,35 @@ body {
 /*********** For Text Component ********************/
 
 .da-label-regular {
-  @apply da-txt-regular font-medium;
+  @apply da-txt-regular font-light;
 }
 
 .da-label-regular-bold {
-  @apply da-txt-regular font-bold;
+  @apply da-txt-regular font-semibold;
 }
 
 .da-label-small {
-  @apply da-txt-small font-medium;
+  @apply da-txt-small font-light;
 }
 
 .da-label-small-bold {
-  @apply da-txt-small font-bold;
+  @apply da-txt-small font-semibold;
 }
 
 .da-label-sub-title {
-  @apply da-txt-medium font-bold;
+  @apply da-txt-medium font-semibold;
 }
 
 .da-label-title {
-  @apply da-txt-large font-bold;
+  @apply da-txt-large font-semibold;
 }
 
 .da-label-huge {
-  @apply da-txt-huge;
+  @apply da-txt-huge font-light;
 }
 
 .da-label-huge-bold {
-  @apply da-txt-huge font-bold;
+  @apply da-txt-huge font-semibold;
 }
 
 /*********** For Button Component ********************/
