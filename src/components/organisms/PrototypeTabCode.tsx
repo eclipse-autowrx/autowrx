@@ -6,10 +6,8 @@ import { Prototype } from '@/types/model.type'
 import { TbRocket, TbDotsVertical, TbArrowUpRight } from 'react-icons/tb'
 import DaTabItem from '../atoms/DaTabItem'
 import config from '@/configs/config'
-import { DaText } from '../atoms/DaText'
-import ModelApiList from './ModelApiList'
-import { DaApiListItem } from '../molecules/DaApiList'
 import { shallow } from "zustand/shallow";
+import PrototypeTabCodeApiPanel from './PrototypeTabCodeApiPanel'
 
 const PrototypeTabCode: FC = ({ }) => {
     const [prototype, setActivePrototype, activeModelApis] = useModelStore((state) => [
@@ -21,7 +19,7 @@ const PrototypeTabCode: FC = ({ }) => {
     const [code, setCode] = useState<string | undefined>(undefined)
     const [ticker, setTicker] = useState(0)
     const [activeTab, setActiveTab] = useState('api')
-    const [useApis, setUseApis] = useState<any[]>([]);
+    
 
     useEffect(() => {
         let timer = setInterval(() => {
@@ -45,20 +43,7 @@ const PrototypeTabCode: FC = ({ }) => {
         setSavedCode(prototype.code || '')
     }, [prototype])
 
-    useEffect(() => {
-        if (!code || !activeModelApis || activeModelApis.length === 0) {
-            setUseApis([]);
-            return;
-        }
-        let useList: any[] = [];
-        activeModelApis.forEach((item: any) => {
-            if (code.includes(item.shortName)) {
-                useList.push(item);
-            }
-        });
-        console.log("useList", useList)
-        setUseApis(useList);
-    }, [code, activeModelApis]);
+    
 
     const saveCodeToDb = () => {
         if (code === savedCode) return
@@ -68,6 +53,8 @@ const PrototypeTabCode: FC = ({ }) => {
         newPrototype.code = code || ''
         setActivePrototype(newPrototype)
     }
+
+
 
     if (!prototype) {
         return <div></div>
@@ -121,31 +108,7 @@ const PrototypeTabCode: FC = ({ }) => {
             </div>
             <div className='flex-1 flex flex-col w-full overflow-hidden'>
                 {activeTab == 'api' && <>
-                    <DaText variant='sub-title' className='px-4 mt-2'>
-                        Used APIs({useApis.length})
-                    </DaText>
-                    {useApis && useApis.length > 0 && (
-                        <div className="mb-2">
-                            
-                            <div className="flex flex-col w-full px-6 scroll-gray">
-                                <div className="max-h-[150px] mt-2 overflow-y-auto scroll-gray">
-                                    {useApis.map((item: any, index: any) => (
-                                        <DaApiListItem
-                                            key={index}
-                                            api={item}
-                                            onClick={() => { console.log(`On API clicked`, item) }}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                    <DaText variant='sub-title' className='px-4 mt-2'>
-                        All APIs
-                    </DaText>
-                    <div className='grow overflow-hidden'>
-                        <ModelApiList onApiClick={(api) => {console.log(`XX On API clicked `, api)}}/>
-                    </div>
+                    <PrototypeTabCodeApiPanel code={code}/>
                 </>}
                 {activeTab == 'dashboard' && 'Dashboards constent'}
             </div>

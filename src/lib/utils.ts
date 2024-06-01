@@ -47,3 +47,12 @@ export const parseCvi = (cvi: Cvi) => {
   }
   return traverse(cvi.Vehicle)
 }
+
+export const copyText = async (text: string, copiedText: string = "Copied!") => {
+  try {
+      await navigator.clipboard.writeText(text);
+      console.log(copiedText);
+  } catch (error) {
+    console.log(`Error occured while copying to clipboard. ${error}`);
+  }
+};
