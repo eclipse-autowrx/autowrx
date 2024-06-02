@@ -8,6 +8,7 @@ import DaTabItem from '../atoms/DaTabItem'
 import config from '@/configs/config'
 import { shallow } from "zustand/shallow";
 import PrototypeTabCodeApiPanel from './PrototypeTabCodeApiPanel'
+import PrototypeTabCodeDashboardCfg from './PrototypeTabCodeDashboardCfg'
 
 const PrototypeTabCode: FC = ({ }) => {
     const [prototype, setActivePrototype, activeModelApis] = useModelStore((state) => [
@@ -108,9 +109,9 @@ const PrototypeTabCode: FC = ({ }) => {
             </div>
             <div className='flex-1 flex flex-col w-full overflow-hidden'>
                 {activeTab == 'api' && <>
-                    <PrototypeTabCodeApiPanel code={code}/>
+                    <PrototypeTabCodeApiPanel code={code || ''}/>
                 </>}
-                {activeTab == 'dashboard' && 'Dashboards constent'}
+                {activeTab == 'dashboard' && <PrototypeTabCodeDashboardCfg/>}
             </div>
         </div>
     </div>

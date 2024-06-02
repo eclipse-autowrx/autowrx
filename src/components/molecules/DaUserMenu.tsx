@@ -33,7 +33,7 @@ const DaUserMenu = ({ user }: DaUserDropdownProps) => {
                 className="h-full w-full object-cover rounded-full"
               />
               <img
-                src={'/imgs/user.png'}
+                src={'/imgs/profile.png'}
                 alt="bar"
                 className="h-full w-full object-cover rounded-full"
               />
