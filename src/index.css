@@ -91,6 +91,10 @@ body {
   --da-gradient-to: 67 54 48;
 }
 
+.col-span-2 {
+  grid-column: span 2 / span 2;
+}
+
 /*********** Font size and weight ********************/
 .da-txt-small {
   font-size: 14px;

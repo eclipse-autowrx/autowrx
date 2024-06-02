@@ -1,3 +1,5 @@
+// TODO: this file need to be refactored, maximum 250 lines
+
 import { useState, useEffect, useRef } from "react";
 import { DaButton } from "../atoms/DaButton";
 import {
@@ -19,6 +21,7 @@ import DaTooltip from "../atoms/DaTooltip";
 import config from "@/configs/config";
 import DaPopup from "../atoms/DaPopup";
 import DaWidgetLibrary from "./widgets/DaWidgetLibrary";
+import { isContinuousRectangle } from "@/lib/utils";
 
 interface DaDashboardEditorProps {
     widgetConfigString?: string;
@@ -34,51 +37,6 @@ export interface WidgetConfig {
     options: any;
     boxes: number[];
 }
-
-export const isContinuousRectangle = (pickedCells: number[]): boolean => {
-    // console.log("pickedCells", pickedCells);
-    const numCols = 5;
-    if (pickedCells.length <= 1) return true; // Single cell is always valid
-    // Convert cell number to grid position
-    const toGridPosition = (cell: number): [number, number] => {
-        let row = Math.floor((cell - 1) / numCols);
-        let col = (cell - 1) % numCols;
-        return [row, col];
-    };
-    // Create a matrix to represent the grid
-    let grid = Array(2)
-        .fill(null)
-        .map(() => Array(5).fill(false));
-    // Mark the selected cells in the grid
-    pickedCells.forEach((cell) => {
-        const [row, col] = toGridPosition(cell);
-        grid[row][col] = true;
-    });
-    // Find the bounding box of the selected cells
-    let minRow = 2,
-        maxRow = -1,
-        minCol = 5,
-        maxCol = -1;
-    grid.forEach((row, rowIndex) => {
-        row.forEach((cell, colIndex) => {
-            if (cell) {
-                minRow = Math.min(minRow, rowIndex);
-                maxRow = Math.max(maxRow, rowIndex);
-                minCol = Math.min(minCol, colIndex);
-                maxCol = Math.max(maxCol, colIndex);
-            }
-        });
-    });
-    // Check all cells within the bounding box are selected
-    for (let row = minRow; row <= maxRow; row++) {
-        for (let col = minCol; col <= maxCol; col++) {
-            if (!grid[row][col]) {
-                return false; // Found a cell in the bounding box that is not selected
-            }
-        }
-    }
-    return true; // All cells within the bounding box are selected
-};
 
 const DaDashboardEditor = ({
     widgetConfigString,
@@ -111,47 +69,57 @@ const DaDashboardEditor = ({
         for (const widget of otherWidgets) {
             for (const box of widget.boxes) {
                 if (updatedBoxes.has(box)) {
-                    return true; // Found an overlap
+                    return true
                 }
             }
         }
-        return false; // No overlap found
+        return false
     };
 
     useEffect(() => {
-        if (entireWidgetConfig) {
-            try {
-                const config = JSON.parse(entireWidgetConfig);
-                const widgetArray = config.widgets || config; // Fallback to config if widgets key is absent
-                setWidgetConfigs(widgetArray);
-                let message = "";
-                let isConfigValidLocal = true;
-                // Check each widget in the array
-                for (let i = 0; i < widgetArray.length; i++) {
-                    const widget = widgetArray[i];
-                    // Check for continuous rectangle
-                    if (!isContinuousRectangle(widget.boxes)) {
-                        message = "One or more widgets have discrete cell placement. Please check the configuration.";
-                        isConfigValidLocal = false;
-                        break;
-                    }
-                    // Check for overlaps
-                    const otherWidgets = widgetArray.filter((_:any, idx: number) => idx !== i);
-                    const doesOverlapResult = otherWidgets.some((otherWidget: any) =>
-                        otherWidget.boxes.some((box: any) => widget.boxes.includes(box))
-                    );
-                    if (doesOverlapResult) {
-                        message = "One or more widgets are overlapping. Please check the configuration.";
-                        isConfigValidLocal = false;
-                        break;
-                    }
-                }
-                setIsConfigValid(isConfigValidLocal);
-                setWarningMessage2(message);
-            } catch (e) {
-                setIsConfigValid(false);
-                setWarningMessage2("The raw configuration text is not valid. Please check the configuration.");
+        console.log(`widgetConfigs`)
+        console.log(widgetConfigs)
+    }, [widgetConfigs])
+
+    useEffect(() => {
+        if (!entireWidgetConfig) return
+        try {
+            const config = JSON.parse(entireWidgetConfig);
+            console.log(`config`)
+            console.log(config)
+            const widgetArray = config.widgets || config; // Fallback to config if widgets key is absent
+            if(Array.isArray(widgetArray)){
+                setWidgetConfigs(widgetArray)
+            } else {
+                setWidgetConfigs([]);
             }
+             
+            let message = "";
+            let isConfigValidLocal = true;
+            for (let i = 0; i < widgetArray.length; i++) {
+                const widget = widgetArray[i];
+                if (!isContinuousRectangle(widget.boxes)) {
+                    message = "One or more widgets have discrete cell placement. Please check the configuration.";
+                    isConfigValidLocal = false;
+                    break;
+                }
+                // Check for overlaps
+                const otherWidgets = widgetArray.filter((_: any, idx: number) => idx !== i);
+                const doesOverlapResult = otherWidgets.some((otherWidget: any) =>
+                    otherWidget.boxes.some((box: any) => widget.boxes.includes(box))
+                );
+                if (doesOverlapResult) {
+                    message = "One or more widgets are overlapping. Please check the configuration.";
+                    isConfigValidLocal = false;
+                    break;
+                }
+            }
+            setIsConfigValid(isConfigValidLocal);
+            setWarningMessage2(message);
+        } catch (e) {
+            setWidgetConfigs([])
+            setIsConfigValid(false);
+            setWarningMessage2("The raw configuration text is not valid. Please check the configuration.");
         }
     }, [entireWidgetConfig]);
 
@@ -263,9 +231,8 @@ const DaDashboardEditor = ({
         const { rowSpan, colSpan } = calculateSpans(widgetConfig.boxes);
         return (
             <div
-                className={`group flex relative border border-da-gray-mediu select-none cursor-pointer col-span-${colSpan} row-span-${rowSpan} text-da-gray-dark da-label-small ${
-                    selectedWidgetIndex === index && `!border-da-primary-500 border-2 !text-da-primary-500 !bg-da-gray-light `
-                } bg-da-gray-light hover:bg-da-gray-light`}
+                className={`group flex relative border border-da-gray-mediu select-none cursor-pointer col-span-${colSpan} row-span-${rowSpan} text-da-gray-dark da-label-small ${selectedWidgetIndex === index && `!border-da-primary-500 border-2 !text-da-primary-500 !bg-da-gray-light `
+                    } bg-da-gray-light hover:bg-da-gray-light`}
                 key={`${index}-${cell}`}
                 onClick={() => handleWidgetClick(index)}
             >
@@ -273,33 +240,36 @@ const DaDashboardEditor = ({
                     <div className="flex items-center">
                         <DaTooltip className="py-1" content="Delete widget" space={20} delay={500}>
                             <DaButton
+                                variant="plain"
                                 className="!px-0"
                                 onClick={() => handleDeleteWidget(index)}
                             >
-                                <TbTrash className="ml-2 mr-2 w-5 h-5 da-accent-500 hover:text-da-accent-500"></TbTrash>
+                                <TbTrash className="mx-2 w-5 h-5"></TbTrash>
                             </DaButton>
                         </DaTooltip>
                         {/* TODO: need to change bewebstudio to somethigng smarter*/}
                         {widgetConfig.options?.url && widgetConfig.options.url.includes("bewebstudio") && (
                             <DaTooltip className="py-1" content="Open widget in Studio" space={20} delay={500}>
                                 <DaButton
+                                    variant="plain"
                                     className="!px-0 hover:text-da-primary-500"
                                     onClick={() => handleOpenWidget(index)}
                                 >
-                                    <TbExternalLink className="mr-2 w-5 h-5"/>
+                                    <TbExternalLink className="mx-2 w-5 h-5" />
                                 </DaButton>
                             </DaTooltip>
                         )}
 
                         <DaTooltip className="py-1" content="Edit widget" space={20} delay={500}>
                             <DaButton
+                                variant="plain"
                                 className="!px-0 hover:text-da-primary-500"
                                 onClick={() => {
                                     setSelectedWidget(JSON.stringify(widgetConfig, null, 2));
                                     codeEditorPopup[1](true)
                                 }}
                             >
-                                <TbEdit className="mr-2 w-5 h-5"/>
+                                <TbEdit className="mx-2 w-5 h-5" />
                             </DaButton>
                         </DaTooltip>
                     </div>
@@ -352,16 +322,20 @@ const DaDashboardEditor = ({
         }
 
         const renderedWidgets = new Set();
-        // Render blank cells
+
         return CELLS.map((cell) => {
+            // let widgetIndex = -1;
+            // widgetConfigs.forEach((w, wIndex) => {
+            //     if(w.boxes?.includes(cell)) {
+            //         widgetIndex = wIndex
+            //     }
+            // })
             const widgetIndex = widgetConfigs.findIndex((w) => w.boxes?.includes(cell));
             const isCellSelected = selectedCells.includes(cell);
 
             if (selectedCellValid && isCellSelected) {
-                // Calculate position and spans
                 const { rowSpan, colSpan } = calculateSpans(selectedCells);
 
-                // Render merged cell with button if it's the first cell in selection
                 if (cell === Math.min(...selectedCells)) {
                     return (
                         <div
@@ -375,21 +349,23 @@ const DaDashboardEditor = ({
                                 delay={500}
                             >
                                 <DaButton
+                                    size="sm"
                                     variant="outline"
                                     onClick={() => handleAddWidget()}
                                     className="hover:text-da-gray-dark"
                                 >
-                                    <TbCategoryPlus className="w-4 h-4"/>
+                                    <TbCategoryPlus className="w-4 h-4 mr-1" />
                                     Add widget
                                 </DaButton>
                             </DaTooltip>
 
                             <DaTooltip content="Cancel place widget" className="!py-1" space={30} delay={500}>
                                 <DaButton
+                                    variant="plain"
                                     className="mr-0 absolute top-2 right-0 hover:text-accent-500"
                                     onClick={() => setSelectedCells([])}
                                 >
-                                    <TbX className="w-5 h-5"/>
+                                    <TbX className="w-5 h-5" />
                                 </DaButton>
                             </DaTooltip>
                         </div>
@@ -405,9 +381,8 @@ const DaDashboardEditor = ({
                 return (
                     <div
                         key={`empty-${cell}`}
-                        className={`flex border border-da-gray-medium justify-center items-center select-none da-label-small text-da-gray-medium font-bold cursor-pointer ${
-                            selectedCells.includes(cell) && "bg-da-gray-light text-da-gray-dark"
-                        }`}
+                        className={`flex border border-da-gray-medium justify-center items-center select-none da-label-small text-da-gray-medium font-bold cursor-pointer ${selectedCells.includes(cell) && "bg-da-gray-light text-da-gray-dark"
+                            }`}
                         onClick={() => handleSelectCell(cell)}
                     >
                         {cell}
@@ -420,9 +395,8 @@ const DaDashboardEditor = ({
     return (
         <div className="flex flex-col w-full p-1 items-center justify-center">
             <div
-                className={`grid w-full grid-cols-5 grid-rows-2 border border-da-gray-medium ${
-                    editable ? "cursor-pointer" : "!pointer-events-none"
-                } `}
+                className={`grid w-full grid-cols-5 grid-rows-2 border border-da-gray-medium ${editable ? "cursor-pointer" : "!pointer-events-none"
+                    } `}
                 style={{ gridTemplateRows: "repeat(2, 120px)" }}
             >
                 {widgetGrid()}
@@ -458,7 +432,7 @@ const DaDashboardEditor = ({
                                             setIsExpanded(!isExpanded);
                                         }}
                                     >
-                                        <TbSelector className="mr-2 flex bg-da-white justify-end hover:bg-gray-50 w-fit"/> Recently used APIs
+                                        <TbSelector className="mr-2 flex bg-da-white justify-end hover:bg-gray-50 w-fit" /> Recently used APIs
                                     </DaButton>
                                 </div>
                                 {isExpanded && (
@@ -489,11 +463,11 @@ const DaDashboardEditor = ({
                         setCode={(e) => {
                             setSelectedWidget(e);
                         }}
-                        onBlur={() => {}}
+                        onBlur={() => { }}
                     />
                     <div className="flex w-full space-x-2 justify-end p-4">
                         <DaButton variant="outline" className="" onClick={() => codeEditorPopup[1](false)}>
-                            <TbX className="mr-2"/> Close
+                            <TbX className="mr-2" /> Close
                         </DaButton>
                         <DaButton
                             variant="solid"
@@ -502,7 +476,7 @@ const DaDashboardEditor = ({
                                 codeEditorPopup[1](false)
                             }}
                         >
-                            <TbCheck className="mr-2"/> Save
+                            <TbCheck className="mr-2" /> Save
                         </DaButton>
                     </div>
                 </div>

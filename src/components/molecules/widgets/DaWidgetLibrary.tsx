@@ -1,3 +1,5 @@
+// TODO: this file need to be refactored, maximum 250 lines
+
 import { FC, useEffect, useState, useRef } from "react";
 import DaPopup from "../../atoms/DaPopup";
 import { MdOutlineWidgets } from "react-icons/md";
@@ -9,7 +11,7 @@ import BUILT_IN_WIDGETS from "@/data/builtinWidgets";
 import { DaInput } from "../../atoms/DaInput";
 import { TbDownload, TbHeart, TbSearch, TbShoppingCart, TbLayoutGrid, TbPlus, TbExternalLink } from "react-icons/tb";
 import { DaButton } from "../../atoms/DaButton";
-import { isContinuousRectangle } from "../DaDashboardEditor";
+import { isContinuousRectangle } from "@/lib/utils";
 import { toast } from "react-toastify";
 
 import { BsStars } from "react-icons/bs";
