@@ -95,6 +95,10 @@ body {
   grid-column: span 2 / span 2;
 }
 
+.da-clickable {
+  @apply cursor-pointer;
+}
+
 /*********** Font size and weight ********************/
 .da-txt-small {
   font-size: 14px;
