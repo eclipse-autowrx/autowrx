@@ -301,3 +301,8 @@ body::-webkit-scrollbar-thumb {
   background-clip: padding-box;
   background-color: #aaaaaa;
 }
+
+/*********** Textarea component ********************/
+.da-textarea {
+  @apply flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-da-primary-500 disabled:opacity-50;
+}

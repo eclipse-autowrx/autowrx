@@ -1,14 +1,17 @@
 import { DaButton } from '@/components/atoms/DaButton'
 import { DaText } from '@/components/atoms/DaText'
 import { DaTextarea } from '@/components/atoms/DaTextarea'
-import { createDiscussionService } from '@/services/discussion.service'
+import {
+  createDiscussionService,
+  updateDiscussionService,
+} from '@/services/discussion.service'
 import {
   DISCUSSION_REF_TYPE,
   Discussion,
   DiscussionCreate,
 } from '@/types/discussion.type'
 import { isAxiosError } from 'axios'
-import { FormEvent, useState } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 import { TbLoader, TbX } from 'react-icons/tb'
 
 const initialState = {
@@ -19,19 +22,18 @@ interface FormCreateDiscussionProps {
   refId: string
   refType: DISCUSSION_REF_TYPE
   refetch: () => Promise<unknown>
-  replying?: {
-    id: string
-    onCancel: () => void
-  }
-  updating?: Discussion
+  replyingId?: string
+  onCancel?: () => void
+  updatingData?: Discussion
 }
 
 const FormCreateDiscussion = ({
   refId,
   refType,
   refetch,
-  replying,
-  updating,
+  replyingId,
+  updatingData,
+  onCancel,
 }: FormCreateDiscussionProps) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
@@ -41,17 +43,15 @@ const FormCreateDiscussion = ({
     setData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const createNewModel = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+  const createNewDiscussion = async () => {
     try {
-      setLoading(true)
       const body: DiscussionCreate = {
         content: data.content,
         ref: refId,
         ref_type: refType,
       }
-      if (replying) {
-        body.parent = replying.id
+      if (replyingId) {
+        body.parent = replyingId
       }
       await createDiscussionService(body)
       await refetch()
@@ -64,18 +64,50 @@ const FormCreateDiscussion = ({
         return
       }
       setError('Something went wrong')
-    } finally {
-      setLoading(false)
     }
   }
 
+  const updateDiscussion = async () => {
+    try {
+      if (!updatingData) return
+      await updateDiscussionService(updatingData.id, {
+        content: data.content,
+      })
+      setData(initialState)
+      setError('')
+      await refetch()
+      onCancel && onCancel()
+    } catch (error) {
+      if (isAxiosError(error)) {
+        setError(error.response?.data?.message || 'Something went wrong')
+        return
+      }
+      setError('Something went wrong')
+    }
+  }
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setLoading(true)
+    if (!updatingData) {
+      await createNewDiscussion()
+    } else {
+      await updateDiscussion()
+    }
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    if (updatingData) setData(updatingData)
+  }, [updatingData])
+
   return (
-    <form onSubmit={createNewModel} className="flex flex-col bg-da-white">
+    <form onSubmit={handleSubmit} className="flex flex-col bg-da-white">
       {/* Content */}
       <DaTextarea
         value={data.content}
         onChange={(e) => handleChange('content', e.target.value)}
-        placeholder={replying ? 'Replying...' : 'Start a discussion'}
+        placeholder={replyingId ? 'Replying...' : 'Start a discussion'}
       />
 
       <div className="grow"></div>
@@ -89,9 +121,9 @@ const FormCreateDiscussion = ({
 
       {/* Action */}
       <div className="flex mt-3 ml-auto gap-2">
-        {replying && (
+        {(replyingId || updatingData) && (
           <DaButton
-            onClick={replying?.onCancel}
+            onClick={onCancel}
             disabled={loading}
             variant="plain"
             type="button"

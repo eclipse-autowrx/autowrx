@@ -37,3 +37,10 @@ export const createDiscussionService = async (body: DiscussionCreate) => {
 export const deleteDiscussionService = async (id: string) => {
   return await serverAxios.delete(`/discussions/${id}`)
 }
+
+export const updateDiscussionService = async (
+  id: string,
+  body: Partial<Discussion>,
+) => {
+  return (await serverAxios.patch<Discussion>(`/discussions/${id}`, body)).data
+}
