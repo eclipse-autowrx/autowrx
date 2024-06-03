@@ -37,7 +37,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
     const updateData = {
       name: localPrototype.name,
       description: {
-        // problems: localPrototype.description.problems, # Backend not allow change problems
+        problem: localPrototype.description.problem,
         says_who: localPrototype.description.says_who,
         solution: localPrototype.description.solution,
         status: localPrototype.description.status,
@@ -52,7 +52,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
         updateData,
       )
       console.log(updatedPrototype)
-      window.location.reload() // Will change this to re-fetch prototype instead of reload later on
+      // window.location.reload() // Will change this to re-fetch prototype instead of reload later on
       setIsEditing(false)
     } catch (error) {
       console.error('Error updating prototype:', error)
@@ -157,9 +157,9 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
               <div className="flex items-center mb-4">
                 <DaText className="w-1/4">Problem</DaText>
                 <DaInput
-                  value={localPrototype.description.problems}
+                  value={localPrototype.description.problem}
                   onChange={(e) =>
-                    handleDescriptionChange('problems', e.target.value)
+                    handleDescriptionChange('problem', e.target.value)
                   }
                   className="w-3/4"
                 />
@@ -234,7 +234,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                 properties={[
                   {
                     property: 'Problem',
-                    value: prototype.description.problems,
+                    value: prototype.description.problem,
                   },
                   {
                     property: 'Says who?',

@@ -72,8 +72,8 @@ export type VehicleApi = {
   unit?: string
   max?: number
   min?: number
-  children?: { [key: string]: VehicleApi },
-  shortName?: string;
+  children?: { [key: string]: VehicleApi }
+  shortName?: string
 }
 
 export interface Cvi {
@@ -86,3 +86,23 @@ export interface ApiItem {
   details: VehicleApi
 }
 
+export interface Feedback {
+  id: string
+  interviewee: {
+    name: string
+    org?: string
+  }
+  recommendation: string
+  question: string
+  model_id: string
+  score: {
+    easyToUse?: number
+    needAddress?: number
+    relevance?: number
+  }
+  created: {
+    created_time: Date
+    user_id: string
+    user_fullname: string
+  }
+}

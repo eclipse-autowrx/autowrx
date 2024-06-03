@@ -18,6 +18,7 @@ import PagePrototypeList from '@/pages/PagePrototypeList'
 import PageResetPassword from '@/pages/PageResetPassword'
 import PageManageUsers from '@/pages/PageManageUsers'
 import PageDiscussions from '@/pages/test-ui/PageDiscussions'
+import PageUserProfile from '@/pages/PageUserProfile'
 
 const routesConfig: RouteObject[] = [
   {
@@ -49,13 +50,18 @@ const routesConfig: RouteObject[] = [
       { path: ':model_id/library', element: <PagePrototypeList /> },
       {
         path: ':model_id/library/prototype/:prototype_id',
-        element: <PagePrototypeDetail/>,
+        element: <PagePrototypeDetail />,
       },
       {
         path: ':model_id/library/prototype/:prototype_id/:tab',
-        element: <PagePrototypeDetail/>,
+        element: <PagePrototypeDetail />,
       },
     ],
+  },
+  {
+    path: '/profile',
+    element: <RootLayout />,
+    children: [{ index: true, element: <PageUserProfile /> }],
   },
   {
     path: '/test-ui/forms',
