@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom'
 import { DaText } from '@/components/atoms/DaText'
 import PrototypeTabCode from '@/components/organisms/PrototypeTabCode'
 import DaTabItem from '@/components/atoms/DaTabItem'
+import PrototypeTabJourney from '@/components/organisms/PrototypeTabJourney'
 
 interface ViewPrototypeProps {
   display?: 'tree' | 'list'
@@ -39,34 +40,51 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
         <div className="grow"></div>
       </div>
       <div className="flex px-6 py-0 bg-da-gray-light min-h-8">
-        <DaTabItem active={isDefaultTab} to={`/model/${model_id}/library/prototype/${prototype_id}/journey`}>
+        <DaTabItem
+          active={isDefaultTab}
+          to={`/model/${model_id}/library/prototype/${prototype_id}/journey`}
+        >
           Journey
         </DaTabItem>
-        <DaTabItem active={tab == 'architecture'} to={`/model/${model_id}/library/prototype/${prototype_id}/architecture`}>
+        <DaTabItem
+          active={tab == 'architecture'}
+          to={`/model/${model_id}/library/prototype/${prototype_id}/architecture`}
+        >
           Architecture
         </DaTabItem>
-        <DaTabItem active={tab == 'code'} to={`/model/${model_id}/library/prototype/${prototype_id}/code`}>
+        <DaTabItem
+          active={tab == 'code'}
+          to={`/model/${model_id}/library/prototype/${prototype_id}/code`}
+        >
           Code
         </DaTabItem>
-        <DaTabItem active={tab == 'flow'} to={`/model/${model_id}/library/prototype/${prototype_id}/flow`}>
+        <DaTabItem
+          active={tab == 'flow'}
+          to={`/model/${model_id}/library/prototype/${prototype_id}/flow`}
+        >
           Flow
         </DaTabItem>
-        <DaTabItem active={tab == 'dashboard'} to={`/model/${model_id}/library/prototype/${prototype_id}/dashboard`}>
+        <DaTabItem
+          active={tab == 'dashboard'}
+          to={`/model/${model_id}/library/prototype/${prototype_id}/dashboard`}
+        >
           Dashboard
         </DaTabItem>
-        <DaTabItem active={tab == 'homologation'} to={`/model/${model_id}/library/prototype/${prototype_id}/homologation`}>
+        <DaTabItem
+          active={tab == 'homologation'}
+          to={`/model/${model_id}/library/prototype/${prototype_id}/homologation`}
+        >
           Homologation
         </DaTabItem>
-        <DaTabItem active={tab == 'feedback'} to={`/model/${model_id}/library/prototype/${prototype_id}/feedback`}>
+        <DaTabItem
+          active={tab == 'feedback'}
+          to={`/model/${model_id}/library/prototype/${prototype_id}/feedback`}
+        >
           Feedback
         </DaTabItem>
       </div>
       <div className="w-full min-h-[100px] grow">
-        {isDefaultTab && (
-          <div className="p-8">
-            <DaText variant="huge">Journey Page</DaText>
-          </div>
-        )}
+        {isDefaultTab && <PrototypeTabJourney prototype={prototype} />}
         {tab == 'architecture' && (
           <div className="p-8">
             <DaText variant="huge">Architecture Page</DaText>
