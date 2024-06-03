@@ -5,6 +5,16 @@ import { prototypes } from '@/data/models_mock'
 
 const IS_MOCK = false
 
+const DEFAULT_PY_CODE = `from sdv_model import Vehicle
+import plugins
+from browser import aio
+
+vehicle = Vehicle()
+
+# write your code here
+
+`;
+
 export const listProposalPrototype = async () => {
   if (IS_MOCK) {
     return {
@@ -19,9 +29,10 @@ export const listProposalPrototype = async () => {
     await serverAxios.get<List<Prototype>>('/prototypes', {
       params: {
         fields: [
+          'model_id',
           'name',
           'visibility',
-          'model_home_image_file',
+          'image_file',
           'id',
           'created_at',
           'created_by',
@@ -33,10 +44,14 @@ export const listProposalPrototype = async () => {
 }
 
 export const getPrototype = async (prototype_id: string) => {
+  if(!prototype_id) return null
   if (IS_MOCK) {
     const prototype = prototypes.find(
       (prototype) => prototype.id === prototype_id,
     )
+    if(prototype && !prototype.code) {
+      prototype.code = DEFAULT_PY_CODE
+    }
     return prototype
   }
   return (await serverAxios.get<Prototype>(`/prototypes/${prototype_id}`)).data

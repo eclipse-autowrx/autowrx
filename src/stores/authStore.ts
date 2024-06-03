@@ -6,16 +6,24 @@ import { create } from 'zustand'
 
 type AuthState = {
   access?: Token | null
+  user: any
 }
 
 type Actions = {
   setAccess: (_: Token) => void
+  setUser: (user: any, access: any) => void
   logOut: () => void
 }
 
 const useAuthStore = create<AuthState & Actions>()(
   immer((set) => ({
     access: undefined,
+    user: undefined,
+    setUser: (user, access) =>
+      set((state) => {
+        state.access = access
+        state.user = user
+      }),
     setAccess: (access) =>
       set((state) => {
         state.access = access
@@ -28,6 +36,7 @@ const useAuthStore = create<AuthState & Actions>()(
           })
         }
         state.access = null
+        state.user = null
       }),
   })),
 )

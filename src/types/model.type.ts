@@ -1,3 +1,5 @@
+import { User } from './user.type'
+
 export type Tag = {
   tag: string
   tagCategoryId?: string
@@ -30,6 +32,8 @@ export type Model = {
   created_at?: Date
   skeleton?: string
   tags?: Tag[]
+  contributors?: User[]
+  members?: User[]
 }
 
 export type Prototype = {
@@ -68,5 +72,17 @@ export type VehicleApi = {
   unit?: string
   max?: number
   min?: number
-  children?: { [key: string]: VehicleApi }
+  children?: { [key: string]: VehicleApi },
+  shortName?: string;
 }
+
+export interface Cvi {
+  Vehicle: VehicleApi
+}
+
+export interface ApiItem {
+  api: string
+  type: string
+  details: VehicleApi
+}
+

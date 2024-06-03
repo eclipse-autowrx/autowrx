@@ -1,47 +1,101 @@
- import { FC } from "react"
- import useModelStore from "@/stores/modelStore";
-import { Prototype } from "@/types/model.type";
-import { DaButton } from "@/components/atoms/DaButton";
+import { FC, useEffect, useState } from 'react'
+import useModelStore from '@/stores/modelStore'
+import { Prototype } from '@/types/model.type'
+import { useParams } from 'react-router-dom'
+import { DaText } from '@/components/atoms/DaText'
+import PrototypeTabCode from '@/components/organisms/PrototypeTabCode'
+import DaTabItem from '@/components/atoms/DaTabItem'
 
-interface TabItemProps {
-    children: any,
-    active?: boolean
+interface ViewPrototypeProps {
+  display?: 'tree' | 'list'
 }
 
-const TabItem : FC<TabItemProps> = ({children, active}) => {
-    return <div className={`text-da-primary-500 da-label-regular py-1 px-4 min-w-20 
-        cursor-pointer hover:opacity-70 hover:border-b-2 hover:border-da-primary-500
-        ${active && 'border-b-2 border-da-primary-500'}`}>
-        {children}
-    </div>
-}
-
-const PagePrototypeDetail: FC = ({}) => {
-    const [prototype] = useModelStore(
-        (state) => [state.prototype as Prototype]
-      );
-
-    if (!prototype) {
-    return <div className="container grid place-items-center">
-        <div className="p-8 text-da-gray-dark da-label-huge">Prototype not found</div>
-    </div>
+const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
+  const { model_id, prototype_id, tab } = useParams()
+  const [prototype] = useModelStore((state) => [state.prototype as Prototype])
+  const [isDefaultTab, setIsDefaultTab] = useState(false)
+  useEffect(() => {
+    if (!tab || tab == 'journey' || tab == 'view') {
+      setIsDefaultTab(true)
+      return
     }
-    
-    return <div className="">
-        <div className="px-4 py-2 flex bg-da-primary-500 text-da-white da-label-sub-title">
-            {prototype.name}
-            <div className="grow"></div>
+    setIsDefaultTab(false)
+  }, [tab])
+
+  if (!prototype) {
+    return (
+      <div className="container grid place-items-center">
+        <div className="p-8 text-da-gray-dark da-label-huge">
+          Prototype not found
         </div>
-        <div className="flex px-6 py-0 bg-da-gray-light min-h-8">
-            <TabItem>Journey</TabItem>
-            <TabItem active>Architecture</TabItem>
-            <TabItem>Code</TabItem>
-            <TabItem>Flow</TabItem>
-            <TabItem>Dashboard</TabItem>
-            <TabItem>Homologation</TabItem>
-            <TabItem>Feedback</TabItem>
-        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="w-full h-full flex flex-col">
+      <div className="px-4 py-2 flex bg-da-primary-500 text-da-white da-label-sub-title">
+        {prototype.name}
+        <div className="grow"></div>
+      </div>
+      <div className="flex px-6 py-0 bg-da-gray-light min-h-8">
+        <DaTabItem active={isDefaultTab} to={`/model/${model_id}/library/prototype/${prototype_id}/journey`}>
+          Journey
+        </DaTabItem>
+        <DaTabItem active={tab == 'architecture'} to={`/model/${model_id}/library/prototype/${prototype_id}/architecture`}>
+          Architecture
+        </DaTabItem>
+        <DaTabItem active={tab == 'code'} to={`/model/${model_id}/library/prototype/${prototype_id}/code`}>
+          Code
+        </DaTabItem>
+        <DaTabItem active={tab == 'flow'} to={`/model/${model_id}/library/prototype/${prototype_id}/flow`}>
+          Flow
+        </DaTabItem>
+        <DaTabItem active={tab == 'dashboard'} to={`/model/${model_id}/library/prototype/${prototype_id}/dashboard`}>
+          Dashboard
+        </DaTabItem>
+        <DaTabItem active={tab == 'homologation'} to={`/model/${model_id}/library/prototype/${prototype_id}/homologation`}>
+          Homologation
+        </DaTabItem>
+        <DaTabItem active={tab == 'feedback'} to={`/model/${model_id}/library/prototype/${prototype_id}/feedback`}>
+          Feedback
+        </DaTabItem>
+      </div>
+      <div className="w-full min-h-[100px] grow">
+        {isDefaultTab && (
+          <div className="p-8">
+            <DaText variant="huge">Journey Page</DaText>
+          </div>
+        )}
+        {tab == 'architecture' && (
+          <div className="p-8">
+            <DaText variant="huge">Architecture Page</DaText>
+          </div>
+        )}
+        {tab == 'code' && <PrototypeTabCode />}
+        {tab == 'flow' && (
+          <div className="p-8">
+            <DaText variant="huge">Flow Page</DaText>
+          </div>
+        )}
+        {tab == 'dashboard' && (
+          <div className="p-8">
+            <DaText variant="huge">Dashboard Page</DaText>
+          </div>
+        )}
+        {tab == 'homologation' && (
+          <div className="p-8">
+            <DaText variant="huge">Homologation Page</DaText>
+          </div>
+        )}
+        {tab == 'feedback' && (
+          <div className="p-8">
+            <DaText variant="huge">Feedback Page</DaText>
+          </div>
+        )}
+      </div>
     </div>
+  )
 }
 
 export default PagePrototypeDetail

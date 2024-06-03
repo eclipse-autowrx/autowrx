@@ -5,59 +5,73 @@ import { DaTableProperty } from '../molecules/DaTableProperty'
 import { DaAvatar } from '../atoms/DaAvatar'
 import { DaButton } from '../atoms/DaButton'
 import { TbArrowRight } from 'react-icons/tb'
+import { Link } from 'react-router-dom'
+import { Prototype } from '@/types/model.type'
 
 interface PrototypeSummaryProps {
-  prototypeName: string
-  prototypeAuthorName: string
-  prototypeTags: string[]
-  prototypeProperties: { property: string; value: string }[]
-  prototypeImageUrl: string
-  prototypeAuthorAvatarUrl: string
+  prototype: Prototype
 }
 
-const PrototypeSummary = ({
-  prototypeName,
-  prototypeAuthorName,
-  prototypeTags,
-  prototypeProperties,
-  prototypeImageUrl,
-  prototypeAuthorAvatarUrl,
-}: PrototypeSummaryProps) => {
+const PrototypeSummary = ({ prototype }: PrototypeSummaryProps) => {
   return (
     <div className="rounded-lg w-full">
       <DaImage
-        src={prototypeImageUrl}
+        src={prototype.image_file}
         className="w-full object-cover max-h-[400px]"
       />
       <div className="p-5">
         <div className="flex justify-between items-center">
           <DaText variant="title" className="text-gray-600">
-            {prototypeName}
+            {prototype.name}
           </DaText>
-          <DaButton variant="solid" className="text-sm">
-            Open
-            <TbArrowRight className="w-5 h-5 ml-1" />
-          </DaButton>
+          <Link
+            to={`/model/${prototype.model_id}/library/prototype/${prototype.id}/view`}
+          >
+            <DaButton variant="solid" className="text-sm">
+              Open
+              <TbArrowRight className="w-5 h-5 ml-1" />
+            </DaButton>
+          </Link>
         </div>
         <div className="flex items-center pt-2">
           <DaAvatar
-            src={prototypeAuthorAvatarUrl}
+            src={'/imgs/1.jpg'}
             alt="Jame Bond"
             className="mr-2 w-7 h-7"
           />
-          <DaText>{prototypeAuthorName}</DaText>
+          <DaText>John Doe</DaText>
         </div>
 
-        <div className="flex flex-wrap mt-4">
-          {prototypeTags.map((tag) => (
-            <DaTag variant={'secondary'} className="mr-2 mb-2">
-              {tag}
-            </DaTag>
-          ))}
-        </div>
+        {prototype.tags && (
+          <div className="flex flex-wrap mt-4">
+            {prototype.tags.map((tag) => (
+              <DaTag variant={'secondary'} className="mr-2 mb-2">
+                {tag.tag}
+              </DaTag>
+            ))}
+          </div>
+        )}
 
         <DaTableProperty
-          properties={prototypeProperties}
+          properties={[
+            {
+              property: 'Problem',
+              value: prototype.description.problems,
+            },
+            {
+              property: 'Says who?',
+              value: prototype.description.says_who,
+            },
+            {
+              property: 'Solution',
+              value: prototype.description.solution,
+            },
+            {
+              property: 'Status',
+              value: prototype.description.status,
+            },
+            { property: 'Complexity', value: prototype.complexity_level },
+          ]}
           maxWidth="500px"
           className="mt-4"
         />

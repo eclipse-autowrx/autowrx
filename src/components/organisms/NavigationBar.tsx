@@ -38,7 +38,7 @@ const NavigationBar = ({}) => {
               <div className="flex items-center">
                 <FaCar style={{ transform: 'scale(1.4)' }} className="mr-3" />
                 <div className="truncate max-w-[180px]">
-                  {model.name || 'no-name'}
+                  {model.name || 'Select Model'}
                 </div>
               </div>
             </DaButton>

@@ -4,23 +4,21 @@ import { TbMinus, TbUserPlus } from 'react-icons/tb'
 import { DaButton } from '../atoms/DaButton'
 import { DaAvatar } from '../atoms/DaAvatar'
 import { cn } from '@/lib/utils'
-
-interface User {
-  name: string
-  email: string
-}
+import DaSelectUserPopup from './DaSelectUserPopup'
+import { set } from 'lodash'
+import { User } from '@/types/user.type'
+import { updateModelPermissionService } from '@/services/model.service'
+import { useParams } from 'react-router-dom'
 
 interface ContributorListProps {
   contributors: User[]
   members: User[]
-  onAddUser: () => void
-  onRemoveUser: (email: string) => void
   className?: string
 }
 
 interface UserItemProps {
   user: User
-  onRemoveUser: (email: string) => void
+  onRemoveUser: (userId: string) => void
 }
 
 const UserItem = ({ user, onRemoveUser }: UserItemProps) => (
@@ -42,7 +40,7 @@ const UserItem = ({ user, onRemoveUser }: UserItemProps) => (
     </div>
     <div
       className="p-2 hover:bg-red-200 rounded-lg"
-      onClick={() => onRemoveUser(user.email)}
+      onClick={() => onRemoveUser(user.id)}
     >
       <TbMinus className="text-red-500 cursor-pointer" />
     </div>
@@ -52,11 +50,25 @@ const UserItem = ({ user, onRemoveUser }: UserItemProps) => (
 const DaContributorList = ({
   contributors,
   members,
-  onAddUser,
-  onRemoveUser,
   className,
 }: ContributorListProps) => {
+  const { model_id } = useParams()
   const [activeTab, setActiveTab] = useState('contributors')
+  const [open, setOpen] = useState(false)
+
+  if (!contributors || !members || !model_id) {
+    return null
+  }
+
+  const handleAddUser = (userId: string) => {
+    const role =
+      activeTab === 'contributors' ? 'model_contributor' : 'model_member'
+    updateModelPermissionService(model_id, role, userId)
+  }
+
+  const onRemoveUser = (userId: string) => {
+    // No API available yet / permission hook is in development
+  }
 
   return (
     <div
@@ -96,7 +108,9 @@ const DaContributorList = ({
         </div>
         <DaButton
           size="sm"
-          onClick={onAddUser}
+          onClick={() => {
+            setOpen(true)
+          }}
           className="text-da-primary-500 flex items-center"
         >
           <TbUserPlus className="mr-2" /> Add user
@@ -111,6 +125,11 @@ const DaContributorList = ({
               <UserItem key={index} user={user} onRemoveUser={onRemoveUser} />
             ))}
       </div>
+      <DaSelectUserPopup
+        selectUser={handleAddUser}
+        popupState={[open, setOpen]}
+        excludeUserIds={[]}
+      />
     </div>
   )
 }

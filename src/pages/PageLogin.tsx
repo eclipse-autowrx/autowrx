@@ -8,8 +8,8 @@ import { shallow } from 'zustand/shallow'
 const PageLogin = () => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [access, setAccess, logOut] = useAuthStore(
-    (state) => [state.access, state.setAccess, state.logOut],
+  const [access, setAccess] = useAuthStore(
+    (state) => [state.access, state.setAccess],
     shallow,
   )
 
@@ -17,6 +17,8 @@ const PageLogin = () => {
     e.preventDefault()
     try {
       const response = await loginService(username, password)
+      console.log('loginService')
+      console.log(response)
       setAccess(response.tokens.access)
     } catch (error) {
       if (isAxiosError(error)) {

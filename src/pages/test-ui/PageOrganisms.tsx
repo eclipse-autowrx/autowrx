@@ -11,8 +11,9 @@ const PageOrganisms = () => {
         <DaText variant="title" className="text-da-primary-500">
           PrototypeSummary
         </DaText>
-        <div className="flex w-full mt-2 space-x-4 border rounded-lg">
+        {/* <div className="flex w-full mt-2 space-x-4 border rounded-lg">
           <PrototypeSummary
+            prototype={}
             prototypeName="Mockup Prototype"
             prototypeImageUrl="https://firebasestorage.googleapis.com/v0/b/digital-auto.appspot.com/o/media%2Fshutterstock_2076658843O_mod.jpg?alt=media&token=b0018688-29b1-4df1-a633-85bbff84a52e"
             prototypeAuthorAvatarUrl="https://avatars.githubusercontent.com/u/115630638?v=4"
@@ -24,7 +25,7 @@ const PageOrganisms = () => {
               { property: 'property3', value: 'value3' },
             ]}
           />
-        </div>
+        </div> */}
         <DaText variant="sub-title" className="text-da-gray-medium mt-8">
           HomeIntroBlock
         </DaText>
