@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom'
 import { DaText } from '@/components/atoms/DaText'
 import PrototypeTabCode from '@/components/organisms/PrototypeTabCode'
 import DaTabItem from '@/components/atoms/DaTabItem'
+import PrototypeTabDashboard from '@/components/organisms/PrototypeTabDashboard'
 import PrototypeTabJourney from '@/components/organisms/PrototypeTabJourney'
 
 interface ViewPrototypeProps {
@@ -96,11 +97,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
             <DaText variant="huge">Flow Page</DaText>
           </div>
         )}
-        {tab == 'dashboard' && (
-          <div className="p-8">
-            <DaText variant="huge">Dashboard Page</DaText>
-          </div>
-        )}
+        {tab == 'dashboard' && <PrototypeTabDashboard />}
         {tab == 'homologation' && (
           <div className="p-8">
             <DaText variant="huge">Homologation Page</DaText>
