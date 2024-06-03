@@ -96,6 +96,10 @@ body {
 }
 
 /*********** Font size and weight ********************/
+.da-txt-tiny {
+  font-size: 12px;
+}
+
 .da-txt-small {
   font-size: 14px;
 }
@@ -124,6 +128,10 @@ body {
 
 .da-label-regular-bold {
   @apply da-txt-regular font-semibold;
+}
+
+.da-label-tiny {
+  @apply da-txt-tiny;
 }
 
 .da-label-small {
@@ -292,7 +300,7 @@ body::-webkit-scrollbar-thumb {
 
 .scroll-gray::-webkit-scrollbar-thumb {
   border: 2px solid rgba(0, 0, 0, 0);
-  background-clip: padding-box;
+  backgrounds-clip: padding-box;
   background-color: #aaaaaa;
 }
 
@@ -300,4 +308,9 @@ body::-webkit-scrollbar-thumb {
   border: 2px solid rgba(0, 0, 0, 0);
   background-clip: padding-box;
   background-color: #aaaaaa;
+}
+
+/*********** Textarea component ********************/
+.da-textarea {
+  @apply flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-da-primary-500 disabled:opacity-50;
 }
