@@ -6,6 +6,7 @@ import { DaText } from '@/components/atoms/DaText'
 import PrototypeTabCode from '@/components/organisms/PrototypeTabCode'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import PrototypeTabDashboard from '@/components/organisms/PrototypeTabDashboard'
+import PrototypeTabJourney from '@/components/organisms/PrototypeTabJourney'
 
 interface ViewPrototypeProps {
   display?: 'tree' | 'list'
@@ -84,11 +85,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
         </DaTabItem>
       </div>
       <div className="w-full min-h-[100px] grow">
-        {isDefaultTab && (
-          <div className="p-8">
-            <DaText variant="huge">Journey Page</DaText>
-          </div>
-        )}
+        {isDefaultTab && <PrototypeTabJourney prototype={prototype} />}
         {tab == 'architecture' && (
           <div className="p-8">
             <DaText variant="huge">Architecture Page</DaText>

@@ -17,6 +17,7 @@ import PageTestForm from '@/pages/test-ui/PageTestForm'
 import PagePrototypeList from '@/pages/PagePrototypeList'
 import PageResetPassword from '@/pages/PageResetPassword'
 import PageManageUsers from '@/pages/PageManageUsers'
+import PageDiscussions from '@/pages/test-ui/PageDiscussions'
 
 const routesConfig: RouteObject[] = [
   {
@@ -80,6 +81,11 @@ const routesConfig: RouteObject[] = [
     path: '/test-ui/organisms',
     element: <PageOrganisms />,
     children: [{ index: true, element: <PageOrganisms /> }],
+  },
+  {
+    path: '/test-ui/discussion',
+    element: <RootLayout />,
+    children: [{ index: true, element: <PageDiscussions /> }],
   },
 ]
 
