@@ -13,7 +13,7 @@ vehicle = Vehicle()
 
 # write your code here
 
-`;
+`
 
 export const listProposalPrototype = async () => {
   if (IS_MOCK) {
@@ -44,12 +44,12 @@ export const listProposalPrototype = async () => {
 }
 
 export const getPrototype = async (prototype_id: string) => {
-  if(!prototype_id) return null
+  if (!prototype_id) return null
   if (IS_MOCK) {
     const prototype = prototypes.find(
       (prototype) => prototype.id === prototype_id,
     )
-    if(prototype && !prototype.code) {
+    if (prototype && !prototype.code) {
       prototype.code = DEFAULT_PY_CODE
     }
     return prototype
@@ -68,4 +68,13 @@ export const listModelPrototypes = async (model_id: string) => {
 
 export const createPrototypeService = async (prototype: any) => {
   return (await serverAxios.post<Prototype>('/prototypes', prototype)).data
+}
+
+export const updatePrototypeService = async (
+  prototype_id: string,
+  data: Partial<Prototype>,
+) => {
+  return (
+    await serverAxios.patch<Prototype>(`/prototypes/${prototype_id}`, data)
+  ).data
 }
