@@ -55,22 +55,22 @@ const PrototypeSummary = ({ prototype }: PrototypeSummaryProps) => {
         <DaTableProperty
           properties={[
             {
-              property: 'Problem',
+              name: 'Problem',
               value: prototype.description.problems,
             },
             {
-              property: 'Says who?',
+              name: 'Says who?',
               value: prototype.description.says_who,
             },
             {
-              property: 'Solution',
+              name: 'Solution',
               value: prototype.description.solution,
             },
             {
-              property: 'Status',
+              name: 'Status',
               value: prototype.description.status,
             },
-            { property: 'Complexity', value: prototype.complexity_level },
+            { name: 'Complexity', value: prototype.complexity_level },
           ]}
           maxWidth="500px"
           className="mt-4"

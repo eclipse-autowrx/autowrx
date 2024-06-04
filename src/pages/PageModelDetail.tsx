@@ -9,6 +9,7 @@ import DaContributorList from '@/components/molecules/DaContributorList'
 import { DaButton } from '@/components/atoms/DaButton'
 import { updateModelService } from '@/services/model.service'
 import { useParams } from 'react-router-dom'
+import { convertJSONToProperty } from '@/lib/vehiclePropertyUtils'
 import { TbFileExport, TbLoader } from 'react-icons/tb'
 import { downloadModelZip } from '@/lib/zipUtils'
 
@@ -139,7 +140,7 @@ const PageModelDetail = () => {
         <DaVehicleProperties
           key={model.id}
           category={model.vehicle_category ? model.vehicle_category : ''}
-          properties={model.property ? model.property : {}}
+          properties={convertJSONToProperty(model.property) ?? []}
           className="mt-3"
         />
 

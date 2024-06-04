@@ -26,9 +26,7 @@ export type Model = {
   cvi?: string
   visibility: 'public' | 'private'
   vehicle_category: string
-  property: {
-    [key: string]: string | number | undefined
-  }
+  property: string
   created_by: string
   created_at?: Date
   skeleton?: string

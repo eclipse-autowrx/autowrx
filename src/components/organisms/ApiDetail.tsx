@@ -127,7 +127,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
         />
         <DaText className="flex !mt-6">Dependencies</DaText>
         <DaTableProperty
-          properties={[{ property: 'Used by these vehicle app', value: 'N/A' }]}
+          properties={[{ name: 'Used by these vehicle app', value: 'N/A' }]}
           maxWidth="700px"
         />
         <DaText className="flex text-xl font-bold !mt-6">Implementation</DaText>

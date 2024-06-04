@@ -10,13 +10,13 @@ import { DaTableProperty } from '@/components/molecules/DaTableProperty'
 const PageMolecules = () => {
   const properties = [
     {
-      property: 'Property #1',
+      name: 'Property #1',
       value:
         'It is a long established fact a reader will be distracted by the readable content of a page',
     },
-    { property: 'Property #2', value: 'Property Value 2' },
-    { property: 'Property #3', value: 'Property Value 3' },
-    { property: 'Property #4', value: 'Property Value 4' },
+    { name: 'Property #2', value: 'Property Value 2' },
+    { name: 'Property #3', value: 'Property Value 3' },
+    { name: 'Property #4', value: 'Property Value 4' },
   ]
 
   const apis = [
@@ -81,7 +81,7 @@ const PageMolecules = () => {
             author="John Doe"
             content="It is a long
                 established fact that a reader will be distracted by the readable content of a page when looking at its layout"
-            tags={[{ tag: 'Tag1'}, {tag: 'Tag2'}]}
+            tags={[{ tag: 'Tag1' }, { tag: 'Tag2' }]}
             imageUrl="/imgs/1.jpg"
             avatarUrl="/imgs/2.jpg"
             maxWidth="500px"

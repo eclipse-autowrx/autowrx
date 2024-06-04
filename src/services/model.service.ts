@@ -33,11 +33,11 @@ export const listModelsLite = async () => {
 }
 
 export const getModel = async (model_id: string) => {
-  if (!model_id) return null
-  if (IS_MOCK) {
-    const model = models.find((model) => model.id === model_id)
-    return model
-  }
+  // if(!model_id) return null
+  // if (IS_MOCK) {
+  //   const model = models.find((model) => model.id === model_id)
+  //   return model
+  // }
   return (await serverAxios.get<Model>(`/models/${model_id}`)).data
 }
 
