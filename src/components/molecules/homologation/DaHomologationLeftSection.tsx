@@ -30,7 +30,7 @@ const HomologationLeftSection = ({
         <HomologationVehicleProperties />
       </div>
       <div className="h-fit flex-shrink-0 mt-4 flex flex-col">
-        <p className="text-[13px] text-center flex-shrink-0 text-gray-600">
+        <p className="da-label-tiny text-center flex-shrink-0 text-da-gray-medium">
           This prototype is powered by
         </p>
         <HomologationPoweredBy />

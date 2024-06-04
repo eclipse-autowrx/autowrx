@@ -41,7 +41,7 @@ export const getModel = async (model_id: string) => {
   return (await serverAxios.get<Model>(`/models/${model_id}`)).data
 }
 
-export const createModelService = async (model: Partial<Model>) => {
+export const createModelService = async (model: ModelCreate) => {
   return (await serverAxios.post('/models', model)).data
 }
 

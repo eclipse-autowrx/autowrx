@@ -150,7 +150,7 @@ const DaHomologationUsedAPIs = ({
   )
 
   return (
-    <div className="rounded-3xl flex flex-col w-full bg-gray-50 px-5 pt-5 pb-3 h-full text-gray-700">
+    <div className="rounded-3xl flex flex-col w-full bg-da-gray-light/20 px-5 pt-5 pb-3 h-full text-da-gray-medium">
       <HomologationUsedAPIsHeader
         selectedAPIs={selectedAPIs}
         setSelectedAPIs={setSelectedAPIs}
@@ -165,8 +165,8 @@ const DaHomologationUsedAPIs = ({
               <li
                 onClick={selectAPIHandler(api)}
                 className={clsx(
-                  'hover:bg-gray-300 active:ring-2 flex-1 min-w-0 ring-gray-300 ring-inset transition cursor-pointer',
-                  selectedAPIs.has(api) && 'bg-gray-300',
+                  'hover:bg-da-gray-light/40 active:ring-2 flex-1 min-w-0 ring-da-gray-light/40 ring-inset transition cursor-pointer',
+                  selectedAPIs.has(api) && 'da-gray-light/40',
                   ...getRoundedClassesOfRow(index),
                 )}
               >
@@ -185,7 +185,7 @@ const DaHomologationUsedAPIs = ({
           ))}
         </ul>
       ) : (
-        <div className="text-sm h-full flex italic items-center text-gray-600 justify-center py-6">
+        <div className="da-label-small h-full flex italic items-center text-da-gray-medium justify-center py-6">
           {'<'}No APIs used{'>'}
         </div>
       )}

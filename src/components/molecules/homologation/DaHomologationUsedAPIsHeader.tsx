@@ -38,9 +38,9 @@ const HomologationUsedAPIsHeader = ({
   }, [setSelectedAPIs, currentSupportedAPIs])
 
   return (
-    <div className="items-center flex flex-shrink-0 mb-1">
+    <div className="items-center -mt-1 flex flex-shrink-0 mb-1">
       {/* Title */}
-      <h1 className="font-bold text-xl text-black">
+      <h1 className="da-label-title text-da-black">
         Used APIs
         {usedAPIs.length > 0 && ` (${usedAPIs.length})`}
       </h1>
@@ -48,8 +48,9 @@ const HomologationUsedAPIsHeader = ({
       {/* Select all button */}
       <DaButton
         variant="plain"
+        size="sm"
         className={clsx(
-          'ml-auto mb-0.5 hover:bg-gray-200 !text-[13px] rounded-lg px-2 transition',
+          'ml-auto mb-0.5 rounded-lg px-2 transition',
           selectedAPIs.size === currentSupportedAPIs.length &&
             selectedAPIs.size > 0 &&
             'bg-gray-300',
@@ -57,7 +58,7 @@ const HomologationUsedAPIsHeader = ({
         )}
         onClick={selectAllHandler}
       >
-        Select all
+        <span className="da-label-tiny">Select all</span>
         {selectedAPIs.size === currentSupportedAPIs.length &&
         selectedAPIs.size > 0 ? (
           <TbSquareCheck className="ml-1 mt-0.5" />
@@ -69,14 +70,18 @@ const HomologationUsedAPIsHeader = ({
       {/* Clear selections button */}
       <DaButton
         variant="plain"
+        size="sm"
         onClick={() => setSelectedAPIs(new Set([]))}
         className={clsx(
-          'ml-2 mb-0.5 hover:bg-gray-200 !text-[13px] rounded-lg px-2 transition',
+          'ml-2 mb-0.5 rounded-lg px-2 transition',
           selectedAPIs.size === 0 && 'pointer-events-none opacity-50',
         )}
       >
-        Clear {selectedAPIs.size !== 0 ? selectedAPIs.size : ''} selection
-        {selectedAPIs.size > 1 && 's'} <TbX className="mt-0.5 text-sm ml-1" />
+        <span className="da-label-tiny flex">
+          Clear
+          {selectedAPIs.size !== 0 ? selectedAPIs.size : ''} selection
+          {selectedAPIs.size > 1 && 's'} <TbX className="mt-0.5 text-sm ml-1" />
+        </span>
       </DaButton>
 
       {/* Help tooltip (show help about not supported APIs) */}

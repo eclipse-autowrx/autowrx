@@ -118,12 +118,12 @@ const HomologationRegulationResult = ({
       <div className="h-5" />
       <div
         className={clsx(
-          'bg-gray-50 p-5 min-h-[calc(100%-40px)] rounded-3xl',
+          'bg-da-gray-light/20 p-5 min-h-[calc(100%-40px)] rounded-3xl',
           (errorMsg || regulationRegions.length === 0 || loading) &&
             'h-[calc(100%-40px)]',
         )}
       >
-        <h1 className="font-bold text-3xl mb-2">Regulatory Compliance</h1>
+        <h1 className="font-bold da-label-huge-bold text-da-gray-dark mb-2">Regulatory Compliance</h1>
         {loading ? (
           <div className="flex items-center justify-center h-[calc(100%-50px)]">
             <DaLoader />
@@ -137,11 +137,11 @@ const HomologationRegulationResult = ({
             )}
           >
             {errorMsg ? (
-              <div className="h-full w-full flex items-center justify-center italic text-gray-600">
+              <div className="h-full w-full flex items-center justify-center italic text-da-gray-medium">
                 {'<' + errorMsg + '>'}
               </div>
             ) : regulationRegions.length === 0 ? (
-              <div className="h-full w-full flex items-center justify-center italic text-gray-600">
+              <div className="h-full w-full flex items-center justify-center italic text-da-gray-medium">
                 {'<Please select a supported API>'}
               </div>
             ) : (

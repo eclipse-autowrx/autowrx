@@ -10,7 +10,7 @@ import DaImportFile from '@/components/atoms/DaImportFile'
 import { zipToModel } from '@/lib/zipUtils'
 import { createModelService } from '@/services/model.service'
 import { createPrototypeService } from '@/services/prototype.service'
-import { Model } from '@/types/model.type'
+import { Model, ModelCreate } from '@/types/model.type'
 import { Prototype } from '@/types/model.type'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
@@ -32,7 +32,7 @@ const PageModelList = () => {
   const createNewModel = async (importedModel: any) => {
     if (!importedModel || !importedModel.model) return
     try {
-      const newModel: Partial<Model> = {
+      const newModel: ModelCreate = {
         custom_apis: importedModel.model.custom_apis
           ? JSON.stringify(importedModel.model.custom_apis)
           : 'Empty',
