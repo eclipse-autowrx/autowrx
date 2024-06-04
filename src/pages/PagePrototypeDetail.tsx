@@ -8,6 +8,7 @@ import DaTabItem from '@/components/atoms/DaTabItem'
 import PrototypeTabDashboard from '@/components/organisms/PrototypeTabDashboard'
 import PrototypeTabJourney from '@/components/organisms/PrototypeTabJourney'
 import PrototypeTabFeedback from '@/components/organisms/PrototypeTabFeedback'
+import PrototypeTabHomologation from '@/components/organisms/PrototypeTabHomologation'
 
 interface ViewPrototypeProps {
   display?: 'tree' | 'list'
@@ -99,11 +100,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           </div>
         )}
         {tab == 'dashboard' && <PrototypeTabDashboard />}
-        {tab == 'homologation' && (
-          <div className="p-8">
-            <DaText variant="huge">Homologation Page</DaText>
-          </div>
-        )}
+        {tab == 'homologation' && <PrototypeTabHomologation />}
         {tab == 'feedback' && <PrototypeTabFeedback />}
       </div>
     </div>

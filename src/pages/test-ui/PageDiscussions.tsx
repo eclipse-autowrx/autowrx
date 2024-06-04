@@ -1,4 +1,4 @@
-import DaDiscussions from '@/components/molecules/DaDiscussions'
+import DaDiscussions from '@/components/molecules/discussion/DaDiscussions'
 
 const PageDiscussions = () => {
   return (

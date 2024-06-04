@@ -233,23 +233,23 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
               <DaTableProperty
                 properties={[
                   {
-                    property: 'Problem',
+                    name: 'Problem',
                     value: prototype.description.problem,
                   },
                   {
-                    property: 'Says who?',
+                    name: 'Says who?',
                     value: prototype.description.says_who,
                   },
                   {
-                    property: 'Solution',
+                    name: 'Solution',
                     value: prototype.description.solution,
                   },
                   {
-                    property: 'Status',
+                    name: 'Status',
                     value: prototype.description.status,
                   },
                   {
-                    property: 'Complexity',
+                    name: 'Complexity',
                     value:
                       complexityLevels[
                         (Number(prototype.complexity_level) || 3) - 1

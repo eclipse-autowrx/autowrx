@@ -24,7 +24,7 @@ const DaTablePropertyItem = ({ property, value }: DaTablePropertyItemProps) => {
 }
 
 interface DaTablePropertyProps {
-  properties: { property: string; value: string }[]
+  properties: { name: string; value: string }[]
   maxWidth?: string
   className?: string
 }
@@ -42,7 +42,7 @@ export const DaTableProperty = ({
       {properties.map((item, index) => (
         <DaTablePropertyItem
           key={index}
-          property={item.property}
+          property={item.name}
           value={item.value}
         />
       ))}

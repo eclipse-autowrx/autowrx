@@ -4,12 +4,11 @@ import { DaTableProperty } from './DaTableProperty'
 import { DaButton } from '../atoms/DaButton'
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb'
 import { cn } from '@/lib/utils'
+import { Property } from '@/types/property.type'
 
 interface VehiclePropertiesProps {
   category: string
-  properties: {
-    [key: string]: string | number | undefined
-  }
+  properties: Property[]
   className?: string
 }
 
@@ -23,12 +22,6 @@ const DaVehicleProperties = ({
   const toggleVisibility = () => {
     setIsVisible(!isVisible)
   }
-
-  // Convert properties object to array format for DaTableProperty
-  const propertiesArray = Object.entries(properties).map(([key, value]) => ({
-    property: key,
-    value: value ? String(value) : '',
-  }))
 
   return (
     <div className={cn('border rounded-md py-2 px-4 shadow-sm', className)}>
@@ -54,8 +47,8 @@ const DaVehicleProperties = ({
       {isVisible && (
         <div className="mt-2 flex flex-col">
           <DaText className="font-semibold">Category: {category}</DaText>
-          {propertiesArray.length > 0 ? (
-            <DaTableProperty properties={propertiesArray} />
+          {properties.length > 0 ? (
+            <DaTableProperty properties={properties} />
           ) : (
             <DaText>No properties available.</DaText>
           )}
