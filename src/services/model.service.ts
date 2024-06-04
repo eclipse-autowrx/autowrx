@@ -33,7 +33,7 @@ export const listModelsLite = async () => {
 }
 
 export const getModel = async (model_id: string) => {
-  if(!model_id) return null
+  if (!model_id) return null
   if (IS_MOCK) {
     const model = models.find((model) => model.id === model_id)
     return model
@@ -41,8 +41,8 @@ export const getModel = async (model_id: string) => {
   return (await serverAxios.get<Model>(`/models/${model_id}`)).data
 }
 
-export const createModelService = async (model: ModelCreate) => {
-  return (await serverAxios.post<Model>('/models', model)).data
+export const createModelService = async (model: Partial<Model>) => {
+  return (await serverAxios.post('/models', model)).data
 }
 
 export const updateModelPermissionService = async (

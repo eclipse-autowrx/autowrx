@@ -9,6 +9,8 @@ import DaContributorList from '@/components/molecules/DaContributorList'
 import { DaButton } from '@/components/atoms/DaButton'
 import { updateModelService } from '@/services/model.service'
 import { useParams } from 'react-router-dom'
+import { TbFileExport, TbLoader } from 'react-icons/tb'
+import { downloadModelZip } from '@/lib/zipUtils'
 
 interface VisibilityControlProps {
   initialVisibility: 'public' | 'private' | undefined
@@ -68,6 +70,7 @@ const cardIntro = [
 const PageModelDetail = () => {
   const { model_id } = useParams()
   const [model] = useModelStore((state) => [state.model as Model])
+  const [isExporting, setIsExporting] = useState(false)
 
   useEffect(() => {
     console.log(model)
@@ -86,9 +89,39 @@ const PageModelDetail = () => {
   return (
     <div className="col-span-12 gap-4 grid grid-cols-12 h-full px-2 py-4 container space-y-2">
       <div className="col-span-6">
-        <DaText variant="title" className="text-da-primary-500">
-          {model.name}
-        </DaText>
+        <div className="flex justify-between items-center">
+          <DaText variant="title" className="text-da-primary-500">
+            {model.name}
+          </DaText>
+          <div>
+            {!isExporting ? (
+              <DaButton
+                variant="plain"
+                onClick={async () => {
+                  if (!model) return
+                  setIsExporting(true)
+                  try {
+                    await downloadModelZip(model)
+                  } catch (e) {
+                    console.error(e)
+                  }
+                  setIsExporting(false)
+                }}
+              >
+                <TbFileExport className="w-5 h-5 mr-2" />
+                Export Model
+              </DaButton>
+            ) : (
+              <DaText
+                variant="regular"
+                className="flex items-center text-da-gray-medium"
+              >
+                <TbLoader className="animate-spin text-lg mr-2" />
+                Exporting model...
+              </DaText>
+            )}
+          </div>
+        </div>
 
         {cardIntro.map((card, index) => (
           <Link key={index} to={card.path}>

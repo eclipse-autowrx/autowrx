@@ -11,6 +11,8 @@ import useModelStore from '@/stores/modelStore'
 import { Model } from '@/types/model.type'
 import { TbUsers } from 'react-icons/tb'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { VscListTree } from 'react-icons/vsc'
+import { ImBooks } from 'react-icons/im'
 
 const NavigationBar = ({}) => {
   const [model] = useModelStore((state) => [state.model as Model])
@@ -27,7 +29,7 @@ const NavigationBar = ({}) => {
       {model ? (
         <>
           <Link to="/model">
-            <DaButton variant="plain">
+            <DaButton variant="plain" className="hover:text-da-primary-500">
               <div className="flex items-center">
                 <FiGrid style={{ transform: 'scale(1.4)' }} className="" />
               </div>
@@ -40,6 +42,25 @@ const NavigationBar = ({}) => {
                 <div className="truncate max-w-[180px]">
                   {model.name || 'Select Model'}
                 </div>
+              </div>
+            </DaButton>
+          </Link>
+          <Link to={`/model/${model.id}/api`}>
+            <DaButton variant="plain" className="">
+              <div className="flex items-center">
+                <VscListTree
+                  style={{ transform: 'scale(1.4)' }}
+                  className="mr-3"
+                />
+                <div className="truncate max-w-[180px]">Vehicle APIs</div>
+              </div>
+            </DaButton>
+          </Link>
+          <Link to={`/model/${model.id}/library`}>
+            <DaButton variant="plain">
+              <div className="flex items-center">
+                <ImBooks style={{ transform: 'scale(1.4)' }} className="mr-3" />
+                <div className="truncate max-w-[180px]">Prototypes</div>
               </div>
             </DaButton>
           </Link>

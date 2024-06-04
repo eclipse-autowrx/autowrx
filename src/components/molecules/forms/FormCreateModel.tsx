@@ -74,13 +74,11 @@ const FormCreateModel = () => {
         label="VSS API *"
         wrapperClassName="mt-4"
       >
-        <DaSelectItem value="vss-api">
-          Start with the COVESA VSS API
-        </DaSelectItem>
+        <DaSelectItem value="vss-api">COVESA VSS API v3.1</DaSelectItem>
         <DaSelectItem value="vss-api-4.0">COVESA VSS API v4.0</DaSelectItem>
         <DaSelectItem value="vss-api-4.1">COVESA VSS API v4.1</DaSelectItem>
         <DaSelectItem value="v2c-s2s">
-          Start with V2C ans S2S(COVESA) API
+          Start with V2C and S2S(COVESA) API
         </DaSelectItem>
         <DaSelectItem value="from-scratch">Start from scratch</DaSelectItem>
       </DaSelect>
