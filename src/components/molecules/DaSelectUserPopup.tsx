@@ -62,7 +62,7 @@ const DaSelectUserPopup = ({
             </DaButton>
           </div>
           {!loading && (
-            <div className="mt-2 px-2 max-h-[400px] min-h-[400px] overflow-auto">
+            <div className="mt-2 px-2 max-h-[600px] min-h-[400px] overflow-auto">
               <DaInput
                 className="border-t-2 pt-3"
                 placeholder="Search"
@@ -91,7 +91,7 @@ const DaSelectUserPopup = ({
                       </div>
                     </div>
                     <div
-                      className=" items-center justify-center flex rounded-sm hover:text-da-accent-500 da-label-regular"
+                      className=" items-center justify-center flex"
                       onClick={() => {
                         if (selectUser) {
                           selectUser(user.id)
@@ -99,7 +99,12 @@ const DaSelectUserPopup = ({
                         popupState[1](false)
                       }}
                     >
-                      Select
+                      <DaText
+                        variant="small-bold"
+                        className="text-da-primary-500 hover:bg-da-primary-100 px-2 py-1 rounded-md"
+                      >
+                        Select
+                      </DaText>
                     </div>
                   </div>
                 ))}

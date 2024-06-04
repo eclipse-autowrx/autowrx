@@ -16,7 +16,7 @@ const DaItemVerticalStandard: React.FC<DaItemVerticalStandardProps> = ({
   maxWidth = '500px',
 }) => {
   return (
-    <div className="p-2 border border-transparent hover:border-da-gray-light bg-da-white rounded-lg cursor-pointer">
+    <div className="p-2 border border-da-gray-light hover:border-da-gray-medium bg-da-white rounded-lg cursor-pointer">
       <div
         className="flex w-full flex-col items-center space-y-1 text-da-gray-medium overflow-hidden"
         style={{ maxWidth: maxWidth }}
@@ -29,7 +29,7 @@ const DaItemVerticalStandard: React.FC<DaItemVerticalStandardProps> = ({
           maxWidth={maxWidth}
         />
         <div className="flex flex-col items-start w-full space-y-0">
-          <DaText variant="sub-title" className="line-clamp-1">
+          <DaText variant="regular-bold" className="line-clamp-1">
             {title}
           </DaText>
           <DaText
