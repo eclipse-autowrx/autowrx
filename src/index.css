@@ -181,7 +181,7 @@ body {
 }
 
 .da-btn-plain {
-  @apply text-da-gray-medium hover:bg-da-primary-100;
+  @apply text-da-gray-medium hover:bg-da-primary-100 hover:text-da-primary-500;
 }
 
 .da-btn-text {
@@ -285,6 +285,7 @@ body {
 
 *::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
   background-color: #f5f5f5;
 }
 

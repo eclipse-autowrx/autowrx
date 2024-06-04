@@ -18,11 +18,12 @@ export type ModelLite = {
 
 export type Model = {
   id: string
-  custom_apis?: Record<string, unknown>
+  custom_apis?: string
   main_api: string
   model_home_image_file?: string
   model_files?: Record<string, unknown>
   name: string
+  cvi?: string
   visibility: 'public' | 'private'
   vehicle_category: string
   property: string

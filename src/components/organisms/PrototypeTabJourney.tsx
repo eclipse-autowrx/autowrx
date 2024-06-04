@@ -2,16 +2,15 @@ import React, { useState } from 'react'
 import { DaText } from '../atoms/DaText'
 import { DaImage } from '../atoms/DaImage'
 import { DaTag } from '../atoms/DaTag'
-import { DaAvatar } from '../atoms/DaAvatar'
 import { DaButton } from '../atoms/DaButton'
-import { TbArrowRight } from 'react-icons/tb'
-import { Link } from 'react-router-dom'
 import { DaInput } from '../atoms/DaInput'
 import { DaSelect, DaSelectItem } from '../atoms/DaSelect'
 import { Prototype } from '@/types/model.type'
 import { DaTableProperty } from '../molecules/DaTableProperty'
 import { updatePrototypeService } from '@/services/prototype.service'
 import DaTableEditor from '../molecules/DaCustomerJourneyTable'
+import DaImportFile from '../atoms/DaImportFile'
+import { uploadFileService } from '@/services/upload.service'
 
 interface PrototypeTabJourneyProps {
   prototype: Prototype
@@ -45,14 +44,11 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
       complexity_level: localPrototype.complexity_level,
       tags: localPrototype.tags,
       customer_journey: localPrototype.customer_journey,
+      image_file: localPrototype.image_file,
     }
     try {
-      const updatedPrototype = await updatePrototypeService(
-        prototype.id,
-        updateData,
-      )
-      console.log(updatedPrototype)
-      // window.location.reload() // Will change this to re-fetch prototype instead of reload later on
+      await updatePrototypeService(prototype.id, updateData)
+      window.location.reload() // Will change this to re-fetch prototype instead of reload later on
       setIsEditing(false)
     } catch (error) {
       console.error('Error updating prototype:', error)
@@ -92,10 +88,26 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
     })
   }
 
+  const handlePrototypeImageChange = async (file: File) => {
+    try {
+      const { url } = await uploadFileService(file)
+      console.log('Prototype image url: ', url)
+      setLocalPrototype((prevPrototype) => {
+        if (!prevPrototype) return prevPrototype
+        return {
+          ...prevPrototype,
+          image_file: url,
+        }
+      })
+    } catch (error) {
+      console.error('Failed to update prototype image:', error)
+    }
+  }
+
   return (
     <div className="flex flex-col h-full w-full">
       <div className="flex">
-        <div className="w-1/2">
+        <div className="flex-1 relative">
           <DaImage
             src={
               localPrototype.image_file
@@ -104,12 +116,22 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
             }
             className="w-full object-cover max-h-[400px]"
           />
+          {isEditing && (
+            <DaImportFile
+              onFileChange={handlePrototypeImageChange}
+              accept=".png, .jpg, .jpeg, .gif, .webp"
+            >
+              <DaButton variant="solid" className="absolute right-2 top-2">
+                Change Image
+              </DaButton>
+            </DaImportFile>
+          )}
         </div>
-        <div className="w-1/2 p-2">
+        <div className="flex-1 p-2 ml-6">
           <div className="flex justify-between items-center mb-4">
             {isEditing ? (
               <>
-                <DaText variant="title" className=" ">
+                <DaText variant="title" className="text-da-primary-500">
                   Editing Prototype
                 </DaText>
                 <div className="flex space-x-4">
@@ -147,7 +169,9 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
           {isEditing ? (
             <>
               <div className="flex items-center mb-4">
-                <DaText className="w-1/4">Prototype Name</DaText>
+                <DaText className="w-1/4" variant="regular-bold">
+                  Prototype Name
+                </DaText>
                 <DaInput
                   value={localPrototype.name}
                   onChange={(e) => handleChange('name', e.target.value)}
@@ -155,7 +179,9 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                 />
               </div>
               <div className="flex items-center mb-4">
-                <DaText className="w-1/4">Problem</DaText>
+                <DaText className="w-1/4" variant="regular-bold">
+                  Problem
+                </DaText>
                 <DaInput
                   value={localPrototype.description.problem}
                   onChange={(e) =>
@@ -165,7 +191,9 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                 />
               </div>
               <div className="flex items-center mb-4">
-                <DaText className="w-1/4 ">Says who?</DaText>
+                <DaText className="w-1/4 " variant="regular-bold">
+                  Says who?
+                </DaText>
                 <DaInput
                   value={localPrototype.description.says_who}
                   onChange={(e) =>
@@ -175,7 +203,9 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                 />
               </div>
               <div className="flex items-center mb-4">
-                <DaText className="w-1/4 ">Solution</DaText>
+                <DaText className="w-1/4 " variant="regular-bold">
+                  Solution
+                </DaText>
                 <DaInput
                   value={localPrototype.description.solution}
                   onChange={(e) =>
@@ -185,7 +215,9 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                 />
               </div>
               <div className="flex items-center mb-4">
-                <DaText className="w-1/4 ">Complexity</DaText>
+                <DaText className="w-1/4 " variant="regular-bold">
+                  Complexity
+                </DaText>
                 <DaSelect
                   value={
                     complexityLevels[
@@ -208,7 +240,9 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                 </DaSelect>
               </div>
               <div className="flex items-center mb-4">
-                <DaText className="w-1/4 ">Status</DaText>
+                <DaText className="w-1/4 " variant="regular-bold">
+                  Status
+                </DaText>
                 <DaSelect
                   value={
                     localPrototype.description.status

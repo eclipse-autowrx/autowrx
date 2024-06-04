@@ -36,3 +36,7 @@ export const updateUserService = async (id: string, data: UserUpdate) => {
 export const deleteUserService = async (id: string) => {
   return (await serverAxios.delete(`/users/${id}`)).data
 }
+
+export const partialUpdateUserService = async (data: Partial<User>) => {
+  return (await serverAxios.patch<User>(`/users/self`, data)).data
+}

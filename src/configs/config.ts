@@ -5,5 +5,6 @@ export default {
   studioUrl: 'https://studio.digital.auto',
   studioBeUrl: 'https://bewebstudio.digitalauto.tech',
   widgetMarketPlaceUrl: 'https://marketplace.digital.auto/packagetype/widget',
-  widgetMarketPlaceBe: 'https://store-be.digitalauto.tech'
+  widgetMarketPlaceBe: 'https://store-be.digitalauto.tech',
+  uploadFileUrl: 'https://upload.digitalauto.asia',
 }
