@@ -6,6 +6,10 @@ import DaDashboardEditor from '../molecules/dashboard/DaDashboardEditor'
 import CodeEditor from '../molecules/CodeEditor'
 import { DaButton } from '../atoms/DaButton'
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb'
+import { BsStars } from 'react-icons/bs'
+import DaPopup from '../atoms/DaPopup'
+import DaGenAI_Dashboard from '../molecules/genAI/DaGenAI_Dashboard'
+import { DaText } from '../atoms/DaText'
 
 const PrototypeTabCodeDashboardCfg: FC = ({}) => {
   const [prototype, setActivePrototype] = useModelStore(
@@ -88,14 +92,25 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
               <TbChevronRight className="ml-1" />
             )}
           </DaButton>
-          {/* <button
-                    onClick={() => setIsOpenGenAIDashboard(true)}
-                    className={`bg-white ml-2 rounded px-3 py-1 flex items-center justify-center hover:bg-gray-100 border border-gray-200 shadow-sm text-sm text-gray-600 hover:text-gray-800 select-none ${CAN_EDIT ? "" : "opacity-30 pointer-events-none"
-                        }`}
-                >
-                    <BsStars className="w-4 h-auto text-aiot-blue mr-1" />
-                    Dashboard ProtoPilot
-                </button> */}
+          <DaPopup
+            trigger={
+              <DaButton variant="outline">
+                <BsStars className="w-4 h-auto text-aiot-blue mr-1" />
+                Dashboard ProtoPilot
+              </DaButton>
+            }
+          >
+            <div className="flex flex-col w-[1000px] h-[500px]">
+              <DaText variant="title" className="text-da-primary-500">
+                {' '}
+                Dashboard ProtoPilot{' '}
+              </DaText>
+              <DaGenAI_Dashboard
+                onCodeChanged={setDashboardCfg}
+                pythonCode={prototype.code}
+              />
+            </div>
+          </DaPopup>
         </div>
         {/* <GenAI_ProtoPilot
                 type="GenAI_Dashboard"
