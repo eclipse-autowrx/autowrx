@@ -5,18 +5,20 @@ import _ from 'lodash'
 import { AddOn } from '@/types/addon.type'
 import { TbCode } from 'react-icons/tb'
 import { BsStars } from 'react-icons/bs'
-import LoadingLineAnimation from './DaGenAI_LoadingLineAnimation'
-import DaGenAI_ResponseDisplay from './DaGenAI_ResponseDisplay'
+import LoadingLineAnimation from './DaGenAI_LoadingLineAnimation.tsx'
+import DaGenAI_ResponseDisplay from './DaGenAI_ResponseDisplay.tsx'
 import axios from 'axios'
 import { DaTextarea } from '@/components/atoms/DaTextarea'
 import useListMarketplaceAddOns from '@/hooks/useListMarketplaceAddOns'
-import DaGeneratorSelector from './DaGeneratorSelector.tsx'
+import DaGeneratorSelector from './DaGeneratorSelector.tsx.tsx'
+import config from '@/configs/config.ts'
 
 type GenAICodeProps = {
   onCodeChanged?: (code: string) => void
+  pythonCode?: string
 }
 
-const DaGenAI_Python = ({ onCodeChanged }: GenAICodeProps) => {
+const DaGenAI_Dashboard = ({ onCodeChanged }: GenAICodeProps) => {
   const [inputPrompt, setInputPrompt] = useState<string>('')
   const [selectedAddOn, setSelectedAddOn] = useState<AddOn | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
@@ -24,30 +26,23 @@ const DaGenAI_Python = ({ onCodeChanged }: GenAICodeProps) => {
   const [isFinished, setIsFinished] = useState<boolean>(false)
   const { data: marketplaceAddOns } = useListMarketplaceAddOns('GenAI_Python')
 
-  const ETASAddOn: AddOn = {
-    id: 'etas-genai',
-    type: 'GenAI_Python',
-    name: 'ETAS SDV GenAI',
-    description: 'ETAS GenAI for Python code generation',
-    apiKey: 'Empty',
-    endpointUrl: 'https://backend-core-etas.digital.auto/v2/genai',
-    customPayload: { prompt: inputPrompt },
+  const builtInAddOn: AddOn = {
+    ...config.genAI.sdvApp.default,
+    customPayload: config.genAI.sdvApp.default.customPayload(inputPrompt),
   }
 
-  const allAddOns = marketplaceAddOns
-    ? [ETASAddOn, ...marketplaceAddOns]
-    : [ETASAddOn]
-
-  console.log('allAddOns: ', allAddOns)
+  const builtInAddOns = [builtInAddOn]
 
   const genPythonCode = async () => {
     if (!selectedAddOn) return
 
+    console.log('Invoke GenAI Model')
+    setGenCode('')
     setLoading(true)
     setIsFinished(false)
     try {
       let response
-      if (selectedAddOn.id === 'etas-genai') {
+      if (selectedAddOn.id.includes('etas-')) {
         console.log('Invoke ETAS GENAI Model')
         response = await axios.post(selectedAddOn.endpointUrl, {
           prompt: inputPrompt,
@@ -74,10 +69,10 @@ const DaGenAI_Python = ({ onCodeChanged }: GenAICodeProps) => {
 
   return (
     <div className="flex w-full h-full rounded">
-      <div className="flex flex-col w-[50%] h-full pr-2 pt-3 border-r border-gray-100">
+      <div className="flex flex-col w-[50%] h-full pr-2 pt-3 border-r border-da-gray-light">
         <div>
           <div className="flex select-none">
-            <div className="flex w-5 h-5 items-center justify-center font-bold text-xs rounded p-2 bg-gray-100 ">
+            <div className="flex w-5 h-5 items-center justify-center font-bold text-xs rounded p-2 bg-da-gray-light ">
               1
             </div>
             <div className="flex ml-1 text-gray-600 font-medium">Prompting</div>
@@ -92,19 +87,20 @@ const DaGenAI_Python = ({ onCodeChanged }: GenAICodeProps) => {
           </div>
         </div>
         <div className="flex mt-2 select-none">
-          <div className="flex w-5 h-5 items-center justify-center font-bold text-xs rounded p-2 bg-gray-100 ">
+          <div className="flex w-5 h-5 items-center justify-center font-bold text-xs rounded p-2 bg-da-gray-light ">
             2
           </div>
           <div className="flex ml-1 text-gray-600 font-medium">
             Select Generator
           </div>
         </div>
-        {allAddOns && Array.isArray(allAddOns) && (
-          <DaGeneratorSelector
-            generatorList={allAddOns}
-            onSelectedGeneratorChange={setSelectedAddOn}
-          />
-        )}
+
+        <DaGeneratorSelector
+          builtInAddOns={builtInAddOns}
+          marketplaceAddOns={marketplaceAddOns ? marketplaceAddOns : []}
+          onSelectedGeneratorChange={setSelectedAddOn}
+        />
+
         {!inputPrompt && (
           <div className="flex w-full mt-auto justify-center text-gray-400 select-none">
             You need to enter prompt and select generator
@@ -124,7 +120,7 @@ const DaGenAI_Python = ({ onCodeChanged }: GenAICodeProps) => {
       </div>
       <div className="flex flex-col w-1/2 h-full pt-3 pl-2">
         <div className="flex mb-2 select-none">
-          <div className="flex w-5 h-5 items-center justify-center font-bold text-xs rounded p-2 bg-gray-100 ">
+          <div className="flex w-5 h-5 items-center justify-center font-bold text-xs rounded p-2 bg-da-gray-light ">
             3
           </div>
           <div className="flex ml-1 text-gray-600 font-medium">
@@ -158,4 +154,4 @@ const DaGenAI_Python = ({ onCodeChanged }: GenAICodeProps) => {
   )
 }
 
-export default DaGenAI_Python
+export default DaGenAI_Dashboard

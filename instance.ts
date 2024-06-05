@@ -10,11 +10,6 @@ const instance = {
           img: 'https://bewebstudio.digitalauto.tech/data/projects/OezCm7PTy8FT/a/bosch.png',
           url: 'https://www.bosch.com/',
         },
-        {
-          name: 'Dassault Systems',
-          img: 'https://www.3ds.com/assets/3ds-navigation/3DS_corporate-logo_blue.svg',
-          url: 'https://www.3ds.com/',
-        },
       ],
     },
     {
@@ -44,8 +39,7 @@ const instance = {
     },
   ],
   text: {
-    home_ads_pan_title:
-      'Welcome to digital.auto playground for virtual exploration',
+    home_ads_pan_title: 'Welcome to ETAS playground for virtual exploration',
     home_ads_pan_desc: `To support shift-level testing for software-defined vehicle (SDV) applications, we have created the digital.auto playground. This is a cloud-based, rapid prototyping environment for new, <b>SDV-enabled features</b>. The prototypes are built against real-world vehicle APIs and can be seamlessly migrated to automotive runtimes, such as Eclipse Velocitas. The playground is open and free to use.`,
   },
 }

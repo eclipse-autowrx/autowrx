@@ -81,8 +81,8 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
       <div className="flex flex-col h-full w-full items-center px-2 py-1 text-xs text-da-gray-medium rounded">
         <div className="flex w-full">
           <DaButton
-            variant="plain"
-            className="flex bg-white pl-3"
+            variant="outline"
+            className="flex bg-white pl-3 mr-2"
             onClick={() => setIsExpanded((old) => !old)}
           >
             <div>Show all raw config text</div>
