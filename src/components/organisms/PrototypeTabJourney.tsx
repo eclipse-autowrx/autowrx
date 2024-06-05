@@ -24,7 +24,6 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false)
   const [localPrototype, setLocalPrototype] = useState(prototype)
-  const tableRef = React.createRef<HTMLDivElement>()
 
   if (!prototype) {
     return <DaText>No prototype available</DaText>
@@ -39,12 +38,12 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
         problem: localPrototype.description.problem,
         says_who: localPrototype.description.says_who,
         solution: localPrototype.description.solution,
-        status: localPrototype.description.status,
       },
       complexity_level: localPrototype.complexity_level,
       tags: localPrototype.tags,
       customer_journey: localPrototype.customer_journey,
       image_file: localPrototype.image_file,
+      state: localPrototype.description.state,
     }
     try {
       await updatePrototypeService(prototype.id, updateData)
@@ -55,6 +54,9 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
       setIsEditing(false)
     }
   }
+
+  // Log the localPrototype state
+  console.log('localPrototype:', localPrototype)
 
   const handleCancel = () => {
     // Handle the cancel action here
@@ -152,7 +154,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
               </>
             ) : (
               <>
-                <DaText variant="title" className=" ">
+                <DaText variant="title" className="text-da-primary-500">
                   {localPrototype.name}
                 </DaText>
                 <div className="flex space-x-4">
@@ -167,7 +169,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
             )}
           </div>
           {isEditing ? (
-            <>
+            <div>
               <div className="flex items-center mb-4">
                 <DaText className="w-1/4" variant="regular-bold">
                   Prototype Name
@@ -245,13 +247,15 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                 </DaText>
                 <DaSelect
                   value={
-                    localPrototype.description.status
-                      ? localPrototype.description.status
+                    localPrototype.state === 'Released' ||
+                    localPrototype.state === 'Developing'
+                      ? localPrototype.state
                       : 'Developing'
                   }
-                  onValueChange={(value) =>
-                    handleDescriptionChange('status', value)
-                  }
+                  onValueChange={(value) => {
+                    console.log('value', value)
+                    handleChange('state', value)
+                  }}
                   className="w-3/4"
                 >
                   {statusOptions.map((status, index) => (
@@ -261,7 +265,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                   ))}
                 </DaSelect>
               </div>
-            </>
+            </div>
           ) : (
             <>
               <DaTableProperty
@@ -280,7 +284,11 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                   },
                   {
                     name: 'Status',
-                    value: prototype.description.status,
+                    value:
+                      prototype.state === 'Released' ||
+                      prototype.state === 'Developing'
+                        ? prototype.state
+                        : 'Developing',
                   },
                   {
                     name: 'Complexity',

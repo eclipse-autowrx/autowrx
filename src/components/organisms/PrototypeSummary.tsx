@@ -21,7 +21,7 @@ const PrototypeSummary = ({ prototype }: PrototypeSummaryProps) => {
       />
       <div className="p-5">
         <div className="flex justify-between items-center">
-          <DaText variant="title" className="text-gray-600">
+          <DaText variant="title" className="text-da-primary-500">
             {prototype.name}
           </DaText>
           <Link
@@ -56,7 +56,7 @@ const PrototypeSummary = ({ prototype }: PrototypeSummaryProps) => {
           properties={[
             {
               name: 'Problem',
-              value: prototype.description.problems,
+              value: prototype.description.problem,
             },
             {
               name: 'Says who?',
@@ -68,7 +68,11 @@ const PrototypeSummary = ({ prototype }: PrototypeSummaryProps) => {
             },
             {
               name: 'Status',
-              value: prototype.description.status,
+              value:
+                prototype.state === 'Released' ||
+                prototype.state === 'Developing'
+                  ? prototype.state
+                  : 'Developing',
             },
             { name: 'Complexity', value: prototype.complexity_level },
           ]}
