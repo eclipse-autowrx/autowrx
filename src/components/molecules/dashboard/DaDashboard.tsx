@@ -8,9 +8,38 @@ const DaDashboard: FC = ({}) => {
   const [widgetItems, setWidgetItems] = useState<any>([])
 
   useEffect(() => {
-    if (!prototype?.widget_config) {
+    console.log('DaDashboard, prototype', prototype)
+    let wItems = []
+    if (prototype?.widget_config) {
+      
+      try {
+        let dashboard_config = JSON.parse(prototype.widget_config)
+        console.log("dashboard_config", dashboard_config)
+        if(Array.isArray(dashboard_config)) {
+          wItems = dashboard_config
+        } else {
+          if(dashboard_config?.widgets && Array.isArray(dashboard_config.widgets)) {
+            wItems = dashboard_config.widgets
+          }
+        }
+      } catch(err) {
+        console.error('Error parsing widget config', err)
+      }
     }
+    processWidgetItems(wItems)
+    setWidgetItems(wItems)
   }, [prototype?.widget_config])
+
+  const processWidgetItems = (widgetItems: any[]) => {
+    if(!widgetItems) return
+    widgetItems.forEach((widget) => {
+      if(!widget?.url) {
+        if(widget.options?.url) {
+          widget.url = widget.options.url
+        }
+      }
+    })
+  }
 
   return (
     <div className="w-full h-full flex items-center justify-center">
