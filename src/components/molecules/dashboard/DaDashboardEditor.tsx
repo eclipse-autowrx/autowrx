@@ -34,6 +34,7 @@ interface DaDashboardEditorProps {
 export interface WidgetConfig {
   plugin: string
   widget: string
+  url: string
   options: any
   boxes: number[]
 }
