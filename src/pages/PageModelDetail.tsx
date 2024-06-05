@@ -89,7 +89,7 @@ const PageModelDetail = () => {
 
   return (
     <div className="col-span-12 gap-4 grid grid-cols-12 h-full px-2 py-4 container space-y-2">
-      <div className="col-span-6">
+      <div className="col-span-6 overflow-y-auto">
         <div className="flex justify-between items-center">
           <DaText variant="title" className="text-da-primary-500">
             {model.name}
@@ -159,7 +159,7 @@ const PageModelDetail = () => {
           members={model.members ? model.members : []}
         />
       </div>
-      <div className="col-span-6">
+      <div className="col-span-6 overflow-y-auto">
         <img src={model.model_home_image_file} alt={model.name} />
       </div>
     </div>

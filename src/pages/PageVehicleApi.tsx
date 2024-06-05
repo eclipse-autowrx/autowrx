@@ -5,6 +5,7 @@ import ApiList from '@/components/organisms/ApiList'
 import ApiDetail from '@/components/organisms/ApiDetail'
 import { VehicleApi } from '@/types/model.type'
 import ModelApiList from '@/components/organisms/ModelApiList'
+import { DaImage } from '@/components/atoms/DaImage'
 
 interface Cvi {
   Vehicle: VehicleApi
@@ -27,7 +28,7 @@ const PageVehicleApi = () => {
   }
 
   return (
-    <div className="grid grid-cols-12 auto-cols-max">
+    <div className="grid grid-cols-12 auto-cols-max h-full">
       <div className="col-span-6 w-full flex overflow-auto border-r">
         <ModelApiList
           onApiClick={handleApiClick}
@@ -35,7 +36,16 @@ const PageVehicleApi = () => {
         />
       </div>
       <div className="col-span-6 w-full flex h-full overflow-auto">
-        {selectedApi && <ApiDetail apiDetails={selectedApi} />}
+        {selectedApi ? (
+          <ApiDetail apiDetails={selectedApi} />
+        ) : (
+          <div className="flex justify-center w-full h-full">
+            <DaImage
+              src="https://bewebstudio.digitalauto.tech/data/projects/OezCm7PTy8FT/a/E-Car_Full_Vehicle.png"
+              className="object-contain"
+            />
+          </div>
+        )}
       </div>
     </div>
   )

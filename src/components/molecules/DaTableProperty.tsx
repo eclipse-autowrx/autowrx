@@ -10,12 +10,12 @@ const DaTablePropertyItem = ({ property, value }: DaTablePropertyItemProps) => {
   return (
     <div className="grid grid-cols-4 gap-4 py-2 text-da-gray-medium">
       <div className="col-span-1">
-        <DaText variant="regular" className="!text-sm text-da-accent-500">
+        <DaText variant="regular-bold" className="">
           {property}
         </DaText>
       </div>
       <div className="col-span-3">
-        <DaText variant="regular" className="!text-sm">
+        <DaText variant="regular" className="">
           {value}
         </DaText>
       </div>

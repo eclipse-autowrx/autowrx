@@ -20,7 +20,7 @@ const DaItemVerticalType2: React.FC<DaItemVerticalType2Props> = ({
 }) => {
   return (
     <div
-      className="py-2 flex flex-col w-full rounded-lg border bg-da-white space-y-1 text-da-gray-medium overflow-hidden hover:border-da-primary-500"
+      className="py-2 flex flex-col w-full h-full rounded-lg border bg-da-white space-y-1 text-da-gray-medium overflow-hidden hover:border-da-primary-500"
       style={{ maxWidth: maxWidth }}
       onClick={onClick}
     >
