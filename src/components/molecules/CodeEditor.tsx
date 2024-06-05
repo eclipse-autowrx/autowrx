@@ -1,12 +1,9 @@
 import Editor from '@monaco-editor/react'
-import type monaco from 'monaco-editor'
 import clsx from 'clsx'
 import DaLoader from '../atoms/DaLoader'
 import { useEffect } from 'react'
 import { useMonaco } from '@monaco-editor/react'
 import { useState } from 'react'
-
-export type EditorType = monaco.editor.IStandaloneCodeEditor
 
 export interface CodeEditorProps {
   code: string
