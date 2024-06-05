@@ -5,29 +5,31 @@ import _ from 'lodash'
 import { AddOn } from '@/types/addon.type'
 import { TbCode } from 'react-icons/tb'
 import { BsStars } from 'react-icons/bs'
-import LoadingLineAnimation from './DaGenAI_LoadingLineAnimation'
-import DaGenAI_ResponseDisplay from './DaGenAI_ResponseDisplay'
+import LoadingLineAnimation from './DaGenAI_LoadingLineAnimation.tsx'
+import DaGenAI_ResponseDisplay from './DaGenAI_ResponseDisplay.tsx'
 import axios from 'axios'
 import { DaTextarea } from '@/components/atoms/DaTextarea'
 import useListMarketplaceAddOns from '@/hooks/useListMarketplaceAddOns'
-import DaGeneratorSelector from './DaGeneratorSelector.tsx'
+import DaGeneratorSelector from './DaGeneratorSelector.tsx.tsx'
 
 type GenAICodeProps = {
   onCodeChanged?: (code: string) => void
+  pythonCode?: string
 }
 
-const DaGenAI_Python = ({ onCodeChanged }: GenAICodeProps) => {
+const DaGenAI_Dashboard = ({ onCodeChanged }: GenAICodeProps) => {
   const [inputPrompt, setInputPrompt] = useState<string>('')
   const [selectedAddOn, setSelectedAddOn] = useState<AddOn | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const [genCode, setGenCode] = useState<string>('')
   const [isFinished, setIsFinished] = useState<boolean>(false)
-  const { data: marketplaceAddOns } = useListMarketplaceAddOns('GenAI_Python')
+  const { data: marketplaceAddOns } =
+    useListMarketplaceAddOns('GenAI_Dashboard')
 
   const ETASAddOn: AddOn = {
     id: 'etas-genai',
     type: 'GenAI_Python',
-    name: 'ETAS SDV GenAI',
+    name: 'ETAS Dashboard GenAI',
     description: 'ETAS GenAI for Python code generation',
     apiKey: 'Empty',
     endpointUrl: 'https://backend-core-etas.digital.auto/v2/genai',
@@ -158,4 +160,4 @@ const DaGenAI_Python = ({ onCodeChanged }: GenAICodeProps) => {
   )
 }
 
-export default DaGenAI_Python
+export default DaGenAI_Dashboard
