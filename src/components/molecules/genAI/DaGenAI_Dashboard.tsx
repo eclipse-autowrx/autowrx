@@ -41,21 +41,17 @@ const DaGenAI_Dashboard = ({ onCodeChanged }: GenAICodeProps) => {
     setIsFinished(false)
     try {
       let response
-      if (selectedAddOn.id === 'etas-genai') {
-        console.log('Invoke ETAS GENAI Model')
+      if (selectedAddOn.id.includes(config.instance)) {
         response = await axios.post(selectedAddOn.endpointUrl, {
           prompt: inputPrompt,
         })
         setGenCode(response.data.payload.code)
       } else {
-        response = await axios.post(
-          'http://localhost:3001/genAI/invokeBedrockModel',
-          {
-            endpointURL: selectedAddOn.endpointUrl,
-            inputPrompt: inputPrompt,
-            systemMessage: selectedAddOn.samples || '',
-          },
-        )
+        response = await axios.post(config.genAI.defaultEndpointUrl, {
+          endpointURL: selectedAddOn.endpointUrl,
+          inputPrompt: inputPrompt,
+          systemMessage: selectedAddOn.samples || '',
+        })
         setGenCode(response.data.code)
       }
     } catch (error) {

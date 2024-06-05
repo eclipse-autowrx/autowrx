@@ -1,4 +1,3 @@
-// config.ts
 export default {
   serverBaseUrl:
     import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:8080',
@@ -8,7 +7,12 @@ export default {
   widgetMarketPlaceUrl: 'https://marketplace.digital.auto/packagetype/widget',
   widgetMarketPlaceBe: 'https://store-be.digitalauto.tech',
   uploadFileUrl: 'https://upload.digitalauto.asia',
+  instanceLogo:
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Etas-logo-blue-new.svg/512px-Etas-logo-blue-new.svg.png?20231004120207',
+  instance: 'etas',
   genAI: {
+    defaultEndpointUrl: 'https://intermediate.digitalauto.tech/v1/genai',
+    marketplaceUrl: 'https://store-be.digitalauto.tech/marketplace/genai',
     sdvApp: {
       default: {
         id: 'etas-sdv-genai',
@@ -31,6 +35,5 @@ export default {
         customPayload: (prompt: string) => ({ prompt }),
       },
     },
-    marketplaceUrl: 'https://store-be.digitalauto.tech/marketplace/genai',
   },
 }
