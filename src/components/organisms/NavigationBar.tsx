@@ -27,7 +27,7 @@ const NavigationBar = ({}) => {
 
       <div className="grow"></div>
       {/* Model selection */}
-      {model ? (
+      {model && model.id ? (
         <>
           <Link to="/model">
             <DaButton variant="plain" className="hover:text-da-primary-500">
