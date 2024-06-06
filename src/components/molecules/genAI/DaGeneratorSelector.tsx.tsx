@@ -38,12 +38,16 @@ const DaGeneratorSelector = ({
   }, [])
 
   useEffect(() => {
-    if (!builtInAddOns) return
-    if (builtInAddOns.length > 0 && !selectedAddOn) {
-      setSelectedAddOn(builtInAddOns[0])
-      onSelectedGeneratorChange(builtInAddOns[0])
+    if (!selectedAddOn) {
+      if (builtInAddOns && builtInAddOns.length > 0) {
+        setSelectedAddOn(builtInAddOns[0])
+        onSelectedGeneratorChange(builtInAddOns[0])
+      } else if (marketplaceAddOns && marketplaceAddOns.length > 0) {
+        setSelectedAddOn(marketplaceAddOns[0])
+        onSelectedGeneratorChange(marketplaceAddOns[0])
+      }
     }
-  }, [builtInAddOns])
+  }, [builtInAddOns, marketplaceAddOns])
 
   useEffect(() => {
     const fetchTimeout = setTimeout(() => {
@@ -94,7 +98,7 @@ const DaGeneratorSelector = ({
       {isExpandGenerator && (
         <div className="absolute flex flex-col top-14 left-0 w-full z-10 min-h-8 border bg-da-white rounded-md border-da-gray-light shadow p-1 text-sm space-y-1">
           <div className="flex flex-col max-h-[150px] overflow-y-auto scroll-gray-small px-1">
-            {builtInAddOns && (
+            {builtInAddOns && builtInAddOns.length > 0 && (
               <>
                 <DaText variant="small-bold">Built-in Generators</DaText>
                 {builtInAddOns.map((addOn) => (

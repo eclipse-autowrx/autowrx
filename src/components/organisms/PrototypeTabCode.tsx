@@ -13,6 +13,7 @@ import { BsStars } from 'react-icons/bs'
 import DaPopup from '../atoms/DaPopup'
 import DaGenAI_Python from '../molecules/genAI/DaGenAI_Python'
 import { DaText } from '../atoms/DaText'
+import { set } from 'lodash'
 
 const PrototypeTabCode: FC = ({}) => {
   const [prototype, setActivePrototype, activeModelApis] = useModelStore(
@@ -27,6 +28,7 @@ const PrototypeTabCode: FC = ({}) => {
   const [code, setCode] = useState<string | undefined>(undefined)
   const [ticker, setTicker] = useState(0)
   const [activeTab, setActiveTab] = useState('api')
+  const [isOpenGenAI, setIsOpenGenAI] = useState(false)
 
   useEffect(() => {
     let timer = setInterval(() => {
@@ -73,6 +75,7 @@ const PrototypeTabCode: FC = ({}) => {
               Action
             </DaButton>
             <DaPopup
+              state={[isOpenGenAI, setIsOpenGenAI]}
               trigger={
                 <DaButton size="sm" variant="outline">
                   <BsStars className="mr-1" size={20} />
@@ -86,7 +89,12 @@ const PrototypeTabCode: FC = ({}) => {
                   SDV ProtoPilot{' '}
                 </DaText>
                 <div className="flex flex-col w-full h-full bg-white rounded-lgtext-sm">
-                  <DaGenAI_Python onCodeChanged={setCode} />
+                  <DaGenAI_Python
+                    onCodeChanged={(code) => {
+                      setCode(code)
+                      setIsOpenGenAI(false)
+                    }}
+                  />
                 </div>
               </div>
             </DaPopup>
