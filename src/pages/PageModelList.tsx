@@ -18,8 +18,6 @@ const PageModelList = () => {
   const [isImporting, setIsImporting] = useState(false)
   const { data: user } = useSelfProfileQuery()
 
-  if (!user) return null
-
   const handleImportModelZip = async (file: File) => {
     const model = await zipToModel(file)
     if (model) {
@@ -89,33 +87,35 @@ const PageModelList = () => {
           Model List
         </DaText>
         <div className="grow"></div>
-        <div className="flex">
-          {!isImporting ? (
-            <DaImportFile accept=".zip" onFileChange={handleImportModelZip}>
-              <DaButton variant="outline" className="mr-2">
-                <TbPackageExport className="mr-1 text-lg" /> Import Model
-              </DaButton>
-            </DaImportFile>
-          ) : (
-            <DaText
-              variant="regular"
-              className="flex items-center text-da-gray-medium mr-2"
+        {user && (
+          <div className="flex">
+            {!isImporting ? (
+              <DaImportFile accept=".zip" onFileChange={handleImportModelZip}>
+                <DaButton variant="outline" className="mr-2">
+                  <TbPackageExport className="mr-1 text-lg" /> Import Model
+                </DaButton>
+              </DaImportFile>
+            ) : (
+              <DaText
+                variant="regular"
+                className="flex items-center text-da-gray-medium mr-2"
+              >
+                <TbLoader className="animate-spin text-lg mr-2" />
+                Importing model ...
+              </DaText>
+            )}
+            <DaPopup
+              trigger={
+                <DaButton variant="outline" className="">
+                  <HiPlus className="mr-1 text-lg" />
+                  Create New Model
+                </DaButton>
+              }
             >
-              <TbLoader className="animate-spin text-lg mr-2" />
-              Importing model ...
-            </DaText>
-          )}
-          <DaPopup
-            trigger={
-              <DaButton variant="outline" className="">
-                <HiPlus className="mr-1 text-lg" />
-                Create New Model
-              </DaButton>
-            }
-          >
-            <FormCreateModel />
-          </DaPopup>
-        </div>
+              <FormCreateModel />
+            </DaPopup>
+          </div>
+        )}
       </div>
 
       <ModelGrid />
