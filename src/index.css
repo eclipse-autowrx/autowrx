@@ -61,7 +61,7 @@
 
 /* Define font weights as CSS variables */
 body {
-  font-family: "Manrope", sans-serif;
+  font-family: 'Manrope', sans-serif;
   /* font-family: "Geist Variable"; */
   /* font-family: "Roboto", sans-serif; */
   /* font-family: Inter, sans-serif; */
@@ -94,6 +94,18 @@ body {
 
 .col-span-2 {
   grid-column: span 2 / span 2;
+}
+
+.col-span-3 {
+  grid-column: span 3 / span 3;
+}
+
+.col-span-4 {
+  grid-column: span 4 / span 4;
+}
+
+.col-span-5 {
+  grid-column: span 5 / span 5;
 }
 
 .da-clickable {

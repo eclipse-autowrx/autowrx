@@ -49,24 +49,24 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
         >
           Journey
         </DaTabItem>
-        <DaTabItem
+        {/* <DaTabItem
           active={tab == 'architecture'}
           to={`/model/${model_id}/library/prototype/${prototype_id}/architecture`}
         >
           Architecture
-        </DaTabItem>
+        </DaTabItem> */}
         <DaTabItem
           active={tab == 'code'}
           to={`/model/${model_id}/library/prototype/${prototype_id}/code`}
         >
           Code
         </DaTabItem>
-        <DaTabItem
+        {/* <DaTabItem
           active={tab == 'flow'}
           to={`/model/${model_id}/library/prototype/${prototype_id}/flow`}
         >
           Flow
-        </DaTabItem>
+        </DaTabItem> */}
         <DaTabItem
           active={tab == 'dashboard'}
           to={`/model/${model_id}/library/prototype/${prototype_id}/dashboard`}
