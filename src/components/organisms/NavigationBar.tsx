@@ -13,9 +13,10 @@ import { TbUsers } from 'react-icons/tb'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { VscListTree } from 'react-icons/vsc'
 import { ImBooks } from 'react-icons/im'
+import useCurrentModel from '@/hooks/useCurrentModel'
 
 const NavigationBar = ({}) => {
-  const [model] = useModelStore((state) => [state.model as Model])
+  const { data: model } = useCurrentModel()
   const { data: user } = useSelfProfileQuery()
 
   return (
