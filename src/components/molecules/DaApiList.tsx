@@ -17,13 +17,18 @@ const DaApiListItem = ({ api, onClick, isSelected }: DaApiListItemProps) => {
       }`}
       onClick={onClick}
     >
-      <div className="col-span-3 cursor-pointer">
+      <div className="col-span-3 cursor-pointer flex items-center">
         <DaText
           variant={isSelected ? 'small-bold' : 'small'}
           className="cursor-pointer"
         >
           {api.api}
         </DaText>
+        {api.isWishlist && (
+          <div className=" flex font-bold rounded-full w-4 h-4 ml-2 bg-fuchsia-500 text-da-white items-center justify-center text-[9px]">
+            W
+          </div>
+        )}
       </div>
       <div className="col-span-1 flex justify-end cursor-pointer">
         <DaText

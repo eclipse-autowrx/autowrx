@@ -5,7 +5,7 @@ import DaFilter from '../atoms/DaFilter'
 import { debounce } from '@/lib/utils'
 import useModelStore from '@/stores/modelStore'
 import { useParams } from 'react-router-dom'
-import { ApiItem } from '@/types/model.type'
+import { ApiItem, VehicleApi, CustomApi } from '@/types/model.type'
 import { shallow } from 'zustand/shallow'
 import { DaButton } from '../atoms/DaButton'
 import { TbPlus } from 'react-icons/tb'
@@ -25,8 +25,15 @@ const ModelApiList = ({ onApiClick, onApiSelected }: ModelApiListProps) => {
     shallow,
   )
   const [searchTerm, setSearchTerm] = useState('')
-  const [filteredApiList, setFilteredApiList] = useState<any[]>([])
-  const [selectedFilters, setSelectedFilters] = useState<string[]>([])
+  const [filteredApiList, setFilteredApiList] = useState<VehicleApi[]>([])
+  const [selectedFilters, setSelectedFilters] = useState<string[]>([
+    'default',
+    'wishlist',
+    'branch',
+    'sensor',
+    'actuator',
+    'attribute',
+  ])
   const [selectedApi, setSelectedApi] = useState<ApiItem | null>(null)
   const [isOpenPopup, setIsOpenPopup] = useState(false)
 
@@ -42,26 +49,42 @@ const ModelApiList = ({ onApiClick, onApiSelected }: ModelApiListProps) => {
   }, [api, activeModelApis])
 
   useEffect(() => {
-    console.log('selectedApi', selectedApi)
     if (onApiSelected) {
       onApiSelected(selectedApi)
     }
   }, [selectedApi, onApiSelected])
 
   useEffect(() => {
-    let filteredList = activeModelApis.filter((apiItem) =>
+    let combinedApis = [
+      ...activeModelApis,
+      ...(model?.custom_apis?.map((wishlistApi: CustomApi) => ({
+        ...wishlistApi,
+        api: wishlistApi.name,
+        isWishlist: true,
+      })) || []),
+    ]
+
+    let filteredList = combinedApis.filter((apiItem) =>
       apiItem.api.toLowerCase().includes(searchTerm.toLowerCase()),
     )
 
     if (selectedFilters.length > 0) {
+      filteredList = filteredList.filter((apiItem) => {
+        const isDefault = !apiItem.isWishlist
+        const isWishlist = !!apiItem.isWishlist
+        return (
+          (selectedFilters.includes('default') && isDefault) ||
+          (selectedFilters.includes('wishlist') && isWishlist)
+        )
+      })
+
       filteredList = filteredList.filter((apiItem) =>
-        selectedFilters.includes(apiItem.details.type),
+        selectedFilters.includes(apiItem.type.toLowerCase()),
       )
     }
 
-    console.log('filteredList', filteredList)
     setFilteredApiList(filteredList)
-  }, [searchTerm, selectedFilters, activeModelApis])
+  }, [searchTerm, selectedFilters, activeModelApis, model?.custom_apis])
 
   const handleSearchChange = useCallback(
     debounce((term: string) => {
@@ -84,7 +107,14 @@ const ModelApiList = ({ onApiClick, onApiSelected }: ModelApiListProps) => {
           onChange={(e) => handleSearchChange(e.target.value)}
         />
         <DaFilter
-          options={['Branch', 'Sensor', 'Actuator', 'Attribute']}
+          options={[
+            'Default',
+            'Wishlist',
+            'Branch',
+            'Sensor',
+            'Actuator',
+            'Attribute',
+          ]}
           onChange={handleFilterChange}
           className="w-full"
         />

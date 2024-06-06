@@ -77,6 +77,14 @@ export type VehicleApi = {
   min?: number
   children?: { [key: string]: VehicleApi }
   shortName?: string
+  isWishlist?: boolean
+}
+
+export type CustomApi = {
+  name: string
+  description: string
+  type: string
+  datatype?: string
 }
 
 export interface Cvi {
