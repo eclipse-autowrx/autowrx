@@ -13,30 +13,38 @@ import useListMarketplaceAddOns from '@/hooks/useListMarketplaceAddOns'
 import DaGeneratorSelector from './DaGeneratorSelector.tsx.tsx'
 import config from '@/configs/config.ts'
 
-type DaGenAI_PythonProps = {
+type DaGenAI_DashboardProps = {
   onCodeChanged?: (code: string) => void
   pythonCode?: string
 }
 
-const DaGenAI_Python = ({ onCodeChanged }: DaGenAI_PythonProps) => {
+const DaGenAI_Dashboard = ({
+  onCodeChanged,
+  pythonCode,
+}: DaGenAI_DashboardProps) => {
   const [inputPrompt, setInputPrompt] = useState<string>('')
   const [selectedAddOn, setSelectedAddOn] = useState<AddOn | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const [genCode, setGenCode] = useState<string>('')
   const [isFinished, setIsFinished] = useState<boolean>(false)
-  const { data: marketplaceAddOns } = useListMarketplaceAddOns('GenAI_Python')
+  const { data: marketplaceAddOns } =
+    useListMarketplaceAddOns('GenAI_Dashboard')
 
-  const builtInAddOns: AddOn[] =
-    config.genAI && config.genAI.sdvApp && config.genAI.sdvApp.length > 0
-      ? config.genAI.sdvApp.map((addOn) => ({
+  const builtInAddOns =
+    config.genAI && config.genAI.dashboard && config.genAI.dashboard.length > 0
+      ? config.genAI.dashboard.map((addOn) => ({
           ...addOn,
-          customPayload: addOn.customPayload(inputPrompt), // Append the customPayload with the inputPrompt
+          customPayload: addOn.customPayload(
+            inputPrompt + 'With the sdv app python code: ' + pythonCode
+              ? pythonCode
+              : '',
+          ), // Append the customPayload with the inputPrompt
         }))
       : []
 
-  const genPythonCode = async () => {
+  const genDashboardCode = async () => {
     if (!selectedAddOn) return
-    setGenCode('')
+
     setLoading(true)
     setIsFinished(false)
     try {
@@ -105,7 +113,7 @@ const DaGenAI_Python = ({ onCodeChanged }: DaGenAI_PythonProps) => {
           variant="solid"
           disabled={!inputPrompt}
           className={`!h-8 w-full mt-auto ${!inputPrompt ? '!mt-2' : 'mt-auto'}`}
-          onClick={genPythonCode}
+          onClick={genDashboardCode}
         >
           <BsStars
             className={`inline-block mr-1 mb-0.5 ${loading ? 'animate-pulse' : ''}`}
@@ -149,4 +157,4 @@ const DaGenAI_Python = ({ onCodeChanged }: DaGenAI_PythonProps) => {
   )
 }
 
-export default DaGenAI_Python
+export default DaGenAI_Dashboard

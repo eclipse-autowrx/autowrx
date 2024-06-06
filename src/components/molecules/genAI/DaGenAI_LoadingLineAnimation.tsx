@@ -38,7 +38,7 @@ const LoadingLineAnimation = ({
   return (
     <div
       ref={containerRef}
-      className="bg-gray-100 shadow-sm border border-gray-200 rounded flex-1 flex items-center justify-center relative select-none"
+      className="h-full bg-gray-100 shadow-sm border border-gray-200 rounded flex-1 flex items-center justify-center relative select-none"
     >
       {!loading ? (
         <div>{content}</div>
@@ -51,7 +51,7 @@ const LoadingLineAnimation = ({
             left: `${linePosition}px`,
             height: '100%',
             width: '2px',
-            backgroundColor: '#005072',
+            backgroundColor: 'hsl(var(--da-primary-500))',
             boxShadow: '0px 0px 20px #005072',
           }}
         />

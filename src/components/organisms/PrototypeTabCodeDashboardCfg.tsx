@@ -6,6 +6,10 @@ import DaDashboardEditor from '../molecules/dashboard/DaDashboardEditor'
 import CodeEditor from '../molecules/CodeEditor'
 import { DaButton } from '../atoms/DaButton'
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb'
+import { BsStars } from 'react-icons/bs'
+import DaPopup from '../atoms/DaPopup'
+import DaGenAI_Dashboard from '../molecules/genAI/DaGenAI_Dashboard'
+import { DaText } from '../atoms/DaText'
 
 const PrototypeTabCodeDashboardCfg: FC = ({}) => {
   const [prototype, setActivePrototype] = useModelStore(
@@ -17,6 +21,7 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
   const [useApis, setUseApis] = useState<any[]>([])
   const [isExpanded, setIsExpanded] = useState(false)
   const [ticker, setTicker] = useState(0)
+  const [isOpenGenAI, setIsOpenGenAI] = useState(false)
 
   useEffect(() => {
     let timer = setInterval(() => {
@@ -37,8 +42,8 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
   }, [ticker])
 
   const saveDashboardCfgToDb = (config: string) => {
-    console.log(`saveDashboardCfgToDb`)
-    console.log(config)
+    // console.log(`saveDashboardCfgToDb`)
+    // console.log(config)
     let tmpConfig = config
     try {
       let configObj = JSON.parse(tmpConfig)
@@ -77,8 +82,8 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
       <div className="flex flex-col h-full w-full items-center px-2 py-1 text-xs text-da-gray-medium rounded">
         <div className="flex w-full">
           <DaButton
-            variant="plain"
-            className="flex bg-white pl-3"
+            variant="outline"
+            className="flex bg-white pl-3 mr-2"
             onClick={() => setIsExpanded((old) => !old)}
           >
             <div>Show all raw config text</div>
@@ -88,14 +93,29 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
               <TbChevronRight className="ml-1" />
             )}
           </DaButton>
-          {/* <button
-                    onClick={() => setIsOpenGenAIDashboard(true)}
-                    className={`bg-white ml-2 rounded px-3 py-1 flex items-center justify-center hover:bg-gray-100 border border-gray-200 shadow-sm text-sm text-gray-600 hover:text-gray-800 select-none ${CAN_EDIT ? "" : "opacity-30 pointer-events-none"
-                        }`}
-                >
-                    <BsStars className="w-4 h-auto text-aiot-blue mr-1" />
-                    Dashboard ProtoPilot
-                </button> */}
+          <DaPopup
+            state={[isOpenGenAI, setIsOpenGenAI]}
+            trigger={
+              <DaButton variant="outline">
+                <BsStars className="w-4 h-auto text-aiot-blue mr-1" />
+                Dashboard ProtoPilot
+              </DaButton>
+            }
+          >
+            <div className="flex flex-col w-[1000px] h-[500px]">
+              <DaText variant="title" className="text-da-primary-500">
+                {' '}
+                Dashboard ProtoPilot{' '}
+              </DaText>
+              <DaGenAI_Dashboard
+                onCodeChanged={(code) => {
+                  setDashboardCfg(code)
+                  setIsOpenGenAI(false)
+                }}
+                pythonCode={prototype.code}
+              />
+            </div>
+          </DaPopup>
         </div>
         {/* <GenAI_ProtoPilot
                 type="GenAI_Dashboard"
