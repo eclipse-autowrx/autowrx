@@ -7,6 +7,11 @@ import useModelStore from '@/stores/modelStore'
 import { useParams } from 'react-router-dom'
 import { ApiItem } from '@/types/model.type'
 import { shallow } from 'zustand/shallow'
+import { DaButton } from '../atoms/DaButton'
+import { TbPlus } from 'react-icons/tb'
+import DaPopup from '../atoms/DaPopup'
+import FormCreateWishlistApi from '../molecules/forms/FormCreateWishlistApi'
+import useCurrentModel from '@/hooks/useCurrentModel'
 
 interface ModelApiListProps {
   onApiClick?: (details: any) => void
@@ -23,6 +28,9 @@ const ModelApiList = ({ onApiClick, onApiSelected }: ModelApiListProps) => {
   const [filteredApiList, setFilteredApiList] = useState<any[]>([])
   const [selectedFilters, setSelectedFilters] = useState<string[]>([])
   const [selectedApi, setSelectedApi] = useState<ApiItem | null>(null)
+  const [isOpenPopup, setIsOpenPopup] = useState(false)
+
+  const { data: model } = useCurrentModel()
 
   useEffect(() => {
     if (api) {
@@ -80,6 +88,24 @@ const ModelApiList = ({ onApiClick, onApiSelected }: ModelApiListProps) => {
           onChange={handleFilterChange}
           className="w-full"
         />
+      </div>
+      <div className="py-1">
+        <DaPopup
+          state={[isOpenPopup, setIsOpenPopup]}
+          trigger={
+            <DaButton variant="plain" size="sm">
+              <TbPlus className="w-4 h-4 mr-1" /> Add Wishlist API
+            </DaButton>
+          }
+        >
+          {model_id && model && (
+            <FormCreateWishlistApi
+              modelId={model_id}
+              existingCustomApis={model.custom_apis as any}
+              onClose={() => setIsOpenPopup(false)}
+            />
+          )}
+        </DaPopup>
       </div>
       <div className="flex-grow overflow-y-auto">
         <DaApiList

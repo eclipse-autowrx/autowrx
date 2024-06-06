@@ -69,7 +69,7 @@ export type VehicleApi = {
   datatype?: string
   description: string
   type: string
-  uuid: string
+  uuid?: string
   allowed?: string[]
   comment?: string
   unit?: string
