@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from 'react'
+import { FC, useEffect, useState, useRef } from 'react'
 import { WidgetConfig } from './DaDashboardEditor'
 
 interface DaDashboardGridProps {
@@ -24,21 +24,49 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
     console.log('DaDashboardGrid, widgetItems', widgetItems)
   }, [widgetItems])
 
-  const widgetItem = (
-    widgetConfig: WidgetConfig,
-    index: number,
-    cell: number,
-  ) => {
-    const { rowSpan, colSpan } = calculateSpans(widgetConfig.boxes)
+  interface PropsWidgetItem {
+    widgetConfig: WidgetConfig
+    index: number
+    cell: number
+  }
+
+  const WidgetItem: FC<PropsWidgetItem> = ({ widgetConfig, index, cell }) => {
+    const [rSpan, setRSpan] = useState<number>(0)
+    const [cSpan, setCSpan] = useState<number>(0)
+    const frameElement = useRef<HTMLIFrameElement>(null)
+    const [url, setUrl] = useState<string>()
+
+    useEffect(() => {
+      let url = widgetConfig.url
+      if (url && widgetConfig.options) {
+        let send_options = JSON.parse(JSON.stringify(widgetConfig.options))
+        delete send_options.url
+        url =
+          url + '?options=' + encodeURIComponent(JSON.stringify(send_options))
+        setUrl(url)
+      }
+    }, [widgetConfig.url])
+
+    useEffect(() => {
+      const { rowSpan, colSpan } = calculateSpans(widgetConfig.boxes)
+      setRSpan(rowSpan)
+      setCSpan(colSpan)
+    }, [widgetConfig.boxes])
+
     return (
       <div
-        className={`col-span-${colSpan} row-span-${rowSpan}`}
+        className={`col-span-${cSpan} row-span-${rSpan}`}
         key={`${index}-${cell}`}
       >
         <iframe
-          src={widgetConfig.url}
+          ref={frameElement}
+          src={url}
           className="w-full h-full m-0"
           allow="camera;microphone"
+          onLoad={() => {
+            // console.log('iframe loaded')
+            // console.log(frameElement?.current?.contentWindow)
+          }}
         ></iframe>
       </div>
     )
@@ -54,7 +82,14 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
         )
         if (widgetIndex !== -1 && !renderedWidgets.has(widgetIndex)) {
           renderedWidgets.add(widgetIndex)
-          return widgetItem(widgetItems[widgetIndex], widgetIndex, cell)
+          // return widgetItem(widgetItems[widgetIndex], widgetIndex, cell)
+          return (
+            <WidgetItem
+              widgetConfig={widgetItems[widgetIndex]}
+              index={widgetIndex}
+              cell={cell}
+            />
+          )
         } else if (widgetIndex === -1) {
           return (
             <div
