@@ -28,7 +28,7 @@ const DaItemVerticalType2: React.FC<DaItemVerticalType2Props> = ({
         {title}
       </DaText>
       <DaImageRatio
-        src={imageUrl}
+        src={imageUrl ? imageUrl : 'https://placehold.co/600x400'}
         alt="Image"
         className="w-full h-auto rounded-lg"
         ratio={16 / 9}

@@ -22,7 +22,7 @@ const DaItemVerticalStandard: React.FC<DaItemVerticalStandardProps> = ({
         style={{ maxWidth: maxWidth }}
       >
         <DaImageRatio
-          src={imageUrl}
+          src={imageUrl ? imageUrl : 'https://placehold.co/600x400'}
           alt="Image"
           className="w-full h-auto rounded-lg"
           ratio={16 / 9}

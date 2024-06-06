@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { CVI_v4_1 } from '@/data/CVI_v4.1'
-import ApiList from '@/components/organisms/ApiList'
 import ApiDetail from '@/components/organisms/ApiDetail'
 import { VehicleApi } from '@/types/model.type'
 import ModelApiList from '@/components/organisms/ModelApiList'

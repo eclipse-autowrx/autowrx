@@ -189,7 +189,7 @@ body {
 }
 
 .da-btn-outline-nocolor {
-  @apply border text-da-gray-medium border-da-gray-medium/10 hover:bg-da-gray-medium/10 shadow;
+  @apply border text-da-gray-medium border-da-gray-light hover:bg-da-gray-medium/10 shadow;
 }
 
 .da-btn-plain {
