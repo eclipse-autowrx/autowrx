@@ -42,7 +42,7 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
   }, [ticker])
 
   const saveDashboardCfgToDb = (config: string) => {
-    // console.log(`saveDashboardCfgToDb`)
+    console.log(`saveDashboardCfgToDb`)
     // console.log(config)
     let tmpConfig = config
     try {
@@ -134,7 +134,9 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
             editable={editable}
             language="json"
             onBlur={() => {
-              saveDashboardCfgToDb(dashboardCfg)
+              console.log('CodeEditor On blur')
+              setTicker((oldTicker) => oldTicker + 1)
+              // saveDashboardCfgToDb(dashboardCfg)
             }}
           />
         </div>
