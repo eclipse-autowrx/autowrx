@@ -34,6 +34,11 @@ module.exports = {
           300: 'hsl(var(--da-accent-300))',
           500: 'hsl(var(--da-accent-500))',
         },
+        'da-secondary': {
+          100: 'hsl(var(--da-secondary-100))',
+          300: 'hsl(var(--da-secondary-300))',
+          500: 'hsl(var(--da-secondary-500))',
+        },
         'da-white': 'hsl(var(--da-white))',
         'da-black': 'hsl(var(--da-black))',
         'da-gray-light': 'hsl(var(--da-gray-light))',

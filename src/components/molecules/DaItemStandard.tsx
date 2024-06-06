@@ -36,7 +36,7 @@ const DaItemStandard: React.FC<DaItemStandardProps> = ({
       style={{ maxWidth: maxWidth }}
     >
       <DaImageRatio
-        src={imageUrl}
+        src={imageUrl ? imageUrl : 'https://placehold.co/600x400'}
         alt="Image"
         className="w-full h-full rounded-lg"
         ratio={1 / 1}

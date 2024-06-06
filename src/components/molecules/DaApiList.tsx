@@ -8,20 +8,20 @@ interface DaApiListItemProps {
   isSelected?: boolean
 }
 
-const DaApiListItem = ({
-  api,
-  onClick,
-  isSelected,
-}: DaApiListItemProps) => {
+const DaApiListItem = ({ api, onClick, isSelected }: DaApiListItemProps) => {
   const { textClass } = getApiTypeClasses(api.type)
   return (
     <div
-      className={`grid grid-cols-4 gap-4 py-1.5 text-da-gray-medium cursor-pointer hover:bg-da-gray-light items-center justify-center px-2 rounded ${isSelected ? 'bg-da-primary-100 text-da-primary-500' : ''
-        }`}
+      className={`grid grid-cols-4 gap-4 py-1.5 text-da-gray-medium cursor-pointer hover:bg-da-primary-100 items-center justify-center px-2 rounded ${
+        isSelected ? 'bg-da-primary-100 text-da-primary-500' : ''
+      }`}
       onClick={onClick}
     >
       <div className="col-span-3 cursor-pointer">
-        <DaText variant="small" className="cursor-pointer">
+        <DaText
+          variant={isSelected ? 'small-bold' : 'small'}
+          className="cursor-pointer"
+        >
           {api.api}
         </DaText>
       </div>
@@ -59,7 +59,11 @@ const DaApiList = ({
         <DaApiListItem
           key={index}
           api={item}
-          onClick={() => { if (onApiClick) { onApiClick(item) } }}
+          onClick={() => {
+            if (onApiClick) {
+              onApiClick(item)
+            }
+          }}
           isSelected={selectedApi?.api === item.api}
         />
       ))}
