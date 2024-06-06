@@ -13,12 +13,12 @@ import useListMarketplaceAddOns from '@/hooks/useListMarketplaceAddOns'
 import DaGeneratorSelector from './DaGeneratorSelector.tsx.tsx'
 import config from '@/configs/config.ts'
 
-type GenAICodeProps = {
+type DaGenAI_PythonProps = {
   onCodeChanged?: (code: string) => void
   pythonCode?: string
 }
 
-const DaGenAI_Dashboard = ({ onCodeChanged }: GenAICodeProps) => {
+const DaGenAI_Python = ({ onCodeChanged }: DaGenAI_PythonProps) => {
   const [inputPrompt, setInputPrompt] = useState<string>('')
   const [selectedAddOn, setSelectedAddOn] = useState<AddOn | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
@@ -26,12 +26,13 @@ const DaGenAI_Dashboard = ({ onCodeChanged }: GenAICodeProps) => {
   const [isFinished, setIsFinished] = useState<boolean>(false)
   const { data: marketplaceAddOns } = useListMarketplaceAddOns('GenAI_Python')
 
-  const builtInAddOn: AddOn = {
-    ...config.genAI.sdvApp.default,
-    customPayload: config.genAI.sdvApp.default.customPayload(inputPrompt),
-  }
-
-  const builtInAddOns = [builtInAddOn]
+  const builtInAddOns: AddOn[] =
+    config.genAI && config.genAI.sdvApp && config.genAI.sdvApp.length > 0
+      ? config.genAI.sdvApp.map((addOn) => ({
+          ...addOn,
+          customPayload: addOn.customPayload(inputPrompt), // Append the customPayload with the inputPrompt
+        }))
+      : []
 
   const genPythonCode = async () => {
     if (!selectedAddOn) return
@@ -148,4 +149,4 @@ const DaGenAI_Dashboard = ({ onCodeChanged }: GenAICodeProps) => {
   )
 }
 
-export default DaGenAI_Dashboard
+export default DaGenAI_Python

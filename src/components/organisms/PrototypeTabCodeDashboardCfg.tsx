@@ -21,6 +21,7 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
   const [useApis, setUseApis] = useState<any[]>([])
   const [isExpanded, setIsExpanded] = useState(false)
   const [ticker, setTicker] = useState(0)
+  const [isOpenGenAI, setIsOpenGenAI] = useState(false)
 
   useEffect(() => {
     let timer = setInterval(() => {
@@ -41,8 +42,8 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
   }, [ticker])
 
   const saveDashboardCfgToDb = (config: string) => {
-    console.log(`saveDashboardCfgToDb`)
-    console.log(config)
+    // console.log(`saveDashboardCfgToDb`)
+    // console.log(config)
     let tmpConfig = config
     try {
       let configObj = JSON.parse(tmpConfig)
@@ -93,6 +94,7 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
             )}
           </DaButton>
           <DaPopup
+            state={[isOpenGenAI, setIsOpenGenAI]}
             trigger={
               <DaButton variant="outline">
                 <BsStars className="w-4 h-auto text-aiot-blue mr-1" />
@@ -106,7 +108,10 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
                 Dashboard ProtoPilot{' '}
               </DaText>
               <DaGenAI_Dashboard
-                onCodeChanged={setDashboardCfg}
+                onCodeChanged={(code) => {
+                  setDashboardCfg(code)
+                  setIsOpenGenAI(false)
+                }}
                 pythonCode={prototype.code}
               />
             </div>

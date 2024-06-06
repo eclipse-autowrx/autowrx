@@ -13,12 +13,15 @@ import useListMarketplaceAddOns from '@/hooks/useListMarketplaceAddOns'
 import DaGeneratorSelector from './DaGeneratorSelector.tsx.tsx'
 import config from '@/configs/config.ts'
 
-type GenAICodeProps = {
+type DaGenAI_DashboardProps = {
   onCodeChanged?: (code: string) => void
   pythonCode?: string
 }
 
-const DaGenAI_Dashboard = ({ onCodeChanged }: GenAICodeProps) => {
+const DaGenAI_Dashboard = ({
+  onCodeChanged,
+  pythonCode,
+}: DaGenAI_DashboardProps) => {
   const [inputPrompt, setInputPrompt] = useState<string>('')
   const [selectedAddOn, setSelectedAddOn] = useState<AddOn | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
@@ -27,14 +30,19 @@ const DaGenAI_Dashboard = ({ onCodeChanged }: GenAICodeProps) => {
   const { data: marketplaceAddOns } =
     useListMarketplaceAddOns('GenAI_Dashboard')
 
-  const builtInAddOn: AddOn = {
-    ...config.genAI.dashboard.default,
-    customPayload: config.genAI.dashboard.default.customPayload(inputPrompt),
-  }
+  const builtInAddOns =
+    config.genAI && config.genAI.dashboard && config.genAI.dashboard.length > 0
+      ? config.genAI.dashboard.map((addOn) => ({
+          ...addOn,
+          customPayload: addOn.customPayload(
+            inputPrompt + 'With the sdv app python code: ' + pythonCode
+              ? pythonCode
+              : '',
+          ), // Append the customPayload with the inputPrompt
+        }))
+      : []
 
-  const builtInAddOns = [builtInAddOn]
-
-  const genPythonCode = async () => {
+  const genDashboardCode = async () => {
     if (!selectedAddOn) return
 
     setLoading(true)
@@ -105,7 +113,7 @@ const DaGenAI_Dashboard = ({ onCodeChanged }: GenAICodeProps) => {
           variant="solid"
           disabled={!inputPrompt}
           className={`!h-8 w-full mt-auto ${!inputPrompt ? '!mt-2' : 'mt-auto'}`}
-          onClick={genPythonCode}
+          onClick={genDashboardCode}
         >
           <BsStars
             className={`inline-block mr-1 mb-0.5 ${loading ? 'animate-pulse' : ''}`}
