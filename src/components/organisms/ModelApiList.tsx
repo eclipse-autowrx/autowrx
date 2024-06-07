@@ -5,7 +5,7 @@ import DaFilter from '../atoms/DaFilter'
 import { debounce } from '@/lib/utils'
 import useModelStore from '@/stores/modelStore'
 import { useParams } from 'react-router-dom'
-import { ApiItem, VehicleApi, CustomApi } from '@/types/model.type'
+import { VehicleApi, CustomApi } from '@/types/model.type'
 import { shallow } from 'zustand/shallow'
 import { DaButton } from '../atoms/DaButton'
 import { TbPlus } from 'react-icons/tb'
@@ -15,10 +15,9 @@ import useCurrentModel from '@/hooks/useCurrentModel'
 
 interface ModelApiListProps {
   onApiClick?: (details: any) => void
-  onApiSelected?: (selectedApi: any) => void
 }
 
-const ModelApiList = ({ onApiClick, onApiSelected }: ModelApiListProps) => {
+const ModelApiList = ({ onApiClick }: ModelApiListProps) => {
   const { model_id, api } = useParams()
   const [activeModelApis] = useModelStore(
     (state) => [state.activeModelApis],
@@ -34,7 +33,7 @@ const ModelApiList = ({ onApiClick, onApiSelected }: ModelApiListProps) => {
     'actuator',
     'attribute',
   ])
-  const [selectedApi, setSelectedApi] = useState<ApiItem | null>(null)
+  const [selectedApi, setSelectedApi] = useState<VehicleApi>()
   const [isOpenPopup, setIsOpenPopup] = useState(false)
 
   const { data: model } = useCurrentModel()
@@ -49,23 +48,19 @@ const ModelApiList = ({ onApiClick, onApiSelected }: ModelApiListProps) => {
   }, [api, activeModelApis])
 
   useEffect(() => {
-    if (onApiSelected) {
-      onApiSelected(selectedApi)
-    }
-  }, [selectedApi, onApiSelected])
-
-  useEffect(() => {
-    let combinedApis = [
+    let combinedApis: VehicleApi[] = [
       ...activeModelApis,
       ...(model?.custom_apis?.map((wishlistApi: CustomApi) => ({
         ...wishlistApi,
         api: wishlistApi.name,
         isWishlist: true,
+        type: wishlistApi.type,
+        description: wishlistApi.description,
       })) || []),
     ]
 
     let filteredList = combinedApis.filter((apiItem) =>
-      apiItem.api.toLowerCase().includes(searchTerm.toLowerCase()),
+      apiItem.name.toLowerCase().includes(searchTerm.toLowerCase()),
     )
 
     if (selectedFilters.length > 0) {
@@ -131,8 +126,10 @@ const ModelApiList = ({ onApiClick, onApiSelected }: ModelApiListProps) => {
           {model_id && model && (
             <FormCreateWishlistApi
               modelId={model_id}
-              existingCustomApis={model.custom_apis as any}
-              onClose={() => setIsOpenPopup(false)}
+              existingCustomApis={model.custom_apis as VehicleApi[]}
+              onClose={() => {
+                setIsOpenPopup(false)
+              }}
             />
           )}
         </DaPopup>

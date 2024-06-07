@@ -22,7 +22,7 @@ const DaApiListItem = ({ api, onClick, isSelected }: DaApiListItemProps) => {
           variant={isSelected ? 'small-bold' : 'small'}
           className="cursor-pointer"
         >
-          {api.api}
+          {api.name}
         </DaText>
         {api.isWishlist && (
           <div className=" flex font-bold rounded-full w-4 h-4 ml-2 bg-fuchsia-500 text-da-white items-center justify-center text-[9px]">
@@ -43,9 +43,9 @@ const DaApiListItem = ({ api, onClick, isSelected }: DaApiListItemProps) => {
 }
 
 interface DaApiListProps {
-  apis: any[]
+  apis: VehicleApi[]
   onApiClick?: (api: VehicleApi) => void
-  selectedApi?: { api: string; type: string; details: any } | null
+  selectedApi?: VehicleApi | null
   maxWidth?: string
 }
 
@@ -69,7 +69,7 @@ const DaApiList = ({
               onApiClick(item)
             }
           }}
-          isSelected={selectedApi?.api === item.api}
+          isSelected={selectedApi?.name === item.name}
         />
       ))}
     </div>

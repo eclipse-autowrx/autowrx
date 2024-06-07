@@ -1,38 +1,24 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { CVI_v4_1 } from '@/data/CVI_v4.1'
 import ApiDetail from '@/components/organisms/ApiDetail'
 import { VehicleApi } from '@/types/model.type'
 import ModelApiList from '@/components/organisms/ModelApiList'
 import { DaImage } from '@/components/atoms/DaImage'
 
-interface Cvi {
-  Vehicle: VehicleApi
-}
-
-interface ApiItem {
-  api: string
-  type: string
-  details: VehicleApi
-}
-
 const PageVehicleApi = () => {
   const { model_id, api } = useParams()
   const navigate = useNavigate()
-  const [selectedApi, setSelectedApi] = useState<ApiItem | null>(null)
+  const [selectedApi, setSelectedApi] = useState<VehicleApi | null>(null)
 
-  const handleApiClick = (apiDetails: ApiItem) => {
+  const handleApiClick = (apiDetails: VehicleApi) => {
     setSelectedApi(apiDetails)
-    navigate(`/model/${model_id}/api/${apiDetails.api}`)
+    navigate(`/model/${model_id}/api/${apiDetails.name}`)
   }
 
   return (
     <div className="grid grid-cols-12 auto-cols-max h-full">
       <div className="col-span-6 w-full flex overflow-auto border-r">
-        <ModelApiList
-          onApiClick={handleApiClick}
-          onApiSelected={setSelectedApi}
-        />
+        <ModelApiList onApiClick={handleApiClick} />
       </div>
       <div className="col-span-6 w-full flex h-full overflow-auto">
         {selectedApi ? (
