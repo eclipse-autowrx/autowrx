@@ -8,22 +8,27 @@ interface DaApiListItemProps {
   isSelected?: boolean
 }
 
-const DaApiListItem = ({
-  api,
-  onClick,
-  isSelected,
-}: DaApiListItemProps) => {
+const DaApiListItem = ({ api, onClick, isSelected }: DaApiListItemProps) => {
   const { textClass } = getApiTypeClasses(api.type)
   return (
     <div
-      className={`grid grid-cols-4 gap-4 py-1.5 text-da-gray-medium cursor-pointer hover:bg-da-gray-light items-center justify-center px-2 rounded ${isSelected ? 'bg-da-primary-100 text-da-primary-500' : ''
-        }`}
+      className={`grid grid-cols-4 gap-4 py-1.5 text-da-gray-medium cursor-pointer hover:bg-da-primary-100 items-center justify-center px-2 rounded ${
+        isSelected ? 'bg-da-primary-100 text-da-primary-500' : ''
+      }`}
       onClick={onClick}
     >
-      <div className="col-span-3 cursor-pointer">
-        <DaText variant="small" className="cursor-pointer">
-          {api.api}
+      <div className="col-span-3 cursor-pointer flex items-center">
+        <DaText
+          variant={isSelected ? 'small-bold' : 'small'}
+          className="cursor-pointer"
+        >
+          {api.name}
         </DaText>
+        {api.isWishlist && (
+          <div className=" flex font-bold rounded-full w-4 h-4 ml-2 bg-fuchsia-500 text-da-white items-center justify-center text-[9px]">
+            W
+          </div>
+        )}
       </div>
       <div className="col-span-1 flex justify-end cursor-pointer">
         <DaText
@@ -38,9 +43,9 @@ const DaApiListItem = ({
 }
 
 interface DaApiListProps {
-  apis: any[]
+  apis: VehicleApi[]
   onApiClick?: (api: VehicleApi) => void
-  selectedApi?: { api: string; type: string; details: any } | null
+  selectedApi?: VehicleApi | null
   maxWidth?: string
 }
 
@@ -59,8 +64,12 @@ const DaApiList = ({
         <DaApiListItem
           key={index}
           api={item}
-          onClick={() => { if (onApiClick) { onApiClick(item) } }}
-          isSelected={selectedApi?.api === item.api}
+          onClick={() => {
+            if (onApiClick) {
+              onApiClick(item)
+            }
+          }}
+          isSelected={selectedApi?.name === item.name}
         />
       ))}
     </div>

@@ -3,6 +3,7 @@ import { NavigationBar } from '@/components/organisms/NavigationBar'
 import { SiteFooter } from '@/components/organisms/SiteFooter'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { Outlet } from 'react-router-dom'
+import { Toaster } from '@/components/molecules/toaster/toaster'
 
 const RootLayout = () => {
   useSelfProfileQuery()
@@ -15,6 +16,7 @@ const RootLayout = () => {
         <Outlet />
       </div>
       {/* <SiteFooter /> */}
+      <Toaster />
     </div>
   )
 }
