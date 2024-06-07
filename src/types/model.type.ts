@@ -65,7 +65,7 @@ export type ModelCreate = {
 }
 
 export type VehicleApi = {
-  api: string
+  name: string
   datatype?: string
   description: string
   type: string
@@ -89,12 +89,6 @@ export type CustomApi = {
 
 export interface Cvi {
   Vehicle: VehicleApi
-}
-
-export interface ApiItem {
-  api: string
-  type: string
-  details: VehicleApi
 }
 
 export interface Feedback {

@@ -1,8 +1,16 @@
+import { useState } from 'react'
 import { DaTableProperty } from '../molecules/DaTableProperty'
 import { DaText } from '../atoms/DaText'
 import { DaImage } from '../atoms/DaImage'
 import { DaCopy } from '../atoms/DaCopy'
 import { cn, getApiTypeClasses } from '@/lib/utils'
+import { DaButton } from '../atoms/DaButton'
+import { updateModelService } from '@/services/model.service'
+import useCurrentModel from '@/hooks/useCurrentModel'
+import { CustomApi } from '@/types/model.type'
+import DaConfirmPopup from '../molecules/DaConfirmPopup'
+import { useNavigate } from 'react-router-dom'
+import DaLoader from '../atoms/DaLoader'
 
 interface ApiDetailProps {
   apiDetails: any
@@ -15,12 +23,38 @@ const OneOfFromName = (list: string[], name: string) => {
 
 const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
   const { bgClass } = getApiTypeClasses(apiDetails.type)
+  const { data: model, refetch } = useCurrentModel()
+  const [isLoading, setIsLoading] = useState(false)
+  const navigate = useNavigate()
+
+  const handleDeleteWishlistApi = async () => {
+    if (model && model.custom_apis) {
+      const updatedCustomApis = model.custom_apis.filter(
+        (api: CustomApi) => api.name !== apiDetails.name,
+      )
+      try {
+        setIsLoading(true)
+        const customApisJson = JSON.stringify(updatedCustomApis)
+        await updateModelService(model.id, {
+          custom_apis: customApisJson as any,
+        })
+        setIsLoading(false)
+        await refetch()
+        navigate(`/model/${model.id}/api`)
+        console.log('Wishlist API deleted successfully')
+      } catch (error) {
+        setIsLoading(false)
+        console.error('Error deleting wishlist API:', error)
+      }
+    }
+  }
+
   const implementationProperties = [
     {
       name: 'Implementation Status',
       value: OneOfFromName(
         ['Wishlist', 'VSS Spec', 'HW Prototype', 'Production ready'],
-        apiDetails.api,
+        apiDetails.name,
       ),
     },
     {
@@ -32,7 +66,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
           'Committed: Server implementation has been committed for next release',
           'Available: Server implementation is available',
         ],
-        apiDetails.api,
+        apiDetails.name,
       ),
     },
     {
@@ -44,7 +78,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
           'Proposed for standardization: Formal proposal to API standards organization, e.g. COVESA',
           'Standardized: Proposal has been accepted',
         ],
-        apiDetails.api,
+        apiDetails.name,
       ),
     },
     {
@@ -55,7 +89,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
           'Partner: This API is only available to the OEM as well as selected development partners',
           'Open AppStore: This API is available to any vehicle AppStore developer',
         ],
-        apiDetails.api,
+        apiDetails.name,
       ),
     },
     apiDetails.supportedHardware && {
@@ -69,18 +103,18 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
   ].filter(Boolean)
 
   const vssSpecificationProperties = [
-    { name: 'API', value: apiDetails.api || 'N/A' },
+    { name: 'API', value: apiDetails.name || 'N/A' },
     {
       name: 'UUID',
-      value: (apiDetails.details && apiDetails.details.uuid) || 'N/A',
+      value: (apiDetails && apiDetails.uuid) || 'N/A',
     },
     {
       name: 'Type',
-      value: (apiDetails.details && apiDetails.details.type) || 'N/A',
+      value: (apiDetails && apiDetails.type) || 'N/A',
     },
     {
       name: 'Description',
-      value: (apiDetails.details && apiDetails.details.description) || 'N/A',
+      value: (apiDetails && apiDetails.description) || 'N/A',
     },
     apiDetails.datatype && {
       name: 'Data Type',
@@ -109,15 +143,38 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
         className="object-cover"
       />
       <div className="w-full py-2 px-4 bg-da-primary-100 justify-between flex">
-        <DaCopy textToCopy={apiDetails.api}>
+        <DaCopy textToCopy={apiDetails.name}>
           <DaText variant="regular-bold" className="text-da-primary-500">
-            {apiDetails.api}
+            {apiDetails.name}
           </DaText>
+          {apiDetails.isWishlist && (
+            <div className=" flex font-bold rounded-full w-4 h-4 ml-2 bg-fuchsia-500 text-da-white items-center justify-center text-[9px]">
+              W
+            </div>
+          )}
         </DaCopy>
-        <div className={cn('px-3 rounded', bgClass)}>
-          <DaText variant="small" className="text-da-white uppercase">
-            {apiDetails.type}
-          </DaText>
+        <div className="flex items-center space-x-4">
+          {isLoading ? (
+            <DaText variant="small-bold" className="text-da-secondary-500">
+              <DaLoader className="w-4 h-4 mr-1" /> Loading...
+            </DaText>
+          ) : (
+            apiDetails.isWishlist && (
+              <DaConfirmPopup
+                onConfirm={handleDeleteWishlistApi}
+                label="Are you sure you want to delete this wishlist API?"
+              >
+                <DaButton variant="plain" size="sm">
+                  Delete Wishlist API
+                </DaButton>
+              </DaConfirmPopup>
+            )
+          )}
+          <div className={cn('px-3 rounded', bgClass)}>
+            <DaText variant="small-bold" className="text-da-white uppercase">
+              {apiDetails.type}
+            </DaText>
+          </div>
         </div>
       </div>
 

@@ -6,18 +6,19 @@ import { useState, useEffect } from 'react'
 import { TbLoader } from 'react-icons/tb'
 import { isAxiosError } from 'axios'
 import { updateModelService } from '@/services/model.service'
-import { log } from 'console'
+import useCurrentModel from '@/hooks/useCurrentModel'
+import { CustomApi } from '@/types/model.type'
 
 interface FormCreateWishlistApiProps {
   onClose: () => void
   modelId: string
-  existingCustomApis: { name: string }[]
+  existingCustomApis: CustomApi[]
 }
 
 const initialData = {
   name: '',
   description: '',
-  type: '',
+  type: 'branch',
   datatype: '',
 }
 
@@ -43,8 +44,8 @@ const FormCreateWishlistApi = ({
 }: FormCreateWishlistApiProps) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-
   const [data, setData] = useState(initialData)
+  const { refetch } = useCurrentModel()
 
   useEffect(() => {
     if (data.name && !data.name.startsWith('Vehicle.')) {
@@ -54,14 +55,10 @@ const FormCreateWishlistApi = ({
     }
   }, [data.name])
 
-  useEffect(() => {
-    // Check whether the API name already exists
-    console.log('existingCustomApis', existingCustomApis)
-  }, [data.name, existingCustomApis])
-
   const createWishlistApi = async (data: any) => {
     try {
-      if (existingCustomApis.some((api) => api.name === data.name)) {
+      const currentCustomApis = existingCustomApis ?? []
+      if (currentCustomApis.some((name) => name.name === data.name)) {
         setError('API with this name already exists')
         return
       }
@@ -72,7 +69,7 @@ const FormCreateWishlistApi = ({
         type: data.type,
         ...(data.type !== 'branch' && { datatype: data.datatype }),
       }
-      const updatedCustomApis = [...existingCustomApis, customApi]
+      const updatedCustomApis = [...currentCustomApis, customApi]
       const customApisJson = JSON.stringify(updatedCustomApis)
 
       await updateModelService(modelId, {
@@ -80,6 +77,7 @@ const FormCreateWishlistApi = ({
       })
       setError('')
       setData(initialData)
+      await refetch()
       onClose()
     } catch (error) {
       if (isAxiosError(error)) {
@@ -89,7 +87,6 @@ const FormCreateWishlistApi = ({
       setError('Something went wrong')
     }
   }
-
   const handleChange =
     (key: keyof typeof data) => (e: React.ChangeEvent<HTMLInputElement>) => {
       setData((prev) => ({ ...prev, [key]: e.target.value }))
@@ -160,7 +157,7 @@ const FormCreateWishlistApi = ({
         data.type === 'attribute') && (
         <DaSelect
           label="Data Type"
-          value={data.datatype}
+          value={data.datatype ? data.datatype : 'uint8'}
           onValueChange={handleDatatypeChange}
           wrapperClassName="mt-4"
         >
