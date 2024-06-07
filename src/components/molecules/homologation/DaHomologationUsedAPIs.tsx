@@ -175,7 +175,7 @@ const DaHomologationUsedAPIs = ({
                     isSelected={selectedAPIs.has(api)}
                     api={{
                       ...api,
-                      api: api.name,
+                      name: api.name,
                     }}
                     onClick={(() => {}) as any}
                   />

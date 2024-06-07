@@ -5,90 +5,144 @@ import DaFilter from '../atoms/DaFilter'
 import { debounce } from '@/lib/utils'
 import useModelStore from '@/stores/modelStore'
 import { useParams } from 'react-router-dom'
-import { ApiItem } from '@/types/model.type'
-import { shallow } from "zustand/shallow";
+import { VehicleApi, CustomApi } from '@/types/model.type'
+import { shallow } from 'zustand/shallow'
+import { DaButton } from '../atoms/DaButton'
+import { TbPlus } from 'react-icons/tb'
+import DaPopup from '../atoms/DaPopup'
+import FormCreateWishlistApi from '../molecules/forms/FormCreateWishlistApi'
+import useCurrentModel from '@/hooks/useCurrentModel'
 
 interface ModelApiListProps {
-    onApiClick?: (details: any) => void
-    onApiSelected?: (selectedApi: any) => void
-    // selectedApi?: { api: string; type: string; details: any } | null
+  onApiClick?: (details: any) => void
 }
 
-const ModelApiList = ({ onApiClick, onApiSelected }: ModelApiListProps) => {
-    const { model_id, api } = useParams()
-    const [activeModelApis] = useModelStore((state) => [state.activeModelApis], shallow)
-    const [searchTerm, setSearchTerm] = useState('')
-    const [filteredApiList, setFilteredApiList] = useState<any[]>([])
-    const [selectedFilters, setSelectedFilters] = useState<string[]>([])
-    const [selectedApi, setSelectedApi] = useState<ApiItem | null>(null)
+const ModelApiList = ({ onApiClick }: ModelApiListProps) => {
+  const { model_id, api } = useParams()
+  const [activeModelApis] = useModelStore(
+    (state) => [state.activeModelApis],
+    shallow,
+  )
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filteredApiList, setFilteredApiList] = useState<VehicleApi[]>([])
+  const [selectedFilters, setSelectedFilters] = useState<string[]>([
+    'default',
+    'wishlist',
+    'branch',
+    'sensor',
+    'actuator',
+    'attribute',
+  ])
+  const [selectedApi, setSelectedApi] = useState<VehicleApi>()
+  const [isOpenPopup, setIsOpenPopup] = useState(false)
 
-    useEffect(() => {
-        if (api) {
-            const foundApi = activeModelApis.find((apiItem) => apiItem.api === api)
-            if (foundApi) {
-                setSelectedApi(foundApi)
-            }
-        }
-    }, [api, activeModelApis])
+  const { data: model } = useCurrentModel()
 
-    useEffect(() => {
-        console.log('selectedApi', selectedApi)
-        if(onApiSelected) {
-            onApiSelected(selectedApi)
-        }
-    }, [selectedApi])
+  useEffect(() => {
+    if (api) {
+      const foundApi = activeModelApis.find((apiItem) => apiItem.api === api)
+      if (foundApi) {
+        setSelectedApi(foundApi)
+      }
+    }
+  }, [api, activeModelApis])
 
-    useEffect(() => {
-        let filteredList = activeModelApis.filter((apiItem) =>
-            apiItem.api.toLowerCase().includes(searchTerm.toLowerCase()),
-        )
+  useEffect(() => {
+    let combinedApis: VehicleApi[] = [
+      ...activeModelApis,
+      ...(model?.custom_apis?.map((wishlistApi: CustomApi) => ({
+        ...wishlistApi,
+        api: wishlistApi.name,
+        isWishlist: true,
+        type: wishlistApi.type,
+        description: wishlistApi.description,
+      })) || []),
+    ]
 
-        if (selectedFilters.length > 0) {
-            filteredList = filteredList.filter((apiItem) =>
-                selectedFilters.includes(apiItem.details.type),
-            )
-        }
-
-        // console.log('filteredList', filteredList)
-
-        setFilteredApiList(filteredList)
-    }, [searchTerm, activeModelApis, selectedFilters])
-
-    const handleSearchChange = useCallback(
-        debounce((term: string) => {
-            setSearchTerm(term)
-        }, 500),
-        [],
+    let filteredList = combinedApis.filter((apiItem) =>
+      apiItem.name.toLowerCase().includes(searchTerm.toLowerCase()),
     )
 
-    const handleFilterChange = (selectedOptions: string[]) => {
-        const updatedFilters = selectedOptions.map((option) => option.toLowerCase())
-        setSelectedFilters(updatedFilters)
+    if (selectedFilters.length > 0) {
+      filteredList = filteredList.filter((apiItem) => {
+        const isDefault = !apiItem.isWishlist
+        const isWishlist = !!apiItem.isWishlist
+        return (
+          (selectedFilters.includes('default') && isDefault) ||
+          (selectedFilters.includes('wishlist') && isWishlist)
+        )
+      })
+
+      filteredList = filteredList.filter((apiItem) =>
+        selectedFilters.includes(apiItem.type.toLowerCase()),
+      )
     }
 
-    return (
-        <div className="flex flex-col h-full w-full p-4">
-            <div className="flex items-center mb-2">
-                <DaInput
-                    placeholder="Search API"
-                    className="mr-2 w-full"
-                    onChange={(e) => handleSearchChange(e.target.value)}
-                />
-                {/* <DaFilter
-                    options={['Branch', 'Sensor', 'Actuator', 'Attribute']}
-                    onChange={handleFilterChange}
-                    className="w-full"
-                /> */}
-            </div>
-            <div className="flex-grow overflow-y-auto">
-                <DaApiList
-                    apis={filteredApiList}
-                    onApiClick={onApiClick}
-                    selectedApi={selectedApi}
-                />
-            </div>
-        </div>
-    )
+    setFilteredApiList(filteredList)
+  }, [searchTerm, selectedFilters, activeModelApis, model?.custom_apis])
+
+  const handleSearchChange = useCallback(
+    debounce((term: string) => {
+      setSearchTerm(term)
+    }, 500),
+    [],
+  )
+
+  const handleFilterChange = (selectedOptions: string[]) => {
+    const updatedFilters = selectedOptions.map((option) => option.toLowerCase())
+    setSelectedFilters(updatedFilters)
+  }
+
+  return (
+    <div className="flex flex-col h-full w-full p-4">
+      <div className="flex items-center mb-2">
+        <DaInput
+          placeholder="Search API"
+          className="mr-2 w-full"
+          onChange={(e) => handleSearchChange(e.target.value)}
+        />
+        <DaFilter
+          options={[
+            'Default',
+            'Wishlist',
+            'Branch',
+            'Sensor',
+            'Actuator',
+            'Attribute',
+          ]}
+          onChange={handleFilterChange}
+          className="w-full"
+        />
+      </div>
+      <div className="py-1">
+        <DaPopup
+          state={[isOpenPopup, setIsOpenPopup]}
+          trigger={
+            <DaButton variant="plain" size="sm">
+              <TbPlus className="w-4 h-4 mr-1" /> Add Wishlist API
+            </DaButton>
+          }
+        >
+          {model_id && model && (
+            <FormCreateWishlistApi
+              modelId={model_id}
+              existingCustomApis={model.custom_apis as VehicleApi[]}
+              onClose={() => {
+                setIsOpenPopup(false)
+              }}
+            />
+          )}
+        </DaPopup>
+      </div>
+      <div className="flex-grow overflow-y-auto">
+        <DaApiList
+          apis={filteredApiList}
+          onApiClick={onApiClick}
+          selectedApi={selectedApi}
+        />
+      </div>
+    </div>
+  )
 }
 
 export default ModelApiList

@@ -65,11 +65,11 @@ export type ModelCreate = {
 }
 
 export type VehicleApi = {
-  api: string
+  name: string
   datatype?: string
   description: string
   type: string
-  uuid: string
+  uuid?: string
   allowed?: string[]
   comment?: string
   unit?: string
@@ -77,16 +77,18 @@ export type VehicleApi = {
   min?: number
   children?: { [key: string]: VehicleApi }
   shortName?: string
+  isWishlist?: boolean
+}
+
+export type CustomApi = {
+  name: string
+  description: string
+  type: string
+  datatype?: string
 }
 
 export interface Cvi {
   Vehicle: VehicleApi
-}
-
-export interface ApiItem {
-  api: string
-  type: string
-  details: VehicleApi
 }
 
 export interface Feedback {
