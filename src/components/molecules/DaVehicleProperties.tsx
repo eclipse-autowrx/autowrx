@@ -24,7 +24,7 @@ const DaVehicleProperties = ({
   }
 
   return (
-    <div className={cn('border rounded-md py-2 px-4 shadow-sm', className)}>
+    <div className={cn('border rounded-md py-2 px-4', className)}>
       <div className="flex justify-between items-center">
         <DaText variant="sub-title" className="text-lg font-medium">
           Vehicle Properties
@@ -38,7 +38,11 @@ const DaVehicleProperties = ({
           >
             Update property
           </DaButton>
-          <DaButton size="sm" onClick={toggleVisibility}>
+          <DaButton
+            variant="outline-nocolor"
+            size="sm"
+            onClick={toggleVisibility}
+          >
             <div className="pr-1 w-12">{isVisible ? 'Hide' : 'Show'}</div>
             {isVisible ? <TbChevronRight /> : <TbChevronDown />}
           </DaButton>

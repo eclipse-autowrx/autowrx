@@ -73,7 +73,7 @@ const DaContributorList = ({
   return (
     <div
       className={cn(
-        'mx-auto p-4 bg-white shadow-sm rounded-lg border border-da-gray-light',
+        'flex flex-col mx-auto p-4 bg-white rounded-lg border border-da-gray-light',
         className,
       )}
     >
@@ -112,11 +112,12 @@ const DaContributorList = ({
             setOpen(true)
           }}
           className="text-da-primary-500 flex items-center"
+          variant="outline-nocolor"
         >
           <TbUserPlus className="mr-2" /> Add user
         </DaButton>
       </div>
-      <div>
+      <div className="flex flex-col max-h-[400px] overflow-y-auto">
         {activeTab === 'contributors'
           ? contributors.map((user, index) => (
               <UserItem key={index} user={user} onRemoveUser={onRemoveUser} />

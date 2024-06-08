@@ -7,8 +7,10 @@ import { createModelService } from '@/services/model.service'
 import { ModelCreate } from '@/types/model.type'
 import { isAxiosError } from 'axios'
 import { FormEvent, useState } from 'react'
-import { TbLoader } from 'react-icons/tb'
+import { TbCircleCheckFilled, TbLoader } from 'react-icons/tb'
 import { useNavigate } from 'react-router-dom'
+import useCurrentModel from '@/hooks/useCurrentModel'
+import { useToast } from '../toaster/use-toast'
 
 const initialState = {
   cvi: JSON.stringify(CVI),
@@ -20,6 +22,8 @@ const FormCreateModel = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
   const [data, setData] = useState(initialState)
+  const { refetch } = useCurrentModel()
+  const { toast } = useToast()
 
   const navigate = useNavigate()
 
@@ -37,6 +41,17 @@ const FormCreateModel = () => {
         name: data.name,
       }
       const modelId = await createModelService(body)
+      await refetch()
+      toast({
+        title: ``,
+        description: (
+          <DaText variant="small" className=" flex items-center">
+            <TbCircleCheckFilled className="text-green-500 w-4 h-4 mr-2" />
+            Model "{data.name}" created successfully
+          </DaText>
+        ),
+        duration: 3000,
+      })
       navigate(`/model/${modelId}`)
       setData(initialState)
     } catch (error) {

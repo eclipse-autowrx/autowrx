@@ -20,7 +20,7 @@ export const listProposalPrototype = async () => {
     return {
       results: prototypes,
       page: 1,
-      limit: 10,
+      limit: 12,
       totalPages: 1,
       totalResults: prototypes.length,
     }
@@ -58,9 +58,9 @@ export const getPrototype = async (prototype_id: string) => {
 }
 
 export const listModelPrototypes = async (model_id: string) => {
-  if (IS_MOCK) {
-    return prototypes
-  }
+  // if (IS_MOCK) {
+  //   return prototypes
+  // }
   return (
     await serverAxios.get<List<Prototype>>(`/prototypes?model_id=${model_id}`)
   ).data.results

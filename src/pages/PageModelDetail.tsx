@@ -1,17 +1,32 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DaText } from '@/components/atoms/DaText'
 import { DaCardIntro } from '@/components/molecules/DaCardIntro'
+import DaImportFile from '@/components/atoms/DaImportFile'
+import { DaButton } from '@/components/atoms/DaButton'
+import { DaImage } from '@/components/atoms/DaImage'
+import { DaInput } from '@/components/atoms/DaInput'
+import DaLoading from '@/components/atoms/DaLoading'
+import DaConfirmPopup from '@/components/molecules/DaConfirmPopup'
 import useModelStore from '@/stores/modelStore'
 import { Model } from '@/types/model.type'
 import DaVehicleProperties from '@/components/molecules/DaVehicleProperties'
 import DaContributorList from '@/components/molecules/DaContributorList'
-import { DaButton } from '@/components/atoms/DaButton'
-import { updateModelService } from '@/services/model.service'
-import { useParams } from 'react-router-dom'
+import {
+  deleteModelService,
+  updateModelService,
+} from '@/services/model.service'
+import { uploadFileService } from '@/services/upload.service'
 import { convertJSONToProperty } from '@/lib/vehiclePropertyUtils'
-import { TbFileExport, TbLoader } from 'react-icons/tb'
+import {
+  TbEdit,
+  TbFileExport,
+  TbLoader,
+  TbPhotoEdit,
+  TbTrashX,
+} from 'react-icons/tb'
 import { downloadModelZip } from '@/lib/zipUtils'
+import useCurrentModel from '@/hooks/useCurrentModel'
 
 interface VisibilityControlProps {
   initialVisibility: 'public' | 'private' | undefined
@@ -69,35 +84,123 @@ const cardIntro = [
 ]
 
 const PageModelDetail = () => {
-  const { model_id } = useParams()
   const [model] = useModelStore((state) => [state.model as Model])
   const [isExporting, setIsExporting] = useState(false)
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [newName, setNewName] = useState(model?.name ?? '')
+  const { refetch } = useCurrentModel()
 
-  useEffect(() => {
-    console.log(model)
-  }, [model])
+  const handleAvatarChange = async (file: File) => {
+    if (!model || !model.id) return
+    if (file) {
+      try {
+        const { url } = await uploadFileService(file)
+        await updateModelService(model.id, { model_home_image_file: url })
+        await refetch()
+      } catch (error) {
+        console.error('Failed to update avatar:', error)
+      }
+    }
+  }
 
-  if (!model || !model_id) {
+  const handleNameSave = async () => {
+    if (!model || !model.id) return
+    try {
+      await updateModelService(model.id, { name: newName })
+      await refetch()
+      setIsEditingName(false)
+    } catch (error) {
+      console.error('Failed to update model name:', error)
+    }
+  }
+
+  const handleDeleteModel = async () => {
+    try {
+      await deleteModelService(model.id)
+      await refetch()
+      window.location.href = '/model'
+    } catch (error) {
+      console.error('Failed to delete model:', error)
+    }
+  }
+
+  if (!model || !model.id) {
     return (
-      <div className="container grid place-items-center">
-        <div className="p-8 text-da-gray-dark da-label-huge">
-          Model not found
-        </div>
-      </div>
+      <DaLoading
+        text="Loading model..."
+        timeout={10}
+        timeoutText="Model not found"
+      />
     )
   }
 
   return (
-    <div className="col-span-12 gap-4 grid grid-cols-12 h-full px-2 py-4 container space-y-2">
-      <div className="col-span-6 overflow-y-auto">
-        <div className="flex justify-between items-center">
-          <DaText variant="title" className="text-da-primary-500">
-            {model.name}
-          </DaText>
-          <div>
+    <div className="flex flex-col w-full h-[90%] container pt-4">
+      <div className="flex h-fit pb-3">
+        <div className="flex w-full justify-between items-center">
+          <div className="flex items-center">
+            {isEditingName ? (
+              <div className="flex items-center">
+                <DaInput
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  className="h-8 min-w-[300px]"
+                  inputClassName="h-6"
+                />
+                <div className="space-x-2">
+                  <DaButton
+                    variant="plain"
+                    size="sm"
+                    className="ml-4"
+                    onClick={() => setIsEditingName(false)}
+                  >
+                    Cancel
+                  </DaButton>
+                  <DaButton
+                    variant="solid"
+                    size="sm"
+                    className="ml-4"
+                    onClick={handleNameSave}
+                  >
+                    Save
+                  </DaButton>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center">
+                <DaText variant="title" className="text-da-primary-500">
+                  {model.name}
+                </DaText>
+                <DaButton
+                  variant="plain"
+                  size="sm"
+                  className="ml-4"
+                  onClick={() => {
+                    setNewName(model.name)
+                    setIsEditingName(true)
+                  }}
+                >
+                  <TbEdit className="w-4 h-4 mr-2" />
+                  Edit name
+                </DaButton>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center space-x-2">
+            <DaConfirmPopup
+              onConfirm={handleDeleteModel}
+              label="This action cannot be undone and will delete all your model and prototypes data. Please handle with care."
+              confirmText={model.name}
+            >
+              <DaButton variant="destructive" size="sm" className="">
+                <TbTrashX className="w-4 h-4 mr-2" />
+                Delete Model
+              </DaButton>
+            </DaConfirmPopup>
             {!isExporting ? (
               <DaButton
-                variant="plain"
+                variant="outline-nocolor"
+                size="sm"
                 onClick={async () => {
                   if (!model) return
                   setIsExporting(true)
@@ -109,7 +212,7 @@ const PageModelDetail = () => {
                   setIsExporting(false)
                 }}
               >
-                <TbFileExport className="w-5 h-5 mr-2" />
+                <TbFileExport className="w-4 h-4 mr-2" />
                 Export Model
               </DaButton>
             ) : (
@@ -123,44 +226,60 @@ const PageModelDetail = () => {
             )}
           </div>
         </div>
-
-        {cardIntro.map((card, index) => (
-          <Link key={index} to={card.path}>
-            <div className="space-y-3 mt-3 da-clickable">
-              <DaCardIntro
-                key={index}
-                title={card.title}
-                content={card.content}
-                maxWidth={'1000px'}
-              />
-            </div>
-          </Link>
-        ))}
-
-        <DaVehicleProperties
-          key={model.id}
-          category={model.vehicle_category ? model.vehicle_category : ''}
-          properties={convertJSONToProperty(model.property) ?? []}
-          className="mt-3"
-        />
-
-        <DaVisibilityControl
-          initialVisibility={model.visibility}
-          onVisibilityChange={(newVisibility) => {
-            updateModelService(model_id, {
-              visibility: newVisibility,
-            })
-          }}
-        />
-
-        <DaContributorList
-          className="mt-3"
-          contributors={model.contributors ? model.contributors : []}
-          members={model.members ? model.members : []}
-        />
       </div>
-      <div className="col-span-6 overflow-y-auto">
-        <img src={model.model_home_image_file} alt={model.name} />
+
+      <div className="grid grid-cols-12 w-full h-full">
+        <div className="col-span-6 overflow-y-auto pr-2">
+          {cardIntro.map((card, index) => (
+            <Link key={index} to={card.path}>
+              <div className="space-y-3 da-clickable">
+                <DaCardIntro
+                  key={index}
+                  title={card.title}
+                  content={card.content}
+                  maxWidth={'1000px'}
+                  className="mb-3"
+                />
+              </div>
+            </Link>
+          ))}
+
+          <DaVehicleProperties
+            key={model.id}
+            category={model.vehicle_category ? model.vehicle_category : ''}
+            properties={convertJSONToProperty(model.property) ?? []}
+            className="mt-3"
+          />
+
+          <DaVisibilityControl
+            initialVisibility={model.visibility}
+            onVisibilityChange={(newVisibility) => {
+              updateModelService(model.id, {
+                visibility: newVisibility,
+              })
+            }}
+          />
+
+          <DaContributorList
+            className="mt-3"
+            contributors={model.contributors ? model.contributors : []}
+            members={model.members ? model.members : []}
+          />
+        </div>
+        <div className="col-span-6 flex flex-col overflow-y-auto pr-2">
+          <DaImage src={model.model_home_image_file} alt={model.name} />
+          <div className="flex w-full justify-end">
+            <DaImportFile
+              onFileChange={handleAvatarChange}
+              accept=".png, .jpg, .jpeg"
+            >
+              <DaButton variant="outline-nocolor" className="mt-3" size="sm">
+                <TbPhotoEdit className="w-4 h-4 mr-2" />
+                Update Image
+              </DaButton>
+            </DaImportFile>
+          </div>
+        </div>
       </div>
     </div>
   )
