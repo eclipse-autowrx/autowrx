@@ -64,3 +64,7 @@ export const updateModelService = async (
 ) => {
   return (await serverAxios.patch<Model>(`/models/${model_id}`, data)).data
 }
+
+export const deleteModelService = async (model_id: string) => {
+  return await serverAxios.delete(`/models/${model_id}`)
+}

@@ -1,17 +1,17 @@
 import { DaButton } from '@/components/atoms/DaButton'
 import { DaInput } from '@/components/atoms/DaInput'
-import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import { DaText } from '@/components/atoms/DaText'
 import { FormEvent, useState } from 'react'
-import { TbLoader } from 'react-icons/tb'
+import { TbCircleCheckFilled, TbLoader } from 'react-icons/tb'
 import { createPrototypeService } from '@/services/prototype.service'
-import { useNavigate } from 'react-router-dom'
+import { useToast } from '../toaster/use-toast'
+import useListModelPrototypes from '@/hooks/useListModelPrototypes'
+import useCurrentModel from '@/hooks/useCurrentModel'
+import { on } from 'events'
 
 const initialState = {
   name: '',
 }
-
-const complexityLevels = ['Lowest', 'Low', 'Medium', 'High', 'Highest']
 
 const MockDefaultJourney = `
 #Step 1
@@ -30,13 +30,19 @@ Customer TouchPoints: Notification on car dashboard and mobile app
 
 interface FormCreatePrototypeProps {
   model_id: string
+  onClose: () => void
 }
 
-const FormCreatePrototype = ({ model_id }: FormCreatePrototypeProps) => {
+const FormCreatePrototype = ({
+  model_id,
+  onClose,
+}: FormCreatePrototypeProps) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
   const [data, setData] = useState(initialState)
-  const navigate = useNavigate()
+  const { data: model } = useCurrentModel()
+  const { refetch } = useListModelPrototypes(model ? model.id : '')
+  const { toast } = useToast()
 
   const handleChange = (name: keyof typeof data, value: string | number) => {
     setData((prev) => ({ ...prev, [name]: value }))
@@ -71,9 +77,19 @@ vehicle = Vehicle()`,
         autorun: true,
       }
       await createPrototypeService(body)
+      await refetch()
+      toast({
+        title: ``,
+        description: (
+          <DaText variant="small" className=" flex items-center">
+            <TbCircleCheckFilled className="text-green-500 w-4 h-4 mr-2" />
+            Prototype "{data.name}" created successfully
+          </DaText>
+        ),
+        duration: 3000,
+      })
       setData(initialState)
-      // navigate(`/model/${model_id}/library`)
-      window.location.reload() // Reload the current page -> Fix reload later
+      onClose()
     } catch (error) {
       setError('Something went wrong')
     } finally {
@@ -84,7 +100,7 @@ vehicle = Vehicle()`,
   return (
     <form
       onSubmit={createNewModel}
-      className="flex flex-col w-[400px] min-w-[400px]  px-2 md:px-6 py-4 bg-da-white"
+      className="flex flex-col w-[400px] min-w-[400px] px-2 md:px-6 py-4 bg-da-white"
     >
       <DaText variant="title" className="text-da-primary-500">
         Create New Prototype

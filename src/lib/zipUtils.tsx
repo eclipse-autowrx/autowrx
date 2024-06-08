@@ -256,10 +256,23 @@ export const downloadPrototypeZip = async (prototype: Prototype) => {
   }
 }
 
-export const zipToPrototype = async (model: Model, file: File) => {
+export const zipToPrototype = async (
+  model_id: string,
+  file: File,
+): Promise<Partial<Prototype> | null> => {
   const zip = new JSZip()
-  const prototype: any = {
+  const prototype: Partial<Prototype> = {
+    apis: {},
+    model_id: model_id, // Set model_id here
     name: '',
+    code: '',
+    complexity_level: '3',
+    customer_journey: '',
+    portfolio: {},
+    skeleton: '{}',
+    state: '',
+    widget_config: '',
+    image_file: '',
     description: {
       problem: '',
       says_who: '',
@@ -267,33 +280,29 @@ export const zipToPrototype = async (model: Model, file: File) => {
       status: '',
     },
     tags: [],
-    model_id: model.id,
-    code: '',
-    widget_config: '',
-    image_file: '',
-    complexity_level: 3,
-    journey_image_file: '',
-    analysis_image_file: '',
-    customer_journey: '',
-    partner_logo: '',
   }
+
   try {
     const zipFile = await zip.loadAsync(file)
     if (!zipFile) throw new Error('Error on import prototype')
+
     const metadata = JSON.parse(
       (await zipFile.file('metadata.json')?.async('string')) || '{}',
     )
     const code = (await zipFile.file('code.py')?.async('string')) || ''
     const dashboard =
       (await zipFile.file('dashboard.json')?.async('string')) || '[]'
+
     Object.assign(prototype, metadata, { code, widget_config: dashboard })
 
-    const pluginsStr =
-      (await zipFile.file('plugins.json')?.async('string')) || '[]'
-    prototype.plugins = JSON.parse(pluginsStr) || []
+    // Ensure the model_id is correctly set to the new model_id
+    prototype.model_id = model_id
+
+    console.log('Imported prototype:', prototype)
   } catch (err) {
     console.log('Error on import prototype', err)
     return null
   }
+
   return prototype
 }

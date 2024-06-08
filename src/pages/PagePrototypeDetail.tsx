@@ -3,6 +3,7 @@ import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
 import { useParams } from 'react-router-dom'
 import { DaText } from '@/components/atoms/DaText'
+import DaLoading from '@/components/atoms/DaLoading'
 import PrototypeTabCode from '@/components/organisms/PrototypeTabCode'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import PrototypeTabDashboard from '@/components/organisms/PrototypeTabDashboard'
@@ -28,11 +29,11 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
 
   if (!prototype) {
     return (
-      <div className="container grid place-items-center">
-        <div className="p-8 text-da-gray-dark da-label-huge">
-          Prototype not found
-        </div>
-      </div>
+      <DaLoading
+        text="Loading prototype..."
+        timeout={10}
+        timeoutText="Failed to load prototype"
+      />
     )
   }
 

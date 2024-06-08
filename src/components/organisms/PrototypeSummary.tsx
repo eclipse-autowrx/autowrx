@@ -16,7 +16,11 @@ const PrototypeSummary = ({ prototype }: PrototypeSummaryProps) => {
   return (
     <div className="rounded-lg w-full">
       <DaImage
-        src={prototype.image_file}
+        src={
+          prototype.image_file
+            ? prototype.image_file
+            : 'https://placehold.co/600x400'
+        }
         className="w-full object-cover max-h-[400px]"
       />
       <div className="p-5">

@@ -213,7 +213,7 @@ body {
 }
 
 .da-btn-destructive {
-  @apply text-da-destructive hover:bg-da-destructive/10;
+  @apply text-da-gray-medium hover:text-da-destructive hover:bg-da-destructive/10;
 }
 
 .da-btn-sm {

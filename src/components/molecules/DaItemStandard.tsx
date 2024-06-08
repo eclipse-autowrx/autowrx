@@ -1,9 +1,9 @@
-import * as React from 'react'
 import { DaImageRatio } from '../atoms/DaImageRatio'
 import { DaTag } from '../atoms/DaTag'
 import { DaText } from '../atoms/DaText'
 import { DaAvatar } from '../atoms/DaAvatar'
 import { Tag } from '@/types/model.type'
+import { cn } from '@/lib/utils'
 
 interface DaItemStandardProps {
   title: string
@@ -31,7 +31,7 @@ const DaItemStandard: React.FC<DaItemStandardProps> = ({
   return (
     <div
       className={`flex w-full p-4 border border-da-gray-light rounded-lg bg-da-white max-w-lg space-x-4 text-da-gray-medium hover:border-da-primary-500 overflow-hidden ${
-        isSelected ? 'border-da-primary-500 bg-da-primary-500/10' : ''
+        isSelected ? 'border-da-primary-500 !bg-da-primary-100' : ''
       }`}
       style={{ maxWidth: maxWidth }}
     >
@@ -45,7 +45,15 @@ const DaItemStandard: React.FC<DaItemStandardProps> = ({
 
       <div className="flex flex-col justify-between overflow-hidden w-ful">
         <div className="flex flex-col space-y-2">
-          <DaText className="text-da-gray-dark">{title}</DaText>
+          <DaText
+            variant="small-bold"
+            className={cn(
+              'text-da-gray-medium',
+              isSelected ? 'text-da-primary-500' : '',
+            )}
+          >
+            {title}
+          </DaText>
           <div className="flex items-center space-x-2">
             <DaAvatar
               src={avatarUrl}
