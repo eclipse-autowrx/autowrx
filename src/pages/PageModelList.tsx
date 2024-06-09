@@ -24,7 +24,7 @@ const PageModelList = () => {
       setIsImporting(true)
       await createNewModel(model)
     }
-    console.log(model)
+    // console.log(model)
   }
 
   const createNewModel = async (importedModel: any) => {
@@ -57,14 +57,14 @@ const PageModelList = () => {
                 VSC: [],
               },
               code: proto.code || '',
-              widget_config: proto.widget_config || '',
+              widget_config: proto.widget_config || '{}',
               description: proto.description,
               tags: proto.tags || [],
               image_file: proto.image_file,
               model_id: createdModel,
               name: proto.name,
-              complexity_level: proto.complexity_level,
-              customer_journey: proto.customer_journey || '',
+              complexity_level: proto.complexity_level || '3',
+              customer_journey: proto.customer_journey || '{}',
               portfolio: proto.portfolio || {},
             }
 

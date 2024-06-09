@@ -49,7 +49,24 @@ const PagePrototypeList = () => {
     // console.log('Model ID:', model.id)
     try {
       if (prototype) {
-        await createPrototypeService(prototype)
+        const prototypePayload: Partial<Prototype> = {
+          state: prototype.state || 'development',
+          apis: {
+            VSS: [],
+            VSC: [],
+          },
+          code: prototype.code || '',
+          widget_config: prototype.widget_config || '{}',
+          description: prototype.description,
+          tags: prototype.tags || [],
+          image_file: prototype.image_file,
+          model_id: model.id,
+          name: prototype.name,
+          complexity_level: prototype.complexity_level || '3',
+          customer_journey: prototype.customer_journey || '{}',
+          portfolio: prototype.portfolio || {},
+        }
+        await createPrototypeService(prototypePayload)
         await refetch()
         setIsLoading(false)
         console.log('Prototype imported successfully')

@@ -3,8 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import { ImageAreaEdit, ImageAreaPreview } from 'image-area-lib'
 import useCurrentModel from '@/hooks/useCurrentModel'
+import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
-import { updateModelService } from '@/services/model.service'
+import { updatePrototypeService } from '@/services/prototype.service'
 import { DaCopy } from '@/components/atoms/DaCopy'
 import { DaButton } from '@/components/atoms/DaButton'
 import { DaText } from '@/components/atoms/DaText'
@@ -15,10 +16,10 @@ import { cn } from '@/lib/utils'
 
 const MASTER_ITEM = 'master'
 
-const PageModelArchitecture = () => {
+const PrototypeTabArchitecture = () => {
   const [searchParams] = useSearchParams()
-  const { data: profile } = useSelfProfileQuery()
-  const { data: model, refetch } = useCurrentModel()
+  const { data: prototype, refetch: refetchPrototype } = useCurrentPrototype()
+
   const [skeleton, setSkeleton] = useState<any>(null)
   const [activeNodeId, setActiveNodeId] = useState<any>(null)
   const [activeNode, setActiveNode] = useState<any>(null)
@@ -29,17 +30,16 @@ const PageModelArchitecture = () => {
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (!model) return
+    if (!prototype) return
+    // console.log("ModelSkeletonPage model", model)
     let skele = { nodes: [] }
-    if (model.skeleton) {
+    if (prototype.skeleton) {
       try {
-        skele = JSON.parse(model.skeleton)
-      } catch (err) {
-        console.error(err)
-      }
+        skele = JSON.parse(prototype.skeleton)
+      } catch (err) {}
     }
     setSkeleton(skele)
-  }, [model])
+  }, [prototype])
 
   useEffect(() => {
     let id = searchParams.get('id')
@@ -71,10 +71,12 @@ const PageModelArchitecture = () => {
   }, [isEditMode])
 
   const callSave = async (skele: any) => {
-    if (!model) return
+    if (!prototype || !prototype.id) return
     try {
-      await updateModelService(model.id, { skeleton: JSON.stringify(skele) })
-      await refetch()
+      await updatePrototypeService(prototype.id, {
+        skeleton: JSON.stringify(skele),
+      })
+      await refetchPrototype()
     } catch (err) {
       console.log('error on save skeleton', err)
     }
@@ -177,7 +179,7 @@ const PageModelArchitecture = () => {
   }
 
   return (
-    <div className="flex w-full h-full bg-da-white text-da-gray-medium select-none pt-6">
+    <div className="flex w-full h-full bg-da-white text-da-gray-medium select-none pt-2">
       <div className="flex flex-col min-w-[400px] px-4 h-full border-r">
         <div className="flex py-1 items-center justify-between">
           <DaText variant="sub-title">Architecture Mapping</DaText>
@@ -356,4 +358,4 @@ const PageModelArchitecture = () => {
   )
 }
 
-export default PageModelArchitecture
+export default PrototypeTabArchitecture

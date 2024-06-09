@@ -189,7 +189,7 @@ const PageModelDetail = () => {
           <div className="flex items-center space-x-2">
             <DaConfirmPopup
               onConfirm={handleDeleteModel}
-              label="This action cannot be undone and will delete all your model and prototypes data. Please handle with care."
+              label="This action cannot be undone and will delete all of your model and prototypes data. Please proceed with caution."
               confirmText={model.name}
             >
               <DaButton variant="destructive" size="sm" className="">

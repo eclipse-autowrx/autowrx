@@ -78,3 +78,7 @@ export const updatePrototypeService = async (
     await serverAxios.patch<Prototype>(`/prototypes/${prototype_id}`, data)
   ).data
 }
+
+export const deletePrototypeService = async (prototype_id: string) => {
+  return await serverAxios.delete(`/prototypes/${prototype_id}`)
+}

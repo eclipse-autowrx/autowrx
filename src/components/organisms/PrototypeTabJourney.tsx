@@ -7,10 +7,19 @@ import { DaInput } from '../atoms/DaInput'
 import { DaSelect, DaSelectItem } from '../atoms/DaSelect'
 import { Prototype } from '@/types/model.type'
 import { DaTableProperty } from '../molecules/DaTableProperty'
-import { updatePrototypeService } from '@/services/prototype.service'
+import {
+  updatePrototypeService,
+  deletePrototypeService,
+} from '@/services/prototype.service'
+import { TbEdit, TbPhotoEdit, TbTrashX } from 'react-icons/tb'
 import DaTableEditor from '../molecules/DaCustomerJourneyTable'
 import DaImportFile from '../atoms/DaImportFile'
+import DaConfirmPopup from '../molecules/DaConfirmPopup'
 import { uploadFileService } from '@/services/upload.service'
+import useCurrentModel from '@/hooks/useCurrentModel'
+import { useNavigate } from 'react-router-dom'
+import useListModelPrototypes from '@/hooks/useListModelPrototypes'
+import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 
 interface PrototypeTabJourneyProps {
   prototype: Prototype
@@ -24,6 +33,13 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false)
   const [localPrototype, setLocalPrototype] = useState(prototype)
+  const { data: model } = useCurrentModel()
+  const { refetch: refetchModelPrototypes } = useListModelPrototypes(
+    model?.id || '',
+  )
+  const { refetch: refetchCurrentPrototype } = useCurrentPrototype()
+
+  const navigate = useNavigate()
 
   if (!prototype) {
     return <DaText>No prototype available</DaText>
@@ -47,16 +63,13 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
     }
     try {
       await updatePrototypeService(prototype.id, updateData)
-      window.location.reload() // Will change this to re-fetch prototype instead of reload later on
+      await refetchCurrentPrototype()
       setIsEditing(false)
     } catch (error) {
       console.error('Error updating prototype:', error)
       setIsEditing(false)
     }
   }
-
-  // Log the localPrototype state
-  console.log('localPrototype:', localPrototype)
 
   const handleCancel = () => {
     // Handle the cancel action here
@@ -93,7 +106,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
   const handlePrototypeImageChange = async (file: File) => {
     try {
       const { url } = await uploadFileService(file)
-      console.log('Prototype image url: ', url)
+      // console.log('Prototype image url: ', url)
       setLocalPrototype((prevPrototype) => {
         if (!prevPrototype) return prevPrototype
         return {
@@ -103,6 +116,16 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
       })
     } catch (error) {
       console.error('Failed to update prototype image:', error)
+    }
+  }
+
+  const handleDeletePrototype = async () => {
+    try {
+      await deletePrototypeService(prototype.id)
+      await refetchModelPrototypes()
+      navigate(`/model/${model?.id}/library`)
+    } catch (error) {
+      console.error('Failed to delete prototype:', error)
     }
   }
 
@@ -123,8 +146,12 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
               onFileChange={handlePrototypeImageChange}
               accept=".png, .jpg, .jpeg, .gif, .webp"
             >
-              <DaButton variant="solid" className="absolute right-2 top-2">
-                Change Image
+              <DaButton
+                variant="solid"
+                size="sm"
+                className="absolute right-2 top-2"
+              >
+                <TbPhotoEdit className="w-4 h-4 mr-1" /> Change Image
               </DaButton>
             </DaImportFile>
           )}
@@ -136,17 +163,19 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                 <DaText variant="title" className="text-da-primary-500">
                   Editing Prototype
                 </DaText>
-                <div className="flex space-x-4">
+                <div className="flex space-x-2">
                   <DaButton
                     variant="outline-nocolor"
                     onClick={handleCancel}
                     className="text-da-white px-4 py-2 rounded"
+                    size="sm"
                   >
                     Cancel
                   </DaButton>
                   <DaButton
                     onClick={handleSave}
                     className=" text-white px-4 py-2 rounded"
+                    size="sm"
                   >
                     Save
                   </DaButton>
@@ -157,12 +186,23 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                 <DaText variant="title" className="text-da-primary-500">
                   {localPrototype.name}
                 </DaText>
-                <div className="flex space-x-4">
+                <div className="flex space-x-2">
+                  <DaConfirmPopup
+                    onConfirm={handleDeletePrototype}
+                    label="This action cannot be undone and will delete all of your prototype data. Please proceed with caution."
+                    confirmText={prototype.name}
+                  >
+                    <DaButton variant="destructive" size="sm" className="">
+                      <TbTrashX className="w-4 h-4 mr-2" />
+                      Delete Prototype
+                    </DaButton>
+                  </DaConfirmPopup>
                   <DaButton
                     onClick={() => setIsEditing(true)}
                     className=" text-white px-4 py-2 rounded"
+                    size="sm"
                   >
-                    Edit Prototype
+                    <TbEdit className="w-4 h-4 mr-1" /> Edit Prototype
                   </DaButton>
                 </div>
               </>
