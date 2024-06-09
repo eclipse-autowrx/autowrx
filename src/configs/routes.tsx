@@ -5,6 +5,7 @@ import PageAbout from '@/pages/PageAbout'
 import PageLogin from '@/pages/PageLogin'
 import PageModelList from '@/pages/PageModelList'
 import PageModelDetail from '@/pages/PageModelDetail'
+import PageModelArchitecture from '@/pages/PageModelArchitecture'
 import PageVehicleApi from '@/pages/PageVehicleApi'
 import PagePrototypeDetail from '@/pages/PagePrototypeDetail'
 
@@ -48,6 +49,7 @@ const routesConfig: RouteObject[] = [
       { path: ':model_id/api', element: <PageVehicleApi /> },
       { path: ':model_id/api/:api', element: <PageVehicleApi /> },
       { path: ':model_id/library', element: <PagePrototypeList /> },
+      { path: ':model_id/architecture', element: <PageModelArchitecture /> },
       {
         path: ':model_id/library/prototype/:prototype_id',
         element: <PagePrototypeDetail />,
