@@ -135,7 +135,7 @@ const PageModelDetail = () => {
   }
 
   return (
-    <div className="flex flex-col w-full h-[90%] container pt-4">
+    <div className="flex flex-col w-full h-[90%] container pt-6">
       <div className="flex h-fit pb-3">
         <div className="flex w-full justify-between items-center">
           <div className="flex items-center">

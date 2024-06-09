@@ -17,6 +17,7 @@ const PageVehicleApi = () => {
 
   return (
     <div className="grid grid-cols-12 auto-cols-max h-full">
+      <div className="col-span-12 h-12 bg-da-primary-100 sticky top-0 z-20"></div>
       <div className="col-span-6 w-full flex overflow-auto border-r">
         <ModelApiList onApiClick={handleApiClick} />
       </div>
