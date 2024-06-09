@@ -10,6 +10,7 @@ import PrototypeTabDashboard from '@/components/organisms/PrototypeTabDashboard'
 import PrototypeTabJourney from '@/components/organisms/PrototypeTabJourney'
 import PrototypeTabFeedback from '@/components/organisms/PrototypeTabFeedback'
 import PrototypeTabHomologation from '@/components/organisms/PrototypeTabHomologation'
+import PrototypeTabArchitecture from '@/components/organisms/PrototypeTabArchitecture'
 
 interface ViewPrototypeProps {
   display?: 'tree' | 'list'
@@ -50,12 +51,12 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
         >
           Journey
         </DaTabItem>
-        {/* <DaTabItem
+        <DaTabItem
           active={tab == 'architecture'}
           to={`/model/${model_id}/library/prototype/${prototype_id}/architecture`}
         >
           Architecture
-        </DaTabItem> */}
+        </DaTabItem>
         <DaTabItem
           active={tab == 'code'}
           to={`/model/${model_id}/library/prototype/${prototype_id}/code`}
@@ -89,11 +90,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
       </div>
       <div className="w-full min-h-[100px] grow">
         {isDefaultTab && <PrototypeTabJourney prototype={prototype} />}
-        {tab == 'architecture' && (
-          <div className="p-8">
-            <DaText variant="huge">Architecture Page</DaText>
-          </div>
-        )}
+        {tab == 'architecture' && <PrototypeTabArchitecture />}
         {tab == 'code' && <PrototypeTabCode />}
         {tab == 'flow' && (
           <div className="p-8">
