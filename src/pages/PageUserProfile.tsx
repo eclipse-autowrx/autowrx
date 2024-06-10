@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { DaButton } from '@/components/atoms/DaButton'
 import { DaInput } from '@/components/atoms/DaInput'
 import { DaText } from '@/components/atoms/DaText'
@@ -8,29 +8,42 @@ import DaImportFile from '@/components/atoms/DaImportFile'
 import { TbPhotoEdit } from 'react-icons/tb'
 import { uploadFileService } from '@/services/upload.service'
 import { partialUpdateUserService } from '@/services/user.service'
+import FormUpdatePassword from '@/components/molecules/forms/FormUpdatePassword'
+import DaPopup from '@/components/atoms/DaPopup'
 
 const PageUserProfile = () => {
   const [isEditing, setIsEditing] = useState(false)
-  const { data: user } = useSelfProfileQuery()
+  const { data: user, refetch } = useSelfProfileQuery()
+  const [isOpenPopup, setIsOpenPopup] = useState(false)
+  const [name, setName] = useState('')
 
   if (!user) return null
 
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(e.target.value)
-  }
-
-  const handleSave = () => {
-    setIsEditing(false)
-  }
+  useEffect(() => {
+    if (user) {
+      setName(user.name)
+    }
+  }, [user])
 
   const handleAvatarChange = async (file: File) => {
     if (file) {
       try {
         const { url } = await uploadFileService(file)
         await partialUpdateUserService({ image_file: url })
+        await refetch()
       } catch (error) {
         console.error('Failed to update avatar:', error)
       }
+    }
+  }
+
+  const handleUpdateUser = async () => {
+    try {
+      await partialUpdateUserService({ name })
+      await refetch()
+      setIsEditing(false)
+    } catch (error) {
+      console.error('Failed to update user:', error)
     }
   }
 
@@ -66,8 +79,8 @@ const PageUserProfile = () => {
               </DaText>
               {isEditing ? (
                 <DaInput
-                  value={user?.name}
-                  onChange={handleNameChange}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   className="h-8"
                   inputClassName="h-6"
                 />
@@ -85,7 +98,7 @@ const PageUserProfile = () => {
                 >
                   Cancel
                 </DaButton>
-                <DaButton size="sm" onClick={handleSave}>
+                <DaButton size="sm" onClick={handleUpdateUser}>
                   Save
                 </DaButton>
               </div>
@@ -98,7 +111,13 @@ const PageUserProfile = () => {
 
           <div className="flex justify-between items-center w-full pt-2 border-t">
             <DaText variant="regular">Do you want to change password?</DaText>
-            <DaButton size="sm">Change password</DaButton>
+
+            <DaPopup
+              state={[isOpenPopup, setIsOpenPopup]}
+              trigger={<DaButton size="sm">Change password</DaButton>}
+            >
+              <FormUpdatePassword />
+            </DaPopup>
           </div>
         </div>
       </div>

@@ -7,11 +7,12 @@ import { BsStars } from 'react-icons/bs'
 import { fetchMarketAddOns } from '@/services/widget.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { DaInput } from '@/components/atoms/DaInput'
-
-// import LoadingLineAnimation from "./LoadingLineAnimation";
-// import ResponseDisplay from "./ResponseDisplay";
-// import LLMServices from "./LLMService";
-// import GeneratorSelector from "./GeneratorDropdown";
+import DaGenAI_ResponseDisplay from './DaGenAI_ResponseDisplay'
+import LoadingLineAnimation from './DaGenAI_LoadingLineAnimation'
+import DaGeneratorSelector from './DaGeneratorSelector.tsx'
+import config from '@/configs/config.ts'
+import useListMarketplaceAddOns from '@/hooks/useListMarketplaceAddOns'
+import axios from 'axios'
 
 interface DaGenAIWidgetProps {
   widgetConfig?: any
@@ -36,16 +37,17 @@ const DaGenAIWidget = ({
   const [finalCode, setFinalCode] = useState('')
   const [iframeSrc, setIframeSrc] = useState('')
   const [selectedAddOn, setSelectedAddOn] = useState<AddOn | null>(null)
-  const [marketplaceAddOns, setMarketplaceAddOns] = useState<AddOn[]>([])
   const [isPreviewWidget, setIsPreviewWidget] = useState(false)
 
-  useEffect(() => {
-    fetchMarketAddOns('GenAI_Widget').then((res) => {
-      if (res) {
-        setMarketplaceAddOns(res)
-      }
-    })
-  }, [])
+  const { data: marketplaceAddOns } = useListMarketplaceAddOns('GenAI_Widget')
+
+  const builtInAddOns: AddOn[] =
+    config.genAI && config.genAI.widget && config.genAI.widget.length > 0
+      ? config.genAI.widget.map((addOn) => ({
+          ...addOn,
+          customPayload: addOn.customPayload(inputPrompt), // Append the customPayload with the inputPrompt
+        }))
+      : []
 
   // Check if the prompt is valid
   useEffect(() => {
@@ -94,40 +96,33 @@ const DaGenAIWidget = ({
   }, [loading, isFinished, genCode])
 
   const genWidget = async () => {
-    if (!selectedAddOn) {
-      alert('Please select an generator')
-      return
-    }
+    if (!selectedAddOn) return
+    setGenCode('')
+    setLoading(true)
+    setIsFinished(false)
     try {
-      // if (selectedAddOn.endpointUrl.startsWith("https://bedrock-")) {
-      //     let keys = (selectedAddOn.apiKey || "-@-").split("@");
-      //     let accessKey = keys.length >= 1 ? keys[0] : "";
-      //     let secretKey = keys.length >= 2 ? keys[1] : "";
-      //     LLMServices.BedrockGenCode({
-      //         endpointURL: selectedAddOn.endpointUrl,
-      //         publicKey: accessKey,
-      //         secretKey: secretKey,
-      //         inputPrompt: inputPrompt,
-      //         systemMessage: selectedAddOn.samples ? selectedAddOn.samples : "",
-      //         setGenCode: setGenCode,
-      //         setLoading: setLoading,
-      //         setIsFinished: setIsFinished,
-      //     });
-      // } else {
-      //     LLMServices.OpenAIGenCode({
-      //         endpointUrl: selectedAddOn.endpointUrl,
-      //         apiKey: selectedAddOn.apiKey,
-      //         inputPrompt: inputPrompt,
-      //         systemMessage: selectedAddOn.samples ? selectedAddOn.samples : "",
-      //         setGenCode: setGenCode,
-      //         setLoading: setLoading,
-      //         setIsFinished: setIsFinished,
-      //     });
-      // }
+      let response
+      if (selectedAddOn.id.includes(config.instance)) {
+        response = await axios.post(selectedAddOn.endpointUrl, {
+          prompt: inputPrompt,
+        })
+        setGenCode(response.data.payload.code)
+      } else {
+        response = await axios.post(config.genAI.defaultEndpointUrl, {
+          endpointURL: selectedAddOn.endpointUrl,
+          inputPrompt: inputPrompt,
+          systemMessage: selectedAddOn.samples || '',
+        })
+        setGenCode(response.data.code)
+      }
     } catch (error) {
-      // Handle by LLMServices
+      console.error('Error generating AI content:', error)
+    } finally {
+      setLoading(false)
+      setIsFinished(true)
     }
   }
+
   return (
     <div className="flex w-full h-full rounded min-h-[500px]">
       <div className="flex flex-col w-1/2 h-full border-r pr-2 border-gray-100">
@@ -157,7 +152,11 @@ const DaGenAIWidget = ({
             </div>
           </div>
 
-          {/* <GeneratorSelector generatorList={marketplaceAddOns} onSelectedGeneratorChange={setSelectedAddOn} /> */}
+          <DaGeneratorSelector
+            builtInAddOns={builtInAddOns}
+            marketplaceAddOns={marketplaceAddOns ? marketplaceAddOns : []}
+            onSelectedGeneratorChange={setSelectedAddOn}
+          />
         </div>
         <div className="flex flex-grow"></div>
         <div className="flex flex-col relative w-full h-full justify-end">
@@ -206,12 +205,13 @@ const DaGenAIWidget = ({
               sandbox="allow-scripts allow-same-origin"
             ></iframe>
           ) : (
-            // <ResponseDisplay code={genCode} language="htmlbars" />
-            <span></span>
+            <DaGenAI_ResponseDisplay code={genCode} language="htmlbars" />
           )
         ) : (
-          // <LoadingLineAnimation loading={loading} content={"There's no widget here"} />
-          <span></span>
+          <LoadingLineAnimation
+            loading={loading}
+            content={"There's no widget here"}
+          />
         )}
       </div>
     </div>
