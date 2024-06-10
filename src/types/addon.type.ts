@@ -32,5 +32,6 @@ export interface Config {
     marketplaceUrl: string
     sdvApp?: AddOn[]
     dashboard?: AddOn[]
+    widget?: AddOn[]
   }
 }

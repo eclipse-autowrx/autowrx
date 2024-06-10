@@ -44,6 +44,7 @@ const useModelStore = create<ModelState & Actions>()(
               let arName = api.name.split('.')
               return {
                 ...api,
+                isWishlist: true,
                 shortName:
                   arName.length > 1
                     ? '.' + arName.slice(1).join('.')

@@ -6,7 +6,8 @@ import { DaText } from '../atoms/DaText'
 import { DaApiListItem } from '../molecules/DaApiList'
 import ModelApiList from './ModelApiList'
 import { TbCopy } from 'react-icons/tb'
-import { copyText, getApiTypeClasses } from '@/lib/utils'
+import { getApiTypeClasses } from '@/lib/utils'
+import { DaCopy } from '../atoms/DaCopy'
 
 interface ApiCodeBlockProps {
   apiName: string
@@ -19,20 +20,11 @@ const ApiCodeBlock = ({ apiName, onCopied }: ApiCodeBlockProps) => {
     setCode(`await v${apiName.substring(1)}`)
   }, [apiName])
   return (
-    <div className="flex px-3 py-3 bg-da-gray-light rounded font-mono ">
-      <div className="grow pre-wrap da-label-small">{code}</div>
-      <div
-        className="px-2 cursor-pointer text-da-primary-500 hover:opacity-80"
-        onClick={() => {
-          copyText(code)
-          // triggerSnackbar("Copied to clipboard");
-          if (onCopied) {
-            onCopied()
-          }
-        }}
-      >
-        Copy
-      </div>
+    <div className="flex px-3 py-3 mt-2 bg-gray-100 rounded justify-between">
+      <DaText variant="regular" className=" font-mono">
+        {code}
+      </DaText>
+      <DaCopy textToCopy={code} label="Copy"></DaCopy>
     </div>
   )
 }
@@ -43,31 +35,32 @@ interface APIDetailsProps {
 }
 
 const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
+  useEffect(() => {
+    if (activeApi) {
+      console.log('activeApi', activeApi)
+    }
+  }, [activeApi])
   return (
     <div className="flex flex-col">
       {activeApi && (
         <div className="flex flex-col w-full">
-          <div className="text-da-gray-dark py-1 flex items-center da-label-sub-title border-b border-da-gray-medium">
-            <div
-              className="flex items-center grow cursor-pointer"
-              onClick={() =>
-                copyText(
-                  activeApi.api,
-                  `Copied "${activeApi.api}" to clipboard.`,
-                )
-              }
-            >
-              {activeApi.api}
-              <TbCopy className="w-5 h-5 ml-1" />
-            </div>
+          <div className="flex py-1 items-center da-label-sub-title border-b border-da-gray-light justify-between">
+            <DaCopy textToCopy={activeApi.name}>
+              <DaText
+                variant="sub-title"
+                className="text-da-primary-500 cursor-pointer"
+              >
+                {activeApi.name}
+              </DaText>
+            </DaCopy>
             <div className={getApiTypeClasses(activeApi.type).textClass}>
               {activeApi.type.toUpperCase()}
             </div>
           </div>
-          <div className="max-h-[500px] px-2 overflow-y-auto scroll-gray">
+          <div className="max-h-[500px] overflow-y-auto scroll-gray">
             {['branch'].includes(activeApi.type) && (
               <div>
-                <div className="mt-4 text-da-gray-dark py-1 mt-1 flex items-center da-label-regular">
+                <div className="mt-4 text-da-gray-dark py-1 flex items-center da-label-regular">
                   This is branch node, branch include a list of child API. You
                   can not call a branch in python code, please select its
                   children.
@@ -75,12 +68,12 @@ const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
               </div>
             )}
             {['actuator', 'sensor'].includes(activeApi.type) && (
-              <div>
-                <div className="mt-4  text-da-gray-dark py-1 mt-1 flex items-center da-label-regular">
+              <div className="mt-4">
+                <DaText variant="regular" className="text-da-gray-medium">
                   Sample code to get API value:
-                </div>
+                </DaText>
                 <ApiCodeBlock
-                  apiName={activeApi.api + '.get()'}
+                  apiName={activeApi.name + '.get()'}
                   onCopied={() => {
                     if (requestCancel) requestCancel()
                   }}
@@ -88,12 +81,12 @@ const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
               </div>
             )}
             {['actuator'].includes(activeApi.type) && (
-              <div>
-                <div className="mt-4 text-da-gray-dark py-1 mt-1 flex items-center da-label-regular">
-                  Sample code to Set API:
-                </div>
+              <div className="mt-4">
+                <DaText variant="regular" className="text-da-gray-medium">
+                  Sample code to set API value:
+                </DaText>
                 <ApiCodeBlock
-                  apiName={activeApi.api + '.set(value)'}
+                  apiName={activeApi.name + '.set(value)'}
                   onCopied={() => {
                     if (requestCancel) requestCancel()
                   }}
@@ -101,12 +94,12 @@ const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
               </div>
             )}
             {['actuator', 'sensor'].includes(activeApi.type) && (
-              <div>
-                <div className="text-da-gray-dark py-1 mt-1 flex items-center da-label-regular">
-                  Sample code to subscrible for API value change:
-                </div>
+              <div className="mt-4">
+                <DaText variant="regular" className="text-da-gray-medium">
+                  Sample code to subscribe API value:
+                </DaText>
                 <ApiCodeBlock
-                  apiName={activeApi.api + '.subscribe(function_name)'}
+                  apiName={activeApi.name + '.subscribe(function_name)'}
                   onCopied={() => {
                     if (requestCancel) requestCancel()
                   }}
@@ -159,7 +152,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
 
   return (
     <>
-      <DaPopup state={popupApi} width={'680px'} trigger={<span></span>}>
+      <DaPopup state={popupApi} width={'800px'} trigger={<span></span>}>
         <APIDetails
           activeApi={activeApi}
           requestCancel={() => {
@@ -172,7 +165,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
       </DaText>
       {useApis && useApis.length > 0 && (
         <div className="mb-2">
-          <div className="flex flex-col w-full px-6 scroll-gray">
+          <div className="flex flex-col w-full px-4 scroll-gray">
             <div className="max-h-[150px] mt-2 overflow-y-auto scroll-gray">
               {useApis.map((item: any, index: any) => (
                 <DaApiListItem

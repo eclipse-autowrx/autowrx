@@ -2,7 +2,8 @@ import { Config } from '@/types/addon.type'
 
 const config: Config = {
   serverBaseUrl:
-    import.meta.env.VITE_SERVER_BASE_URL || 'https://backend-core-dev.digital.auto',
+    import.meta.env.VITE_SERVER_BASE_URL ||
+    'https://backend-core-dev.digital.auto',
   serverVersion: import.meta.env.VITE_SERVER_VERSION || 'v2',
   studioUrl: 'https://studio.digital.auto',
   studioBeUrl: 'https://bewebstudio.digitalauto.tech',
@@ -17,6 +18,7 @@ const config: Config = {
     marketplaceUrl: 'https://store-be.digitalauto.tech/marketplace/genai',
     sdvApp: [],
     dashboard: [],
+    widget: [],
   },
 }
 

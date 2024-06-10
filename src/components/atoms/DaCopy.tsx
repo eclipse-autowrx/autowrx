@@ -5,11 +5,17 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
 interface DaCopyProps {
   textToCopy: string
-  children: React.ReactNode
+  children?: React.ReactNode
   showIcon?: boolean
+  label?: string
 }
 
-const DaCopy = ({ textToCopy, children, showIcon = true }: DaCopyProps) => {
+const DaCopy = ({
+  textToCopy,
+  children,
+  showIcon = true,
+  label,
+}: DaCopyProps) => {
   const { toast } = useToast()
   const { refetch } = useSelfProfileQuery()
 
@@ -40,7 +46,17 @@ const DaCopy = ({ textToCopy, children, showIcon = true }: DaCopyProps) => {
   return (
     <div className="flex items-center cursor-pointer" onClick={handleCopyClick}>
       {children}
-      {showIcon && <TbCopy className="text-da-primary-500 ml-1" />}
+      <div className="flex items-center">
+        {label && (
+          <DaText
+            variant="small"
+            className="ml-1 text-da-primary-500 cursor-pointer"
+          >
+            {label}
+          </DaText>
+        )}
+        {showIcon && <TbCopy className="text-da-primary-500 ml-1" />}
+      </div>
     </div>
   )
 }

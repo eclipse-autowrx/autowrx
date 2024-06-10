@@ -5,7 +5,7 @@ import DaFilter from '../atoms/DaFilter'
 import { debounce } from '@/lib/utils'
 import useModelStore from '@/stores/modelStore'
 import { useParams } from 'react-router-dom'
-import { VehicleApi, CustomApi } from '@/types/model.type'
+import { VehicleApi } from '@/types/model.type'
 import { shallow } from 'zustand/shallow'
 import { DaButton } from '../atoms/DaButton'
 import { TbPlus } from 'react-icons/tb'
@@ -35,31 +35,20 @@ const ModelApiList = ({ onApiClick }: ModelApiListProps) => {
   ])
   const [selectedApi, setSelectedApi] = useState<VehicleApi>()
   const [isOpenPopup, setIsOpenPopup] = useState(false)
-
   const { data: model } = useCurrentModel()
 
   useEffect(() => {
     if (api) {
-      const foundApi = activeModelApis.find((apiItem) => apiItem.api === api)
+      const foundApi = activeModelApis.find((apiItem) => apiItem.name === api)
       if (foundApi) {
         setSelectedApi(foundApi)
+        onApiClick?.(foundApi)
       }
     }
   }, [api, activeModelApis])
 
   useEffect(() => {
-    let combinedApis: VehicleApi[] = [
-      ...activeModelApis,
-      ...(model?.custom_apis?.map((wishlistApi: CustomApi) => ({
-        ...wishlistApi,
-        api: wishlistApi.name,
-        isWishlist: true,
-        type: wishlistApi.type,
-        description: wishlistApi.description,
-      })) || []),
-    ]
-
-    let filteredList = combinedApis.filter((apiItem) =>
+    let filteredList = activeModelApis.filter((apiItem) =>
       apiItem.name.toLowerCase().includes(searchTerm.toLowerCase()),
     )
 
