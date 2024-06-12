@@ -66,6 +66,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
     try {
       await updatePrototypeService(prototype.id, updateData)
       await refetchCurrentPrototype()
+      await refetchModelPrototypes()
       setIsEditing(false)
     } catch (error) {
       console.error('Error updating prototype:', error)

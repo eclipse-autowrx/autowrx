@@ -53,7 +53,7 @@ const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
           {Icon && iconBefore && (
             <Icon
               size={iconSize || 20}
-              className="mx-2"
+              className={iconBefore ? 'ml-2' : 'mr-2'}
               onClick={IconOnClick}
             />
           )}

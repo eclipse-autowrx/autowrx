@@ -16,6 +16,7 @@ import DaWidgetLibrary from '../widgets/DaWidgetLibrary'
 import { isContinuousRectangle, doesOverlap, calculateSpans } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import DaDashboardWidgetEditor from './DaDashboardWidgetEditor'
+import { DaText } from '@/components/atoms/DaText'
 
 interface DaDashboardEditorProps {
   entireWidgetConfig?: string
@@ -395,9 +396,9 @@ const DaDashboardEditor = ({
         {widgetGrid()}
       </div>
       {editable && (
-        <div className="italic py-0.5 text-da-gray-medium da-label-regular">
+        <DaText variant="small" className="py-2">
           Click on empty cell to place new widget
-        </div>
+        </DaText>
       )}
       {warningMessage && (
         <div className="flex w-fit mt-3 rounded py-1 px-2 justify-center items-center border border-da-gray-light shadow-sm select-none">

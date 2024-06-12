@@ -7,7 +7,7 @@ import { DaButton } from '@/components/atoms/DaButton'
 import DaImportFile from '@/components/atoms/DaImportFile'
 import DaPopup from '@/components/atoms/DaPopup'
 import DaLoading from '@/components/atoms/DaLoading'
-import { TbFileImport, TbPlus } from 'react-icons/tb'
+import { TbFileImport, TbPlus, TbSearch } from 'react-icons/tb'
 import FormCreatePrototype from '@/components/molecules/forms/FormCreatePrototype'
 import useListModelPrototypes from '@/hooks/useListModelPrototypes'
 import useCurrentModel from '@/hooks/useCurrentModel'
@@ -86,6 +86,8 @@ const PagePrototypeList = () => {
         <div className="col-span-5 xl:col-span-4 h-full overflow-y-auto mt-2 flex flex-col">
           <DaInput
             type="text"
+            Icon={TbSearch}
+            iconBefore={true}
             placeholder="Enter to search"
             className="w-full py-2 px-4 sticky top-0 !bg-white z-10"
           />
@@ -110,15 +112,20 @@ const PagePrototypeList = () => {
                   />
                 </div>
               ))}
+              <div className="grow"> </div>
             </div>
           )}
           {isAuthorized && (
-            <div className="grid sticky bottom-0 mt-auto bg-white grid-cols-1 2xl:grid-cols-2 gap-2 px-4 py-1">
+            <div className="grid sticky bottom-0 mt-auto bg-white grid-cols-1 xl:grid-cols-2 gap-2 px-4 py-1">
               <DaImportFile
                 accept=".zip"
                 onFileChange={handleImportPrototypeZip}
               >
-                <DaButton variant="outline-nocolor" className="w-full">
+                <DaButton
+                  variant="outline-nocolor"
+                  size="sm"
+                  className="w-full"
+                >
                   {isLoading ? (
                     <div className="flex items-center">
                       <DaLoader className="mr-2" />
@@ -136,7 +143,7 @@ const PagePrototypeList = () => {
               <DaPopup
                 state={[open, setOpen]}
                 trigger={
-                  <DaButton variant="outline-nocolor">
+                  <DaButton variant="outline-nocolor" size="sm">
                     <TbPlus className="w-5 h-5 mr-2" />
                     Create New Prototype
                   </DaButton>

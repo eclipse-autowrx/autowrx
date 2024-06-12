@@ -27,6 +27,7 @@ export interface Config {
   uploadFileUrl: string
   instanceLogo: string
   instance: string
+  defaultModelId: string
   genAI: {
     defaultEndpointUrl: string
     marketplaceUrl: string

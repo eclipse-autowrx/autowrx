@@ -19,8 +19,8 @@ import {
 import { uploadFileService } from '@/services/upload.service'
 import { convertJSONToProperty } from '@/lib/vehiclePropertyUtils'
 import {
+  TbDownload,
   TbEdit,
-  TbFileExport,
   TbLoader,
   TbPhotoEdit,
   TbTrashX,
@@ -218,7 +218,7 @@ const PageModelDetail = () => {
                     setIsExporting(false)
                   }}
                 >
-                  <TbFileExport className="w-4 h-4 mr-2" />
+                  <TbDownload className="w-4 h-4 mr-2" />
                   Export Model
                 </DaButton>
               ) : (
