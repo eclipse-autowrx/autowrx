@@ -1,13 +1,16 @@
-import { CheckPermissionResponse } from '@/types/permission.type'
+import { Permission } from '@/types/permission.type'
 import { serverAxios } from './base'
 
 export const checkPermissionService = async (
-  permission: string,
-  ref?: string,
+  permissions: ([Permission, string] | Permission)[],
 ) => {
   return (
-    await serverAxios.get<CheckPermissionResponse>(`/permissions`, {
-      params: { ref, permission },
+    await serverAxios.get<boolean[]>(`/permissions`, {
+      params: {
+        permissions: permissions
+          .map((perm) => (typeof perm === 'string' ? [perm] : perm).join(':'))
+          .join(','),
+      },
     })
   ).data
 }
