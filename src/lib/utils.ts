@@ -1,6 +1,7 @@
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { Cvi, VehicleApi } from '@/types/model.type'
+import { WidgetConfig } from '@/components/molecules/dashboard/DaDashboardEditor'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -62,6 +63,7 @@ export const copyText = async (
   }
 }
 
+// Dashboard utils : Checking if the selected cells are continuous rectangle
 export const isContinuousRectangle = (pickedCells: number[]): boolean => {
   // console.log("pickedCells", pickedCells);
   const numCols = 5
@@ -105,4 +107,34 @@ export const isContinuousRectangle = (pickedCells: number[]): boolean => {
     }
   }
   return true // All cells within the bounding box are selected
+}
+
+// Dashboard utils : Calculate the rowSpan and colSpan of widget box to merge the cells
+export const calculateSpans = (boxes: any) => {
+  let minCol = Math.min(...boxes.map((box: any) => ((box - 1) % 5) + 1))
+  let maxCol = Math.max(...boxes.map((box: any) => ((box - 1) % 5) + 1))
+  let minRow = Math.ceil(Math.min(...boxes) / 5)
+  let maxRow = Math.ceil(Math.max(...boxes) / 5)
+
+  let colSpan = maxCol - minCol + 1
+  let rowSpan = maxRow - minRow + 1
+
+  return { rowSpan, colSpan }
+}
+
+export const doesOverlap = (
+  widgetConfigs: WidgetConfig[],
+  updatedWidgetConfig: WidgetConfig,
+  index: number,
+): boolean => {
+  const otherWidgets = widgetConfigs.filter((_, idx) => idx !== index)
+  const updatedBoxes = new Set(updatedWidgetConfig.boxes)
+  for (const widget of otherWidgets) {
+    for (const box of widget.boxes) {
+      if (updatedBoxes.has(box)) {
+        return true
+      }
+    }
+  }
+  return false
 }

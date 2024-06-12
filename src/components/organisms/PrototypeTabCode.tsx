@@ -13,7 +13,6 @@ import { BsStars } from 'react-icons/bs'
 import DaPopup from '../atoms/DaPopup'
 import DaGenAI_Python from '../molecules/genAI/DaGenAI_Python'
 import { DaText } from '../atoms/DaText'
-import { set } from 'lodash'
 
 const PrototypeTabCode: FC = ({}) => {
   const [prototype, setActivePrototype, activeModelApis] = useModelStore(
