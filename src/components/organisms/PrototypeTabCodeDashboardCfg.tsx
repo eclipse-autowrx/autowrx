@@ -86,7 +86,8 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
         {isAuthorized && (
           <div className="flex w-full">
             <DaButton
-              variant="outline"
+              variant="outline-nocolor"
+              size="sm"
               className="flex bg-white pl-3 mr-2"
               onClick={() => setIsExpanded((old) => !old)}
             >
@@ -101,8 +102,8 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
             <DaPopup
               state={[isOpenGenAI, setIsOpenGenAI]}
               trigger={
-                <DaButton variant="outline">
-                  <BsStars className="w-4 h-auto text-aiot-blue mr-1" />
+                <DaButton variant="outline-nocolor" size="sm">
+                  <BsStars className="w-4 h-auto text-da-primary-500 mr-1" />
                   Dashboard ProtoPilot
                 </DaButton>
               }

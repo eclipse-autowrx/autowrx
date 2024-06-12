@@ -99,6 +99,7 @@ const PrototypeTabArchitecture = () => {
         bgImage: '',
         shapes: [],
       },
+      bgImage: 'https://placehold.co/1024x576?text=Empty+Architecture',
     })
     setSkeleton(tmpSkele)
     setActiveNodeId(id)

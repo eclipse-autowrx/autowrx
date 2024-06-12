@@ -70,20 +70,20 @@ const PrototypeTabCode: FC = ({}) => {
   }
 
   return (
-    <div className="w-full h-full flex">
-      <div className="w-1/2 flex flex-col">
+    <div className="flex flex-col w-full h-full">
+      <div className="flex w-full px-2 py-1">
         {isAuthorized && (
-          <div className="mb-1 py-1 px-2 flex border-b-2 border-da-gray-light">
+          <div className="flex w-1/2">
             <div className="flex space-x-2">
-              <DaButton size="sm" variant="outline" className="mr-2">
-                <TbDotsVertical className="mr-1" size={20} />
+              <DaButton size="sm" variant="outline-nocolor" className="mr-2">
+                <TbDotsVertical className="mr-1" />
                 Action
               </DaButton>
               <DaPopup
                 state={[isOpenGenAI, setIsOpenGenAI]}
                 trigger={
-                  <DaButton size="sm" variant="outline">
-                    <BsStars className="mr-1" size={20} />
+                  <DaButton size="sm" variant="outline-nocolor">
+                    <BsStars className="mr-1 text-da-primary-500" />
                     SDV ProtoPilot
                   </DaButton>
                 }
@@ -112,16 +112,7 @@ const PrototypeTabCode: FC = ({}) => {
             </DaButton>
           </div>
         )}
-        <CodeEditor
-          code={code || ''}
-          setCode={setCode}
-          editable={isAuthorized}
-          language="python"
-          onBlur={saveCodeToDb}
-        />
-      </div>
-      <div className="w-1/2 flex flex-col">
-        <div className="mb-1 pt-1 px-2 flex-none flex border-b border-da-gray-light">
+        <div className="flex w-1/2 justify-end">
           <div className="grow"></div>
           <DaTabItem
             small
@@ -150,13 +141,26 @@ const PrototypeTabCode: FC = ({}) => {
             </DaTabItem>
           )}
         </div>
-        <div className="flex-1 flex flex-col w-full overflow-hidden">
-          {activeTab == 'api' && (
-            <>
-              <PrototypeTabCodeApiPanel code={code || ''} />
-            </>
-          )}
-          {activeTab == 'dashboard' && <PrototypeTabCodeDashboardCfg />}
+      </div>
+      <div className="flex w-full h-full">
+        <div className="w-1/2 flex flex-col">
+          <CodeEditor
+            code={code || ''}
+            setCode={setCode}
+            editable={isAuthorized}
+            language="python"
+            onBlur={saveCodeToDb}
+          />
+        </div>
+        <div className="w-1/2 flex flex-col">
+          <div className="flex-1 flex flex-col w-full overflow-hidden">
+            {activeTab == 'api' && (
+              <>
+                <PrototypeTabCodeApiPanel code={code || ''} />
+              </>
+            )}
+            {activeTab == 'dashboard' && <PrototypeTabCodeDashboardCfg />}
+          </div>
         </div>
       </div>
     </div>

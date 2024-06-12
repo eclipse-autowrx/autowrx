@@ -94,9 +94,10 @@ const PageModelArchitecture = () => {
       type: 'node',
       parent_id: tmpSkele.nodes.length <= 0 ? MASTER_ITEM : 'NAN',
       content: {
-        bgImage: '',
+        bgImage: '', // Don't know why this exist
         shapes: [],
       },
+      bgImage: 'https://placehold.co/1024x576?text=Empty+Architecture',
     })
     setSkeleton(tmpSkele)
     setActiveNodeId(id)

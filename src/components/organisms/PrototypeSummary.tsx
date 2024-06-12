@@ -31,9 +31,9 @@ const PrototypeSummary = ({ prototype }: PrototypeSummaryProps) => {
           <Link
             to={`/model/${prototype.model_id}/library/prototype/${prototype.id}/view`}
           >
-            <DaButton variant="solid" className="text-sm">
+            <DaButton variant="solid" size="sm">
               Open
-              <TbArrowRight className="w-5 h-5 ml-1" />
+              <TbArrowRight className="w-5 h-5 ml-2" />
             </DaButton>
           </Link>
         </div>

@@ -8,7 +8,7 @@ import { useParams } from 'react-router-dom'
 import { VehicleApi } from '@/types/model.type'
 import { shallow } from 'zustand/shallow'
 import { DaButton } from '../atoms/DaButton'
-import { TbPlus } from 'react-icons/tb'
+import { TbPlus, TbSearch } from 'react-icons/tb'
 import DaPopup from '../atoms/DaPopup'
 import FormCreateWishlistApi from '../molecules/forms/FormCreateWishlistApi'
 import useCurrentModel from '@/hooks/useCurrentModel'
@@ -91,6 +91,8 @@ const ModelApiList = ({ onApiClick }: ModelApiListProps) => {
         <DaInput
           placeholder="Search API"
           className="mr-2 w-full"
+          Icon={TbSearch}
+          iconBefore={true}
           onChange={(e) => handleSearchChange(e.target.value)}
         />
         <DaFilter
