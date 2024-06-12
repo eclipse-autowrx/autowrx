@@ -17,7 +17,7 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
     shallow,
   )
   const [dashboardCfg, setDashboardCfg] = useState<string>('')
-  const [editable, setEditable] = useState<boolean>(true)
+  const [isEditing, setIsEditing] = useState<boolean>(true)
   const [useApis, setUseApis] = useState<any[]>([])
   const [isExpanded, setIsExpanded] = useState(false)
   const [ticker, setTicker] = useState(0)
@@ -30,7 +30,7 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
     return () => {
       if (timer) clearInterval(timer)
     }
-  }, [])
+  }, [ticker])
 
   useEffect(() => {
     setDashboardCfg(prototype?.widget_config || '')
@@ -72,7 +72,7 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
       <DaDashboardEditor
         // widgetConfigString={prototype.widget_config}
         entireWidgetConfig={prototype.widget_config}
-        editable={editable}
+        isEditing={isEditing}
         usedAPIs={useApis}
         onDashboardConfigChanged={(config: string) => {
           console.log(`onDashboardConfigChanged`, config)
@@ -117,21 +117,13 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
             </div>
           </DaPopup>
         </div>
-        {/* <GenAI_ProtoPilot
-                type="GenAI_Dashboard"
-                onClose={() => setIsOpenGenAIDashboard(false)}
-                isOpen={isOpenGenAIDashboard}
-                widgetConfig={widgetConfig}
-                onDashboardConfigChanged={onDashboardConfigChanged}
-                pythonCode={props.code}
-            /> */}
         <div
           className={`flex w-full h-full ${isExpanded ? 'visible' : 'invisible'}`}
         >
           <CodeEditor
             code={dashboardCfg}
             setCode={setDashboardCfg}
-            editable={editable}
+            editable={isEditing}
             language="json"
             onBlur={() => {
               console.log('CodeEditor On blur')

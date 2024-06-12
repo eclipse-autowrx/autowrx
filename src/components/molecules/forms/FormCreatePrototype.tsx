@@ -7,7 +7,7 @@ import { createPrototypeService } from '@/services/prototype.service'
 import { useToast } from '../toaster/use-toast'
 import useListModelPrototypes from '@/hooks/useListModelPrototypes'
 import useCurrentModel from '@/hooks/useCurrentModel'
-import { on } from 'events'
+import { isAxiosError } from 'axios'
 
 const initialState = {
   name: '',
@@ -91,7 +91,10 @@ vehicle = Vehicle()`,
       setData(initialState)
       onClose()
     } catch (error) {
-      setError('Something went wrong')
+      if (isAxiosError(error)) {
+        setError(error.response?.data?.message || 'Something went wrong')
+        return
+      }
     } finally {
       setLoading(false)
     }

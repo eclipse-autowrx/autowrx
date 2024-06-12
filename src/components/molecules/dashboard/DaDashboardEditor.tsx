@@ -1,34 +1,26 @@
-// TODO: this file need to be refactored, maximum 250 lines
-
 import { useState, useEffect, useRef } from 'react'
 import { DaButton } from '../../atoms/DaButton'
 import {
   TbEdit,
   TbTrash,
   TbX,
-  TbCheck,
   TbExclamationMark,
   TbCategoryPlus,
-  TbSelector,
-  TbCopy,
   TbExternalLink,
   TbCategory,
 } from 'react-icons/tb'
-import CodeEditor from '../CodeEditor'
-import { copyText } from '@/lib/utils'
 import BUILT_IN_WIDGETS from '@/data/builtinWidgets'
 import DaTooltip from '../../atoms/DaTooltip'
 import config from '@/configs/config'
-import DaPopup from '../../atoms/DaPopup'
 import DaWidgetLibrary from '../widgets/DaWidgetLibrary'
-import { isContinuousRectangle } from '@/lib/utils'
+import { isContinuousRectangle, doesOverlap, calculateSpans } from '@/lib/utils'
+import { cn } from '@/lib/utils'
+import DaDashboardWidgetEditor from './DaDashboardWidgetEditor'
 
 interface DaDashboardEditorProps {
-  widgetConfigString?: string
   entireWidgetConfig?: string
   onDashboardConfigChanged: (config: any) => void
-  editable?: boolean
-  usedAPIs?: any[]
+  isEditing?: boolean
 }
 
 export interface WidgetConfig {
@@ -40,11 +32,9 @@ export interface WidgetConfig {
 }
 
 const DaDashboardEditor = ({
-  widgetConfigString,
   entireWidgetConfig,
   onDashboardConfigChanged,
-  editable,
-  usedAPIs,
+  isEditing: editable,
 }: DaDashboardEditorProps) => {
   const CELLS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
   const [widgetConfigs, setWidgetConfigs] = useState<WidgetConfig[]>([])
@@ -56,43 +46,20 @@ const DaDashboardEditor = ({
   const [warningMessage2, setWarningMessage2] = useState<string | null>(null) // New warning message for widget library
   const [isConfigValid, setIsConfigValid] = useState(true) // Prevent crash during editting
   const [selectedCells, setSelectedCells] = useState<number[]>([]) // New state to track selected cells
-  const [selectedCellValid, setSelectedCellValid] = useState<boolean>(false)
+
+  const [isSelectedCellValid, setIsSelectedCellValid] = useState<boolean>(false)
   const [isWidgetLibraryOpen, setIsWidgetLibraryOpen] = useState<boolean>(false)
   const [targetSelectionCells, setTargetSelectionCells] = useState<number[]>([]) // New state to track selected cells
-  const [isExpanded, setIsExpanded] = useState<boolean>(false) // Expand used APIs dropdown list
-  const dropdownRef = useRef<HTMLDivElement>(null)
 
   const codeEditorPopup = useState<boolean>(false)
 
   const [buildinWidgets, setBuildinWidgets] = useState<any[]>(BUILT_IN_WIDGETS)
 
-  const doesOverlap = (
-    updatedWidgetConfig: WidgetConfig,
-    index: number,
-  ): boolean => {
-    const otherWidgets = widgetConfigs.filter((_, idx) => idx !== index)
-    const updatedBoxes = new Set(updatedWidgetConfig.boxes)
-    for (const widget of otherWidgets) {
-      for (const box of widget.boxes) {
-        if (updatedBoxes.has(box)) {
-          return true
-        }
-      }
-    }
-    return false
-  }
-
-  useEffect(() => {
-    console.log(`widgetConfigs`)
-    console.log(widgetConfigs)
-  }, [widgetConfigs])
-
+  // This useEffect used to load the existed widget configuration
   useEffect(() => {
     if (!entireWidgetConfig) return
     try {
       const config = JSON.parse(entireWidgetConfig)
-      console.log(`config`)
-      console.log(config)
       const widgetArray = config.widgets || config // Fallback to config if widgets key is absent
       if (Array.isArray(widgetArray)) {
         setWidgetConfigs(widgetArray)
@@ -150,41 +117,6 @@ const DaDashboardEditor = ({
     }
   }
 
-  const handleUpdateWidget = () => {
-    if (selectedWidgetIndex !== null) {
-      try {
-        const updatedWidgetConfig = JSON.parse(selectedWidget)
-        if (
-          isContinuousRectangle(updatedWidgetConfig.boxes) &&
-          !doesOverlap(updatedWidgetConfig, selectedWidgetIndex)
-        ) {
-          const updatedWidgets = [...widgetConfigs]
-          updatedWidgets[selectedWidgetIndex] = updatedWidgetConfig
-          const newConfigs = {
-            ...JSON.parse(entireWidgetConfig || ''),
-            widgets: updatedWidgets,
-          }
-          setWidgetConfigs(updatedWidgets)
-          onDashboardConfigChanged(JSON.stringify(newConfigs, null, 2))
-          setWarningMessage(null)
-        } else {
-          let message = ''
-          if (!isContinuousRectangle(updatedWidgetConfig.boxes)) {
-            message = 'The cells placement is discrete. Please try again.'
-          }
-          if (doesOverlap(updatedWidgetConfig, selectedWidgetIndex)) {
-            message = 'The cells placement is overlapping. Please try again.'
-          }
-          setWarningMessage(message)
-        }
-      } catch (e) {
-        console.error('Failed to parse the updated widget configuration', e)
-      }
-    } else {
-      console.error('No widget is selected for updating')
-    }
-  }
-
   //Timeout for warning message
   useEffect(() => {
     ;(async () => {
@@ -193,28 +125,10 @@ const DaDashboardEditor = ({
     })()
   }, [warningMessage])
 
+  // Handle add widget to the dashboard from widget library
   const handleAddWidget = () => {
     setTargetSelectionCells(selectedCells)
     setIsWidgetLibraryOpen(true)
-  }
-
-  const handleSelectCell = (cell: number) => {
-    let updatedSelectedCells = selectedCells.includes(cell)
-      ? selectedCells.filter((c) => c !== cell)
-      : [...selectedCells, cell].sort((a, b) => a - b)
-
-    const isValidSelection = isContinuousRectangle(updatedSelectedCells)
-    setSelectedCells(updatedSelectedCells)
-    setSelectedCellValid(isValidSelection)
-    setSelectedWidgetIndex(null) // unselect placed widget
-    if (!isValidSelection) {
-      // Optional: Notify user of invalid selection
-    }
-  }
-  const handleWidgetClick = (index: number) => {
-    setSelectedWidgetIndex(index)
-    // Deselect any selected cells
-    setSelectedCells([])
   }
 
   // Handle open widget in Widget Studio
@@ -236,17 +150,62 @@ const DaDashboardEditor = ({
     }
   }
 
-  // Calculate the rowSpan and colSpan of widget box to merge the cells
-  const calculateSpans = (boxes: any) => {
-    let minCol = Math.min(...boxes.map((box: any) => ((box - 1) % 5) + 1))
-    let maxCol = Math.max(...boxes.map((box: any) => ((box - 1) % 5) + 1))
-    let minRow = Math.ceil(Math.min(...boxes) / 5)
-    let maxRow = Math.ceil(Math.max(...boxes) / 5)
+  const handleSelectCell = (cell: number) => {
+    let updatedSelectedCells = selectedCells.includes(cell)
+      ? selectedCells.filter((c) => c !== cell)
+      : [...selectedCells, cell].sort((a, b) => a - b)
 
-    let colSpan = maxCol - minCol + 1
-    let rowSpan = maxRow - minRow + 1
+    const isValidSelection = isContinuousRectangle(updatedSelectedCells)
 
-    return { rowSpan, colSpan }
+    setSelectedCells(updatedSelectedCells)
+    setIsSelectedCellValid(isValidSelection)
+
+    setSelectedWidgetIndex(null) // unselect placed widget
+    if (!isValidSelection) {
+      // Optional: Notify user of invalid selection
+    }
+  }
+  const handleWidgetClick = (index: number) => {
+    setSelectedWidgetIndex(index)
+    // Deselect any selected cells
+    setSelectedCells([])
+  }
+
+  const handleUpdateWidget = () => {
+    if (selectedWidgetIndex !== null) {
+      try {
+        const updatedWidgetConfig = JSON.parse(selectedWidget)
+        if (
+          isContinuousRectangle(updatedWidgetConfig.boxes) &&
+          !doesOverlap(widgetConfigs, updatedWidgetConfig, selectedWidgetIndex)
+        ) {
+          const updatedWidgets = [...widgetConfigs]
+          updatedWidgets[selectedWidgetIndex] = updatedWidgetConfig
+          const newConfigs = {
+            ...JSON.parse(entireWidgetConfig || ''),
+            widgets: updatedWidgets,
+          }
+          setWidgetConfigs(updatedWidgets)
+          onDashboardConfigChanged(JSON.stringify(newConfigs, null, 2))
+          setWarningMessage(null)
+        } else {
+          let message = ''
+          if (!isContinuousRectangle(updatedWidgetConfig.boxes)) {
+            message = 'The cells placement is discrete. Please try again.'
+          }
+          if (
+            doesOverlap(widgetConfigs, updatedWidgetConfig, selectedWidgetIndex)
+          ) {
+            message = 'The cells placement is overlapping. Please try again.'
+          }
+          setWarningMessage(message)
+        }
+      } catch (e) {
+        console.error('Failed to parse the updated widget configuration', e)
+      }
+    } else {
+      console.error('No widget is selected for updating')
+    }
   }
 
   const widgetItem = (
@@ -257,23 +216,18 @@ const DaDashboardEditor = ({
     const { rowSpan, colSpan } = calculateSpans(widgetConfig.boxes)
     return (
       <div
-        className={`group flex relative border border-da-gray-mediu select-none cursor-pointer col-span-${colSpan} row-span-${rowSpan} text-da-gray-dark da-label-small ${
+        className={`group flex relative border border-da-gray-medium select-none cursor-pointer col-span-${colSpan} row-span-${rowSpan} text-da-gray-dark da-label-small ${
           selectedWidgetIndex === index &&
-          `!border-da-primary-500 border-2 !text-da-primary-500 !bg-da-gray-light `
+          `!border-da-primary-500 !text-da-primary-500 !bg-da-gray-light `
         } bg-da-gray-light hover:bg-da-gray-light`}
         key={`${index}-${cell}`}
         onClick={() => handleWidgetClick(index)}
       >
         <div className="hidden group-hover:block w-fit absolute right-1 top-1 bg-da-white rounded">
           <div className="flex items-center">
-            <DaTooltip
-              className="py-1"
-              content="Delete widget"
-              space={20}
-              delay={500}
-            >
+            <DaTooltip className="py-1" content="Delete widget">
               <DaButton
-                variant="plain"
+                variant="destructive"
                 className="!px-0"
                 onClick={() => handleDeleteWidget(index)}
               >
@@ -283,12 +237,7 @@ const DaDashboardEditor = ({
             {/* TODO: need to change bewebstudio to somethigng smarter*/}
             {widgetConfig.options?.url &&
               widgetConfig.options.url.includes('bewebstudio') && (
-                <DaTooltip
-                  className="py-1"
-                  content="Open widget in Studio"
-                  space={20}
-                  delay={500}
-                >
+                <DaTooltip className="py-1" content="Open widget in Studio">
                   <DaButton
                     variant="plain"
                     className="!px-0 hover:text-da-primary-500"
@@ -299,12 +248,7 @@ const DaDashboardEditor = ({
                 </DaTooltip>
               )}
 
-            <DaTooltip
-              className="py-1"
-              content="Edit widget"
-              space={20}
-              delay={500}
-            >
+            <DaTooltip className="py-1" content="Edit widget">
               <DaButton
                 variant="plain"
                 className="!px-0 hover:text-da-primary-500"
@@ -376,35 +320,26 @@ const DaDashboardEditor = ({
     const renderedWidgets = new Set()
 
     return CELLS.map((cell) => {
-      // let widgetIndex = -1;
-      // widgetConfigs.forEach((w, wIndex) => {
-      //     if(w.boxes?.includes(cell)) {
-      //         widgetIndex = wIndex
-      //     }
-      // })
       const widgetIndex = widgetConfigs.findIndex((w) =>
         w.boxes?.includes(cell),
       )
       const isCellSelected = selectedCells.includes(cell)
 
-      if (selectedCellValid && isCellSelected) {
+      if (isSelectedCellValid && isCellSelected) {
         const { rowSpan, colSpan } = calculateSpans(selectedCells)
-
         if (cell === Math.min(...selectedCells)) {
           return (
             <div
               key={`merged-${cell}`}
-              className={`flex relative border border-da-gray-medium col-span-${colSpan} row-span-${rowSpan} cursor-pointer !bg-da-white border-2 border-da-gray-dark items-center justify-center text-da-gray-dark`}
+              className={cn(
+                'flex relative cursor-pointer !bg-da-white border-2 border-da-gray-medium items-center justify-center text-da-gray-dark',
+                `col-span-${colSpan} row-span-${rowSpan}`,
+              )}
             >
-              <DaTooltip
-                content="Add widget from marketplace or built-in library"
-                className="!py-1"
-                space={30}
-                delay={500}
-              >
+              <DaTooltip content="Add widget from marketplace">
                 <DaButton
                   size="sm"
-                  variant="outline"
+                  variant="outline-nocolor"
                   onClick={() => handleAddWidget()}
                   className="hover:text-da-gray-dark"
                 >
@@ -413,15 +348,11 @@ const DaDashboardEditor = ({
                 </DaButton>
               </DaTooltip>
 
-              <DaTooltip
-                content="Cancel place widget"
-                className="!py-1"
-                space={30}
-                delay={500}
-              >
+              <DaTooltip content="Cancel place widget">
                 <DaButton
-                  variant="plain"
-                  className="mr-0 absolute top-2 right-0 hover:text-accent-500"
+                  variant="destructive"
+                  size="sm"
+                  className="mr-0 absolute top-1 right-1"
                   onClick={() => setSelectedCells([])}
                 >
                   <TbX className="w-5 h-5" />
@@ -474,82 +405,13 @@ const DaDashboardEditor = ({
           <div className="flex text-da-gray-dark">{warningMessage}</div>
         </div>
       )}
-      <DaPopup
-        state={codeEditorPopup}
-        className="flex w-[90%] max-w-[880px] h-[500px] bg-white rounded"
-        trigger={<span></span>}
-      >
-        <div className="flex flex-col w-full h-full">
-          <div className="flex relative w-full justify-between items-center p-4">
-            <div className="flex items-center text-aiot-blue">
-              <TbEdit className="w-6 h-6 mr-1.5" />
-              <div className="flex text-lg font-bold">Edit widget</div>
-            </div>
-            {usedAPIs && usedAPIs.length > 0 && (
-              <div ref={dropdownRef} className="flex flex-col relative">
-                <div className="flex w-full justify-end">
-                  <DaButton
-                    variant="outline"
-                    onClick={() => {
-                      setIsExpanded(!isExpanded)
-                    }}
-                  >
-                    <TbSelector className="mr-2 flex bg-da-white justify-end hover:bg-gray-50 w-fit" />{' '}
-                    Recently used APIs
-                  </DaButton>
-                </div>
-                {isExpanded && (
-                  <div className="absolute flex flex-col top-9 right-0 bg-da-white z-10 rounded border border-gray-200 shadow-sm cursor-pointer">
-                    {usedAPIs.map((api) => (
-                      <div
-                        onClick={() =>
-                          copyText(api.api, `Copied "${api.api}" to clipboard.`)
-                        }
-                        className="flex h-50% rounded hover:bg-da-gray-light items-center text-da-gray-dark group justify-between px-2 py-1 m-1"
-                        key={api.name}
-                      >
-                        <div className="flex text-sm mr-2">{api.api}</div>
-                        {
-                          <TbCopy
-                            className={`w-4 h-4 cursor-pointer invisible group-hover:visible`}
-                          />
-                        }
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-          <CodeEditor
-            language="json"
-            editable={true}
-            code={selectedWidget}
-            setCode={(e) => {
-              setSelectedWidget(e)
-            }}
-            onBlur={() => {}}
-          />
-          <div className="flex w-full space-x-2 justify-end p-4">
-            <DaButton
-              variant="outline"
-              className=""
-              onClick={() => codeEditorPopup[1](false)}
-            >
-              <TbX className="mr-2" /> Close
-            </DaButton>
-            <DaButton
-              variant="solid"
-              onClick={() => {
-                handleUpdateWidget()
-                codeEditorPopup[1](false)
-              }}
-            >
-              <TbCheck className="mr-2" /> Save
-            </DaButton>
-          </div>
-        </div>
-      </DaPopup>
+
+      <DaDashboardWidgetEditor
+        widgetEditorPopupState={codeEditorPopup}
+        selectedWidget={selectedWidget}
+        setSelectedWidget={setSelectedWidget}
+        handleUpdateWidget={handleUpdateWidget}
+      />
 
       <DaWidgetLibrary
         targetSelectionCells={targetSelectionCells}
