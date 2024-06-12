@@ -85,7 +85,7 @@ const FormCreateModel = () => {
         className="mt-4"
       />
       <DaSelect
-        defaultValue="vss-api"
+        defaultValue="vss-api-4.1"
         label="VSS API *"
         wrapperClassName="mt-4"
       >

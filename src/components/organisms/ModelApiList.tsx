@@ -12,6 +12,8 @@ import { TbPlus } from 'react-icons/tb'
 import DaPopup from '../atoms/DaPopup'
 import FormCreateWishlistApi from '../molecules/forms/FormCreateWishlistApi'
 import useCurrentModel from '@/hooks/useCurrentModel'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
 
 interface ModelApiListProps {
   onApiClick?: (details: any) => void
@@ -36,6 +38,7 @@ const ModelApiList = ({ onApiClick }: ModelApiListProps) => {
   const [selectedApi, setSelectedApi] = useState<VehicleApi>()
   const [isOpenPopup, setIsOpenPopup] = useState(false)
   const { data: model } = useCurrentModel()
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model_id])
 
   useEffect(() => {
     if (api) {
@@ -91,37 +94,35 @@ const ModelApiList = ({ onApiClick }: ModelApiListProps) => {
           onChange={(e) => handleSearchChange(e.target.value)}
         />
         <DaFilter
-          options={[
-            'Default',
-            'Wishlist',
-            'Branch',
-            'Sensor',
-            'Actuator',
-            'Attribute',
-          ]}
+          categories={{
+            API: ['Default', 'Wishlist'],
+            Type: ['Branch', 'Sensor', 'Actuator', 'Attribute'],
+          }}
           onChange={handleFilterChange}
           className="w-full"
         />
       </div>
       <div className="py-1">
-        <DaPopup
-          state={[isOpenPopup, setIsOpenPopup]}
-          trigger={
-            <DaButton variant="plain" size="sm">
-              <TbPlus className="w-4 h-4 mr-1" /> Add Wishlist API
-            </DaButton>
-          }
-        >
-          {model_id && model && (
-            <FormCreateWishlistApi
-              modelId={model_id}
-              existingCustomApis={model.custom_apis as VehicleApi[]}
-              onClose={() => {
-                setIsOpenPopup(false)
-              }}
-            />
-          )}
-        </DaPopup>
+        {isAuthorized && (
+          <DaPopup
+            state={[isOpenPopup, setIsOpenPopup]}
+            trigger={
+              <DaButton variant="plain" size="sm">
+                <TbPlus className="w-4 h-4 mr-1" /> Add Wishlist API
+              </DaButton>
+            }
+          >
+            {model_id && model && (
+              <FormCreateWishlistApi
+                modelId={model_id}
+                existingCustomApis={model.custom_apis as VehicleApi[]}
+                onClose={() => {
+                  setIsOpenPopup(false)
+                }}
+              />
+            )}
+          </DaPopup>
+        )}
       </div>
       <div className="flex-grow overflow-y-auto">
         <DaApiList

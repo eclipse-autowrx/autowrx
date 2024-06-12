@@ -11,6 +11,9 @@ import { CustomApi } from '@/types/model.type'
 import DaConfirmPopup from '../molecules/DaConfirmPopup'
 import { useNavigate } from 'react-router-dom'
 import DaLoader from '../atoms/DaLoader'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { useParams } from 'react-router-dom'
+import { PERMISSIONS } from '@/data/permission'
 
 interface ApiDetailProps {
   apiDetails: any
@@ -26,6 +29,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
   const { data: model, refetch } = useCurrentModel()
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model?.id])
 
   const handleDeleteWishlistApi = async () => {
     if (model && model.custom_apis) {
@@ -159,7 +163,8 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
               <DaLoader className="w-4 h-4 mr-1" /> Loading...
             </DaText>
           ) : (
-            apiDetails.isWishlist && (
+            apiDetails.isWishlist &&
+            isAuthorized && (
               <DaConfirmPopup
                 onConfirm={handleDeleteWishlistApi}
                 label="Are you sure you want to delete this wishlist API?"

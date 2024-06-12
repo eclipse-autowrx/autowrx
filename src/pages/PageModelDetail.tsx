@@ -27,6 +27,8 @@ import {
 } from 'react-icons/tb'
 import { downloadModelZip } from '@/lib/zipUtils'
 import useCurrentModel from '@/hooks/useCurrentModel'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
 
 interface VisibilityControlProps {
   initialVisibility: 'public' | 'private' | undefined
@@ -89,6 +91,7 @@ const PageModelDetail = () => {
   const [isEditingName, setIsEditingName] = useState(false)
   const [newName, setNewName] = useState(model?.name ?? '')
   const { refetch } = useCurrentModel()
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model?.id])
 
   const handleAvatarChange = async (file: File) => {
     if (!model || !model.id) return
@@ -171,60 +174,64 @@ const PageModelDetail = () => {
                 <DaText variant="title" className="text-da-primary-500">
                   {model.name}
                 </DaText>
-                <DaButton
-                  variant="plain"
-                  size="sm"
-                  className="ml-4"
-                  onClick={() => {
-                    setNewName(model.name)
-                    setIsEditingName(true)
-                  }}
-                >
-                  <TbEdit className="w-4 h-4 mr-2" />
-                  Edit name
-                </DaButton>
+                {isAuthorized && (
+                  <DaButton
+                    variant="plain"
+                    size="sm"
+                    className="ml-4"
+                    onClick={() => {
+                      setNewName(model.name)
+                      setIsEditingName(true)
+                    }}
+                  >
+                    <TbEdit className="w-4 h-4 mr-2" />
+                    Edit name
+                  </DaButton>
+                )}
               </div>
             )}
           </div>
-          <div className="flex items-center space-x-2">
-            <DaConfirmPopup
-              onConfirm={handleDeleteModel}
-              label="This action cannot be undone and will delete all of your model and prototypes data. Please proceed with caution."
-              confirmText={model.name}
-            >
-              <DaButton variant="destructive" size="sm" className="">
-                <TbTrashX className="w-4 h-4 mr-2" />
-                Delete Model
-              </DaButton>
-            </DaConfirmPopup>
-            {!isExporting ? (
-              <DaButton
-                variant="outline-nocolor"
-                size="sm"
-                onClick={async () => {
-                  if (!model) return
-                  setIsExporting(true)
-                  try {
-                    await downloadModelZip(model)
-                  } catch (e) {
-                    console.error(e)
-                  }
-                  setIsExporting(false)
-                }}
+          {isAuthorized && (
+            <div className="flex items-center space-x-2">
+              <DaConfirmPopup
+                onConfirm={handleDeleteModel}
+                label="This action cannot be undone and will delete all of your model and prototypes data. Please proceed with caution."
+                confirmText={model.name}
               >
-                <TbFileExport className="w-4 h-4 mr-2" />
-                Export Model
-              </DaButton>
-            ) : (
-              <DaText
-                variant="regular"
-                className="flex items-center text-da-gray-medium"
-              >
-                <TbLoader className="animate-spin text-lg mr-2" />
-                Exporting model...
-              </DaText>
-            )}
-          </div>
+                <DaButton variant="destructive" size="sm" className="">
+                  <TbTrashX className="w-4 h-4 mr-2" />
+                  Delete Model
+                </DaButton>
+              </DaConfirmPopup>
+              {!isExporting ? (
+                <DaButton
+                  variant="outline-nocolor"
+                  size="sm"
+                  onClick={async () => {
+                    if (!model) return
+                    setIsExporting(true)
+                    try {
+                      await downloadModelZip(model)
+                    } catch (e) {
+                      console.error(e)
+                    }
+                    setIsExporting(false)
+                  }}
+                >
+                  <TbFileExport className="w-4 h-4 mr-2" />
+                  Export Model
+                </DaButton>
+              ) : (
+                <DaText
+                  variant="regular"
+                  className="flex items-center text-da-gray-medium"
+                >
+                  <TbLoader className="animate-spin text-lg mr-2" />
+                  Exporting model...
+                </DaText>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -243,41 +250,46 @@ const PageModelDetail = () => {
               </div>
             </Link>
           ))}
+          {isAuthorized && (
+            <>
+              <DaVehicleProperties
+                key={model.id}
+                category={model.vehicle_category ? model.vehicle_category : ''}
+                properties={convertJSONToProperty(model.property) ?? []}
+                className="mt-3"
+              />
 
-          <DaVehicleProperties
-            key={model.id}
-            category={model.vehicle_category ? model.vehicle_category : ''}
-            properties={convertJSONToProperty(model.property) ?? []}
-            className="mt-3"
-          />
+              <DaVisibilityControl
+                initialVisibility={model.visibility}
+                onVisibilityChange={(newVisibility) => {
+                  updateModelService(model.id, {
+                    visibility: newVisibility,
+                  })
+                }}
+              />
 
-          <DaVisibilityControl
-            initialVisibility={model.visibility}
-            onVisibilityChange={(newVisibility) => {
-              updateModelService(model.id, {
-                visibility: newVisibility,
-              })
-            }}
-          />
-
-          <DaContributorList
-            className="mt-3"
-            contributors={model.contributors ? model.contributors : []}
-            members={model.members ? model.members : []}
-          />
+              <DaContributorList
+                className="mt-3"
+                contributors={model.contributors ? model.contributors : []}
+                members={model.members ? model.members : []}
+              />
+            </>
+          )}
         </div>
         <div className="col-span-6 flex flex-col overflow-y-auto pr-2">
           <DaImage src={model.model_home_image_file} alt={model.name} />
           <div className="flex w-full justify-end">
-            <DaImportFile
-              onFileChange={handleAvatarChange}
-              accept=".png, .jpg, .jpeg"
-            >
-              <DaButton variant="outline-nocolor" className="mt-3" size="sm">
-                <TbPhotoEdit className="w-4 h-4 mr-2" />
-                Update Image
-              </DaButton>
-            </DaImportFile>
+            {isAuthorized && (
+              <DaImportFile
+                onFileChange={handleAvatarChange}
+                accept=".png, .jpg, .jpeg"
+              >
+                <DaButton variant="outline-nocolor" className="mt-3" size="sm">
+                  <TbPhotoEdit className="w-4 h-4 mr-2" />
+                  Update Image
+                </DaButton>
+              </DaImportFile>
+            )}
           </div>
         </div>
       </div>
