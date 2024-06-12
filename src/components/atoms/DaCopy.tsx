@@ -1,7 +1,6 @@
 import { TbCopy } from 'react-icons/tb'
 import { useToast } from '../molecules/toaster/use-toast'
 import { DaText } from './DaText'
-import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
 interface DaCopyProps {
   textToCopy: string
@@ -17,7 +16,6 @@ const DaCopy = ({
   label,
 }: DaCopyProps) => {
   const { toast } = useToast()
-  const { refetch } = useSelfProfileQuery()
 
   const handleCopyClick = () => {
     navigator.clipboard

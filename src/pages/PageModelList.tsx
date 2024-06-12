@@ -24,7 +24,6 @@ const PageModelList = () => {
       setIsImporting(true)
       await createNewModel(model)
     }
-    // console.log(model)
   }
 
   const createNewModel = async (importedModel: any) => {
