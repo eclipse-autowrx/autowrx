@@ -11,6 +11,20 @@ import PrototypeTabJourney from '@/components/organisms/PrototypeTabJourney'
 import PrototypeTabFeedback from '@/components/organisms/PrototypeTabFeedback'
 import PrototypeTabHomologation from '@/components/organisms/PrototypeTabHomologation'
 import PrototypeTabArchitecture from '@/components/organisms/PrototypeTabArchitecture'
+import {
+  TbBinaryTree,
+  TbCode,
+  TbDownload,
+  TbGauge,
+  TbMessage,
+  TbMessagePlus,
+  TbRoute,
+  TbScale,
+} from 'react-icons/tb'
+import { DaButton } from '@/components/atoms/DaButton'
+import { downloadPrototypeZip } from '@/lib/zipUtils'
+import DaDiscussions from '@/components/molecules/DaDiscussions'
+import DaPopup from '@/components/atoms/DaPopup'
 
 interface ViewPrototypeProps {
   display?: 'tree' | 'list'
@@ -39,28 +53,58 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
   }
 
   return (
-    <div className="w-full h-full flex flex-col">
-      <div className="px-4 py-2 flex bg-da-primary-500 text-da-white da-label-sub-title">
-        {prototype.name}
-        <div className="grow"></div>
+    <div className="flex flex-col w-full h-full">
+      <div className="flex px-4 py-2  bg-da-primary-500 justify-between items-center">
+        <DaText variant="sub-title" className="text-white">
+          {prototype.name}
+        </DaText>
+        <div className="flex space-x-2 w-1/2 justify-end">
+          <DaPopup
+            trigger={
+              <DaButton
+                variant="plain"
+                className="!text-da-white !bg-transparent hover:opacity-75"
+                size="sm"
+              >
+                <TbMessage className="w-5 h-5 mr-2" />
+                Discussion
+              </DaButton>
+            }
+          >
+            <DaDiscussions refId={prototype.id} refType="prototype" />
+          </DaPopup>
+
+          <DaButton
+            variant="plain"
+            className="!text-da-white !bg-transparent hover:opacity-75"
+            size="sm"
+            onClick={() => downloadPrototypeZip(prototype)}
+          >
+            <TbDownload className="w-5 h-5 mr-2" />
+            Export Prototype{' '}
+          </DaButton>
+        </div>
       </div>
-      <div className="flex px-6 py-0 bg-da-gray-light min-h-8">
+      <div className="flex px-2 py-0 bg-da-gray-light min-h-10">
         <DaTabItem
           active={isDefaultTab}
           to={`/model/${model_id}/library/prototype/${prototype_id}/journey`}
         >
+          <TbRoute className="w-5 h-5 mr-2" />
           Journey
         </DaTabItem>
         <DaTabItem
           active={tab == 'architecture'}
           to={`/model/${model_id}/library/prototype/${prototype_id}/architecture`}
         >
+          <TbBinaryTree className="w-5 h-5 mr-2" />
           Architecture
         </DaTabItem>
         <DaTabItem
           active={tab == 'code'}
           to={`/model/${model_id}/library/prototype/${prototype_id}/code`}
         >
+          <TbCode className="w-5 h-5 mr-2" />
           Code
         </DaTabItem>
         {/* <DaTabItem
@@ -73,18 +117,21 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           active={tab == 'dashboard'}
           to={`/model/${model_id}/library/prototype/${prototype_id}/dashboard`}
         >
+          <TbGauge className="w-5 h-5 mr-2" />
           Dashboard
         </DaTabItem>
         <DaTabItem
           active={tab == 'homologation'}
           to={`/model/${model_id}/library/prototype/${prototype_id}/homologation`}
         >
+          <TbScale className="w-5 h-5 mr-2" />
           Homologation
         </DaTabItem>
         <DaTabItem
           active={tab == 'feedback'}
           to={`/model/${model_id}/library/prototype/${prototype_id}/feedback`}
         >
+          <TbMessagePlus className="w-5 h-5 mr-2" />
           Feedback
         </DaTabItem>
       </div>

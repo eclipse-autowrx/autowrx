@@ -24,7 +24,6 @@ const PageModelList = () => {
       setIsImporting(true)
       await createNewModel(model)
     }
-    // console.log(model)
   }
 
   const createNewModel = async (importedModel: any) => {
@@ -91,7 +90,7 @@ const PageModelList = () => {
           <div className="flex">
             {!isImporting ? (
               <DaImportFile accept=".zip" onFileChange={handleImportModelZip}>
-                <DaButton variant="outline" className="mr-2">
+                <DaButton variant="outline-nocolor" size="sm" className="mr-2">
                   <TbPackageExport className="mr-1 text-lg" /> Import Model
                 </DaButton>
               </DaImportFile>
@@ -106,7 +105,7 @@ const PageModelList = () => {
             )}
             <DaPopup
               trigger={
-                <DaButton variant="outline" className="">
+                <DaButton variant="solid" size="sm" className="">
                   <HiPlus className="mr-1 text-lg" />
                   Create New Model
                 </DaButton>

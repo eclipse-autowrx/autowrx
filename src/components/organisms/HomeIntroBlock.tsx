@@ -1,6 +1,6 @@
-import React from 'react'
 import { DaCardIntroBig } from '../molecules/DaCardIntroBig'
 import { useNavigate } from 'react-router-dom'
+import config from '@/configs/config'
 
 const cardData = [
   {
@@ -8,6 +8,7 @@ const cardData = [
     content:
       'Browse, explore and enhance the catalogue of Connected Vehicle Interfaces',
     buttonText: 'Getting Started',
+    path: `model/${config.defaultModelId}/api`,
   },
   {
     title: 'Prototyping',
@@ -21,6 +22,7 @@ const cardData = [
     content:
       'Collect and evaluate user feedback to prioritize your development portfolio',
     buttonText: 'Getting Started',
+    path: `model/${config.defaultModelId}/api`,
   },
 ]
 

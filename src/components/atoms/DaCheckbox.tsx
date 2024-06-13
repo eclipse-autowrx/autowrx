@@ -22,7 +22,7 @@ const DaCheckbox = ({
         onChange={onChange}
         className="h-4 w-4 relative peer shrink-0
         appearance-none border-2 rounded-sm bg-white
-        checked:bg-da-primary-500 checked:border-0"
+        checked:bg-da-primary-500 checked:border-0  cursor-pointer"
       />
       <svg
         className="absolute w-4 h-4 hidden peer-checked:block"
@@ -36,7 +36,7 @@ const DaCheckbox = ({
       >
         <polyline points="20 6 9 17 4 12"></polyline>
       </svg>
-      <span className="ml-2">{label}</span>
+      <span className="ml-2 cursor-pointer">{label}</span>
     </label>
   )
 }

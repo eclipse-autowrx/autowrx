@@ -37,17 +37,19 @@ export const parseCvi = (cvi: Cvi) => {
   ): VehicleApi[] => {
     let result: VehicleApi[] = []
 
+    result.push({ ...node, name: prefix })
+
     if (node.children) {
       for (const [key, child] of Object.entries(node.children)) {
         const newPrefix = `${prefix}.${key}`
         node.children[key].name = newPrefix
-        result.push({ ...child, name: newPrefix })
         result = result.concat(traverse(child, newPrefix))
       }
     }
 
     return result
   }
+
   return traverse(cvi.Vehicle)
 }
 

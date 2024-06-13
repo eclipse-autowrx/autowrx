@@ -57,10 +57,10 @@ const PageVehicleApi = () => {
       </div>
       {activeTab === 'list' && (
         <>
-          <div className="col-span-6 w-full flex overflow-auto border-r">
+          <div className="col-span-6 flex w-full h-full overflow-auto border-r">
             <ModelApiList onApiClick={handleApiClick} />
           </div>
-          <div className="col-span-6 w-full flex h-full overflow-auto">
+          <div className="col-span-6 flex w-full h-full overflow-auto">
             {selectedApi ? (
               <ApiDetail apiDetails={selectedApi} />
             ) : (

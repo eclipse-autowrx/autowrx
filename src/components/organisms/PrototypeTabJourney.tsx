@@ -20,6 +20,8 @@ import useCurrentModel from '@/hooks/useCurrentModel'
 import { useNavigate } from 'react-router-dom'
 import useListModelPrototypes from '@/hooks/useListModelPrototypes'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
 
 interface PrototypeTabJourneyProps {
   prototype: Prototype
@@ -38,8 +40,8 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
     model?.id || '',
   )
   const { refetch: refetchCurrentPrototype } = useCurrentPrototype()
-
   const navigate = useNavigate()
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
 
   if (!prototype) {
     return <DaText>No prototype available</DaText>
@@ -59,11 +61,12 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
       tags: localPrototype.tags,
       customer_journey: localPrototype.customer_journey,
       image_file: localPrototype.image_file,
-      state: localPrototype.description.state,
+      state: localPrototype.state,
     }
     try {
       await updatePrototypeService(prototype.id, updateData)
       await refetchCurrentPrototype()
+      await refetchModelPrototypes()
       setIsEditing(false)
     } catch (error) {
       console.error('Error updating prototype:', error)
@@ -183,28 +186,30 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
               </>
             ) : (
               <>
-                <DaText variant="title" className="text-da-primary-500">
+                <DaText variant="title" className="text-da-primary-500 mt-2">
                   {localPrototype.name}
                 </DaText>
-                <div className="flex space-x-2">
-                  <DaConfirmPopup
-                    onConfirm={handleDeletePrototype}
-                    label="This action cannot be undone and will delete all of your prototype data. Please proceed with caution."
-                    confirmText={prototype.name}
-                  >
-                    <DaButton variant="destructive" size="sm" className="">
-                      <TbTrashX className="w-4 h-4 mr-2" />
-                      Delete Prototype
+                {isAuthorized && (
+                  <div className="flex space-x-2">
+                    <DaConfirmPopup
+                      onConfirm={handleDeletePrototype}
+                      label="This action cannot be undone and will delete all of your prototype data. Please proceed with caution."
+                      confirmText={prototype.name}
+                    >
+                      <DaButton variant="destructive" size="sm" className="">
+                        <TbTrashX className="w-4 h-4 mr-2" />
+                        Delete Prototype
+                      </DaButton>
+                    </DaConfirmPopup>
+                    <DaButton
+                      onClick={() => setIsEditing(true)}
+                      className=" text-white px-4 py-2 rounded"
+                      size="sm"
+                    >
+                      <TbEdit className="w-4 h-4 mr-1" /> Edit Prototype
                     </DaButton>
-                  </DaConfirmPopup>
-                  <DaButton
-                    onClick={() => setIsEditing(true)}
-                    className=" text-white px-4 py-2 rounded"
-                    size="sm"
-                  >
-                    <TbEdit className="w-4 h-4 mr-1" /> Edit Prototype
-                  </DaButton>
-                </div>
+                  </div>
+                )}
               </>
             )}
           </div>
