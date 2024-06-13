@@ -367,13 +367,13 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
         </DaText>
         <div className="flex w-full justify-between items-center">
           <div className="flex mb-2 w-fit rounded !da-label-small mt-2">
-            {/* <DaTabItem
+            <DaTabItem
               active={activeTab === 'builtin'}
               onClick={() => setActiveTab('builtin')}
             >
               <TbLayoutGrid className="mr-2" />
               Built-in ({buildinWidgets.length})
-            </DaTabItem> */}
+            </DaTabItem>
             <DaTabItem
               active={activeTab === 'market'}
               onClick={() => setActiveTab('market')}

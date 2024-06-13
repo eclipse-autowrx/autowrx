@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { DaButton } from '../../atoms/DaButton'
 import {
   TbEdit,
@@ -16,11 +16,12 @@ import DaWidgetLibrary from '../widgets/DaWidgetLibrary'
 import { isContinuousRectangle, doesOverlap, calculateSpans } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import DaDashboardWidgetEditor from './DaDashboardWidgetEditor'
+import { DaText } from '@/components/atoms/DaText'
 
 interface DaDashboardEditorProps {
   entireWidgetConfig?: string
   onDashboardConfigChanged: (config: any) => void
-  isEditing?: boolean
+  editable?: boolean
 }
 
 export interface WidgetConfig {
@@ -34,7 +35,7 @@ export interface WidgetConfig {
 const DaDashboardEditor = ({
   entireWidgetConfig,
   onDashboardConfigChanged,
-  isEditing: editable,
+  editable,
 }: DaDashboardEditorProps) => {
   const CELLS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
   const [widgetConfigs, setWidgetConfigs] = useState<WidgetConfig[]>([])
@@ -52,7 +53,6 @@ const DaDashboardEditor = ({
   const [targetSelectionCells, setTargetSelectionCells] = useState<number[]>([]) // New state to track selected cells
 
   const codeEditorPopup = useState<boolean>(false)
-
   const [buildinWidgets, setBuildinWidgets] = useState<any[]>(BUILT_IN_WIDGETS)
 
   // This useEffect used to load the existed widget configuration
@@ -141,11 +141,9 @@ const DaDashboardEditor = ({
         .split('/')
       const projectId = urlParts[0]
       const fileName = urlParts.slice(1).join('/')
-      // Construct the new URL
       const newUrl = `${config.studioUrl}/project/${projectId}?fileName=/${encodeURIComponent(
         fileName,
       )}`
-      // Open the new URL
       window.open(newUrl)
     }
   }
@@ -159,10 +157,8 @@ const DaDashboardEditor = ({
 
     setSelectedCells(updatedSelectedCells)
     setIsSelectedCellValid(isValidSelection)
-
     setSelectedWidgetIndex(null) // unselect placed widget
     if (!isValidSelection) {
-      // Optional: Notify user of invalid selection
     }
   }
   const handleWidgetClick = (index: number) => {
@@ -216,10 +212,13 @@ const DaDashboardEditor = ({
     const { rowSpan, colSpan } = calculateSpans(widgetConfig.boxes)
     return (
       <div
-        className={`group flex relative border border-da-gray-medium select-none cursor-pointer col-span-${colSpan} row-span-${rowSpan} text-da-gray-dark da-label-small ${
+        className={cn(
+          'group flex relative border border-da-gray-medium select-none cursor-pointer text-da-gray-dark da-label-small',
+          `col-span-${colSpan} row-span-${rowSpan}`,
           selectedWidgetIndex === index &&
-          `!border-da-primary-500 !text-da-primary-500 !bg-da-gray-light `
-        } bg-da-gray-light hover:bg-da-gray-light`}
+            '!border-da-primary-500 !text-da-primary-500 !bg-da-gray-light',
+          'bg-da-gray-light hover:bg-da-gray-light',
+        )}
         key={`${index}-${cell}`}
         onClick={() => handleWidgetClick(index)}
       >
@@ -336,7 +335,7 @@ const DaDashboardEditor = ({
                 `col-span-${colSpan} row-span-${rowSpan}`,
               )}
             >
-              <DaTooltip content="Add widget from marketplace">
+              <DaTooltip content="Add widget from marketplace or built-in">
                 <DaButton
                   size="sm"
                   variant="outline-nocolor"
@@ -371,10 +370,12 @@ const DaDashboardEditor = ({
         return (
           <div
             key={`empty-${cell}`}
-            className={`flex border border-da-gray-medium justify-center items-center select-none da-label-small text-da-gray-medium font-bold cursor-pointer ${
+            className={cn(
+              'flex border border-da-gray-medium justify-center items-center select-none da-label-small text-da-gray-medium font-bold',
               selectedCells.includes(cell) &&
-              'bg-da-gray-light text-da-gray-dark'
-            }`}
+                'bg-da-gray-light text-da-gray-dark',
+              !editable && 'pointer-events-none',
+            )}
             onClick={() => handleSelectCell(cell)}
           >
             {cell}
@@ -395,9 +396,9 @@ const DaDashboardEditor = ({
         {widgetGrid()}
       </div>
       {editable && (
-        <div className="italic py-0.5 text-da-gray-medium da-label-regular">
+        <DaText variant="small" className="py-2">
           Click on empty cell to place new widget
-        </div>
+        </DaText>
       )}
       {warningMessage && (
         <div className="flex w-fit mt-3 rounded py-1 px-2 justify-center items-center border border-da-gray-light shadow-sm select-none">

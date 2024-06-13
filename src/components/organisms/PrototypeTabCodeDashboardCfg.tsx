@@ -10,6 +10,9 @@ import { BsStars } from 'react-icons/bs'
 import DaPopup from '../atoms/DaPopup'
 import DaGenAI_Dashboard from '../molecules/genAI/DaGenAI_Dashboard'
 import { DaText } from '../atoms/DaText'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import useCurrentModel from '@/hooks/useCurrentModel'
+import { PERMISSIONS } from '@/data/permission'
 
 const PrototypeTabCodeDashboardCfg: FC = ({}) => {
   const [prototype, setActivePrototype] = useModelStore(
@@ -18,10 +21,11 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
   )
   const [dashboardCfg, setDashboardCfg] = useState<string>('')
   const [isEditing, setIsEditing] = useState<boolean>(true)
-  const [useApis, setUseApis] = useState<any[]>([])
   const [isExpanded, setIsExpanded] = useState(false)
   const [ticker, setTicker] = useState(0)
   const [isOpenGenAI, setIsOpenGenAI] = useState(false)
+  const { data: model } = useCurrentModel()
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
 
   useEffect(() => {
     let timer = setInterval(() => {
@@ -72,58 +76,62 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
       <DaDashboardEditor
         // widgetConfigString={prototype.widget_config}
         entireWidgetConfig={prototype.widget_config}
-        isEditing={isEditing}
-        usedAPIs={useApis}
+        editable={isAuthorized}
         onDashboardConfigChanged={(config: string) => {
-          console.log(`onDashboardConfigChanged`, config)
+          // console.log(`onDashboardConfigChanged`, config)
           saveDashboardCfgToDb(config)
         }}
       />
       <div className="flex flex-col h-full w-full items-center px-2 py-1 text-xs text-da-gray-medium rounded">
-        <div className="flex w-full">
-          <DaButton
-            variant="outline"
-            className="flex bg-white pl-3 mr-2"
-            onClick={() => setIsExpanded((old) => !old)}
-          >
-            <div>Show all raw config text</div>
-            {isExpanded ? (
-              <TbChevronDown className="ml-1" />
-            ) : (
-              <TbChevronRight className="ml-1" />
-            )}
-          </DaButton>
-          <DaPopup
-            state={[isOpenGenAI, setIsOpenGenAI]}
-            trigger={
-              <DaButton variant="outline">
-                <BsStars className="w-4 h-auto text-aiot-blue mr-1" />
-                Dashboard ProtoPilot
-              </DaButton>
-            }
-          >
-            <div className="flex flex-col w-[1000px] h-[500px]">
-              <DaText variant="title" className="text-da-primary-500">
-                {' '}
-                Dashboard ProtoPilot{' '}
-              </DaText>
-              <DaGenAI_Dashboard
-                onCodeChanged={(code) => {
-                  setDashboardCfg(code)
-                  setIsOpenGenAI(false)
-                }}
-                pythonCode={prototype.code}
-              />
-            </div>
-          </DaPopup>
-        </div>
+        {isAuthorized && (
+          <div className="flex w-full">
+            <DaButton
+              variant="outline-nocolor"
+              size="sm"
+              className="flex bg-white pl-3 mr-2"
+              onClick={() => setIsExpanded((old) => !old)}
+            >
+              <div>Show all raw config text</div>
+              {isExpanded ? (
+                <TbChevronDown className="ml-1" />
+              ) : (
+                <TbChevronRight className="ml-1" />
+              )}
+            </DaButton>
+
+            <DaPopup
+              state={[isOpenGenAI, setIsOpenGenAI]}
+              trigger={
+                <DaButton variant="outline-nocolor" size="sm">
+                  <BsStars className="w-4 h-auto text-da-primary-500 mr-1" />
+                  Dashboard ProtoPilot
+                </DaButton>
+              }
+            >
+              <div className="flex flex-col w-[1000px] h-[500px]">
+                <DaText variant="title" className="text-da-primary-500">
+                  {' '}
+                  Dashboard ProtoPilot{' '}
+                </DaText>
+
+                <DaGenAI_Dashboard
+                  onCodeChanged={(code) => {
+                    setDashboardCfg(code)
+                    setIsOpenGenAI(false)
+                  }}
+                  pythonCode={prototype.code}
+                />
+              </div>
+            </DaPopup>
+          </div>
+        )}
         <div
           className={`flex w-full h-full ${isExpanded ? 'visible' : 'invisible'}`}
         >
           <CodeEditor
             code={dashboardCfg}
             setCode={setDashboardCfg}
-            editable={isEditing}
+            editable={isEditing && isAuthorized}
             language="json"
             onBlur={() => {
               console.log('CodeEditor On blur')

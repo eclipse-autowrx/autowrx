@@ -13,13 +13,14 @@ import { TbEdit, TbPlus } from 'react-icons/tb'
 import DaConfirmPopup from '@/components/molecules/DaConfirmPopup'
 import { DaInput } from '@/components/atoms/DaInput'
 import { cn } from '@/lib/utils'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
 
 const MASTER_ITEM = 'master'
 
 const PrototypeTabArchitecture = () => {
   const [searchParams] = useSearchParams()
   const { data: prototype, refetch: refetchPrototype } = useCurrentPrototype()
-
   const [skeleton, setSkeleton] = useState<any>(null)
   const [activeNodeId, setActiveNodeId] = useState<any>(null)
   const [activeNode, setActiveNode] = useState<any>(null)
@@ -27,6 +28,8 @@ const PrototypeTabArchitecture = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [isEditName, setIsEditName] = useState<boolean>(false)
   const [tmpNodeName, setTmpNodeName] = useState<string>('')
+  const { data: model } = useCurrentModel()
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -96,6 +99,7 @@ const PrototypeTabArchitecture = () => {
         bgImage: '',
         shapes: [],
       },
+      bgImage: 'https://placehold.co/1024x576?text=Empty+Architecture',
     })
     setSkeleton(tmpSkele)
     setActiveNodeId(id)
@@ -183,9 +187,11 @@ const PrototypeTabArchitecture = () => {
       <div className="flex flex-col min-w-[400px] px-4 h-full border-r">
         <div className="flex py-1 items-center justify-between">
           <DaText variant="sub-title">Architecture Mapping</DaText>
-          <DaButton onClick={createNewNode} size="sm" variant="solid">
-            <TbPlus className="w-4 h-4 mr-1" /> New Node
-          </DaButton>
+          {isAuthorized && (
+            <DaButton onClick={createNewNode} size="sm" variant="solid">
+              <TbPlus className="w-4 h-4 mr-1" /> New Node
+            </DaButton>
+          )}
         </div>
         <div className="w-full grow overflow-auto  pt-2 space-y-2">
           {skeleton &&
@@ -213,18 +219,20 @@ const PrototypeTabArchitecture = () => {
                     ID: {node.id}
                   </DaText>
                   <div className="flex text-xs font-bold space-x-2">
-                    <DaConfirmPopup
-                      label="Are you sure you want to delete this node?"
-                      onConfirm={() => handleDeleteNode(node.id)}
-                    >
-                      <DaButton
-                        variant="destructive"
-                        size="sm"
-                        className="text-destructive da-clickable"
+                    {isAuthorized && (
+                      <DaConfirmPopup
+                        label="Are you sure you want to delete this node?"
+                        onConfirm={() => handleDeleteNode(node.id)}
                       >
-                        Delete
-                      </DaButton>
-                    </DaConfirmPopup>
+                        <DaButton
+                          variant="destructive"
+                          size="sm"
+                          className="text-destructive da-clickable"
+                        >
+                          Delete
+                        </DaButton>
+                      </DaConfirmPopup>
+                    )}
 
                     <DaCopy
                       textToCopy={`${window.location.pathname}?id=${node.id}`}
@@ -253,18 +261,20 @@ const PrototypeTabArchitecture = () => {
                   <DaText variant="title" className="text-da-primary-500">
                     {activeNode.name}
                   </DaText>
-                  <DaButton
-                    onClick={() => {
-                      setTmpNodeName(activeNode.name)
-                      setIsEditName(true)
-                    }}
-                    size="sm"
-                    variant="plain"
-                    className="ml-2"
-                  >
-                    <TbEdit className="w-4 h-4 mr-2" />
-                    Edit Name
-                  </DaButton>
+                  {isAuthorized && (
+                    <DaButton
+                      onClick={() => {
+                        setTmpNodeName(activeNode.name)
+                        setIsEditName(true)
+                      }}
+                      size="sm"
+                      variant="plain"
+                      className="ml-2"
+                    >
+                      <TbEdit className="w-4 h-4 mr-2" />
+                      Edit Name
+                    </DaButton>
+                  )}
                 </div>
               )}
               {isEditName && (
@@ -313,20 +323,22 @@ const PrototypeTabArchitecture = () => {
               >
                 View Mode
               </DaButton>
-              <DaButton
-                className={` ${
-                  isEditMode
-                    ? '!border-da-primary-500 !text-da-primary-500 bg-da-primary-100'
-                    : 'text-da-gray-medium'
-                }`}
-                onClick={() => {
-                  setIsEditMode(true)
-                }}
-                size="sm"
-                variant="plain"
-              >
-                Edit Mode
-              </DaButton>
+              {isAuthorized && (
+                <DaButton
+                  className={` ${
+                    isEditMode
+                      ? '!border-da-primary-500 !text-da-primary-500 bg-da-primary-100'
+                      : 'text-da-gray-medium'
+                  }`}
+                  onClick={() => {
+                    setIsEditMode(true)
+                  }}
+                  size="sm"
+                  variant="plain"
+                >
+                  Edit Mode
+                </DaButton>
+              )}
             </div>
           </div>
 

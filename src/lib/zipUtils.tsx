@@ -226,24 +226,6 @@ export const downloadPrototypeZip = async (prototype: Prototype) => {
             }
           }
         }
-        // Temporarily disable plugin download since no API available
-        // if (pluginList.length > 0) {
-        //   let plugins = await getPlugins(prototype.model_id)
-        //   plugins = plugins.filter((plugin) => pluginList.includes(plugin.name))
-        //   zip.file(
-        //     'plugins.json',
-        //     JSON.stringify(
-        //       plugins.map((plugin) => ({
-        //         name: plugin.name,
-        //         description: plugin.description,
-        //         image_file: plugin.image_file,
-        //         js_code_url: plugin.js_code_url,
-        //       })),
-        //       null,
-        //       4,
-        //     ),
-        //   )
-        // }
       } catch (e) {
         console.log('Error on widget_config', e)
       }

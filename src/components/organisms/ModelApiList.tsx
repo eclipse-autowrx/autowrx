@@ -8,16 +8,20 @@ import { useParams } from 'react-router-dom'
 import { VehicleApi } from '@/types/model.type'
 import { shallow } from 'zustand/shallow'
 import { DaButton } from '../atoms/DaButton'
-import { TbPlus } from 'react-icons/tb'
+import { TbPlus, TbSearch } from 'react-icons/tb'
 import DaPopup from '../atoms/DaPopup'
 import FormCreateWishlistApi from '../molecules/forms/FormCreateWishlistApi'
 import useCurrentModel from '@/hooks/useCurrentModel'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
+import { read } from 'fs'
 
 interface ModelApiListProps {
   onApiClick?: (details: any) => void
+  readOnly?: boolean
 }
 
-const ModelApiList = ({ onApiClick }: ModelApiListProps) => {
+const ModelApiList = ({ onApiClick, readOnly }: ModelApiListProps) => {
   const { model_id, api } = useParams()
   const [activeModelApis] = useModelStore(
     (state) => [state.activeModelApis],
@@ -36,6 +40,7 @@ const ModelApiList = ({ onApiClick }: ModelApiListProps) => {
   const [selectedApi, setSelectedApi] = useState<VehicleApi>()
   const [isOpenPopup, setIsOpenPopup] = useState(false)
   const { data: model } = useCurrentModel()
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model_id])
 
   useEffect(() => {
     if (api) {
@@ -46,6 +51,14 @@ const ModelApiList = ({ onApiClick }: ModelApiListProps) => {
       }
     }
   }, [api, activeModelApis])
+
+  useEffect(() => {
+    if (readOnly) return
+    if (activeModelApis) {
+      setSelectedApi(activeModelApis[0])
+      onApiClick?.(activeModelApis[0])
+    }
+  }, [])
 
   useEffect(() => {
     let filteredList = activeModelApis.filter((apiItem) =>
@@ -88,40 +101,40 @@ const ModelApiList = ({ onApiClick }: ModelApiListProps) => {
         <DaInput
           placeholder="Search API"
           className="mr-2 w-full"
+          Icon={TbSearch}
+          iconBefore={true}
           onChange={(e) => handleSearchChange(e.target.value)}
         />
         <DaFilter
-          options={[
-            'Default',
-            'Wishlist',
-            'Branch',
-            'Sensor',
-            'Actuator',
-            'Attribute',
-          ]}
+          categories={{
+            API: ['Default', 'Wishlist'],
+            Type: ['Branch', 'Sensor', 'Actuator', 'Attribute'],
+          }}
           onChange={handleFilterChange}
           className="w-full"
         />
       </div>
       <div className="py-1">
-        <DaPopup
-          state={[isOpenPopup, setIsOpenPopup]}
-          trigger={
-            <DaButton variant="plain" size="sm">
-              <TbPlus className="w-4 h-4 mr-1" /> Add Wishlist API
-            </DaButton>
-          }
-        >
-          {model_id && model && (
-            <FormCreateWishlistApi
-              modelId={model_id}
-              existingCustomApis={model.custom_apis as VehicleApi[]}
-              onClose={() => {
-                setIsOpenPopup(false)
-              }}
-            />
-          )}
-        </DaPopup>
+        {isAuthorized && (
+          <DaPopup
+            state={[isOpenPopup, setIsOpenPopup]}
+            trigger={
+              <DaButton variant="plain" size="sm">
+                <TbPlus className="w-4 h-4 mr-1" /> Add Wishlist API
+              </DaButton>
+            }
+          >
+            {model_id && model && (
+              <FormCreateWishlistApi
+                modelId={model_id}
+                existingCustomApis={model.custom_apis as VehicleApi[]}
+                onClose={() => {
+                  setIsOpenPopup(false)
+                }}
+              />
+            )}
+          </DaPopup>
+        )}
       </div>
       <div className="flex-grow overflow-y-auto">
         <DaApiList

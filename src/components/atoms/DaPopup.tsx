@@ -23,7 +23,7 @@ const DaPopup = forwardRef<HTMLDivElement, PopupProps>(
           ref={ref}
           open={open}
           onClose={() => setOpen(false)}
-          style={{ zIndex: 10 }}
+          style={{ zIndex: 99 }}
         >
           <div
             className={clsx('da-popup-inner', className)}
