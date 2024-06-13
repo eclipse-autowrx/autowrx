@@ -61,7 +61,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
       tags: localPrototype.tags,
       customer_journey: localPrototype.customer_journey,
       image_file: localPrototype.image_file,
-      state: localPrototype.description.state,
+      state: localPrototype.state,
     }
     try {
       await updatePrototypeService(prototype.id, updateData)

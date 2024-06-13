@@ -28,7 +28,9 @@ const useModelStore = create<ModelState & Actions>()(
         state.model = model
         if (model) {
           const cviData = JSON.parse(CVI_v4_1)
+          console.log('cviData', cviData)
           const parsedApiList = parseCvi(cviData)
+          console.log('parsedApiList', parsedApiList)
 
           parsedApiList.forEach((item: any) => {
             if (item.type == 'branch') return

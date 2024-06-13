@@ -29,6 +29,7 @@ import { downloadModelZip } from '@/lib/zipUtils'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
+import { cn } from '@/lib/utils'
 
 interface VisibilityControlProps {
   initialVisibility: 'public' | 'private' | undefined
@@ -142,57 +143,103 @@ const PageModelDetail = () => {
       <div className="flex h-fit pb-3">
         <div className="flex w-full justify-between items-center">
           <div className="flex items-center">
-            {isEditingName ? (
-              <div className="flex items-center">
-                <DaInput
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  className="h-8 min-w-[300px]"
-                  inputClassName="h-6"
-                />
-                <div className="space-x-2">
-                  <DaButton
-                    variant="plain"
-                    size="sm"
-                    className="ml-4"
-                    onClick={() => setIsEditingName(false)}
-                  >
-                    Cancel
-                  </DaButton>
-                  <DaButton
-                    variant="solid"
-                    size="sm"
-                    className="ml-4"
-                    onClick={handleNameSave}
-                  >
-                    Save
-                  </DaButton>
+            <div className="flex flex-col items-center space-y-2">
+              {isEditingName ? (
+                <div className="flex items-center h-[36px]">
+                  <DaInput
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    className="h-8 min-w-[300px]"
+                    inputClassName="h-6"
+                  />
+                  <div className="space-x-2">
+                    <DaButton
+                      variant="plain"
+                      size="sm"
+                      className="ml-4"
+                      onClick={() => setIsEditingName(false)}
+                    >
+                      Cancel
+                    </DaButton>
+                    <DaButton
+                      variant="solid"
+                      size="sm"
+                      className="ml-4"
+                      onClick={handleNameSave}
+                    >
+                      Save
+                    </DaButton>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="flex items-center">
-                <DaText variant="title" className="text-da-primary-500">
+              ) : (
+                <DaText
+                  variant="huge-bold"
+                  className="text-da-primary-500 w-full"
+                >
                   {model.name}
                 </DaText>
-                {isAuthorized && (
+              )}
+              {isAuthorized && (
+                <div
+                  className={cn(
+                    'flex w-full space-x-3 pt-1',
+                    isEditingName && 'pointer-events-none opacity-50',
+                  )}
+                >
                   <DaButton
-                    variant="plain"
+                    variant="outline-nocolor"
                     size="sm"
-                    className="ml-4"
+                    className=""
                     onClick={() => {
                       setNewName(model.name)
                       setIsEditingName(true)
                     }}
                   >
                     <TbEdit className="w-4 h-4 mr-2" />
-                    Edit name
+                    Edit Name
                   </DaButton>
-                )}
-              </div>
-            )}
+                  <DaImportFile
+                    onFileChange={handleAvatarChange}
+                    accept=".png, .jpg, .jpeg"
+                  >
+                    <DaButton variant="outline-nocolor" className="" size="sm">
+                      <TbPhotoEdit className="w-4 h-4 mr-2" />
+                      Update Image
+                    </DaButton>
+                  </DaImportFile>
+                  {!isExporting ? (
+                    <DaButton
+                      variant="outline-nocolor"
+                      size="sm"
+                      onClick={async () => {
+                        if (!model) return
+                        setIsExporting(true)
+                        try {
+                          await downloadModelZip(model)
+                        } catch (e) {
+                          console.error(e)
+                        }
+                        setIsExporting(false)
+                      }}
+                    >
+                      <TbDownload className="w-4 h-4 mr-2" />
+                      Export Model
+                    </DaButton>
+                  ) : (
+                    <DaText
+                      variant="regular"
+                      className="flex items-center text-da-gray-medium"
+                    >
+                      <TbLoader className="animate-spin text-lg mr-2" />
+                      Exporting model...
+                    </DaText>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
           {isAuthorized && (
-            <div className="flex items-center space-x-2">
+            <div className="flex h-full space-x-2">
               <DaConfirmPopup
                 onConfirm={handleDeleteModel}
                 label="This action cannot be undone and will delete all of your model and prototypes data. Please proceed with caution."
@@ -203,33 +250,6 @@ const PageModelDetail = () => {
                   Delete Model
                 </DaButton>
               </DaConfirmPopup>
-              {!isExporting ? (
-                <DaButton
-                  variant="outline-nocolor"
-                  size="sm"
-                  onClick={async () => {
-                    if (!model) return
-                    setIsExporting(true)
-                    try {
-                      await downloadModelZip(model)
-                    } catch (e) {
-                      console.error(e)
-                    }
-                    setIsExporting(false)
-                  }}
-                >
-                  <TbDownload className="w-4 h-4 mr-2" />
-                  Export Model
-                </DaButton>
-              ) : (
-                <DaText
-                  variant="regular"
-                  className="flex items-center text-da-gray-medium"
-                >
-                  <TbLoader className="animate-spin text-lg mr-2" />
-                  Exporting model...
-                </DaText>
-              )}
             </div>
           )}
         </div>
@@ -276,21 +296,8 @@ const PageModelDetail = () => {
             </>
           )}
         </div>
-        <div className="col-span-6 flex flex-col overflow-y-auto pr-2">
+        <div className="col-span-6 flex flex-col overflow-y-auto px-12">
           <DaImage src={model.model_home_image_file} alt={model.name} />
-          <div className="flex w-full justify-end">
-            {isAuthorized && (
-              <DaImportFile
-                onFileChange={handleAvatarChange}
-                accept=".png, .jpg, .jpeg"
-              >
-                <DaButton variant="outline-nocolor" className="mt-3" size="sm">
-                  <TbPhotoEdit className="w-4 h-4 mr-2" />
-                  Update Image
-                </DaButton>
-              </DaImportFile>
-            )}
-          </div>
         </div>
       </div>
     </div>

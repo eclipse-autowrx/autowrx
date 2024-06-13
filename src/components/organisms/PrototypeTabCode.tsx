@@ -71,12 +71,12 @@ const PrototypeTabCode: FC = ({}) => {
 
   return (
     <div className="flex flex-col w-full h-full">
-      <div className="flex w-full px-2 py-1">
+      <div className="flex w-full px-2 py-1.5">
         {isAuthorized && (
-          <div className="flex w-1/2">
+          <div className="flex w-1/2 space-x-2">
             <div className="flex space-x-2">
               <DaButton size="sm" variant="outline-nocolor" className="mr-2">
-                <TbDotsVertical className="mr-1" />
+                <TbDotsVertical className="mr-1 text-da-primary-500" />
                 Action
               </DaButton>
               <DaPopup
@@ -105,9 +105,9 @@ const PrototypeTabCode: FC = ({}) => {
               </DaPopup>
             </div>
 
-            <div className="grow"></div>
-            <DaButton size="sm">
-              <TbRocket className="mr-1" size={20} />
+            {/* <div className="grow"></div> */}
+            <DaButton size="sm" variant="outline-nocolor">
+              <TbRocket className="w-4 h-4 mr-1 text-da-primary-500" />
               Deploy
             </DaButton>
           </div>
@@ -143,7 +143,7 @@ const PrototypeTabCode: FC = ({}) => {
         </div>
       </div>
       <div className="flex w-full h-full">
-        <div className="w-1/2 flex flex-col">
+        <div className="w-1/2 flex flex-col border-r">
           <CodeEditor
             code={code || ''}
             setCode={setCode}
