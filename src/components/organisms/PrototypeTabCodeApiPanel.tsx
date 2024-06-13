@@ -184,7 +184,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
         All APIs
       </DaText>
       <div className="grow overflow-hidden">
-        <ModelApiList onApiClick={onApiClicked} />
+        <ModelApiList onApiClick={onApiClicked} readOnly={true} />
       </div>
     </>
   )

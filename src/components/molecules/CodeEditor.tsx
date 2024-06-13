@@ -57,7 +57,7 @@ const CodeEditor = ({
   }, [monaco])
 
   return (
-    <div className={clsx('flex flex-col h-full w-full overflow-hidden mt-2')}>
+    <div className={clsx('flex flex-col h-full w-full overflow-hidden')}>
       {show && (
         <Editor
           theme={editable ? 'vs-dauto' : 'read-only'}

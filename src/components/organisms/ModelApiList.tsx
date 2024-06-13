@@ -14,12 +14,14 @@ import FormCreateWishlistApi from '../molecules/forms/FormCreateWishlistApi'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
+import { read } from 'fs'
 
 interface ModelApiListProps {
   onApiClick?: (details: any) => void
+  readOnly?: boolean
 }
 
-const ModelApiList = ({ onApiClick }: ModelApiListProps) => {
+const ModelApiList = ({ onApiClick, readOnly }: ModelApiListProps) => {
   const { model_id, api } = useParams()
   const [activeModelApis] = useModelStore(
     (state) => [state.activeModelApis],
@@ -49,6 +51,14 @@ const ModelApiList = ({ onApiClick }: ModelApiListProps) => {
       }
     }
   }, [api, activeModelApis])
+
+  useEffect(() => {
+    if (readOnly) return
+    if (activeModelApis) {
+      setSelectedApi(activeModelApis[0])
+      onApiClick?.(activeModelApis[0])
+    }
+  }, [])
 
   useEffect(() => {
     let filteredList = activeModelApis.filter((apiItem) =>

@@ -90,7 +90,7 @@ const PageModelList = () => {
           <div className="flex">
             {!isImporting ? (
               <DaImportFile accept=".zip" onFileChange={handleImportModelZip}>
-                <DaButton variant="solid" size="sm" className="mr-2">
+                <DaButton variant="outline-nocolor" size="sm" className="mr-2">
                   <TbPackageExport className="mr-1 text-lg" /> Import Model
                 </DaButton>
               </DaImportFile>

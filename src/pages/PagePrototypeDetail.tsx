@@ -23,6 +23,8 @@ import {
 } from 'react-icons/tb'
 import { DaButton } from '@/components/atoms/DaButton'
 import { downloadPrototypeZip } from '@/lib/zipUtils'
+import DaDiscussions from '@/components/molecules/DaDiscussions'
+import DaPopup from '@/components/atoms/DaPopup'
 
 interface ViewPrototypeProps {
   display?: 'tree' | 'list'
@@ -57,14 +59,21 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           {prototype.name}
         </DaText>
         <div className="flex space-x-2 w-1/2 justify-end">
-          <DaButton
-            variant="plain"
-            className="!text-da-white !bg-transparent hover:opacity-75"
-            size="sm"
+          <DaPopup
+            trigger={
+              <DaButton
+                variant="plain"
+                className="!text-da-white !bg-transparent hover:opacity-75"
+                size="sm"
+              >
+                <TbMessage className="w-5 h-5 mr-2" />
+                Discussion
+              </DaButton>
+            }
           >
-            <TbMessage className="w-5 h-5 mr-2" />
-            Discussion
-          </DaButton>
+            <DaDiscussions refId={prototype.id} refType="prototype" />
+          </DaPopup>
+
           <DaButton
             variant="plain"
             className="!text-da-white !bg-transparent hover:opacity-75"

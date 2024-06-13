@@ -9,8 +9,8 @@ import { isAxiosError } from 'axios'
 import { FormEvent, useState } from 'react'
 import { TbCircleCheckFilled, TbLoader } from 'react-icons/tb'
 import { useNavigate } from 'react-router-dom'
-import useCurrentModel from '@/hooks/useCurrentModel'
 import { useToast } from '../toaster/use-toast'
+import useListModelLite from '@/hooks/useListModelLite'
 
 const initialState = {
   cvi: JSON.stringify(CVI),
@@ -22,7 +22,7 @@ const FormCreateModel = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
   const [data, setData] = useState(initialState)
-  const { refetch } = useCurrentModel()
+  const { refetch: refetchModelLite } = useListModelLite()
   const { toast } = useToast()
 
   const navigate = useNavigate()
@@ -41,7 +41,8 @@ const FormCreateModel = () => {
         name: data.name,
       }
       const modelId = await createModelService(body)
-      await refetch()
+      await refetchModelLite()
+
       toast({
         title: ``,
         description: (
