@@ -140,3 +140,19 @@ export const doesOverlap = (
   }
   return false
 }
+
+// Handle case when prototype's widget config is an object instead of an array
+export const parseWidgetConfig = (configStr: any) => {
+  if (!configStr) return []
+
+  try {
+    const parsedConfig =
+      typeof configStr === 'string' ? JSON.parse(configStr) : configStr
+    return Array.isArray(parsedConfig)
+      ? parsedConfig
+      : parsedConfig.widgets || []
+  } catch (e) {
+    console.error('Error normalizing widget config:', e)
+    return []
+  }
+}

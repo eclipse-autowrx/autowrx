@@ -1,5 +1,5 @@
 import { FC, useEffect, useState, useRef } from 'react'
-import { WidgetConfig } from './DaDashboardEditor'
+import { WidgetConfig } from '@/types/widget.type'
 
 interface DaDashboardGridProps {
   widgetItems: any[]
@@ -20,9 +20,9 @@ const calculateSpans = (boxes: any) => {
 const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
   const CELLS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
-  useEffect(() => {
-    console.log('DaDashboardGrid, widgetItems', widgetItems)
-  }, [widgetItems])
+  // useEffect(() => {
+  //   console.log('DaDashboardGrid, widgetItems: ', widgetItems)
+  // }, [widgetItems])
 
   interface PropsWidgetItem {
     widgetConfig: WidgetConfig
@@ -37,7 +37,7 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
     const [url, setUrl] = useState<string>()
 
     useEffect(() => {
-      let url = widgetConfig.url
+      let url = widgetConfig.path || widgetConfig.options.url
       if (url && widgetConfig.options) {
         let send_options = JSON.parse(JSON.stringify(widgetConfig.options))
         delete send_options.url
@@ -45,7 +45,7 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
           url + '?options=' + encodeURIComponent(JSON.stringify(send_options))
         setUrl(url)
       }
-    }, [widgetConfig.url])
+    }, [widgetConfig.path, widgetConfig.options])
 
     useEffect(() => {
       const { rowSpan, colSpan } = calculateSpans(widgetConfig.boxes)
@@ -82,7 +82,6 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
         )
         if (widgetIndex !== -1 && !renderedWidgets.has(widgetIndex)) {
           renderedWidgets.add(widgetIndex)
-          // return widgetItem(widgetItems[widgetIndex], widgetIndex, cell)
           return (
             <WidgetItem
               widgetConfig={widgetItems[widgetIndex]}
