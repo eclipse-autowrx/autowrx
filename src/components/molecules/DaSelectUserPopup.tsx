@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import DaPopup from '../atoms/DaPopup'
 import { DaInput } from '../atoms/DaInput'
-import { TbX } from 'react-icons/tb'
 import { useListUsers } from '@/hooks/useListUsers'
 import { User } from '@/types/user.type'
 import { DaText } from '../atoms/DaText'
 import { DaButton } from '../atoms/DaButton'
+import { maskEmail } from '@/lib/utils'
 
 interface DaSelectUserProps {
   popupState: [boolean, React.Dispatch<React.SetStateAction<boolean>>]
@@ -62,58 +62,59 @@ const DaSelectUserPopup = ({
             </DaButton>
           </div>
           {!loading && (
-            <div className="mt-2 px-2 max-h-[600px] min-h-[400px] overflow-auto">
+            <div className="mt-2 px-2">
               <DaInput
                 className="border-t-2 pt-3"
                 placeholder="Search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
-
-              {renderUsers &&
-                renderUsers.map((user: any) => (
-                  <div
-                    key={user.id}
-                    className="border-b border-slate-200 flex mt-2"
-                  >
-                    <div className="py-1 grow">
-                      <DaText
-                        variant="regular-bold"
-                        className="text-da-gray-meidum"
+              <div className="max-h-[400px] xl:max-h-[600px] min-h-[400px] overflow-auto mt-2 p-1">
+                {renderUsers &&
+                  renderUsers.map((user: any) => (
+                    <div
+                      key={user.id}
+                      className="border-b border-slate-200 flex"
+                    >
+                      <div className="py-1 grow">
+                        <DaText
+                          variant="regular-bold"
+                          className="text-da-gray-meidum"
+                        >
+                          {user.name}
+                        </DaText>
+                        <div className="da-label-small italic">
+                          {maskEmail(user.email)}{' '}
+                          {user.provider && (
+                            <span className="">via @{user.provider}</span>
+                          )}
+                        </div>
+                      </div>
+                      <div
+                        className=" items-center justify-center flex"
+                        onClick={() => {
+                          if (selectUser) {
+                            selectUser(user.id)
+                          }
+                          popupState[1](false)
+                        }}
                       >
-                        {user.name}
-                      </DaText>
-                      <div className="da-label-small italic">
-                        {user.email}{' '}
-                        {user.provider && (
-                          <span className="">via @{user.provider}</span>
-                        )}
+                        <DaText
+                          variant="small-bold"
+                          className="text-da-primary-500 hover:bg-da-primary-100 px-2 py-1 rounded-md da-clickable"
+                        >
+                          Select
+                        </DaText>
                       </div>
                     </div>
-                    <div
-                      className=" items-center justify-center flex"
-                      onClick={() => {
-                        if (selectUser) {
-                          selectUser(user.id)
-                        }
-                        popupState[1](false)
-                      }}
-                    >
-                      <DaText
-                        variant="small-bold"
-                        className="text-da-primary-500 hover:bg-da-primary-100 px-2 py-1 rounded-md"
-                      >
-                        Select
-                      </DaText>
-                    </div>
-                  </div>
-                ))}
+                  ))}
 
-              {search && renderUsers.length == 0 && (
-                <DaText className="py-2 px-4 text-center text-da-gray-dark bg-da-gray-light rounded">
-                  No user match '{search}'
-                </DaText>
-              )}
+                {search && renderUsers.length == 0 && (
+                  <DaText className="py-2 px-4 text-center text-da-gray-dark bg-da-gray-light rounded">
+                    No user match '{search}'
+                  </DaText>
+                )}
+              </div>
             </div>
           )}
         </div>
