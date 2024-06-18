@@ -6,7 +6,6 @@ import { TbArrowLeft, TbEdit } from 'react-icons/tb'
 import { CircularProgress } from '@mui/material'
 import DaTooltip from '../atoms/DaTooltip'
 import usePermissionHook from '@/hooks/usePermissionHook'
-import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { useNavigate } from 'react-router-dom'
 import { PERMISSIONS } from '@/data/permission'
 import useCurrentModel from '@/hooks/useCurrentModel'
@@ -185,17 +184,20 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
     apiName: string,
     modelID: string,
   ): Promise<any> => {
-    if (!apiName || apiName === 'Vehicle' || !apiName.includes('.')) return null
+    if (!apiName || apiName === 'Vehicle') return null
 
     const parentApiName = apiName.substring(0, apiName.lastIndexOf('.'))
 
-    const res = await getExtendedApi(parentApiName, modelID)
-    // console.log('Parent API skeleton:', JSON.parse(res.skeleton))
-    if (res) {
-      return JSON.parse(res.skeleton)
-    } else {
-      return fetchParentAPISkeleton(parentApiName, modelID)
+    try {
+      const res = await getExtendedApi(parentApiName, modelID)
+      if (res && res.skeleton) {
+        return JSON.parse(res.skeleton)
+      }
+    } catch (error) {
+      console.error(`Error fetching parent API ${parentApiName}:`, error)
     }
+
+    return fetchParentAPISkeleton(parentApiName, modelID) // Recursive call to fetch the next parent if the current one is not found
   }
 
   const handleUploadImage = async (file: File) => {
