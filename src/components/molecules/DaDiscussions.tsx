@@ -3,17 +3,19 @@ import { DaText } from '../atoms/DaText'
 import FormCreateDiscussion from './forms/FormCreateDiscussion'
 import DaDiscussionItem from './DaDiscussionItem'
 import { Fragment, useEffect, useRef, useState } from 'react'
-import { TbBubble } from 'react-icons/tb'
+import { TbBubble, TbMessage } from 'react-icons/tb'
 import DaLoader from '../atoms/DaLoader'
 import { DISCUSSION_REF_TYPE } from '@/types/discussion.type'
 import useDiscussionIdentifier from '@/stores/useDiscussionIdentifer'
+import { cn } from '@/lib/utils'
 
 interface DaDiscussionsProps {
   refId: string
   refType: DISCUSSION_REF_TYPE
+  className?: string
 }
 
-const DaDiscussions = ({ refId, refType }: DaDiscussionsProps) => {
+const DaDiscussions = ({ refId, refType, className }: DaDiscussionsProps) => {
   const { data, isLoading, refetch } = useListDiscussions(
     refId,
     refType,
@@ -27,9 +29,12 @@ const DaDiscussions = ({ refId, refType }: DaDiscussionsProps) => {
   }, [refId, refType])
 
   return (
-    <div className="px-2 md:px-6 py-4 w-[600px] min-w-[500px] ">
-      <DaText variant="title" className="text-da-primary-500">
-        Discussions
+    <div className={cn('px-2 w-full min-w-[500px] ', className)}>
+      <DaText
+        variant="sub-title"
+        className="flex items-center text-da-primary-500"
+      >
+        <TbMessage className="w-5 h-5 mr-2" /> Discussions
       </DaText>
 
       {isLoading ? (
