@@ -112,6 +112,7 @@ const PrototypeTabCode: FC = ({}) => {
             </DaButton>
           </div>
         )}
+        <div className="grow"></div>
         <div className="flex w-1/2 justify-end">
           <div className="grow"></div>
           <DaTabItem

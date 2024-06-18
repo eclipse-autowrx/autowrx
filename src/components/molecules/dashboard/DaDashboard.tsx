@@ -8,28 +8,29 @@ const DaDashboard: FC = ({}) => {
   const [widgetItems, setWidgetItems] = useState<any>([])
 
   useEffect(() => {
-    console.log('DaDashboard, prototype', prototype)
-    let wItems = []
+    // console.log('DaDashboard, prototype', prototype)
+    let widgetItems = []
     if (prototype?.widget_config) {
       try {
         let dashboard_config = JSON.parse(prototype.widget_config)
-        console.log('dashboard_config', dashboard_config)
+        // console.log('dashboard_config', dashboard_config)
         if (Array.isArray(dashboard_config)) {
-          wItems = dashboard_config
+          widgetItems = dashboard_config
         } else {
           if (
             dashboard_config?.widgets &&
             Array.isArray(dashboard_config.widgets)
           ) {
-            wItems = dashboard_config.widgets
+            widgetItems = dashboard_config.widgets
           }
         }
       } catch (err) {
         console.error('Error parsing widget config', err)
       }
     }
-    processWidgetItems(wItems)
-    setWidgetItems(wItems)
+    // console.log('widgetItems', widgetItems)
+    processWidgetItems(widgetItems)
+    setWidgetItems(widgetItems)
   }, [prototype?.widget_config])
 
   const processWidgetItems = (widgetItems: any[]) => {

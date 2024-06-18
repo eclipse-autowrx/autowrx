@@ -48,7 +48,7 @@ const DaDashboardWidgetEditor = ({
         newUsedAPIsList.push(item) // Assuming item is the object you showed
       }
     })
-    console.log('newUsedAPIsList', newUsedAPIsList)
+    // console.log('newUsedAPIsList', newUsedAPIsList)
     setUsedAPIs(newUsedAPIsList)
   }, [prototype.code, activeModelApis])
 
@@ -110,18 +110,25 @@ const DaDashboardWidgetEditor = ({
           }}
           onBlur={() => {}}
         />
-        <div className="flex w-full space-x-2 justify-end p-4">
-          <DaButton variant="outline" onClick={() => codeEditorPopup[1](false)}>
-            <TbX className="mr-2" /> Close
+        <div className="flex w-full space-x-2 justify-end pt-4">
+          <DaButton
+            size="sm"
+            variant="outline-nocolor"
+            className="!min-w-16"
+            onClick={() => codeEditorPopup[1](false)}
+          >
+            Cancel
           </DaButton>
           <DaButton
+            size="sm"
             variant="solid"
+            className="!min-w-16"
             onClick={() => {
               handleUpdateWidget()
               codeEditorPopup[1](false)
             }}
           >
-            <TbCheck className="mr-2" /> Save
+            Save
           </DaButton>
         </div>
       </div>
