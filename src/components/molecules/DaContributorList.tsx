@@ -6,7 +6,10 @@ import { DaAvatar } from '../atoms/DaAvatar'
 import { cn } from '@/lib/utils'
 import DaSelectUserPopup from './DaSelectUserPopup'
 import { User } from '@/types/user.type'
-import { updateModelPermissionService } from '@/services/model.service'
+import {
+  updateModelPermissionService,
+  deleteModelPermissionService,
+} from '@/services/model.service'
 import { maskEmail } from '@/lib/utils'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import DaLoading from '../atoms/DaLoading'
@@ -68,8 +71,11 @@ const DaContributorList = ({ className }: ContributorListProps) => {
     await refetch()
   }
 
-  const onRemoveUser = (userId: string) => {
-    // No API available yet / permission hook is in development
+  const onRemoveUser = async (userId: string) => {
+    const role =
+      activeTab === 'contributors' ? 'model_contributor' : 'model_member'
+    await deleteModelPermissionService(model.id, role, userId)
+    await refetch()
   }
 
   return (
@@ -130,7 +136,11 @@ const DaContributorList = ({ className }: ContributorListProps) => {
       <DaSelectUserPopup
         selectUser={handleAddUser}
         popupState={[open, setOpen]}
-        excludeUserIds={[]}
+        excludeUsers={
+          activeTab === 'contributors'
+            ? model.contributors ?? []
+            : model.members ?? []
+        }
       />
     </div>
   )

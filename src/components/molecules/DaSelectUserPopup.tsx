@@ -10,15 +10,15 @@ import { maskEmail } from '@/lib/utils'
 interface DaSelectUserProps {
   popupState: [boolean, React.Dispatch<React.SetStateAction<boolean>>]
   selectUser: (userId: string) => void
-  excludeUserIds: string[] // User already selected/existed
+  excludeUsers?: User[]
 }
 
 const DaSelectUserPopup = ({
   popupState,
   selectUser,
-  excludeUserIds,
+  excludeUsers,
 }: DaSelectUserProps) => {
-  const { data, isLoading, error } = useListUsers()
+  const { data } = useListUsers()
   const [renderUsers, setRenderUsers] = useState<any>([])
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState('')
@@ -29,7 +29,10 @@ const DaSelectUserPopup = ({
     }
 
     let tmpUsers = data.results.filter(
-      (user: User) => !(excludeUserIds || []).includes(user.id),
+      (user: User) =>
+        !(excludeUsers || []).some(
+          (excludedUser) => excludedUser.id === user.id,
+        ),
     )
     if (search.trim() !== '') {
       tmpUsers = tmpUsers.filter(
@@ -39,7 +42,7 @@ const DaSelectUserPopup = ({
       )
     }
     setRenderUsers(tmpUsers)
-  }, [data, excludeUserIds, search])
+  }, [data, excludeUsers, search])
 
   return (
     <>
