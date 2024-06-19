@@ -4,7 +4,11 @@ import { DaText } from '@/components/atoms/DaText'
 import DaStarsRating from '@/components/atoms/DaStarsRating'
 import { FormEvent, useState } from 'react'
 import { TbLoader } from 'react-icons/tb'
-import { useNavigate } from 'react-router-dom'
+import { createFeedback } from '@/services/feedback.service'
+import { FeedbackCreate } from '@/types/model.type'
+import useCurrentModel from '@/hooks/useCurrentModel'
+import useCurrentPrototype from '@/hooks/useCurrentPrototype'
+import useListPrototypeFeedback from '@/hooks/useListPrototypeFeedback'
 
 const initialState = {
   interviewee: '',
@@ -17,25 +21,43 @@ const initialState = {
 }
 
 const FeedbackForm = () => {
+  const { data: prototype } = useCurrentPrototype()
+  const { data: model } = useCurrentModel()
+  const { refetch } = useListPrototypeFeedback(prototype?.id || '')
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
   const [data, setData] = useState(initialState)
-  const navigate = useNavigate()
 
   const handleChange = (name: keyof typeof data, value: string | number) => {
     setData((prev) => ({ ...prev, [name]: value }))
   }
 
   const submitFeedback = async (e: FormEvent<HTMLFormElement>) => {
+    if (!prototype || !prototype.id || !model) return
     e.preventDefault()
     try {
       setLoading(true)
-      const body = { ...data }
-      // Submit feedback service
+      const payload: FeedbackCreate = {
+        interviewee: {
+          name: data.interviewee,
+          organization: data.organization,
+        },
+        recommendation: data.recommendations,
+        question: data.questions,
+        model_id: model.id,
+        score: {
+          easy_to_use: data.easeOfUse,
+          need_address: data.needsAddressed,
+          relevance: data.relevance,
+        },
+        ref: prototype.id,
+        ref_type: 'prototype',
+      }
 
+      await createFeedback(payload)
+      await refetch()
       setData(initialState)
-      // navigate(`/thank-you`);
-      window.location.reload() // Reload the current page -> Fix reload later
     } catch (error) {
       setError('Something went wrong')
     } finally {

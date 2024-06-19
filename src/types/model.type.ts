@@ -95,19 +95,34 @@ export interface Feedback {
   id: string
   interviewee: {
     name: string
-    org?: string
+    organization?: string
   }
   recommendation: string
   question: string
   model_id: string
   score: {
-    easyToUse?: number
-    needAddress?: number
+    easy_to_use?: number
+    need_address?: number
     relevance?: number
   }
-  created: {
-    created_time: Date
-    user_id: string
-    user_fullname: string
+  created_by: string
+  created_at: Date
+  avg_score: number
+}
+
+export interface FeedbackCreate {
+  interviewee: {
+    name: string
+    organization?: string
   }
+  recommendation: string
+  question: string
+  model_id: string
+  score: {
+    easy_to_use?: number
+    need_address?: number
+    relevance?: number
+  }
+  ref: string
+  ref_type: string
 }
