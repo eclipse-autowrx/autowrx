@@ -32,6 +32,11 @@ const DaDashboard: FC = ({}) => {
     setWidgetItems(wItems)
   }, [prototype?.widget_config])
 
+  // useEffect(() => {
+  //   console.log("apiValues")
+  //   console.log(apisValue)
+  // }, [apisValue])
+
   const processWidgetItems = (widgetItems: any[]) => {
     if (!widgetItems) return
     widgetItems.forEach((widget) => {
