@@ -5,14 +5,14 @@ const mockFeedbackData: Feedback[] = [
     id: '1',
     interviewee: {
       name: 'John Doe',
-      org: 'Acme Corp',
+      organization: 'Acme Corp',
     },
     recommendation: 'Add more features.',
     question: 'How can we improve?',
     model_id: 'model-1',
     score: {
-      easyToUse: 3,
-      needAddress: 4,
+      easy_to_use: 3,
+      need_address: 4,
       relevance: 5,
     },
     created: {
@@ -25,14 +25,14 @@ const mockFeedbackData: Feedback[] = [
     id: '2',
     interviewee: {
       name: 'Jane Smith',
-      org: 'Global Inc',
+      organization: 'Global Inc',
     },
     recommendation: 'Provide 24/7 support.',
     question: 'What about support?',
     model_id: 'model-2',
     score: {
-      easyToUse: 5,
-      needAddress: 5,
+      easy_to_use: 5,
+      need_address: 5,
       relevance: 4,
     },
     created: {
