@@ -1,23 +1,46 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import FeedbackForm from '../molecules/forms/FormFeedback'
 import { DaText } from '@/components/atoms/DaText'
 import DaStarsRating from '@/components/atoms/DaStarsRating'
-import { Feedback } from '@/types/model.type'
+import { Prototype } from '@/types/model.type'
 import DaPopup from '../atoms/DaPopup'
 import { DaButton } from '../atoms/DaButton'
 import useListPrototypeFeedback from '@/hooks/useListPrototypeFeedback'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
-import { TbTrash } from 'react-icons/tb'
+import { TbChartDots, TbTrash } from 'react-icons/tb'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { deleteFeedback } from '@/services/feedback.service'
+import DaConfirmPopup from '../molecules/DaConfirmPopup'
+import DaLoading from '../atoms/DaLoading'
+import {
+  DaPaging,
+  DaPaginationContent,
+  DaPaginationItem,
+  DaPaginationLink,
+  DaPaginationPrevious,
+  DaPaginationNext,
+} from '../atoms/DaPaging'
 
 const PrototypeTabFeedback = () => {
   const [isOpenPopup, setIsOpenPopup] = useState(false)
+  const [currentPage, setCurrentPage] = useState(() => {
+    const hash = window.location.hash.substring(1)
+    return hash ? parseInt(hash, 10) : 1
+  })
   const { data: profile } = useSelfProfileQuery()
   const { data: prototype } = useCurrentPrototype()
-  const { data: prototypeFeedbacks, refetch } = useListPrototypeFeedback(
-    prototype?.id || '',
-  )
+  const {
+    data: prototypeFeedbacks,
+    refetch,
+    isLoading,
+  } = useListPrototypeFeedback(prototype?.id || '', currentPage)
+
+  useEffect(() => {
+    window.location.hash = currentPage.toString()
+    const newPage = parseInt(window.location.hash.substring(1), 10) // in case of coping the link with the page number
+    setCurrentPage(newPage)
+    refetch()
+  }, [currentPage])
 
   const handleDeleteFeedback = async (id: string) => {
     await deleteFeedback(id)
@@ -25,81 +48,104 @@ const PrototypeTabFeedback = () => {
   }
 
   return (
-    <div className="container mt-6">
+    <div className="container h-full mt-6">
       <div className="flex w-full justify-between">
         <div>
           <DaText variant="title" className="text-da-primary-500">
-            END-USER FEEDBACK
+            End-User Feedback
           </DaText>
-          {/* <div className="items-center flex">
+          <div className="items-center flex">
             <DaText variant="regular">Overall:</DaText>
             <DaStarsRating
-              readonly
-              initialRating={
-                prototypeFeedbacks.reduce(
-                  (sum, item) => sum + (item.score.needAddress || 0),
-                  0,
-                ) / prototypeFeedbacks.length
-              }
+              readonly={true}
+              initialRating={(prototype as Prototype)?.avg_score ?? 0}
             />
-          </div> */}
+            ({(prototype as Prototype)?.avg_score?.toFixed(2) ?? 0})
+          </div>
         </div>
-        <DaPopup
-          state={[isOpenPopup, setIsOpenPopup]}
-          trigger={
-            <DaButton
-              size="sm"
-              onClick={() =>
-                document
-                  .getElementById('feedbackForm')
-                  ?.scrollIntoView({ behavior: 'smooth' })
-              }
-            >
-              + Add Feedback
-            </DaButton>
-          }
-        >
-          <FeedbackForm />
-        </DaPopup>
+        <div className="flex">
+          <DaButton size="sm" variant="outline-nocolor" className="mr-2">
+            <TbChartDots className="w-4 h-4 mr-1" />
+            View Portfolio
+          </DaButton>
+          <DaPopup
+            state={[isOpenPopup, setIsOpenPopup]}
+            trigger={
+              <DaButton
+                size="sm"
+                onClick={() =>
+                  document
+                    .getElementById('feedbackForm')
+                    ?.scrollIntoView({ behavior: 'smooth' })
+                }
+              >
+                + Add Feedback
+              </DaButton>
+            }
+          >
+            <FeedbackForm
+              onClose={() => {
+                setIsOpenPopup(false)
+              }}
+            />
+          </DaPopup>
+        </div>
       </div>
-      {prototypeFeedbacks && prototypeFeedbacks.length > 0 && (
+      {isLoading ? (
+        <DaLoading
+          text="Loading feedbacks..."
+          timeout={20}
+          timeoutText="Failed to load feedbacks. Please try again."
+          fullScreen={true}
+        />
+      ) : prototypeFeedbacks &&
+        prototypeFeedbacks.results &&
+        prototypeFeedbacks.results.length > 0 ? (
         <div className="mt-8">
-          {prototypeFeedbacks.map((feedback) => (
+          {prototypeFeedbacks.results.map((feedback) => (
             <div key={feedback.id} className="border p-4 mb-4  rounded-lg">
               <div className="flex w-full">
-                <DaText variant="regular-bold" className="text-da-primary-500">
-                  {feedback.interviewee.name} (
-                  {feedback.interviewee.organization})
-                </DaText>
+                <div className="space-x-6">
+                  <DaText variant="sub-title" className="text-da-primary-500">
+                    {feedback.interviewee.name}
+                  </DaText>
+                  <DaText variant="small" className="ml-auto">
+                    Organization: {feedback.interviewee.organization}
+                  </DaText>
+                </div>
                 {profile && profile?.id === feedback.created_by && (
-                  <DaButton
-                    variant="destructive"
-                    size="sm"
-                    className="ml-auto"
-                    onClick={() => handleDeleteFeedback(feedback.id)}
+                  <DaConfirmPopup
+                    onConfirm={() => handleDeleteFeedback(feedback.id)}
+                    label="Are you sure you want to delete this feedback?"
                   >
-                    <TbTrash className="w-4 h-4 mr-1" /> Delete Feedback
-                  </DaButton>
+                    <DaButton
+                      variant="destructive"
+                      size="sm"
+                      className="ml-auto"
+                    >
+                      <TbTrash className="w-4 h-4 mr-1" /> Delete Your Feedback
+                    </DaButton>
+                  </DaConfirmPopup>
                 )}
               </div>
               <div className="flex w-full">
                 <div className="flex-1">
                   <div className="mt-2 flex items-center">
-                    <DaText variant="regular">Needs addressed:</DaText>
+                    <DaText variant="regular-bold">Needs addressed:</DaText>
                     <DaStarsRating
                       readonly
                       initialRating={feedback.score.need_address || 0}
                     />
                   </div>
                   <div className="mt-2 flex items-center">
-                    <DaText variant="regular">Relevance:</DaText>
+                    <DaText variant="regular-bold">Relevance:</DaText>
                     <DaStarsRating
                       readonly
                       initialRating={feedback.score.relevance || 0}
                     />
                   </div>
                   <div className="mt-2 flex items-center">
-                    <DaText variant="regular">Ease of use:</DaText>
+                    <DaText variant="regular-bold">Ease of use:</DaText>
                     <DaStarsRating
                       readonly
                       initialRating={feedback.score.easy_to_use || 0}
@@ -123,6 +169,41 @@ const PrototypeTabFeedback = () => {
               </div>
             </div>
           ))}
+          <DaPaging className="pt-3 pb-6">
+            <DaPaginationContent>
+              <DaPaginationItem>
+                <DaPaginationPrevious
+                  href={`#${currentPage - 1}`}
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage == 1}
+                />
+              </DaPaginationItem>
+              {[...Array(prototypeFeedbacks.totalPages)].map((_, index) => (
+                <DaPaginationItem key={index}>
+                  <DaPaginationLink
+                    href={`#${index + 1}`}
+                    isActive={currentPage === index + 1}
+                    onClick={() => setCurrentPage(index + 1)}
+                  >
+                    {index + 1}
+                  </DaPaginationLink>
+                </DaPaginationItem>
+              ))}
+              <DaPaginationItem>
+                <DaPaginationNext
+                  href={`#${currentPage + 1}`}
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage == prototypeFeedbacks.totalPages}
+                />
+              </DaPaginationItem>
+            </DaPaginationContent>
+          </DaPaging>
+        </div>
+      ) : (
+        <div className="flex w-full h-full items-center justify-center">
+          <DaText variant="title" className="">
+            No feedback found.
+          </DaText>
         </div>
       )}
     </div>

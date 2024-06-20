@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React from 'react'
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -6,6 +6,7 @@ import {
 } from '@radix-ui/react-icons'
 
 import { cn } from '@/lib/utils'
+import { DaText } from './DaText'
 
 const DaPaging = ({ className, ...props }: React.ComponentProps<'nav'>) => (
   <nav
@@ -17,7 +18,7 @@ const DaPaging = ({ className, ...props }: React.ComponentProps<'nav'>) => (
 )
 DaPaging.displayName = 'Pagination'
 
-const PaginationContent = React.forwardRef<
+const DaPaginationContent = React.forwardRef<
   HTMLUListElement,
   React.ComponentProps<'ul'>
 >(({ className, ...props }, ref) => (
@@ -27,64 +28,84 @@ const PaginationContent = React.forwardRef<
     {...props}
   />
 ))
-PaginationContent.displayName = 'PaginationContent'
+DaPaginationContent.displayName = 'PaginationContent'
 
-const PaginationItem = React.forwardRef<
+const DaPaginationItem = React.forwardRef<
   HTMLLIElement,
   React.ComponentProps<'li'>
 >(({ className, ...props }, ref) => (
   <li ref={ref} className={cn('', className)} {...props} />
 ))
-PaginationItem.displayName = 'PaginationItem'
+DaPaginationItem.displayName = 'PaginationItem'
 
 type PaginationLinkProps = {
   isActive?: boolean
+  disabled?: boolean
 } & React.ComponentProps<'a'>
 
-const PaginationLink = ({
+const DaPaginationLink = ({
   className,
   isActive,
+  disabled,
   ...props
 }: PaginationLinkProps) => (
   <a
     aria-current={isActive ? 'page' : undefined}
-    className={cn(className)}
+    className={cn(
+      'flex items-center hover:bg-da-gray-light hover:text-da-gray-dark rounded-md px-2 py-1',
+      isActive
+        ? 'bg-da-gray-light text-da-gray-dark da-label-regular-bold'
+        : '',
+      disabled ? 'select-none pointer-events-none opacity-50' : '',
+      className,
+    )}
+    {...(disabled
+      ? { 'aria-disabled': true, onClick: (e) => e.preventDefault() }
+      : {})}
     {...props}
   />
 )
-PaginationLink.displayName = 'PaginationLink'
+DaPaginationLink.displayName = 'PaginationLink'
 
-const PaginationPrevious = ({
+const DaPaginationPrevious = ({
   className,
+  disabled,
   ...props
-}: React.ComponentProps<typeof PaginationLink>) => (
-  <PaginationLink
+}: PaginationLinkProps) => (
+  <DaPaginationLink
     aria-label="Go to previous page"
     className={cn('gap-1 pl-2.5', className)}
+    disabled={disabled}
     {...props}
   >
     <ChevronLeftIcon className="h-4 w-4" />
-    <span>Previous</span>
-  </PaginationLink>
+    <DaText variant="small-bold" className="da-clickable">
+      Previous
+    </DaText>
+  </DaPaginationLink>
 )
-PaginationPrevious.displayName = 'PaginationPrevious'
+DaPaginationPrevious.displayName = 'PaginationPrevious'
 
-const PaginationNext = ({
+const DaPaginationNext = ({
   className,
+  disabled,
   ...props
-}: React.ComponentProps<typeof PaginationLink>) => (
-  <PaginationLink
+}: PaginationLinkProps) => (
+  <DaPaginationLink
     aria-label="Go to next page"
     className={cn('gap-1 pr-2.5', className)}
+    disabled={disabled}
     {...props}
   >
-    <span>Next</span>
+    <DaText variant="small-bold" className="da-clickable">
+      Next
+    </DaText>
     <ChevronRightIcon className="h-4 w-4" />
-  </PaginationLink>
+  </DaPaginationLink>
 )
-PaginationNext.displayName = 'PaginationNext'
+DaPaginationNext.displayName = 'PaginationNext'
 
-const PaginationEllipsis = ({
+const DaPaginationEllipsis = ({
   className,
   ...props
 }: React.ComponentProps<'span'>) => (
@@ -97,14 +118,14 @@ const PaginationEllipsis = ({
     <span className="sr-only">More pages</span>
   </span>
 )
-PaginationEllipsis.displayName = 'PaginationEllipsis'
+DaPaginationEllipsis.displayName = 'PaginationEllipsis'
 
 export {
   DaPaging,
-  PaginationContent,
-  PaginationLink,
-  PaginationItem,
-  PaginationPrevious,
-  PaginationNext,
-  PaginationEllipsis,
+  DaPaginationContent,
+  DaPaginationLink,
+  DaPaginationPrevious,
+  DaPaginationNext,
+  DaPaginationEllipsis,
+  DaPaginationItem,
 }

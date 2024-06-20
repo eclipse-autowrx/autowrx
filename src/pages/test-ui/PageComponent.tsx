@@ -4,6 +4,15 @@ import { DaInput } from '@/components/atoms/DaInput'
 import { DaTag } from '@/components/atoms/DaTag'
 import { DaImageRatio } from '@/components/atoms/DaImageRatio'
 import { DaAvatar } from '@/components/atoms/DaAvatar'
+import {
+  DaPaging,
+  DaPaginationContent,
+  DaPaginationItem,
+  DaPaginationNext,
+  DaPaginationLink,
+  DaPaginationPrevious,
+  DaPaginationEllipsis,
+} from '@/components/atoms/DaPaging'
 
 const PageHome = () => {
   return (
@@ -99,32 +108,32 @@ const PageHome = () => {
           <DaAvatar src="/imgs/3.jpg" className="w-24 h-24" />
         </div>
 
-        {/* <div className="flex col-span-full space-x-4 p-4 border rounded-lg">
+        <div className="flex col-span-full space-x-4 p-4 border rounded-lg">
           <DaPaging>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious href="#" />
-              </PaginationItem>
-              <PaginationItem>
-                <PaginationLink href="#">1</PaginationLink>
-              </PaginationItem>
-              <PaginationItem>
-                <PaginationLink href="#" isActive>
+            <DaPaginationContent>
+              <DaPaginationItem>
+                <DaPaginationPrevious href="#" />
+              </DaPaginationItem>
+              <DaPaginationItem>
+                <DaPaginationLink href="#">1</DaPaginationLink>
+              </DaPaginationItem>
+              <DaPaginationItem>
+                <DaPaginationLink href="#" isActive>
                   2
-                </PaginationLink>
-              </PaginationItem>
-              <PaginationItem>
-                <PaginationLink href="#">3</PaginationLink>
-              </PaginationItem>
-              <PaginationItem>
-                <PaginationEllipsis />
-              </PaginationItem>
-              <PaginationItem>
-                <PaginationNext href="#" />
-              </PaginationItem>
-            </PaginationContent>
+                </DaPaginationLink>
+              </DaPaginationItem>
+              <DaPaginationItem>
+                <DaPaginationLink href="#">3</DaPaginationLink>
+              </DaPaginationItem>
+              <DaPaginationItem>
+                <DaPaginationEllipsis />
+              </DaPaginationItem>
+              <DaPaginationItem>
+                <DaPaginationNext href="#" />
+              </DaPaginationItem>
+            </DaPaginationContent>
           </DaPaging>
-        </div> */}
+        </div>
 
         {/* <div className="flex col-span-full space-x-4 p-4 border rounded-lg">
           <DaDropdown>

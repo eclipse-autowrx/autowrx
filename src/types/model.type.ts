@@ -52,6 +52,7 @@ export type Prototype = {
   description: any
   created_at?: Date
   tags?: Tag[]
+  avg_score?: number
 }
 
 export type ModelCreate = {

@@ -9,6 +9,8 @@ import { FeedbackCreate } from '@/types/model.type'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import useListPrototypeFeedback from '@/hooks/useListPrototypeFeedback'
+import { isAxiosError } from 'axios'
+import { DaTextarea } from '@/components/atoms/DaTextarea'
 
 const initialState = {
   interviewee: '',
@@ -20,10 +22,14 @@ const initialState = {
   recommendations: '',
 }
 
-const FeedbackForm = () => {
+interface FeedbackFormProps {
+  onClose: () => void
+}
+
+const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
   const { data: prototype } = useCurrentPrototype()
   const { data: model } = useCurrentModel()
-  const { refetch } = useListPrototypeFeedback(prototype?.id || '')
+  const { refetch } = useListPrototypeFeedback(prototype?.id || '', 1)
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
@@ -59,97 +65,107 @@ const FeedbackForm = () => {
       await refetch()
       setData(initialState)
     } catch (error) {
+      if (isAxiosError(error)) {
+        setError(error.response?.data?.message ?? 'Something went wrong')
+        return
+      }
       setError('Something went wrong')
     } finally {
       setLoading(false)
+      onClose()
     }
   }
 
   return (
     <form
       onSubmit={submitFeedback}
-      className="flex flex-col w-[400px] min-w-[400px] px-2 md:px-6 py-4 bg-da-white"
+      className="flex flex-col w-[40vw] max-h-[80vh] bg-da-white py-4"
     >
-      <DaText variant="title" className="text-da-primary-500">
-        End User Give Feedback
-      </DaText>
-
-      <DaInput
-        name="interviewee"
-        value={data.interviewee}
-        onChange={(e) => handleChange('interviewee', e.target.value)}
-        placeholder="Interviewee?"
-        label="Interviewee?"
-        className="mt-4"
-      />
-
-      <DaInput
-        name="organization"
-        value={data.organization}
-        onChange={(e) => handleChange('organization', e.target.value)}
-        placeholder="From organization"
-        label="From organization"
-        className="mt-4"
-      />
-
-      {/* Star ratings for Needs Addressed, Relevance, and Ease of Use */}
-      <div className="mt-4 flex items-center">
-        <DaText variant="regular-bold">Needs addressed?</DaText>
-        <DaStarsRating
-          initialRating={data.needsAddressed}
-          onChange={(value) => handleChange('needsAddressed', value)}
-        />
-      </div>
-
-      <div className="mt-4 flex items-center">
-        <DaText variant="regular-bold">Relevance?</DaText>
-        <DaStarsRating
-          initialRating={data.relevance}
-          onChange={(value) => handleChange('relevance', value)}
-        />
-      </div>
-
-      <div className="mt-4 flex items-center">
-        <DaText variant="regular-bold">Ease of use</DaText>
-        <DaStarsRating
-          initialRating={data.easeOfUse}
-          onChange={(value) => handleChange('easeOfUse', value)}
-        />
-      </div>
-
-      <DaInput
-        name="questions"
-        value={data.questions}
-        onChange={(e) => handleChange('questions', e.target.value)}
-        placeholder="Write your questions..."
-        label="Questions"
-        className="mt-4"
-      />
-
-      <DaInput
-        name="recommendations"
-        value={data.recommendations}
-        onChange={(e) => handleChange('recommendations', e.target.value)}
-        placeholder="Write your recommendations..."
-        label="Recommendations"
-        className="mt-4"
-      />
-
-      {error && (
-        <DaText variant="small" className="mt-4 text-da-accent-500">
-          {error}
+      <div className="flex flex-col overflow-y-auto px-4">
+        <DaText variant="title" className="text-da-primary-500">
+          End User Give Feedback
         </DaText>
-      )}
 
-      <DaButton
-        disabled={loading}
-        type="submit"
-        variant="gradient"
-        className="w-full mt-8"
-      >
-        {loading && <TbLoader className="animate-spin text-lg mr-2" />}
-        Submit
-      </DaButton>
+        <DaInput
+          name="interviewee"
+          value={data.interviewee}
+          onChange={(e) => handleChange('interviewee', e.target.value)}
+          placeholder="Interviewee?"
+          label="Interviewee?"
+          className="mt-4"
+        />
+
+        <DaInput
+          name="organization"
+          value={data.organization}
+          onChange={(e) => handleChange('organization', e.target.value)}
+          placeholder="From organization"
+          label="From organization"
+          className="mt-4"
+        />
+
+        {/* Star ratings for Needs Addressed, Relevance, and Ease of Use */}
+        <div className="mt-4 flex items-center">
+          <DaText variant="regular-bold">Needs addressed?</DaText>
+          <DaStarsRating
+            initialRating={data.needsAddressed}
+            onChange={(value) => handleChange('needsAddressed', value)}
+          />
+        </div>
+
+        <div className="mt-4 flex items-center">
+          <DaText variant="regular-bold">Relevance?</DaText>
+          <DaStarsRating
+            initialRating={data.relevance}
+            onChange={(value) => handleChange('relevance', value)}
+          />
+        </div>
+
+        <div className="mt-4 flex items-center">
+          <DaText variant="regular-bold">Ease of use</DaText>
+          <DaStarsRating
+            initialRating={data.easeOfUse}
+            onChange={(value) => handleChange('easeOfUse', value)}
+          />
+        </div>
+
+        <DaInput
+          name="questions"
+          value={data.questions}
+          onChange={(e) => handleChange('questions', e.target.value)}
+          placeholder="Write your questions..."
+          label="Questions"
+          className="mt-4"
+        />
+
+        <DaTextarea
+          rows={5}
+          name="recommendations"
+          value={data.recommendations}
+          onChange={(e) => handleChange('recommendations', e.target.value)}
+          placeholder="Write your recommendations..."
+          label="Recommendations"
+          className="mt-4"
+        />
+
+        {error && (
+          <DaText variant="small" className="mt-4 text-da-accent-500">
+            {error}
+          </DaText>
+        )}
+      </div>
+
+      <div className="px-4">
+        <DaButton
+          disabled={loading}
+          type="submit"
+          variant="gradient"
+          className="w-full mt-8"
+        >
+          {loading && <TbLoader className="animate-spin text-lg mr-2" />}
+          Submit
+        </DaButton>
+      </div>
     </form>
   )
 }

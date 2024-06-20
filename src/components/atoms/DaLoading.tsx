@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { TbX } from 'react-icons/tb'
+import { DaButton } from './DaButton'
 
 const DaLoading = ({
-  text = 'Loading',
-  timeoutText = 'Request timed out',
+  text = 'Loading...',
+  timeoutText = 'Something went wrong. Please try again',
   timeout = 20,
   size = 60,
   fullScreen = true,
@@ -58,25 +59,36 @@ const DaLoading = ({
           </defs>
         </svg>
       ) : (
-        <TbX className="text-gray-400" size={size} />
+        <TbX className="text-da-gray-medium" size={size} />
       )}
       <div
         style={{ fontSize: `${textSize}rem` }}
-        className="text-gray-400 mt-2"
+        className="text-da-gray-medium mt-6"
       >
         {hasTimedOut ? timeoutText : text}
       </div>
-      <style>{`
-                .loading-spinner {
-                    transform-origin: center;
-                    animation: spin 1s linear infinite;
-                }
+      {hasTimedOut && (
+        <DaButton
+          variant="outline-nocolor"
+          className="mt-4"
+          onClick={() => window.location.reload()}
+        >
+          Try to reload the page
+        </DaButton>
+      )}
+      <style>
+        {`
+          .loading-spinner {
+              transform-origin: center;
+              animation: spin 1s linear infinite;
+          }
 
-                @keyframes spin {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
-                }
-            `}</style>
+          @keyframes spin {
+              from { transform: rotate(0deg); }
+              to { transform: rotate(360deg); }
+          }
+        `}
+      </style>
     </div>
   )
 }
