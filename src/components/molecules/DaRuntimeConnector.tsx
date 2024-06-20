@@ -2,6 +2,7 @@ import { forwardRef, useState, useEffect, useImperativeHandle } from 'react'
 import { socketio } from '@/services/socketio.service'
 import useRuntimeStore from '@/stores/runtimeStore'
 import { shallow } from 'zustand/shallow'
+import useModelStore from '@/stores/modelStore'
 
 interface KitConnectProps {
     // code: string;
@@ -12,24 +13,57 @@ interface KitConnectProps {
     onAppExit?: (code: any) => void;
 }
 
-const DaRuntimeConnector = forwardRef<any,KitConnectProps>(({usedAPIs, onActiveRtChanged, onNewLog, onAppExit}, ref) => {
+const DaRuntimeConnector = forwardRef<any, KitConnectProps>(({ usedAPIs, onActiveRtChanged, onNewLog, onAppExit }, ref) => {
     const [activeRtId, setActiveRtId] = useState<string | undefined>("");
     const [allRuntimes, setAllRuntimes] = useState<any>([]);
+    const [ticker, setTicker] = useState(0)
 
     useImperativeHandle(ref, () => { return { runApp, stopApp } });
 
     const [apisValue, setActiveApis] = useRuntimeStore(
         (state) => [
-          state.apisValue,
-          state.setActiveApis
+            state.apisValue,
+            state.setActiveApis
         ],
         shallow,
-      )
+    )
 
+    useEffect(() => {
+        if (!usedAPIs) return
+        console.log("usedAPIs", usedAPIs)
+        if (activeRtId) {
+            console.log("subscribe_apis usedAPIs", usedAPIs)
+            socketio.emit("messageToKit", {
+                cmd: "subscribe_apis",
+                to_kit_id: activeRtId,
+                apis: usedAPIs
+            })
+        }
+    }, [usedAPIs])
+
+    useEffect(() => {
+        let timer = setInterval(() => {
+          setTicker((oldTicker) => oldTicker + 1)
+        }, 30000)
+        return () => {
+          if (timer) clearInterval(timer)
+        }
+      }, [])
+
+      useEffect(() => {
+        if (activeRtId) {
+            console.log("subscribe_apis usedAPIs", usedAPIs)
+            socketio.emit("messageToKit", {
+                cmd: "subscribe_apis",
+                to_kit_id: activeRtId,
+                apis: usedAPIs
+            })
+        }
+      }, [ticker])
 
     const runApp = (code: string) => {
         console.log("runCode", code)
-        if(onNewLog) {
+        if (onNewLog) {
             onNewLog(`Run app\r\n`)
         }
         socketio.emit("messageToKit", {
@@ -50,11 +84,11 @@ const DaRuntimeConnector = forwardRef<any,KitConnectProps>(({usedAPIs, onActiveR
     }
 
     useEffect(() => {
-        if(onActiveRtChanged) {
+        if (onActiveRtChanged) {
             onActiveRtChanged(activeRtId)
         }
 
-        if(activeRtId){
+        if (activeRtId) {
             socketio.emit("messageToKit", {
                 cmd: "subscribe_apis",
                 to_kit_id: activeRtId,
@@ -77,7 +111,7 @@ const DaRuntimeConnector = forwardRef<any,KitConnectProps>(({usedAPIs, onActiveR
         socketio.on("broadcastToClient", onBroadCastToClient);
 
         return () => {
-            if(activeRtId) {
+            if (activeRtId) {
                 socketio.emit("messageToKit", {
                     cmd: "unsubscribe_apis",
                     to_kit_id: activeRtId
@@ -96,10 +130,10 @@ const DaRuntimeConnector = forwardRef<any,KitConnectProps>(({usedAPIs, onActiveR
     }, []);
 
     useEffect(() => {
-        if(allRuntimes && allRuntimes.length>0) {
-            if(activeRtId) return
-            let activeRt = allRuntimes.find((rt:any) => rt.is_online)
-            if(activeRt) {
+        if (allRuntimes && allRuntimes.length > 0) {
+            if (activeRtId) return
+            let activeRt = allRuntimes.find((rt: any) => rt.is_online)
+            if (activeRt) {
                 setActiveRtId(activeRt.kit_id)
             }
         } else {
@@ -109,15 +143,17 @@ const DaRuntimeConnector = forwardRef<any,KitConnectProps>(({usedAPIs, onActiveR
 
     const onConnected = () => {
         registerClient()
-        setTimeout(() => {
-            if(activeRtId){
-                socketio.emit("messageToKit", {
-                    cmd: "subscribe_apis",
-                    to_kit_id: activeRtId,
-                    apis: ["Vehicle.AverageSpeed"]
-                })
-            }
-        }, 1000)
+        if(usedAPIs) {
+            setTimeout(() => {
+                if (activeRtId) {
+                    socketio.emit("messageToKit", {
+                        cmd: "subscribe_apis",
+                        to_kit_id: activeRtId,
+                        apis: usedAPIs
+                    })
+                }
+            }, 1000)
+        }
     }
 
     const registerClient = () => {
@@ -144,7 +180,7 @@ const DaRuntimeConnector = forwardRef<any,KitConnectProps>(({usedAPIs, onActiveR
     };
 
     const onBroadCastToClient = (payload: any) => {
-        if(!payload) return
+        if (!payload) return
         console.log(`onBroadCastToClient`)
         console.log(payload)
     }
@@ -152,23 +188,23 @@ const DaRuntimeConnector = forwardRef<any,KitConnectProps>(({usedAPIs, onActiveR
     const onKitReply = (payload: any) => {
         if (!payload) return
         // console.log(payload)
-        if(payload.cmd == "run_python_app") {
-            if(payload.isDone) {
-                if(onNewLog) {
+        if (payload.cmd == "run_python_app") {
+            if (payload.isDone) {
+                if (onNewLog) {
                     onNewLog(`Exit code ${payload.code}\r\n`)
                 }
-                if(onAppExit) {
+                if (onAppExit) {
                     onAppExit(payload.code)
                 }
             } else {
-                if(onNewLog) {
+                if (onNewLog) {
                     onNewLog(payload.result || '')
                 }
             }
         }
 
-        if(payload.cmd == "apis-value") {
-            if(payload.result) {
+        if (payload.cmd == "apis-value") {
+            if (payload.result) {
                 // console.log(payload.result)
                 setActiveApis(payload.result)
             }
