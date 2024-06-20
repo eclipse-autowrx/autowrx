@@ -1,7 +1,6 @@
 import { FC, useEffect, useState, useRef } from 'react'
 import { WidgetConfig } from './DaDashboardEditor'
 import useRuntimeStore from '@/stores/runtimeStore'
-import { shallow } from 'zustand/shallow'
 
 interface DaDashboardGridProps {
   widgetItems: any[]
@@ -21,21 +20,20 @@ const calculateSpans = (boxes: any) => {
 
 interface PropsWidgetItem {
   widgetConfig: WidgetConfig
-  index: number
-  cell: number,
   apisValue: any
 }
 
 
 
-const WidgetItem: FC<PropsWidgetItem> = ({ widgetConfig, index, cell, apisValue }) => {
-  
+const WidgetItem: FC<PropsWidgetItem> = ({ widgetConfig, apisValue }) => {
+
   const [rSpan, setRSpan] = useState<number>(0)
   const [cSpan, setCSpan] = useState<number>(0)
   const frameElement = useRef<HTMLIFrameElement>(null)
   const [url, setUrl] = useState<string>()
 
   useEffect(() => {
+    if (!widgetConfig) return
     let url = widgetConfig.url
     if (url && widgetConfig.options) {
       let send_options = JSON.parse(JSON.stringify(widgetConfig.options))
@@ -44,49 +42,40 @@ const WidgetItem: FC<PropsWidgetItem> = ({ widgetConfig, index, cell, apisValue 
         url + '?options=' + encodeURIComponent(JSON.stringify(send_options))
       setUrl(url)
     }
-  }, [widgetConfig.url])
+  }, [widgetConfig?.url])
 
   useEffect(() => {
+    if (!widgetConfig) return
     const { rowSpan, colSpan } = calculateSpans(widgetConfig.boxes)
     setRSpan(rowSpan)
     setCSpan(colSpan)
-  }, [widgetConfig.boxes])
+  }, [widgetConfig?.boxes])
 
   useEffect(() => {
-    let timer = setInterval(() => {
-      // console.log(new Date())
-      console.log(`apisValue inside`)
-      console.log(apisValue)
 
-      // let setData = JSON.parse(JSON.stringify(apisValue))
-      // for (const api in setData) {
-      //   setData[api] = { value: setData[api] }
-      // }
-
-      // console.log(apisValue)
-
-      frameElement?.current?.contentWindow?.postMessage(JSON.stringify({
-        cmd: "vss-sync",
-        vssData: apisValue
-      }), "*")
-
-    }, 1000)
-
-    return () => {
-      clearInterval(timer)
+    let setData = JSON.parse(JSON.stringify(apisValue))
+    for (const api in setData) {
+      setData[api] = { value: setData[api] }
     }
 
-  }, [])
+    frameElement?.current?.contentWindow?.postMessage(JSON.stringify({
+      cmd: "vss-sync",
+      vssData: apisValue
+    }), "*")
 
-  // useEffect(() => {
-  //   console.log(`apisValue inside`)
-  //   console.log(apisValue)
-  // }, [apisValue])
+  }, [apisValue])
+
+
+  if (!widgetConfig) return <div
+    className={`flex border border-da-gray-light justify-center items-center select-none da-label-huge text-da-gray-medium`}
+  >
+    .
+  </div>
 
   return (
     <div
       className={`col-span-${cSpan} row-span-${rSpan}`}
-      key={`${index}-${cell}`}
+    // key={`${index}-${cell}`}
     >
       <iframe
         ref={frameElement}
@@ -103,28 +92,42 @@ const WidgetItem: FC<PropsWidgetItem> = ({ widgetConfig, index, cell, apisValue 
 }
 
 const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
-  const CELLS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  // const CELLS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  const [renderCell, setRenderCell] = useState<any[]>([])
 
   useEffect(() => {
-    console.log('DaDashboardGrid, widgetItems', widgetItems)
+    // console.log('DaDashboardGrid, widgetItems', widgetItems)
+    let tmpCells = []
+    let usedWidget = new Set()
+    for (let i = 1; i <= 10; i++) {
+      const widgetIndex = widgetItems.findIndex((w) =>
+        w.boxes?.includes(i),
+      )
+      if (widgetIndex != -1 && !usedWidget.has(widgetIndex)) {
+        tmpCells.push(widgetItems[widgetIndex])
+        usedWidget.add(widgetIndex)
+      } else {
+        tmpCells.push(null)
+      }
+      setRenderCell(tmpCells)
+    }
   }, [widgetItems])
 
   const apisValue = useRuntimeStore(
-    state => 
+    state =>
       state.apisValue
   )
 
-    useEffect(() => {
-    console.log(`apisValue`)
-    console.log(apisValue)
-  }, [apisValue])
-
-
-  let renderedWidgets = new Set()
+  // let renderedWidgets = new Set()
 
   return (
     <div className={`grid h-full w-full grid-cols-5 grid-rows-2`}>
-      {CELLS.map((cell) => {
+      {
+        renderCell.map((widgetItem, wIndex) => <WidgetItem key={wIndex}
+          widgetConfig={widgetItem}
+          apisValue={apisValue} />)
+      }
+      {/* {CELLS.map((cell) => {
         const widgetIndex = widgetItems.findIndex((w) =>
           w.boxes?.includes(cell),
         )
@@ -149,7 +152,7 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
             </div>
           )
         }
-      })}
+      })} */}
     </div>
   )
 }
