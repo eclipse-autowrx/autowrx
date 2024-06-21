@@ -17,7 +17,7 @@ import DaLoader from '@/components/atoms/DaLoader'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 
-const PagePrototypeList = () => {
+const PrototypeLibraryList = () => {
   const { data: model } = useCurrentModel()
   const { data: fetchedPrototypes, refetch } = useListModelPrototypes(
     model ? model.id : '',
@@ -37,8 +37,7 @@ const PagePrototypeList = () => {
     return (
       <DaLoading
         text="Loading prototypes..."
-        timeout={10}
-        timeoutText="Failed to load prototypes"
+        timeoutText="Failed to load prototypes. Please try again."
       />
     )
   }
@@ -47,8 +46,6 @@ const PagePrototypeList = () => {
     if (!file) return
     setIsLoading(true)
     const prototype = await zipToPrototype(model.id, file)
-    // console.log('Imported prototype:', prototype)
-    // console.log('Model ID:', model.id)
     try {
       if (prototype) {
         const prototypePayload: Partial<Prototype> = {
@@ -81,7 +78,6 @@ const PagePrototypeList = () => {
 
   return (
     <div className="flex flex-col w-full h-[99%]">
-      <div className="flex h-12 bg-da-primary-100 sticky top-0"></div>
       <div className="grid grid-cols-12 w-full h-full">
         <div className="col-span-5 xl:col-span-4 h-full overflow-y-auto mt-2 flex flex-col">
           <DaInput
@@ -108,7 +104,7 @@ const PagePrototypeList = () => {
                     avatarUrl="/imgs/2.jpg"
                     maxWidth="2000px"
                     imageMaxWidth="100px"
-                    isSelected={selectedPrototype === prototype} // Pass the selected prop
+                    isSelected={selectedPrototype === prototype}
                   />
                 </div>
               ))}
@@ -169,4 +165,4 @@ const PagePrototypeList = () => {
   )
 }
 
-export default PagePrototypeList
+export default PrototypeLibraryList

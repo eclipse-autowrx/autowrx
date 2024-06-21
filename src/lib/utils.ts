@@ -1,7 +1,7 @@
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { Cvi, VehicleApi } from '@/types/model.type'
-import { WidgetConfig } from '@/components/molecules/dashboard/DaDashboardEditor'
+import { WidgetConfig } from '@/types/widget.type'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -155,4 +155,11 @@ export const parseWidgetConfig = (configStr: any) => {
     console.error('Error normalizing widget config:', e)
     return []
   }
+}
+
+export const getCSSVariable = (variable: string): string => {
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue(variable)
+    .trim()
+  return value ? `hsl(${value})` : ''
 }

@@ -20,6 +20,7 @@ import {
   DaPaginationPrevious,
   DaPaginationNext,
 } from '../atoms/DaPaging'
+import { Link, useParams } from 'react-router-dom'
 
 const PrototypeTabFeedback = () => {
   const [isOpenPopup, setIsOpenPopup] = useState(false)
@@ -29,6 +30,7 @@ const PrototypeTabFeedback = () => {
   })
   const { data: profile } = useSelfProfileQuery()
   const { data: prototype } = useCurrentPrototype()
+  const { model_id } = useParams()
   const {
     data: prototypeFeedbacks,
     refetch,
@@ -64,10 +66,12 @@ const PrototypeTabFeedback = () => {
           </div>
         </div>
         <div className="flex">
-          <DaButton size="sm" variant="outline-nocolor" className="mr-2">
-            <TbChartDots className="w-4 h-4 mr-1" />
-            View Portfolio
-          </DaButton>
+          <Link to={`/model/${model_id}/library/portfolio`}>
+            <DaButton size="sm" variant="outline-nocolor" className="mr-2">
+              <TbChartDots className="w-4 h-4 mr-1" />
+              View Portfolio
+            </DaButton>
+          </Link>
           <DaPopup
             state={[isOpenPopup, setIsOpenPopup]}
             trigger={

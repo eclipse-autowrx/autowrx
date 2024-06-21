@@ -15,7 +15,7 @@ import PageMolecules from '@/pages/test-ui/PageMolecules'
 import PageOrganisms from '@/pages/test-ui/PageOrganisms'
 import PageTestHome from '@/pages/test-ui/PageTestHome'
 import PageTestForm from '@/pages/test-ui/PageTestForm'
-import PagePrototypeList from '@/pages/PagePrototypeList'
+import PagePrototypeLibrary from '@/pages/PagePrototypeLibrary'
 import PageResetPassword from '@/pages/PageResetPassword'
 import PageManageUsers from '@/pages/PageManageUsers'
 import PageDiscussions from '@/pages/test-ui/PageDiscussions'
@@ -48,7 +48,8 @@ const routesConfig: RouteObject[] = [
       { path: ':model_id', element: <PageModelDetail /> },
       { path: ':model_id/api', element: <PageVehicleApi /> },
       { path: ':model_id/api/:api', element: <PageVehicleApi /> },
-      { path: ':model_id/library', element: <PagePrototypeList /> },
+      { path: ':model_id/library', element: <PagePrototypeLibrary /> },
+      { path: ':model_id/library/:tab', element: <PagePrototypeLibrary /> },
       { path: ':model_id/architecture', element: <PageModelArchitecture /> },
       {
         path: ':model_id/library/prototype/:prototype_id',
