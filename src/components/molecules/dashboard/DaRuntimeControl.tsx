@@ -149,7 +149,8 @@ const DaRuntimeControl: FC = ({ }) => {
             setCode={setCode}
             editable={isAuthorized}
             language="python"
-            onBlur={saveCodeToDb}
+            onBlur={() => {}}
+            // onBlur={saveCodeToDb}
           />
           }
         </>
