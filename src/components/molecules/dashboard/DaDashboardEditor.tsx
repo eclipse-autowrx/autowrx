@@ -17,19 +17,12 @@ import { isContinuousRectangle, doesOverlap, calculateSpans } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import DaDashboardWidgetEditor from './DaDashboardWidgetEditor'
 import { DaText } from '@/components/atoms/DaText'
+import { WidgetConfig } from '@/types/widget.type'
 
 interface DaDashboardEditorProps {
   entireWidgetConfig?: string
-  onDashboardConfigChanged: (config: any) => void
+  onDashboardConfigChanged: (dashboardConfig: string) => void
   editable?: boolean
-}
-
-export interface WidgetConfig {
-  plugin: string
-  widget: string
-  url: string
-  options: any
-  boxes: number[]
 }
 
 const DaDashboardEditor = ({
@@ -161,10 +154,10 @@ const DaDashboardEditor = ({
     if (!isValidSelection) {
     }
   }
+
   const handleWidgetClick = (index: number) => {
     setSelectedWidgetIndex(index)
-    // Deselect any selected cells
-    setSelectedCells([])
+    setSelectedCells([]) // unselect any selected cells
   }
 
   const handleUpdateWidget = () => {
@@ -201,6 +194,15 @@ const DaDashboardEditor = ({
       }
     } else {
       console.error('No widget is selected for updating')
+    }
+  }
+
+  const handleOnDashboardConfigChanged = (newConfigString: string) => {
+    try {
+      onDashboardConfigChanged(newConfigString)
+      setSelectedCells([]) // unselect any selected cells
+    } catch (e) {
+      console.error('Failed to parse new dashboard config:', e)
     }
   }
 
@@ -331,7 +333,7 @@ const DaDashboardEditor = ({
             <div
               key={`merged-${cell}`}
               className={cn(
-                'flex relative cursor-pointer !bg-da-white border-2 border-da-gray-medium items-center justify-center text-da-gray-dark',
+                'flex relative cursor-pointer !bg-da-white border-2 border-da-primary-500 items-center justify-center text-da-gray-dark',
                 `col-span-${colSpan} row-span-${rowSpan}`,
               )}
             >
@@ -371,7 +373,7 @@ const DaDashboardEditor = ({
           <div
             key={`empty-${cell}`}
             className={cn(
-              'flex border border-da-gray-medium justify-center items-center select-none da-label-small text-da-gray-medium font-bold',
+              'flex border border-da-gray-medium justify-center items-center select-none da-label-small text-da-gray-medium da-label-sub-title',
               selectedCells.includes(cell) &&
                 'bg-da-gray-light text-da-gray-dark',
               !editable && 'pointer-events-none',
@@ -417,12 +419,8 @@ const DaDashboardEditor = ({
       <DaWidgetLibrary
         targetSelectionCells={targetSelectionCells}
         entireWidgetConfig={entireWidgetConfig || ''}
-        updateDashboardCfg={onDashboardConfigChanged}
-        openPopup={isWidgetLibraryOpen}
-        onClose={() => {
-          setIsWidgetLibraryOpen(false)
-          setSelectedCells([])
-        }}
+        updateDashboardCfg={handleOnDashboardConfigChanged}
+        popupState={[isWidgetLibraryOpen, setIsWidgetLibraryOpen]}
       />
     </div>
   )

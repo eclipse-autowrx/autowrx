@@ -12,8 +12,8 @@ import DaConfirmPopup from '../molecules/DaConfirmPopup'
 import { useNavigate } from 'react-router-dom'
 import DaLoader from '../atoms/DaLoader'
 import usePermissionHook from '@/hooks/usePermissionHook'
-import { useParams } from 'react-router-dom'
 import { PERMISSIONS } from '@/data/permission'
+import DaApiArchitecture from '../molecules/DaApiArchitecture'
 
 interface ApiDetailProps {
   apiDetails: any
@@ -45,7 +45,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
         setIsLoading(false)
         await refetch()
         navigate(`/model/${model.id}/api`)
-        console.log('Wishlist API deleted successfully')
+        // console.log('Wishlist API deleted successfully')
       } catch (error) {
         setIsLoading(false)
         console.error('Error deleting wishlist API:', error)
@@ -141,11 +141,12 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
   ].filter(Boolean)
 
   return (
-    <div>
-      <DaImage
+    <div className="flex flex-col w-full px-2">
+      {/* <DaImage
         src="https://bewebstudio.digitalauto.tech/data/projects/OezCm7PTy8FT/a/E-Car_Full_Vehicle.png"
         className="object-cover"
-      />
+      /> */}
+      <DaApiArchitecture apiName={apiDetails.name} />
       <div className="w-full py-2 px-4 bg-da-primary-100 justify-between flex">
         <DaCopy textToCopy={apiDetails.name}>
           <DaText variant="regular-bold" className="text-da-primary-500">

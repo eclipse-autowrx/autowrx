@@ -1,6 +1,6 @@
 import { FC, useEffect, useState, useRef } from 'react'
-import { WidgetConfig } from './DaDashboardEditor'
 import useRuntimeStore from '@/stores/runtimeStore'
+import { WidgetConfig } from '@/types/widget.type'
 
 interface DaDashboardGridProps {
   widgetItems: any[]
@@ -32,6 +32,7 @@ const WidgetItem: FC<PropsWidgetItem> = ({ widgetConfig, apisValue }) => {
   const frameElement = useRef<HTMLIFrameElement>(null)
   const [url, setUrl] = useState<string>()
 
+<<<<<<< src/components/molecules/dashboard/DaDashboardGrid.tsx
   useEffect(() => {
     if (!widgetConfig) return
     let url = widgetConfig.url
@@ -112,13 +113,64 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
       setRenderCell(tmpCells)
     }
   }, [widgetItems])
+=======
+  // useEffect(() => {
+  //   console.log('DaDashboardGrid, widgetItems: ', widgetItems)
+  // }, [widgetItems])
+>>>>>>> src/components/molecules/dashboard/DaDashboardGrid.tsx
 
   const apisValue = useRuntimeStore(
     state =>
       state.apisValue
   )
 
+<<<<<<< src/components/molecules/dashboard/DaDashboardGrid.tsx
   // let renderedWidgets = new Set()
+=======
+  const WidgetItem: FC<PropsWidgetItem> = ({ widgetConfig, index, cell }) => {
+    const [rSpan, setRSpan] = useState<number>(0)
+    const [cSpan, setCSpan] = useState<number>(0)
+    const frameElement = useRef<HTMLIFrameElement>(null)
+    const [url, setUrl] = useState<string>()
+
+    useEffect(() => {
+      let url = widgetConfig.path || widgetConfig.options.url
+      if (url && widgetConfig.options) {
+        let send_options = JSON.parse(JSON.stringify(widgetConfig.options))
+        delete send_options.url
+        url =
+          url + '?options=' + encodeURIComponent(JSON.stringify(send_options))
+        setUrl(url)
+      }
+    }, [widgetConfig.path, widgetConfig.options])
+
+    useEffect(() => {
+      const { rowSpan, colSpan } = calculateSpans(widgetConfig.boxes)
+      setRSpan(rowSpan)
+      setCSpan(colSpan)
+    }, [widgetConfig.boxes])
+
+    return (
+      <div
+        className={`col-span-${cSpan} row-span-${rSpan}`}
+        key={`${index}-${cell}`}
+      >
+        <iframe
+          ref={frameElement}
+          src={url}
+          className="w-full h-full m-0"
+          allow="camera;microphone"
+          onLoad={() => {
+            // console.log('iframe loaded')
+            // console.log(frameElement?.current?.contentWindow)
+          }}
+        ></iframe>
+      </div>
+    )
+  }
+
+  let renderedWidgets = new Set()
+>>>>>>> src/components/molecules/dashboard/DaDashboardGrid.tsx
 
   return (
     <div className={`grid h-full w-full grid-cols-5 grid-rows-2`}>
@@ -133,7 +185,6 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
         )
         if (widgetIndex !== -1 && !renderedWidgets.has(widgetIndex)) {
           renderedWidgets.add(widgetIndex)
-          // return widgetItem(widgetItems[widgetIndex], widgetIndex, cell)
           return (
             <WidgetItem
               widgetConfig={widgetItems[widgetIndex]}
