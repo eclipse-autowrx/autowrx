@@ -96,12 +96,8 @@ const PrototypeLibraryList = () => {
                   className="cursor-pointer mb-2"
                 >
                   <DaItemStandard
-                    title={prototype.name}
-                    author="John Doe"
-                    content={prototype.description.problem}
-                    tags={prototype.tags ? prototype.tags : []}
-                    imageUrl={prototype.image_file}
-                    avatarUrl="/imgs/2.jpg"
+                    prototype={prototype}
+                    creatorId={prototype.created_by}
                     maxWidth="2000px"
                     imageMaxWidth="100px"
                     isSelected={selectedPrototype === prototype}
