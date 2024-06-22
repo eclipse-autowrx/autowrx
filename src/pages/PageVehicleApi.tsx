@@ -5,12 +5,11 @@ import { VehicleApi } from '@/types/model.type'
 import ModelApiList from '@/components/organisms/ModelApiList'
 import { DaImage } from '@/components/atoms/DaImage'
 import { DaText } from '@/components/atoms/DaText'
-import { DaButton } from '@/components/atoms/DaButton'
-import { cn } from '@/lib/utils'
+import DaTabItem from '@/components/atoms/DaTabItem'
 import DaTreeView from '@/components/molecules/DaTreeView'
 
 const PageVehicleApi = () => {
-  const { model_id } = useParams()
+  const { model_id, tab } = useParams()
   const navigate = useNavigate()
   const [selectedApi, setSelectedApi] = useState<VehicleApi | null>(null)
   const [activeTab, setActiveTab] = useState<'list' | 'tree'>('list')
@@ -26,33 +25,19 @@ const PageVehicleApi = () => {
         <DaText variant="regular-bold" className="text-da-primary-500">
           COVESA VSS 4.1
         </DaText>
-        <div className="w-fit space-x-2">
-          <DaButton
-            variant="plain"
-            className={cn(
-              '!px-1',
-              activeTab === 'list'
-                ? 'border-b-2 border-da-primary-500 !rounded-none !text-da-primary-500'
-                : '',
-            )}
-            onClick={() => {
-              setActiveTab('list')
-            }}
+        <div className="flex space-x-2">
+          <DaTabItem
+            active={activeTab === 'list'}
+            onClick={() => setActiveTab('list')}
           >
             List View
-          </DaButton>
-          <DaButton
-            variant="plain"
-            className={cn(
-              ' !px-1',
-              activeTab === 'tree'
-                ? 'border-b-2 border-da-primary-500 !rounded-none !text-da-primary-500'
-                : '',
-            )}
+          </DaTabItem>
+          <DaTabItem
+            active={activeTab === 'tree'}
             onClick={() => setActiveTab('tree')}
           >
             Tree View
-          </DaButton>
+          </DaTabItem>
         </div>
       </div>
       {activeTab === 'list' && (

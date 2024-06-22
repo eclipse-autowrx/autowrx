@@ -157,6 +157,13 @@ export const parseWidgetConfig = (configStr: any) => {
   }
 }
 
+export const getCSSVariable = (variable: string): string => {
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue(variable)
+    .trim()
+  return value ? `hsl(${value})` : ''
+}
+
 export const maskEmail = (email: string) => {
   const [localPart, domainPart] = email.split('@')
   const maskedLocalPart =
