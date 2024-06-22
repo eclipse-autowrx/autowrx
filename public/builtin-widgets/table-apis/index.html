@@ -1,0 +1,56 @@
+<html>
+
+<head>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+    <script defer src="https://bestudio.digitalauto.tech/project/BzR91b49OHqj/syncer.js"></script>
+</head>
+
+<body class="flex flex-col bg-white h-full w-full overflow-auto text-gray-800">
+
+    <table id="api-table" class="table-auto w-full">
+        <tbody>
+            <!-- Dynamic content will be inserted here -->
+        </tbody>
+    </table>
+
+    <script>
+        let interval = null;
+
+        function createTableCell(content, isBold = false) {
+            const cell = document.createElement('td');
+            cell.className = `px-4 py-2 ${isBold ? 'font-semibold' : ''} whitespace-nowrap`;
+            cell.innerText = content;
+            return cell;
+        }
+
+        function onWidgetLoaded(options) {
+            const apiTableBody = document.querySelector('#api-table tbody');
+
+            if (options.apis && Array.isArray(options.apis)) {
+                options.apis.forEach((api, index) => {
+                    const row = document.createElement('tr');
+                    row.className = index % 2 === 1 ? 'bg-gray-100' : '';
+                    row.appendChild(createTableCell(api));
+                    row.appendChild(createTableCell('0', true));
+                    apiTableBody.appendChild(row);
+                });
+
+                interval = setInterval(() => {
+                    options.apis.forEach((api, index) => {
+                        let apiValueObject = getApiValue(api);
+                        let apiValue = apiValueObject?.value || "0";
+                        apiTableBody.rows[index].cells[1].innerText = apiValue;
+                        apiTableBody.rows[index].cells[1].title = apiValue;
+                    });
+                }, 100);
+            }
+        }
+
+        function onWidgetUnloaded(options) {
+            if (interval) clearInterval(interval);
+        }
+    </script>
+</body>
+
+</html>

@@ -13,12 +13,15 @@ import { DaText } from '../atoms/DaText'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { PERMISSIONS } from '@/data/permission'
+import { updatePrototypeService } from '@/services/prototype.service'
+import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 
 const PrototypeTabCodeDashboardCfg: FC = ({}) => {
   const [prototype, setActivePrototype] = useModelStore(
     (state) => [state.prototype as Prototype, state.setActivePrototype],
     shallow,
   )
+  const { refetch } = useCurrentPrototype()
   const [dashboardCfg, setDashboardCfg] = useState<string>('')
   const [isEditing, setIsEditing] = useState<boolean>(true)
   const [isExpanded, setIsExpanded] = useState(false)
@@ -45,42 +48,58 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
     saveDashboardCfgToDb(dashboardCfg || '')
   }, [ticker])
 
-  const saveDashboardCfgToDb = (config: string) => {
-    console.log(`saveDashboardCfgToDb`)
-    // console.log(config)
-    let tmpConfig = config
+  const saveDashboardCfgToDb = async (dashboardConfig: string) => {
+    if (!dashboardConfig) {
+      console.log('No dashboard config provided')
+      return
+    }
+
+    let updateConfig = dashboardConfig
+
     try {
-      let configObj = JSON.parse(tmpConfig)
+      let configObj = JSON.parse(updateConfig)
       if (Array.isArray(configObj)) {
         let revisedObj = {
           autorun: false,
           widgets: configObj,
         }
-        tmpConfig = JSON.stringify(revisedObj, null, 4)
+        updateConfig = JSON.stringify(revisedObj, null, 4)
       }
     } catch (parseErr) {
-      console.log(parseErr)
+      console.error('JSON parsing error:', parseErr, 'Input:', updateConfig)
+      return
     }
-    setDashboardCfg(tmpConfig)
-    let newPrototype = JSON.parse(JSON.stringify(prototype))
-    newPrototype.widget_config = tmpConfig
-    setActivePrototype(newPrototype)
-  }
 
-  if (!prototype) {
-    return <></>
+    console.log('Parsed and updated configuration:', updateConfig)
+
+    if (updateConfig === prototype.widget_config || updateConfig === '') {
+      console.log('No changes detected in the configuration.')
+      return
+    }
+
+    setDashboardCfg(updateConfig)
+    let newPrototype = { ...prototype, widget_config: updateConfig }
+    setActivePrototype(newPrototype)
+
+    if (prototype && prototype.id) {
+      try {
+        await updatePrototypeService(prototype.id, {
+          widget_config: updateConfig,
+        })
+        await refetch()
+        console.log('Configuration updated and refetched successfully.')
+      } catch (error) {
+        console.error('Error updating prototype service:', error)
+      }
+    }
   }
 
   return (
     <>
       <DaDashboardEditor
-        // widgetConfigString={prototype.widget_config}
         entireWidgetConfig={prototype.widget_config}
         editable={isAuthorized}
-        onDashboardConfigChanged={(config: string) => {
-          // console.log(`onDashboardConfigChanged`, config)
-          saveDashboardCfgToDb(config)
-        }}
+        onDashboardConfigChanged={saveDashboardCfgToDb}
       />
       <div className="flex flex-col h-full w-full items-center px-2 py-1 text-xs text-da-gray-medium rounded">
         {isAuthorized && (
@@ -136,7 +155,6 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
             onBlur={() => {
               console.log('CodeEditor On blur')
               setTicker((oldTicker) => oldTicker + 1)
-              // saveDashboardCfgToDb(dashboardCfg)
             }}
           />
         </div>

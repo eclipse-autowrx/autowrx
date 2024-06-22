@@ -288,11 +288,7 @@ const PageModelDetail = () => {
                 }}
               />
 
-              <DaContributorList
-                className="mt-3"
-                contributors={model.contributors ? model.contributors : []}
-                members={model.members ? model.members : []}
-              />
+              <DaContributorList className="mt-3" />
             </>
           )}
         </div>

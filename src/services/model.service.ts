@@ -58,6 +58,16 @@ export const updateModelPermissionService = async (
   ).data
 }
 
+export const deleteModelPermissionService = async (
+  model_id: string,
+  role: string,
+  userId: string,
+) => {
+  return await serverAxios.delete(`/models/${model_id}/permissions`, {
+    params: { userId, role },
+  })
+}
+
 export const updateModelService = async (
   model_id: string,
   data: Partial<Model>,
