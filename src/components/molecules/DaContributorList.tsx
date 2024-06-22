@@ -5,14 +5,16 @@ import { DaButton } from '../atoms/DaButton'
 import { DaAvatar } from '../atoms/DaAvatar'
 import { cn } from '@/lib/utils'
 import DaSelectUserPopup from './DaSelectUserPopup'
-import { set } from 'lodash'
 import { User } from '@/types/user.type'
-import { updateModelPermissionService } from '@/services/model.service'
-import { useParams } from 'react-router-dom'
+import {
+  updateModelPermissionService,
+  deleteModelPermissionService,
+} from '@/services/model.service'
+import { maskEmail } from '@/lib/utils'
+import useCurrentModel from '@/hooks/useCurrentModel'
+import DaLoading from '../atoms/DaLoading'
 
 interface ContributorListProps {
-  contributors: User[]
-  members: User[]
   className?: string
 }
 
@@ -34,7 +36,7 @@ const UserItem = ({ user, onRemoveUser }: UserItemProps) => (
           {user.name}
         </DaText>
         <DaText variant="small" className="text-da-gray-medium">
-          {user.email}
+          {maskEmail(user.email)}
         </DaText>
       </div>
     </div>
@@ -47,27 +49,33 @@ const UserItem = ({ user, onRemoveUser }: UserItemProps) => (
   </div>
 )
 
-const DaContributorList = ({
-  contributors,
-  members,
-  className,
-}: ContributorListProps) => {
-  const { model_id } = useParams()
+const DaContributorList = ({ className }: ContributorListProps) => {
+  const { data: model, refetch } = useCurrentModel()
   const [activeTab, setActiveTab] = useState('contributors')
   const [open, setOpen] = useState(false)
 
-  if (!contributors || !members || !model_id) {
-    return null
+  if (!model) {
+    return (
+      <DaLoading
+        text="Loading model..."
+        timeout={10}
+        timeoutText="Model not found"
+      />
+    )
   }
 
-  const handleAddUser = (userId: string) => {
+  const handleAddUser = async (userId: string) => {
     const role =
       activeTab === 'contributors' ? 'model_contributor' : 'model_member'
-    updateModelPermissionService(model_id, role, userId)
+    await updateModelPermissionService(model.id, role, userId)
+    await refetch()
   }
 
-  const onRemoveUser = (userId: string) => {
-    // No API available yet / permission hook is in development
+  const onRemoveUser = async (userId: string) => {
+    const role =
+      activeTab === 'contributors' ? 'model_contributor' : 'model_member'
+    await deleteModelPermissionService(model.id, role, userId)
+    await refetch()
   }
 
   return (
@@ -89,7 +97,7 @@ const DaContributorList = ({
                   : 'text-da-gray-medium',
               )}
             >
-              Contributor ({contributors.length})
+              Contributor ({model.contributors?.length ?? 0})
             </DaText>
           </div>
           <div onClick={() => setActiveTab('members')}>
@@ -102,7 +110,7 @@ const DaContributorList = ({
                   : 'text-da-gray-medium',
               )}
             >
-              Member ({members.length})
+              Member ({model.members?.length ?? 0})
             </DaText>
           </div>
         </div>
@@ -117,19 +125,22 @@ const DaContributorList = ({
           <TbUserPlus className="mr-2" /> Add user
         </DaButton>
       </div>
-      <div className="flex flex-col max-h-[400px] overflow-y-auto">
-        {activeTab === 'contributors'
-          ? contributors.map((user, index) => (
-              <UserItem key={index} user={user} onRemoveUser={onRemoveUser} />
-            ))
-          : members.map((user, index) => (
-              <UserItem key={index} user={user} onRemoveUser={onRemoveUser} />
-            ))}
+      <div className="flex flex-col max-h-[400px]">
+        {(activeTab === 'contributors'
+          ? model.contributors ?? []
+          : model.members ?? []
+        ).map((user, index) => (
+          <UserItem key={index} user={user} onRemoveUser={onRemoveUser} />
+        ))}
       </div>
       <DaSelectUserPopup
         selectUser={handleAddUser}
         popupState={[open, setOpen]}
-        excludeUserIds={[]}
+        excludeUsers={
+          activeTab === 'contributors'
+            ? model.contributors ?? []
+            : model.members ?? []
+        }
       />
     </div>
   )

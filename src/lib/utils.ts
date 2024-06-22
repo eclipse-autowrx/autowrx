@@ -156,3 +156,10 @@ export const parseWidgetConfig = (configStr: any) => {
     return []
   }
 }
+
+export const maskEmail = (email: string) => {
+  const [localPart, domainPart] = email.split('@')
+  const maskedLocalPart =
+    localPart.slice(0, 6).replace(/./g, 'x') + localPart.slice(6)
+  return `${maskedLocalPart}@${domainPart}`
+}
