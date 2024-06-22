@@ -1,29 +1,21 @@
 import { DaImageRatio } from '../atoms/DaImageRatio'
 import { DaTag } from '../atoms/DaTag'
 import { DaText } from '../atoms/DaText'
-import { DaAvatar } from '../atoms/DaAvatar'
-import { Tag } from '@/types/model.type'
+import { Prototype } from '@/types/model.type'
 import { cn } from '@/lib/utils'
+import DaUserProfile from './DaUserProfile'
 
 interface DaItemStandardProps {
-  title: string
-  author: string
-  content: string
-  tags: Tag[]
-  imageUrl: string
-  avatarUrl: string
+  prototype: Prototype
+  creatorId: string
   maxWidth?: string
   imageMaxWidth?: string
   isSelected?: boolean
 }
 
 const DaItemStandard: React.FC<DaItemStandardProps> = ({
-  title,
-  author,
-  content,
-  tags,
-  imageUrl,
-  avatarUrl,
+  prototype,
+  creatorId,
   maxWidth = '500px',
   imageMaxWidth = '300px',
   isSelected = false,
@@ -36,7 +28,11 @@ const DaItemStandard: React.FC<DaItemStandardProps> = ({
       style={{ maxWidth: maxWidth }}
     >
       <DaImageRatio
-        src={imageUrl ? imageUrl : 'https://placehold.co/600x400'}
+        src={
+          prototype.image_file
+            ? prototype.image_file
+            : 'https://placehold.co/600x400'
+        }
         alt="Image"
         className="w-full h-full rounded-lg"
         ratio={1 / 1}
@@ -46,34 +42,25 @@ const DaItemStandard: React.FC<DaItemStandardProps> = ({
       <div className="flex flex-col justify-between overflow-hidden w-ful">
         <div className="flex flex-col space-y-2">
           <DaText
-            variant="small-bold"
+            variant="regular-bold"
             className={cn(
               'text-da-gray-medium',
               isSelected ? 'text-da-primary-500' : '',
             )}
           >
-            {title}
+            {prototype.name}
           </DaText>
-          <div className="flex items-center space-x-2">
-            <DaAvatar
-              src={avatarUrl}
-              alt="Author"
-              className="w-5 h-5 rounded-full"
-            />
-            <DaText variant="small" className="text-da-gray-">
-              {author}
-            </DaText>
-          </div>
+          <DaUserProfile userId={creatorId} />
           <DaText
             variant="small"
             className="w-full line-clamp-2 text-da-gray-medium"
           >
-            {content}
+            {prototype.description.problem}
           </DaText>
         </div>
-        {tags && (
+        {prototype.tags && (
           <div className="flex space-x-2">
-            {tags.map((tag, index) => (
+            {prototype.tags.map((tag, index) => (
               <DaTag variant={'secondary'} key={index}>
                 {tag.tag}
               </DaTag>

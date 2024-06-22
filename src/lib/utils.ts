@@ -1,7 +1,7 @@
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { Cvi, VehicleApi } from '@/types/model.type'
-import { WidgetConfig } from '@/components/molecules/dashboard/DaDashboardEditor'
+import { WidgetConfig } from '@/types/widget.type'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -139,4 +139,27 @@ export const doesOverlap = (
     }
   }
   return false
+}
+
+// Handle case when prototype's widget config is an object instead of an array
+export const parseWidgetConfig = (configStr: any) => {
+  if (!configStr) return []
+
+  try {
+    const parsedConfig =
+      typeof configStr === 'string' ? JSON.parse(configStr) : configStr
+    return Array.isArray(parsedConfig)
+      ? parsedConfig
+      : parsedConfig.widgets || []
+  } catch (e) {
+    console.error('Error normalizing widget config:', e)
+    return []
+  }
+}
+
+export const maskEmail = (email: string) => {
+  const [localPart, domainPart] = email.split('@')
+  const maskedLocalPart =
+    localPart.slice(0, 6).replace(/./g, 'x') + localPart.slice(6)
+  return `${maskedLocalPart}@${domainPart}`
 }

@@ -9,6 +9,10 @@ export const getSelfService = async () => {
   return (await serverAxios.get<User>('/users/self')).data
 }
 
+export const getUserService = async (id: string) => {
+  return (await serverAxios.get<User>(`/users/${id}`)).data
+}
+
 export const listUsersService = async () => {
   if (IS_MOCK) {
     return {

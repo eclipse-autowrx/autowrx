@@ -46,7 +46,8 @@
     "react-toastify": "^10.0.5",
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7",
-    "zustand": "^4.5.2"
+    "zustand": "^4.5.2",
+    "socket.io-client": "^4.7.1"
   },
   "devDependencies": {
     "@tanstack/eslint-plugin-query": "^5.35.6",

@@ -1,0 +1,53 @@
+<html>
+
+<head>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+    <script defer src="https://bestudio.digitalauto.tech/project/BzR91b49OHqj/syncer.js"></script>
+</head>
+
+<body class="bg-white flex items-center justify-center h-screen">
+    <div id="api-widget" class="flex flex-col p-4 items-center space-y-6">
+        <div id="value" class="text-3xl font-bold text-[#005072]">
+            0
+        </div>
+        <div id="label" class="text-xl text-gray-700">
+            Label
+        </div>
+    </div>
+    <script>
+        let ASSOCIATED_API = "";
+        let interval = null;
+        function onWidgetLoaded(options) {
+            if (options.api) {
+                ASSOCIATED_API = options.api;
+            }
+            if (options.label) {
+                document.getElementById("label").innerText = options.label;
+            }
+            if (options.labelClassname) {
+                document.getElementById("label").className = options.labelClassname;
+            }
+            if (options.valueClassname) {
+                document.getElementById("value").className = options.valueClassname;
+            }
+            if (options.boxClassname) {
+                document.getElementById("api-widget").className = `p-4 rounded-lg shadow-lg ${options.boxClassname}`;
+            }
+
+            interval = setInterval(() => {
+                if (ASSOCIATED_API) {
+                    let apiValueObject = getApiValue(ASSOCIATED_API);
+                    let apiValue = apiValueObject?.value || "0";
+                    document.getElementById("value").innerText = apiValue;
+                }
+            }, 100);
+        }
+
+        function onWidgetUnloaded(options) {
+            if (interval) clearInterval(interval);
+        }
+    </script>
+</body>
+
+</html>

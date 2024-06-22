@@ -1,0 +1,120 @@
+<html>
+
+<head>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+    <script defer src="https://bestudio.digitalauto.tech/project/BzR91b49OHqj/syncer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        #chart-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        #api-chart {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body class="bg-white flex items-center justify-center h-screen">
+    <div id="chart-container" class="flex flex-col p-4 items-center space-y-6">
+        <canvas id="api-chart"></canvas>
+    </div>
+
+    <script>
+        let ASSOCIATED_API = "";
+        let interval = null;
+        let chart = null;
+        let counter = 0;
+
+        function onWidgetLoaded(options) {
+            if (options.api) {
+                ASSOCIATED_API = options.api;
+            }
+
+            const lineColor = options.lineColor || '#005072';
+            const dataUpdateInterval = options.dataUpdateInterval || 1000; // Default to 1 second
+            const maxDataPoints = options.maxDataPoints || 60; // Default to 60 points
+
+            const ctx = document.getElementById('api-chart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [], // Labels will be dynamically updated
+                    datasets: [{
+                        label: options.api,
+                        data: [],
+                        borderColor: lineColor,
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.1,
+                        pointBackgroundColor: lineColor,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 0 // Disable animation
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            title: {
+                                display: true,
+                                text: 'Time (s)'
+                            },
+                            ticks: {
+                                stepSize: 1,
+                                callback: function (value, index, values) {
+                                    return value; // Display the value as is (0, 1, 2, ...)
+                                }
+                            },
+                            min: 0
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Value'
+                            }
+                        }
+                    }
+                }
+            });
+
+            interval = setInterval(() => {
+                if (ASSOCIATED_API) {
+                    let apiValueObject = getApiValue(ASSOCIATED_API);
+                    let apiValue = apiValueObject?.value || 0;
+                    updateChart(chart, apiValue, maxDataPoints);
+                }
+            }, dataUpdateInterval);
+        }
+
+        function updateChart(chart, value, maxDataPoints) {
+            chart.data.labels.push(counter);
+            chart.data.datasets[0].data.push(value);
+            counter++;
+
+            if (chart.data.labels.length > maxDataPoints) {
+                chart.data.labels.shift();
+                chart.data.datasets[0].data.shift();
+            }
+
+            chart.options.scales.x.min = Math.max(0, counter - maxDataPoints);
+            chart.options.scales.x.max = counter;
+
+            chart.update();
+        }
+
+        function onWidgetUnloaded(options) {
+            if (interval) clearInterval(interval);
+        }
+    </script>
+</body>
+
+</html>

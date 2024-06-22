@@ -1,7 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { DaTableProperty } from '../molecules/DaTableProperty'
 import { DaText } from '../atoms/DaText'
-import { DaImage } from '../atoms/DaImage'
 import { DaCopy } from '../atoms/DaCopy'
 import { cn, getApiTypeClasses } from '@/lib/utils'
 import { DaButton } from '../atoms/DaButton'
@@ -12,8 +11,10 @@ import DaConfirmPopup from '../molecules/DaConfirmPopup'
 import { useNavigate } from 'react-router-dom'
 import DaLoader from '../atoms/DaLoader'
 import usePermissionHook from '@/hooks/usePermissionHook'
-import { useParams } from 'react-router-dom'
 import { PERMISSIONS } from '@/data/permission'
+import DaApiArchitecture from '../molecules/DaApiArchitecture'
+import DaDiscussions from '../molecules/DaDiscussions'
+import { TbMessage } from 'react-icons/tb'
 
 interface ApiDetailProps {
   apiDetails: any
@@ -28,6 +29,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
   const { bgClass } = getApiTypeClasses(apiDetails.type)
   const { data: model, refetch } = useCurrentModel()
   const [isLoading, setIsLoading] = useState(false)
+  const discussionsRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model?.id])
 
@@ -45,11 +47,17 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
         setIsLoading(false)
         await refetch()
         navigate(`/model/${model.id}/api`)
-        console.log('Wishlist API deleted successfully')
+        // console.log('Wishlist API deleted successfully')
       } catch (error) {
         setIsLoading(false)
         console.error('Error deleting wishlist API:', error)
       }
+    }
+  }
+
+  const handleScrollToDiscussions = () => {
+    if (discussionsRef.current) {
+      discussionsRef.current.scrollIntoView({ behavior: 'smooth' })
     }
   }
 
@@ -141,11 +149,12 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
   ].filter(Boolean)
 
   return (
-    <div>
-      <DaImage
+    <div className="flex flex-col w-full px-2">
+      {/* <DaImage
         src="https://bewebstudio.digitalauto.tech/data/projects/OezCm7PTy8FT/a/E-Car_Full_Vehicle.png"
         className="object-cover"
-      />
+      /> */}
+      <DaApiArchitecture apiName={apiDetails.name} />
       <div className="w-full py-2 px-4 bg-da-primary-100 justify-between flex">
         <DaCopy textToCopy={apiDetails.name}>
           <DaText variant="regular-bold" className="text-da-primary-500">
@@ -175,6 +184,15 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
               </DaConfirmPopup>
             )
           )}
+          <DaButton
+            variant="plain"
+            className="!text-da-primary-500"
+            size="sm"
+            onClick={handleScrollToDiscussions}
+          >
+            <TbMessage className="w-5 h-5 mr-2" />{' '}
+            <div className="da-label-small-bold">Discussions</div>
+          </DaButton>
           <div className={cn('px-3 rounded', bgClass)}>
             <DaText variant="small-bold" className="text-da-white uppercase">
               {apiDetails.type}
@@ -212,6 +230,15 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
           maxWidth="700px"
         />
       </div>
+      {model && model.id && (
+        <div ref={discussionsRef}>
+          <DaDiscussions
+            className="py-4"
+            refId={`${model.id}-${apiDetails.name}`}
+            refType="api"
+          />
+        </div>
+      )}
     </div>
   )
 }

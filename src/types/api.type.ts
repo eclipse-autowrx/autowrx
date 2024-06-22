@@ -1,3 +1,5 @@
+import { Tag } from './model.type'
+
 export type VehicleAPI = {
   name: string
   type: string
@@ -77,4 +79,31 @@ export interface Branch {
   children: {
     [key: string]: AnyNode
   }
+}
+
+export type ExtendedApi = {
+  id: string
+  model: string
+  apiName: string
+  skeleton: string
+  tags?: Tag[]
+  created_at?: string
+}
+
+export type ExtendedApiCreate = Omit<ExtendedApi, 'id'>
+
+export type SkeletonNode = {
+  id: number
+  name: string
+  type: string
+  parent_id: string
+  content: {
+    bgImage: string
+    shapes: any[]
+  }
+  bgImage: string
+}
+
+export type Skeleton = {
+  nodes: SkeletonNode[]
 }

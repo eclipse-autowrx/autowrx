@@ -7,6 +7,7 @@ import { DaButton } from '../atoms/DaButton'
 import { TbArrowRight } from 'react-icons/tb'
 import { Link } from 'react-router-dom'
 import { Prototype } from '@/types/model.type'
+import DaUserProfile from '../molecules/DaUserProfile'
 
 interface PrototypeSummaryProps {
   prototype: Prototype
@@ -37,14 +38,7 @@ const PrototypeSummary = ({ prototype }: PrototypeSummaryProps) => {
             </DaButton>
           </Link>
         </div>
-        <div className="flex items-center pt-2">
-          <DaAvatar
-            src={'/imgs/1.jpg'}
-            alt="Jame Bond"
-            className="mr-2 w-7 h-7"
-          />
-          <DaText>John Doe</DaText>
-        </div>
+        <DaUserProfile className="mt-2" userId={prototype.created_by} />
 
         {prototype.tags && (
           <div className="flex flex-wrap mt-4">

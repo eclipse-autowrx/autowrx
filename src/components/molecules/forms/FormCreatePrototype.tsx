@@ -57,11 +57,28 @@ const FormCreatePrototype = ({
         name: data.name,
         state: 'development',
         apis: { VSC: [], VSS: [] },
-        code: `from sdv_model import Vehicle
-import plugins
-from browser import aio
+        code: `from vehicle import Vehicle
+import time
+import asyncio
+import signal
 
-vehicle = Vehicle()`,
+vehicle = Vehicle("EV Car")
+
+async def main():
+    print("Hello")
+
+    for i in range(3):
+        time.sleep(1)
+        speed = (await vehicle.AverageSpeed.get()).value
+        print(f"{i} Speed: {speed}")
+
+    print("Goodbye")
+
+
+LOOP = asyncio.get_event_loop()
+LOOP.add_signal_handler(signal.SIGTERM, LOOP.stop)
+LOOP.run_until_complete(main())
+LOOP.close()`,
         complexity_level: 3,
         customer_journey: MockDefaultJourney,
         description: {
