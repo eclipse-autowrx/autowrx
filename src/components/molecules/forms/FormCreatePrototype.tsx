@@ -62,17 +62,26 @@ import time
 import asyncio
 import signal
 
-vehicle = Vehicle("EV Car")
+from sdv.vdb.reply import DataPointReply
+from sdv.vehicle_app import VehicleApp
+from vehicle import Vehicle, vehicle
+
+class TestApp(VehicleApp):
+
+    def __init__(self, vehicle_client: Vehicle):
+        super().__init__()
+        self.Vehicle = vehicle_client
+
+    async def on_start(self):
+        for i in range(10):
+            await asyncio.sleep(1)
+            speed = (await self.Vehicle.AverageSpeed.get()).value
+            print(f"[{i}] speed {speed}")
 
 async def main():
-    print("Hello")
-
-    for i in range(3):
-        time.sleep(1)
-        speed = (await vehicle.AverageSpeed.get()).value
-        print(f"{i} Speed: {speed}")
-
-    print("Goodbye")
+    logger.info("Starting TestApp...")
+    vehicle_app = TestApp(vehicle)
+    await vehicle_app.run()
 
 
 LOOP = asyncio.get_event_loop()

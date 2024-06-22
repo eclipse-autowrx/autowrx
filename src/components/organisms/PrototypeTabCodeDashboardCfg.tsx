@@ -70,7 +70,7 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
       return
     }
 
-    console.log('Parsed and updated configuration:', updateConfig)
+    // console.log('Parsed and updated configuration:', updateConfig)
 
     if (updateConfig === prototype.widget_config || updateConfig === '') {
       console.log('No changes detected in the configuration.')
@@ -86,8 +86,8 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
         await updatePrototypeService(prototype.id, {
           widget_config: updateConfig,
         })
-        await refetch()
-        console.log('Configuration updated and refetched successfully.')
+        // await refetch()
+        // console.log('Configuration updated and refetched successfully.')
       } catch (error) {
         console.error('Error updating prototype service:', error)
       }

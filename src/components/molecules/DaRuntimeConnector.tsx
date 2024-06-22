@@ -2,7 +2,7 @@ import { forwardRef, useState, useEffect, useImperativeHandle } from 'react'
 import { socketio } from '@/services/socketio.service'
 import useRuntimeStore from '@/stores/runtimeStore'
 import { shallow } from 'zustand/shallow'
-import useModelStore from '@/stores/modelStore'
+// import useModelStore from '@/stores/modelStore'
 
 interface KitConnectProps {
     // code: string;
