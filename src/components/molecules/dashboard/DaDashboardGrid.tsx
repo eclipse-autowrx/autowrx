@@ -52,7 +52,6 @@ const WidgetItem: FC<PropsWidgetItem> = ({ widgetConfig, apisValue }) => {
   }, [widgetConfig?.boxes])
 
   useEffect(() => {
-
     let setData = JSON.parse(JSON.stringify(apisValue))
     for (const api in setData) {
       setData[api] = { value: setData[api] }
@@ -75,7 +74,6 @@ const WidgetItem: FC<PropsWidgetItem> = ({ widgetConfig, apisValue }) => {
   return (
     <div
       className={`col-span-${cSpan} row-span-${rSpan}`}
-    // key={`${index}-${cell}`}
     >
       <iframe
         ref={frameElement}
@@ -103,14 +101,16 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
       const widgetIndex = widgetItems.findIndex((w) =>
         w.boxes?.includes(i),
       )
-      if (widgetIndex != -1 && !usedWidget.has(widgetIndex)) {
-        tmpCells.push(widgetItems[widgetIndex])
-        usedWidget.add(widgetIndex)
-      } else {
+      if(widgetIndex == -1) {
         tmpCells.push(null)
+      } else {
+        if (!usedWidget.has(widgetIndex)) {
+          tmpCells.push(widgetItems[widgetIndex])
+          usedWidget.add(widgetIndex)
+        }
       }
-      setRenderCell(tmpCells)
     }
+    setRenderCell(tmpCells)
   }, [widgetItems])
 
   const apisValue = useRuntimeStore(
@@ -120,6 +120,7 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
 
   return (
     <div className={`grid h-full w-full grid-cols-5 grid-rows-2`}>
+      {/* <div>renderCell: {renderCell.length}</div> */}
       {
         renderCell.map((widgetItem, wIndex) => <WidgetItem key={wIndex}
           widgetConfig={widgetItem}

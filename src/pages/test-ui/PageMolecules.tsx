@@ -76,7 +76,7 @@ const PageMolecules = () => {
           DaItemStandard
         </DaText>
         <div className="flex mt-2 space-x-4 p-4 border rounded-lg">
-          <DaItemStandard
+          {/* <DaItemStandard
             title="Prototypes"
             author="John Doe"
             content="It is a long
@@ -85,7 +85,7 @@ const PageMolecules = () => {
             imageUrl="/imgs/1.jpg"
             avatarUrl="/imgs/2.jpg"
             maxWidth="500px"
-          />
+          /> */}
         </div>
         <DaText variant="sub-title" className="text-da-gray-medium pt-4">
           DaItemVerticalStandard

@@ -40,7 +40,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
   const buildinWidgets = BUILT_IN_WIDGETS
   let [renderWidgets, setRenderWidgets] = useState<any[]>([])
   let [activeTab, setActiveTab] = useState<'builtin' | 'market' | 'genAI'>(
-    'builtin',
+    'market',
   )
 
   let [activeWidget, setActiveWidget] = useState<any>(null)
@@ -141,7 +141,8 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
   useEffect(() => {
     setActiveWidget(activeTab === 'genAI' ? {} : null)
     setIsWidgetGenAI(activeTab === 'genAI')
-    setRenderWidgets(activeTab === 'builtin' ? buildinWidgets : marketWidgets)
+    setRenderWidgets(marketWidgets)
+    // setRenderWidgets(activeTab === 'builtin' ? buildinWidgets : marketWidgets)
   }, [activeTab])
 
   useEffect(() => {
@@ -185,13 +186,13 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
         </DaText>
         <div className="flex w-full justify-between items-center">
           <div className="flex mb-2 w-fit rounded !da-label-small mt-2">
-            <DaTabItem
+            {/* <DaTabItem
               active={activeTab === 'builtin'}
               onClick={() => setActiveTab('builtin')}
             >
               <TbLayoutGrid className="mr-2" />
               Built-in ({buildinWidgets.length})
-            </DaTabItem>
+            </DaTabItem> */}
             {marketWidgets && (
               <DaTabItem
                 active={activeTab === 'market'}
