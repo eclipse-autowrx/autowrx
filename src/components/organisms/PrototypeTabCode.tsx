@@ -16,6 +16,7 @@ import { DaText } from '../atoms/DaText'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { PERMISSIONS } from '@/data/permission'
+import { updatePrototypeService } from '@/services/prototype.service'
 
 const PrototypeTabCode: FC = ({}) => {
   const [prototype, setActivePrototype, activeModelApis] = useModelStore(
@@ -56,13 +57,23 @@ const PrototypeTabCode: FC = ({}) => {
     setSavedCode(prototype.code || '')
   }, [prototype])
 
-  const saveCodeToDb = () => {
+  const saveCodeToDb = async () => {
     if (code === savedCode) return
     console.log(`save code to DB`)
     console.log(code)
     let newPrototype = JSON.parse(JSON.stringify(prototype))
     newPrototype.code = code || ''
     setActivePrototype(newPrototype)
+
+    if (!prototype || !prototype.id) return
+    try {
+      await updatePrototypeService(prototype.id, {
+        code: code || ''
+      })
+      // await refetchPrototype()
+    } catch (err) {
+      console.log('error on save skeleton', err)
+    }
   }
 
   if (!prototype) {

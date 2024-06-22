@@ -10,6 +10,7 @@ import CodeEditor from '../CodeEditor';
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import useCurrentModel from '@/hooks/useCurrentModel'
+import DaApisWatch from './DaApisWatch';
 
 const AlwaysScrollToBottom = () => {
   const elementRef = useRef<any>(null);
@@ -65,7 +66,7 @@ const DaRuntimeControl: FC = ({ }) => {
         apis.push(item.name)
       }
     })
-    console.log('usedApis', apis)
+    // console.log('usedApis', apis)
     setUsedApis(apis)
   }, [code, activeModelApis])
 
@@ -83,9 +84,9 @@ const DaRuntimeControl: FC = ({ }) => {
     setActivePrototype(newPrototype)
   }
 
-  useEffect(() => {
-    // console.log(`DaRuntimeControl: activeRtId`, activeRtId)
-  }, [activeRtId])
+  // useEffect(() => {
+  //   // console.log(`DaRuntimeControl: activeRtId`, activeRtId)
+  // }, [activeRtId])
 
   return (
     <div className={`absolute z-10 top-0 bottom-0 right-0 ${isExpand ? 'w-[460px]' : 'w-16'} text-da-gray-light py-2 px-1 flex flex-col justify-center bg-da-gray-dark`}>
@@ -95,7 +96,7 @@ const DaRuntimeControl: FC = ({ }) => {
           onActiveRtChanged={(rtId: string | undefined) => setActiveRtId(rtId)}
           onNewLog={appendLog}
           onAppExit={() => {
-            console.log(`onAppExit`)
+            // console.log(`onAppExit`)
             setIsRunning(false)
           }}
         />
@@ -144,13 +145,16 @@ const DaRuntimeControl: FC = ({ }) => {
             </p>
           }
 
+          {activeTab == 'apis' && <DaApisWatch/>
+          }
+
           {activeTab == 'code' && <CodeEditor
             code={code || ''}
             setCode={setCode}
             editable={isAuthorized}
             language="python"
-            onBlur={() => {}}
-            // onBlur={saveCodeToDb}
+            onBlur={() => { }}
+          // onBlur={saveCodeToDb}
           />
           }
         </>
@@ -170,11 +174,15 @@ const DaRuntimeControl: FC = ({ }) => {
             onClick={() => { setActiveTab('output') }}>
             Output</div>
           <div className={`flex items-center px-4 py-0.5 da-label-small text-da-white da-clickable hover:bg-da-gray-medium
+              ${activeTab == 'apis' && 'border-b-2 border-da-white'}`}
+            onClick={() => { setActiveTab('apis') }}>
+            APIs Watch
+          </div>
+          <div className={`flex items-center px-4 py-0.5 da-label-small text-da-white da-clickable hover:bg-da-gray-medium
               ${activeTab == 'code' && 'border-b-2 border-da-white'}`}
             onClick={() => { setActiveTab('code') }}>
             Code
           </div>
-
         </>}
       </div>
     </div>
