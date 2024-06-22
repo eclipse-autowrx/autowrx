@@ -125,13 +125,14 @@ const DaContributorList = ({ className }: ContributorListProps) => {
           <TbUserPlus className="mr-2" /> Add user
         </DaButton>
       </div>
-      <div className="flex flex-col max-h-[400px]">
-        {(activeTab === 'contributors'
-          ? model.contributors ?? []
-          : model.members ?? []
-        ).map((user, index) => (
-          <UserItem key={index} user={user} onRemoveUser={onRemoveUser} />
-        ))}
+      <div className="flex flex-col max-h-[400px] overflow-y-auto">
+        {activeTab === 'contributors'
+          ? contributors.map((user, index) => (
+              <UserItem key={index} user={user} onRemoveUser={onRemoveUser} />
+            ))
+          : members.map((user, index) => (
+              <UserItem key={index} user={user} onRemoveUser={onRemoveUser} />
+            ))}
       </div>
       <DaSelectUserPopup
         selectUser={handleAddUser}
