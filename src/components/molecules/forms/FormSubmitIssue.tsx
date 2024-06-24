@@ -1,0 +1,129 @@
+import { DaButton } from '@/components/atoms/DaButton'
+import { DaInput } from '@/components/atoms/DaInput'
+import { DaText } from '@/components/atoms/DaText'
+import { FormEvent, useState, useEffect } from 'react'
+import { TbLoader } from 'react-icons/tb'
+import { createFeedback } from '@/services/feedback.service'
+import useCurrentModel from '@/hooks/useCurrentModel'
+import { isAxiosError } from 'axios'
+import { DaTextarea } from '@/components/atoms/DaTextarea'
+import axios from 'axios'
+
+interface SummitIssueFormProps {
+    api: any,
+    onClose: () => void
+}
+
+const SubmitIssueForm = ({ api, onClose }: SummitIssueFormProps) => {
+  const { data: model } = useCurrentModel()
+
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string>('')
+  const [title, setTitle] = useState('')
+  const [content, setContent] = useState('')
+
+  useEffect(() => {
+    // console.log(`api`, api)
+    if(!api) {
+        setTitle('')
+        setContent('')
+    }
+    let title = `[digital.auto] Prosose new API: ${api.name}`
+    setTitle(title)
+
+    let des = `Description: ${api.description || 'nan'}\n`
+    des += `Type:\t${api.type || 'nan'}\n`
+    des += `DataType:\t${api.datatype || 'nan'}\n`
+    setContent(des)
+  }, [api])
+
+
+  const submitIssue = async () => {
+    console.log(`submitIssue`)
+    console.log(`title`, title)
+    console.log(`content`, content)
+    // e.preventDefault()
+    try {
+        if(!title || !content) {
+            console.log('No title or content')
+            return
+        }
+        let res  = await axios.post('https://api.github.com/repos/NhanLuongBGSV/issues-verify/issues', {
+            "title": title,
+            "body": content,
+            "assignees":[],
+            "milestone":1,
+            "labels":[""]
+        },
+        {
+            headers: {
+                Authorization: `Bearer token`,
+                Accept: "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28"
+            }
+        })
+        console.log(res.data)
+      setLoading(true)
+    } catch (error) {
+        console.log(error)
+      if (isAxiosError(error)) {
+        setError(error.response?.data?.message ?? 'Something went wrong')
+        return
+      }
+      setError('Something went wrong')
+    } finally {
+      setLoading(false)
+      onClose()
+    }
+  }
+
+  return (
+    <form
+    //   onSubmit={submitIssue}
+      className="flex flex-col w-[40vw] max-h-[80vh] bg-da-white py-4"
+    >
+      <div className="flex flex-col overflow-y-auto px-4">
+        <DaText variant="title" className="text-da-primary-500">
+          Propose this API to COVESA
+        </DaText>
+
+        <DaInput
+          name="title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Title"
+          label="Title"
+          className="mt-4"
+        />
+
+        <DaTextarea
+          rows={5}
+          name="content"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="Write your proposal..."
+          label="Content"
+          className="mt-4"
+        />
+
+      </div>
+
+      <div className="px-4">
+        <DaButton
+          disabled={loading}
+          type="submit"
+          variant="gradient"
+          className="w-full mt-8"
+          onClick={() => {
+            submitIssue()
+          }}
+        >
+          {loading && <TbLoader className="animate-spin text-lg mr-2" />}
+          Submit
+        </DaButton>
+      </div>
+    </form>
+  )
+}
+
+export default SubmitIssueForm

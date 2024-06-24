@@ -15,6 +15,9 @@ import { PERMISSIONS } from '@/data/permission'
 import DaApiArchitecture from '../molecules/DaApiArchitecture'
 import DaDiscussions from '../molecules/DaDiscussions'
 import { TbMessage } from 'react-icons/tb'
+import DaPopup from '../atoms/DaPopup'
+import FormSubmitIssue from '../molecules/forms/FormSubmitIssue'
+import { FaGithub } from "react-icons/fa6";
 
 interface ApiDetailProps {
   apiDetails: any
@@ -32,6 +35,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
   const discussionsRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model?.id])
+  const popupSubmitIssueState = useState(false)
 
   const handleDeleteWishlistApi = async () => {
     if (model && model.custom_apis) {
@@ -173,18 +177,39 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
             </DaText>
           ) : (
             apiDetails.isWishlist &&
-            isAuthorized && (
+            isAuthorized && <>
               <DaConfirmPopup
                 onConfirm={handleDeleteWishlistApi}
                 label="Are you sure you want to delete this wishlist API?"
               >
                 <DaButton variant="plain" size="sm">
-                  Delete Wishlist API
+                  Delete API
                 </DaButton>
               </DaConfirmPopup>
-            )
+              <DaPopup
+                state={popupSubmitIssueState}
+                trigger={
+                  <DaButton
+                    variant="plain" size="sm"
+                    onClick={() =>
+                      popupSubmitIssueState[1](true)
+                    }
+                  >
+                    <FaGithub className='mr-1'/>
+                    Propose this API to COVESA
+                  </DaButton>
+                }
+              >
+                <FormSubmitIssue
+                  api={apiDetails}
+                  onClose={() => {
+                    popupSubmitIssueState[1](false)
+                  }}
+                />
+              </DaPopup>
+            </>
           )}
-          <DaButton
+          {/* <DaButton
             variant="plain"
             className="!text-da-primary-500"
             size="sm"
@@ -192,7 +217,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
           >
             <TbMessage className="w-5 h-5 mr-2" />{' '}
             <div className="da-label-small-bold">Discussions</div>
-          </DaButton>
+          </DaButton> */}
           <div className={cn('px-3 rounded', bgClass)}>
             <DaText variant="small-bold" className="text-da-white uppercase">
               {apiDetails.type}
