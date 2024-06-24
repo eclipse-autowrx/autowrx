@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { TbX } from 'react-icons/tb'
 import { DaButton } from './DaButton'
+import { DaText } from './DaText'
 
 const DaLoading = ({
   text = 'Loading...',
@@ -21,7 +22,6 @@ const DaLoading = ({
 
   const circleRadius = size * 0.38
   const strokeWidth = size * 0.067
-  const textSize = size * 0.02
 
   return (
     <div
@@ -61,12 +61,9 @@ const DaLoading = ({
       ) : (
         <TbX className="text-da-gray-medium" size={size} />
       )}
-      <div
-        style={{ fontSize: `${textSize}rem` }}
-        className="text-da-gray-medium mt-6"
-      >
+      <DaText variant="title" className="text-da-gray-medium mt-6">
         {hasTimedOut ? timeoutText : text}
-      </div>
+      </DaText>
       {hasTimedOut && (
         <DaButton
           variant="outline-nocolor"

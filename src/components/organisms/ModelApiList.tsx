@@ -14,6 +14,7 @@ import FormCreateWishlistApi from '../molecules/forms/FormCreateWishlistApi'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
+import { DaText } from '../atoms/DaText'
 
 interface ModelApiListProps {
   onApiClick?: (details: any) => void
@@ -136,11 +137,17 @@ const ModelApiList = ({ onApiClick, readOnly }: ModelApiListProps) => {
         )}
       </div>
       <div className="flex-grow overflow-y-auto">
-        <DaApiList
-          apis={filteredApiList}
-          onApiClick={onApiClick}
-          selectedApi={selectedApi}
-        />
+        {filteredApiList && filteredApiList.length > 0 ? (
+          <DaApiList
+            apis={filteredApiList}
+            onApiClick={onApiClick}
+            selectedApi={selectedApi}
+          />
+        ) : (
+          <div className="flex w-full h-full items-center justify-center">
+            <DaText variant="title">No vehicle API found.</DaText>
+          </div>
+        )}
       </div>
     </div>
   )
