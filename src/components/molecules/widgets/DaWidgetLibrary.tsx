@@ -39,9 +39,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
   const modalRef = useRef<HTMLDivElement>(null)
   const buildinWidgets = BUILT_IN_WIDGETS
   let [renderWidgets, setRenderWidgets] = useState<any[]>([])
-  let [activeTab, setActiveTab] = useState<'builtin' | 'market' | 'genAI'>(
-    'market',
-  )
+  let [activeTab, setActiveTab] = useState<'builtin' | 'market' | 'genAI'>('market')
 
   let [activeWidget, setActiveWidget] = useState<any>(null)
   let [pickedCells, setPickedCells] = useState<any[]>([])
@@ -143,7 +141,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
     setIsWidgetGenAI(activeTab === 'genAI')
     setRenderWidgets(marketWidgets)
     // setRenderWidgets(activeTab === 'builtin' ? buildinWidgets : marketWidgets)
-  }, [activeTab])
+  }, [activeTab, marketWidgets])
 
   useEffect(() => {
     let tmp_usageCells: any[] = []
@@ -181,6 +179,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
       className="rounded-lg"
     >
       <div className="select-none text-da-primary-500">
+        <div>activeTab: {activeTab}</div>
         <DaText variant="sub-title" className="text-da-primary-500 mb-2">
           Place new widget to dashboard
         </DaText>
@@ -227,7 +226,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
           )}
         </div>
 
-        {(activeTab == 'builtin' || activeTab == 'market') && (
+        {( activeTab == 'market') && (
           <DaWidgetList
             renderWidgets={renderWidgets}
             activeWidgetState={[activeWidget, setActiveWidget]}
