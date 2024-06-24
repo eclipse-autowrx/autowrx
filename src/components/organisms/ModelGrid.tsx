@@ -1,14 +1,19 @@
-import { DaItemVerticalStandard } from '../molecules/DaItemVerticalStandard'
 import { DaItemVerticalType2 } from '../molecules/DaItemVerticalType2'
-import { DaText } from '../atoms/DaText'
-import useListModelLite from '@/hooks/useListModelLite'
 import { Link } from 'react-router-dom'
+import useListModelLite from '@/hooks/useListModelLite'
+import DaLoadingWrapper from '../molecules/DaLoadingWrapper'
 
 const ModelGrid: React.FC = () => {
-  const { data: data } = useListModelLite()
+  const { data: data, isLoading } = useListModelLite()
 
   return (
-    <div className="flex flex-col w-full items-center">
+    <DaLoadingWrapper
+      loadingMessage="Loading models..."
+      isLoading={isLoading}
+      data={data?.results}
+      emptyMessage="No models found. Please create a new model."
+      timeoutMessage="Failed to load models. Please try again."
+    >
       <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-2 md:gap-4">
         {data?.results?.map((item, index) => (
           <Link key={index} to={`/model/${item.id}`}>
@@ -21,7 +26,8 @@ const ModelGrid: React.FC = () => {
           </Link>
         ))}
       </div>
-    </div>
+    </DaLoadingWrapper>
   )
 }
+
 export { ModelGrid }

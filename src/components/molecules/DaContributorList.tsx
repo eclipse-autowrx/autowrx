@@ -126,17 +126,25 @@ const DaContributorList = ({ className }: ContributorListProps) => {
         </DaButton>
       </div>
       <div className="flex flex-col max-h-[400px] overflow-y-auto">
-        {activeTab === 'contributors'
-          ? <> {model && model.contributors && model.contributors.map((user: any, index: number) => (
-            <UserItem key={index} user={user} onRemoveUser={onRemoveUser} />
-          ))}
+        {activeTab === 'contributors' ? (
+          <>
+            {' '}
+            {model &&
+              model.contributors &&
+              model.contributors.map((user: any, index: number) => (
+                <UserItem key={index} user={user} onRemoveUser={onRemoveUser} />
+              ))}
           </>
-          : <> {model && model.members && model.members.map((user, index) => (
-            <UserItem key={index} user={user} onRemoveUser={onRemoveUser} />
-          ))
-          }
+        ) : (
+          <>
+            {' '}
+            {model &&
+              model.members &&
+              model.members.map((user, index) => (
+                <UserItem key={index} user={user} onRemoveUser={onRemoveUser} />
+              ))}
           </>
-        }
+        )}
       </div>
       <DaSelectUserPopup
         selectUser={handleAddUser}
