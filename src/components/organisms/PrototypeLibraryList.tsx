@@ -16,6 +16,7 @@ import { createPrototypeService } from '@/services/prototype.service'
 import DaLoader from '@/components/atoms/DaLoader'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
+import { DaText } from '../atoms/DaText'
 
 const PrototypeLibraryList = () => {
   const { data: model } = useCurrentModel()
@@ -26,6 +27,7 @@ const PrototypeLibraryList = () => {
   const [selectedPrototype, setSelectedPrototype] = useState<Prototype>()
   const [isLoading, setIsLoading] = useState(false)
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
+  const [searchInput, setSearchInput] = useState('')
 
   useEffect(() => {
     if (fetchedPrototypes && fetchedPrototypes.length > 0) {
@@ -76,6 +78,10 @@ const PrototypeLibraryList = () => {
     }
   }
 
+  const filteredPrototypes = fetchedPrototypes.filter((prototype) =>
+    prototype.name.toLowerCase().includes(searchInput.toLowerCase()),
+  )
+
   return (
     <div className="flex flex-col w-full h-[99%]">
       <div className="grid grid-cols-12 w-full h-full">
@@ -86,10 +92,12 @@ const PrototypeLibraryList = () => {
             iconBefore={true}
             placeholder="Enter to search"
             className="w-full py-2 px-4 sticky top-0 !bg-white z-10"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
           />
-          {fetchedPrototypes && (
+          {filteredPrototypes && filteredPrototypes.length > 0 ? (
             <div className="flex flex-col px-4 mt-2">
-              {fetchedPrototypes.map((prototype, index) => (
+              {filteredPrototypes.map((prototype, index) => (
                 <div
                   key={index}
                   onClick={() => setSelectedPrototype(prototype)}
@@ -105,6 +113,10 @@ const PrototypeLibraryList = () => {
                 </div>
               ))}
               <div className="grow"> </div>
+            </div>
+          ) : (
+            <div className="flex w-full h-full items-center justify-center">
+              <DaText variant="title">No prototype found.</DaText>
             </div>
           )}
           {isAuthorized && (
