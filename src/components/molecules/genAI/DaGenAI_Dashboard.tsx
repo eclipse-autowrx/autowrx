@@ -84,6 +84,7 @@ const DaGenAI_Dashboard = ({
             <DaTextarea
               value={inputPrompt}
               onChange={(e) => setInputPrompt(e.target.value)}
+              rows={4}
               placeholder="Ask AI to generate code based on this prompt..."
               className="w-full"
             ></DaTextarea>

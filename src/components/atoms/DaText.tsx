@@ -22,6 +22,7 @@ const DaText = React.forwardRef<HTMLLabelElement, DaTextProps>(
       <label
         className={cn(` da-label-${variant}`, className)}
         ref={ref}
+        style={{ cursor: 'inherit' }}
         {...props}
       />
     )

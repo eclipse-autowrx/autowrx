@@ -13,7 +13,7 @@ const config: Config = {
   instanceLogo:
     'https://static.wixstatic.com/media/604381_7624c1d2f72b45c18183be743e983e45~mv2.png/v1/fill/w_77,h_77,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/Logo-Icon.png',
   instance: 'digitalauto',
-  defaultModelId: '665826e3194aff003dd2f67b',
+  defaultModelId: '667a9194694a35002f961ba8',
   genAI: {
     defaultEndpointUrl: 'https://intermediate.digitalauto.tech/v1/genai',
     marketplaceUrl: 'https://store-be.digitalauto.tech/marketplace/genai',

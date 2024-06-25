@@ -17,7 +17,7 @@ const PagePrototypeLibrary = () => {
 
   return (
     <div className="flex flex-col w-full h-[99%]">
-      <div className="col-span-12 flex w-full h-12 items-center justify-between px-4 bg-da-primary-100 sticky top-0 z-20">
+      <div className="col-span-12 flex w-full min-h-12 items-center justify-between px-4 bg-da-primary-100 sticky top-0 z-20">
         <DaText variant="regular-bold" className="text-da-primary-500">
           Prototype Library
         </DaText>
