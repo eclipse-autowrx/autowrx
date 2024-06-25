@@ -14,6 +14,7 @@ import { DaInput } from '@/components/atoms/DaInput'
 import { cn } from '@/lib/utils'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
+import DaLoading from '@/components/atoms/DaLoading'
 
 const MASTER_ITEM = 'master'
 
@@ -54,7 +55,9 @@ const PageModelArchitecture = () => {
     let activeNode = null
     if (skeleton && skeleton.nodes && skeleton.nodes.length > 0) {
       if (!activeNodeId) {
-        navigate(`${window.location.pathname}?id=${skeleton.nodes[0].id}`)
+        navigate(`${window.location.pathname}?id=${skeleton.nodes[0].id}`, {
+          replace: true,
+        })
         return
       }
       activeNode = skeleton.nodes.find((n: any) => n.id == activeNodeId)
@@ -120,6 +123,7 @@ const PageModelArchitecture = () => {
   }
 
   const handleNavigate = (url: string) => {
+    console.log('Navigate to:', url)
     url.toLowerCase().startsWith('http')
       ? window.open(url, '_blank')
       : navigate(url)
@@ -179,6 +183,14 @@ const PageModelArchitecture = () => {
     }
     setIsEditName(false)
   }
+
+  if (!skeleton)
+    return (
+      <DaLoading
+        text="Loading Model Architecture..."
+        timeoutText="Failed to load model architecture. Please try again."
+      />
+    )
 
   return (
     <div className="flex w-full h-full bg-da-white text-da-gray-medium select-none pt-6">

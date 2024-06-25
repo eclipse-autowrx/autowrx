@@ -15,6 +15,7 @@ import { DaInput } from '@/components/atoms/DaInput'
 import { cn } from '@/lib/utils'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
+import DaLoading from '../atoms/DaLoading'
 
 const MASTER_ITEM = 'master'
 
@@ -181,6 +182,14 @@ const PrototypeTabArchitecture = () => {
     }
     setIsEditName(false)
   }
+
+  if (!skeleton)
+    return (
+      <DaLoading
+        text="Loading Prototype Architecture..."
+        timeoutText="Failed to load prototype architecture. Please try again."
+      />
+    )
 
   return (
     <div className="flex w-full h-full bg-da-white text-da-gray-medium select-none pt-2">

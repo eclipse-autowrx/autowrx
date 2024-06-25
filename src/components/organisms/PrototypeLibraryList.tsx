@@ -31,28 +31,46 @@ const PrototypeLibraryList = () => {
   const [searchInput, setSearchInput] = useState('')
   const location = useLocation()
   const navigate = useNavigate()
+  const { prototype_id } = useParams()
 
   const handleSearchChange = (searchTerm: string) => {
     setSearchInput(searchTerm)
-    const params = new URLSearchParams(location.search)
+    const querys = new URLSearchParams(location.search)
     if (searchTerm) {
-      params.set('search', searchTerm)
+      querys.set('search', searchTerm)
     } else {
-      params.delete('search')
+      querys.delete('search')
     }
-    navigate({ search: params.toString() }, { replace: true })
+    navigate({ search: querys.toString() }, { replace: true })
   }
 
   useEffect(() => {
     if (fetchedPrototypes && fetchedPrototypes.length > 0) {
       setSelectedPrototype(fetchedPrototypes[0] as Prototype)
-      const params = new URLSearchParams(location.search) // set search term from params
-      const searchQuery = params.get('search')
+      const querys = new URLSearchParams(location.search) // set search term from querys
+      const searchQuery = querys.get('search')
       if (searchQuery) {
         setSearchInput(searchQuery)
       }
     }
   }, [fetchedPrototypes])
+
+  useEffect(() => {
+    if (!selectedPrototype) return
+    navigate(`/model/${model?.id}/library/list/${selectedPrototype.id}`)
+  }, [selectedPrototype])
+
+  useEffect(() => {
+    if (!fetchedPrototypes) return
+    if (prototype_id) {
+      const prototype = fetchedPrototypes.find(
+        (prototype) => prototype.id === prototype_id,
+      )
+      if (prototype) {
+        setSelectedPrototype(prototype)
+      }
+    }
+  }, [prototype_id, fetchedPrototypes])
 
   if (!model || !fetchedPrototypes) {
     return (

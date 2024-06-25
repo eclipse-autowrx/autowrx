@@ -3,12 +3,22 @@ import { TbX } from 'react-icons/tb'
 import { DaButton } from './DaButton'
 import { DaText } from './DaText'
 
+interface DaLoadingProps {
+  text?: string
+  timeoutText?: string
+  timeout?: number
+  size?: number
+  fullScreen?: boolean
+  showRetry?: boolean
+}
+
 const DaLoading = ({
   text = 'Loading...',
   timeoutText = 'Something went wrong. Please try again',
   timeout = 20,
   size = 60,
   fullScreen = true,
+  showRetry = true,
 }) => {
   const [hasTimedOut, setHasTimedOut] = useState(false)
 
@@ -64,7 +74,7 @@ const DaLoading = ({
       <DaText variant="title" className="text-da-gray-medium mt-6">
         {hasTimedOut ? timeoutText : text}
       </DaText>
-      {hasTimedOut && (
+      {hasTimedOut && showRetry && (
         <DaButton
           variant="outline-nocolor"
           className="mt-4"

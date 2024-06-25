@@ -17,7 +17,8 @@ const DaCopy = ({
 }: DaCopyProps) => {
   const { toast } = useToast()
 
-  const handleCopyClick = () => {
+  const handleCopyClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation() // Ensure the event does not propagate
     navigator.clipboard
       .writeText(textToCopy)
       .then(() => {

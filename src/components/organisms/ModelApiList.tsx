@@ -15,6 +15,7 @@ import useCurrentModel from '@/hooks/useCurrentModel'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import { DaText } from '../atoms/DaText'
+import DaLoading from '../atoms/DaLoading'
 
 interface ModelApiListProps {
   onApiClick?: (details: any) => void
@@ -56,8 +57,8 @@ const ModelApiList = ({ onApiClick, readOnly }: ModelApiListProps) => {
       foundApi = activeModelApis[0] // set "Vehicle" as active if no api found in params
     }
 
-    const params = new URLSearchParams(location.search) // set search term from params
-    const searchQuery = params.get('search')
+    const querys = new URLSearchParams(location.search) // set search term from query params
+    const searchQuery = querys.get('search')
     if (searchQuery) {
       setSearchTerm(searchQuery)
     }
@@ -108,13 +109,13 @@ const ModelApiList = ({ onApiClick, readOnly }: ModelApiListProps) => {
 
   const handleSearchChange = (searchTerm: string) => {
     setSearchTerm(searchTerm)
-    const params = new URLSearchParams(location.search)
+    const querys = new URLSearchParams(location.search)
     if (searchTerm) {
-      params.set('search', searchTerm)
+      querys.set('search', searchTerm)
     } else {
-      params.delete('search')
+      querys.delete('search')
     }
-    navigate({ search: params.toString() }, { replace: true })
+    navigate({ search: querys.toString() }, { replace: true })
   }
 
   const handleFilterChange = (selectedOptions: string[]) => {
@@ -172,9 +173,12 @@ const ModelApiList = ({ onApiClick, readOnly }: ModelApiListProps) => {
             selectedApi={selectedApi}
           />
         ) : (
-          <div className="flex w-full h-full items-center justify-center">
-            <DaText variant="title">No vehicle API found.</DaText>
-          </div>
+          <DaLoading
+            text="Loading API List..."
+            timeoutText="No API found."
+            showRetry={false}
+            timeout={5}
+          />
         )}
       </div>
     </div>

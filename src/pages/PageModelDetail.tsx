@@ -76,7 +76,7 @@ const cardIntro = [
     title: 'Prototype Library',
     content:
       'Build up, evaluate and prioritize your portfolio of connected vehicle applications',
-    path: 'library',
+    path: 'library/list',
   },
   {
     title: 'Vehicle APIs',
