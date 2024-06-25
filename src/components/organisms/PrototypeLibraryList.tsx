@@ -17,6 +17,7 @@ import DaLoader from '@/components/atoms/DaLoader'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import { DaText } from '../atoms/DaText'
+import { useLocation, useParams, useNavigate } from 'react-router-dom'
 
 const PrototypeLibraryList = () => {
   const { data: model } = useCurrentModel()
@@ -28,10 +29,28 @@ const PrototypeLibraryList = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
   const [searchInput, setSearchInput] = useState('')
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const handleSearchChange = (searchTerm: string) => {
+    setSearchInput(searchTerm)
+    const params = new URLSearchParams(location.search)
+    if (searchTerm) {
+      params.set('search', searchTerm)
+    } else {
+      params.delete('search')
+    }
+    navigate({ search: params.toString() }, { replace: true })
+  }
 
   useEffect(() => {
     if (fetchedPrototypes && fetchedPrototypes.length > 0) {
       setSelectedPrototype(fetchedPrototypes[0] as Prototype)
+      const params = new URLSearchParams(location.search) // set search term from params
+      const searchQuery = params.get('search')
+      if (searchQuery) {
+        setSearchInput(searchQuery)
+      }
     }
   }, [fetchedPrototypes])
 
@@ -136,7 +155,7 @@ const PrototypeLibraryList = () => {
             placeholder="Enter to search"
             className="w-full py-2 px-4 sticky top-0 !bg-white z-10"
             value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
           />
           {filteredPrototypes && filteredPrototypes.length > 0 ? (
             <div className="flex flex-col px-4 mt-2">

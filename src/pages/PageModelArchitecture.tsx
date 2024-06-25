@@ -191,64 +191,62 @@ const PageModelArchitecture = () => {
             </DaButton>
           )}
         </div>
-        {skeleton && skeleton.nodes && skeleton.nodes.lenght > 0 ? (
+        {skeleton && skeleton.nodes ? (
           <div className="w-full grow overflow-auto  pt-2 space-y-2">
-            {skeleton &&
-              skeleton.nodes &&
-              skeleton.nodes.map((node: any) => (
-                <div
-                  key={node.id}
-                  onClick={() =>
-                    navigate(`${window.location.pathname}?id=${node.id}`)
-                  }
-                  className={`flex flex-col px-3 py-2 border border-da-gray-light hover:border-da-primary-500 cursor-pointer rounded-lg
+            {skeleton.nodes.map((node: any) => (
+              <div
+                key={node.id}
+                onClick={() =>
+                  navigate(`${window.location.pathname}?id=${node.id}`)
+                }
+                className={`flex flex-col px-3 py-2 border border-da-gray-light hover:border-da-primary-500 cursor-pointer rounded-lg
                     ${node.id == activeNodeId && '!border-da-primary-500'}`}
+              >
+                <DaText
+                  variant="small-bold"
+                  className={cn(
+                    'text-da-gray-medium',
+                    node.id == activeNodeId && 'text-da-primary-500',
+                  )}
                 >
-                  <DaText
-                    variant="small-bold"
-                    className={cn(
-                      'text-da-gray-medium',
-                      node.id == activeNodeId && 'text-da-primary-500',
-                    )}
-                  >
-                    {node.name}
+                  {node.name}
+                </DaText>
+                <div className="flex w-full justify-between items-center">
+                  <DaText variant="small" className="">
+                    ID: {node.id}
                   </DaText>
-                  <div className="flex w-full justify-between items-center">
-                    <DaText variant="small" className="">
-                      ID: {node.id}
-                    </DaText>
-                    <div className="flex text-xs font-bold space-x-2">
-                      {isAuthorized && (
-                        <DaConfirmPopup
-                          label="Are you sure you want to delete this node?"
-                          onConfirm={() => handleDeleteNode(node.id)}
-                        >
-                          <DaButton
-                            variant="destructive"
-                            size="sm"
-                            className="text-destructive da-clickable"
-                          >
-                            Delete
-                          </DaButton>
-                        </DaConfirmPopup>
-                      )}
-
-                      <DaCopy
-                        textToCopy={`${window.location.pathname}?id=${node.id}`}
-                        showIcon={false}
+                  <div className="flex text-xs font-bold space-x-2">
+                    {isAuthorized && (
+                      <DaConfirmPopup
+                        label="Are you sure you want to delete this node?"
+                        onConfirm={() => handleDeleteNode(node.id)}
                       >
                         <DaButton
-                          variant="plain"
+                          variant="destructive"
                           size="sm"
-                          className="hover:bg-da-primary-100"
+                          className="text-destructive da-clickable"
                         >
-                          Copy link
+                          Delete
                         </DaButton>
-                      </DaCopy>
-                    </div>
+                      </DaConfirmPopup>
+                    )}
+
+                    <DaCopy
+                      textToCopy={`${window.location.pathname}?id=${node.id}`}
+                      showIcon={false}
+                    >
+                      <DaButton
+                        variant="plain"
+                        size="sm"
+                        className="hover:bg-da-primary-100"
+                      >
+                        Copy link
+                      </DaButton>
+                    </DaCopy>
                   </div>
                 </div>
-              ))}
+              </div>
+            ))}
           </div>
         ) : (
           <div className="flex w-full h-full items-center justify-center">

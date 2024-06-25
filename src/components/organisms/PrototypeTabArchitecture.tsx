@@ -193,7 +193,7 @@ const PrototypeTabArchitecture = () => {
             </DaButton>
           )}
         </div>
-        {skeleton && skeleton.nodes && skeleton.nodes.lenght > 0 ? (
+        {skeleton && skeleton.nodes ? (
           <div className="w-full grow overflow-auto  pt-2 space-y-2">
             {skeleton.nodes.map((node: any) => (
               <div
