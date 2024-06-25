@@ -193,10 +193,9 @@ const PrototypeTabArchitecture = () => {
             </DaButton>
           )}
         </div>
-        <div className="w-full grow overflow-auto  pt-2 space-y-2">
-          {skeleton &&
-            skeleton.nodes &&
-            skeleton.nodes.map((node: any) => (
+        {skeleton && skeleton.nodes && skeleton.nodes.lenght > 0 ? (
+          <div className="w-full grow overflow-auto  pt-2 space-y-2">
+            {skeleton.nodes.map((node: any) => (
               <div
                 key={node.id}
                 onClick={() =>
@@ -250,7 +249,12 @@ const PrototypeTabArchitecture = () => {
                 </div>
               </div>
             ))}
-        </div>
+          </div>
+        ) : (
+          <div className="flex w-full h-full items-center justify-center">
+            <DaText variant="title">No node found.</DaText>
+          </div>
+        )}
       </div>
       {activeNode && (
         <div className="flex flex-col h-full w-full px-4">
@@ -362,9 +366,12 @@ const PrototypeTabArchitecture = () => {
         </div>
       )}
       {!activeNode && (
-        <div className="grow flex items-center justify-center h-full text-da-gray-medium text-2xl min-h-[400px]">
-          No node selected!
-        </div>
+        <DaText
+          variant="title"
+          className="flex w-full h-full items-center justify-center"
+        >
+          No node selected.
+        </DaText>
       )}
     </div>
   )

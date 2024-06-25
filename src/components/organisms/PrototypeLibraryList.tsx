@@ -86,6 +86,49 @@ const PrototypeLibraryList = () => {
     <div className="flex flex-col w-full h-[99%]">
       <div className="grid grid-cols-12 w-full h-full">
         <div className="col-span-5 xl:col-span-4 h-full overflow-y-auto mt-2 flex flex-col">
+          {isAuthorized && (
+            <div className="grid sticky bottom-0 bg-white grid-cols-1 xl:grid-cols-2 gap-2 px-4 py-1">
+              <DaImportFile
+                accept=".zip"
+                onFileChange={handleImportPrototypeZip}
+              >
+                <DaButton
+                  variant="outline-nocolor"
+                  size="sm"
+                  className="w-full"
+                >
+                  {isLoading ? (
+                    <div className="flex items-center">
+                      <DaLoader className="mr-2" />
+                      Importing...
+                    </div>
+                  ) : (
+                    <>
+                      <TbFileImport className="w-5 h-5 mr-2" />
+                      Import Prototype
+                    </>
+                  )}
+                </DaButton>
+              </DaImportFile>
+
+              <DaPopup
+                state={[open, setOpen]}
+                trigger={
+                  <DaButton variant="solid" size="sm">
+                    <TbPlus className="w-5 h-5 mr-2" />
+                    Create New Prototype
+                  </DaButton>
+                }
+              >
+                <FormCreatePrototype
+                  model_id={model.id}
+                  onClose={() => {
+                    setOpen(false)
+                  }}
+                />
+              </DaPopup>
+            </div>
+          )}
           <DaInput
             type="text"
             Icon={TbSearch}
@@ -119,53 +162,14 @@ const PrototypeLibraryList = () => {
               <DaText variant="title">No prototype found.</DaText>
             </div>
           )}
-          {isAuthorized && (
-            <div className="grid sticky bottom-0 mt-auto bg-white grid-cols-1 xl:grid-cols-2 gap-2 px-4 py-1">
-              <DaImportFile
-                accept=".zip"
-                onFileChange={handleImportPrototypeZip}
-              >
-                <DaButton
-                  variant="outline-nocolor"
-                  size="sm"
-                  className="w-full"
-                >
-                  {isLoading ? (
-                    <div className="flex items-center">
-                      <DaLoader className="mr-2" />
-                      Importing...
-                    </div>
-                  ) : (
-                    <>
-                      <TbFileImport className="w-5 h-5 mr-2" />
-                      Import Prototype
-                    </>
-                  )}
-                </DaButton>
-              </DaImportFile>
-
-              <DaPopup
-                state={[open, setOpen]}
-                trigger={
-                  <DaButton variant="outline-nocolor" size="sm">
-                    <TbPlus className="w-5 h-5 mr-2" />
-                    Create New Prototype
-                  </DaButton>
-                }
-              >
-                <FormCreatePrototype
-                  model_id={model.id}
-                  onClose={() => {
-                    setOpen(false)
-                  }}
-                />
-              </DaPopup>
-            </div>
-          )}
         </div>
         <div className="col-span-7 xl:col-span-8 border-l h-full">
-          {selectedPrototype && (
+          {selectedPrototype ? (
             <PrototypeSummary prototype={selectedPrototype as Prototype} />
+          ) : (
+            <div className="flex w-full h-full items-center justify-center">
+              <DaText variant="title">No prototype selected.</DaText>
+            </div>
           )}
         </div>
       </div>

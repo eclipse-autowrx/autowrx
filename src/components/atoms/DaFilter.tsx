@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { DaButton } from '../atoms/DaButton'
 import { cn } from '@/lib/utils'
 import DaCheckbox from './DaCheckbox'
@@ -14,11 +14,28 @@ interface DaFilterProps {
 const DaFilter = ({ categories, onChange, className }: DaFilterProps) => {
   const [selectedOptions, setSelectedOptions] = useState<string[]>([])
   const [isDropdownVisible, setIsDropdownVisible] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const allOptions = Object.values(categories).flat()
     setSelectedOptions(allOptions)
     onChange(allOptions)
+  }, [])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownVisible(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
   }, [])
 
   const handleOptionChange = (option: string) => {
@@ -34,7 +51,7 @@ const DaFilter = ({ categories, onChange, className }: DaFilterProps) => {
   }
 
   return (
-    <div className="relative">
+    <div className="relative" ref={dropdownRef}>
       <DaButton
         className={cn('text-da-primary-500 mr-2 !shadow-sm', className)}
         variant="outline-nocolor"

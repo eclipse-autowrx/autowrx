@@ -191,64 +191,70 @@ const PageModelArchitecture = () => {
             </DaButton>
           )}
         </div>
-        <div className="w-full grow overflow-auto  pt-2 space-y-2">
-          {skeleton &&
-            skeleton.nodes &&
-            skeleton.nodes.map((node: any) => (
-              <div
-                key={node.id}
-                onClick={() =>
-                  navigate(`${window.location.pathname}?id=${node.id}`)
-                }
-                className={`flex flex-col px-3 py-2 border border-da-gray-light hover:border-da-primary-500 cursor-pointer rounded-lg
+        {skeleton && skeleton.nodes && skeleton.nodes.lenght > 0 ? (
+          <div className="w-full grow overflow-auto  pt-2 space-y-2">
+            {skeleton &&
+              skeleton.nodes &&
+              skeleton.nodes.map((node: any) => (
+                <div
+                  key={node.id}
+                  onClick={() =>
+                    navigate(`${window.location.pathname}?id=${node.id}`)
+                  }
+                  className={`flex flex-col px-3 py-2 border border-da-gray-light hover:border-da-primary-500 cursor-pointer rounded-lg
                     ${node.id == activeNodeId && '!border-da-primary-500'}`}
-              >
-                <DaText
-                  variant="small-bold"
-                  className={cn(
-                    'text-da-gray-medium',
-                    node.id == activeNodeId && 'text-da-primary-500',
-                  )}
                 >
-                  {node.name}
-                </DaText>
-                <div className="flex w-full justify-between items-center">
-                  <DaText variant="small" className="">
-                    ID: {node.id}
+                  <DaText
+                    variant="small-bold"
+                    className={cn(
+                      'text-da-gray-medium',
+                      node.id == activeNodeId && 'text-da-primary-500',
+                    )}
+                  >
+                    {node.name}
                   </DaText>
-                  <div className="flex text-xs font-bold space-x-2">
-                    {isAuthorized && (
-                      <DaConfirmPopup
-                        label="Are you sure you want to delete this node?"
-                        onConfirm={() => handleDeleteNode(node.id)}
+                  <div className="flex w-full justify-between items-center">
+                    <DaText variant="small" className="">
+                      ID: {node.id}
+                    </DaText>
+                    <div className="flex text-xs font-bold space-x-2">
+                      {isAuthorized && (
+                        <DaConfirmPopup
+                          label="Are you sure you want to delete this node?"
+                          onConfirm={() => handleDeleteNode(node.id)}
+                        >
+                          <DaButton
+                            variant="destructive"
+                            size="sm"
+                            className="text-destructive da-clickable"
+                          >
+                            Delete
+                          </DaButton>
+                        </DaConfirmPopup>
+                      )}
+
+                      <DaCopy
+                        textToCopy={`${window.location.pathname}?id=${node.id}`}
+                        showIcon={false}
                       >
                         <DaButton
-                          variant="destructive"
+                          variant="plain"
                           size="sm"
-                          className="text-destructive da-clickable"
+                          className="hover:bg-da-primary-100"
                         >
-                          Delete
+                          Copy link
                         </DaButton>
-                      </DaConfirmPopup>
-                    )}
-
-                    <DaCopy
-                      textToCopy={`${window.location.pathname}?id=${node.id}`}
-                      showIcon={false}
-                    >
-                      <DaButton
-                        variant="plain"
-                        size="sm"
-                        className="hover:bg-da-primary-100"
-                      >
-                        Copy link
-                      </DaButton>
-                    </DaCopy>
+                      </DaCopy>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-        </div>
+              ))}
+          </div>
+        ) : (
+          <div className="flex w-full h-full items-center justify-center">
+            <DaText variant="title">No node found.</DaText>
+          </div>
+        )}
       </div>
       {activeNode && (
         <div className="flex flex-col h-full w-full px-4">
@@ -360,9 +366,12 @@ const PageModelArchitecture = () => {
         </div>
       )}
       {!activeNode && (
-        <div className="grow flex items-center justify-center h-full text-da-gray-medium text-2xl min-h-[400px]">
-          No node selected!
-        </div>
+        <DaText
+          variant="title"
+          className="flex w-full h-full items-center justify-center"
+        >
+          No node selected.
+        </DaText>
       )}
     </div>
   )
