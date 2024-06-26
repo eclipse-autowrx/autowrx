@@ -194,7 +194,7 @@ const PrototypeTabArchitecture = () => {
   return (
     <div className="flex w-full h-full bg-da-white text-da-gray-medium select-none pt-2">
       <div className="flex flex-col min-w-[400px] px-4 h-full border-r">
-        <div className="flex py-1 items-center justify-between">
+        <div className="flex py-1 mb-2 items-center justify-between">
           <DaText variant="sub-title">Architecture Mapping</DaText>
           {isAuthorized && (
             <DaButton onClick={createNewNode} size="sm" variant="solid">
@@ -203,7 +203,7 @@ const PrototypeTabArchitecture = () => {
           )}
         </div>
         {skeleton && skeleton.nodes ? (
-          <div className="w-full grow overflow-auto  pt-2 space-y-2">
+          <div className="w-full grow overflow-auto pr-2 space-y-2">
             {skeleton.nodes.map((node: any) => (
               <div
                 key={node.id}

@@ -31,7 +31,7 @@ const DaSelectUserPopup = ({
     let tmpUsers = data.results.filter(
       (user: User) =>
         !(excludeUsers || []).some(
-          (excludedUser) => excludedUser.id === user.id,
+          (excludedUser) => excludedUser && excludedUser.id === user.id,
         ),
     )
     if (search.trim() !== '') {

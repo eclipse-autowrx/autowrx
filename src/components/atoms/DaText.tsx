@@ -10,6 +10,7 @@ interface DaTextProps {
     | 'regular-bold'
     | 'small'
     | 'small-bold'
+    | 'small-medium'
     | 'sub-title'
     | 'title'
     | 'huge'

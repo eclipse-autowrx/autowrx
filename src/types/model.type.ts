@@ -11,7 +11,7 @@ export type ModelLite = {
   visibility: string
   model_home_image_file: string
   id: string
-  created_at: Date
+  created_at?: Date
   created_by: string
   tags?: Tag[]
 }
