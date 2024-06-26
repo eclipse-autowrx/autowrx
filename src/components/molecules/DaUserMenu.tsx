@@ -41,17 +41,20 @@ const DaUserMenu = ({ user }: DaUserDropdownProps) => {
           </DaButton>
         }
       >
-        <Link to="/profile" className="px-4 block py-2 da-menu-item">
-          <DaText className="flex items-center gap-2">
-            <TbUser className="text-base" /> User Profile
+        <Link
+          to="/profile"
+          className="flex px-4 py-2 da-menu-item items-center"
+        >
+          <DaText variant="small-medium" className="flex items-center gap-2 ">
+            <TbUser /> User Profile
           </DaText>
         </Link>
         <div
           onClick={handleLogout}
           className="px-4 py-2 da-menu-item flex items-center gap-2"
         >
-          <DaText className="flex items-center gap-2">
-            <TbLogout className="text-base" /> Logout
+          <DaText variant="small-medium" className="flex items-center gap-2">
+            <TbLogout /> Logout
           </DaText>
         </div>
       </DaMenu>

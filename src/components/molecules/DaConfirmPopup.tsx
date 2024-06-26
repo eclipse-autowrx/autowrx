@@ -1,14 +1,15 @@
-import React, { useState } from 'react'
+import React, { useState, ReactElement } from 'react'
 import DaPopup from '../atoms/DaPopup'
 import { DaButton } from '../atoms/DaButton'
 import { DaText } from '../atoms/DaText'
-import { DaInput } from '../atoms/DaInput' // Assuming DaInput is available
+import { DaInput } from '../atoms/DaInput'
 
 interface DaConfirmPopupProps {
   onConfirm: () => void
   label: string
   confirmText?: string
-  children: React.ReactElement
+  children: ReactElement
+  state?: [boolean, React.Dispatch<React.SetStateAction<boolean>>]
 }
 
 const DaConfirmPopup = ({
@@ -16,8 +17,10 @@ const DaConfirmPopup = ({
   label,
   confirmText,
   children,
+  state,
 }: DaConfirmPopupProps) => {
-  const [isOpen, setIsOpen] = useState(false)
+  const selfManaged = useState(false)
+  const [isOpen, setIsOpen] = state ?? selfManaged
   const [inputValue, setInputValue] = useState('')
 
   const handleConfirm = () => {

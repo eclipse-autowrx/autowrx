@@ -59,39 +59,6 @@
   }
 }
 
-/* Define font weights as CSS variables */
-body {
-  font-family: 'Manrope', sans-serif;
-  /* font-family: "Geist Variable"; */
-  /* font-family: "Roboto", sans-serif; */
-  /* font-family: Inter, sans-serif; */
-}
-
-/* Define colors as CSS variables */
-:root {
-  --da-primary-100: 196 28 92;
-  --da-primary-300: 198 100 51;
-  --da-primary-500: 198 100 22;
-
-  --da-secondary-100: 67 54 92;
-  --da-secondary-300: 67 54 68;
-  --da-secondary-500: 67 54 48;
-
-  --da-accent-100: 67 54 92;
-  --da-accent-300: 67 54 68;
-  --da-accent-500: 67 54 48;
-
-  --da-white: 0 0 100;
-  --da-black: 0 0 0;
-  --da-gray-light: 214 32 91;
-  --da-gray-medium: 215 16 47;
-  --da-gray-dark: 217 33 17;
-  --da-destructive: 0 84 60;
-
-  --da-gradient-from: 198 100 22;
-  --da-gradient-to: 67 54 48;
-}
-
 .col-span-2 {
   grid-column: span 2 / span 2;
 }
@@ -159,6 +126,10 @@ body {
   @apply da-txt-regular font-light;
 }
 
+.da-label-regular-medium {
+  @apply da-txt-regular font-medium;
+}
+
 .da-label-regular-bold {
   @apply da-txt-regular font-semibold;
 }
@@ -173,6 +144,10 @@ body {
 
 .da-label-small-bold {
   @apply da-txt-small font-semibold;
+}
+
+.da-label-small-medium {
+  @apply da-txt-small font-medium;
 }
 
 .da-label-sub-title {
@@ -205,7 +180,7 @@ body {
 }
 
 .da-btn-outline-nocolor {
-  @apply border text-da-gray-medium border-da-gray-light hover:bg-da-gray-medium/10 shadow;
+  @apply border bg-white text-da-gray-medium border-da-gray-light hover:bg-da-gray-light shadow;
 }
 
 .da-btn-plain {
@@ -289,23 +264,7 @@ body {
   overflow: auto;
 }
 
-/*********** For Dropdown Component ********************/
-.da-menu-popup {
-  :global(.MuiList-root) {
-    padding: 0;
-    font-family: inherit !important;
-    box-shadow: none !important;
-  }
-
-  :global(.MuiPaper-root) {
-    box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px !important;
-  }
-
-  :global(.MuiMenuItem-root) {
-    font-family: inherit !important;
-  }
-}
-
+/*********** For Scrollbar *********/
 *::-webkit-scrollbar-track {
   border-radius: 4px;
   background-color: #f5f5f5;
@@ -334,7 +293,7 @@ body::-webkit-scrollbar-thumb {
 
 .scroll-gray::-webkit-scrollbar-thumb {
   border: 2px solid rgba(0, 0, 0, 0);
-  backgrounds-clip: padding-box;
+  background-clip: padding-box;
   background-color: #aaaaaa;
 }
 
@@ -344,7 +303,51 @@ body::-webkit-scrollbar-thumb {
   background-color: #aaaaaa;
 }
 
-/*********** Textarea component ********************/
+/*********** Textarea Component ****************/
 .da-textarea {
   @apply flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-da-primary-500 disabled:opacity-50;
+}
+
+/*********** Menu Component ********************/
+
+.da-menu-item {
+  @apply da-btn-plain da-btn-sm mx-1 da-clickable da-label-small-medium;
+}
+
+.da-menu-dropdown {
+  @apply !rounded-lg !px-1;
+}
+
+/******** Font and Colors for instances ********/
+body {
+  font-family: 'Manrope', sans-serif;
+  /* font-family: "Geist Variable"; */
+  /* font-family: "Roboto", sans-serif; */
+  /* font-family: Inter, sans-serif; */
+}
+
+:root {
+  --da-primary-100: 196 28 92;
+  --da-primary-300: 198 28 61;
+  --da-primary-500: 198 100 22;
+
+  --da-secondary-100: 67 54 92;
+  --da-secondary-300: 67 54 68;
+  --da-secondary-500: 67 54 48;
+
+  --da-accent-100: 67 54 92;
+  --da-accent-300: 67 54 68;
+  --da-accent-500: 67 54 48;
+
+  --da-white: 0 0 100;
+  --da-black: 0 0 0;
+
+  --da-gray-light: 214 32 91;
+  --da-gray-medium: 215 16 47;
+  --da-gray-dark: 217 33 17;
+
+  --da-destructive: 0 84 60;
+
+  --da-gradient-from: 198 100 22;
+  --da-gradient-to: 67 54 48;
 }
