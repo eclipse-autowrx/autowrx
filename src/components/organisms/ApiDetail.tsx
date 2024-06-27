@@ -220,7 +220,9 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
                         }}
                       >
                         <FaGithub className="mr-1" />
-                        Propose this API to COVESA
+                        <span className="da-label-small-bold">
+                          Propose this API to COVESA
+                        </span>
                       </DaButton>
                     }
                   >
