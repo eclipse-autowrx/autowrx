@@ -41,7 +41,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
   const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model?.id])
   const popupSubmitIssueState = useState(false)
 
-  const { onTriggerAuth, loading, user, access } = useGithubAuth()
+  const { onTriggerAuth, loading, user, access, error } = useGithubAuth()
   const { data } = useCurrentExtendedApiIssue()
 
   const handleDeleteWishlistApi = async () => {
@@ -232,7 +232,14 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
                         </p>
                       </div>
                     )}
-                    {!loading && (
+
+                    {!loading && error && (
+                      <div className="p-4 flex flex-col gap-4 items-center">
+                        <p>{error}</p>
+                      </div>
+                    )}
+
+                    {!loading && !error && (
                       <FormSubmitIssue
                         user={user}
                         api={apiDetails}

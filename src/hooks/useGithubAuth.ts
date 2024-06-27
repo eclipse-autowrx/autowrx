@@ -8,6 +8,7 @@ import { GithubUser } from '@/types/github.type'
 
 const useGithubAuth = () => {
   const [access, setAccess] = useState<string>()
+  const [error, setError] = useState<string>('')
   const [loading, setLoading] = useState(false)
   const [user, setUser] = useState<GithubUser>()
 
@@ -39,10 +40,20 @@ const useGithubAuth = () => {
           console.error('Error getting github user:', error)
         } finally {
           setLoading(false)
+          setError('')
           socketRef.current?.off('auth/github')
+          socketRef.current?.off('auth/github/error')
         }
       },
     )
+    socketRef.current?.on('auth/github/error', (data: { message: string }) => {
+      setError(data.message)
+      setLoading(false)
+      setAccess('')
+      setUser(undefined)
+      socketRef.current?.off('auth/github')
+      socketRef.current?.off('auth/github/error')
+    })
   }
 
   const onTriggerAuth = () => {
@@ -53,7 +64,7 @@ const useGithubAuth = () => {
     listenForAuth()
   }
 
-  return { onTriggerAuth, access, loading, user }
+  return { onTriggerAuth, access, loading, user, error }
 }
 
 export default useGithubAuth
