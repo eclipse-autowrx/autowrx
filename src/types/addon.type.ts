@@ -35,4 +35,7 @@ export interface Config {
     dashboard?: AddOn[]
     widget?: AddOn[]
   }
+  github: {
+    clientId: string
+  }
 }

@@ -17,7 +17,8 @@ import DaDiscussions from '../molecules/DaDiscussions'
 import { TbMessage } from 'react-icons/tb'
 import DaPopup from '../atoms/DaPopup'
 import FormSubmitIssue from '../molecules/forms/FormSubmitIssue'
-import { FaGithub } from "react-icons/fa6";
+import { FaGithub } from 'react-icons/fa6'
+import useGithubAuth from '@/hooks/useGithubAuth'
 
 interface ApiDetailProps {
   apiDetails: any
@@ -36,6 +37,8 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
   const navigate = useNavigate()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model?.id])
   const popupSubmitIssueState = useState(false)
+
+  const { onTriggerAuth } = useGithubAuth()
 
   const handleDeleteWishlistApi = async () => {
     if (model && model.custom_apis) {
@@ -177,37 +180,41 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
             </DaText>
           ) : (
             apiDetails.isWishlist &&
-            isAuthorized && <>
-              <DaConfirmPopup
-                onConfirm={handleDeleteWishlistApi}
-                label="Are you sure you want to delete this wishlist API?"
-              >
-                <DaButton variant="plain" size="sm">
-                  Delete API
-                </DaButton>
-              </DaConfirmPopup>
-              <DaPopup
-                state={popupSubmitIssueState}
-                trigger={
-                  <DaButton
-                    variant="plain" size="sm"
-                    onClick={() =>
-                      popupSubmitIssueState[1](true)
-                    }
-                  >
-                    <FaGithub className='mr-1'/>
-                    Propose this API to COVESA
+            isAuthorized && (
+              <>
+                <DaConfirmPopup
+                  onConfirm={handleDeleteWishlistApi}
+                  label="Are you sure you want to delete this wishlist API?"
+                >
+                  <DaButton variant="plain" size="sm">
+                    Delete API
                   </DaButton>
-                }
-              >
-                <FormSubmitIssue
-                  api={apiDetails}
-                  onClose={() => {
-                    popupSubmitIssueState[1](false)
-                  }}
-                />
-              </DaPopup>
-            </>
+                </DaConfirmPopup>
+                <DaPopup
+                  state={popupSubmitIssueState}
+                  trigger={
+                    <DaButton
+                      variant="plain"
+                      size="sm"
+                      onClick={() => {
+                        popupSubmitIssueState[1](true)
+                        onTriggerAuth()
+                      }}
+                    >
+                      <FaGithub className="mr-1" />
+                      Propose this API to COVESA
+                    </DaButton>
+                  }
+                >
+                  <FormSubmitIssue
+                    api={apiDetails}
+                    onClose={() => {
+                      popupSubmitIssueState[1](false)
+                    }}
+                  />
+                </DaPopup>
+              </>
+            )
           )}
           {/* <DaButton
             variant="plain"

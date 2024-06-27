@@ -21,6 +21,9 @@ const config: Config = {
     dashboard: [],
     widget: [],
   },
+  github: {
+    clientId: import.meta.env.VITE_GITHUB_CLIENT_ID || '',
+  },
 }
 
 export default config
