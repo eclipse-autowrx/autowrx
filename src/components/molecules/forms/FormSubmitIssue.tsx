@@ -10,14 +10,21 @@ import { DaTextarea } from '@/components/atoms/DaTextarea'
 import axios from 'axios'
 import { GithubUser } from '@/types/github.type'
 import { DaAvatar } from '@/components/atoms/DaAvatar'
+import { createIssueService } from '@/services/issue.service'
 
 interface SummitIssueFormProps {
   api: any
   onClose: () => void
   user?: GithubUser
+  accessToken?: string
 }
 
-const SubmitIssueForm = ({ api, onClose, user }: SummitIssueFormProps) => {
+const SubmitIssueForm = ({
+  api,
+  onClose,
+  user,
+  accessToken,
+}: SummitIssueFormProps) => {
   const { data: model } = useCurrentModel()
 
   const [loading, setLoading] = useState(false)
@@ -46,29 +53,23 @@ const SubmitIssueForm = ({ api, onClose, user }: SummitIssueFormProps) => {
     console.log(`content`, content)
     // e.preventDefault()
     try {
+      setLoading(true)
       if (!title || !content) {
         console.log('No title or content')
         return
       }
-      let res = await axios.post(
-        'https://api.github.com/repos/NhanLuongBGSV/issues-verify/issues',
-        {
-          title: title,
-          body: content,
-          assignees: [],
-          milestone: 1,
-          labels: [''],
-        },
-        {
-          headers: {
-            Authorization: `Bearer token`,
-            Accept: 'application/vnd.github+json',
-            'X-GitHub-Api-Version': '2022-11-28',
-          },
-        },
-      )
-      console.log(res.data)
-      setLoading(true)
+      if (!accessToken || !model?.id) {
+        return
+      }
+      const res = await createIssueService({
+        extendedApi: api.name,
+        githubAccessToken: accessToken,
+        model: model?.id!,
+        title: title,
+        content: content,
+      })
+      window.open(res.link, '_blank')
+      onClose()
     } catch (error) {
       console.log(error)
       if (isAxiosError(error)) {
@@ -78,7 +79,6 @@ const SubmitIssueForm = ({ api, onClose, user }: SummitIssueFormProps) => {
       setError('Something went wrong')
     } finally {
       setLoading(false)
-      onClose()
     }
   }
 
@@ -122,7 +122,7 @@ const SubmitIssueForm = ({ api, onClose, user }: SummitIssueFormProps) => {
       <div className="px-4">
         <DaButton
           disabled={loading}
-          type="submit"
+          type="button"
           variant="gradient"
           className="w-full mt-8"
           onClick={() => {

@@ -47,7 +47,7 @@ const useGithubAuth = () => {
 
   const onTriggerAuth = () => {
     window.open(
-      `https://github.com/login/oauth/authorize/?client_id=${config.github.clientId}&redirect_uri=${config.serverBaseUrl}/${config.serverVersion}/auth/github/callback?userId=${self?.id}&scope=user:email`,
+      `https://github.com/login/oauth/authorize/?client_id=${config.github.clientId}&redirect_uri=${config.serverBaseUrl}/${config.serverVersion}/auth/github/callback?userId=${self?.id}&scope=user:email%20public_repo`,
       '_blank',
     )
     listenForAuth()

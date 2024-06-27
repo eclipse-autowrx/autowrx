@@ -30,6 +30,8 @@ const OneOfFromName = (list: string[], name: string) => {
 }
 
 const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
+  console.log(`apiDetails`, apiDetails)
+
   const { bgClass } = getApiTypeClasses(apiDetails.type)
   const { data: model, refetch } = useCurrentModel()
   const [isLoading, setIsLoading] = useState(false)
@@ -38,7 +40,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
   const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model?.id])
   const popupSubmitIssueState = useState(false)
 
-  const { onTriggerAuth, loading, user } = useGithubAuth()
+  const { onTriggerAuth, loading, user, access } = useGithubAuth()
 
   const handleDeleteWishlistApi = async () => {
     if (model && model.custom_apis) {
@@ -225,6 +227,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
                       onClose={() => {
                         popupSubmitIssueState[1](false)
                       }}
+                      accessToken={access}
                     />
                   )}
                 </DaPopup>
