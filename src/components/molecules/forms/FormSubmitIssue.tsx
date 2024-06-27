@@ -8,13 +8,16 @@ import useCurrentModel from '@/hooks/useCurrentModel'
 import { isAxiosError } from 'axios'
 import { DaTextarea } from '@/components/atoms/DaTextarea'
 import axios from 'axios'
+import { GithubUser } from '@/types/github.type'
+import { DaAvatar } from '@/components/atoms/DaAvatar'
 
 interface SummitIssueFormProps {
-    api: any,
-    onClose: () => void
+  api: any
+  onClose: () => void
+  user?: GithubUser
 }
 
-const SubmitIssueForm = ({ api, onClose }: SummitIssueFormProps) => {
+const SubmitIssueForm = ({ api, onClose, user }: SummitIssueFormProps) => {
   const { data: model } = useCurrentModel()
 
   const [loading, setLoading] = useState(false)
@@ -23,20 +26,19 @@ const SubmitIssueForm = ({ api, onClose }: SummitIssueFormProps) => {
   const [content, setContent] = useState('')
 
   useEffect(() => {
-    // console.log(`api`, api)
-    if(!api) {
-        setTitle('')
-        setContent('')
+    console.log(`api`, api)
+    if (!api) {
+      setTitle('')
+      setContent('')
     }
     let title = `[digital.auto] Prosose new API: ${api.name}`
     setTitle(title)
 
-    let des = `Description: ${api.description || 'nan'}\n`
+    let des = `Description: ${api.description ?? 'nan'}\n`
     des += `Type:\t${api.type || 'nan'}\n`
-    des += `DataType:\t${api.datatype || 'nan'}\n`
+    des += `DataType:\t${api.datatype ?? 'nan'}\n`
     setContent(des)
   }, [api])
-
 
   const submitIssue = async () => {
     console.log(`submitIssue`)
@@ -44,28 +46,31 @@ const SubmitIssueForm = ({ api, onClose }: SummitIssueFormProps) => {
     console.log(`content`, content)
     // e.preventDefault()
     try {
-        if(!title || !content) {
-            console.log('No title or content')
-            return
-        }
-        let res  = await axios.post('https://api.github.com/repos/NhanLuongBGSV/issues-verify/issues', {
-            "title": title,
-            "body": content,
-            "assignees":[],
-            "milestone":1,
-            "labels":[""]
+      if (!title || !content) {
+        console.log('No title or content')
+        return
+      }
+      let res = await axios.post(
+        'https://api.github.com/repos/NhanLuongBGSV/issues-verify/issues',
+        {
+          title: title,
+          body: content,
+          assignees: [],
+          milestone: 1,
+          labels: [''],
         },
         {
-            headers: {
-                Authorization: `Bearer token`,
-                Accept: "application/vnd.github+json",
-                "X-GitHub-Api-Version": "2022-11-28"
-            }
-        })
-        console.log(res.data)
+          headers: {
+            Authorization: `Bearer token`,
+            Accept: 'application/vnd.github+json',
+            'X-GitHub-Api-Version': '2022-11-28',
+          },
+        },
+      )
+      console.log(res.data)
       setLoading(true)
     } catch (error) {
-        console.log(error)
+      console.log(error)
       if (isAxiosError(error)) {
         setError(error.response?.data?.message ?? 'Something went wrong')
         return
@@ -79,7 +84,7 @@ const SubmitIssueForm = ({ api, onClose }: SummitIssueFormProps) => {
 
   return (
     <form
-    //   onSubmit={submitIssue}
+      //   onSubmit={submitIssue}
       className="flex flex-col w-[40vw] max-h-[80vh] bg-da-white py-4"
     >
       <div className="flex flex-col overflow-y-auto px-4">
@@ -106,6 +111,12 @@ const SubmitIssueForm = ({ api, onClose }: SummitIssueFormProps) => {
           className="mt-4"
         />
 
+        {user && (
+          <div className="flex gap-2 mt-4 items-center">
+            Submitting as: {user?.login}{' '}
+            <DaAvatar className="h-8 w-8" src={user?.avatar_url} />
+          </div>
+        )}
       </div>
 
       <div className="px-4">

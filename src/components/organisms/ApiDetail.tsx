@@ -38,7 +38,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
   const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model?.id])
   const popupSubmitIssueState = useState(false)
 
-  const { onTriggerAuth } = useGithubAuth()
+  const { onTriggerAuth, loading, user } = useGithubAuth()
 
   const handleDeleteWishlistApi = async () => {
     if (model && model.custom_apis) {
@@ -210,12 +210,23 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
                     </DaButton>
                   }
                 >
-                  <FormSubmitIssue
-                    api={apiDetails}
-                    onClose={() => {
-                      popupSubmitIssueState[1](false)
-                    }}
-                  />
+                  {loading && (
+                    <div className="p-4 flex flex-col gap-4 items-center">
+                      <DaLoader />
+                      <p>
+                        Please wait while we are authenticating with Github...
+                      </p>
+                    </div>
+                  )}
+                  {!loading && (
+                    <FormSubmitIssue
+                      user={user}
+                      api={apiDetails}
+                      onClose={() => {
+                        popupSubmitIssueState[1](false)
+                      }}
+                    />
+                  )}
                 </DaPopup>
               </>
             )
