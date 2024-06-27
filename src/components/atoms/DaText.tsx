@@ -7,6 +7,7 @@ interface DaTextProps {
   className?: string
   variant?:
     | 'regular'
+    | 'regular-medium'
     | 'regular-bold'
     | 'small'
     | 'small-bold'

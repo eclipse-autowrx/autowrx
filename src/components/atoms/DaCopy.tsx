@@ -26,15 +26,15 @@ const DaCopy = ({
           title: ``,
           description: (
             <div className="flex flex-col space-y-2">
-              <DaText variant="small-bold" className="text-da-primary-500">
+              <DaText variant="regular-bold" className="text-da-primary-500">
                 {textToCopy}
               </DaText>
-              <DaText variant="small" className="">
+              <DaText variant="regular-medium" className="">
                 Copied to clipboard
               </DaText>
             </div>
           ),
-          duration: 1500,
+          duration: 2000,
         })
       })
       .catch((err) => {
