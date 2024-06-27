@@ -18,7 +18,7 @@ interface DaUserListProps {
 
 const DaUserList = ({ users }: DaUserListProps) => {
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto">
+    <div className="flex-1 min-h-0 overflow-y-auto pr-4 space-y-2">
       {users.map((user) => (
         <DaUser user={user} key={user.id} />
       ))}
@@ -50,36 +50,41 @@ const DaUser = ({ user }: { user: User }) => {
   }
 
   return (
-    <div key={user.id} className="flex w-full p-4 border rounded-lg my-3">
-      {/* Avatar */}
-      <div className="flex-shrink-0">
-        <DaAvatar
-          src={user.image_file || ''}
-          alt="user"
-          className="w-[72px] h-[72px] rounded-full mr-4"
-          fallback={
-            <div className="h-[72px] w-[72px] flex items-center justify-center">
-              <TbUserFilled className="text-2xl" />
-            </div>
-          }
-        />
-      </div>
+    <div key={user.id} className="flex w-full p-4 border rounded-lg">
+      <DaAvatar
+        src={user.image_file || './imgs/profile.png'}
+        className="mr-4"
+        alt="user"
+      />
 
       {/* Information */}
-      <div className="space-y-1">
-        <DaText className="block text-da-black">{user.name}</DaText>
-        <DaText variant="small" className="block">
-          {user.email}
-        </DaText>
-        {user.role === 'admin' && (
-          <div className="block rounded-full bg-da-primary-100 w-fit px-2">
-            <DaText variant="small">Admin</DaText>
+      <div className="space-y-1 flex">
+        <div>
+          <div className="flex w-full space-x-2 items-center">
+            <DaText variant="regular-bold" className="text-da-gray-dark">
+              {user.name}
+            </DaText>
+            {user.role === 'admin' && (
+              <DaText
+                variant="small-medium"
+                className="px-2 bg-da-primary-100 h-fit text-da-primary-500 rounded-lg"
+              >
+                Admin
+              </DaText>
+            )}
           </div>
-        )}
+
+          <DaText variant="small" className="block">
+            {user.email}
+          </DaText>
+        </div>
       </div>
 
       {/* Action */}
-      <div className="ml-auto items-end flex gap-2 flex-col">
+      <div className="ml-auto items-center flex gap-2">
+        <DaText variant="small" className="flex">
+          Created at: {dayjs(user.created_at).format('DD/MM/YYYY, hh:mm:ss A')}
+        </DaText>
         <div>
           <DaPopup state={[open, setOpen]} trigger={<span></span>}>
             <FormCreateUser updateData={user} onClose={() => setOpen(false)} />
@@ -107,9 +112,6 @@ const DaUser = ({ user }: { user: User }) => {
             <TbTrash className="w-5 h-5" />
           </DaButton>
         </div>
-        <DaText variant="small" className="block">
-          Created at: {dayjs(user.created_at).format('DD/MM/YYYY, hh:mm:ss A')}
-        </DaText>
       </div>
     </div>
   )

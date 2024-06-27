@@ -62,7 +62,7 @@ const UsersManagement = () => {
   if (!data) return null
 
   return (
-    <div className="h-full mt-6 flex flex-col w-full">
+    <div className="h-full mt-6 flex flex-col w-full container">
       {/* Header */}
       <div className="mb-4 flex-shrink-0 flex items-center gap-4">
         <span className="space-x-2 text-da-primary-500">
@@ -72,7 +72,7 @@ const UsersManagement = () => {
         <DaPopup state={[open, setOpen]} trigger={<span></span>}>
           <FormCreateUser onClose={() => setOpen(false)} />
         </DaPopup>
-        <DaButton variant="outline" onClick={() => setOpen(true)}>
+        <DaButton variant="solid" size="sm" onClick={() => setOpen(true)}>
           <TbPlus className="mr-2" /> Create new user
         </DaButton>
         <DaInput

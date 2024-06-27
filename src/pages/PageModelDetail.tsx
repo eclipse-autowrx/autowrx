@@ -19,6 +19,7 @@ import {
 import { uploadFileService } from '@/services/upload.service'
 import { convertJSONToProperty } from '@/lib/vehiclePropertyUtils'
 import {
+  TbDotsVertical,
   TbDownload,
   TbEdit,
   TbLoader,
@@ -30,6 +31,7 @@ import useCurrentModel from '@/hooks/useCurrentModel'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import { cn } from '@/lib/utils'
+import DaMenu from '@/components/atoms/DaMenu'
 
 interface VisibilityControlProps {
   initialVisibility: 'public' | 'private' | undefined
@@ -76,7 +78,7 @@ const cardIntro = [
     title: 'Prototype Library',
     content:
       'Build up, evaluate and prioritize your portfolio of connected vehicle applications',
-    path: 'library',
+    path: 'library/list',
   },
   {
     title: 'Vehicle APIs',
@@ -89,20 +91,26 @@ const cardIntro = [
 const PageModelDetail = () => {
   const [model] = useModelStore((state) => [state.model as Model])
   const [isExporting, setIsExporting] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [isEditingName, setIsEditingName] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
   const [newName, setNewName] = useState(model?.name ?? '')
   const { refetch } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model?.id])
+  const [confirmPopupOpen, setConfirmPopupOpen] = useState(false)
 
   const handleAvatarChange = async (file: File) => {
     if (!model || !model.id) return
     if (file) {
       try {
+        setIsUploading(true)
         const { url } = await uploadFileService(file)
         await updateModelService(model.id, { model_home_image_file: url })
         await refetch()
       } catch (error) {
         console.error('Failed to update avatar:', error)
+      } finally {
+        setIsUploading(false)
       }
     }
   }
@@ -120,11 +128,14 @@ const PageModelDetail = () => {
 
   const handleDeleteModel = async () => {
     try {
+      setIsDeleting(true)
       await deleteModelService(model.id)
       await refetch()
       window.location.href = '/model'
     } catch (error) {
       console.error('Failed to delete model:', error)
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -139,7 +150,7 @@ const PageModelDetail = () => {
   }
 
   return (
-    <div className="flex flex-col w-full h-[90%] container pt-6">
+    <div className="flex flex-col w-full h-full container pt-6">
       <div className="flex h-fit pb-3">
         <div className="flex w-full justify-between items-center">
           <div className="flex items-center">
@@ -179,84 +190,97 @@ const PageModelDetail = () => {
                   {model.name}
                 </DaText>
               )}
-              {isAuthorized && (
-                <div
-                  className={cn(
-                    'flex w-full space-x-3 pt-1',
-                    isEditingName && 'pointer-events-none opacity-50',
-                  )}
-                >
-                  <DaButton
-                    variant="outline-nocolor"
-                    size="sm"
-                    className=""
-                    onClick={() => {
-                      setNewName(model.name)
-                      setIsEditingName(true)
-                    }}
-                  >
-                    <TbEdit className="w-4 h-4 mr-2" />
-                    Edit Name
-                  </DaButton>
-                  <DaImportFile
-                    onFileChange={handleAvatarChange}
-                    accept=".png, .jpg, .jpeg"
-                  >
-                    <DaButton variant="outline-nocolor" className="" size="sm">
-                      <TbPhotoEdit className="w-4 h-4 mr-2" />
-                      Update Image
-                    </DaButton>
-                  </DaImportFile>
-                  {!isExporting ? (
-                    <DaButton
-                      variant="outline-nocolor"
-                      size="sm"
-                      onClick={async () => {
-                        if (!model) return
-                        setIsExporting(true)
-                        try {
-                          await downloadModelZip(model)
-                        } catch (e) {
-                          console.error(e)
-                        }
-                        setIsExporting(false)
-                      }}
-                    >
-                      <TbDownload className="w-4 h-4 mr-2" />
-                      Export Model
-                    </DaButton>
-                  ) : (
-                    <DaText
-                      variant="regular"
-                      className="flex items-center text-da-gray-medium"
-                    >
-                      <TbLoader className="animate-spin text-lg mr-2" />
-                      Exporting model...
-                    </DaText>
-                  )}
-                </div>
-              )}
             </div>
           </div>
-          {isAuthorized && (
-            <div className="flex h-full space-x-2">
-              <DaConfirmPopup
-                onConfirm={handleDeleteModel}
-                label="This action cannot be undone and will delete all of your model and prototypes data. Please proceed with caution."
-                confirmText={model.name}
-              >
-                <DaButton variant="destructive" size="sm" className="">
+        </div>
+        {isAuthorized && (
+          <>
+            <DaMenu
+              trigger={
+                <DaButton
+                  variant="solid"
+                  size="sm"
+                  className={cn(
+                    'flex w-full space-x-3 pt-1',
+                    isEditingName && '!pointer-events-none opacity-50',
+                  )}
+                >
+                  {!isDeleting && !isExporting && (
+                    <>
+                      <TbDotsVertical className="w-4 h-4 mr-1" /> Model Action
+                    </>
+                  )}
+                  {isDeleting && (
+                    <div className="flex items-center">
+                      <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                      Deleting Model...
+                    </div>
+                  )}
+                  {isExporting && (
+                    <div className="flex items-center">
+                      <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                      Exporting Model...
+                    </div>
+                  )}
+                </DaButton>
+              }
+            >
+              <div className="flex flex-col px-1">
+                <DaButton
+                  variant="plain"
+                  size="sm"
+                  className="!justify-start"
+                  onClick={() => {
+                    setNewName(model.name)
+                    setIsEditingName(true)
+                  }}
+                >
+                  <TbEdit className="w-4 h-4 mr-2" />
+                  Edit Name
+                </DaButton>
+                <DaButton
+                  variant="plain"
+                  size="sm"
+                  className="!justify-start"
+                  onClick={async () => {
+                    if (!model) return
+                    setIsExporting(true)
+                    try {
+                      await downloadModelZip(model)
+                    } catch (e) {
+                      console.error(e)
+                    }
+                    setIsExporting(false)
+                  }}
+                >
+                  <TbDownload className="w-4 h-4 mr-2" />
+                  Export Model
+                </DaButton>
+                <DaButton
+                  variant="destructive"
+                  size="sm"
+                  className="!justify-start"
+                  onClick={() => setConfirmPopupOpen(true)}
+                >
                   <TbTrashX className="w-4 h-4 mr-2" />
                   Delete Model
                 </DaButton>
-              </DaConfirmPopup>
-            </div>
-          )}
-        </div>
+              </div>
+            </DaMenu>
+            <DaConfirmPopup
+              onConfirm={handleDeleteModel}
+              label="This action cannot be undone and will delete all of your model and prototypes data. Please proceed with caution."
+              confirmText={model.name}
+              state={[confirmPopupOpen, setConfirmPopupOpen]}
+            >
+              <></>
+            </DaConfirmPopup>
+          </>
+        )}
       </div>
 
-      <div className="grid grid-cols-12 w-full h-full">
-        <div className="col-span-6 overflow-y-auto pr-2">
+      <div className="grid grid-cols-12 w-full h-full overflow-auto">
+        <div className="col-span-6 overflow-y-auto h-[99%] pr-2">
           {cardIntro.map((card, index) => (
             <Link key={index} to={card.path}>
               <div className="space-y-3 da-clickable">
@@ -292,8 +316,38 @@ const PageModelDetail = () => {
             </>
           )}
         </div>
-        <div className="col-span-6 flex flex-col overflow-y-auto px-12">
-          <DaImage src={model.model_home_image_file} alt={model.name} />
+        <div className="col-span-6 flex flex-col overflow-y-auto pl-2">
+          <div className="flex w-full relative border rounded-lg overflow-hidden">
+            <DaImage
+              className="object-contain aspect-video w-full p-4"
+              src={model.model_home_image_file}
+              alt={model.name}
+            />
+            {isAuthorized && (
+              <DaImportFile
+                onFileChange={handleAvatarChange}
+                accept=".png, .jpg, .jpeg"
+              >
+                <DaButton
+                  variant="outline-nocolor"
+                  className="absolute bottom-2 right-2"
+                  size="sm"
+                >
+                  {isUploading ? (
+                    <div className="flex items-center">
+                      <TbLoader className="w-4 h-4 mr-2 animate-spin" />
+                      Updating
+                    </div>
+                  ) : (
+                    <div className="flex items-center">
+                      <TbPhotoEdit className="w-4 h-4 mr-2" />
+                      Update Image
+                    </div>
+                  )}
+                </DaButton>
+              </DaImportFile>
+            )}
+          </div>
         </div>
       </div>
     </div>

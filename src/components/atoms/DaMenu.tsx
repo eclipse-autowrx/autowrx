@@ -13,7 +13,7 @@ const DaMenu: FC<DropdownProps> = ({ trigger, children, onHover = false }) => {
   const handleClose = () => setAnchorEl(null)
 
   return (
-    <div className="inline-flex" style={{ zIndex: 99 }}>
+    <div className="inline-flex" style={{ zIndex: 10 }}>
       <span
         style={{ display: 'flex' }}
         onClick={(event) => {
@@ -38,7 +38,7 @@ const DaMenu: FC<DropdownProps> = ({ trigger, children, onHover = false }) => {
           'aria-labelledby': 'basic-button',
         }}
         onClick={handleClose}
-        className="da-menu-popup"
+        classes={{ paper: 'da-menu-dropdown' }}
       >
         {children}
       </Menu>

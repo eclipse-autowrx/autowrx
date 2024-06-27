@@ -143,7 +143,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
     setIsWidgetGenAI(activeTab === 'genAI')
     setRenderWidgets(marketWidgets)
     // setRenderWidgets(activeTab === 'builtin' ? buildinWidgets : marketWidgets)
-  }, [activeTab])
+  }, [activeTab, marketWidgets])
 
   useEffect(() => {
     let tmp_usageCells: any[] = []
@@ -227,7 +227,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
           )}
         </div>
 
-        {(activeTab == 'builtin' || activeTab == 'market') && (
+        {activeTab == 'market' && (
           <DaWidgetList
             renderWidgets={renderWidgets}
             activeWidgetState={[activeWidget, setActiveWidget]}

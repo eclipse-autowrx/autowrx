@@ -13,6 +13,7 @@ import DaGeneratorSelector from './DaGeneratorSelector.tsx'
 import config from '@/configs/config.ts'
 import useListMarketplaceAddOns from '@/hooks/useListMarketplaceAddOns'
 import axios from 'axios'
+import { DaTextarea } from '@/components/atoms/DaTextarea.tsx'
 
 interface DaGenAIWidgetProps {
   widgetConfig?: any
@@ -133,13 +134,13 @@ const DaGenAIWidget = ({
           <div className="flex ml-1 text-gray-600 font-bold">Prompting</div>
         </div>
         <div className="flex mt-3 w-full mb-4" ref={modalRef}>
-          <DaInput
+          <DaTextarea
             value={inputPrompt}
             onChange={(e) => setInputPrompt(e.target.value)}
-            inputClassName=""
+            rows={4}
             className="w-full"
             placeholder="Ask AI to generate a widget based on this prompt..."
-          ></DaInput>
+          ></DaTextarea>
         </div>
         <div className="flex flex-col select-none mb-2 border-gray-100 pt-2">
           <div className="flex w-full items-center">

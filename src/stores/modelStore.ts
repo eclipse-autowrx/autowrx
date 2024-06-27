@@ -53,7 +53,7 @@ const useModelStore = create<ModelState & Actions>()(
                     : undefined,
               }
             })
-            state.activeModelApis = [...parsedApiList, ...customApis]
+            state.activeModelApis = [...customApis, ...parsedApiList]
           } else {
             state.activeModelApis = parsedApiList
           }

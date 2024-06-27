@@ -91,7 +91,7 @@ const FormCreateUser = ({ onClose, updateData }: FormCreateUserProps) => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col w-[400px] min-w-[400px] min-h-[300px] px-2 md:px-6 py-4 bg-da-white"
+      className="flex flex-col w-[30vw] lg:w-[25vw] max-h-[80vh] p-4 bg-da-white"
     >
       {/* Title */}
       <DaText variant="title" className="text-da-primary-500">

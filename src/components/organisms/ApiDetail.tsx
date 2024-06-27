@@ -14,11 +14,11 @@ import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import DaApiArchitecture from '../molecules/DaApiArchitecture'
 import DaDiscussions from '../molecules/DaDiscussions'
-import { TbMessage } from 'react-icons/tb'
 import DaPopup from '../atoms/DaPopup'
 import FormSubmitIssue from '../molecules/forms/FormSubmitIssue'
 import { FaGithub } from 'react-icons/fa6'
 import useGithubAuth from '@/hooks/useGithubAuth'
+import { TbLoader, TbMessage, TbTrash } from 'react-icons/tb'
 
 interface ApiDetailProps {
   apiDetails: any
@@ -175,9 +175,10 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
         </DaCopy>
         <div className="flex items-center space-x-4">
           {isLoading ? (
-            <DaText variant="small-bold" className="text-da-secondary-500">
-              <DaLoader className="w-4 h-4 mr-1" /> Loading...
-            </DaText>
+            <div className="flex items-center text-da-gray-medium">
+              <TbLoader className="text-da-gray-medium w-5 h-5 mr-2 animate animate-spin" />
+              <DaText variant="small-bold">Deleting...</DaText>
+            </div>
           ) : (
             apiDetails.isWishlist &&
             isAuthorized && (
@@ -186,8 +187,11 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
                   onConfirm={handleDeleteWishlistApi}
                   label="Are you sure you want to delete this wishlist API?"
                 >
-                  <DaButton variant="plain" size="sm">
-                    Delete API
+                  <DaButton variant="destructive" size="sm">
+                    <TbTrash className="w-5 h-5 mr-2 " />
+                    <div className="da-label-small-bold">
+                      Delete Wishlist API
+                    </div>
                   </DaButton>
                 </DaConfirmPopup>
                 <DaPopup

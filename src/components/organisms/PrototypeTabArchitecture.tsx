@@ -15,6 +15,7 @@ import { DaInput } from '@/components/atoms/DaInput'
 import { cn } from '@/lib/utils'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
+import DaLoading from '../atoms/DaLoading'
 
 const MASTER_ITEM = 'master'
 
@@ -182,10 +183,18 @@ const PrototypeTabArchitecture = () => {
     setIsEditName(false)
   }
 
+  if (!skeleton)
+    return (
+      <DaLoading
+        text="Loading Prototype Architecture..."
+        timeoutText="Failed to load prototype architecture. Please try again."
+      />
+    )
+
   return (
     <div className="flex w-full h-full bg-da-white text-da-gray-medium select-none pt-2">
       <div className="flex flex-col min-w-[400px] px-4 h-full border-r">
-        <div className="flex py-1 items-center justify-between">
+        <div className="flex py-1 mb-2 items-center justify-between">
           <DaText variant="sub-title">Architecture Mapping</DaText>
           {isAuthorized && (
             <DaButton onClick={createNewNode} size="sm" variant="solid">
@@ -193,10 +202,9 @@ const PrototypeTabArchitecture = () => {
             </DaButton>
           )}
         </div>
-        <div className="w-full grow overflow-auto  pt-2 space-y-2">
-          {skeleton &&
-            skeleton.nodes &&
-            skeleton.nodes.map((node: any) => (
+        {skeleton && skeleton.nodes ? (
+          <div className="w-full grow overflow-auto pr-2 space-y-2">
+            {skeleton.nodes.map((node: any) => (
               <div
                 key={node.id}
                 onClick={() =>
@@ -250,7 +258,12 @@ const PrototypeTabArchitecture = () => {
                 </div>
               </div>
             ))}
-        </div>
+          </div>
+        ) : (
+          <div className="flex w-full h-full items-center justify-center">
+            <DaText variant="title">No node found.</DaText>
+          </div>
+        )}
       </div>
       {activeNode && (
         <div className="flex flex-col h-full w-full px-4">
@@ -362,9 +375,12 @@ const PrototypeTabArchitecture = () => {
         </div>
       )}
       {!activeNode && (
-        <div className="grow flex items-center justify-center h-full text-da-gray-medium text-2xl min-h-[400px]">
-          No node selected!
-        </div>
+        <DaText
+          variant="title"
+          className="flex w-full h-full items-center justify-center"
+        >
+          No node selected.
+        </DaText>
       )}
     </div>
   )

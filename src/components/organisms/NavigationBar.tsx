@@ -11,11 +11,15 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { VscListTree } from 'react-icons/vsc'
 import { ImBooks } from 'react-icons/im'
 import useCurrentModel from '@/hooks/useCurrentModel'
+import { useEffect } from 'react'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
 
 const NavigationBar = ({}) => {
   const { data: model } = useCurrentModel()
   const { data: user } = useSelfProfileQuery()
   const location = useLocation()
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
 
   const getClassNames = (
     exactPath?: string,
@@ -114,17 +118,17 @@ const NavigationBar = ({}) => {
         </Link>
       )}
 
-      {user?.role === 'admin' && (
+      {isAuthorized && (
         <DaMenu
           trigger={
-            <div className="da-clickable flex h-full items-center px-4 text-da-gray-medium">
+            <div className="da-clickable flex h-full items-center !mx-2 da-btn-sm text-da-gray-medium da-btn-plain">
               <HiMenu size={22} />
             </div>
           }
         >
           <Link
             to="/manage-users"
-            className="flex items-center px-4 py-2 gap-2 da-menu-item"
+            className="flex items-center px-4 py-2 gap-2 da-menu-item da-label-regular"
           >
             <TbUsers className="text-base" /> Manage Users
           </Link>

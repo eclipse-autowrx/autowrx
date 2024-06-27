@@ -13,6 +13,7 @@ import {
 import { maskEmail } from '@/lib/utils'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import DaLoading from '../atoms/DaLoading'
+import DaTabItem from '../atoms/DaTabItem'
 
 interface ContributorListProps {
   className?: string
@@ -23,31 +24,37 @@ interface UserItemProps {
   onRemoveUser: (userId: string) => void
 }
 
-const UserItem = ({ user, onRemoveUser }: UserItemProps) => (
-  <div className="flex items-center justify-between p-2 border my-2 rounded-lg border-da-gray-light bg-da-gray-light/25 cursor-pointer">
-    <div className="flex items-center">
-      <DaAvatar
-        src="https://firebasestorage.googleapis.com/v0/b/digital-auto.appspot.com/o/users%2Fperson.png?alt=media&token=df7759f6-37d2-4d57-a684-5463b9e4e86c"
-        alt="user"
-        className="w-10 h-10 rounded-full mr-4"
-      />
-      <div className="flex-col flex">
-        <DaText variant="regular" className="font-bold text-da-gray-dark">
-          {user.name}
-        </DaText>
-        <DaText variant="small" className="text-da-gray-medium">
-          {maskEmail(user.email)}
-        </DaText>
+const UserItem = ({ user, onRemoveUser }: UserItemProps) => {
+  if (!user) {
+    return null
+  }
+
+  return (
+    <div className="flex items-center justify-between p-2 border my-2 rounded-lg border-da-gray-light bg-da-gray-light/25 cursor-pointer">
+      <div className="flex items-center">
+        <DaAvatar
+          src="/imgs/profile.png"
+          alt="user"
+          className="w-10 h-10 rounded-full mr-4"
+        />
+        <div className="flex-col flex">
+          <DaText variant="regular" className="font-bold text-da-gray-dark">
+            {user.name ?? 'Loading...'}
+          </DaText>
+          <DaText variant="small" className="text-da-gray-medium">
+            {maskEmail(user.email)}
+          </DaText>
+        </div>
+      </div>
+      <div
+        className="p-2 hover:bg-red-200 rounded-lg"
+        onClick={() => onRemoveUser(user.id)}
+      >
+        <TbMinus className="text-red-500 cursor-pointer" />
       </div>
     </div>
-    <div
-      className="p-2 hover:bg-red-200 rounded-lg"
-      onClick={() => onRemoveUser(user.id)}
-    >
-      <TbMinus className="text-red-500 cursor-pointer" />
-    </div>
-  </div>
-)
+  )
+}
 
 const DaContributorList = ({ className }: ContributorListProps) => {
   const { data: model, refetch } = useCurrentModel()
@@ -86,33 +93,20 @@ const DaContributorList = ({ className }: ContributorListProps) => {
       )}
     >
       <div className="flex justify-between items-center mb-4">
-        <div className="flex space-x-4">
-          <div onClick={() => setActiveTab('contributors')}>
-            <DaText
-              variant="regular"
-              className={cn(
-                'cursor-pointer pb-1',
-                activeTab === 'contributors'
-                  ? 'text-da-primary-500 border-b-2 border-da-primary-500'
-                  : 'text-da-gray-medium',
-              )}
-            >
-              Contributor ({model.contributors?.length ?? 0})
-            </DaText>
-          </div>
-          <div onClick={() => setActiveTab('members')}>
-            <DaText
-              variant="regular"
-              className={cn(
-                'cursor-pointer pb-1',
-                activeTab === 'members'
-                  ? 'text-da-primary-500 border-b-2 border-da-primary-500'
-                  : 'text-da-gray-medium',
-              )}
-            >
-              Member ({model.members?.length ?? 0})
-            </DaText>
-          </div>
+        <div className="flex">
+          <DaTabItem
+            onClick={() => setActiveTab('contributors')}
+            active={activeTab === 'contributors'}
+          >
+            Contributor ({model.contributors?.length ?? 0})
+          </DaTabItem>
+          <DaTabItem
+            onClick={() => setActiveTab('members')}
+            active={activeTab === 'members'}
+          >
+            {' '}
+            Member ({model.members?.length ?? 0})
+          </DaTabItem>
         </div>
         <DaButton
           size="sm"
@@ -125,18 +119,26 @@ const DaContributorList = ({ className }: ContributorListProps) => {
           <TbUserPlus className="mr-2" /> Add user
         </DaButton>
       </div>
-      <div className="flex flex-col max-h-[400px] overflow-y-auto">
-        {activeTab === 'contributors'
-          ? <> {model && model.contributors && model.contributors.map((user: any, index: number) => (
-            <UserItem key={index} user={user} onRemoveUser={onRemoveUser} />
-          ))}
+      <div className="flex flex-col max-h-[400px] pr-2 overflow-y-auto">
+        {activeTab === 'contributors' ? (
+          <>
+            {' '}
+            {model &&
+              model.contributors &&
+              model.contributors.map((user: any, index: number) => (
+                <UserItem key={index} user={user} onRemoveUser={onRemoveUser} />
+              ))}
           </>
-          : <> {model && model.members && model.members.map((user, index) => (
-            <UserItem key={index} user={user} onRemoveUser={onRemoveUser} />
-          ))
-          }
+        ) : (
+          <>
+            {' '}
+            {model &&
+              model.members &&
+              model.members.map((user, index) => (
+                <UserItem key={index} user={user} onRemoveUser={onRemoveUser} />
+              ))}
           </>
-        }
+        )}
       </div>
       <DaSelectUserPopup
         selectUser={handleAddUser}

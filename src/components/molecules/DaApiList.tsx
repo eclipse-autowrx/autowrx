@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { VehicleApi } from '@/types/model.type'
 import { DaText } from '../atoms/DaText'
 import { getApiTypeClasses } from '@/lib/utils'
@@ -6,12 +7,19 @@ interface DaApiListItemProps {
   api: VehicleApi
   onClick: () => void
   isSelected?: boolean
+  itemRef?: React.RefObject<HTMLDivElement>
 }
 
-const DaApiListItem = ({ api, onClick, isSelected }: DaApiListItemProps) => {
+const DaApiListItem = ({
+  api,
+  onClick,
+  isSelected,
+  itemRef,
+}: DaApiListItemProps) => {
   const { textClass } = getApiTypeClasses(api.type)
   return (
     <div
+      ref={itemRef}
       className={`grid grid-cols-4 gap-4 py-1.5 text-da-gray-medium cursor-pointer hover:bg-da-primary-100 items-center justify-center px-2 rounded ${
         isSelected ? 'bg-da-primary-100 text-da-primary-500' : ''
       }`}
@@ -25,7 +33,7 @@ const DaApiListItem = ({ api, onClick, isSelected }: DaApiListItemProps) => {
           {api.name}
         </DaText>
         {api.isWishlist && (
-          <div className=" flex font-bold rounded-full w-4 h-4 ml-2 bg-fuchsia-500 text-da-white items-center justify-center text-[9px]">
+          <div className="flex font-bold rounded-full w-4 h-4 ml-2 bg-fuchsia-500 text-da-white items-center justify-center text-[9px]">
             W
           </div>
         )}
@@ -55,6 +63,17 @@ const DaApiList = ({
   selectedApi,
   maxWidth = '1500px',
 }: DaApiListProps) => {
+  const selectedRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (selectedRef.current) {
+      selectedRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      })
+    }
+  }, [selectedApi])
+
   return (
     <div
       className="flex flex-col w-full h-full overflow-y-auto overflow-x-hidden bg-da-white"
@@ -70,6 +89,7 @@ const DaApiList = ({
             }
           }}
           isSelected={selectedApi?.name === item.name}
+          itemRef={selectedApi?.name === item.name ? selectedRef : undefined}
         />
       ))}
     </div>

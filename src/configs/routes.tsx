@@ -50,6 +50,10 @@ const routesConfig: RouteObject[] = [
       { path: ':model_id/api/:api', element: <PageVehicleApi /> },
       { path: ':model_id/library', element: <PagePrototypeLibrary /> },
       { path: ':model_id/library/:tab', element: <PagePrototypeLibrary /> },
+      {
+        path: ':model_id/library/:tab/:prototype_id',
+        element: <PagePrototypeLibrary />,
+      },
       { path: ':model_id/architecture', element: <PageModelArchitecture /> },
       {
         path: ':model_id/library/prototype/:prototype_id',

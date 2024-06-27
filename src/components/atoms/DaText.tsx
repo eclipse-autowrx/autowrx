@@ -7,9 +7,11 @@ interface DaTextProps {
   className?: string
   variant?:
     | 'regular'
+    | 'regular-medium'
     | 'regular-bold'
     | 'small'
     | 'small-bold'
+    | 'small-medium'
     | 'sub-title'
     | 'title'
     | 'huge'
@@ -22,6 +24,7 @@ const DaText = React.forwardRef<HTMLLabelElement, DaTextProps>(
       <label
         className={cn(` da-label-${variant}`, className)}
         ref={ref}
+        style={{ cursor: 'inherit' }}
         {...props}
       />
     )

@@ -301,9 +301,7 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
               >
                 {activeTab === 'view' ? <TbEdit /> : <TbArrowLeft />}
                 <span className="ml-2">
-                  {activeTab === 'view'
-                    ? 'Edit Architecture'
-                    : 'Exit edit mode'}{' '}
+                  {activeTab === 'view' ? 'Edit Mapping' : 'Exit Edit Mode'}{' '}
                 </span>
               </DaButton>
             </DaTooltip>
