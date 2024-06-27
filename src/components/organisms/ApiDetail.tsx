@@ -42,7 +42,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
   const popupSubmitIssueState = useState(false)
 
   const { onTriggerAuth, loading, user, access, error } = useGithubAuth()
-  const { data } = useCurrentExtendedApiIssue()
+  const { data, refetch: refetchCurrIssue } = useCurrentExtendedApiIssue()
 
   const handleDeleteWishlistApi = async () => {
     if (model && model.custom_apis) {
@@ -245,7 +245,8 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
                       <FormSubmitIssue
                         user={user}
                         api={apiDetails}
-                        onClose={() => {
+                        refetch={refetchCurrIssue}
+                        onClose={async () => {
                           popupSubmitIssueState[1](false)
                         }}
                         accessToken={access}

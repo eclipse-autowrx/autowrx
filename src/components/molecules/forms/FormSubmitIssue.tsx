@@ -17,6 +17,7 @@ interface SummitIssueFormProps {
   onClose: () => void
   user?: GithubUser
   accessToken?: string
+  refetch?: () => Promise<any>
 }
 
 const SubmitIssueForm = ({
@@ -24,6 +25,7 @@ const SubmitIssueForm = ({
   onClose,
   user,
   accessToken,
+  refetch,
 }: SummitIssueFormProps) => {
   const { data: model } = useCurrentModel()
 
@@ -69,6 +71,7 @@ const SubmitIssueForm = ({
         content: content,
       })
       window.open(res.link, '_blank')
+      refetch && (await refetch())
       onClose()
     } catch (error) {
       console.log(error)
