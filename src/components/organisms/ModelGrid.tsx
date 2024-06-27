@@ -19,7 +19,10 @@ const ModelGrid: React.FC = () => {
   const [filteredModels, setFilteredModels] = useState<ModelLite[]>([])
 
   useEffect(() => {
-    if (activeTab === 'myContribution') {
+    if (!user) {
+      setActiveTab('public')
+    }
+    if (activeTab === 'myContribution' && user) {
       setFilteredModels(contributionModel?.results || [])
     } else if (activeTab === 'myModel' && user) {
       setFilteredModels(
@@ -37,21 +40,25 @@ const ModelGrid: React.FC = () => {
 
   return (
     <div className="flex flex-col w-full h-full">
-      <div className="flex w-full mb-4">
-        <DaTabItem
-          small
-          active={activeTab === 'myContribution'}
-          onClick={() => setActiveTab('myContribution')}
-        >
-          My Contributions
-        </DaTabItem>
-        <DaTabItem
-          small
-          active={activeTab === 'myModel'}
-          onClick={() => setActiveTab('myModel')}
-        >
-          My Models
-        </DaTabItem>
+      <div className="flex w-full mb-4 space-x-2">
+        {user && (
+          <>
+            <DaTabItem
+              small
+              active={activeTab === 'myContribution'}
+              onClick={() => setActiveTab('myContribution')}
+            >
+              My Contributions
+            </DaTabItem>
+            <DaTabItem
+              small
+              active={activeTab === 'myModel'}
+              onClick={() => setActiveTab('myModel')}
+            >
+              My Models
+            </DaTabItem>
+          </>
+        )}
         <DaTabItem
           small
           active={activeTab === 'public'}

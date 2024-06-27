@@ -129,7 +129,7 @@ LOOP.close()`,
   return (
     <form
       onSubmit={createNewModel}
-      className="flex flex-col w-[400px] min-w-[400px] px-2 md:px-6 py-4 bg-da-white"
+      className="flex flex-col w-[30vw] lg:w-[25vw] max-h-[80vh] p-4 bg-da-white"
     >
       <DaText variant="title" className="text-da-primary-500">
         Create New Prototype

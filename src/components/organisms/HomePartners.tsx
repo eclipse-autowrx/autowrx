@@ -7,9 +7,9 @@ const HomePartners: FC = () => {
   const partners = useParnerList()
   return (
     <div className="flex flex-col items-center w-full pb-10 mt-12">
-      <DaText variant="sub-title" className="text-da-gray-medium">
+      {/* <DaText variant="sub-title" className="text-da-gray-medium">
         Partners
-      </DaText>
+      </DaText> */}
       <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-3 gap-24">
         {partners.map((groups: any, gIndex: number) => (
           <div key={gIndex} className="text-center">

@@ -1,66 +1,58 @@
 import { List } from '@/types/common.type'
 import { serverAxios } from './base'
-import { Prototype, Model } from '@/types/model.type'
-import { prototypes } from '@/data/models_mock'
+import { Prototype } from '@/types/model.type'
 
-const IS_MOCK = false
+export const listProposalPrototype = async (): Promise<List<Prototype>> => {
+  let page = 1
+  const limit = 12
+  let allResults: Prototype[] = []
+  let totalPages = 1
+  // do {
+  // Only get 1 page since we have different component for this Popular Prototypes that not migrated yet
+  const response = await serverAxios.get<List<Prototype>>('/prototypes', {
+    params: {
+      fields: [
+        'model_id',
+        'name',
+        'visibility',
+        'image_file',
+        'id',
+        'created_at',
+        'created_by',
+        'tags',
+        'state',
+      ].join(','),
+      page,
+      limit,
+    },
+  })
+  allResults = [...allResults, ...response.data.results]
+  totalPages = response.data.totalPages
+  page++
+  // } while (page <= totalPages)
 
-const DEFAULT_PY_CODE = `from sdv_model import Vehicle
-import plugins
-from browser import aio
+  // Filter results to only include prototypes with the specified conditions
+  const filteredResults = allResults.filter(
+    (prototype) =>
+      prototype.image_file !== 'https://placehold.co/600x400' &&
+      prototype.state === 'Released',
+  )
 
-vehicle = Vehicle()
-
-# write your code here
-
-`
-
-export const listProposalPrototype = async () => {
-  if (IS_MOCK) {
-    return {
-      results: prototypes,
-      page: 1,
-      limit: 12,
-      totalPages: 1,
-      totalResults: prototypes.length,
-    }
+  return {
+    results: filteredResults,
+    totalPages: Math.ceil(filteredResults.length / limit),
+    totalResults: filteredResults.length,
+    page: 1,
+    limit,
   }
-  return (
-    await serverAxios.get<List<Prototype>>('/prototypes', {
-      params: {
-        fields: [
-          'model_id',
-          'name',
-          'visibility',
-          'image_file',
-          'id',
-          'created_at',
-          'created_by',
-          'tags',
-        ].join(','),
-      },
-    })
-  ).data
 }
 
 export const getPrototype = async (prototype_id: string) => {
   if (!prototype_id) return null
-  if (IS_MOCK) {
-    const prototype = prototypes.find(
-      (prototype) => prototype.id === prototype_id,
-    )
-    if (prototype && !prototype.code) {
-      prototype.code = DEFAULT_PY_CODE
-    }
-    return prototype
-  }
   return (await serverAxios.get<Prototype>(`/prototypes/${prototype_id}`)).data
 }
 
 export const listModelPrototypes = async (model_id: string) => {
-  // if (IS_MOCK) {
-  //   return prototypes
-  // }
   return (
     await serverAxios.get<List<Prototype>>(`/prototypes?model_id=${model_id}`)
   ).data.results

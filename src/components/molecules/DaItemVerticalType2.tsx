@@ -1,7 +1,7 @@
 import * as React from 'react'
-import { DaImageRatio } from '../atoms/DaImageRatio'
 import { DaText } from '../atoms/DaText'
 import { DaTag } from '../atoms/DaTag'
+import { DaImage } from '../atoms/DaImage'
 
 interface DaItemVerticalType2Props {
   title: string
@@ -27,12 +27,10 @@ const DaItemVerticalType2: React.FC<DaItemVerticalType2Props> = ({
       <DaText variant="sub-title" className="px-2 py-1 line-clamp-1">
         {title}
       </DaText>
-      <DaImageRatio
+      <DaImage
         src={imageUrl ? imageUrl : 'https://placehold.co/600x400'}
         alt="Image"
-        className="w-full h-auto rounded-lg"
-        ratio={16 / 9}
-        maxWidth={maxWidth}
+        className="w-full h-full rounded-lg aspect-video object-contain"
       />
       <div className="flex space-x-2 pt-2 px-2">
         {tags.map((tag, index) => (

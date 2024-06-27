@@ -41,7 +41,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
   return (
     <form
       onSubmit={signIn}
-      className="w-[400px] min-w-[400px] min-h-[300px] block px-2 md:px-6 py-2 bg-da-white"
+      className="w-[30vw] lg:w-[25vw] max-h-[80vh] p-4 bg-da-white"
     >
       {/* Title */}
       <DaText variant="title" className="text-da-primary-500">
