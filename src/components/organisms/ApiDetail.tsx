@@ -8,7 +8,7 @@ import { updateModelService } from '@/services/model.service'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { CustomApi } from '@/types/model.type'
 import DaConfirmPopup from '../molecules/DaConfirmPopup'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import DaLoader from '../atoms/DaLoader'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
@@ -18,7 +18,8 @@ import DaPopup from '../atoms/DaPopup'
 import FormSubmitIssue from '../molecules/forms/FormSubmitIssue'
 import { FaGithub } from 'react-icons/fa6'
 import useGithubAuth from '@/hooks/useGithubAuth'
-import { TbLoader, TbMessage, TbTrash } from 'react-icons/tb'
+import { TbExternalLink, TbLoader, TbMessage, TbTrash } from 'react-icons/tb'
+import useCurrentExtendedApiIssue from '@/hooks/useCurrentExtendedApiIssue'
 
 interface ApiDetailProps {
   apiDetails: any
@@ -41,6 +42,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
   const popupSubmitIssueState = useState(false)
 
   const { onTriggerAuth, loading, user, access } = useGithubAuth()
+  const { data } = useCurrentExtendedApiIssue()
 
   const handleDeleteWishlistApi = async () => {
     if (model && model.custom_apis) {
@@ -196,41 +198,52 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
                     </div>
                   </DaButton>
                 </DaConfirmPopup>
-                <DaPopup
-                  state={popupSubmitIssueState}
-                  trigger={
-                    <DaButton
-                      variant="plain"
-                      size="sm"
-                      onClick={() => {
-                        popupSubmitIssueState[1](true)
-                        onTriggerAuth()
-                      }}
-                    >
-                      <FaGithub className="mr-1" />
-                      Propose this API to COVESA
-                    </DaButton>
-                  }
-                >
-                  {loading && (
-                    <div className="p-4 flex flex-col gap-4 items-center">
-                      <DaLoader />
-                      <p>
-                        Please wait while we are authenticating with Github...
-                      </p>
-                    </div>
-                  )}
-                  {!loading && (
-                    <FormSubmitIssue
-                      user={user}
-                      api={apiDetails}
-                      onClose={() => {
-                        popupSubmitIssueState[1](false)
-                      }}
-                      accessToken={access}
-                    />
-                  )}
-                </DaPopup>
+                {data ? (
+                  <Link
+                    to={data.link}
+                    className="da-label-small-bold flex items-center gap-2"
+                    target="_blank"
+                  >
+                    <TbExternalLink className="w-5 h-5" />
+                    View COVESA Issue
+                  </Link>
+                ) : (
+                  <DaPopup
+                    state={popupSubmitIssueState}
+                    trigger={
+                      <DaButton
+                        variant="plain"
+                        size="sm"
+                        onClick={() => {
+                          popupSubmitIssueState[1](true)
+                          onTriggerAuth()
+                        }}
+                      >
+                        <FaGithub className="mr-1" />
+                        Propose this API to COVESA
+                      </DaButton>
+                    }
+                  >
+                    {loading && (
+                      <div className="p-4 flex flex-col gap-4 items-center">
+                        <DaLoader />
+                        <p>
+                          Please wait while we are authenticating with Github...
+                        </p>
+                      </div>
+                    )}
+                    {!loading && (
+                      <FormSubmitIssue
+                        user={user}
+                        api={apiDetails}
+                        onClose={() => {
+                          popupSubmitIssueState[1](false)
+                        }}
+                        accessToken={access}
+                      />
+                    )}
+                  </DaPopup>
+                )}
               </>
             )
           )}

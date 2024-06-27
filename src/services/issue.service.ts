@@ -33,16 +33,13 @@ const deleteIssueService = async (issueId: string): Promise<void> => {
   await serverAxios.delete(`/issues/${issueId}`)
 }
 
-const getIssueByModelAndApiService = async (
-  modelId: string,
-  apiId: string,
-): Promise<Issue[]> => {
+const getIssueByApiService = async (apiId: string): Promise<Issue> => {
   const response = (
-    await serverAxios.get<{ results: Issue[] }>(`/issues/by-model-api`, {
-      params: { model: modelId, api: apiId },
+    await serverAxios.get<Issue>(`/issues/by-api`, {
+      params: { extendedApi: apiId },
     })
   ).data
-  return response.results
+  return response
 }
 
 export {
@@ -51,5 +48,5 @@ export {
   getIssueByIdService,
   updateIssueService,
   deleteIssueService,
-  getIssueByModelAndApiService,
+  getIssueByApiService,
 }
