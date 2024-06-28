@@ -85,6 +85,9 @@ export type ExtendedApi = {
   id: string
   model: string
   apiName: string
+  description?: string
+  type?: string
+  data_type?: string
   skeleton: string
   tags?: Tag[]
   created_at?: string
