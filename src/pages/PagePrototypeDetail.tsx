@@ -1,16 +1,10 @@
-import { FC, useEffect, useState } from 'react'
+import { FC, useEffect, useState, lazy, Suspense } from 'react'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
 import { useParams } from 'react-router-dom'
 import { DaText } from '@/components/atoms/DaText'
 import DaLoading from '@/components/atoms/DaLoading'
-import PrototypeTabCode from '@/components/organisms/PrototypeTabCode'
 import DaTabItem from '@/components/atoms/DaTabItem'
-import PrototypeTabDashboard from '@/components/organisms/PrototypeTabDashboard'
-import PrototypeTabJourney from '@/components/organisms/PrototypeTabJourney'
-import PrototypeTabFeedback from '@/components/organisms/PrototypeTabFeedback'
-import PrototypeTabHomologation from '@/components/organisms/PrototypeTabHomologation'
-import PrototypeTabArchitecture from '@/components/organisms/PrototypeTabArchitecture'
 import {
   TbBinaryTree,
   TbCode,
@@ -25,6 +19,31 @@ import { DaButton } from '@/components/atoms/DaButton'
 import { downloadPrototypeZip } from '@/lib/zipUtils'
 import DaDiscussions from '@/components/molecules/DaDiscussions'
 import DaPopup from '@/components/atoms/DaPopup'
+
+// import PrototypeTabCode from '@/components/organisms/PrototypeTabCode'
+// import PrototypeTabDashboard from '@/components/organisms/PrototypeTabDashboard'
+// import PrototypeTabJourney from '@/components/organisms/PrototypeTabJourney'
+// import PrototypeTabFeedback from '@/components/organisms/PrototypeTabFeedback'
+// import PrototypeTabHomologation from '@/components/organisms/PrototypeTabHomologation'
+// import PrototypeTabArchitecture from '@/components/organisms/PrototypeTabArchitecture'
+const PrototypeTabCode = lazy(
+  () => import('@/components/organisms/PrototypeTabCode'),
+)
+const PrototypeTabDashboard = lazy(
+  () => import('@/components/organisms/PrototypeTabDashboard'),
+)
+const PrototypeTabJourney = lazy(
+  () => import('@/components/organisms/PrototypeTabJourney'),
+)
+const PrototypeTabFeedback = lazy(
+  () => import('@/components/organisms/PrototypeTabFeedback'),
+)
+const PrototypeTabHomologation = lazy(
+  () => import('@/components/organisms/PrototypeTabHomologation'),
+)
+const PrototypeTabArchitecture = lazy(
+  () => import('@/components/organisms/PrototypeTabArchitecture'),
+)
 
 interface ViewPrototypeProps {
   display?: 'tree' | 'list'
@@ -136,17 +155,41 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
         </DaTabItem>
       </div>
       <div className="w-full min-h-[100px] grow">
-        {isDefaultTab && <PrototypeTabJourney prototype={prototype} />}
-        {tab == 'architecture' && <PrototypeTabArchitecture />}
-        {tab == 'code' && <PrototypeTabCode />}
+        {isDefaultTab && (
+          <Suspense>
+            <PrototypeTabJourney prototype={prototype} />
+          </Suspense>
+        )}
+        {tab == 'architecture' && (
+          <Suspense>
+            <PrototypeTabArchitecture />
+          </Suspense>
+        )}
+        {tab == 'code' && (
+          <Suspense>
+            <PrototypeTabCode />
+          </Suspense>
+        )}
         {tab == 'flow' && (
           <div className="p-8">
             <DaText variant="huge">Flow Page</DaText>
           </div>
         )}
-        {tab == 'dashboard' && <PrototypeTabDashboard />}
-        {tab == 'homologation' && <PrototypeTabHomologation />}
-        {tab == 'feedback' && <PrototypeTabFeedback />}
+        {tab == 'dashboard' && (
+          <Suspense>
+            <PrototypeTabDashboard />
+          </Suspense>
+        )}
+        {tab == 'homologation' && (
+          <Suspense>
+            <PrototypeTabHomologation />
+          </Suspense>
+        )}
+        {tab == 'feedback' && (
+          <Suspense>
+            <PrototypeTabFeedback />
+          </Suspense>
+        )}
       </div>
     </div>
   )
