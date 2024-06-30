@@ -8,13 +8,18 @@ import { updateModelService } from '@/services/model.service'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { CustomApi } from '@/types/model.type'
 import DaConfirmPopup from '../molecules/DaConfirmPopup'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import DaLoader from '../atoms/DaLoader'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import DaApiArchitecture from '../molecules/DaApiArchitecture'
 import DaDiscussions from '../molecules/DaDiscussions'
-import { TbLoader, TbMessage, TbTrash } from 'react-icons/tb'
+import DaPopup from '../atoms/DaPopup'
+import FormSubmitIssue from '../molecules/forms/FormSubmitIssue'
+import { FaGithub } from 'react-icons/fa6'
+import useGithubAuth from '@/hooks/useGithubAuth'
+import { TbExternalLink, TbLoader, TbMessage, TbTrash } from 'react-icons/tb'
+import useCurrentExtendedApiIssue from '@/hooks/useCurrentExtendedApiIssue'
 
 interface ApiDetailProps {
   apiDetails: any
@@ -26,12 +31,18 @@ const OneOfFromName = (list: string[], name: string) => {
 }
 
 const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
+  console.log(`apiDetails`, apiDetails)
+
   const { bgClass } = getApiTypeClasses(apiDetails.type)
   const { data: model, refetch } = useCurrentModel()
   const [isLoading, setIsLoading] = useState(false)
   const discussionsRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model?.id])
+  const popupSubmitIssueState = useState(false)
+
+  const { onTriggerAuth, loading, user, access, error } = useGithubAuth()
+  const { data, refetch: refetchCurrIssue } = useCurrentExtendedApiIssue()
 
   const handleDeleteWishlistApi = async () => {
     if (model && model.custom_apis) {
@@ -175,18 +186,78 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
           ) : (
             apiDetails.isWishlist &&
             isAuthorized && (
-              <DaConfirmPopup
-                onConfirm={handleDeleteWishlistApi}
-                label="Are you sure you want to delete this wishlist API?"
-              >
-                <DaButton variant="destructive" size="sm">
-                  <TbTrash className="w-5 h-5 mr-2 " />
-                  <div className="da-label-small-bold">Delete Wishlist API</div>
-                </DaButton>
-              </DaConfirmPopup>
+              <>
+                <DaConfirmPopup
+                  onConfirm={handleDeleteWishlistApi}
+                  label="Are you sure you want to delete this wishlist API?"
+                >
+                  <DaButton variant="destructive" size="sm">
+                    <TbTrash className="w-5 h-5 mr-2 " />
+                    <div className="da-label-small-bold">
+                      Delete Wishlist API
+                    </div>
+                  </DaButton>
+                </DaConfirmPopup>
+                {data ? (
+                  <Link
+                    to={data.link}
+                    className="da-label-small-bold flex items-center gap-2"
+                    target="_blank"
+                  >
+                    <TbExternalLink className="w-5 h-5" />
+                    View COVESA Issue
+                  </Link>
+                ) : (
+                  <DaPopup
+                    state={popupSubmitIssueState}
+                    trigger={
+                      <DaButton
+                        variant="plain"
+                        size="sm"
+                        onClick={() => {
+                          popupSubmitIssueState[1](true)
+                          onTriggerAuth()
+                        }}
+                      >
+                        <FaGithub className="mr-1" />
+                        <span className="da-label-small-bold">
+                          Propose this API to COVESA
+                        </span>
+                      </DaButton>
+                    }
+                  >
+                    {loading && (
+                      <div className="p-4 flex flex-col gap-4 items-center">
+                        <DaLoader />
+                        <p>
+                          Please wait while we are authenticating with Github...
+                        </p>
+                      </div>
+                    )}
+
+                    {!loading && error && (
+                      <div className="p-4 flex flex-col gap-4 items-center">
+                        <p>{error}</p>
+                      </div>
+                    )}
+
+                    {!loading && !error && (
+                      <FormSubmitIssue
+                        user={user}
+                        api={apiDetails}
+                        refetch={refetchCurrIssue}
+                        onClose={async () => {
+                          popupSubmitIssueState[1](false)
+                        }}
+                        accessToken={access}
+                      />
+                    )}
+                  </DaPopup>
+                )}
+              </>
             )
           )}
-          <DaButton
+          {/* <DaButton
             variant="plain"
             className="!text-da-primary-500"
             size="sm"
@@ -194,7 +265,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
           >
             <TbMessage className="w-5 h-5 mr-2" />{' '}
             <div className="da-label-small-bold">Discussions</div>
-          </DaButton>
+          </DaButton> */}
           <div className={cn('px-3 rounded', bgClass)}>
             <DaText variant="small-bold" className="text-da-white uppercase">
               {apiDetails.type}
