@@ -24,7 +24,7 @@ const DaItemVerticalStandard: React.FC<DaItemVerticalStandardProps> = ({
         <DaImage
           src={imageUrl ? imageUrl : 'https://placehold.co/600x400'}
           alt="Image"
-          className="w-full h-auto rounded-lg aspect-video object-contain"
+          className="w-full h-auto rounded-lg aspect-video object-cover"
         />
         <div className="flex flex-col items-start w-full space-y-0">
           <DaText variant="regular-bold" className="line-clamp-1">
