@@ -20,6 +20,9 @@ import PageResetPassword from '@/pages/PageResetPassword'
 import PageManageUsers from '@/pages/PageManageUsers'
 import PageDiscussions from '@/pages/test-ui/PageDiscussions'
 import PageUserProfile from '@/pages/PageUserProfile'
+import { Suspense, lazy } from 'react'
+
+const PageAuthSuccess = lazy(() => import('@/pages/PageAuthSuccess'))
 
 const routesConfig: RouteObject[] = [
   {
@@ -99,6 +102,14 @@ const routesConfig: RouteObject[] = [
     path: '/test-ui/discussion',
     element: <RootLayout />,
     children: [{ index: true, element: <PageDiscussions /> }],
+  },
+  {
+    path: '/auth/github/success',
+    element: (
+      <Suspense fallback={<div>Loading...</div>}>
+        <PageAuthSuccess />
+      </Suspense>
+    ),
   },
 ]
 

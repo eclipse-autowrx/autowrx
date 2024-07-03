@@ -21,6 +21,10 @@ const useGithubAuth = () => {
   const { data: self } = useSelfProfileQuery()
   const socketRef = useRef<Socket | null>(null)
 
+  const redirectUri = encodeURIComponent(
+    `${config.serverBaseUrl}/${config.serverVersion}/auth/github/callback?userId=${self?.id}&origin=${window.location.origin}`,
+  )
+
   useEffect(() => {
     if (!self) return
     socketRef.current = io(config.serverBaseUrl, {
@@ -86,7 +90,7 @@ const useGithubAuth = () => {
   const onTriggerAuth = () => {
     if (isExpired()) {
       window.open(
-        `https://github.com/login/oauth/authorize/?client_id=${config.github.clientId}&redirect_uri=${config.serverBaseUrl}/${config.serverVersion}/auth/github/callback?userId=${self?.id}&scope=user:email%20public_repo`,
+        `https://github.com/login/oauth/authorize/?client_id=${config.github.clientId}&redirect_uri=${redirectUri}&scope=user:email%20public_repo`,
         '_blank',
       )
       listenForAuth()
