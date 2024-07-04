@@ -1,10 +1,11 @@
-import { Config } from '@/types/addon.type'
-
-const config: Config = {
+const config = {
   serverBaseUrl:
     import.meta.env.VITE_SERVER_BASE_URL ||
     'https://backend-core-dev.digital.auto',
   serverVersion: import.meta.env.VITE_SERVER_VERSION || 'v2',
+  logBaseUrl: import.meta.env.PROD
+    ? 'https://logs.digital.auto'
+    : 'https://logs.digitalauto.asia',
   studioUrl: 'https://studio.digital.auto',
   studioBeUrl: 'https://bewebstudio.digitalauto.tech',
   widgetMarketPlaceUrl: 'https://marketplace.digital.auto/packagetype/widget',

@@ -11,6 +11,8 @@ import { TbCircleCheckFilled, TbLoader } from 'react-icons/tb'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '../toaster/use-toast'
 import useListModelLite from '@/hooks/useListModelLite'
+import { addLog } from '@/services/log.service'
+import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
 const initialState = {
   cvi: JSON.stringify(CVI),
@@ -24,6 +26,8 @@ const FormCreateModel = () => {
   const [data, setData] = useState(initialState)
   const { refetch: refetchModelLite } = useListModelLite()
   const { toast } = useToast()
+
+  const { data: currentUser } = useSelfProfileQuery()
 
   const navigate = useNavigate()
 
@@ -42,6 +46,14 @@ const FormCreateModel = () => {
       }
       const modelId = await createModelService(body)
       await refetchModelLite()
+      addLog({
+        name: `New model '${body.name}' with visibility: ${body.visibility}`,
+        description: `New model '${body.name}' was created by ${currentUser?.email || currentUser?.name || currentUser?.id}`,
+        type: 'new-model',
+        create_by: currentUser?.id!,
+        ref_id: modelId,
+        ref_type: 'model',
+      })
 
       toast({
         title: ``,

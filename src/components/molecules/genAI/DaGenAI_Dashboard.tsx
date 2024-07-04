@@ -12,6 +12,8 @@ import { DaTextarea } from '@/components/atoms/DaTextarea'
 import useListMarketplaceAddOns from '@/hooks/useListMarketplaceAddOns'
 import DaGeneratorSelector from './DaGeneratorSelector.tsx.tsx'
 import config from '@/configs/config.ts'
+import { addLog } from '@/services/log.service.ts'
+import useSelfProfileQuery from '@/hooks/useSelfProfile.ts'
 
 type DaGenAI_DashboardProps = {
   onCodeChanged?: (code: string) => void
@@ -30,9 +32,11 @@ const DaGenAI_Dashboard = ({
   const { data: marketplaceAddOns } =
     useListMarketplaceAddOns('GenAI_Dashboard')
 
+  const { data: user } = useSelfProfileQuery()
+
   const builtInAddOns =
     config.genAI && config.genAI.dashboard && config.genAI.dashboard.length > 0
-      ? config.genAI.dashboard.map((addOn) => ({
+      ? config.genAI.dashboard.map((addOn: any) => ({
           ...addOn,
           customPayload: addOn.customPayload(
             inputPrompt + 'With the sdv app python code: ' + pythonCode
@@ -61,6 +65,14 @@ const DaGenAI_Dashboard = ({
           systemMessage: selectedAddOn.samples || '',
         })
         setGenCode(response.data.code)
+        addLog({
+          name: `User ${user?.name} generated dashboard code`,
+          description: `User ${user?.name} with id ${user?.id} generated python code with ${selectedAddOn.name}`,
+          create_by: user?.id!,
+          type: 'gen-dashboard',
+          ref_id: selectedAddOn.id,
+          ref_type: 'genai',
+        })
       }
     } catch (error) {
       console.error('Error generating AI content:', error)

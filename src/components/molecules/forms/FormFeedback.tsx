@@ -11,6 +11,8 @@ import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import useListPrototypeFeedback from '@/hooks/useListPrototypeFeedback'
 import { isAxiosError } from 'axios'
 import { DaTextarea } from '@/components/atoms/DaTextarea'
+import { addLog } from '@/services/log.service'
+import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
 const initialState = {
   interviewee: '',
@@ -39,6 +41,8 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
     setData((prev) => ({ ...prev, [name]: value }))
   }
 
+  const { data: user } = useSelfProfileQuery()
+
   const submitFeedback = async (e: FormEvent<HTMLFormElement>) => {
     if (!prototype || !prototype.id || !model) return
     e.preventDefault()
@@ -61,8 +65,17 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
         ref_type: 'prototype',
       }
 
-      await createFeedback(payload)
+      const feedback = await createFeedback(payload)
       await refetch()
+      addLog({
+        name: `User ${user?.name} gave feedback`,
+        description: `User ${user?.name} with id ${user?.id} as interviewee ${data.interviewee} gave feedback to prototype ${prototype?.name} within model ${model?.name}`,
+        type: 'create-feedback',
+        create_by: user?.id!,
+        ref_id: feedback.id,
+        ref_type: 'feedback',
+        parent_id: prototype.id,
+      })
       setData(initialState)
     } catch (error) {
       if (isAxiosError(error)) {
