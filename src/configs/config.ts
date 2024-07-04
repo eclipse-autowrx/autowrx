@@ -5,6 +5,8 @@ const config: Config = {
     import.meta.env.VITE_SERVER_BASE_URL ||
     'https://backend-core-dev.digital.auto',
   serverVersion: import.meta.env.VITE_SERVER_VERSION || 'v2',
+  cacheBaseUrl:
+    import.meta.env.VITE_CACHE_BASE_URL || 'https://cache.digitalauto.tech',
   studioUrl: 'https://studio.digital.auto',
   studioBeUrl: 'https://bewebstudio.digitalauto.tech',
   widgetMarketPlaceUrl: 'https://marketplace.digital.auto/packagetype/widget',

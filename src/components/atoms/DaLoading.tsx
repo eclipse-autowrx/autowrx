@@ -69,9 +69,9 @@ const DaLoading = ({
           </defs>
         </svg>
       ) : (
-        <TbX className="text-da-gray-medium" size={size} />
+        showRetry && <TbX className="text-da-gray-medium mb-6" size={size} />
       )}
-      <DaText variant="title" className="text-da-gray-medium mt-6">
+      <DaText variant="title" className="text-da-gray-medium">
         {hasTimedOut ? timeoutText : text}
       </DaText>
       {hasTimedOut && showRetry && (
