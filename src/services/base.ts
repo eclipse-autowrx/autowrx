@@ -19,3 +19,8 @@ serverAxios.interceptors.request.use(
     return Promise.reject(error)
   },
 )
+
+export const logAxios = axios.create({
+  baseURL: config.logBaseUrl,
+  withCredentials: true,
+})

@@ -6,6 +6,7 @@ import { isAxiosError } from 'axios'
 import { useState } from 'react'
 import { TbLoader } from 'react-icons/tb'
 import { usePolicy } from '@/hooks/useInstanceCfg'
+import { addLog } from '@/services/log.service'
 
 interface FormRegisterProps {
   setAuthType: (type: 'sign-in' | 'register' | 'forgot') => void
@@ -53,6 +54,12 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
 
       // Register
       await registerService(name, email, password)
+      await addLog({
+        name: `User registered`,
+        description: `User registered with email: ${email}`,
+        type: 'user-register@email',
+        create_by: email,
+      })
       setError('')
       // eslint-disable-next-line no-self-assign
       window.location.href = window.location.href

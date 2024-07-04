@@ -8,6 +8,7 @@ import FormAlert from './forms/FormAlert'
 import { DaText } from '../atoms/DaText'
 import React, { useState } from 'react'
 import { deleteDiscussionService } from '@/services/discussion.service'
+import { addLog } from '@/services/log.service'
 
 interface DaDiscussionItemOptionsProps {
   data: Discussion
@@ -24,12 +25,23 @@ const DaDiscussionItemOptions = ({
   const [openDelete, setOpenDelete] = useState(false)
   const [loading, setLoading] = useState(false)
 
+  const { data: user } = useSelfProfileQuery()
+
   const deleteDiscussion = async () => {
     try {
       setLoading(true)
       // Delete discussion
       await deleteDiscussionService(data.id)
       await refetch()
+      addLog({
+        name: `User ${user?.id} deleted discussion`,
+        description: `User ${user?.id} deleted discussion with id: ${data.id}`,
+        type: 'delete-dicussion',
+        create_by: user?.id!,
+        parent_id: data?.ref,
+        ref_id: data?.id,
+        ref_type: 'discussion',
+      })
       setOpenDelete(false)
     } catch (error) {
       console.error('Delete discussion failed')

@@ -15,6 +15,7 @@ import useCurrentModel from '@/hooks/useCurrentModel'
 import { PERMISSIONS } from '@/data/permission'
 import { updatePrototypeService } from '@/services/prototype.service'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
+import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
 const PrototypeTabCodeDashboardCfg: FC = ({}) => {
   const [prototype, setActivePrototype] = useModelStore(
@@ -29,6 +30,8 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
   const [isOpenGenAI, setIsOpenGenAI] = useState(false)
   const { data: model } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
+
+  const { data: currentUser } = useSelfProfileQuery()
 
   useEffect(() => {
     let timer = setInterval(() => {
@@ -86,6 +89,7 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
         await updatePrototypeService(prototype.id, {
           widget_config: updateConfig,
         })
+
         // await refetch()
         // console.log('Configuration updated and refetched successfully.')
       } catch (error) {

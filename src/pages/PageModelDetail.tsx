@@ -32,6 +32,8 @@ import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import { cn } from '@/lib/utils'
 import DaMenu from '@/components/atoms/DaMenu'
+import { addLog } from '@/services/log.service'
+import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
 interface VisibilityControlProps {
   initialVisibility: 'public' | 'private' | undefined
@@ -99,6 +101,8 @@ const PageModelDetail = () => {
   const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model?.id])
   const [confirmPopupOpen, setConfirmPopupOpen] = useState(false)
 
+  const { data: currentUser } = useSelfProfileQuery()
+
   const handleAvatarChange = async (file: File) => {
     if (!model || !model.id) return
     if (file) {
@@ -130,6 +134,14 @@ const PageModelDetail = () => {
     try {
       setIsDeleting(true)
       await deleteModelService(model.id)
+      addLog({
+        name: `User ${currentUser?.email} deleted model '${model.name}'`,
+        description: `User ${currentUser?.email} deleted model '${model.name}' with id ${model.id}`,
+        type: 'delete-model',
+        create_by: currentUser?.id!,
+        ref_id: model.id,
+        ref_type: 'model',
+      })
       await refetch()
       window.location.href = '/model'
     } catch (error) {

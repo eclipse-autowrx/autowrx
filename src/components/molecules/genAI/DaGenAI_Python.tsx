@@ -12,6 +12,8 @@ import { DaTextarea } from '@/components/atoms/DaTextarea'
 import useListMarketplaceAddOns from '@/hooks/useListMarketplaceAddOns'
 import DaGeneratorSelector from './DaGeneratorSelector.tsx.tsx'
 import config from '@/configs/config.ts'
+import { addLog } from '@/services/log.service.ts'
+import useSelfProfileQuery from '@/hooks/useSelfProfile.ts'
 
 type DaGenAI_PythonProps = {
   onCodeChanged?: (code: string) => void
@@ -26,9 +28,11 @@ const DaGenAI_Python = ({ onCodeChanged }: DaGenAI_PythonProps) => {
   const [isFinished, setIsFinished] = useState<boolean>(false)
   const { data: marketplaceAddOns } = useListMarketplaceAddOns('GenAI_Python')
 
+  const { data: user } = useSelfProfileQuery()
+
   const builtInAddOns: AddOn[] =
     config.genAI && config.genAI.sdvApp && config.genAI.sdvApp.length > 0
-      ? config.genAI.sdvApp.map((addOn) => ({
+      ? config.genAI.sdvApp.map((addOn: any) => ({
           ...addOn,
           customPayload: addOn.customPayload(inputPrompt), // Append the customPayload with the inputPrompt
         }))
@@ -54,6 +58,14 @@ const DaGenAI_Python = ({ onCodeChanged }: DaGenAI_PythonProps) => {
         })
         setGenCode(response.data.code)
       }
+      addLog({
+        name: `User ${user?.name} generated python code`,
+        description: `User ${user?.name} with id ${user?.id} generated python code with ${selectedAddOn.name}`,
+        create_by: user?.id!,
+        type: 'gen-python',
+        ref_id: selectedAddOn.id,
+        ref_type: 'genai',
+      })
     } catch (error) {
       console.error('Error generating AI content:', error)
     } finally {
