@@ -7,13 +7,15 @@ import { TbCode } from 'react-icons/tb'
 import { BsStars } from 'react-icons/bs'
 import LoadingLineAnimation from './DaGenAI_LoadingLineAnimation.tsx'
 import DaGenAI_ResponseDisplay from './DaGenAI_ResponseDisplay.tsx'
-import axios from 'axios'
+import axios, { isAxiosError } from 'axios'
 import { DaTextarea } from '@/components/atoms/DaTextarea'
 import useListMarketplaceAddOns from '@/hooks/useListMarketplaceAddOns'
 import DaGeneratorSelector from './DaGeneratorSelector.tsx.tsx'
 import config from '@/configs/config.ts'
 import { addLog } from '@/services/log.service.ts'
 import useSelfProfileQuery from '@/hooks/useSelfProfile.ts'
+import useAuthStore from '@/stores/authStore.ts'
+import { toast } from 'react-toastify'
 
 type DaGenAI_DashboardProps = {
   onCodeChanged?: (code: string) => void
@@ -33,6 +35,7 @@ const DaGenAI_Dashboard = ({
     useListMarketplaceAddOns('GenAI_Dashboard')
 
   const { data: user } = useSelfProfileQuery()
+  const access = useAuthStore((state) => state.access)
 
   const builtInAddOns =
     config.genAI && config.genAI.dashboard && config.genAI.dashboard.length > 0
@@ -54,16 +57,32 @@ const DaGenAI_Dashboard = ({
     try {
       let response
       if (selectedAddOn.id.includes(config.instance)) {
-        response = await axios.post(selectedAddOn.endpointUrl, {
-          prompt: inputPrompt,
-        })
+        response = await axios.post(
+          selectedAddOn.endpointUrl,
+          {
+            prompt: inputPrompt,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${access?.token}`,
+            },
+          },
+        )
         setGenCode(response.data.payload.code)
       } else {
-        response = await axios.post(config.genAI.defaultEndpointUrl, {
-          endpointURL: selectedAddOn.endpointUrl,
-          inputPrompt: inputPrompt,
-          systemMessage: selectedAddOn.samples || '',
-        })
+        response = await axios.post(
+          config.genAI.defaultEndpointUrl,
+          {
+            endpointURL: selectedAddOn.endpointUrl,
+            inputPrompt: inputPrompt,
+            systemMessage: selectedAddOn.samples || '',
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${access?.token}`,
+            },
+          },
+        )
         setGenCode(response.data.code)
         addLog({
           name: `User ${user?.name} generated dashboard code`,
@@ -76,6 +95,13 @@ const DaGenAI_Dashboard = ({
       }
     } catch (error) {
       console.error('Error generating AI content:', error)
+      if (isAxiosError(error)) {
+        toast.error(
+          error.response?.data?.message || 'Error generating AI content',
+        )
+      } else {
+        toast.error('Error generating AI content')
+      }
     } finally {
       setLoading(false)
       setIsFinished(true)
