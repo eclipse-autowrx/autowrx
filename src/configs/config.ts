@@ -6,6 +6,8 @@ const config = {
   logBaseUrl: import.meta.env.PROD
     ? 'https://logs.digital.auto'
     : 'https://logs.digitalauto.asia',
+  cacheBaseUrl:
+    import.meta.env.VITE_CACHE_BASE_URL || 'https://cache.digitalauto.tech',
   studioUrl: 'https://studio.digital.auto',
   studioBeUrl: 'https://bewebstudio.digitalauto.tech',
   widgetMarketPlaceUrl: 'https://marketplace.digital.auto/packagetype/widget',

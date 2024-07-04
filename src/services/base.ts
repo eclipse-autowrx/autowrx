@@ -7,6 +7,10 @@ export const serverAxios = axios.create({
   withCredentials: true,
 })
 
+export const cacheAxios = axios.create({
+  baseURL: config.cacheBaseUrl,
+})
+
 serverAxios.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().access?.token
