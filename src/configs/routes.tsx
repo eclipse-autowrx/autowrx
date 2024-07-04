@@ -20,6 +20,7 @@ import PageResetPassword from '@/pages/PageResetPassword'
 import PageManageUsers from '@/pages/PageManageUsers'
 import PageDiscussions from '@/pages/test-ui/PageDiscussions'
 import PageUserProfile from '@/pages/PageUserProfile'
+import PageManageFeatures from '@/pages/PageManageFeatures'
 
 const routesConfig: RouteObject[] = [
   {
@@ -28,6 +29,7 @@ const routesConfig: RouteObject[] = [
     children: [
       { index: true, element: <PageHome /> },
       { path: 'manage-users', element: <PageManageUsers /> },
+      { path: 'manage-features', element: <PageManageFeatures /> },
     ],
   },
   {

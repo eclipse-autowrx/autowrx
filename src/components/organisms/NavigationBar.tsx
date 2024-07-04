@@ -6,7 +6,7 @@ import DaNavUser from '../molecules/DaNavUser'
 import { FaCar } from 'react-icons/fa'
 import { FiGrid } from 'react-icons/fi'
 import { HiMenu } from 'react-icons/hi'
-import { TbUsers } from 'react-icons/tb'
+import { TbStack2, TbUsers } from 'react-icons/tb'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { VscListTree } from 'react-icons/vsc'
 import { ImBooks } from 'react-icons/im'
@@ -131,6 +131,12 @@ const NavigationBar = ({}) => {
             className="flex items-center px-4 py-2 gap-2 da-menu-item da-label-regular"
           >
             <TbUsers className="text-base" /> Manage Users
+          </Link>
+          <Link
+            to="/manage-features"
+            className="flex items-center px-4 py-2 gap-2 da-menu-item da-label-regular"
+          >
+            <TbStack2 className="text-base" /> Manage Features
           </Link>
         </DaMenu>
       )}

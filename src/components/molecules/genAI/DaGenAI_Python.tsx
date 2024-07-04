@@ -12,6 +12,8 @@ import { DaTextarea } from '@/components/atoms/DaTextarea'
 import useListMarketplaceAddOns from '@/hooks/useListMarketplaceAddOns'
 import DaGeneratorSelector from './DaGeneratorSelector.tsx.tsx'
 import config from '@/configs/config.ts'
+import usePermissionHook from '@/hooks/usePermissionHook.ts'
+import { PERMISSIONS } from '@/data/permission.ts'
 
 type DaGenAI_PythonProps = {
   onCodeChanged?: (code: string) => void
@@ -25,6 +27,11 @@ const DaGenAI_Python = ({ onCodeChanged }: DaGenAI_PythonProps) => {
   const [genCode, setGenCode] = useState<string>('')
   const [isFinished, setIsFinished] = useState<boolean>(false)
   const { data: marketplaceAddOns } = useListMarketplaceAddOns('GenAI_Python')
+  const [canUseGenAI] = usePermissionHook([PERMISSIONS.USE_GEN_AI])
+
+  useEffect(() => {
+    console.log('Permission to use GenAI: ', canUseGenAI)
+  }, [canUseGenAI])
 
   const builtInAddOns: AddOn[] =
     config.genAI && config.genAI.sdvApp && config.genAI.sdvApp.length > 0
@@ -93,7 +100,9 @@ const DaGenAI_Python = ({ onCodeChanged }: DaGenAI_PythonProps) => {
 
         <DaGeneratorSelector
           builtInAddOns={builtInAddOns}
-          marketplaceAddOns={marketplaceAddOns ? marketplaceAddOns : []}
+          marketplaceAddOns={
+            marketplaceAddOns ? (canUseGenAI ? marketplaceAddOns : []) : []
+          }
           onSelectedGeneratorChange={setSelectedAddOn}
         />
 
