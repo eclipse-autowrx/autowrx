@@ -6,14 +6,14 @@ import DaNavUser from '../molecules/DaNavUser'
 import { FaCar } from 'react-icons/fa'
 import { FiGrid } from 'react-icons/fi'
 import { HiMenu } from 'react-icons/hi'
-import { TbUsers } from 'react-icons/tb'
+import { TbUsers, TbZoom } from 'react-icons/tb'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { VscListTree } from 'react-icons/vsc'
 import { ImBooks } from 'react-icons/im'
 import useCurrentModel from '@/hooks/useCurrentModel'
-import { useEffect } from 'react'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
+import DaGlobalSearch from '../molecules/DaGlobalSearch'
 
 const NavigationBar = ({}) => {
   const { data: model } = useCurrentModel()
@@ -51,7 +51,14 @@ const NavigationBar = ({}) => {
       </Link>
 
       <div className="grow"></div>
-      {/* Model selection */}
+
+      <DaGlobalSearch>
+        <DaButton variant="outline-nocolor" className="!pr-24 mr-2">
+          <TbZoom className="w-4 h-4 mr-1" />
+          Search
+        </DaButton>
+      </DaGlobalSearch>
+
       {model && model.id ? (
         <>
           <Link to="/model">
