@@ -29,6 +29,4 @@ const config = {
   },
 }
 
-config.genAI.defaultEndpointUrl = `${config.serverBaseUrl}/${config.serverVersion}/genai`
-
 export default config
