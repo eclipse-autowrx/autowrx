@@ -5,7 +5,6 @@ import { Model } from '@/types/model.type'
 import { AddOn } from '@/types/addon.type'
 import { BsStars } from 'react-icons/bs'
 import { fetchMarketAddOns } from '@/services/widget.service'
-import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { DaInput } from '@/components/atoms/DaInput'
 import DaGenAI_ResponseDisplay from './DaGenAI_ResponseDisplay'
 import LoadingLineAnimation from './DaGenAI_LoadingLineAnimation'
@@ -16,6 +15,10 @@ import axios, { isAxiosError } from 'axios'
 import { DaTextarea } from '@/components/atoms/DaTextarea.tsx'
 import usePermissionHook from '@/hooks/usePermissionHook.ts'
 import { PERMISSIONS } from '@/data/permission.ts'
+import useSelfProfileQuery from '@/hooks/useSelfProfile.ts'
+import useAuthStore from '@/stores/authStore'
+import { addLog } from '@/services/log.service'
+import { toast } from 'react-toastify'
 
 interface DaGenAIWidgetProps {
   widgetConfig?: any
@@ -43,6 +46,7 @@ const DaGenAIWidget = ({
   const [isPreviewWidget, setIsPreviewWidget] = useState(false)
 
   const { data: marketplaceAddOns } = useListMarketplaceAddOns('GenAI_Widget')
+  const access = useAuthStore((state) => state.access)
   const [canUseGenAI] = usePermissionHook([PERMISSIONS.USE_GEN_AI])
 
   useEffect(() => {

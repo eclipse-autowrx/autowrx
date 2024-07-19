@@ -14,6 +14,10 @@ import DaGeneratorSelector from './DaGeneratorSelector.tsx.tsx'
 import config from '@/configs/config.ts'
 import usePermissionHook from '@/hooks/usePermissionHook.ts'
 import { PERMISSIONS } from '@/data/permission.ts'
+import useSelfProfileQuery from '@/hooks/useSelfProfile.ts'
+import useAuthStore from '@/stores/authStore'
+import { addLog } from '@/services/log.service'
+import { toast } from 'react-toastify'
 
 type DaGenAI_PythonProps = {
   onCodeChanged?: (code: string) => void

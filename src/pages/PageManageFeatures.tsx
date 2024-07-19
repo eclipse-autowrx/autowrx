@@ -11,10 +11,12 @@ import { User } from '@/types/user.type'
 import DaLoading from '@/components/atoms/DaLoading'
 import { TbUserPlus } from 'react-icons/tb'
 import DaSelectUserPopup from '@/components/molecules/DaSelectUserPopup'
-import config from '@/configs/config'
+import config from '@/configs/config' 
 
 const PageManageFeatures = () => {
-  const [activeTab, setActiveTab] = useState(config.features[0].description) // Use features from config
+  // not a good practice to use feature[0] as default activeTab, we never know if the feature[0] is available or not
+  // const [activeTab, setActiveTab] = useState(config.features[0].description) // Use features from config
+  const [activeTab, setActiveTab] = useState("")
   const [usersWithRoles, setUsersWithRoles] = useState<UsersWithRoles[]>([])
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]) // Explicitly type as User array
   const [loading, setLoading] = useState(true)
@@ -33,8 +35,8 @@ const PageManageFeatures = () => {
   }
 
   const handleAddUser = async (userId: string) => {
-    const activeFeature = config.features.find(
-      (feature) => feature.description === activeTab,
+    const activeFeature:any = config.features.find(
+      (feature: any) => feature.description === activeTab,
     )
     if (activeFeature) {
       await assignRoleToUserService(userId, activeFeature.id)
@@ -49,8 +51,8 @@ const PageManageFeatures = () => {
   }, [])
 
   useEffect(() => {
-    const activeFeature = config.features.find(
-      (feature) => feature.description === activeTab,
+    const activeFeature:any = config.features.find(
+      (feature:any) => feature.description === activeTab,
     )
     if (activeFeature) {
       const filtered = usersWithRoles.filter(
@@ -72,7 +74,7 @@ const PageManageFeatures = () => {
           <div className="flex flex-col w-1/4 h-fit py-2 px-1 border rounded-lg border-r">
             {config.features.map(
               (
-                feature, // Use features from config
+                feature: any, // Use features from config
               ) => (
                 <div
                   key={feature.id}
