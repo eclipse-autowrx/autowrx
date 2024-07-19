@@ -8,6 +8,8 @@ import { useToast } from '../toaster/use-toast'
 import useListModelPrototypes from '@/hooks/useListModelPrototypes'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { isAxiosError } from 'axios'
+import { addLog } from '@/services/log.service'
+import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
 const initialState = {
   name: '',
@@ -43,6 +45,8 @@ const FormCreatePrototype = ({
   const { data: model } = useCurrentModel()
   const { refetch } = useListModelPrototypes(model ? model.id : '')
   const { toast } = useToast()
+
+  const { data: currentUser } = useSelfProfileQuery()
 
   const handleChange = (name: keyof typeof data, value: string | number) => {
     setData((prev) => ({ ...prev, [name]: value }))
@@ -102,7 +106,7 @@ LOOP.close()`,
         widget_config: '[]',
         autorun: true,
       }
-      await createPrototypeService(body)
+      const response = await createPrototypeService(body)
       await refetch()
       toast({
         title: ``,
@@ -114,6 +118,16 @@ LOOP.close()`,
         ),
         duration: 3000,
       })
+      await addLog({
+        name: `New prototype '${data.name}' under model '${model?.name}'`,
+        description: `Prototype '${data.name}' was created by ${currentUser?.email || currentUser?.name || currentUser?.id}`,
+        type: 'new-prototype',
+        create_by: currentUser?.id!,
+        ref_id: response.id,
+        ref_type: 'prototype',
+        parent_id: model?.id,
+      })
+
       setData(initialState)
       onClose()
     } catch (error) {

@@ -1,10 +1,12 @@
 import { DaButton } from '@/components/atoms/DaButton'
 import { DaText } from '@/components/atoms/DaText'
 import { DaTextarea } from '@/components/atoms/DaTextarea'
+import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import {
   createDiscussionService,
   updateDiscussionService,
 } from '@/services/discussion.service'
+import { addLog } from '@/services/log.service'
 import {
   DISCUSSION_REF_TYPE,
   Discussion,
@@ -39,6 +41,8 @@ const FormCreateDiscussion = ({
   const [error, setError] = useState<string>('')
   const [data, setData] = useState(initialState)
 
+  const { data: user } = useSelfProfileQuery()
+
   const handleChange = (name: keyof typeof data, value: string) => {
     setData((prev) => ({ ...prev, [name]: value }))
   }
@@ -53,8 +57,17 @@ const FormCreateDiscussion = ({
       if (replyingId) {
         body.parent = replyingId
       }
-      await createDiscussionService(body)
+      const discussion = await createDiscussionService(body)
       await refetch()
+      addLog({
+        name: `User ${user?.id} created discussion`,
+        description: `User ${user?.id} created discussion with id ${discussion.id}}, ref ${refId} and ref_type ${refType}`,
+        type: 'create-dicussion',
+        create_by: user?.id!,
+        parent_id: refId,
+        ref_id: discussion?.id,
+        ref_type: refType,
+      })
 
       setData(initialState)
       setError('')
@@ -76,6 +89,15 @@ const FormCreateDiscussion = ({
       setData(initialState)
       setError('')
       await refetch()
+      addLog({
+        name: `User ${user?.id} updated discussion`,
+        description: `User ${user?.id} updated discussion with id ${updatingData.id}`,
+        type: 'update-discussion',
+        create_by: user?.id!,
+        parent_id: updatingData?.ref,
+        ref_id: updatingData?.id,
+        ref_type: 'discussion',
+      })
       onCancel && onCancel()
     } catch (error) {
       if (isAxiosError(error)) {

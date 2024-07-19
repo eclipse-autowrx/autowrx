@@ -2,7 +2,7 @@ import { DaText } from '../atoms/DaText'
 import { DaButton } from '../atoms/DaButton'
 import { DaInput } from '../atoms/DaInput'
 import { TbPlus, TbSearch } from 'react-icons/tb'
-import DaUserList from '../molecules/DaUserList'
+import DaUserManagementList from '../molecules/DaUserManagementList'
 import { useListUsers } from '@/hooks/useListUsers'
 import DaPopup from '../atoms/DaPopup'
 import FormCreateUser from '../molecules/forms/FormCreateUser'
@@ -86,7 +86,7 @@ const UsersManagement = () => {
       </div>
 
       {/* List */}
-      <DaUserList users={filteredUsers} />
+      <DaUserManagementList users={filteredUsers} />
     </div>
   )
 }

@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import DaLoading from '../atoms/DaLoading'
+import { addLog } from '@/services/log.service'
 
 const MASTER_ITEM = 'master'
 
@@ -32,6 +33,8 @@ const PrototypeTabArchitecture = () => {
   const { data: model } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
   const navigate = useNavigate()
+
+  const { data: currentUser } = useSelfProfileQuery()
 
   useEffect(() => {
     if (!prototype) return
@@ -79,6 +82,15 @@ const PrototypeTabArchitecture = () => {
     try {
       await updatePrototypeService(prototype.id, {
         skeleton: JSON.stringify(skele),
+      })
+      addLog({
+        name: `User ${currentUser?.email} updated prototype architecture`,
+        description: `User ${currentUser?.email} updated architecture of prototype ${prototype.name} with id ${prototype?.id} of model ${prototype.model_id}`,
+        type: 'update-prototype',
+        create_by: currentUser?.id!,
+        parent_id: prototype.model_id,
+        ref_id: prototype?.id,
+        ref_type: 'prototype',
       })
       await refetchPrototype()
     } catch (err) {

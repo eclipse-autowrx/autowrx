@@ -18,6 +18,8 @@ import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import { DaText } from '../atoms/DaText'
 import { useLocation, useParams, useNavigate } from 'react-router-dom'
+import { addLog } from '@/services/log.service'
+import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
 const PrototypeLibraryList = () => {
   const { data: model } = useCurrentModel()
@@ -32,6 +34,8 @@ const PrototypeLibraryList = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const { prototype_id } = useParams()
+
+  const { data: currentUser } = useSelfProfileQuery()
 
   const handleSearchChange = (searchTerm: string) => {
     setSearchInput(searchTerm)
@@ -104,7 +108,16 @@ const PrototypeLibraryList = () => {
           customer_journey: prototype.customer_journey || '{}',
           portfolio: prototype.portfolio || {},
         }
-        await createPrototypeService(prototypePayload)
+        const data = await createPrototypeService(prototypePayload)
+        await addLog({
+          name: `New prototype '${data.name}' under model '${model.name}'`,
+          description: `Prototype '${data.name}' was created by ${currentUser?.email || currentUser?.name || currentUser?.id}`,
+          type: 'new-prototype',
+          create_by: currentUser?.id!,
+          ref_id: data.id,
+          ref_type: 'prototype',
+          parent_id: model.id,
+        })
         await refetch()
         setIsLoading(false)
         console.log('Prototype imported successfully')

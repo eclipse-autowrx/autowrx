@@ -19,6 +19,7 @@ export interface AddOn {
 
 export interface Config {
   serverBaseUrl: string
+  cacheBaseUrl: string
   serverVersion: string
   studioUrl: string
   studioBeUrl: string
@@ -38,4 +39,8 @@ export interface Config {
   github: {
     clientId: string
   }
+  features: {
+    description: string
+    id: string
+  }[]
 }
