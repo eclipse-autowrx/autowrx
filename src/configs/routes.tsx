@@ -28,6 +28,31 @@ const routesConfig: RouteObject[] = [
     path: '/',
     element: <RootLayout />,
     children: [
+      { index: true, element: <PageHome /> },
+      { path: 'manage-users', element: <PageManageUsers /> },
+      { path: 'manage-features', element: <PageManageFeatures /> },
+    ],
+  },
+  {
+    path: '/about',
+    element: <RootLayout />,
+    children: [{ index: true, element: <PageAbout /> }],
+  },
+  {
+    path: '/reset-password',
+    element: <RootLayout />,
+    children: [{ index: true, element: <PageResetPassword /> }],
+  },
+  {
+    path: '/model',
+    element: <RootLayout />,
+    children: [
+      { index: true, element: <PageModelList /> },
+      { path: ':model_id', element: <PageModelDetail /> },
+      { path: ':model_id/api', element: <PageVehicleApi /> },
+      { path: ':model_id/api/:api', element: <PageVehicleApi /> },
+      { path: ':model_id/library', element: <PagePrototypeLibrary /> },
+      { path: ':model_id/library/:tab', element: <PagePrototypeLibrary /> },
       {
         path: '/',
         children: [

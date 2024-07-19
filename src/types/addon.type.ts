@@ -39,4 +39,8 @@ export interface Config {
   github: {
     clientId: string
   }
+  features: {
+    description: string
+    id: string
+  }[]
 }
