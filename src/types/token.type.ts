@@ -1,6 +1,6 @@
 export type Token = {
   token: string
-  expires: Date
+  expires: string
 }
 
 export type AuthToken = {

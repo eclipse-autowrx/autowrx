@@ -16,3 +16,31 @@ export interface AddOn {
   samples?: string
   team?: any
 }
+
+export interface Config {
+  serverBaseUrl: string
+  cacheBaseUrl: string
+  serverVersion: string
+  studioUrl: string
+  studioBeUrl: string
+  widgetMarketPlaceUrl: string
+  widgetMarketPlaceBe: string
+  uploadFileUrl: string
+  instanceLogo: string
+  instance: string
+  defaultModelId: string
+  genAI: {
+    defaultEndpointUrl: string
+    marketplaceUrl: string
+    sdvApp?: AddOn[]
+    dashboard?: AddOn[]
+    widget?: AddOn[]
+  }
+  github: {
+    clientId: string
+  }
+  features: {
+    description: string
+    id: string
+  }[]
+}

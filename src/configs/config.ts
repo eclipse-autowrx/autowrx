@@ -27,6 +27,7 @@ const config = {
   github: {
     clientId: import.meta.env.VITE_GITHUB_CLIENT_ID || '',
   },
+  features: []
 }
 
 export default config

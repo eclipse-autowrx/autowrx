@@ -8,6 +8,8 @@ import { cn } from '@/lib/utils'
 interface DaUserProfileProps {
   userId: string
   className?: string
+  avatarClassName?: string
+  textClassName?: string
 }
 
 const DaUserProfile = ({ userId, className }: DaUserProfileProps) => {
@@ -22,7 +24,7 @@ const DaUserProfile = ({ userId, className }: DaUserProfileProps) => {
   return (
     <div className={cn('flex items-center', className)}>
       <DaAvatar
-        className="w-5 h-5 mr-2"
+        className={cn('w-5 h-5 mr-2')}
         src={user?.image_file ?? '/imgs/profile.png'}
       />
       <DaText variant="small">{user?.name}</DaText>

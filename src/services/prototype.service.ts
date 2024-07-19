@@ -11,34 +11,54 @@ export const listPopularPrototypes = async (): Promise<List<Prototype>> => {
   const limit = 12
   let allResults: Prototype[] = []
   let totalPages = 1
+  const addedIds = new Set<string>() // To track added prototype IDs
 
-  // Fetch models and filter by visibility
+  // console.log('Fetching models...')
   const allModels = await listModelsLite()
   const publicModelIds = allModels.results
     .filter((model) => model.visibility === 'public')
     .map((model) => model.id)
 
-  // Fetch prototypes
-  const response = await serverAxios.get<List<Prototype>>('/prototypes', {
-    params: {
-      fields: [
-        'model_id',
-        'name',
-        'visibility',
-        'image_file',
-        'id',
-        'created_at',
-        'created_by',
-        'tags',
-        'state',
-      ].join(','),
-      page,
-      limit,
-    },
-  })
-  allResults = [...allResults, ...response.data.results]
-  totalPages = response.data.totalPages
-  page++
+  // console.log('Public Model IDs:', publicModelIds)
+
+  // Fetch all prototypes with pagination
+  do {
+    console.log(`Fetching prototypes - Page: ${page}`)
+    const response = await serverAxios.get<List<Prototype>>('/prototypes', {
+      params: {
+        fields: [
+          'model_id',
+          'name',
+          'visibility',
+          'image_file',
+          'id',
+          'created_at',
+          'created_by',
+          'tags',
+          'state',
+        ].join(','),
+        page,
+        limit,
+      },
+    })
+
+    // console.log(
+    //   `Fetched ${response.data.results.length} prototypes on page ${page}`,
+    // )
+    response.data.results.forEach((prototype) => {
+      if (addedIds.has(prototype.id)) {
+        // console.log(
+        //   `Duplicate found: Prototype ID ${prototype.id} on page ${page}`,
+        // )
+      } else {
+        addedIds.add(prototype.id)
+        allResults.push(prototype)
+      }
+    })
+
+    totalPages = response.data.totalPages
+    page++
+  } while (page <= totalPages)
 
   // Filter results to only include prototypes with the specified conditions
   const filteredResults = allResults.filter(
@@ -50,10 +70,10 @@ export const listPopularPrototypes = async (): Promise<List<Prototype>> => {
 
   return {
     results: filteredResults,
-    totalPages: Math.ceil(filteredResults.length / limit),
+    totalPages: 1, // Since we are returning all filtered results in one page
     totalResults: filteredResults.length,
     page: 1,
-    limit,
+    limit: filteredResults.length, // Limit is set to the length of filtered results
   }
 }
 
@@ -62,34 +82,65 @@ export const listAllPrototypes = async (): Promise<List<Prototype>> => {
   const limit = 12
   let allResults: Prototype[] = []
   let totalPages = 1
+  const addedIds = new Set<string>() // To track added prototype IDs, BE have duplicate data
 
-  const response = await serverAxios.get<List<Prototype>>('/prototypes', {
-    params: {
-      fields: [
-        'model_id',
-        'name',
-        'visibility',
-        'image_file',
-        'id',
-        'created_at',
-        'created_by',
-        'tags',
-        'state',
-      ].join(','),
-      page,
-      limit,
-    },
-  })
-  allResults = [...allResults, ...response.data.results]
-  totalPages = response.data.totalPages
-  page++
+  // const allModels = await listModelsLite()
+  // const publicModelIds = allModels.results
+  //   .filter((model) => model.visibility === 'public')
+  //   .map((model) => model.id)
+
+  // Fetch all prototypes with pagination
+  do {
+    console.log(`Fetching prototypes - Page: ${page}`)
+    const response = await serverAxios.get<List<Prototype>>('/prototypes', {
+      params: {
+        fields: [
+          'model_id',
+          'name',
+          'visibility',
+          'image_file',
+          'id',
+          'created_at',
+          'created_by',
+          'tags',
+          'state',
+        ].join(','),
+        page,
+        limit,
+      },
+    })
+
+    // console.log(
+    //   `Fetched ${response.data.results.length} prototypes on page ${page}`,
+    // )
+    response.data.results.forEach((prototype) => {
+      if (addedIds.has(prototype.id)) {
+        // console.log(
+        //   `Duplicate found: Prototype ID ${prototype.id} on page ${page}`,
+        // )
+      } else {
+        addedIds.add(prototype.id)
+        allResults.push(prototype)
+      }
+    })
+
+    totalPages = response.data.totalPages
+    // console.log(`Total pages: ${totalPages}`)
+    page++
+  } while (page <= totalPages)
+
+  // const filteredResults = allResults.filter((prototype) =>
+  //   publicModelIds.includes(prototype.model_id),
+  // )
+
+  // console.log('Filtered Results:', filteredResults)
 
   return {
     results: allResults,
-    totalPages: Math.ceil(allResults.length / limit),
+    totalPages: 1, // Since we are returning all filtered results in one page
     totalResults: allResults.length,
     page: 1,
-    limit,
+    limit: allResults.length, // Limit is set to the length of filtered results
   }
 }
 

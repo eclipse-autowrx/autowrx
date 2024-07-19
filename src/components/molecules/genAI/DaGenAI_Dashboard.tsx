@@ -12,10 +12,8 @@ import { DaTextarea } from '@/components/atoms/DaTextarea'
 import useListMarketplaceAddOns from '@/hooks/useListMarketplaceAddOns'
 import DaGeneratorSelector from './DaGeneratorSelector.tsx.tsx'
 import config from '@/configs/config.ts'
-import { addLog } from '@/services/log.service.ts'
-import useSelfProfileQuery from '@/hooks/useSelfProfile.ts'
-import useAuthStore from '@/stores/authStore.ts'
-import { toast } from 'react-toastify'
+import usePermissionHook from '@/hooks/usePermissionHook.ts'
+import { PERMISSIONS } from '@/data/permission.ts'
 
 type DaGenAI_DashboardProps = {
   onCodeChanged?: (code: string) => void
@@ -33,6 +31,11 @@ const DaGenAI_Dashboard = ({
   const [isFinished, setIsFinished] = useState<boolean>(false)
   const { data: marketplaceAddOns } =
     useListMarketplaceAddOns('GenAI_Dashboard')
+  const [canUseGenAI] = usePermissionHook([PERMISSIONS.USE_GEN_AI])
+
+  useEffect(() => {
+    console.log('Permission to use GenAI: ', canUseGenAI)
+  }, [canUseGenAI])
 
   const { data: user } = useSelfProfileQuery()
   const access = useAuthStore((state) => state.access)
@@ -139,7 +142,9 @@ const DaGenAI_Dashboard = ({
 
         <DaGeneratorSelector
           builtInAddOns={builtInAddOns}
-          marketplaceAddOns={marketplaceAddOns ? marketplaceAddOns : []}
+          marketplaceAddOns={
+            marketplaceAddOns ? (canUseGenAI ? marketplaceAddOns : []) : []
+          }
           onSelectedGeneratorChange={setSelectedAddOn}
         />
 

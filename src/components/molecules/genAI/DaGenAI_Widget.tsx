@@ -14,9 +14,8 @@ import config from '@/configs/config.ts'
 import useListMarketplaceAddOns from '@/hooks/useListMarketplaceAddOns'
 import axios, { isAxiosError } from 'axios'
 import { DaTextarea } from '@/components/atoms/DaTextarea.tsx'
-import { addLog } from '@/services/log.service.ts'
-import useAuthStore from '@/stores/authStore.ts'
-import { toast } from 'react-toastify'
+import usePermissionHook from '@/hooks/usePermissionHook.ts'
+import { PERMISSIONS } from '@/data/permission.ts'
 
 interface DaGenAIWidgetProps {
   widgetConfig?: any
@@ -44,7 +43,11 @@ const DaGenAIWidget = ({
   const [isPreviewWidget, setIsPreviewWidget] = useState(false)
 
   const { data: marketplaceAddOns } = useListMarketplaceAddOns('GenAI_Widget')
-  const access = useAuthStore((state) => state.access)
+  const [canUseGenAI] = usePermissionHook([PERMISSIONS.USE_GEN_AI])
+
+  useEffect(() => {
+    console.log('Permission to use GenAI: ', canUseGenAI)
+  }, [canUseGenAI])
 
   const builtInAddOns: AddOn[] =
     config.genAI && config.genAI.widget && config.genAI.widget.length > 0
@@ -190,7 +193,9 @@ const DaGenAIWidget = ({
 
           <DaGeneratorSelector
             builtInAddOns={builtInAddOns}
-            marketplaceAddOns={marketplaceAddOns ? marketplaceAddOns : []}
+            marketplaceAddOns={
+              marketplaceAddOns ? (canUseGenAI ? marketplaceAddOns : []) : []
+            }
             onSelectedGeneratorChange={setSelectedAddOn}
           />
         </div>

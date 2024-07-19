@@ -241,7 +241,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
                       </div>
                     )}
 
-                    {!loading && !error && (
+                    {!loading && !error && access && (
                       <FormSubmitIssue
                         user={user}
                         api={apiDetails}
@@ -249,7 +249,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
                         onClose={async () => {
                           popupSubmitIssueState[1](false)
                         }}
-                        accessToken={access}
+                        access={access}
                       />
                     )}
                   </DaPopup>
