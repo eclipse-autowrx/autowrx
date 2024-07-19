@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "pretty": "prettier --write \"./**/*.{js,jsx,mjs,ts,tsx,json}\"",
     "tsc": "tsc",
-    "precommit": "yarn tsc"
+    "prepare": "husky"
   },
   "dependencies": {
     "@emotion/react": "^11.11.4",
