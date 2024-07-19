@@ -252,50 +252,7 @@ const routesConfig: RouteObject[] = [
         ],
       },
     ],
-  },
-  {
-    path: '/profile',
-    element: <RootLayout />,
-    children: [{ index: true, element: <PageUserProfile /> }],
-  },
-  {
-    path: '/test-ui/forms',
-    element: <RootLayout />,
-    children: [{ index: true, element: <PageTestForm /> }],
-  },
-  {
-    path: '/test-ui/home',
-    element: <RootLayout />,
-    children: [{ index: true, element: <PageTestHome /> }],
-  },
-  {
-    path: '/test-ui/components',
-    element: <PageComponent />,
-    children: [{ index: true, element: <PageComponent /> }],
-  },
-  {
-    path: '/test-ui/molecules',
-    element: <PageMolecules />,
-    children: [{ index: true, element: <PageMolecules /> }],
-  },
-  {
-    path: '/test-ui/organisms',
-    element: <PageOrganisms />,
-    children: [{ index: true, element: <PageOrganisms /> }],
-  },
-  {
-    path: '/test-ui/discussion',
-    element: <RootLayout />,
-    children: [{ index: true, element: <PageDiscussions /> }],
-  },
-  {
-    path: '/auth/github/success',
-    element: (
-      <Suspense fallback={<div>Loading...</div>}>
-        <PageAuthSuccess />
-      </Suspense>
-    ),
-  },
+  }
 ]
 
 export default routesConfig
