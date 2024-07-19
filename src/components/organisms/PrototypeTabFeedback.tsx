@@ -22,6 +22,7 @@ import {
   DaPaginationNext,
 } from '../atoms/DaPaging'
 import { Link, useParams } from 'react-router-dom'
+import { addLog } from '@/services/log.service'
 
 const PrototypeTabFeedback = () => {
   const [isOpenPopup, setIsOpenPopup] = useState(false)
@@ -48,6 +49,15 @@ const PrototypeTabFeedback = () => {
   const handleDeleteFeedback = async (id: string) => {
     await deleteFeedback(id)
     await refetch()
+    addLog({
+      name: `User ${profile?.name} deleted feedback`,
+      description: `User ${profile?.name} with id ${profile?.id} deleted feedback with id ${id} from prototype ${prototype?.name}`,
+      type: 'delete-feedback',
+      create_by: profile?.id!,
+      ref_id: id,
+      ref_type: 'feedback',
+      parent_id: prototype?.id,
+    })
   }
 
   return (

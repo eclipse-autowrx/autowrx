@@ -75,6 +75,7 @@ const PrototypeTabCode: FC = ({}) => {
       await updatePrototypeService(prototype.id, {
         code: code || '',
       })
+
       // await refetchPrototype()
     } catch (err) {
       console.log('error on save skeleton', err)

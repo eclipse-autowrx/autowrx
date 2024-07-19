@@ -2,6 +2,7 @@ import { DaButton } from '@/components/atoms/DaButton'
 import { DaInput } from '@/components/atoms/DaInput'
 import { DaText } from '@/components/atoms/DaText'
 import { loginService } from '@/services/auth.service'
+import { addLog } from '@/services/log.service'
 import { isAxiosError } from 'axios'
 import { useState } from 'react'
 import { TbLoader } from 'react-icons/tb'
@@ -24,6 +25,12 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
         e.currentTarget.password.value,
       ]
       await loginService(email, password)
+      await addLog({
+        name: `User log in`,
+        description: `User ${email} logged in`,
+        type: 'user-login@email',
+        create_by: email,
+      })
       setError('')
       // eslint-disable-next-line no-self-assign
       window.location.href = window.location.href
