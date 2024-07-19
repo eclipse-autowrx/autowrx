@@ -147,3 +147,4 @@ const NavigationBar = ({}) => {
 }
 
 export { NavigationBar }
+export default NavigationBar

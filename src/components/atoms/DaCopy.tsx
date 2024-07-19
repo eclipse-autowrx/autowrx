@@ -1,6 +1,7 @@
 import { TbCopy } from 'react-icons/tb'
 import { useToast } from '../molecules/toaster/use-toast'
-import { DaText } from './DaText'
+import { Suspense, lazy } from 'react'
+const DaText = lazy(() => import('./DaText'))
 
 interface DaCopyProps {
   textToCopy: string
@@ -43,20 +44,25 @@ const DaCopy = ({
   }
 
   return (
-    <div className="flex items-center cursor-pointer" onClick={handleCopyClick}>
-      {children}
-      <div className="flex items-center">
-        {label && (
-          <DaText
-            variant="small"
-            className="ml-1 text-da-primary-500 cursor-pointer"
-          >
-            {label}
-          </DaText>
-        )}
-        {showIcon && <TbCopy className="text-da-primary-500 ml-1" />}
+    <Suspense>
+      <div
+        className="flex items-center cursor-pointer"
+        onClick={handleCopyClick}
+      >
+        {children}
+        <div className="flex items-center">
+          {label && (
+            <DaText
+              variant="small"
+              className="ml-1 text-da-primary-500 cursor-pointer"
+            >
+              {label}
+            </DaText>
+          )}
+          {showIcon && <TbCopy className="text-da-primary-500 ml-1" />}
+        </div>
       </div>
-    </div>
+    </Suspense>
   )
 }
 
