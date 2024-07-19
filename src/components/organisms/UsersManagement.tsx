@@ -9,7 +9,7 @@ import FormCreateUser from '../molecules/forms/FormCreateUser'
 import DaLoader from '../atoms/DaLoader'
 import { isAxiosError } from 'axios'
 import { useEffect, useMemo, useState } from 'react'
-import debounce from 'lodash.debounce'
+import { debounce } from 'lodash'
 
 const UsersManagement = () => {
   const { data, isLoading, error } = useListUsers()
