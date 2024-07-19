@@ -1,70 +1,255 @@
 import { RouteObject } from 'react-router-dom'
+import { lazy } from 'react'
 import RootLayout from '@/layouts/RootLayout'
-import PageHome from '@/pages/PageHome'
-import PageAbout from '@/pages/PageAbout'
-import PageLogin from '@/pages/PageLogin'
-import PageModelList from '@/pages/PageModelList'
-import PageModelDetail from '@/pages/PageModelDetail'
-import PageModelArchitecture from '@/pages/PageModelArchitecture'
-import PageVehicleApi from '@/pages/PageVehicleApi'
-import PagePrototypeDetail from '@/pages/PagePrototypeDetail'
+import SuspenseProvider from '@/providers/SuspenseProvider'
 
-// test-ui
-import PageComponent from '@/pages/test-ui/PageComponent'
-import PageMolecules from '@/pages/test-ui/PageMolecules'
-import PageOrganisms from '@/pages/test-ui/PageOrganisms'
-import PageTestHome from '@/pages/test-ui/PageTestHome'
-import PageTestForm from '@/pages/test-ui/PageTestForm'
-import PagePrototypeLibrary from '@/pages/PagePrototypeLibrary'
-import PageResetPassword from '@/pages/PageResetPassword'
-import PageManageUsers from '@/pages/PageManageUsers'
-import PageDiscussions from '@/pages/test-ui/PageDiscussions'
-import PageUserProfile from '@/pages/PageUserProfile'
-import { Suspense, lazy } from 'react'
-
-const PageAuthSuccess = lazy(() => import('@/pages/PageAuthSuccess'))
+const PageHome = lazy(() => import('@/pages/PageHome'))
+const PageAbout = lazy(() => import('@/pages/PageAbout'))
+const PageModelList = lazy(() => import('@/pages/PageModelList'))
+const PageModelDetail = lazy(() => import('@/pages/PageModelDetail'))
+const PageModelArchitecture = lazy(
+  () => import('@/pages/PageModelArchitecture'),
+)
+const PageVehicleApi = lazy(() => import('@/pages/PageVehicleApi'))
+const PagePrototypeDetail = lazy(() => import('@/pages/PagePrototypeDetail'))
+const PageComponent = lazy(() => import('@/pages/test-ui/PageComponent'))
+const PageMolecules = lazy(() => import('@/pages/test-ui/PageMolecules'))
+const PageOrganisms = lazy(() => import('@/pages/test-ui/PageOrganisms'))
+const PageTestHome = lazy(() => import('@/pages/test-ui/PageTestHome'))
+const PageTestForm = lazy(() => import('@/pages/test-ui/PageTestForm'))
+const PagePrototypeLibrary = lazy(() => import('@/pages/PagePrototypeLibrary'))
+const PageResetPassword = lazy(() => import('@/pages/PageResetPassword'))
+const PageManageUsers = lazy(() => import('@/pages/PageManageUsers'))
+const PageDiscussions = lazy(() => import('@/pages/test-ui/PageDiscussions'))
+const PageUserProfile = lazy(() => import('@/pages/PageUserProfile'))
 
 const routesConfig: RouteObject[] = [
   {
     path: '/',
     element: <RootLayout />,
     children: [
-      { index: true, element: <PageHome /> },
-      { path: 'manage-users', element: <PageManageUsers /> },
-    ],
-  },
-  {
-    path: '/about',
-    element: <RootLayout />,
-    children: [{ index: true, element: <PageAbout /> }],
-  },
-  {
-    path: '/reset-password',
-    element: <RootLayout />,
-    children: [{ index: true, element: <PageResetPassword /> }],
-  },
-  {
-    path: '/model',
-    element: <RootLayout />,
-    children: [
-      { index: true, element: <PageModelList /> },
-      { path: ':model_id', element: <PageModelDetail /> },
-      { path: ':model_id/api', element: <PageVehicleApi /> },
-      { path: ':model_id/api/:api', element: <PageVehicleApi /> },
-      { path: ':model_id/library', element: <PagePrototypeLibrary /> },
-      { path: ':model_id/library/:tab', element: <PagePrototypeLibrary /> },
       {
-        path: ':model_id/library/:tab/:prototype_id',
-        element: <PagePrototypeLibrary />,
-      },
-      { path: ':model_id/architecture', element: <PageModelArchitecture /> },
-      {
-        path: ':model_id/library/prototype/:prototype_id',
-        element: <PagePrototypeDetail />,
+        path: '/',
+        children: [
+          {
+            index: true,
+            element: (
+              <SuspenseProvider>
+                <PageHome />
+              </SuspenseProvider>
+            ),
+          },
+          {
+            path: 'manage-users',
+            element: (
+              <SuspenseProvider>
+                <PageManageUsers />
+              </SuspenseProvider>
+            ),
+          },
+        ],
       },
       {
-        path: ':model_id/library/prototype/:prototype_id/:tab',
-        element: <PagePrototypeDetail />,
+        path: '/about',
+        children: [
+          {
+            index: true,
+            element: (
+              <SuspenseProvider>
+                <PageAbout />
+              </SuspenseProvider>
+            ),
+          },
+        ],
+      },
+      {
+        path: '/reset-password',
+        children: [
+          {
+            index: true,
+            element: (
+              <SuspenseProvider>
+                <PageResetPassword />
+              </SuspenseProvider>
+            ),
+          },
+        ],
+      },
+      {
+        path: '/model',
+        children: [
+          {
+            index: true,
+            element: (
+              <SuspenseProvider>
+                <PageModelList />
+              </SuspenseProvider>
+            ),
+          },
+          {
+            path: ':model_id',
+            element: (
+              <SuspenseProvider>
+                <PageModelDetail />
+              </SuspenseProvider>
+            ),
+          },
+          {
+            path: ':model_id/api',
+            element: (
+              <SuspenseProvider>
+                <PageVehicleApi />
+              </SuspenseProvider>
+            ),
+          },
+          {
+            path: ':model_id/api/:api',
+            element: (
+              <SuspenseProvider>
+                <PageVehicleApi />
+              </SuspenseProvider>
+            ),
+          },
+          {
+            path: ':model_id/library',
+            element: (
+              <SuspenseProvider>
+                <PagePrototypeLibrary />
+              </SuspenseProvider>
+            ),
+          },
+          {
+            path: ':model_id/library/:tab',
+            element: (
+              <SuspenseProvider>
+                <PagePrototypeLibrary />
+              </SuspenseProvider>
+            ),
+          },
+          {
+            path: ':model_id/library/:tab/:prototype_id',
+            element: (
+              <SuspenseProvider>
+                <PagePrototypeLibrary />
+              </SuspenseProvider>
+            ),
+          },
+          {
+            path: ':model_id/architecture',
+            element: (
+              <SuspenseProvider>
+                <PageModelArchitecture />
+              </SuspenseProvider>
+            ),
+          },
+          {
+            path: ':model_id/library/prototype/:prototype_id',
+            element: (
+              <SuspenseProvider>
+                <PagePrototypeDetail />
+              </SuspenseProvider>
+            ),
+          },
+          {
+            path: ':model_id/library/prototype/:prototype_id/:tab',
+            element: (
+              <SuspenseProvider>
+                <PagePrototypeDetail />
+              </SuspenseProvider>
+            ),
+          },
+        ],
+      },
+      {
+        path: '/profile',
+        children: [
+          {
+            index: true,
+            element: (
+              <SuspenseProvider>
+                <PageUserProfile />
+              </SuspenseProvider>
+            ),
+          },
+        ],
+      },
+      {
+        path: '/test-ui/forms',
+        children: [
+          {
+            index: true,
+            element: (
+              <SuspenseProvider>
+                <PageTestForm />
+              </SuspenseProvider>
+            ),
+          },
+        ],
+      },
+      {
+        path: '/test-ui/home',
+        children: [
+          {
+            index: true,
+            element: (
+              <SuspenseProvider>
+                <PageTestHome />
+              </SuspenseProvider>
+            ),
+          },
+        ],
+      },
+      {
+        path: '/test-ui/components',
+        children: [
+          {
+            index: true,
+            element: (
+              <SuspenseProvider>
+                <PageComponent />
+              </SuspenseProvider>
+            ),
+          },
+        ],
+      },
+      {
+        path: '/test-ui/molecules',
+        children: [
+          {
+            index: true,
+            element: (
+              <SuspenseProvider>
+                <PageMolecules />
+              </SuspenseProvider>
+            ),
+          },
+        ],
+      },
+      {
+        path: '/test-ui/organisms',
+        children: [
+          {
+            index: true,
+            element: (
+              <SuspenseProvider>
+                <PageOrganisms />
+              </SuspenseProvider>
+            ),
+          },
+        ],
+      },
+      {
+        path: '/test-ui/discussion',
+        children: [
+          {
+            index: true,
+            element: (
+              <SuspenseProvider>
+                <PageDiscussions />
+              </SuspenseProvider>
+            ),
+          },
+        ],
       },
     ],
   },
