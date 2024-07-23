@@ -11,7 +11,14 @@ import {
   updatePrototypeService,
   deletePrototypeService,
 } from '@/services/prototype.service'
-import { TbEdit, TbPhotoEdit, TbTrashX } from 'react-icons/tb'
+import {
+  TbDotsVertical,
+  TbDownload,
+  TbEdit,
+  TbLoader,
+  TbPhotoEdit,
+  TbTrashX,
+} from 'react-icons/tb'
 import DaTableEditor from '../molecules/DaCustomerJourneyTable'
 import DaImportFile from '../atoms/DaImportFile'
 import DaConfirmPopup from '../molecules/DaConfirmPopup'
@@ -22,6 +29,10 @@ import useListModelPrototypes from '@/hooks/useListModelPrototypes'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
+import DaMenu from '../atoms/DaMenu'
+import { cn } from '@/lib/utils'
+import { DaTextarea } from '../atoms/DaTextarea'
+import { downloadPrototypeZip } from '@/lib/zipUtils'
 
 interface PrototypeTabJourneyProps {
   prototype: Prototype
@@ -42,6 +53,9 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
   const { refetch: refetchCurrentPrototype } = useCurrentPrototype()
   const navigate = useNavigate()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [confirmPopupOpen, setConfirmPopupOpen] = useState(false)
 
   if (!prototype) {
     return <DaText>No prototype available</DaText>
@@ -75,7 +89,6 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
   }
 
   const handleCancel = () => {
-    // Handle the cancel action here
     setLocalPrototype(prototype)
     setIsEditing(false)
   }
@@ -108,6 +121,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
 
   const handlePrototypeImageChange = async (file: File) => {
     try {
+      setIsUploading(true)
       const { url } = await uploadFileService(file)
       // console.log('Prototype image url: ', url)
       setLocalPrototype((prevPrototype) => {
@@ -119,23 +133,28 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
       })
     } catch (error) {
       console.error('Failed to update prototype image:', error)
+    } finally {
+      setIsUploading(false)
     }
   }
 
   const handleDeletePrototype = async () => {
     try {
+      setIsDeleting(true)
       await deletePrototypeService(prototype.id)
       await refetchModelPrototypes()
       navigate(`/model/${model?.id}/library`)
     } catch (error) {
       console.error('Failed to delete prototype:', error)
+    } finally {
+      setIsDeleting(false)
     }
   }
 
   return (
     <div className="flex flex-col h-full w-full">
       <div className="flex">
-        <div className="flex-1 relative">
+        <div className="flex-1 h-fit relative">
           <DaImage
             src={
               localPrototype.image_file
@@ -144,23 +163,30 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
             }
             className="w-full object-cover max-h-[400px]"
           />
-          {isEditing && (
-            <DaImportFile
-              onFileChange={handlePrototypeImageChange}
-              accept=".png, .jpg, .jpeg, .gif, .webp"
+          <DaImportFile
+            onFileChange={handlePrototypeImageChange}
+            accept=".png, .jpg, .jpeg, .gif, .webp"
+          >
+            <DaButton
+              variant="outline-nocolor"
+              className="absolute bottom-2 right-2"
+              size="sm"
             >
-              <DaButton
-                variant="solid"
-                size="sm"
-                className="absolute right-2 top-2"
-              >
-                <TbPhotoEdit className="w-4 h-4 mr-1" /> Change Image
-              </DaButton>
-            </DaImportFile>
-          )}
+              {isUploading ? (
+                <div className="flex items-center">
+                  <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                  Uploading Image...
+                </div>
+              ) : (
+                <>
+                  <TbPhotoEdit className="w-4 h-4 mr-1" /> Update Image
+                </>
+              )}
+            </DaButton>
+          </DaImportFile>
         </div>
-        <div className="flex-1 p-2 ml-6">
-          <div className="flex justify-between items-center mb-4">
+        <div className="flex-1 p-4 ml-4">
+          <div className="flex mb-4 justify-between items-center">
             {isEditing ? (
               <>
                 <DaText variant="title" className="text-da-primary-500">
@@ -186,29 +212,74 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
               </>
             ) : (
               <>
-                <DaText variant="title" className="text-da-primary-500 mt-2">
+                <DaText variant="title" className="text-da-primary-500">
                   {localPrototype.name}
                 </DaText>
                 {isAuthorized && (
-                  <div className="flex space-x-2">
+                  <>
+                    <DaMenu
+                      trigger={
+                        <DaButton
+                          variant="solid"
+                          size="sm"
+                          className={cn(
+                            'flex w-full',
+                            isEditing && '!pointer-events-none opacity-50',
+                          )}
+                        >
+                          {!isDeleting && !isEditing && (
+                            <>
+                              <TbDotsVertical className="w-4 h-4 mr-1" />{' '}
+                              Prototype Action
+                            </>
+                          )}
+                          {isDeleting && (
+                            <div className="flex items-center">
+                              <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                              Deleting Model...
+                            </div>
+                          )}
+                        </DaButton>
+                      }
+                    >
+                      <div className="flex flex-col px-1">
+                        <DaButton
+                          onClick={() => setIsEditing(true)}
+                          className="!justify-start"
+                          variant="plain"
+                          size="sm"
+                        >
+                          <TbEdit className="w-4 h-4 mr-2" /> Edit Prototype
+                        </DaButton>
+                        <DaButton
+                          variant="plain"
+                          size="sm"
+                          className="!justify-start"
+                          onClick={() => downloadPrototypeZip(prototype)}
+                        >
+                          <TbDownload className="w-4 h-4 mr-2" />
+                          Export Prototype{' '}
+                        </DaButton>
+                        <DaButton
+                          variant="destructive"
+                          size="sm"
+                          className="!justify-start"
+                          onClick={() => setConfirmPopupOpen(true)}
+                        >
+                          <TbTrashX className="w-4 h-4 mr-2" />
+                          Delete Prototype
+                        </DaButton>
+                      </div>
+                    </DaMenu>
                     <DaConfirmPopup
                       onConfirm={handleDeletePrototype}
-                      label="This action cannot be undone and will delete all of your prototype data. Please proceed with caution."
+                      label="This action cannot be undone and will delete all prototypes data. Please proceed with caution."
                       confirmText={prototype.name}
+                      state={[confirmPopupOpen, setConfirmPopupOpen]}
                     >
-                      <DaButton variant="destructive" size="sm" className="">
-                        <TbTrashX className="w-4 h-4 mr-2" />
-                        Delete Prototype
-                      </DaButton>
+                      <></>
                     </DaConfirmPopup>
-                    <DaButton
-                      onClick={() => setIsEditing(true)}
-                      className=" text-white px-4 py-2 rounded"
-                      size="sm"
-                    >
-                      <TbEdit className="w-4 h-4 mr-1" /> Edit Prototype
-                    </DaButton>
-                  </div>
+                  </>
                 )}
               </>
             )}
@@ -253,7 +324,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                 <DaText className="w-1/4 " variant="regular-bold">
                   Solution
                 </DaText>
-                <DaInput
+                <DaTextarea
                   value={localPrototype.description.solution}
                   onChange={(e) =>
                     handleDescriptionChange('solution', e.target.value)
@@ -343,7 +414,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                       ],
                   },
                 ]}
-                maxWidth="500px"
+                maxWidth="1000px"
                 className="mt-4"
               />
               <div className="flex items-center pt-2"></div>
