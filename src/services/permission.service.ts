@@ -33,14 +33,30 @@ export const assignRoleToUserService = async (
     throw error
   }
 }
+
 export const removeRoleFromUserService = async (
   userId: string,
   roleId: string,
 ) => {
   return (
-    await serverAxios.post('/permissions/remove-role-from-user', {
-      user: userId,
-      role: roleId,
+    await serverAxios.delete('/permissions', {
+      params: {
+        user: userId,
+        role: roleId,
+      },
     })
   ).data
+}
+
+export const fetchFeaturesService = async () => {
+  try {
+    const rawData = (await serverAxios.get('/permissions/roles')).data
+    const filteredData = rawData.filter(
+      (feature: any) => feature.not_feature !== true,
+    )
+    return filteredData
+  } catch (error) {
+    console.error('Error fetching features:', error)
+    throw error
+  }
 }

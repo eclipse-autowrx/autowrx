@@ -4,6 +4,7 @@ import { DaText } from '../atoms/DaText'
 import DaUserProfile from './DaUserProfile'
 import { User } from '@/types/user.type'
 import { TbMinus, TbUserPlus } from 'react-icons/tb'
+import { maskEmail } from '@/lib/utils'
 
 interface UserListProps {
   users: User[]
@@ -17,17 +18,15 @@ const DaUserList = ({
   canRemove = true,
 }: UserListProps) => {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col h-full">
       <div className="mt-4 space-y-1 overflow-y-auto">
         {users.map((user, index) => (
           <div
             key={user.id}
-            className="flex justify-between items-center border p-4 border-muted rounded-lg"
+            className="flex justify-between items-center border px-4 py-2 border-muted rounded-lg"
           >
-            <div className="flex w-full items-center">
-              <div className="flex w-[300px] items-center">
-                <DaUserProfile userId={user.id} />
-              </div>
+            <div className="flex flex-col w-full items-start justify-start">
+              <DaUserProfile userId={user.id} showEmail={true} />
             </div>
 
             <div className="flex min-w-fit items-center">
