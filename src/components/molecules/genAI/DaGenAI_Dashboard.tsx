@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { DaInput } from '@/components/atoms/DaInput'
 import { DaButton } from '@/components/atoms/DaButton'
-import _ from 'lodash'
 import { AddOn } from '@/types/addon.type'
 import { TbCode } from 'react-icons/tb'
 import { BsStars } from 'react-icons/bs'
