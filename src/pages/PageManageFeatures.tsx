@@ -3,6 +3,8 @@ import { DaText } from '@/components/atoms/DaText'
 import {
   listUsersByRolesService,
   assignRoleToUserService,
+  fetchFeaturesService,
+  removeRoleFromUserService,
 } from '@/services/permission.service'
 import { DaButton } from '@/components/atoms/DaButton'
 import DaUserList from '@/components/molecules/DaUserList'
@@ -11,33 +13,43 @@ import { User } from '@/types/user.type'
 import DaLoading from '@/components/atoms/DaLoading'
 import { TbUserPlus } from 'react-icons/tb'
 import DaSelectUserPopup from '@/components/molecules/DaSelectUserPopup'
-import config from '@/configs/config' 
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
 
 const PageManageFeatures = () => {
-  // not a good practice to use feature[0] as default activeTab, we never know if the feature[0] is available or not
-  // const [activeTab, setActiveTab] = useState(config.features[0].description) // Use features from config
-  const [activeTab, setActiveTab] = useState("")
+  const [activeTab, setActiveTab] = useState('')
   const [usersWithRoles, setUsersWithRoles] = useState<UsersWithRoles[]>([])
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]) // Explicitly type as User array
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
+  const [features, setFeatures] = useState<any[]>([])
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
 
   const fetchUsersWithRoles = async () => {
     try {
       const response = await listUsersByRolesService()
-      // console.log('Users with roles: ', response)
       setUsersWithRoles(response)
-      setLoading(false)
     } catch (error) {
       console.error('Failed to fetch users with roles:', error)
-      setLoading(false)
+    }
+    setLoading(false)
+  }
+
+  const fetchPermissions = async () => {
+    try {
+      const response = await fetchFeaturesService()
+      // console.log('Permissions fetched', response)
+      setFeatures(response)
+      if (response.length > 0) {
+        setActiveTab(response[0].name)
+      }
+    } catch (error) {
+      console.error('Failed to fetch permissions:', error)
     }
   }
 
   const handleAddUser = async (userId: string) => {
-    const activeFeature:any = config.features.find(
-      (feature: any) => feature.description === activeTab,
-    )
+    const activeFeature = features.find((feature) => feature.name === activeTab)
     if (activeFeature) {
       await assignRoleToUserService(userId, activeFeature.id)
       setOpen(false)
@@ -45,22 +57,28 @@ const PageManageFeatures = () => {
     }
   }
 
-  useEffect(() => {
-    fetchUsersWithRoles()
-    console.log('Fetching users with roles')
-  }, [])
+  const handleRemoveUser = async (userId: string) => {
+    const activeFeature = features.find((feature) => feature.name === activeTab)
+    if (activeFeature) {
+      await removeRoleFromUserService(userId, activeFeature.id)
+      await fetchUsersWithRoles()
+    }
+  }
 
   useEffect(() => {
-    const activeFeature:any = config.features.find(
-      (feature:any) => feature.description === activeTab,
-    )
+    fetchUsersWithRoles()
+    fetchPermissions()
+  }, [isAuthorized])
+
+  useEffect(() => {
+    const activeFeature = features.find((feature) => feature.name === activeTab)
     if (activeFeature) {
       const filtered = usersWithRoles.filter(
         (roleGroup) => roleGroup.role.id === activeFeature.id,
       )
       setFilteredUsers(filtered.flatMap((roleGroup) => roleGroup.users))
     }
-  }, [activeTab, usersWithRoles])
+  }, [activeTab, usersWithRoles, features])
 
   return (
     <div className="flex flex-col w-full h-full container mt-6">
@@ -68,55 +86,85 @@ const PageManageFeatures = () => {
         Feature Management
       </DaText>
       {loading ? (
-        <div>Loading features...</div>
+        <div className="flex w-full h-full items-center justify-center">
+          <DaLoading
+            text={'Loading users features...'}
+            timeoutText={'Failed to load users features'}
+            fullScreen={true}
+          />
+        </div>
       ) : (
         <div className="flex w-full h-full max-h-[70vh] mt-4 space-x-2 rounded">
-          <div className="flex flex-col w-1/4 h-fit py-2 px-1 border rounded-lg border-r">
-            {config.features.map(
-              (
-                feature: any, // Use features from config
-              ) => (
-                <div
-                  key={feature.id}
-                  className={`flex items-center p-4 cursor-pointer da-menu-item whitespace-nowrap truncate ${
-                    activeTab === feature.description
-                      ? 'bg-da-primary-100 !text-da-primary-500'
-                      : ''
-                  }`}
-                  onClick={() => setActiveTab(feature.description)}
-                >
-                  {feature.description}
-                </div>
-              ),
-            )}
-          </div>
-          <div className="flex flex-col w-3/4 min-h-[500px] p-4 border rounded-lg">
-            <div className="flex w-full h-fit items-center justify-between">
-              <DaText variant="regular-bold">
-                {activeTab} ({filteredUsers.length})
+          {features && features.length > 0 ? (
+            <div className="flex flex-col w-1/4 h-full p-2 border rounded-lg">
+              <DaText variant="regular-bold" className="px-2">
+                Feature Categories
               </DaText>
-              <DaButton
-                size="sm"
-                onClick={() => {
-                  setOpen(!open)
-                }}
-              >
-                <TbUserPlus className="w-4 h-4 mr-1" /> Add User
-              </DaButton>
-            </div>
-            {filteredUsers.length > 0 ? (
-              <div className="flex flex-col w-full ">
-                <DaUserList
-                  users={filteredUsers}
-                  onRemoveUser={(userId) =>
-                    console.log('No API to remove user permission yet:', userId)
-                  }
-                />
+              <div className="flex flex-col w-full h-full mt-2 overflow-y-auto">
+                {features.map((feature) => (
+                  <div
+                    key={feature.id}
+                    className={`flex mt-1 items-center da-menu-item whitespace-nowrap truncate ${
+                      activeTab === feature.name
+                        ? 'bg-da-primary-100 !text-da-primary-500'
+                        : ''
+                    }`}
+                    onClick={() => setActiveTab(feature.name)}
+                  >
+                    {feature.name}
+                  </div>
+                ))}
               </div>
-            ) : (
-              <div>No users found for this feature.</div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <DaText
+              variant="title"
+              className="flex flex-col w-1/4 h-full border rounded-lg items-center justify-center"
+            >
+              No features available
+            </DaText>
+          )}
+          {activeTab ? (
+            <div className="flex flex-col w-3/4 h-full p-2 border rounded-lg">
+              <div className="flex w-full h-fit items-center justify-between">
+                <DaText variant="regular-bold">
+                  {activeTab} ({filteredUsers.length})
+                </DaText>
+                <DaButton
+                  size="sm"
+                  onClick={() => {
+                    setOpen(!open)
+                  }}
+                >
+                  <TbUserPlus className="w-4 h-4 mr-1" /> Add User
+                </DaButton>
+              </div>
+              {filteredUsers.length > 0 ? (
+                <div className="flex flex-col h-[90%] w-full ">
+                  <DaUserList
+                    users={filteredUsers}
+                    onRemoveUser={handleRemoveUser}
+                  />
+                </div>
+              ) : (
+                <DaText
+                  variant="title"
+                  className="flex w-full h-full items-center justify-center"
+                >
+                  No users found for this feature.
+                </DaText>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col w-3/4 min-h-[500px] p-4 border rounded-lg">
+              <DaText
+                variant="title"
+                className="flex w-full h-full items-center justify-center"
+              >
+                Please select a feature category
+              </DaText>
+            </div>
+          )}
         </div>
       )}
       <DaSelectUserPopup
