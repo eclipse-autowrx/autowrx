@@ -30,12 +30,15 @@ const DaMenu: FC<DropdownProps> = ({ trigger, children, onHover = false }) => {
         {trigger}
       </span>
       <Menu
-        dir="right"
         anchorEl={anchorEl}
         open={!!anchorEl}
         onClose={handleClose}
-        MenuListProps={{
-          'aria-labelledby': 'basic-button',
+        slotProps={{
+          paper: {
+            sx: {
+              mt: '5px',
+            },
+          },
         }}
         onClick={handleClose}
         classes={{ paper: 'da-menu-dropdown' }}

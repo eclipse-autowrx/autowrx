@@ -16,7 +16,6 @@ import {
   TbScale,
 } from 'react-icons/tb'
 import { DaButton } from '@/components/atoms/DaButton'
-import { downloadPrototypeZip } from '@/lib/zipUtils'
 import DaDiscussions from '@/components/molecules/DaDiscussions'
 import DaPopup from '@/components/atoms/DaPopup'
 import { saveRecentPrototype } from '@/services/prototype.service'
@@ -92,16 +91,6 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           >
             <DaDiscussions refId={prototype.id} refType="prototype" />
           </DaPopup>
-
-          <DaButton
-            variant="plain"
-            className="!text-da-white !bg-transparent hover:opacity-75"
-            size="sm"
-            onClick={() => downloadPrototypeZip(prototype)}
-          >
-            <TbDownload className="w-5 h-5 mr-2" />
-            Export Prototype{' '}
-          </DaButton>
         </div>
       </div>
       <div className="flex px-2 py-0 bg-da-gray-light min-h-10">
