@@ -43,9 +43,28 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
 
   const { data: user } = useSelfProfileQuery()
 
+  const validateForm = () => {
+    if (
+      !data.interviewee ||
+      !data.organization ||
+      // !data.questions ||
+      // !data.recommendations ||
+      !data.needsAddressed ||
+      !data.relevance ||
+      !data.easeOfUse
+    ) {
+      setError('Please fill in all the required fields.')
+      return false
+    }
+    setError('')
+    return true
+  }
+
   const submitFeedback = async (e: FormEvent<HTMLFormElement>) => {
     if (!prototype || !prototype.id || !model) return
     e.preventDefault()
+    if (!validateForm()) return
+
     try {
       setLoading(true)
       const payload: FeedbackCreate = {
@@ -119,7 +138,7 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
 
         {/* Star ratings for Needs Addressed, Relevance, and Ease of Use */}
         <div className="mt-4 flex items-center">
-          <DaText variant="regular-bold">Needs addressed?</DaText>
+          <DaText variant="regular-medium">Needs addressed?</DaText>
           <DaStarsRating
             initialRating={data.needsAddressed}
             onChange={(value) => handleChange('needsAddressed', value)}
@@ -127,7 +146,7 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
         </div>
 
         <div className="mt-4 flex items-center">
-          <DaText variant="regular-bold">Relevance?</DaText>
+          <DaText variant="regular-medium">Relevance?</DaText>
           <DaStarsRating
             initialRating={data.relevance}
             onChange={(value) => handleChange('relevance', value)}
@@ -135,7 +154,7 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
         </div>
 
         <div className="mt-4 flex items-center">
-          <DaText variant="regular-bold">Ease of use</DaText>
+          <DaText variant="regular-medium">Ease of use?</DaText>
           <DaStarsRating
             initialRating={data.easeOfUse}
             onChange={(value) => handleChange('easeOfUse', value)}
@@ -158,7 +177,7 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
           onChange={(e) => handleChange('recommendations', e.target.value)}
           placeholder="Write your recommendations..."
           label="Recommendations"
-          className="mt-4"
+          className="mt-4 mb-2"
         />
 
         {error && (
