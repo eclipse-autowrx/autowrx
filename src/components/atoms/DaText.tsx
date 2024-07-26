@@ -32,3 +32,4 @@ const DaText = React.forwardRef<HTMLLabelElement, DaTextProps>(
 )
 
 export { DaText }
+export default DaText

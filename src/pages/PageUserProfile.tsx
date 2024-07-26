@@ -17,13 +17,13 @@ const PageUserProfile = () => {
   const [isOpenPopup, setIsOpenPopup] = useState(false)
   const [name, setName] = useState('')
 
-  if (!user) return null
-
   useEffect(() => {
     if (user) {
       setName(user.name)
     }
   }, [user])
+
+  if (!user) return null
 
   const handleAvatarChange = async (file: File) => {
     if (file) {

@@ -33,6 +33,8 @@ import DaMenu from '../atoms/DaMenu'
 import { cn } from '@/lib/utils'
 import { DaTextarea } from '../atoms/DaTextarea'
 import { downloadPrototypeZip } from '@/lib/zipUtils'
+import { addLog } from '@/services/log.service'
+import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
 interface PrototypeTabJourneyProps {
   prototype: Prototype
@@ -56,6 +58,8 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
   const [isDeleting, setIsDeleting] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [confirmPopupOpen, setConfirmPopupOpen] = useState(false)
+
+  const { data: currentUser } = useSelfProfileQuery()
 
   if (!prototype) {
     return <DaText>No prototype available</DaText>
@@ -81,6 +85,15 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
       await updatePrototypeService(prototype.id, updateData)
       await refetchCurrentPrototype()
       await refetchModelPrototypes()
+      addLog({
+        name: `User ${currentUser?.email} updated prototype ${localPrototype.name}`,
+        description: `User ${currentUser?.email} updated Prototype ${localPrototype.name} with id ${localPrototype?.id} of model ${localPrototype.model_id}`,
+        type: 'update-prototype',
+        create_by: currentUser?.id!,
+        parent_id: localPrototype.model_id,
+        ref_id: localPrototype.id,
+        ref_type: 'prototype',
+      })
       setIsEditing(false)
     } catch (error) {
       console.error('Error updating prototype:', error)

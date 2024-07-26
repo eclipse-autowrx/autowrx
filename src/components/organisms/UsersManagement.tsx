@@ -2,14 +2,14 @@ import { DaText } from '../atoms/DaText'
 import { DaButton } from '../atoms/DaButton'
 import { DaInput } from '../atoms/DaInput'
 import { TbPlus, TbSearch } from 'react-icons/tb'
-import DaUserList from '../molecules/DaUserList'
+import DaUserManagementList from '../molecules/DaUserManagementList'
 import { useListUsers } from '@/hooks/useListUsers'
 import DaPopup from '../atoms/DaPopup'
 import FormCreateUser from '../molecules/forms/FormCreateUser'
 import DaLoader from '../atoms/DaLoader'
 import { isAxiosError } from 'axios'
 import { useEffect, useMemo, useState } from 'react'
-import _ from 'lodash'
+import { debounce } from 'lodash'
 
 const UsersManagement = () => {
   const { data, isLoading, error } = useListUsers()
@@ -19,7 +19,7 @@ const UsersManagement = () => {
   const [open, setOpen] = useState(false)
 
   const filter = useMemo(() => {
-    return _.debounce((search: string) => {
+    return debounce((search: string) => {
       if (!data) return
 
       if (search === '') {
@@ -86,7 +86,7 @@ const UsersManagement = () => {
       </div>
 
       {/* List */}
-      <DaUserList users={filteredUsers} />
+      <DaUserManagementList users={filteredUsers} />
     </div>
   )
 }

@@ -4,13 +4,22 @@ import { DaText } from '../atoms/DaText'
 import { User } from '@/types/user.type'
 import { getUserService } from '@/services/user.service'
 import { cn } from '@/lib/utils'
+import { maskEmail } from '@/lib/utils'
 
 interface DaUserProfileProps {
   userId: string
   className?: string
+  avatarClassName?: string
+  showEmail?: boolean
+  textClassName?: string
 }
 
-const DaUserProfile = ({ userId, className }: DaUserProfileProps) => {
+const DaUserProfile = ({
+  userId,
+  className,
+  avatarClassName = 'mr-2 w-5 h-5',
+  showEmail = false,
+}: DaUserProfileProps) => {
   const [user, setUser] = useState<User>()
 
   useEffect(() => {
@@ -22,10 +31,15 @@ const DaUserProfile = ({ userId, className }: DaUserProfileProps) => {
   return (
     <div className={cn('flex items-center', className)}>
       <DaAvatar
-        className="w-5 h-5 mr-2"
+        className={avatarClassName}
         src={user?.image_file ?? '/imgs/profile.png'}
       />
-      <DaText variant="small">{user?.name}</DaText>
+      <DaText variant="regular-medium">{user?.name}</DaText>
+      {showEmail && (
+        <DaText variant="small" className="ml-2">
+          {maskEmail(user?.email ?? '')}
+        </DaText>
+      )}
     </div>
   )
 }

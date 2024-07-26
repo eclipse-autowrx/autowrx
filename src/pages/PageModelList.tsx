@@ -13,6 +13,7 @@ import { createPrototypeService } from '@/services/prototype.service'
 import { Model, ModelCreate } from '@/types/model.type'
 import { Prototype } from '@/types/model.type'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { addLog } from '@/services/log.service'
 
 const PageModelList = () => {
   const [isImporting, setIsImporting] = useState(false)
@@ -44,6 +45,15 @@ const PageModelList = () => {
       }
       // console.log('Creating model:', newModel)
       const createdModel = await createModelService(newModel)
+
+      addLog({
+        name: `New model '${createdModel.name}' with visibility: ${createdModel.visibility}`,
+        description: `New model '${createdModel.name}' was created by ${user?.email || user?.name || user?.id}`,
+        type: 'new-model',
+        create_by: user?.id!,
+        ref_id: createdModel.id,
+        ref_type: 'model',
+      })
       // console.log('Created model succesfully:', createdModelId)
 
       if (importedModel.prototypes.length > 0) {

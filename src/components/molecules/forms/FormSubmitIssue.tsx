@@ -11,12 +11,13 @@ import axios from 'axios'
 import { GithubUser } from '@/types/github.type'
 import { DaAvatar } from '@/components/atoms/DaAvatar'
 import { createIssueService } from '@/services/issue.service'
+import { Token } from '@/types/token.type'
 
 interface SummitIssueFormProps {
   api: any
   onClose: () => void
   user?: GithubUser
-  accessToken?: string
+  access?: Token
   refetch?: () => Promise<any>
 }
 
@@ -24,7 +25,7 @@ const SubmitIssueForm = ({
   api,
   onClose,
   user,
-  accessToken,
+  access,
   refetch,
 }: SummitIssueFormProps) => {
   const { data: model } = useCurrentModel()
@@ -60,12 +61,12 @@ const SubmitIssueForm = ({
         console.log('No title or content')
         return
       }
-      if (!accessToken || !model?.id) {
+      if (!access || !model?.id) {
         return
       }
       const res = await createIssueService({
         extendedApi: api.name,
-        githubAccessToken: accessToken,
+        githubAccessToken: access.token,
         model: model?.id!,
         title: title,
         content: content,
