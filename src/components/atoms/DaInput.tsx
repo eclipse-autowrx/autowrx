@@ -34,6 +34,7 @@ const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
       <div className={cn('flex flex-col', className)}>
         {label && (
           <DaText
+            variant="regular-medium"
             className={cn(
               'mb-1',
               focused ? `text-da-primary-500` : `text-da-gray-medium`,
