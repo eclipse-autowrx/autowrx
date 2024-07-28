@@ -12,7 +12,7 @@ const PageHome = () => {
   return (
     <>
       <div className="flex col-span-12 relative min-h-[400px] max-h-[400px] w-full justify-between  scale z-10 overflow-hidden">
-        <div
+        {/* <div
           className={cn(
             'absolute top-0 left-0 w-full h-full bg-gradient-to-r z-0',
             'from-da-gradient-from to-da-gradient-to',
@@ -24,15 +24,16 @@ const PageHome = () => {
             'absolute top-0 left-0 w-full h-full bg-gradient-to-r z-10 opacity-80',
             'from-da-gradient-from to-da-gradient-to',
           )}
-        ></div>
+        ></div> */}
 
         <img
           className=" w-full object-cover z-0 items-center justify-center"
-          src="https://bewebstudio.digitalauto.tech/data/projects/8go3BVLvQX3B/digitalautobg.jpg"
+          // src="https://bewebstudio.digitalauto.tech/data/projects/8go3BVLvQX3B/digitalautobg.jpg"
+          src="https://covesa.global/wp-content/uploads/2024/03/covesa_homepage_hero_banner_connected_vehicle_network.jpg"
           alt="home-cover"
         ></img>
 
-        <div className="absolute flex h-full items-center justify-end w-full">
+        <div className="absolute flex h-full items-center justify-start w-full">
           <div className="lg:w-[50%] lg:px-24 px-12 z-30">
             <div className="flex flex-col sm:text-xs">
               <div
