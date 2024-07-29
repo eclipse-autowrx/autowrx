@@ -114,7 +114,7 @@ const DaGenAIWidget = ({
           inputPrompt: inputPrompt,
           systemMessage: selectedAddOn.samples || '',
         })
-        setGenCode(response.data.code)
+        setGenCode(response.data)
       }
     } catch (error) {
       console.error('Error generating AI content:', error)
