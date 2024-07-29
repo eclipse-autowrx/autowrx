@@ -13,7 +13,7 @@ const instance = {
       ],
     },
     {
-      category: 'Standards & Open Source',
+      category: '',
       items: [
         {
           name: 'digital.auto',
