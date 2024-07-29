@@ -75,6 +75,7 @@ const useGithubAuth = () => {
       setLoading(true)
       const user = await getGithubCurrentUser(token)
       setUser(user)
+      return user
     } catch (error) {
       console.error('Error getting github user:', error)
     } finally {
@@ -87,15 +88,14 @@ const useGithubAuth = () => {
     return dayjs(access.expires).isBefore(dayjs())
   }
 
-  const onTriggerAuth = () => {
-    if (isExpired()) {
+  const onTriggerAuth = async () => {
+    const user = await retrieveUser(access?.token!)
+    if (isExpired() || !user) {
       window.open(
         `https://github.com/login/oauth/authorize/?client_id=${config.github.clientId}&redirect_uri=${redirectUri}&scope=user:email%20public_repo`,
         '_blank',
       )
       listenForAuth()
-    } else {
-      retrieveUser(access?.token!)
     }
   }
 
