@@ -4,7 +4,7 @@ import config from '@/configs/config'
 
 const cardData = [
   {
-    title: 'Vehicle API Catalogue',
+    title: 'Vehicle Signal Catalogue',
     content:
       'Browse, explore and enhance the catalogue of Connected Vehicle Interfaces',
     buttonText: 'Getting Started',
@@ -13,7 +13,7 @@ const cardData = [
   {
     title: 'Prototyping',
     content:
-      'Build and test new connected vehicle app prototypes in the browser, using Python and the Vehicle APIs',
+      'Build and test new connected vehicle app prototypes in the browser, using Python and the Vehicle Signals',
     buttonText: 'Getting Started',
     path: '/model',
   },

@@ -8,6 +8,8 @@ import { isAxiosError } from 'axios'
 import { updateModelService } from '@/services/model.service'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { CustomApi } from '@/types/model.type'
+import { addLog } from '@/services/log.service'
+import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
 interface FormCreateWishlistApiProps {
   onClose: () => void
@@ -47,6 +49,8 @@ const FormCreateWishlistApi = ({
   const [data, setData] = useState(initialData)
   const { refetch } = useCurrentModel()
 
+  const { data: currentUser } = useSelfProfileQuery()
+
   useEffect(() => {
     if (data.name && !data.name.startsWith('Vehicle.')) {
       setError('API name must start with "Vehicle."')
@@ -77,6 +81,15 @@ const FormCreateWishlistApi = ({
       })
       setError('')
       setData(initialData)
+
+      addLog({
+        name: `Create wishlist API ${customApi.name}`,
+        description: `User ${currentUser?.email} created wishlist API ${customApi.name} in model ${modelId}`,
+        type: 'create-wishlist',
+        create_by: currentUser?.id!,
+        ref_id: modelId,
+        ref_type: 'model',
+      })
       await refetch()
       onClose()
     } catch (error) {
@@ -121,7 +134,7 @@ const FormCreateWishlistApi = ({
     >
       {/* Title */}
       <DaText variant="title" className="text-da-primary-500">
-        New Wishlist API
+        New Wishlist Signal
       </DaText>
 
       {/* Content */}

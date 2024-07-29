@@ -11,6 +11,8 @@ import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import useListPrototypeFeedback from '@/hooks/useListPrototypeFeedback'
 import { isAxiosError } from 'axios'
 import { DaTextarea } from '@/components/atoms/DaTextarea'
+import { addLog } from '@/services/log.service'
+import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
 const initialState = {
   interviewee: '',
@@ -39,9 +41,30 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
     setData((prev) => ({ ...prev, [name]: value }))
   }
 
+  const { data: user } = useSelfProfileQuery()
+
+  const validateForm = () => {
+    if (
+      !data.interviewee ||
+      !data.organization ||
+      // !data.questions ||
+      // !data.recommendations ||
+      !data.needsAddressed ||
+      !data.relevance ||
+      !data.easeOfUse
+    ) {
+      setError('Please fill in all the required fields.')
+      return false
+    }
+    setError('')
+    return true
+  }
+
   const submitFeedback = async (e: FormEvent<HTMLFormElement>) => {
     if (!prototype || !prototype.id || !model) return
     e.preventDefault()
+    if (!validateForm()) return
+
     try {
       setLoading(true)
       const payload: FeedbackCreate = {
@@ -61,8 +84,17 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
         ref_type: 'prototype',
       }
 
-      await createFeedback(payload)
+      const feedback = await createFeedback(payload)
       await refetch()
+      addLog({
+        name: `User ${user?.name} gave feedback`,
+        description: `User ${user?.name} with id ${user?.id} as interviewee ${data.interviewee} gave feedback to prototype ${prototype?.name} within model ${model?.name}`,
+        type: 'create-feedback',
+        create_by: user?.id!,
+        ref_id: feedback.id,
+        ref_type: 'feedback',
+        parent_id: prototype.id,
+      })
       setData(initialState)
     } catch (error) {
       if (isAxiosError(error)) {
@@ -106,7 +138,7 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
 
         {/* Star ratings for Needs Addressed, Relevance, and Ease of Use */}
         <div className="mt-4 flex items-center">
-          <DaText variant="regular-bold">Needs addressed?</DaText>
+          <DaText variant="regular-medium">Needs addressed?</DaText>
           <DaStarsRating
             initialRating={data.needsAddressed}
             onChange={(value) => handleChange('needsAddressed', value)}
@@ -114,7 +146,7 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
         </div>
 
         <div className="mt-4 flex items-center">
-          <DaText variant="regular-bold">Relevance?</DaText>
+          <DaText variant="regular-medium">Relevance?</DaText>
           <DaStarsRating
             initialRating={data.relevance}
             onChange={(value) => handleChange('relevance', value)}
@@ -122,7 +154,7 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
         </div>
 
         <div className="mt-4 flex items-center">
-          <DaText variant="regular-bold">Ease of use</DaText>
+          <DaText variant="regular-medium">Ease of use?</DaText>
           <DaStarsRating
             initialRating={data.easeOfUse}
             onChange={(value) => handleChange('easeOfUse', value)}
@@ -145,7 +177,7 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
           onChange={(e) => handleChange('recommendations', e.target.value)}
           placeholder="Write your recommendations..."
           label="Recommendations"
-          className="mt-4"
+          className="mt-4 mb-2"
         />
 
         {error && (

@@ -8,13 +8,13 @@ interface DaTablePropertyItemProps {
 
 const DaTablePropertyItem = ({ property, value }: DaTablePropertyItemProps) => {
   return (
-    <div className="grid grid-cols-4 gap-4 py-2 text-da-gray-medium">
-      <div className="col-span-1">
+    <div className="grid grid-cols-4 lg:grid-cols-5 gap-4 py-2 text-da-gray-medium">
+      <div className="col-span-1 ">
         <DaText variant="regular-bold" className="">
           {property}
         </DaText>
       </div>
-      <div className="col-span-3">
+      <div className="col-span-3 lg:grid-cols-5">
         <DaText variant="regular" className="">
           {value}
         </DaText>

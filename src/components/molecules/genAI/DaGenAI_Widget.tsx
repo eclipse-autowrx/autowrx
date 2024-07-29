@@ -5,15 +5,20 @@ import { Model } from '@/types/model.type'
 import { AddOn } from '@/types/addon.type'
 import { BsStars } from 'react-icons/bs'
 import { fetchMarketAddOns } from '@/services/widget.service'
-import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { DaInput } from '@/components/atoms/DaInput'
 import DaGenAI_ResponseDisplay from './DaGenAI_ResponseDisplay'
 import LoadingLineAnimation from './DaGenAI_LoadingLineAnimation'
 import DaGeneratorSelector from './DaGeneratorSelector.tsx'
 import config from '@/configs/config.ts'
 import useListMarketplaceAddOns from '@/hooks/useListMarketplaceAddOns'
-import axios from 'axios'
+import axios, { isAxiosError } from 'axios'
 import { DaTextarea } from '@/components/atoms/DaTextarea.tsx'
+import usePermissionHook from '@/hooks/usePermissionHook.ts'
+import { PERMISSIONS } from '@/data/permission.ts'
+import useSelfProfileQuery from '@/hooks/useSelfProfile.ts'
+import useAuthStore from '@/stores/authStore'
+import { addLog } from '@/services/log.service'
+import { toast } from 'react-toastify'
 
 interface DaGenAIWidgetProps {
   widgetConfig?: any
@@ -41,10 +46,16 @@ const DaGenAIWidget = ({
   const [isPreviewWidget, setIsPreviewWidget] = useState(false)
 
   const { data: marketplaceAddOns } = useListMarketplaceAddOns('GenAI_Widget')
+  const access = useAuthStore((state) => state.access)
+  const [canUseGenAI] = usePermissionHook([PERMISSIONS.USE_GEN_AI])
+
+  useEffect(() => {
+    console.log('Permission to use GenAI: ', canUseGenAI)
+  }, [canUseGenAI])
 
   const builtInAddOns: AddOn[] =
     config.genAI && config.genAI.widget && config.genAI.widget.length > 0
-      ? config.genAI.widget.map((addOn) => ({
+      ? config.genAI.widget.map((addOn: any) => ({
           ...addOn,
           customPayload: addOn.customPayload(inputPrompt), // Append the customPayload with the inputPrompt
         }))
@@ -104,20 +115,51 @@ const DaGenAIWidget = ({
     try {
       let response
       if (selectedAddOn.id.includes(config.instance)) {
-        response = await axios.post(selectedAddOn.endpointUrl, {
-          prompt: inputPrompt,
-        })
+        response = await axios.post(
+          selectedAddOn.endpointUrl,
+          {
+            prompt: inputPrompt,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${access?.token}`,
+            },
+          },
+        )
         setGenCode(response.data.payload.code)
       } else {
-        response = await axios.post(config.genAI.defaultEndpointUrl, {
-          endpointURL: selectedAddOn.endpointUrl,
-          inputPrompt: inputPrompt,
-          systemMessage: selectedAddOn.samples || '',
-        })
+        response = await axios.post(
+          config.genAI.defaultEndpointUrl,
+          {
+            endpointURL: selectedAddOn.endpointUrl,
+            inputPrompt: inputPrompt,
+            systemMessage: selectedAddOn.samples || '',
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${access?.token}`,
+            },
+          },
+        )
         setGenCode(response.data)
       }
+      addLog({
+        name: `User ${user?.name} generated widget`,
+        description: `User ${user?.name} with id ${user?.id} generated widget with ${selectedAddOn.name}`,
+        create_by: user?.id!,
+        type: 'gen-widget',
+        ref_id: selectedAddOn.id,
+        ref_type: 'genai',
+      })
     } catch (error) {
       console.error('Error generating AI content:', error)
+      if (isAxiosError(error)) {
+        toast.error(
+          error.response?.data?.message || 'Error generating AI content',
+        )
+      } else {
+        toast.error('Error generating AI content')
+      }
     } finally {
       setLoading(false)
       setIsFinished(true)
@@ -155,7 +197,9 @@ const DaGenAIWidget = ({
 
           <DaGeneratorSelector
             builtInAddOns={builtInAddOns}
-            marketplaceAddOns={marketplaceAddOns ? marketplaceAddOns : []}
+            marketplaceAddOns={
+              marketplaceAddOns ? (canUseGenAI ? marketplaceAddOns : []) : []
+            }
             onSelectedGeneratorChange={setSelectedAddOn}
           />
         </div>

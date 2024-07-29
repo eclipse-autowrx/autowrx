@@ -1,10 +1,13 @@
-import { Config } from '@/types/addon.type'
-
-const config: Config = {
+const config: any = {
   serverBaseUrl:
     import.meta.env.VITE_SERVER_BASE_URL ||
     'https://backend-core-dev.digital.auto',
   serverVersion: import.meta.env.VITE_SERVER_VERSION || 'v2',
+  logBaseUrl: import.meta.env.PROD
+    ? 'https://logs.digital.auto'
+    : 'https://logs.digitalauto.asia',
+  cacheBaseUrl:
+    import.meta.env.VITE_CACHE_BASE_URL || 'https://cache.digitalauto.tech',
   studioUrl: 'https://studio.digital.auto',
   studioBeUrl: 'https://bewebstudio.digitalauto.tech',
   widgetMarketPlaceUrl: 'https://marketplace.digital.auto/packagetype/widget',
@@ -15,12 +18,16 @@ const config: Config = {
   instance: 'digitalauto',
   defaultModelId: '667a9194694a35002f961ba8',
   genAI: {
-    defaultEndpointUrl: 'https://intermediate.digitalauto.tech/v1/genai',
+    defaultEndpointUrl: '',
     marketplaceUrl: 'https://store-be.digitalauto.tech/marketplace/genai',
     sdvApp: [],
     dashboard: [],
     widget: [],
   },
+  github: {
+    clientId: import.meta.env.VITE_GITHUB_CLIENT_ID || '',
+  },
+  features: [],
 }
 
 export default config
