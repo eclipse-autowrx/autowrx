@@ -23,8 +23,10 @@ const RootLayout = () => {
         <Outlet />
       </div>
       {/* <SiteFooter /> */}
-      <div className="absolute w-full bottom-0 right-0 bg-da-primary-500 text-da-white px-2 py-1 da-label-regular-bold text-end">
-        Powered by digital.auto
+      <div className="absolute w-full bottom-0 right-0 bg-da-gray-dark text-da-white px-4 py-0.5 text-xs text-end">
+        <a href="https://www.digital.auto/" target="_blank" rel="noreferrer">
+          Powered by digital.auto
+        </a>
       </div>
       <Toaster />
     </div>
