@@ -46,7 +46,9 @@ const SubmitIssueForm = ({
 
     let des = `Description: ${api.description ?? 'nan'}\n`
     des += `Type:\t${api.type || 'nan'}\n`
-    des += `DataType:\t${api.datatype ?? 'nan'}\n`
+    if (api.type !== 'branch') {
+      des += `DataType:\t${api.datatype ?? 'nan'}\n`
+    }
     setContent(des)
   }, [api])
 
@@ -129,9 +131,7 @@ const SubmitIssueForm = ({
           type="button"
           variant="gradient"
           className="w-full mt-8"
-          onClick={() => {
-            submitIssue()
-          }}
+          onClick={submitIssue}
         >
           {loading && <TbLoader className="animate-spin text-lg mr-2" />}
           Submit
