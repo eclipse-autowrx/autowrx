@@ -41,7 +41,7 @@ const SubmitIssueForm = ({
       setTitle('')
       setContent('')
     }
-    let title = `[digital.auto] Prosose new API: ${api.name}`
+    let title = `[COVESA explorer] Prosose new API: ${api.name}`
     setTitle(title)
 
     let des = `Description: ${api.description ?? 'nan'}\n`
@@ -49,6 +49,7 @@ const SubmitIssueForm = ({
     if (api.type !== 'branch') {
       des += `DataType:\t${api.datatype ?? 'nan'}\n`
     }
+    des += `\nView detail wishlist signal on: [${window.location.origin}/model/${model?.id}/api/${api.name}](${window.location.origin}/model/${model?.id}/api/${api.name})`
     setContent(des)
   }, [api])
 
