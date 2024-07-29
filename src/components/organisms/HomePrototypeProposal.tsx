@@ -77,7 +77,7 @@ const HomePrototypeProposal = () => {
             <DaLoading
               text="Loading prototypes..."
               showRetry={false}
-              timeout={20}
+              timeout={10}
               timeoutText={
                 activeTab === 'popular'
                   ? 'There are no popular prototypes available yet.'
