@@ -144,6 +144,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
           image_file: url,
         }
       })
+      await updatePrototypeService(prototype.id, { image_file: url })
     } catch (error) {
       console.error('Failed to update prototype image:', error)
     } finally {
@@ -180,22 +181,24 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
             onFileChange={handlePrototypeImageChange}
             accept=".png, .jpg, .jpeg, .gif, .webp"
           >
-            <DaButton
-              variant="outline-nocolor"
-              className="absolute bottom-2 right-2"
-              size="sm"
-            >
-              {isUploading ? (
-                <div className="flex items-center">
-                  <TbLoader className="w-4 h-4 mr-1 animate-spin" />
-                  Uploading Image...
-                </div>
-              ) : (
-                <>
-                  <TbPhotoEdit className="w-4 h-4 mr-1" /> Update Image
-                </>
-              )}
-            </DaButton>
+            {isAuthorized && (
+              <DaButton
+                variant="outline-nocolor"
+                className="absolute bottom-2 right-2"
+                size="sm"
+              >
+                {isUploading ? (
+                  <div className="flex items-center">
+                    <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                    Uploading Image...
+                  </div>
+                ) : (
+                  <>
+                    <TbPhotoEdit className="w-4 h-4 mr-1" /> Update Image
+                  </>
+                )}
+              </DaButton>
+            )}
           </DaImportFile>
         </div>
         <div className="flex-1 p-4 ml-4">

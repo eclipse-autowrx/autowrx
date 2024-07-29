@@ -93,7 +93,7 @@ const DaRuntimeControl: FC = ({}) => {
 
   return (
     <div
-      className={`absolute z-10 top-0 bottom-0 right-0 ${isExpand ? 'w-[460px]' : 'w-16'} text-da-gray-light py-2 px-1 flex flex-col justify-center bg-da-gray-dark`}
+      className={`absolute z-10 top-0 bottom-2 right-0 ${isExpand ? 'w-[460px]' : 'w-16'} text-da-gray-light py-2 px-1 flex flex-col justify-center bg-da-gray-dark`}
     >
       <div className="px-1">
         <DaRuntimeConnector
