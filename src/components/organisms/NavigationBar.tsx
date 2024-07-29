@@ -94,7 +94,7 @@ const NavigationBar = ({}) => {
                   style={{ transform: 'scale(1.4)' }}
                   className="mr-3"
                 />
-                <div className="truncate max-w-[180px]">Vehicle APIs</div>
+                <div className="truncate max-w-[180px]">Vehicle Signals</div>
               </div>
             </DaButton>
           </Link>

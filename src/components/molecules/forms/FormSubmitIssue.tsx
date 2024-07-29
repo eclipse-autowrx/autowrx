@@ -95,7 +95,7 @@ const SubmitIssueForm = ({
     >
       <div className="flex flex-col overflow-y-auto px-4">
         <DaText variant="title" className="text-da-primary-500">
-          Propose this API to COVESA
+          Propose this Signal to COVESA
         </DaText>
 
         <DaInput

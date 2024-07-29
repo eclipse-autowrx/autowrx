@@ -81,10 +81,10 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
       ),
     },
     {
-      name: 'API Lifecycle Status',
+      name: 'Signal Lifecycle Status',
       value: OneOfFromName(
         [
-          'Proposal: Proposed new API',
+          'Proposal: Proposed new Signal',
           'Validated: Has at least one valid client use case / example prototype',
           'Committed: Server implementation has been committed for next release',
           'Available: Server implementation is available',
@@ -93,24 +93,24 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
       ),
     },
     {
-      name: 'API Standardization',
+      name: 'Signal Standardization',
       value: OneOfFromName(
         [
           'Undefined',
-          'Proprietary: Proprietary API definition (OEM only)',
-          'Proposed for standardization: Formal proposal to API standards organization, e.g. COVESA',
+          'Proprietary: Proprietary Signal definition (OEM only)',
+          'Proposed for standardization: Formal proposal to Signal standards organization, e.g. COVESA',
           'Standardized: Proposal has been accepted',
         ],
         apiDetails.name,
       ),
     },
     {
-      name: 'API Visibility',
+      name: 'Signal Visibility',
       value: OneOfFromName(
         [
-          'Internal: This API is only accessible for apps provided by the OEM',
-          'Partner: This API is only available to the OEM as well as selected development partners',
-          'Open AppStore: This API is available to any vehicle AppStore developer',
+          'Internal: This Signal is only accessible for apps provided by the OEM',
+          'Partner: This Signal is only available to the OEM as well as selected development partners',
+          'Open AppStore: This Signal is available to any vehicle AppStore developer',
         ],
         apiDetails.name,
       ),
@@ -126,7 +126,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
   ].filter(Boolean)
 
   const vssSpecificationProperties = [
-    { name: 'API', value: apiDetails.name || 'N/A' },
+    { name: 'Signal', value: apiDetails.name || 'N/A' },
     {
       name: 'UUID',
       value: (apiDetails && apiDetails.uuid) || 'N/A',
@@ -189,12 +189,12 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
               <>
                 <DaConfirmPopup
                   onConfirm={handleDeleteWishlistApi}
-                  label="Are you sure you want to delete this wishlist API?"
+                  label="Are you sure you want to delete this wishlist signal?"
                 >
                   <DaButton variant="destructive" size="sm">
                     <TbTrash className="w-5 h-5 mr-2 " />
                     <div className="da-label-small-bold">
-                      Delete Wishlist API
+                      Delete Wishlist Signal
                     </div>
                   </DaButton>
                 </DaConfirmPopup>
@@ -221,7 +221,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
                       >
                         <FaGithub className="mr-1" />
                         <span className="da-label-small-bold">
-                          Propose this API to COVESA
+                          Propose this Signal to COVESA
                         </span>
                       </DaButton>
                     }
