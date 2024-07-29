@@ -15,7 +15,7 @@ const PageVehicleApi = () => {
   const navigate = useNavigate()
   const [selectedApi, setSelectedApi] = useState<VehicleApi | null>(null)
   const [activeTab, setActiveTab] = useState<'list' | 'tree'>('list')
-  const [activeModelApis] = useModelStore((state) => [state.activeModelApis])
+  const [activeModelApis] = useModelStore((state) => state.activeModelApis)
 
   const handleApiClick = (apiDetails: VehicleApi) => {
     setSelectedApi(apiDetails)
@@ -35,7 +35,7 @@ const PageVehicleApi = () => {
       <div className="grid grid-cols-12 auto-cols-max h-full w-full">
         <div className="col-span-12 flex w-full h-12 items-center justify-between px-4 bg-da-primary-100 sticky top-0 z-20 ">
           <DaText variant="regular-bold" className="text-da-primary-500">
-            COVESA VSS 4.1
+            COVESA VSS
           </DaText>
           <div className="flex space-x-2">
             <DaTabItem
