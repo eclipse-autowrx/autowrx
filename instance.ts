@@ -3,12 +3,12 @@ const instance = {
   policy_url: 'https://www.etas.com/en/company/terms_of_use.php',
   partners: [
     {
-      category: 'Industry Partners',
+      category: '',
       items: [
         {
-          name: 'Bosch',
-          img: 'https://bewebstudio.digitalauto.tech/data/projects/OezCm7PTy8FT/a/bosch.png',
-          url: 'https://www.bosch.com/',
+          name: '',
+          img: '',
+          url: '',
         },
       ],
     },
@@ -16,24 +16,19 @@ const instance = {
       category: 'Standards & Open Source',
       items: [
         {
-          name: 'COVESA',
-          img: 'https://digitalauto.netlify.app/assets/COVESA-b3f64c5b.png',
-          url: 'https://www.covesa.global',
-        },
-        {
-          name: 'Eclipse Foundation',
-          img: 'https://www.eclipse.org/eclipse.org-common/themes/solstice/public/images/logo/eclipse-foundation-grey-orange.svg',
-          url: 'https://www.eclipse.org',
+          name: 'digital.auto',
+          img: 'https://bewebstudio.digitalauto.tech/data/projects/nTcRsgxcDWgr/digitalauto_logo.png',
+          url: 'https://www.digital.auto/',
         },
       ],
     },
     {
-      category: 'Academic Partners',
+      category: '',
       items: [
         {
-          name: 'Ferdinand-Steinbeis-Institut',
-          img: 'https://digitalauto.netlify.app/assets/FSTI-55cf60eb.png',
-          url: 'https://ferdinand-steinbeis-institut.de',
+          name: '',
+          img: '',
+          url: '',
         },
       ],
     },
