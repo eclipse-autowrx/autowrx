@@ -161,7 +161,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
         />
       </DaPopup>
       <DaText variant="sub-title" className="px-4 mt-2">
-        Used APIs({useApis.length})
+        Used Signals({useApis.length})
       </DaText>
       {useApis && useApis.length > 0 && (
         <div className="mb-2">
@@ -181,7 +181,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
         </div>
       )}
       <DaText variant="sub-title" className="px-4 mt-2">
-        All APIs
+        All Signals
       </DaText>
       <div className="grow overflow-hidden">
         <ModelApiList onApiClick={onApiClicked} readOnly={true} />

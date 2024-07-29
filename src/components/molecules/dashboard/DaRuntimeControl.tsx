@@ -213,7 +213,7 @@ const DaRuntimeControl: FC = ({}) => {
                 setActiveTab('apis')
               }}
             >
-              APIs Watch
+              Signals Watch
             </div>
             <div
               className={`flex items-center px-4 py-0.5 da-label-small text-da-white da-clickable hover:bg-da-gray-medium
