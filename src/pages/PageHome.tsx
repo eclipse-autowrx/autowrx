@@ -11,7 +11,7 @@ const PageHome = () => {
   const txtLib = useTextLib()
   return (
     <>
-      <div className="flex col-span-12 relative min-h-[400px] max-h-[400px] w-full justify-between  scale z-10 overflow-hidden">
+      <div className="flex col-span-12 relative min-h-[400px] max-h-[700px] w-full justify-between  scale z-10 overflow-hidden">
         {/* <div
           className={cn(
             'absolute top-0 left-0 w-full h-full bg-gradient-to-r z-0',
@@ -34,14 +34,14 @@ const PageHome = () => {
         ></img>
 
         <div className="absolute flex h-full items-center justify-start w-full">
-          <div className="lg:w-[50%] lg:px-24 px-12 z-30">
+          <div className="sm:w-[60%] px-12 z-30">
             <div className="flex flex-col sm:text-xs">
               <div
-                className="text-2xl lg:text-4xl font-bold text-white"
+                className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white whitespace-pre-wrap"
                 dangerouslySetInnerHTML={{ __html: txtLib.home_ads_pan_title }}
               ></div>
               <div
-                className="text-white pt-2 text-sm lg:text-normal"
+                className="text-white pt-4 text-lg sm:text-normal lg:text-lg"
                 dangerouslySetInnerHTML={{ __html: txtLib.home_ads_pan_desc }}
               ></div>
             </div>
