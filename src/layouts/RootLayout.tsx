@@ -11,7 +11,7 @@ const NavigationBar = lazy(() => import('@/components/organisms/NavigationBar'))
 const RootLayout = () => {
   useSelfProfileQuery()
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen relative">
       <Suspense>
         <ActiveObjectManagement />
       </Suspense>
@@ -19,10 +19,13 @@ const RootLayout = () => {
         <NavigationBar />
       </Suspense>
       {/* "grid grid-cols-12 auto-cols-max" */}
-      <div className="h-full overflow-y-auto ">
+      <div className=" h-full overflow-y-auto ">
         <Outlet />
       </div>
       {/* <SiteFooter /> */}
+      <div className="absolute w-full bottom-0 right-0 bg-da-primary-500 text-da-white px-2 py-1 da-label-regular-bold text-end">
+        Powered by digital.auto
+      </div>
       <Toaster />
     </div>
   )

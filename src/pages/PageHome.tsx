@@ -11,7 +11,7 @@ const PageHome = () => {
   const txtLib = useTextLib()
   return (
     <>
-      <div className="flex col-span-12 relative min-h-[400px] max-h-[700px] w-full justify-between  scale z-10 overflow-hidden">
+      <div className="flex col-span-12 relative min-h-[400px] max-h-[700px] w-full justify-between z-10 overflow-hidden ">
         {/* <div
           className={cn(
             'absolute top-0 left-0 w-full h-full bg-gradient-to-r z-0',
