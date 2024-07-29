@@ -83,7 +83,7 @@ const cardIntro = [
     path: 'library/list',
   },
   {
-    title: 'Vehicle APIs',
+    title: 'Vehicle Signals',
     content:
       'Browse, explore and enhance the catalogue of Connected Vehicle Interfaces',
     path: 'api',

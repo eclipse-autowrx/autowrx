@@ -28,9 +28,9 @@ const PageVehicleApi = () => {
     <DaLoadingWrapper
       isLoading={isLoading}
       data={activeModelApis}
-      loadingMessage="Loading Vehicle APIs..."
-      emptyMessage="No APIs found."
-      timeoutMessage="Failed to load APIs. Please try again."
+      loadingMessage="Loading Vehicle Signals..."
+      emptyMessage="No Signals found."
+      timeoutMessage="Failed to load Signals. Please try again."
     >
       <div className="grid grid-cols-12 auto-cols-max h-full w-full">
         <div className="col-span-12 flex w-full h-12 items-center justify-between px-4 bg-da-primary-100 sticky top-0 z-20 ">

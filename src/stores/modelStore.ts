@@ -28,19 +28,19 @@ const useModelStore = create<ModelState & Actions>()(
         state.model = model
         if (model) {
           const cviData = JSON.parse(CVI_v4_1)
-          // console.log('cviData', cviData)
           const parsedApiList = parseCvi(cviData)
-          // console.log('parsedApiList', parsedApiList)
 
           parsedApiList.forEach((item: any) => {
             if (item.type == 'branch') return
             let arName = item.name.split('.')
             if (arName.length > 1) {
               item.shortName = '.' + arName.slice(1).join('.')
+            } else {
+              item.shortName = item.name // Ensure root elements have their name as shortName
             }
           })
 
-          // Append custom APIs to the parsed API list
+          let combinedApis = parsedApiList
           if (model.custom_apis) {
             const customApis = model.custom_apis.map((api: CustomApi) => {
               let arName = api.name.split('.')
@@ -50,17 +50,29 @@ const useModelStore = create<ModelState & Actions>()(
                 shortName:
                   arName.length > 1
                     ? '.' + arName.slice(1).join('.')
-                    : undefined,
+                    : api.name, // Ensure root elements have their name as shortName
               }
             })
-            state.activeModelApis = [...customApis, ...parsedApiList]
-          } else {
-            state.activeModelApis = parsedApiList
+            combinedApis = [...customApis, ...parsedApiList]
           }
+
+          combinedApis.sort((a, b) => {
+            const aParts = a.name.split('.')
+            const bParts = b.name.split('.')
+
+            for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+              if (aParts[i] !== bParts[i]) {
+                return (aParts[i] || '').localeCompare(bParts[i] || '')
+              }
+            }
+
+            return 0
+          })
+
+          state.activeModelApis = combinedApis
         } else {
           state.activeModelApis = []
         }
-        // console.log('state.activeModelApis', state.activeModelApis)
       }),
     setActivePrototype: (prototype) =>
       set((state) => {

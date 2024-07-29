@@ -78,7 +78,7 @@ const DaDashboardWidgetEditor = ({
                   }}
                 >
                   <TbSelector className="mr-2 flex justify-end w-fit" />{' '}
-                  Recently used APIs
+                  Recently used signals
                 </DaButton>
               </div>
               {isExpanded && (
