@@ -1,6 +1,12 @@
 import { List } from '@/types/common.type'
 import { serverAxios } from './base'
-import { Model, ModelCreate, ModelLite } from '@/types/model.type'
+import {
+  GithubRelease,
+  Model,
+  ModelCreate,
+  ModelLite,
+} from '@/types/model.type'
+import axios from 'axios'
 
 export const listModelsLite = async (): Promise<List<ModelLite>> => {
   let page = 1
@@ -116,4 +122,18 @@ export const updateModelService = async (
 
 export const deleteModelService = async (model_id: string) => {
   return await serverAxios.delete(`/models/${model_id}`)
+}
+
+export const listVSSGithubReleasesService = async () => {
+  return (
+    await axios.get<GithubRelease[]>(
+      'https://api.github.com/repos/covesa/vehicle_signal_specification/releases',
+      {
+        headers: {
+          Accept: 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+        },
+      },
+    )
+  ).data
 }
