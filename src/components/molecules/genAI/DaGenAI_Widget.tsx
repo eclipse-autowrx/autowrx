@@ -141,7 +141,7 @@ const DaGenAIWidget = ({
             },
           },
         )
-        setGenCode(response.data.code)
+        setGenCode(response.data)
       }
       addLog({
         name: `User ${user?.name} generated widget`,

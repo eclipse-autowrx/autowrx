@@ -81,7 +81,7 @@ const DaGenAI_Python = ({ onCodeChanged }: DaGenAI_PythonProps) => {
             },
           },
         )
-        setGenCode(response.data.code)
+        setGenCode(response.data)
       }
       addLog({
         name: `User ${user?.name} generated python code`,
