@@ -2,6 +2,7 @@ import { RouteObject } from 'react-router-dom'
 import { lazy } from 'react'
 import RootLayout from '@/layouts/RootLayout'
 import SuspenseProvider from '@/providers/SuspenseProvider'
+import PageAuthSuccess from '@/pages/PageAuthSuccess'
 
 const PageHome = lazy(() => import('@/pages/PageHome'))
 const PageAbout = lazy(() => import('@/pages/PageAbout'))
@@ -259,9 +260,13 @@ const routesConfig: RouteObject[] = [
             ),
           },
         ],
-      }
-  ]
-}
+      },
+    ],
+  },
+  {
+    path: '/auth/github/success',
+    element: <PageAuthSuccess />,
+  },
 ]
 
 export default routesConfig
