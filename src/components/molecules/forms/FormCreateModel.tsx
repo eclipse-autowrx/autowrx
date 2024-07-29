@@ -5,19 +5,22 @@ import { DaText } from '@/components/atoms/DaText'
 import { CVI } from '@/data/CVI'
 import { createModelService } from '@/services/model.service'
 import { ModelCreate } from '@/types/model.type'
-import { isAxiosError } from 'axios'
-import { FormEvent, useState } from 'react'
+import axios, { isAxiosError } from 'axios'
+import { FormEvent, useEffect, useState } from 'react'
 import { TbCircleCheckFilled, TbLoader } from 'react-icons/tb'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '../toaster/use-toast'
 import useListModelLite from '@/hooks/useListModelLite'
 import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import useListVSSVersions from '@/hooks/useListVSSVersions'
+import { repeatService } from '@/services/utils.service'
 
 const initialState = {
-  cvi: JSON.stringify(CVI),
+  cvi: '{}',
   name: '',
   mainApi: 'Vehicle',
+  vssVersion: 'v4.2',
 }
 
 const FormCreateModel = () => {
@@ -26,7 +29,7 @@ const FormCreateModel = () => {
   const [data, setData] = useState(initialState)
   const { refetch: refetchModelLite } = useListModelLite()
   const { toast } = useToast()
-
+  const { data: vssVersions } = useListVSSVersions()
   const { data: currentUser } = useSelfProfileQuery()
 
   const navigate = useNavigate()
@@ -40,12 +43,25 @@ const FormCreateModel = () => {
     try {
       setLoading(true)
       const body: ModelCreate = {
-        cvi: data.cvi,
+        cvi: '{}',
         main_api: data.mainApi,
         name: data.name,
       }
+      if (data.vssVersion !== 'from-scratch') {
+        const vssVersion = vssVersions?.find(
+          (version) => version.tag_name === data.vssVersion,
+        )
+        if (!vssVersion) {
+          setError('VSS version not found')
+          return
+        }
+        const jsonData = await repeatService(vssVersion.json_asset_url!, 'GET')
+        body.cvi = JSON.stringify(jsonData)
+      }
+
       const modelId = await createModelService(body)
       await refetchModelLite()
+
       addLog({
         name: `New model '${body.name}' with visibility: ${body.visibility}`,
         description: `New model '${body.name}' was created by ${currentUser?.email || currentUser?.name || currentUser?.id}`,
@@ -98,17 +114,35 @@ const FormCreateModel = () => {
         className="mt-4"
       />
       <DaSelect
-        defaultValue="vss-api-4.1"
-        label="VSS API *"
+        defaultValue={
+          vssVersions && vssVersions.length > 0
+            ? vssVersions[0].tag_name
+            : 'v4.2'
+        }
+        label="Covesa VSS version *"
         wrapperClassName="mt-4"
       >
-        <DaSelectItem value="vss-api">COVESA VSS API v3.1</DaSelectItem>
+        {vssVersions?.map((version, index) => (
+          <DaSelectItem
+            onClick={() => handleChange('vssVersion', version.tag_name)}
+            key={index}
+            value={version.tag_name}
+          >
+            {version.tag_name}
+          </DaSelectItem>
+        ))}
+        {/* <DaSelectItem value="vss-api">COVESA VSS API v3.1</DaSelectItem>
         <DaSelectItem value="vss-api-4.0">COVESA VSS API v4.0</DaSelectItem>
         <DaSelectItem value="vss-api-4.1">COVESA VSS API v4.1</DaSelectItem>
         <DaSelectItem value="v2c-s2s">
           Start with V2C and S2S(COVESA) API
+        </DaSelectItem> */}
+        <DaSelectItem
+          onClick={() => handleChange('vssVersion', 'from-scratch')}
+          value="from-scratch"
+        >
+          Start from scratch
         </DaSelectItem>
-        <DaSelectItem value="from-scratch">Start from scratch</DaSelectItem>
       </DaSelect>
 
       <div className="grow"></div>

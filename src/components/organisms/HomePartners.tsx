@@ -8,7 +8,7 @@ const HomePartners: FC = () => {
   return (
     <div className="flex flex-col items-center w-full my-12">
       <DaText variant="sub-title" className="text-da-gray-medium">
-        Partner
+        Powered by
       </DaText>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-12 xl:gap-24">
         {partners.map((groups: any, gIndex: number) => (
