@@ -22,11 +22,13 @@ const HomePartners: FC = () => {
             <div className="flex justify-center space-x-4">
               {groups.items.map((partner: any, pIndex: number) => (
                 <a key={pIndex} href={partner.url} target="_blank">
-                  <DaImage
-                    src={partner.img}
-                    alt={partner.name}
-                    className="w-32 h-20 rounded-lg object-contain"
-                  />
+                  {partner.img && (
+                    <DaImage
+                      src={partner.img}
+                      alt={partner.name}
+                      className="max-w-40 h-20 rounded-lg object-contain"
+                    />
+                  )}
                 </a>
               ))}
             </div>
