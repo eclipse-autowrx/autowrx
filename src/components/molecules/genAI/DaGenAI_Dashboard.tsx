@@ -27,7 +27,6 @@ const DaGenAI_Dashboard = ({
   onCodeChanged,
   pythonCode,
 }: DaGenAI_DashboardProps) => {
-
   const [inputPrompt, setInputPrompt] = useState<string>('')
   const [selectedAddOn, setSelectedAddOn] = useState<AddOn | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
@@ -90,7 +89,7 @@ const DaGenAI_Dashboard = ({
             },
           },
         )
-        setGenCode(response.data.code)
+        setGenCode(response.data)
         addLog({
           name: `User ${user?.name} generated dashboard code`,
           description: `User ${user?.name} with id ${user?.id} generated python code with ${selectedAddOn.name}`,
