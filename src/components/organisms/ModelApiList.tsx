@@ -127,7 +127,7 @@ const ModelApiList = ({ onApiClick, readOnly }: ModelApiListProps) => {
     <div className="flex flex-col h-full w-full p-4">
       <div className="flex items-center mb-2">
         <DaInput
-          placeholder="Search API"
+          placeholder="Search Signal"
           className="mr-2 w-full"
           Icon={TbSearch}
           iconBefore={true}
@@ -136,7 +136,7 @@ const ModelApiList = ({ onApiClick, readOnly }: ModelApiListProps) => {
         />
         <DaFilter
           categories={{
-            API: ['Default', 'Wishlist'],
+            Signal: ['Default', 'Wishlist'],
             Type: ['Branch', 'Sensor', 'Actuator', 'Attribute'],
           }}
           onChange={handleFilterChange}
@@ -149,7 +149,7 @@ const ModelApiList = ({ onApiClick, readOnly }: ModelApiListProps) => {
             state={[isOpenPopup, setIsOpenPopup]}
             trigger={
               <DaButton variant="plain" size="sm">
-                <TbPlus className="w-4 h-4 mr-1" /> Add Wishlist API
+                <TbPlus className="w-4 h-4 mr-1" /> Add Wishlist Signal
               </DaButton>
             }
           >

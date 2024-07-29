@@ -134,7 +134,7 @@ const FormCreateWishlistApi = ({
     >
       {/* Title */}
       <DaText variant="title" className="text-da-primary-500">
-        New Wishlist API
+        New Wishlist Signal
       </DaText>
 
       {/* Content */}

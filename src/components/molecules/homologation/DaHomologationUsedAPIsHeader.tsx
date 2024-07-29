@@ -41,7 +41,7 @@ const HomologationUsedAPIsHeader = ({
     <div className="items-center -mt-1 flex flex-shrink-0 mb-1">
       {/* Title */}
       <h1 className="da-label-title text-da-black">
-        Used APIs
+        Used Signals
         {usedAPIs.length > 0 && ` (${usedAPIs.length})`}
       </h1>
 
@@ -86,7 +86,7 @@ const HomologationUsedAPIsHeader = ({
 
       {/* Help tooltip (show help about not supported APIs) */}
       <Tooltip
-        title={`Some APIs are not yet supported (${
+        title={`Some signal are not yet supported (${
           usedAPIs.filter(
             (api) => !supportedCertivityApis.has('Vehicle' + api.shortName),
           ).length

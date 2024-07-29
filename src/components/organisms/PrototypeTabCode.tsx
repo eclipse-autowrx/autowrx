@@ -139,7 +139,7 @@ const PrototypeTabCode: FC = ({}) => {
             active={activeTab == 'api'}
             onClick={() => setActiveTab('api')}
           >
-            API
+            Signal
           </DaTabItem>
           <DaTabItem
             small
