@@ -5,7 +5,7 @@ const PageAuthSuccess = () => {
     window.close()
   }, [])
 
-  return <div>Authentication succeeded.</div>
+  return <div>Authentication succeeded. You can close this tab now.</div>
 }
 
 export default PageAuthSuccess
