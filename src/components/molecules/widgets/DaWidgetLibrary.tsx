@@ -177,10 +177,8 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
           Pick a widget from gallery
         </div>
       }
-      width="85%"
-      className="rounded-lg"
     >
-      <div className="select-none text-da-primary-500">
+      <div className="flex flex-col w-full min-w-[80vw] xl:min-w-[60vw] lg:max-w-[80vw] h-[90vh] xl:h-[75vh] select-none text-da-primary-500 ">
         <DaText variant="sub-title" className="text-da-primary-500 mb-2">
           Place new widget to dashboard
         </DaText>
@@ -226,17 +224,18 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
             </DaButton>
           )}
         </div>
-
         {activeTab == 'market' && (
-          <DaWidgetList
-            renderWidgets={renderWidgets}
-            activeWidgetState={[activeWidget, setActiveWidget]}
-            activeTab={activeTab}
-          />
+          <div className="flex h-full overflow-y-auto space-x-2  my-2">
+            <DaWidgetList
+              renderWidgets={renderWidgets}
+              activeWidgetState={[activeWidget, setActiveWidget]}
+              activeTab={activeTab}
+            />
+          </div>
         )}
 
         {activeTab == 'genAI' && (
-          <div className="flex items-stretch h-[500px] max-h-[80vh] space-x-2">
+          <div className="flex h-full space-x-2 ">
             <DaWidgetSetup
               setWidgetUrl={setWidgetUrl}
               modalRef={modalRef}
@@ -246,40 +245,38 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
             />
           </div>
         )}
-        <div className="flex w-full h-full justify-between items-center pt-10">
-          <div className="grow"></div>
-          <div className="flex">
+
+        <div className="flex w-full justify-end items-center mt-4">
+          <DaButton
+            variant="plain"
+            className="px-4 py-2 !text-base mr-2 h-8"
+            onClick={() => {
+              popupState[1](false)
+            }}
+          >
+            Cancel
+          </DaButton>
+          {pickedCells && pickedCells.length > 0 && !isWidgetDiscrete && (
             <DaButton
-              variant="plain"
-              className="px-4 py-2 !text-base mr-2 h-8"
+              variant="solid"
+              disabled={(isWidgetGenAI || !activeWidget) && !widgetUrl}
+              className="px-4 py-2 !text-base h-8"
               onClick={() => {
-                popupState[1](false)
+                if (activeTab === 'genAI') {
+                  setIsWidgetGenAI(true)
+                  handleCreateFromScratch()
+                } else {
+                  handleAddWidgetClick()
+                }
               }}
             >
-              Cancel
+              {isWidgetGenAI
+                ? projectCreating
+                  ? 'Creating...'
+                  : 'Add widget'
+                : 'Add selected widget'}
             </DaButton>
-            {pickedCells && pickedCells.length > 0 && !isWidgetDiscrete && (
-              <DaButton
-                variant="solid"
-                disabled={(isWidgetGenAI || !activeWidget) && !widgetUrl}
-                className="px-4 py-2 !text-base h-8"
-                onClick={() => {
-                  if (activeTab === 'genAI') {
-                    setIsWidgetGenAI(true)
-                    handleCreateFromScratch()
-                  } else {
-                    handleAddWidgetClick()
-                  }
-                }}
-              >
-                {isWidgetGenAI
-                  ? projectCreating
-                    ? 'Creating...'
-                    : 'Add widget'
-                  : 'Add selected widget'}
-              </DaButton>
-            )}
-          </div>
+          )}
         </div>
       </div>
     </DaPopup>

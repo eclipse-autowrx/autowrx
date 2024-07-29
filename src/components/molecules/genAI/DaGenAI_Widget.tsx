@@ -167,29 +167,29 @@ const DaGenAIWidget = ({
   }
 
   return (
-    <div className="flex w-full h-full rounded min-h-[500px]">
+    <div className="flex w-full h-full">
       <div className="flex flex-col w-1/2 h-full border-r pr-2 border-gray-100">
-        <div className="flex select-none items-center">
+        <div className="flex select-none items-center mt-3">
           <div className="flex w-5 h-5 items-center justify-center font-bold text-xs rounded p-2 bg-gray-100 ">
             1
           </div>
-          <div className="flex ml-1 text-gray-600 font-bold">Prompting</div>
+          <div className="flex ml-1 text-gray-600 font-medium">Prompting</div>
         </div>
-        <div className="flex mt-3 w-full mb-4" ref={modalRef}>
+        <div className="flex w-full mb-4 mt-2" ref={modalRef}>
           <DaTextarea
             value={inputPrompt}
             onChange={(e) => setInputPrompt(e.target.value)}
-            rows={4}
+            rows={6}
             className="w-full"
             placeholder="Ask AI to generate a widget based on this prompt..."
-          ></DaTextarea>
+          />
         </div>
         <div className="flex flex-col select-none mb-2 border-gray-100 pt-2">
-          <div className="flex w-full items-center">
+          <div className="flex w-full items-center ">
             <div className="flex w-5 h-5 items-center justify-center font-bold text-xs rounded p-2 bg-gray-100">
               2
             </div>
-            <div className="flex ml-1 mb-1 text-gray-600 font-bold">
+            <div className="flex ml-1 text-gray-600 font-medium">
               {' '}
               Select Generator
             </div>
@@ -225,7 +225,7 @@ const DaGenAIWidget = ({
             <div className="flex w-5 h-5 items-center justify-center font-bold text-xs rounded p-2 bg-gray-100 ">
               3
             </div>
-            <div className="flex ml-1 text-gray-600 font-bold">
+            <div className="flex ml-1 text-gray-600 font-medium">
               {' '}
               Preview Widget
             </div>
