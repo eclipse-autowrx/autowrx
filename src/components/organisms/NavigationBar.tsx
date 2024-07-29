@@ -52,103 +52,113 @@ const NavigationBar = ({}) => {
 
       <div className="grow"></div>
 
-      <DaGlobalSearch>
-        <DaButton variant="outline-nocolor" className="!pr-24 mr-2">
-          <TbZoom className="w-4 h-4 mr-1" />
-          Search
-        </DaButton>
-      </DaGlobalSearch>
-
-      {model && model.id ? (
-        <>
-          <Link to="/model">
-            <DaButton
-              variant="plain"
-              className={`hover:text-da-primary-500 ${getClassNames('/model')}`}
-            >
-              <div className="flex items-center">
-                <FiGrid style={{ transform: 'scale(1.4)' }} className="" />
-              </div>
+      <div className="flex h-full items-end">
+        <div className="flex w-full items-center mb-2">
+          <DaGlobalSearch>
+            <DaButton variant="outline-nocolor" className="!pr-24 mr-2">
+              <TbZoom className="w-4 h-4 mr-1" />
+              Search
             </DaButton>
-          </Link>
-          <Link to={`/model/${model.id}`}>
-            <DaButton
-              variant="plain"
-              className={getClassNames(`/model/${model.id}`)}
-            >
-              <div className="flex items-center">
-                <FaCar style={{ transform: 'scale(1.4)' }} className="mr-3" />
-                <div className="truncate max-w-[180px]">
-                  {model.name || 'Select Model'}
+          </DaGlobalSearch>
+
+          {model && model.id ? (
+            <>
+              <Link to="/model">
+                <DaButton
+                  variant="plain"
+                  className={`hover:text-da-primary-500 ${getClassNames('/model')}`}
+                >
+                  <div className="flex items-center">
+                    <FiGrid style={{ transform: 'scale(1.4)' }} className="" />
+                  </div>
+                </DaButton>
+              </Link>
+              <Link to={`/model/${model.id}`}>
+                <DaButton
+                  variant="plain"
+                  className={getClassNames(`/model/${model.id}`)}
+                >
+                  <div className="flex items-center">
+                    <FaCar
+                      style={{ transform: 'scale(1.4)' }}
+                      className="mr-3"
+                    />
+                    <div className="truncate max-w-[180px]">
+                      {model.name || 'Select Model'}
+                    </div>
+                  </div>
+                </DaButton>
+              </Link>
+              <Link to={`/model/${model.id}/api`}>
+                <DaButton
+                  variant="plain"
+                  className={getClassNames(undefined, 'api')}
+                >
+                  <div className="flex items-center">
+                    <VscListTree
+                      style={{ transform: 'scale(1.4)' }}
+                      className="mr-3"
+                    />
+                    <div className="truncate max-w-[180px]">Vehicle APIs</div>
+                  </div>
+                </DaButton>
+              </Link>
+              <Link to={`/model/${model.id}/library`}>
+                <DaButton
+                  variant="plain"
+                  className={getClassNames(
+                    undefined,
+                    'library',
+                    'library/prototype',
+                  )}
+                >
+                  <div className="flex items-center">
+                    <ImBooks
+                      style={{ transform: 'scale(1.4)' }}
+                      className="mr-3"
+                    />
+                    <div className="truncate max-w-[180px]">Prototypes</div>
+                  </div>
+                </DaButton>
+              </Link>
+            </>
+          ) : (
+            <Link to="/model">
+              <DaButton variant="plain" className={getClassNames('/model')}>
+                <div className="flex items-center">
+                  <FaCar style={{ transform: 'scale(1.5)' }} className="mr-3" />
+                  Select Model
                 </div>
-              </div>
-            </DaButton>
-          </Link>
-          <Link to={`/model/${model.id}/api`}>
-            <DaButton
-              variant="plain"
-              className={getClassNames(undefined, 'api')}
-            >
-              <div className="flex items-center">
-                <VscListTree
-                  style={{ transform: 'scale(1.4)' }}
-                  className="mr-3"
-                />
-                <div className="truncate max-w-[180px]">Vehicle APIs</div>
-              </div>
-            </DaButton>
-          </Link>
-          <Link to={`/model/${model.id}/library`}>
-            <DaButton
-              variant="plain"
-              className={getClassNames(
-                undefined,
-                'library',
-                'library/prototype',
-              )}
-            >
-              <div className="flex items-center">
-                <ImBooks style={{ transform: 'scale(1.4)' }} className="mr-3" />
-                <div className="truncate max-w-[180px]">Prototypes</div>
-              </div>
-            </DaButton>
-          </Link>
-        </>
-      ) : (
-        <Link to="/model">
-          <DaButton variant="plain" className={getClassNames('/model')}>
-            <div className="flex items-center">
-              <FaCar style={{ transform: 'scale(1.5)' }} className="mr-3" />
-              Select Model
-            </div>
-          </DaButton>
-        </Link>
-      )}
+              </DaButton>
+            </Link>
+          )}
 
-      {isAuthorized && (
-        <DaMenu
-          trigger={
-            <div className="da-clickable flex h-full items-center !mx-2 da-btn-sm text-da-gray-medium da-btn-plain">
-              <HiMenu size={22} />
-            </div>
-          }
-        >
-          <Link
-            to="/manage-users"
-            className="flex items-center px-4 py-2 gap-2 da-menu-item da-label-regular"
-          >
-            <TbUsers className="text-base" /> Manage Users
-          </Link>
-          <Link
-            to="/manage-features"
-            className="flex items-center px-4 py-2 gap-2 da-menu-item da-label-regular"
-          >
-            <TbStack2 className="text-base" /> Manage Features
-          </Link>
-        </DaMenu>
-      )}
+          {isAuthorized && (
+            <DaMenu
+              trigger={
+                <div className="da-clickable flex h-full items-center !mx-2 da-btn-sm text-da-gray-medium da-btn-plain">
+                  <HiMenu size={22} />
+                </div>
+              }
+            >
+              <Link
+                to="/manage-users"
+                className="flex items-center px-4 py-2 gap-2 da-menu-item da-label-regular"
+              >
+                <TbUsers className="text-base" /> Manage Users
+              </Link>
+              <Link
+                to="/manage-features"
+                className="flex items-center px-4 py-2 gap-2 da-menu-item da-label-regular"
+              >
+                <TbStack2 className="text-base" /> Manage Features
+              </Link>
+            </DaMenu>
+          )}
 
-      <DaNavUser />
+          <DaNavUser />
+        </div>
+      </div>
     </header>
   )
 }

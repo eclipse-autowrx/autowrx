@@ -39,9 +39,8 @@ const instance = {
     },
   ],
   text: {
-    home_ads_pan_title:
-      'Welcome to COVESA VSS Explorer for virtual exploration',
-    home_ads_pan_desc: `To support shift-level testing for software-defined vehicle (SDV) applications, we have created the digital.auto playground. This is a cloud-based, rapid prototyping environment for new, <b>SDV-enabled features</b>. The prototypes are built against real-world vehicle APIs and can be seamlessly migrated to automotive runtimes, such as Eclipse Velocitas. The playground is open and free to use.`,
+    home_ads_pan_title: `COVESA Explorer: Innovate with the VSS Vehicle Signal Specification`,
+    home_ads_pan_desc: `Discover the COVESA VSS vehicle signal catalogue with our intuitive Explorer tool. Whether you're interested in rapid prototyping, validating new vehicle signals, or contributing to the evolution of VSS, this tool is designed for you. Join us to streamline vehicle communication and innovation seamlessly, directly in your browser. Explore, prototype, and evolve the future of vehicle signals with COVESA Explorer.`,
   },
 }
 

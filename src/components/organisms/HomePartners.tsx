@@ -10,7 +10,7 @@ const HomePartners: FC = () => {
       {/* <DaText variant="sub-title" className="text-da-gray-medium">
         Partners
       </DaText> */}
-      <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-3 gap-12 xl:gap-24">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-12 xl:gap-24">
         {partners.map((groups: any, gIndex: number) => (
           <div key={gIndex} className="text-center">
             <DaText
