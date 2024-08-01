@@ -124,14 +124,14 @@ const DaGenAI_Dashboard = ({
             </div>
             <div className="flex ml-1 text-gray-600 font-medium">Prompting</div>
           </div>
-          <div className="flex mt-2 mb-4 w-full h-fit">
+          <div className="flex mt-1 mb-4 w-full h-fit">
             <DaTextarea
               value={inputPrompt}
               onChange={(e) => setInputPrompt(e.target.value)}
-              rows={4}
+              rows={6}
               placeholder="Ask AI to generate code based on this prompt..."
               className="w-full"
-            ></DaTextarea>
+            />
           </div>
         </div>
         <div className="flex mt-2 select-none">
