@@ -144,6 +144,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
           image_file: url,
         }
       })
+      await updatePrototypeService(prototype.id, { image_file: url })
     } catch (error) {
       console.error('Failed to update prototype image:', error)
     } finally {
