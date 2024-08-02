@@ -7,6 +7,8 @@ import { isAxiosError } from 'axios'
 import { useState } from 'react'
 import { TbLoader } from 'react-icons/tb'
 import { TbAt, TbLock } from 'react-icons/tb'
+import SSOHandler from '../SSOHandler'
+import config from '@/configs/config'
 
 interface FormSignInProps {
   setAuthType: (type: 'sign-in' | 'register' | 'forgot') => void
@@ -48,13 +50,12 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
   return (
     <form
       onSubmit={signIn}
-      className="w-[30vw] lg:w-[25vw] min-w-[400px] max-h-[80vh] p-4 bg-da-white"
+      className="w-[30vw] lg:w-[25vw] min-w-[400px] max-w-[500px] max-h-[90vh] p-4 bg-da-white"
     >
       {/* Title */}
       <DaText variant="title" className="text-da-primary-500">
         Sign In
       </DaText>
-
       <div className="mt-6"></div>
       {/* Content */}
       <DaInput
@@ -76,7 +77,6 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
         iconBefore
         iconSize={18}
       />
-
       <div className="flex items-center justify-end mt-1">
         <DaButton
           type="button"
@@ -86,7 +86,6 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
           Forget Password
         </DaButton>
       </div>
-
       {/* Error */}
       {error && (
         <DaText variant="small" className="mt-2 text-da-accent-500">
@@ -103,18 +102,52 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
         {loading && <TbLoader className="animate-spin text-lg mr-2" />}
         Sign in
       </DaButton>
-      {/* More */}
-      <div className="mt-4 flex items-center">
+      <div className="mt-4 flex w-full justify-center items-center">
         <DaText className="text-da-gray-medium">Don't have an account?</DaText>
         <DaButton
           type="button"
           onClick={() => setAuthType('register')}
           variant="text"
-          className="text-da-primary-500"
+          className="text-da-primary-500 !da-label-small !px-1.5"
         >
           Register
         </DaButton>
       </div>
+      {config.instance === 'xhub' && (
+        <>
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t"></span>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase py-6">
+              <DaText
+                variant="small"
+                className="bg-white px-2 text-da-gray-medium"
+              >
+                {' '}
+                Or continue with{' '}
+              </DaText>
+            </div>
+          </div>
+
+          <div
+            onClick={(event) => {
+              event.preventDefault()
+              event.stopPropagation()
+            }}
+          >
+            <SSOHandler>
+              <DaButton
+                variant="outline-nocolor"
+                className="w-full mt-2"
+                disabled={loading}
+              >
+                Bosch SSO
+              </DaButton>
+            </SSOHandler>
+          </div>
+        </>
+      )}
     </form>
   )
 }
