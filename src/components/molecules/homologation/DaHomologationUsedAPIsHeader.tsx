@@ -73,13 +73,12 @@ const HomologationUsedAPIsHeader = ({
         size="sm"
         onClick={() => setSelectedAPIs(new Set([]))}
         className={clsx(
-          'ml-2 mb-0.5 rounded-lg px-2 transition',
+          'ml-2 mb-0.5 rounded-lg px-2 transition w-[136px]',
           selectedAPIs.size === 0 && 'pointer-events-none opacity-50',
         )}
       >
         <span className="da-label-tiny flex">
-          Clear
-          {selectedAPIs.size !== 0 ? selectedAPIs.size : ''} selection
+          Clear {selectedAPIs.size !== 0 ? selectedAPIs.size : ''} selection
           {selectedAPIs.size > 1 && 's'} <TbX className="mt-0.5 text-sm ml-1" />
         </span>
       </DaButton>
