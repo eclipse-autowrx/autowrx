@@ -10,14 +10,22 @@ export const registerService = async (
   name: string,
   email: string,
   password: string,
-) => {
-  return (
-    await serverAxios.post<AuthToken>('/auth/register', {
-      name,
-      email,
-      password,
-    })
-  ).data
+  imageFileUrl?: string,
+  provider: string = 'Email',
+): Promise<AuthToken> => {
+  const registrationData: any = {
+    name,
+    email,
+    password,
+    provider,
+  }
+
+  if (imageFileUrl) {
+    registrationData.image_file = imageFileUrl
+  }
+
+  return (await serverAxios.post<AuthToken>('/auth/register', registrationData))
+    .data
 }
 
 export const logoutService = async () => {

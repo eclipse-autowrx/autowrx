@@ -3,6 +3,7 @@ import { loginRequest, callMsGraph } from '@/services/sso.service'
 import { useIsAuthenticated, useMsal } from '@azure/msal-react'
 import { loginService, registerService } from '@/services/auth.service'
 import { addLog } from '@/services/log.service'
+import { uploadFileService } from '@/services/upload.service'
 
 interface SSOHandlerProps {
   children: React.ReactNode
@@ -66,7 +67,11 @@ const SSOHandler = ({ children }: SSOHandlerProps) => {
 
       // If login fails, attempt to register the user
       try {
-        await registerService(displayName, mail, id)
+        const response = await fetch(userPhotoUrl)
+        const blob = await response.blob()
+        const file = new File([blob], 'avatar.jpg', { type: blob.type })
+        const { url } = await uploadFileService(file)
+        await registerService(displayName, mail, id, url, 'BOSCH_SSO')
         await addLog({
           name: `User registered`,
           description: `User registered with email: ${mail}`,
