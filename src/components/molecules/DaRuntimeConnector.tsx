@@ -44,7 +44,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     useEffect(() => {
       let timer = setInterval(() => {
         setTicker((oldTicker) => oldTicker + 1)
-      }, 30000)
+      }, 1000)
       return () => {
         if (timer) clearInterval(timer)
       }
