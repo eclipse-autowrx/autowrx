@@ -95,7 +95,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
       )}
       {/* Action */}
       <DaButton
-        disabled={loading && ssoLoading}
+        disabled={loading || ssoLoading}
         type="submit"
         variant="gradient"
         className="w-full mt-2"
@@ -142,12 +142,13 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
               <DaButton
                 variant="outline-nocolor"
                 className="w-full mt-2"
-                disabled={loading && ssoLoading}
+                disabled={loading || ssoLoading}
               >
                 {ssoLoading && (
                   <TbLoader className="animate-spin text-lg mr-2" />
                 )}
-                Bosch SSO
+                {config.instance === 'xhub' && 'BOSCH SSO'}
+                {config.instance === 'etas' && 'ETAS SSO'}
               </DaButton>
             </SSOHandler>
           </div>
