@@ -1,4 +1,5 @@
 import { LogLevel } from '@azure/msal-browser'
+import config from '@/configs/config'
 
 export const msalConfig = {
   auth: {
@@ -6,7 +7,9 @@ export const msalConfig = {
     authority: import.meta.env.VITE_REACT_SSO_AUTHORITY,
     redirectUri: window.location.origin.includes('localhost')
       ? 'http://localhost:3000'
-      : 'https://xhub.digital.auto',
+      : config.instance === 'xhub'
+        ? 'https://xhub.digital.auto'
+        : 'https://etas.digital.auto',
   },
   cache: {
     cacheLocation: 'sessionStorage', // This configures where your cache will be stored
