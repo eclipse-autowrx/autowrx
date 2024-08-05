@@ -82,12 +82,6 @@ const SSOHandler = ({ children }: SSOHandlerProps) => {
 
         // Retry logging in after successful registration
         await loginService(mail, id)
-        await addLog({
-          name: `User log in`,
-          description: `User ${mail} logged in via SSO after registration`,
-          type: 'user-login@email',
-          create_by: mail,
-        })
       } catch (registrationError) {
         console.error('SSO registration failed:', registrationError)
       }

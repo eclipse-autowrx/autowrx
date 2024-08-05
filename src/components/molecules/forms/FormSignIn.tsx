@@ -16,6 +16,7 @@ interface FormSignInProps {
 
 const FormSignIn = ({ setAuthType }: FormSignInProps) => {
   const [loading, setLoading] = useState(false)
+  const [ssoLoading, setSSOLoading] = useState(false)
   const [error, setError] = useState<string>('')
 
   const signIn = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -94,7 +95,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
       )}
       {/* Action */}
       <DaButton
-        disabled={loading}
+        disabled={loading && ssoLoading}
         type="submit"
         variant="gradient"
         className="w-full mt-2"
@@ -113,7 +114,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
           Register
         </DaButton>
       </div>
-      {config.instance === 'xhub' && (
+      {(config.instance === 'xhub' || config.instance === 'etas') && (
         <>
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
@@ -132,6 +133,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
 
           <div
             onClick={(event) => {
+              setSSOLoading(true)
               event.preventDefault()
               event.stopPropagation()
             }}
@@ -140,8 +142,11 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
               <DaButton
                 variant="outline-nocolor"
                 className="w-full mt-2"
-                disabled={loading}
+                disabled={loading && ssoLoading}
               >
+                {ssoLoading && (
+                  <TbLoader className="animate-spin text-lg mr-2" />
+                )}
                 Bosch SSO
               </DaButton>
             </SSOHandler>
