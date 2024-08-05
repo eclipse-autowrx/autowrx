@@ -12,6 +12,7 @@ import {
   deletePrototypeService,
 } from '@/services/prototype.service'
 import {
+  TbChevronDown,
   TbDotsVertical,
   TbDownload,
   TbEdit,
@@ -245,8 +246,8 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                         >
                           {!isDeleting && !isEditing && (
                             <>
-                              <TbDotsVertical className="w-4 h-4 mr-1" />{' '}
                               Prototype Action
+                              <TbChevronDown className="w-4 h-4 ml-1" />
                             </>
                           )}
                           {isDeleting && (

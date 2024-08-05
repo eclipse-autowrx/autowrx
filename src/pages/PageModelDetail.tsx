@@ -19,6 +19,7 @@ import {
 import { uploadFileService } from '@/services/upload.service'
 import { convertJSONToProperty } from '@/lib/vehiclePropertyUtils'
 import {
+  TbChevronDown,
   TbDotsVertical,
   TbDownload,
   TbEdit,
@@ -219,7 +220,8 @@ const PageModelDetail = () => {
                 >
                   {!isDeleting && !isExporting && (
                     <>
-                      <TbDotsVertical className="w-4 h-4 mr-1" /> Model Action
+                      Model Action
+                      <TbChevronDown className="w-4 h-4 ml-1" />
                     </>
                   )}
                   {isDeleting && (

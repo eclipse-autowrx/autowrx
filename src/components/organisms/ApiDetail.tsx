@@ -18,8 +18,15 @@ import DaPopup from '../atoms/DaPopup'
 import FormSubmitIssue from '../molecules/forms/FormSubmitIssue'
 import { FaGithub } from 'react-icons/fa6'
 import useGithubAuth from '@/hooks/useGithubAuth'
-import { TbExternalLink, TbLoader, TbMessage, TbTrash } from 'react-icons/tb'
+import {
+  TbChevronDown,
+  TbDotsVertical,
+  TbExternalLink,
+  TbLoader,
+  TbTrash,
+} from 'react-icons/tb'
 import useCurrentExtendedApiIssue from '@/hooks/useCurrentExtendedApiIssue'
+import DaMenu from '../atoms/DaMenu'
 
 interface ApiDetailProps {
   apiDetails: any
@@ -177,7 +184,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
             </div>
           )}
         </DaCopy>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2">
           {isLoading ? (
             <div className="flex items-center text-da-gray-medium">
               <TbLoader className="text-da-gray-medium w-5 h-5 mr-2 animate animate-spin" />
@@ -186,75 +193,91 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
           ) : (
             apiDetails.isWishlist &&
             isAuthorized && (
-              <>
-                <DaConfirmPopup
-                  onConfirm={handleDeleteWishlistApi}
-                  label="Are you sure you want to delete this wishlist signal?"
-                >
-                  <DaButton variant="destructive" size="sm">
-                    <TbTrash className="w-5 h-5 mr-2 " />
+              <DaMenu
+                trigger={
+                  <DaButton variant="solid" size="sm">
                     <div className="da-label-small-bold">
-                      Delete Wishlist Signal
+                      Wishlist Signal Action
                     </div>
+                    <TbChevronDown className="w-4 h-4 ml-1" />
                   </DaButton>
-                </DaConfirmPopup>
-                {data ? (
-                  <Link
-                    to={data.link}
-                    className="da-label-small-bold flex items-center gap-2"
-                    target="_blank"
-                  >
-                    <TbExternalLink className="w-5 h-5" />
-                    View COVESA Issue
-                  </Link>
-                ) : (
-                  <DaPopup
-                    state={popupSubmitIssueState}
-                    trigger={
-                      <DaButton
-                        variant="plain"
-                        size="sm"
-                        onClick={() => {
-                          popupSubmitIssueState[1](true)
-                          onTriggerAuth()
-                        }}
-                      >
-                        <FaGithub className="mr-1" />
-                        <span className="da-label-small-bold">
-                          Propose this Signal to COVESA
-                        </span>
-                      </DaButton>
-                    }
-                  >
-                    {loading && (
-                      <div className="p-4 flex flex-col gap-4 items-center">
-                        <DaLoader />
-                        <p>
-                          Please wait while we are authenticating with Github...
-                        </p>
-                      </div>
-                    )}
+                }
+              >
+                <div className="flex flex-col da-menu-dropdown">
+                  {data ? (
+                    <Link
+                      to={data.link}
+                      className="da-label-small-bold flex items-center gap-2"
+                      target="_blank"
+                    >
+                      <TbExternalLink className="w-5 h-5" />
+                      View COVESA Issue
+                    </Link>
+                  ) : (
+                    <DaPopup
+                      state={popupSubmitIssueState}
+                      trigger={
+                        <DaButton
+                          variant="plain"
+                          size="sm"
+                          onClick={() => {
+                            popupSubmitIssueState[1](true)
+                            onTriggerAuth()
+                          }}
+                        >
+                          <FaGithub className="w-5 h-5 mr-2" />
+                          <span className="da-label-small-bold">
+                            Propose this Signal to COVESA
+                          </span>
+                        </DaButton>
+                      }
+                    >
+                      {loading && (
+                        <div className="p-4 flex flex-col gap-4 items-center">
+                          <DaLoader />
+                          <p>
+                            Please wait while we are authenticating with
+                            Github...
+                          </p>
+                        </div>
+                      )}
 
-                    {!loading && error && (
-                      <div className="p-4 flex flex-col gap-4 items-center">
-                        <p>{error}</p>
-                      </div>
-                    )}
+                      {!loading && error && (
+                        <div className="p-4 flex flex-col gap-4 items-center">
+                          <p>{error}</p>
+                        </div>
+                      )}
 
-                    {!loading && !error && access && (
-                      <FormSubmitIssue
-                        user={user}
-                        api={apiDetails}
-                        refetch={refetchCurrIssue}
-                        onClose={async () => {
-                          popupSubmitIssueState[1](false)
-                        }}
-                        access={access}
-                      />
-                    )}
-                  </DaPopup>
-                )}
-              </>
+                      {!loading && !error && access && (
+                        <FormSubmitIssue
+                          user={user}
+                          api={apiDetails}
+                          refetch={refetchCurrIssue}
+                          onClose={async () => {
+                            popupSubmitIssueState[1](false)
+                          }}
+                          access={access}
+                        />
+                      )}
+                    </DaPopup>
+                  )}
+                  <DaConfirmPopup
+                    onConfirm={handleDeleteWishlistApi}
+                    label="Are you sure you want to delete this wishlist signal?"
+                  >
+                    <DaButton
+                      variant="destructive"
+                      size="sm"
+                      className="flex w-full !justify-start"
+                    >
+                      <TbTrash className="w-5 h-5 mr-2 " />
+                      <div className="da-label-small-bold">
+                        Delete Wishlist Signal
+                      </div>
+                    </DaButton>
+                  </DaConfirmPopup>
+                </div>
+              </DaMenu>
             )
           )}
           {/* <DaButton
@@ -266,7 +289,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
             <TbMessage className="w-5 h-5 mr-2" />{' '}
             <div className="da-label-small-bold">Discussions</div>
           </DaButton> */}
-          <div className={cn('px-3 rounded', bgClass)}>
+          <div className={cn('flex px-3 rounded-md h-8 items-center', bgClass)}>
             <DaText variant="small-bold" className="text-da-white uppercase">
               {apiDetails.type}
             </DaText>
