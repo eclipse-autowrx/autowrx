@@ -33,11 +33,11 @@ const PageVehicleApi = () => {
       timeoutMessage="Failed to load Signals. Please try again."
     >
       <div className="grid grid-cols-12 auto-cols-max h-full w-full">
-        <div className="col-span-12 flex w-full h-12 items-center justify-between px-4 bg-da-primary-100 sticky top-0 z-20 ">
+        <div className="col-span-12 flex w-full h-10 items-center justify-between px-4 bg-da-primary-100 sticky top-0 z-20 ">
           <DaText variant="regular-bold" className="text-da-primary-500">
             COVESA VSS 4.1
           </DaText>
-          <div className="flex space-x-2">
+          <div className="flex space-x-2 h-full">
             <DaTabItem
               active={activeTab === 'list'}
               onClick={() => setActiveTab('list')}
