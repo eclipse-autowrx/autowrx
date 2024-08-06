@@ -237,7 +237,7 @@ const PageModelArchitecture = () => {
                         <DaButton
                           variant="destructive"
                           size="sm"
-                          className="text-destructive da-clickable"
+                          className="text-destructive cursor-pointer"
                         >
                           Delete
                         </DaButton>

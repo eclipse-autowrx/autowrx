@@ -119,7 +119,7 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
           <a
             href={policy_url}
             target="_blank"
-            className="ml-2 da-clickable hover:text-da-primary-500"
+            className="ml-2 cursor-pointer hover:text-da-primary-500"
           >
             <u>Privacy Policy</u>
           </a>

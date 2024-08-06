@@ -91,11 +91,8 @@ const PageModelList = () => {
 
   return (
     <div className="col-span-full h-full flex flex-col px-2 py-4 container space-y-2">
-      <div className="flex mb-2">
-        <DaText variant="title" className="text-da-primary-500">
-          Model List
-        </DaText>
-        <div className="grow"></div>
+      <div className="flex w-full mt-4 items-start justify-between">
+        <ModelGrid />
         {user && (
           <div className="flex">
             {!isImporting ? (
@@ -126,8 +123,6 @@ const PageModelList = () => {
           </div>
         )}
       </div>
-
-      <ModelGrid />
     </div>
   )
 }

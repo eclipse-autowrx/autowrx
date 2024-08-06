@@ -72,7 +72,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
 
   return prototype ? (
     <div className="flex flex-col w-full h-full">
-      <div className="flex px-4 py-2 bg-da-primary-500 justify-between items-center">
+      {/* <div className="flex px-4 py-2 bg-da-primary-500 justify-between items-center">
         <DaText variant="sub-title" className="text-white">
           {prototype.name}
         </DaText>
@@ -92,7 +92,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
             <DaDiscussions refId={prototype.id} refType="prototype" />
           </DaPopup>
         </div>
-      </div>
+      </div> */}
       <div className="flex px-2 py-0 bg-da-gray-light min-h-10">
         <DaTabItem
           active={isDefaultTab}

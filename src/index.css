@@ -91,10 +91,6 @@
   grid-row: span 5 / span 5;
 }
 
-.da-clickable {
-  @apply cursor-pointer;
-}
-
 /*********** Font size and weight ********************/
 .da-txt-tiny {
   font-size: 12px;
@@ -311,7 +307,7 @@ body::-webkit-scrollbar-thumb {
 /*********** Menu Component ********************/
 
 .da-menu-item {
-  @apply da-btn-plain da-btn-sm mx-1 da-clickable da-label-small-medium;
+  @apply da-btn-plain da-btn-sm mx-1 cursor-pointer da-label-small-medium;
 }
 
 .da-menu-dropdown {

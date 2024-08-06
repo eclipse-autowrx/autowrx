@@ -198,7 +198,7 @@ const DaRuntimeControl: FC = ({}) => {
           <>
             <div className="grow"></div>
             <div
-              className={`flex items-center px-4 py-0.5 da-label-small text-da-white da-clickable hover:bg-da-gray-medium
+              className={`flex items-center px-4 py-0.5 da-label-small text-da-white cursor-pointer hover:bg-da-gray-medium
               ${activeTab == 'output' && 'border-b-2 border-da-white'}`}
               onClick={() => {
                 setActiveTab('output')
@@ -207,7 +207,7 @@ const DaRuntimeControl: FC = ({}) => {
               Output
             </div>
             <div
-              className={`flex items-center px-4 py-0.5 da-label-small text-da-white da-clickable hover:bg-da-gray-medium
+              className={`flex items-center px-4 py-0.5 da-label-small text-da-white cursor-pointer hover:bg-da-gray-medium
               ${activeTab == 'apis' && 'border-b-2 border-da-white'}`}
               onClick={() => {
                 setActiveTab('apis')
@@ -216,7 +216,7 @@ const DaRuntimeControl: FC = ({}) => {
               Signals Watch
             </div>
             <div
-              className={`flex items-center px-4 py-0.5 da-label-small text-da-white da-clickable hover:bg-da-gray-medium
+              className={`flex items-center px-4 py-0.5 da-label-small text-da-white cursor-pointer hover:bg-da-gray-medium
               ${activeTab == 'code' && 'border-b-2 border-da-white'}`}
               onClick={() => {
                 setActiveTab('code')

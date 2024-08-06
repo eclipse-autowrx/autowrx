@@ -13,7 +13,7 @@ import {
 } from '@/services/prototype.service'
 import {
   TbChevronDown,
-  TbDotsVertical,
+  TbMessage,
   TbDownload,
   TbEdit,
   TbLoader,
@@ -36,6 +36,8 @@ import { DaTextarea } from '../atoms/DaTextarea'
 import { downloadPrototypeZip } from '@/lib/zipUtils'
 import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import DaPopup from '../atoms/DaPopup'
+import DaDiscussions from '../molecules/DaDiscussions'
 
 interface PrototypeTabJourneyProps {
   prototype: Prototype
@@ -268,6 +270,23 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                         >
                           <TbEdit className="w-4 h-4 mr-2" /> Edit Prototype
                         </DaButton>
+                        <DaPopup
+                          trigger={
+                            <DaButton
+                              className="!justify-start"
+                              variant="plain"
+                              size="sm"
+                            >
+                              <TbMessage className="w-4 h-4 mr-2" />
+                              Discussion
+                            </DaButton>
+                          }
+                        >
+                          <DaDiscussions
+                            refId={prototype.id}
+                            refType="prototype"
+                          />
+                        </DaPopup>
                         <DaButton
                           variant="plain"
                           size="sm"

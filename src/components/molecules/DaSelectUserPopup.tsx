@@ -104,7 +104,7 @@ const DaSelectUserPopup = ({
                       >
                         <DaText
                           variant="small-bold"
-                          className="text-da-primary-500 hover:bg-da-primary-100 px-2 py-1 rounded-md da-clickable"
+                          className="text-da-primary-500 hover:bg-da-primary-100 px-2 py-1 rounded-md cursor-pointer"
                         >
                           Select
                         </DaText>

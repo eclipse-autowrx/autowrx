@@ -297,7 +297,7 @@ const PageModelDetail = () => {
         <div className="col-span-6 overflow-y-auto h-[99%] pr-2">
           {cardIntro.map((card, index) => (
             <Link key={index} to={card.path}>
-              <div className="space-y-3 da-clickable">
+              <div className="space-y-3 cursor-pointer">
                 <DaCardIntro
                   key={index}
                   title={card.title}

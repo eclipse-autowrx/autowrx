@@ -59,7 +59,7 @@ const NavigationBar = ({}) => {
         </DaButton>
       </DaGlobalSearch>
 
-      {model && model.id ? (
+      {/* {model && model.id ? (
         <>
           <Link to="/model">
             <DaButton
@@ -123,12 +123,12 @@ const NavigationBar = ({}) => {
             </div>
           </DaButton>
         </Link>
-      )}
+      )} */}
 
       {isAuthorized && (
         <DaMenu
           trigger={
-            <div className="da-clickable flex h-full items-center !mx-2 da-btn-sm text-da-gray-medium da-btn-plain">
+            <div className="cursor-pointer flex !h-10 items-center !mx-2 da-btn-sm text-da-gray-medium da-btn-plain">
               <HiMenu size={22} />
             </div>
           }
