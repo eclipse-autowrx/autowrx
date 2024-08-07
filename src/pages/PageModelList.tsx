@@ -91,10 +91,10 @@ const PageModelList = () => {
 
   return (
     <div className="col-span-full h-full flex flex-col px-2 py-4 container space-y-2">
-      <div className="flex w-full mt-4 items-start justify-between">
+      <div className="relative flex w-full h-full mt-4 items-start">
         <ModelGrid />
         {user && (
-          <div className="flex">
+          <div className="absolute right-0 flex">
             {!isImporting ? (
               <DaImportFile accept=".zip" onFileChange={handleImportModelZip}>
                 <DaButton variant="outline-nocolor" size="sm" className="mr-2">
