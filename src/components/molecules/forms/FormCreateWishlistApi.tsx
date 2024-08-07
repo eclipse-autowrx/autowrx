@@ -2,7 +2,7 @@ import { DaButton } from '@/components/atoms/DaButton'
 import { DaInput } from '@/components/atoms/DaInput'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import { DaText } from '@/components/atoms/DaText'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { TbLoader } from 'react-icons/tb'
 import { isAxiosError } from 'axios'
 import { updateModelService } from '@/services/model.service'
@@ -17,7 +17,14 @@ interface FormCreateWishlistApiProps {
   existingCustomApis: CustomApi[]
 }
 
-const initialData = {
+interface CreateWishlistAPI {
+  name: string
+  description: string
+  type: 'branch' | 'sensor' | 'actuator' | 'attribute'
+  datatype: string
+}
+
+const initialData: CreateWishlistAPI = {
   name: '',
   description: '',
   type: 'branch',
@@ -39,6 +46,8 @@ const dataTypes = [
   'uint8[]',
 ]
 
+const ROOT_API_NOTATION = 'Vehicle.'
+
 const FormCreateWishlistApi = ({
   onClose,
   modelId,
@@ -51,9 +60,35 @@ const FormCreateWishlistApi = ({
 
   const { data: currentUser } = useSelfProfileQuery()
 
+  const validate = useCallback((data: CreateWishlistAPI) => {
+    if (data.name) {
+      if (!data.name.startsWith(ROOT_API_NOTATION)) {
+        return `API name must start with "${ROOT_API_NOTATION}"`
+      }
+      const actualName = data.name.slice(ROOT_API_NOTATION.length)
+      if (actualName.length === 0) {
+        return `API name must have at least 1 character after "${ROOT_API_NOTATION}"`
+      }
+      if (!/^[a-zA-Z_$][a-zA-Z_$0-9]*$/.test(actualName)) {
+        return 'API name must only contain letters, numbers, underscores, and must not start with a number'
+      }
+      if (data.name.length > 255) {
+        return 'API name must not exceed 255 characters'
+      }
+    }
+    if (data.description.length > 4096) {
+      return 'API description must not exceed 4096 characters'
+    }
+    if (data.type !== 'branch' && !data.datatype) {
+      return 'Data type is required for sensor, actuator, and attribute'
+    }
+    return null
+  }, [])
+
   useEffect(() => {
-    if (data.name && !data.name.startsWith('Vehicle.')) {
-      setError('API name must start with "Vehicle."')
+    const result = validate(data)
+    if (result) {
+      setError(result)
     } else {
       setError('')
     }
@@ -108,7 +143,7 @@ const FormCreateWishlistApi = ({
   const handleTypeChange = (value: string) => {
     setData((prev) => ({
       ...prev,
-      type: value,
+      type: value as CreateWishlistAPI['type'],
       ...(value === 'branch' ? { datatype: '' } : {}),
     }))
   }
@@ -127,6 +162,15 @@ const FormCreateWishlistApi = ({
     setLoading(false)
   }
 
+  const isButtonDisabled = useMemo(() => {
+    if (loading) return true
+    if (!data.name) {
+      return true
+    }
+    if (error) return true
+    return false
+  }, [error, loading])
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -136,7 +180,6 @@ const FormCreateWishlistApi = ({
       <DaText variant="title" className="text-da-primary-500">
         New Wishlist Signal
       </DaText>
-
       {/* Content */}
       <DaInput
         value={data.name}
@@ -181,16 +224,13 @@ const FormCreateWishlistApi = ({
           ))}
         </DaSelect>
       )}
-
       <div className="grow"></div>
-
       {/* Error */}
       {error && (
         <DaText variant="small" className="mt-2 text-da-accent-500">
           {error}
         </DaText>
       )}
-
       {/* Action */}
       <div className="space-x-2 ml-auto">
         <DaButton
@@ -202,7 +242,11 @@ const FormCreateWishlistApi = ({
         >
           Cancel
         </DaButton>
-        <DaButton disabled={loading} type="submit" className="w-fit mt-8">
+        <DaButton
+          disabled={isButtonDisabled}
+          type="submit"
+          className="w-fit mt-8"
+        >
           {loading && (
             <TbLoader className="animate-spin da-label-regular mr-2" />
           )}
