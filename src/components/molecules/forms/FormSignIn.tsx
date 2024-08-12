@@ -28,20 +28,19 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
         e.currentTarget.password.value,
       ]
       await loginService(email, password)
-      await addLog({
-        name: `User log in`,
-        description: `User ${email} logged in`,
-        type: 'user-login@email',
-        create_by: email,
-      })
-      setError('')
+      // Server addLog have error after security patches
+      // await addLog({
+      //   name: `User log in`,
+      //   description: `User ${email} logged in`,
+      //   type: 'user-login@email',
+      //   create_by: email,
+      // })
       window.location.href = window.location.href
     } catch (error) {
       if (isAxiosError(error)) {
         setError(error.response?.data.message || 'Something went wrong')
         return
       }
-      setError('Something went wrong')
     } finally {
       setLoading(false)
     }

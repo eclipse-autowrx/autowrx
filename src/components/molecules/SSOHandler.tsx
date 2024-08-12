@@ -49,12 +49,13 @@ const SSOHandler = ({ children }: SSOHandlerProps) => {
     try {
       // Attempt to log in using the SSO credentials
       await loginService(mail, id)
-      await addLog({
-        name: `User log in`,
-        description: `User ${mail} logged in via SSO`,
-        type: 'user-login@email',
-        create_by: mail,
-      })
+      // Error with addLog server after security patches
+      // await addLog({
+      //   name: `User log in`,
+      //   description: `User ${mail} logged in via SSO`,
+      //   type: 'user-login@email',
+      //   create_by: mail,
+      // })
     } catch (loginError) {
       console.error(
         'SSO login failed, attempting to register user:',
@@ -68,12 +69,12 @@ const SSOHandler = ({ children }: SSOHandlerProps) => {
         const file = new File([blob], 'avatar.jpg', { type: blob.type })
         const { url } = await uploadFileService(file)
         await registerService(displayName, mail, id, url, 'BOSCH_SSO')
-        await addLog({
-          name: `User registered`,
-          description: `User registered with email: ${mail}`,
-          type: 'user-register@email',
-          create_by: mail,
-        })
+        // await addLog({
+        //   name: `User registered`,
+        //   description: `User registered with email: ${mail}`,
+        //   type: 'user-register@email',
+        //   create_by: mail,
+        // })
 
         // Retry logging in after successful registration
         await loginService(mail, id)

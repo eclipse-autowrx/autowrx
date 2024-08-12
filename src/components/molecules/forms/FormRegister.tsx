@@ -54,12 +54,12 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
 
       // Register
       await registerService(name, email, password)
-      await addLog({
-        name: `User registered`,
-        description: `User registered with email: ${email}`,
-        type: 'user-register@email',
-        create_by: email,
-      })
+      // await addLog({
+      //   name: `User registered`,
+      //   description: `User registered with email: ${email}`,
+      //   type: 'user-register@email',
+      //   create_by: email,
+      // })
       setError('')
       // eslint-disable-next-line no-self-assign
       window.location.href = window.location.href
