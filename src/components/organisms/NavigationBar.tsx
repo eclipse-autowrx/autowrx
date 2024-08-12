@@ -52,78 +52,14 @@ const NavigationBar = ({}) => {
 
       <div className="grow"></div>
 
-      <DaGlobalSearch>
-        <DaButton variant="outline-nocolor" className="!pr-24 mr-2">
-          <TbZoom className="w-4 h-4 mr-1" />
-          Search
-        </DaButton>
-      </DaGlobalSearch>
-
-      {/* {model && model.id ? (
-        <>
-          <Link to="/model">
-            <DaButton
-              variant="plain"
-              className={`hover:text-da-primary-500 ${getClassNames('/model')}`}
-            >
-              <div className="flex items-center">
-                <FiGrid style={{ transform: 'scale(1.4)' }} className="" />
-              </div>
-            </DaButton>
-          </Link>
-          <Link to={`/model/${model.id}`}>
-            <DaButton
-              variant="plain"
-              className={getClassNames(`/model/${model.id}`)}
-            >
-              <div className="flex items-center">
-                <FaCar style={{ transform: 'scale(1.4)' }} className="mr-3" />
-                <div className="truncate max-w-[180px]">
-                  {model.name || 'Select Model'}
-                </div>
-              </div>
-            </DaButton>
-          </Link>
-          <Link to={`/model/${model.id}/api`}>
-            <DaButton
-              variant="plain"
-              className={getClassNames(undefined, 'api')}
-            >
-              <div className="flex items-center">
-                <VscListTree
-                  style={{ transform: 'scale(1.4)' }}
-                  className="mr-3"
-                />
-                <div className="truncate max-w-[180px]">Vehicle Signals</div>
-              </div>
-            </DaButton>
-          </Link>
-          <Link to={`/model/${model.id}/library`}>
-            <DaButton
-              variant="plain"
-              className={getClassNames(
-                undefined,
-                'library',
-                'library/prototype',
-              )}
-            >
-              <div className="flex items-center">
-                <ImBooks style={{ transform: 'scale(1.4)' }} className="mr-3" />
-                <div className="truncate max-w-[180px]">Prototypes</div>
-              </div>
-            </DaButton>
-          </Link>
-        </>
-      ) : (
-        <Link to="/model">
-          <DaButton variant="plain" className={getClassNames('/model')}>
-            <div className="flex items-center">
-              <FaCar style={{ transform: 'scale(1.5)' }} className="mr-3" />
-              Select Model
-            </div>
+      {user && (
+        <DaGlobalSearch>
+          <DaButton variant="outline-nocolor" className="!pr-24 mr-2">
+            <TbZoom className="w-4 h-4 mr-1" />
+            Search
           </DaButton>
-        </Link>
-      )} */}
+        </DaGlobalSearch>
+      )}
 
       {isAuthorized && (
         <DaMenu
