@@ -1,6 +1,8 @@
 import { DaCardIntroBig } from '../molecules/DaCardIntroBig'
 import { useNavigate } from 'react-router-dom'
+import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import config from '@/configs/config'
+import useAuthStore from '@/stores/authStore'
 
 const cardData = [
   {
@@ -22,16 +24,14 @@ const cardData = [
     content:
       'Collect and evaluate user feedback to prioritize your development portfolio',
     buttonText: 'Getting Started',
-    path: `model/${config.defaultModelId}/api`,
+    path: `model/${config.defaultModelId}/library/portfolio`,
   },
 ]
 
 const HomeIntroBlock = () => {
   const navigate = useNavigate()
-
-  const handleNavigation = (path: string) => {
-    navigate(path)
-  }
+  const { data: user } = useSelfProfileQuery()
+  const { setOpenLoginDialog } = useAuthStore()
 
   return (
     <div className="flex container justify-center w-full">
@@ -45,7 +45,11 @@ const HomeIntroBlock = () => {
               buttonText={card.buttonText}
               maxWidth={'600px'}
               onClick={() => {
-                handleNavigation(card.path ? card.path : '/')
+                if (user) {
+                  navigate(card.path ? card.path : '/')
+                } else {
+                  setOpenLoginDialog(true)
+                }
               }}
             />
           </div>

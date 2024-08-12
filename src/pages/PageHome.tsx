@@ -1,9 +1,6 @@
 import { HomeIntroBlock } from '@/components/organisms/HomeIntroBlock'
 import { HomePrototypeProposal } from '@/components/organisms/HomePrototypeProposal'
 import { cn } from '@/lib/utils'
-import { DaButton } from '@/components/atoms/DaButton'
-import { TbExternalLink } from 'react-icons/tb'
-import { DaText } from '@/components/atoms/DaText'
 import { HomePartners } from '@/components/organisms/HomePartners'
 import { useTextLib } from '@/hooks/useInstanceCfg'
 
