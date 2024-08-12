@@ -55,8 +55,8 @@ const DaGlobalSearch = ({ state, children }: DaConfirmPopupProps) => {
     const prototypes = searchResults.top10prototypes
     const models = searchResults.top10models
 
-    // console.log('prototypes', prototypes)
-    // console.log('models', models)
+    //
+    //
 
     if (prototypes && models) {
       let results: SearchResult[] = []
@@ -74,7 +74,6 @@ const DaGlobalSearch = ({ state, children }: DaConfirmPopupProps) => {
             parent: { model_id: prototype.model_id },
           }))
         results = [...results, ...filteredPrototypes]
-        console.log('filteredPrototypes', filteredPrototypes)
       }
 
       if (selectedFilters.includes('Models')) {

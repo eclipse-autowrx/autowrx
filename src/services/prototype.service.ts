@@ -13,17 +13,16 @@ export const listPopularPrototypes = async (): Promise<List<Prototype>> => {
   let totalPages = 1
   const addedIds = new Set<string>() // To track added prototype IDs
 
-  // console.log('Fetching models...')
+  //
   const allModels = await listModelsLite()
   const publicModelIds = allModels.results
     .filter((model) => model.visibility === 'public')
     .map((model) => model.id)
 
-  // console.log('Public Model IDs:', publicModelIds)
+  //
 
   // Fetch all prototypes with pagination
   do {
-    console.log(`Fetching prototypes - Page: ${page}`)
     const response = await serverAxios.get<List<Prototype>>('/prototypes', {
       params: {
         fields: [
@@ -41,15 +40,8 @@ export const listPopularPrototypes = async (): Promise<List<Prototype>> => {
         limit,
       },
     })
-
-    // console.log(
-    //   `Fetched ${response.data.results.length} prototypes on page ${page}`,
-    // )
     response.data.results.forEach((prototype) => {
       if (addedIds.has(prototype.id)) {
-        // console.log(
-        //   `Duplicate found: Prototype ID ${prototype.id} on page ${page}`,
-        // )
       } else {
         addedIds.add(prototype.id)
         allResults.push(prototype)
@@ -91,7 +83,6 @@ export const listAllPrototypes = async (): Promise<List<Prototype>> => {
 
   // Fetch all prototypes with pagination
   do {
-    console.log(`Fetching prototypes - Page: ${page}`)
     const response = await serverAxios.get<List<Prototype>>('/prototypes', {
       params: {
         fields: [
@@ -110,14 +101,8 @@ export const listAllPrototypes = async (): Promise<List<Prototype>> => {
       },
     })
 
-    // console.log(
-    //   `Fetched ${response.data.results.length} prototypes on page ${page}`,
-    // )
     response.data.results.forEach((prototype) => {
       if (addedIds.has(prototype.id)) {
-        // console.log(
-        //   `Duplicate found: Prototype ID ${prototype.id} on page ${page}`,
-        // )
       } else {
         addedIds.add(prototype.id)
         allResults.push(prototype)
@@ -125,15 +110,12 @@ export const listAllPrototypes = async (): Promise<List<Prototype>> => {
     })
 
     totalPages = response.data.totalPages
-    // console.log(`Total pages: ${totalPages}`)
     page++
   } while (page <= totalPages)
 
   // const filteredResults = allResults.filter((prototype) =>
   //   publicModelIds.includes(prototype.model_id),
   // )
-
-  // console.log('Filtered Results:', filteredResults)
 
   return {
     results: allResults,

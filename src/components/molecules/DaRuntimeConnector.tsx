@@ -30,9 +30,8 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
 
     useEffect(() => {
       if (!usedAPIs) return
-      console.log('usedAPIs', usedAPIs)
+
       if (activeRtId) {
-        console.log('subscribe_apis usedAPIs', usedAPIs)
         socketio.emit('messageToKit', {
           cmd: 'subscribe_apis',
           to_kit_id: activeRtId,
@@ -52,7 +51,6 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
 
     useEffect(() => {
       if (activeRtId) {
-        console.log('subscribe_apis usedAPIs', usedAPIs)
         socketio.emit('messageToKit', {
           cmd: 'subscribe_apis',
           to_kit_id: activeRtId,
@@ -62,7 +60,6 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     }, [ticker])
 
     const runApp = (code: string) => {
-      console.log('runCode', code)
       if (onNewLog) {
         onNewLog(`Run app\r\n`)
       }
@@ -168,13 +165,9 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       socketio.emit('unregister_client', {})
     }
 
-    const onDisconnect = () => {
-      console.log('socket disconnected')
-    }
+    const onDisconnect = () => {}
 
     const onGetAllKitData = (data: any) => {
-      console.log('list-all-kits-result', data)
-
       // Helper function to extract the part after the last hyphen
       const getLastPart = (kit_id: string) => {
         const parts = kit_id.split('-')
@@ -208,19 +201,16 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         }
       })
 
-      console.log('sortedKits', sortedKits)
       setAllRuntimes(sortedKits)
     }
 
     const onBroadCastToClient = (payload: any) => {
       if (!payload) return
-      console.log(`onBroadCastToClient`)
-      console.log(payload)
     }
 
     const onKitReply = (payload: any) => {
       if (!payload) return
-      // console.log(payload)
+      //
       if (payload.cmd == 'run_python_app') {
         if (payload.isDone) {
           if (onNewLog) {
@@ -238,7 +228,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
 
       if (payload.cmd == 'apis-value') {
         if (payload.result) {
-          // console.log(payload.result)
+          //
           setActiveApis(payload.result)
         }
       }
@@ -252,7 +242,6 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
             className={`border rounded da-label-small px-2 py-1 min-w-[240px] text-da-white bg-da-gray-medium`}
             value={activeRtId as any}
             onChange={(e) => {
-              console.log(`in option, active RT`, e.target.value)
               setActiveRtId(e.target.value)
             }}
           >

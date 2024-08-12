@@ -48,7 +48,7 @@ const DaDashboardWidgetEditor = ({
         newUsedAPIsList.push(item) // Assuming item is the object you showed
       }
     })
-    // console.log('newUsedAPIsList', newUsedAPIsList)
+    //
     setUsedAPIs(newUsedAPIsList)
   }, [prototype.code, activeModelApis])
 

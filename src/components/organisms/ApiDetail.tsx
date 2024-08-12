@@ -38,8 +38,6 @@ const OneOfFromName = (list: string[], name: string) => {
 }
 
 const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
-  console.log(`apiDetails`, apiDetails)
-
   const { bgClass } = getApiTypeClasses(apiDetails.type)
   const { data: model, refetch } = useCurrentModel()
   const [isLoading, setIsLoading] = useState(false)
@@ -65,7 +63,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
         setIsLoading(false)
         await refetch()
         navigate(`/model/${model.id}/api`)
-        // console.log('Wishlist API deleted successfully')
+        //
       } catch (error) {
         setIsLoading(false)
         console.error('Error deleting wishlist API:', error)

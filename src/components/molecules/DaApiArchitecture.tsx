@@ -115,7 +115,7 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
         const parsedSkeleton: Skeleton = JSON.parse(res.skeleton)
         // If the skeleton is found but empty, fetch the parent API skeleton
         if (!parsedSkeleton.nodes || parsedSkeleton.nodes.length === 0) {
-          // console.log("Extended API existed but didn't have any nodes")
+          //
           // Get the bgImage from the parent API
           const parentSkeletonObject = await fetchParentAPISkeleton(
             apiName,
@@ -134,7 +134,7 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
           setSkeleton(tmpSkele)
         } else {
           // If the skeleton is found and not empty, set the skeleton
-          // console.log('Fetched skeleton:', parsedSkeleton)
+          //
           setSkeleton(parsedSkeleton)
         }
       } else {
@@ -144,7 +144,7 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
       // The selected API skeleton is not found, create a new one
       const error = err as AxiosError
       if (error.response && error.response.status === 404) {
-        // console.log('Extended API not found, creating new one.')
+        //
         // Get the bgImage from the parent API
         const parentSkeletonObject = await fetchParentAPISkeleton(
           apiName,
@@ -160,14 +160,14 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
         const tmpSkele = await createNodeWithImage(
           parentSkeletonObject.nodes[0].bgImage,
         )
-        // console.log('Skeleton object', tmpSkele)
+        //
         const createPayload: ExtendedApiCreate = {
           apiName: apiName,
           model: modelID,
           skeleton: JSON.stringify(tmpSkele),
         }
         const res = await createExtendedApi(createPayload)
-        // console.log('Created extendedAPI', res)
+        //
         // The ImageArea lib will trigger onSaveRequested to save the skeleton so no need to set it here
         setExtendedApi(res)
         setSkeleton(tmpSkele)
@@ -221,11 +221,8 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
         setSkeleton(tmpSkele)
         await saveAPISkeleton(tmpSkele)
       } else {
-        console.log('Node not found')
       }
-    } catch (err) {
-      console.log(err)
-    }
+    } catch (err) {}
   }
 
   const saveAPISkeleton = async (skele: any) => {

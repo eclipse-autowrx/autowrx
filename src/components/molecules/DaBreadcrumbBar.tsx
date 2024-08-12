@@ -51,8 +51,8 @@ const DaBreadcrumbBar = () => {
   )
 
   //   useEffect(() => {
-  //     console.log('current model', model)
-  //     console.log('current prototype', prototype)
+  //
+  //
   //   }, [model, prototype])
 
   useEffect(() => {

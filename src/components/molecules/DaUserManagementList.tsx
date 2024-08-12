@@ -39,11 +39,11 @@ const DaUser = ({ user }: { user: User }) => {
       await refetch()
       setOpenDelete(false)
     } catch (error) {
-      console.log(
-        isAxiosError(error)
-          ? error.response?.data?.message
-          : 'Something went wrong',
-      )
+      // console.log(
+      //   isAxiosError(error)
+      //     ? error.response?.data?.message
+      //     : 'Something went wrong',
+      // )
     } finally {
       setLoading(false)
     }

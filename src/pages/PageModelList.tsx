@@ -43,7 +43,7 @@ const PageModelList = () => {
         name: importedModel.model.name || 'New Imported Model',
         visibility: 'private',
       }
-      // console.log('Creating model:', newModel)
+      //
       const createdModel = await createModelService(newModel)
 
       addLog({
@@ -54,7 +54,7 @@ const PageModelList = () => {
         ref_id: createdModel.id,
         ref_type: 'model',
       })
-      // console.log('Created model succesfully:', createdModelId)
+      //
 
       if (importedModel.prototypes.length > 0) {
         const prototypePromises = importedModel.prototypes.map(
@@ -83,7 +83,6 @@ const PageModelList = () => {
         await Promise.all(prototypePromises)
       }
     } catch (err) {
-      console.log('Error creating model and prototypes', err)
     } finally {
       setIsImporting(false)
     }

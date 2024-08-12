@@ -31,7 +31,7 @@ const DaWidgetList: FC<DaWidgetListProps> = ({
       try {
         const widgetDetails = await searchWidget(widget.id)
         if (widgetDetails) {
-          // console.log('widgetDetails', widgetDetails);
+          //
           // Update the active widget with detail information and media
           setActiveWidget(widgetDetails)
         }

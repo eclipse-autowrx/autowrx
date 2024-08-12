@@ -69,7 +69,7 @@ const DaRuntimeControl: FC = ({}) => {
         apis.push(item.name)
       }
     })
-    // console.log('usedApis', apis)
+    //
     setUsedApis(apis)
   }, [code, activeModelApis])
 
@@ -80,15 +80,14 @@ const DaRuntimeControl: FC = ({}) => {
 
   const saveCodeToDb = () => {
     if (code === savedCode) return
-    console.log(`save code to DB`)
-    console.log(code)
+
     let newPrototype = JSON.parse(JSON.stringify(prototype))
     newPrototype.code = code || ''
     setActivePrototype(newPrototype)
   }
 
   // useEffect(() => {
-  //   // console.log(`DaRuntimeControl: activeRtId`, activeRtId)
+  //   //
   // }, [activeRtId])
 
   return (
@@ -102,7 +101,7 @@ const DaRuntimeControl: FC = ({}) => {
           onActiveRtChanged={(rtId: string | undefined) => setActiveRtId(rtId)}
           onNewLog={appendLog}
           onAppExit={() => {
-            // console.log(`onAppExit`)
+            //
             setIsRunning(false)
           }}
         />

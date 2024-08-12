@@ -38,7 +38,7 @@ const PrototypeTabArchitecture = () => {
 
   useEffect(() => {
     if (!prototype) return
-    // console.log("ModelSkeletonPage model", model)
+    //
     let skele = { nodes: [] }
     if (prototype.skeleton) {
       try {
@@ -93,9 +93,7 @@ const PrototypeTabArchitecture = () => {
         ref_type: 'prototype',
       })
       await refetchPrototype()
-    } catch (err) {
-      console.log('error on save skeleton', err)
-    }
+    } catch (err) {}
   }
 
   const createNewNode = async () => {
@@ -162,11 +160,8 @@ const PrototypeTabArchitecture = () => {
         setSkeleton(tmpSkele)
         await callSave(tmpSkele)
       } else {
-        console.log('Node not found')
       }
-    } catch (err) {
-      console.log(err)
-    }
+    } catch (err) {}
     setIsLoading(false)
   }
 

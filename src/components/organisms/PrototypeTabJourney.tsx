@@ -139,7 +139,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
     try {
       setIsUploading(true)
       const { url } = await uploadFileService(file)
-      // console.log('Prototype image url: ', url)
+      //
       setLocalPrototype((prevPrototype) => {
         if (!prevPrototype) return prevPrototype
         return {
@@ -405,7 +405,6 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                       : 'Developing'
                   }
                   onValueChange={(value) => {
-                    console.log('value', value)
                     handleChange('state', value)
                   }}
                   className="w-3/4"

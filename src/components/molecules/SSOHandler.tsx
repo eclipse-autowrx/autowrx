@@ -15,7 +15,6 @@ const SSOHandler = ({ children }: SSOHandlerProps) => {
 
   const handleSSOAuth = async () => {
     try {
-      console.log('Attempt sign in with SSO silent')
       // Attempt to acquire token silently
       if (accounts.length > 0) {
         const response = await instance.acquireTokenSilent({
@@ -27,19 +26,17 @@ const SSOHandler = ({ children }: SSOHandlerProps) => {
         throw new Error('No accounts found')
       }
     } catch (e) {
-      console.log(
-        'Silent token acquisition failed, falling back to loginPopup: ',
-        e,
-      )
+      // console.log(
+      //   'Silent token acquisition failed, falling back to loginPopup: ',
+      //   e,
+      // )
       // Fall back to interactive login if silent token acquisition fails
       await instance
         .loginPopup(loginRequest)
         .then((response) => {
           handleSSOAuthSuccess(response.accessToken)
         })
-        .catch((error) => {
-          console.log('SSO error: ', error)
-        })
+        .catch((error) => {})
     }
   }
 
@@ -58,7 +55,6 @@ const SSOHandler = ({ children }: SSOHandlerProps) => {
         type: 'user-login@email',
         create_by: mail,
       })
-      console.log('SSO login success')
     } catch (loginError) {
       console.error(
         'SSO login failed, attempting to register user:',
@@ -78,7 +74,6 @@ const SSOHandler = ({ children }: SSOHandlerProps) => {
           type: 'user-register@email',
           create_by: mail,
         })
-        console.log('SSO registration success, retrying login')
 
         // Retry logging in after successful registration
         await loginService(mail, id)

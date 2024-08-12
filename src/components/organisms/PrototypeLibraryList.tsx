@@ -120,7 +120,6 @@ const PrototypeLibraryList = () => {
         })
         await refetch()
         setIsLoading(false)
-        console.log('Prototype imported successfully')
       }
     } catch (error) {
       setIsLoading(false)
