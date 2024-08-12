@@ -59,15 +59,12 @@ export const copyText = async (
 ) => {
   try {
     await navigator.clipboard.writeText(text)
-    console.log(copiedText)
-  } catch (error) {
-    console.log(`Error occured while copying to clipboard. ${error}`)
-  }
+  } catch (error) {}
 }
 
 // Dashboard utils : Checking if the selected cells are continuous rectangle
 export const isContinuousRectangle = (pickedCells: number[]): boolean => {
-  // console.log("pickedCells", pickedCells);
+  //
   const numCols = 5
   if (pickedCells.length <= 1) return true // Single cell is always valid
   // Convert cell number to grid position

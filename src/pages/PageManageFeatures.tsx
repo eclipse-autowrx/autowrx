@@ -38,7 +38,7 @@ const PageManageFeatures = () => {
   const fetchPermissions = async () => {
     try {
       const response = await fetchFeaturesService()
-      // console.log('Permissions fetched', response)
+      //
       setFeatures(response)
       if (response.length > 0) {
         setActiveTab(response[0].name)

@@ -53,7 +53,6 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
 
   const saveDashboardCfgToDb = async (dashboardConfig: string) => {
     if (!dashboardConfig) {
-      console.log('No dashboard config provided')
       return
     }
 
@@ -73,10 +72,9 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
       return
     }
 
-    // console.log('Parsed and updated configuration:', updateConfig)
+    //
 
     if (updateConfig === prototype.widget_config || updateConfig === '') {
-      console.log('No changes detected in the configuration.')
       return
     }
 
@@ -91,7 +89,7 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
         })
 
         // await refetch()
-        // console.log('Configuration updated and refetched successfully.')
+        //
       } catch (error) {
         console.error('Error updating prototype service:', error)
       }
@@ -157,7 +155,6 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
             editable={isEditing && isAuthorized}
             language="json"
             onBlur={() => {
-              console.log('CodeEditor On blur')
               setTicker((oldTicker) => oldTicker + 1)
             }}
           />

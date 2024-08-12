@@ -83,7 +83,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
 
   const handleCreateFromScratch = async () => {
     let newWidgetConfig = {}
-    // console.log("handleCreateFromScratch", isWidgetGenAI);
+    //
     try {
       if (!user || !prototype) return
       if (projectCreating) return

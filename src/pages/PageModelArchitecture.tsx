@@ -82,9 +82,7 @@ const PageModelArchitecture = () => {
     try {
       await updateModelService(model.id, { skeleton: JSON.stringify(skele) })
       await refetch()
-    } catch (err) {
-      console.log('error on save skeleton', err)
-    }
+    } catch (err) {}
   }
 
   const createNewNode = async () => {
@@ -124,7 +122,6 @@ const PageModelArchitecture = () => {
   }
 
   const handleNavigate = (url: string) => {
-    console.log('Navigate to:', url)
     url.toLowerCase().startsWith('http')
       ? window.open(url, '_blank')
       : navigate(url)
@@ -152,11 +149,8 @@ const PageModelArchitecture = () => {
         setSkeleton(tmpSkele)
         await callSave(tmpSkele)
       } else {
-        console.log('Node not found')
       }
-    } catch (err) {
-      console.log(err)
-    }
+    } catch (err) {}
     setIsLoading(false)
   }
 

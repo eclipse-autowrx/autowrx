@@ -17,8 +17,7 @@ const PageLogin = () => {
     e.preventDefault()
     try {
       const response = await loginService(username, password)
-      console.log('loginService')
-      console.log(response)
+
       setAccess(response.tokens.access)
     } catch (error) {
       if (isAxiosError(error)) {

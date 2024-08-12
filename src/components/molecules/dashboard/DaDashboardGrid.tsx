@@ -23,10 +23,7 @@ interface PropsWidgetItem {
   apisValue: any
 }
 
-
-
 const WidgetItem: FC<PropsWidgetItem> = ({ widgetConfig, apisValue }) => {
-
   const [rSpan, setRSpan] = useState<number>(0)
   const [cSpan, setCSpan] = useState<number>(0)
   const frameElement = useRef<HTMLIFrameElement>(null)
@@ -38,8 +35,7 @@ const WidgetItem: FC<PropsWidgetItem> = ({ widgetConfig, apisValue }) => {
     if (url && widgetConfig.options) {
       let send_options = JSON.parse(JSON.stringify(widgetConfig.options))
       delete send_options.url
-      url =
-        url + '?options=' + encodeURIComponent(JSON.stringify(send_options))
+      url = url + '?options=' + encodeURIComponent(JSON.stringify(send_options))
       setUrl(url)
     }
   }, [widgetConfig?.url])
@@ -57,32 +53,34 @@ const WidgetItem: FC<PropsWidgetItem> = ({ widgetConfig, apisValue }) => {
       setData[api] = { value: setData[api] }
     }
 
-    frameElement?.current?.contentWindow?.postMessage(JSON.stringify({
-      cmd: "vss-sync",
-      vssData: apisValue
-    }), "*")
-
+    frameElement?.current?.contentWindow?.postMessage(
+      JSON.stringify({
+        cmd: 'vss-sync',
+        vssData: apisValue,
+      }),
+      '*',
+    )
   }, [apisValue])
 
-
-  if (!widgetConfig) return <div
-    className={`flex border border-da-gray-light justify-center items-center select-none da-label-huge text-da-gray-medium`}
-  >
-    .
-  </div>
+  if (!widgetConfig)
+    return (
+      <div
+        className={`flex border border-da-gray-light justify-center items-center select-none da-label-huge text-da-gray-medium`}
+      >
+        .
+      </div>
+    )
 
   return (
-    <div
-      className={`col-span-${cSpan} row-span-${rSpan}`}
-    >
+    <div className={`col-span-${cSpan} row-span-${rSpan}`}>
       <iframe
         ref={frameElement}
         src={url}
         className="w-full h-full m-0"
         allow="camera;microphone"
         onLoad={() => {
-          // console.log('iframe loaded')
-          // console.log(frameElement?.current?.contentWindow)
+          //
+          //
         }}
       ></iframe>
     </div>
@@ -94,14 +92,12 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
   const [renderCell, setRenderCell] = useState<any[]>([])
 
   useEffect(() => {
-    // console.log('DaDashboardGrid, widgetItems', widgetItems)
+    //
     let tmpCells = []
     let usedWidget = new Set()
     for (let i = 1; i <= 10; i++) {
-      const widgetIndex = widgetItems.findIndex((w) =>
-        w.boxes?.includes(i),
-      )
-      if(widgetIndex == -1) {
+      const widgetIndex = widgetItems.findIndex((w) => w.boxes?.includes(i))
+      if (widgetIndex == -1) {
         tmpCells.push(null)
       } else {
         if (!usedWidget.has(widgetIndex)) {
@@ -113,19 +109,18 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
     setRenderCell(tmpCells)
   }, [widgetItems])
 
-  const apisValue = useRuntimeStore(
-    state =>
-      state.apisValue
-  )
+  const apisValue = useRuntimeStore((state) => state.apisValue)
 
   return (
     <div className={`grid h-full w-full grid-cols-5 grid-rows-2`}>
       {/* <div>renderCell: {renderCell.length}</div> */}
-      {
-        renderCell.map((widgetItem, wIndex) => <WidgetItem key={wIndex}
+      {renderCell.map((widgetItem, wIndex) => (
+        <WidgetItem
+          key={wIndex}
           widgetConfig={widgetItem}
-          apisValue={apisValue} />)
-      }
+          apisValue={apisValue}
+        />
+      ))}
       {/* {CELLS.map((cell) => {
         const widgetIndex = widgetItems.findIndex((w) =>
           w.boxes?.includes(cell),

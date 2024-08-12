@@ -8,12 +8,12 @@ const DaDashboard: FC = ({}) => {
   const [widgetItems, setWidgetItems] = useState<any>([])
 
   useEffect(() => {
-    // console.log('DaDashboard, prototype', prototype)
+    //
     let widgetItems = []
     if (prototype?.widget_config) {
       try {
         let dashboard_config = JSON.parse(prototype.widget_config)
-        // console.log('dashboard_config', dashboard_config)
+        //
         if (Array.isArray(dashboard_config)) {
           widgetItems = dashboard_config
         } else {
@@ -28,14 +28,14 @@ const DaDashboard: FC = ({}) => {
         console.error('Error parsing widget config', err)
       }
     }
-    // console.log('widgetItems', widgetItems)
+    //
     processWidgetItems(widgetItems)
     setWidgetItems(widgetItems)
   }, [prototype?.widget_config])
 
   // useEffect(() => {
-  //   console.log("apiValues")
-  //   console.log(apisValue)
+  //
+  //
   // }, [apisValue])
 
   const processWidgetItems = (widgetItems: any[]) => {

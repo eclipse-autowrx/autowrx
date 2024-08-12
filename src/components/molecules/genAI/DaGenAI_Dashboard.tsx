@@ -36,9 +36,7 @@ const DaGenAI_Dashboard = ({
     useListMarketplaceAddOns('GenAI_Dashboard')
   const [canUseGenAI] = usePermissionHook([PERMISSIONS.USE_GEN_AI])
 
-  useEffect(() => {
-    console.log('Permission to use GenAI: ', canUseGenAI)
-  }, [canUseGenAI])
+  useEffect(() => {}, [canUseGenAI])
 
   const { data: user } = useSelfProfileQuery()
   const access = useAuthStore((state) => state.access)

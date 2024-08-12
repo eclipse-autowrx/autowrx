@@ -37,7 +37,6 @@ interface APIDetailsProps {
 const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
   useEffect(() => {
     if (activeApi) {
-      console.log('activeApi', activeApi)
     }
   }, [activeApi])
   return (
@@ -140,7 +139,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
         useList.push(item)
       }
     })
-    console.log('useList', useList)
+
     setUseApis(useList)
   }, [code, activeModelApis])
 

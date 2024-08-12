@@ -49,9 +49,7 @@ const DaGenAIWidget = ({
   const access = useAuthStore((state) => state.access)
   const [canUseGenAI] = usePermissionHook([PERMISSIONS.USE_GEN_AI])
 
-  useEffect(() => {
-    console.log('Permission to use GenAI: ', canUseGenAI)
-  }, [canUseGenAI])
+  useEffect(() => {}, [canUseGenAI])
 
   const builtInAddOns: AddOn[] =
     config.genAI && config.genAI.widget && config.genAI.widget.length > 0
@@ -97,8 +95,8 @@ const DaGenAIWidget = ({
       genCode,
     )
     outerSetiWidgetUrl && outerSetiWidgetUrl(linkUrl)
-    // console.log("linkUrl: ", linkUrl);
-    // console.log("linkStudio: ", linkStudio);
+    //
+    //
   }
 
   useEffect(() => {

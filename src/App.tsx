@@ -15,7 +15,7 @@ function App() {
     if (!currentUser) {
       return
     }
-    // console.log("currentUser", currentUser)
+    //
     let userId = 'anonymous'
     let userName = 'Anonymous'
     if (currentUser) {

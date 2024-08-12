@@ -64,8 +64,7 @@ const PrototypeTabCode: FC = ({}) => {
 
   const saveCodeToDb = async () => {
     if (code === savedCode) return
-    console.log(`save code to DB`)
-    console.log(code)
+
     let newPrototype = JSON.parse(JSON.stringify(prototype))
     newPrototype.code = code || ''
     setActivePrototype(newPrototype)
@@ -77,9 +76,7 @@ const PrototypeTabCode: FC = ({}) => {
       })
 
       // await refetchPrototype()
-    } catch (err) {
-      console.log('error on save skeleton', err)
-    }
+    } catch (err) {}
   }
 
   if (!prototype) {
