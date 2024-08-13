@@ -12,8 +12,13 @@ import DaLoading from '../atoms/DaLoading'
 
 const HomePrototypeProposal = () => {
   const { data: user } = useSelfProfileQuery()
-  const [popularPrototypes, setPopularPrototypes] = useState<Prototype[]>([])
-  const [recentPrototypes, setRecentPrototypes] = useState<Prototype[]>([])
+  const [popularPrototypes, setPopularPrototypes] = useState<
+    Prototype[] | undefined
+  >(undefined)
+  const [recentPrototypes, setRecentPrototypes] = useState<
+    Prototype[] | undefined
+  >(undefined)
+
   const [renderedPrototypes, setRenderedPrototypes] = useState<Prototype[]>([])
   const [activeTab, setActiveTab] = useState<'popular' | 'recent'>('recent')
 
@@ -31,9 +36,9 @@ const HomePrototypeProposal = () => {
 
   useEffect(() => {
     if (activeTab === 'popular') {
-      setRenderedPrototypes(popularPrototypes)
+      setRenderedPrototypes(popularPrototypes || [])
     } else {
-      setRenderedPrototypes(recentPrototypes)
+      setRenderedPrototypes(recentPrototypes || [])
     }
   }, [activeTab, popularPrototypes, recentPrototypes])
 
@@ -82,6 +87,10 @@ const HomePrototypeProposal = () => {
                 activeTab === 'popular'
                   ? 'There are no popular prototypes available yet.'
                   : 'Your recently accessed prototypes will be shown here.'
+              }
+              stopLoading={
+                (activeTab === 'popular' && popularPrototypes !== undefined) ||
+                (activeTab === 'recent' && recentPrototypes !== undefined)
               }
             />
           </div>
