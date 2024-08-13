@@ -157,7 +157,7 @@ const PageModelDetail = () => {
       <DaLoading
         text="Loading model..."
         timeout={10}
-        timeoutText="Model not found"
+        timeoutText="Model not found or access denied"
       />
     )
   }

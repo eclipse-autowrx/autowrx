@@ -80,7 +80,7 @@ const PrototypeLibraryList = () => {
     return (
       <DaLoading
         text="Loading prototypes..."
-        timeoutText="Failed to load prototypes. Please try again."
+        timeoutText="Failed to load prototype library or access denied"
       />
     )
   }

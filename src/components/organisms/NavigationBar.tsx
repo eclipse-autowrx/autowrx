@@ -1,18 +1,17 @@
-import { useLocation, Link } from 'react-router-dom'
+import { useLocation, Link, useNavigate } from 'react-router-dom'
 import { DaImage } from '../atoms/DaImage'
 import { DaButton } from '../atoms/DaButton'
 import DaMenu from '../atoms/DaMenu'
 import DaNavUser from '../molecules/DaNavUser'
 import { HiMenu } from 'react-icons/hi'
 import { TbUsers, TbZoom, TbStack2 } from 'react-icons/tb'
-import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import DaGlobalSearch from '../molecules/DaGlobalSearch'
+import useAuthStore from '@/stores/authStore'
 
 const NavigationBar = ({}) => {
-  const { data: user } = useSelfProfileQuery()
-  const location = useLocation()
+  const { user } = useAuthStore()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
 
   return (
