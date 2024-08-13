@@ -10,6 +10,7 @@ import useAuthStore from '@/stores/authStore'
 import { AuthToken } from '@/types/token.type'
 import { serverAxios } from '@/services/base'
 import { shallow } from 'zustand/shallow'
+import { useNavigate } from 'react-router-dom'
 
 type QueryProviderProps = {
   children: React.ReactNode
@@ -17,6 +18,7 @@ type QueryProviderProps = {
 
 const QueryProvider = ({ children }: QueryProviderProps) => {
   const refreshingToken = useRef(false)
+  const navigate = useNavigate()
 
   const [queryClient] = useState(
     () =>
@@ -41,6 +43,7 @@ const QueryProvider = ({ children }: QueryProviderProps) => {
                 queryClient.invalidateQueries({ queryKey: query.queryKey })
               } catch (error) {
                 console.error('Error refreshing token', error)
+                navigate('/')
               }
             }
           },

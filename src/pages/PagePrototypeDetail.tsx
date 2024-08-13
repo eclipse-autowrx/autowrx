@@ -185,7 +185,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
     <DaLoading
       text="Loading prototype..."
       timeout={20}
-      timeoutText="Failed to load prototype. Please try again later"
+      timeoutText="Failed to load prototype or access denied"
     />
   )
 }

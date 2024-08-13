@@ -31,8 +31,9 @@ const DaBreadcrumbBar = () => {
     path: string,
     name: string,
     isLast: boolean,
+    key: string,
   ) => (
-    <>
+    <React.Fragment key={key}>
       <DaBreadcrumbSeparator />
       <DaBreadcrumbItem>
         <DaBreadcrumbLink>
@@ -40,20 +41,15 @@ const DaBreadcrumbBar = () => {
             to={path}
             className={cn(
               'text-da-white hover:opacity-75',
-              isLast && 'font-bold border-b',
+              isLast && ' border-b',
             )}
           >
             {name}
           </Link>
         </DaBreadcrumbLink>
       </DaBreadcrumbItem>
-    </>
+    </React.Fragment>
   )
-
-  //   useEffect(() => {
-  //
-  //
-  //   }, [model, prototype])
 
   useEffect(() => {
     const pathnames = location.pathname.split('/').filter((x) => x)
@@ -123,7 +119,12 @@ const DaBreadcrumbBar = () => {
     paths.forEach((breadcrumb, index) => {
       const isLast = index === paths.length - 1
       breadcrumbList.push(
-        generateBreadcrumbItem(breadcrumb.path, breadcrumb.name, isLast),
+        generateBreadcrumbItem(
+          breadcrumb.path,
+          breadcrumb.name,
+          isLast,
+          breadcrumb.key,
+        ),
       )
     })
 
