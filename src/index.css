@@ -119,7 +119,7 @@
 /*********** For Text Component ********************/
 
 .da-label-regular {
-  @apply da-txt-regular font-light;
+  @apply da-txt-regular font-normal;
 }
 
 .da-label-regular-medium {
@@ -135,7 +135,7 @@
 }
 
 .da-label-small {
-  @apply da-txt-small font-light;
+  @apply da-txt-small font-normal;
 }
 
 .da-label-small-bold {
@@ -155,7 +155,7 @@
 }
 
 .da-label-huge {
-  @apply da-txt-huge font-light;
+  @apply da-txt-huge font-normal;
 }
 
 .da-label-huge-bold {
