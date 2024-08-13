@@ -23,7 +23,13 @@ export const listUsersService = async () => {
       totalResults: users.length,
     }
   }
-  return (await serverAxios.get<List<User>>('/users')).data
+  const response = await serverAxios.get<List<User>>('/users', {
+    params: {
+      limit: 50, // Temporarily set to 50
+    },
+  })
+
+  return response.data
 }
 
 export const createUserService = async (data: UserCreate) => {
