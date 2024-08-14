@@ -4,7 +4,6 @@ import { DaText } from '../atoms/DaText'
 import DaUserProfile from './DaUserProfile'
 import { User } from '@/types/user.type'
 import { TbMinus, TbUserPlus } from 'react-icons/tb'
-import { maskEmail } from '@/lib/utils'
 
 interface UserListProps {
   users: User[]

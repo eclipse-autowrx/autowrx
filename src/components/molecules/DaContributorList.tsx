@@ -10,12 +10,12 @@ import {
   updateModelPermissionService,
   deleteModelPermissionService,
 } from '@/services/model.service'
-import { maskEmail } from '@/lib/utils'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import DaLoading from '../atoms/DaLoading'
 import DaTabItem from '../atoms/DaTabItem'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { addLog } from '@/services/log.service'
+import { maskEmail } from '@/lib/utils'
 
 interface ContributorListProps {
   className?: string
@@ -44,7 +44,7 @@ const UserItem = ({ user, onRemoveUser }: UserItemProps) => {
             {user.name ?? 'Loading...'}
           </DaText>
           <DaText variant="small" className="text-da-gray-medium">
-            {maskEmail(user.email)}
+            {maskEmail(user?.email ?? '')}
           </DaText>
         </div>
       </div>
@@ -164,8 +164,8 @@ const DaContributorList = ({ className }: ContributorListProps) => {
         popupState={[open, setOpen]}
         excludeUsers={
           activeTab === 'contributors'
-            ? model.contributors ?? []
-            : model.members ?? []
+            ? (model.contributors ?? [])
+            : (model.members ?? [])
         }
       />
     </div>

@@ -87,9 +87,11 @@ const DaSelectUserPopup = ({
                           {user.name}
                         </DaText>
                         <div className="da-label-small italic">
-                          {maskEmail(user.email)}{' '}
+                          {maskEmail(user?.email ?? '')} {''}
                           {user.provider && (
-                            <span className="">via @{user.provider}</span>
+                            <span>
+                              {''}via @{user.provider}
+                            </span>
                           )}
                         </div>
                       </div>
