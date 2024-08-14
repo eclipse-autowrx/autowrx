@@ -19,6 +19,7 @@ const DaUserProfile = ({
   className,
   avatarClassName = 'mr-2 w-5 h-5',
   showEmail = false,
+  textClassName,
 }: DaUserProfileProps) => {
   const [user, setUser] = useState<User>()
 
@@ -34,7 +35,9 @@ const DaUserProfile = ({
         className={avatarClassName}
         src={user?.image_file ?? '/imgs/profile.png'}
       />
-      <DaText variant="regular-medium">{user?.name}</DaText>
+      <DaText variant="regular-medium" className={textClassName}>
+        {user?.name}
+      </DaText>
       {showEmail && (
         <DaText variant="small" className="ml-2">
           {maskEmail(user?.email ?? '')}

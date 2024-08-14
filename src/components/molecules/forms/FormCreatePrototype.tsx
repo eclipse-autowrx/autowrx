@@ -10,6 +10,7 @@ import useCurrentModel from '@/hooks/useCurrentModel'
 import { isAxiosError } from 'axios'
 import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 const initialState = {
   name: '',
@@ -45,6 +46,8 @@ const FormCreatePrototype = ({
   const { data: model } = useCurrentModel()
   const { refetch } = useListModelPrototypes(model ? model.id : '')
   const { toast } = useToast()
+  const navigate = useNavigate()
+  const location = useLocation()
 
   const { data: currentUser } = useSelfProfileQuery()
 
@@ -129,6 +132,8 @@ LOOP.close()`,
       })
 
       setData(initialState)
+      // Navigate to new created prototype
+      navigate(`/model/${model_id}/library/list/${response.id}`)
       onClose()
     } catch (error) {
       if (isAxiosError(error)) {

@@ -274,8 +274,8 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
   }, [model])
 
   return (
-    <div className={`flex flex-col w-full h-fit items-center`}>
-      <div className={`flex flex-col w-full h-fit items-center`}>
+    <div className={`flex flex-col w-full h-full items-center`}>
+      <div className={`flex flex-col w-full h-full items-center`}>
         {isFetching ? (
           <div className="flex w-full items-center justify-center py-2">
             <CircularProgress size="1rem" style={{ color: '#4b5563' }} />

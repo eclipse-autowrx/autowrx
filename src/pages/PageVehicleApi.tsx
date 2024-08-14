@@ -9,6 +9,7 @@ import DaTabItem from '@/components/atoms/DaTabItem'
 import DaTreeView from '@/components/molecules/DaTreeView'
 import DaLoadingWrapper from '@/components/molecules/DaLoadingWrapper'
 import useModelStore from '@/stores/modelStore'
+import { TbBinaryTree2, TbList } from 'react-icons/tb'
 
 const PageVehicleApi = () => {
   const { model_id, tab } = useParams()
@@ -33,24 +34,26 @@ const PageVehicleApi = () => {
       timeoutMessage="Failed to load Signals. Please try again."
     >
       <div className="grid grid-cols-12 auto-cols-max h-full w-full">
-        <div className="col-span-12 flex w-full h-10 items-center justify-between px-4 bg-da-primary-100 sticky top-0 z-20 ">
-          <DaText variant="regular-bold" className="text-da-primary-500">
-            COVESA VSS 4.1
-          </DaText>
+        <div className="sticky top-0 col-span-12 flex w-full h-10 items-center justify-between bg-da-gray-light">
           <div className="flex space-x-2 h-full">
             <DaTabItem
               active={activeTab === 'list'}
               onClick={() => setActiveTab('list')}
             >
+              <TbList className="w-5 h-5 mr-2" />
               List View
             </DaTabItem>
             <DaTabItem
               active={activeTab === 'tree'}
               onClick={() => setActiveTab('tree')}
             >
+              <TbBinaryTree2 className="w-5 h-5 mr-2 rotate-[270deg]" />
               Tree View
             </DaTabItem>
           </div>
+          {/* <DaText variant="regular-bold" className="text-da-primary-500 pr-4">
+            COVESA VSS 4.1
+          </DaText> */}
         </div>
         {activeTab === 'list' && (
           <>

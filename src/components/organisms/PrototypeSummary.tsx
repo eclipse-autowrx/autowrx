@@ -15,16 +15,16 @@ interface PrototypeSummaryProps {
 
 const PrototypeSummary = ({ prototype }: PrototypeSummaryProps) => {
   return (
-    <div className="rounded-lg w-full">
+    <div className="flex flex-col h-full w-full">
       <DaImage
         src={
           prototype.image_file
             ? prototype.image_file
             : 'https://placehold.co/600x400'
         }
-        className="w-full object-cover max-h-[400px]"
+        className="flex w-full object-cover max-h-[400px]"
       />
-      <div className="p-5">
+      <div className="flex flex-col h-full p-4">
         <div className="flex justify-between items-center">
           <DaText variant="title" className="text-da-primary-500">
             {prototype.name}
@@ -40,43 +40,34 @@ const PrototypeSummary = ({ prototype }: PrototypeSummaryProps) => {
         </div>
         <DaUserProfile className="mt-2" userId={prototype.created_by} />
 
-        {prototype.tags && (
-          <div className="flex flex-wrap mt-4">
-            {prototype.tags.map((tag) => (
-              <DaTag variant={'secondary'} className="mr-2 mb-2">
-                {tag.tag}
-              </DaTag>
-            ))}
-          </div>
-        )}
-
-        <DaTableProperty
-          properties={[
-            {
-              name: 'Problem',
-              value: prototype.description.problem,
-            },
-            {
-              name: 'Says who?',
-              value: prototype.description.says_who,
-            },
-            {
-              name: 'Solution',
-              value: prototype.description.solution,
-            },
-            {
-              name: 'Status',
-              value:
-                prototype.state === 'Released' ||
-                prototype.state === 'Developing'
-                  ? prototype.state
-                  : 'Developing',
-            },
-            { name: 'Complexity', value: prototype.complexity_level },
-          ]}
-          maxWidth="500px"
-          className="mt-4"
-        />
+        <div className="flex h-full">
+          <DaTableProperty
+            properties={[
+              {
+                name: 'Problem',
+                value: prototype.description.problem,
+              },
+              {
+                name: 'Says who?',
+                value: prototype.description.says_who,
+              },
+              {
+                name: 'Solution',
+                value: prototype.description.solution,
+              },
+              {
+                name: 'Status',
+                value:
+                  prototype.state === 'Released' ||
+                  prototype.state === 'Developing'
+                    ? prototype.state
+                    : 'Developing',
+              },
+              { name: 'Complexity', value: prototype.complexity_level },
+            ]}
+            className="mt-2"
+          />
+        </div>
       </div>
     </div>
   )

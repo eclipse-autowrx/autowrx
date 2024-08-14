@@ -8,14 +8,14 @@ interface DaTablePropertyItemProps {
 
 const DaTablePropertyItem = ({ property, value }: DaTablePropertyItemProps) => {
   return (
-    <div className="grid grid-cols-4 lg:grid-cols-5 gap-4 py-2 text-da-gray-medium">
-      <div className="col-span-1 ">
-        <DaText variant="regular-bold" className="">
+    <div className="flex w-full h-fit py-2 text-da-gray-medium space-x-4">
+      <div className="flex w-[150px]">
+        <DaText variant="small-bold" className="!flex">
           {property}
         </DaText>
       </div>
-      <div className="col-span-3 lg:grid-cols-5">
-        <DaText variant="regular" className="">
+      <div className="flex w-full">
+        <DaText variant="small" className="!flex">
           {value}
         </DaText>
       </div>
@@ -25,19 +25,19 @@ const DaTablePropertyItem = ({ property, value }: DaTablePropertyItemProps) => {
 
 interface DaTablePropertyProps {
   properties: { name: string; value: string }[]
-  maxWidth?: string
   className?: string
 }
 
 export const DaTableProperty = ({
   properties,
-  maxWidth = '1500px',
   className,
 }: DaTablePropertyProps) => {
   return (
     <div
-      className={cn('rounded-lg bg-da-white', className)}
-      style={{ maxWidth: maxWidth }}
+      className={cn(
+        'flex flex-col h-full w-full rounded-lg bg-da-white',
+        className,
+      )}
     >
       {properties.map((item, index) => (
         <DaTablePropertyItem

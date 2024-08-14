@@ -132,8 +132,6 @@ const FormCreateDiscussion = ({
         placeholder={replyingId ? 'Replying...' : 'Start a discussion'}
       />
 
-      <div className="grow"></div>
-
       {/* Error */}
       {error && (
         <DaText variant="small" className="mt-2 text-da-accent-500">

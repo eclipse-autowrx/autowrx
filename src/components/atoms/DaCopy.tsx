@@ -46,7 +46,7 @@ const DaCopy = ({
   return (
     <Suspense>
       <div
-        className="flex items-center cursor-pointer"
+        className="flex w-full items-center cursor-pointer truncate"
         onClick={handleCopyClick}
       >
         {children}

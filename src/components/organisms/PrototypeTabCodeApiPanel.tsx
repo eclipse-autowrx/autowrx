@@ -150,7 +150,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   }
 
   return (
-    <>
+    <div className="flex flex-col w-full h-full">
       <DaPopup state={popupApi} width={'800px'} trigger={<span></span>}>
         <APIDetails
           activeApi={activeApi}
@@ -159,13 +159,13 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
           }}
         />
       </DaPopup>
-      <DaText variant="sub-title" className="px-4 mt-2">
+      <DaText variant="regular-bold" className="px-4">
         Used Signals({useApis.length})
       </DaText>
       {useApis && useApis.length > 0 && (
         <div className="mb-2">
-          <div className="flex flex-col w-full px-4 scroll-gray">
-            <div className="max-h-[150px] mt-2 overflow-y-auto scroll-gray">
+          <div className="flex flex-col w-full px-4">
+            <div className="max-h-[150px] mt-2 overflow-y-auto scroll">
               {useApis.map((item: any, index: any) => (
                 <DaApiListItem
                   key={index}
@@ -179,13 +179,13 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
           </div>
         </div>
       )}
-      <DaText variant="sub-title" className="px-4 mt-2">
+      <DaText variant="regular-bold" className="px-4">
         All Signals
       </DaText>
-      <div className="grow overflow-hidden">
+      <div className="flex w-full min-h-[300px] overflow-hidden">
         <ModelApiList onApiClick={onApiClicked} readOnly={true} />
       </div>
-    </>
+    </div>
   )
 }
 

@@ -165,7 +165,7 @@ const ModelApiList = ({ onApiClick, readOnly }: ModelApiListProps) => {
           </DaPopup>
         )}
       </div>
-      <div className="flex-grow overflow-y-auto">
+      <div className="flex flex-col h-full w-full overflow-y-auto">
         {filteredApiList && filteredApiList.length > 0 ? (
           <DaApiList
             apis={filteredApiList}

@@ -29,7 +29,12 @@ const DaDiscussions = ({ refId, refType, className }: DaDiscussionsProps) => {
   }, [refId, refType])
 
   return (
-    <div className={cn('px-2 w-full min-w-[500px] ', className)}>
+    <div
+      className={cn(
+        'flex flex-col w-full min-w-[500px] h-full px-2',
+        className,
+      )}
+    >
       <DaText
         variant="sub-title"
         className="flex items-center text-da-primary-500"
@@ -42,11 +47,11 @@ const DaDiscussions = ({ refId, refType, className }: DaDiscussionsProps) => {
           <DaLoader className="m-auto" />
         </div>
       ) : (
-        <>
+        <div className="flex flex-col w-full h-full">
           {/* Empty state */}
           {!data ||
             (data.results.length === 0 && (
-              <div className="p-5 rounded-mb my-4 bg-da-gray-light/50 flex flex-col items-center gap-2 rounded-md">
+              <div className="flex flex-col h-full p-5 rounded-mb mt-4 bg-da-gray-light/50 items-center gap-2 rounded-md">
                 <TbBubble className="text-da-primary-500 da-label-huge" />
                 <DaText variant="small" className="text-da-gray-medium">
                   No discussion yet. Be the first one to start a discussion!
@@ -56,7 +61,7 @@ const DaDiscussions = ({ refId, refType, className }: DaDiscussionsProps) => {
 
           {/* List */}
           {data && (
-            <div className="my-4">
+            <div className="flex w-full h-full mt-2">
               {data.results.map((discussion, index) => (
                 <Fragment key={discussion.id}>
                   <DaDiscussionItem refetch={refetch} data={discussion} />
@@ -67,7 +72,7 @@ const DaDiscussions = ({ refId, refType, className }: DaDiscussionsProps) => {
               ))}
             </div>
           )}
-        </>
+        </div>
       )}
 
       <div ref={ref} />

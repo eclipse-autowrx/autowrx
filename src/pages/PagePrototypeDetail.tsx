@@ -8,25 +8,14 @@ import DaTabItem from '@/components/atoms/DaTabItem'
 import {
   TbBinaryTree,
   TbCode,
-  TbDownload,
   TbGauge,
-  TbMessage,
   TbMessagePlus,
   TbRoute,
   TbScale,
 } from 'react-icons/tb'
-import { DaButton } from '@/components/atoms/DaButton'
-import DaDiscussions from '@/components/molecules/DaDiscussions'
-import DaPopup from '@/components/atoms/DaPopup'
 import { saveRecentPrototype } from '@/services/prototype.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
-// import PrototypeTabCode from '@/components/organisms/PrototypeTabCode'
-// import PrototypeTabDashboard from '@/components/organisms/PrototypeTabDashboard'
-// import PrototypeTabJourney from '@/components/organisms/PrototypeTabJourney'
-// import PrototypeTabFeedback from '@/components/organisms/PrototypeTabFeedback'
-// import PrototypeTabHomologation from '@/components/organisms/PrototypeTabHomologation'
-// import PrototypeTabArchitecture from '@/components/organisms/PrototypeTabArchitecture'
 const PrototypeTabCode = lazy(
   () => import('@/components/organisms/PrototypeTabCode'),
 )
@@ -71,29 +60,8 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
   }, [prototype, tab, user])
 
   return prototype ? (
-    <div className="flex flex-col w-full h-full">
-      {/* <div className="flex px-4 py-2 bg-da-primary-500 justify-between items-center">
-        <DaText variant="sub-title" className="text-white">
-          {prototype.name}
-        </DaText>
-        <div className="flex space-x-2 w-1/2 justify-end">
-          <DaPopup
-            trigger={
-              <DaButton
-                variant="plain"
-                className="!text-da-white !bg-transparent hover:opacity-75"
-                size="sm"
-              >
-                <TbMessage className="w-5 h-5 mr-2" />
-                Discussion
-              </DaButton>
-            }
-          >
-            <DaDiscussions refId={prototype.id} refType="prototype" />
-          </DaPopup>
-        </div>
-      </div> */}
-      <div className="flex px-2 py-0 bg-da-gray-light min-h-10">
+    <div className="flex flex-col w-full h-full relative">
+      <div className="sticky flex top-0 py-0 bg-da-gray-light min-h-10 ">
         <DaTabItem
           active={isDefaultTab}
           to={`/model/${model_id}/library/prototype/${prototype_id}/journey`}
@@ -143,7 +111,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           Feedback
         </DaTabItem>
       </div>
-      <div className="w-full min-h-[100px] grow">
+      <div className="flex flex-col h-full  scroll overflow-y-auto">
         {isDefaultTab && (
           <Suspense>
             <PrototypeTabJourney prototype={prototype} />
