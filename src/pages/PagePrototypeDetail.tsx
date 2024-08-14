@@ -61,7 +61,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
 
   return prototype ? (
     <div className="flex flex-col w-full h-full relative">
-      <div className="sticky flex top-0 py-0 bg-da-gray-light min-h-10 ">
+      <div className="sticky flex top-0 py-0 bg-da-gray-light min-h-10">
         <DaTabItem
           active={isDefaultTab}
           to={`/model/${model_id}/library/prototype/${prototype_id}/journey`}
@@ -111,7 +111,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           Feedback
         </DaTabItem>
       </div>
-      <div className="flex flex-col h-full  scroll overflow-y-auto">
+      <div className="flex flex-col h-full overflow-y-auto">
         {isDefaultTab && (
           <Suspense>
             <PrototypeTabJourney prototype={prototype} />

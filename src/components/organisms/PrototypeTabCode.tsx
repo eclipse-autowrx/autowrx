@@ -84,12 +84,17 @@ const PrototypeTabCode: FC = ({}) => {
   }
 
   return (
-    <div className="flex flex-col w-full h-full">
-      <div className="flex w-full p-2 justify-between">
+    <div className="flex flex-col w-full h-[calc(100%-50px)]">
+      <div className="flex w-full min-h-10 px-1 justify-between items-center border-b">
         {isAuthorized && (
           <div className="flex space-x-2">
             <div className="flex space-x-2">
-              <DaButton size="sm" variant="outline-nocolor" className="mr-2">
+              <DaButton
+                size="sm"
+                variant="outline-nocolor"
+                className="mr-2"
+                disabled
+              >
                 <TbDotsVertical className="mr-1 text-da-primary-500" />
                 Action
               </DaButton>
@@ -121,14 +126,14 @@ const PrototypeTabCode: FC = ({}) => {
               </DaPopup>
             </div>
 
-            <DaButton size="sm" variant="outline-nocolor">
+            <DaButton size="sm" variant="outline-nocolor" disabled>
               <TbRocket className="w-4 h-4 mr-1 text-da-primary-500" />
               Deploy
             </DaButton>
           </div>
         )}
 
-        <div className="flex w-fit justify-end">
+        <div className="flex w-fit h-full justify-end">
           <DaTabItem
             small
             active={activeTab == 'api'}
@@ -170,7 +175,7 @@ const PrototypeTabCode: FC = ({}) => {
             />
           </Suspense>
         </div>
-        {/* <div className="flex flex-col w-1/2 h-full">
+        <div className="flex flex-col w-1/2 h-full">
           {activeTab == 'api' && (
             <Suspense>
               <PrototypeTabCodeApiPanel code={code || ''} />
@@ -181,7 +186,7 @@ const PrototypeTabCode: FC = ({}) => {
               <PrototypeTabCodeDashboardCfg />
             </Suspense>
           )}
-        </div> */}
+        </div>
       </div>
     </div>
   )

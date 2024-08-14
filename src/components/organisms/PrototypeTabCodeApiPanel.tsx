@@ -11,20 +11,35 @@ import { DaCopy } from '../atoms/DaCopy'
 
 interface ApiCodeBlockProps {
   apiName: string
-  onCopied: () => void
+  sampleLabel: string
 }
 
-const ApiCodeBlock = ({ apiName, onCopied }: ApiCodeBlockProps) => {
+const ApiCodeBlock = ({ apiName, sampleLabel }: ApiCodeBlockProps) => {
   const [code, setCode] = useState<any>(null)
   useEffect(() => {
     setCode(`await v${apiName.substring(1)}`)
   }, [apiName])
   return (
-    <div className="flex px-3 py-3 mt-2 bg-gray-100 rounded justify-between">
-      <DaText variant="regular" className=" font-mono">
-        {code}
-      </DaText>
-      <DaCopy textToCopy={code} label="Copy"></DaCopy>
+    <div className="flex flex-col">
+      <DaCopy textToCopy={code} className="items-center w-fit pt-3">
+        <div className="flex w-full items-center">
+          <DaText
+            variant="regular-bold"
+            className="w-fit shrink-0 text-da-gray-medium"
+          >
+            Sample code to subscribe API value
+          </DaText>
+        </div>
+      </DaCopy>
+
+      <div className="flex flex-wrap w-full min-w-fit px-3 py-3 mt-2 bg-gray-100 rounded justify-between">
+        <DaText
+          variant="regular"
+          className="w-full font-mono whitespace-pre-line"
+        >
+          {code}
+        </DaText>
+      </div>
     </div>
   )
 }
@@ -67,43 +82,22 @@ const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
               </div>
             )}
             {['actuator', 'sensor'].includes(activeApi.type) && (
-              <div className="mt-4">
-                <DaText variant="regular" className="text-da-gray-medium">
-                  Sample code to get API value:
-                </DaText>
-                <ApiCodeBlock
-                  apiName={activeApi.name + '.get()'}
-                  onCopied={() => {
-                    if (requestCancel) requestCancel()
-                  }}
-                />
-              </div>
+              <ApiCodeBlock
+                apiName={activeApi.name + '.get()'}
+                sampleLabel="Sample code to get API value"
+              />
             )}
             {['actuator'].includes(activeApi.type) && (
-              <div className="mt-4">
-                <DaText variant="regular" className="text-da-gray-medium">
-                  Sample code to set API value:
-                </DaText>
-                <ApiCodeBlock
-                  apiName={activeApi.name + '.set(value)'}
-                  onCopied={() => {
-                    if (requestCancel) requestCancel()
-                  }}
-                />
-              </div>
+              <ApiCodeBlock
+                apiName={activeApi.name + '.set(value)'}
+                sampleLabel="Sample code to set API value"
+              />
             )}
             {['actuator', 'sensor'].includes(activeApi.type) && (
-              <div className="mt-4">
-                <DaText variant="regular" className="text-da-gray-medium">
-                  Sample code to subscribe API value:
-                </DaText>
-                <ApiCodeBlock
-                  apiName={activeApi.name + '.subscribe(function_name)'}
-                  onCopied={() => {
-                    if (requestCancel) requestCancel()
-                  }}
-                />
-              </div>
+              <ApiCodeBlock
+                apiName={activeApi.name + '.subscribe(function_name)'}
+                sampleLabel="Sample code to subscribe API value"
+              />
             )}
           </div>
         </div>
@@ -159,7 +153,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
           }}
         />
       </DaPopup>
-      <DaText variant="regular-bold" className="px-4">
+      <DaText variant="regular-bold" className="px-4 mt-2">
         Used Signals({useApis.length})
       </DaText>
       {useApis && useApis.length > 0 && (

@@ -1,6 +1,7 @@
 import { TbCopy } from 'react-icons/tb'
 import { useToast } from '../molecules/toaster/use-toast'
 import { Suspense, lazy } from 'react'
+import { cn } from '@/lib/utils'
 const DaText = lazy(() => import('./DaText'))
 
 interface DaCopyProps {
@@ -8,6 +9,7 @@ interface DaCopyProps {
   children?: React.ReactNode
   showIcon?: boolean
   label?: string
+  className?: string
 }
 
 const DaCopy = ({
@@ -15,6 +17,7 @@ const DaCopy = ({
   children,
   showIcon = true,
   label,
+  className,
 }: DaCopyProps) => {
   const { toast } = useToast()
 
@@ -46,7 +49,10 @@ const DaCopy = ({
   return (
     <Suspense>
       <div
-        className="flex w-full items-center cursor-pointer truncate"
+        className={cn(
+          'flex w-full items-center cursor-pointer truncate',
+          className,
+        )}
         onClick={handleCopyClick}
       >
         {children}
