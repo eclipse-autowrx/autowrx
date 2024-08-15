@@ -20,7 +20,7 @@ const PrototypeSummary = ({ prototype }: PrototypeSummaryProps) => {
         src={
           prototype.image_file
             ? prototype.image_file
-            : 'https://placehold.co/600x400'
+            : '/imgs/default_prototype_cover.jpg'
         }
         className="flex w-full object-cover max-h-[400px]"
       />

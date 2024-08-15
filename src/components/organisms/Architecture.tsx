@@ -205,7 +205,7 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
   return (
     <div className="flex w-full h-full bg-da-white text-da-gray-medium select-none">
       <div className="flex flex-col min-w-fit max-w-[400px] px-4 h-full border-r pt-3">
-        <div className="flex py-1 mb-2 items-center justify-between">
+        <div className="flex py-1 mb-2 items-center justify-between space-x-8">
           <DaText variant="sub-title">Architecture Mapping</DaText>
           {isAuthorized && (
             <DaButton onClick={createNewNode} size="sm" variant="solid">

@@ -29,7 +29,7 @@ const DaItemStandard: React.FC<DaItemStandardProps> = ({
         src={
           prototype.image_file
             ? prototype.image_file
-            : 'https://placehold.co/600x400'
+            : '/imgs/default_prototype_cover.jpg'
         }
         alt="Image"
         className="flex w-full h-full rounded-lg"
