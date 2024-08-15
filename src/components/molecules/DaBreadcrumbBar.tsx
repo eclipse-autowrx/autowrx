@@ -143,7 +143,7 @@ const DaBreadcrumbBar = () => {
       <DaBreadcrumb className="flex text-da-white da-label-regular-bold">
         <DaBreadcrumbList>{breadcrumbs}</DaBreadcrumbList>
       </DaBreadcrumb>
-      {isAuthorized && pathnames.includes('prototype') && (
+      {isAuthorized && pathnames.includes('prototype') && prototype?.id && (
         <DaPopup
           trigger={
             <DaButton
@@ -156,7 +156,11 @@ const DaBreadcrumbBar = () => {
             </DaButton>
           }
         >
-          <DaDiscussions refId={prototype?.id ?? ''} refType="prototype" />
+          <DaDiscussions
+            refId={prototype?.id ?? ''}
+            refType="prototype"
+            className="max-h-[80vh] xl:max-h-[60vh]"
+          />
         </DaPopup>
       )}
     </div>

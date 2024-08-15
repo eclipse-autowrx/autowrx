@@ -40,16 +40,16 @@ const DaDiscussionContent = ({
   }
 
   return (
-    <>
+    <div className="flex flex-col w-full">
       <div className="da-label-small flex items-center">
         <DaAvatar
           src={data?.created_by.image_file || '/imgs/user.png'}
           alt={data?.created_by.name}
           fallback={<img src="/imgs/user.png" className="p-1" alt="User" />}
-          className="select-none w-8 h-8 overflow-hidden "
+          className="select-none w-6 h-6 overflow-hidden"
         />
 
-        <div className="pl-2 da-label-regular-bold text-da-gray-dark font-bold">
+        <div className="pl-2 da-label-regular-bold text-da-gray-dark">
           {data?.created_by.name || 'Anonymous'}
         </div>
         <div className="ml-4 da-label-tiny">
@@ -67,7 +67,7 @@ const DaDiscussionContent = ({
       </div>
 
       {/* The content */}
-      <div className="w-full mt-1 py-2 px-4 text-left bg-da-gray-light/50 text-da-gray-dark rounded">
+      <div className="w-full mt-1 py-2 px-4 text-left bg-da-primary-100/50 text-da-gray-dark rounded">
         <div
           className="whitespace-pre-wrap da-label-small max-h-[200px] overflow-y-auto"
           dangerouslySetInnerHTML={{ __html: data.content }}
@@ -75,7 +75,7 @@ const DaDiscussionContent = ({
       </div>
 
       {/* Action buttons */}
-      <div className="flex items-center mt-2">
+      <div className="flex w-full items-center mt-2">
         <div className="grow"></div>
 
         {data.replies && data.replies.length > 0 && (
@@ -113,16 +113,18 @@ const DaDiscussionContent = ({
         )}
 
         {!data.parent && (
-          <div
-            className="ml-1 flex items-center text-da-gray-medium px-2 py-1 cursor-pointer hover:bg-slate-200 da-label-small rounded"
+          <DaButton
+            variant="plain"
+            size="sm"
+            className="flex items-center px-2 mb-1 da-label-small rounded"
             onClick={() => setIsReplying(true)}
           >
-            <TbArrowBack className="mr-1" size={18} />
+            <TbArrowBack size={18} className="mr-1" />
             Reply
-          </div>
+          </DaButton>
         )}
       </div>
-    </>
+    </div>
   )
 }
 

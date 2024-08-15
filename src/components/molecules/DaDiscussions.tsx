@@ -47,11 +47,11 @@ const DaDiscussions = ({ refId, refType, className }: DaDiscussionsProps) => {
           <DaLoader className="m-auto" />
         </div>
       ) : (
-        <div className="flex flex-col w-full h-full">
+        <div className="flex flex-col w-full h-full overflow-y-auto my-2 pr-2">
           {/* Empty state */}
           {!data ||
             (data.results.length === 0 && (
-              <div className="flex flex-col h-full p-5 rounded-mb mt-4 bg-da-gray-light/50 items-center gap-2 rounded-md">
+              <div className="flex flex-col h-full p-5 rounded-mb mt-4 bg-da-primary-100/50 items-center gap-2 rounded-md">
                 <TbBubble className="text-da-primary-500 da-label-huge" />
                 <DaText variant="small" className="text-da-gray-medium">
                   No discussion yet. Be the first one to start a discussion!
@@ -61,7 +61,7 @@ const DaDiscussions = ({ refId, refType, className }: DaDiscussionsProps) => {
 
           {/* List */}
           {data && (
-            <div className="flex w-full h-full mt-2">
+            <div className="flex flex-col w-full h-full mt-2">
               {data.results.map((discussion, index) => (
                 <Fragment key={discussion.id}>
                   <DaDiscussionItem refetch={refetch} data={discussion} />

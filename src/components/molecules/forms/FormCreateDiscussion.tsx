@@ -152,7 +152,12 @@ const FormCreateDiscussion = ({
             Cancel
           </DaButton>
         )}
-        <DaButton disabled={loading} type="submit" className="w-fit">
+        <DaButton
+          disabled={loading}
+          type="submit"
+          className="w-fit !px-4"
+          size="sm"
+        >
           {loading && <TbLoader className="animate-spin text-lg mr-2" />}
           Submit
         </DaButton>
