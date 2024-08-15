@@ -43,17 +43,15 @@ const DaBreadcrumbBar = () => {
     <React.Fragment key={key}>
       <DaBreadcrumbSeparator />
       <DaBreadcrumbItem>
-        <DaBreadcrumbLink>
-          <Link
-            to={path}
-            className={cn(
-              'text-da-white hover:opacity-75',
-              isLast && ' border-b',
-            )}
-          >
-            {name}
-          </Link>
-        </DaBreadcrumbLink>
+        <Link
+          to={path}
+          className={cn(
+            'text-da-white hover:opacity-75',
+            isLast && ' border-b',
+          )}
+        >
+          {name}
+        </Link>
       </DaBreadcrumbItem>
     </React.Fragment>
   )
@@ -64,7 +62,7 @@ const DaBreadcrumbBar = () => {
 
     breadcrumbList.push(
       <DaBreadcrumbItem key="home">
-        <Link to="/" className={cn('flex', 'text-primary')}>
+        <Link to="/" className="flex text-primary">
           Home
         </Link>
       </DaBreadcrumbItem>,
@@ -72,7 +70,7 @@ const DaBreadcrumbBar = () => {
 
     const paths: { path: string; name: string; key: string }[] = []
 
-    if (pathnames.includes('model')) {
+    if (model && model.id && pathnames.includes('model')) {
       paths.push({
         path: '/model',
         name: breadcrumbNames['model'],
@@ -94,7 +92,7 @@ const DaBreadcrumbBar = () => {
           key: 'library',
         })
 
-        if (prototype && pathnames.includes('prototype')) {
+        if (prototype && prototype.id && pathnames.includes('prototype')) {
           paths.push({
             path: `/model/${model?.id}/library/prototype/${prototype.id}`,
             name: prototype.name,

@@ -55,6 +55,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
   const [isDeleting, setIsDeleting] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [confirmPopupOpen, setConfirmPopupOpen] = useState(false)
 
   const { data: currentUser } = useSelfProfileQuery()
@@ -65,7 +66,8 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
 
   const handleSave = async () => {
     if (!localPrototype) return
-
+    setIsEditing(false)
+    setIsSaving(true)
     const updateData = {
       name: localPrototype.name,
       description: {
@@ -92,10 +94,10 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
         ref_id: localPrototype.id,
         ref_type: 'prototype',
       })
-      setIsEditing(false)
     } catch (error) {
       console.error('Error updating prototype:', error)
-      setIsEditing(false)
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -164,8 +166,112 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
   }
 
   return (
-    <div className="flex flex-col h-full w-full">
-      <div className="flex">
+    <div className="flex flex-col h-full w-full container pt-6">
+      <div className="flex mr-4 mb-3 justify-between items-center">
+        {isEditing ? (
+          <>
+            <DaText variant="title" className="text-da-primary-500">
+              Editing Prototype
+            </DaText>
+            <div className="flex space-x-2">
+              <DaButton
+                variant="outline-nocolor"
+                onClick={handleCancel}
+                className="text-da-white px-4 py-2 rounded"
+                size="sm"
+              >
+                Cancel
+              </DaButton>
+              <DaButton
+                onClick={handleSave}
+                className=" text-white px-4 py-2 rounded"
+                size="sm"
+              >
+                Save
+              </DaButton>
+            </div>
+          </>
+        ) : (
+          <>
+            <DaText variant="huge-bold" className="text-da-primary-500">
+              {localPrototype.name}
+            </DaText>
+            {isAuthorized && (
+              <>
+                <DaMenu
+                  trigger={
+                    <DaButton
+                      variant="solid"
+                      size="sm"
+                      className={cn(
+                        'flex w-full',
+                        isEditing && '!pointer-events-none opacity-50',
+                      )}
+                    >
+                      {!isDeleting && !isEditing && !isSaving && (
+                        <>
+                          Prototype Action
+                          <TbChevronDown className="w-4 h-4 ml-1" />
+                        </>
+                      )}
+                      {isSaving && (
+                        <div className="flex items-center">
+                          <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                          Saving...
+                        </div>
+                      )}
+                      {isDeleting && (
+                        <div className="flex items-center">
+                          <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                          Deleting...
+                        </div>
+                      )}
+                    </DaButton>
+                  }
+                >
+                  <div className="flex flex-col px-1">
+                    <DaButton
+                      onClick={() => setIsEditing(true)}
+                      className="!justify-start"
+                      variant="plain"
+                      size="sm"
+                    >
+                      <TbEdit className="w-4 h-4 mr-2" /> Edit Prototype
+                    </DaButton>
+                    <DaButton
+                      variant="plain"
+                      size="sm"
+                      className="!justify-start"
+                      onClick={() => downloadPrototypeZip(prototype)}
+                    >
+                      <TbDownload className="w-4 h-4 mr-2" />
+                      Export Prototype{' '}
+                    </DaButton>
+                    <DaButton
+                      variant="destructive"
+                      size="sm"
+                      className="!justify-start"
+                      onClick={() => setConfirmPopupOpen(true)}
+                    >
+                      <TbTrashX className="w-4 h-4 mr-2" />
+                      Delete Prototype
+                    </DaButton>
+                  </div>
+                </DaMenu>
+                <DaConfirmPopup
+                  onConfirm={handleDeletePrototype}
+                  label="This action cannot be undone and will delete all prototypes data. Please proceed with caution."
+                  confirmText={prototype.name}
+                  state={[confirmPopupOpen, setConfirmPopupOpen]}
+                >
+                  <></>
+                </DaConfirmPopup>
+              </>
+            )}
+          </>
+        )}
+      </div>
+      <div className="flex w-full">
         <div className="flex-1 h-fit relative">
           <DaImage
             src={
@@ -173,7 +279,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                 ? localPrototype.image_file
                 : '/imgs/default_prototype_cover.jpg'
             }
-            className="w-full object-cover max-h-[400px]"
+            className="w-full object-cover max-h-[400px] rounded-lg"
           />
           {isAuthorized && (
             <DaImportFile
@@ -199,107 +305,9 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
             </DaImportFile>
           )}
         </div>
-        <div className="flex-1 p-4 ml-4">
-          <div className="flex mb-4 justify-between items-center">
-            {isEditing ? (
-              <>
-                <DaText variant="title" className="text-da-primary-500">
-                  Editing Prototype
-                </DaText>
-                <div className="flex space-x-2">
-                  <DaButton
-                    variant="outline-nocolor"
-                    onClick={handleCancel}
-                    className="text-da-white px-4 py-2 rounded"
-                    size="sm"
-                  >
-                    Cancel
-                  </DaButton>
-                  <DaButton
-                    onClick={handleSave}
-                    className=" text-white px-4 py-2 rounded"
-                    size="sm"
-                  >
-                    Save
-                  </DaButton>
-                </div>
-              </>
-            ) : (
-              <>
-                <DaText variant="title" className="text-da-primary-500">
-                  {localPrototype.name}
-                </DaText>
-                {isAuthorized && (
-                  <>
-                    <DaMenu
-                      trigger={
-                        <DaButton
-                          variant="solid"
-                          size="sm"
-                          className={cn(
-                            'flex w-full',
-                            isEditing && '!pointer-events-none opacity-50',
-                          )}
-                        >
-                          {!isDeleting && !isEditing && (
-                            <>
-                              Prototype Action
-                              <TbChevronDown className="w-4 h-4 ml-1" />
-                            </>
-                          )}
-                          {isDeleting && (
-                            <div className="flex items-center">
-                              <TbLoader className="w-4 h-4 mr-1 animate-spin" />
-                              Deleting Prototype...
-                            </div>
-                          )}
-                        </DaButton>
-                      }
-                    >
-                      <div className="flex flex-col px-1">
-                        <DaButton
-                          onClick={() => setIsEditing(true)}
-                          className="!justify-start"
-                          variant="plain"
-                          size="sm"
-                        >
-                          <TbEdit className="w-4 h-4 mr-2" /> Edit Prototype
-                        </DaButton>
-                        <DaButton
-                          variant="plain"
-                          size="sm"
-                          className="!justify-start"
-                          onClick={() => downloadPrototypeZip(prototype)}
-                        >
-                          <TbDownload className="w-4 h-4 mr-2" />
-                          Export Prototype{' '}
-                        </DaButton>
-                        <DaButton
-                          variant="destructive"
-                          size="sm"
-                          className="!justify-start"
-                          onClick={() => setConfirmPopupOpen(true)}
-                        >
-                          <TbTrashX className="w-4 h-4 mr-2" />
-                          Delete Prototype
-                        </DaButton>
-                      </div>
-                    </DaMenu>
-                    <DaConfirmPopup
-                      onConfirm={handleDeletePrototype}
-                      label="This action cannot be undone and will delete all prototypes data. Please proceed with caution."
-                      confirmText={prototype.name}
-                      state={[confirmPopupOpen, setConfirmPopupOpen]}
-                    >
-                      <></>
-                    </DaConfirmPopup>
-                  </>
-                )}
-              </>
-            )}
-          </div>
+        <div className="flex flex-1 h-full px-4 ml-4">
           {isEditing ? (
-            <div>
+            <div className="flex flex-col w-full">
               <DaInputWithLabel
                 label="Prototype Name"
                 value={localPrototype.name}
@@ -378,7 +386,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                     ],
                 },
               ]}
-              className="mt-4"
+              className=""
             />
           )}
         </div>
