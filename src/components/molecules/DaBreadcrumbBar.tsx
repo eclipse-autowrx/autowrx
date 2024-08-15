@@ -55,6 +55,7 @@ const DaBreadcrumbBar = () => {
       </DaBreadcrumbItem>
     </React.Fragment>
   )
+
   const pathnames = location.pathname.split('/').filter((x) => x)
 
   useEffect(() => {
@@ -70,13 +71,13 @@ const DaBreadcrumbBar = () => {
 
     const paths: { path: string; name: string; key: string }[] = []
 
-    if (model && model.id && pathnames.includes('model')) {
-      paths.push({
-        path: '/model',
-        name: breadcrumbNames['model'],
-        key: 'model',
-      })
+    paths.push({
+      path: '/model',
+      name: breadcrumbNames['model'],
+      key: 'model',
+    })
 
+    if (model) {
       if (model && pathnames[1] === model.id) {
         paths.push({
           path: `/model/${model.id}`,
@@ -132,7 +133,6 @@ const DaBreadcrumbBar = () => {
         ),
       )
     })
-
     setBreadcrumbs(breadcrumbList)
   }, [location.pathname, model, prototype])
 

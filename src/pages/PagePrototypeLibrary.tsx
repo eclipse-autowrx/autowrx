@@ -18,7 +18,7 @@ const PagePrototypeLibrary = () => {
 
   return (
     <div className="flex flex-col w-full h-full">
-      <div className="col-span-12 flex w-full min-h-10 items-center bg-da-primary-100 sticky top-0 z-20">
+      <div className="col-span-12 flex w-full min-h-10 items-center bg-da-gray-light sticky top-0 z-20">
         <div className="flex space-x-2 h-full ">
           <DaTabItem
             active={activeTab === 'list'}
