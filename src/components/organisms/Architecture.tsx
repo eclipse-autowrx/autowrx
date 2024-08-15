@@ -4,48 +4,53 @@ import axios from 'axios'
 import { ImageAreaEdit, ImageAreaPreview } from 'image-area-lib'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
-import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { updateModelService } from '@/services/model.service'
 import { updatePrototypeService } from '@/services/prototype.service'
 import { DaCopy } from '@/components/atoms/DaCopy'
 import { DaButton } from '@/components/atoms/DaButton'
 import { DaText } from '@/components/atoms/DaText'
+import { DaInput } from '../atoms/DaInput'
+import DaLoading from '../atoms/DaLoading'
 import { TbEdit, TbPlus } from 'react-icons/tb'
 import DaConfirmPopup from '@/components/molecules/DaConfirmPopup'
-import { DaInput } from '@/components/atoms/DaInput'
 import { cn } from '@/lib/utils'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
-import DaLoading from '../atoms/DaLoading'
-import { addLog } from '@/services/log.service'
 
-const MASTER_ITEM = 'master'
+const MASTER_ITEM = 'MASTER_ITEM'
 
-const PrototypeTabArchitecture = () => {
+interface ArchitectureProps {
+  displayMode: 'model' | 'prototype'
+}
+
+const Architecture = ({ displayMode }: ArchitectureProps) => {
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+
+  const { data: model, refetch: refetchModel } = useCurrentModel()
   const { data: prototype, refetch: refetchPrototype } = useCurrentPrototype()
+
   const [skeleton, setSkeleton] = useState<any>(null)
   const [activeNodeId, setActiveNodeId] = useState<any>(null)
   const [activeNode, setActiveNode] = useState<any>(null)
   const [isEditMode, setIsEditMode] = useState<boolean>(false)
   const [isEditName, setIsEditName] = useState<boolean>(false)
   const [tmpNodeName, setTmpNodeName] = useState<string>('')
-  const { data: model } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
-  const navigate = useNavigate()
-
-  const { data: currentUser } = useSelfProfileQuery()
 
   useEffect(() => {
-    if (!prototype) return
-    //
+    const inputSkeleton =
+      displayMode === 'model' ? model?.skeleton : prototype?.skeleton
+    if (!inputSkeleton) return
+
     let skele = { nodes: [] }
-    if (prototype.skeleton) {
-      try {
-        skele = JSON.parse(prototype.skeleton)
-      } catch (err) {}
+    try {
+      skele = JSON.parse(inputSkeleton)
+    } catch (err) {
+      console.error(err)
     }
     setSkeleton(skele)
-  }, [prototype])
+  }, [displayMode, model, prototype])
 
   useEffect(() => {
     let id = searchParams.get('id')
@@ -57,12 +62,13 @@ const PrototypeTabArchitecture = () => {
     let activeNode = null
     if (skeleton && skeleton.nodes && skeleton.nodes.length > 0) {
       if (!activeNodeId) {
-        navigate(`${window.location.pathname}?id=${skeleton.nodes[0].id}`)
+        navigate(`${window.location.pathname}?id=${skeleton.nodes[0].id}`, {
+          replace: true,
+        })
         return
       }
       activeNode = skeleton.nodes.find((n: any) => n.id == activeNodeId)
     }
-
     setActiveNode(activeNode)
   }, [activeNodeId, skeleton])
 
@@ -77,22 +83,23 @@ const PrototypeTabArchitecture = () => {
   }, [isEditMode])
 
   const callSave = async (skele: any) => {
-    if (!prototype || !prototype.id) return
+    if (!skele) return
+
     try {
-      await updatePrototypeService(prototype.id, {
-        skeleton: JSON.stringify(skele),
-      })
-      addLog({
-        name: `User ${currentUser?.email} updated prototype architecture`,
-        description: `User ${currentUser?.email} updated architecture of prototype ${prototype.name} with id ${prototype?.id} of model ${prototype.model_id}`,
-        type: 'update-prototype',
-        create_by: currentUser?.id!,
-        parent_id: prototype.model_id,
-        ref_id: prototype?.id,
-        ref_type: 'prototype',
-      })
-      await refetchPrototype()
-    } catch (err) {}
+      if (displayMode === 'model') {
+        await updateModelService(model?.id ?? '', {
+          skeleton: JSON.stringify(skele),
+        })
+        await refetchModel()
+      } else {
+        await updatePrototypeService(prototype?.id ?? '', {
+          skeleton: JSON.stringify(skele),
+        })
+        await refetchPrototype()
+      }
+    } catch (err) {
+      console.error('Failed to save skeleton:', err)
+    }
   }
 
   const createNewNode = async () => {
@@ -156,9 +163,10 @@ const PrototypeTabArchitecture = () => {
         node.bgImage = data.data.fileLink
         setSkeleton(tmpSkele)
         await callSave(tmpSkele)
-      } else {
       }
-    } catch (err) {}
+    } catch (err) {
+      console.error('Failed to upload image:', err)
+    }
   }
 
   const handleDeleteNode = async (nodeId: string) => {
@@ -189,8 +197,8 @@ const PrototypeTabArchitecture = () => {
   if (!skeleton)
     return (
       <DaLoading
-        text="Loading Prototype Architecture..."
-        timeoutText="Failed to load prototype architecture. Please try again."
+        text={`Loading ${displayMode === 'model' ? 'Model' : 'Prototype'} Architecture...`}
+        timeoutText={`Failed to load ${displayMode === 'model' ? 'model' : 'prototype'} architecture. Please try again.`}
       />
     )
 
@@ -389,4 +397,4 @@ const PrototypeTabArchitecture = () => {
   )
 }
 
-export default PrototypeTabArchitecture
+export default Architecture

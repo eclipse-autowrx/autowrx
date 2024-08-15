@@ -15,13 +15,11 @@ import { cn } from '@/lib/utils'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import DaLoading from '@/components/atoms/DaLoading'
-import { isArray } from 'lodash'
 
 const MASTER_ITEM = 'master'
 
 const PageModelArchitecture = () => {
   const [searchParams] = useSearchParams()
-  const { data: profile } = useSelfProfileQuery()
   const { data: model, refetch } = useCurrentModel()
   const [skeleton, setSkeleton] = useState<any>(null)
   const [activeNodeId, setActiveNodeId] = useState<any>(null)
@@ -188,8 +186,8 @@ const PageModelArchitecture = () => {
     )
 
   return (
-    <div className="flex w-full h-full bg-da-white text-da-gray-medium select-none pt-6">
-      <div className="flex flex-col min-w-[400px] px-4 h-full border-r">
+    <div className="flex w-full h-full bg-da-white text-da-gray-medium select-none">
+      <div className="flex flex-col min-w-fit max-w-[400px] px-4 h-full border-r pt-3">
         <div className="flex py-1 mb-2 items-center justify-between">
           <DaText variant="sub-title">Architecture Mapping</DaText>
           {isAuthorized && (
@@ -219,7 +217,7 @@ const PageModelArchitecture = () => {
                   {node.name}
                 </DaText>
                 <div className="flex w-full justify-between items-center">
-                  <DaText variant="small" className="">
+                  <DaText variant="small" className="mr-2">
                     ID: {node.id}
                   </DaText>
                   <div className="flex text-xs font-bold space-x-2">
@@ -262,8 +260,8 @@ const PageModelArchitecture = () => {
         )}
       </div>
       {activeNode && (
-        <div className="flex flex-col h-full w-full px-4">
-          <div className="flex w-full items-center justify-between pb-2 flex-wrap">
+        <div className="relative flex flex-col h-full w-full overflow-y-auto">
+          <div className="sticky top-0 z-10 flex w-full px-3 bg-white items-center justify-between min-h-16">
             <div className="flex items-center">
               {!isEditName && (
                 <div className="flex items-center">
@@ -287,34 +285,32 @@ const PageModelArchitecture = () => {
                 </div>
               )}
               {isEditName && (
-                <>
-                  <div className="flex items-center">
-                    <DaInput
-                      value={tmpNodeName}
-                      onChange={(e) => setTmpNodeName(e.target.value)}
-                      className="h-8 min-w-[300px]"
-                      inputClassName="h-6"
-                    />
-                    <div className="space-x-2">
-                      <DaButton
-                        variant="plain"
-                        size="sm"
-                        className="ml-4"
-                        onClick={() => setIsEditName(false)}
-                      >
-                        Cancel
-                      </DaButton>
-                      <DaButton
-                        variant="solid"
-                        size="sm"
-                        className="ml-4"
-                        onClick={handleNameSave}
-                      >
-                        Save
-                      </DaButton>
-                    </div>
+                <div className="flex items-center">
+                  <DaInput
+                    value={tmpNodeName}
+                    onChange={(e) => setTmpNodeName(e.target.value)}
+                    className="h-8 min-w-[300px]"
+                    inputClassName="h-6"
+                  />
+                  <div className="space-x-2">
+                    <DaButton
+                      variant="plain"
+                      size="sm"
+                      className="ml-4"
+                      onClick={() => setIsEditName(false)}
+                    >
+                      Cancel
+                    </DaButton>
+                    <DaButton
+                      variant="solid"
+                      size="sm"
+                      className="ml-4"
+                      onClick={handleNameSave}
+                    >
+                      Save
+                    </DaButton>
                   </div>
-                </>
+                </div>
               )}
             </div>
             <div className="flex space-x-2">
@@ -351,22 +347,24 @@ const PageModelArchitecture = () => {
             </div>
           </div>
 
-          <div className="flex w-full max-w-[99%]">
-            {!isEditMode && (
-              <ImageAreaPreview
-                shapes={activeNode?.shapes}
-                bgImage={activeNode?.bgImage}
-                navigate={handleNavigate}
-              />
-            )}
-            {isEditMode && (
-              <ImageAreaEdit
-                shapes={activeNode?.shapes}
-                bgImage={activeNode?.bgImage}
-                onSave={onSaveRequested}
-                handleUploadImage={handleUploadImage}
-              />
-            )}
+          <div className="flex w-full h-full items-center justify-center ">
+            <div className="flex w-full h-full max-w-[85%] overflow-x-hidden">
+              {!isEditMode && (
+                <ImageAreaPreview
+                  shapes={activeNode?.shapes}
+                  bgImage={activeNode?.bgImage}
+                  navigate={handleNavigate}
+                />
+              )}
+              {isEditMode && (
+                <ImageAreaEdit
+                  shapes={activeNode?.shapes}
+                  bgImage={activeNode?.bgImage}
+                  onSave={onSaveRequested}
+                  handleUploadImage={handleUploadImage}
+                />
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -124,7 +124,7 @@ const ModelApiList = ({ onApiClick, readOnly }: ModelApiListProps) => {
   }
 
   return (
-    <div className="flex flex-col h-full w-full p-4">
+    <div className="flex flex-col h-full w-full p-3">
       <div className="flex items-center mb-2">
         <DaInput
           placeholder="Search Signal"
