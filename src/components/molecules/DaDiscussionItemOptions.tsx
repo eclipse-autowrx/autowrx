@@ -73,11 +73,11 @@ const DaDiscussionItemOptions = ({
             </DaButton>
           }
         >
-          <div className="-my-2 flex flex-col">
+          <div className="flex flex-col">
             <DaButton
               onClick={props.triggerEdit}
               variant="plain"
-              className="block"
+              className="da-menu-item "
             >
               <div className="flex w-full items-center">
                 <TbPencil className="mr-2" /> Edit
@@ -85,8 +85,8 @@ const DaDiscussionItemOptions = ({
             </DaButton>
             <DaButton
               onClick={() => setOpenDelete(true)}
-              variant="plain"
-              className="block"
+              variant="destructive"
+              className="!text-sm !h-fit !px-2 !mx-1"
             >
               <TbTrash className="mr-2" /> Delete
             </DaButton>

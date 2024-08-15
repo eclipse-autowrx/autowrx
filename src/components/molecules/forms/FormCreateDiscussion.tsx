@@ -147,7 +147,8 @@ const FormCreateDiscussion = ({
             disabled={loading}
             variant="plain"
             type="button"
-            className="w-fit"
+            className="w-fit !px-4"
+            size="sm"
           >
             Cancel
           </DaButton>

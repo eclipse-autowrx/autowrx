@@ -67,7 +67,7 @@ const DaDiscussionContent = ({
       </div>
 
       {/* The content */}
-      <div className="w-full mt-1 py-2 px-4 text-left bg-da-primary-100/50 text-da-gray-dark rounded">
+      <div className="w-full mt-1 py-2 px-4 text-left bg-da-gray-light/50 text-da-gray-dark rounded">
         <div
           className="whitespace-pre-wrap da-label-small max-h-[200px] overflow-y-auto"
           dangerouslySetInnerHTML={{ __html: data.content }}
@@ -80,7 +80,7 @@ const DaDiscussionContent = ({
 
         {data.replies && data.replies.length > 0 && (
           <div className="flex items-center">
-            <div className="text-da-gray-dark da-label-small mr-4">
+            <div className="da-label-small-bold text-da-primary-500 mr-4">
               Reply ({data.replies.length})
             </div>
             {collapsed && (

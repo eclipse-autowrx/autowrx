@@ -31,7 +31,7 @@ const DaDiscussions = ({ refId, refType, className }: DaDiscussionsProps) => {
   return (
     <div
       className={cn(
-        'flex flex-col w-full min-w-[500px] min-h-[400px] h-full px-2',
+        'flex flex-col w-full min-w-[500px] h-full px-2',
         className,
       )}
     >

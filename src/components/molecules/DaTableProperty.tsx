@@ -9,7 +9,7 @@ interface DaTablePropertyItemProps {
 const DaTablePropertyItem = ({ property, value }: DaTablePropertyItemProps) => {
   return (
     <div className="flex w-full h-fit py-2 text-da-gray-medium space-x-4">
-      <div className="flex w-[150px]">
+      <div className="flex min-w-[100px]">
         <DaText variant="small-bold" className="!flex">
           {property}
         </DaText>
@@ -35,7 +35,7 @@ export const DaTableProperty = ({
   return (
     <div
       className={cn(
-        'flex flex-col h-full w-full rounded-lg bg-da-white',
+        'flex flex-col h-fit w-full rounded-lg bg-da-white',
         className,
       )}
     >

@@ -4,10 +4,11 @@ import { DaTag } from '../atoms/DaTag'
 import { DaTableProperty } from '../molecules/DaTableProperty'
 import { DaAvatar } from '../atoms/DaAvatar'
 import { DaButton } from '../atoms/DaButton'
-import { TbArrowRight } from 'react-icons/tb'
+import { TbArrowRight, TbArrowUpRight, TbLink } from 'react-icons/tb'
 import { Link } from 'react-router-dom'
 import { Prototype } from '@/types/model.type'
 import DaUserProfile from '../molecules/DaUserProfile'
+import DaStarsRating from '../atoms/DaStarsRating'
 
 interface PrototypeSummaryProps {
   prototype: Prototype
@@ -40,7 +41,7 @@ const PrototypeSummary = ({ prototype }: PrototypeSummaryProps) => {
         </div>
         <DaUserProfile className="mt-2" userId={prototype.created_by} />
 
-        <div className="flex h-full">
+        <div className="flex flex-col h-full">
           <DaTableProperty
             properties={[
               {
@@ -67,6 +68,27 @@ const PrototypeSummary = ({ prototype }: PrototypeSummaryProps) => {
             ]}
             className="mt-2"
           />
+          <div className="flex items-center mt-1">
+            <Link
+              to={`/model/${prototype.model_id}/library/prototype/${prototype.id}/feedback`}
+              className="flex w-fit items-center "
+            >
+              <DaText
+                variant="small-bold"
+                className="flex items-center min-w-[110px]"
+              >
+                Feedback <TbArrowUpRight className="w-4 h-4 ml-1" />
+              </DaText>
+            </Link>
+            <DaStarsRating
+              initialRating={prototype.avg_score ?? 0}
+              readonly
+              className="flex mx-0"
+            />
+            <DaText variant="small" className="ml-1">
+              ({(prototype.avg_score ?? 0).toFixed(2)})
+            </DaText>
+          </div>
         </div>
       </div>
     </div>

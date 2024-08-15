@@ -71,11 +71,13 @@ const DaBreadcrumbBar = () => {
 
     const paths: { path: string; name: string; key: string }[] = []
 
-    paths.push({
-      path: '/model',
-      name: breadcrumbNames['model'],
-      key: 'model',
-    })
+    if (pathnames[0] === 'model') {
+      paths.push({
+        path: '/model',
+        name: breadcrumbNames['model'],
+        key: 'model',
+      })
+    }
 
     if (model) {
       if (model && pathnames[1] === model.id) {
