@@ -20,7 +20,6 @@ import { FaGithub } from 'react-icons/fa6'
 import useGithubAuth from '@/hooks/useGithubAuth'
 import {
   TbChevronDown,
-  TbDotsVertical,
   TbExternalLink,
   TbLoader,
   TbTrash,
@@ -68,12 +67,6 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
         setIsLoading(false)
         console.error('Error deleting wishlist API:', error)
       }
-    }
-  }
-
-  const handleScrollToDiscussions = () => {
-    if (discussionsRef.current) {
-      discussionsRef.current.scrollIntoView({ behavior: 'smooth' })
     }
   }
 
@@ -165,15 +158,14 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
   ].filter(Boolean)
 
   return (
-    <div className="flex flex-col w-full px-2">
-      {/* <DaImage
-        src="https://bewebstudio.digitalauto.tech/data/projects/OezCm7PTy8FT/a/E-Car_Full_Vehicle.png"
-        className="object-cover"
-      /> */}
+    <div className="flex flex-col w-full h-full px-2">
       <DaApiArchitecture apiName={apiDetails.name} />
-      <div className="w-full py-2 px-4 bg-da-primary-100 justify-between flex">
+      <div className="flex flex-row w-full h-full py-2 pl-4 pr-2 bg-da-primary-100 justify-between items-center space-x-2">
         <DaCopy textToCopy={apiDetails.name}>
-          <DaText variant="regular-bold" className="text-da-primary-500">
+          <DaText
+            variant="regular-bold"
+            className="text-da-primary-500 truncate"
+          >
             {apiDetails.name}
           </DaText>
           {apiDetails.isWishlist && (
@@ -278,16 +270,12 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
               </DaMenu>
             )
           )}
-          {/* <DaButton
-            variant="plain"
-            className="!text-da-primary-500"
-            size="sm"
-            onClick={handleScrollToDiscussions}
+          <div
+            className={cn(
+              'hidden xl:flex px-2 rounded-md h-6 items-center',
+              bgClass,
+            )}
           >
-            <TbMessage className="w-5 h-5 mr-2" />{' '}
-            <div className="da-label-small-bold">Discussions</div>
-          </DaButton> */}
-          <div className={cn('flex px-3 rounded-md h-8 items-center', bgClass)}>
             <DaText variant="small-bold" className="text-da-white uppercase">
               {apiDetails.type}
             </DaText>
@@ -295,39 +283,32 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
         </div>
       </div>
 
-      <div className="p-4">
+      <div className="flex flex-col w-full h-fit p-4">
         <DaText variant="regular-bold" className="flex text-da-secondary-500">
           VSS Specification
         </DaText>
-        <DaTableProperty
-          properties={vssSpecificationProperties}
-          maxWidth="700px"
-        />
+        <DaTableProperty properties={vssSpecificationProperties} />
         <DaText
           variant="regular-bold"
-          className="flex !mt-6 text-da-secondary-500"
+          className="flex pt-4 text-da-secondary-500"
         >
           Dependencies
         </DaText>
         <DaTableProperty
           properties={[{ name: 'Used by these vehicle app', value: 'N/A' }]}
-          maxWidth="700px"
         />
         <DaText
           variant="regular-bold"
-          className="!mt-6 flex text-da-secondary-500"
+          className="flex pt-4 text-da-secondary-500"
         >
           Implementation
         </DaText>
-        <DaTableProperty
-          properties={implementationProperties}
-          maxWidth="700px"
-        />
+        <DaTableProperty properties={implementationProperties} />
       </div>
       {model && model.id && (
-        <div ref={discussionsRef}>
+        <div ref={discussionsRef} className="flex h-full">
           <DaDiscussions
-            className="py-4"
+            className="min-w-[0px] h-full pb-2"
             refId={`${model.id}-${apiDetails.name}`}
             refType="api"
           />

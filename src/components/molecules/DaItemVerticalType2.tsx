@@ -28,7 +28,7 @@ const DaItemVerticalType2: React.FC<DaItemVerticalType2Props> = ({
         {title}
       </DaText>
       <DaImage
-        src={imageUrl ? imageUrl : 'https://placehold.co/600x400'}
+        src={imageUrl ? imageUrl : '/imgs/default_prototype_cover.jpg'}
         alt="Image"
         className="w-full h-full rounded-lg aspect-video object-contain"
       />

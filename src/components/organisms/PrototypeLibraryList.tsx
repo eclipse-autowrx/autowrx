@@ -132,19 +132,52 @@ const PrototypeLibraryList = () => {
   )
 
   return (
-    <div className="flex flex-col w-full h-[99%]">
+    <div className="flex flex-col w-full h-full">
       <div className="grid grid-cols-12 w-full h-full">
-        <div className="col-span-5 xl:col-span-4 h-full overflow-y-auto mt-2 flex flex-col">
+        <div className="relative flex flex-col h-full col-span-5 xl:col-span-4 overflow-auto">
+          <DaInput
+            type="text"
+            Icon={TbSearch}
+            iconBefore={true}
+            placeholder="Enter to search"
+            className="w-full p-3 !bg-white z-10"
+            value={searchInput}
+            onChange={(e) => handleSearchChange(e.target.value)}
+          />
+
+          {filteredPrototypes && filteredPrototypes.length > 0 ? (
+            <div className="flex flex-col w-full h-full overflow-y-auto px-3">
+              {filteredPrototypes.map((prototype, index) => (
+                <div
+                  key={index}
+                  onClick={() => setSelectedPrototype(prototype)}
+                  className="flex w-full cursor-pointer mb-2"
+                >
+                  <DaItemStandard
+                    prototype={prototype}
+                    creatorId={prototype.created_by}
+                    imageMaxWidth="100px"
+                    isSelected={selectedPrototype === prototype}
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex w-full h-full items-center justify-center">
+              <DaText variant="title">No prototype found.</DaText>
+            </div>
+          )}
           {isAuthorized && (
-            <div className="grid sticky bottom-0 bg-white grid-cols-1 xl:grid-cols-2 gap-2 px-4 py-1">
+            <div className="flex w-full h-fit px-3 py-2 bg-white z-10">
               <DaImportFile
                 accept=".zip"
                 onFileChange={handleImportPrototypeZip}
+                className="flex w-full"
               >
                 <DaButton
                   variant="outline-nocolor"
                   size="sm"
-                  className="w-full"
+                  className="flex w-full"
                 >
                   {isLoading ? (
                     <div className="flex items-center">
@@ -163,7 +196,11 @@ const PrototypeLibraryList = () => {
               <DaPopup
                 state={[open, setOpen]}
                 trigger={
-                  <DaButton variant="solid" size="sm">
+                  <DaButton
+                    variant="solid"
+                    size="sm"
+                    className="flex w-full ml-2"
+                  >
                     <TbPlus className="w-5 h-5 mr-2" />
                     Create New Prototype
                   </DaButton>
@@ -178,41 +215,8 @@ const PrototypeLibraryList = () => {
               </DaPopup>
             </div>
           )}
-          <DaInput
-            type="text"
-            Icon={TbSearch}
-            iconBefore={true}
-            placeholder="Enter to search"
-            className="w-full py-2 px-4 sticky top-0 !bg-white z-10"
-            value={searchInput}
-            onChange={(e) => handleSearchChange(e.target.value)}
-          />
-          {filteredPrototypes && filteredPrototypes.length > 0 ? (
-            <div className="flex flex-col px-4 mt-2">
-              {filteredPrototypes.map((prototype, index) => (
-                <div
-                  key={index}
-                  onClick={() => setSelectedPrototype(prototype)}
-                  className="cursor-pointer mb-2"
-                >
-                  <DaItemStandard
-                    prototype={prototype}
-                    creatorId={prototype.created_by}
-                    maxWidth="2000px"
-                    imageMaxWidth="100px"
-                    isSelected={selectedPrototype === prototype}
-                  />
-                </div>
-              ))}
-              <div className="grow"> </div>
-            </div>
-          ) : (
-            <div className="flex w-full h-full items-center justify-center">
-              <DaText variant="title">No prototype found.</DaText>
-            </div>
-          )}
         </div>
-        <div className="col-span-7 xl:col-span-8 border-l h-full">
+        <div className="col-span-7 xl:col-span-8 border-l flex w-full h-full overflow-auto">
           {selectedPrototype ? (
             <PrototypeSummary prototype={selectedPrototype as Prototype} />
           ) : (

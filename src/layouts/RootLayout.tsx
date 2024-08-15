@@ -33,7 +33,7 @@ const RootLayout = () => {
       </div>
 
       {config && config.instance !== 'digitalauto' && (
-        <div className="absolute w-full bottom-0 right-0 bg-da-gray-dark text-da-white px-4 py-0.5 text-xs text-end z-10">
+        <div className="sticky w-full bottom-0 right-0 bg-da-gray-dark text-da-white px-4 py-0.5 text-xs text-end z-10">
           <a
             href="https://www.digital.auto/"
             target="_blank"

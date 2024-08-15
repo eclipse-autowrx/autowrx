@@ -55,7 +55,7 @@ const DaSelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={clsx(
-      'relative flex w-full bg-white cursor-default select-none items-center rounded-sm py-1.5 pl-2 pr-8 outline-none focus:bg-accent data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+      'relative flex w-full bg-white hover:bg-gray-100 text-da-gray-medium  cursor-pointer select-none items-center rounded py-1.5 pl-2 pr-8 outline-none focus:bg-accent data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       className,
     )}
     {...props}

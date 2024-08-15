@@ -84,12 +84,17 @@ const PrototypeTabCode: FC = ({}) => {
   }
 
   return (
-    <div className="flex flex-col w-full h-full">
-      <div className="flex w-full px-2 py-1.5">
+    <div className="flex flex-col w-full h-[calc(100%-50px)]">
+      <div className="flex w-full min-h-10 px-1 justify-between items-center border-b">
         {isAuthorized && (
-          <div className="flex w-1/2 space-x-2">
+          <div className="flex space-x-2">
             <div className="flex space-x-2">
-              <DaButton size="sm" variant="outline-nocolor" className="mr-2">
+              <DaButton
+                size="sm"
+                variant="outline-nocolor"
+                className="mr-2"
+                disabled
+              >
                 <TbDotsVertical className="mr-1 text-da-primary-500" />
                 Action
               </DaButton>
@@ -121,16 +126,14 @@ const PrototypeTabCode: FC = ({}) => {
               </DaPopup>
             </div>
 
-            {/* <div className="grow"></div> */}
-            <DaButton size="sm" variant="outline-nocolor">
+            <DaButton size="sm" variant="outline-nocolor" disabled>
               <TbRocket className="w-4 h-4 mr-1 text-da-primary-500" />
               Deploy
             </DaButton>
           </div>
         )}
-        <div className="grow"></div>
-        <div className="flex w-1/2 justify-end">
-          <div className="grow"></div>
+
+        <div className="flex w-fit h-full justify-end">
           <DaTabItem
             small
             active={activeTab == 'api'}
@@ -159,8 +162,9 @@ const PrototypeTabCode: FC = ({}) => {
           )}
         </div>
       </div>
-      <div className="flex w-full h-full">
-        <div className="w-1/2 flex flex-col border-r">
+
+      <div className="flex w-full h-full justify-between">
+        <div className="flex flex-col w-1/2 h-full border-r">
           <Suspense>
             <CodeEditor
               code={code || ''}
@@ -171,19 +175,17 @@ const PrototypeTabCode: FC = ({}) => {
             />
           </Suspense>
         </div>
-        <div className="w-1/2 flex flex-col">
-          <div className="flex-1 flex flex-col w-full overflow-hidden">
-            {activeTab == 'api' && (
-              <Suspense>
-                <PrototypeTabCodeApiPanel code={code || ''} />
-              </Suspense>
-            )}
-            {activeTab == 'dashboard' && (
-              <Suspense>
-                <PrototypeTabCodeDashboardCfg />
-              </Suspense>
-            )}
-          </div>
+        <div className="flex flex-col w-1/2 h-full">
+          {activeTab == 'api' && (
+            <Suspense>
+              <PrototypeTabCodeApiPanel code={code || ''} />
+            </Suspense>
+          )}
+          {activeTab == 'dashboard' && (
+            <Suspense>
+              <PrototypeTabCodeDashboardCfg />
+            </Suspense>
+          )}
         </div>
       </div>
     </div>

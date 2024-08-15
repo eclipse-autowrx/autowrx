@@ -48,6 +48,7 @@ const DaConfirmPopup = ({
               onChange={(e) => setInputValue(e.target.value)}
               className="h-8 flex mt-2"
               inputClassName="h-6"
+              onKeyDown={(e) => e.key === 'Enter' && handleConfirm()}
             />
           </div>
         )}
