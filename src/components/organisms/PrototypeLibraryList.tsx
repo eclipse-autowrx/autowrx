@@ -134,63 +134,19 @@ const PrototypeLibraryList = () => {
   return (
     <div className="flex flex-col w-full h-full">
       <div className="grid grid-cols-12 w-full h-full">
-        <div className="relative col-span-5 xl:col-span-4 flex flex-col w-full h-full overflow-y-auto">
-          <div className="sticky top-0 z-10">
-            {isAuthorized && (
-              <div className="grid bg-white grid-cols-1 xl:grid-cols-2 gap-2 p-2">
-                <DaImportFile
-                  accept=".zip"
-                  onFileChange={handleImportPrototypeZip}
-                >
-                  <DaButton
-                    variant="outline-nocolor"
-                    size="sm"
-                    className="w-full"
-                  >
-                    {isLoading ? (
-                      <div className="flex items-center">
-                        <DaLoader className="mr-2" />
-                        Importing...
-                      </div>
-                    ) : (
-                      <>
-                        <TbFileImport className="w-5 h-5 mr-2" />
-                        Import Prototype
-                      </>
-                    )}
-                  </DaButton>
-                </DaImportFile>
+        <div className="relative flex flex-col h-full col-span-5 xl:col-span-4 overflow-auto">
+          <DaInput
+            type="text"
+            Icon={TbSearch}
+            iconBefore={true}
+            placeholder="Enter to search"
+            className="w-full p-3 !bg-white z-10"
+            value={searchInput}
+            onChange={(e) => handleSearchChange(e.target.value)}
+          />
 
-                <DaPopup
-                  state={[open, setOpen]}
-                  trigger={
-                    <DaButton variant="solid" size="sm">
-                      <TbPlus className="w-5 h-5 mr-2" />
-                      Create New Prototype
-                    </DaButton>
-                  }
-                >
-                  <FormCreatePrototype
-                    model_id={model.id}
-                    onClose={() => {
-                      setOpen(false)
-                    }}
-                  />
-                </DaPopup>
-              </div>
-            )}
-            <DaInput
-              type="text"
-              Icon={TbSearch}
-              iconBefore={true}
-              placeholder="Enter to search"
-              className="w-full px-2 pb-2 !bg-white z-10"
-              value={searchInput}
-              onChange={(e) => handleSearchChange(e.target.value)}
-            />
-          </div>
           {filteredPrototypes && filteredPrototypes.length > 0 ? (
-            <div className="flex flex-col w-full px-2 mt-1">
+            <div className="flex flex-col w-full h-full overflow-y-auto px-3">
               {filteredPrototypes.map((prototype, index) => (
                 <div
                   key={index}
@@ -209,6 +165,54 @@ const PrototypeLibraryList = () => {
           ) : (
             <div className="flex w-full h-full items-center justify-center">
               <DaText variant="title">No prototype found.</DaText>
+            </div>
+          )}
+          {isAuthorized && (
+            <div className="flex w-full h-fit px-3 py-2 bg-white z-10">
+              <DaImportFile
+                accept=".zip"
+                onFileChange={handleImportPrototypeZip}
+                className="flex w-full"
+              >
+                <DaButton
+                  variant="outline-nocolor"
+                  size="sm"
+                  className="flex w-full"
+                >
+                  {isLoading ? (
+                    <div className="flex items-center">
+                      <DaLoader className="mr-2" />
+                      Importing...
+                    </div>
+                  ) : (
+                    <>
+                      <TbFileImport className="w-5 h-5 mr-2" />
+                      Import Prototype
+                    </>
+                  )}
+                </DaButton>
+              </DaImportFile>
+
+              <DaPopup
+                state={[open, setOpen]}
+                trigger={
+                  <DaButton
+                    variant="solid"
+                    size="sm"
+                    className="flex w-full ml-2"
+                  >
+                    <TbPlus className="w-5 h-5 mr-2" />
+                    Create New Prototype
+                  </DaButton>
+                }
+              >
+                <FormCreatePrototype
+                  model_id={model.id}
+                  onClose={() => {
+                    setOpen(false)
+                  }}
+                />
+              </DaPopup>
             </div>
           )}
         </div>

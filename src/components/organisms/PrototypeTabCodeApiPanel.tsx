@@ -176,7 +176,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
       <DaText variant="regular-bold" className="px-4">
         All Signals
       </DaText>
-      <div className="flex w-full min-h-[300px] overflow-hidden">
+      <div className="flex w-full  overflow-hidden">
         <ModelApiList onApiClick={onApiClicked} readOnly={true} />
       </div>
     </div>

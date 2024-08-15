@@ -25,14 +25,14 @@ const PagePrototypeLibrary = () => {
             to={`/model/${model_id}/library/list`}
           >
             <TbListDetails className="w-5 h-5 mr-2" />
-            List
+            List View
           </DaTabItem>
           <DaTabItem
             active={activeTab === 'portfolio'}
             to={`/model/${model_id}/library/portfolio`}
           >
             <TbChartScatter className="w-5 h-5 mr-2" />
-            Portfolio
+            Portfolio View
           </DaTabItem>
         </div>
       </div>
