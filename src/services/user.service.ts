@@ -1,6 +1,6 @@
 import { User, UserCreate, UserUpdate } from '@/types/user.type'
 import { serverAxios } from './base'
-import { List } from '@/types/common.type'
+import { List, ListQueryParams } from '@/types/common.type'
 import { users } from '@/data/users_mock'
 
 const IS_MOCK = false
@@ -13,7 +13,9 @@ export const getUserService = async (id: string) => {
   return (await serverAxios.get<User>(`/users/${id}`)).data
 }
 
-export const listUsersService = async () => {
+export const listUsersService = async (
+  params?: Partial<Record<keyof (User & ListQueryParams), unknown>>,
+) => {
   if (IS_MOCK) {
     return {
       results: users,
@@ -23,13 +25,11 @@ export const listUsersService = async () => {
       totalResults: users.length,
     }
   }
-  const response = await serverAxios.get<List<User>>('/users', {
-    params: {
-      limit: 50, // Temporarily set to 50
-    },
-  })
-
-  return response.data
+  return (
+    await serverAxios.get<List<User>>('/users', {
+      params,
+    })
+  ).data
 }
 
 export const createUserService = async (data: UserCreate) => {

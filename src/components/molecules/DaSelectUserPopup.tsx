@@ -24,11 +24,11 @@ const DaSelectUserPopup = ({
   const [search, setSearch] = useState('')
 
   useEffect(() => {
-    if (!data || !data.results) {
+    if (!data || !data) {
       return
     }
 
-    let tmpUsers = data.results.filter(
+    let tmpUsers = data.filter(
       (user: User) =>
         !(excludeUsers || []).some(
           (excludedUser) => excludedUser && excludedUser.id === user.id,
