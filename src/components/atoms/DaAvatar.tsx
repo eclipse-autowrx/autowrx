@@ -28,7 +28,13 @@ const DaAvatar = React.forwardRef<
       className="aspect-square object-cover h-full w-full"
     />
     <AvatarPrimitive.Fallback className="flex items-center justify-center bg-gray-200 text-gray-700">
-      {fallback}
+      {fallback || (
+        <img
+          src={'/imgs/profile.png'}
+          alt="bar"
+          className="h-full w-full object-cover rounded-full"
+        />
+      )}
     </AvatarPrimitive.Fallback>
   </AvatarPrimitive.Root>
 ))

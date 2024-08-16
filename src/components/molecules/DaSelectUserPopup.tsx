@@ -5,7 +5,8 @@ import { useListUsers } from '@/hooks/useListUsers'
 import { User } from '@/types/user.type'
 import { DaText } from '../atoms/DaText'
 import { DaButton } from '../atoms/DaButton'
-import { maskEmail } from '@/lib/utils'
+// import { maskEmail } from '@/lib/utils'
+import { DaAvatar } from '../atoms/DaAvatar'
 
 interface DaSelectUserProps {
   popupState: [boolean, React.Dispatch<React.SetStateAction<boolean>>]
@@ -18,7 +19,9 @@ const DaSelectUserPopup = ({
   selectUser,
   excludeUsers,
 }: DaSelectUserProps) => {
-  const { data } = useListUsers()
+  const { data } = useListUsers({
+    limit: 100,
+  })
   const [renderUsers, setRenderUsers] = useState<any>([])
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState('')
@@ -47,8 +50,8 @@ const DaSelectUserPopup = ({
   return (
     <>
       <DaPopup state={popupState} trigger={<span></span>}>
-        <div className="min-w-[500px] rounded select-none">
-          <div className="text-xl font-bold border-da-gray-light py-1 px-3 flex items-center">
+        <div className="min-w-[500px] select-none rounded">
+          <div className="flex items-center border-da-gray-light px-3 py-1 text-xl font-bold">
             <DaText variant="sub-title" className="text-da-primary-500">
               Select user
             </DaText>
@@ -72,31 +75,32 @@ const DaSelectUserPopup = ({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
-              <div className="max-h-[400px] xl:max-h-[600px] min-h-[400px] overflow-auto mt-2 p-1">
+              <div className="-mx-4 mt-2 max-h-[400px] min-h-[400px] overflow-auto p-1 px-4 xl:max-h-[600px]">
                 {renderUsers &&
                   renderUsers.map((user: any) => (
                     <div
                       key={user.id}
-                      className="border-b border-slate-200 flex"
+                      className="flex items-center border-b border-slate-200 py-3"
                     >
-                      <div className="py-1 grow">
+                      <DaAvatar src={user?.image_file} className="mr-4" />
+                      <div className="grow py-1">
                         <DaText
                           variant="regular-bold"
                           className="text-da-gray-meidum"
                         >
                           {user.name}
                         </DaText>
-                        <div className="da-label-small italic">
+                        {/* <div className="da-label-small italic">
                           {maskEmail(user?.email ?? '')} {''}
                           {user.provider && (
                             <span>
                               {''}via @{user.provider}
                             </span>
                           )}
-                        </div>
+                        </div> */}
                       </div>
                       <div
-                        className=" items-center justify-center flex"
+                        className="flex items-center justify-center"
                         onClick={() => {
                           if (selectUser) {
                             selectUser(user.id)
@@ -106,7 +110,7 @@ const DaSelectUserPopup = ({
                       >
                         <DaText
                           variant="small-bold"
-                          className="text-da-primary-500 hover:bg-da-primary-100 px-2 py-1 rounded-md cursor-pointer"
+                          className="cursor-pointer rounded-md px-2 py-1 text-da-primary-500 hover:bg-da-primary-100"
                         >
                           Select
                         </DaText>
@@ -115,7 +119,7 @@ const DaSelectUserPopup = ({
                   ))}
 
                 {search && renderUsers.length == 0 && (
-                  <DaText className="py-2 px-4 text-center text-da-gray-dark bg-da-gray-light rounded">
+                  <DaText className="rounded bg-da-gray-light px-4 py-2 text-center text-da-gray-dark">
                     No user match '{search}'
                   </DaText>
                 )}

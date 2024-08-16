@@ -6,7 +6,12 @@ import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 export const useListUsers = (
-  params?: Partial<Record<keyof (User & InfiniteListQueryParams), unknown>>,
+  params?: Partial<
+    Record<
+      keyof (User & InfiniteListQueryParams & { includeFullDetails?: boolean }),
+      unknown
+    >
+  >,
 ) => {
   const [searchParams] = useSearchParams()
   const search = searchParams.get('search') || ''
