@@ -36,6 +36,10 @@ const FormCreateModel = () => {
   }
 
   const createNewModel = async (e: FormEvent<HTMLFormElement>) => {
+    if (!currentUser) {
+      console.error('User not found')
+      return
+    }
     e.preventDefault()
     try {
       setLoading(true)
@@ -48,9 +52,9 @@ const FormCreateModel = () => {
       await refetchModelLite()
       addLog({
         name: `New model '${body.name}' with visibility: ${body.visibility}`,
-        description: `New model '${body.name}' was created by ${currentUser?.email || currentUser?.name || currentUser?.id}`,
+        description: `New model '${body.name}' was created by ${currentUser.email || currentUser.name || currentUser.id}`,
         type: 'new-model',
-        create_by: currentUser?.id!,
+        create_by: currentUser.id,
         ref_id: modelId,
         ref_type: 'model',
       })
@@ -81,7 +85,7 @@ const FormCreateModel = () => {
   return (
     <form
       onSubmit={createNewModel}
-      className="flex flex-col w-[400px] min-w-[400px] min-h-[300px] px-2 md:px-6 py-4 bg-da-white"
+      className="flex flex-col w-[400px] min-w-[400px] min-h-[300px] p-4  bg-da-white"
     >
       {/* Title */}
       <DaText variant="title" className="text-da-primary-500">
@@ -93,7 +97,7 @@ const FormCreateModel = () => {
         name="name"
         value={data.name}
         onChange={(e) => handleChange('name', e.target.value)}
-        placeholder="Model Name"
+        placeholder="Model name"
         label="Model Name *"
         className="mt-4"
       />

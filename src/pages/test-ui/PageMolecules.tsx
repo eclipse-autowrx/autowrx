@@ -56,19 +56,16 @@ const PageMolecules = () => {
           <DaCardIntroBig
             title="Prototypes"
             content="It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout"
-            maxWidth="320px"
             buttonText="Learn More"
           />
           <DaCardIntroBig
             title="Prototypes"
             content="It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout"
-            maxWidth="600px"
             buttonText="Learn More"
           />
           <DaCardIntroBig
             title="Prototypes"
             content="It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout"
-            maxWidth="320px"
             buttonText="Learn More"
           />
         </div>
