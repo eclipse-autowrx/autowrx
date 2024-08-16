@@ -45,15 +45,15 @@ const PageHome = () => {
         </div>
       </div>
 
-      <div className="col-span-12 mt-12 mb-3">
+      <div className="col-span-12 mt-12">
         <HomeIntroBlock />
       </div>
 
-      <div className="col-span-12">
+      <div className="col-span-12 mt-12">
         <HomePrototypeProposal />
       </div>
 
-      <div className="col-span-12">
+      <div className="col-span-12 mt-12">
         <HomePartners />
       </div>
     </>

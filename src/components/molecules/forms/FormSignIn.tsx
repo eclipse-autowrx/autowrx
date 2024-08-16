@@ -129,7 +129,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
         </div>
       )}
 
-      {config.sso && config.instance === 'xhub' && (
+      {config.sso && config.instance !== 'etas' && (
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t"></span>

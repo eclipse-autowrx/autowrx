@@ -9,9 +9,12 @@ import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import DaGlobalSearch from '../molecules/DaGlobalSearch'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { FaCar } from 'react-icons/fa'
+import useCurrentModel from '@/hooks/useCurrentModel'
 
 const NavigationBar = ({}) => {
   const { data: user } = useSelfProfileQuery()
+  const { data: model } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
 
   return (
@@ -23,12 +26,35 @@ const NavigationBar = ({}) => {
       <div className="grow"></div>
 
       {user && (
-        <DaGlobalSearch>
-          <DaButton variant="outline-nocolor" className="!pr-24 mr-2">
-            <TbZoom className="w-4 h-4 mr-1" />
-            Search
-          </DaButton>
-        </DaGlobalSearch>
+        <>
+          <DaGlobalSearch>
+            <DaButton variant="outline-nocolor" className="!pr-24 mr-3">
+              <TbZoom className="w-4 h-4 mr-1" />
+              Search
+            </DaButton>
+          </DaGlobalSearch>{' '}
+          {/* {model ? (
+            <Link to={`/model/${model.id}`}>
+              <DaButton variant="plain">
+                <div className="flex items-center">
+                  <FaCar style={{ transform: 'scale(1.4)' }} className="mr-3" />
+                  <div className="truncate max-w-[180px]">
+                    {model.name || 'Select Model'}
+                  </div>
+                </div>
+              </DaButton>
+            </Link>
+          ) : (
+            <Link to="/model">
+              <DaButton variant="plain">
+                <div className="flex items-center">
+                  <FaCar style={{ transform: 'scale(1.5)' }} className="mr-3" />
+                  Select Model
+                </div>
+              </DaButton>
+            </Link>
+          )} */}
+        </>
       )}
 
       {isAuthorized && (
