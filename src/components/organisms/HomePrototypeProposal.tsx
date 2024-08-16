@@ -9,6 +9,7 @@ import {
 } from '@/services/prototype.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import DaLoading from '../atoms/DaLoading'
+import DaText from '../atoms/DaText'
 
 const HomePrototypeProposal = () => {
   const { data: user } = useSelfProfileQuery()
@@ -45,52 +46,80 @@ const HomePrototypeProposal = () => {
   return (
     user && (
       <div className="flex flex-col w-full container mt-12">
-        <div className="flex justify-center space-x-2 w-full ">
-          <DaTabItem
-            active={activeTab === 'recent'}
-            onClick={() => setActiveTab('recent')}
-          >
-            Recent Prototypes
-          </DaTabItem>
-          <DaTabItem
-            active={activeTab === 'popular'}
-            onClick={() => setActiveTab('popular')}
-          >
-            Popular Prototypes
-          </DaTabItem>
-        </div>
-        {renderedPrototypes.length > 0 ? (
-          <div className="flex  flex-col w-full items-center mt-6">
-            <div className="w-full grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {renderedPrototypes.map((prototype, pIndex) => (
-                <Link
-                  to={`/model/${prototype.model_id}/library/prototype/${prototype.id}/view`}
-                  key={pIndex}
-                >
-                  <DaItemVerticalStandard
-                    title={prototype.name}
-                    content={prototype.description?.solution}
-                    imageUrl={prototype.image_file}
-                    maxWidth="400px"
-                  />
-                </Link>
-              ))}
+        {recentPrototypes && popularPrototypes ? (
+          <>
+            <DaText variant="sub-title" className="mt-6 text-da-primary-500">
+              Recent Prototypes
+            </DaText>
+            <div className="mt-2 w-full grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {recentPrototypes &&
+                recentPrototypes.map((prototype, pIndex) => (
+                  <Link
+                    to={`/model/${prototype.model_id}/library/prototype/${prototype.id}/view`}
+                    key={pIndex}
+                  >
+                    <DaItemVerticalStandard
+                      title={prototype.name}
+                      content={prototype.description?.solution}
+                      imageUrl={prototype.image_file}
+                      maxWidth="400px"
+                    />
+                  </Link>
+                ))}
             </div>
-          </div>
+            <DaText
+              variant="sub-title"
+              className="mt-12
+             text-da-primary-500"
+            >
+              Popular Prototypes
+            </DaText>
+            <div className="mt-2 w-full grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {popularPrototypes &&
+                popularPrototypes.map((prototype, pIndex) => (
+                  <Link
+                    to={`/model/${prototype.model_id}/library/prototype/${prototype.id}/view`}
+                    key={pIndex}
+                  >
+                    <DaItemVerticalStandard
+                      title={prototype.name}
+                      content={prototype.description?.solution}
+                      imageUrl={prototype.image_file}
+                      maxWidth="400px"
+                    />
+                  </Link>
+                ))}
+            </div>
+            {/* <DaText variant="regular-bold" className="mt-6">
+              Template Prototypes
+            </DaText>
+            <div className="mt-2 w-full grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {popularPrototypes &&
+                popularPrototypes.map((prototype, pIndex) => (
+                  <Link
+                    to={`/model/${prototype.model_id}/library/prototype/${prototype.id}/view`}
+                    key={pIndex}
+                  >
+                    <DaItemVerticalStandard
+                      title={prototype.name}
+                      content={prototype.description?.solution}
+                      imageUrl={prototype.image_file}
+                      maxWidth="400px"
+                    />
+                  </Link>
+                ))}
+            </div> */}
+          </>
         ) : (
           <div className="flex min-h-[200px] items-center">
             <DaLoading
               text="Loading prototypes..."
               showRetry={false}
               timeout={20}
-              timeoutText={
-                activeTab === 'popular'
-                  ? 'There are no popular prototypes available yet.'
-                  : 'Your recently accessed prototypes will be shown here.'
-              }
+              timeoutText={'There are prototypes available yet'}
               stopLoading={
-                (activeTab === 'popular' && popularPrototypes !== undefined) ||
-                (activeTab === 'recent' && recentPrototypes !== undefined)
+                popularPrototypes !== undefined &&
+                recentPrototypes !== undefined
               }
             />
           </div>

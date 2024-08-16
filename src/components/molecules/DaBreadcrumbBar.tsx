@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useParams, useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import {
@@ -11,10 +11,6 @@ import {
 } from '@/components/atoms/DaBreadcrumb'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
-import DaPopup from '../atoms/DaPopup'
-import DaDiscussions from './DaDiscussions'
-import { DaButton } from '../atoms/DaButton'
-import { TbMessage } from 'react-icons/tb'
 import { PERMISSIONS } from '@/data/permission'
 import usePermissionHook from '@/hooks/usePermissionHook'
 
@@ -32,7 +28,6 @@ const DaBreadcrumbBar = () => {
   const { data: prototype } = useCurrentPrototype()
   const location = useLocation()
   const [breadcrumbs, setBreadcrumbs] = useState<JSX.Element[]>([])
-  const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
 
   const generateBreadcrumbItem = (
     path: string,
@@ -143,26 +138,6 @@ const DaBreadcrumbBar = () => {
       <DaBreadcrumb className="flex text-da-white da-label-regular-bold">
         <DaBreadcrumbList>{breadcrumbs}</DaBreadcrumbList>
       </DaBreadcrumb>
-      {isAuthorized && pathnames.includes('prototype') && prototype?.id && (
-        <DaPopup
-          trigger={
-            <DaButton
-              variant="plain"
-              className="!text-da-white !bg-transparent hover:opacity-75"
-              size="sm"
-            >
-              <TbMessage className="w-5 h-5 mr-2" />
-              Discussion
-            </DaButton>
-          }
-        >
-          <DaDiscussions
-            refId={prototype?.id ?? ''}
-            refType="prototype"
-            className="max-h-[80vh] xl:max-h-[60vh]"
-          />
-        </DaPopup>
-      )}
     </div>
   )
 }

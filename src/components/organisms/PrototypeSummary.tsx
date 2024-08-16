@@ -68,16 +68,16 @@ const PrototypeSummary = ({ prototype }: PrototypeSummaryProps) => {
             ]}
             className="mt-2"
           />
-          <div className="flex items-center mt-1">
+          <div className="flex items-center mt-2">
             <Link
               to={`/model/${prototype.model_id}/library/prototype/${prototype.id}/feedback`}
-              className="flex w-fit items-center "
+              className="flex w-fit items-center hover:opacity-75"
             >
               <DaText
                 variant="small-bold"
                 className="flex items-center min-w-[110px]"
               >
-                Feedback <TbArrowUpRight className="w-4 h-4 ml-1" />
+                Feedback <TbArrowUpRight className="w-5 h-5 stroke-[1.75]" />
               </DaText>
             </Link>
             <DaStarsRating

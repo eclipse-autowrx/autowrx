@@ -15,6 +15,13 @@ import {
 } from 'react-icons/tb'
 import { saveRecentPrototype } from '@/services/prototype.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { PERMISSIONS } from '@/data/permission'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import useCurrentModel from '@/hooks/useCurrentModel'
+import DaPopup from '@/components/atoms/DaPopup'
+import { DaButton } from '@/components/atoms/DaButton'
+import { TbMessage } from 'react-icons/tb'
+import DaDiscussions from '@/components/molecules/DaDiscussions'
 
 const PrototypeTabCode = lazy(
   () => import('@/components/organisms/PrototypeTabCode'),
@@ -42,6 +49,7 @@ interface ViewPrototypeProps {
 const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
   const { model_id, prototype_id, tab } = useParams()
   const { data: user } = useSelfProfileQuery()
+  const { data: model } = useCurrentModel()
   const prototype = useModelStore((state) => state.prototype as Prototype)
   const [isDefaultTab, setIsDefaultTab] = useState(false)
 
@@ -61,56 +69,75 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
 
   return prototype ? (
     <div className="flex flex-col w-full h-full relative">
-      <div className="sticky flex top-0 py-0 bg-da-gray-light min-h-10">
-        <DaTabItem
-          active={isDefaultTab}
-          to={`/model/${model_id}/library/prototype/${prototype_id}/journey`}
-        >
-          <TbRoute className="w-5 h-5 mr-2" />
-          Journey
-        </DaTabItem>
-        <DaTabItem
-          active={tab === 'architecture'}
-          to={`/model/${model_id}/library/prototype/${prototype_id}/architecture`}
-        >
-          <TbBinaryTree className="w-5 h-5 mr-2" />
-          Architecture
-        </DaTabItem>
-        <DaTabItem
-          active={tab === 'code'}
-          to={`/model/${model_id}/library/prototype/${prototype_id}/code`}
-        >
-          <TbCode className="w-5 h-5 mr-2" />
-          Code
-        </DaTabItem>
-        {/* <DaTabItem
+      <div className="sticky flex top-0 py-0 bg-da-gray-light min-h-10 justify-between">
+        <div className="flex w-fit">
+          <DaTabItem
+            active={isDefaultTab}
+            to={`/model/${model_id}/library/prototype/${prototype_id}/journey`}
+          >
+            <TbRoute className="w-5 h-5 mr-2" />
+            Journey
+          </DaTabItem>
+          <DaTabItem
+            active={tab === 'architecture'}
+            to={`/model/${model_id}/library/prototype/${prototype_id}/architecture`}
+          >
+            <TbBinaryTree className="w-5 h-5 mr-2" />
+            Architecture
+          </DaTabItem>
+          <DaTabItem
+            active={tab === 'code'}
+            to={`/model/${model_id}/library/prototype/${prototype_id}/code`}
+          >
+            <TbCode className="w-5 h-5 mr-2" />
+            Code
+          </DaTabItem>
+          {/* <DaTabItem
           active={tab === 'flow'}
           to={`/model/${model_id}/library/prototype/${prototype_id}/flow`}
         >
           Flow
         </DaTabItem> */}
-        <DaTabItem
-          active={tab === 'dashboard'}
-          to={`/model/${model_id}/library/prototype/${prototype_id}/dashboard`}
-        >
-          <TbGauge className="w-5 h-5 mr-2" />
-          Dashboard
-        </DaTabItem>
-        <DaTabItem
-          active={tab === 'homologation'}
-          to={`/model/${model_id}/library/prototype/${prototype_id}/homologation`}
-        >
-          <TbScale className="w-5 h-5 mr-2" />
-          Homologation
-        </DaTabItem>
-        <DaTabItem
-          active={tab === 'feedback'}
-          to={`/model/${model_id}/library/prototype/${prototype_id}/feedback`}
-        >
-          <TbMessagePlus className="w-5 h-5 mr-2" />
-          Feedback
-        </DaTabItem>
+          <DaTabItem
+            active={tab === 'dashboard'}
+            to={`/model/${model_id}/library/prototype/${prototype_id}/dashboard`}
+          >
+            <TbGauge className="w-5 h-5 mr-2" />
+            Dashboard
+          </DaTabItem>
+          <DaTabItem
+            active={tab === 'homologation'}
+            to={`/model/${model_id}/library/prototype/${prototype_id}/homologation`}
+          >
+            <TbScale className="w-5 h-5 mr-2" />
+            Homologation
+          </DaTabItem>
+          <DaTabItem
+            active={tab === 'feedback'}
+            to={`/model/${model_id}/library/prototype/${prototype_id}/feedback`}
+          >
+            <TbMessagePlus className="w-5 h-5 mr-2" />
+            Feedback
+          </DaTabItem>
+        </div>
+        {
+          <DaPopup
+            trigger={
+              <DaTabItem>
+                <TbMessage className="w-5 h-5 mr-2" />
+                Discussion
+              </DaTabItem>
+            }
+          >
+            <DaDiscussions
+              refId={prototype?.id ?? ''}
+              refType="prototype"
+              className="max-h-[80vh] xl:max-h-[60vh]"
+            />
+          </DaPopup>
+        }
       </div>
+
       <div className="flex flex-col h-full overflow-y-auto">
         {isDefaultTab && (
           <Suspense>
