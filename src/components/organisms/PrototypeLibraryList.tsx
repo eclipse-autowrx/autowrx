@@ -155,7 +155,6 @@ const PrototypeLibraryList = () => {
                 >
                   <DaItemStandard
                     prototype={prototype}
-                    creatorId={prototype.created_by}
                     imageMaxWidth="100px"
                     isSelected={selectedPrototype === prototype}
                   />

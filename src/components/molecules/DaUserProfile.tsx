@@ -1,13 +1,10 @@
-import { useState, useEffect } from 'react'
 import { DaAvatar } from '../atoms/DaAvatar'
 import { DaText } from '../atoms/DaText'
-import { User } from '@/types/user.type'
-import { getUserService } from '@/services/user.service'
 import { cn } from '@/lib/utils'
-import { maskEmail } from '@/lib/utils'
 
 interface DaUserProfileProps {
-  userId: string
+  userName: string
+  userAvatar?: string
   className?: string
   avatarClassName?: string
   showEmail?: boolean
@@ -15,34 +12,21 @@ interface DaUserProfileProps {
 }
 
 const DaUserProfile = ({
-  userId,
+  userName,
+  userAvatar,
   className,
   avatarClassName = 'mr-2 w-5 h-5',
-  showEmail = false,
   textClassName,
 }: DaUserProfileProps) => {
-  const [user, setUser] = useState<User>()
-
-  useEffect(() => {
-    getUserService(userId).then((data) => {
-      setUser(data)
-    })
-  }, [userId])
-
   return (
     <div className={cn('flex items-center', className)}>
       <DaAvatar
         className={avatarClassName}
-        src={user?.image_file ?? '/imgs/profile.png'}
+        src={userAvatar ?? '/imgs/profile.png'}
       />
       <DaText variant="regular-medium" className={textClassName}>
-        {user?.name}
+        {userName}
       </DaText>
-      {showEmail && (
-        <DaText variant="small" className="ml-2">
-          {maskEmail(user?.email ?? '')}
-        </DaText>
-      )}
     </div>
   )
 }

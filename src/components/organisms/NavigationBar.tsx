@@ -33,7 +33,7 @@ const NavigationBar = ({}) => {
               Search
             </DaButton>
           </DaGlobalSearch>{' '}
-          {/* {model ? (
+          {model ? (
             <Link to={`/model/${model.id}`}>
               <DaButton variant="plain">
                 <div className="flex items-center">
@@ -53,7 +53,7 @@ const NavigationBar = ({}) => {
                 </div>
               </DaButton>
             </Link>
-          )} */}
+          )}
         </>
       )}
 

@@ -39,7 +39,11 @@ const PrototypeSummary = ({ prototype }: PrototypeSummaryProps) => {
             </DaButton>
           </Link>
         </div>
-        <DaUserProfile className="mt-2" userId={prototype.created_by} />
+        <DaUserProfile
+          className="mt-2"
+          userName={prototype.created_by.name}
+          userAvatar={prototype.created_by.image_file}
+        />
 
         <div className="flex flex-col h-full">
           <DaTableProperty
