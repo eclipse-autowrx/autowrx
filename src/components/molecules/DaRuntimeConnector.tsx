@@ -9,18 +9,19 @@ interface KitConnectProps {
   usedAPIs: string[]
   // allKit: any[];
   onActiveRtChanged?: (newActiveKitId: string | undefined) => void
+  onLoadedMockSignals?: (signals: []) => void
   onNewLog?: (log: string) => void
   onAppExit?: (code: any) => void
 }
 
 const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
-  ({ usedAPIs, onActiveRtChanged, onNewLog, onAppExit }, ref) => {
+  ({ usedAPIs, onActiveRtChanged, onLoadedMockSignals, onNewLog, onAppExit }, ref) => {
     const [activeRtId, setActiveRtId] = useState<string | undefined>('')
     const [allRuntimes, setAllRuntimes] = useState<any>([])
     const [ticker, setTicker] = useState(0)
 
     useImperativeHandle(ref, () => {
-      return { runApp, stopApp }
+      return { runApp, stopApp, setMockSignals, loadMockSignals }
     })
 
     const [apisValue, setActiveApis] = useRuntimeStore(
@@ -43,7 +44,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     useEffect(() => {
       let timer = setInterval(() => {
         setTicker((oldTicker) => oldTicker + 1)
-      }, 1000)
+      }, 30*1000)
       return () => {
         if (timer) clearInterval(timer)
       }
@@ -57,7 +58,14 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
           apis: usedAPIs,
         })
       }
-    }, [ticker])
+    }, [ticker, activeRtId])
+
+    useEffect(() => {
+      socketio.emit('messageToKit', {
+        cmd: 'list_mock_signal',
+        to_kit_id: activeRtId
+      })
+    }, [activeRtId])
 
     const runApp = (code: string) => {
       if (onNewLog) {
@@ -77,6 +85,21 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         cmd: 'stop_python_app',
         to_kit_id: activeRtId,
         data: {},
+      })
+    }
+
+    const setMockSignals = (signals: any[]) => {
+      socketio.emit('messageToKit', {
+        cmd: 'set_mock_signals',
+        to_kit_id: activeRtId,
+        data: signals || [],
+      })
+    }
+
+    const loadMockSignals = () => {
+      socketio.emit('messageToKit', {
+        cmd: 'list_mock_signal',
+        to_kit_id: activeRtId
       })
     }
 
@@ -127,12 +150,26 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     }, [])
 
     useEffect(() => {
+      if(activeRtId) {
+        localStorage.setItem("last-rt", activeRtId);
+      }
+    }, [activeRtId])
+
+    useEffect(() => {
       if (allRuntimes && allRuntimes.length > 0) {
         if (activeRtId) return
-        let activeRt = allRuntimes.find((rt: any) => rt.is_online)
-        if (activeRt) {
-          setActiveRtId(activeRt.kit_id)
+        let onlineRuntimes = allRuntimes.filter((rt: any) => rt.is_online)
+        if(onlineRuntimes.length<=0) {
+          setActiveRtId(undefined)
+          return
         }
+        let lastOnlineRuntime = localStorage.getItem("last-rt");
+        if(lastOnlineRuntime && onlineRuntimes.map((rt:any) => rt.kit_id).includes(lastOnlineRuntime)) {
+          setActiveRtId(lastOnlineRuntime)
+          return
+        }
+        setActiveRtId(onlineRuntimes[0].kit_id)
+        localStorage.setItem("last-rt", onlineRuntimes[0].kit_id);
       } else {
         setActiveRtId(undefined)
       }
@@ -230,6 +267,13 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         if (payload.result) {
           //
           setActiveApis(payload.result)
+        }
+      }
+
+      if(payload.cmd == 'list_mock_signal') {
+        if(!onLoadedMockSignals) return
+        if(payload && payload.data && Array.isArray(payload.data)) {
+          onLoadedMockSignals(payload.data)
         }
       }
     }

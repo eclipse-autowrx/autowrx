@@ -13,6 +13,7 @@ import useCurrentModel from '@/hooks/useCurrentModel'
 import DaApisWatch from './DaApisWatch'
 import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import DaMockManager from './DaMockManager'
 import { countCodeExecution } from '@/services/prototype.service'
 
 const AlwaysScrollToBottom = () => {
@@ -50,6 +51,8 @@ const DaRuntimeControl: FC = ({}) => {
 
   const [usedApis, setUsedApis] = useState<any[]>([])
   const [code, setCode] = useState<string>('')
+
+  const [mockSignals, setMockSignals] = useState<any[]>([])
 
   useEffect(() => {
     if (prototype) {
@@ -93,16 +96,16 @@ const DaRuntimeControl: FC = ({}) => {
 
   return (
     <div
-      className={`absolute bottom-0 right-0 top-0 z-10 ${isExpand ? 'w-[460px]' : 'w-16'} flex flex-col justify-center bg-da-gray-dark px-1 py-2 text-da-gray-light`}
+      className={`absolute bottom-0 right-0 top-0 z-10 ${isExpand ? 'w-[500px]' : 'w-16'} flex flex-col justify-center bg-da-gray-dark px-1 py-2 text-da-gray-light`}
     >
       <div className="px-1">
         <DaRuntimeConnector
           ref={runTimeRef}
           usedAPIs={usedApis}
           onActiveRtChanged={(rtId: string | undefined) => setActiveRtId(rtId)}
+          onLoadedMockSignals={setMockSignals}
           onNewLog={appendLog}
           onAppExit={() => {
-            //
             setIsRunning(false)
           }}
         />
@@ -171,6 +174,22 @@ const DaRuntimeControl: FC = ({}) => {
                 // onBlur={saveCodeToDb}
               />
             )}
+
+            {activeTab == 'mock' && (
+              <DaMockManager
+                mockSignals={mockSignals}
+                loadMockSignalsFromRt={() => {
+                  if (runTimeRef.current) {
+                    runTimeRef.current?.loadMockSignals()
+                  }
+                }}
+                sendMockSignalsToRt={(signals: any[]) => {
+                  if (runTimeRef.current) {
+                    runTimeRef.current?.setMockSignals(signals)
+                  }
+                }}
+              />
+            )}
           </>
         )}
       </div>
@@ -206,6 +225,14 @@ const DaRuntimeControl: FC = ({}) => {
               }}
             >
               Signals Watch
+            </div>
+            <div
+              className={`da-label-small flex cursor-pointer items-center px-4 py-0.5 text-da-white hover:bg-da-gray-medium ${activeTab == 'mock' && 'border-b-2 border-da-white'}`}
+              onClick={() => {
+                setActiveTab('mock')
+              }}
+            >
+              Mock Services
             </div>
             <div
               className={`da-label-small flex cursor-pointer items-center px-4 py-0.5 text-da-white hover:bg-da-gray-medium ${activeTab == 'code' && 'border-b-2 border-da-white'}`}
