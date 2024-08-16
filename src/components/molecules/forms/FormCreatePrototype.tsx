@@ -262,6 +262,35 @@ LOOP.close()`,
         className="mt-4"
       />
 
+      {!model &&
+        (contributionModels && !isFetchingModelContribution && localModel ? (
+          <DaSelect
+            defaultValue={localModel.id}
+            label="Select vehicle model *"
+            wrapperClassName="mt-4"
+            onValueChange={(e) => {
+              const selectedModel = contributionModels.results.find(
+                (model) => model.id === e,
+              )
+              selectedModel && setLocalModel(selectedModel)
+            }}
+          >
+            {contributionModels.results.map((model, index) => (
+              <DaSelectItem key={index} value={model.id}>
+                {model.name}
+              </DaSelectItem>
+            ))}
+          </DaSelect>
+        ) : isFetchingModelContribution ? (
+          <DaText variant="small" className="mt-4 text-da-accent-500">
+            Loading...
+          </DaText>
+        ) : (
+          <DaText variant="small" className="mt-4 text-da-accent-500">
+            No contribution model found.
+          </DaText>
+        ))}
+
       {error && (
         <DaText variant="small" className="mt-4 text-da-accent-500">
           {error}

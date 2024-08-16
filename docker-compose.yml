@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   playground-fe:
     container_name: playground-fe

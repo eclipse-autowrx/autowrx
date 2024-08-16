@@ -13,6 +13,8 @@ import useCurrentModel from '@/hooks/useCurrentModel'
 import DaApisWatch from './DaApisWatch'
 import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import DaMockManager from './DaMockManager'
+import { countCodeExecution } from '@/services/prototype.service'
 
 const AlwaysScrollToBottom = () => {
   const elementRef = useRef<any>(null)
@@ -49,6 +51,8 @@ const DaRuntimeControl: FC = ({}) => {
 
   const [usedApis, setUsedApis] = useState<any[]>([])
   const [code, setCode] = useState<string>('')
+
+  const [mockSignals, setMockSignals] = useState<any[]>([])
 
   useEffect(() => {
     if (prototype) {
@@ -92,16 +96,16 @@ const DaRuntimeControl: FC = ({}) => {
 
   return (
     <div
-      className={`absolute z-10 top-0 bottom-0 right-0 ${isExpand ? 'w-[460px]' : 'w-16'} text-da-gray-light py-2 px-1 flex flex-col justify-center bg-da-gray-dark`}
+      className={`absolute bottom-0 right-0 top-0 z-10 ${isExpand ? 'w-[500px]' : 'w-16'} flex flex-col justify-center bg-da-gray-dark px-1 py-2 text-da-gray-light`}
     >
       <div className="px-1">
         <DaRuntimeConnector
           ref={runTimeRef}
           usedAPIs={usedApis}
           onActiveRtChanged={(rtId: string | undefined) => setActiveRtId(rtId)}
+          onLoadedMockSignals={setMockSignals}
           onNewLog={appendLog}
           onAppExit={() => {
-            //
             setIsRunning(false)
           }}
         />
@@ -126,10 +130,9 @@ const DaRuntimeControl: FC = ({}) => {
                   type: 'run-prototype',
                   create_by: userId,
                 })
+                countCodeExecution(prototype.id)
               }}
-              className="p-2 mt-1 da-label-regular-bold hover:bg-da-gray-medium 
-                          flex items-center justify-center rounded border border-da-gray-medium
-                          disabled:text-da-gray-medium"
+              className="da-label-regular-bold mt-1 flex items-center justify-center rounded border border-da-gray-medium p-2 hover:bg-da-gray-medium disabled:text-da-gray-medium"
             >
               <IoPlay />
             </button>
@@ -141,9 +144,7 @@ const DaRuntimeControl: FC = ({}) => {
                   runTimeRef.current?.stopApp()
                 }
               }}
-              className={`${isExpand && 'mx-2'} p-2 mt-1 da-label-regular-bold hover:bg-da-gray-medium 
-                        flex items-center justify-center rounded border border-da-gray-medium
-                        disabled:text-da-gray-medium`}
+              className={`${isExpand && 'mx-2'} da-label-regular-bold mt-1 flex items-center justify-center rounded border border-da-gray-medium p-2 hover:bg-da-gray-medium disabled:text-da-gray-medium`}
             >
               <IoStop />
             </button>
@@ -151,14 +152,11 @@ const DaRuntimeControl: FC = ({}) => {
         )}
       </div>
 
-      <div className="grow mt-1 overflow-y-auto">
+      <div className="mt-1 grow overflow-y-auto">
         {isExpand && (
           <>
             {activeTab == 'output' && (
-              <p
-                className="bg-da-black text-da-white da-label-tiny
-                                                whitespace-pre-wrap h-full overflow-y-auto px-2 py-1 rounded"
-              >
+              <p className="da-label-tiny h-full overflow-y-auto whitespace-pre-wrap rounded bg-da-black px-2 py-1 text-da-white">
                 {log}
                 <AlwaysScrollToBottom />
               </p>
@@ -174,6 +172,22 @@ const DaRuntimeControl: FC = ({}) => {
                 language="python"
                 onBlur={() => {}}
                 // onBlur={saveCodeToDb}
+              />
+            )}
+
+            {activeTab == 'mock' && (
+              <DaMockManager
+                mockSignals={mockSignals}
+                loadMockSignalsFromRt={() => {
+                  if (runTimeRef.current) {
+                    runTimeRef.current?.loadMockSignals()
+                  }
+                }}
+                sendMockSignalsToRt={(signals: any[]) => {
+                  if (runTimeRef.current) {
+                    runTimeRef.current?.setMockSignals(signals)
+                  }
+                }}
               />
             )}
           </>
@@ -197,8 +211,7 @@ const DaRuntimeControl: FC = ({}) => {
           <>
             <div className="grow"></div>
             <div
-              className={`flex items-center px-4 py-0.5 da-label-small text-da-white cursor-pointer hover:bg-da-gray-medium
-              ${activeTab == 'output' && 'border-b-2 border-da-white'}`}
+              className={`da-label-small flex cursor-pointer items-center px-4 py-0.5 text-da-white hover:bg-da-gray-medium ${activeTab == 'output' && 'border-b-2 border-da-white'}`}
               onClick={() => {
                 setActiveTab('output')
               }}
@@ -206,8 +219,7 @@ const DaRuntimeControl: FC = ({}) => {
               Output
             </div>
             <div
-              className={`flex items-center px-4 py-0.5 da-label-small text-da-white cursor-pointer hover:bg-da-gray-medium
-              ${activeTab == 'apis' && 'border-b-2 border-da-white'}`}
+              className={`da-label-small flex cursor-pointer items-center px-4 py-0.5 text-da-white hover:bg-da-gray-medium ${activeTab == 'apis' && 'border-b-2 border-da-white'}`}
               onClick={() => {
                 setActiveTab('apis')
               }}
@@ -215,8 +227,15 @@ const DaRuntimeControl: FC = ({}) => {
               Signals Watch
             </div>
             <div
-              className={`flex items-center px-4 py-0.5 da-label-small text-da-white cursor-pointer hover:bg-da-gray-medium
-              ${activeTab == 'code' && 'border-b-2 border-da-white'}`}
+              className={`da-label-small flex cursor-pointer items-center px-4 py-0.5 text-da-white hover:bg-da-gray-medium ${activeTab == 'mock' && 'border-b-2 border-da-white'}`}
+              onClick={() => {
+                setActiveTab('mock')
+              }}
+            >
+              Mock Services
+            </div>
+            <div
+              className={`da-label-small flex cursor-pointer items-center px-4 py-0.5 text-da-white hover:bg-da-gray-medium ${activeTab == 'code' && 'border-b-2 border-da-white'}`}
               onClick={() => {
                 setActiveTab('code')
               }}
