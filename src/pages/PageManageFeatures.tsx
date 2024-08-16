@@ -81,12 +81,12 @@ const PageManageFeatures = () => {
   }, [activeTab, usersWithRoles, features])
 
   return (
-    <div className="flex flex-col w-full h-[calc(100%-40px)] container mt-6 pb-8">
+    <div className="container mt-6 flex h-[calc(100%-40px)] w-full flex-col pb-8">
       <DaText variant="huge-bold" className="text-da-primary-500">
         Feature Management
       </DaText>
       {loading ? (
-        <div className="flex w-full h-full items-center justify-center">
+        <div className="flex h-full w-full items-center justify-center">
           <DaLoading
             text={'Loading users features...'}
             timeoutText={'Failed to load users features'}
@@ -94,17 +94,17 @@ const PageManageFeatures = () => {
           />
         </div>
       ) : (
-        <div className="flex w-full h-full mt-4 space-x-2 rounded">
+        <div className="mt-4 flex h-full w-full space-x-2 rounded">
           {features && features.length > 0 ? (
-            <div className="flex flex-col w-1/4 h-full p-2 border rounded-lg">
+            <div className="flex h-full w-1/4 flex-col rounded-lg border p-2">
               <DaText variant="regular-bold" className="px-2">
                 Feature Categories
               </DaText>
-              <div className="flex flex-col w-full h-full mt-2 overflow-y-auto">
+              <div className="mt-2 flex h-full w-full flex-col overflow-y-auto">
                 {features.map((feature) => (
                   <div
                     key={feature.id}
-                    className={`flex mt-1 items-center da-menu-item whitespace-nowrap truncate ${
+                    className={`da-menu-item mt-1 flex items-center truncate whitespace-nowrap ${
                       activeTab === feature.name
                         ? 'bg-da-primary-100 !text-da-primary-500'
                         : ''
@@ -119,14 +119,14 @@ const PageManageFeatures = () => {
           ) : (
             <DaText
               variant="title"
-              className="flex flex-col w-1/4 h-full border rounded-lg items-center justify-center"
+              className="flex h-full w-1/4 flex-col items-center justify-center rounded-lg border"
             >
               No features available
             </DaText>
           )}
           {activeTab ? (
-            <div className="flex flex-col w-3/4 h-full p-4 border rounded-lg">
-              <div className="flex w-full h-fit items-center justify-between">
+            <div className="flex h-full w-3/4 flex-col rounded-lg border p-4">
+              <div className="flex h-fit w-full items-center justify-between">
                 <DaText variant="regular-bold">
                   {activeTab} ({filteredUsers.length})
                 </DaText>
@@ -136,15 +136,15 @@ const PageManageFeatures = () => {
                     setOpen(!open)
                   }}
                 >
-                  <TbUserPlus className="w-4 h-4 mr-1" /> Add User
+                  <TbUserPlus className="mr-1 h-4 w-4" /> Add User
                 </DaButton>
               </div>
               {filteredUsers.length > 0 ? (
-                <div className="flex flex-col gap-2 mt-4 overflow-y-auto h-[90%] -mx-2 px-2">
+                <div className="-mx-2 mt-4 flex h-[90%] flex-col gap-2 overflow-y-auto px-2">
                   {filteredUsers.map((user) => (
                     <div
                       key={user.id}
-                      className="flex p-4 items-center border rounded-lg"
+                      className="flex items-center rounded-lg border p-4"
                     >
                       <DaUserListItem user={user} key={user.id} />
                       <DaButton
@@ -160,17 +160,17 @@ const PageManageFeatures = () => {
               ) : (
                 <DaText
                   variant="title"
-                  className="flex w-full h-full items-center justify-center"
+                  className="flex h-full w-full items-center justify-center"
                 >
                   No users found for this feature.
                 </DaText>
               )}
             </div>
           ) : (
-            <div className="flex flex-col w-3/4 min-h-[500px] p-4 border rounded-lg">
+            <div className="flex min-h-[500px] w-3/4 flex-col rounded-lg border p-4">
               <DaText
                 variant="title"
-                className="flex w-full h-full items-center justify-center"
+                className="flex h-full w-full items-center justify-center"
               >
                 Please select a feature category
               </DaText>
@@ -182,6 +182,7 @@ const PageManageFeatures = () => {
         selectUser={handleAddUser}
         popupState={[open, setOpen]}
         excludeUsers={filteredUsers}
+        includeFullDetails
       />
     </div>
   )

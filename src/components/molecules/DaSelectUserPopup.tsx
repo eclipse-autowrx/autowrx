@@ -12,15 +12,18 @@ interface DaSelectUserProps {
   popupState: [boolean, React.Dispatch<React.SetStateAction<boolean>>]
   selectUser: (userId: string) => void
   excludeUsers?: User[]
+  includeFullDetails?: boolean
 }
 
 const DaSelectUserPopup = ({
   popupState,
   selectUser,
   excludeUsers,
+  includeFullDetails = false,
 }: DaSelectUserProps) => {
   const { data } = useListUsers({
     limit: 100,
+    includeFullDetails,
   })
   const [renderUsers, setRenderUsers] = useState<any>([])
   const [loading, setLoading] = useState(false)
@@ -80,9 +83,9 @@ const DaSelectUserPopup = ({
                   renderUsers.map((user: any) => (
                     <div
                       key={user.id}
-                      className="flex items-center border-b border-slate-200 py-3"
+                      className="flex items-center gap-x-3 border-b border-slate-200 py-3"
                     >
-                      <DaAvatar src={user?.image_file} className="mr-4" />
+                      <DaAvatar src={user?.image_file} />
                       <div className="grow py-1">
                         <DaText
                           variant="regular-bold"
@@ -90,14 +93,16 @@ const DaSelectUserPopup = ({
                         >
                           {user.name}
                         </DaText>
-                        {/* <div className="da-label-small italic">
-                          {maskEmail(user?.email ?? '')} {''}
-                          {user.provider && (
-                            <span>
-                              {''}via @{user.provider}
-                            </span>
-                          )}
-                        </div> */}
+                        {user.email && (
+                          <div className="da-label-small italic">
+                            {user?.email ?? ''} {''}
+                            {user.provider && (
+                              <span>
+                                {''}via @{user.provider}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
                       <div
                         className="flex items-center justify-center"
