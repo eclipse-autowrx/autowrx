@@ -198,3 +198,7 @@ export const saveRecentPrototype = async (
     page,
   })
 }
+
+export const countCodeExecution = async (prototypeId: string) => {
+  return serverAxios.post(`/prototypes/${prototypeId}/execute-code`)
+}
