@@ -13,10 +13,16 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { useNavigate, useLocation } from 'react-router-dom'
 import useListModelContribution from '@/hooks/useListModelContribution'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
-import { Model, ModelLite } from '@/types/model.type'
+import { Model, ModelLite, ModelCreate } from '@/types/model.type'
+import DaLoader from '@/components/atoms/DaLoader'
+import { CVI } from '@/data/CVI'
+import { createModelService } from '@/services/model.service'
 
 const initialState = {
-  name: '',
+  prototypeName: '',
+  modelName: '',
+  cvi: JSON.stringify(CVI),
+  mainApi: 'Vehicle',
 }
 
 const MockDefaultJourney = `
@@ -47,8 +53,8 @@ const FormCreatePrototype = ({ onClose }: FormCreatePrototypeProps) => {
     useListModelContribution()
   const [localModel, setLocalModel] = useState<ModelLite>()
   const { refetch } = useListModelPrototypes(model ? model.id : '')
-  const { toast } = useToast()
   const navigate = useNavigate()
+  const { toast } = useToast()
 
   const { data: currentUser } = useSelfProfileQuery()
 
@@ -56,14 +62,37 @@ const FormCreatePrototype = ({ onClose }: FormCreatePrototypeProps) => {
     setData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const createNewModel = async (e: FormEvent<HTMLFormElement>) => {
-    if (!localModel) return
-    e.preventDefault()
+  const createNewPrototype = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault() // Prevent the form from submitting
+
     try {
       setLoading(true)
+
+      // Initialize variables to hold the model ID and response from prototype creation
+      let modelId: string
+      let response
+
+      if (localModel) {
+        // Scenario 1: `localModel` exists, use its ID
+        modelId = localModel.id
+      } else if (data.modelName) {
+        // Scenario 2: `localModel` does not exist, create a new model
+        const modelBody: ModelCreate = {
+          cvi: data.cvi,
+          main_api: data.mainApi,
+          name: data.modelName,
+        }
+
+        const newModelId = await createModelService(modelBody)
+        modelId = newModelId
+      } else {
+        throw new Error('Model data is missing')
+      }
+
+      // Create the prototype using the model ID
       const body = {
-        model_id: localModel.id,
-        name: data.name,
+        model_id: modelId,
+        name: data.prototypeName,
         state: 'development',
         apis: { VSC: [], VSS: [] },
         code: `from vehicle import Vehicle
@@ -110,36 +139,45 @@ LOOP.close()`,
         widget_config: '[]',
         autorun: true,
       }
-      const response = await createPrototypeService(body)
-      await refetch()
+
+      response = await createPrototypeService(body)
+
+      // Log the prototype creation
+      await addLog({
+        name: `New prototype '${data.prototypeName}' under model '${localModel?.name || data.modelName}'`,
+        description: `Prototype '${data.prototypeName}' was created by ${currentUser?.email || currentUser?.name || currentUser?.id}`,
+        type: 'new-prototype',
+        create_by: currentUser?.id!,
+        ref_id: response.id,
+        ref_type: 'prototype',
+        parent_id: modelId,
+      })
+
       toast({
         title: ``,
         description: (
           <DaText variant="small" className=" flex items-center">
             <TbCircleCheckFilled className="text-green-500 w-4 h-4 mr-2" />
-            Prototype "{data.name}" created successfully
+            Prototype "{data.prototypeName}" created successfully
           </DaText>
         ),
         duration: 3000,
       })
-      await addLog({
-        name: `New prototype '${data.name}' under model '${localModel.name}'`,
-        description: `Prototype '${data.name}' was created by ${currentUser?.email || currentUser?.name || currentUser?.id}`,
-        type: 'new-prototype',
-        create_by: currentUser?.id!,
-        ref_id: response.id,
-        ref_type: 'prototype',
-        parent_id: localModel.id,
-      })
 
-      setData(initialState)
-      // Navigate to new created prototype
-      navigate(`/model/${localModel.id}/library/list/${response.id}`)
+      // Navigate to the new prototype's page
+      navigate(`/model/${modelId}/library/list/${response.id}`)
+
+      // Optionally close the form/modal
       if (onClose) onClose()
+
+      // Reset form data
+      setData(initialState)
+
+      // Refetch data
+      await refetch()
     } catch (error) {
       if (isAxiosError(error)) {
         setError(error.response?.data?.message || 'Something went wrong')
-        return
       }
     } finally {
       setLoading(false)
@@ -173,27 +211,18 @@ LOOP.close()`,
 
   return (
     <form
-      onSubmit={createNewModel}
+      onSubmit={createNewPrototype}
       className="flex flex-col w-[30vw] lg:w-[25vw] max-h-[80vh] p-4 bg-da-white"
     >
       <DaText variant="title" className="text-da-primary-500">
         Create New Prototype
       </DaText>
 
-      <DaInput
-        name="name"
-        value={data.name}
-        onChange={(e) => handleChange('name', e.target.value)}
-        placeholder="Name"
-        label="Name *"
-        className="mt-4"
-      />
-
       {!model &&
         (contributionModels && !isFetchingModelContribution && localModel ? (
           <DaSelect
             defaultValue={localModel.id}
-            label="Select vehicle model *"
+            label="Model name *"
             wrapperClassName="mt-4"
             onValueChange={(e) => {
               const selectedModel = contributionModels.results.find(
@@ -209,14 +238,29 @@ LOOP.close()`,
             ))}
           </DaSelect>
         ) : isFetchingModelContribution ? (
-          <DaText variant="small" className="mt-4 text-da-accent-500">
-            Loading...
+          <DaText variant="regular" className="mt-4 flex items-center">
+            <DaLoader className="w-4 h-4 mr-1" />
+            Loading vehicle model...
           </DaText>
         ) : (
-          <DaText variant="small" className="mt-4 text-da-accent-500">
-            No contribution model found.
-          </DaText>
+          <DaInput
+            name="name"
+            value={data.modelName}
+            onChange={(e) => handleChange('modelName', e.target.value)}
+            placeholder="Model name"
+            label="Model Name *"
+            className="mt-4"
+          />
         ))}
+
+      <DaInput
+        name="name"
+        value={data.prototypeName}
+        onChange={(e) => handleChange('prototypeName', e.target.value)}
+        placeholder="Name"
+        label="Prototype Name *"
+        className="mt-4"
+      />
 
       {error && (
         <DaText variant="small" className="mt-4 text-da-accent-500">
@@ -225,7 +269,9 @@ LOOP.close()`,
       )}
 
       <DaButton
-        disabled={loading || !localModel}
+        disabled={
+          loading || (!localModel && !data.modelName) || !data.prototypeName
+        }
         type="submit"
         variant="gradient"
         className="w-full mt-8"

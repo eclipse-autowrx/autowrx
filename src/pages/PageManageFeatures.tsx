@@ -7,7 +7,6 @@ import {
   removeRoleFromUserService,
 } from '@/services/permission.service'
 import { DaButton } from '@/components/atoms/DaButton'
-import DaUserList from '@/components/molecules/DaUserList'
 import { UsersWithRoles } from '@/types/permission.type'
 import { User } from '@/types/user.type'
 import DaLoading from '@/components/atoms/DaLoading'
@@ -140,12 +139,7 @@ const PageManageFeatures = () => {
                 </DaButton>
               </div>
               {filteredUsers.length > 0 ? (
-                <div className="flex flex-col h-[90%] w-full ">
-                  <DaUserList
-                    users={filteredUsers}
-                    onRemoveUser={handleRemoveUser}
-                  />
-                </div>
+                <div className="flex flex-col h-[90%] w-full "></div>
               ) : (
                 <DaText
                   variant="title"
