@@ -4,11 +4,11 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import useAuthStore from '@/stores/authStore'
 import { DaActionCard } from '../molecules/DaActionCard'
 import { FaCar } from 'react-icons/fa'
-import {
-  TbArrowRight,
-  TbCode,
-  TbPackageImport,
-} from 'react-icons/tb'
+import { TbArrowRight, TbCode, TbPackageImport } from 'react-icons/tb'
+import FormCreateModel from '../molecules/forms/FormCreateModel'
+import FormCreatePrototype from '../molecules/forms/FormCreatePrototype'
+import DaPopup from '../atoms/DaPopup'
+import FormImportPrototype from '../molecules/forms/FormImportPrototype'
 
 const cardData = [
   {
@@ -34,11 +34,10 @@ const cardData = [
 const HomeIntroBlock = () => {
   const navigate = useNavigate()
   const { data: user } = useSelfProfileQuery()
-  const { setOpenLoginDialog } = useAuthStore()
 
   return (
     <div className="flex flex-col container justify-center w-full">
-      <div className="grid w-full grid-cols-1 md:grid-cols-3 gap-12 my-6">
+      <div className="grid w-full grid-cols-1 md:grid-cols-3 gap-12">
         {cardData.map((card, index) => (
           <div key={index} className="flex w-full items-center justify-center">
             <DaCardIntroBig
@@ -51,29 +50,51 @@ const HomeIntroBlock = () => {
       </div>
       {user && (
         <div className="grid w-full grid-cols-1 md:grid-cols-4 gap-12 mt-12">
-          <DaActionCard
-            title="New model"
-            content="Create a vehicle model"
-            icon={<FaCar className="w-7 h-7 text-da-primary-500" />}
-            className="w-full"
-          />
-          <DaActionCard
-            title="New prototype"
-            content="Quickly develop vehicle app"
-            icon={<TbCode className="w-7 h-7 text-da-primary-500" />}
-            className="w-full"
-          />
-          <DaActionCard
-            title="Import model"
-            content="Import my available model"
-            icon={<TbPackageImport className="w-7 h-7 text-da-primary-500" />}
-            className="w-full"
-          />
+          <DaPopup
+            trigger={
+              <DaActionCard
+                title="New model"
+                content="Create a vehicle model"
+                icon={<FaCar className="w-7 h-7 text-da-primary-500" />}
+                className="w-full"
+              />
+            }
+          >
+            <FormCreateModel />
+          </DaPopup>
+          <DaPopup
+            trigger={
+              <DaActionCard
+                title="New prototype"
+                content="Quickly develop vehicle app"
+                icon={<TbCode className="w-7 h-7 text-da-primary-500" />}
+                className="w-full"
+              />
+            }
+          >
+            <FormCreatePrototype />
+          </DaPopup>
+          <DaPopup
+            trigger={
+              <DaActionCard
+                title="Import model"
+                content="Import my available model"
+                icon={
+                  <TbPackageImport className="w-7 h-7 text-da-primary-500" />
+                }
+                className="w-full"
+              />
+            }
+          >
+            <FormImportPrototype />
+          </DaPopup>
+
           <DaActionCard
             title="My models"
             content="Go to my models"
             icon={<TbArrowRight className="w-7 h-7 text-da-primary-500" />}
             className="w-full"
+            onClick={() => navigate('/model')}
           />
         </div>
       )}

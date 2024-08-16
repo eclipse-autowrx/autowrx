@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { DaItemVerticalStandard } from '../molecules/DaItemVerticalStandard'
 import { Link } from 'react-router-dom'
 import { Prototype } from '@/types/model.type'
-import DaTabItem from '../atoms/DaTabItem'
 import {
   listRecentPrototypes,
   listPopularPrototypes,
@@ -45,7 +44,7 @@ const HomePrototypeProposal = () => {
 
   return (
     user && (
-      <div className="flex flex-col w-full container mt-12">
+      <div className="flex flex-col w-full container ">
         {recentPrototypes && popularPrototypes ? (
           <>
             <DaText variant="sub-title" className="mt-6 text-da-primary-500">

@@ -25,6 +25,7 @@ const DaActionCard = ({
         `flex p-4 w-full rounded-lg border border-da-gray-light items-center space-x-4 bg-da-gray-light/25 hover:bg-da-gray-light/50 cursor-pointer`,
         className,
       )}
+      onClick={onClick}
     >
       {icon && (
         <div className="p-2 rounded-full bg-da-primary-300/25">{icon}</div>
