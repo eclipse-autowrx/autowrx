@@ -7,14 +7,14 @@ import {
   removeRoleFromUserService,
 } from '@/services/permission.service'
 import { DaButton } from '@/components/atoms/DaButton'
-import DaUserList from '@/components/molecules/DaUserList'
 import { UsersWithRoles } from '@/types/permission.type'
 import { User } from '@/types/user.type'
 import DaLoading from '@/components/atoms/DaLoading'
-import { TbUserPlus } from 'react-icons/tb'
+import { TbMinus, TbUserPlus } from 'react-icons/tb'
 import DaSelectUserPopup from '@/components/molecules/DaSelectUserPopup'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
+import DaUserListItem from '@/components/molecules/DaUserListItem'
 
 const PageManageFeatures = () => {
   const [activeTab, setActiveTab] = useState('')
@@ -81,7 +81,7 @@ const PageManageFeatures = () => {
   }, [activeTab, usersWithRoles, features])
 
   return (
-    <div className="flex flex-col w-full h-full container mt-6">
+    <div className="flex flex-col w-full h-[calc(100%-40px)] container mt-6 pb-8">
       <DaText variant="huge-bold" className="text-da-primary-500">
         Feature Management
       </DaText>
@@ -94,7 +94,7 @@ const PageManageFeatures = () => {
           />
         </div>
       ) : (
-        <div className="flex w-full h-full max-h-[70vh] mt-4 space-x-2 rounded">
+        <div className="flex w-full h-full mt-4 space-x-2 rounded">
           {features && features.length > 0 ? (
             <div className="flex flex-col w-1/4 h-full p-2 border rounded-lg">
               <DaText variant="regular-bold" className="px-2">
@@ -125,7 +125,7 @@ const PageManageFeatures = () => {
             </DaText>
           )}
           {activeTab ? (
-            <div className="flex flex-col w-3/4 h-full p-2 border rounded-lg">
+            <div className="flex flex-col w-3/4 h-full p-4 border rounded-lg">
               <div className="flex w-full h-fit items-center justify-between">
                 <DaText variant="regular-bold">
                   {activeTab} ({filteredUsers.length})
@@ -140,11 +140,22 @@ const PageManageFeatures = () => {
                 </DaButton>
               </div>
               {filteredUsers.length > 0 ? (
-                <div className="flex flex-col h-[90%] w-full ">
-                  <DaUserList
-                    users={filteredUsers}
-                    onRemoveUser={handleRemoveUser}
-                  />
+                <div className="flex flex-col gap-2 mt-4 overflow-y-auto h-[90%] -mx-2 px-2">
+                  {filteredUsers.map((user) => (
+                    <div
+                      key={user.id}
+                      className="flex p-4 items-center border rounded-lg"
+                    >
+                      <DaUserListItem user={user} key={user.id} />
+                      <DaButton
+                        onClick={() => handleRemoveUser(user.id)}
+                        size="sm"
+                        variant="destructive"
+                      >
+                        <TbMinus />
+                      </DaButton>
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <DaText
