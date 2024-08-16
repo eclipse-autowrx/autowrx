@@ -14,7 +14,12 @@ export const getUserService = async (id: string) => {
 }
 
 export const listUsersService = async (
-  params?: Partial<Record<keyof (User & ListQueryParams), unknown>>,
+  params?: Partial<
+    Record<
+      keyof (User & ListQueryParams & { includeFullDetails?: boolean }),
+      unknown
+    >
+  >,
 ) => {
   if (IS_MOCK) {
     return {

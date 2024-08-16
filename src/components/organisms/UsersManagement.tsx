@@ -26,7 +26,9 @@ const UsersManagement = () => {
     hasNextPage,
     totalResults,
     refetch,
-  } = useListUsers()
+  } = useListUsers({
+    includeFullDetails: true,
+  })
 
   const [open, setOpen] = useState(false)
 
