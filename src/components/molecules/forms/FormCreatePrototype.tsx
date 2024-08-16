@@ -1,7 +1,7 @@
 import { DaButton } from '@/components/atoms/DaButton'
 import { DaInput } from '@/components/atoms/DaInput'
 import { DaText } from '@/components/atoms/DaText'
-import { FormEvent, useState } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 import { TbCircleCheckFilled, TbLoader } from 'react-icons/tb'
 import { createPrototypeService } from '@/services/prototype.service'
 import { useToast } from '../toaster/use-toast'
@@ -11,6 +11,9 @@ import { isAxiosError } from 'axios'
 import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { useNavigate, useLocation } from 'react-router-dom'
+import useListModelContribution from '@/hooks/useListModelContribution'
+import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
+import { Model, ModelLite } from '@/types/model.type'
 
 const initialState = {
   name: '',
@@ -32,22 +35,20 @@ Customer TouchPoints: Notification on car dashboard and mobile app
 `
 
 interface FormCreatePrototypeProps {
-  model_id: string
-  onClose: () => void
+  onClose?: () => void
 }
 
-const FormCreatePrototype = ({
-  model_id,
-  onClose,
-}: FormCreatePrototypeProps) => {
+const FormCreatePrototype = ({ onClose }: FormCreatePrototypeProps) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
   const [data, setData] = useState(initialState)
   const { data: model } = useCurrentModel()
+  const { data: contributionModels, isLoading: isFetchingModelContribution } =
+    useListModelContribution()
+  const [localModel, setLocalModel] = useState<ModelLite>()
   const { refetch } = useListModelPrototypes(model ? model.id : '')
   const { toast } = useToast()
   const navigate = useNavigate()
-  const location = useLocation()
 
   const { data: currentUser } = useSelfProfileQuery()
 
@@ -56,11 +57,12 @@ const FormCreatePrototype = ({
   }
 
   const createNewModel = async (e: FormEvent<HTMLFormElement>) => {
+    if (!localModel) return
     e.preventDefault()
     try {
       setLoading(true)
       const body = {
-        model_id: model_id,
+        model_id: localModel.id,
         name: data.name,
         state: 'development',
         apis: { VSC: [], VSS: [] },
@@ -86,7 +88,6 @@ class TestApp(VehicleApp):
             print(f"[{i}] speed {speed}")
 
 async def main():
-    logger.info("Starting TestApp...")
     vehicle_app = TestApp(vehicle)
     await vehicle_app.run()
 
@@ -122,19 +123,19 @@ LOOP.close()`,
         duration: 3000,
       })
       await addLog({
-        name: `New prototype '${data.name}' under model '${model?.name}'`,
+        name: `New prototype '${data.name}' under model '${localModel.name}'`,
         description: `Prototype '${data.name}' was created by ${currentUser?.email || currentUser?.name || currentUser?.id}`,
         type: 'new-prototype',
         create_by: currentUser?.id!,
         ref_id: response.id,
         ref_type: 'prototype',
-        parent_id: model?.id,
+        parent_id: localModel.id,
       })
 
       setData(initialState)
       // Navigate to new created prototype
-      navigate(`/model/${model_id}/library/list/${response.id}`)
-      onClose()
+      navigate(`/model/${localModel.id}/library/list/${response.id}`)
+      if (onClose) onClose()
     } catch (error) {
       if (isAxiosError(error)) {
         setError(error.response?.data?.message || 'Something went wrong')
@@ -144,6 +145,31 @@ LOOP.close()`,
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (model) {
+      const modelLite = {
+        id: model.id,
+        name: model.name,
+        visibility: model.visibility,
+        model_home_image_file: model.model_home_image_file || '',
+        created_at: model.created_at,
+        created_by: model.created_by,
+        tags: model.tags,
+      }
+      setLocalModel(modelLite)
+    }
+  }, [model])
+
+  useEffect(() => {
+    if (
+      contributionModels &&
+      !isFetchingModelContribution &&
+      contributionModels.results.length > 0
+    ) {
+      setLocalModel(contributionModels.results[0])
+    }
+  }, [contributionModels, isFetchingModelContribution])
 
   return (
     <form
@@ -163,6 +189,35 @@ LOOP.close()`,
         className="mt-4"
       />
 
+      {!model &&
+        (contributionModels && !isFetchingModelContribution && localModel ? (
+          <DaSelect
+            defaultValue={localModel.id}
+            label="Select vehicle model *"
+            wrapperClassName="mt-4"
+            onValueChange={(e) => {
+              const selectedModel = contributionModels.results.find(
+                (model) => model.id === e,
+              )
+              selectedModel && setLocalModel(selectedModel)
+            }}
+          >
+            {contributionModels.results.map((model, index) => (
+              <DaSelectItem key={index} value={model.id}>
+                {model.name}
+              </DaSelectItem>
+            ))}
+          </DaSelect>
+        ) : isFetchingModelContribution ? (
+          <DaText variant="small" className="mt-4 text-da-accent-500">
+            Loading...
+          </DaText>
+        ) : (
+          <DaText variant="small" className="mt-4 text-da-accent-500">
+            No contribution model found.
+          </DaText>
+        ))}
+
       {error && (
         <DaText variant="small" className="mt-4 text-da-accent-500">
           {error}
@@ -170,7 +225,7 @@ LOOP.close()`,
       )}
 
       <DaButton
-        disabled={loading}
+        disabled={loading || !localModel}
         type="submit"
         variant="gradient"
         className="w-full mt-8"

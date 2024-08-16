@@ -207,7 +207,6 @@ const PrototypeLibraryList = () => {
                 }
               >
                 <FormCreatePrototype
-                  model_id={model.id}
                   onClose={() => {
                     setOpen(false)
                   }}
