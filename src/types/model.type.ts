@@ -48,7 +48,11 @@ export type Prototype = {
   state: string
   widget_config: string
   image_file: string
-  created_by: string
+  created_by: {
+    name: string
+    image_file: string
+    id: string
+  }
   description: any
   created_at?: Date
   tags?: Tag[]

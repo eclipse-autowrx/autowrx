@@ -7,7 +7,6 @@ import DaUserProfile from './DaUserProfile'
 
 interface DaItemStandardProps {
   prototype: Prototype
-  creatorId: string
   maxWidth?: string
   imageMaxWidth?: string
   isSelected?: boolean
@@ -15,7 +14,6 @@ interface DaItemStandardProps {
 
 const DaItemStandard: React.FC<DaItemStandardProps> = ({
   prototype,
-  creatorId,
   imageMaxWidth = '300px',
   isSelected = false,
 }) => {
@@ -49,7 +47,8 @@ const DaItemStandard: React.FC<DaItemStandardProps> = ({
             {prototype.name}
           </DaText>
           <DaUserProfile
-            userId={creatorId}
+            userName={prototype.created_by.name}
+            userAvatar={prototype.created_by.image_file}
             avatarClassName="w-4 h-4 mr-2"
             textClassName="!text-sm"
           />
