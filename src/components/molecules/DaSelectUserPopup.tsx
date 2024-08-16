@@ -44,7 +44,7 @@ const DaSelectUserPopup = ({
       tmpUsers = tmpUsers.filter(
         (user: User) =>
           user.name.toLowerCase().includes(search.toLowerCase()) ||
-          user.email.toLowerCase().includes(search.toLowerCase()),
+          user.email?.toLowerCase().includes(search.toLowerCase()),
       )
     }
     setRenderUsers(tmpUsers)
