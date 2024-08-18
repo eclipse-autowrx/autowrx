@@ -37,7 +37,7 @@ const HomePrototypeProposal = () => {
   }, [popularPrototypes, recentPrototypes])
 
   return (
-    <div className="flex flex-col w-full container ">
+   user && <div className="flex flex-col w-full container ">
       {recentPrototypes && popularPrototypes ? (
         <>
           <DaText variant="sub-title" className="mt-6 text-da-primary-500">
