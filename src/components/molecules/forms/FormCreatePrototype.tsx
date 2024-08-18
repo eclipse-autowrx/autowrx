@@ -48,11 +48,13 @@ const FormCreatePrototype = ({ onClose }: FormCreatePrototypeProps) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
   const [data, setData] = useState(initialState)
-  const { data: model } = useCurrentModel()
+  const { data: currentModel } = useCurrentModel()
   const { data: contributionModels, isLoading: isFetchingModelContribution } =
     useListModelContribution()
   const [localModel, setLocalModel] = useState<ModelLite>()
-  const { refetch } = useListModelPrototypes(model ? model.id : '')
+  const { refetch } = useListModelPrototypes(
+    currentModel ? currentModel.id : '',
+  )
   const navigate = useNavigate()
   const { toast } = useToast()
 
@@ -156,8 +158,8 @@ LOOP.close()`,
       toast({
         title: ``,
         description: (
-          <DaText variant="small" className=" flex items-center">
-            <TbCircleCheckFilled className="text-green-500 w-4 h-4 mr-2" />
+          <DaText variant="small" className="flex items-center">
+            <TbCircleCheckFilled className="mr-2 h-4 w-4 text-green-500" />
             Prototype "{data.prototypeName}" created successfully
           </DaText>
         ),
@@ -185,40 +187,36 @@ LOOP.close()`,
   }
 
   useEffect(() => {
-    if (model) {
+    if (currentModel) {
       const modelLite = {
-        id: model.id,
-        name: model.name,
-        visibility: model.visibility,
-        model_home_image_file: model.model_home_image_file || '',
-        created_at: model.created_at,
-        created_by: model.created_by,
-        tags: model.tags,
+        id: currentModel.id,
+        name: currentModel.name,
+        visibility: currentModel.visibility,
+        model_home_image_file: currentModel.model_home_image_file || '',
+        created_at: currentModel.created_at,
+        created_by: currentModel.created_by,
+        tags: currentModel.tags,
       }
       setLocalModel(modelLite)
-    }
-  }, [model])
-
-  useEffect(() => {
-    if (
+    } else if (
       contributionModels &&
       !isFetchingModelContribution &&
       contributionModels.results.length > 0
     ) {
       setLocalModel(contributionModels.results[0])
     }
-  }, [contributionModels, isFetchingModelContribution])
+  }, [contributionModels, isFetchingModelContribution, currentModel])
 
   return (
     <form
       onSubmit={createNewPrototype}
-      className="flex flex-col w-[30vw] lg:w-[25vw] max-h-[80vh] p-4 bg-da-white"
+      className="flex max-h-[80vh] w-[30vw] flex-col bg-da-white p-4 lg:w-[25vw]"
     >
       <DaText variant="title" className="text-da-primary-500">
         Create New Prototype
       </DaText>
 
-      {!model &&
+      {!currentModel &&
         (contributionModels && !isFetchingModelContribution && localModel ? (
           <DaSelect
             defaultValue={localModel.id}
@@ -239,7 +237,7 @@ LOOP.close()`,
           </DaSelect>
         ) : isFetchingModelContribution ? (
           <DaText variant="regular" className="mt-4 flex items-center">
-            <DaLoader className="w-4 h-4 mr-1" />
+            <DaLoader className="mr-1 h-4 w-4" />
             Loading vehicle model...
           </DaText>
         ) : (
@@ -262,35 +260,6 @@ LOOP.close()`,
         className="mt-4"
       />
 
-      {!model &&
-        (contributionModels && !isFetchingModelContribution && localModel ? (
-          <DaSelect
-            defaultValue={localModel.id}
-            label="Select vehicle model *"
-            wrapperClassName="mt-4"
-            onValueChange={(e) => {
-              const selectedModel = contributionModels.results.find(
-                (model) => model.id === e,
-              )
-              selectedModel && setLocalModel(selectedModel)
-            }}
-          >
-            {contributionModels.results.map((model, index) => (
-              <DaSelectItem key={index} value={model.id}>
-                {model.name}
-              </DaSelectItem>
-            ))}
-          </DaSelect>
-        ) : isFetchingModelContribution ? (
-          <DaText variant="small" className="mt-4 text-da-accent-500">
-            Loading...
-          </DaText>
-        ) : (
-          <DaText variant="small" className="mt-4 text-da-accent-500">
-            No contribution model found.
-          </DaText>
-        ))}
-
       {error && (
         <DaText variant="small" className="mt-4 text-da-accent-500">
           {error}
@@ -303,9 +272,9 @@ LOOP.close()`,
         }
         type="submit"
         variant="gradient"
-        className="w-full mt-8"
+        className="mt-8 w-full"
       >
-        {loading && <TbLoader className="animate-spin text-lg mr-2" />}
+        {loading && <TbLoader className="mr-2 animate-spin text-lg" />}
         Create
       </DaButton>
     </form>
