@@ -16,17 +16,17 @@ interface PrototypeSummaryProps {
 
 const PrototypeSummary = ({ prototype }: PrototypeSummaryProps) => {
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className="flex h-full w-full flex-col">
       <DaImage
         src={
           prototype.image_file
             ? prototype.image_file
             : '/imgs/default_prototype_cover.jpg'
         }
-        className="flex w-full object-cover max-h-[400px]"
+        className="flex max-h-[400px] w-full object-cover"
       />
-      <div className="flex flex-col h-full p-4">
-        <div className="flex justify-between items-center">
+      <div className="flex h-full flex-col p-4">
+        <div className="flex items-center justify-between">
           <DaText variant="title" className="text-da-primary-500">
             {prototype.name}
           </DaText>
@@ -35,17 +35,17 @@ const PrototypeSummary = ({ prototype }: PrototypeSummaryProps) => {
           >
             <DaButton variant="solid" size="sm">
               Open
-              <TbArrowRight className="w-5 h-5 ml-2" />
+              <TbArrowRight className="ml-2 h-5 w-5" />
             </DaButton>
           </Link>
         </div>
         <DaUserProfile
           className="mt-2"
-          userName={prototype.created_by.name}
-          userAvatar={prototype.created_by.image_file}
+          userName={prototype.created_by?.name}
+          userAvatar={prototype.created_by?.image_file}
         />
 
-        <div className="flex flex-col h-full">
+        <div className="flex h-full flex-col">
           <DaTableProperty
             properties={[
               {
@@ -72,22 +72,22 @@ const PrototypeSummary = ({ prototype }: PrototypeSummaryProps) => {
             ]}
             className="mt-2"
           />
-          <div className="flex items-center mt-2">
+          <div className="mt-2 flex items-center">
             <Link
               to={`/model/${prototype.model_id}/library/prototype/${prototype.id}/feedback`}
               className="flex w-fit items-center hover:opacity-75"
             >
               <DaText
                 variant="small-bold"
-                className="flex items-center min-w-[110px]"
+                className="flex min-w-[110px] items-center"
               >
-                Feedback <TbArrowUpRight className="w-5 h-5 stroke-[1.75]" />
+                Feedback <TbArrowUpRight className="h-5 w-5 stroke-[1.75]" />
               </DaText>
             </Link>
             <DaStarsRating
               initialRating={prototype.avg_score ?? 0}
               readonly
-              className="flex mx-0"
+              className="mx-0 flex"
             />
             <DaText variant="small" className="ml-1">
               ({(prototype.avg_score ?? 0).toFixed(2)})

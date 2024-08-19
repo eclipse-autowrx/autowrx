@@ -48,7 +48,7 @@ export type Prototype = {
   state: string
   widget_config: string
   image_file: string
-  created_by: {
+  created_by?: {
     name: string
     image_file: string
     id: string

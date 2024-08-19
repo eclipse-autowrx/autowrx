@@ -68,7 +68,7 @@ const DaGeneratorSelector = ({
   return (
     <div
       ref={dropdownRef}
-      className="flex flex-col mb-auto relative text-da-gray-medium"
+      className="relative mb-auto flex flex-col text-da-gray-medium"
     >
       <DaButton
         variant="outline-nocolor"
@@ -77,60 +77,60 @@ const DaGeneratorSelector = ({
         className="mt-2 hover:bg-da-gray-light"
       >
         <div className="flex w-full items-center justify-between">
-          <div className="flex items-center w-full">
+          <div className="flex w-full items-center">
             {selectedAddOn ? selectedAddOn.name : 'Select generator'}
             {selectedAddOn && selectedAddOn.id.includes(config.instance) && (
               <img
                 src={config.instanceLogo}
                 alt={config.instance}
-                className="ml-2 w-10 h-10 object-contain"
+                className="ml-2 h-10 w-10 object-contain"
               />
             )}
             {selectedAddOn && selectedAddOn.team && (
-              <div className="text-xs px-1 py-0 ml-2 rounded-full bg-da-primary-100 text-da-primary-500 truncate">
+              <div className="ml-2 truncate rounded-full bg-da-primary-100 px-1 py-0 text-xs text-da-primary-500">
                 GenAI Awards : {selectedAddOn.team}
               </div>
             )}
           </div>
-          <TbSelector className="w-4 h-4" />
+          <TbSelector className="h-4 w-4" />
         </div>
       </DaButton>
       {isExpandGenerator && (
-        <div className="absolute flex flex-col top-14 left-0 w-full z-10 min-h-8 border bg-da-white rounded-md border-da-gray-light shadow p-1 text-sm space-y-1">
-          <div className="flex flex-col max-h-[150px] overflow-y-auto scroll-gray-small px-1">
+        <div className="absolute left-0 top-14 z-10 flex min-h-8 w-full flex-col space-y-1 rounded-md border border-da-gray-light bg-da-white p-1 text-sm shadow">
+          <div className="scroll-gray-small flex max-h-[150px] flex-col overflow-y-auto px-1">
             {builtInAddOns && builtInAddOns.length > 0 && (
               <>
                 <DaText variant="small-bold">Built-in Generators</DaText>
                 {builtInAddOns.map((addOn) => (
                   <div
                     key={addOn.id}
-                    className="flex rounded items-center justify-between cursor-pointer hover:bg-da-gray-light"
+                    className="flex cursor-pointer items-center justify-between rounded hover:bg-da-gray-light"
                     onClick={() => handleAddOnSelect(addOn)}
                   >
-                    <div className="flex w-full h-full min-h-10 px-1 items-center justify-between">
+                    <div className="flex h-full min-h-10 w-full items-center justify-between px-1">
                       <div className="flex w-full items-center">
                         {addOn.name}
                         {addOn.id.includes(config.instance) && (
                           <img
                             src={config.instanceLogo}
                             alt={config.instance}
-                            className="ml-2 w-8 h-8 object-contain"
+                            className="ml-2 h-8 w-8 object-contain"
                           />
                         )}
                         {addOn.team && (
-                          <div className="text-xs px-1 py-0 ml-2 rounded-full bg-da-primary-100 text-da-primary-500">
+                          <div className="ml-2 rounded-full bg-da-primary-100 px-1 py-0 text-xs text-da-primary-500">
                             GenAI Awards: {addOn.team}
                           </div>
                         )}
                         {addOn.rating && (
-                          <div className="flex items-center justify-center text-xs ml-3">
-                            <TbStarFilled className="w-3 h-3 mr-0.5 text-yellow-400" />
+                          <div className="ml-3 flex items-center justify-center text-xs">
+                            <TbStarFilled className="mr-0.5 h-3 w-3 text-yellow-400" />
                             {addOn.rating.toFixed(1)}
                           </div>
                         )}
                       </div>
                       {selectedAddOn?.id === addOn.id && (
-                        <TbCheck className="w-4 h-4 text-da-gray-dark" />
+                        <TbCheck className="h-4 w-4 text-da-gray-dark" />
                       )}
                     </div>
                   </div>
@@ -138,46 +138,50 @@ const DaGeneratorSelector = ({
               </>
             )}
 
-            {marketplaceAddOns && (
+            {!config?.genAI?.hideMarketplace && (
               <>
-                <DaText variant="small-bold" className="mt-2">
-                  Marketplace Generators
-                </DaText>
+                {marketplaceAddOns && (
+                  <>
+                    <DaText variant="small-bold" className="mt-2">
+                      Marketplace Generators
+                    </DaText>
 
-                {marketplaceAddOns.map((addOn) => (
-                  <div
-                    key={addOn.id}
-                    className="flex rounded items-center justify-between cursor-pointer hover:bg-da-gray-light "
-                    onClick={() => handleAddOnSelect(addOn)}
-                  >
-                    <div className="flex w-full h-full min-h-10 px-1 items-center justify-between">
-                      <div className="flex w-full items-center">
-                        {addOn.name}
-                        {addOn.team && (
-                          <div className="text-xs px-1 py-0 ml-2 rounded-full bg-da-primary-100 text-da-primary-500">
-                            GenAI Awards : {addOn.team}
+                    {marketplaceAddOns.map((addOn) => (
+                      <div
+                        key={addOn.id}
+                        className="flex cursor-pointer items-center justify-between rounded hover:bg-da-gray-light"
+                        onClick={() => handleAddOnSelect(addOn)}
+                      >
+                        <div className="flex h-full min-h-10 w-full items-center justify-between px-1">
+                          <div className="flex w-full items-center">
+                            {addOn.name}
+                            {addOn.team && (
+                              <div className="ml-2 rounded-full bg-da-primary-100 px-1 py-0 text-xs text-da-primary-500">
+                                GenAI Awards : {addOn.team}
+                              </div>
+                            )}
+                            {addOn.rating && (
+                              <div className="ml-3 flex items-center justify-center text-xs">
+                                <TbStarFilled className="mr-0.5 h-3 w-3 text-yellow-400" />
+                                {addOn.rating.toFixed(1)}
+                              </div>
+                            )}
                           </div>
-                        )}
-                        {addOn.rating && (
-                          <div className="flex items-center justify-center text-xs ml-3">
-                            <TbStarFilled className="w-3 h-3 mr-0.5 text-yellow-400" />
-                            {addOn.rating.toFixed(1)}
-                          </div>
-                        )}
+                          <TbCheck
+                            className={`h-4 w-4 text-da-gray-dark ${
+                              selectedAddOn?.id === addOn.id ? '' : 'hidden'
+                            }`}
+                          />
+                        </div>
                       </div>
-                      <TbCheck
-                        className={`w-4 h-4 text-da-gray-dark ${
-                          selectedAddOn?.id === addOn.id ? '' : 'hidden'
-                        }`}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
+                    ))}
+                  </>
+                )}
 
-            {marketplaceAddOns && marketplaceAddOns.length === 0 && (
-              <div className="p-1">No marketplace generators found</div>
+                {marketplaceAddOns && marketplaceAddOns.length === 0 && (
+                  <div className="p-1">No marketplace generators found</div>
+                )}
+              </>
             )}
           </div>
         </div>

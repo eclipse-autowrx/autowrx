@@ -19,10 +19,30 @@ const config: any = {
   sso: 'bosch',
   defaultModelId: '667a9194694a35002f961ba8',
   genAI: {
-    defaultEndpointUrl: '',
-    marketplaceUrl: 'https://store-be.digitalauto.tech/marketplace/genai',
-    sdvApp: [],
-    dashboard: [],
+    hideMarketplace: true,
+    defaultEndpointUrl: 'https://backend-core-etas.digital.auto/v2/genai',
+    sdvApp: [
+      {
+        id: 'etas-sdv-genai',
+        type: 'GenAI_Python',
+        name: 'ETAS SDV GenAI',
+        description: 'ETAS GenAI for Python code generation',
+        apiKey: 'Empty',
+        endpointUrl: 'https://backend-core-etas.digital.auto/v2/genai/etas',
+        customPayload: (prompt: string) => ({ prompt }),
+      },
+    ],
+    dashboard: [
+      {
+        id: 'etas-dashboard-genai',
+        type: 'GenAI_Python',
+        name: 'ETAS Dashboard GenAI',
+        description: 'ETAS GenAI for Python code generation',
+        apiKey: 'Empty',
+        endpointUrl: 'https://backend-core-etas.digital.auto/v2/genai/etas',
+        customPayload: (prompt: string) => ({ prompt }),
+      },
+    ],
     widget: [],
   },
   github: {

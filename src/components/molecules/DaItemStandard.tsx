@@ -19,7 +19,7 @@ const DaItemStandard: React.FC<DaItemStandardProps> = ({
 }) => {
   return (
     <div
-      className={`flex w-full p-4 border border-da-gray-light rounded-lg bg-da-white space-x-4 text-da-gray-medium hover:border-da-primary-500 overflow-hidden ${
+      className={`flex w-full space-x-4 overflow-hidden rounded-lg border border-da-gray-light bg-da-white p-4 text-da-gray-medium hover:border-da-primary-500 ${
         isSelected ? 'border-da-primary-500 !bg-da-primary-100' : ''
       }`}
     >
@@ -30,12 +30,12 @@ const DaItemStandard: React.FC<DaItemStandardProps> = ({
             : '/imgs/default_prototype_cover.jpg'
         }
         alt="Image"
-        className="flex w-full h-full rounded-lg"
+        className="flex h-full w-full rounded-lg"
         ratio={1 / 1}
         maxWidth={imageMaxWidth}
       />
 
-      <div className="flex flex-col w-full justify-between overflow-hidden">
+      <div className="flex w-full flex-col justify-between overflow-hidden">
         <div className="flex flex-col space-y-2">
           <DaText
             variant="regular-bold"
@@ -47,14 +47,14 @@ const DaItemStandard: React.FC<DaItemStandardProps> = ({
             {prototype.name}
           </DaText>
           <DaUserProfile
-            userName={prototype.created_by.name}
-            userAvatar={prototype.created_by.image_file}
+            userName={prototype.created_by?.name}
+            userAvatar={prototype.created_by?.image_file}
             avatarClassName="w-4 h-4 mr-2"
             textClassName="!text-sm"
           />
           <DaText
             variant="small"
-            className="w-full line-clamp-2 text-da-gray-medium"
+            className="line-clamp-2 w-full text-da-gray-medium"
           >
             {prototype.description.problem}
           </DaText>
