@@ -162,7 +162,11 @@ const DaRuntimeControl: FC = ({}) => {
               </p>
             )}
 
-            {activeTab == 'apis' && <DaApisWatch />}
+            {activeTab == 'apis' && <DaApisWatch requestWriteSignalValue={(obj:any) => {
+              if (runTimeRef.current) {
+                runTimeRef.current?.writeSignalsValue(obj)
+              }
+            }}/>}
 
             {activeTab == 'code' && (
               <CodeEditor
