@@ -2,7 +2,9 @@ import { List } from '@/types/common.type'
 import { serverAxios } from './base'
 import { Model, ModelCreate, ModelLite } from '@/types/model.type'
 
-export const listModelsLite = async (): Promise<List<ModelLite>> => {
+export const listModelsLite = async (
+  params?: Record<string, unknown>,
+): Promise<List<ModelLite>> => {
   let page = 1
   const limit = 10
   let allResults: ModelLite[] = []
@@ -11,6 +13,7 @@ export const listModelsLite = async (): Promise<List<ModelLite>> => {
   do {
     const response = await serverAxios.get<List<ModelLite>>('/models', {
       params: {
+        ...params,
         fields: [
           'name',
           'visibility',

@@ -62,8 +62,8 @@ const FormCreateModel = () => {
       toast({
         title: ``,
         description: (
-          <DaText variant="regular-medium" className=" flex items-center">
-            <TbCircleCheckFilled className="text-green-500 w-5 h-5 mr-2" />
+          <DaText variant="regular-medium" className="flex items-center">
+            <TbCircleCheckFilled className="mr-2 h-5 w-5 text-green-500" />
             Model "{data.name}" created successfully
           </DaText>
         ),
@@ -85,7 +85,7 @@ const FormCreateModel = () => {
   return (
     <form
       onSubmit={createNewModel}
-      className="flex flex-col w-[400px] min-w-[400px] min-h-[300px] p-4  bg-da-white"
+      className="flex min-h-[300px] w-[400px] min-w-[400px] flex-col bg-da-white p-4"
     >
       {/* Title */}
       <DaText variant="title" className="text-da-primary-500">
@@ -110,9 +110,6 @@ const FormCreateModel = () => {
         <DaSelectItem value="vss-api">COVESA VSS API v3.1</DaSelectItem>
         <DaSelectItem value="vss-api-4.0">COVESA VSS API v4.0</DaSelectItem>
         <DaSelectItem value="vss-api-4.1">COVESA VSS API v4.1</DaSelectItem>
-        <DaSelectItem value="v2c-s2s">
-          Start with V2C and S2S(COVESA) API
-        </DaSelectItem>
         <DaSelectItem value="from-scratch">Start from scratch</DaSelectItem>
       </DaSelect>
 
@@ -129,9 +126,9 @@ const FormCreateModel = () => {
         disabled={loading}
         type="submit"
         variant="gradient"
-        className="w-full mt-8"
+        className="mt-8 w-full"
       >
-        {loading && <TbLoader className="animate-spin text-lg mr-2" />}
+        {loading && <TbLoader className="mr-2 animate-spin text-lg" />}
         Create Model
       </DaButton>
     </form>

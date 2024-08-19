@@ -52,7 +52,7 @@ const DaGenAI_Python = ({ onCodeChanged }: DaGenAI_PythonProps) => {
     setIsFinished(false)
     try {
       let response
-      if (selectedAddOn.id.includes(config.instance)) {
+      if (selectedAddOn?.endpointUrl) {
         response = await axios.post(
           selectedAddOn.endpointUrl,
           {
@@ -105,16 +105,16 @@ const DaGenAI_Python = ({ onCodeChanged }: DaGenAI_PythonProps) => {
   }
 
   return (
-    <div className="flex w-full h-full rounded">
-      <div className="flex flex-col w-[50%] h-full pr-2 pt-3 border-r border-da-gray-light">
+    <div className="flex h-full w-full rounded">
+      <div className="flex h-full w-[50%] flex-col border-r border-da-gray-light pr-2 pt-3">
         <div>
           <div className="flex select-none">
-            <div className="flex w-5 h-5 items-center justify-center font-bold text-xs rounded p-2 bg-da-gray-light ">
+            <div className="flex h-5 w-5 items-center justify-center rounded bg-da-gray-light p-2 text-xs font-bold">
               1
             </div>
-            <div className="flex ml-1 text-gray-600 font-medium">Prompting</div>
+            <div className="ml-1 flex font-medium text-gray-600">Prompting</div>
           </div>
-          <div className="flex mt-1 mb-4 w-full h-fit">
+          <div className="mb-4 mt-1 flex h-fit w-full">
             <DaTextarea
               value={inputPrompt}
               onChange={(e) => setInputPrompt(e.target.value)}
@@ -124,11 +124,11 @@ const DaGenAI_Python = ({ onCodeChanged }: DaGenAI_PythonProps) => {
             />
           </div>
         </div>
-        <div className="flex mt-2 select-none">
-          <div className="flex w-5 h-5 items-center justify-center font-bold text-xs rounded p-2 bg-da-gray-light ">
+        <div className="mt-2 flex select-none">
+          <div className="flex h-5 w-5 items-center justify-center rounded bg-da-gray-light p-2 text-xs font-bold">
             2
           </div>
-          <div className="flex ml-1 text-gray-600 font-medium">
+          <div className="ml-1 flex font-medium text-gray-600">
             Select Generator
           </div>
         </div>
@@ -142,32 +142,32 @@ const DaGenAI_Python = ({ onCodeChanged }: DaGenAI_PythonProps) => {
         />
 
         {!inputPrompt && (
-          <div className="flex w-full mt-auto justify-center text-gray-400 select-none">
+          <div className="mt-auto flex w-full select-none justify-center text-gray-400">
             You need to enter prompt and select generator
           </div>
         )}
         <DaButton
           variant="solid"
           disabled={!inputPrompt}
-          className={`!h-8 w-full mt-auto ${!inputPrompt ? '!mt-2' : 'mt-auto'}`}
+          className={`mt-auto !h-8 w-full ${!inputPrompt ? '!mt-2' : 'mt-auto'}`}
           onClick={genPythonCode}
         >
           <BsStars
-            className={`inline-block mr-1 mb-0.5 ${loading ? 'animate-pulse' : ''}`}
+            className={`mb-0.5 mr-1 inline-block ${loading ? 'animate-pulse' : ''}`}
           />
           {!loading && <div>Generate</div>}
         </DaButton>
       </div>
-      <div className="flex flex-col w-1/2 h-full pt-3 pl-2">
-        <div className="flex mb-2 select-none">
-          <div className="flex w-5 h-5 items-center justify-center font-bold text-xs rounded p-2 bg-da-gray-light ">
+      <div className="flex h-full w-1/2 flex-col pl-2 pt-3">
+        <div className="mb-2 flex select-none">
+          <div className="flex h-5 w-5 items-center justify-center rounded bg-da-gray-light p-2 text-xs font-bold">
             3
           </div>
-          <div className="flex ml-1 text-gray-600 font-medium">
+          <div className="ml-1 flex font-medium text-gray-600">
             Preview Code
           </div>
         </div>
-        <div className="flex w-full h-full overflow-y-auto overflow-x-hidden scroll-gray max-h-[380px]">
+        <div className="scroll-gray flex h-full max-h-[380px] w-full overflow-y-auto overflow-x-hidden">
           {genCode ? (
             <DaGenAI_ResponseDisplay code={genCode} language={'python'} />
           ) : (
@@ -177,7 +177,7 @@ const DaGenAI_Python = ({ onCodeChanged }: DaGenAI_PythonProps) => {
             />
           )}
         </div>
-        <div className="flex flex-col w-full mt-auto pt-3 select-none">
+        <div className="mt-auto flex w-full select-none flex-col pt-3">
           <DaButton
             variant="outline-nocolor"
             className="!h-8 w-full"
@@ -186,7 +186,7 @@ const DaGenAI_Python = ({ onCodeChanged }: DaGenAI_PythonProps) => {
             }}
             disabled={!(genCode && genCode.length > 0) || !isFinished}
           >
-            <TbCode className="w-4 h-4 mr-1.5" /> Add new generated code
+            <TbCode className="mr-1.5 h-4 w-4" /> Add new generated code
           </DaButton>
         </div>
       </div>

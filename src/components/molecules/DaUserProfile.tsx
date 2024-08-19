@@ -3,7 +3,7 @@ import { DaText } from '../atoms/DaText'
 import { cn } from '@/lib/utils'
 
 interface DaUserProfileProps {
-  userName: string
+  userName?: string
   userAvatar?: string
   className?: string
   avatarClassName?: string
