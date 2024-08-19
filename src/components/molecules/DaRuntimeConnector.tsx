@@ -21,7 +21,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     const [ticker, setTicker] = useState(0)
 
     useImperativeHandle(ref, () => {
-      return { runApp, stopApp, setMockSignals, loadMockSignals }
+      return { runApp, stopApp, setMockSignals, loadMockSignals, writeSignalsValue }
     })
 
     const [apisValue, setActiveApis] = useRuntimeStore(
@@ -93,6 +93,14 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         cmd: 'set_mock_signals',
         to_kit_id: activeRtId,
         data: signals || [],
+      })
+    }
+
+    const writeSignalsValue = (obj: any) => {
+      socketio.emit('messageToKit', {
+        cmd: 'write_signals_value',
+        to_kit_id: activeRtId,
+        data: obj || {},
       })
     }
 
@@ -264,7 +272,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       }
 
       if (payload.cmd == 'apis-value') {
-        if (payload.result) {
+        if (payload.result && payload.kit_id == activeRtId) {
           setActiveApis(payload.result)
         }
       }
