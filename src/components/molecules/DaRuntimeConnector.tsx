@@ -29,17 +29,17 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       shallow,
     )
 
-    useEffect(() => {
-      if (!usedAPIs) return
+    // useEffect(() => {
+    //   if (!usedAPIs) return
 
-      if (activeRtId) {
-        socketio.emit('messageToKit', {
-          cmd: 'subscribe_apis',
-          to_kit_id: activeRtId,
-          apis: usedAPIs,
-        })
-      }
-    }, [usedAPIs])
+    //   if (activeRtId) {
+    //     socketio.emit('messageToKit', {
+    //       cmd: 'subscribe_apis',
+    //       to_kit_id: activeRtId,
+    //       apis: usedAPIs,
+    //     })
+    //   }
+    // }, [usedAPIs, activeRtId])
 
     useEffect(() => {
       let timer = setInterval(() => {
@@ -55,10 +55,10 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         socketio.emit('messageToKit', {
           cmd: 'subscribe_apis',
           to_kit_id: activeRtId,
-          apis: usedAPIs,
+          apis: usedAPIs || [],
         })
       }
-    }, [ticker, activeRtId])
+    }, [ticker, activeRtId, usedAPIs])
 
     useEffect(() => {
       socketio.emit('messageToKit', {
@@ -265,7 +265,6 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
 
       if (payload.cmd == 'apis-value') {
         if (payload.result) {
-          //
           setActiveApis(payload.result)
         }
       }
