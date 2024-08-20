@@ -20,6 +20,8 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     const [allRuntimes, setAllRuntimes] = useState<any>([])
     const [ticker, setTicker] = useState(0)
 
+    const [rawApisPackage, setRawApisPackage] = useState<any>(null)
+
     useImperativeHandle(ref, () => {
       return { runApp, stopApp, setMockSignals, loadMockSignals, writeSignalsValue }
     })
@@ -28,6 +30,18 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       (state) => [state.apisValue, state.setActiveApis],
       shallow,
     )
+
+    useEffect(() => {
+      if(rawApisPackage) {
+        // console.log(`apis-value `, activeRtId)
+        // console.log(payload)
+        if (rawApisPackage.result) {
+          // console.log(`receive apis-value`)
+          // console.log(rawApisPackage)
+          setActiveApis(rawApisPackage.result)
+        }
+      }
+    }, [rawApisPackage])
 
     // useEffect(() => {
     //   if (!usedAPIs) return
@@ -158,6 +172,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     }, [])
 
     useEffect(() => {
+      console.log(`activeRtId`, activeRtId)
       if(activeRtId) {
         localStorage.setItem("last-rt", activeRtId);
       }
@@ -168,17 +183,21 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         if (activeRtId) return
         let onlineRuntimes = allRuntimes.filter((rt: any) => rt.is_online)
         if(onlineRuntimes.length<=0) {
+          console.log(`setActiveRtId(undefined) cause: no onlineRuntimes`)
           setActiveRtId(undefined)
           return
         }
         let lastOnlineRuntime = localStorage.getItem("last-rt");
         if(lastOnlineRuntime && onlineRuntimes.map((rt:any) => rt.kit_id).includes(lastOnlineRuntime)) {
+          console.log(`lastOnlineRuntime `, lastOnlineRuntime)
           setActiveRtId(lastOnlineRuntime)
           return
         }
+        console.log(`setActiveRtId `, onlineRuntimes[0].kit_id)
         setActiveRtId(onlineRuntimes[0].kit_id)
         localStorage.setItem("last-rt", onlineRuntimes[0].kit_id);
       } else {
+        console.log(`setActiveRtId(undefined) cause: noRuntime`)
         setActiveRtId(undefined)
       }
     }, [allRuntimes])
@@ -272,8 +291,12 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       }
 
       if (payload.cmd == 'apis-value') {
-        if (payload.result && payload.kit_id == activeRtId) {
-          setActiveApis(payload.result)
+        // console.log(`apis-value `, activeRtId)
+        // console.log(payload)
+        if (payload.result) {
+          setRawApisPackage(payload)
+          // console.log(`receive apis-value`)
+          // setActiveApis(payload.result)
         }
       }
 
@@ -293,6 +316,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
             className={`border rounded da-label-small px-2 py-1 min-w-[240px] text-da-white bg-da-gray-medium`}
             value={activeRtId as any}
             onChange={(e) => {
+              console.log(`setActiveRtId(e.target.value) `, e.target.value)
               setActiveRtId(e.target.value)
             }}
           >
