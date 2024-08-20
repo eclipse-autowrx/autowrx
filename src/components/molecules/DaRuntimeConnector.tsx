@@ -1,11 +1,14 @@
 import { forwardRef, useState, useEffect, useImperativeHandle } from 'react'
-import { socketio } from '@/services/socketio.service'
+// import { socketio } from '@/services/socketio.service'
 import useRuntimeStore from '@/stores/runtimeStore'
 import { shallow } from 'zustand/shallow'
 // import useModelStore from '@/stores/modelStore'
 
+import { io } from "socket.io-client";
+
 interface KitConnectProps {
   // code: string;
+  kitServerUrl?: string,
   usedAPIs: string[]
   // allKit: any[];
   onActiveRtChanged?: (newActiveKitId: string | undefined) => void
@@ -14,8 +17,13 @@ interface KitConnectProps {
   onAppExit?: (code: any) => void
 }
 
+// const socketio = io(DEFAULT_KIT_SERVER);
+
 const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
-  ({ usedAPIs, onActiveRtChanged, onLoadedMockSignals, onNewLog, onAppExit }, ref) => {
+  ({kitServerUrl, usedAPIs, onActiveRtChanged, onLoadedMockSignals, onNewLog, onAppExit }, ref) => {
+
+    // const socketio = io(kitServerUrl || DEFAULT_KIT_SERVER);
+    const [socketio, setSocketIo] =useState<any>(null)
     const [activeRtId, setActiveRtId] = useState<string | undefined>('')
     const [allRuntimes, setAllRuntimes] = useState<any>([])
     const [ticker, setTicker] = useState(0)
@@ -75,6 +83,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     }, [ticker, activeRtId, usedAPIs])
 
     useEffect(() => {
+      if(!socketio) return
       socketio.emit('messageToKit', {
         cmd: 'list_mock_signal',
         to_kit_id: activeRtId
@@ -140,6 +149,13 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     }, [activeRtId])
 
     useEffect(() => {
+      if(!kitServerUrl) return
+      setSocketIo(io(kitServerUrl))
+    }, [kitServerUrl])
+
+    useEffect(() => {
+      if(!socketio) return
+
       if (!socketio.connected) {
         socketio.connect()
       } else {
@@ -169,7 +185,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         unregisterClient()
         socketio.disconnect()
       }
-    }, [])
+    }, [socketio, socketio?.connected])
 
     useEffect(() => {
       console.log(`activeRtId`, activeRtId)

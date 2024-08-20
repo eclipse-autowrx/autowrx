@@ -15,6 +15,10 @@ import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import DaMockManager from './DaMockManager'
 import { countCodeExecution } from '@/services/prototype.service'
+import { DaInput } from '@/components/atoms/DaInput'
+import { SlOptionsVertical } from "react-icons/sl";
+
+const DEFAULT_KIT_SERVER = "https://kit.digitalauto.tech";
 
 const AlwaysScrollToBottom = () => {
   const elementRef = useRef<any>(null)
@@ -43,6 +47,7 @@ const DaRuntimeControl: FC = ({}) => {
   const [activeRtId, setActiveRtId] = useState<string | undefined>('')
   const [log, setLog] = useState<string>('')
   const runTimeRef = useRef<any>()
+  const runTimeRef1 = useRef<any>()
 
   const [activeTab, setActiveTab] = useState<string>('output')
   const { data: model } = useCurrentModel()
@@ -53,6 +58,13 @@ const DaRuntimeControl: FC = ({}) => {
   const [code, setCode] = useState<string>('')
 
   const [mockSignals, setMockSignals] = useState<any[]>([])
+  const [customKitServer, setCustomKitServer] = useState<string>(localStorage.getItem("customKitServer")||'')
+  const [tmpCustomKitServer, setTmpCustomKitServer] = useState<string>(localStorage.getItem("customKitServer")||'')
+  const [isShowEditKitServer, setIsShowEditKitServer] = useState<boolean>(false)
+
+  useEffect(() => {
+    localStorage.setItem("customKitServer", customKitServer.trim())
+  }, [customKitServer])
 
   useEffect(() => {
     if (prototype) {
@@ -98,17 +110,56 @@ const DaRuntimeControl: FC = ({}) => {
     <div
       className={`absolute bottom-0 right-0 top-0 z-10 ${isExpand ? 'w-[500px]' : 'w-16'} flex flex-col justify-center bg-da-gray-dark px-1 py-2 text-da-gray-light`}
     >
-      <div className="px-1">
-        <DaRuntimeConnector
-          ref={runTimeRef}
-          usedAPIs={usedApis}
-          onActiveRtChanged={(rtId: string | undefined) => setActiveRtId(rtId)}
-          onLoadedMockSignals={setMockSignals}
-          onNewLog={appendLog}
-          onAppExit={() => {
-            setIsRunning(false)
-          }}
-        />
+      {/* <div>{customKitServer}</div> */}
+      {isExpand && isShowEditKitServer && <div className='flex mb-2'>
+        <DaInput className='grow text-da-black' value={tmpCustomKitServer} onChange={(e) => { setTmpCustomKitServer(e.target.value) }}/>
+        <DaButton className='ml-2 w-20' onClick={()=>{
+              setCustomKitServer(tmpCustomKitServer)
+              setIsShowEditKitServer(false)
+            }
+          }>Set</DaButton>
+        <DaButton className='ml-2 w-20' onClick={()=>{
+              setIsShowEditKitServer(false)
+            }
+          }>Cancel</DaButton>
+      </div> }
+      <div className="px-1 flex">
+          {/* <DaRuntimeConnector
+            kitServerUrl={customKitServer}
+            ref={runTimeRef}
+            usedAPIs={usedApis}
+            onActiveRtChanged={(rtId: string | undefined) => setActiveRtId(rtId)}
+            onLoadedMockSignals={setMockSignals}
+            onNewLog={appendLog}
+            onAppExit={() => {
+              setIsRunning(false)
+            }}/> */}
+        {(customKitServer && customKitServer.trim().length>0)?<DaRuntimeConnector
+            kitServerUrl={customKitServer}
+            ref={runTimeRef}
+            usedAPIs={usedApis}
+            onActiveRtChanged={(rtId: string | undefined) => setActiveRtId(rtId)}
+            onLoadedMockSignals={setMockSignals}
+            onNewLog={appendLog}
+            onAppExit={() => {
+              setIsRunning(false)
+            }}
+          />:<DaRuntimeConnector
+            kitServerUrl={DEFAULT_KIT_SERVER}
+            ref={runTimeRef1}
+            usedAPIs={usedApis}
+            onActiveRtChanged={(rtId: string | undefined) => setActiveRtId(rtId)}
+            onLoadedMockSignals={setMockSignals}
+            onNewLog={appendLog}
+            onAppExit={() => {
+              setIsRunning(false)
+            }}/>
+        }
+        <div className='grow'/>
+        <SlOptionsVertical size={36} className='text-da-white cursor-pointer hover:bg-slate-500 p-2 rounded'
+          onClick={() => {
+            setIsShowEditKitServer((v) => !v)
+          }}/>
       </div>
 
       <div className={`flex px-1 ${!isExpand && 'flex-col'}`}>
@@ -122,6 +173,9 @@ const DaRuntimeControl: FC = ({}) => {
                 setLog('')
                 if (runTimeRef.current) {
                   runTimeRef.current?.runApp(code || '')
+                }
+                if (runTimeRef1.current) {
+                  runTimeRef1.current?.runApp(code || '')
                 }
                 const userId = currentUser?.id || 'Anonymous'
                 addLog({
@@ -142,6 +196,9 @@ const DaRuntimeControl: FC = ({}) => {
                 setIsRunning(false)
                 if (runTimeRef.current) {
                   runTimeRef.current?.stopApp()
+                }
+                if (runTimeRef1.current) {
+                  runTimeRef1.current?.stopApp()
                 }
               }}
               className={`${isExpand && 'mx-2'} da-label-regular-bold mt-1 flex items-center justify-center rounded border border-da-gray-medium p-2 hover:bg-da-gray-medium disabled:text-da-gray-medium`}
@@ -166,6 +223,9 @@ const DaRuntimeControl: FC = ({}) => {
               if (runTimeRef.current) {
                 runTimeRef.current?.writeSignalsValue(obj)
               }
+              if (runTimeRef1.current) {
+                runTimeRef1.current?.writeSignalsValue(obj)
+              }
             }}/>}
 
             {activeTab == 'code' && (
@@ -186,10 +246,16 @@ const DaRuntimeControl: FC = ({}) => {
                   if (runTimeRef.current) {
                     runTimeRef.current?.loadMockSignals()
                   }
+                  if (runTimeRef1.current) {
+                    runTimeRef1.current?.loadMockSignals()
+                  }
                 }}
                 sendMockSignalsToRt={(signals: any[]) => {
                   if (runTimeRef.current) {
                     runTimeRef.current?.setMockSignals(signals)
+                  }
+                  if (runTimeRef1.current) {
+                    runTimeRef1.current?.setMockSignals(signals)
                   }
                 }}
               />
