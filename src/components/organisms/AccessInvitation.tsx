@@ -1,0 +1,135 @@
+import { useRef, useState } from 'react'
+import DaPopup from '../atoms/DaPopup'
+import DaText from '../atoms/DaText'
+import DaMultiUsersInput from '../molecules/DaMultiUsersInput'
+import { DaButton } from '../atoms/DaButton'
+import { InvitedUser } from '@/types/user.type'
+import DaCollaboratorSearchPicker from '../molecules/DaCollaboratorSearchPicker'
+import { isAxiosError } from 'axios'
+import { toast } from 'react-toastify'
+import { useMutation } from '@tanstack/react-query'
+import DaLoader from '../atoms/DaLoader'
+
+type AccessInvitationProps = {
+  open: boolean
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>
+  invitedUsers?: InvitedUser[]
+  onInviteUsers: (users: InvitedUser[], accessLevelId: string) => Promise<void>
+  onInviteSuccess?: (accessLevelId?: string) => void
+  onRemoveUserAccess: (user: InvitedUser) => Promise<void>
+  label: string
+}
+
+const AccessInvitation = ({
+  open,
+  setOpen,
+  invitedUsers,
+  onInviteUsers,
+  onInviteSuccess,
+  onRemoveUserAccess,
+  label,
+}: AccessInvitationProps) => {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [inputString, setInputString] = useState('')
+  const [accessLevelId, setAccessLevelId] = useState('model_contributor')
+  const [selectedUsers, setSelectedUsers] = useState<Map<string, InvitedUser>>(
+    new Map(),
+  )
+
+  const addUser = (user: InvitedUser) => {
+    setSelectedUsers((prev) => new Map(prev.set(user.id, user)))
+  }
+
+  const removeUser = (user: InvitedUser) => {
+    setSelectedUsers((prev) => {
+      const newMap = new Map(prev)
+      newMap.delete(user.id)
+      return newMap
+    })
+  }
+
+  const handleToggle = (user: InvitedUser) => {
+    if (selectedUsers.has(user.id)) {
+      removeUser(user)
+    } else {
+      addUser(user)
+      setInputString('')
+      inputRef.current?.focus()
+    }
+  }
+
+  const { mutate: mutateInviting, isPending } = useMutation({
+    mutationFn: async () => {
+      await onInviteUsers(Array.from(selectedUsers.values()), accessLevelId)
+    },
+    onSuccess: () => {
+      setSelectedUsers(new Map())
+      setOpen(false)
+      onInviteSuccess && onInviteSuccess(accessLevelId)
+    },
+    onError: (error) => {
+      if (isAxiosError(error)) {
+        return toast.error(
+          `Error inviting users: ${error.response?.data?.message || error?.message}`,
+        )
+      }
+      toast.error('Error inviting user')
+    },
+  })
+
+  const { mutate: mutateRemovingUserAccess } = useMutation({
+    mutationFn: onRemoveUserAccess,
+    onError: (error) => {
+      if (isAxiosError(error)) {
+        return toast.error(
+          `Error removing users: ${error.response?.data?.message || error?.message}`,
+        )
+      }
+      toast.error('Error removing user access')
+    },
+  })
+
+  return (
+    <DaPopup state={[open, setOpen]} trigger={<></>}>
+      <div className="flex h-[500px] max-h-[calc(100vw-160px)] min-h-[400px] w-[560px] max-w-[calc(100vw-80px)] flex-col rounded">
+        <div className="mb-4">
+          <DaText variant="sub-title" className="text-da-primary-500">
+            {label}
+          </DaText>
+
+          <div className="mt-2 flex gap-4">
+            <DaMultiUsersInput
+              inputString={inputString}
+              setInputString={setInputString}
+              selectedUsers={Array.from(selectedUsers.values())}
+              onRemoveUser={(user) => removeUser(user)}
+              inputRef={inputRef}
+              accessLevelId={accessLevelId}
+              setAccessLevelId={setAccessLevelId}
+              className="min-w-0 flex-1"
+            />
+            <DaButton
+              onClick={() => mutateInviting()}
+              className="flex-shrink-0"
+              disabled={isPending || selectedUsers.size === 0}
+            >
+              Invite {isPending && <DaLoader className="ml-2 text-white" />}
+            </DaButton>
+          </div>
+        </div>
+
+        <div className="-mx-5 flex flex-1 flex-col overflow-y-auto px-5">
+          <DaCollaboratorSearchPicker
+            inputString={inputString}
+            invitedUsers={invitedUsers || []}
+            selectedUsers={selectedUsers}
+            onToggle={handleToggle}
+            onRemoveAccess={(user) => mutateRemovingUserAccess(user)}
+          />
+        </div>
+      </div>
+    </DaPopup>
+  )
+}
+
+export default AccessInvitation

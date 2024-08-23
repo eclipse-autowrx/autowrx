@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 
 interface DaAvatarProps
   extends React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root> {
-  src: string
+  src?: string
   alt?: string
   fallback?: React.ReactNode
 }
@@ -25,14 +25,14 @@ const DaAvatar = React.forwardRef<
     <AvatarPrimitive.Image
       src={src}
       alt={alt ? alt : 'Avatar'}
-      className="aspect-square object-cover h-full w-full"
+      className="aspect-square h-full w-full object-cover"
     />
     <AvatarPrimitive.Fallback className="flex items-center justify-center bg-gray-200 text-gray-700">
       {fallback || (
         <img
           src={'/imgs/profile.png'}
           alt="bar"
-          className="h-full w-full object-cover rounded-full"
+          className="h-full w-full rounded-full object-cover"
         />
       )}
     </AvatarPrimitive.Fallback>

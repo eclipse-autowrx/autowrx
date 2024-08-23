@@ -18,7 +18,6 @@ const initialData = {
   email: '',
   name: '',
   password: '',
-  role: 'user',
 }
 
 const FormCreateUser = ({ onClose, updateData }: FormCreateUserProps) => {
@@ -31,11 +30,10 @@ const FormCreateUser = ({ onClose, updateData }: FormCreateUserProps) => {
   const [data, setData] = useState(initialData)
 
   useEffect(() => {
-    if (updateData) {
+    if (updateData?.email && updateData?.name) {
       setData({
         email: updateData.email,
         name: updateData.name,
-        role: updateData.role,
         password: '',
       })
     }
@@ -91,7 +89,7 @@ const FormCreateUser = ({ onClose, updateData }: FormCreateUserProps) => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col w-[30vw] lg:w-[25vw] max-h-[80vh] p-4 bg-da-white"
+      className="flex max-h-[80vh] w-[30vw] flex-col bg-da-white p-4 lg:w-[25vw]"
     >
       {/* Title */}
       <DaText variant="title" className="text-da-primary-500">
@@ -129,20 +127,6 @@ const FormCreateUser = ({ onClose, updateData }: FormCreateUserProps) => {
         label={isCreate ? 'Password *' : 'Password'}
         className="mt-4"
       />
-      <DaSelect
-        label="Role"
-        value={data.role}
-        onValueChange={(value) =>
-          setData((prev) => ({
-            ...prev,
-            role: value,
-          }))
-        }
-        wrapperClassName="mt-4"
-      >
-        <DaSelectItem value="user">User</DaSelectItem>
-        <DaSelectItem value="admin">Admin</DaSelectItem>
-      </DaSelect>
 
       <div className="grow"></div>
 
@@ -154,19 +138,19 @@ const FormCreateUser = ({ onClose, updateData }: FormCreateUserProps) => {
       )}
 
       {/* Action */}
-      <div className="space-x-2 ml-auto">
+      <div className="ml-auto space-x-2">
         <DaButton
           onClick={onClose}
           disabled={loading}
           type="button"
-          className="w-fit mt-8"
+          className="mt-8 w-fit"
           variant="plain"
         >
           Cancel
         </DaButton>
-        <DaButton disabled={loading} type="submit" className="w-fit mt-8">
+        <DaButton disabled={loading} type="submit" className="mt-8 w-fit">
           {loading && (
-            <TbLoader className="animate-spin da-label-regular mr-2" />
+            <TbLoader className="da-label-regular mr-2 animate-spin" />
           )}
           {isCreate ? 'Create User' : 'Update User'}
         </DaButton>

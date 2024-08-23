@@ -18,7 +18,7 @@ interface DaUserListProps {
 
 const DaUserManagementList = ({ users }: DaUserListProps) => {
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto pr-4 space-y-2">
+    <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-4">
       {users.map((user) => (
         <DaUser user={user} key={user.id} />
       ))}
@@ -50,7 +50,7 @@ const DaUser = ({ user }: { user: User }) => {
   }
 
   return (
-    <div key={user.id} className="flex w-full p-4 border rounded-lg">
+    <div key={user.id} className="flex w-full rounded-lg border p-4">
       <DaAvatar
         src={user.image_file || './imgs/profile.png'}
         className="mr-4"
@@ -58,20 +58,12 @@ const DaUser = ({ user }: { user: User }) => {
       />
 
       {/* Information */}
-      <div className="space-y-1 flex">
+      <div className="flex space-y-1">
         <div>
-          <div className="flex w-full space-x-2 items-center">
+          <div className="flex w-full items-center space-x-2">
             <DaText variant="regular-bold" className="text-da-gray-dark">
               {user.name}
             </DaText>
-            {user.role === 'admin' && (
-              <DaText
-                variant="small-medium"
-                className="px-2 bg-da-primary-100 h-fit text-da-primary-500 rounded-lg"
-              >
-                Admin
-              </DaText>
-            )}
           </div>
 
           <DaText variant="small" className="block">
@@ -81,7 +73,7 @@ const DaUser = ({ user }: { user: User }) => {
       </div>
 
       {/* Action */}
-      <div className="ml-auto items-center flex gap-2">
+      <div className="ml-auto flex items-center gap-2">
         <DaText variant="small" className="flex">
           Created at: {dayjs(user.created_at).format('DD/MM/YYYY, hh:mm:ss A')}
         </DaText>
@@ -90,7 +82,7 @@ const DaUser = ({ user }: { user: User }) => {
             <FormCreateUser updateData={user} onClose={() => setOpen(false)} />
           </DaPopup>
           <DaButton onClick={() => setOpen(true)} variant="plain" size="sm">
-            <TbPencil className="w-5 h-5" />
+            <TbPencil className="h-5 w-5" />
           </DaButton>
 
           <DaPopup state={[openDelete, setOpenDelete]} trigger={<span></span>}>
@@ -109,7 +101,7 @@ const DaUser = ({ user }: { user: User }) => {
             variant="destructive"
             size="sm"
           >
-            <TbTrash className="w-5 h-5" />
+            <TbTrash className="h-5 w-5" />
           </DaButton>
         </div>
       </div>

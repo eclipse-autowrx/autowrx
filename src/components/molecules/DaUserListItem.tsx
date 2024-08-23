@@ -12,20 +12,12 @@ const DaUserListItem = ({ user }: { user: User }) => {
       />
 
       {/* Information */}
-      <div className="space-y-1 flex">
+      <div className="flex space-y-1">
         <div>
-          <div className="flex w-full space-x-2 items-center">
+          <div className="flex w-full items-center space-x-2">
             <DaText variant="regular-bold" className="text-da-gray-dark">
               {user.name}
             </DaText>
-            {user.role === 'admin' && (
-              <DaText
-                variant="small-medium"
-                className="px-2 bg-da-primary-100 h-fit text-da-primary-500 rounded-lg"
-              >
-                Admin
-              </DaText>
-            )}
           </div>
 
           <DaText variant="small" className="block">
