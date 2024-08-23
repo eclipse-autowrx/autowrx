@@ -2,7 +2,6 @@ import { User } from '@/types/user.type'
 
 export const users: User[] = [
   {
-    role: 'admin',
     roles: {
       model_contributor: ['mockModelContributorId1'],
       tenant_admin: [],
@@ -18,7 +17,6 @@ export const users: User[] = [
     created_at: new Date(),
   },
   {
-    role: 'user',
     roles: {
       model_contributor: [],
       tenant_admin: [],
@@ -33,7 +31,6 @@ export const users: User[] = [
     created_at: new Date(),
   },
   {
-    role: 'user',
     roles: {
       model_contributor: [],
       tenant_admin: [],
@@ -48,7 +45,6 @@ export const users: User[] = [
     created_at: new Date(),
   },
   {
-    role: 'user',
     roles: {
       model_contributor: [],
       tenant_admin: [],
@@ -63,7 +59,6 @@ export const users: User[] = [
     created_at: new Date(),
   },
   {
-    role: 'user',
     roles: {
       model_contributor: [],
       tenant_admin: [],
@@ -78,7 +73,6 @@ export const users: User[] = [
     created_at: new Date(),
   },
   {
-    role: 'user',
     roles: {
       model_contributor: [],
       tenant_admin: [],
@@ -93,7 +87,6 @@ export const users: User[] = [
     created_at: new Date(),
   },
   {
-    role: 'user',
     roles: {
       model_contributor: [],
       tenant_admin: [],
@@ -108,7 +101,6 @@ export const users: User[] = [
     created_at: new Date(),
   },
   {
-    role: 'user',
     roles: {
       model_contributor: [],
       tenant_admin: [],
@@ -123,7 +115,6 @@ export const users: User[] = [
     created_at: new Date(),
   },
   {
-    role: 'user',
     roles: {
       model_contributor: [],
       tenant_admin: [],
@@ -138,7 +129,6 @@ export const users: User[] = [
     created_at: new Date(),
   },
   {
-    role: 'user',
     roles: {
       model_contributor: [],
       tenant_admin: [],
@@ -153,7 +143,6 @@ export const users: User[] = [
     created_at: new Date(),
   },
   {
-    role: 'user',
     roles: {
       model_contributor: [],
       tenant_admin: [],
@@ -168,7 +157,6 @@ export const users: User[] = [
     created_at: new Date(),
   },
   {
-    role: 'user',
     roles: {
       model_contributor: [],
       tenant_admin: [],
@@ -183,7 +171,6 @@ export const users: User[] = [
     created_at: new Date(),
   },
   {
-    role: 'user',
     roles: {
       model_contributor: [],
       tenant_admin: [],
@@ -198,7 +185,6 @@ export const users: User[] = [
     created_at: new Date(),
   },
   {
-    role: 'user',
     roles: {
       model_contributor: [],
       tenant_admin: [],

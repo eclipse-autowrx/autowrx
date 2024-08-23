@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { DaText } from '@/components/atoms/DaText'
 import { TbMinus, TbUserPlus } from 'react-icons/tb'
 import { DaButton } from '../atoms/DaButton'
 import { DaAvatar } from '../atoms/DaAvatar'
 import { cn } from '@/lib/utils'
 import DaSelectUserPopup from './DaSelectUserPopup'
-import { User } from '@/types/user.type'
+import { InvitedUser, User } from '@/types/user.type'
 import {
   updateModelPermissionService,
   deleteModelPermissionService,
@@ -16,6 +16,7 @@ import DaTabItem from '../atoms/DaTabItem'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { addLog } from '@/services/log.service'
 import { maskEmail } from '@/lib/utils'
+import AccessInvitation from '../organisms/AccessInvitation'
 
 interface ContributorListProps {
   className?: string
@@ -32,14 +33,14 @@ const UserItem = ({ user, onRemoveUser }: UserItemProps) => {
   }
 
   return (
-    <div className="flex items-center justify-between p-2 border my-2 rounded-lg border-da-gray-light bg-da-gray-light/25 cursor-pointer">
+    <div className="my-2 flex cursor-pointer items-center justify-between rounded-lg border border-da-gray-light bg-da-gray-light/25 p-2">
       <div className="flex items-center">
         <DaAvatar
-          src="/imgs/profile.png"
+          src={user.image_file}
           alt="user"
-          className="w-10 h-10 rounded-full mr-4"
+          className="mr-4 h-10 w-10 rounded-full"
         />
-        <div className="flex-col flex">
+        <div className="flex flex-col">
           <DaText variant="regular" className="font-bold text-da-gray-dark">
             {user.name ?? 'Loading...'}
           </DaText>
@@ -49,10 +50,10 @@ const UserItem = ({ user, onRemoveUser }: UserItemProps) => {
         </div>
       </div>
       <div
-        className="p-2 hover:bg-red-200 rounded-lg"
+        className="rounded-lg p-2 hover:bg-red-200"
         onClick={() => onRemoveUser(user.id)}
       >
-        <TbMinus className="text-red-500 cursor-pointer" />
+        <TbMinus className="cursor-pointer text-red-500" />
       </div>
     </div>
   )
@@ -61,8 +62,8 @@ const UserItem = ({ user, onRemoveUser }: UserItemProps) => {
 const DaContributorList = ({ className }: ContributorListProps) => {
   const { data: model, refetch } = useCurrentModel()
   const [activeTab, setActiveTab] = useState('contributors')
-  const [open, setOpen] = useState(false)
   const { data: currentUser } = useSelfProfileQuery()
+  const [open, setOpen] = useState(false)
 
   if (!model) {
     return (
@@ -72,21 +73,6 @@ const DaContributorList = ({ className }: ContributorListProps) => {
         timeoutText="Model not found"
       />
     )
-  }
-
-  const handleAddUser = async (userId: string) => {
-    const role =
-      activeTab === 'contributors' ? 'model_contributor' : 'model_member'
-    await updateModelPermissionService(model.id, role, userId)
-    addLog({
-      name: `User ${currentUser?.email} update permission of model ${model.name}`,
-      description: `User ${currentUser?.email} update permission of model ${model.name}: Add user ${userId} as ${role}`,
-      type: 'add-permission',
-      create_by: currentUser?.id!,
-      ref_id: model.id,
-      ref_type: 'model',
-    })
-    await refetch()
   }
 
   const onRemoveUser = async (userId: string) => {
@@ -104,14 +90,71 @@ const DaContributorList = ({ className }: ContributorListProps) => {
     })
   }
 
+  const invitedUsers: InvitedUser[] = useMemo(() => {
+    const modelContributors = (model.contributors || []).map((c) => ({
+      name: c.name,
+      id: c.id,
+      email: c.email || '',
+      image_file: c.image_file,
+      access_level: 'Contributor',
+      access_level_id: 'model_contributor',
+    }))
+    const modelMembers = (model.members || []).map((c) => ({
+      name: c.name,
+      id: c.id,
+      email: c.email || '',
+      image_file: c.image_file,
+      access_level: 'Member',
+      access_level_id: 'model_member',
+    }))
+
+    const results = [...modelContributors, ...modelMembers]
+
+    results.push({
+      name: model.created_by?.name || '',
+      id: model.created_by?.id || '',
+      email: model.created_by?.email || '',
+      image_file: model.created_by?.image_file,
+      access_level: 'Owner',
+      access_level_id: 'owner',
+    })
+    return results
+  }, [model])
+
+  const handleInviteUsers = async (users: InvitedUser[], role: string) => {
+    await updateModelPermissionService(
+      model.id,
+      role,
+      users.map((u) => u.id).join(','),
+    )
+    await refetch()
+    addLog({
+      name: `User ${currentUser?.email} update permission of model ${model.name}`,
+      description: `User ${currentUser?.email} update permission of model ${model.name}: Add users ${users.map((u) => u.id).join(',')} as ${role}`,
+      type: 'add-permission',
+      create_by: currentUser?.id!,
+      ref_id: model.id,
+      ref_type: 'model',
+    })
+  }
+
+  const handleRemoveUserAccess = async (user: InvitedUser) => {
+    await deleteModelPermissionService(
+      model.id,
+      user.access_level_id || '',
+      user.id,
+    )
+    await refetch()
+  }
+
   return (
     <div
       className={cn(
-        'flex flex-col mx-auto p-4 bg-white rounded-lg border border-da-gray-light',
+        'mx-auto flex flex-col rounded-lg border border-da-gray-light bg-white p-4',
         className,
       )}
     >
-      <div className="flex justify-between items-center mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <div className="flex">
           <DaTabItem
             onClick={() => setActiveTab('contributors')}
@@ -129,16 +172,14 @@ const DaContributorList = ({ className }: ContributorListProps) => {
         </div>
         <DaButton
           size="sm"
-          onClick={() => {
-            setOpen(true)
-          }}
-          className="text-da-primary-500 flex items-center"
+          className="flex items-center text-da-primary-500"
           variant="outline-nocolor"
+          onClick={() => setOpen(true)}
         >
           <TbUserPlus className="mr-2" /> Add user
         </DaButton>
       </div>
-      <div className="flex flex-col max-h-[400px] pr-2 overflow-y-auto">
+      <div className="flex max-h-[400px] flex-col overflow-y-auto pr-2">
         {activeTab === 'contributors' ? (
           <>
             {' '}
@@ -159,14 +200,19 @@ const DaContributorList = ({ className }: ContributorListProps) => {
           </>
         )}
       </div>
-      <DaSelectUserPopup
-        selectUser={handleAddUser}
-        popupState={[open, setOpen]}
-        excludeUsers={
-          activeTab === 'contributors'
-            ? (model.contributors ?? [])
-            : (model.members ?? [])
-        }
+
+      <AccessInvitation
+        label="Collaborator Invitation"
+        open={open}
+        setOpen={setOpen}
+        invitedUsers={invitedUsers}
+        onInviteUsers={handleInviteUsers}
+        onInviteSuccess={(role) => {
+          setActiveTab(
+            role === 'model_contributor' ? 'contributors' : 'members',
+          )
+        }}
+        onRemoveUserAccess={handleRemoveUserAccess}
       />
     </div>
   )

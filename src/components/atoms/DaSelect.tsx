@@ -36,9 +36,13 @@ const DaSelect = React.forwardRef<
       onValueChange={onValueChange}
     >
       <div className={cn('flex, flex-col', wrapperClassName)}>
-        <DaText className="flex flex-col focus-within:text-da-primary-500 text-da-gray-medium">
-          <DaText className="!font-medium mb-1">{label}</DaText>
-          <SelectTrigger ref={ref} {...props} className="font-normal">
+        <DaText className="flex flex-col text-da-gray-medium focus-within:text-da-primary-500">
+          <DaText className="mb-1 !font-medium">{label}</DaText>
+          <SelectTrigger
+            ref={ref}
+            {...props}
+            className={cn('font-normal', props.className)}
+          >
             <SelectValue />
           </SelectTrigger>
         </DaText>
@@ -50,12 +54,15 @@ const DaSelect = React.forwardRef<
 
 const DaSelectItem = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Item>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
->(({ className, children, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item> & {
+    helperText?: string
+  }
+>(({ className, children, helperText, ...props }, ref) => (
   <SelectPrimitive.Item
     ref={ref}
     className={clsx(
-      'relative flex w-full bg-white hover:bg-gray-100 text-da-gray-medium  cursor-pointer select-none items-center rounded py-1.5 pl-2 pr-8 outline-none focus:bg-accent data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+      'focus:bg-accent relative flex w-full cursor-pointer select-none rounded bg-white py-1.5 pl-2 pr-8 text-da-gray-medium outline-none hover:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+      helperText ? 'flex-col text-left' : 'items-center',
       className,
     )}
     {...props}
@@ -65,7 +72,9 @@ const DaSelectItem = React.forwardRef<
         <CheckIcon className="h-4 w-4" />
       </SelectPrimitive.ItemIndicator>
     </span>
+
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+    {helperText && <DaText className="da-label-small">{helperText}</DaText>}
   </SelectPrimitive.Item>
 ))
 DaSelectItem.displayName = SelectPrimitive.Item.displayName
@@ -81,7 +90,7 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={clsx(
-      'flex h-10 w-full items-center shadow-sm justify-between whitespace-nowrap rounded-md border border-da-gray-light bg-transparent px-2 py-2 focus:border-da-primary-500 disabled:opacity-50 [&>span]:line-clamp-1',
+      'flex h-10 w-full items-center justify-between whitespace-nowrap rounded-md border border-da-gray-light bg-transparent px-2 py-2 shadow-sm focus:border-da-primary-500 disabled:opacity-50 [&>span]:line-clamp-1',
       className,
     )}
     {...props}
@@ -102,7 +111,7 @@ const SelectContent = React.forwardRef<
     <SelectPrimitive.Content
       ref={ref}
       className={clsx(
-        'relative z-[1500] shadow-sm max-h-96 min-w-[8rem] overflow-hidden rounded-md border bg-popover data-[state=open]:animate-in data-[state=closed]:animate-out data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1',
+        'bg-popover relative z-[1500] max-h-96 min-w-[8rem] overflow-hidden rounded-md border shadow-sm data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1 data-[state=open]:animate-in data-[state=closed]:animate-out',
         className,
       )}
       position="popper"
@@ -110,7 +119,7 @@ const SelectContent = React.forwardRef<
     >
       <SelectPrimitive.Viewport
         className={clsx(
-          'p-1 bg-white h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]',
+          'h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)] bg-white p-1',
         )}
       >
         {children}

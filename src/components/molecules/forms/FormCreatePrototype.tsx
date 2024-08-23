@@ -197,7 +197,10 @@ LOOP.close()`,
         created_by: currentModel.created_by,
         tags: currentModel.tags,
       }
-      setLocalModel(modelLite)
+      setLocalModel({
+        ...modelLite,
+        created_by: modelLite.created_by?.id || '',
+      })
     } else if (
       contributionModels &&
       !isFetchingModelContribution &&

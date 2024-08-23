@@ -27,7 +27,12 @@ export type Model = {
   visibility: 'public' | 'private'
   vehicle_category: string
   property: string
-  created_by: string
+  created_by?: {
+    name: string
+    id: string
+    image_file?: string
+    email?: string
+  }
   created_at?: Date
   skeleton?: string
   tags?: Tag[]
