@@ -31,6 +31,16 @@ const config: any = {
         endpointUrl: 'https://backend-core-etas.digital.auto/v2/genai/etas',
         customPayload: (prompt: string) => ({ prompt }),
       },
+      {
+        id: 'mock-genai',
+        type: 'GenAI_Python',
+        name: 'Mock SDV GenAI',
+        description: 'Mock GenAI for Python code generation',
+        apiKey: 'Empty',
+        endpointUrl: 'https://backend-core-etas.digital.auto/v2/genai/etas',
+        customPayload: (prompt: string) => ({ prompt }),
+        isMock: true,
+      },
     ],
     dashboard: [
       {
