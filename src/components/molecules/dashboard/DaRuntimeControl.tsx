@@ -17,6 +17,9 @@ import DaMockManager from './DaMockManager'
 import { countCodeExecution } from '@/services/prototype.service'
 import { DaInput } from '@/components/atoms/DaInput'
 import { SlOptionsVertical } from "react-icons/sl";
+import DaPopup from '@/components/atoms/DaPopup'
+import DaStaging from '../staging/DaStaging'
+import { BiSend } from "react-icons/bi";
 
 const DEFAULT_KIT_SERVER = "https://kit.digitalauto.tech";
 
@@ -61,6 +64,8 @@ const DaRuntimeControl: FC = ({}) => {
   const [customKitServer, setCustomKitServer] = useState<string>(localStorage.getItem("customKitServer")||'')
   const [tmpCustomKitServer, setTmpCustomKitServer] = useState<string>(localStorage.getItem("customKitServer")||'')
   const [isShowEditKitServer, setIsShowEditKitServer] = useState<boolean>(false)
+
+  // const [showStaging, setShowStaging] = useState<boolean>(false)
 
   useEffect(() => {
     localStorage.setItem("customKitServer", customKitServer.trim())
@@ -135,6 +140,7 @@ const DaRuntimeControl: FC = ({}) => {
               setIsRunning(false)
             }}/> */}
         {(customKitServer && customKitServer.trim().length>0)?<DaRuntimeConnector
+            targetPrefix="runtime-"
             kitServerUrl={customKitServer}
             ref={runTimeRef}
             usedAPIs={usedApis}
@@ -145,6 +151,7 @@ const DaRuntimeControl: FC = ({}) => {
               setIsRunning(false)
             }}
           />:<DaRuntimeConnector
+            targetPrefix="runtime-"
             kitServerUrl={DEFAULT_KIT_SERVER}
             ref={runTimeRef1}
             usedAPIs={usedApis}
@@ -156,6 +163,7 @@ const DaRuntimeControl: FC = ({}) => {
             }}/>
         }
         <div className='grow'/>
+        
         <SlOptionsVertical size={36} className='text-da-white cursor-pointer hover:bg-slate-500 p-2 rounded'
           onClick={() => {
             setIsShowEditKitServer((v) => !v)
@@ -205,8 +213,36 @@ const DaRuntimeControl: FC = ({}) => {
             >
               <IoStop />
             </button>
+           
           </>
         )}
+        <div className='grow'></div>
+        { isExpand && <DaButton size='sm' variant="outline" className='ml-4 mt-1 !text-white hover:!text-da-gray-medium !border-da-white hover:!border-da-gray-medium'
+              onClick={() => {
+                setLog("")
+                if (runTimeRef.current) {
+                  runTimeRef.current?.deploy()
+                }
+                if (runTimeRef1.current) {
+                  runTimeRef1.current?.deploy()
+                }
+              }}>
+              Deploy 
+              <BiSend className='ml-1' size={20}/>
+            </DaButton>
+          }
+        {/* { isExpand && <DaButton size='sm' variant="outline" className='mt-1 ml-2 !text-white hover:!text-da-gray-medium !border-da-white hover:!border-da-gray-medium'
+          onClick={() => { setShowStaging(true) }}>
+          Staging
+        </DaButton>
+        } */}
+
+        { isExpand && <DaButton size='sm' variant="plain" className='mt-1 ml-2 !text-white hover:!text-da-gray-medium !border-da-white hover:!border-da-gray-medium'
+          onClick={() => { setLog("") }}>
+          Clear log
+        </DaButton>
+        }
+       
       </div>
 
       <div className="mt-1 grow overflow-y-auto">
@@ -263,6 +299,7 @@ const DaRuntimeControl: FC = ({}) => {
           </>
         )}
       </div>
+
       <div className="flex">
         <DaButton
           variant="plain"
@@ -315,6 +352,10 @@ const DaRuntimeControl: FC = ({}) => {
           </>
         )}
       </div>
+
+      {/* { showStaging && <DaPopup state={[showStaging, setShowStaging]} trigger={<span></span>}>
+          <DaStaging />
+        </DaPopup>}  */}
     </div>
   )
 }

@@ -22,6 +22,7 @@ import DaPopup from '@/components/atoms/DaPopup'
 import { DaButton } from '@/components/atoms/DaButton'
 import { TbMessage } from 'react-icons/tb'
 import DaDiscussions from '@/components/molecules/DaDiscussions'
+import DaStaging from '@/components/molecules/staging/DaStaging'
 
 const PrototypeTabCode = lazy(
   () => import('@/components/organisms/PrototypeTabCode'),
@@ -120,6 +121,19 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
             Feedback
           </DaTabItem>
         </div>
+        <div className='grow'></div>
+        {
+          <DaPopup
+            trigger={
+              <DaTabItem>
+                {/* <TbMessage className="w-5 h-5 mr-2" /> */}
+                Staging
+              </DaTabItem>
+            }
+          >
+            <DaStaging/>
+          </DaPopup>
+        }
         {
           <DaPopup
             trigger={
