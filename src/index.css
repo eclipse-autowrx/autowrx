@@ -59,6 +59,22 @@
   }
 }
 
+.da-pl-8 {
+  padding-left: 32px;
+}
+
+.da-pl-16 {
+  padding-left: 64px;
+}
+
+.da-pl-24 {
+  padding-left: 96px;
+}
+
+.da-pl-32 {
+  padding-left: 128px;
+}
+
 .col-span-2 {
   grid-column: span 2 / span 2;
 }
