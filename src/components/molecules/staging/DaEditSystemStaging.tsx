@@ -29,6 +29,8 @@ const DaEditSystemStaging = ({stageDefine, onTargetMode, system, target, onFinis
     const runTimeRef = useRef<any>()
     const [log, setLog] = useState<string>("")
 
+    const [prototype] = useModelStore((state) => [state.prototype as Prototype])
+
     useEffect(() => {
         setDefine(stageDefine)
     }, [])
@@ -145,6 +147,7 @@ const DaEditSystemStaging = ({stageDefine, onTargetMode, system, target, onFinis
                         </div>
 
                         { define && <DaStageComponent onTargetMode={onTargetMode} id="none"
+                            prototype={prototype}
                             isTargetConnected={!!activeRtId}
                             activeId={activeId}
                             isUpdating={isUpdating}

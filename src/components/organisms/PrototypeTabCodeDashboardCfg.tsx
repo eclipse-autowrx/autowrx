@@ -103,7 +103,8 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
         editable={isAuthorized}
         onDashboardConfigChanged={saveDashboardCfgToDb}
       />
-      <div className="flex flex-col h-full w-full items-center px-2 py-1 text-xs text-da-gray-medium rounded">
+
+      {/* <div className="flex flex-col w-full items-center px-2 py-1 text-xs text-da-gray-medium rounded">
         {isAuthorized && (
           <div className="flex w-full">
             <DaButton
@@ -147,7 +148,7 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
           </div>
         )}
         <div
-          className={`flex w-full h-full ${isExpanded ? 'visible' : 'invisible'}`}
+          className={`flex w-full h-[300px] ${isExpanded ? 'visible' : 'invisible'}`}
         >
           <CodeEditor
             code={dashboardCfg}
@@ -159,7 +160,8 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
             }}
           />
         </div>
-      </div>
+      </div> */}
+
     </>
   )
 }

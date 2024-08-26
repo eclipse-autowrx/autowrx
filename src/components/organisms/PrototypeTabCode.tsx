@@ -139,27 +139,18 @@ const PrototypeTabCode: FC = ({}) => {
             active={activeTab == 'api'}
             onClick={() => setActiveTab('api')}
           >
-            Signal
+            Signals
           </DaTabItem>
-          <DaTabItem
+
+          {/* <DaTabItem
             small
             active={activeTab == 'dashboard'}
             onClick={() => setActiveTab('dashboard')}
           >
             Dashboard Config
-          </DaTabItem>
-          {config?.studioUrl && (
-            <DaTabItem to={config?.studioUrl}>
-              Widget Studio
-              <TbArrowUpRight className="w-5 h-5" />
-            </DaTabItem>
-          )}
-          {config?.widgetMarketPlaceUrl && (
-            <DaTabItem to={config?.widgetMarketPlaceUrl}>
-              Widget Marketplace
-              <TbArrowUpRight className="w-5 h-5" />
-            </DaTabItem>
-          )}
+          </DaTabItem> */}
+
+         
         </div>
       </div>
 
@@ -181,11 +172,11 @@ const PrototypeTabCode: FC = ({}) => {
               <PrototypeTabCodeApiPanel code={code || ''} />
             </Suspense>
           )}
-          {activeTab == 'dashboard' && (
+          {/* {activeTab == 'dashboard' && (
             <Suspense>
               <PrototypeTabCodeDashboardCfg />
             </Suspense>
-          )}
+          )} */}
         </div>
       </div>
     </div>

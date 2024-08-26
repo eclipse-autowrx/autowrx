@@ -17,6 +17,7 @@ interface DaStageComponentProps {
     targetState: any,
     item: any,
     className?: string
+    prototype: any,
     level: number,
     isUpdating: boolean,
     isTargetConnected: boolean,
@@ -24,10 +25,12 @@ interface DaStageComponentProps {
     onRequestUpdate?: (id: string, data: string) => void
 }
 
-const DaStageComponent = ({id, isTargetConnected,  activeId, isUpdating, onTargetMode, targetState, editMode, item, className, level, onItemEditFinished, onRequestUpdate}:DaStageComponentProps) => {
+const DaStageComponent = ({id, prototype, isTargetConnected,  activeId, isUpdating, onTargetMode, targetState, editMode, item, className, level, onItemEditFinished, onRequestUpdate}:DaStageComponentProps) => {
     const [isEpanded, setIsExpanded] = useState<boolean>(false)
     const [inEditMode, setInEditMode] = useState<boolean>(false)
     const [editVersion, setEditVersion] = useState<string>(item.version || '')
+
+    const COOK_ID = "3.1.1.1.1.1"
 
     return <>
         { !item.isTopMost && <div className={cn("h-[32px] w-full border-b flex", className)}>
@@ -41,7 +44,7 @@ const DaStageComponent = ({id, isTargetConnected,  activeId, isUpdating, onTarge
                     {isEpanded && <IoIosArrowDown className="cursor-pointer mr-2" size={20} onClick={() => { setIsExpanded(false) }}/> }
                 </>:<BsDot size={20} className="mr-2"></BsDot>
                 }
-                {item.name}
+                {item.id==COOK_ID?`Sunscription ${prototype?.name || 'Event Analyzer'}`:item.name}
             </div>
             <div className="h-full px-2 flex items-center justify-center w-24 border-l">
                 { !inEditMode && (item.version || '') }
@@ -126,6 +129,7 @@ const DaStageComponent = ({id, isTargetConnected,  activeId, isUpdating, onTarge
         }
         { (isEpanded || item.isTopMost) && item.children.map((it: any, index: number) =>
             <DaStageComponent
+                prototype = {prototype}
                 onTargetMode={onTargetMode}
                 onItemEditFinished={onItemEditFinished}
                 onRequestUpdate={onRequestUpdate}
