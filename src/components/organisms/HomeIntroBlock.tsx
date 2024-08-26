@@ -9,6 +9,8 @@ import FormCreateModel from '../molecules/forms/FormCreateModel'
 import FormCreatePrototype from '../molecules/forms/FormCreatePrototype'
 import DaPopup from '../atoms/DaPopup'
 import FormImportPrototype from '../molecules/forms/FormImportPrototype'
+import GenAIPrototypeWizard from './GenAIPrototypeWizard'
+import { useState } from 'react'
 
 const cardData = [
   {
@@ -34,10 +36,11 @@ const cardData = [
 const HomeIntroBlock = () => {
   const navigate = useNavigate()
   const { data: user } = useSelfProfileQuery()
+  const [open, setOpen] = useState(false)
 
   return (
-    <div className="flex flex-col container justify-center w-full">
-      <div className="grid w-full grid-cols-1 md:grid-cols-3 gap-12">
+    <div className="container flex w-full flex-col justify-center">
+      <div className="grid w-full grid-cols-1 gap-12 md:grid-cols-3">
         {cardData.map((card, index) => (
           <div key={index} className="flex w-full items-center justify-center">
             <DaCardIntroBig
@@ -49,13 +52,13 @@ const HomeIntroBlock = () => {
         ))}
       </div>
       {user && (
-        <div className="grid w-full grid-cols-1 md:grid-cols-4 gap-12 mt-12">
+        <div className="mt-12 grid w-full grid-cols-1 gap-12 md:grid-cols-4">
           <DaPopup
             trigger={
               <DaActionCard
                 title="New model"
                 content="Create a vehicle model"
-                icon={<FaCar className="w-7 h-7 text-da-primary-500" />}
+                icon={<FaCar className="h-7 w-7 text-da-primary-500" />}
                 className="w-full"
               />
             }
@@ -67,32 +70,40 @@ const HomeIntroBlock = () => {
               <DaActionCard
                 title="New prototype"
                 content="Quickly develop vehicle app"
-                icon={<TbCode className="w-7 h-7 text-da-primary-500" />}
+                icon={<TbCode className="h-7 w-7 text-da-primary-500" />}
                 className="w-full"
               />
             }
           >
             <FormCreatePrototype />
           </DaPopup>
-          <DaPopup
+          <DaActionCard
+            title="Build with AI"
+            content="Build prototype with GenAI"
+            icon={<TbPackageImport className="h-7 w-7 text-da-primary-500" />}
+            onClick={() => setOpen(true)}
+            className="w-full"
+          />
+          <GenAIPrototypeWizard open={open} setOpen={setOpen} />
+          {/* <DaPopup
             trigger={
               <DaActionCard
-                title="Import model"
-                content="Import my available model"
+                title="Build with AI"
+                content="Build prototype with GenAI"
                 icon={
-                  <TbPackageImport className="w-7 h-7 text-da-primary-500" />
+                  <TbPackageImport className="h-7 w-7 text-da-primary-500" />
                 }
                 className="w-full"
               />
             }
           >
             <FormImportPrototype />
-          </DaPopup>
+          </DaPopup> */}
 
           <DaActionCard
             title="My models"
             content="Go to my models"
-            icon={<TbArrowRight className="w-7 h-7 text-da-primary-500" />}
+            icon={<TbArrowRight className="h-7 w-7 text-da-primary-500" />}
             className="w-full"
             onClick={() => navigate('/model')}
           />

@@ -8,12 +8,17 @@ interface PopupProps {
   state?: [boolean, React.Dispatch<React.SetStateAction<boolean>>]
   width?: string
   className?: string
+  disableBackdropClick?: boolean
 }
 
 const DaPopup = forwardRef<HTMLDivElement, PopupProps>(
-  ({ trigger, children, state, width, className }, ref) => {
+  (
+    { trigger, children, state, width, className, disableBackdropClick },
+    ref,
+  ) => {
     const selfManaged = useState(false)
     const [open, setOpen] = state ?? selfManaged
+
     return (
       <Fragment>
         <span className="da-popup-placeholder" onClick={() => setOpen(true)}>
@@ -22,7 +27,10 @@ const DaPopup = forwardRef<HTMLDivElement, PopupProps>(
         <Modal
           ref={ref}
           open={open}
-          onClose={() => setOpen(false)}
+          onClose={(_, reason) => {
+            if (disableBackdropClick && reason === 'backdropClick') return
+            setOpen(false)
+          }}
           style={{ zIndex: 99 }}
         >
           <div

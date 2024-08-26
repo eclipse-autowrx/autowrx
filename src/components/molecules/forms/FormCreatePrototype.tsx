@@ -17,6 +17,8 @@ import { Model, ModelLite, ModelCreate } from '@/types/model.type'
 import DaLoader from '@/components/atoms/DaLoader'
 import { CVI } from '@/data/CVI'
 import { createModelService } from '@/services/model.service'
+import clsx from 'clsx'
+import default_journey from '@/data/default_journey'
 
 const initialState = {
   prototypeName: '',
@@ -25,29 +27,28 @@ const initialState = {
   mainApi: 'Vehicle',
 }
 
-const MockDefaultJourney = `
-#Step 1
-Who: Driver
-What: Wipers turned on manually
-Customer TouchPoints: Windshield wiper switch
-#Step 2
-Who: User
-What: User opens the car door/trunk and the open status of door/trunk is set to true
-Customer TouchPoints: Door/trunk handle
-#Step 3
-Who: System
-What: The wiping is immediately turned off by the software and user is notified
-Customer TouchPoints: Notification on car dashboard and mobile app
-`
-
 interface FormCreatePrototypeProps {
   onClose?: () => void
+  onPrototypeChange?: (data: {
+    prototypeName: string
+    modelName?: string
+    modelId?: string
+  }) => void
+  disabledState?: [boolean, (disabled: boolean) => void]
+  hideCreateButton?: boolean
 }
 
-const FormCreatePrototype = ({ onClose }: FormCreatePrototypeProps) => {
+const FormCreatePrototype = ({
+  onClose,
+  onPrototypeChange,
+  disabledState,
+  hideCreateButton,
+}: FormCreatePrototypeProps) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
   const [data, setData] = useState(initialState)
+  const [disabled, setDisabled] = disabledState ?? useState(false)
+
   const { data: currentModel } = useCurrentModel()
   const { data: contributionModels, isLoading: isFetchingModelContribution } =
     useListModelContribution()
@@ -91,7 +92,6 @@ const FormCreatePrototype = ({ onClose }: FormCreatePrototypeProps) => {
         throw new Error('Model data is missing')
       }
 
-      // Create the prototype using the model ID
       const body = {
         model_id: modelId,
         name: data.prototypeName,
@@ -128,7 +128,7 @@ LOOP.add_signal_handler(signal.SIGTERM, LOOP.stop)
 LOOP.run_until_complete(main())
 LOOP.close()`,
         complexity_level: 3,
-        customer_journey: MockDefaultJourney,
+        customer_journey: default_journey,
         description: {
           problem: '',
           says_who: '',
@@ -141,6 +141,8 @@ LOOP.close()`,
         widget_config: '[]',
         autorun: true,
       }
+
+      // Create the prototype using the model ID
 
       response = await createPrototypeService(body)
 
@@ -210,6 +212,27 @@ LOOP.close()`,
     }
   }, [contributionModels, isFetchingModelContribution, currentModel])
 
+  useEffect(() => {
+    if (loading || (!localModel && !data.modelName) || !data.prototypeName) {
+      setDisabled(true)
+    } else setDisabled(false)
+    if (onPrototypeChange) {
+      if (localModel) {
+        onPrototypeChange({
+          prototypeName: data.prototypeName,
+          modelId: localModel.id,
+          modelName: undefined,
+        })
+      } else {
+        onPrototypeChange({
+          prototypeName: data.prototypeName,
+          modelName: data.modelName,
+          modelId: undefined,
+        })
+      }
+    }
+  }, [loading, localModel, data.modelName, data.prototypeName])
+
   return (
     <form
       onSubmit={createNewPrototype}
@@ -251,6 +274,7 @@ LOOP.close()`,
             placeholder="Model name"
             label="Model Name *"
             className="mt-4"
+            inputClassName="bg-da-gray-light"
           />
         ))}
 
@@ -270,12 +294,10 @@ LOOP.close()`,
       )}
 
       <DaButton
-        disabled={
-          loading || (!localModel && !data.modelName) || !data.prototypeName
-        }
+        disabled={disabled}
         type="submit"
         variant="gradient"
-        className="mt-8 w-full"
+        className={clsx('mt-8 w-full', hideCreateButton && '!hidden')}
       >
         {loading && <TbLoader className="mr-2 animate-spin text-lg" />}
         Create

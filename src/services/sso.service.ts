@@ -9,7 +9,9 @@ export const msalConfig = {
       ? 'http://localhost:3000'
       : config.instance === 'xhub'
         ? 'https://xhub.digital.auto'
-        : 'https://etas.digital.auto',
+        : config.instance === 'etas'
+          ? 'https://etas.digital.auto'
+          : 'https://autowrx.digital.auto',
   },
   cache: {
     cacheLocation: 'sessionStorage', // This configures where your cache will be stored

@@ -22,13 +22,17 @@ import { WidgetConfig } from '@/types/widget.type'
 interface DaDashboardEditorProps {
   entireWidgetConfig?: string
   onDashboardConfigChanged: (dashboardConfig: string) => void
+  onConfigValidChanged?: (isValid: boolean) => void
   editable?: boolean
+  hideWidget?: boolean
 }
 
 const DaDashboardEditor = ({
   entireWidgetConfig,
   onDashboardConfigChanged,
+  onConfigValidChanged,
   editable,
+  hideWidget,
 }: DaDashboardEditorProps) => {
   const CELLS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
   const [widgetConfigs, setWidgetConfigs] = useState<WidgetConfig[]>([])
@@ -85,10 +89,12 @@ const DaDashboardEditor = ({
         }
       }
       setIsConfigValid(isConfigValidLocal)
+      onConfigValidChanged?.(isConfigValidLocal)
       setWarningMessage2(message)
     } catch (e) {
       setWidgetConfigs([])
       setIsConfigValid(false)
+      onConfigValidChanged?.(false)
       setWarningMessage2(
         'The raw configuration text is not valid. Please check the configuration.',
       )
@@ -215,16 +221,16 @@ const DaDashboardEditor = ({
     return (
       <div
         className={cn(
-          'group flex relative border border-da-gray-medium select-none cursor-pointer text-da-gray-dark da-label-small',
+          'da-label-small group relative flex cursor-pointer select-none border border-da-gray-medium text-da-gray-dark',
           `col-span-${colSpan} row-span-${rowSpan}`,
           selectedWidgetIndex === index &&
-            '!border-da-primary-500 !text-da-primary-500 !bg-da-gray-light',
+            '!border-da-primary-500 !bg-da-gray-light !text-da-primary-500',
           'bg-da-gray-light hover:bg-da-gray-light',
         )}
         key={`${index}-${cell}`}
         onClick={() => handleWidgetClick(index)}
       >
-        <div className="hidden group-hover:block w-fit absolute right-1 top-1 bg-da-white rounded">
+        <div className="absolute right-1 top-1 hidden w-fit rounded bg-da-white group-hover:block">
           <div className="flex items-center">
             <DaTooltip className="py-1" content="Delete widget">
               <DaButton
@@ -232,7 +238,7 @@ const DaDashboardEditor = ({
                 className="!px-0"
                 onClick={() => handleDeleteWidget(index)}
               >
-                <TbTrash className="mx-2 w-5 h-5"></TbTrash>
+                <TbTrash className="mx-2 h-5 w-5"></TbTrash>
               </DaButton>
             </DaTooltip>
             {/* TODO: need to change bewebstudio to somethigng smarter*/}
@@ -244,7 +250,7 @@ const DaDashboardEditor = ({
                     className="!px-0 hover:text-da-primary-500"
                     onClick={() => handleOpenWidget(index)}
                   >
-                    <TbExternalLink className="mx-2 w-5 h-5" />
+                    <TbExternalLink className="mx-2 h-5 w-5" />
                   </DaButton>
                 </DaTooltip>
               )}
@@ -258,14 +264,14 @@ const DaDashboardEditor = ({
                   codeEditorPopup[1](true)
                 }}
               >
-                <TbEdit className="mx-2 w-5 h-5" />
+                <TbEdit className="mx-2 h-5 w-5" />
               </DaButton>
             </DaTooltip>
           </div>
         </div>
-        <div className="flex flex-col w-full p-3 justify-center items-center">
-          <div className="flex flex-col justify-center items-center overflow-hidden">
-            <div className="flex w-full min-w-[100px] max-w-[300px] h-3/4 max-h-[200px] justify-center">
+        <div className="flex w-full flex-col items-center justify-center p-3">
+          <div className="flex flex-col items-center justify-center overflow-hidden">
+            <div className="flex h-3/4 max-h-[200px] w-full min-w-[100px] max-w-[300px] justify-center">
               {(() => {
                 const imageUrl =
                   widgetConfig.options && widgetConfig.options.iconURL
@@ -283,12 +289,12 @@ const DaDashboardEditor = ({
                   )
                 } else {
                   return (
-                    <TbCategory className="w-full text-aiot-blue h-full pb-2 stroke-[1.8]" />
+                    <TbCategory className="text-aiot-blue h-full w-full stroke-[1.8] pb-2" />
                   )
                 }
               })()}
             </div>
-            <div className="w-full text-center !text-xs font-semibold pt-2">
+            <div className="w-full pt-2 text-center !text-xs font-semibold">
               {/* TODO: need to change '/store-be/' to something smarter */}
               {widgetConfig.options?.url &&
               widgetConfig.options.url.includes('/store-be/')
@@ -307,9 +313,9 @@ const DaDashboardEditor = ({
   const widgetGrid = () => {
     if (!isConfigValid) {
       return (
-        <div className="flex col-span-5 row-span-2 justify-center items-center w-full h-full">
+        <div className="col-span-5 row-span-2 flex h-full w-full items-center justify-center">
           <div className="flex items-center text-da-gray-medium">
-            <TbExclamationMark className="w-5 h-5 mr-0.5 text-da-accent-500" />
+            <TbExclamationMark className="mr-0.5 h-5 w-5 text-da-accent-500" />
             {warningMessage2
               ? warningMessage2
               : 'The configuration is not valid. Please check the configuration.'}
@@ -333,7 +339,7 @@ const DaDashboardEditor = ({
             <div
               key={`merged-${cell}`}
               className={cn(
-                'flex relative cursor-pointer !bg-da-white border-2 border-da-primary-500 items-center justify-center text-da-gray-dark',
+                'relative flex cursor-pointer items-center justify-center border-2 border-da-primary-500 !bg-da-white text-da-gray-dark',
                 `col-span-${colSpan} row-span-${rowSpan}`,
               )}
             >
@@ -344,7 +350,7 @@ const DaDashboardEditor = ({
                   onClick={() => handleAddWidget()}
                   className="hover:text-da-gray-dark"
                 >
-                  <TbCategoryPlus className="w-4 h-4 mr-1" />
+                  <TbCategoryPlus className="mr-1 h-4 w-4" />
                   Add widget
                 </DaButton>
               </DaTooltip>
@@ -353,10 +359,10 @@ const DaDashboardEditor = ({
                 <DaButton
                   variant="destructive"
                   size="sm"
-                  className="mr-0 absolute top-1 right-1"
+                  className="absolute right-1 top-1 mr-0"
                   onClick={() => setSelectedCells([])}
                 >
-                  <TbX className="w-5 h-5" />
+                  <TbX className="h-5 w-5" />
                 </DaButton>
               </DaTooltip>
             </div>
@@ -373,7 +379,7 @@ const DaDashboardEditor = ({
           <div
             key={`empty-${cell}`}
             className={cn(
-              'flex border border-da-gray-medium justify-center items-center select-none da-label-small text-da-gray-medium da-label-sub-title',
+              'da-label-small da-label-sub-title flex select-none items-center justify-center border border-da-gray-medium text-da-gray-medium',
               selectedCells.includes(cell) &&
                 'bg-da-gray-light text-da-gray-dark',
               !editable && 'pointer-events-none',
@@ -388,7 +394,7 @@ const DaDashboardEditor = ({
   }
 
   return (
-    <div className="flex flex-col w-full p-1 items-center justify-center">
+    <div className="flex w-full flex-col items-center justify-center p-1">
       <div
         className={`grid w-full grid-cols-5 grid-rows-2 border border-da-gray-medium ${
           editable ? 'cursor-pointer' : '!pointer-events-none'
@@ -403,25 +409,29 @@ const DaDashboardEditor = ({
         </DaText>
       )}
       {warningMessage && (
-        <div className="flex w-fit mt-3 rounded py-1 px-2 justify-center items-center border border-da-gray-light shadow-sm select-none">
-          <TbExclamationMark className="flex w-5 h-5 text-da-accent-500 mr-1" />
+        <div className="mt-3 flex w-fit select-none items-center justify-center rounded border border-da-gray-light px-2 py-1 shadow-sm">
+          <TbExclamationMark className="mr-1 flex h-5 w-5 text-da-accent-500" />
           <div className="flex text-da-gray-dark">{warningMessage}</div>
         </div>
       )}
 
-      <DaDashboardWidgetEditor
-        widgetEditorPopupState={codeEditorPopup}
-        selectedWidget={selectedWidget}
-        setSelectedWidget={setSelectedWidget}
-        handleUpdateWidget={handleUpdateWidget}
-      />
+      {!hideWidget && (
+        <>
+          <DaDashboardWidgetEditor
+            widgetEditorPopupState={codeEditorPopup}
+            selectedWidget={selectedWidget}
+            setSelectedWidget={setSelectedWidget}
+            handleUpdateWidget={handleUpdateWidget}
+          />
 
-      <DaWidgetLibrary
-        targetSelectionCells={targetSelectionCells}
-        entireWidgetConfig={entireWidgetConfig || ''}
-        updateDashboardCfg={handleOnDashboardConfigChanged}
-        popupState={[isWidgetLibraryOpen, setIsWidgetLibraryOpen]}
-      />
+          <DaWidgetLibrary
+            targetSelectionCells={targetSelectionCells}
+            entireWidgetConfig={entireWidgetConfig || ''}
+            updateDashboardCfg={handleOnDashboardConfigChanged}
+            popupState={[isWidgetLibraryOpen, setIsWidgetLibraryOpen]}
+          />
+        </>
+      )}
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 
 interface LoadingLineAnimationProps {
   loading: boolean
@@ -12,13 +12,6 @@ const LoadingLineAnimation = ({
   const [linePosition, setLinePosition] = useState(0)
   const [direction, setDirection] = useState(1)
   const [maxLeft, setMaxLeft] = useState(0)
-  const containerRef = useRef<HTMLDivElement | null>(null)
-
-  useEffect(() => {
-    if (containerRef.current) {
-      setMaxLeft(containerRef.current.offsetWidth)
-    }
-  }, [containerRef])
 
   useEffect(() => {
     if (loading) {
@@ -37,8 +30,10 @@ const LoadingLineAnimation = ({
 
   return (
     <div
-      ref={containerRef}
-      className="h-full bg-gray-100 shadow-sm border border-gray-200 rounded flex-1 flex items-center justify-center relative select-none"
+      ref={(element) => {
+        setMaxLeft(element?.clientWidth || 0)
+      }}
+      className="relative flex h-full flex-1 select-none items-center justify-center rounded border border-gray-200 bg-gray-100 shadow-sm"
     >
       {!loading ? (
         <div>{content}</div>
