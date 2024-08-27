@@ -15,7 +15,7 @@ const BouncingDotsLoader = () => {
     height: '5px',
     margin: '0 2px',
     borderRadius: '50%',
-    backgroundColor: '#005072', // Tailwind gray-500 color
+    backgroundColor: '#005072',
     animation: 'bounce 0.6s infinite alternate',
   }
 
@@ -41,7 +41,8 @@ const BouncingDotsLoader = () => {
 const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({ onRecognize }) => {
   const [isListening, setIsListening] = useState(false)
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null)
-  const stopTimeout = useRef<NodeJS.Timeout | null>(null)
+  const [accumulatedText, setAccumulatedText] = useState<string>('') // State to accumulate recognized text
+  const inactivityTimeout = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     // Initialize SpeechRecognition
@@ -50,48 +51,73 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({ onRecognize }) => {
 
     if (SpeechRecognition) {
       const recognitionInstance = new SpeechRecognition()
-      recognitionInstance.continuous = false
+      recognitionInstance.continuous = true // Keep listening until explicitly stopped
       recognitionInstance.interimResults = false
       recognitionInstance.lang = 'en-US'
 
       recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
-        const transcript = event.results[0][0].transcript
-        onRecognize(transcript)
-        setIsListening(false)
+        const transcript = event.results[event.results.length - 1][0].transcript
+        const updatedText = accumulatedText + ' ' + transcript // Update accumulated text
+        console.log('Recognized:', transcript)
+        console.log('Accumulated:', updatedText)
+        setAccumulatedText(updatedText.trim()) // Update state with the new accumulated text
+        onRecognize(updatedText.trim()) // Pass the updated accumulated text to onRecognize
+
+        // Reset the inactivity timeout when new speech is detected
+        if (inactivityTimeout.current) {
+          clearTimeout(inactivityTimeout.current)
+        }
+        inactivityTimeout.current = setTimeout(() => {
+          recognitionInstance.stop()
+          setIsListening(false)
+        }, 5000) // 5 seconds timeout
       }
 
       recognitionInstance.onend = () => {
-        if (stopTimeout.current) {
-          clearTimeout(stopTimeout.current)
-          stopTimeout.current = null
+        if (isListening) {
+          // Restart recognition automatically if still in listening mode
+          recognitionInstance.start()
+        } else {
+          if (inactivityTimeout.current) {
+            clearTimeout(inactivityTimeout.current)
+            inactivityTimeout.current = null
+          }
         }
-        setIsListening(false)
       }
 
       recognitionInstance.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('Speech recognition error:', event)
         setIsListening(false)
+        if (inactivityTimeout.current) {
+          clearTimeout(inactivityTimeout.current)
+          inactivityTimeout.current = null
+        }
       }
 
       setRecognition(recognitionInstance)
     } else {
       console.warn('Speech Recognition API not supported in this browser.')
     }
-  }, [onRecognize])
+  }, [onRecognize, accumulatedText])
 
   const handleClick = () => {
     if (isListening) {
       recognition?.stop()
       setIsListening(false)
+      if (inactivityTimeout.current) {
+        clearTimeout(inactivityTimeout.current)
+        inactivityTimeout.current = null
+      }
     } else {
+      setAccumulatedText('') // Clear accumulated text before starting a new session
       recognition?.start()
       setIsListening(true)
 
-      // Delay stopping recognition
-      stopTimeout.current = setTimeout(() => {
+      // Start the inactivity timeout when recognition starts
+      inactivityTimeout.current = setTimeout(() => {
         recognition?.stop()
         setIsListening(false)
-      }, 3000)
+      }, 5000) // 5 seconds timeout
     }
   }
 
@@ -108,7 +134,7 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({ onRecognize }) => {
       ) : (
         <>
           <TbMicrophoneFilled className="mr-1 size-3.5" />
-          <p className="text-xs font-medium">Speech to prompt</p>
+          <p className="text-xs font-medium">Voice input</p>
         </>
       )}
     </div>

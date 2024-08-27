@@ -152,6 +152,19 @@ const DaGenAI_Python = ({
     }
   }
 
+  useEffect(() => {
+    if (isFinished) {
+      const timeout = setTimeout(() => {
+        setStreamOutput('')
+      }, 3000)
+      timeouts.current.push(timeout)
+    }
+    return () => {
+      timeouts.current.forEach((timeout) => clearTimeout(timeout))
+      timeouts.current = []
+    }
+  }, [isFinished])
+
   return (
     <div className="flex h-full w-full rounded">
       <div className="flex h-full w-[50%] flex-col border-r border-da-gray-light pr-2 pt-3">
@@ -166,6 +179,7 @@ const DaGenAI_Python = ({
             rows={9}
             placeholder="Ask AI to generate code based on this prompt..."
             className="w-full"
+            textareaClassName="resize-none"
           />
         </div>
 
@@ -179,7 +193,7 @@ const DaGenAI_Python = ({
           onSelectedGeneratorChange={setSelectedAddOn}
         />
         {streamOutput && (
-          <div className="-mt-20 flex h-10 items-center rounded-md bg-da-gray-dark px-4">
+          <div className="mt-2 flex h-10 items-center rounded-md bg-da-gray-dark px-4">
             <p className="da-label-small font-mono text-white">
               {streamOutput}
             </p>
@@ -194,7 +208,7 @@ const DaGenAI_Python = ({
         <DaButton
           variant="solid"
           disabled={!inputPrompt}
-          className={`mt-auto !h-8 w-full ${!inputPrompt ? '!mt-2' : 'mt-auto'}`}
+          className={`mt-auto !h-8 w-full ${!inputPrompt ? '!mt-1' : 'mt-auto'}`}
           onClick={genPythonCode}
         >
           <BsStars

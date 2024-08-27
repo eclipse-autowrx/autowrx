@@ -84,20 +84,11 @@ const PrototypeTabCode: FC = ({}) => {
   }
 
   return (
-    <div className="flex flex-col w-full h-[calc(100%-50px)]">
-      <div className="flex w-full min-h-10 px-1 justify-between items-center border-b">
+    <div className="flex h-[calc(100%-50px)] w-full flex-col">
+      <div className="flex min-h-10 w-full items-center justify-between border-b px-1">
         {isAuthorized && (
           <div className="flex space-x-2">
             <div className="flex space-x-2">
-              <DaButton
-                size="sm"
-                variant="outline-nocolor"
-                className="mr-2"
-                disabled
-              >
-                <TbDotsVertical className="mr-1 text-da-primary-500" />
-                Action
-              </DaButton>
               <DaPopup
                 state={[isOpenGenAI, setIsOpenGenAI]}
                 trigger={
@@ -107,12 +98,12 @@ const PrototypeTabCode: FC = ({}) => {
                   </DaButton>
                 }
               >
-                <div className="flex flex-col w-[1000px] h-[500px]">
+                <div className="flex h-[500px] w-[1000px] flex-col">
                   <DaText variant="title" className="text-da-primary-500">
                     {' '}
                     SDV ProtoPilot{' '}
                   </DaText>
-                  <div className="flex flex-col w-full h-full bg-white rounded-lgtext-sm">
+                  <div className="rounded-lgtext-sm flex h-full w-full flex-col bg-white">
                     <Suspense>
                       <DaGenAI_Python
                         onCodeChanged={(code) => {
@@ -125,15 +116,10 @@ const PrototypeTabCode: FC = ({}) => {
                 </div>
               </DaPopup>
             </div>
-
-            <DaButton size="sm" variant="outline-nocolor" disabled>
-              <TbRocket className="w-4 h-4 mr-1 text-da-primary-500" />
-              Deploy
-            </DaButton>
           </div>
         )}
 
-        <div className="flex w-fit h-full justify-end">
+        <div className="flex h-full w-fit justify-end">
           <DaTabItem
             small
             active={activeTab == 'api'}
@@ -141,21 +127,11 @@ const PrototypeTabCode: FC = ({}) => {
           >
             Signals
           </DaTabItem>
-
-          {/* <DaTabItem
-            small
-            active={activeTab == 'dashboard'}
-            onClick={() => setActiveTab('dashboard')}
-          >
-            Dashboard Config
-          </DaTabItem> */}
-
-         
         </div>
       </div>
 
-      <div className="flex w-full h-full justify-between">
-        <div className="flex flex-col w-1/2 h-full border-r">
+      <div className="flex h-full w-full justify-between">
+        <div className="flex h-full w-1/2 flex-col border-r">
           <Suspense>
             <CodeEditor
               code={code || ''}
@@ -166,7 +142,7 @@ const PrototypeTabCode: FC = ({}) => {
             />
           </Suspense>
         </div>
-        <div className="flex flex-col w-1/2 h-full">
+        <div className="flex h-full w-1/2 flex-col">
           {activeTab == 'api' && (
             <Suspense>
               <PrototypeTabCodeApiPanel code={code || ''} />

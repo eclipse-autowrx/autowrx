@@ -35,7 +35,7 @@ const DaPopup = forwardRef<HTMLDivElement, PopupProps>(
         >
           <div
             className={clsx('da-popup-inner', className)}
-            style={{ width: width ?? '400px !important' }}
+            style={{ width: width ?? '400px !important', overflow: 'visible' }}
           >
             {children}
           </div>
