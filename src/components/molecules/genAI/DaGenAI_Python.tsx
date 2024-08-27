@@ -165,7 +165,7 @@ const DaGenAI_Python = ({
             <DaTextarea
               value={inputPrompt}
               onChange={(e) => setInputPrompt(e.target.value)}
-              rows={6}
+              rows={9}
               placeholder="Ask AI to generate code based on this prompt..."
               className="w-full"
             />

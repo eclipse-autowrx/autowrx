@@ -65,7 +65,7 @@ const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
             onBlur={() => setFocused(false)}
             className={cn(
               `grow flex px-2 py-1 h-8 w-full
-                placeholder:text-da-gray-dark
+                placeholder:text-da-gray-medium
                 focus-visible:ring-0 focus-visible:outline-none
                 disabled:cursor-not-allowed`,
               inputClassName,

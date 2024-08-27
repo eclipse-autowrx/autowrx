@@ -6,7 +6,7 @@ import DaStepper from '../atoms/DaStepper'
 import DaStep from '../atoms/DaStep'
 import { TbX } from 'react-icons/tb'
 import FormCreatePrototype from '../molecules/forms/FormCreatePrototype'
-import clsx from 'clsx'
+import { cn } from '@/lib/utils'
 import DaGenAI_Python from '../molecules/genAI/DaGenAI_Python'
 import GenAIDashboardConfigTemplates from './GenAIDashboardConfigTemplates'
 import { isAxiosError } from 'axios'
@@ -225,7 +225,7 @@ const GenAIPrototypeWizard = ({ open, setOpen }: PrototypeGenAIWizardProps) => {
         <div className="flex min-h-0 flex-1 py-2">
           {/* Step 1: Create prototype */}
           <div
-            className={clsx(
+            className={cn(
               '-mx-4 -my-2',
               currentStep !== 0 && 'pointer-events-none hidden',
             )}
@@ -239,7 +239,7 @@ const GenAIPrototypeWizard = ({ open, setOpen }: PrototypeGenAIWizardProps) => {
 
           {/* Step 2: Generate code */}
           <div
-            className={clsx(
+            className={cn(
               currentStep !== 1
                 ? 'pointer-events-none hidden'
                 : 'flex max-h-[480px] w-full',
@@ -254,7 +254,7 @@ const GenAIPrototypeWizard = ({ open, setOpen }: PrototypeGenAIWizardProps) => {
 
           {/* Step 3: Choose dashboard template */}
           <div
-            className={clsx(
+            className={cn(
               currentStep !== 2
                 ? 'pointer-events-none hidden'
                 : 'h-full w-full py-2',
