@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { DaInput } from '@/components/atoms/DaInput'
 import { DaButton } from '@/components/atoms/DaButton'
 import { AddOn } from '@/types/addon.type'
-import { TbCode } from 'react-icons/tb'
+import { TbCode, TbMicrophone } from 'react-icons/tb'
 import { BsStars } from 'react-icons/bs'
 import LoadingLineAnimation from './DaGenAI_LoadingLineAnimation.tsx'
 import DaGenAI_ResponseDisplay from './DaGenAI_ResponseDisplay.tsx'
@@ -19,6 +18,8 @@ import { addLog } from '@/services/log.service'
 import { toast } from 'react-toastify'
 import clsx from 'clsx'
 import default_generated_code from '@/data/default_generated_code.ts'
+import DaSectionTitle from '@/components/atoms/DaSectionTitle.tsx'
+import DaSpeechToText from './DaSpeechToText.tsx'
 
 type DaGenAI_PythonProps = {
   onCodeChanged?: (code: string) => void
@@ -154,31 +155,21 @@ const DaGenAI_Python = ({
   return (
     <div className="flex h-full w-full rounded">
       <div className="flex h-full w-[50%] flex-col border-r border-da-gray-light pr-2 pt-3">
-        <div>
-          <div className="flex select-none">
-            <div className="flex h-5 w-5 items-center justify-center rounded bg-da-gray-light p-2 text-xs font-bold">
-              1
-            </div>
-            <div className="ml-1 flex font-medium text-gray-600">Prompting</div>
-          </div>
-          <div className="mb-4 mt-1 flex h-fit w-full">
-            <DaTextarea
-              value={inputPrompt}
-              onChange={(e) => setInputPrompt(e.target.value)}
-              rows={9}
-              placeholder="Ask AI to generate code based on this prompt..."
-              className="w-full"
-            />
-          </div>
+        <div className="flex w-full items-center justify-between">
+          <DaSectionTitle number={1} title="Prompting" />
+          <DaSpeechToText onRecognize={setInputPrompt} />
         </div>
-        <div className="mt-2 flex select-none">
-          <div className="flex h-5 w-5 items-center justify-center rounded bg-da-gray-light p-2 text-xs font-bold">
-            2
-          </div>
-          <div className="ml-1 flex font-medium text-gray-600">
-            Select Generator
-          </div>
+        <div className="mb-4 mt-1 flex h-fit w-full">
+          <DaTextarea
+            value={inputPrompt}
+            onChange={(e) => setInputPrompt(e.target.value)}
+            rows={9}
+            placeholder="Ask AI to generate code based on this prompt..."
+            className="w-full"
+          />
         </div>
+
+        <DaSectionTitle number={2} title="Select Generator" />
 
         <DaGeneratorSelector
           builtInAddOns={builtInAddOns}
@@ -213,17 +204,10 @@ const DaGenAI_Python = ({
         </DaButton>
       </div>
       <div className="flex h-full w-1/2 flex-col pl-2 pt-3">
-        <div className="mb-2 flex select-none">
-          <div className="flex h-5 w-5 items-center justify-center rounded bg-da-gray-light p-2 text-xs font-bold">
-            3
-          </div>
-          <div className="ml-1 flex font-medium text-gray-600">
-            Preview Code
-          </div>
-        </div>
+        <DaSectionTitle number={3} title="Preview Code" />
         <div
           className={clsx(
-            'scroll-gray flex h-full max-h-[380px] w-full overflow-y-auto overflow-x-hidden',
+            'scroll-gray mt-2 flex h-full max-h-[380px] w-full overflow-y-auto overflow-x-hidden',
             codeDisplayClassName,
           )}
         >

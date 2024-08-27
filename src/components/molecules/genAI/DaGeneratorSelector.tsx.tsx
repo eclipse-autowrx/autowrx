@@ -74,7 +74,7 @@ const DaGeneratorSelector = ({
         variant="outline-nocolor"
         onClick={() => setIsExpandGenerator(!isExpandGenerator)}
         disabled={isLoading}
-        className="mt-2 hover:bg-da-gray-light !shadow-sm"
+        className="mt-2 !shadow-sm hover:bg-da-gray-light"
       >
         <div className="flex w-full items-center justify-between">
           <div className="flex w-full items-center">
@@ -100,7 +100,9 @@ const DaGeneratorSelector = ({
           <div className="scroll-gray-small flex max-h-[150px] flex-col overflow-y-auto px-1">
             {builtInAddOns && builtInAddOns.length > 0 && (
               <>
-                <DaText variant="small-bold" className='p-1'>Built-in Generators</DaText>
+                <DaText variant="small-bold" className="p-1">
+                  Built-in Generators
+                </DaText>
                 {builtInAddOns.map((addOn) => (
                   <div
                     key={addOn.id}
