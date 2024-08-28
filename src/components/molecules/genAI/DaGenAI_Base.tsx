@@ -15,6 +15,7 @@ import { toast } from 'react-toastify'
 import useAuthStore from '@/stores/authStore.ts'
 import default_generated_code from '@/data/default_generated_code'
 import { cn } from '@/lib/utils.ts'
+import { TbHistory, TbRotate } from 'react-icons/tb'
 
 type DaGenAI_BaseProps = {
   type: 'GenAI_Python' | 'GenAI_Dashboard' | 'GenAI_Widget'
@@ -24,6 +25,7 @@ type DaGenAI_BaseProps = {
   onCodeGenerated: (code: string) => void
   onLoadingChange: (loading: boolean) => void
   onFinishChange: (isFinished: boolean) => void
+  isWizard?: boolean
 }
 
 const DaGenAI_Base = ({
@@ -34,6 +36,7 @@ const DaGenAI_Base = ({
   onCodeGenerated,
   onLoadingChange,
   onFinishChange,
+  isWizard,
 }: DaGenAI_BaseProps) => {
   const [inputPrompt, setInputPrompt] = useState<string>('')
   const [selectedAddOn, setSelectedAddOn] = useState<AddOn | null>(null)
@@ -153,9 +156,28 @@ const DaGenAI_Base = ({
 
   return (
     <div className={cn('flex h-full w-full rounded', className)}>
-      <div className="flex h-full w-full flex-col border-r border-da-gray-light pr-2 pt-3">
+      <div
+        className={cn(
+          'flex h-full w-full flex-col border-r border-da-gray-light pr-2 pt-3',
+          isWizard && 'border-none',
+        )}
+      >
         <div className="flex w-full items-center justify-between">
-          <DaSectionTitle number={1} title="Prompting" />
+          {!isWizard ? (
+            <DaSectionTitle number={1} title="Prompting" />
+          ) : (
+            <div className="space-x-2">
+              <DaButton variant="plain" size="sm" onClick={() => {}}>
+                <TbHistory className="mr-1 size-4 rotate-[0deg]" />
+                History
+              </DaButton>
+              <DaButton variant="plain" size="sm" onClick={() => {}}>
+                <TbRotate className="mr-1 size-4 rotate-[270deg]" />
+                Undo
+              </DaButton>
+            </div>
+          )}
+
           <DaSpeechToText onRecognize={setInputPrompt} />
         </div>
         <div className="mb-4 mt-1 flex h-fit w-full">
@@ -169,41 +191,53 @@ const DaGenAI_Base = ({
           />
         </div>
 
-        <DaSectionTitle number={2} title="Select Generator" />
+        {!isWizard && (
+          <>
+            <DaSectionTitle number={2} title="Select Generator" />
+            <DaGeneratorSelector
+              builtInAddOns={builtInAddOns}
+              marketplaceAddOns={
+                marketplaceAddOns ? (canUseGenAI ? marketplaceAddOns : []) : []
+              }
+              onSelectedGeneratorChange={setSelectedAddOn}
+            />
+          </>
+        )}
 
-        <DaGeneratorSelector
-          builtInAddOns={builtInAddOns}
-          marketplaceAddOns={
-            marketplaceAddOns ? (canUseGenAI ? marketplaceAddOns : []) : []
-          }
-          onSelectedGeneratorChange={setSelectedAddOn}
-        />
-
-        {streamOutput && (
-          <div className="mt-2 flex h-10 items-center rounded-md bg-da-gray-dark px-4">
+        {(streamOutput || isWizard) && (
+          <div
+            className={cn(
+              'mt-2 flex h-10 rounded-md bg-da-gray-dark p-3',
+              isWizard && 'mt-0 min-h-36',
+              0,
+            )}
+          >
             <p className="da-label-small font-mono text-white">
-              {streamOutput}
+              {streamOutput ? streamOutput : 'Log message ...'}
             </p>
           </div>
         )}
+        {!isWizard && (
+          <>
+            {!inputPrompt && (
+              <div className="mt-auto flex w-full select-none justify-center text-sm text-gray-400">
+                You need to enter prompt and select generator
+              </div>
+            )}
 
-        {!inputPrompt && (
-          <div className="mt-auto flex w-full select-none justify-center text-sm text-gray-400">
-            You need to enter prompt and select generator
-          </div>
+            <DaButton
+              variant="solid"
+              disabled={!inputPrompt || loading}
+              className={`mt-auto !h-8 w-full ${!inputPrompt ? '!mt-1' : 'mt-auto'}`}
+              onClick={handleGenerate}
+            >
+              <BsStars
+                className={`mb-0.5 mr-1 inline-block ${loading ? 'animate-pulse' : ''}`}
+              />
+              {!loading && <div>{buttonText}</div>}
+            </DaButton>
+          </>
         )}
-
-        <DaButton
-          variant="solid"
-          disabled={!inputPrompt || loading}
-          className={`mt-auto !h-8 w-full ${!inputPrompt ? '!mt-1' : 'mt-auto'}`}
-          onClick={handleGenerate}
-        >
-          <BsStars
-            className={`mb-0.5 mr-1 inline-block ${loading ? 'animate-pulse' : ''}`}
-          />
-          {!loading && <div>{buttonText}</div>}
-        </DaButton>
       </div>
     </div>
   )

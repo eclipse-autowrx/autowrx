@@ -3,20 +3,21 @@ import { DaButton } from '@/components/atoms/DaButton'
 import { TbCode } from 'react-icons/tb'
 import LoadingLineAnimation from './DaGenAI_LoadingLineAnimation.tsx'
 import DaGenAI_ResponseDisplay from './DaGenAI_ResponseDisplay.tsx'
-import clsx from 'clsx'
 import DaSectionTitle from '@/components/atoms/DaSectionTitle.tsx'
 import DaGenAI_Base from './DaGenAI_Base.tsx'
+import { cn } from '@/lib/utils.ts'
+import { DaImage } from '@/components/atoms/DaImage.tsx'
 
-type DaGenAI_PythonProps = {
+type DaGenAI_WizardProps = {
   onCodeChanged?: (code: string) => void
   onCodeGenerated?: (code: string) => void
   pythonCode?: string
 }
 
-const DaGenAI_Python = ({
+const DaGenAI_Wizard = ({
   onCodeChanged,
   onCodeGenerated,
-}: DaGenAI_PythonProps) => {
+}: DaGenAI_WizardProps) => {
   const [loading, setLoading] = useState<boolean>(false)
   const [genCode, setGenCode] = useState<string>('')
   const [isFinished, setIsFinished] = useState<boolean>(false)
@@ -26,7 +27,7 @@ const DaGenAI_Python = ({
       <DaGenAI_Base
         type="GenAI_Python"
         buttonText="Generate SDV App"
-        placeholderText="Enter your prompt to generate SDV App"
+        placeholderText="Please desribe your vehicle application in human readable language"
         onCodeGenerated={(code) => {
           setGenCode(code)
           if (onCodeGenerated) {
@@ -36,11 +37,11 @@ const DaGenAI_Python = ({
         onFinishChange={setIsFinished}
         onLoadingChange={setLoading}
         className="w-1/2"
+        isWizard={true}
       />
       <div className="flex h-full w-1/2 flex-1 flex-col pl-2 pt-3">
-        <DaSectionTitle number={3} title="Preview Code" />
-        <div
-          className={clsx(
+        {/* <div
+          className={cn(
             'scroll-gray mt-2 flex h-full max-h-[380px] w-full overflow-y-auto overflow-x-hidden',
           )}
         >
@@ -52,23 +53,15 @@ const DaGenAI_Python = ({
               content={"There's no code here"}
             />
           )}
-        </div>
-
-        <div className="mt-auto flex w-full select-none flex-col pt-3">
-          <DaButton
-            variant="outline-nocolor"
-            className="!h-8 w-full"
-            onClick={() => {
-              onCodeChanged ? onCodeChanged(genCode) : null
-            }}
-            disabled={!(genCode && genCode.length > 0) || !isFinished}
-          >
-            <TbCode className="mr-1.5 h-4 w-4" /> Add new generated code
-          </DaButton>
-        </div>
+        </div> */}
+        <DaImage
+          src="/imgs/default_car.png"
+          alt="Prototype Wizard"
+          className="h-full w-full object-contain"
+        />
       </div>
     </div>
   )
 }
 
-export default DaGenAI_Python
+export default DaGenAI_Wizard

@@ -1,3 +1,5 @@
+import { DaButton } from '@/components/atoms/DaButton'
+import { cn } from '@/lib/utils'
 import React, { useState, useEffect, useRef } from 'react'
 import {
   TbMicrophone,
@@ -128,22 +130,27 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({ onRecognize }) => {
   }
 
   return (
-    <div
-      className="flex cursor-pointer items-center rounded-lg bg-da-primary-100 p-1 px-2 text-da-primary-500 hover:opacity-80"
+    <DaButton
+      variant="plain"
+      size="sm"
+      className={cn(
+        'flex cursor-pointer items-center rounded-lg p-1 px-2 text-da-primary-500 hover:bg-da-primary-100',
+        isListening && 'bg-da-primary-100',
+      )}
       onClick={handleClick}
     >
       {isListening ? (
         <>
           <BouncingDotsLoader />
-          <TbPlayerStopFilled className="ml-1 size-4" />
+          <TbPlayerStopFilled className="ml-1 size-4 text-da-primary-500" />
         </>
       ) : (
         <>
-          <TbMicrophoneFilled className="mr-1 size-3.5" />
-          <p className="text-xs font-medium">Voice input</p>
+          <TbMicrophoneFilled className="mr-1 size-4" />
+          <p className="font-medium">Voice input</p>
         </>
       )}
-    </div>
+    </DaButton>
   )
 }
 
