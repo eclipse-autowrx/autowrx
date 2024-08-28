@@ -30,7 +30,7 @@ const DaGenAI_Python = ({
     <div className="flex h-full w-full rounded">
       <DaGenAI_Base
         type="GenAI_Python"
-        buttonText="Generate Python Code"
+        buttonText="Generate SDV App"
         placeholderText="Enter your prompt to generate SDV App"
         onCodeGenerated={(code) => {
           setGenCode(code)
