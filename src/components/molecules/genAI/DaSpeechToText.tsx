@@ -57,11 +57,11 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({ onRecognize }) => {
 
       recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
         const transcript = event.results[event.results.length - 1][0].transcript
-        console.log('Recognized:', transcript)
+        // console.log('Recognized:', transcript)
 
         setAccumulatedText((prevText) => {
           const updatedText = prevText + ' ' + transcript // Use the previous state value to accumulate
-          console.log('Accumulated:', updatedText.trim())
+          // console.log('Accumulated:', updatedText.trim())
           onRecognize(updatedText.trim()) // Pass the updated accumulated text to onRecognize
           return updatedText.trim() // Return the new state
         })
@@ -80,6 +80,7 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({ onRecognize }) => {
       recognitionInstance.onend = () => {
         if (isListening) {
           // Restart recognition if it was interrupted due to a pause
+          // console.log('Restarting recognition...')
           recognitionInstance.start()
         } else {
           // Clean up the timeout and stop listening
@@ -107,16 +108,22 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({ onRecognize }) => {
 
   const handleClick = () => {
     if (isListening) {
-      recognition?.stop()
-      setIsListening(false)
+      // Stop the recognition and prevent restarting
+      if (recognition) {
+        recognition.stop()
+        recognition.onend = () => {
+          setIsListening(false) // Update the state only after the recognition has stopped
+        }
+      }
       if (inactivityTimeout.current) {
         clearTimeout(inactivityTimeout.current)
         inactivityTimeout.current = null
       }
     } else {
+      // Start recognition and clear accumulated text
       setAccumulatedText('') // Clear accumulated text before starting a new session
-      recognition?.start()
       setIsListening(true)
+      recognition?.start()
     }
   }
 

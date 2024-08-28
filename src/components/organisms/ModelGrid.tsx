@@ -40,7 +40,7 @@ const ModelGrid: React.FC = () => {
         []
       setFilteredModels(publicModels)
     }
-  }, [activeTab, contributionModel, allModel])
+  }, [activeTab, contributionModel, allModel, myModels, user])
 
   return (
     <div className="flex h-full w-full flex-col">
