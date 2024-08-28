@@ -20,6 +20,7 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import DaLoader from '../atoms/DaLoader'
+import DaGenAI_Wizard from '../molecules/genAI/DaGenAI_Wizard'
 
 type PrototypeGenAIWizardProps = {
   open: boolean
@@ -204,7 +205,7 @@ const GenAIPrototypeWizard = ({ open, setOpen }: PrototypeGenAIWizardProps) => {
             >
               <DaStep>New Prototype</DaStep>
               <DaStep disabled={soFarSteps < 1 || disabledStep[0]}>
-                Generate Code
+                Generate Vehicle Application
               </DaStep>
               <DaStep
                 disabled={soFarSteps < 2 || disabledStep[0] || disabledStep[1]}
@@ -245,11 +246,7 @@ const GenAIPrototypeWizard = ({ open, setOpen }: PrototypeGenAIWizardProps) => {
                 : 'flex max-h-[480px] w-full',
             )}
           >
-            <DaGenAI_Python
-              onCodeGenerated={handleGenerateCode}
-              hideAddGeneratedCodeButton
-              codeDisplayClassName="max-h-full"
-            />
+            <DaGenAI_Wizard onCodeChanged={handleGenerateCode} />
           </div>
 
           {/* Step 3: Choose dashboard template */}
@@ -281,7 +278,9 @@ const GenAIPrototypeWizard = ({ open, setOpen }: PrototypeGenAIWizardProps) => {
             disabled={disabledStep.at(currentStep) || loading}
           >
             {loading && <DaLoader className="mr-2 text-white" />}
-            {currentStep === 2 ? 'Finish' : 'Next'}
+            {currentStep === 0 && 'Next'}
+            {currentStep === 1 && 'Generate my Vehicle Application'}
+            {currentStep === 2 && 'Finish'}
           </DaButton>
         </div>
       </div>
