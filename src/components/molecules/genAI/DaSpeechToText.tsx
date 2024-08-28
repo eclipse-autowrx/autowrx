@@ -57,34 +57,39 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({ onRecognize }) => {
 
       recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
         const transcript = event.results[event.results.length - 1][0].transcript
-        const updatedText = accumulatedText + ' ' + transcript // Update accumulated text
         console.log('Recognized:', transcript)
-        console.log('Accumulated:', updatedText)
-        setAccumulatedText(updatedText.trim()) // Update state with the new accumulated text
-        onRecognize(updatedText.trim()) // Pass the updated accumulated text to onRecognize
 
-        // Reset the inactivity timeout when new speech is detected
+        setAccumulatedText((prevText) => {
+          const updatedText = prevText + ' ' + transcript // Use the previous state value to accumulate
+          console.log('Accumulated:', updatedText.trim())
+          onRecognize(updatedText.trim()) // Pass the updated accumulated text to onRecognize
+          return updatedText.trim() // Return the new state
+        })
+
+        // Clear any previous timeout, if applicable
         if (inactivityTimeout.current) {
           clearTimeout(inactivityTimeout.current)
         }
+
+        // Restart the inactivity timeout for the next speech segment
         inactivityTimeout.current = setTimeout(() => {
           recognitionInstance.stop()
-          setIsListening(false)
-        }, 5000) // 5 seconds timeout
+        }, 3000)
       }
 
       recognitionInstance.onend = () => {
         if (isListening) {
-          // Restart recognition automatically if still in listening mode
+          // Restart recognition if it was interrupted due to a pause
           recognitionInstance.start()
         } else {
+          // Clean up the timeout and stop listening
+          setIsListening(false) // Ensure isListening is set to false
           if (inactivityTimeout.current) {
             clearTimeout(inactivityTimeout.current)
             inactivityTimeout.current = null
           }
         }
       }
-
       recognitionInstance.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('Speech recognition error:', event)
         setIsListening(false)
@@ -112,12 +117,6 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({ onRecognize }) => {
       setAccumulatedText('') // Clear accumulated text before starting a new session
       recognition?.start()
       setIsListening(true)
-
-      // Start the inactivity timeout when recognition starts
-      inactivityTimeout.current = setTimeout(() => {
-        recognition?.stop()
-        setIsListening(false)
-      }, 5000) // 5 seconds timeout
     }
   }
 

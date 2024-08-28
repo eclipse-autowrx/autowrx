@@ -87,35 +87,33 @@ const PrototypeTabCode: FC = ({}) => {
     <div className="flex h-[calc(100%-50px)] w-full flex-col">
       <div className="flex min-h-10 w-full items-center justify-between border-b px-1">
         {isAuthorized && (
-          <div className="flex space-x-2">
-            <div className="flex space-x-2">
-              <DaPopup
-                state={[isOpenGenAI, setIsOpenGenAI]}
-                trigger={
-                  <DaButton size="sm" variant="outline-nocolor">
-                    <BsStars className="mr-1 text-da-primary-500" />
-                    SDV ProtoPilot
-                  </DaButton>
-                }
-              >
-                <div className="flex h-[500px] w-[1000px] flex-col">
-                  <DaText variant="title" className="text-da-primary-500">
-                    {' '}
-                    SDV ProtoPilot{' '}
-                  </DaText>
-                  <div className="rounded-lgtext-sm flex h-full w-full flex-col bg-white">
-                    <Suspense>
-                      <DaGenAI_Python
-                        onCodeChanged={(code) => {
-                          setCode(code)
-                          setIsOpenGenAI(false)
-                        }}
-                      />
-                    </Suspense>
-                  </div>
+          <div className="flex">
+            <DaPopup
+              state={[isOpenGenAI, setIsOpenGenAI]}
+              trigger={
+                <DaButton size="sm" variant="outline-nocolor">
+                  <BsStars className="mr-1 text-da-primary-500" />
+                  SDV ProtoPilot
+                </DaButton>
+              }
+            >
+              <div className="flex h-[500px] w-[1000px] flex-col">
+                <DaText variant="title" className="text-da-primary-500">
+                  {' '}
+                  SDV ProtoPilot{' '}
+                </DaText>
+                <div className="rounded-lgtext-sm flex h-full w-full flex-col bg-white">
+                  <Suspense>
+                    <DaGenAI_Python
+                      onCodeChanged={(code) => {
+                        setCode(code)
+                        setIsOpenGenAI(false)
+                      }}
+                    />
+                  </Suspense>
                 </div>
-              </DaPopup>
-            </div>
+              </div>
+            </DaPopup>
           </div>
         )}
 
