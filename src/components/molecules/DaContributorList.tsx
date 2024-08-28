@@ -91,33 +91,41 @@ const DaContributorList = ({ className }: ContributorListProps) => {
   }
 
   const invitedUsers: InvitedUser[] = useMemo(() => {
-    const modelContributors = (model.contributors || []).map((c) => ({
-      name: c.name,
-      id: c.id,
-      email: c.email || '',
-      image_file: c.image_file,
-      access_level: 'Contributor',
-      access_level_id: 'model_contributor',
-    }))
-    const modelMembers = (model.members || []).map((c) => ({
-      name: c.name,
-      id: c.id,
-      email: c.email || '',
-      image_file: c.image_file,
-      access_level: 'Member',
-      access_level_id: 'model_member',
-    }))
+    const modelContributors = (model.contributors || [])
+      .filter((c): c is User => !!c)
+      .map((c) => ({
+        name: c.name || 'Unknown',
+        id: c.id || '',
+        email: c.email || '',
+        image_file: c.image_file,
+        access_level: 'Contributor',
+        access_level_id: 'model_contributor',
+      }))
 
-    const results = [...modelContributors, ...modelMembers]
+    const modelMembers = (model.members || [])
+      .filter((c): c is User => !!c)
+      .map((c) => ({
+        name: c.name || 'Unknown',
+        id: c.id || '',
+        email: c.email || '',
+        image_file: c.image_file,
+        access_level: 'Member',
+        access_level_id: 'model_member',
+      }))
 
-    results.push({
-      name: model.created_by?.name || '',
-      id: model.created_by?.id || '',
-      email: model.created_by?.email || '',
-      image_file: model.created_by?.image_file,
-      access_level: 'Owner',
-      access_level_id: 'owner',
-    })
+    const results: InvitedUser[] = [...modelContributors, ...modelMembers]
+
+    if (model.created_by) {
+      results.push({
+        name: model.created_by.name || 'Unknown',
+        id: model.created_by.id || '',
+        email: model.created_by.email || '',
+        image_file: model.created_by.image_file,
+        access_level: 'Owner',
+        access_level_id: 'owner',
+      })
+    }
+
     return results
   }, [model])
 
