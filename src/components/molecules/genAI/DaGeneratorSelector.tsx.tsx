@@ -68,13 +68,13 @@ const DaGeneratorSelector = ({
   return (
     <div
       ref={dropdownRef}
-      className="relative mb-auto flex flex-col text-da-gray-medium"
+      className="relative flex flex-col text-da-gray-medium"
     >
       <DaButton
         variant="outline-nocolor"
         onClick={() => setIsExpandGenerator(!isExpandGenerator)}
         disabled={isLoading}
-        className="mt-2 hover:bg-da-gray-light"
+        className="mt-2 !shadow-sm hover:bg-da-gray-light"
       >
         <div className="flex w-full items-center justify-between">
           <div className="flex w-full items-center">
@@ -96,11 +96,13 @@ const DaGeneratorSelector = ({
         </div>
       </DaButton>
       {isExpandGenerator && (
-        <div className="absolute left-0 top-14 z-10 flex min-h-8 w-full flex-col space-y-1 rounded-md border border-da-gray-light bg-da-white p-1 text-sm shadow">
+        <div className="absolute left-0 top-14 z-10 flex min-h-8 w-full flex-col space-y-1 rounded-md border border-da-gray-light bg-da-white p-1 text-sm">
           <div className="scroll-gray-small flex max-h-[150px] flex-col overflow-y-auto px-1">
             {builtInAddOns && builtInAddOns.length > 0 && (
               <>
-                <DaText variant="small-bold">Built-in Generators</DaText>
+                <DaText variant="small-bold" className="p-1">
+                  Built-in Generators
+                </DaText>
                 {builtInAddOns.map((addOn) => (
                   <div
                     key={addOn.id}
@@ -130,7 +132,7 @@ const DaGeneratorSelector = ({
                         )}
                       </div>
                       {selectedAddOn?.id === addOn.id && (
-                        <TbCheck className="h-4 w-4 text-da-gray-dark" />
+                        <TbCheck className="h-4 w-4 text-da-primary-500" />
                       )}
                     </div>
                   </div>
@@ -142,7 +144,7 @@ const DaGeneratorSelector = ({
               <>
                 {marketplaceAddOns && (
                   <>
-                    <DaText variant="small-bold" className="mt-2">
+                    <DaText variant="small-bold" className="mt-1 p-1">
                       Marketplace Generators
                     </DaText>
 

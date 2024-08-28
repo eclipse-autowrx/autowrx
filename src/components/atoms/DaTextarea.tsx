@@ -15,7 +15,7 @@ const DaTextarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         {/* Flex col reverse allow us to use peer className */}
         <DaText
           variant="regular-medium"
-          className="gap-y-1 flex flex-col-reverse"
+          className="flex flex-col-reverse gap-y-1"
         >
           <textarea
             className={clsx('da-textarea peer', textareaClassName)}

@@ -236,17 +236,17 @@ LOOP.close()`,
   return (
     <form
       onSubmit={createNewPrototype}
-      className="flex max-h-[80vh] w-[30vw] flex-col bg-da-white p-4 lg:w-[25vw]"
+      className="flex max-h-[80vh] w-[40vw] min-w-[400px] flex-col bg-da-white p-4 lg:w-[25vw]"
     >
       <DaText variant="title" className="text-da-primary-500">
-        Create New Prototype
+        New Prototype
       </DaText>
 
       {!currentModel &&
         (contributionModels && !isFetchingModelContribution && localModel ? (
           <DaSelect
             defaultValue={localModel.id}
-            label="Model name *"
+            label="Model Name *"
             wrapperClassName="mt-4"
             onValueChange={(e) => {
               const selectedModel = contributionModels.results.find(

@@ -11,6 +11,7 @@ import DaPopup from '../atoms/DaPopup'
 import FormImportPrototype from '../molecules/forms/FormImportPrototype'
 import GenAIPrototypeWizard from './GenAIPrototypeWizard'
 import { useState } from 'react'
+import { BsStars } from 'react-icons/bs'
 
 const cardData = [
   {
@@ -80,7 +81,7 @@ const HomeIntroBlock = () => {
           <DaActionCard
             title="Build with AI"
             content="Build prototype with GenAI"
-            icon={<TbPackageImport className="h-7 w-7 text-da-primary-500" />}
+            icon={<BsStars className="h-7 w-7 text-da-primary-500" />}
             onClick={() => setOpen(true)}
             className="w-full"
           />
