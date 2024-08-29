@@ -22,7 +22,7 @@ const DaGenAI_Python = ({
   const [isFinished, setIsFinished] = useState<boolean>(false)
 
   return (
-    <div className="flex h-full w-full rounded">
+    <div className="mt-2 flex h-full w-full rounded">
       <DaGenAI_Base
         type="GenAI_Python"
         buttonText="Generate SDV App"
@@ -37,11 +37,11 @@ const DaGenAI_Python = ({
         onLoadingChange={setLoading}
         className="w-1/2"
       />
-      <div className="flex h-full w-1/2 flex-1 flex-col pl-2 pt-3">
+      <div className="flex h-full w-1/2 flex-1 flex-col pl-2">
         <DaSectionTitle number={3} title="Preview Code" />
         <div
           className={clsx(
-            'scroll-gray mt-2 flex h-full max-h-[380px] w-full overflow-y-auto overflow-x-hidden',
+            'scroll-gray mt-4 flex h-full max-h-[380px] w-full overflow-y-auto overflow-x-hidden',
           )}
         >
           {genCode ? (
@@ -54,7 +54,7 @@ const DaGenAI_Python = ({
           )}
         </div>
 
-        <div className="mt-auto flex w-full select-none flex-col pt-3">
+        <div className="mt-auto flex w-full select-none flex-col">
           <DaButton
             variant="outline-nocolor"
             className="!h-8 w-full"

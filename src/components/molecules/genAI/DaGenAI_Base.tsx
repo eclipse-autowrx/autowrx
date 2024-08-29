@@ -16,6 +16,9 @@ import useAuthStore from '@/stores/authStore.ts'
 import default_generated_code from '@/data/default_generated_code'
 import { cn } from '@/lib/utils.ts'
 import { TbHistory, TbRotate } from 'react-icons/tb'
+import promptTemplates from '@/data/prompt_templates.ts'
+import { useClickOutside } from '@/lib/utils.ts'
+import useGenAIWizardStore from '@/stores/genAIWizardStore.ts'
 
 type DaGenAI_BaseProps = {
   type: 'GenAI_Python' | 'GenAI_Dashboard' | 'GenAI_Widget'
@@ -42,11 +45,19 @@ const DaGenAI_Base = ({
   const [selectedAddOn, setSelectedAddOn] = useState<AddOn | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const [streamOutput, setStreamOutput] = useState<string>('')
+  const [showDropdown, setShowDropdown] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const [isFinished, setIsFinished] = useState<boolean>(false)
   const { data: marketplaceAddOns } = useListMarketplaceAddOns(type)
   const [canUseGenAI] = usePermissionHook([PERMISSIONS.USE_GEN_AI])
   const access = useAuthStore((state) => state.access)
   const timeouts = useRef<NodeJS.Timeout[]>([])
+  const {
+    registerWizardGenerateCodeAction,
+    setWizardGeneratedCode,
+    setWizardPrompt,
+    setWizardLog,
+  } = useGenAIWizardStore()
 
   const addOnsArray =
     {
@@ -91,7 +102,9 @@ const DaGenAI_Base = ({
 
       if (selectedAddOn.isMock) {
         await new Promise((resolve) => setTimeout(resolve, 5000))
+        console.log('Mock generated code:', default_generated_code)
         onCodeGenerated && onCodeGenerated(default_generated_code || '')
+        setWizardGeneratedCode(default_generated_code || '')
         return
       }
 
@@ -103,6 +116,7 @@ const DaGenAI_Base = ({
           { headers: { Authorization: `Bearer ${access?.token}` } },
         )
         onCodeGenerated(response.data.payload.code)
+        setWizardGeneratedCode(response.data.payload.code)
       } else {
         response = await axios.post(
           config.genAI.defaultEndpointUrl,
@@ -114,6 +128,7 @@ const DaGenAI_Base = ({
           { headers: { Authorization: `Bearer ${access?.token}` } },
         )
         onCodeGenerated(response.data)
+        setWizardGeneratedCode(response.data)
       }
     } catch (error) {
       timeouts.current.forEach((timeout) => clearTimeout(timeout))
@@ -136,6 +151,9 @@ const DaGenAI_Base = ({
   }
 
   useEffect(() => {
+    if (isWizard) {
+      return
+    }
     if (isFinished) {
       const timeout = setTimeout(() => {
         setStreamOutput('')
@@ -146,7 +164,7 @@ const DaGenAI_Base = ({
       timeouts.current.forEach((timeout) => clearTimeout(timeout))
       timeouts.current = []
     }
-  }, [isFinished])
+  }, [isFinished, isWizard])
 
   useEffect(() => {
     return () => {
@@ -154,11 +172,29 @@ const DaGenAI_Base = ({
     }
   }, [])
 
+  useClickOutside(dropdownRef, () => {
+    setShowDropdown(false)
+  })
+
+  useEffect(() => {
+    if (isWizard) {
+      setWizardPrompt(inputPrompt)
+      setSelectedAddOn(builtInAddOns.find((addOn) => addOn.isMock) || null)
+      registerWizardGenerateCodeAction(handleGenerate)
+    }
+  }, [inputPrompt, isWizard])
+
+  useEffect(() => {
+    if (isWizard) {
+      setWizardLog(streamOutput)
+    }
+  }, [streamOutput])
+
   return (
     <div className={cn('flex h-full w-full rounded', className)}>
       <div
         className={cn(
-          'flex h-full w-full flex-col border-r border-da-gray-light pr-2 pt-3',
+          'flex h-full w-full flex-col overflow-y-auto border-r border-da-gray-light pl-0.5 pr-2',
           isWizard && 'border-none',
         )}
       >
@@ -167,14 +203,46 @@ const DaGenAI_Base = ({
             <DaSectionTitle number={1} title="Prompting" />
           ) : (
             <div className="space-x-2">
-              <DaButton variant="plain" size="sm" onClick={() => {}}>
-                <TbHistory className="mr-1 size-4 rotate-[0deg]" />
-                History
-              </DaButton>
-              <DaButton variant="plain" size="sm" onClick={() => {}}>
-                <TbRotate className="mr-1 size-4 rotate-[270deg]" />
-                Undo
-              </DaButton>
+              <div className="relative flex">
+                <DaButton
+                  variant="plain"
+                  size="sm"
+                  onClick={() => {
+                    setShowDropdown(!showDropdown)
+                  }}
+                >
+                  <TbHistory className="mr-1 size-4 rotate-[0deg]" />
+                  History
+                </DaButton>
+
+                {showDropdown && (
+                  <div
+                    ref={dropdownRef}
+                    className="absolute top-6 z-10 mt-2 w-full min-w-full rounded-lg border border-gray-300 bg-white shadow-lg"
+                  >
+                    {promptTemplates.map((template) => (
+                      <div
+                        key={template.title}
+                        className="da-txt-small flex w-full min-w-full shrink-0 cursor-pointer border-b p-2 hover:bg-da-gray-light"
+                        onClick={() => {
+                          setInputPrompt(template.prompt)
+                          setShowDropdown(!showDropdown)
+                        }}
+                      >
+                        {template.title}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <DaButton
+                  variant="plain"
+                  size="sm"
+                  onClick={() => setInputPrompt('')}
+                >
+                  <TbRotate className="mr-1 size-4 rotate-[270deg]" />
+                  Undo
+                </DaButton>
+              </div>
             </div>
           )}
 
@@ -208,12 +276,12 @@ const DaGenAI_Base = ({
           <div
             className={cn(
               'mt-2 flex h-10 rounded-md bg-da-gray-dark p-3',
-              isWizard && 'mt-0 min-h-36',
+              isWizard && 'mb-2 mt-0 h-full',
               0,
             )}
           >
             <p className="da-label-small font-mono text-white">
-              {streamOutput ? streamOutput : 'Log message ...'}
+              {streamOutput ? streamOutput : 'Log messages...'}
             </p>
           </div>
         )}

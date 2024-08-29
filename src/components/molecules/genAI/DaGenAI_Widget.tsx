@@ -5,6 +5,7 @@ import DaGenAI_ResponseDisplay from './DaGenAI_ResponseDisplay'
 import LoadingLineAnimation from './DaGenAI_LoadingLineAnimation'
 import useSelfProfileQuery from '@/hooks/useSelfProfile.ts'
 import DaGenAI_Base from './DaGenAI_Base.tsx'
+import DaSectionTitle from '@/components/atoms/DaSectionTitle.tsx'
 
 interface DaGenAIWidgetProps {
   widgetConfig?: any
@@ -74,18 +75,11 @@ const DaGenAIWidget = ({
         className="w-1/2"
       />
       <div className="flex h-full w-1/2 flex-col pl-2">
-        <div className="mb-1 flex select-none items-center justify-between">
-          <div className="flex items-center">
-            <div className="flex h-5 w-5 items-center justify-center rounded bg-gray-100 p-2 text-xs font-bold">
-              3
-            </div>
-            <div className="ml-1 flex font-medium text-gray-600">
-              {' '}
-              Preview Widget
-            </div>
-          </div>
+        <div className="mb-2 flex select-none items-center justify-between">
+          <DaSectionTitle number={3} title="Preview Widget" />
           <DaButton
             variant="plain"
+            size="sm"
             onClick={() => {
               setIsPreviewWidget(!isPreviewWidget)
             }}
