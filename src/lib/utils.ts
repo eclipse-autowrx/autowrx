@@ -2,6 +2,7 @@ import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { Cvi, VehicleApi } from '@/types/model.type'
 import { WidgetConfig } from '@/types/widget.type'
+import { useEffect } from 'react'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -166,4 +167,23 @@ export const maskEmail = (email: string) => {
   const maskedLocalPart =
     localPart.slice(0, 6).replace(/./g, 'x') + localPart.slice(6)
   return `${maskedLocalPart}@${domainPart}`
+}
+
+export const useClickOutside = (
+  ref: React.RefObject<HTMLElement>,
+  handler: (event: MouseEvent) => void,
+) => {
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        handler(event)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [ref, handler])
 }

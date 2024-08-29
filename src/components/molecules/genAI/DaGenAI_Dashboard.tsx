@@ -19,7 +19,7 @@ const DaGenAI_Dashboard = ({
   const [isFinished, setIsFinished] = useState<boolean>(false)
 
   return (
-    <div className="flex h-full w-full rounded">
+    <div className="flex h-full w-full rounded pt-2">
       <DaGenAI_Base
         type="GenAI_Dashboard"
         buttonText="Generate Dashboard"
@@ -34,7 +34,7 @@ const DaGenAI_Dashboard = ({
         onLoadingChange={setLoading}
         className="w-1/2"
       />
-      <div className="flex h-full w-1/2 flex-col pl-2 pt-3">
+      <div className="flex h-full w-1/2 flex-col pl-2">
         <div className="mb-2 flex select-none">
           <div className="flex h-5 w-5 items-center justify-center rounded bg-da-gray-light p-2 text-xs font-bold">
             3
@@ -53,7 +53,7 @@ const DaGenAI_Dashboard = ({
             />
           )}
         </div>
-        <div className="mt-auto flex w-full select-none flex-col pt-3">
+        <div className="mt-auto flex w-full select-none flex-col">
           <DaButton
             variant="outline-nocolor"
             className="!h-8 w-full"

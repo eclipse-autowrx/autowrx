@@ -130,4 +130,4 @@ const SelectContent = React.forwardRef<
 
 SelectContent.displayName = SelectPrimitive.Content.displayName
 
-export { DaSelect, DaSelectItem }
+export { DaSelect, DaSelectItem, SelectTrigger, SelectContent }

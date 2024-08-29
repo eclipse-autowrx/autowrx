@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import DaPopup from '../atoms/DaPopup'
 import DaText from '../atoms/DaText'
 import { DaButton } from '../atoms/DaButton'
@@ -21,6 +21,8 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import DaLoader from '../atoms/DaLoader'
 import DaGenAI_Wizard from '../molecules/genAI/DaGenAI_Wizard'
+import useWizardGenAIStore from '@/stores/genAIWizardStore'
+import DaGenAI_Simulate from '../molecules/genAI/DaGenAI_Simulate'
 
 type PrototypeGenAIWizardProps = {
   open: boolean
@@ -42,14 +44,22 @@ const GenAIPrototypeWizard = ({ open, setOpen }: PrototypeGenAIWizardProps) => {
     })
   }
 
-  const handleNext = () => {
+  const { executeWizardGenerateCodeAction, wizardPrompt } =
+    useWizardGenAIStore()
+
+  const handleNext = async () => {
     if (currentStep === 2) {
       finish()
     }
+
+    if (currentStep === 1) {
+      await executeWizardGenerateCodeAction()
+    }
+
     if (soFarSteps <= currentStep) {
       setSoFarSteps(currentStep + 1)
     }
-    if (currentStep < 2) {
+    if (currentStep < 1) {
       setCurrentStep(currentStep + 1)
     }
   }
@@ -76,28 +86,26 @@ const GenAIPrototypeWizard = ({ open, setOpen }: PrototypeGenAIWizardProps) => {
 
   // Start: Second step (generate code step) related stuffs
   const [code, setCode] = useState<string | undefined>(undefined)
-  const handleGenerateCode = (code: string) => {
-    setCode(code)
-    if (code) {
+  useEffect(() => {
+    if (wizardPrompt && wizardPrompt.length > 0) {
       updateDisabledStep(1)(false)
     } else {
       updateDisabledStep(1)(true)
     }
-  }
+  }, [wizardPrompt])
+
+  useEffect(() => {
+    if (code) {
+      setCurrentStep(currentStep + 1)
+    }
+  }, [code])
+
   // End: Second step (generate code step) related stuffs
 
   // Start: Third step (choose dashboard template step) related
   const [dashboardConfig, setDashboardConfig] = useState<string | undefined>(
     undefined,
   )
-  const handleTemplateSelected = (config: string) => {
-    setDashboardConfig(config)
-    if (config) {
-      updateDisabledStep(2)(false)
-    } else {
-      updateDisabledStep(2)(true)
-    }
-  }
   // End: Third step (choose dashboard template step) related
 
   // Start: Finish the wizard
@@ -210,7 +218,7 @@ const GenAIPrototypeWizard = ({ open, setOpen }: PrototypeGenAIWizardProps) => {
               <DaStep
                 disabled={soFarSteps < 2 || disabledStep[0] || disabledStep[1]}
               >
-                Choose Dashboard
+                Finalize
               </DaStep>
             </DaStepper>
           </div>
@@ -246,7 +254,11 @@ const GenAIPrototypeWizard = ({ open, setOpen }: PrototypeGenAIWizardProps) => {
                 : 'flex max-h-[480px] w-full',
             )}
           >
-            <DaGenAI_Wizard onCodeChanged={handleGenerateCode} />
+            <DaGenAI_Wizard
+              onCodeGenerated={(code) => {
+                setCode(code)
+              }}
+            />
           </div>
 
           {/* Step 3: Choose dashboard template */}
@@ -254,12 +266,10 @@ const GenAIPrototypeWizard = ({ open, setOpen }: PrototypeGenAIWizardProps) => {
             className={cn(
               currentStep !== 2
                 ? 'pointer-events-none hidden'
-                : 'h-full w-full py-2',
+                : 'h-full w-full',
             )}
           >
-            <GenAIDashboardConfigTemplates
-              onTemplateSelected={handleTemplateSelected}
-            />
+            <DaGenAI_Simulate />
           </div>
         </div>
 
@@ -279,8 +289,8 @@ const GenAIPrototypeWizard = ({ open, setOpen }: PrototypeGenAIWizardProps) => {
           >
             {loading && <DaLoader className="mr-2 text-white" />}
             {currentStep === 0 && 'Next'}
-            {currentStep === 1 && 'Generate my Vehicle Application'}
-            {currentStep === 2 && 'Finish'}
+            {currentStep === 1 && 'Generate My Vehicle Application'}
+            {currentStep === 2 && 'Create Prototype'}
           </DaButton>
         </div>
       </div>
