@@ -2,6 +2,7 @@ import { RouteObject } from 'react-router-dom'
 import { lazy } from 'react'
 import RootLayout from '@/layouts/RootLayout'
 import SuspenseProvider from '@/providers/SuspenseProvider'
+import { RouteConfig } from '@/types/common.type'
 
 const PageHome = lazy(() => import('@/pages/PageHome'))
 const PageAbout = lazy(() => import('@/pages/PageAbout'))
@@ -24,13 +25,14 @@ const PageDiscussions = lazy(() => import('@/pages/test-ui/PageDiscussions'))
 const PageUserProfile = lazy(() => import('@/pages/PageUserProfile'))
 const PageManageFeatures = lazy(() => import('@/pages/PageManageFeatures'))
 
-const routesConfig: RouteObject[] = [
+const routesConfig: RouteConfig[] = [
   {
     path: '/',
     element: <RootLayout />,
     children: [
       {
         path: '/',
+        noBreadcrumbs: true,
         children: [
           {
             index: true,
@@ -39,6 +41,7 @@ const routesConfig: RouteObject[] = [
                 <PageHome />
               </SuspenseProvider>
             ),
+            noBreadcrumbs: true,
           },
           {
             path: 'manage-users',
@@ -47,6 +50,7 @@ const routesConfig: RouteObject[] = [
                 <PageManageUsers />
               </SuspenseProvider>
             ),
+            noBreadcrumbs: true,
           },
           {
             path: 'manage-features',
@@ -55,6 +59,7 @@ const routesConfig: RouteObject[] = [
                 <PageManageFeatures />
               </SuspenseProvider>
             ),
+            noBreadcrumbs: true,
           },
         ],
       },
@@ -259,9 +264,9 @@ const routesConfig: RouteObject[] = [
             ),
           },
         ],
-      }
-  ]
-}
+      },
+    ],
+  },
 ]
 
 export default routesConfig
