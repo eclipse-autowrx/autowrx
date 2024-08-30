@@ -19,6 +19,7 @@ import { TbHistory, TbRotate } from 'react-icons/tb'
 import promptTemplates from '@/data/prompt_templates.ts'
 import { useClickOutside } from '@/lib/utils.ts'
 import useGenAIWizardStore from '@/stores/genAIWizardStore.ts'
+import DaText from '@/components/atoms/DaText.tsx'
 
 type DaGenAI_BaseProps = {
   type: 'GenAI_Python' | 'GenAI_Dashboard' | 'GenAI_Widget'
@@ -248,14 +249,14 @@ const DaGenAI_Base = ({
 
           <DaSpeechToText onRecognize={setInputPrompt} />
         </div>
-        <div className="mb-4 mt-1 flex h-fit w-full">
+        <div className="mt-1 flex h-fit w-full">
           <DaTextarea
             value={inputPrompt}
             onChange={(e) => setInputPrompt(e.target.value)}
             rows={9}
             placeholder={placeholderText}
             className="w-full"
-            textareaClassName="resize-none"
+            textareaClassName="resize-none !bg-gray-50 text-da-gray-dark"
           />
         </div>
 
@@ -273,17 +274,19 @@ const DaGenAI_Base = ({
         )}
 
         {(streamOutput || isWizard) && (
-          <div
-            className={cn(
-              'mt-2 flex h-10 rounded-md bg-da-gray-dark p-3',
-              isWizard && 'mb-2 mt-0 h-full',
-              0,
-            )}
-          >
-            <p className="da-label-small font-mono text-white">
-              {streamOutput ? streamOutput : 'Log messages...'}
-            </p>
-          </div>
+          <>
+            <div className="da-label-small-medium mb-1 mt-2">Status</div>
+            <div
+              className={cn(
+                'mt-2 flex h-10 rounded-md bg-da-gray-dark p-3',
+                isWizard && 'mb-2 mt-0 h-full',
+              )}
+            >
+              <p className="da-label-small font-mono text-white">
+                {streamOutput ? streamOutput : 'Log messages...'}
+              </p>
+            </div>
+          </>
         )}
         {!isWizard && (
           <>
