@@ -253,10 +253,13 @@ const DaGenAI_Base = ({
           <DaTextarea
             value={inputPrompt}
             onChange={(e) => setInputPrompt(e.target.value)}
-            rows={9}
+            rows={isWizard ? 12 : 7}
             placeholder={placeholderText}
             className="w-full"
-            textareaClassName="resize-none !bg-gray-50 text-da-gray-dark"
+            textareaClassName={cn(
+              'resize-none !bg-gray-50 text-da-gray-dark',
+              isWizard && '!text-lg',
+            )}
           />
         </div>
 

@@ -5,6 +5,7 @@ type WizardGenAIStoreState = {
   wizardLog: string
   wizardGeneratedCode: string
   wizardGenerateCodeAction: (() => void) | null
+  wizardRunSimulationAction: (() => void) | null
 }
 
 type WizardGenAIStoreActions = {
@@ -13,6 +14,8 @@ type WizardGenAIStoreActions = {
   setWizardGeneratedCode: (code: string) => void
   registerWizardGenerateCodeAction: (action: () => void) => void
   executeWizardGenerateCodeAction: () => void
+  registerWizardSimulationRun: (action: () => void) => void
+  executeWizardSimulationRun: () => boolean
 }
 
 const useWizardGenAIStore = create<
@@ -22,6 +25,7 @@ const useWizardGenAIStore = create<
   wizardLog: '',
   wizardGeneratedCode: '',
   wizardGenerateCodeAction: null,
+  wizardRunSimulationAction: null,
 
   setWizardPrompt: (prompt: string) => set({ wizardPrompt: prompt }),
 
@@ -39,6 +43,19 @@ const useWizardGenAIStore = create<
       return true
     } else {
       console.warn('Wizard generate code action is not registered')
+      return false
+    }
+  },
+  registerWizardSimulationRun: (action: () => void) =>
+    set({ wizardRunSimulationAction: action }),
+
+  executeWizardSimulationRun: () => {
+    const { wizardRunSimulationAction } = get()
+    if (wizardRunSimulationAction) {
+      wizardRunSimulationAction()
+      return true
+    } else {
+      console.warn('Wizard simulation run action is not registered')
       return false
     }
   },
