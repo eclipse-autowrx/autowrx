@@ -23,6 +23,7 @@ const PageManageUsers = lazy(() => import('@/pages/PageManageUsers'))
 const PageDiscussions = lazy(() => import('@/pages/test-ui/PageDiscussions'))
 const PageUserProfile = lazy(() => import('@/pages/PageUserProfile'))
 const PageManageFeatures = lazy(() => import('@/pages/PageManageFeatures'))
+const PageGenAIWizard = lazy(() => import('@/pages/PageGenAIWizard'))
 
 const routesConfig: RouteObject[] = [
   {
@@ -183,6 +184,19 @@ const routesConfig: RouteObject[] = [
         ],
       },
       {
+        path: '/genai-wizard',
+        children: [
+          {
+            index: true,
+            element: (
+              <SuspenseProvider>
+                <PageGenAIWizard />
+              </SuspenseProvider>
+            ),
+          },
+        ],
+      },
+      {
         path: '/test-ui/forms',
         children: [
           {
@@ -259,9 +273,9 @@ const routesConfig: RouteObject[] = [
             ),
           },
         ],
-      }
-  ]
-}
+      },
+    ],
+  },
 ]
 
 export default routesConfig

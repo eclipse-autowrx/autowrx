@@ -82,10 +82,10 @@ const HomeIntroBlock = () => {
             title="Build with AI"
             content="Build prototype with GenAI"
             icon={<BsStars className="h-7 w-7 text-da-primary-500" />}
-            onClick={() => setOpen(true)}
+            onClick={() => navigate('/genai-wizard')}
             className="w-full"
           />
-          <GenAIPrototypeWizard open={open} setOpen={setOpen} />
+          {/* <GenAIPrototypeWizard open={open} setOpen={setOpen} /> */}
           {/* <DaPopup
             trigger={
               <DaActionCard
