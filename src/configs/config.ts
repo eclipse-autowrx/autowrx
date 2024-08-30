@@ -59,6 +59,7 @@ const config: any = {
     clientId: import.meta.env.VITE_GITHUB_CLIENT_ID || '',
   },
   features: [],
+  strictAuth: import.meta.env.VITE_STRICT_AUTH === 'true',
 }
 
 export default config
