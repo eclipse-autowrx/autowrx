@@ -35,12 +35,21 @@ const DaGenAI_Wizard = ({ onCodeGenerated }: DaGenAI_WizardProps) => {
         className="w-1/2"
         isWizard={true}
       />
-      <div className="flex h-full w-1/2 flex-1 flex-col pl-2 pt-3">
-        <DaImage
-          src="/imgs/default_car.png"
-          alt="Prototype Wizard"
-          className="h-full w-full object-contain"
-        />
+      <div className="flex h-full w-1/2 flex-1 flex-col pb-2 pl-2">
+        <div
+          className={cn(
+            'scroll-gray mt-2 flex h-full w-full overflow-y-auto overflow-x-hidden',
+          )}
+        >
+          {genCode ? (
+            <DaGenAI_ResponseDisplay code={genCode} language={'python'} />
+          ) : (
+            <LoadingLineAnimation
+              loading={loading}
+              content={"There's no code here"}
+            />
+          )}
+        </div>
       </div>
     </div>
   )

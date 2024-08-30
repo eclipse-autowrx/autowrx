@@ -4,6 +4,8 @@ import { cn } from '@/lib/utils'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import { DaTextarea } from '@/components/atoms/DaTextarea'
 import useWizardGenAIStore from '@/stores/genAIWizardStore'
+import { DaButton } from '@/components/atoms/DaButton'
+import { TbPlayerPlay, TbPlayerPlayFilled } from 'react-icons/tb'
 
 type DaGenAI_SimulateProps = {}
 
@@ -19,50 +21,14 @@ const DaGenAI_Simulate = ({}: DaGenAI_SimulateProps) => {
   }, [wizardGeneratedCode, wizardLog, wizardPrompt])
 
   return (
-    <div className="flex h-full max-h-[calc(100%-30px)] w-full flex-col">
-      <div className="flex">
-        <DaTabItem
-          onClick={() => setActiveTab('analyze')}
-          active={activeTab === 'analyze'}
-        >
-          Analyze
-        </DaTabItem>
-        <DaTabItem
-          onClick={() => setActiveTab('simulate')}
-          active={activeTab === 'simulate'}
-        >
-          Simulate
-        </DaTabItem>
-      </div>
-      <div className="flex h-full w-full">
-        <div className="mb-4 mt-1 flex h-full w-full flex-col">
-          <DaTextarea
-            value={wizardPrompt}
-            onChange={() => {}}
-            rows={9}
-            placeholder={wizardPrompt}
-            className="pointer-events-none w-full"
-            textareaClassName="resize-none"
-          />
-          <div
-            className={cn(
-              'mb-2 mt-4 flex h-full rounded-md bg-da-gray-dark p-3',
-              0,
-            )}
-          >
-            <p className="da-label-small font-mono text-white">{wizardLog}</p>
-          </div>
-        </div>
-        <div
-          className={cn(
-            'scroll-gray ml-2 flex h-full w-full overflow-y-auto overflow-x-hidden border-l p-2 pb-1',
-          )}
-        >
-          <DaGenAI_ResponseDisplay
-            code={wizardGeneratedCode}
-            language={'python'}
-          />
-        </div>
+    <div className="flex h-full w-full flex-col py-2">
+      <div className="relative flex h-full w-full">
+        <iframe
+          src="http://127.0.0.1:5501/3DCar.html"
+          className="h-full w-full rounded-lg"
+          title="YouTube video player"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        ></iframe>
       </div>
     </div>
   )

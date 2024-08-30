@@ -146,7 +146,7 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({ onRecognize }) => {
         </>
       ) : (
         <>
-          <TbMicrophoneFilled className="mr-1 size-4" />
+          <TbMicrophoneFilled className="mr-1 size-6 text-da-primary-500" />
           <p className="font-medium">Voice input</p>
         </>
       )}
