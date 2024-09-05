@@ -1,3 +1,5 @@
+import { DaButton } from '@/components/atoms/DaButton'
+import { cn } from '@/lib/utils'
 import React, { useState, useEffect, useRef } from 'react'
 import {
   TbMicrophone,
@@ -41,56 +43,50 @@ const BouncingDotsLoader = () => {
 const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({ onRecognize }) => {
   const [isListening, setIsListening] = useState(false)
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null)
-  const [accumulatedText, setAccumulatedText] = useState<string>('') // State to accumulate recognized text
+  const [accumulatedText, setAccumulatedText] = useState<string>('')
   const inactivityTimeout = useRef<NodeJS.Timeout | null>(null)
+  const manuallyStopped = useRef<boolean>(false) // Track whether the mic was stopped manually
 
   useEffect(() => {
-    // Initialize SpeechRecognition
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition
 
     if (SpeechRecognition) {
       const recognitionInstance = new SpeechRecognition()
-      recognitionInstance.continuous = true // Keep listening until explicitly stopped
+      recognitionInstance.continuous = true
       recognitionInstance.interimResults = false
       recognitionInstance.lang = 'en-US'
 
       recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
         const transcript = event.results[event.results.length - 1][0].transcript
-        // console.log('Recognized:', transcript)
 
         setAccumulatedText((prevText) => {
-          const updatedText = prevText + ' ' + transcript // Use the previous state value to accumulate
-          // console.log('Accumulated:', updatedText.trim())
-          onRecognize(updatedText.trim()) // Pass the updated accumulated text to onRecognize
-          return updatedText.trim() // Return the new state
+          const updatedText = prevText + ' ' + transcript
+          onRecognize(updatedText.trim())
+          return updatedText.trim()
         })
 
-        // Clear any previous timeout, if applicable
         if (inactivityTimeout.current) {
           clearTimeout(inactivityTimeout.current)
         }
 
-        // Restart the inactivity timeout for the next speech segment
         inactivityTimeout.current = setTimeout(() => {
           recognitionInstance.stop()
         }, 3000)
       }
 
       recognitionInstance.onend = () => {
-        if (isListening) {
-          // Restart recognition if it was interrupted due to a pause
-          // console.log('Restarting recognition...')
+        if (isListening && !manuallyStopped.current) {
           recognitionInstance.start()
         } else {
-          // Clean up the timeout and stop listening
-          setIsListening(false) // Ensure isListening is set to false
+          setIsListening(false)
           if (inactivityTimeout.current) {
             clearTimeout(inactivityTimeout.current)
             inactivityTimeout.current = null
           }
         }
       }
+
       recognitionInstance.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('Speech recognition error:', event)
         setIsListening(false)
@@ -104,15 +100,15 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({ onRecognize }) => {
     } else {
       console.warn('Speech Recognition API not supported in this browser.')
     }
-  }, [onRecognize, accumulatedText])
+  }, [onRecognize])
 
   const handleClick = () => {
     if (isListening) {
-      // Stop the recognition and prevent restarting
       if (recognition) {
+        manuallyStopped.current = true // Set the manual stop flag
         recognition.stop()
         recognition.onend = () => {
-          setIsListening(false) // Update the state only after the recognition has stopped
+          setIsListening(false)
         }
       }
       if (inactivityTimeout.current) {
@@ -120,30 +116,36 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({ onRecognize }) => {
         inactivityTimeout.current = null
       }
     } else {
-      // Start recognition and clear accumulated text
-      setAccumulatedText('') // Clear accumulated text before starting a new session
+      setAccumulatedText('')
+      onRecognize('')
+      manuallyStopped.current = false // Reset the manual stop flag
       setIsListening(true)
       recognition?.start()
     }
   }
 
   return (
-    <div
-      className="flex cursor-pointer items-center rounded-lg bg-da-primary-100 p-1 px-2 text-da-primary-500 hover:opacity-80"
+    <DaButton
+      variant="plain"
+      size="sm"
+      className={cn(
+        'flex cursor-pointer items-center rounded-lg p-1 px-2 text-da-primary-500 hover:bg-da-primary-100',
+        isListening && 'bg-da-primary-100',
+      )}
       onClick={handleClick}
     >
       {isListening ? (
         <>
           <BouncingDotsLoader />
-          <TbPlayerStopFilled className="ml-1 size-4" />
+          <TbPlayerStopFilled className="ml-1 size-4 text-da-primary-500" />
         </>
       ) : (
         <>
-          <TbMicrophoneFilled className="mr-1 size-3.5" />
-          <p className="text-xs font-medium">Voice input</p>
+          <TbMicrophoneFilled className="mr-1 size-6 text-da-primary-500" />
+          <p className="font-medium">Voice input</p>
         </>
       )}
-    </div>
+    </DaButton>
   )
 }
 
