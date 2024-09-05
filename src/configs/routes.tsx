@@ -1,8 +1,8 @@
-import { RouteObject } from 'react-router-dom'
 import { lazy } from 'react'
 import RootLayout from '@/layouts/RootLayout'
 import SuspenseProvider from '@/providers/SuspenseProvider'
 import { RouteConfig } from '@/types/common.type'
+import ModelDetailLayout from '@/layouts/ModelDetailLayout'
 
 const PageHome = lazy(() => import('@/pages/PageHome'))
 const PageAbout = lazy(() => import('@/pages/PageAbout'))
@@ -105,57 +105,68 @@ const routesConfig: RouteConfig[] = [
             path: ':model_id',
             element: (
               <SuspenseProvider>
-                <PageModelDetail />
+                <ModelDetailLayout />
               </SuspenseProvider>
             ),
-          },
-          {
-            path: ':model_id/api',
-            element: (
-              <SuspenseProvider>
-                <PageVehicleApi />
-              </SuspenseProvider>
-            ),
-          },
-          {
-            path: ':model_id/api/:api',
-            element: (
-              <SuspenseProvider>
-                <PageVehicleApi />
-              </SuspenseProvider>
-            ),
-          },
-          {
-            path: ':model_id/library',
-            element: (
-              <SuspenseProvider>
-                <PagePrototypeLibrary />
-              </SuspenseProvider>
-            ),
-          },
-          {
-            path: ':model_id/library/:tab',
-            element: (
-              <SuspenseProvider>
-                <PagePrototypeLibrary />
-              </SuspenseProvider>
-            ),
-          },
-          {
-            path: ':model_id/library/:tab/:prototype_id',
-            element: (
-              <SuspenseProvider>
-                <PagePrototypeLibrary />
-              </SuspenseProvider>
-            ),
-          },
-          {
-            path: ':model_id/architecture',
-            element: (
-              <SuspenseProvider>
-                <PageModelArchitecture />
-              </SuspenseProvider>
-            ),
+            children: [
+              {
+                index: true,
+                element: (
+                  <SuspenseProvider>
+                    <PageModelDetail />
+                  </SuspenseProvider>
+                ),
+              },
+              {
+                path: 'api',
+                element: (
+                  <SuspenseProvider>
+                    <PageVehicleApi />
+                  </SuspenseProvider>
+                ),
+              },
+              {
+                path: 'api/:api',
+                element: (
+                  <SuspenseProvider>
+                    <PageVehicleApi />
+                  </SuspenseProvider>
+                ),
+              },
+              {
+                path: 'library',
+                element: (
+                  <SuspenseProvider>
+                    <PagePrototypeLibrary />
+                  </SuspenseProvider>
+                ),
+              },
+              {
+                path: 'library/:tab',
+                element: (
+                  <SuspenseProvider>
+                    <PagePrototypeLibrary />
+                  </SuspenseProvider>
+                ),
+              },
+              {
+                path: 'library/:tab/:prototype_id',
+                element: (
+                  <SuspenseProvider>
+                    <PagePrototypeLibrary />
+                  </SuspenseProvider>
+                ),
+              },
+
+              {
+                path: 'architecture',
+                element: (
+                  <SuspenseProvider>
+                    <PageModelArchitecture />
+                  </SuspenseProvider>
+                ),
+              },
+            ],
           },
           {
             path: ':model_id/library/prototype/:prototype_id',

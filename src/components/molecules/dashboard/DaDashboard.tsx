@@ -7,10 +7,17 @@ import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { MdOutlineDesignServices } from 'react-icons/md'
-import { IoSaveOutline } from 'react-icons/io5'
 import config from '@/configs/config'
-import DaTabItem from '@/components/atoms/DaTabItem'
-import { TbRocket, TbDotsVertical, TbArrowUpRight } from 'react-icons/tb'
+import {
+  TbRocket,
+  TbDotsVertical,
+  TbArrowUpRight,
+  TbDeviceFloppy,
+} from 'react-icons/tb'
+import DaText from '@/components/atoms/DaText'
+import { DaButton } from '@/components/atoms/DaButton'
+import { Link } from 'react-router-dom'
+import clsx from 'clsx'
 
 const MODE_RUN = 'run'
 const MODE_EDIT = 'edit'
@@ -58,9 +65,9 @@ const DaDashboard: FC = ({}) => {
   }
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center">
+    <div className="w-full h-full overflow-y-auto pt-3 items-center justify-center bg-white">
       {isAuthorized && (
-        <div className="w-full flex items-center justify-start py-1 bg-slate-100 px-2">
+        <div className="w-full flex-shrink-0 h-[72px] flex items-center justify-start px-2">
           {mode == MODE_RUN && (
             <div
               className="mx-2 font-bold cursor-pointer hover:opacity-50 flex items-center"
@@ -74,39 +81,64 @@ const DaDashboard: FC = ({}) => {
           )}
 
           {mode == MODE_EDIT && (
-            <>
-              <div
-                className="ml-2 mr-4 font-bold cursor-pointer hover:opacity-50 flex items-center"
-                onClick={() => {
-                  setMode(MODE_RUN)
-                }}
+            <div className="px-3">
+              <DaText
+                className="text-da-black block w-full"
+                variant="sub-title"
               >
-                <IoSaveOutline size={20} className="mr-2" />
-                Save
-              </div>
+                Dashboard Config
+              </DaText>
+              <div className="flex mt-3 gap-6">
+                <DaButton
+                  size="sm"
+                  onClick={() => {
+                    setMode(MODE_RUN)
+                  }}
+                >
+                  <TbDeviceFloppy size={20} className="mr-2" />
+                  Save
+                </DaButton>
 
-              {config?.studioUrl && (
-                <DaTabItem to={config?.studioUrl}>
-                  Widget Studio
-                  <TbArrowUpRight className="w-5 h-5" />
-                </DaTabItem>
-              )}
-              {config?.widgetMarketPlaceUrl && (
-                <DaTabItem to={config?.widgetMarketPlaceUrl}>
-                  Widget Marketplace
-                  <TbArrowUpRight className="w-5 h-5" />
-                </DaTabItem>
-              )}
-            </>
+                {config?.studioUrl && (
+                  <Link
+                    className="da-label-small flex gap-2 h-8 items-center justify-center"
+                    target="_blank"
+                    to={config?.studioUrl}
+                  >
+                    Widget Studio
+                    <TbArrowUpRight className="w-5 h-5" />
+                  </Link>
+                )}
+                {config?.widgetMarketPlaceUrl && (
+                  <Link
+                    className="da-label-small gap-2 h-8 flex items-center justify-center"
+                    target="_blank"
+                    to={config?.widgetMarketPlaceUrl}
+                  >
+                    Widget Marketplace
+                    <TbArrowUpRight className="w-5 h-5" />
+                  </Link>
+                )}
+              </div>
+            </div>
           )}
         </div>
       )}
 
-      <div className="w-full h-full border">
+      <div
+        className={clsx(
+          'w-full pt-3',
+          mode == MODE_RUN ? 'h-full' : 'h-[calc(100%-100px)] min-h-[280px]',
+        )}
+      >
         {mode == MODE_RUN && (
           <DaDashboardGrid widgetItems={widgetItems}></DaDashboardGrid>
         )}
-        {mode == MODE_EDIT && <PrototypeTabCodeDashboardCfg />}
+        {mode == MODE_EDIT && (
+          <div className="px-4 h-full">
+            <PrototypeTabCodeDashboardCfg />
+          </div>
+        )}
       </div>
     </div>
   )
