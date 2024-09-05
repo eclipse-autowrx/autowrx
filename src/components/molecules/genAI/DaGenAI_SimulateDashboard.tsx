@@ -50,11 +50,17 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
   }
 
   const handleDashboardConfigChanged = (config: any) => {
-    const widget_config = {
-      autorun: false,
-      widgets: JSON.parse(config),
-    }
-    setPrototypeData({ widget_config: JSON.stringify(widget_config) }) // widget_config is currently a JSON string
+    let parsedConfig = JSON.parse(config) // Parse the incoming config string
+
+    // Check if the parsed config already has the correct format
+    const widget_config =
+      parsedConfig.autorun !== undefined && Array.isArray(parsedConfig.widgets)
+        ? parsedConfig // If it's already in the correct format, use it as-is
+        : {
+            autorun: false,
+            widgets: parsedConfig,
+          }
+    setPrototypeData({ widget_config: JSON.stringify(widget_config) }) // Store as JSON string
   }
 
   return (
@@ -102,7 +108,7 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
         )}
       </div>
 
-      <div className="flex w-full h-full border">
+      <div className="flex w-full h-full ">
         {mode == MODE_RUN && (
           <DaDashboardGrid widgetItems={widgetItems}></DaDashboardGrid>
         )}
@@ -112,6 +118,7 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
               entireWidgetConfig={prototypeData.widget_config}
               editable={true}
               onDashboardConfigChanged={handleDashboardConfigChanged}
+              isWizard={true}
             />
           </div>
         )}

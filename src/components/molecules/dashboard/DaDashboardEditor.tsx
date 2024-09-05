@@ -25,6 +25,7 @@ interface DaDashboardEditorProps {
   onConfigValidChanged?: (isValid: boolean) => void
   editable?: boolean
   hideWidget?: boolean
+  isWizard?: boolean
 }
 
 const DaDashboardEditor = ({
@@ -33,6 +34,7 @@ const DaDashboardEditor = ({
   onConfigValidChanged,
   editable,
   hideWidget,
+  isWizard = false,
 }: DaDashboardEditorProps) => {
   const CELLS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
   const [widgetConfigs, setWidgetConfigs] = useState<WidgetConfig[]>([])
@@ -54,6 +56,7 @@ const DaDashboardEditor = ({
 
   // This useEffect used to load the existed widget configuration
   useEffect(() => {
+    console.log('entireWidgetConfig', entireWidgetConfig)
     if (!entireWidgetConfig) return
     try {
       const config = JSON.parse(entireWidgetConfig)
@@ -170,6 +173,7 @@ const DaDashboardEditor = ({
     if (selectedWidgetIndex !== null) {
       try {
         const updatedWidgetConfig = JSON.parse(selectedWidget)
+        console.log('updatedWidgetConfig', updatedWidgetConfig)
         if (
           isContinuousRectangle(updatedWidgetConfig.boxes) &&
           !doesOverlap(widgetConfigs, updatedWidgetConfig, selectedWidgetIndex)
@@ -404,7 +408,7 @@ const DaDashboardEditor = ({
         {widgetGrid()}
       </div>
       {editable && (
-        <DaText variant="small-bold" className="py-2 text-da-primary-500">
+        <DaText variant="small-bold" className="py-2 text-orange-500">
           Click on empty cell to place new widget
         </DaText>
       )}
@@ -417,12 +421,13 @@ const DaDashboardEditor = ({
 
       {!hideWidget && (
         <>
-          {/* <DaDashboardWidgetEditor
+          <DaDashboardWidgetEditor
             widgetEditorPopupState={codeEditorPopup}
             selectedWidget={selectedWidget}
             setSelectedWidget={setSelectedWidget}
             handleUpdateWidget={handleUpdateWidget}
-          /> */}
+            isWizard={isWizard}
+          />
 
           <DaWidgetLibrary
             targetSelectionCells={targetSelectionCells}

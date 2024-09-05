@@ -59,6 +59,7 @@ const useWizardGenAIStore = create<
     set({ wizardGenerateCodeAction: action }),
 
   executeWizardGenerateCodeAction: () => {
+    set({ wizardGeneratedCode: '' })
     const { wizardGenerateCodeAction } = get()
     if (wizardGenerateCodeAction) {
       wizardGenerateCodeAction()
