@@ -41,8 +41,8 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       return { runApp, stopApp, deploy, setMockSignals, loadMockSignals, writeSignalsValue }
     })
 
-    const [apisValue, setActiveApis] = useRuntimeStore(
-      (state) => [state.apisValue, state.setActiveApis],
+    const [apisValue, setActiveApis, setAppLog] = useRuntimeStore(
+      (state) => [state.apisValue, state.setActiveApis, state.setAppLog],
       shallow,
     )
 
@@ -100,6 +100,9 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     const runApp = (code: string) => {
       if (onNewLog) {
         onNewLog(`Run app\r\n`)
+      }
+      if(setAppLog) {
+        setAppLog(`Run app\r\n`)
       }
       socketio.emit('messageToKit', {
         cmd: 'run_python_app',
@@ -330,12 +333,18 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         if(onDeployResponse) {
           onDeployResponse(payload.result, payload.is_finish)
         }
+        if(setAppLog) {
+          setAppLog(payload.result || '')
+        }
         if (onNewLog) {
           onNewLog(payload.result || '')
         }
       }
       if (payload.cmd == 'run_python_app') {
         if (payload.isDone) {
+          if(setAppLog) {
+            setAppLog(`Exit code ${payload.code}\r\n`)
+          }
           if (onNewLog) {
             onNewLog(`Exit code ${payload.code}\r\n`)
           }
@@ -343,6 +352,9 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
             onAppExit(payload.code)
           }
         } else {
+          if(setAppLog) {
+            setAppLog(payload.result || '')
+          }
           if (onNewLog) {
             onNewLog(payload.result || '')
           }

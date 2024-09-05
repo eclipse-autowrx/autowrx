@@ -16,6 +16,7 @@ import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import { DaText } from '../atoms/DaText'
 import DaLoading from '../atoms/DaLoading'
+import { on } from 'events'
 
 interface ModelApiListProps {
   onApiClick?: (details: any) => void
@@ -63,11 +64,11 @@ const ModelApiList = ({ onApiClick, readOnly }: ModelApiListProps) => {
       setSearchTerm(searchQuery)
     }
 
-    if (foundApi) {
+    if (foundApi && (!selectedApi || selectedApi.name !== foundApi.name)) {
       setSelectedApi(foundApi)
       onApiClick?.(foundApi)
     }
-  }, [api, activeModelApis, readOnly])
+  }, [api, activeModelApis, readOnly, location.search])
 
   const debouncedFilter = useCallback(
     debounce(
@@ -124,8 +125,8 @@ const ModelApiList = ({ onApiClick, readOnly }: ModelApiListProps) => {
   }
 
   return (
-    <div className="flex flex-col h-full w-full p-3">
-      <div className="flex items-center mb-2">
+    <div className="flex h-full w-full flex-col p-3">
+      <div className="mb-2 flex items-center">
         <DaInput
           placeholder="Search Signal"
           className="mr-2 w-full"
@@ -149,7 +150,7 @@ const ModelApiList = ({ onApiClick, readOnly }: ModelApiListProps) => {
             state={[isOpenPopup, setIsOpenPopup]}
             trigger={
               <DaButton variant="plain" size="sm">
-                <TbPlus className="w-4 h-4 mr-1" /> Add Wishlist Signal
+                <TbPlus className="mr-1 h-4 w-4" /> Add Wishlist Signal
               </DaButton>
             }
           >
@@ -160,12 +161,18 @@ const ModelApiList = ({ onApiClick, readOnly }: ModelApiListProps) => {
                 onClose={() => {
                   setIsOpenPopup(false)
                 }}
+                onApiCreate={(api) => {
+                  const path = `/model/${model_id}/api/${api.name}`
+                  setSelectedApi(api)
+                  navigate(path, { replace: true })
+                  // window.location.reload() // Try to optimize later
+                }}
               />
             )}
           </DaPopup>
         )}
       </div>
-      <div className="flex flex-col h-full w-full overflow-y-auto">
+      <div className="flex h-full w-full flex-col overflow-y-auto">
         {filteredApiList && filteredApiList.length > 0 ? (
           <DaApiList
             apis={filteredApiList}

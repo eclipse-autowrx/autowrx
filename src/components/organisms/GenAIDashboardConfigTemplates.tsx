@@ -49,10 +49,10 @@ const GenAIDashboardConfigTemplates = ({
     setTemplates(newTemplates)
   }
   const resetDashboard = () => {
-    console.log(
-      'initial config:',
-      dashboard_templates[editingIndex as number].config,
-    )
+    // console.log(
+    //   'initial config:',
+    //   dashboard_templates[editingIndex as number].config,
+    // )
     handleDashboardConfigChanged(
       dashboard_templates[editingIndex as number].config,
     )
