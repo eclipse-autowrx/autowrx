@@ -13,6 +13,7 @@ import useCurrentModel from '@/hooks/useCurrentModel'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import { PERMISSIONS } from '@/data/permission'
 import usePermissionHook from '@/hooks/usePermissionHook'
+import path from 'path'
 
 const breadcrumbNames: { [key: string]: string } = {
   home: 'Home',
@@ -21,6 +22,7 @@ const breadcrumbNames: { [key: string]: string } = {
   prototype: 'Vehicle Prototypes',
   api: 'Vehicle Signals',
   architecture: 'Vehicle Architecture',
+  genai: 'Build Prototype with AI',
 }
 
 const DaBreadcrumbBar = () => {
@@ -40,10 +42,7 @@ const DaBreadcrumbBar = () => {
       <DaBreadcrumbItem>
         <Link
           to={path}
-          className={cn(
-            'text-da-white hover:opacity-75',
-            isLast && ' border-b',
-          )}
+          className={cn('text-da-white hover:opacity-75', isLast && 'border-b')}
         >
           {name}
         </Link>
@@ -58,7 +57,7 @@ const DaBreadcrumbBar = () => {
 
     breadcrumbList.push(
       <DaBreadcrumbItem key="home">
-        <Link to="/" className="flex text-primary">
+        <Link to="/" className="text-primary flex">
           Home
         </Link>
       </DaBreadcrumbItem>,
@@ -119,6 +118,14 @@ const DaBreadcrumbBar = () => {
       }
     }
 
+    if (pathnames.includes('genai-wizard')) {
+      paths.push({
+        path: `/genai-wizard`,
+        name: breadcrumbNames['genai'],
+        key: 'genai',
+      })
+    }
+
     paths.forEach((breadcrumb, index) => {
       const isLast = index === paths.length - 1
       breadcrumbList.push(
@@ -135,7 +142,7 @@ const DaBreadcrumbBar = () => {
 
   return (
     <div className="flex w-full justify-between">
-      <DaBreadcrumb className="flex text-da-white da-label-regular-bold">
+      <DaBreadcrumb className="da-label-regular-bold flex text-da-white">
         <DaBreadcrumbList>{breadcrumbs}</DaBreadcrumbList>
       </DaBreadcrumb>
     </div>
