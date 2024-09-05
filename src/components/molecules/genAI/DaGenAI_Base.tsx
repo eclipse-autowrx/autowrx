@@ -19,7 +19,7 @@ import { TbHistory, TbRotate } from 'react-icons/tb'
 import promptTemplates from '@/data/prompt_templates.ts'
 import { useClickOutside } from '@/lib/utils.ts'
 import useGenAIWizardStore from '@/stores/genAIWizardStore.ts'
-import DaText from '@/components/atoms/DaText.tsx'
+import CodeEditor from '../CodeEditor.tsx'
 
 type DaGenAI_BaseProps = {
   type: 'GenAI_Python' | 'GenAI_Dashboard' | 'GenAI_Widget'
