@@ -16,6 +16,7 @@ import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import { DaText } from '../atoms/DaText'
 import DaLoading from '../atoms/DaLoading'
+import { on } from 'events'
 
 interface ModelApiListProps {
   onApiClick?: (details: any) => void
@@ -63,7 +64,7 @@ const ModelApiList = ({ onApiClick, readOnly }: ModelApiListProps) => {
       setSearchTerm(searchQuery)
     }
 
-    if (foundApi) {
+    if (foundApi && (!selectedApi || selectedApi.name !== foundApi.name)) {
       setSelectedApi(foundApi)
       onApiClick?.(foundApi)
     }
@@ -162,7 +163,6 @@ const ModelApiList = ({ onApiClick, readOnly }: ModelApiListProps) => {
                 }}
                 onApiCreate={(api) => {
                   const path = `/model/${model_id}/api/${api.name}`
-                  console.log(path)
                   setSelectedApi(api)
                   navigate(path, { replace: true })
                   // window.location.reload() // Try to optimize later
