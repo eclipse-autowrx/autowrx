@@ -1,5 +1,5 @@
 import { FC, useEffect, useState } from 'react'
-import DaDashboardGrid from './DaDashboardGrid'
+import DaDashboardGrid from '../dashboard/DaDashboardGrid'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
 import PrototypeTabCodeDashboardCfg from '@/components/organisms/PrototypeTabCodeDashboardCfg'
@@ -15,7 +15,7 @@ import { TbRocket, TbDotsVertical, TbArrowUpRight } from 'react-icons/tb'
 const MODE_RUN = 'run'
 const MODE_EDIT = 'edit'
 
-const DaDashboard: FC = ({}) => {
+const DaGenAI_SimulateDashboard: FC = ({}) => {
   const { data: model } = useCurrentModel()
   const [prototype] = useModelStore((state) => [state.prototype as Prototype])
   const [widgetItems, setWidgetItems] = useState<any>([])
@@ -112,4 +112,4 @@ const DaDashboard: FC = ({}) => {
   )
 }
 
-export default DaDashboard
+export default DaGenAI_SimulateDashboard

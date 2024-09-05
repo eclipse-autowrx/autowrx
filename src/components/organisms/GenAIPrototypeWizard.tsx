@@ -210,7 +210,7 @@ const GenAIPrototypeWizard = ({}: PrototypeGenAIWizardProps) => {
           variant="sub-title"
           className="flex-1 flex-shrink-0 text-da-primary-500"
         >
-          Build with AI
+          Build Prototype with AI
         </DaText>
 
         {/* Stepper */}
@@ -256,9 +256,9 @@ const GenAIPrototypeWizard = ({}: PrototypeGenAIWizardProps) => {
         >
           <div className="mt-2 flex h-full w-full">
             <div className="flex flex-1 flex-col">
-              <DaText variant="title" className="mb-2 text-da-primary-500">
-                Generate Prototype with AI
-              </DaText>
+              {/* <DaText variant="title" className="mb-2 text-da-primary-500">
+                Build Prototype with AI
+              </DaText> */}
               <DaText variant="regular" className="mb-4 max-w-xl text-justify">
                 Create your prototype entirely with Generative AI. Describe the
                 vehicle app idea then let AI handle the vehicle app logic and
@@ -266,11 +266,11 @@ const GenAIPrototypeWizard = ({}: PrototypeGenAIWizardProps) => {
                 and refine your concepts effortlessly.
               </DaText>
             </div>
-            <div className="flex w-1/2">
+            <div className="flex w-1/2 h-full">
               <DaImage
-                src="/imgs/default_car.png"
+                src="/imgs/default_prototype_cover.jpg"
                 alt="Prototype Wizard"
-                className="h-full w-full object-contain"
+                className="h-fit w-full object-contain !overflow-hidden !rounded-lg"
               />
             </div>
           </div>
@@ -306,7 +306,7 @@ const GenAIPrototypeWizard = ({}: PrototypeGenAIWizardProps) => {
           className={cn(
             currentStep !== 3
               ? 'pointer-events-none hidden'
-              : 'flex h-full w-full justify-center',
+              : 'flex h-full w-full justify-center overflow-y-auto',
           )}
         >
           <DaStaging isWizard={true} />

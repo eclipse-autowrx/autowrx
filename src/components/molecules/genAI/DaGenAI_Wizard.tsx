@@ -1,12 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { DaButton } from '@/components/atoms/DaButton'
-import { TbCode } from 'react-icons/tb'
 import LoadingLineAnimation from './DaGenAI_LoadingLineAnimation.tsx'
-import DaGenAI_ResponseDisplay from './DaGenAI_ResponseDisplay.tsx'
-import DaSectionTitle from '@/components/atoms/DaSectionTitle.tsx'
 import DaGenAI_Base from './DaGenAI_Base.tsx'
 import { cn } from '@/lib/utils.ts'
-import { DaImage } from '@/components/atoms/DaImage.tsx'
+import CodeEditor from '../CodeEditor.tsx'
 
 type DaGenAI_WizardProps = {
   onCodeGenerated?: (code: string) => void
@@ -42,7 +38,16 @@ const DaGenAI_Wizard = ({ onCodeGenerated }: DaGenAI_WizardProps) => {
           )}
         >
           {genCode ? (
-            <DaGenAI_ResponseDisplay code={genCode} language={'python'} />
+            // <DaGenAI_ResponseDisplay code={genCode} language={'python'} />
+            <div className="flex w-full h-full rounded-md overflow-hidden border">
+              <CodeEditor
+                code={genCode}
+                setCode={setGenCode}
+                language="python"
+                onBlur={() => {}}
+                editable={true}
+              />
+            </div>
           ) : (
             <LoadingLineAnimation
               loading={loading}

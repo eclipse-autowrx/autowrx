@@ -55,7 +55,7 @@ import GenAIPrototypeWizard from '@/components/organisms/GenAIPrototypeWizard'
 
 const PageOrganisms = () => {
   const [open, setOpen] = useState(true)
-  return <GenAIPrototypeWizard open={open} setOpen={setOpen} />
+  return <GenAIPrototypeWizard />
 }
 
 export default PageOrganisms
