@@ -399,12 +399,12 @@ const DaDashboardEditor = ({
         className={`grid w-full grid-cols-5 grid-rows-2 border border-da-gray-medium ${
           editable ? 'cursor-pointer' : '!pointer-events-none'
         } `}
-        // style={{ gridTemplateRows: 'repeat(2, 120px)' }}
+        style={{ gridTemplateRows: 'repeat(2, 150px)' }}
       >
         {widgetGrid()}
       </div>
       {editable && (
-        <DaText variant="small-bold" className="py-2 text-yellow-600">
+        <DaText variant="small-bold" className="py-2 text-da-primary-500">
           Click on empty cell to place new widget
         </DaText>
       )}
@@ -417,12 +417,12 @@ const DaDashboardEditor = ({
 
       {!hideWidget && (
         <>
-          <DaDashboardWidgetEditor
+          {/* <DaDashboardWidgetEditor
             widgetEditorPopupState={codeEditorPopup}
             selectedWidget={selectedWidget}
             setSelectedWidget={setSelectedWidget}
             handleUpdateWidget={handleUpdateWidget}
-          />
+          /> */}
 
           <DaWidgetLibrary
             targetSelectionCells={targetSelectionCells}

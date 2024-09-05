@@ -1,32 +1,24 @@
 import { FC, useEffect, useState } from 'react'
 import DaDashboardGrid from '../dashboard/DaDashboardGrid'
-import useModelStore from '@/stores/modelStore'
-import { Prototype } from '@/types/model.type'
-import PrototypeTabCodeDashboardCfg from '@/components/organisms/PrototypeTabCodeDashboardCfg'
-import usePermissionHook from '@/hooks/usePermissionHook'
-import { PERMISSIONS } from '@/data/permission'
-import useCurrentModel from '@/hooks/useCurrentModel'
 import { MdOutlineDesignServices } from 'react-icons/md'
-import { IoSaveOutline } from 'react-icons/io5'
-import config from '@/configs/config'
-import DaTabItem from '@/components/atoms/DaTabItem'
-import { TbRocket, TbDotsVertical, TbArrowUpRight } from 'react-icons/tb'
+import { TbDeviceFloppy } from 'react-icons/tb'
+import useWizardGenAIStore from '@/stores/genAIWizardStore'
+import DaDashboardEditor from '../dashboard/DaDashboardEditor'
 
 const MODE_RUN = 'run'
 const MODE_EDIT = 'edit'
 
 const DaGenAI_SimulateDashboard: FC = ({}) => {
-  const { data: model } = useCurrentModel()
-  const [prototype] = useModelStore((state) => [state.prototype as Prototype])
+  const { prototypeData, setPrototypeData } = useWizardGenAIStore()
   const [widgetItems, setWidgetItems] = useState<any>([])
   const [mode, setMode] = useState<string>(MODE_RUN)
-  const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
 
   useEffect(() => {
     let widgetItems = []
-    if (prototype?.widget_config) {
+    // console.log('prototypeData', prototypeData)
+    if (prototypeData?.widget_config) {
       try {
-        let dashboard_config = JSON.parse(prototype.widget_config)
+        let dashboard_config = JSON.parse(prototypeData.widget_config)
         if (Array.isArray(dashboard_config)) {
           widgetItems = dashboard_config
         } else {
@@ -44,7 +36,7 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
     //
     processWidgetItems(widgetItems)
     setWidgetItems(widgetItems)
-  }, [prototype?.widget_config])
+  }, [prototypeData?.widget_config])
 
   const processWidgetItems = (widgetItems: any[]) => {
     if (!widgetItems) return
@@ -57,34 +49,42 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
     })
   }
 
+  const handleDashboardConfigChanged = (config: any) => {
+    const widget_config = {
+      autorun: false,
+      widgets: JSON.parse(config),
+    }
+    setPrototypeData({ widget_config: JSON.stringify(widget_config) }) // widget_config is currently a JSON string
+  }
+
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center">
-      {isAuthorized && (
-        <div className="w-full flex items-center justify-start py-1 bg-slate-100 px-2">
-          {mode == MODE_RUN && (
+    <div className="flex flex-col w-full h-full items-center justify-center">
+      <div className="flex w-full items-center justify-start py-1 bg-slate-100 px-2">
+        {mode == MODE_RUN && (
+          <div
+            className="mx-2 font-bold cursor-pointer hover:opacity-50 flex items-center"
+            onClick={() => {
+              setMode(MODE_EDIT)
+            }}
+          >
+            <MdOutlineDesignServices size={20} className="mr-2" />
+            Design Dashboard
+          </div>
+        )}
+
+        {mode == MODE_EDIT && (
+          <div className="flex items-center">
             <div
-              className="mx-2 font-bold cursor-pointer hover:opacity-50 flex items-center"
+              className="flex ml-2 mr-4 font-bold cursor-pointer hover:opacity-50 items-center"
               onClick={() => {
-                setMode(MODE_EDIT)
+                setMode(MODE_RUN)
               }}
             >
-              <MdOutlineDesignServices size={20} className="mr-2" />
-              Design Dashboard
+              <TbDeviceFloppy className="size-5 mr-2" />
+              Save
             </div>
-          )}
 
-          {mode == MODE_EDIT && (
-            <>
-              <div
-                className="ml-2 mr-4 font-bold cursor-pointer hover:opacity-50 flex items-center"
-                onClick={() => {
-                  setMode(MODE_RUN)
-                }}
-              >
-                <IoSaveOutline size={20} className="mr-2" />
-                Save
-              </div>
-
+            {/* <>
               {config?.studioUrl && (
                 <DaTabItem to={config?.studioUrl}>
                   Widget Studio
@@ -97,16 +97,24 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
                   <TbArrowUpRight className="w-5 h-5" />
                 </DaTabItem>
               )}
-            </>
-          )}
-        </div>
-      )}
+            </> */}
+          </div>
+        )}
+      </div>
 
-      <div className="w-full h-full border">
+      <div className="flex w-full h-full border">
         {mode == MODE_RUN && (
           <DaDashboardGrid widgetItems={widgetItems}></DaDashboardGrid>
         )}
-        {mode == MODE_EDIT && <PrototypeTabCodeDashboardCfg />}
+        {mode == MODE_EDIT && (
+          <div className="flex w-full h-fit">
+            <DaDashboardEditor
+              entireWidgetConfig={prototypeData.widget_config}
+              editable={true}
+              onDashboardConfigChanged={handleDashboardConfigChanged}
+            />
+          </div>
+        )}
       </div>
     </div>
   )

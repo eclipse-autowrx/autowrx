@@ -24,9 +24,12 @@ const DaDashboard: FC = ({}) => {
 
   useEffect(() => {
     let widgetItems = []
+    // prototype.widget_config: JSON string
     if (prototype?.widget_config) {
+      // console.log('prototype.widget_config', prototype.widget_config)
       try {
-        let dashboard_config = JSON.parse(prototype.widget_config)
+        let dashboard_config = JSON.parse(prototype.widget_config) // prototype.dashboard_config: JSON object
+        // console.log('dashboard_config', dashboard_config)
         if (Array.isArray(dashboard_config)) {
           widgetItems = dashboard_config
         } else {
