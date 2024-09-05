@@ -19,6 +19,7 @@ const PageVehicleApi = () => {
   const [activeModelApis] = useModelStore((state) => [state.activeModelApis])
 
   const handleApiClick = (apiDetails: VehicleApi) => {
+    // console.log('apiDetails', apiDetails)
     setSelectedApi(apiDetails)
     navigate(`/model/${model_id}/api/${apiDetails.name}`)
   }
@@ -51,9 +52,6 @@ const PageVehicleApi = () => {
               Tree View
             </DaTabItem>
           </div>
-          {/* <DaText variant="regular-bold" className="text-da-primary-500 pr-4">
-            COVESA VSS 4.1
-          </DaText> */}
         </div>
         {activeTab === 'list' && (
           <>

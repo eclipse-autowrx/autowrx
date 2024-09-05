@@ -51,3 +51,9 @@ export const resetPasswordService = async (password: string, token: string) => {
     },
   )
 }
+
+export const ssoService = async (msAccessToken: string) => {
+  return serverAxios.post('/auth/sso', {
+    msAccessToken,
+  })
+}

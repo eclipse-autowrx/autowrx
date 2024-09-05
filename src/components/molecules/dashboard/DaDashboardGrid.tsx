@@ -4,6 +4,7 @@ import { WidgetConfig } from '@/types/widget.type'
 
 interface DaDashboardGridProps {
   widgetItems: any[]
+  appLog?: string
 }
 
 const calculateSpans = (boxes: any) => {
@@ -21,9 +22,14 @@ const calculateSpans = (boxes: any) => {
 interface PropsWidgetItem {
   widgetConfig: WidgetConfig
   apisValue: any
+  appLog?: string
 }
 
-const WidgetItem: FC<PropsWidgetItem> = ({ widgetConfig, apisValue }) => {
+const WidgetItem: FC<PropsWidgetItem> = ({
+  widgetConfig,
+  apisValue,
+  appLog,
+}) => {
   const [rSpan, setRSpan] = useState<number>(0)
   const [cSpan, setCSpan] = useState<number>(0)
   const frameElement = useRef<HTMLIFrameElement>(null)
@@ -62,10 +68,26 @@ const WidgetItem: FC<PropsWidgetItem> = ({ widgetConfig, apisValue }) => {
     )
   }, [apisValue])
 
+  const sendAppLogToWidget = (log: string) => {
+    if (!log) return
+    frameElement?.current?.contentWindow?.postMessage(
+      JSON.stringify({
+        cmd: 'app-log',
+        log: log,
+      }),
+      '*',
+    )
+  }
+
+  useEffect(() => {
+    if (!appLog) return
+    sendAppLogToWidget(appLog)
+  }, [appLog])
+
   if (!widgetConfig)
     return (
       <div
-        className={`flex border border-da-gray-light justify-center items-center select-none da-label-huge text-da-gray-medium`}
+        className={`da-label-huge flex select-none items-center justify-center border border-da-gray-light text-da-gray-medium`}
       >
         .
       </div>
@@ -76,7 +98,7 @@ const WidgetItem: FC<PropsWidgetItem> = ({ widgetConfig, apisValue }) => {
       <iframe
         ref={frameElement}
         src={url}
-        className="w-full h-full m-0"
+        className="m-0 h-full w-full"
         allow="camera;microphone"
         onLoad={() => {
           //
@@ -109,7 +131,10 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
     setRenderCell(tmpCells)
   }, [widgetItems])
 
-  const apisValue = useRuntimeStore((state) => state.apisValue)
+  const [apisValue, appLog] = useRuntimeStore((state) => [
+    state.apisValue,
+    state.appLog,
+  ])
 
   return (
     <div className={`grid h-full w-full grid-cols-5 grid-rows-2`}>
@@ -119,6 +144,7 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
           key={wIndex}
           widgetConfig={widgetItem}
           apisValue={apisValue}
+          appLog={appLog}
         />
       ))}
       {/* {CELLS.map((cell) => {

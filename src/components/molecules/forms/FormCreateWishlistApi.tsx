@@ -13,6 +13,7 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
 interface FormCreateWishlistApiProps {
   onClose: () => void
+  onApiCreate: (api: CustomApi) => void
   modelId: string
   existingCustomApis: CustomApi[]
 }
@@ -28,7 +29,7 @@ const initialData: CreateWishlistAPI = {
   name: '',
   description: '',
   type: 'branch',
-  datatype: '',
+  datatype: 'boolean',
 }
 
 const dataTypes = [
@@ -52,6 +53,7 @@ const FormCreateWishlistApi = ({
   onClose,
   modelId,
   existingCustomApis,
+  onApiCreate,
 }: FormCreateWishlistApiProps) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -63,21 +65,27 @@ const FormCreateWishlistApi = ({
   const validate = useCallback((data: CreateWishlistAPI) => {
     if (data.name) {
       if (!data.name.startsWith(ROOT_API_NOTATION)) {
-        return `API name must start with "${ROOT_API_NOTATION}"`
+        return `Signal name must start with "${ROOT_API_NOTATION}"`
       }
       const actualName = data.name.slice(ROOT_API_NOTATION.length)
       if (actualName.length === 0) {
-        return `API name must have at least 1 character after "${ROOT_API_NOTATION}"`
+        return `Signal name must have at least 1 character after "${ROOT_API_NOTATION}"`
       }
-      if (!/^[a-zA-Z_$][a-zA-Z_$0-9]*$/.test(actualName)) {
-        return 'API name must only contain letters, numbers, underscores, and must not start with a number'
+      if (!/^[a-zA-Z][a-zA-Z0-9.]*$/.test(actualName)) {
+        return 'API name must only contain letters, numbers, and periods, and must not start with a number'
+      }
+      if (/\.\./.test(actualName)) {
+        return 'API name must not contain consecutive periods' // Prevent case like "Vehicle..Speed"
+      }
+      if (actualName.endsWith('.')) {
+        return 'API name must not end with a period' // Prevent case like "Vehicle.Speed."
       }
       if (data.name.length > 255) {
-        return 'API name must not exceed 255 characters'
+        return 'Signal name must not exceed 255 characters'
       }
     }
     if (data.description.length > 4096) {
-      return 'API description must not exceed 4096 characters'
+      return 'Signal description must not exceed 4096 characters'
     }
     if (data.type !== 'branch' && !data.datatype) {
       return 'Data type is required for sensor, actuator, and attribute'
@@ -92,13 +100,13 @@ const FormCreateWishlistApi = ({
     } else {
       setError('')
     }
-  }, [data.name])
+  }, [data])
 
   const createWishlistApi = async (data: any) => {
     try {
       const currentCustomApis = existingCustomApis ?? []
       if (currentCustomApis.some((name) => name.name === data.name)) {
-        setError('API with this name already exists')
+        setError('Signal with this name already exists')
         return
       }
 
@@ -118,14 +126,17 @@ const FormCreateWishlistApi = ({
       setData(initialData)
 
       addLog({
-        name: `Create wishlist API ${customApi.name}`,
-        description: `User ${currentUser?.email} created wishlist API ${customApi.name} in model ${modelId}`,
+        name: `Create wishlist Signal ${customApi.name}`,
+        description: `User ${currentUser?.email} created wishlist Signal ${customApi.name} in model ${modelId}`,
         type: 'create-wishlist',
         create_by: currentUser?.id!,
         ref_id: modelId,
         ref_type: 'model',
       })
+
       await refetch()
+
+      onApiCreate(customApi)
       onClose()
     } catch (error) {
       if (isAxiosError(error)) {
@@ -144,11 +155,12 @@ const FormCreateWishlistApi = ({
     setData((prev) => ({
       ...prev,
       type: value as CreateWishlistAPI['type'],
-      ...(value === 'branch' ? { datatype: '' } : {}),
+      ...(value === 'branch' ? { datatype: prev.datatype ?? 'boolean' } : {}),
     }))
   }
 
   const handleDatatypeChange = (value: string) => {
+    console.log(value)
     setData((prev) => ({
       ...prev,
       datatype: value,
@@ -174,7 +186,7 @@ const FormCreateWishlistApi = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col w-[30vw] lg:w-[25vw] max-h-[80vh] p-4 bg-da-white"
+      className="flex h-fit max-h-[550px] w-[30vw] min-w-[400px] max-w-[500px] flex-col bg-da-white p-4 lg:w-[25vw]"
     >
       {/* Title */}
       <DaText variant="title" className="text-da-primary-500">
@@ -232,12 +244,12 @@ const FormCreateWishlistApi = ({
         </DaText>
       )}
       {/* Action */}
-      <div className="space-x-2 ml-auto">
+      <div className="ml-auto space-x-2">
         <DaButton
           onClick={onClose}
           disabled={loading}
           type="button"
-          className="w-fit mt-8"
+          className="mt-8 w-fit"
           variant="plain"
         >
           Cancel
@@ -245,10 +257,10 @@ const FormCreateWishlistApi = ({
         <DaButton
           disabled={isButtonDisabled}
           type="submit"
-          className="w-fit mt-8"
+          className="mt-8 w-fit"
         >
           {loading && (
-            <TbLoader className="animate-spin da-label-regular mr-2" />
+            <TbLoader className="da-label-regular mr-2 animate-spin" />
           )}
           Create
         </DaButton>

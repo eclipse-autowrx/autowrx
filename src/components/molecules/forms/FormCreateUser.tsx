@@ -2,6 +2,7 @@ import { DaButton } from '@/components/atoms/DaButton'
 import { DaInput } from '@/components/atoms/DaInput'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import { DaText } from '@/components/atoms/DaText'
+import config from '@/configs/config'
 import { useListUsers } from '@/hooks/useListUsers'
 import { createUserService, updateUserService } from '@/services/user.service'
 import { User, UserCreate, UserUpdate } from '@/types/user.type'
@@ -23,7 +24,9 @@ const initialData = {
 const FormCreateUser = ({ onClose, updateData }: FormCreateUserProps) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const { refetch } = useListUsers()
+  const { refetch } = useListUsers({
+    includeFullDetails: true,
+  })
 
   const isCreate = !updateData
 
@@ -78,9 +81,23 @@ const FormCreateUser = ({ onClose, updateData }: FormCreateUserProps) => {
     e.preventDefault()
     setLoading(true)
     if (isCreate) {
-      await createUser(data as UserCreate)
+      await createUser(
+        (config.strictAuth
+          ? {
+              email: data.email,
+              name: data.name,
+            }
+          : data) as UserCreate,
+      )
     } else {
-      await updateUser(updateData.id, data as UserUpdate)
+      await updateUser(
+        updateData.id,
+        config.strictAuth
+          ? {
+              name: data.name,
+            }
+          : data,
+      )
     }
     await refetch()
     setLoading(false)
@@ -118,16 +135,17 @@ const FormCreateUser = ({ onClose, updateData }: FormCreateUserProps) => {
           />
         </>
       )}
-      <DaInput
-        value={data.password}
-        onChange={handleChange('password')}
-        name="password"
-        type="password"
-        placeholder="Password"
-        label={isCreate ? 'Password *' : 'Password'}
-        className="mt-4"
-      />
-
+      {!config.strictAuth && (
+        <DaInput
+          value={data.password}
+          onChange={handleChange('password')}
+          name="password"
+          type="password"
+          placeholder="Password"
+          label={isCreate ? 'Password *' : 'Password'}
+          className="mt-4"
+        />
+      )}
       <div className="grow"></div>
 
       {/* Error */}

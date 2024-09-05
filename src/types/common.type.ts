@@ -1,3 +1,9 @@
+import {
+  IndexRouteObject,
+  NonIndexRouteObject,
+  RouteObject,
+} from 'react-router-dom'
+
 export type List<T> = {
   results: T[]
   page: number
@@ -14,3 +20,12 @@ export type ListQueryParams = {
 }
 
 export type InfiniteListQueryParams = Omit<ListQueryParams, 'page'>
+
+export type RouteConfig = (
+  | IndexRouteObject
+  | (NonIndexRouteObject & {
+      children?: RouteConfig[]
+    })
+) & {
+  noBreadcrumbs?: boolean
+}

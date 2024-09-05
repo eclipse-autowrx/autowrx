@@ -1,9 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
-import { loginRequest, callMsGraph } from '@/services/sso.service'
+import { loginRequest } from '@/services/sso.service'
 import { useIsAuthenticated, useMsal } from '@azure/msal-react'
-import { loginService, registerService } from '@/services/auth.service'
-import { addLog } from '@/services/log.service'
-import { uploadFileService } from '@/services/upload.service'
+import { ssoService } from '@/services/auth.service'
+import { toast } from 'react-toastify'
+import { isAxiosError } from 'axios'
 
 interface SSOHandlerProps {
   children: React.ReactNode
@@ -40,50 +39,17 @@ const SSOHandler = ({ children }: SSOHandlerProps) => {
     }
   }
 
-  const handleSSOAuthSuccess = async (accessToken: any) => {
-    // Fetch user profile data from Microsoft Graph
-    const graphResponse = await callMsGraph(accessToken)
-    const { id, displayName, mail, userPrincipalName, userPhotoUrl } =
-      graphResponse
-
+  const handleSSOAuthSuccess = async (accessToken: string) => {
     try {
-      // Attempt to log in using the SSO credentials
-      await loginService(mail, id)
-      // Error with addLog server after security patches
-      // await addLog({
-      //   name: `User log in`,
-      //   description: `User ${mail} logged in via SSO`,
-      //   type: 'user-login@email',
-      //   create_by: mail,
-      // })
-    } catch (loginError) {
-      console.error(
-        'SSO login failed, attempting to register user:',
-        loginError,
-      )
-
-      // If login fails, attempt to register the user
-      try {
-        const response = await fetch(userPhotoUrl)
-        const blob = await response.blob()
-        const file = new File([blob], 'avatar.jpg', { type: blob.type })
-        const { url } = await uploadFileService(file)
-        await registerService(displayName, mail, id, url, 'BOSCH_SSO')
-        // await addLog({
-        //   name: `User registered`,
-        //   description: `User registered with email: ${mail}`,
-        //   type: 'user-register@email',
-        //   create_by: mail,
-        // })
-
-        // Retry logging in after successful registration
-        await loginService(mail, id)
-      } catch (registrationError) {
-        console.error('SSO registration failed:', registrationError)
-      }
-    } finally {
-      // Redirect or update state after successful login or registration
+      await ssoService(accessToken)
       window.location.href = window.location.href
+    } catch (error) {
+      console.log(error)
+      if (isAxiosError(error)) {
+        toast.error(error.response?.data.message || 'SSO authentication failed')
+        return
+      }
+      toast.error('SSO authentication failed')
     }
   }
 
