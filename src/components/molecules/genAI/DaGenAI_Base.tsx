@@ -265,7 +265,11 @@ const DaGenAI_Base = ({
 
         {!isWizard && (
           <>
-            <DaSectionTitle number={2} title="Select Generator" />
+            <DaSectionTitle
+              number={2}
+              title="Select Generator"
+              className="mt-4"
+            />
             <DaGeneratorSelector
               builtInAddOns={builtInAddOns}
               marketplaceAddOns={

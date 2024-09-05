@@ -1,11 +1,20 @@
 import create from 'zustand'
 
+type PrototypeData = {
+  prototypeName: string
+  modelName?: string
+  modelId?: string
+  widget_config?: any
+  wizardGeneratedCode?: string
+}
+
 type WizardGenAIStoreState = {
   wizardPrompt: string
   wizardLog: string
   wizardGeneratedCode: string
   wizardGenerateCodeAction: (() => void) | null
   wizardRunSimulationAction: (() => void) | null
+  prototypeData: PrototypeData
 }
 
 type WizardGenAIStoreActions = {
@@ -16,6 +25,8 @@ type WizardGenAIStoreActions = {
   executeWizardGenerateCodeAction: () => void
   registerWizardSimulationRun: (action: () => void) => void
   executeWizardSimulationRun: () => boolean
+  setPrototypeData: (data: Partial<PrototypeData>) => void
+  resetPrototypeData: () => void
 }
 
 const useWizardGenAIStore = create<
@@ -26,12 +37,23 @@ const useWizardGenAIStore = create<
   wizardGeneratedCode: '',
   wizardGenerateCodeAction: null,
   wizardRunSimulationAction: null,
+  prototypeData: {
+    prototypeName: '',
+    modelName: '',
+    modelId: '',
+    widget_config: '',
+    wizardGeneratedCode: '',
+  },
 
   setWizardPrompt: (prompt: string) => set({ wizardPrompt: prompt }),
-
   setWizardLog: (log: string) => set({ wizardLog: log }),
 
-  setWizardGeneratedCode: (code: string) => set({ wizardGeneratedCode: code }),
+  setWizardGeneratedCode: (code: string) => {
+    set((state) => ({
+      wizardGeneratedCode: code,
+      prototypeData: { ...state.prototypeData, wizardGeneratedCode: code },
+    }))
+  },
 
   registerWizardGenerateCodeAction: (action: () => void) =>
     set({ wizardGenerateCodeAction: action }),
@@ -46,6 +68,7 @@ const useWizardGenAIStore = create<
       return false
     }
   },
+
   registerWizardSimulationRun: (action: () => void) =>
     set({ wizardRunSimulationAction: action }),
 
@@ -59,6 +82,22 @@ const useWizardGenAIStore = create<
       return false
     }
   },
+
+  setPrototypeData: (data: Partial<PrototypeData>) =>
+    set((state) => ({
+      prototypeData: { ...state.prototypeData, ...data },
+    })),
+
+  resetPrototypeData: () =>
+    set({
+      prototypeData: {
+        prototypeName: '',
+        modelName: '',
+        modelId: '',
+        widget_config: '',
+        wizardGeneratedCode: '',
+      },
+    }),
 }))
 
 export default useWizardGenAIStore
