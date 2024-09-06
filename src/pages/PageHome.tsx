@@ -3,9 +3,11 @@ import { HomePrototypeProposal } from '@/components/organisms/HomePrototypePropo
 import { cn } from '@/lib/utils'
 import { HomePartners } from '@/components/organisms/HomePartners'
 import { useTextLib } from '@/hooks/useInstanceCfg'
+import { useBackground } from '@/hooks/useInstanceCfg'
 
 const PageHome = () => {
   const txtLib = useTextLib()
+  const background = useBackground()
   return (
     <>
       <div className="flex col-span-12 relative min-h-[400px] max-h-[400px] w-full justify-between  scale z-10 overflow-hidden">
@@ -25,7 +27,7 @@ const PageHome = () => {
 
         <img
           className=" w-full object-cover z-0 items-center justify-center"
-          src="https://bewebstudio.digitalauto.tech/data/projects/8go3BVLvQX3B/digitalautobg.jpg"
+          src={background}
           alt="home-cover"
         ></img>
 

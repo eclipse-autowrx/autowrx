@@ -1,6 +1,29 @@
 const instance = {
-  name: 'ETAS',
-  policy_url: 'https://www.etas.com/en/company/terms_of_use.php',
+  name: 'Autowrx',
+  policy_url: 'https://www.digital.auto/privacy-policy',
+  background: '/imgs/autowrx-bg.jpg',
+  text: {
+    home_ads_pan_title:
+      'Welcome to digital.auto playground for virtual exploration',
+    home_ads_pan_desc: `To support shift-level testing for software-defined vehicle (SDV) applications, we have created the digital.auto playground. This is a cloud-based, rapid prototyping environment for new, <b>SDV-enabled features</b>. The prototypes are built against real-world vehicle APIs and can be seamlessly migrated to automotive runtimes, such as Eclipse Velocitas. The playground is open and free to use.`,
+  },
+  featureCards: [
+    {
+      title: 'Vehicle Signal Catalogue',
+      content:
+        'Browse, explore and enhance the catalogue of Connected Vehicle Interfaces',
+    },
+    {
+      title: 'Prototyping',
+      content:
+        'Build and test new connected vehicle app prototypes in the browser, using Python and the Vehicle Signals',
+    },
+    {
+      title: 'User Feedback',
+      content:
+        'Collect and evaluate user feedback to prioritize your development portfolio',
+    },
+  ],
   partners: [
     {
       category: 'Industry Partners',
@@ -43,11 +66,6 @@ const instance = {
       ],
     },
   ],
-  text: {
-    home_ads_pan_title:
-      'Welcome to digital.auto playground for virtual exploration',
-    home_ads_pan_desc: `To support shift-level testing for software-defined vehicle (SDV) applications, we have created the digital.auto playground. This is a cloud-based, rapid prototyping environment for new, <b>SDV-enabled features</b>. The prototypes are built against real-world vehicle APIs and can be seamlessly migrated to automotive runtimes, such as Eclipse Velocitas. The playground is open and free to use.`,
-  },
 }
 
 export default instance
