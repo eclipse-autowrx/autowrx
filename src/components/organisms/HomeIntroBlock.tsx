@@ -8,36 +8,15 @@ import { TbArrowRight, TbCode, TbPackageImport } from 'react-icons/tb'
 import FormCreateModel from '../molecules/forms/FormCreateModel'
 import FormCreatePrototype from '../molecules/forms/FormCreatePrototype'
 import DaPopup from '../atoms/DaPopup'
-import FormImportPrototype from '../molecules/forms/FormImportPrototype'
-import GenAIPrototypeWizard from './GenAIPrototypeWizard'
 import { useState } from 'react'
 import { BsStars } from 'react-icons/bs'
-
-const cardData = [
-  {
-    title: 'Vehicle Signal Catalogue',
-    content:
-      'Browse, explore and enhance the catalogue of Connected Vehicle Interfaces',
-    buttonText: 'Getting Started',
-  },
-  {
-    title: 'Prototyping',
-    content:
-      'Build and test new connected vehicle app prototypes in the browser, using Python and the Vehicle Signals',
-    buttonText: 'Getting Started',
-  },
-  {
-    title: 'User Feedback',
-    content:
-      'Collect and evaluate user feedback to prioritize your development portfolio',
-    buttonText: 'Getting Started',
-  },
-]
+import { useFeatureCards } from '@/hooks/useInstanceCfg'
 
 const HomeIntroBlock = () => {
   const navigate = useNavigate()
   const { data: user } = useSelfProfileQuery()
   const [open, setOpen] = useState(false)
+  const cardData = useFeatureCards()
 
   return (
     <div className="container flex w-full flex-col justify-center">
