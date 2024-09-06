@@ -51,7 +51,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
       onSubmit={signIn}
       className="flex flex-col w-[30vw] lg:w-[25vw] min-w-[400px] max-w-[500px] h-fit max-h-[550px] p-4 bg-da-white"
     >
-      {config.instance === 'etas' ? (
+      {config.disableEmailLogin ? (
         <div className="flex flex-col h-full mb-16">
           <DaText variant="title" className="text-da-primary-500">
             Sign in with SSO
@@ -129,7 +129,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
         </div>
       )}
 
-      {config.sso && config.instance !== 'etas' && (
+      {config.sso && !config.disableEmailLogin && (
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t"></span>
