@@ -150,24 +150,14 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
 
   return (
     <div className="flex flex-col w-full h-full">
-      {/* <div className="mx-4 mt-4 flex items-center">
-        <DaInput
-          placeholder="Search Signal"
-          className="mr-2 w-full"
-          Icon={TbSearch}
-          iconBefore={true}
-          // value={searchTerm}
-          // onChange={(e) => handleSearchChange(e.target.value)}
-        />
-        <DaFilter
-          categories={{
-            Signal: ['Default', 'Wishlist'],
-            Type: ['Branch', 'Sensor', 'Actuator', 'Attribute'],
+      <DaPopup state={popupApi} width={'800px'} trigger={<span></span>}>
+        <APIDetails
+          activeApi={activeApi}
+          requestCancel={() => {
+            popupApi[1](false)
           }}
-          onChange={() => {}}
-          className="w-full"
         />
-      </div> */}
+      </DaPopup>
 
       <div className="flex border-b mx-3 mt-2">
         <DaTabItem
