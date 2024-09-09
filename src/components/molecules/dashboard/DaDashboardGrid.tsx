@@ -3,8 +3,7 @@ import useRuntimeStore from '@/stores/runtimeStore'
 import { WidgetConfig } from '@/types/widget.type'
 
 interface DaDashboardGridProps {
-  widgetItems: any[],
-  appLog: string
+  widgetItems: any[]
 }
 
 const calculateSpans = (boxes: any) => {
