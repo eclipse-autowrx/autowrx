@@ -58,8 +58,8 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
           </DaText>
           <DaText variant="regular" className="mt-2 text-da-gray-medium">
             Your organization uses single sign-on (SSO) with{' '}
-            <span className="font-bold">etas.digital.auto</span>. Please sign in
-            using your SSO credentials.
+            <span className="font-bold">{window.location.hostname}</span>.
+            Please sign in using your SSO credentials.
           </DaText>
         </div>
       ) : (
