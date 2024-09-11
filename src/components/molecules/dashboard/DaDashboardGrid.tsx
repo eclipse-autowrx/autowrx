@@ -137,7 +137,7 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
   ])
 
   return (
-    <div className={`grid h-full w-full grid-cols-5 grid-rows-2`}>
+    <div className={`grid h-full w-full grid-cols-5 grid-rows-2 border`}>
       {/* <div>renderCell: {renderCell.length}</div> */}
       {renderCell.map((widgetItem, wIndex) => (
         <WidgetItem

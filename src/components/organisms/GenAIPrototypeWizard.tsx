@@ -47,21 +47,6 @@ const GenAIPrototypeWizard = () => {
     resetPrototypeData,
   } = useWizardGenAIStore()
 
-  const handleNext = async () => {
-    if (currentStep === 3) {
-      finish()
-    }
-
-
-    if (soFarSteps <= currentStep) {
-      setSoFarSteps(currentStep + 1)
-    }
-    if (currentStep < 3) {
-    if (currentStep < 3) {
-      setCurrentStep(currentStep + 1)
-    }
-  }
-
   const handleBack = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1)
@@ -148,6 +133,21 @@ const GenAIPrototypeWizard = () => {
       toast.error('Error creating the prototype')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleNext = async () => {
+    if (currentStep === 3) {
+      finish()
+    }
+
+    if (soFarSteps <= currentStep) {
+      setSoFarSteps(currentStep + 1)
+    }
+    if (currentStep < 3) {
+      if (currentStep < 3) {
+        setCurrentStep(currentStep + 1)
+      }
     }
   }
 
@@ -253,8 +253,6 @@ const GenAIPrototypeWizard = () => {
           </DaButton>
         )}
         {currentStep < 3 && (
-        )}
-        {currentStep < 3 && (
           <DaButton
             onClick={handleNext}
             className="min-w-20"
@@ -263,7 +261,6 @@ const GenAIPrototypeWizard = () => {
           >
             {currentStep < 3 && 'Next'}
           </DaButton>
-        )}
         )}
       </div>
     </div>

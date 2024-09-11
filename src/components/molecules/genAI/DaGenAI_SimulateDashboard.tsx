@@ -4,6 +4,11 @@ import { MdOutlineDesignServices } from 'react-icons/md'
 import { TbDeviceFloppy } from 'react-icons/tb'
 import useWizardGenAIStore from '@/stores/genAIWizardStore'
 import DaDashboardEditor from '../dashboard/DaDashboardEditor'
+import { DaButton } from '@/components/atoms/DaButton'
+import DaDashboardTemplate from '../DaDashboardTemplate'
+import dashboard_templates from '@/data/dashboard_templates'
+import { cloneDeep } from 'lodash'
+import DaText from '@/components/atoms/DaText'
 
 const MODE_RUN = 'run'
 const MODE_EDIT = 'edit'
@@ -12,6 +17,9 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
   const { prototypeData, setPrototypeData } = useWizardGenAIStore()
   const [widgetItems, setWidgetItems] = useState<any>([])
   const [mode, setMode] = useState<string>(MODE_RUN)
+  const [templates, setTemplates] = useState(cloneDeep(dashboard_templates))
+  const [selected, setSelected] = useState<number | null>(0)
+  const [editingIndex, setEditingIndex] = useState<number | null>(null)
 
   useEffect(() => {
     let widgetItems = []
@@ -64,62 +72,57 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
   }
 
   return (
-    <div className="flex flex-col w-full h-full items-center justify-center">
-      <div className="flex w-full items-center justify-start py-1 bg-slate-100 px-2">
-        {mode == MODE_RUN && (
-          <div
-            className="mx-2 font-bold cursor-pointer hover:opacity-50 flex items-center"
-            onClick={() => {
-              setMode(MODE_EDIT)
-            }}
-          >
-            <MdOutlineDesignServices size={20} className="mr-2" />
-            Design Dashboard
-          </div>
-        )}
-
-        {mode == MODE_EDIT && (
+    <div className="flex flex-col w-full h-full overflow-y-auto pr-2">
+      <div className="flex w-full h-fit items-start pb-3">
+        <DaButton
+          className="flex w-fit"
+          size="sm"
+          variant="outline-nocolor"
+          onClick={() => setMode(mode === MODE_RUN ? MODE_EDIT : MODE_RUN)}
+        >
           <div className="flex items-center">
-            <div
-              className="flex ml-2 mr-4 font-bold cursor-pointer hover:opacity-50 items-center"
-              onClick={() => {
-                setMode(MODE_RUN)
-              }}
-            >
-              <TbDeviceFloppy className="size-5 mr-2" />
-              Save
-            </div>
-
-            {/* <>
-              {config?.studioUrl && (
-                <DaTabItem to={config?.studioUrl}>
-                  Widget Studio
-                  <TbArrowUpRight className="w-5 h-5" />
-                </DaTabItem>
-              )}
-              {config?.widgetMarketPlaceUrl && (
-                <DaTabItem to={config?.widgetMarketPlaceUrl}>
-                  Widget Marketplace
-                  <TbArrowUpRight className="w-5 h-5" />
-                </DaTabItem>
-              )}
-            </> */}
+            {mode === MODE_RUN ? (
+              <>
+                <MdOutlineDesignServices className="size-5 mr-2" />
+                Design Dashboard
+              </>
+            ) : (
+              <>
+                <TbDeviceFloppy className="size-5 mr-2" />
+                Save
+              </>
+            )}
           </div>
-        )}
+        </DaButton>
       </div>
 
-      <div className="flex w-full h-full ">
-        {mode == MODE_RUN && (
-          <DaDashboardGrid widgetItems={widgetItems}></DaDashboardGrid>
-        )}
+      <div className="flex flex-col w-full h-full ">
+        {mode == MODE_RUN && <DaDashboardGrid widgetItems={widgetItems} />}
         {mode == MODE_EDIT && (
-          <div className="flex w-full h-fit">
+          <div className="flex flex-col w-full h-full">
             <DaDashboardEditor
               entireWidgetConfig={prototypeData.widget_config}
               editable={true}
               onDashboardConfigChanged={handleDashboardConfigChanged}
               isWizard={true}
             />
+            <DaText variant="sub-title" className="flex text-da-primary-500">
+              Select Dashboard Template
+            </DaText>
+
+            <div className="mt-4 h-fit grid grid-cols-4 gap-4">
+              {templates.map((template, index) => (
+                <div className="col-span-1">
+                  <DaDashboardTemplate
+                    onClick={() => setSelected(index)}
+                    onEditClick={() => setEditingIndex(index)}
+                    key={index}
+                    selected={selected === index}
+                    template={template}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
