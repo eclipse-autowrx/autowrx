@@ -177,19 +177,17 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
       {tab === 'used-signals' && (
         <>
           {useApis && useApis.length > 0 ? (
-            <div>
-              <div className="flex flex-col w-full px-4">
-                <div className="max-h-[150px] mt-2 overflow-y-auto scroll">
-                  {useApis.map((item: any, index: any) => (
-                    <DaApiListItem
-                      key={index}
-                      api={item}
-                      onClick={() => {
-                        onApiClicked(item)
-                      }}
-                    />
-                  ))}
-                </div>
+            <div className="flex flex-col w-full h-full px-4 overflow-y-auto">
+              <div className="flex flex-col w-full min-w-fit mt-2">
+                {useApis.map((item: any, index: any) => (
+                  <DaApiListItem
+                    key={index}
+                    api={item}
+                    onClick={() => {
+                      onApiClicked(item)
+                    }}
+                  />
+                ))}
               </div>
             </div>
           ) : (
@@ -201,7 +199,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
       )}
 
       {tab === 'all-signals' && (
-        <div className="flex w-full  overflow-hidden">
+        <div className="flex w-full overflow-hidden">
           <ModelApiList onApiClick={onApiClicked} readOnly={true} />
         </div>
       )}
