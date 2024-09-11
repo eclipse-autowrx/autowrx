@@ -20,7 +20,7 @@ const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
 
 const TARGETS = [
   {
-    name: 'Virtual WS: AWS',
+    name: 'Virtual WS',
     icon: '/imgs/targets/vm.png',
     prefix: 'Runtime-',
     version: 'v.0.10',
@@ -28,10 +28,20 @@ const TARGETS = [
       '3.1.1.1.1.1': '2.3.2',
     },
   },
+  // {
+  //   name: 'Education Kit: MakerKit',
+  //   short_name: 'MaketKit',
+  //   icon: '/imgs/targets/edukit.png',
+  //   prefix: 'Runtime-', // "Kit-"
+  //   version: 'v.0.9',
+  //   state: {
+  //     '3.1.1.1.1.1': '2.3.1',
+  //   },
+  // },
   {
-    name: 'Education Kit: MakerKit',
-    short_name: 'MaketKit',
-    icon: '/imgs/targets/edukit.png',
+    name: 'Automation Kit',
+    short_name: 'Runtime-',
+    icon: '/imgs/targets/automationKit.png',
     prefix: 'Runtime-', // "Kit-"
     version: 'v.0.9',
     state: {
@@ -39,17 +49,7 @@ const TARGETS = [
     },
   },
   {
-    name: 'Automotive Kit: DreamKit',
-    short_name: 'DreamKit',
-    icon: '/imgs/targets/desktopKit.png',
-    prefix: 'Runtime-', // "Kit-"
-    version: 'v.0.9',
-    state: {
-      '3.1.1.1.1.1': '2.3.1',
-    },
-  },
-  {
-    name: 'Test Fleet: XSPACE',
+    name: 'Test Fleet',
     short_name: 'XSPACE',
     icon: '/imgs/targets/pilotCar.png',
     prefix: 'PilotCar-', // "PilotCar-"

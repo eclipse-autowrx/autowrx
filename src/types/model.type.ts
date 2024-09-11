@@ -64,6 +64,16 @@ export type Prototype = {
   avg_score?: number
 }
 
+export type SearchPrototype = {
+  id: string
+  name: string
+  image_file: string
+  model?: {
+    id?: string
+    name?: string
+  }
+}
+
 export type ModelCreate = {
   name: string
   cvi: string

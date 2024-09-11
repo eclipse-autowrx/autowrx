@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import ApiDetail from '@/components/organisms/ApiDetail'
 import { VehicleApi } from '@/types/model.type'
 import ModelApiList from '@/components/organisms/ModelApiList'
 import { DaImage } from '@/components/atoms/DaImage'
-import { DaText } from '@/components/atoms/DaText'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import DaTreeView from '@/components/molecules/DaTreeView'
 import DaLoadingWrapper from '@/components/molecules/DaLoadingWrapper'
@@ -34,8 +33,8 @@ const PageVehicleApi = () => {
       emptyMessage="No Signals found."
       timeoutMessage="Failed to load Signals. Please try again."
     >
-      <div className="grid grid-cols-12 auto-cols-max h-full w-full">
-        <div className="sticky top-0 col-span-12 flex w-full h-10 items-center justify-between bg-da-gray-light">
+      <div className="grid grid-cols-12 auto-cols-max bg-white rounded-md h-full w-full">
+        <div className="sticky top-0 col-span-12 flex w-full h-10 items-center justify-between">
           <div className="flex space-x-2 h-full">
             <DaTabItem
               active={activeTab === 'list'}

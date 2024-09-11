@@ -363,3 +363,10 @@ body {
   --da-gradient-from: 198 100 22;
   --da-gradient-to: 67 54 48;
 }
+
+/*********** Other ********************/
+.autofill {
+  display: grid;
+  --grid-min-width: 180px;
+  grid-template-columns: repeat(auto-fill, minmax(var(--grid-min-width), 1fr));
+}

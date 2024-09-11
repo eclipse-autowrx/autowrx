@@ -5,9 +5,12 @@ import useModelStore from '@/stores/modelStore'
 import { DaText } from '../atoms/DaText'
 import { DaApiListItem } from '../molecules/DaApiList'
 import ModelApiList from './ModelApiList'
-import { TbCopy } from 'react-icons/tb'
+import { TbCopy, TbSearch } from 'react-icons/tb'
 import { getApiTypeClasses } from '@/lib/utils'
 import { DaCopy } from '../atoms/DaCopy'
+import DaTabItem from '../atoms/DaTabItem'
+import { DaInput } from '../atoms/DaInput'
+import DaFilter from '../atoms/DaFilter'
 
 interface ApiCodeBlockProps {
   apiName: string
@@ -113,6 +116,8 @@ interface PrototypeTabCodeApiPanelProps {
 const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   code,
 }) => {
+  const [tab, setTab] = useState<'used-signals' | 'all-signals'>('used-signals')
+
   const [activeModelApis] = useModelStore(
     (state) => [state.activeModelApis],
     shallow,
@@ -153,32 +158,51 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
           }}
         />
       </DaPopup>
-      <DaText variant="regular-bold" className="px-4 mt-2">
-        Used Signals({useApis.length})
-      </DaText>
-      {useApis && useApis.length > 0 && (
-        <div className="mb-2">
-          <div className="flex flex-col w-full px-4">
-            <div className="max-h-[150px] mt-2 overflow-y-auto scroll">
-              {useApis.map((item: any, index: any) => (
-                <DaApiListItem
-                  key={index}
-                  api={item}
-                  onClick={() => {
-                    onApiClicked(item)
-                  }}
-                />
-              ))}
+
+      <div className="flex border-b mx-3 mt-2">
+        <DaTabItem
+          onClick={() => setTab('used-signals')}
+          active={tab === 'used-signals'}
+        >
+          Used Signals
+        </DaTabItem>
+        <DaTabItem
+          onClick={() => setTab('all-signals')}
+          active={tab === 'all-signals'}
+        >
+          All Signals
+        </DaTabItem>
+      </div>
+
+      {tab === 'used-signals' && (
+        <>
+          {useApis && useApis.length > 0 ? (
+            <div className="flex flex-col w-full h-full px-4 overflow-y-auto">
+              <div className="flex flex-col w-full min-w-fit mt-2">
+                {useApis.map((item: any, index: any) => (
+                  <DaApiListItem
+                    key={index}
+                    api={item}
+                    onClick={() => {
+                      onApiClicked(item)
+                    }}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="items-center flex-1 justify-center flex">
+              <p className="text-da-gray-medium">No signals was used.</p>
+            </div>
+          )}
+        </>
+      )}
+
+      {tab === 'all-signals' && (
+        <div className="flex w-full overflow-hidden">
+          <ModelApiList onApiClick={onApiClicked} readOnly={true} />
         </div>
       )}
-      <DaText variant="regular-bold" className="px-4">
-        All Signals
-      </DaText>
-      <div className="flex w-full  overflow-hidden">
-        <ModelApiList onApiClick={onApiClicked} readOnly={true} />
-      </div>
     </div>
   )
 }

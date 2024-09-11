@@ -26,6 +26,7 @@ import {
 } from 'react-icons/tb'
 import useCurrentExtendedApiIssue from '@/hooks/useCurrentExtendedApiIssue'
 import DaMenu from '../atoms/DaMenu'
+import DaConsumedPrototypes from '../molecules/DaConsumedPrototypes'
 
 interface ApiDetailProps {
   apiDetails: any
@@ -293,15 +294,15 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
           VSS Specification
         </DaText>
         <DaTableProperty properties={vssSpecificationProperties} />
-        <DaText
-          variant="regular-bold"
-          className="flex pt-4 text-da-secondary-500"
-        >
-          Dependencies
-        </DaText>
-        <DaTableProperty
-          properties={[{ name: 'Used by these vehicle app', value: 'N/A' }]}
+
+        <DaConsumedPrototypes
+          signal={
+            ['actuator', 'sensor'].includes(apiDetails.type)
+              ? apiDetails?.name || apiDetails?.shortName || ''
+              : ''
+          }
         />
+
         <DaText
           variant="regular-bold"
           className="flex pt-4 text-da-secondary-500"

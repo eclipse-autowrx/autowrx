@@ -317,7 +317,7 @@ const DaDashboardEditor = ({
   const widgetGrid = () => {
     if (!isConfigValid) {
       return (
-        <div className="col-span-5 row-span-2 flex h-full w-full items-center justify-center">
+        <div className="col-span-5 flex h-full w-full items-center justify-center">
           <div className="flex items-center text-da-gray-medium">
             <TbExclamationMark className="mr-0.5 h-5 w-5 text-da-accent-500" />
             {warningMessage2
@@ -398,9 +398,9 @@ const DaDashboardEditor = ({
   }
 
   return (
-    <div className="flex w-full flex-col items-center justify-center p-1">
+    <div className="flex w-full flex-col h-full items-center justify-center p-1">
       <div
-        className={`grid w-full grid-cols-5 grid-rows-2 border border-da-gray-medium ${
+        className={`grid w-full grid-cols-5 h-[calc(100%-40px)] grid-rows-2 border border-da-gray-medium ${
           editable ? 'cursor-pointer' : '!pointer-events-none'
         } `}
         style={{ gridTemplateRows: 'repeat(2, 150px)' }}

@@ -91,7 +91,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
             to={`/model/${model_id}/library/prototype/${prototype_id}/code`}
           >
             <TbCode className="w-5 h-5 mr-2" />
-            Code
+            SDV Code
           </DaTabItem>
           {/* <DaTabItem
           active={tab === 'flow'}
@@ -121,7 +121,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
             Feedback
           </DaTabItem>
         </div>
-        <div className='grow'></div>
+        <div className="grow"></div>
         {
           <DaPopup
             trigger={
@@ -131,7 +131,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
               </DaTabItem>
             }
           >
-            <DaStaging/>
+            <DaStaging />
           </DaPopup>
         }
         {

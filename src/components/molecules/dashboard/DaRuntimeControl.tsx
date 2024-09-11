@@ -16,12 +16,12 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import DaMockManager from './DaMockManager'
 import { countCodeExecution } from '@/services/prototype.service'
 import { DaInput } from '@/components/atoms/DaInput'
-import { SlOptionsVertical } from "react-icons/sl";
+import { SlOptionsVertical } from 'react-icons/sl'
 import DaPopup from '@/components/atoms/DaPopup'
 import DaStaging from '../staging/DaStaging'
-import { BiSend } from "react-icons/bi";
+import { BiSend } from 'react-icons/bi'
 
-const DEFAULT_KIT_SERVER = "https://kit.digitalauto.tech";
+const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
 
 const AlwaysScrollToBottom = () => {
   const elementRef = useRef<any>(null)
@@ -61,14 +61,18 @@ const DaRuntimeControl: FC = ({}) => {
   const [code, setCode] = useState<string>('')
 
   const [mockSignals, setMockSignals] = useState<any[]>([])
-  const [customKitServer, setCustomKitServer] = useState<string>(localStorage.getItem("customKitServer")||'')
-  const [tmpCustomKitServer, setTmpCustomKitServer] = useState<string>(localStorage.getItem("customKitServer")||'')
+  const [customKitServer, setCustomKitServer] = useState<string>(
+    localStorage.getItem('customKitServer') || '',
+  )
+  const [tmpCustomKitServer, setTmpCustomKitServer] = useState<string>(
+    localStorage.getItem('customKitServer') || '',
+  )
   const [isShowEditKitServer, setIsShowEditKitServer] = useState<boolean>(false)
 
   // const [showStaging, setShowStaging] = useState<boolean>(false)
 
   useEffect(() => {
-    localStorage.setItem("customKitServer", customKitServer.trim())
+    localStorage.setItem('customKitServer', customKitServer.trim())
   }, [customKitServer])
 
   useEffect(() => {
@@ -116,20 +120,36 @@ const DaRuntimeControl: FC = ({}) => {
       className={`absolute bottom-0 right-0 top-0 z-10 ${isExpand ? 'w-[500px]' : 'w-16'} flex flex-col justify-center bg-da-gray-dark px-1 py-2 text-da-gray-light`}
     >
       {/* <div>{customKitServer}</div> */}
-      {isExpand && isShowEditKitServer && <div className='flex mb-2'>
-        <DaInput className='grow text-da-black' value={tmpCustomKitServer} onChange={(e) => { setTmpCustomKitServer(e.target.value) }}/>
-        <DaButton className='ml-2 w-20' onClick={()=>{
+      {isExpand && isShowEditKitServer && (
+        <div className="flex mb-2">
+          <DaInput
+            className="grow text-da-black"
+            value={tmpCustomKitServer}
+            onChange={(e) => {
+              setTmpCustomKitServer(e.target.value)
+            }}
+          />
+          <DaButton
+            className="ml-2 w-20"
+            onClick={() => {
               setCustomKitServer(tmpCustomKitServer)
               setIsShowEditKitServer(false)
-            }
-          }>Set</DaButton>
-        <DaButton className='ml-2 w-20' onClick={()=>{
+            }}
+          >
+            Set
+          </DaButton>
+          <DaButton
+            className="ml-2 w-20"
+            onClick={() => {
               setIsShowEditKitServer(false)
-            }
-          }>Cancel</DaButton>
-      </div> }
+            }}
+          >
+            Cancel
+          </DaButton>
+        </div>
+      )}
       <div className="px-1 flex">
-          {/* <DaRuntimeConnector
+        {/* <DaRuntimeConnector
             kitServerUrl={customKitServer}
             ref={runTimeRef}
             usedAPIs={usedApis}
@@ -139,35 +159,46 @@ const DaRuntimeControl: FC = ({}) => {
             onAppExit={() => {
               setIsRunning(false)
             }}/> */}
-        {(customKitServer && customKitServer.trim().length>0)?<DaRuntimeConnector
+        {customKitServer && customKitServer.trim().length > 0 ? (
+          <DaRuntimeConnector
             targetPrefix="runtime-"
             kitServerUrl={customKitServer}
             ref={runTimeRef}
             usedAPIs={usedApis}
-            onActiveRtChanged={(rtId: string | undefined) => setActiveRtId(rtId)}
+            onActiveRtChanged={(rtId: string | undefined) =>
+              setActiveRtId(rtId)
+            }
             onLoadedMockSignals={setMockSignals}
             onNewLog={appendLog}
             onAppExit={() => {
               setIsRunning(false)
             }}
-          />:<DaRuntimeConnector
+          />
+        ) : (
+          <DaRuntimeConnector
             targetPrefix="runtime-"
             kitServerUrl={DEFAULT_KIT_SERVER}
             ref={runTimeRef1}
             usedAPIs={usedApis}
-            onActiveRtChanged={(rtId: string | undefined) => setActiveRtId(rtId)}
+            onActiveRtChanged={(rtId: string | undefined) =>
+              setActiveRtId(rtId)
+            }
             onLoadedMockSignals={setMockSignals}
             onNewLog={appendLog}
             onAppExit={() => {
               setIsRunning(false)
-            }}/>
-        }
-        <div className='grow'/>
-        
-        <SlOptionsVertical size={36} className='text-da-white cursor-pointer hover:bg-slate-500 p-2 rounded'
+            }}
+          />
+        )}
+        <div className="grow" />
+
+        <SlOptionsVertical
+          size={36}
+          className="text-da-white cursor-pointer hover:bg-slate-500 p-2 rounded"
           onClick={() => {
             setIsShowEditKitServer((v) => !v)
-          }}/>
+          }}
+        />
       </div>
 
       <div className={`flex px-1 ${!isExpand && 'flex-col'}`}>
@@ -213,36 +244,46 @@ const DaRuntimeControl: FC = ({}) => {
             >
               <IoStop />
             </button>
-           
           </>
         )}
-        <div className='grow'></div>
-        { isExpand && <DaButton size='sm' variant="outline" className='ml-4 mt-1 !text-white hover:!text-da-gray-medium !border-da-white hover:!border-da-gray-medium'
-              onClick={() => {
-                setLog("")
-                if (runTimeRef.current) {
-                  runTimeRef.current?.deploy()
-                }
-                if (runTimeRef1.current) {
-                  runTimeRef1.current?.deploy()
-                }
-              }}>
-              Deploy 
-              <BiSend className='ml-1' size={20}/>
-            </DaButton>
-          }
+        <div className="grow"></div>
+        {isExpand && (
+          <DaButton
+            size="sm"
+            variant="outline"
+            className="ml-4 mt-1 !text-white hover:!text-da-gray-medium !border-da-white hover:!border-da-gray-medium"
+            onClick={() => {
+              setLog('')
+              if (runTimeRef.current) {
+                runTimeRef.current?.deploy()
+              }
+              if (runTimeRef1.current) {
+                runTimeRef1.current?.deploy()
+              }
+            }}
+          >
+            Deploy
+            <BiSend className="ml-1" size={20} />
+          </DaButton>
+        )}
         {/* { isExpand && <DaButton size='sm' variant="outline" className='mt-1 ml-2 !text-white hover:!text-da-gray-medium !border-da-white hover:!border-da-gray-medium'
           onClick={() => { setShowStaging(true) }}>
           Staging
         </DaButton>
         } */}
 
-        { isExpand && <DaButton size='sm' variant="plain" className='mt-1 ml-2 !text-white hover:!text-da-gray-medium !border-da-white hover:!border-da-gray-medium'
-          onClick={() => { setLog("") }}>
-          Clear log
-        </DaButton>
-        }
-       
+        {isExpand && (
+          <DaButton
+            size="sm"
+            variant="plain"
+            className="mt-1 ml-2 !text-white hover:!text-da-gray-medium !border-da-white hover:!border-da-gray-medium"
+            onClick={() => {
+              setLog('')
+            }}
+          >
+            Clear log
+          </DaButton>
+        )}
       </div>
 
       <div className="mt-1 grow overflow-y-auto">
@@ -255,14 +296,18 @@ const DaRuntimeControl: FC = ({}) => {
               </p>
             )}
 
-            {activeTab == 'apis' && <DaApisWatch requestWriteSignalValue={(obj:any) => {
-              if (runTimeRef.current) {
-                runTimeRef.current?.writeSignalsValue(obj)
-              }
-              if (runTimeRef1.current) {
-                runTimeRef1.current?.writeSignalsValue(obj)
-              }
-            }}/>}
+            {activeTab == 'apis' && (
+              <DaApisWatch
+                requestWriteSignalValue={(obj: any) => {
+                  if (runTimeRef.current) {
+                    runTimeRef.current?.writeSignalsValue(obj)
+                  }
+                  if (runTimeRef1.current) {
+                    runTimeRef1.current?.writeSignalsValue(obj)
+                  }
+                }}
+              />
+            )}
 
             {activeTab == 'code' && (
               <CodeEditor
@@ -323,7 +368,7 @@ const DaRuntimeControl: FC = ({}) => {
                 setActiveTab('output')
               }}
             >
-              Output
+              Terminal{' '}
             </div>
             <div
               className={`da-label-small flex cursor-pointer items-center px-4 py-0.5 text-da-white hover:bg-da-gray-medium ${activeTab == 'apis' && 'border-b-2 border-da-white'}`}
@@ -333,7 +378,7 @@ const DaRuntimeControl: FC = ({}) => {
             >
               Signals Watch
             </div>
-            <div
+            {/* <div
               className={`da-label-small flex cursor-pointer items-center px-4 py-0.5 text-da-white hover:bg-da-gray-medium ${activeTab == 'mock' && 'border-b-2 border-da-white'}`}
               onClick={() => {
                 setActiveTab('mock')
@@ -348,7 +393,7 @@ const DaRuntimeControl: FC = ({}) => {
               }}
             >
               Code
-            </div>
+            </div> */}
           </>
         )}
       </div>

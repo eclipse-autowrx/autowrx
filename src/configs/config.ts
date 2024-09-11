@@ -60,6 +60,7 @@ const config: any = {
   },
   features: [],
   strictAuth: import.meta.env.VITE_STRICT_AUTH === 'true',
+  disableEmailLogin: import.meta.env.VITE_DISABLE_EMAIL_LOGIN === 'true',
 }
 
 export default config
