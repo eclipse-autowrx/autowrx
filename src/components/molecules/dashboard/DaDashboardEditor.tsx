@@ -398,9 +398,9 @@ const DaDashboardEditor = ({
   }
 
   return (
-    <div className="flex w-full flex-col h-full items-center justify-center p-1">
+    <div className="flex w-full flex-col h-fit items-center justify-start p-1 ">
       <div
-        className={`grid w-full grid-cols-5 h-[calc(100%-40px)] grid-rows-2 border border-da-gray-medium ${
+        className={`grid w-full grid-cols-5 h-fit grid-rows-2 border   border-da-gray-medium ${
           editable ? 'cursor-pointer' : '!pointer-events-none'
         } `}
         style={{ gridTemplateRows: 'repeat(2, 150px)' }}

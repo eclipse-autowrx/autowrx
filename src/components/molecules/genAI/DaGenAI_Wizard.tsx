@@ -19,7 +19,7 @@ const DaGenAI_Wizard = ({ onCodeGenerated }: DaGenAI_WizardProps) => {
       <DaGenAI_Base
         type="GenAI_Python"
         buttonText="Generate SDV App"
-        placeholderText="Please desribe your vehicle application in human readable language"
+        placeholderText="Please describe your vehicle application in human readable language"
         onCodeGenerated={(code) => {
           setGenCode(code)
           if (onCodeGenerated) {
