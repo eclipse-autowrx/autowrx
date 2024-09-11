@@ -58,7 +58,7 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
   }
 
   const handleDashboardConfigChanged = (config: any) => {
-    let parsedConfig = JSON.parse(config) // Parse the incoming config string
+    let parsedConfig = JSON.parse(config) // Parse the incoming config string to object
 
     // Check if the parsed config already has the correct format
     const widget_config =
@@ -114,7 +114,10 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
               {templates.map((template, index) => (
                 <div className="col-span-1">
                   <DaDashboardTemplate
-                    onClick={() => setSelected(index)}
+                    onClick={() => {
+                      setSelected(index)
+                      handleDashboardConfigChanged(template.config)
+                    }}
                     onEditClick={() => setEditingIndex(index)}
                     key={index}
                     selected={selected === index}

@@ -212,7 +212,11 @@ const GenAIPrototypeWizard = () => {
         </div>
 
         <div
-          className={cn(currentStep !== 3 ? 'hidden' : 'flex h-full w-full')}
+          className={cn(
+            currentStep !== 3
+              ? 'hidden'
+              : 'flex h-full w-full justify-center overflow-y-auto',
+          )}
         >
           <DaStaging isWizard={true} />
         </div>

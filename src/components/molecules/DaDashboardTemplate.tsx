@@ -22,13 +22,13 @@ const DaDashboardTemplate = ({
       <div
         onClick={onClick}
         className={clsx(
-          'cursor-pointer rounded-md border-2 border-da-gray-light hover:border-da-primary-500 overflow-hidden',
+          'cursor-pointer rounded-xl border-2 border-da-gray-light hover:border-da-primary-500 overflow-hidden',
           selected && 'border-da-primary-500',
         )}
       >
         <DaImage
           src={template.image}
-          className="aspect-[16/9] w-full object-cover "
+          className="aspect-[16/9] w-full object-cover hover:scale-110"
         />
       </div>
 
