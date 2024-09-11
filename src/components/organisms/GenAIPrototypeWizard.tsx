@@ -52,9 +52,11 @@ const GenAIPrototypeWizard = () => {
       finish()
     }
 
+
     if (soFarSteps <= currentStep) {
       setSoFarSteps(currentStep + 1)
     }
+    if (currentStep < 3) {
     if (currentStep < 3) {
       setCurrentStep(currentStep + 1)
     }
@@ -72,7 +74,9 @@ const GenAIPrototypeWizard = () => {
     if (wizardGeneratedCode && wizardGeneratedCode.length > 0) {
       updateDisabledStep(2)(false)
       updateDisabledStep(1)(false)
+      setLoading(false)
     } else {
+      updateDisabledStep(2)(true)
       updateDisabledStep(2)(true)
       updateDisabledStep(1)(true)
     }
@@ -249,6 +253,8 @@ const GenAIPrototypeWizard = () => {
           </DaButton>
         )}
         {currentStep < 3 && (
+        )}
+        {currentStep < 3 && (
           <DaButton
             onClick={handleNext}
             className="min-w-20"
@@ -257,6 +263,7 @@ const GenAIPrototypeWizard = () => {
           >
             {currentStep < 3 && 'Next'}
           </DaButton>
+        )}
         )}
       </div>
     </div>

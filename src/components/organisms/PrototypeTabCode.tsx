@@ -2,9 +2,6 @@ import { FC, useEffect, useState, lazy, Suspense } from 'react'
 import { DaButton } from '../atoms/DaButton'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
-import { TbRocket, TbDotsVertical, TbArrowUpRight } from 'react-icons/tb'
-import DaTabItem from '../atoms/DaTabItem'
-import config from '@/configs/config'
 import { shallow } from 'zustand/shallow'
 import { BsStars } from 'react-icons/bs'
 import DaPopup from '../atoms/DaPopup'
@@ -15,9 +12,7 @@ import { PERMISSIONS } from '@/data/permission'
 import { updatePrototypeService } from '@/services/prototype.service'
 
 const CodeEditor = lazy(() => import('../molecules/CodeEditor'))
-const PrototypeTabCodeDashboardCfg = lazy(
-  () => import('./PrototypeTabCodeDashboardCfg'),
-)
+
 const PrototypeTabCodeApiPanel = lazy(
   () => import('./PrototypeTabCodeApiPanel'),
 )
@@ -84,74 +79,71 @@ const PrototypeTabCode: FC = ({}) => {
   }
 
   return (
-    <div className="flex h-[calc(100%-50px)] w-full flex-col">
-      <div className="flex min-h-10 w-full items-center justify-between border-b px-1">
-        {isAuthorized && (
-          <div className="flex">
-            <DaPopup
-              state={[isOpenGenAI, setIsOpenGenAI]}
-              trigger={
-                <DaButton size="sm" variant="outline-nocolor">
-                  <BsStars className="mr-1 text-da-primary-500" />
-                  SDV ProtoPilot
-                </DaButton>
-              }
-            >
-              <div className="flex h-[500px] w-[1000px] flex-col">
-                <DaText variant="title" className="text-da-primary-500">
-                  {' '}
-                  SDV ProtoPilot{' '}
-                </DaText>
-                <div className="rounded-lgtext-sm flex h-full w-full flex-col bg-white">
-                  <Suspense>
-                    <DaGenAI_Python
-                      onCodeChanged={(code) => {
-                        setCode(code)
-                        setIsOpenGenAI(false)
-                      }}
-                    />
-                  </Suspense>
-                </div>
-              </div>
-            </DaPopup>
-          </div>
-        )}
-
-        <div className="flex h-full w-fit justify-end">
-          <DaTabItem
-            small
-            active={activeTab == 'api'}
-            onClick={() => setActiveTab('api')}
-          >
-            Signals
-          </DaTabItem>
-        </div>
-      </div>
-
-      <div className="flex h-full w-full justify-between">
-        <div className="flex h-full w-1/2 flex-col border-r">
+    <div className="flex h-[calc(100%-0px)] bg-da-g w-full pb-2 px-2 gap-2 bg-da-gray-light">
+      <div className="flex h-full flex-[2] min-w-[360px] flex-col bg-da-white rounded-md">
+        {activeTab == 'api' && (
           <Suspense>
-            <CodeEditor
-              code={code || ''}
-              setCode={setCode}
-              editable={isAuthorized}
-              language="python"
-              onBlur={saveCodeToDb}
-            />
+            <PrototypeTabCodeApiPanel code={code || ''} />
           </Suspense>
-        </div>
-        <div className="flex h-full w-1/2 flex-col">
-          {activeTab == 'api' && (
-            <Suspense>
-              <PrototypeTabCodeApiPanel code={code || ''} />
-            </Suspense>
-          )}
-          {/* {activeTab == 'dashboard' && (
+        )}
+        {/* {activeTab == 'dashboard' && (
             <Suspense>
               <PrototypeTabCodeDashboardCfg />
             </Suspense>
           )} */}
+      </div>
+      <div className="flex h-full flex-[3] min-w-0 flex-col border-r bg-da-white rounded-md">
+        <div className="flex min-h-12 w-full items-center justify-between">
+          {isAuthorized && (
+            <div className="flex mx-2">
+              <DaPopup
+                state={[isOpenGenAI, setIsOpenGenAI]}
+                trigger={
+                  <DaButton size="sm">
+                    <BsStars className="mr-1" />
+                    SDV ProtoPilot
+                  </DaButton>
+                }
+              >
+                <div className="flex h-[500px] w-[1000px] flex-col">
+                  <DaText variant="title" className="text-da-primary-500">
+                    {' '}
+                    SDV ProtoPilot{' '}
+                  </DaText>
+                  <div className="rounded-lgtext-sm flex h-full w-full flex-col bg-white">
+                    <Suspense>
+                      <DaGenAI_Python
+                        onCodeChanged={(code) => {
+                          setCode(code)
+                          setIsOpenGenAI(false)
+                        }}
+                      />
+                    </Suspense>
+                  </div>
+                </div>
+              </DaPopup>
+            </div>
+          )}
+
+          {/* <div className="flex h-full w-fit justify-end">
+              <DaTabItem
+                small
+                active={activeTab == 'api'}
+                onClick={() => setActiveTab('api')}
+              >
+                Signals
+              </DaTabItem>
+            </div> */}
         </div>
+        <Suspense>
+          <CodeEditor
+            code={code || ''}
+            setCode={setCode}
+            editable={isAuthorized}
+            language="python"
+            onBlur={saveCodeToDb}
+          />
+        </Suspense>
       </div>
     </div>
   )

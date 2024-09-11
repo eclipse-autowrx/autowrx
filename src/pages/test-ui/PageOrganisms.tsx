@@ -55,7 +55,8 @@ import DaGenAI_SimulateDashboard from '@/components/molecules/genAI/DaGenAI_Simu
 // }
 
 const PageOrganisms = () => {
-  return <DaGenAI_SimulateDashboard />
+  const [open, setOpen] = useState(true)
+  return <GenAIPrototypeWizard />
 }
 
 export default PageOrganisms

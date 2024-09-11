@@ -1,7 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { DaText } from '@/components/atoms/DaText'
-import { DaCardIntro } from '@/components/molecules/DaCardIntro'
 import DaImportFile from '@/components/atoms/DaImportFile'
 import { DaButton } from '@/components/atoms/DaButton'
 import { DaImage } from '@/components/atoms/DaImage'
@@ -20,7 +18,6 @@ import { uploadFileService } from '@/services/upload.service'
 import { convertJSONToProperty } from '@/lib/vehiclePropertyUtils'
 import {
   TbChevronDown,
-  TbDotsVertical,
   TbDownload,
   TbEdit,
   TbLoader,
@@ -70,26 +67,6 @@ const DaVisibilityControl: React.FC<VisibilityControlProps> = ({
     </div>
   )
 }
-
-const cardIntro = [
-  {
-    title: 'Architecture',
-    content: 'Provide the big picture of the vehicle model',
-    path: 'architecture',
-  },
-  {
-    title: 'Prototype Library',
-    content:
-      'Build up, evaluate and prioritize your portfolio of connected vehicle applications',
-    path: 'library/list',
-  },
-  {
-    title: 'Vehicle Signals',
-    content:
-      'Browse, explore and enhance the catalogue of Connected Vehicle Interfaces',
-    path: 'api',
-  },
-]
 
 const PageModelDetail = () => {
   const [model] = useModelStore((state) => [state.model as Model])
@@ -163,7 +140,7 @@ const PageModelDetail = () => {
   }
 
   return (
-    <div className="flex flex-col w-full h-full container pt-6">
+    <div className="bg-white p-4 h-full rounded-md">
       <div className="flex h-fit pb-3">
         <div className="flex w-full justify-between items-center">
           <div className="flex items-center">
@@ -207,11 +184,10 @@ const PageModelDetail = () => {
           </div>
         </div>
         {isAuthorized && (
-          <>
+          <div className="flex gap-2">
             <DaMenu
               trigger={
                 <DaButton
-                  variant="solid"
                   size="sm"
                   className={cn(
                     'flex w-full space-x-3 pt-1',
@@ -221,7 +197,7 @@ const PageModelDetail = () => {
                   {!isDeleting && !isExporting && (
                     <>
                       Model Action
-                      <TbChevronDown className="w-4 h-4 ml-1" />
+                      <TbChevronDown />
                     </>
                   )}
                   {isDeleting && (
@@ -289,48 +265,12 @@ const PageModelDetail = () => {
             >
               <></>
             </DaConfirmPopup>
-          </>
+          </div>
         )}
       </div>
 
-      <div className="grid grid-cols-12 w-full h-full overflow-auto">
-        <div className="col-span-6 overflow-y-auto h-[99%] pr-2">
-          {cardIntro.map((card, index) => (
-            <Link key={index} to={card.path}>
-              <div className="space-y-3 cursor-pointer">
-                <DaCardIntro
-                  key={index}
-                  title={card.title}
-                  content={card.content}
-                  maxWidth={'1000px'}
-                  className="mb-3"
-                />
-              </div>
-            </Link>
-          ))}
-          {isAuthorized && (
-            <>
-              <DaVehicleProperties
-                key={model.id}
-                category={model.vehicle_category ? model.vehicle_category : ''}
-                properties={convertJSONToProperty(model.property) ?? []}
-                className="mt-3"
-              />
-
-              <DaVisibilityControl
-                initialVisibility={model.visibility}
-                onVisibilityChange={(newVisibility) => {
-                  updateModelService(model.id, {
-                    visibility: newVisibility,
-                  })
-                }}
-              />
-
-              <DaContributorList className="mt-3" />
-            </>
-          )}
-        </div>
-        <div className="col-span-6 flex flex-col overflow-y-auto pl-2">
+      <div className="grid gap-4 grid-cols-12 w-full overflow-auto">
+        <div className="col-span-6 flex flex-col overflow-y-auto">
           <div className="flex w-full relative border rounded-lg overflow-hidden">
             <DaImage
               className="object-contain aspect-video w-full p-4"
@@ -362,6 +302,41 @@ const PageModelDetail = () => {
               </DaImportFile>
             )}
           </div>
+        </div>
+        <div className="col-span-6 overflow-y-auto h-[99%]">
+          {/* {cardIntro.map((card, index) => (
+            <Link key={index} to={card.path}>
+              <div className="space-y-3 cursor-pointer">
+                <DaCardIntro
+                  key={index}
+                  title={card.title}
+                  content={card.content}
+                  maxWidth={'1000px'}
+                  className="mb-3"
+                />
+              </div>
+            </Link>
+          ))} */}
+          {isAuthorized && (
+            <>
+              <DaVehicleProperties
+                key={model.id}
+                category={model.vehicle_category ? model.vehicle_category : ''}
+                properties={convertJSONToProperty(model.property) ?? []}
+              />
+
+              <DaVisibilityControl
+                initialVisibility={model.visibility}
+                onVisibilityChange={(newVisibility) => {
+                  updateModelService(model.id, {
+                    visibility: newVisibility,
+                  })
+                }}
+              />
+
+              <DaContributorList className="mt-3" />
+            </>
+          )}
         </div>
       </div>
     </div>
