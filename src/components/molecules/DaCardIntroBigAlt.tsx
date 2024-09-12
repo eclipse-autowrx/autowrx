@@ -20,7 +20,7 @@ const DaCardIntroBig = ({ title, content, url }: CardIntroProps) => {
       )}
     >
       <div className="flex w-full items-center space-x-2">
-        <DaText variant="title" className="text-da-gray-medium w-full min-h-10">
+        <DaText variant="title" className="text-da-gray-medium w-full min-h-8">
           {title}
         </DaText>
       </div>
