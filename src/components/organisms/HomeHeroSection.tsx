@@ -41,14 +41,20 @@ const HomeHeroSection = ({
             <div className="lg:w-[50%] lg:px-24 px-12 z-30">
               <div className="flex flex-col sm:text-xs">
                 {title && (
-                  <div className="text-2xl lg:text-4xl font-bold text-white">
-                    {title}
-                  </div>
+                  <div
+                    className="text-2xl lg:text-4xl font-bold text-white"
+                    dangerouslySetInnerHTML={{
+                      __html: title,
+                    }}
+                  />
                 )}
                 {description && (
-                  <div className="text-white pt-2 text-sm lg:text-normal">
-                    {description}
-                  </div>
+                  <div
+                    className="text-white pt-2 text-sm lg:text-normal"
+                    dangerouslySetInnerHTML={{
+                      __html: description,
+                    }}
+                  />
                 )}
               </div>
             </div>
