@@ -28,6 +28,7 @@ const GenAIPrototypeWizard = () => {
   const [currentStep, setCurrentStep] = useState(0)
   const [soFarSteps, setSoFarSteps] = useState(0)
   const [disabledStep, setDisabledStep] = useState([true, true, true])
+
   const updateDisabledStep = (step: number) => (disabled: boolean) => {
     setDisabledStep((prev) => {
       prev[step] = disabled
@@ -72,9 +73,13 @@ const GenAIPrototypeWizard = () => {
     updateDisabledStep(0)(false)
   }, [])
 
+  useEffect(() => {
+    console.log('Prototype Data:', prototypeData)
+  }, [prototypeData])
+
   const finish = async () => {
     try {
-      setPrototypeData({ wizardGeneratedCode }) // Make sure wizard code is in prototypeData
+      setPrototypeData({ code: wizardGeneratedCode }) // Make sure wizard code is in prototypeData
       setLoading(true)
 
       let modelId = prototypeData.modelId
@@ -95,7 +100,7 @@ const GenAIPrototypeWizard = () => {
         name: prototypeData.prototypeName,
         state: 'development',
         apis: { VSC: [], VSS: [] },
-        wizardGeneratedCode: prototypeData.wizardGeneratedCode,
+        wizardGeneratedCode: prototypeData.code,
         complexity_level: 3,
         customer_journey: default_journey,
         description: { problem: '', says_who: '', solution: '', status: '' },
@@ -107,20 +112,6 @@ const GenAIPrototypeWizard = () => {
       }
 
       const response = await createPrototypeService(body)
-
-      toast.success(
-        `Prototype "${prototypeData.prototypeName}" created successfully`,
-      )
-
-      addLog({
-        name: `New prototype '${prototypeData.prototypeName}' under model '${response.model_id}'`,
-        description: `Prototype '${prototypeData.prototypeName}' was created by ${currentUser?.email}`,
-        type: 'new-prototype-with-ai',
-        create_by: currentUser?.id!,
-        ref_id: response.id,
-        ref_type: 'prototype',
-        parent_id: modelId,
-      })
 
       resetPrototypeData()
       navigate(`/model/${modelId}/library/prototype/${response.id}/dashboard`)
