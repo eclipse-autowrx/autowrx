@@ -42,7 +42,9 @@ const DaGenAI_Wizard = ({ onCodeGenerated }: DaGenAI_WizardProps) => {
             <div className="flex w-full h-full rounded-md overflow-hidden border">
               <CodeEditor
                 code={genCode}
-                setCode={setGenCode}
+                setCode={(code) => {
+                  onCodeGenerated && onCodeGenerated(code)
+                }}
                 language="python"
                 onBlur={() => {}}
                 editable={true}

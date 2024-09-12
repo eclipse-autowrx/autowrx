@@ -1,11 +1,13 @@
 import create from 'zustand'
+import { parseCvi } from '@/lib/utils'
+import { CVI_v4_1 } from '@/data/CVI_v4.1'
 
 type PrototypeData = {
   prototypeName: string
   modelName?: string
   modelId?: string
   widget_config?: any
-  wizardGeneratedCode?: string
+  code?: string
 }
 
 type WizardGenAIStoreState = {
@@ -15,6 +17,7 @@ type WizardGenAIStoreState = {
   wizardGenerateCodeAction: (() => void) | null
   wizardRunSimulationAction: (() => void) | null
   prototypeData: PrototypeData
+  activeModelApis: any[]
 }
 
 type WizardGenAIStoreActions = {
@@ -27,6 +30,36 @@ type WizardGenAIStoreActions = {
   executeWizardSimulationRun: () => boolean
   setPrototypeData: (data: Partial<PrototypeData>) => void
   resetPrototypeData: () => void
+}
+
+const parseSignalCVI = () => {
+  const cviData = JSON.parse(CVI_v4_1)
+  const parsedApiList = parseCvi(cviData)
+
+  parsedApiList.forEach((item: any) => {
+    if (item.type === 'branch') return
+    let arName = item.name.split('.')
+    if (arName.length > 1) {
+      item.shortName = '.' + arName.slice(1).join('.')
+    } else {
+      item.shortName = item.name // Ensure root elements have their name as shortName
+    }
+  })
+
+  parsedApiList.sort((a, b) => {
+    const aParts = a.name.split('.')
+    const bParts = b.name.split('.')
+
+    for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+      if (aParts[i] !== bParts[i]) {
+        return (aParts[i] || '').localeCompare(bParts[i] || '')
+      }
+    }
+
+    return 0
+  })
+
+  return parsedApiList
 }
 
 const useWizardGenAIStore = create<
@@ -42,8 +75,9 @@ const useWizardGenAIStore = create<
     modelName: '',
     modelId: '',
     widget_config: '',
-    wizardGeneratedCode: '',
+    code: '',
   },
+  activeModelApis: parseSignalCVI(),
 
   setWizardPrompt: (prompt: string) => set({ wizardPrompt: prompt }),
   setWizardLog: (log: string) => set({ wizardLog: log }),
@@ -51,7 +85,7 @@ const useWizardGenAIStore = create<
   setWizardGeneratedCode: (code: string) => {
     set((state) => ({
       wizardGeneratedCode: code,
-      prototypeData: { ...state.prototypeData, wizardGeneratedCode: code },
+      prototypeData: { ...state.prototypeData, code: code },
     }))
   },
 
@@ -96,7 +130,7 @@ const useWizardGenAIStore = create<
         modelName: '',
         modelId: '',
         widget_config: '',
-        wizardGeneratedCode: '',
+        code: '',
       },
     }),
 }))
