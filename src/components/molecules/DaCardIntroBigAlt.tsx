@@ -15,12 +15,12 @@ const DaCardIntroBig = ({ title, content, url }: CardIntroProps) => {
     <Link
       to={url || '#'}
       className={clsx(
-        'flex flex-col min-h-28 w-full bg-da-white rounded-lg  justify-center  border p-4 select-none',
+        'flex flex-col min-h-28 w-full bg-da-white rounded-lg border p-4 select-none',
         url ? 'hover:border-da-primary-300' : 'pointer-events-none',
       )}
     >
       <div className="flex w-full items-center space-x-2">
-        <DaText variant="title" className="text-da-gray-medium w-full">
+        <DaText variant="title" className="text-da-gray-medium w-full min-h-10">
           {title}
         </DaText>
       </div>
