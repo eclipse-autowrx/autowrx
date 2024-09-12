@@ -10,6 +10,8 @@ import useCurrentModel from '@/hooks/useCurrentModel'
 import DaApisWatch from '../dashboard/DaApisWatch'
 import DaMockManager from '../dashboard/DaMockManager'
 import useWizardGenAIStore from '@/stores/genAIWizardStore'
+import useRuntimeStore from '@/stores/runtimeStore'
+import { shallow } from 'zustand/shallow'
 
 const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
 
@@ -40,6 +42,8 @@ const DaGenAI_RuntimeControl = () => {
 
   const [mockSignals, setMockSignals] = useState<any[]>([])
 
+  const { apisValue } = useRuntimeStore()
+
   const {
     prototypeData,
     setPrototypeData,
@@ -52,7 +56,7 @@ const DaGenAI_RuntimeControl = () => {
 
   useEffect(() => {
     if (prototypeData) {
-      console.log('prototypeData', prototypeData)
+      // console.log('prototypeData', prototypeData)
       setCode(prototypeData.code || '')
     } else {
       setCode('')
@@ -79,7 +83,7 @@ const DaGenAI_RuntimeControl = () => {
   }
 
   const handleRun = () => {
-    console.log('Running simulation with code', code)
+    // console.log('Running simulation with code', code)
     setWizardSimulating(true)
     setActiveTab('output')
     setLog('')
@@ -92,7 +96,7 @@ const DaGenAI_RuntimeControl = () => {
   }
 
   const handleStop = () => {
-    console.log('Stopping simulation')
+    // console.log('Stopping simulation')
     setWizardSimulating(false)
     if (runTimeRef.current) {
       runTimeRef.current?.stopApp()
@@ -100,12 +104,28 @@ const DaGenAI_RuntimeControl = () => {
     if (runTimeRef1.current) {
       runTimeRef1.current?.stopApp()
     }
+    clearApisValue(apisValue)
   }
 
   useEffect(() => {
     registerWizardSimulationRun(handleRun)
     registerWizardSimulationStop(handleStop)
   }, [])
+
+  const clearApisValue = (apisValue: any) => {
+    // Iterate over the keys in apisValue and reset based on value type
+    const newValue: any = {}
+    Object.keys(apisValue).forEach((key) => {
+      if (typeof apisValue[key] === 'number') {
+        newValue[key] = 0 // Set number values to 0
+      } else if (typeof apisValue[key] === 'boolean') {
+        newValue[key] = false // Set boolean values to false
+      } else {
+        newValue[key] = apisValue[key] // Keep other types as is (or modify as needed)
+      }
+    })
+    return newValue
+  }
 
   return (
     <div
@@ -161,6 +181,7 @@ const DaGenAI_RuntimeControl = () => {
             {activeTab == 'apis' && (
               <DaApisWatch
                 requestWriteSignalValue={(obj: any) => {
+                  console.log('writeSignalsValue', obj)
                   if (runTimeRef.current) {
                     runTimeRef.current?.writeSignalsValue(obj)
                   }
