@@ -3,6 +3,7 @@ import LoadingLineAnimation from './DaGenAI_LoadingLineAnimation.tsx'
 import DaGenAI_Base from './DaGenAI_Base.tsx'
 import { cn } from '@/lib/utils.ts'
 import CodeEditor from '../CodeEditor.tsx'
+import useWizardGenAIStore from '@/stores/genAIWizardStore.ts'
 
 type DaGenAI_WizardProps = {
   onCodeGenerated?: (code: string) => void
@@ -13,6 +14,7 @@ const DaGenAI_Wizard = ({ onCodeGenerated }: DaGenAI_WizardProps) => {
   const [loading, setLoading] = useState<boolean>(false)
   const [genCode, setGenCode] = useState<string>('')
   const [isFinished, setIsFinished] = useState<boolean>(false)
+  const { prototypeData, setPrototypeData } = useWizardGenAIStore()
 
   return (
     <div className="flex h-full w-full rounded">
@@ -44,6 +46,7 @@ const DaGenAI_Wizard = ({ onCodeGenerated }: DaGenAI_WizardProps) => {
                 code={genCode}
                 setCode={(code) => {
                   onCodeGenerated && onCodeGenerated(code)
+                  setPrototypeData({ code })
                 }}
                 language="python"
                 onBlur={() => {}}

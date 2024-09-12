@@ -10,15 +10,15 @@ const DaGenAI_Simulate = ({}: DaGenAI_SimulateProps) => {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const { registerWizardSimulationRun } = useWizardGenAIStore()
 
-  const triggerSimulation = () => {
-    if (iframeRef.current) {
-      iframeRef.current.contentWindow?.postMessage('run-simulate', '*')
-    }
-  }
+  // const triggerSimulation = () => {
+  //   if (iframeRef.current) {
+  //     iframeRef.current.contentWindow?.postMessage('run-simulate', '*')
+  //   }
+  // }
 
-  useEffect(() => {
-    registerWizardSimulationRun(triggerSimulation)
-  }, [])
+  // useEffect(() => {
+  //   registerWizardSimulationRun(triggerSimulation)
+  // }, [])
 
   return (
     <div className="flex h-full w-full flex-col py-2  ">

@@ -13,9 +13,14 @@ type PrototypeData = {
 type WizardGenAIStoreState = {
   wizardPrompt: string
   wizardLog: string
+
   wizardGeneratedCode: string
   wizardGenerateCodeAction: (() => void) | null
+
+  wizardSimulating: boolean
   wizardRunSimulationAction: (() => void) | null
+  wizardStopSimulationAction: (() => void) | null
+
   prototypeData: PrototypeData
   activeModelApis: any[]
 }
@@ -23,11 +28,17 @@ type WizardGenAIStoreState = {
 type WizardGenAIStoreActions = {
   setWizardPrompt: (prompt: string) => void
   setWizardLog: (log: string) => void
+
   setWizardGeneratedCode: (code: string) => void
   registerWizardGenerateCodeAction: (action: () => void) => void
   executeWizardGenerateCodeAction: () => void
+
+  setWizardSimulating: (simulating: boolean) => void
   registerWizardSimulationRun: (action: () => void) => void
+  registerWizardSimulationStop: (action: () => void) => void
   executeWizardSimulationRun: () => boolean
+  executeWizardSimulationStop: () => boolean
+
   setPrototypeData: (data: Partial<PrototypeData>) => void
   resetPrototypeData: () => void
 }
@@ -67,9 +78,14 @@ const useWizardGenAIStore = create<
 >((set, get) => ({
   wizardPrompt: '',
   wizardLog: '',
+
   wizardGeneratedCode: '',
   wizardGenerateCodeAction: null,
+
+  wizardSimulating: false,
   wizardRunSimulationAction: null,
+  wizardStopSimulationAction: null,
+
   prototypeData: {
     prototypeName: '',
     modelName: '',
@@ -78,6 +94,9 @@ const useWizardGenAIStore = create<
     code: '',
   },
   activeModelApis: parseSignalCVI(),
+
+  setWizardSimulating: (simulating: boolean) =>
+    set({ wizardSimulating: simulating }),
 
   setWizardPrompt: (prompt: string) => set({ wizardPrompt: prompt }),
   setWizardLog: (log: string) => set({ wizardLog: log }),
@@ -107,6 +126,9 @@ const useWizardGenAIStore = create<
   registerWizardSimulationRun: (action: () => void) =>
     set({ wizardRunSimulationAction: action }),
 
+  registerWizardSimulationStop: (action: () => void) =>
+    set({ wizardStopSimulationAction: action }),
+
   executeWizardSimulationRun: () => {
     const { wizardRunSimulationAction } = get()
     if (wizardRunSimulationAction) {
@@ -114,6 +136,17 @@ const useWizardGenAIStore = create<
       return true
     } else {
       console.warn('Wizard simulation run action is not registered')
+      return false
+    }
+  },
+
+  executeWizardSimulationStop: () => {
+    const { wizardStopSimulationAction } = get()
+    if (wizardStopSimulationAction) {
+      wizardStopSimulationAction()
+      return true
+    } else {
+      console.warn('Wizard simulation stop action is not registered')
       return false
     }
   },

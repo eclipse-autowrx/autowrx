@@ -39,7 +39,9 @@ const GenAIPrototypeWizard = () => {
   const [isGeneratedFlag, setIsGeneratedFlag] = useState(false)
   const {
     executeWizardGenerateCodeAction,
+    wizardSimulating,
     executeWizardSimulationRun,
+    executeWizardSimulationStop,
     wizardPrompt,
     wizardGeneratedCode,
     setWizardGeneratedCode,
@@ -56,7 +58,7 @@ const GenAIPrototypeWizard = () => {
 
   // Updating code generation and steps logic
   useEffect(() => {
-    console.log('wizardGeneratedCode:', wizardGeneratedCode)
+    // console.log('wizardGeneratedCode:', wizardGeneratedCode)
     if (wizardGeneratedCode && wizardGeneratedCode.length > 0) {
       updateDisabledStep(2)(false)
       updateDisabledStep(1)(false)
@@ -73,9 +75,9 @@ const GenAIPrototypeWizard = () => {
     updateDisabledStep(0)(false)
   }, [])
 
-  useEffect(() => {
-    console.log('Prototype Data:', prototypeData)
-  }, [prototypeData])
+  // useEffect(() => {
+  //   console.log('Prototype Data:', prototypeData)
+  // }, [prototypeData])
 
   const finish = async () => {
     try {
@@ -239,12 +241,14 @@ const GenAIPrototypeWizard = () => {
         {currentStep === 2 && (
           <DaButton
             onClick={() => {
-              executeWizardSimulationRun()
+              wizardSimulating
+                ? executeWizardSimulationStop()
+                : executeWizardSimulationRun()
             }}
             className="w-[300px]"
             variant="solid"
           >
-            Run Simulate
+            {wizardSimulating ? 'Stop Simulate' : 'Run Simulate'}
           </DaButton>
         )}
         {currentStep < 3 && (
