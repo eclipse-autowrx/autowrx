@@ -136,13 +136,16 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     }
 
     const stopApp = () => {
+      if (!socketio) {
+        console.error('SocketIO is not initialized.')
+        return
+      }
       socketio.emit('messageToKit', {
         cmd: 'stop_python_app',
         to_kit_id: activeRtId,
         data: {},
       })
     }
-
     const deploy = () => {
       if (prototype && prototype.id && currentUser) {
         socketio.emit('messageToKit', {
@@ -167,6 +170,10 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     }
 
     const writeSignalsValue = (obj: any) => {
+      if (!socketio) {
+        console.error('SocketIO is not initialized.')
+        return
+      }
       socketio.emit('messageToKit', {
         cmd: 'write_signals_value',
         to_kit_id: activeRtId,

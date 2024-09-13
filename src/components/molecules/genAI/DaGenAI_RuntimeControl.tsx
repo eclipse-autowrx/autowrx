@@ -11,7 +11,6 @@ import DaApisWatch from '../dashboard/DaApisWatch'
 import DaMockManager from '../dashboard/DaMockManager'
 import useWizardGenAIStore from '@/stores/genAIWizardStore'
 import useRuntimeStore from '@/stores/runtimeStore'
-import { shallow } from 'zustand/shallow'
 
 const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
 
@@ -30,7 +29,6 @@ const DaGenAI_RuntimeControl = () => {
   const [isExpand, setIsExpand] = useState(false)
   const [activeRtId, setActiveRtId] = useState<string | undefined>('')
   const [log, setLog] = useState<string>('')
-  const runTimeRef = useRef<any>()
   const runTimeRef1 = useRef<any>()
 
   const [activeTab, setActiveTab] = useState<string>('output')
@@ -83,48 +81,45 @@ const DaGenAI_RuntimeControl = () => {
   }
 
   const handleRun = () => {
-    // console.log('Running simulation with code', code)
+    console.log('Running simulation with code', code)
     setWizardSimulating(true)
-    setActiveTab('output')
     setLog('')
-    if (runTimeRef.current) {
-      runTimeRef.current?.runApp(code || '')
-    }
     if (runTimeRef1.current) {
       runTimeRef1.current?.runApp(code || '')
     }
   }
 
   const handleStop = () => {
-    // console.log('Stopping simulation')
+    console.log('Stopping simulation')
     setWizardSimulating(false)
-    if (runTimeRef.current) {
-      runTimeRef.current?.stopApp()
-    }
+    clearApisValue(apisValue)
     if (runTimeRef1.current) {
       runTimeRef1.current?.stopApp()
     }
-    clearApisValue(apisValue)
   }
 
   useEffect(() => {
     registerWizardSimulationRun(handleRun)
     registerWizardSimulationStop(handleStop)
-  }, [])
+  }, [prototypeData])
 
   const clearApisValue = (apisValue: any) => {
-    // Iterate over the keys in apisValue and reset based on value type
-    const newValue: any = {}
+    // Iterate over the keys in apisValue, set the new values, and write them at the same time
     Object.keys(apisValue).forEach((key) => {
+      let newValue
       if (typeof apisValue[key] === 'number') {
-        newValue[key] = 0 // Set number values to 0
+        newValue = 0 // Set number values to 0
       } else if (typeof apisValue[key] === 'boolean') {
-        newValue[key] = false // Set boolean values to false
+        newValue = false // Set boolean values to false
       } else {
-        newValue[key] = apisValue[key] // Keep other types as is (or modify as needed)
+        newValue = apisValue[key] // Keep other types as is (or modify as needed)
+      }
+
+      const obj = { [key]: newValue } // Construct a key-value pair
+      if (runTimeRef1.current) {
+        runTimeRef1.current?.writeSignalsValue(obj)
       }
     })
-    return newValue
   }
 
   return (
@@ -143,7 +138,7 @@ const DaGenAI_RuntimeControl = () => {
           onAppExit={() => {
             setWizardSimulating(false)
           }}
-          preferRuntime="RunTime-test-only-34"
+          preferRuntime="RunTime-VSS4-02-20"
         />
       </div>
 
@@ -182,9 +177,6 @@ const DaGenAI_RuntimeControl = () => {
               <DaApisWatch
                 requestWriteSignalValue={(obj: any) => {
                   console.log('writeSignalsValue', obj)
-                  if (runTimeRef.current) {
-                    runTimeRef.current?.writeSignalsValue(obj)
-                  }
                   if (runTimeRef1.current) {
                     runTimeRef1.current?.writeSignalsValue(obj)
                   }
@@ -206,17 +198,11 @@ const DaGenAI_RuntimeControl = () => {
               <DaMockManager
                 mockSignals={mockSignals}
                 loadMockSignalsFromRt={() => {
-                  if (runTimeRef.current) {
-                    runTimeRef.current?.loadMockSignals()
-                  }
                   if (runTimeRef1.current) {
                     runTimeRef1.current?.loadMockSignals()
                   }
                 }}
                 sendMockSignalsToRt={(signals: any[]) => {
-                  if (runTimeRef.current) {
-                    runTimeRef.current?.setMockSignals(signals)
-                  }
                   if (runTimeRef1.current) {
                     runTimeRef1.current?.setMockSignals(signals)
                   }

@@ -24,7 +24,7 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
   useEffect(() => {
     let widgetItems = []
     // console.log('prototypeData', prototypeData)
-    if (prototypeData?.widget_config) {
+    if (prototypeData.widget_config && prototypeData.widget_config.length > 0) {
       try {
         let dashboard_config = JSON.parse(prototypeData.widget_config)
         if (Array.isArray(dashboard_config)) {
@@ -40,6 +40,9 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
       } catch (err) {
         console.error('Error parsing widget config', err)
       }
+    } else {
+      // Set as default template if no widget_config
+      setPrototypeData({ widget_config: dashboard_templates[0].config })
     }
     //
     processWidgetItems(widgetItems)

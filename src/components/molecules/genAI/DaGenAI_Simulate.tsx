@@ -6,9 +6,8 @@ import DaGenAI_RuntimeControl from './DaGenAI_RuntimeControl'
 type DaGenAI_SimulateProps = {}
 
 const DaGenAI_Simulate = ({}: DaGenAI_SimulateProps) => {
-  const [activeTab, setActiveTab] = useState<'analyze' | 'simulate'>('analyze')
   const iframeRef = useRef<HTMLIFrameElement>(null)
-  const { registerWizardSimulationRun } = useWizardGenAIStore()
+  const { registerWizardSimulationRun, prototypeData } = useWizardGenAIStore()
 
   // const triggerSimulation = () => {
   //   if (iframeRef.current) {
