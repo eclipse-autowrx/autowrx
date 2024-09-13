@@ -14,7 +14,6 @@ type WizardGenAIStoreState = {
   wizardPrompt: string
   wizardLog: string
 
-  wizardGeneratedCode: string
   wizardGenerateCodeAction: (() => void) | null
 
   wizardSimulating: boolean
@@ -40,7 +39,7 @@ type WizardGenAIStoreActions = {
   executeWizardSimulationStop: () => boolean
 
   setPrototypeData: (data: Partial<PrototypeData>) => void
-  resetPrototypeData: () => void
+  resetWizardStore: () => void
 }
 
 const parseSignalCVI = () => {
@@ -112,7 +111,6 @@ const useWizardGenAIStore = create<
     set({ wizardGenerateCodeAction: action }),
 
   executeWizardGenerateCodeAction: () => {
-    set({ wizardGeneratedCode: '' })
     const { wizardGenerateCodeAction } = get()
     if (wizardGenerateCodeAction) {
       wizardGenerateCodeAction()
@@ -156,8 +154,12 @@ const useWizardGenAIStore = create<
       prototypeData: { ...state.prototypeData, ...data },
     })),
 
-  resetPrototypeData: () =>
+  resetWizardStore: () => {
+    const { executeWizardSimulationStop } = get()
+    executeWizardSimulationStop()
     set({
+      wizardPrompt: '',
+      wizardLog: '',
       prototypeData: {
         prototypeName: '',
         modelName: '',
@@ -165,7 +167,8 @@ const useWizardGenAIStore = create<
         widget_config: '',
         code: '',
       },
-    }),
+    })
+  },
 }))
 
 export default useWizardGenAIStore

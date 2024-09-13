@@ -43,45 +43,39 @@ const GenAIPrototypeWizard = () => {
     executeWizardSimulationRun,
     executeWizardSimulationStop,
     wizardPrompt,
-    wizardGeneratedCode,
     setWizardGeneratedCode,
     prototypeData,
     setPrototypeData,
-    resetPrototypeData,
+    resetWizardStore: resetWizard,
   } = useWizardGenAIStore()
-
-  const handleBack = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1)
-    }
-  }
 
   // Updating code generation and steps logic
   useEffect(() => {
     // console.log('wizardGeneratedCode:', wizardGeneratedCode)
-    if (wizardGeneratedCode && wizardGeneratedCode.length > 0) {
+    if (prototypeData.code && prototypeData.code.length > 0) {
       updateDisabledStep(2)(false)
       updateDisabledStep(1)(false)
       setLoading(false)
     } else {
       updateDisabledStep(2)(true)
-      updateDisabledStep(2)(true)
       updateDisabledStep(1)(true)
     }
-  }, [wizardGeneratedCode])
+  }, [prototypeData.code])
 
   useEffect(() => {
-    resetPrototypeData() // Reset prototype state on mount
+    resetWizard() // Reset prototype state on mount
     updateDisabledStep(0)(false)
   }, [])
 
-  // useEffect(() => {
-  //   console.log('Prototype Data:', prototypeData)
-  // }, [prototypeData])
+  useEffect(() => {
+    if (currentStep === 0) {
+      console.log('resetWizard')
+      resetWizard()
+    }
+  }, [currentStep])
 
   const finish = async () => {
     try {
-      setPrototypeData({ code: wizardGeneratedCode }) // Make sure wizard code is in prototypeData
       setLoading(true)
 
       let modelId = prototypeData.modelId
@@ -115,7 +109,7 @@ const GenAIPrototypeWizard = () => {
 
       const response = await createPrototypeService(body)
 
-      resetPrototypeData()
+      resetWizard()
       navigate(`/model/${modelId}/library/prototype/${response.id}/dashboard`)
     } catch (error) {
       if (isAxiosError(error)) {
@@ -126,6 +120,12 @@ const GenAIPrototypeWizard = () => {
       toast.error('Error creating the prototype')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1)
     }
   }
 
@@ -233,7 +233,8 @@ const GenAIPrototypeWizard = () => {
             variant="solid"
             disabled={wizardPrompt.length === 0 || loading}
           >
-            {wizardGeneratedCode.length > 0 || isGeneratedFlag
+            {(prototypeData.code && prototypeData.code.length > 0) ||
+            isGeneratedFlag
               ? 'Regenerate'
               : 'Generate My Vehicle Application'}
           </DaButton>

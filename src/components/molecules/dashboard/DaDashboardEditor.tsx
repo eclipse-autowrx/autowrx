@@ -56,7 +56,7 @@ const DaDashboardEditor = ({
 
   // This useEffect used to load the existed widget configuration
   useEffect(() => {
-    console.log('entireWidgetConfig', entireWidgetConfig)
+    // console.log('entireWidgetConfig', entireWidgetConfig)
     if (!entireWidgetConfig) return
     try {
       const config = JSON.parse(entireWidgetConfig)
