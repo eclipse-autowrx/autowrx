@@ -60,6 +60,8 @@ const DaRuntimeControl: FC = ({}) => {
   const [usedApis, setUsedApis] = useState<any[]>([])
   const [code, setCode] = useState<string>('')
 
+  const [isAdvantageMode, setIsAdvantageMode] = useState<number>(-5)
+
   const [mockSignals, setMockSignals] = useState<any[]>([])
   const [customKitServer, setCustomKitServer] = useState<string>(
     localStorage.getItem('customKitServer') || '',
@@ -70,6 +72,29 @@ const DaRuntimeControl: FC = ({}) => {
   const [isShowEditKitServer, setIsShowEditKitServer] = useState<boolean>(false)
 
   // const [showStaging, setShowStaging] = useState<boolean>(false)
+
+  const handleMessageListenter = (e:any) => {
+    console.log('window on message', e)
+    if (!e.data) return
+    console.log(`onMessage`, e.data)
+    try {
+      let payload = JSON.parse(e.data)
+      if(payload.cmd == 'set-api-value' && payload.api) {
+        let obj = {} as any
+        obj[`${payload.api}`] = payload.value
+        writeSignalValue(obj)
+      }
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  useEffect(() => {
+    window.addEventListener('message', handleMessageListenter)
+    return () => {
+      window.removeEventListener('message', handleMessageListenter)
+    }
+  }, [])
 
   useEffect(() => {
     localStorage.setItem('customKitServer', customKitServer.trim())
@@ -103,12 +128,15 @@ const DaRuntimeControl: FC = ({}) => {
     setLog((log) => log + content)
   }
 
-  const saveCodeToDb = () => {
-    if (code === savedCode) return
+  const writeSignalValue = (obj: any) => {
+    if (!obj) return
 
-    let newPrototype = JSON.parse(JSON.stringify(prototype))
-    newPrototype.code = code || ''
-    setActivePrototype(newPrototype)
+    if (runTimeRef.current) {
+      runTimeRef.current?.writeSignalsValue(obj)
+    }
+    if (runTimeRef1.current) {
+      runTimeRef1.current?.writeSignalsValue(obj)
+    }
   }
 
   // useEffect(() => {
@@ -299,12 +327,7 @@ const DaRuntimeControl: FC = ({}) => {
             {activeTab == 'apis' && (
               <DaApisWatch
                 requestWriteSignalValue={(obj: any) => {
-                  if (runTimeRef.current) {
-                    runTimeRef.current?.writeSignalsValue(obj)
-                  }
-                  if (runTimeRef1.current) {
-                    runTimeRef1.current?.writeSignalsValue(obj)
-                  }
+                  writeSignalValue(obj)
                 }}
               />
             )}
@@ -359,6 +382,13 @@ const DaRuntimeControl: FC = ({}) => {
           )}
         </DaButton>
 
+        <div
+          className="ml-4 w-10 h-full flex items-center justify-center cursor-pointer hover:bg-slate-400"
+          onClick={() => {
+            setIsAdvantageMode((v) => v + 1)
+          }}
+        ></div>
+
         {isExpand && (
           <>
             <div className="grow"></div>
@@ -378,15 +408,18 @@ const DaRuntimeControl: FC = ({}) => {
             >
               Signals Watch
             </div>
+
+            {isAdvantageMode > 0 && (
+              <div
+                className={`da-label-small flex cursor-pointer items-center px-4 py-0.5 text-da-white hover:bg-da-gray-medium ${activeTab == 'mock' && 'border-b-2 border-da-white'}`}
+                onClick={() => {
+                  setActiveTab('mock')
+                }}
+              >
+                Mock Services
+              </div>
+            )}
             {/* <div
-              className={`da-label-small flex cursor-pointer items-center px-4 py-0.5 text-da-white hover:bg-da-gray-medium ${activeTab == 'mock' && 'border-b-2 border-da-white'}`}
-              onClick={() => {
-                setActiveTab('mock')
-              }}
-            >
-              Mock Services
-            </div>
-            <div
               className={`da-label-small flex cursor-pointer items-center px-4 py-0.5 text-da-white hover:bg-da-gray-medium ${activeTab == 'code' && 'border-b-2 border-da-white'}`}
               onClick={() => {
                 setActiveTab('code')
