@@ -74,9 +74,9 @@ const DaRuntimeControl: FC = ({}) => {
   // const [showStaging, setShowStaging] = useState<boolean>(false)
 
   const handleMessageListenter = (e:any) => {
-    console.log('window on message', e)
+    // console.log('window on message', e)
     if (!e.data) return
-    console.log(`onMessage`, e.data)
+    // console.log(`onMessage`, e.data)
     try {
       let payload = JSON.parse(e.data)
       if(payload.cmd == 'set-api-value' && payload.api) {
