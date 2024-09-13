@@ -52,6 +52,36 @@ const DaGenAI_RuntimeControl = () => {
     setWizardSimulating,
   } = useWizardGenAIStore()
 
+  const writeSignalValue = (obj: any) => {
+    if (!obj) return
+    if (runTimeRef1.current) {
+      runTimeRef1.current?.writeSignalsValue(obj)
+    }
+  }
+
+  const handleMessageListenter = (e: any) => {
+    // console.log('window on message', e)
+    if (!e.data) return
+    // console.log(`onMessage`, e.data)
+    try {
+      let payload = JSON.parse(e.data)
+      if (payload.cmd == 'set-api-value' && payload.api) {
+        let obj = {} as any
+        obj[`${payload.api}`] = payload.value
+        writeSignalValue(obj)
+      }
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  useEffect(() => {
+    window.addEventListener('message', handleMessageListenter)
+    return () => {
+      window.removeEventListener('message', handleMessageListenter)
+    }
+  }, [])
+
   useEffect(() => {
     if (prototypeData) {
       // console.log('prototypeData', prototypeData)
@@ -116,9 +146,7 @@ const DaGenAI_RuntimeControl = () => {
       }
 
       const obj = { [key]: newValue } // Construct a key-value pair
-      if (runTimeRef1.current) {
-        runTimeRef1.current?.writeSignalsValue(obj)
-      }
+      writeSignalValue(obj)
     })
   }
 
@@ -176,10 +204,7 @@ const DaGenAI_RuntimeControl = () => {
             {activeTab == 'apis' && (
               <DaApisWatch
                 requestWriteSignalValue={(obj: any) => {
-                  console.log('writeSignalsValue', obj)
-                  if (runTimeRef1.current) {
-                    runTimeRef1.current?.writeSignalsValue(obj)
-                  }
+                  writeSignalValue(obj)
                 }}
               />
             )}
