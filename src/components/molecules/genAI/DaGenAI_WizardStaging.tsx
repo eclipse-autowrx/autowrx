@@ -1,11 +1,5 @@
 import DaText from '@/components/atoms/DaText'
-import DaRuntimeConnector from '../DaRuntimeConnector'
 import { useEffect, useState } from 'react'
-import useRuntimeStore from '@/stores/runtimeStore'
-import { shallow } from 'zustand/shallow'
-import useCurrentPrototype from '@/hooks/useCurrentPrototype'
-import useModelStore from '@/stores/modelStore'
-import { Prototype } from '@/types/model.type'
 import { DaButton } from '@/components/atoms/DaButton'
 import DaEditSystemStaging from '../staging/DaEditSystemStaging'
 
@@ -13,7 +7,6 @@ interface DaStagingProps {
   onCancel?: () => void
   loading?: boolean
   onClose?: () => void
-  isWizard?: boolean
 }
 
 const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
@@ -197,7 +190,6 @@ const DaGenAI_WizardStaging = ({
   onCancel,
   loading,
   onClose,
-  isWizard,
 }: DaStagingProps) => {
   const [system, setSystem] = useState<any>(SYSTEM)
   const [targets, setTargets] = useState<any[]>(TARGETS)
@@ -208,14 +200,6 @@ const DaGenAI_WizardStaging = ({
   const MODE_ON_TARGET = 'on_target'
   const [mode, setMode] = useState<string>(MODE_OVERVIEW)
   const [stageDefine, setStageDefine] = useState<any>(STANDARD_STAGE)
-
-  useEffect(() => {
-    console.log('mode:', mode)
-  }, [])
-
-  useEffect(() => {
-    console.log('active target: ', activeTarget)
-  }, [activeTarget])
 
   return (
     <div className="min-h-[400px] w-[90vw] min-w-[400px] max-w-[1200px] ">
@@ -244,12 +228,12 @@ const DaGenAI_WizardStaging = ({
           onCancel={() => {
             setMode(MODE_OVERVIEW)
           }}
+          isWizard={true}
         />
       )}
 
       {mode == MODE_OVERVIEW && (
         <div>
-          {!isWizard && <DaText variant="huge-bold">Staging</DaText>}
           <div className="mt-4 w-full rounded border">
             {/* Title */}
             <div className="flex h-[40px] w-full rounded-t bg-gradient-to-r from-da-gradient-from to-da-gradient-to text-da-white">

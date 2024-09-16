@@ -19,8 +19,8 @@ const config: any = {
   sso: 'bosch',
   defaultModelId: '667a9194694a35002f961ba8',
   genAI: {
-    // wizardCover: '/imgs/default_prototype_cover.jpg',
     wizardCover: '/imgs/default_prototype_cover.jpg',
+    wizardPreferRuntime: 'RunTime-VSS4-02-20',
     hideMarketplace: false,
     defaultEndpointUrl: 'https://backend-core-etas.digital.auto/v2/genai',
     sdvApp: [
