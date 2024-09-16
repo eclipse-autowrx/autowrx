@@ -29,3 +29,12 @@ export type RouteConfig = (
 ) & {
   noBreadcrumbs?: boolean
 }
+
+export type Partner = {
+  title: string
+  items: {
+    name: string
+    img: string
+    url: string
+  }[]
+}
