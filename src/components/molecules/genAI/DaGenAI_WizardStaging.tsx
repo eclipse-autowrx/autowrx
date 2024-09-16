@@ -3,14 +3,6 @@ import { useEffect, useState } from 'react'
 import { DaButton } from '@/components/atoms/DaButton'
 import DaEditSystemStaging from '../staging/DaEditSystemStaging'
 
-interface DaStagingProps {
-  onCancel?: () => void
-  loading?: boolean
-  onClose?: () => void
-}
-
-const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
-
 const TARGETS = [
   {
     name: 'Virtual WS',
@@ -68,7 +60,7 @@ const STANDARD_STAGE = {
               children: [
                 {
                   id: '2.1.1.1',
-                  name: 'Sunscription Manager',
+                  name: 'Subscription Manager',
                   version: '1.2.3',
                 },
               ],
@@ -186,11 +178,7 @@ const STANDARD_STAGE = {
   ],
 }
 
-const DaGenAI_WizardStaging = ({
-  onCancel,
-  loading,
-  onClose,
-}: DaStagingProps) => {
+const DaGenAI_WizardStaging = () => {
   const [system, setSystem] = useState<any>(SYSTEM)
   const [targets, setTargets] = useState<any[]>(TARGETS)
   const [activeTarget, setActiveTarget] = useState<any>(null)

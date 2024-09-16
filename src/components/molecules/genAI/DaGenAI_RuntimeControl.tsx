@@ -11,6 +11,7 @@ import DaApisWatch from '../dashboard/DaApisWatch'
 import DaMockManager from '../dashboard/DaMockManager'
 import useWizardGenAIStore from '@/stores/genAIWizardStore'
 import useRuntimeStore from '@/stores/runtimeStore'
+import config from '@/configs/config'
 
 const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
 
@@ -169,7 +170,10 @@ const DaGenAI_RuntimeControl = () => {
           onAppExit={() => {
             setWizardSimulating(false)
           }}
-          preferRuntime="RunTime-VSS4-02-20"
+          preferRuntime={
+            config.genAI.wizardPreferRuntime ?? 'RunTime-VSS4-02-20'
+          }
+          isWizard={true}
         />
       </div>
 
