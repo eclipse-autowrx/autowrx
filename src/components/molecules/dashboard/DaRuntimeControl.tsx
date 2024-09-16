@@ -17,8 +17,6 @@ import DaMockManager from './DaMockManager'
 import { countCodeExecution } from '@/services/prototype.service'
 import { DaInput } from '@/components/atoms/DaInput'
 import { SlOptionsVertical } from 'react-icons/sl'
-import DaPopup from '@/components/atoms/DaPopup'
-import DaStaging from '../staging/DaStaging'
 import { BiSend } from 'react-icons/bi'
 
 const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
@@ -73,13 +71,13 @@ const DaRuntimeControl: FC = ({}) => {
 
   // const [showStaging, setShowStaging] = useState<boolean>(false)
 
-  const handleMessageListenter = (e:any) => {
+  const handleMessageListenter = (e: any) => {
     // console.log('window on message', e)
     if (!e.data) return
     // console.log(`onMessage`, e.data)
     try {
       let payload = JSON.parse(e.data)
-      if(payload.cmd == 'set-api-value' && payload.api) {
+      if (payload.cmd == 'set-api-value' && payload.api) {
         let obj = {} as any
         obj[`${payload.api}`] = payload.value
         writeSignalValue(obj)
@@ -176,7 +174,7 @@ const DaRuntimeControl: FC = ({}) => {
           </DaButton>
         </div>
       )}
-      <div className="px-1 flex">
+      <div className={`px-1 flex ${!isExpand && 'hidden'}`}>
         {/* <DaRuntimeConnector
             kitServerUrl={customKitServer}
             ref={runTimeRef}

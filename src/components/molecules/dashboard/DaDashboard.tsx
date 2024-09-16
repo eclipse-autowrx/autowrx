@@ -18,16 +18,28 @@ import DaText from '@/components/atoms/DaText'
 import { DaButton } from '@/components/atoms/DaButton'
 import { Link } from 'react-router-dom'
 import clsx from 'clsx'
+import { BsArrowsFullscreen } from 'react-icons/bs'
+import { AiOutlineFullscreenExit } from 'react-icons/ai'
 
 const MODE_RUN = 'run'
 const MODE_EDIT = 'edit'
 
-const DaDashboard: FC = ({}) => {
+interface iDaDashboardProps {
+  setFullScreenMode: (mode: boolean) => void
+}
+
+const DaDashboard: FC<iDaDashboardProps> = ({ setFullScreenMode }) => {
+  const [isFullscreen, setIsFullScreen] = useState(false)
   const { data: model } = useCurrentModel()
   const [prototype] = useModelStore((state) => [state.prototype as Prototype])
   const [widgetItems, setWidgetItems] = useState<any>([])
   const [mode, setMode] = useState<string>(MODE_RUN)
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
+
+  useEffect(() => {
+    if (!setFullScreenMode) return
+    setFullScreenMode(isFullscreen)
+  }, [isFullscreen])
 
   useEffect(() => {
     let widgetItems = []
@@ -68,79 +80,102 @@ const DaDashboard: FC = ({}) => {
   }
 
   return (
-    <div className="flex flex-col w-full h-full overflow-y-auto pt-3 bg-white">
-      {isAuthorized && (
-        <div className="flex w-full h-fit items-center justify-start px-2">
-          {mode == MODE_RUN && (
-            <DaButton
-              variant="outline-nocolor"
-              size="sm"
-              onClick={() => {
-                setMode(MODE_EDIT)
-              }}
-            >
-              <MdOutlineDesignServices className="size-5 mr-2" />
-              <div className="font-medium">Design Dashboard </div>
-            </DaButton>
-          )}
+    <div className="w-full h-full relative">
+      <div className="absolute left-3 top-2 px-3 py-1 shadow-xl bg-white rounded-full z-10 flex items-center">
+        {!isFullscreen && (
+          <BsArrowsFullscreen
+            onClick={() => {
+              setIsFullScreen(true)
+            }}
+            size={22}
+            className="ml-2 cursor-pointer hover:opacity-80"
+          />
+        )}
+        {isFullscreen && (
+          <AiOutlineFullscreenExit
+            onClick={() => {
+              setIsFullScreen(false)
+            }}
+            size={24}
+            className="ml-2 cursor-pointer hover:opacity-80"
+          />
+        )}
 
-          {mode == MODE_EDIT && (
-            <div className="flex flex-col w-full h-full px-3">
-              <DaText
-                className="flex h-fit w-full text-da-primary-500"
-                variant="sub-title"
+        {isAuthorized && (
+          <div className="ml-4 flex w-full h-fit items-center justify-start px-2 ">
+            {mode == MODE_RUN && (
+              <DaButton
+                variant="plain"
+                size="sm"
+                onClick={() => {
+                  setMode(MODE_EDIT)
+                }}
               >
-                Dashboard Config
-              </DaText>
-              <div className="flex w-full h-fit mt-3 gap-6">
-                <DaButton
-                  size="sm"
-                  onClick={() => {
-                    setMode(MODE_RUN)
-                  }}
-                  variant="outline-nocolor"
-                >
-                  <TbDeviceFloppy size={20} className="mr-2" />
-                  Save
-                </DaButton>
+                <MdOutlineDesignServices className="size-5 mr-2" />
+                <div className="font-medium">Config</div>
+              </DaButton>
+            )}
 
-                {config?.studioUrl && (
-                  <Link
-                    className="flex da-label-small  gap-2 h-8 items-center justify-center hover:text-da-gray-dark"
-                    target="_blank"
-                    to={config?.studioUrl}
+            {mode == MODE_EDIT && (
+              <div className="flex flex-col w-full h-full">
+                {/* <DaText
+                  className="flex h-fit w-full text-da-primary-500"
+                  variant="sub-title"
+                >
+                  Dashboard Config
+                </DaText> */}
+                <div className="flex w-full h-fit gap-4">
+                  <DaButton
+                    size="sm"
+                    onClick={() => {
+                      setMode(MODE_RUN)
+                    }}
+                    variant="plain"
                   >
-                    Widget Studio
-                    <TbArrowUpRight className="w-5 h-5" />
-                  </Link>
-                )}
-                {config?.widgetMarketPlaceUrl && (
-                  <Link
-                    className="flex da-label-small gap-2 h-8  items-center justify-center hover:text-da-gray-dark"
-                    target="_blank"
-                    to={config?.widgetMarketPlaceUrl}
-                  >
-                    Widget Marketplace
-                    <TbArrowUpRight className="w-5 h-5" />
-                  </Link>
-                )}
+                    <TbDeviceFloppy size={20} className="mr-2" />
+                    Save
+                  </DaButton>
+
+                  {/* {config?.studioUrl && (
+                    <Link
+                      className="flex da-label-small  gap-2 h-8 items-center justify-center hover:text-da-gray-dark"
+                      target="_blank"
+                      to={config?.studioUrl}
+                    >
+                      Studio
+                      <TbArrowUpRight className="w-5 h-5" />
+                    </Link>
+                  )}
+                  {config?.widgetMarketPlaceUrl && (
+                    <Link
+                      className="flex da-label-small gap-2 h-8  items-center justify-center hover:text-da-gray-dark"
+                      target="_blank"
+                      to={config?.widgetMarketPlaceUrl}
+                    >
+                      Marketplace
+                      <TbArrowUpRight className="w-5 h-5" />
+                    </Link>
+                  )} */}
+                </div>
               </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="w-full h-full absolute top-0 left-0 right-0 bottom-0">
+        <div className="flex flex-col w-full h-full pt-1">
+          {mode == MODE_RUN && (
+            <div className="flex w-full h-full px-1 pb-1">
+              <DaDashboardGrid widgetItems={widgetItems} />
+            </div>
+          )}
+          {mode == MODE_EDIT && (
+            <div className="px-4 h-full">
+              <PrototypeTabCodeDashboardCfg />
             </div>
           )}
         </div>
-      )}
-
-      <div className="flex flex-col w-full h-full pt-2 ">
-        {mode == MODE_RUN && (
-          <div className="flex w-full h-full px-2 pb-2">
-            <DaDashboardGrid widgetItems={widgetItems} />
-          </div>
-        )}
-        {mode == MODE_EDIT && (
-          <div className="px-4 h-full">
-            <PrototypeTabCodeDashboardCfg />
-          </div>
-        )}
       </div>
     </div>
   )

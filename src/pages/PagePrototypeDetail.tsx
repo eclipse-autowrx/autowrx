@@ -69,7 +69,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
   }, [prototype, tab, user])
 
   return prototype ? (
-    <div className="flex flex-col w-full h-full relative">
+    <div className={`flex flex-col w-full h-full relative`}>
       <div className="sticky flex top-0 py-0 bg-da-gray-light min-h-10 justify-between">
         <div className="flex w-fit">
           <DaTabItem
