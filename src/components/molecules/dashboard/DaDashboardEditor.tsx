@@ -25,6 +25,7 @@ interface DaDashboardEditorProps {
   onConfigValidChanged?: (isValid: boolean) => void
   editable?: boolean
   hideWidget?: boolean
+  isWizard?: boolean
 }
 
 const DaDashboardEditor = ({
@@ -33,6 +34,7 @@ const DaDashboardEditor = ({
   onConfigValidChanged,
   editable,
   hideWidget,
+  isWizard = false,
 }: DaDashboardEditorProps) => {
   const CELLS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
   const [widgetConfigs, setWidgetConfigs] = useState<WidgetConfig[]>([])
@@ -54,6 +56,7 @@ const DaDashboardEditor = ({
 
   // This useEffect used to load the existed widget configuration
   useEffect(() => {
+    // console.log('entireWidgetConfig', entireWidgetConfig)
     if (!entireWidgetConfig) return
     try {
       const config = JSON.parse(entireWidgetConfig)
@@ -170,6 +173,7 @@ const DaDashboardEditor = ({
     if (selectedWidgetIndex !== null) {
       try {
         const updatedWidgetConfig = JSON.parse(selectedWidget)
+        console.log('updatedWidgetConfig', updatedWidgetConfig)
         if (
           isContinuousRectangle(updatedWidgetConfig.boxes) &&
           !doesOverlap(widgetConfigs, updatedWidgetConfig, selectedWidgetIndex)
@@ -313,9 +317,9 @@ const DaDashboardEditor = ({
   const widgetGrid = () => {
     if (!isConfigValid) {
       return (
-        <div className="col-span-5 flex h-full w-full items-center justify-center">
-          <div className="flex items-center text-da-gray-medium">
-            <TbExclamationMark className="mr-0.5 h-5 w-5 text-da-accent-500" />
+        <div className="col-span-5 row-span-2 flex h-full w-full items-center justify-center">
+          <div className="flex h-full items-center text-da-gray-medium">
+            <TbExclamationMark className="mr-0.5 h-5 w-5 text-red-500" />
             {warningMessage2
               ? warningMessage2
               : 'The configuration is not valid. Please check the configuration.'}
@@ -394,12 +398,12 @@ const DaDashboardEditor = ({
   }
 
   return (
-    <div className="flex w-full flex-col h-full items-center justify-center p-1">
+    <div className="flex w-full flex-col h-fit items-center justify-start p-1 ">
       <div
-        className={`grid w-full grid-cols-5 h-[calc(100%-40px)] grid-rows-2 border border-da-gray-medium ${
+        className={`grid w-full grid-cols-5 h-fit grid-rows-2 border border-da-gray-medium ${
           editable ? 'cursor-pointer' : '!pointer-events-none'
         } `}
-        // style={{ gridTemplateRows: 'repeat(2, 120px)' }}
+        style={{ gridTemplateRows: 'repeat(2, 150px)' }}
       >
         {widgetGrid()}
       </div>
@@ -422,6 +426,7 @@ const DaDashboardEditor = ({
             selectedWidget={selectedWidget}
             setSelectedWidget={setSelectedWidget}
             handleUpdateWidget={handleUpdateWidget}
+            isWizard={isWizard}
           />
 
           <DaWidgetLibrary

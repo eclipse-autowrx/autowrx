@@ -15,11 +15,13 @@ import { toast } from 'react-toastify'
 import useAuthStore from '@/stores/authStore.ts'
 import default_generated_code from '@/data/default_generated_code'
 import { cn } from '@/lib/utils.ts'
-import { TbHistory, TbRotate } from 'react-icons/tb'
+import { TbHistory, TbRotate, TbSettings } from 'react-icons/tb'
 import promptTemplates from '@/data/prompt_templates.ts'
 import { useClickOutside } from '@/lib/utils.ts'
 import useGenAIWizardStore from '@/stores/genAIWizardStore.ts'
-import CodeEditor from '../CodeEditor.tsx'
+import DaPopup from '@/components/atoms/DaPopup.tsx'
+import DaText from '@/components/atoms/DaText.tsx'
+import DaGeneratorSelectPopup from './DaGeneratorSelectPopup.tsx'
 
 type DaGenAI_BaseProps = {
   type: 'GenAI_Python' | 'GenAI_Dashboard' | 'GenAI_Widget'
@@ -43,7 +45,9 @@ const DaGenAI_Base = ({
   isWizard,
 }: DaGenAI_BaseProps) => {
   const [inputPrompt, setInputPrompt] = useState<string>('')
-  const [selectedAddOn, setSelectedAddOn] = useState<AddOn | null>(null)
+  const [selectedAddOn, setSelectedAddOn] = useState<AddOn | undefined>(
+    undefined,
+  )
   const [loading, setLoading] = useState<boolean>(false)
   const [streamOutput, setStreamOutput] = useState<string>('')
   const [showDropdown, setShowDropdown] = useState(false)
@@ -56,9 +60,12 @@ const DaGenAI_Base = ({
   const {
     registerWizardGenerateCodeAction,
     setWizardGeneratedCode,
+    setPrototypeData,
     setWizardPrompt,
     setWizardLog,
   } = useGenAIWizardStore()
+
+  const [openSelectorPopup, setOpenSelectorPopup] = useState(false)
 
   const addOnsArray =
     {
@@ -100,12 +107,13 @@ const DaGenAI_Base = ({
     onFinishChange(false)
     try {
       mockStreamOutput()
-
+      console.log('selectedAddOn at genai base', selectedAddOn)
       if (selectedAddOn.isMock) {
-        await new Promise((resolve) => setTimeout(resolve, 5000))
+        console.log('Mock generating code...')
+        await new Promise((resolve) => setTimeout(resolve, 1000))
         console.log('Mock generated code:', default_generated_code)
-        onCodeGenerated && onCodeGenerated(default_generated_code || '')
-        setWizardGeneratedCode(default_generated_code || '')
+        onCodeGenerated && onCodeGenerated(default_generated_code)
+        setPrototypeData({ code: default_generated_code })
         return
       }
 
@@ -179,11 +187,16 @@ const DaGenAI_Base = ({
 
   useEffect(() => {
     if (isWizard) {
+      setSelectedAddOn(builtInAddOns.find((addOn) => addOn.isMock) || undefined)
+    }
+  }, [isWizard])
+
+  useEffect(() => {
+    if (isWizard) {
       setWizardPrompt(inputPrompt)
-      setSelectedAddOn(builtInAddOns.find((addOn) => addOn.isMock) || null)
       registerWizardGenerateCodeAction(handleGenerate)
     }
-  }, [inputPrompt, isWizard])
+  }, [inputPrompt, selectedAddOn])
 
   useEffect(() => {
     if (isWizard) {
@@ -243,6 +256,14 @@ const DaGenAI_Base = ({
                   <TbRotate className="mr-1 size-4 rotate-[270deg]" />
                   Undo
                 </DaButton>
+                <DaButton
+                  variant="plain"
+                  size="sm"
+                  onClick={() => setOpenSelectorPopup(true)}
+                >
+                  <TbSettings className="mr-1 size-4" />
+                  Settings
+                </DaButton>
               </div>
             </div>
           )}
@@ -265,7 +286,11 @@ const DaGenAI_Base = ({
 
         {!isWizard && (
           <>
-            <DaSectionTitle number={2} title="Select Generator" />
+            <DaSectionTitle
+              number={2}
+              title="Select Generator"
+              className="mt-4"
+            />
             <DaGeneratorSelector
               builtInAddOns={builtInAddOns}
               marketplaceAddOns={
@@ -313,6 +338,24 @@ const DaGenAI_Base = ({
           </>
         )}
       </div>
+
+      {isWizard && (
+        <DaPopup
+          state={[openSelectorPopup, setOpenSelectorPopup]}
+          trigger={<span></span>}
+          className="flex flex-col w-[40vw] lg:w-[30vw] min-w-[600px] max-w-[500px] h-fit max-h-[550px] p-4 bg-da-white"
+        >
+          <DaText variant="sub-title">Select Generator</DaText>
+          <DaGeneratorSelectPopup
+            builtInAddOns={builtInAddOns}
+            marketplaceAddOns={
+              marketplaceAddOns ? (canUseGenAI ? marketplaceAddOns : []) : []
+            }
+            onSelectedGeneratorChange={setSelectedAddOn}
+            onClick={() => setOpenSelectorPopup(false)}
+          />
+        </DaPopup>
+      )}
     </div>
   )
 }

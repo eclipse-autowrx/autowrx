@@ -138,7 +138,6 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
 
   return (
     <div className={`grid h-full w-full grid-cols-5 grid-rows-2`}>
-      {/* <div>renderCell: {renderCell.length}</div> */}
       {renderCell.map((widgetItem, wIndex) => (
         <WidgetItem
           key={wIndex}
@@ -147,31 +146,6 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
           appLog={appLog}
         />
       ))}
-      {/* {CELLS.map((cell) => {
-        const widgetIndex = widgetItems.findIndex((w) =>
-          w.boxes?.includes(cell),
-        )
-        if (widgetIndex !== -1 && !renderedWidgets.has(widgetIndex)) {
-          renderedWidgets.add(widgetIndex)
-          return (
-            <WidgetItem
-              widgetConfig={widgetItems[widgetIndex]}
-              index={widgetIndex}
-              cell={cell}
-              apisValue={apisValue}
-            />
-          )
-        } else if (widgetIndex === -1) {
-          return (
-            <div
-              key={`empty-${cell}`}
-              className={`flex border border-da-gray-light justify-center items-center select-none da-label-huge text-da-gray-medium`}
-            >
-              {cell}
-            </div>
-          )
-        }
-      })} */}
     </div>
   )
 }

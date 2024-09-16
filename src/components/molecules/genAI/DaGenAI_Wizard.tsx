@@ -3,6 +3,7 @@ import LoadingLineAnimation from './DaGenAI_LoadingLineAnimation.tsx'
 import DaGenAI_Base from './DaGenAI_Base.tsx'
 import { cn } from '@/lib/utils.ts'
 import CodeEditor from '../CodeEditor.tsx'
+import useWizardGenAIStore from '@/stores/genAIWizardStore.ts'
 
 type DaGenAI_WizardProps = {
   onCodeGenerated?: (code: string) => void
@@ -13,13 +14,14 @@ const DaGenAI_Wizard = ({ onCodeGenerated }: DaGenAI_WizardProps) => {
   const [loading, setLoading] = useState<boolean>(false)
   const [genCode, setGenCode] = useState<string>('')
   const [isFinished, setIsFinished] = useState<boolean>(false)
+  const { prototypeData, setPrototypeData } = useWizardGenAIStore()
 
   return (
     <div className="flex h-full w-full rounded">
       <DaGenAI_Base
         type="GenAI_Python"
         buttonText="Generate SDV App"
-        placeholderText="Please desribe your vehicle application in human readable language"
+        placeholderText="Please describe your vehicle application in human readable language"
         onCodeGenerated={(code) => {
           setGenCode(code)
           if (onCodeGenerated) {
@@ -42,7 +44,10 @@ const DaGenAI_Wizard = ({ onCodeGenerated }: DaGenAI_WizardProps) => {
             <div className="flex w-full h-full rounded-md overflow-hidden border">
               <CodeEditor
                 code={genCode}
-                setCode={setGenCode}
+                setCode={(code) => {
+                  onCodeGenerated && onCodeGenerated(code)
+                  setPrototypeData({ code })
+                }}
                 language="python"
                 onBlur={() => {}}
                 editable={true}

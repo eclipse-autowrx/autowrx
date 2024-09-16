@@ -8,6 +8,7 @@ import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
 import { shallow } from 'zustand/shallow'
 import { DaCopy } from '@/components/atoms/DaCopy'
+import useWizardGenAIStore from '@/stores/genAIWizardStore'
 
 interface DaDashboardWidgetEditorprototype {
   widgetEditorPopupState: [
@@ -17,6 +18,7 @@ interface DaDashboardWidgetEditorprototype {
   selectedWidget: any
   setSelectedWidget: React.Dispatch<React.SetStateAction<any>>
   handleUpdateWidget: () => void
+  isWizard?: boolean
 }
 
 const DaDashboardWidgetEditor = ({
@@ -24,10 +26,15 @@ const DaDashboardWidgetEditor = ({
   selectedWidget,
   setSelectedWidget,
   handleUpdateWidget,
+  isWizard = false,
 }: DaDashboardWidgetEditorprototype) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const [usedAPIs, setUsedAPIs] = useState<any[]>([])
+  const [localPrototype, setLocalPrototype] = useState<Partial<Prototype>>({
+    code: '',
+  })
+
   const [prototype, setActivePrototype, activeModelApis] = useModelStore(
     (state) => [
       state.prototype as Prototype,
@@ -37,20 +44,34 @@ const DaDashboardWidgetEditor = ({
     shallow,
   )
 
+  const { prototypeData } = useWizardGenAIStore()
+
   useEffect(() => {
-    if (!prototype.code || !activeModelApis || activeModelApis.length === 0) {
+    if (isWizard) {
+      setLocalPrototype(prototypeData)
+    } else {
+      setLocalPrototype(prototype)
+    }
+  }, [prototype, prototypeData, isWizard])
+
+  useEffect(() => {
+    if (
+      !localPrototype.code ||
+      !activeModelApis ||
+      activeModelApis.length === 0
+    ) {
       return
     }
 
     let newUsedAPIsList = [] as string[]
     activeModelApis.forEach((item) => {
-      if (prototype.code.includes(item.shortName)) {
+      if (localPrototype.code && localPrototype.code.includes(item.shortName)) {
         newUsedAPIsList.push(item) // Assuming item is the object you showed
       }
     })
-    //
+
     setUsedAPIs(newUsedAPIsList)
-  }, [prototype.code, activeModelApis])
+  }, [localPrototype.code, activeModelApis])
 
   return (
     <DaPopup

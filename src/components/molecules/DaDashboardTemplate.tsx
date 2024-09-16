@@ -22,17 +22,18 @@ const DaDashboardTemplate = ({
       <div
         onClick={onClick}
         className={clsx(
-          'cursor-pointer rounded-md border',
-          selected && 'outline',
+          'cursor-pointer rounded-xl border-2 border-da-gray-light hover:border-da-primary-500 overflow-hidden',
+          selected && 'border-da-primary-500',
         )}
       >
         <DaImage
           src={template.image}
-          className="aspect-[8/3] w-full object-cover"
+          className="aspect-[16/9] w-full object-cover hover:scale-110"
         />
       </div>
 
       <DaText
+        variant="regular-medium"
         className={clsx(
           'w-full truncate',
           selected ? 'text-da-primary-500' : 'text-da-gray-medium/80',
@@ -41,14 +42,14 @@ const DaDashboardTemplate = ({
         {template.name}
       </DaText>
 
-      <DaButton
+      {/* <DaButton
         onClick={onEditClick}
         className="absolute right-[6px] top-[6px] !hidden !h-9 !w-9 !rounded-full group-hover:!block"
         size="sm"
         variant="secondary"
       >
         <TbEdit className="h-5 w-5" />
-      </DaButton>
+      </DaButton> */}
     </div>
   )
 }
