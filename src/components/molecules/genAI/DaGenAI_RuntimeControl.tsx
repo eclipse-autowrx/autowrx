@@ -131,6 +131,10 @@ const DaGenAI_RuntimeControl = () => {
     registerWizardSimulationStop(handleStop)
   }, [prototypeData])
 
+  useEffect(() => {
+    handleStop()
+  }, [])
+
   const clearApisValue = (apisValue: any) => {
     // Iterate over the keys in apisValue, set the new values, and write them at the same time
     Object.keys(apisValue).forEach((key) => {

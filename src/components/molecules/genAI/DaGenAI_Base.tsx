@@ -254,7 +254,7 @@ const DaGenAI_Base = ({
                   onClick={() => setInputPrompt('')}
                 >
                   <TbRotate className="mr-1 size-4 rotate-[270deg]" />
-                  Undo
+                  Clear
                 </DaButton>
                 <DaButton
                   variant="plain"
@@ -345,7 +345,7 @@ const DaGenAI_Base = ({
           trigger={<span></span>}
           className="flex flex-col w-[40vw] lg:w-[30vw] min-w-[600px] max-w-[500px] h-fit max-h-[550px] p-4 bg-da-white"
         >
-          <DaText variant="sub-title">Select Generator</DaText>
+          <DaText variant="sub-title">Select AI Generator</DaText>
           <DaGeneratorSelectPopup
             builtInAddOns={builtInAddOns}
             marketplaceAddOns={

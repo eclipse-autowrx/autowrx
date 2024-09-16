@@ -18,10 +18,15 @@ class TestApp(VehicleApp):
         await self.Vehicle.Cabin.Seat.Row1.DriverSide.Position.set(0)
 
     async def on_start(self):
+        print ("Reset demo runtime api value to default")
         await self.reset_all()
         await asyncio.sleep(2)
+        print ("Start passenger welcome vehicle app")
+        await asyncio.sleep(1)
+        print ("Open driver side door")
         await self.Vehicle.Cabin.Door.Row1.DriverSide.IsOpen.set(True)
         await asyncio.sleep(3)
+        print ("Adjust driver side seat")
         await self.Vehicle.Cabin.Seat.Row1.DriverSide.Position.set(10)
 
 async def main():
