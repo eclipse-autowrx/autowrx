@@ -9,7 +9,6 @@ import { ModelCreate } from '@/types/model.type'
 import { CVI } from '@/data/CVI'
 import { createModelService } from '@/services/model.service'
 import { createPrototypeService } from '@/services/prototype.service'
-import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
@@ -19,6 +18,7 @@ import DaGenAI_Simulate from '../molecules/genAI/DaGenAI_Simulate'
 import DaStaging from '../molecules/staging/DaStaging'
 import { DaImage } from '../atoms/DaImage'
 import { cn } from '@/lib/utils'
+import config from '@/configs/config'
 
 const GenAIPrototypeWizard = () => {
   const { data: currentUser } = useSelfProfileQuery()
@@ -173,7 +173,10 @@ const GenAIPrototypeWizard = () => {
           className={cn('flex h-full w-full', currentStep !== 0 && 'hidden')}
         >
           <div className="flex flex-1 flex-col">
-            <DaText variant="regular" className="mb-4 max-w-xl text-justify">
+            <DaText
+              variant="sub-title"
+              className="mb-4 max-w-full pr-12 text-justify"
+            >
               Create your prototype entirely with Generative AI. Describe the
               vehicle app idea then let AI handle the vehicle app logic and
               interactive widget creation, allowing you to build, visualize, and
@@ -182,7 +185,9 @@ const GenAIPrototypeWizard = () => {
           </div>
           <div className="flex w-1/2 h-full">
             <DaImage
-              src="/imgs/default_prototype_cover.jpg"
+              src={
+                config.genAI.wizardCover ?? '/imgs/default_prototype_cover.jpg'
+              }
               alt="Prototype Wizard"
               className="h-fit w-full object-contain !overflow-hidden !rounded-lg"
             />
