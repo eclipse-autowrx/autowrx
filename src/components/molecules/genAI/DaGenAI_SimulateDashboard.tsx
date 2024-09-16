@@ -19,7 +19,6 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
   const [mode, setMode] = useState<string>(MODE_RUN)
   const [templates, setTemplates] = useState(cloneDeep(dashboard_templates))
   const [selected, setSelected] = useState<number | null>(0)
-  const [editingIndex, setEditingIndex] = useState<number | null>(null)
 
   useEffect(() => {
     let widgetItems = []
@@ -121,7 +120,6 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
                       setSelected(index)
                       handleDashboardConfigChanged(template.config)
                     }}
-                    onEditClick={() => setEditingIndex(index)}
                     key={index}
                     selected={selected === index}
                     template={template}

@@ -1,6 +1,7 @@
 import create from 'zustand'
 import { parseCvi } from '@/lib/utils'
 import { CVI_v4_1 } from '@/data/CVI_v4.1'
+import dashboard_templates from '@/data/dashboard_templates'
 
 type PrototypeData = {
   prototypeName: string
@@ -89,7 +90,7 @@ const useWizardGenAIStore = create<
     prototypeName: '',
     modelName: '',
     modelId: '',
-    widget_config: '',
+    widget_config: dashboard_templates[0].config,
     code: '',
   },
   activeModelApis: parseSignalCVI(),
