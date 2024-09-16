@@ -63,59 +63,64 @@ const home = [
       },
     ],
   },
-  // {
-  //   type: 'recent',
-  //   title: 'Recent Prototypes',
-  // },
-  // {
-  //   type: 'popular',
-  //   title: 'Popular Prototypes',
-  // },
-  // {
-  //   type: 'partner-list',
-  //   items: [
-  //     {
-  //       title: 'Industry Partners',
-  //       items: [
-  //         {
-  //           name: 'Bosch',
-  //           img: 'https://bewebstudio.digitalauto.tech/data/projects/OezCm7PTy8FT/a/bosch.png',
-  //           url: 'https://www.bosch.com/',
-  //         },
-  //         {
-  //           name: 'Dassault Systems',
-  //           img: 'https://www.3ds.com/assets/3ds-navigation/3DS_corporate-logo_blue.svg',
-  //           url: 'https://www.3ds.com/',
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       title: 'Standards & Open Source',
-  //       items: [
-  //         {
-  //           name: 'COVESA',
-  //           img: 'https://digitalauto.netlify.app/assets/COVESA-b3f64c5b.png',
-  //           url: 'https://www.covesa.global',
-  //         },
-  //         {
-  //           name: 'Eclipse Foundation',
-  //           img: 'https://www.eclipse.org/eclipse.org-common/themes/solstice/public/images/logo/eclipse-foundation-grey-orange.svg',
-  //           url: 'https://www.eclipse.org',
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       title: 'Academic Partners',
-  //       items: [
-  //         {
-  //           name: 'Ferdinand-Steinbeis-Institut',
-  //           img: 'https://digitalauto.netlify.app/assets/FSTI-55cf60eb.png',
-  //           url: 'https://ferdinand-steinbeis-institut.de',
-  //         },
-  //       ],
-  //     },
-  //   ],
-  // },
+  {
+    type: 'news',
+    title: 'News',
+  },
+  {
+    type: 'recent',
+    title: 'Recent Prototypes',
+  },
+  {
+    type: 'popular',
+    title: 'Popular Prototypes',
+    requiredLogin: true,
+  },
+  {
+    type: 'partner-list',
+    items: [
+      {
+        title: 'Industry Partners',
+        items: [
+          {
+            name: 'Bosch',
+            img: 'https://bewebstudio.digitalauto.tech/data/projects/OezCm7PTy8FT/a/bosch.png',
+            url: 'https://www.bosch.com/',
+          },
+          {
+            name: 'Dassault Systems',
+            img: 'https://www.3ds.com/assets/3ds-navigation/3DS_corporate-logo_blue.svg',
+            url: 'https://www.3ds.com/',
+          },
+        ],
+      },
+      {
+        title: 'Standards & Open Source',
+        items: [
+          {
+            name: 'COVESA',
+            img: 'https://digitalauto.netlify.app/assets/COVESA-b3f64c5b.png',
+            url: 'https://www.covesa.global',
+          },
+          {
+            name: 'Eclipse Foundation',
+            img: 'https://www.eclipse.org/eclipse.org-common/themes/solstice/public/images/logo/eclipse-foundation-grey-orange.svg',
+            url: 'https://www.eclipse.org',
+          },
+        ],
+      },
+      {
+        title: 'Academic Partners',
+        items: [
+          {
+            name: 'Ferdinand-Steinbeis-Institut',
+            img: 'https://digitalauto.netlify.app/assets/FSTI-55cf60eb.png',
+            url: 'https://ferdinand-steinbeis-institut.de',
+          },
+        ],
+      },
+    ],
+  },
 ]
 
 export default home

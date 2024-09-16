@@ -35,7 +35,7 @@ const HomeButtonList = ({ items, requiredLogin }: HomeButtonListProps) => {
 
   return (
     meetConditions && (
-      <div className="container flex w-full flex-col justify-center">
+      <div className="container pb-6 flex w-full flex-col justify-center">
         <div className="grid w-full grid-cols-1 gap-12 md:grid-cols-4">
           {items?.map((button, index) => {
             if (button.type === 'new-model')
