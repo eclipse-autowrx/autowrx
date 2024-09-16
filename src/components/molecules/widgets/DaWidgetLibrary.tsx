@@ -76,6 +76,9 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
     }
 
     let currentWidgetConfig = parseWidgetConfig(entireWidgetConfig)
+    if (!Array.isArray(currentWidgetConfig)) {
+      currentWidgetConfig = []
+    }
     currentWidgetConfig.push(newWidgetConfig)
     await updateDashboardCfg(JSON.stringify(currentWidgetConfig, null, 4))
     popupState[1](false)
@@ -147,15 +150,17 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
 
   useEffect(() => {
     let tmp_usageCells: any[] = []
-    const widgetConfig = parseWidgetConfig(entireWidgetConfig) // Array of widget config objects
+    const widgetConfig = parseWidgetConfig(entireWidgetConfig) // Assuming this is an array of widget config objects
 
-    widgetConfig.forEach((widgetConfig: any) => {
-      if (widgetConfig.boxes && Array.isArray(widgetConfig.boxes)) {
-        tmp_usageCells = [...tmp_usageCells, ...widgetConfig.boxes]
-      }
-    })
+    // Ensure widgetConfig is an array before using forEach
+    if (Array.isArray(widgetConfig)) {
+      widgetConfig.forEach((config: any) => {
+        if (config.boxes && Array.isArray(config.boxes)) {
+          tmp_usageCells = [...tmp_usageCells, ...config.boxes]
+        }
+      })
+    }
   }, [entireWidgetConfig])
-
   useEffect(() => {
     if (activeWidget && activeWidget.options) {
       setOptionStr(JSON.stringify(activeWidget.options, null, 4))

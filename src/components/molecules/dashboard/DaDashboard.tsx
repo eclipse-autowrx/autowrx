@@ -31,9 +31,12 @@ const DaDashboard: FC = ({}) => {
 
   useEffect(() => {
     let widgetItems = []
+    // prototype.widget_config: JSON string
     if (prototype?.widget_config) {
+      console.log('prototype.widget_config', prototype.widget_config)
       try {
-        let dashboard_config = JSON.parse(prototype.widget_config)
+        let dashboard_config = JSON.parse(prototype.widget_config) // prototype.dashboard_config: JSON object
+        // console.log('dashboard_config', dashboard_config)
         if (Array.isArray(dashboard_config)) {
           widgetItems = dashboard_config
         } else {
@@ -65,35 +68,37 @@ const DaDashboard: FC = ({}) => {
   }
 
   return (
-    <div className="w-full h-full overflow-y-auto pt-3 items-center justify-center bg-white">
+    <div className="flex flex-col w-full h-full overflow-y-auto pt-3 bg-white">
       {isAuthorized && (
-        <div className="w-full flex-shrink-0 h-[72px] flex items-center justify-start px-2">
+        <div className="flex w-full h-fit items-center justify-start px-2">
           {mode == MODE_RUN && (
-            <div
-              className="mx-2 font-bold cursor-pointer hover:opacity-50 flex items-center"
+            <DaButton
+              variant="outline-nocolor"
+              size="sm"
               onClick={() => {
                 setMode(MODE_EDIT)
               }}
             >
-              <MdOutlineDesignServices size={20} className="mr-2" />
-              Design Dashboard
-            </div>
+              <MdOutlineDesignServices className="size-5 mr-2" />
+              <div className="font-medium">Design Dashboard </div>
+            </DaButton>
           )}
 
           {mode == MODE_EDIT && (
-            <div className="px-3">
+            <div className="flex flex-col w-full h-full px-3">
               <DaText
-                className="text-da-black block w-full"
+                className="flex h-fit w-full text-da-primary-500"
                 variant="sub-title"
               >
                 Dashboard Config
               </DaText>
-              <div className="flex mt-3 gap-6">
+              <div className="flex w-full h-fit mt-3 gap-6">
                 <DaButton
                   size="sm"
                   onClick={() => {
                     setMode(MODE_RUN)
                   }}
+                  variant="outline-nocolor"
                 >
                   <TbDeviceFloppy size={20} className="mr-2" />
                   Save
@@ -101,7 +106,7 @@ const DaDashboard: FC = ({}) => {
 
                 {config?.studioUrl && (
                   <Link
-                    className="da-label-small flex gap-2 h-8 items-center justify-center"
+                    className="flex da-label-small  gap-2 h-8 items-center justify-center hover:text-da-gray-dark"
                     target="_blank"
                     to={config?.studioUrl}
                   >
@@ -111,7 +116,7 @@ const DaDashboard: FC = ({}) => {
                 )}
                 {config?.widgetMarketPlaceUrl && (
                   <Link
-                    className="da-label-small gap-2 h-8 flex items-center justify-center"
+                    className="flex da-label-small gap-2 h-8  items-center justify-center hover:text-da-gray-dark"
                     target="_blank"
                     to={config?.widgetMarketPlaceUrl}
                   >
@@ -125,14 +130,11 @@ const DaDashboard: FC = ({}) => {
         </div>
       )}
 
-      <div
-        className={clsx(
-          'w-full pt-3',
-          mode == MODE_RUN ? 'h-full' : 'h-[calc(100%-100px)] min-h-[280px]',
-        )}
-      >
+      <div className="flex flex-col w-full h-full pt-2 ">
         {mode == MODE_RUN && (
-          <DaDashboardGrid widgetItems={widgetItems}></DaDashboardGrid>
+          <div className="flex w-full h-full px-2 pb-2">
+            <DaDashboardGrid widgetItems={widgetItems} />
+          </div>
         )}
         {mode == MODE_EDIT && (
           <div className="px-4 h-full">

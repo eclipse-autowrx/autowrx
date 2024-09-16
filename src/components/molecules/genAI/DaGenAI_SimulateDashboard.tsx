@@ -1,32 +1,31 @@
 import { FC, useEffect, useState } from 'react'
 import DaDashboardGrid from '../dashboard/DaDashboardGrid'
-import useModelStore from '@/stores/modelStore'
-import { Prototype } from '@/types/model.type'
-import PrototypeTabCodeDashboardCfg from '@/components/organisms/PrototypeTabCodeDashboardCfg'
-import usePermissionHook from '@/hooks/usePermissionHook'
-import { PERMISSIONS } from '@/data/permission'
-import useCurrentModel from '@/hooks/useCurrentModel'
 import { MdOutlineDesignServices } from 'react-icons/md'
-import { IoSaveOutline } from 'react-icons/io5'
-import config from '@/configs/config'
-import DaTabItem from '@/components/atoms/DaTabItem'
-import { TbRocket, TbDotsVertical, TbArrowUpRight } from 'react-icons/tb'
+import { TbDeviceFloppy } from 'react-icons/tb'
+import useWizardGenAIStore from '@/stores/genAIWizardStore'
+import DaDashboardEditor from '../dashboard/DaDashboardEditor'
+import { DaButton } from '@/components/atoms/DaButton'
+import DaDashboardTemplate from '../DaDashboardTemplate'
+import dashboard_templates from '@/data/dashboard_templates'
+import { cloneDeep } from 'lodash'
+import DaText from '@/components/atoms/DaText'
 
 const MODE_RUN = 'run'
 const MODE_EDIT = 'edit'
 
 const DaGenAI_SimulateDashboard: FC = ({}) => {
-  const { data: model } = useCurrentModel()
-  const [prototype] = useModelStore((state) => [state.prototype as Prototype])
+  const { prototypeData, setPrototypeData } = useWizardGenAIStore()
   const [widgetItems, setWidgetItems] = useState<any>([])
   const [mode, setMode] = useState<string>(MODE_RUN)
-  const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
+  const [templates, setTemplates] = useState(cloneDeep(dashboard_templates))
+  const [selected, setSelected] = useState<number | null>(0)
 
   useEffect(() => {
     let widgetItems = []
-    if (prototype?.widget_config) {
+    // console.log('prototypeData', prototypeData)
+    if (prototypeData.widget_config && prototypeData.widget_config.length > 0) {
       try {
-        let dashboard_config = JSON.parse(prototype.widget_config)
+        let dashboard_config = JSON.parse(prototypeData.widget_config)
         if (Array.isArray(dashboard_config)) {
           widgetItems = dashboard_config
         } else {
@@ -40,11 +39,14 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
       } catch (err) {
         console.error('Error parsing widget config', err)
       }
+    } else {
+      // Set as default template if no widget_config
+      setPrototypeData({ widget_config: dashboard_templates[0].config })
     }
     //
     processWidgetItems(widgetItems)
     setWidgetItems(widgetItems)
-  }, [prototype?.widget_config])
+  }, [prototypeData?.widget_config])
 
   const processWidgetItems = (widgetItems: any[]) => {
     if (!widgetItems) return
@@ -57,56 +59,76 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
     })
   }
 
+  const handleDashboardConfigChanged = (config: any) => {
+    let parsedConfig = JSON.parse(config) // Parse the incoming config string to object
+
+    // Check if the parsed config already has the correct format
+    const widget_config =
+      parsedConfig.autorun !== undefined && Array.isArray(parsedConfig.widgets)
+        ? parsedConfig // If it's already in the correct format, use it as-is
+        : {
+            autorun: false,
+            widgets: parsedConfig,
+          }
+    setPrototypeData({ widget_config: JSON.stringify(widget_config) }) // Store as JSON string
+  }
+
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center">
-      {isAuthorized && (
-        <div className="w-full flex items-center justify-start py-1 bg-slate-100 px-2">
-          {mode == MODE_RUN && (
-            <div
-              className="mx-2 font-bold cursor-pointer hover:opacity-50 flex items-center"
-              onClick={() => {
-                setMode(MODE_EDIT)
-              }}
-            >
-              <MdOutlineDesignServices size={20} className="mr-2" />
-              Design Dashboard
-            </div>
-          )}
-
-          {mode == MODE_EDIT && (
-            <>
-              <div
-                className="ml-2 mr-4 font-bold cursor-pointer hover:opacity-50 flex items-center"
-                onClick={() => {
-                  setMode(MODE_RUN)
-                }}
-              >
-                <IoSaveOutline size={20} className="mr-2" />
+    <div className="flex flex-col w-full h-full overflow-y-auto pr-2">
+      <div className="flex w-full h-fit items-start pb-3">
+        <DaButton
+          className="flex w-fit"
+          size="sm"
+          variant="outline-nocolor"
+          onClick={() => setMode(mode === MODE_RUN ? MODE_EDIT : MODE_RUN)}
+        >
+          <div className="flex items-center">
+            {mode === MODE_RUN ? (
+              <>
+                <MdOutlineDesignServices className="size-5 mr-2" />
+                Design Dashboard
+              </>
+            ) : (
+              <>
+                <TbDeviceFloppy className="size-5 mr-2" />
                 Save
-              </div>
+              </>
+            )}
+          </div>
+        </DaButton>
+      </div>
 
-              {config?.studioUrl && (
-                <DaTabItem to={config?.studioUrl}>
-                  Widget Studio
-                  <TbArrowUpRight className="w-5 h-5" />
-                </DaTabItem>
-              )}
-              {config?.widgetMarketPlaceUrl && (
-                <DaTabItem to={config?.widgetMarketPlaceUrl}>
-                  Widget Marketplace
-                  <TbArrowUpRight className="w-5 h-5" />
-                </DaTabItem>
-              )}
-            </>
-          )}
-        </div>
-      )}
+      <div className="flex flex-col w-full h-full ">
+        {mode == MODE_RUN && <DaDashboardGrid widgetItems={widgetItems} />}
+        {mode == MODE_EDIT && (
+          <div className="flex flex-col w-full h-full">
+            <DaDashboardEditor
+              entireWidgetConfig={prototypeData.widget_config}
+              editable={true}
+              onDashboardConfigChanged={handleDashboardConfigChanged}
+              isWizard={true}
+            />
+            <DaText variant="sub-title" className="flex text-da-primary-500">
+              Select Dashboard Template
+            </DaText>
 
-      <div className="w-full h-full border">
-        {mode == MODE_RUN && (
-          <DaDashboardGrid widgetItems={widgetItems}></DaDashboardGrid>
+            <div className="mt-4 h-fit grid grid-cols-4 gap-4">
+              {templates.map((template, index) => (
+                <div className="col-span-1">
+                  <DaDashboardTemplate
+                    onClick={() => {
+                      setSelected(index)
+                      handleDashboardConfigChanged(template.config)
+                    }}
+                    key={index}
+                    selected={selected === index}
+                    template={template}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
         )}
-        {mode == MODE_EDIT && <PrototypeTabCodeDashboardCfg />}
       </div>
     </div>
   )
