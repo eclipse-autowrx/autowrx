@@ -107,11 +107,11 @@ const DaGenAI_Base = ({
     onFinishChange(false)
     try {
       mockStreamOutput()
-      console.log('selectedAddOn at genai base', selectedAddOn)
+      // console.log('selectedAddOn at genai base', selectedAddOn)
       if (selectedAddOn.isMock) {
-        console.log('Mock generating code...')
+        // console.log('Mock generating code...')
         await new Promise((resolve) => setTimeout(resolve, 1000))
-        console.log('Mock generated code:', default_generated_code)
+        // console.log('Mock generated code:', default_generated_code)
         onCodeGenerated && onCodeGenerated(default_generated_code)
         setPrototypeData({ code: default_generated_code })
         return

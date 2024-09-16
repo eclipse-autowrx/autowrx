@@ -15,7 +15,7 @@ import { toast } from 'react-toastify'
 import DaGenAI_Wizard from '../molecules/genAI/DaGenAI_Wizard'
 import useWizardGenAIStore from '@/stores/genAIWizardStore'
 import DaGenAI_Simulate from '../molecules/genAI/DaGenAI_Simulate'
-import DaStaging from '../molecules/staging/DaStaging'
+import DaGenAI_WizardStaging from '../molecules/genAI/DaGenAI_WizardStaging'
 import { DaImage } from '../atoms/DaImage'
 import { cn } from '@/lib/utils'
 import config from '@/configs/config'
@@ -217,7 +217,7 @@ const GenAIPrototypeWizard = () => {
               : 'flex h-full w-full justify-center overflow-y-auto',
           )}
         >
-          <DaStaging isWizard={true} />
+          <DaGenAI_WizardStaging isWizard={true} />
         </div>
       </div>
 
