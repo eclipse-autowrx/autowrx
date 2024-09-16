@@ -107,11 +107,11 @@ const DaGenAI_Base = ({
     onFinishChange(false)
     try {
       mockStreamOutput()
-      console.log('selectedAddOn at genai base', selectedAddOn)
+      // console.log('selectedAddOn at genai base', selectedAddOn)
       if (selectedAddOn.isMock) {
-        console.log('Mock generating code...')
+        // console.log('Mock generating code...')
         await new Promise((resolve) => setTimeout(resolve, 1000))
-        console.log('Mock generated code:', default_generated_code)
+        // console.log('Mock generated code:', default_generated_code)
         onCodeGenerated && onCodeGenerated(default_generated_code)
         setPrototypeData({ code: default_generated_code })
         return
@@ -254,7 +254,7 @@ const DaGenAI_Base = ({
                   onClick={() => setInputPrompt('')}
                 >
                   <TbRotate className="mr-1 size-4 rotate-[270deg]" />
-                  Undo
+                  Clear
                 </DaButton>
                 <DaButton
                   variant="plain"
@@ -345,7 +345,7 @@ const DaGenAI_Base = ({
           trigger={<span></span>}
           className="flex flex-col w-[40vw] lg:w-[30vw] min-w-[600px] max-w-[500px] h-fit max-h-[550px] p-4 bg-da-white"
         >
-          <DaText variant="sub-title">Select Generator</DaText>
+          <DaText variant="sub-title">Select AI Generator</DaText>
           <DaGeneratorSelectPopup
             builtInAddOns={builtInAddOns}
             marketplaceAddOns={

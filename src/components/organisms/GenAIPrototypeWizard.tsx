@@ -15,10 +15,11 @@ import { toast } from 'react-toastify'
 import DaGenAI_Wizard from '../molecules/genAI/DaGenAI_Wizard'
 import useWizardGenAIStore from '@/stores/genAIWizardStore'
 import DaGenAI_Simulate from '../molecules/genAI/DaGenAI_Simulate'
-import DaStaging from '../molecules/staging/DaStaging'
+import DaGenAI_WizardStaging from '../molecules/genAI/DaGenAI_WizardStaging'
 import { DaImage } from '../atoms/DaImage'
 import { cn } from '@/lib/utils'
 import config from '@/configs/config'
+import { TbArrowRight, TbArrowLeft } from 'react-icons/tb'
 
 const GenAIPrototypeWizard = () => {
   const { data: currentUser } = useSelfProfileQuery()
@@ -216,7 +217,7 @@ const GenAIPrototypeWizard = () => {
               : 'flex h-full w-full justify-center overflow-y-auto',
           )}
         >
-          <DaStaging isWizard={true} />
+          <DaGenAI_WizardStaging isWizard={true} />
         </div>
       </div>
 
@@ -224,9 +225,10 @@ const GenAIPrototypeWizard = () => {
         <DaButton
           onClick={handleBack}
           disabled={currentStep === 0}
-          className="w-20"
+          className="min-w-20"
           variant="outline"
         >
+          <TbArrowLeft className="size-4 mr-1" />
           Back
         </DaButton>
         {currentStep === 1 && (
@@ -265,6 +267,7 @@ const GenAIPrototypeWizard = () => {
             disabled={disabledStep[currentStep] || loading}
           >
             {currentStep < 3 && 'Next'}
+            <TbArrowRight className="size-4 ml-1" />
           </DaButton>
         )}
       </div>
