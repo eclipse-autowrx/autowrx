@@ -13,7 +13,7 @@ const DaMenu: FC<DropdownProps> = ({ trigger, children, onHover = false }) => {
   const handleClose = () => setAnchorEl(null)
 
   return (
-    <div className="inline-flex" style={{ zIndex: 10 }}>
+    <div className="inline-flex">
       <span
         style={{ display: 'flex' }}
         onClick={(event) => {

@@ -398,17 +398,17 @@ const DaDashboardEditor = ({
   }
 
   return (
-    <div className="flex w-full flex-col h-fit items-center justify-start p-1 ">
+    <div className="flex w-full flex-col h-full items-center justify-start p-0">
       <div
-        className={`grid w-full grid-cols-5 h-fit grid-rows-2 border border-da-gray-medium ${
+        className={`grid w-full grid-cols-5 grow grid-rows-2 border border-da-gray-medium ${
           editable ? 'cursor-pointer' : '!pointer-events-none'
         } `}
-        style={{ gridTemplateRows: 'repeat(2, 150px)' }}
+        style={{ gridTemplateRows: 'repeat(2)' }}
       >
         {widgetGrid()}
       </div>
       {editable && (
-        <DaText variant="small-bold" className="py-2 text-orange-500">
+        <DaText variant="small-bold" className="py-2 text-orange-700">
           Click on empty cell to place new widget
         </DaText>
       )}
