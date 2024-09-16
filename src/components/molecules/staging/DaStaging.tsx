@@ -85,7 +85,7 @@ const STANDARD_STAGE = {
               children: [
                 {
                   id: '2.1.1.1',
-                  name: 'Sunscription Manager',
+                  name: 'Subscription Manager',
                   version: '1.2.3',
                 },
               ],

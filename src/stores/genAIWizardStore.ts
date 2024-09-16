@@ -4,9 +4,9 @@ import { CVI_v4_1 } from '@/data/CVI_v4.1'
 import dashboard_templates from '@/data/dashboard_templates'
 
 type PrototypeData = {
-  prototypeName: string
-  modelName?: string
-  modelId?: string
+  name: string
+  model_id?: string
+  id?: string
   widget_config?: any
   code?: string
 }
@@ -73,6 +73,14 @@ const parseSignalCVI = () => {
   return parsedApiList
 }
 
+const defaultPrototypeData: PrototypeData = {
+  name: '',
+  model_id: '',
+  id: 'this-is-a-mock-prototype-id',
+  widget_config: dashboard_templates[0].config,
+  code: 'print("Hellow World")',
+}
+
 const useWizardGenAIStore = create<
   WizardGenAIStoreState & WizardGenAIStoreActions
 >((set, get) => ({
@@ -86,13 +94,7 @@ const useWizardGenAIStore = create<
   wizardRunSimulationAction: null,
   wizardStopSimulationAction: null,
 
-  prototypeData: {
-    prototypeName: '',
-    modelName: '',
-    modelId: '',
-    widget_config: dashboard_templates[0].config,
-    code: '',
-  },
+  prototypeData: defaultPrototypeData,
   activeModelApis: parseSignalCVI(),
 
   setWizardSimulating: (simulating: boolean) =>
@@ -161,13 +163,7 @@ const useWizardGenAIStore = create<
     set({
       wizardPrompt: '',
       wizardLog: '',
-      prototypeData: {
-        prototypeName: '',
-        modelName: '',
-        modelId: '',
-        widget_config: '',
-        code: '',
-      },
+      prototypeData: defaultPrototypeData,
     })
   },
 }))

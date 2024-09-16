@@ -5,6 +5,7 @@ import { shallow } from 'zustand/shallow'
 // import useModelStore from '@/stores/modelStore'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import useWizardGenAIStore from '@/stores/genAIWizardStore'
 
 import { io } from 'socket.io-client'
 
@@ -22,6 +23,7 @@ interface KitConnectProps {
   onDeployResponse?: (log: string, isDone: boolean) => void
 
   preferRuntime?: string
+  isWizard?: boolean
 }
 
 // const socketio = io(DEFAULT_KIT_SERVER);
@@ -39,6 +41,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       onAppExit,
       onDeployResponse,
       preferRuntime,
+      isWizard = false,
     },
     ref,
   ) => {
@@ -47,10 +50,24 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     const [activeRtId, setActiveRtId] = useState<string | undefined>('')
     const [allRuntimes, setAllRuntimes] = useState<any>([])
     const [ticker, setTicker] = useState(0)
+    const [prototype, setPrototype] = useState<any>(null)
 
     const [rawApisPackage, setRawApisPackage] = useState<any>(null)
-    const { data: prototype } = useCurrentPrototype()
+
+    const { data: currentPrototype } = useCurrentPrototype()
+
+    const { prototypeData } = useWizardGenAIStore()
+
     const { data: currentUser } = useSelfProfileQuery()
+
+    // Remove wizard dependency from useCurrentPrototype
+    useEffect(() => {
+      if (preferRuntime && isWizard) {
+        setPrototype(prototypeData)
+      } else {
+        setPrototype(currentPrototype)
+      }
+    }, [preferRuntime, isWizard, prototypeData, currentPrototype])
 
     useImperativeHandle(ref, () => {
       return {

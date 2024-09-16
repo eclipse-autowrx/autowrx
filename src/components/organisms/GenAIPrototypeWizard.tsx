@@ -9,7 +9,6 @@ import { ModelCreate } from '@/types/model.type'
 import { CVI } from '@/data/CVI'
 import { createModelService } from '@/services/model.service'
 import { createPrototypeService } from '@/services/prototype.service'
-import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import DaGenAI_Wizard from '../molecules/genAI/DaGenAI_Wizard'
@@ -22,7 +21,6 @@ import config from '@/configs/config'
 import { TbArrowRight, TbArrowLeft } from 'react-icons/tb'
 
 const GenAIPrototypeWizard = () => {
-  const { data: currentUser } = useSelfProfileQuery()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
 
@@ -79,22 +77,22 @@ const GenAIPrototypeWizard = () => {
     try {
       setLoading(true)
 
-      let modelId = prototypeData.modelId
+      let modelId = prototypeData.model_id
       if (!modelId) {
         const modelBody: ModelCreate = {
           cvi: CVI,
           main_api: 'Vehicle',
-          name: prototypeData.modelName as string,
+          name: prototypeData.model_id as string,
         }
 
         const newModelId = await createModelService(modelBody)
         modelId = newModelId
-        setPrototypeData({ modelId: newModelId })
+        setPrototypeData({ model_id: newModelId })
       }
 
       const body = {
         model_id: modelId,
-        name: prototypeData.prototypeName,
+        name: prototypeData.name,
         state: 'development',
         apis: { VSC: [], VSS: [] },
         wizardGeneratedCode: prototypeData.code,
@@ -217,7 +215,7 @@ const GenAIPrototypeWizard = () => {
               : 'flex h-full w-full justify-center overflow-y-auto',
           )}
         >
-          <DaGenAI_WizardStaging isWizard={true} />
+          <DaGenAI_WizardStaging />
         </div>
       </div>
 
