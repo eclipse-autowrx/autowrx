@@ -6,6 +6,7 @@ import HomeFeatureList from '@/components/organisms/HomeFeatureList'
 import HomeButtonList from '@/components/organisms/HomeButtonList'
 import HomePrototypeRecent from '@/components/organisms/HomePrototypeRecent'
 import HomePrototypePopular from '@/components/organisms/HomePrototypePopular'
+import HomeNews from '@/components/organisms/HomeNews'
 
 const PageHome = () => {
   const homeElements = home || defaultHome
@@ -18,11 +19,13 @@ const PageHome = () => {
         return HomeFeatureList
       case 'button-list':
         return HomeButtonList
+      case 'news':
+        return HomeNews
       case 'recent':
         return HomePrototypeRecent
       case 'popular':
         return HomePrototypePopular
-      case 'partners-list':
+      case 'partner-list':
         return HomePartners
       default:
         return null
