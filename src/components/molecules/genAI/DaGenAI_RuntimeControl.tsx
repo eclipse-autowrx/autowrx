@@ -111,16 +111,14 @@ const DaGenAI_RuntimeControl = () => {
   }
 
   const handleRun = () => {
-    console.log('Running simulation with code', code)
     setWizardSimulating(true)
     setLog('')
     if (runTimeRef1.current) {
-      runTimeRef1.current?.runApp(code || '')
+      runTimeRef1.current?.runApp(prototypeData.code)
     }
   }
 
   const handleStop = () => {
-    console.log('Stopping simulation')
     setWizardSimulating(false)
     clearApisValue(apisValue)
     if (runTimeRef1.current) {
@@ -209,7 +207,7 @@ const DaGenAI_RuntimeControl = () => {
               />
             )}
 
-            {activeTab == 'code' && (
+            {activeTab == '' && (
               <CodeEditor
                 code={code || ''}
                 setCode={setCode}
