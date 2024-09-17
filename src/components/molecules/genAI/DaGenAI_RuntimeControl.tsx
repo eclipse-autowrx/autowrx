@@ -37,7 +37,6 @@ const DaGenAI_RuntimeControl = () => {
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
 
   const [usedApis, setUsedApis] = useState<any[]>([])
-  const [code, setCode] = useState<string>('')
 
   const [mockSignals, setMockSignals] = useState<any[]>([])
 
@@ -84,27 +83,23 @@ const DaGenAI_RuntimeControl = () => {
   }, [])
 
   useEffect(() => {
-    if (prototypeData) {
-      // console.log('prototypeData', prototypeData)
-      setCode(prototypeData.code || '')
-    } else {
-      setCode('')
-    }
-  }, [prototypeData])
-
-  useEffect(() => {
-    if (!code || !activeModelApis || activeModelApis.length === 0) {
+    if (
+      !prototypeData.code ||
+      !activeModelApis ||
+      activeModelApis.length === 0
+    ) {
       setUsedApis([])
       return
     }
     let apis: any[] = []
+    let code = prototypeData.code || ''
     activeModelApis.forEach((item: any) => {
       if (code.includes(item.shortName)) {
         apis.push(item.name)
       }
     })
     setUsedApis(apis)
-  }, [code, activeModelApis])
+  }, [prototypeData.code, activeModelApis])
 
   const appendLog = (content: String) => {
     if (!content) return
@@ -218,8 +213,10 @@ const DaGenAI_RuntimeControl = () => {
 
             {activeTab == '' && (
               <CodeEditor
-                code={code || ''}
-                setCode={setCode}
+                code={prototypeData.code || ''}
+                setCode={(code: string) => {
+                  setPrototypeData({ code })
+                }}
                 editable={isAuthorized}
                 language="python"
                 onBlur={() => {}}
