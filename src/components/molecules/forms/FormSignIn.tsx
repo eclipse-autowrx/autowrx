@@ -154,7 +154,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
             event.stopPropagation()
           }}
         >
-          <SSOHandler>
+          <SSOHandler setSSOLoading={setSSOLoading}>
             <DaButton
               variant="outline-nocolor"
               className="w-full"

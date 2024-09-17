@@ -6,9 +6,10 @@ import { isAxiosError } from 'axios'
 
 interface SSOHandlerProps {
   children: React.ReactNode
+  setSSOLoading: (loading: boolean) => void
 }
 
-const SSOHandler = ({ children }: SSOHandlerProps) => {
+const SSOHandler = ({ children, setSSOLoading }: SSOHandlerProps) => {
   const { instance, accounts } = useMsal()
   const isAuthenticated = useIsAuthenticated()
 
@@ -35,7 +36,16 @@ const SSOHandler = ({ children }: SSOHandlerProps) => {
         .then((response) => {
           handleSSOAuthSuccess(response.accessToken)
         })
-        .catch((error) => {})
+        .catch((error) => {
+          if (isAxiosError(error)) {
+            toast.error(
+              error.response?.data.message || 'SSO authentication failed',
+            )
+            return
+          }
+          toast.error(error?.errorMessage || 'SSO authentication failed')
+        })
+        .finally(() => setSSOLoading(false))
     }
   }
 
