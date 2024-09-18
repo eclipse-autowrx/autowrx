@@ -22,7 +22,7 @@ const DaItemVerticalStandard: React.FC<DaItemVerticalStandardProps> = ({
         style={{ maxWidth: maxWidth }}
       >
         <DaImage
-          src={imageUrl ? imageUrl : 'https://placehold.co/600x400'}
+          src={imageUrl ? imageUrl : '/imgs/default_prototype_cover.jpg'}
           alt="Image"
           className="w-full h-auto rounded-lg aspect-video object-cover"
         />

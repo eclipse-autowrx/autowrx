@@ -17,9 +17,7 @@ export const convertJSONToProperty = (json: string) => {
       result.push({ name: key, type: type, value: String(value) })
     }
     return result
-  } catch (error) {
-    console.log('Error parsing json of vehicle property: ', error)
-  }
+  } catch (error) {}
   return result
 }
 

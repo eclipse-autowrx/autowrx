@@ -2,6 +2,7 @@ import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { Cvi, VehicleApi } from '@/types/model.type'
 import { WidgetConfig } from '@/types/widget.type'
+import { useEffect } from 'react'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -59,15 +60,12 @@ export const copyText = async (
 ) => {
   try {
     await navigator.clipboard.writeText(text)
-    console.log(copiedText)
-  } catch (error) {
-    console.log(`Error occured while copying to clipboard. ${error}`)
-  }
+  } catch (error) {}
 }
 
 // Dashboard utils : Checking if the selected cells are continuous rectangle
 export const isContinuousRectangle = (pickedCells: number[]): boolean => {
-  // console.log("pickedCells", pickedCells);
+  //
   const numCols = 5
   if (pickedCells.length <= 1) return true // Single cell is always valid
   // Convert cell number to grid position
@@ -172,4 +170,23 @@ export const maskEmail = (email?: string) => {
   const maskedLocalPart =
     localPart.slice(0, 6).replace(/./g, 'x') + localPart.slice(6)
   return `${maskedLocalPart}@${domainPart}`
+}
+
+export const useClickOutside = (
+  ref: React.RefObject<HTMLElement>,
+  handler: (event: MouseEvent) => void,
+) => {
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        handler(event)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [ref, handler])
 }

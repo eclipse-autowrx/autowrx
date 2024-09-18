@@ -43,7 +43,7 @@ const PageModelList = () => {
         name: importedModel.model.name || 'New Imported Model',
         visibility: 'private',
       }
-      // console.log('Creating model:', newModel)
+      //
       const createdModel = await createModelService(newModel)
 
       addLog({
@@ -54,7 +54,7 @@ const PageModelList = () => {
         ref_id: createdModel.id,
         ref_type: 'model',
       })
-      // console.log('Created model succesfully:', createdModelId)
+      //
 
       if (importedModel.prototypes.length > 0) {
         const prototypePromises = importedModel.prototypes.map(
@@ -83,7 +83,6 @@ const PageModelList = () => {
         await Promise.all(prototypePromises)
       }
     } catch (err) {
-      console.log('Error creating model and prototypes', err)
     } finally {
       setIsImporting(false)
     }
@@ -91,13 +90,10 @@ const PageModelList = () => {
 
   return (
     <div className="col-span-full h-full flex flex-col px-2 py-4 container space-y-2">
-      <div className="flex mb-2">
-        <DaText variant="title" className="text-da-primary-500">
-          Model List
-        </DaText>
-        <div className="grow"></div>
+      <div className="relative flex w-full h-full mt-4 items-start">
+        <ModelGrid />
         {user && (
-          <div className="flex">
+          <div className="absolute right-0 flex">
             {!isImporting ? (
               <DaImportFile accept=".zip" onFileChange={handleImportModelZip}>
                 <DaButton variant="outline-nocolor" size="sm" className="mr-2">
@@ -126,8 +122,6 @@ const PageModelList = () => {
           </div>
         )}
       </div>
-
-      <ModelGrid />
     </div>
   )
 }

@@ -54,12 +54,12 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
 
       // Register
       await registerService(name, email, password)
-      await addLog({
-        name: `User registered`,
-        description: `User registered with email: ${email}`,
-        type: 'user-register@email',
-        create_by: email,
-      })
+      // await addLog({
+      //   name: `User registered`,
+      //   description: `User registered with email: ${email}`,
+      //   type: 'user-register@email',
+      //   create_by: email,
+      // })
       setError('')
       // eslint-disable-next-line no-self-assign
       window.location.href = window.location.href
@@ -119,7 +119,7 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
           <a
             href={policy_url}
             target="_blank"
-            className="ml-2 da-clickable hover:text-da-primary-500"
+            className="ml-2 cursor-pointer hover:text-da-primary-500"
           >
             <u>Privacy Policy</u>
           </a>

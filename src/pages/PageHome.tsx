@@ -1,14 +1,13 @@
 import { HomeIntroBlock } from '@/components/organisms/HomeIntroBlock'
 import { HomePrototypeProposal } from '@/components/organisms/HomePrototypeProposal'
 import { cn } from '@/lib/utils'
-import { DaButton } from '@/components/atoms/DaButton'
-import { TbExternalLink } from 'react-icons/tb'
-import { DaText } from '@/components/atoms/DaText'
 import { HomePartners } from '@/components/organisms/HomePartners'
 import { useTextLib } from '@/hooks/useInstanceCfg'
+import { useBackground } from '@/hooks/useInstanceCfg'
 
 const PageHome = () => {
   const txtLib = useTextLib()
+  const background = useBackground()
   return (
     <>
       <div className="flex col-span-12 relative min-h-[400px] max-h-[700px] w-full justify-between z-10 overflow-hidden ">
@@ -49,15 +48,15 @@ const PageHome = () => {
         </div>
       </div>
 
-      <div className="col-span-12 mt-12 mb-3">
+      <div className="col-span-12 mt-12">
         <HomeIntroBlock />
       </div>
 
-      <div className="col-span-12">
+      <div className="col-span-12 mt-12">
         <HomePrototypeProposal />
       </div>
 
-      <div className="col-span-12">
+      <div className="col-span-12 mt-12">
         <HomePartners />
       </div>
     </>

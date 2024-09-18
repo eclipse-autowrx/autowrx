@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DaButton } from '../atoms/DaButton'
 import DaPopup from '../atoms/DaPopup'
 import FormSignIn from './forms/FormSignIn'
@@ -6,12 +6,20 @@ import FormRegister from './forms/FormRegister'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import DaUserMenu from './DaUserMenu'
 import FormForgotPassword from './forms/FormForgotPassword'
+import useAuthStore from '@/stores/authStore'
 
 const DaNavUser = () => {
-  const openState = useState(false)
+  const { openLoginDialog, setOpenLoginDialog } = useAuthStore()
   const [authType, setAuthType] = useState<'sign-in' | 'register' | 'forgot'>(
     'sign-in',
   )
+
+  const handleSetOpenLoginDialog = (value: React.SetStateAction<boolean>) => {
+    setOpenLoginDialog(
+      typeof value === 'function' ? value(openLoginDialog) : value,
+    )
+  }
+
   const { data: user } = useSelfProfileQuery()
 
   return (
@@ -22,14 +30,17 @@ const DaNavUser = () => {
         <DaButton
           variant="plain"
           onClick={() => {
-            openState[1](true)
+            setOpenLoginDialog(true) // Open the login dialog
           }}
         >
           Sign in
         </DaButton>
       )}
 
-      <DaPopup state={openState} trigger={<span></span>}>
+      <DaPopup
+        state={[openLoginDialog, handleSetOpenLoginDialog]}
+        trigger={<span></span>}
+      >
         {authType === 'sign-in' && <FormSignIn setAuthType={setAuthType} />}
         {authType === 'register' && <FormRegister setAuthType={setAuthType} />}
         {authType === 'forgot' && (

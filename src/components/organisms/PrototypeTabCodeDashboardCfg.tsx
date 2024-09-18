@@ -53,7 +53,6 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
 
   const saveDashboardCfgToDb = async (dashboardConfig: string) => {
     if (!dashboardConfig) {
-      console.log('No dashboard config provided')
       return
     }
 
@@ -73,10 +72,9 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
       return
     }
 
-    // console.log('Parsed and updated configuration:', updateConfig)
+    //
 
     if (updateConfig === prototype.widget_config || updateConfig === '') {
-      console.log('No changes detected in the configuration.')
       return
     }
 
@@ -91,7 +89,7 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
         })
 
         // await refetch()
-        // console.log('Configuration updated and refetched successfully.')
+        //
       } catch (error) {
         console.error('Error updating prototype service:', error)
       }
@@ -105,7 +103,8 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
         editable={isAuthorized}
         onDashboardConfigChanged={saveDashboardCfgToDb}
       />
-      <div className="flex flex-col h-full w-full items-center px-2 py-1 text-xs text-da-gray-medium rounded">
+
+      {/* <div className="flex flex-col w-full items-center px-2 py-1 text-xs text-da-gray-medium rounded">
         {isAuthorized && (
           <div className="flex w-full">
             <DaButton
@@ -149,7 +148,7 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
           </div>
         )}
         <div
-          className={`flex w-full h-full ${isExpanded ? 'visible' : 'invisible'}`}
+          className={`flex w-full h-[300px] ${isExpanded ? 'visible' : 'invisible'}`}
         >
           <CodeEditor
             code={dashboardCfg}
@@ -157,12 +156,12 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
             editable={isEditing && isAuthorized}
             language="json"
             onBlur={() => {
-              console.log('CodeEditor On blur')
               setTicker((oldTicker) => oldTicker + 1)
             }}
           />
         </div>
-      </div>
+      </div> */}
+
     </>
   )
 }

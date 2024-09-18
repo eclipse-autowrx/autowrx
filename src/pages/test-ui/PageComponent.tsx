@@ -19,13 +19,7 @@ const PageHome = () => {
     <div className="grid place-items-center bg-white">
       <div className="px-2 max-w-[1024px] space-y-4">
         <div className="mt-4 flex space-x-4 p-4 border rounded-lg">
-          <DaButton
-            onClick={() => {
-              console.log('Btn default clicked')
-            }}
-          >
-            Default
-          </DaButton>
+          <DaButton onClick={() => {}}>Default</DaButton>
           <DaButton variant="outline">Outline</DaButton>
           <DaButton variant="gradient">Gradient</DaButton>
           <DaButton variant="outline-nocolor">Outline-nocolor</DaButton>
