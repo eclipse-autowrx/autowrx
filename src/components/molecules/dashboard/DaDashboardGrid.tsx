@@ -4,6 +4,7 @@ import { WidgetConfig } from '@/types/widget.type'
 
 interface DaDashboardGridProps {
   widgetItems: any[]
+  appLog?: string
 }
 
 const calculateSpans = (boxes: any) => {
@@ -21,12 +22,14 @@ const calculateSpans = (boxes: any) => {
 interface PropsWidgetItem {
   widgetConfig: WidgetConfig
   apisValue: any
+  appLog?: string
 }
 
-
-
-const WidgetItem: FC<PropsWidgetItem> = ({ widgetConfig, apisValue }) => {
-
+const WidgetItem: FC<PropsWidgetItem> = ({
+  widgetConfig,
+  apisValue,
+  appLog,
+}) => {
   const [rSpan, setRSpan] = useState<number>(0)
   const [cSpan, setCSpan] = useState<number>(0)
   const frameElement = useRef<HTMLIFrameElement>(null)
@@ -38,8 +41,7 @@ const WidgetItem: FC<PropsWidgetItem> = ({ widgetConfig, apisValue }) => {
     if (url && widgetConfig.options) {
       let send_options = JSON.parse(JSON.stringify(widgetConfig.options))
       delete send_options.url
-      url =
-        url + '?options=' + encodeURIComponent(JSON.stringify(send_options))
+      url = url + '?options=' + encodeURIComponent(JSON.stringify(send_options))
       setUrl(url)
     }
   }, [widgetConfig?.url])
@@ -57,32 +59,50 @@ const WidgetItem: FC<PropsWidgetItem> = ({ widgetConfig, apisValue }) => {
       setData[api] = { value: setData[api] }
     }
 
-    frameElement?.current?.contentWindow?.postMessage(JSON.stringify({
-      cmd: "vss-sync",
-      vssData: apisValue
-    }), "*")
-
+    frameElement?.current?.contentWindow?.postMessage(
+      JSON.stringify({
+        cmd: 'vss-sync',
+        vssData: apisValue,
+      }),
+      '*',
+    )
   }, [apisValue])
 
+  const sendAppLogToWidget = (log: string) => {
+    if (!log) return
+    frameElement?.current?.contentWindow?.postMessage(
+      JSON.stringify({
+        cmd: 'app-log',
+        log: log,
+      }),
+      '*',
+    )
+  }
 
-  if (!widgetConfig) return <div
-    className={`flex border border-da-gray-light justify-center items-center select-none da-label-huge text-da-gray-medium`}
-  >
-    .
-  </div>
+  useEffect(() => {
+    if (!appLog) return
+    sendAppLogToWidget(appLog)
+  }, [appLog])
+
+  if (!widgetConfig)
+    return (
+      <div
+        className={`da-label-huge flex select-none items-center justify-center border border-da-gray-light text-da-gray-medium`}
+      >
+        .
+      </div>
+    )
 
   return (
-    <div
-      className={`col-span-${cSpan} row-span-${rSpan}`}
-    >
+    <div className={`col-span-${cSpan} row-span-${rSpan}`}>
       <iframe
         ref={frameElement}
         src={url}
-        className="w-full h-full m-0"
+        className="m-0 h-full w-full"
         allow="camera;microphone"
         onLoad={() => {
-          // console.log('iframe loaded')
-          // console.log(frameElement?.current?.contentWindow)
+          //
+          //
         }}
       ></iframe>
     </div>
@@ -94,14 +114,12 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
   const [renderCell, setRenderCell] = useState<any[]>([])
 
   useEffect(() => {
-    // console.log('DaDashboardGrid, widgetItems', widgetItems)
+    //
     let tmpCells = []
     let usedWidget = new Set()
     for (let i = 1; i <= 10; i++) {
-      const widgetIndex = widgetItems.findIndex((w) =>
-        w.boxes?.includes(i),
-      )
-      if(widgetIndex == -1) {
+      const widgetIndex = widgetItems.findIndex((w) => w.boxes?.includes(i))
+      if (widgetIndex == -1) {
         tmpCells.push(null)
       } else {
         if (!usedWidget.has(widgetIndex)) {
@@ -113,44 +131,21 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
     setRenderCell(tmpCells)
   }, [widgetItems])
 
-  const apisValue = useRuntimeStore(
-    state =>
-      state.apisValue
-  )
+  const [apisValue, appLog] = useRuntimeStore((state) => [
+    state.apisValue,
+    state.appLog,
+  ])
 
   return (
     <div className={`grid h-full w-full grid-cols-5 grid-rows-2`}>
-      {/* <div>renderCell: {renderCell.length}</div> */}
-      {
-        renderCell.map((widgetItem, wIndex) => <WidgetItem key={wIndex}
+      {renderCell.map((widgetItem, wIndex) => (
+        <WidgetItem
+          key={wIndex}
           widgetConfig={widgetItem}
-          apisValue={apisValue} />)
-      }
-      {/* {CELLS.map((cell) => {
-        const widgetIndex = widgetItems.findIndex((w) =>
-          w.boxes?.includes(cell),
-        )
-        if (widgetIndex !== -1 && !renderedWidgets.has(widgetIndex)) {
-          renderedWidgets.add(widgetIndex)
-          return (
-            <WidgetItem
-              widgetConfig={widgetItems[widgetIndex]}
-              index={widgetIndex}
-              cell={cell}
-              apisValue={apisValue}
-            />
-          )
-        } else if (widgetIndex === -1) {
-          return (
-            <div
-              key={`empty-${cell}`}
-              className={`flex border border-da-gray-light justify-center items-center select-none da-label-huge text-da-gray-medium`}
-            >
-              {cell}
-            </div>
-          )
-        }
-      })} */}
+          apisValue={apisValue}
+          appLog={appLog}
+        />
+      ))}
     </div>
   )
 }

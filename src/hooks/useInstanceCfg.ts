@@ -14,6 +14,28 @@ const useParnerList = () => {
   return instances
 }
 
+const useBackground = () => {
+  if (instance && instance.background && instance.background.length > 0) {
+    return instance.background
+  }
+
+  return '/imgs/autowrx-bg.jpg'
+}
+
+const useFeatureCards = () => {
+  let instances = [] as any[]
+  if (
+    instance &&
+    instance.featureCards &&
+    Array.isArray(instance.featureCards) &&
+    instance.featureCards.length > 0
+  ) {
+    instances = instance.featureCards
+  }
+
+  return instances
+}
+
 const useTextLib = () => {
   let text = {} as any
   if (instance && instance.text) {
@@ -31,4 +53,4 @@ const usePolicy = () => {
   return ''
 }
 
-export { useParnerList, useTextLib, usePolicy }
+export { useParnerList, useTextLib, usePolicy, useBackground, useFeatureCards }

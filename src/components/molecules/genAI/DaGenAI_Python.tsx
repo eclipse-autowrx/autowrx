@@ -1,175 +1,49 @@
-import { useEffect, useState } from 'react'
-import { DaInput } from '@/components/atoms/DaInput'
+import { useEffect, useRef, useState } from 'react'
 import { DaButton } from '@/components/atoms/DaButton'
-import { AddOn } from '@/types/addon.type'
 import { TbCode } from 'react-icons/tb'
-import { BsStars } from 'react-icons/bs'
 import LoadingLineAnimation from './DaGenAI_LoadingLineAnimation.tsx'
 import DaGenAI_ResponseDisplay from './DaGenAI_ResponseDisplay.tsx'
-import axios, { isAxiosError } from 'axios'
-import { DaTextarea } from '@/components/atoms/DaTextarea'
-import useListMarketplaceAddOns from '@/hooks/useListMarketplaceAddOns'
-import DaGeneratorSelector from './DaGeneratorSelector.tsx.tsx'
-import config from '@/configs/config.ts'
-import usePermissionHook from '@/hooks/usePermissionHook.ts'
-import { PERMISSIONS } from '@/data/permission.ts'
-import useSelfProfileQuery from '@/hooks/useSelfProfile.ts'
-import useAuthStore from '@/stores/authStore'
-import { addLog } from '@/services/log.service'
-import { toast } from 'react-toastify'
+import clsx from 'clsx'
+import DaSectionTitle from '@/components/atoms/DaSectionTitle.tsx'
+import DaGenAI_Base from './DaGenAI_Base.tsx'
 
 type DaGenAI_PythonProps = {
   onCodeChanged?: (code: string) => void
+  onCodeGenerated?: (code: string) => void
   pythonCode?: string
 }
 
-const DaGenAI_Python = ({ onCodeChanged }: DaGenAI_PythonProps) => {
-  const [inputPrompt, setInputPrompt] = useState<string>('')
-  const [selectedAddOn, setSelectedAddOn] = useState<AddOn | null>(null)
+const DaGenAI_Python = ({
+  onCodeChanged,
+  onCodeGenerated,
+}: DaGenAI_PythonProps) => {
   const [loading, setLoading] = useState<boolean>(false)
   const [genCode, setGenCode] = useState<string>('')
   const [isFinished, setIsFinished] = useState<boolean>(false)
-  const { data: marketplaceAddOns } = useListMarketplaceAddOns('GenAI_Python')
-  const [canUseGenAI] = usePermissionHook([PERMISSIONS.USE_GEN_AI])
-
-  useEffect(() => {
-    console.log('Permission to use GenAI: ', canUseGenAI)
-  }, [canUseGenAI])
-
-  const { data: user } = useSelfProfileQuery()
-  const access = useAuthStore((state) => state.access)
-
-  const builtInAddOns: AddOn[] =
-    config.genAI && config.genAI.sdvApp && config.genAI.sdvApp.length > 0
-      ? config.genAI.sdvApp.map((addOn: any) => ({
-          ...addOn,
-          customPayload: addOn.customPayload(inputPrompt), // Append the customPayload with the inputPrompt
-        }))
-      : []
-
-  const genPythonCode = async () => {
-    if (!selectedAddOn) return
-    setGenCode('')
-    setLoading(true)
-    setIsFinished(false)
-    try {
-      let response
-      if (selectedAddOn.id.includes(config.instance)) {
-        response = await axios.post(
-          selectedAddOn.endpointUrl,
-          {
-            prompt: inputPrompt,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${access?.token}`,
-            },
-          },
-        )
-        setGenCode(response.data.payload.code)
-      } else {
-        response = await axios.post(
-          config.genAI.defaultEndpointUrl,
-          {
-            endpointURL: selectedAddOn.endpointUrl,
-            inputPrompt: inputPrompt,
-            systemMessage: selectedAddOn.samples || '',
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${access?.token}`,
-            },
-          },
-        )
-        setGenCode(response.data)
-      }
-      addLog({
-        name: `User ${user?.name} generated python code`,
-        description: `User ${user?.name} with id ${user?.id} generated python code with ${selectedAddOn.name}`,
-        create_by: user?.id!,
-        type: 'gen-python',
-        ref_id: selectedAddOn.id,
-        ref_type: 'genai',
-      })
-    } catch (error) {
-      console.error('Error generating AI content:', error)
-      if (isAxiosError(error)) {
-        toast.error(
-          error.response?.data?.message || 'Error generating AI content',
-        )
-      } else {
-        toast.error('Error generating AI content')
-      }
-    } finally {
-      setLoading(false)
-      setIsFinished(true)
-    }
-  }
 
   return (
-    <div className="flex w-full h-full rounded">
-      <div className="flex flex-col w-[50%] h-full pr-2 pt-3 border-r border-da-gray-light">
-        <div>
-          <div className="flex select-none">
-            <div className="flex w-5 h-5 items-center justify-center font-bold text-xs rounded p-2 bg-da-gray-light ">
-              1
-            </div>
-            <div className="flex ml-1 text-gray-600 font-medium">Prompting</div>
-          </div>
-          <div className="flex mt-2 mb-4 w-full h-fit">
-            <DaTextarea
-              value={inputPrompt}
-              onChange={(e) => setInputPrompt(e.target.value)}
-              rows={4}
-              placeholder="Ask AI to generate code based on this prompt..."
-              className="w-full"
-            ></DaTextarea>
-          </div>
-        </div>
-        <div className="flex mt-2 select-none">
-          <div className="flex w-5 h-5 items-center justify-center font-bold text-xs rounded p-2 bg-da-gray-light ">
-            2
-          </div>
-          <div className="flex ml-1 text-gray-600 font-medium">
-            Select Generator
-          </div>
-        </div>
-
-        <DaGeneratorSelector
-          builtInAddOns={builtInAddOns}
-          marketplaceAddOns={
-            marketplaceAddOns ? (canUseGenAI ? marketplaceAddOns : []) : []
+    <div className="mt-2 flex h-full w-full rounded">
+      <DaGenAI_Base
+        type="GenAI_Python"
+        buttonText="Generate SDV App"
+        placeholderText="Enter your prompt to generate SDV App"
+        onCodeGenerated={(code) => {
+          setGenCode(code)
+          if (onCodeGenerated) {
+            onCodeGenerated(code)
           }
-          onSelectedGeneratorChange={setSelectedAddOn}
-        />
-
-        {!inputPrompt && (
-          <div className="flex w-full mt-auto justify-center text-gray-400 select-none">
-            You need to enter prompt and select generator
-          </div>
-        )}
-        <DaButton
-          variant="solid"
-          disabled={!inputPrompt}
-          className={`!h-8 w-full mt-auto ${!inputPrompt ? '!mt-2' : 'mt-auto'}`}
-          onClick={genPythonCode}
+        }}
+        onFinishChange={setIsFinished}
+        onLoadingChange={setLoading}
+        className="w-1/2"
+      />
+      <div className="flex h-full w-1/2 flex-1 flex-col pl-2">
+        <DaSectionTitle number={3} title="Preview Code" />
+        <div
+          className={clsx(
+            'scroll-gray mt-4 flex h-full max-h-[380px] w-full overflow-y-auto overflow-x-hidden',
+          )}
         >
-          <BsStars
-            className={`inline-block mr-1 mb-0.5 ${loading ? 'animate-pulse' : ''}`}
-          />
-          {!loading && <div>Generate</div>}
-        </DaButton>
-      </div>
-      <div className="flex flex-col w-1/2 h-full pt-3 pl-2">
-        <div className="flex mb-2 select-none">
-          <div className="flex w-5 h-5 items-center justify-center font-bold text-xs rounded p-2 bg-da-gray-light ">
-            3
-          </div>
-          <div className="flex ml-1 text-gray-600 font-medium">
-            Preview Code
-          </div>
-        </div>
-        <div className="flex w-full h-full overflow-y-auto overflow-x-hidden scroll-gray max-h-[380px]">
           {genCode ? (
             <DaGenAI_ResponseDisplay code={genCode} language={'python'} />
           ) : (
@@ -179,7 +53,8 @@ const DaGenAI_Python = ({ onCodeChanged }: DaGenAI_PythonProps) => {
             />
           )}
         </div>
-        <div className="flex flex-col w-full mt-auto pt-3 select-none">
+
+        <div className="mt-auto flex w-full select-none flex-col">
           <DaButton
             variant="outline-nocolor"
             className="!h-8 w-full"
@@ -188,7 +63,7 @@ const DaGenAI_Python = ({ onCodeChanged }: DaGenAI_PythonProps) => {
             }}
             disabled={!(genCode && genCode.length > 0) || !isFinished}
           >
-            <TbCode className="w-4 h-4 mr-1.5" /> Add new generated code
+            <TbCode className="mr-1.5 h-4 w-4" /> Add new generated code
           </DaButton>
         </div>
       </div>

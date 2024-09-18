@@ -5,26 +5,44 @@ import useModelStore from '@/stores/modelStore'
 import { DaText } from '../atoms/DaText'
 import { DaApiListItem } from '../molecules/DaApiList'
 import ModelApiList from './ModelApiList'
-import { TbCopy } from 'react-icons/tb'
+import { TbCopy, TbSearch } from 'react-icons/tb'
 import { getApiTypeClasses } from '@/lib/utils'
 import { DaCopy } from '../atoms/DaCopy'
+import DaTabItem from '../atoms/DaTabItem'
+import { DaInput } from '../atoms/DaInput'
+import DaFilter from '../atoms/DaFilter'
 
 interface ApiCodeBlockProps {
   apiName: string
-  onCopied: () => void
+  sampleLabel: string
 }
 
-const ApiCodeBlock = ({ apiName, onCopied }: ApiCodeBlockProps) => {
+const ApiCodeBlock = ({ apiName, sampleLabel }: ApiCodeBlockProps) => {
   const [code, setCode] = useState<any>(null)
   useEffect(() => {
     setCode(`await v${apiName.substring(1)}`)
   }, [apiName])
   return (
-    <div className="flex px-3 py-3 mt-2 bg-gray-100 rounded justify-between">
-      <DaText variant="regular" className=" font-mono">
-        {code}
-      </DaText>
-      <DaCopy textToCopy={code} label="Copy"></DaCopy>
+    <div className="flex flex-col">
+      <DaCopy textToCopy={code} className="items-center w-fit pt-3">
+        <div className="flex w-full items-center">
+          <DaText
+            variant="regular-bold"
+            className="w-fit shrink-0 text-da-gray-medium"
+          >
+            Sample code to subscribe API value
+          </DaText>
+        </div>
+      </DaCopy>
+
+      <div className="flex flex-wrap w-full min-w-fit px-3 py-3 mt-2 bg-gray-100 rounded justify-between">
+        <DaText
+          variant="regular"
+          className="w-full font-mono whitespace-pre-line"
+        >
+          {code}
+        </DaText>
+      </div>
     </div>
   )
 }
@@ -37,7 +55,6 @@ interface APIDetailsProps {
 const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
   useEffect(() => {
     if (activeApi) {
-      console.log('activeApi', activeApi)
     }
   }, [activeApi])
   return (
@@ -68,43 +85,22 @@ const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
               </div>
             )}
             {['actuator', 'sensor'].includes(activeApi.type) && (
-              <div className="mt-4">
-                <DaText variant="regular" className="text-da-gray-medium">
-                  Sample code to get API value:
-                </DaText>
-                <ApiCodeBlock
-                  apiName={activeApi.name + '.get()'}
-                  onCopied={() => {
-                    if (requestCancel) requestCancel()
-                  }}
-                />
-              </div>
+              <ApiCodeBlock
+                apiName={activeApi.name + '.get()'}
+                sampleLabel="Sample code to get API value"
+              />
             )}
             {['actuator'].includes(activeApi.type) && (
-              <div className="mt-4">
-                <DaText variant="regular" className="text-da-gray-medium">
-                  Sample code to set API value:
-                </DaText>
-                <ApiCodeBlock
-                  apiName={activeApi.name + '.set(value)'}
-                  onCopied={() => {
-                    if (requestCancel) requestCancel()
-                  }}
-                />
-              </div>
+              <ApiCodeBlock
+                apiName={activeApi.name + '.set(value)'}
+                sampleLabel="Sample code to set API value"
+              />
             )}
             {['actuator', 'sensor'].includes(activeApi.type) && (
-              <div className="mt-4">
-                <DaText variant="regular" className="text-da-gray-medium">
-                  Sample code to subscribe API value:
-                </DaText>
-                <ApiCodeBlock
-                  apiName={activeApi.name + '.subscribe(function_name)'}
-                  onCopied={() => {
-                    if (requestCancel) requestCancel()
-                  }}
-                />
-              </div>
+              <ApiCodeBlock
+                apiName={activeApi.name + '.subscribe(function_name)'}
+                sampleLabel="Sample code to subscribe API value"
+              />
             )}
           </div>
         </div>
@@ -120,6 +116,8 @@ interface PrototypeTabCodeApiPanelProps {
 const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   code,
 }) => {
+  const [tab, setTab] = useState<'used-signals' | 'all-signals'>('used-signals')
+
   const [activeModelApis] = useModelStore(
     (state) => [state.activeModelApis],
     shallow,
@@ -140,7 +138,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
         useList.push(item)
       }
     })
-    console.log('useList', useList)
+
     setUseApis(useList)
   }, [code, activeModelApis])
 
@@ -151,7 +149,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   }
 
   return (
-    <>
+    <div className="flex flex-col w-full h-full">
       <DaPopup state={popupApi} width={'800px'} trigger={<span></span>}>
         <APIDetails
           activeApi={activeApi}
@@ -160,33 +158,52 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
           }}
         />
       </DaPopup>
-      <DaText variant="sub-title" className="px-4 mt-2">
-        Used Signals({useApis.length})
-      </DaText>
-      {useApis && useApis.length > 0 && (
-        <div className="mb-2">
-          <div className="flex flex-col w-full px-4 scroll-gray">
-            <div className="max-h-[150px] mt-2 overflow-y-auto scroll-gray">
-              {useApis.map((item: any, index: any) => (
-                <DaApiListItem
-                  key={index}
-                  api={item}
-                  onClick={() => {
-                    onApiClicked(item)
-                  }}
-                />
-              ))}
+
+      <div className="flex border-b mx-3 mt-2">
+        <DaTabItem
+          onClick={() => setTab('used-signals')}
+          active={tab === 'used-signals'}
+        >
+          Used Signals
+        </DaTabItem>
+        <DaTabItem
+          onClick={() => setTab('all-signals')}
+          active={tab === 'all-signals'}
+        >
+          All Signals
+        </DaTabItem>
+      </div>
+
+      {tab === 'used-signals' && (
+        <>
+          {useApis && useApis.length > 0 ? (
+            <div className="flex flex-col w-full h-full px-4 overflow-y-auto">
+              <div className="flex flex-col w-full min-w-fit mt-2">
+                {useApis.map((item: any, index: any) => (
+                  <DaApiListItem
+                    key={index}
+                    api={item}
+                    onClick={() => {
+                      onApiClicked(item)
+                    }}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="items-center flex-1 justify-center flex">
+              <p className="text-da-gray-medium">No signals was used.</p>
+            </div>
+          )}
+        </>
+      )}
+
+      {tab === 'all-signals' && (
+        <div className="flex w-full overflow-hidden">
+          <ModelApiList onApiClick={onApiClicked} readOnly={true} />
         </div>
       )}
-      <DaText variant="sub-title" className="px-4 mt-2">
-        All Signals
-      </DaText>
-      <div className="grow overflow-hidden">
-        <ModelApiList onApiClick={onApiClicked} readOnly={true} />
-      </div>
-    </>
+    </div>
   )
 }
 

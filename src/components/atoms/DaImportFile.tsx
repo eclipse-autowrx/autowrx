@@ -4,12 +4,14 @@ interface DaImportFileProps {
   onFileChange: (file: File) => void
   children: React.ReactNode
   accept?: string
+  className?: string
 }
 
 const DaImportFile: React.FC<DaImportFileProps> = ({
   onFileChange,
   children,
   accept = '.png, .jpg, .jpeg',
+  className,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -26,7 +28,9 @@ const DaImportFile: React.FC<DaImportFileProps> = ({
 
   return (
     <>
-      <div onClick={handleClick}>{children}</div>
+      <div className={className} onClick={handleClick}>
+        {children}
+      </div>
       <input
         ref={fileInputRef}
         type="file"

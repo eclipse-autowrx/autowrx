@@ -59,6 +59,22 @@
   }
 }
 
+.da-pl-8 {
+  padding-left: 32px;
+}
+
+.da-pl-16 {
+  padding-left: 64px;
+}
+
+.da-pl-24 {
+  padding-left: 96px;
+}
+
+.da-pl-32 {
+  padding-left: 128px;
+}
+
 .col-span-2 {
   grid-column: span 2 / span 2;
 }
@@ -91,10 +107,6 @@
   grid-row: span 5 / span 5;
 }
 
-.da-clickable {
-  @apply cursor-pointer;
-}
-
 /*********** Font size and weight ********************/
 .da-txt-tiny {
   font-size: 12px;
@@ -123,7 +135,7 @@
 /*********** For Text Component ********************/
 
 .da-label-regular {
-  @apply da-txt-regular font-light;
+  @apply da-txt-regular font-normal;
 }
 
 .da-label-regular-medium {
@@ -139,7 +151,7 @@
 }
 
 .da-label-small {
-  @apply da-txt-small font-light;
+  @apply da-txt-small font-normal;
 }
 
 .da-label-small-bold {
@@ -159,7 +171,7 @@
 }
 
 .da-label-huge {
-  @apply da-txt-huge font-light;
+  @apply da-txt-huge font-normal;
 }
 
 .da-label-huge-bold {
@@ -234,12 +246,12 @@
 
 /*********** NAV BAR ********************/
 .da-nav-bar {
-  height: 120px;
+  height: 60px;
   @apply px-2 md:px-4 py-2 flex items-center w-full;
 }
 
 .da-nav-bar-logo {
-  height: 80px;
+  height: 32px;
 }
 
 /*********** Popup ********************/
@@ -250,7 +262,7 @@
 .da-popup-inner {
   display: flex;
   flex-direction: column;
-  position: absolute;
+  position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -310,7 +322,7 @@ body::-webkit-scrollbar-thumb {
 /*********** Menu Component ********************/
 
 .da-menu-item {
-  @apply da-btn-plain da-btn-sm mx-1 da-clickable da-label-small-medium;
+  @apply da-btn-plain da-btn-sm mx-1 cursor-pointer da-label-small-medium;
 }
 
 .da-menu-dropdown {
@@ -322,7 +334,7 @@ body {
   /* font-family: 'Manrope', sans-serif; */
   /* font-family: "Geist Variable"; */
   /* font-family: "Roboto", sans-serif; */
-  font-family: "Open Sans", sans-serif;
+  font-family: 'Open Sans', sans-serif;
   /* font-family: Inter, sans-serif; */
 }
 
@@ -349,4 +361,11 @@ body {
 
   --da-gradient-from: 211 45 37;
   --da-gradient-to: 186 100 38;
+}
+
+/*********** Other ********************/
+.autofill {
+  display: grid;
+  --grid-min-width: 180px;
+  grid-template-columns: repeat(auto-fill, minmax(var(--grid-min-width), 1fr));
 }

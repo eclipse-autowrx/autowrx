@@ -23,11 +23,11 @@ const DaGenAI_ResponseDisplay = ({ language = 'text', code = '' }) => {
   }, [code])
 
   return (
-    <div className="flex w-full h-full rounded border bg-gray-50 border-gray-200 overflow-y-auto scroll-gray">
+    <div className="scroll-gray flex h-full w-full overflow-y-auto rounded-md border border-gray-200 bg-gray-50 shadow">
       <SyntaxHighlighter
         language={language}
         style={customStyle}
-        className="flex text-xs w-full scroll-gray"
+        className="scroll-gray flex w-full text-xs"
       >
         {genCode}
       </SyntaxHighlighter>

@@ -1,8 +1,6 @@
-version: '3'
-
 services:
   playground-fe:
-    container_name: playground-fe
+    container_name: ${ENV:-dev}-playground-fe
     image: boschvn/playground-fe:${IMAGE_TAG:-latest}
     ports:
       - "${APP_PORT:-8090}:80"
