@@ -46,7 +46,7 @@ const DaMarketWidgetDetail: FC<any> = ({ activeWidget }) => {
               </div>
               <div className="flex w-full space-x-2 items-center justify-end da-label-small text-da-gray-medium">
                 <div className="flex items-center justify-center px-2 py-0.5 bg-da-gray-light rounded">
-                  <TbHeartFilled className="flex w-3 h-3 text-da-accent-500 mr-1" />
+                  <TbHeartFilled className="flex w-3 h-3 text-rose-500 mr-1" />
                   {activeWidget.likes?.lenght > 0
                     ? activeWidget.likes.lenght
                     : 0}

@@ -1,5 +1,5 @@
-import axios from "axios";
-import config from "@/configs/config";
+import axios from 'axios'
+import config from '@/configs/config'
 
 const sampleFileContent = `
 <!doctype html>
@@ -14,17 +14,17 @@ const sampleFileContent = `
         let interval = null
         let textValue = document.getElementById("label_value")
         function onWidgetLoaded(options) {
-            console.log("On my widget loaded")
+            
             interval = setInterval(() => {
                 if(textValue) {
                     let apiValue = getApiValue(API_NAME)
-                    console.log("type of apiValue", typeof apiValue)
+                    
                     textValue.innerText = apiValue
                 }
             }, 500)
         }
         function onWidgetUnloaded(options) {
-            console.log("On my widget unloaded")
+            
             if(interval) clearInterval(interval)
         }
 
@@ -69,83 +69,84 @@ const sampleFileContent = `
 </body>
 
 </html>
-`;
+`
 
-const WEB_STUDIO_API = config.studioBeUrl;
-const WEB_STUDIO_EDITOR = config.studioUrl;
+const WEB_STUDIO_API = config.studioBeUrl
+const WEB_STUDIO_EDITOR = config.studioUrl
 
 const convertProjectPublicLinkToEditorLink = (link: string) => {
-    if (!link) return "";
-    let retLink = link.replace(
-        `${config.studioBeUrl}/data/projects/`,
-        `${config.studioUrl}/project/`
-    );
-    let nameFrom = retLink.lastIndexOf("/");
-    let fileName = retLink.substring(nameFrom + 1);
-    // console.log(fileName)
-    retLink = retLink.replace(`/${fileName}`, `?fileName=%2F${fileName}`);
-    // console.log(`retLink: ${retLink}`)
-    return retLink;
-};
+  if (!link) return ''
+  let retLink = link.replace(
+    `${config.studioBeUrl}/data/projects/`,
+    `${config.studioUrl}/project/`,
+  )
+  let nameFrom = retLink.lastIndexOf('/')
+  let fileName = retLink.substring(nameFrom + 1)
+  //
+  retLink = retLink.replace(`/${fileName}`, `?fileName=%2F${fileName}`)
+  //
+  return retLink
+}
 
 const createNewWidgetByWebStudio = async (name: string, uid: string) => {
-    try {
-        const res = await axios.post(`${config.studioBeUrl}project`, {
-            name: name,
-            uid: uid,
-        });
+  try {
+    const res = await axios.post(`${config.studioBeUrl}project`, {
+      name: name,
+      uid: uid,
+    })
 
-        let projectName = res.data.name;
-        console.log(`Project name: ${projectName}`);
-        await axios.post(`${config.studioBeUrl}/project/${projectName}/file`, {
-            filename: "index.html",
-            content: sampleFileContent,
-            path: "/index.html",
-        });
+    let projectName = res.data.name
 
-        let linkUrl = `${config.studioBeUrl}/data/projects/${projectName}/index.html`;
+    await axios.post(`${config.studioBeUrl}/project/${projectName}/file`, {
+      filename: 'index.html',
+      content: sampleFileContent,
+      path: '/index.html',
+    })
 
-        window.open(`${config.studioUrl}/project/${projectName}?fileName=%2Findex.html`, "_blank");
+    let linkUrl = `${config.studioBeUrl}/data/projects/${projectName}/index.html`
 
-        return linkUrl;
-    } catch (err) {
-        console.log("Error on create web studio project");
-        console.log(err);
-    }
-    return "";
-};
+    window.open(
+      `${config.studioUrl}/project/${projectName}?fileName=%2Findex.html`,
+      '_blank',
+    )
 
-const createNewWidgetByProtoPilot = async (name: string, uid: string, code: string) => {
-    try {
-        const res = await axios.post(`${config.studioBeUrl}/project`, {
-            name: name,
-            uid: uid,
-        });
+    return linkUrl
+  } catch (err) {}
+  return ''
+}
 
-        let projectName = res.data.name;
-        console.log(`Project name: ${projectName}`);
-        await axios.post(`${config.studioBeUrl}/project/${projectName}/file`, {
-            filename: "index.html",
-            content: code,
-            path: "/index.html",
-        });
+const createNewWidgetByProtoPilot = async (
+  name: string,
+  uid: string,
+  code: string,
+) => {
+  try {
+    const res = await axios.post(`${config.studioBeUrl}/project`, {
+      name: name,
+      uid: uid,
+    })
 
-        let linkUrl = `${config.studioBeUrl}/data/projects/${projectName}/index.html`;
-        let linkStudio = `${config.studioUrl}/project/${projectName}?fileName=%2Findex.html`;
+    let projectName = res.data.name
 
-        // window.open(linkStudio, "_blank");
+    await axios.post(`${config.studioBeUrl}/project/${projectName}/file`, {
+      filename: 'index.html',
+      content: code,
+      path: '/index.html',
+    })
 
-        return [linkUrl, linkStudio];
-    } catch (err) {
-        console.log("Error on create web studio project");
-        console.log(err);
-    }
-    return "";
-};
+    let linkUrl = `${config.studioBeUrl}/data/projects/${projectName}/index.html`
+    let linkStudio = `${config.studioUrl}/project/${projectName}?fileName=%2Findex.html`
+
+    // window.open(linkStudio, "_blank");
+
+    return [linkUrl, linkStudio]
+  } catch (err) {}
+  return ''
+}
 
 export {
-    createNewWidgetByWebStudio,
-    WEB_STUDIO_API,
-    convertProjectPublicLinkToEditorLink,
-    createNewWidgetByProtoPilot,
-};
+  createNewWidgetByWebStudio,
+  WEB_STUDIO_API,
+  convertProjectPublicLinkToEditorLink,
+  createNewWidgetByProtoPilot,
+}

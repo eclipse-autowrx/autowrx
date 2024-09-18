@@ -11,9 +11,8 @@ interface UserInfo {
 
 export type UserCreate = {
   name: string
-  email: string
+  email?: string
   password: string
-  role: 'admin' | 'user'
 }
 
 export type User = Omit<UserCreate, 'password'> & {
@@ -30,4 +29,13 @@ export type UserUpdate = Partial<
   Omit<User, 'email_verified' | 'created_at' | 'id'>
 > & {
   password?: string
+}
+
+export type InvitedUser = {
+  email?: string
+  image_file?: string
+  name: string
+  id: string
+  access_level?: string
+  access_level_id?: string
 }

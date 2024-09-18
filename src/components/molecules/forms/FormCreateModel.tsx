@@ -39,6 +39,10 @@ const FormCreateModel = () => {
   }
 
   const createNewModel = async (e: FormEvent<HTMLFormElement>) => {
+    if (!currentUser) {
+      console.error('User not found')
+      return
+    }
     e.preventDefault()
     try {
       setLoading(true)
@@ -64,9 +68,9 @@ const FormCreateModel = () => {
 
       addLog({
         name: `New model '${body.name}' with visibility: ${body.visibility}`,
-        description: `New model '${body.name}' was created by ${currentUser?.email || currentUser?.name || currentUser?.id}`,
+        description: `New model '${body.name}' was created by ${currentUser.email || currentUser.name || currentUser.id}`,
         type: 'new-model',
-        create_by: currentUser?.id!,
+        create_by: currentUser.id,
         ref_id: modelId,
         ref_type: 'model',
       })
@@ -74,8 +78,8 @@ const FormCreateModel = () => {
       toast({
         title: ``,
         description: (
-          <DaText variant="regular-medium" className=" flex items-center">
-            <TbCircleCheckFilled className="text-green-500 w-5 h-5 mr-2" />
+          <DaText variant="regular-medium" className="flex items-center">
+            <TbCircleCheckFilled className="mr-2 h-5 w-5 text-green-500" />
             Model "{data.name}" created successfully
           </DaText>
         ),
@@ -97,7 +101,7 @@ const FormCreateModel = () => {
   return (
     <form
       onSubmit={createNewModel}
-      className="flex flex-col w-[400px] min-w-[400px] min-h-[300px] px-2 md:px-6 py-4 bg-da-white"
+      className="flex min-h-[300px] w-[400px] min-w-[400px] flex-col bg-da-white p-4"
     >
       {/* Title */}
       <DaText variant="title" className="text-da-primary-500">
@@ -109,10 +113,11 @@ const FormCreateModel = () => {
         name="name"
         value={data.name}
         onChange={(e) => handleChange('name', e.target.value)}
-        placeholder="Model Name"
+        placeholder="Model name"
         label="Model Name *"
         className="mt-4"
       />
+
       <DaSelect
         defaultValue={
           vssVersions && vssVersions.length > 0
@@ -158,9 +163,9 @@ const FormCreateModel = () => {
         disabled={loading}
         type="submit"
         variant="gradient"
-        className="w-full mt-8"
+        className="mt-8 w-full"
       >
-        {loading && <TbLoader className="animate-spin text-lg mr-2" />}
+        {loading && <TbLoader className="mr-2 animate-spin text-lg" />}
         Create Model
       </DaButton>
     </form>

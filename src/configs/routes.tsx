@@ -1,8 +1,9 @@
-import { RouteObject } from 'react-router-dom'
 import { lazy } from 'react'
 import RootLayout from '@/layouts/RootLayout'
 import SuspenseProvider from '@/providers/SuspenseProvider'
 import PageAuthSuccess from '@/pages/PageAuthSuccess'
+import { RouteConfig } from '@/types/common.type'
+import ModelDetailLayout from '@/layouts/ModelDetailLayout'
 
 const PageHome = lazy(() => import('@/pages/PageHome'))
 const PageAbout = lazy(() => import('@/pages/PageAbout'))
@@ -24,14 +25,16 @@ const PageManageUsers = lazy(() => import('@/pages/PageManageUsers'))
 const PageDiscussions = lazy(() => import('@/pages/test-ui/PageDiscussions'))
 const PageUserProfile = lazy(() => import('@/pages/PageUserProfile'))
 const PageManageFeatures = lazy(() => import('@/pages/PageManageFeatures'))
+const PageGenAIWizard = lazy(() => import('@/pages/PageGenAIWizard'))
 
-const routesConfig: RouteObject[] = [
+const routesConfig: RouteConfig[] = [
   {
     path: '/',
     element: <RootLayout />,
     children: [
       {
         path: '/',
+        noBreadcrumbs: true,
         children: [
           {
             index: true,
@@ -40,6 +43,7 @@ const routesConfig: RouteObject[] = [
                 <PageHome />
               </SuspenseProvider>
             ),
+            noBreadcrumbs: true,
           },
           {
             path: 'manage-users',
@@ -48,6 +52,7 @@ const routesConfig: RouteObject[] = [
                 <PageManageUsers />
               </SuspenseProvider>
             ),
+            noBreadcrumbs: true,
           },
           {
             path: 'manage-features',
@@ -56,6 +61,7 @@ const routesConfig: RouteObject[] = [
                 <PageManageFeatures />
               </SuspenseProvider>
             ),
+            noBreadcrumbs: true,
           },
         ],
       },
@@ -100,57 +106,68 @@ const routesConfig: RouteObject[] = [
             path: ':model_id',
             element: (
               <SuspenseProvider>
-                <PageModelDetail />
+                <ModelDetailLayout />
               </SuspenseProvider>
             ),
-          },
-          {
-            path: ':model_id/api',
-            element: (
-              <SuspenseProvider>
-                <PageVehicleApi />
-              </SuspenseProvider>
-            ),
-          },
-          {
-            path: ':model_id/api/:api',
-            element: (
-              <SuspenseProvider>
-                <PageVehicleApi />
-              </SuspenseProvider>
-            ),
-          },
-          {
-            path: ':model_id/library',
-            element: (
-              <SuspenseProvider>
-                <PagePrototypeLibrary />
-              </SuspenseProvider>
-            ),
-          },
-          {
-            path: ':model_id/library/:tab',
-            element: (
-              <SuspenseProvider>
-                <PagePrototypeLibrary />
-              </SuspenseProvider>
-            ),
-          },
-          {
-            path: ':model_id/library/:tab/:prototype_id',
-            element: (
-              <SuspenseProvider>
-                <PagePrototypeLibrary />
-              </SuspenseProvider>
-            ),
-          },
-          {
-            path: ':model_id/architecture',
-            element: (
-              <SuspenseProvider>
-                <PageModelArchitecture />
-              </SuspenseProvider>
-            ),
+            children: [
+              {
+                index: true,
+                element: (
+                  <SuspenseProvider>
+                    <PageModelDetail />
+                  </SuspenseProvider>
+                ),
+              },
+              {
+                path: 'api',
+                element: (
+                  <SuspenseProvider>
+                    <PageVehicleApi />
+                  </SuspenseProvider>
+                ),
+              },
+              {
+                path: 'api/:api',
+                element: (
+                  <SuspenseProvider>
+                    <PageVehicleApi />
+                  </SuspenseProvider>
+                ),
+              },
+              {
+                path: 'library',
+                element: (
+                  <SuspenseProvider>
+                    <PagePrototypeLibrary />
+                  </SuspenseProvider>
+                ),
+              },
+              {
+                path: 'library/:tab',
+                element: (
+                  <SuspenseProvider>
+                    <PagePrototypeLibrary />
+                  </SuspenseProvider>
+                ),
+              },
+              {
+                path: 'library/:tab/:prototype_id',
+                element: (
+                  <SuspenseProvider>
+                    <PagePrototypeLibrary />
+                  </SuspenseProvider>
+                ),
+              },
+
+              {
+                path: 'architecture',
+                element: (
+                  <SuspenseProvider>
+                    <PageModelArchitecture />
+                  </SuspenseProvider>
+                ),
+              },
+            ],
           },
           {
             path: ':model_id/library/prototype/:prototype_id',
@@ -178,6 +195,19 @@ const routesConfig: RouteObject[] = [
             element: (
               <SuspenseProvider>
                 <PageUserProfile />
+              </SuspenseProvider>
+            ),
+          },
+        ],
+      },
+      {
+        path: '/genai-wizard',
+        children: [
+          {
+            index: true,
+            element: (
+              <SuspenseProvider>
+                <PageGenAIWizard />
               </SuspenseProvider>
             ),
           },

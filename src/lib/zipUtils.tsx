@@ -83,9 +83,7 @@ const downloadAllPrototypeInModel = async (model: Model, zip: JSZip) => {
         )
       }
     }
-  } catch (err) {
-    console.log('downloadAllPrototypeInModel', err)
-  }
+  } catch (err) {}
 }
 
 export const downloadModelZip = async (model: Model) => {
@@ -122,9 +120,7 @@ export const downloadModelZip = async (model: Model) => {
 
     const content = await zip.generateAsync({ type: 'blob' })
     saveAs(content, zipFilename)
-  } catch (err) {
-    console.log('Error on zip prototype', err)
-  }
+  } catch (err) {}
 }
 
 export const zipToModel = async (file: File) => {
@@ -173,7 +169,6 @@ export const zipToModel = async (file: File) => {
       (await zipFile.file('plugins.json')?.async('string')) || '[]'
     plugins = JSON.parse(pluginsStr)
   } catch (err) {
-    console.log('Error on import prototype', err)
     return null
   }
   return { model, plugins, prototypes }
@@ -226,16 +221,12 @@ export const downloadPrototypeZip = async (prototype: Prototype) => {
             }
           }
         }
-      } catch (e) {
-        console.log('Error on widget_config', e)
-      }
+      } catch (e) {}
     }
 
     const content = await zip.generateAsync({ type: 'blob' })
     saveAs(content, zipFilename)
-  } catch (err) {
-    console.log('Error on zip prototype', err)
-  }
+  } catch (err) {}
 }
 
 export const zipToPrototype = async (
@@ -279,10 +270,7 @@ export const zipToPrototype = async (
 
     // Ensure the model_id is correctly set to the new model_id
     prototype.model_id = model_id
-
-    console.log('Imported prototype:', prototype)
   } catch (err) {
-    console.log('Error on import prototype', err)
     return null
   }
 

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { DaTableProperty } from '../molecules/DaTableProperty'
 import { DaText } from '../atoms/DaText'
 import { DaCopy } from '../atoms/DaCopy'
@@ -18,8 +18,15 @@ import DaPopup from '../atoms/DaPopup'
 import FormSubmitIssue from '../molecules/forms/FormSubmitIssue'
 import { FaGithub } from 'react-icons/fa6'
 import useGithubAuth from '@/hooks/useGithubAuth'
-import { TbExternalLink, TbLoader, TbMessage, TbTrash } from 'react-icons/tb'
+import {
+  TbChevronDown,
+  TbExternalLink,
+  TbLoader,
+  TbTrash,
+} from 'react-icons/tb'
 import useCurrentExtendedApiIssue from '@/hooks/useCurrentExtendedApiIssue'
+import DaMenu from '../atoms/DaMenu'
+import DaConsumedPrototypes from '../molecules/DaConsumedPrototypes'
 
 interface ApiDetailProps {
   apiDetails: any
@@ -31,8 +38,6 @@ const OneOfFromName = (list: string[], name: string) => {
 }
 
 const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
-  console.log(`apiDetails`, apiDetails)
-
   const { bgClass } = getApiTypeClasses(apiDetails.type)
   const { data: model, refetch } = useCurrentModel()
   const [isLoading, setIsLoading] = useState(false)
@@ -57,18 +62,11 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
         })
         setIsLoading(false)
         await refetch()
-        navigate(`/model/${model.id}/api`)
-        // console.log('Wishlist API deleted successfully')
+        navigate(`/model/${model.id}/api/Vehicle`)
       } catch (error) {
         setIsLoading(false)
         console.error('Error deleting wishlist API:', error)
       }
-    }
-  }
-
-  const handleScrollToDiscussions = () => {
-    if (discussionsRef.current) {
-      discussionsRef.current.scrollIntoView({ behavior: 'smooth' })
     }
   }
 
@@ -159,154 +157,164 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
     apiDetails.comment && { name: 'Comment', value: apiDetails.comment },
   ].filter(Boolean)
 
+  const [confirmPopupOpen, setConfirmPopupOpen] = useState(false)
+
   return (
-    <div className="flex flex-col w-full px-2">
-      {/* <DaImage
-        src="https://bewebstudio.digitalauto.tech/data/projects/OezCm7PTy8FT/a/E-Car_Full_Vehicle.png"
-        className="object-cover"
-      /> */}
+    <div className="flex h-full w-full flex-col px-2">
       <DaApiArchitecture apiName={apiDetails.name} />
-      <div className="w-full py-2 px-4 bg-da-primary-100 justify-between flex">
+      <div className="grow"></div>
+      <div className="flex h-fit w-full flex-row items-center justify-between space-x-2 bg-da-primary-100 py-2 pl-4 pr-2">
         <DaCopy textToCopy={apiDetails.name}>
-          <DaText variant="regular-bold" className="text-da-primary-500">
+          <DaText
+            variant="regular-bold"
+            className="truncate text-da-primary-500"
+          >
             {apiDetails.name}
           </DaText>
           {apiDetails.isWishlist && (
-            <div className=" flex font-bold rounded-full w-4 h-4 ml-2 bg-fuchsia-500 text-da-white items-center justify-center text-[9px]">
+            <div className="ml-2 flex h-4 w-4 items-center justify-center rounded-full bg-fuchsia-500 text-[9px] font-bold text-da-white">
               W
             </div>
           )}
         </DaCopy>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2">
           {isLoading ? (
             <div className="flex items-center text-da-gray-medium">
-              <TbLoader className="text-da-gray-medium w-5 h-5 mr-2 animate animate-spin" />
+              <TbLoader className="animate mr-2 h-5 w-5 animate-spin text-da-gray-medium" />
               <DaText variant="small-bold">Deleting...</DaText>
             </div>
           ) : (
             apiDetails.isWishlist &&
             isAuthorized && (
-              <>
-                <DaConfirmPopup
-                  onConfirm={handleDeleteWishlistApi}
-                  label="Are you sure you want to delete this wishlist signal?"
-                >
-                  <DaButton variant="destructive" size="sm">
-                    <TbTrash className="w-5 h-5 mr-2 " />
+              <DaMenu
+                trigger={
+                  <DaButton variant="solid" size="sm">
+                    <div className="da-label-small-bold">
+                      Wishlist Signal Action
+                    </div>
+                    <TbChevronDown className="ml-1 h-4 w-4" />
+                  </DaButton>
+                }
+              >
+                <div className="da-menu-dropdown flex flex-col">
+                  {data ? (
+                    <Link
+                      to={data.link}
+                      className="da-label-small-bold flex items-center gap-2"
+                      target="_blank"
+                    >
+                      <TbExternalLink className="h-5 w-5" />
+                      View COVESA Issue
+                    </Link>
+                  ) : (
+                    <DaPopup
+                      state={popupSubmitIssueState}
+                      trigger={
+                        <DaButton
+                          variant="plain"
+                          size="sm"
+                          onClick={() => {
+                            popupSubmitIssueState[1](true)
+                            onTriggerAuth()
+                          }}
+                        >
+                          <FaGithub className="mr-2 h-5 w-5" />
+                          <span className="da-label-small-bold">
+                            Propose this Signal to COVESA
+                          </span>
+                        </DaButton>
+                      }
+                    >
+                      {loading && (
+                        <div className="flex flex-col items-center gap-4 p-4">
+                          <DaLoader />
+                          <p>
+                            Please wait while we are authenticating with
+                            Github...
+                          </p>
+                        </div>
+                      )}
+
+                      {!loading && error && (
+                        <div className="flex flex-col items-center gap-4 p-4">
+                          <p>{error}</p>
+                        </div>
+                      )}
+
+                      {!loading && !error && access && (
+                        <FormSubmitIssue
+                          user={user}
+                          api={apiDetails}
+                          refetch={refetchCurrIssue}
+                          onClose={async () => {
+                            popupSubmitIssueState[1](false)
+                          }}
+                          access={access}
+                        />
+                      )}
+                    </DaPopup>
+                  )}
+                  <DaButton
+                    variant="destructive"
+                    size="sm"
+                    className="flex w-full !justify-start"
+                    onClick={() => setConfirmPopupOpen(true)}
+                  >
+                    <TbTrash className="mr-2 h-5 w-5" />
                     <div className="da-label-small-bold">
                       Delete Wishlist Signal
                     </div>
                   </DaButton>
-                </DaConfirmPopup>
-                {data ? (
-                  <Link
-                    to={data.link}
-                    className="da-label-small-bold flex items-center gap-2"
-                    target="_blank"
-                  >
-                    <TbExternalLink className="w-5 h-5" />
-                    View COVESA Issue
-                  </Link>
-                ) : (
-                  <DaPopup
-                    state={popupSubmitIssueState}
-                    trigger={
-                      <DaButton
-                        variant="plain"
-                        size="sm"
-                        onClick={() => {
-                          popupSubmitIssueState[1](true)
-                          onTriggerAuth()
-                        }}
-                      >
-                        <FaGithub className="mr-1" />
-                        <span className="da-label-small-bold">
-                          Propose this Signal to COVESA
-                        </span>
-                      </DaButton>
-                    }
-                  >
-                    {loading && (
-                      <div className="p-4 flex flex-col gap-4 items-center">
-                        <DaLoader />
-                        <p>
-                          Please wait while we are authenticating with Github...
-                        </p>
-                      </div>
-                    )}
-
-                    {!loading && error && (
-                      <div className="p-4 flex flex-col gap-4 items-center">
-                        <p>{error}</p>
-                      </div>
-                    )}
-
-                    {!loading && !error && access && (
-                      <FormSubmitIssue
-                        user={user}
-                        api={apiDetails}
-                        refetch={refetchCurrIssue}
-                        onClose={async () => {
-                          popupSubmitIssueState[1](false)
-                        }}
-                        access={access}
-                      />
-                    )}
-                  </DaPopup>
-                )}
-              </>
+                </div>
+              </DaMenu>
             )
           )}
-          {/* <DaButton
-            variant="plain"
-            className="!text-da-primary-500"
-            size="sm"
-            onClick={handleScrollToDiscussions}
+          <DaConfirmPopup
+            onConfirm={handleDeleteWishlistApi}
+            state={[confirmPopupOpen, setConfirmPopupOpen]}
+            label="Are you sure you want to delete this wishlist signal?"
           >
-            <TbMessage className="w-5 h-5 mr-2" />{' '}
-            <div className="da-label-small-bold">Discussions</div>
-          </DaButton> */}
-          <div className={cn('px-3 rounded', bgClass)}>
-            <DaText variant="small-bold" className="text-da-white uppercase">
+            <></>
+          </DaConfirmPopup>
+          <div
+            className={cn(
+              'hidden h-8 items-center rounded-md px-2 xl:flex',
+              bgClass,
+            )}
+          >
+            <DaText variant="small-bold" className="uppercase text-da-white">
               {apiDetails.type}
             </DaText>
           </div>
         </div>
       </div>
 
-      <div className="p-4">
+      <div className="flex h-fit w-full flex-col p-4">
         <DaText variant="regular-bold" className="flex text-da-secondary-500">
           VSS Specification
         </DaText>
-        <DaTableProperty
-          properties={vssSpecificationProperties}
-          maxWidth="700px"
+        <DaTableProperty properties={vssSpecificationProperties} />
+
+        <DaConsumedPrototypes
+          signal={
+            ['actuator', 'sensor'].includes(apiDetails.type)
+              ? apiDetails?.name || apiDetails?.shortName || ''
+              : ''
+          }
         />
+
         <DaText
           variant="regular-bold"
-          className="flex !mt-6 text-da-secondary-500"
-        >
-          Dependencies
-        </DaText>
-        <DaTableProperty
-          properties={[{ name: 'Used by these vehicle app', value: 'N/A' }]}
-          maxWidth="700px"
-        />
-        <DaText
-          variant="regular-bold"
-          className="!mt-6 flex text-da-secondary-500"
+          className="flex pt-4 text-da-secondary-500"
         >
           Implementation
         </DaText>
-        <DaTableProperty
-          properties={implementationProperties}
-          maxWidth="700px"
-        />
+        <DaTableProperty properties={implementationProperties} />
       </div>
       {model && model.id && (
-        <div ref={discussionsRef}>
+        <div ref={discussionsRef} className="flex h-full">
           <DaDiscussions
-            className="py-4"
+            className="h-full min-w-[0px] pb-2"
             refId={`${model.id}-${apiDetails.name}`}
             refType="api"
           />

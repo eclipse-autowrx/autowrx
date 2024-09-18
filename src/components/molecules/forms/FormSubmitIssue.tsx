@@ -36,7 +36,6 @@ const SubmitIssueForm = ({
   const [content, setContent] = useState('')
 
   useEffect(() => {
-    console.log(`api`, api)
     if (!api) {
       setTitle('')
       setContent('')
@@ -54,14 +53,10 @@ const SubmitIssueForm = ({
   }, [api])
 
   const submitIssue = async () => {
-    console.log(`submitIssue`)
-    console.log(`title`, title)
-    console.log(`content`, content)
     // e.preventDefault()
     try {
       setLoading(true)
       if (!title || !content) {
-        console.log('No title or content')
         return
       }
       if (!access || !model?.id) {
@@ -78,7 +73,6 @@ const SubmitIssueForm = ({
       refetch && (await refetch())
       onClose()
     } catch (error) {
-      console.log(error)
       if (isAxiosError(error)) {
         setError(error.response?.data?.message ?? 'Something went wrong')
         return
