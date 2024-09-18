@@ -12,6 +12,7 @@ import DaMockManager from '../dashboard/DaMockManager'
 import useWizardGenAIStore from '@/stores/genAIWizardStore'
 import useRuntimeStore from '@/stores/runtimeStore'
 import config from '@/configs/config'
+import DaGenAI_RuntimeConnector from './DaGenAI_RuntimeConnector'
 
 const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
 
@@ -154,7 +155,7 @@ const DaGenAI_RuntimeControl = () => {
       className={`hidden absolute bottom-0 right-0 top-0 z-10 ${isExpand ? 'w-[500px]' : 'w-16'} flex flex-col justify-center bg-da-gray-dark px-1 py-2 text-da-gray-light`}
     >
       <div className="px-1 flex">
-        <DaRuntimeConnector
+        <DaGenAI_RuntimeConnector
           targetPrefix="runtime-"
           kitServerUrl={DEFAULT_KIT_SERVER}
           ref={runTimeRef1}

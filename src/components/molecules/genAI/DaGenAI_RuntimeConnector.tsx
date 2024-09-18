@@ -5,6 +5,7 @@ import { shallow } from 'zustand/shallow'
 // import useModelStore from '@/stores/modelStore'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import useWizardGenAIStore from '@/stores/genAIWizardStore'
 
 import { io } from 'socket.io-client'
 
@@ -20,11 +21,14 @@ interface KitConnectProps {
   onNewLog?: (log: string) => void
   onAppExit?: (code: any) => void
   onDeployResponse?: (log: string, isDone: boolean) => void
+
+  preferRuntime?: string
+  isWizard?: boolean
 }
 
 // const socketio = io(DEFAULT_KIT_SERVER);
 
-const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
+const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
   (
     {
       hideLabel = false,
@@ -36,6 +40,8 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       onNewLog,
       onAppExit,
       onDeployResponse,
+      preferRuntime,
+      isWizard = false,
     },
     ref,
   ) => {
@@ -44,10 +50,24 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     const [activeRtId, setActiveRtId] = useState<string | undefined>('')
     const [allRuntimes, setAllRuntimes] = useState<any>([])
     const [ticker, setTicker] = useState(0)
+    const [prototype, setPrototype] = useState<any>(null)
 
     const [rawApisPackage, setRawApisPackage] = useState<any>(null)
-    const { data: prototype } = useCurrentPrototype()
+
+    const { data: currentPrototype } = useCurrentPrototype()
+
+    const { prototypeData } = useWizardGenAIStore()
+
     const { data: currentUser } = useSelfProfileQuery()
+
+    // Remove wizard dependency from useCurrentPrototype
+    useEffect(() => {
+      if (preferRuntime && isWizard) {
+        setPrototype(prototypeData)
+      } else {
+        setPrototype(currentPrototype)
+      }
+    }, [preferRuntime, isWizard, prototypeData, currentPrototype])
 
     useImperativeHandle(ref, () => {
       return {
@@ -67,27 +87,11 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
 
     useEffect(() => {
       if (rawApisPackage) {
-        // console.log(`apis-value `, activeRtId)
-        // console.log(payload)
         if (rawApisPackage.result) {
-          // console.log(`receive apis-value`)
-          // console.log(rawApisPackage)
           setActiveApis(rawApisPackage.result)
         }
       }
     }, [rawApisPackage])
-
-    // useEffect(() => {
-    //   if (!usedAPIs) return
-
-    //   if (activeRtId) {
-    //     socketio.emit('messageToKit', {
-    //       cmd: 'subscribe_apis',
-    //       to_kit_id: activeRtId,
-    //       apis: usedAPIs,
-    //     })
-    //   }
-    // }, [usedAPIs, activeRtId])
 
     useEffect(() => {
       let timer = setInterval(() => {
@@ -133,13 +137,16 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     }
 
     const stopApp = () => {
+      if (!socketio) {
+        console.error('SocketIO is not initialized.')
+        return
+      }
       socketio.emit('messageToKit', {
         cmd: 'stop_python_app',
         to_kit_id: activeRtId,
         data: {},
       })
     }
-
     const deploy = () => {
       if (prototype && prototype.id && currentUser) {
         socketio.emit('messageToKit', {
@@ -164,6 +171,10 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     }
 
     const writeSignalsValue = (obj: any) => {
+      if (!socketio) {
+        console.error('SocketIO is not initialized.')
+        return
+      }
       socketio.emit('messageToKit', {
         cmd: 'write_signals_value',
         to_kit_id: activeRtId,
@@ -242,11 +253,22 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       if (allRuntimes && allRuntimes.length > 0) {
         if (activeRtId) return
         let onlineRuntimes = allRuntimes.filter((rt: any) => rt.is_online)
+
         if (onlineRuntimes.length <= 0) {
           console.log(`setActiveRtId(undefined) cause: no onlineRuntimes`)
           setActiveRtId(undefined)
           return
         }
+
+        if (preferRuntime) {
+          if (
+            onlineRuntimes.map((rt: any) => rt.kit_id).includes(preferRuntime)
+          ) {
+            setActiveRtId(preferRuntime)
+            return
+          }
+        }
+
         let lastOnlineRuntime = localStorage.getItem('last-rt')
         if (
           lastOnlineRuntime &&
@@ -263,7 +285,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         console.log(`setActiveRtId(undefined) cause: noRuntime`)
         setActiveRtId(undefined)
       }
-    }, [allRuntimes])
+    }, [allRuntimes, preferRuntime])
 
     const onConnected = () => {
       registerClient()
@@ -439,4 +461,4 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
   },
 )
 
-export default DaRuntimeConnector
+export default DaGenAI_RuntimeConnector

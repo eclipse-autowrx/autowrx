@@ -1,7 +1,7 @@
 import DaText from '@/components/atoms/DaText'
 import { useEffect, useState } from 'react'
 import { DaButton } from '@/components/atoms/DaButton'
-import DaEditSystemStaging from '../staging/DaEditSystemStaging'
+import DaGenAI_EditSystemStaging from './DaGenAI_EditSystemStaging'
 
 const TARGETS = [
   {
@@ -192,7 +192,7 @@ const DaGenAI_WizardStaging = () => {
   return (
     <div className="min-h-[400px] w-[90vw] min-w-[400px] max-w-[1200px] ">
       {mode == MODE_EDIT_DEFINE && (
-        <DaEditSystemStaging
+        <DaGenAI_EditSystemStaging
           onTargetMode={false}
           system={system}
           target={null}
@@ -208,7 +208,7 @@ const DaGenAI_WizardStaging = () => {
       )}
 
       {mode == MODE_ON_TARGET && (
-        <DaEditSystemStaging
+        <DaGenAI_EditSystemStaging
           onTargetMode={true}
           system={system}
           stageDefine={stageDefine}
