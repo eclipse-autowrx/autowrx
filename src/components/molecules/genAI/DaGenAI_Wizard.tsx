@@ -14,7 +14,8 @@ const DaGenAI_Wizard = ({ onCodeGenerated }: DaGenAI_WizardProps) => {
   const [loading, setLoading] = useState<boolean>(false)
   const [genCode, setGenCode] = useState<string>('')
   const [isFinished, setIsFinished] = useState<boolean>(false)
-  const { prototypeData, setPrototypeData } = useWizardGenAIStore()
+  const { wizardPrototype: prototypeData, setPrototypeData } =
+    useWizardGenAIStore()
 
   return (
     <div className="flex h-full w-full rounded">

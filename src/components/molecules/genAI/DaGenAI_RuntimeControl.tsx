@@ -44,7 +44,7 @@ const DaGenAI_RuntimeControl = () => {
   const { apisValue } = useRuntimeStore()
 
   const {
-    prototypeData,
+    wizardPrototype: prototypeData,
     setPrototypeData,
     activeModelApis,
     registerWizardSimulationRun,
@@ -169,7 +169,6 @@ const DaGenAI_RuntimeControl = () => {
           preferRuntime={
             config.genAI.wizardPreferRuntime ?? 'RunTime-VSS4-02-20'
           }
-          isWizard={true}
         />
       </div>
 

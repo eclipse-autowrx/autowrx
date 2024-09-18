@@ -14,8 +14,11 @@ const MODE_RUN = 'run'
 const MODE_EDIT = 'edit'
 
 const DaGenAI_SimulateDashboard: FC = ({}) => {
-  const { prototypeData, setPrototypeData, activeModelApis } =
-    useWizardGenAIStore()
+  const {
+    wizardPrototype: prototypeData,
+    setPrototypeData,
+    activeModelApis,
+  } = useWizardGenAIStore()
   const [widgetItems, setWidgetItems] = useState<any>([])
   const [mode, setMode] = useState<string>(MODE_RUN)
   const [templates, setTemplates] = useState(cloneDeep(dashboard_templates))

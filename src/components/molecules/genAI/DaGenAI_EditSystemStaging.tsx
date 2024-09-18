@@ -17,7 +17,6 @@ interface DaEditSystemStagingProps {
   target: any
   onFinish?: (data: any) => void
   onCancel?: () => void
-  isWizard?: boolean
 }
 
 const DaGenAI_EditSystemStaging = ({
@@ -27,7 +26,6 @@ const DaGenAI_EditSystemStaging = ({
   target,
   onFinish,
   onCancel,
-  isWizard = false,
 }: DaEditSystemStagingProps) => {
   const [define, setDefine] = useState<any>(null)
   const [activeRtId, setActiveRtId] = useState<string>('')
@@ -134,10 +132,6 @@ const DaGenAI_EditSystemStaging = ({
                       }, 2000)
                     }
                   }}
-                  preferRuntime={
-                    isWizard ? config.genAI.wizardPreferRuntime : ''
-                  }
-                  isWizard={isWizard}
                 />
               )}
               {log && (
@@ -248,23 +242,6 @@ const DaGenAI_EditSystemStaging = ({
           </DaButton>
         </div>
       )}
-
-      {/* {onTargetMode && (
-        <div className="flex mt-2">
-          <DaButton
-            className="w-20 ml-2"
-            variant="outline"
-            onClick={() => {
-              if (onCancel) {
-                onCancel()
-              }
-            }}
-          >
-            Go back
-          </DaButton>
-          <div className="grow"></div>
-        </div>
-      )} */}
     </div>
   )
 }

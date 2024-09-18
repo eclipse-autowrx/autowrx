@@ -23,10 +23,7 @@ interface KitConnectProps {
   onDeployResponse?: (log: string, isDone: boolean) => void
 
   preferRuntime?: string
-  isWizard?: boolean
 }
-
-// const socketio = io(DEFAULT_KIT_SERVER);
 
 const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
   (
@@ -41,7 +38,6 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
       onAppExit,
       onDeployResponse,
       preferRuntime,
-      isWizard = false,
     },
     ref,
   ) => {
@@ -50,24 +46,11 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
     const [activeRtId, setActiveRtId] = useState<string | undefined>('')
     const [allRuntimes, setAllRuntimes] = useState<any>([])
     const [ticker, setTicker] = useState(0)
-    const [prototype, setPrototype] = useState<any>(null)
-
     const [rawApisPackage, setRawApisPackage] = useState<any>(null)
 
-    const { data: currentPrototype } = useCurrentPrototype()
-
-    const { prototypeData } = useWizardGenAIStore()
+    const { wizardPrototype } = useWizardGenAIStore()
 
     const { data: currentUser } = useSelfProfileQuery()
-
-    // Remove wizard dependency from useCurrentPrototype
-    useEffect(() => {
-      if (preferRuntime && isWizard) {
-        setPrototype(prototypeData)
-      } else {
-        setPrototype(currentPrototype)
-      }
-    }, [preferRuntime, isWizard, prototypeData, currentPrototype])
 
     useImperativeHandle(ref, () => {
       return {
@@ -148,14 +131,14 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
       })
     }
     const deploy = () => {
-      if (prototype && prototype.id && currentUser) {
+      if (wizardPrototype && wizardPrototype.id && currentUser) {
         socketio.emit('messageToKit', {
           cmd: 'deploy_request',
           to_kit_id: activeRtId,
-          code: prototype.code || '',
+          code: wizardPrototype.code || '',
           prototype: {
-            name: prototype.name || 'no-name',
-            id: prototype.id || 'no-id',
+            name: wizardPrototype.name || 'no-name',
+            id: wizardPrototype.id || 'no-id',
           },
           username: currentUser.name,
         })
@@ -245,7 +228,7 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
     useEffect(() => {
       console.log(`activeRtId`, activeRtId)
       if (activeRtId) {
-        localStorage.setItem('last-rt', activeRtId)
+        localStorage.setItem('last-wizard-rt', activeRtId)
       }
     }, [activeRtId])
 
@@ -269,7 +252,7 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
           }
         }
 
-        let lastOnlineRuntime = localStorage.getItem('last-rt')
+        let lastOnlineRuntime = localStorage.getItem('last-wizard-rt')
         if (
           lastOnlineRuntime &&
           onlineRuntimes.map((rt: any) => rt.kit_id).includes(lastOnlineRuntime)
@@ -280,7 +263,7 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
         }
         console.log(`setActiveRtId `, onlineRuntimes[0].kit_id)
         setActiveRtId(onlineRuntimes[0].kit_id)
-        localStorage.setItem('last-rt', onlineRuntimes[0].kit_id)
+        localStorage.setItem('last-wizard-rt', onlineRuntimes[0].kit_id)
       } else {
         console.log(`setActiveRtId(undefined) cause: noRuntime`)
         setActiveRtId(undefined)

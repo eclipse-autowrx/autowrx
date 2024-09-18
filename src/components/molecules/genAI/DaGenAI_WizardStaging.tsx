@@ -216,7 +216,6 @@ const DaGenAI_WizardStaging = () => {
           onCancel={() => {
             setMode(MODE_OVERVIEW)
           }}
-          isWizard={true}
         />
       )}
 

@@ -43,7 +43,7 @@ const GenAIPrototypeWizard = () => {
     executeWizardSimulationStop,
     wizardPrompt,
     setWizardGeneratedCode,
-    prototypeData,
+    wizardPrototype: prototypeData,
     setPrototypeData,
     resetWizardStore: resetWizard,
   } = useWizardGenAIStore()
