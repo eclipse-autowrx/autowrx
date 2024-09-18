@@ -79,7 +79,7 @@ const DaPaginationPrevious = ({
     {...props}
   >
     <ChevronLeftIcon className="h-4 w-4" />
-    <DaText variant="small-bold" className="da-clickable">
+    <DaText variant="small-bold" className="cursor-pointer">
       Previous
     </DaText>
   </DaPaginationLink>
@@ -97,7 +97,7 @@ const DaPaginationNext = ({
     disabled={disabled}
     {...props}
   >
-    <DaText variant="small-bold" className="da-clickable">
+    <DaText variant="small-bold" className="cursor-pointer">
       Next
     </DaText>
     <ChevronRightIcon className="h-4 w-4" />

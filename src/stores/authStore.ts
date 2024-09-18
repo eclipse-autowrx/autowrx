@@ -7,18 +7,21 @@ import { create } from 'zustand'
 type AuthState = {
   access?: Token | null
   user: any
+  openLoginDialog: boolean
 }
 
 type Actions = {
   setAccess: (_: Token) => void
   setUser: (user: any, access: any) => void
   logOut: () => void
+  setOpenLoginDialog: (isOpen: boolean) => void
 }
 
 const useAuthStore = create<AuthState & Actions>()(
   immer((set) => ({
     access: undefined,
     user: undefined,
+    openLoginDialog: false,
     setUser: (user, access) =>
       set((state) => {
         state.access = access
@@ -37,6 +40,10 @@ const useAuthStore = create<AuthState & Actions>()(
         }
         state.access = null
         state.user = null
+      }),
+    setOpenLoginDialog: (isOpen) =>
+      set((state) => {
+        state.openLoginDialog = isOpen
       }),
   })),
 )

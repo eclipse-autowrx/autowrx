@@ -36,9 +36,7 @@ export const loadMarketWidgets = async () => {
               parsedWidget.options = tmpConfig
               parsedWidget.options.url = parsedWidget.url
             }
-          } catch (err_parse) {
-            console.log('Error on parse')
-          }
+          } catch (err_parse) {}
         }
         return parsedWidget //return the parsed widget for each widget
       })
@@ -81,9 +79,7 @@ export const searchWidget = async (widgetId: any) => {
             parsedWidget.options = tmpConfig
             parsedWidget.options.url = parsedWidget.url
           }
-        } catch (err_parse) {
-          console.log('Error on parse')
-        }
+        } catch (err_parse) {}
       }
       return parsedWidget
     }

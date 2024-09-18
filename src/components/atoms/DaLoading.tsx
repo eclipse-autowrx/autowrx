@@ -10,6 +10,7 @@ interface DaLoadingProps {
   size?: number
   fullScreen?: boolean
   showRetry?: boolean
+  stopLoading?: boolean
 }
 
 const DaLoading = ({
@@ -19,16 +20,21 @@ const DaLoading = ({
   size = 60,
   fullScreen = true,
   showRetry = true,
-}) => {
+  stopLoading = false, // Default to false
+}: DaLoadingProps) => {
   const [hasTimedOut, setHasTimedOut] = useState(false)
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    if (stopLoading) {
       setHasTimedOut(true)
-    }, timeout * 1000)
+    } else {
+      const timer = setTimeout(() => {
+        setHasTimedOut(true)
+      }, timeout * 1000)
 
-    return () => clearTimeout(timer)
-  }, [timeout])
+      return () => clearTimeout(timer)
+    }
+  }, [stopLoading, timeout])
 
   const circleRadius = size * 0.38
   const strokeWidth = size * 0.067

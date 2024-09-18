@@ -20,12 +20,12 @@ const DaApiListItem = ({
   return (
     <div
       ref={itemRef}
-      className={`grid grid-cols-4 gap-4 py-1.5 text-da-gray-medium cursor-pointer hover:bg-da-primary-100 items-center justify-center px-2 rounded ${
+      className={`flex w-full min-w-full justify-between py-1.5 text-da-gray-medium cursor-pointer hover:bg-da-primary-100 items-center px-2 rounded ${
         isSelected ? 'bg-da-primary-100 text-da-primary-500' : ''
       }`}
       onClick={onClick}
     >
-      <div className="col-span-3 cursor-pointer flex items-center">
+      <div className="flex w-full cursor-pointer items-center">
         <DaText
           variant={isSelected ? 'small-bold' : 'small'}
           className="cursor-pointer"
@@ -38,7 +38,7 @@ const DaApiListItem = ({
           </div>
         )}
       </div>
-      <div className="col-span-1 flex justify-end cursor-pointer">
+      <div className="flex w-fit justify-end cursor-pointer pl-4">
         <DaText
           variant="small"
           className={textClass + ' uppercase !font-medium cursor-pointer'}
@@ -54,15 +54,9 @@ interface DaApiListProps {
   apis: VehicleApi[]
   onApiClick?: (api: VehicleApi) => void
   selectedApi?: VehicleApi | null
-  maxWidth?: string
 }
 
-const DaApiList = ({
-  apis,
-  onApiClick,
-  selectedApi,
-  maxWidth = '1500px',
-}: DaApiListProps) => {
+const DaApiList = ({ apis, onApiClick, selectedApi }: DaApiListProps) => {
   const selectedRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -75,21 +69,18 @@ const DaApiList = ({
   }, [selectedApi])
 
   return (
-    <div
-      className="flex flex-col w-full h-full overflow-y-auto overflow-x-hidden bg-da-white"
-      style={{ maxWidth: maxWidth }}
-    >
-      {apis.map((item, index) => (
+    <div className="flex flex-col w-full h-full">
+      {apis.map((api, index) => (
         <DaApiListItem
           key={index}
-          api={item}
+          api={api}
           onClick={() => {
             if (onApiClick) {
-              onApiClick(item)
+              onApiClick(api)
             }
           }}
-          isSelected={selectedApi?.name === item.name}
-          itemRef={selectedApi?.name === item.name ? selectedRef : undefined}
+          isSelected={selectedApi?.name === api.name}
+          itemRef={selectedApi?.name === api.name ? selectedRef : undefined}
         />
       ))}
     </div>

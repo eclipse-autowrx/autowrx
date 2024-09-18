@@ -15,6 +15,7 @@ export interface AddOn {
   rating?: number
   samples?: string
   team?: any
+  isMock?: boolean
 }
 
 export interface Config {

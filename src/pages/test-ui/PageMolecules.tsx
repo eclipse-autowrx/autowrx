@@ -56,19 +56,16 @@ const PageMolecules = () => {
           <DaCardIntroBig
             title="Prototypes"
             content="It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout"
-            maxWidth="320px"
             buttonText="Learn More"
           />
           <DaCardIntroBig
             title="Prototypes"
             content="It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout"
-            maxWidth="600px"
             buttonText="Learn More"
           />
           <DaCardIntroBig
             title="Prototypes"
             content="It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout"
-            maxWidth="320px"
             buttonText="Learn More"
           />
         </div>
@@ -113,7 +110,7 @@ const PageMolecules = () => {
           DaTableProperty
         </DaText>
         <div className="flex mt-2 space-x-4 p-4 border rounded-lg">
-          <DaTableProperty properties={properties} maxWidth="500px" />
+          <DaTableProperty properties={properties} />
         </div>
         <DaText variant="sub-title" className="text-da-gray-medium pt-4">
           DaApiList

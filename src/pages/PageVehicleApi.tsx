@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import ApiDetail from '@/components/organisms/ApiDetail'
 import { VehicleApi } from '@/types/model.type'
 import ModelApiList from '@/components/organisms/ModelApiList'
 import { DaImage } from '@/components/atoms/DaImage'
-import { DaText } from '@/components/atoms/DaText'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import DaTreeView from '@/components/molecules/DaTreeView'
 import DaLoadingWrapper from '@/components/molecules/DaLoadingWrapper'
 import useModelStore from '@/stores/modelStore'
+import { TbBinaryTree2, TbList } from 'react-icons/tb'
 
 const PageVehicleApi = () => {
   const { model_id, tab } = useParams()
@@ -18,6 +18,7 @@ const PageVehicleApi = () => {
   const [activeModelApis] = useModelStore((state) => state.activeModelApis)
 
   const handleApiClick = (apiDetails: VehicleApi) => {
+    // console.log('apiDetails', apiDetails)
     setSelectedApi(apiDetails)
     navigate(`/model/${model_id}/api/${apiDetails.name}`)
   }
@@ -32,22 +33,21 @@ const PageVehicleApi = () => {
       emptyMessage="No Signals found."
       timeoutMessage="Failed to load Signals. Please try again."
     >
-      <div className="grid grid-cols-12 auto-cols-max h-full w-full">
-        <div className="col-span-12 flex w-full h-12 items-center justify-between px-4 bg-da-primary-100 sticky top-0 z-20 ">
-          <DaText variant="regular-bold" className="text-da-primary-500">
-            COVESA VSS
-          </DaText>
-          <div className="flex space-x-2">
+      <div className="grid grid-cols-12 auto-cols-max bg-white rounded-md h-full w-full">
+        <div className="sticky top-0 col-span-12 flex w-full h-10 items-center justify-between">
+          <div className="flex space-x-2 h-full">
             <DaTabItem
               active={activeTab === 'list'}
               onClick={() => setActiveTab('list')}
             >
+              <TbList className="w-5 h-5 mr-2" />
               List View
             </DaTabItem>
             <DaTabItem
               active={activeTab === 'tree'}
               onClick={() => setActiveTab('tree')}
             >
+              <TbBinaryTree2 className="w-5 h-5 mr-2 rotate-[270deg]" />
               Tree View
             </DaTabItem>
           </div>

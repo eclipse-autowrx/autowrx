@@ -163,7 +163,7 @@ const PrototypeLibraryPortfolio = () => {
           stepSize: 1,
         },
         min: 0,
-        max: 5,
+        max: 6,
       },
       x: {
         title: {
@@ -178,7 +178,7 @@ const PrototypeLibraryPortfolio = () => {
           stepSize: 1,
         },
         min: 0,
-        max: 5,
+        max: 6,
       },
     },
     onHover: (

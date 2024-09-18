@@ -27,7 +27,12 @@ export type Model = {
   visibility: 'public' | 'private'
   vehicle_category: string
   property: string
-  created_by: string
+  created_by?: {
+    name: string
+    id: string
+    image_file?: string
+    email?: string
+  }
   created_at?: Date
   skeleton?: string
   tags?: Tag[]
@@ -48,11 +53,25 @@ export type Prototype = {
   state: string
   widget_config: string
   image_file: string
-  created_by: string
+  created_by?: {
+    name: string
+    image_file: string
+    id: string
+  }
   description: any
   created_at?: Date
   tags?: Tag[]
   avg_score?: number
+}
+
+export type SearchPrototype = {
+  id: string
+  name: string
+  image_file: string
+  model?: {
+    id?: string
+    name?: string
+  }
 }
 
 export type ModelCreate = {

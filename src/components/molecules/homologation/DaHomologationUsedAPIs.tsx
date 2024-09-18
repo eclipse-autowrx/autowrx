@@ -8,6 +8,7 @@ import { supportedCertivityApis } from '@/services/certivity.service'
 import { DaApiListItem } from '../DaApiList'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import useApiByModelId from '@/hooks/useApisByModelId'
+import DaHomologationApiListItem from './DaHomologationApiListItem'
 
 type DaHomologationUsedAPIsProps = {
   selectedAPIs: Set<VehicleAPI>
@@ -117,7 +118,7 @@ const DaHomologationUsedAPIs = ({
       }
       setUsedAPIs([])
     })()
-  }, [compareFn, fetchAPIs, prototype, setUsedAPIs])
+  }, [])
 
   const selectAPIHandler = (api: VehicleAPI) => () => {
     if (selectedAPIs.has(api)) {
@@ -162,25 +163,18 @@ const DaHomologationUsedAPIs = ({
         <ul className="flex-1 min-h-0 overflow-y-auto scroll-gray -mx-2">
           {usedAPIs.map((api, index) => (
             <div key={api.name}>
-              <li
+              <DaHomologationApiListItem
+                api={{
+                  ...api,
+                  name: api.name,
+                }}
                 onClick={selectAPIHandler(api)}
-                className={clsx(
-                  'hover:bg-da-gray-light/40 active:ring-2 flex-1 min-w-0 ring-da-gray-light/40 ring-inset transition cursor-pointer',
-                  selectedAPIs.has(api) && 'da-gray-light/40',
-                  ...getRoundedClassesOfRow(index),
-                )}
-              >
-                <div className="pointer-events-none">
-                  <DaApiListItem
-                    isSelected={selectedAPIs.has(api)}
-                    api={{
-                      ...api,
-                      name: api.name,
-                    }}
-                    onClick={(() => {}) as any}
-                  />
-                </div>
-              </li>
+                isSelected={selectedAPIs.has(api)}
+                className={getRoundedClassesOfRow(index).join(' ')}
+                isDisabled={
+                  !supportedCertivityApis.has('Vehicle' + api.shortName)
+                }
+              />
             </div>
           ))}
         </ul>

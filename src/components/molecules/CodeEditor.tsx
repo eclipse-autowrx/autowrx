@@ -27,12 +27,12 @@ const CodeEditor = ({
   function handleEditorMount(editor: any) {
     // editor.onDidFocusEditorText(() => {
     //     if(onFocus) onFocus()
-    // //   console.log("it has just got focused");
+    // //
     // });
 
     editor.onDidBlurEditorText(() => {
       if (onBlur) onBlur()
-      //   console.log("it has just got unfocused");
+      //
     })
   }
 

@@ -17,7 +17,7 @@ const DaDiscussionItem = ({ data, refetch }: DaDiscussionItemProps) => {
   )
 
   return (
-    <div>
+    <div className="flex flex-col w-full h-full">
       {/* Discussion content */}
       <DaDiscussionContent
         refetch={refetch}

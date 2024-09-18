@@ -24,7 +24,6 @@ const useModelStore = create<ModelState & Actions>()(
     prototype: undefined,
     setActiveModel: (model) =>
       set((state) => {
-        console.log(`set active model`, model)
         state.model = model
         if (model) {
           const cviData = JSON.parse(CVI_v4_1)
@@ -76,7 +75,7 @@ const useModelStore = create<ModelState & Actions>()(
       }),
     setActivePrototype: (prototype) =>
       set((state) => {
-        // console.log(`set active prototype`, prototype)
+        //
         state.prototype = prototype
       }),
   })),

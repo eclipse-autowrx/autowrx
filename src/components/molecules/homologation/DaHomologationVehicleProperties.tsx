@@ -6,7 +6,7 @@ import { convertJSONToProperty } from '@/lib/vehiclePropertyUtils'
 import DaViewVehicleProperty from '../DaViewVehicleProperty'
 
 const HomologationVehicleProperties = () => {
-  const { id } = useParams()
+  const { model_id } = useParams()
 
   const { data: model } = useCurrentModel()
 
@@ -24,7 +24,7 @@ const HomologationVehicleProperties = () => {
       <div className="mb-1 flex justify-between flex-shrink-0 items-center">
         <h1 className="da-label-sub-title text-da-black">Vehicle Properties</h1>
         <a
-          href={`/model/${id}`}
+          href={`/model/${model_id}`}
           target="__blank"
           className="hover:text-aiot-blue text-gray-700 transition text-sm flex items-center gap-1"
         >

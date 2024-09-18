@@ -8,18 +8,37 @@ const config: any = {
   uploadFileUrl: 'https://upload.digitalauto.tech',
   instanceLogo:
     'https://covesa.global/wp-content/uploads/2024/03/covesa_logo.png',
+  sso: 'bosch',
   instance: 'covesa',
-  defaultModelId: '667d48dde2e9cb0027710f52',
+  defaultModelId: '665826e3194aff003dd2f67b',
   genAI: {
-    defaultEndpointUrl: 'https://intermediate.digitalauto.tech/v1/genai',
+    wizardCover: '/imgs/default_prototype_cover.jpg',
+    hideMarketplace: false,
+    defaultEndpointUrl: 'https://backend-core-covesa.digital.auto/v2/genai',
     marketplaceUrl: 'https://store-be.digitalauto.tech/marketplace/genai',
-    sdvApp: [],
+    sdvApp: [
+      {
+        id: 'mock-genai',
+        type: 'GenAI_Python',
+        name: 'Mock SDV GenAI',
+        description: 'Mock GenAI for Python code generation',
+        apiKey: 'Empty',
+        endpointUrl: 'https://backend-core-etas.digital.auto/v2/genai/etas',
+        customPayload: (prompt: string) => ({ prompt }),
+        isMock: true,
+      },
+    ],
     dashboard: [],
     widget: [],
   },
   github: {
     clientId: 'Ov23livVYo2MXyqoIHox',
   },
+  disableEmailLogin: false,
+  runtime: {
+    url: 'https://kit.digitalauto.tech',
+  },
+  strictAuth: false,
 }
 
 export default config
