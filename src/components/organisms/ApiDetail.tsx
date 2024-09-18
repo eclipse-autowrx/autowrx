@@ -207,52 +207,19 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
                       View COVESA Issue
                     </Link>
                   ) : (
-                    <DaPopup
-                      state={popupSubmitIssueState}
-                      trigger={
-                        <DaButton
-                          variant="plain"
-                          size="sm"
-                          onClick={() => {
-                            popupSubmitIssueState[1](true)
-                            onTriggerAuth()
-                          }}
-                        >
-                          <FaGithub className="mr-2 h-5 w-5" />
-                          <span className="da-label-small-bold">
-                            Propose this Signal to COVESA
-                          </span>
-                        </DaButton>
-                      }
+                    <DaButton
+                      variant="plain"
+                      size="sm"
+                      onClick={() => {
+                        popupSubmitIssueState[1](true)
+                        onTriggerAuth()
+                      }}
                     >
-                      {loading && (
-                        <div className="flex flex-col items-center gap-4 p-4">
-                          <DaLoader />
-                          <p>
-                            Please wait while we are authenticating with
-                            Github...
-                          </p>
-                        </div>
-                      )}
-
-                      {!loading && error && (
-                        <div className="flex flex-col items-center gap-4 p-4">
-                          <p>{error}</p>
-                        </div>
-                      )}
-
-                      {!loading && !error && access && (
-                        <FormSubmitIssue
-                          user={user}
-                          api={apiDetails}
-                          refetch={refetchCurrIssue}
-                          onClose={async () => {
-                            popupSubmitIssueState[1](false)
-                          }}
-                          access={access}
-                        />
-                      )}
-                    </DaPopup>
+                      <FaGithub className="mr-2 h-5 w-5" />
+                      <span className="da-label-small-bold">
+                        Propose this Signal to COVESA
+                      </span>
+                    </DaButton>
                   )}
                   <DaButton
                     variant="destructive"
@@ -288,6 +255,33 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
           </div>
         </div>
       </div>
+
+      <DaPopup state={popupSubmitIssueState} trigger={<></>}>
+        {loading && (
+          <div className="flex flex-col items-center gap-4 p-4">
+            <DaLoader />
+            <p>Please wait while we are authenticating with Github...</p>
+          </div>
+        )}
+
+        {!loading && error && (
+          <div className="flex flex-col items-center gap-4 p-4">
+            <p>{error}</p>
+          </div>
+        )}
+
+        {!loading && !error && access && (
+          <FormSubmitIssue
+            user={user}
+            api={apiDetails}
+            refetch={refetchCurrIssue}
+            onClose={async () => {
+              popupSubmitIssueState[1](false)
+            }}
+            access={access}
+          />
+        )}
+      </DaPopup>
 
       <div className="flex h-fit w-full flex-col p-4">
         <DaText variant="regular-bold" className="flex text-da-secondary-500">
