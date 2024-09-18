@@ -54,6 +54,8 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
   }, [prototypeData.widget_config])
 
   useEffect(() => {
+    console.log('Prototype Code: ', prototypeData.code)
+    console.log('Active Model APIs: ', activeModelApis)
     if (
       !prototypeData.code ||
       !activeModelApis ||
