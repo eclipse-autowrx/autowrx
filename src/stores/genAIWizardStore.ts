@@ -23,6 +23,9 @@ type WizardGenAIStoreState = {
 
   wizardPrototype: WizardPrototype
   activeModelApis: any[]
+
+  allWizardRuntimes: any[]
+  wizardActiveRtId: string | undefined
 }
 
 type WizardGenAIStoreActions = {
@@ -41,6 +44,8 @@ type WizardGenAIStoreActions = {
 
   setPrototypeData: (data: Partial<WizardPrototype>) => void
   resetWizardStore: () => void
+  setAllWizardRuntimes: (runtimes: any[]) => void
+  setWizardActiveRtId: (rtId: string | undefined) => void
 }
 
 const parseSignalCVI = () => {
@@ -78,7 +83,7 @@ const defaultWizardPrototype: WizardPrototype = {
   model_id: '',
   id: 'this-is-a-mock-prototype-id',
   widget_config: dashboard_templates[0].config,
-  code: 'print("Hellow World")',
+  code: '',
 }
 
 const useWizardGenAIStore = create<
@@ -96,6 +101,15 @@ const useWizardGenAIStore = create<
 
   wizardPrototype: defaultWizardPrototype,
   activeModelApis: parseSignalCVI(),
+
+  allWizardRuntimes: [],
+  wizardActiveRtId: '',
+
+  setWizardActiveRtId: (rtId: string | undefined) =>
+    set({ wizardActiveRtId: rtId }),
+
+  setAllWizardRuntimes: (runtimes: any[]) =>
+    set({ allWizardRuntimes: runtimes }),
 
   setWizardSimulating: (simulating: boolean) =>
     set({ wizardSimulating: simulating }),

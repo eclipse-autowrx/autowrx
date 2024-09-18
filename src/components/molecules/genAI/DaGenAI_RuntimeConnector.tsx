@@ -21,8 +21,6 @@ interface KitConnectProps {
   onNewLog?: (log: string) => void
   onAppExit?: (code: any) => void
   onDeployResponse?: (log: string, isDone: boolean) => void
-
-  preferRuntime?: string
 }
 
 const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
@@ -37,7 +35,6 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
       onNewLog,
       onAppExit,
       onDeployResponse,
-      preferRuntime,
     },
     ref,
   ) => {
@@ -48,7 +45,12 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
     const [ticker, setTicker] = useState(0)
     const [rawApisPackage, setRawApisPackage] = useState<any>(null)
 
-    const { wizardPrototype } = useWizardGenAIStore()
+    const {
+      wizardPrototype,
+      setAllWizardRuntimes,
+      wizardActiveRtId,
+      setWizardActiveRtId,
+    } = useWizardGenAIStore()
 
     const { data: currentUser } = useSelfProfileQuery()
 
@@ -104,6 +106,12 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
     }, [activeRtId])
 
     const runApp = (code: string) => {
+      console.log(
+        'Start app on RuntimeID:',
+        activeRtId,
+        ' with the SDV code: ',
+        code,
+      )
       if (onNewLog) {
         onNewLog(`Run app\r\n`)
       }
@@ -131,6 +139,12 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
       })
     }
     const deploy = () => {
+      console.log(
+        'Deploy app to RuntimeID: ',
+        activeRtId,
+        ' with the SDV code: ',
+        wizardPrototype.code,
+      )
       if (wizardPrototype && wizardPrototype.id && currentUser) {
         socketio.emit('messageToKit', {
           cmd: 'deploy_request',
@@ -233,6 +247,13 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
     }, [activeRtId])
 
     useEffect(() => {
+      // console.log(`activeRtId `, wizardActiveRtId)
+      if (wizardActiveRtId) {
+        setActiveRtId(wizardActiveRtId)
+      }
+    }, [wizardActiveRtId])
+
+    useEffect(() => {
       if (allRuntimes && allRuntimes.length > 0) {
         if (activeRtId) return
         let onlineRuntimes = allRuntimes.filter((rt: any) => rt.is_online)
@@ -240,16 +261,8 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
         if (onlineRuntimes.length <= 0) {
           console.log(`setActiveRtId(undefined) cause: no onlineRuntimes`)
           setActiveRtId(undefined)
+          setWizardActiveRtId(undefined)
           return
-        }
-
-        if (preferRuntime) {
-          if (
-            onlineRuntimes.map((rt: any) => rt.kit_id).includes(preferRuntime)
-          ) {
-            setActiveRtId(preferRuntime)
-            return
-          }
         }
 
         let lastOnlineRuntime = localStorage.getItem('last-wizard-rt')
@@ -259,16 +272,19 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
         ) {
           console.log(`lastOnlineRuntime `, lastOnlineRuntime)
           setActiveRtId(lastOnlineRuntime)
+          setWizardActiveRtId(lastOnlineRuntime)
           return
         }
         console.log(`setActiveRtId `, onlineRuntimes[0].kit_id)
         setActiveRtId(onlineRuntimes[0].kit_id)
+        setWizardActiveRtId(onlineRuntimes[0].kit_id)
         localStorage.setItem('last-wizard-rt', onlineRuntimes[0].kit_id)
       } else {
         console.log(`setActiveRtId(undefined) cause: noRuntime`)
         setActiveRtId(undefined)
+        setWizardActiveRtId(undefined)
       }
-    }, [allRuntimes, preferRuntime])
+    }, [allRuntimes])
 
     const onConnected = () => {
       registerClient()
@@ -348,6 +364,7 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
       })
 
       setAllRuntimes(sortedKits)
+      setAllWizardRuntimes(sortedKits)
     }
 
     const onBroadCastToClient = (payload: any) => {

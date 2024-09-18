@@ -129,9 +129,9 @@ const DaGenAI_RuntimeControl = () => {
   }, [prototypeData])
 
   useEffect(() => {
-    // Restart the simulation when the code changes
+    // Restart the simulation when the code or runtime change
     handleStop()
-  }, [prototypeData.code])
+  }, [prototypeData.code, activeRtId])
 
   const clearApisValue = (apisValue: any) => {
     // Iterate over the keys in apisValue, set the new values, and write them at the same time
@@ -147,6 +147,7 @@ const DaGenAI_RuntimeControl = () => {
 
       const obj = { [key]: newValue } // Construct a key-value pair
       writeSignalValue(obj)
+      console.log('clearApisValue', obj)
     })
   }
 
@@ -166,9 +167,6 @@ const DaGenAI_RuntimeControl = () => {
           onAppExit={() => {
             setWizardSimulating(false)
           }}
-          preferRuntime={
-            config.genAI.wizardPreferRuntime ?? 'RunTime-VSS4-02-20'
-          }
         />
       </div>
 

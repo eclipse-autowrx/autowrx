@@ -18,6 +18,7 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
     wizardPrototype: prototypeData,
     setPrototypeData,
     activeModelApis,
+    wizardActiveRtId,
   } = useWizardGenAIStore()
   const [widgetItems, setWidgetItems] = useState<any>([])
   const [mode, setMode] = useState<string>(MODE_RUN)
@@ -195,7 +196,11 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
         {mode === MODE_RUN && (
           <DaDashboardGrid
             widgetItems={widgetItems}
-            key={JSON.stringify(widgetItems)} // Force re-render when widgetItems change
+            key={JSON.stringify(
+              wizardActiveRtId
+                ? widgetItems + wizardActiveRtId
+                : wizardActiveRtId,
+            )} // Force re-render when widgetItems or Runtime change
           />
         )}
         {mode === MODE_EDIT && (

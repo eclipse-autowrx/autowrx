@@ -18,7 +18,14 @@ import DaGenAI_WizardStaging from '../molecules/genAI/DaGenAI_WizardStaging'
 import { DaImage } from '../atoms/DaImage'
 import { cn } from '@/lib/utils'
 import config from '@/configs/config'
-import { TbArrowRight, TbArrowLeft } from 'react-icons/tb'
+import {
+  TbArrowRight,
+  TbArrowLeft,
+  TbSettings,
+  TbCircleFilled,
+  TbCheck,
+} from 'react-icons/tb'
+import DaPopup from '../atoms/DaPopup'
 
 const GenAIPrototypeWizard = () => {
   const navigate = useNavigate()
@@ -27,6 +34,7 @@ const GenAIPrototypeWizard = () => {
   const [currentStep, setCurrentStep] = useState(0)
   const [soFarSteps, setSoFarSteps] = useState(0)
   const [disabledStep, setDisabledStep] = useState([true, true, true])
+  const [openSelectorPopup, setOpenSelectorPopup] = useState(false)
 
   const updateDisabledStep = (step: number) => (disabled: boolean) => {
     setDisabledStep((prev) => {
@@ -43,15 +51,18 @@ const GenAIPrototypeWizard = () => {
     executeWizardSimulationStop,
     wizardPrompt,
     setWizardGeneratedCode,
-    wizardPrototype: prototypeData,
+    wizardPrototype,
     setPrototypeData,
-    resetWizardStore: resetWizard,
+    resetWizardStore,
+    allWizardRuntimes,
+    wizardActiveRtId,
+    setWizardActiveRtId,
   } = useWizardGenAIStore()
 
   // Updating code generation and steps logic
   useEffect(() => {
     // console.log('wizardGeneratedCode:', wizardGeneratedCode)
-    if (prototypeData.code && prototypeData.code.length > 0) {
+    if (wizardPrototype.code && wizardPrototype.code.length > 0) {
       updateDisabledStep(2)(false)
       updateDisabledStep(1)(false)
       setLoading(false)
@@ -59,17 +70,20 @@ const GenAIPrototypeWizard = () => {
       updateDisabledStep(2)(true)
       updateDisabledStep(1)(true)
     }
-  }, [prototypeData.code])
+  }, [wizardPrototype.code])
 
   useEffect(() => {
-    resetWizard() // Reset prototype state on mount
+    resetWizardStore() // Reset prototype state on mount
     updateDisabledStep(0)(false)
   }, [])
 
   useEffect(() => {
     if (currentStep === 0) {
-      console.log('resetWizard')
-      resetWizard()
+      // Clear the wizard store on step 0 (introduction)
+      resetWizardStore()
+    }
+    if (currentStep === 1) {
+      executeWizardSimulationStop()
     }
   }, [currentStep])
 
@@ -77,12 +91,12 @@ const GenAIPrototypeWizard = () => {
     try {
       setLoading(true)
 
-      let modelId = prototypeData.model_id
+      let modelId = wizardPrototype.model_id
       if (!modelId) {
         const modelBody: ModelCreate = {
           cvi: CVI,
           main_api: 'Vehicle',
-          name: prototypeData.model_id as string,
+          name: wizardPrototype.model_id as string,
         }
 
         const newModelId = await createModelService(modelBody)
@@ -92,23 +106,23 @@ const GenAIPrototypeWizard = () => {
 
       const body = {
         model_id: modelId,
-        name: prototypeData.name,
+        name: wizardPrototype.name,
         state: 'development',
         apis: { VSC: [], VSS: [] },
-        wizardGeneratedCode: prototypeData.code,
+        wizardGeneratedCode: wizardPrototype.code,
         complexity_level: 3,
         customer_journey: default_journey,
         description: { problem: '', says_who: '', solution: '', status: '' },
         image_file: '/imgs/default_prototype_cover.jpg',
         skeleton: '{}',
         tags: [],
-        widget_config: prototypeData.widget_config,
+        widget_config: wizardPrototype.widget_config,
         autorun: true,
       }
 
       const response = await createPrototypeService(body)
 
-      resetWizard()
+      resetWizardStore()
       navigate(`/model/${modelId}/library/prototype/${response.id}/dashboard`)
     } catch (error) {
       if (isAxiosError(error)) {
@@ -238,24 +252,34 @@ const GenAIPrototypeWizard = () => {
             variant="solid"
             disabled={wizardPrompt.length === 0 || loading}
           >
-            {(prototypeData.code && prototypeData.code.length > 0) ||
+            {(wizardPrototype.code && wizardPrototype.code.length > 0) ||
             isGeneratedFlag
               ? 'Regenerate'
               : 'Generate My Vehicle Application'}
           </DaButton>
         )}
         {currentStep === 2 && (
-          <DaButton
-            onClick={() => {
-              wizardSimulating
-                ? executeWizardSimulationStop()
-                : executeWizardSimulationRun()
-            }}
-            className="w-[300px]"
-            variant="solid"
-          >
-            {wizardSimulating ? 'Stop Simulate' : 'Run Simulate'}
-          </DaButton>
+          <div className="flex items-center justify-center ml-8">
+            <DaButton
+              onClick={() => {
+                wizardSimulating
+                  ? executeWizardSimulationStop()
+                  : executeWizardSimulationRun()
+              }}
+              className="w-[300px]"
+              variant="solid"
+              disabled={!wizardActiveRtId}
+            >
+              {wizardSimulating ? 'Stop Simulate' : 'Run Simulate'}
+            </DaButton>
+            <DaButton
+              variant="plain"
+              onClick={() => setOpenSelectorPopup(true)}
+              className="ml-2 !p-2"
+            >
+              <TbSettings className="size-6" />
+            </DaButton>
+          </div>
         )}
         {currentStep < 3 && (
           <DaButton
@@ -269,6 +293,42 @@ const GenAIPrototypeWizard = () => {
           </DaButton>
         )}
       </div>
+
+      <DaPopup
+        state={[openSelectorPopup, setOpenSelectorPopup]}
+        trigger={<span></span>}
+        className="flex flex-col w-[40vw] lg:w-[30vw] min-w-[600px] max-w-[500px] h-full !max-h-[300px] p-4 bg-da-white "
+      >
+        <DaText variant="sub-title">Select Runtime Environment</DaText>
+        <div className="flex flex-col h-full space-y-1 mt-2 overflow-y-auto">
+          {allWizardRuntimes &&
+            Array.isArray(allWizardRuntimes) &&
+            allWizardRuntimes.map((runtime) => (
+              <div
+                key={runtime.kit_id}
+                className={cn(
+                  'flex cursor-pointer items-center justify-between rounded hover:bg-da-gray-light',
+                  wizardActiveRtId === runtime.kit_id && 'bg-gray-100',
+                )}
+                onClick={() => {
+                  setWizardActiveRtId(runtime.kit_id)
+                }}
+              >
+                <div className="text-[20px] flex items-center disabled:text-white text-sm px-2 py-1">
+                  {runtime.is_online ? (
+                    <TbCircleFilled className="size-3 text-green-500 mr-2" />
+                  ) : (
+                    <TbCircleFilled className="size-3 text-yellow-500 mr-2" />
+                  )}{' '}
+                  {runtime.name}
+                </div>
+                {wizardActiveRtId === runtime.kit_id && (
+                  <TbCheck className="size-5 text-da-primary-500 mr-2" />
+                )}
+              </div>
+            ))}
+        </div>
+      </DaPopup>
     </div>
   )
 }
