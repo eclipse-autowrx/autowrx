@@ -1,6 +1,7 @@
 import create from 'zustand'
 import { parseCvi } from '@/lib/utils'
 import { CVI_v4_1 } from '@/data/CVI_v4.1'
+import { CVI } from '@/data/CVI'
 import dashboard_templates from '@/data/dashboard_templates'
 
 type WizardPrototype = {
@@ -48,9 +49,10 @@ type WizardGenAIStoreActions = {
   setWizardActiveRtId: (rtId: string | undefined) => void
 }
 
-const parseSignalCVI = () => {
-  const cviData = JSON.parse(CVI_v4_1)
-  const parsedApiList = parseCvi(cviData)
+const parseSignalCVI = (cviData: any) => {
+  const parsedCviData =
+    typeof cviData === 'string' ? JSON.parse(cviData) : cviData
+  const parsedApiList = parseCvi(parsedCviData)
 
   parsedApiList.forEach((item: any) => {
     if (item.type === 'branch') return
@@ -100,13 +102,29 @@ const useWizardGenAIStore = create<
   wizardStopSimulationAction: null,
 
   wizardPrototype: defaultWizardPrototype,
-  activeModelApis: parseSignalCVI(),
+  activeModelApis: parseSignalCVI(CVI_v4_1),
 
   allWizardRuntimes: [],
   wizardActiveRtId: '',
 
-  setWizardActiveRtId: (rtId: string | undefined) =>
-    set({ wizardActiveRtId: rtId }),
+  setWizardActiveRtId: (rtId: string | undefined) => {
+    set((state) => {
+      let cviData
+      if (rtId?.includes('VSS3')) {
+        cviData = CVI // Use CVI data for VSS3
+      } else if (rtId?.includes('VSS4')) {
+        cviData = CVI_v4_1 // Use CVI_v4_1 data for VSS4
+      } else {
+        cviData = CVI_v4_1 // Default to CVI_v4_1 if not specified
+      }
+      const parsedApis = parseSignalCVI(cviData)
+      console.log('Parsed API List:', parsedApis)
+      return {
+        wizardActiveRtId: rtId,
+        activeModelApis: parsedApis,
+      }
+    })
+  },
 
   setAllWizardRuntimes: (runtimes: any[]) =>
     set({ allWizardRuntimes: runtimes }),

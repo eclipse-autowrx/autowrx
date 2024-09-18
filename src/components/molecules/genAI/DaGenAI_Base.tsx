@@ -344,6 +344,7 @@ const DaGenAI_Base = ({
           state={[openSelectorPopup, setOpenSelectorPopup]}
           trigger={<span></span>}
           className="flex flex-col w-[40vw] lg:w-[30vw] min-w-[600px] max-w-[500px] h-fit max-h-[550px] p-4 bg-da-white"
+          onClose={() => setOpenSelectorPopup(false)}
         >
           <DaText variant="sub-title">Select AI Generator</DaText>
           <DaGeneratorSelectPopup

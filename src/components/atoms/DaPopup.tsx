@@ -1,6 +1,7 @@
 import React, { Fragment, forwardRef, useState } from 'react'
 import Modal from '@mui/material/Modal'
 import clsx from 'clsx'
+import { TbX } from 'react-icons/tb'
 
 interface PopupProps {
   trigger: React.ReactElement
@@ -9,11 +10,20 @@ interface PopupProps {
   width?: string
   className?: string
   disableBackdropClick?: boolean
+  onClose?: () => void
 }
 
 const DaPopup = forwardRef<HTMLDivElement, PopupProps>(
   (
-    { trigger, children, state, width, className, disableBackdropClick },
+    {
+      trigger,
+      children,
+      state,
+      width,
+      className,
+      disableBackdropClick,
+      onClose,
+    },
     ref,
   ) => {
     const selfManaged = useState(false)
@@ -34,9 +44,15 @@ const DaPopup = forwardRef<HTMLDivElement, PopupProps>(
           style={{ zIndex: 99 }}
         >
           <div
-            className={clsx('da-popup-inner', className)}
+            className={clsx('da-popup-inner relative', className)}
             style={{ width: width ?? '400px !important', overflow: 'visible' }}
           >
+            {onClose && (
+              <TbX
+                className="absolute size-5 top-5 right-5 hover:text-red-500 hover:cursor-pointer"
+                onClick={onClose}
+              />
+            )}
             {children}
           </div>
         </Modal>

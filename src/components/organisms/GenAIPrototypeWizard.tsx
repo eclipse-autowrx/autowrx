@@ -297,6 +297,7 @@ const GenAIPrototypeWizard = () => {
 
       <DaPopup
         state={[openSelectorPopup, setOpenSelectorPopup]}
+        onClose={() => setOpenSelectorPopup(false)}
         trigger={<span></span>}
         className="flex flex-col w-[40vw] lg:w-[30vw] min-w-[600px] max-w-[500px] h-full !max-h-[300px] p-4 bg-da-white "
       >
@@ -314,6 +315,7 @@ const GenAIPrototypeWizard = () => {
                 onClick={() => {
                   executeWizardSimulationStop()
                   setWizardActiveRtId(runtime.kit_id)
+                  setOpenSelectorPopup(false)
                 }}
               >
                 <div className="text-[20px] flex items-center disabled:text-white text-sm px-2 py-1">
