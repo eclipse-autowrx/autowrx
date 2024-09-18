@@ -3,7 +3,7 @@ import { parseCvi } from '@/lib/utils'
 import { CVI_v4_1 } from '@/data/CVI_v4.1'
 import dashboard_templates from '@/data/dashboard_templates'
 
-type PrototypeData = {
+type WizardPrototype = {
   name: string
   model_id?: string
   id?: string
@@ -21,8 +21,11 @@ type WizardGenAIStoreState = {
   wizardRunSimulationAction: (() => void) | null
   wizardStopSimulationAction: (() => void) | null
 
-  prototypeData: PrototypeData
+  wizardPrototype: WizardPrototype
   activeModelApis: any[]
+
+  allWizardRuntimes: any[]
+  wizardActiveRtId: string | undefined
 }
 
 type WizardGenAIStoreActions = {
@@ -39,8 +42,10 @@ type WizardGenAIStoreActions = {
   executeWizardSimulationRun: () => boolean
   executeWizardSimulationStop: () => boolean
 
-  setPrototypeData: (data: Partial<PrototypeData>) => void
+  setPrototypeData: (data: Partial<WizardPrototype>) => void
   resetWizardStore: () => void
+  setAllWizardRuntimes: (runtimes: any[]) => void
+  setWizardActiveRtId: (rtId: string | undefined) => void
 }
 
 const parseSignalCVI = () => {
@@ -73,12 +78,12 @@ const parseSignalCVI = () => {
   return parsedApiList
 }
 
-const defaultPrototypeData: PrototypeData = {
+const defaultWizardPrototype: WizardPrototype = {
   name: '',
   model_id: '',
   id: 'this-is-a-mock-prototype-id',
   widget_config: dashboard_templates[0].config,
-  code: 'print("Hellow World")',
+  code: '',
 }
 
 const useWizardGenAIStore = create<
@@ -94,8 +99,17 @@ const useWizardGenAIStore = create<
   wizardRunSimulationAction: null,
   wizardStopSimulationAction: null,
 
-  prototypeData: defaultPrototypeData,
+  wizardPrototype: defaultWizardPrototype,
   activeModelApis: parseSignalCVI(),
+
+  allWizardRuntimes: [],
+  wizardActiveRtId: '',
+
+  setWizardActiveRtId: (rtId: string | undefined) =>
+    set({ wizardActiveRtId: rtId }),
+
+  setAllWizardRuntimes: (runtimes: any[]) =>
+    set({ allWizardRuntimes: runtimes }),
 
   setWizardSimulating: (simulating: boolean) =>
     set({ wizardSimulating: simulating }),
@@ -106,7 +120,7 @@ const useWizardGenAIStore = create<
   setWizardGeneratedCode: (code: string) => {
     set((state) => ({
       wizardGeneratedCode: code,
-      prototypeData: { ...state.prototypeData, code: code },
+      wizardPrototype: { ...state.wizardPrototype, code: code },
     }))
   },
 
@@ -152,9 +166,9 @@ const useWizardGenAIStore = create<
     }
   },
 
-  setPrototypeData: (data: Partial<PrototypeData>) =>
+  setPrototypeData: (data: Partial<WizardPrototype>) =>
     set((state) => ({
-      prototypeData: { ...state.prototypeData, ...data },
+      wizardPrototype: { ...state.wizardPrototype, ...data },
     })),
 
   resetWizardStore: () => {
@@ -163,7 +177,7 @@ const useWizardGenAIStore = create<
     set({
       wizardPrompt: '',
       wizardLog: '',
-      prototypeData: defaultPrototypeData,
+      wizardPrototype: defaultWizardPrototype,
     })
   },
 }))

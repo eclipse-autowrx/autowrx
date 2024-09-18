@@ -137,10 +137,6 @@ const DaRuntimeControl: FC = ({}) => {
     }
   }
 
-  // useEffect(() => {
-  //   //
-  // }, [activeRtId])
-
   return (
     <div
       className={`absolute bottom-0 right-0 top-0 z-10 ${isExpand ? 'w-[500px]' : 'w-16'} flex flex-col justify-center bg-da-gray-dark px-1 py-2 text-da-gray-light`}

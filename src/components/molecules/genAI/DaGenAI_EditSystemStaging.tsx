@@ -1,14 +1,12 @@
 import DaText from '@/components/atoms/DaText'
-import DaRuntimeConnector from '../DaRuntimeConnector'
 import { useEffect, useState, useRef } from 'react'
-import useRuntimeStore from '@/stores/runtimeStore'
-import { shallow } from 'zustand/shallow'
-import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
 import { DaButton } from '@/components/atoms/DaButton'
-import DaStageComponent from './DaStageComponent'
+import DaStageComponent from '../staging/DaStageComponent'
 import { IoMdArrowRoundBack } from 'react-icons/io'
+import config from '@/configs/config'
+import DaGenAI_RuntimeConnector from './DaGenAI_RuntimeConnector'
 
 const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
 
@@ -21,7 +19,7 @@ interface DaEditSystemStagingProps {
   onCancel?: () => void
 }
 
-const DaEditSystemStaging = ({
+const DaGenAI_EditSystemStaging = ({
   stageDefine,
   onTargetMode,
   system,
@@ -113,7 +111,7 @@ const DaEditSystemStaging = ({
             </div>
             <div>
               {target && (
-                <DaRuntimeConnector
+                <DaGenAI_RuntimeConnector
                   targetPrefix={target.prefix || 'runtime-'}
                   kitServerUrl={DEFAULT_KIT_SERVER}
                   ref={runTimeRef}
@@ -165,7 +163,7 @@ const DaEditSystemStaging = ({
         </div>
       )}
 
-      <div className="min-h-[400px] max-h-[70vh] overflow-y-auto mt-2">
+      <div className="min-h-[400px] overflow-y-auto mt-2">
         <div className="w-full rounded border">
           <div className="h-[40px] w-full bg-gradient-to-r from-da-gradient-from to-da-gradient-to rounded-t text-da-white font-bold flex">
             <div className="h-full px-4 flex items-center grow">
@@ -213,7 +211,7 @@ const DaEditSystemStaging = ({
               onItemEditFinished={(id, data) => {
                 updateDefineAtId(id, data)
               }}
-            ></DaStageComponent>
+            />
           )}
         </div>
       </div>
@@ -244,25 +242,8 @@ const DaEditSystemStaging = ({
           </DaButton>
         </div>
       )}
-
-      {onTargetMode && (
-        <div className="flex mt-2">
-          <DaButton
-            className="w-20 ml-2"
-            variant="outline"
-            onClick={() => {
-              if (onCancel) {
-                onCancel()
-              }
-            }}
-          >
-            Go back
-          </DaButton>
-          <div className="grow"></div>
-        </div>
-      )}
     </div>
   )
 }
 
-export default DaEditSystemStaging
+export default DaGenAI_EditSystemStaging

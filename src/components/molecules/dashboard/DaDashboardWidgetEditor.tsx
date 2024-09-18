@@ -44,7 +44,7 @@ const DaDashboardWidgetEditor = ({
     shallow,
   )
 
-  const { prototypeData } = useWizardGenAIStore()
+  const { wizardPrototype: prototypeData } = useWizardGenAIStore()
 
   useEffect(() => {
     if (isWizard) {

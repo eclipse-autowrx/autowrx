@@ -12,6 +12,7 @@ import DaMockManager from '../dashboard/DaMockManager'
 import useWizardGenAIStore from '@/stores/genAIWizardStore'
 import useRuntimeStore from '@/stores/runtimeStore'
 import config from '@/configs/config'
+import DaGenAI_RuntimeConnector from './DaGenAI_RuntimeConnector'
 
 const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
 
@@ -43,7 +44,7 @@ const DaGenAI_RuntimeControl = () => {
   const { apisValue } = useRuntimeStore()
 
   const {
-    prototypeData,
+    wizardPrototype: prototypeData,
     setPrototypeData,
     activeModelApis,
     registerWizardSimulationRun,
@@ -128,7 +129,7 @@ const DaGenAI_RuntimeControl = () => {
   }, [prototypeData])
 
   useEffect(() => {
-    // Restart the simulation when the code changes
+    // Restart the simulation when the code or runtime change
     handleStop()
   }, [prototypeData.code])
 
@@ -146,6 +147,7 @@ const DaGenAI_RuntimeControl = () => {
 
       const obj = { [key]: newValue } // Construct a key-value pair
       writeSignalValue(obj)
+      console.log('clearApisValue', obj)
     })
   }
 
@@ -154,7 +156,7 @@ const DaGenAI_RuntimeControl = () => {
       className={`hidden absolute bottom-0 right-0 top-0 z-10 ${isExpand ? 'w-[500px]' : 'w-16'} flex flex-col justify-center bg-da-gray-dark px-1 py-2 text-da-gray-light`}
     >
       <div className="px-1 flex">
-        <DaRuntimeConnector
+        <DaGenAI_RuntimeConnector
           targetPrefix="runtime-"
           kitServerUrl={DEFAULT_KIT_SERVER}
           ref={runTimeRef1}
@@ -165,10 +167,6 @@ const DaGenAI_RuntimeControl = () => {
           onAppExit={() => {
             setWizardSimulating(false)
           }}
-          preferRuntime={
-            config.genAI.wizardPreferRuntime ?? 'RunTime-VSS4-02-20'
-          }
-          isWizard={true}
         />
       </div>
 
