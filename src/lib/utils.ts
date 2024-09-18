@@ -164,8 +164,11 @@ export const getCSSVariable = (variable: string): string => {
   return value ? `hsl(${value})` : ''
 }
 
-export const maskEmail = (email: string) => {
-  const [localPart, domainPart] = email.split('@')
+export const maskEmail = (email?: string) => {
+  if (!email) {
+    return ''
+  }
+  const [localPart, domainPart] = email?.split('@')
   const maskedLocalPart =
     localPart.slice(0, 6).replace(/./g, 'x') + localPart.slice(6)
   return `${maskedLocalPart}@${domainPart}`
