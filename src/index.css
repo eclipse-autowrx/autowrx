@@ -339,29 +339,29 @@ body {
 }
 
 :root {
-  --da-primary-100: 196 28 92;
-  --da-primary-300: 198 28 61;
-  --da-primary-500: 198 100 22;
+  --da-primary-100: 196 28% 92%;
+  --da-primary-300: 198 28% 61%;
+  --da-primary-500: 198 100% 22%;
 
-  --da-secondary-100: 67 54 92;
-  --da-secondary-300: 67 54 68;
-  --da-secondary-500: 67 54 48;
+  --da-secondary-100: 67 54% 92%;
+  --da-secondary-300: 67 54% 68%;
+  --da-secondary-500: 67 54% 48%;
 
-  --da-accent-100: 67 54 92;
-  --da-accent-300: 67 54 68;
-  --da-accent-500: 67 54 48;
+  --da-accent-100: 67 54% 92%;
+  --da-accent-300: 67 54% 68%;
+  --da-accent-500: 67 54% 48%;
 
-  --da-white: 0 0 100;
-  --da-black: 0 0 0;
+  --da-white: 0 0% 100%;
+  --da-black: 0 0% 0%;
 
-  --da-gray-light: 214 32 91;
-  --da-gray-medium: 215 16 47;
-  --da-gray-dark: 217 33 17;
+  --da-gray-light: 214 32% 91%;
+  --da-gray-medium: 215 16% 47%;
+  --da-gray-dark: 217 33% 17%;
 
-  --da-destructive: 0 84 60;
+  --da-destructive: 0 84% 60%;
 
-  --da-gradient-from: 198 100 22;
-  --da-gradient-to: 67 54 48;
+  --da-gradient-from: 198 100% 22%;
+  --da-gradient-to: 67 54% 48%;
 }
 
 /*********** Other ********************/
