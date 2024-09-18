@@ -196,11 +196,7 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
         {mode === MODE_RUN && (
           <DaDashboardGrid
             widgetItems={widgetItems}
-            key={JSON.stringify(
-              wizardActiveRtId
-                ? widgetItems + wizardActiveRtId
-                : wizardActiveRtId,
-            )} // Force re-render when widgetItems or Runtime change
+            key={JSON.stringify(widgetItems)} // Force re-render when widgetItems
           />
         )}
         {mode === MODE_EDIT && (

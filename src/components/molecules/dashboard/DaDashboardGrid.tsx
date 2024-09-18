@@ -100,10 +100,7 @@ const WidgetItem: FC<PropsWidgetItem> = ({
         src={url}
         className="m-0 h-full w-full"
         allow="camera;microphone"
-        onLoad={() => {
-          //
-          //
-        }}
+        onLoad={() => {}}
       ></iframe>
     </div>
   )

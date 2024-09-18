@@ -83,6 +83,7 @@ const GenAIPrototypeWizard = () => {
       resetWizardStore()
     }
     if (currentStep === 1) {
+      // Stop simulate if user back to generate code step
       executeWizardSimulationStop()
     }
   }, [currentStep])
@@ -311,6 +312,7 @@ const GenAIPrototypeWizard = () => {
                   wizardActiveRtId === runtime.kit_id && 'bg-gray-100',
                 )}
                 onClick={() => {
+                  executeWizardSimulationStop()
                   setWizardActiveRtId(runtime.kit_id)
                 }}
               >

@@ -131,7 +131,7 @@ const DaGenAI_RuntimeControl = () => {
   useEffect(() => {
     // Restart the simulation when the code or runtime change
     handleStop()
-  }, [prototypeData.code, activeRtId])
+  }, [prototypeData.code])
 
   const clearApisValue = (apisValue: any) => {
     // Iterate over the keys in apisValue, set the new values, and write them at the same time

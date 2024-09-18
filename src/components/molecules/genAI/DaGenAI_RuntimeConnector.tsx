@@ -206,6 +206,8 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
     }, [kitServerUrl])
 
     useEffect(() => {
+      console.log('Wizard Active RuntimeID: ', wizardActiveRtId)
+      console.log('Active RuntimeID: ', activeRtId)
       if (!socketio) return
 
       if (!socketio.connected) {
@@ -237,7 +239,7 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
         unregisterClient()
         socketio.disconnect()
       }
-    }, [socketio, socketio?.connected])
+    }, [socketio, socketio?.connected, wizardActiveRtId])
 
     useEffect(() => {
       console.log(`activeRtId`, activeRtId)
