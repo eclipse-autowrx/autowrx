@@ -118,7 +118,12 @@ const DaGenAI_Base = ({
       }
 
       let response
-      if (selectedAddOn.endpointUrl) {
+      if (
+        selectedAddOn.endpointUrl &&
+        !(marketplaceAddOns || []).some(
+          (addOn) => addOn.id === selectedAddOn.id,
+        )
+      ) {
         response = await axios.post(
           selectedAddOn.endpointUrl,
           { prompt: inputPrompt },
