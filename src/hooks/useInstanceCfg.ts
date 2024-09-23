@@ -53,4 +53,23 @@ const usePolicy = () => {
   return ''
 }
 
-export { useParnerList, useTextLib, usePolicy, useBackground, useFeatureCards }
+const usePrivacyPolicy = () => {
+  if (
+    instance &&
+    instance.privacy_policy &&
+    instance.privacy_policy.length > 0
+  ) {
+    return instance.privacy_policy
+  }
+
+  return ''
+}
+
+export {
+  useParnerList,
+  useTextLib,
+  usePolicy,
+  useBackground,
+  useFeatureCards,
+  usePrivacyPolicy,
+}

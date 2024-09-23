@@ -15,6 +15,7 @@ const config: any = {
     'https://covesa.global/wp-content/uploads/2024/03/covesa_logo.png',
   sso: 'bosch',
   instance: 'digitalauto',
+  showPrivacyPolicy: false,
   defaultModelId: '665826e3194aff003dd2f67b',
   genAI: {
     wizardCover: '/imgs/default_prototype_cover.jpg',

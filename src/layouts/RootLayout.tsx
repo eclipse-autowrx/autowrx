@@ -1,5 +1,5 @@
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
-import { Outlet } from 'react-router-dom'
+import { Link, Outlet } from 'react-router-dom'
 import { Toaster } from '@/components/molecules/toaster/toaster'
 import { Suspense, lazy, useEffect, useMemo } from 'react'
 import DaBreadcrumbBar from '@/components/molecules/DaBreadcrumbBar'
@@ -65,12 +65,23 @@ const RootLayout = () => {
       </div>
 
       {config && config.instance !== 'digitalauto' && (
-        <div className="sticky bottom-0 right-0 z-10 w-full bg-da-gray-dark px-4 py-0.5 text-end text-xs text-da-white">
+        <div className="flex w-full sticky bottom-0 right-0 z-10 bg-da-gray-dark px-4 py-0.5 text-end text-xs text-da-white">
+          {config.showPrivacyPolicy && (
+            <Link
+              to="/privacy-policy"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:underline flex h-fit"
+            >
+              Privacy Policy
+            </Link>
+          )}
+          <div className="grow" />
           <a
             href="https://www.digital.auto/"
             target="_blank"
             rel="noreferrer"
-            className="hover:underline"
+            className="hover:underline flex h-fit"
           >
             Powered by digital.auto
           </a>

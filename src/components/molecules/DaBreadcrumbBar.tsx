@@ -126,6 +126,14 @@ const DaBreadcrumbBar = () => {
       })
     }
 
+    if (pathnames.includes('privacy-policy')) {
+      paths.push({
+        path: `/privacy-policy`,
+        name: 'Privacy Policy',
+        key: 'privacy-policy',
+      })
+    }
+
     paths.forEach((breadcrumb, index) => {
       const isLast = index === paths.length - 1
       breadcrumbList.push(

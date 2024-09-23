@@ -25,6 +25,7 @@ const PageDiscussions = lazy(() => import('@/pages/test-ui/PageDiscussions'))
 const PageUserProfile = lazy(() => import('@/pages/PageUserProfile'))
 const PageManageFeatures = lazy(() => import('@/pages/PageManageFeatures'))
 const PageGenAIWizard = lazy(() => import('@/pages/PageGenAIWizard'))
+const PagePrivacyPolicy = lazy(() => import('@/pages/PagePrivacyPolicy'))
 
 const routesConfig: RouteConfig[] = [
   {
@@ -207,6 +208,19 @@ const routesConfig: RouteConfig[] = [
             element: (
               <SuspenseProvider>
                 <PageGenAIWizard />
+              </SuspenseProvider>
+            ),
+          },
+        ],
+      },
+      {
+        path: '/privacy-policy',
+        children: [
+          {
+            index: true,
+            element: (
+              <SuspenseProvider>
+                <PagePrivacyPolicy />
               </SuspenseProvider>
             ),
           },
