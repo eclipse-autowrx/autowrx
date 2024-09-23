@@ -44,7 +44,11 @@ const DaGenAI_HomologationUsedAPIs = ({
         console.log('GenAI Homo Code: ', prototype.code)
         const res: VehicleAPI[] = []
         for (let api of allAPIs) {
-          if (api.shortName && prototype.code.includes(api.shortName)) {
+          if (
+            api.shortName &&
+            prototype.code.includes(api.shortName) &&
+            api.type !== 'branch'
+          ) {
             console.log('Api used: ', api)
             res.push(api)
           }
@@ -54,7 +58,7 @@ const DaGenAI_HomologationUsedAPIs = ({
       }
       setUsedAPIs([])
     })()
-  }, [CVI])
+  }, [CVI, prototype.code])
 
   useEffect(() => {
     console.log('Used api: ', usedAPIs)
