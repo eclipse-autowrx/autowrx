@@ -3,6 +3,7 @@ import { twMerge } from 'tailwind-merge'
 import { Cvi, VehicleApi } from '@/types/model.type'
 import { WidgetConfig } from '@/types/widget.type'
 import { useEffect } from 'react'
+import { VehicleAPI } from '@/types/api.type'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -51,6 +52,48 @@ export const parseCvi = (cvi: Cvi) => {
     return result
   }
 
+  return traverse(cvi.Vehicle)
+}
+
+export const parseCvi_alt = (cvi: Cvi): VehicleAPI[] => {
+  console.log('Attemp to parse CVI')
+  const traverse = (
+    node: VehicleApi,
+    prefix: string = 'Vehicle',
+    parent: string | null = null, // Track the parent node
+  ): VehicleAPI[] => {
+    let result: VehicleAPI[] = []
+
+    // Dynamically generate the shortName by removing "Vehicle" from the prefix
+    const shortName = prefix.startsWith('Vehicle')
+      ? prefix.slice('Vehicle'.length)
+      : prefix
+
+    // Construct the VehicleAPI object
+    const vehicleAPI: VehicleAPI = {
+      name: prefix, // Full name of the API (with prefix)
+      type: node.type, // Copy type from VehicleApi
+      uuid: node.uuid ?? '', // Ensure uuid is not empty
+      description: node.description, // Copy description
+      parent: parent, // Assign the parent node
+      isWishlist: node.isWishlist ?? false, // Default isWishlist to false if undefined
+      shortName: shortName || undefined, // Set the shortName if present, otherwise undefined
+    }
+
+    // Push the transformed VehicleAPI object into the result
+    result.push(vehicleAPI)
+
+    // Recursively traverse children, setting the current node's name as the new parent
+    if (node.children) {
+      for (const [key, child] of Object.entries(node.children)) {
+        const newPrefix = `${prefix}.${key}` // Update the prefix for the child
+        result = result.concat(traverse(child, newPrefix, vehicleAPI.name))
+      }
+    }
+    return result
+  }
+
+  // Start the traversal from the root of the CVI tree (cvi.Vehicle)
   return traverse(cvi.Vehicle)
 }
 

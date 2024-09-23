@@ -62,7 +62,6 @@ const DaDashboardWidgetEditor = ({
     ) {
       return
     }
-
     let newUsedAPIsList = [] as string[]
     activeModelApis.forEach((item) => {
       if (localPrototype.code && localPrototype.code.includes(item.shortName)) {

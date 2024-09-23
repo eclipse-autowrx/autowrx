@@ -92,6 +92,7 @@ const DaGenAI_RuntimeControl = () => {
       setUsedApis([])
       return
     }
+    // console.log('Active Model APIs: ', activeModelApis)
     let apis: any[] = []
     let code = prototypeData.code || ''
     activeModelApis.forEach((item: any) => {
@@ -147,7 +148,7 @@ const DaGenAI_RuntimeControl = () => {
 
       const obj = { [key]: newValue } // Construct a key-value pair
       writeSignalValue(obj)
-      console.log('clearApisValue', obj)
+      // console.log('clearApisValue', obj)
     })
   }
 

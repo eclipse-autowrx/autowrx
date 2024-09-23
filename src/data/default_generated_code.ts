@@ -28,6 +28,8 @@ class TestApp(VehicleApp):
         await asyncio.sleep(3)
         print ("Adjust driver side seat")
         await self.Vehicle.Cabin.Seat.Row1.DriverSide.Position.set(10)
+        await vehicle.Body.Mirrors.Left.Pan.get()
+        await vehicle.Body.Mirrors.Right.Tilt.set(value)
 
 async def main():
     vehicle_app = TestApp(vehicle)
