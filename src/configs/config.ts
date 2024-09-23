@@ -1,5 +1,7 @@
 const config: any = {
-  serverBaseUrl: import.meta.env.VITE_SERVER_BASE_URL || 'https://backend-core-dev.digital.auto',
+  serverBaseUrl:
+    import.meta.env.VITE_SERVER_BASE_URL ||
+    'https://backend-core-dev.digital.auto',
   serverVersion: import.meta.env.VITE_SERVER_VERSION || 'v2',
   logBaseUrl: import.meta.env.PROD
     ? 'https://logs.digital.auto'

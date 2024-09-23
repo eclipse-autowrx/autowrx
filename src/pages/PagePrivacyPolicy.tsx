@@ -6,7 +6,7 @@ const PagePrivacyPolicy = () => {
 
   return (
     <div className="bg-gray-50 text-sm text-gray-700 p-8">
-      <div className="max-w-4xl mx-auto bg-white shadow-md p-6 rounded-lg">
+      <div className="max-w-4xl mx-auto bg-white shadow-md border p-6 rounded-lg">
         <div
           className="policy-content"
           dangerouslySetInnerHTML={{ __html: privacyPolicyHtml }}
