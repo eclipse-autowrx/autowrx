@@ -41,15 +41,18 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
   useEffect(() => {
     const inputSkeleton =
       displayMode === 'model' ? model?.skeleton : prototype?.skeleton
-    if (!inputSkeleton) return
 
     let skele = { nodes: [] }
-    try {
-      skele = JSON.parse(inputSkeleton)
-    } catch (err) {
-      console.error(err)
+
+    if (inputSkeleton) {
+      try {
+        skele = JSON.parse(inputSkeleton) // Try parsing the existing skeleton
+      } catch (err) {
+        console.error('Failed to parse skeleton:', err)
+      }
     }
-    setSkeleton(skele)
+
+    setSkeleton(skele) // Always set skeleton to prevent it from being null
   }, [displayMode, model, prototype])
 
   useEffect(() => {
@@ -193,6 +196,10 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
     }
     setIsEditName(false)
   }
+
+  useEffect(() => {
+    console.log('Skeleton: ', skeleton)
+  }, [skeleton])
 
   if (!skeleton)
     return (
