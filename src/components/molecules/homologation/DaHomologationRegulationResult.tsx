@@ -123,7 +123,9 @@ const HomologationRegulationResult = ({
             'h-[calc(100%-40px)]',
         )}
       >
-        <h1 className="font-bold da-label-huge-bold text-da-gray-dark mb-2">Regulatory Compliance</h1>
+        <h1 className="font-bold da-label-huge-bold text-da-gray-dark mb-2">
+          Regulatory Compliance
+        </h1>
         {loading ? (
           <div className="flex items-center justify-center h-[calc(100%-50px)]">
             <DaLoader />

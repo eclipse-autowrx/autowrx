@@ -118,7 +118,7 @@ const useWizardGenAIStore = create<
         cviData = CVI_v4_1 // Default to CVI_v4_1 if not specified
       }
       const parsedApis = parseSignalCVI(cviData)
-      console.log('Parsed API List:', parsedApis)
+      // console.log('Parsed API List:', parsedApis)
       return {
         wizardActiveRtId: rtId,
         activeModelApis: parsedApis,

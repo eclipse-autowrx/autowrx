@@ -26,6 +26,7 @@ import {
   TbCheck,
 } from 'react-icons/tb'
 import DaPopup from '../atoms/DaPopup'
+import DaHomologation from '../molecules/homologation'
 
 const GenAIPrototypeWizard = () => {
   const navigate = useNavigate()
@@ -33,7 +34,7 @@ const GenAIPrototypeWizard = () => {
 
   const [currentStep, setCurrentStep] = useState(0)
   const [soFarSteps, setSoFarSteps] = useState(0)
-  const [disabledStep, setDisabledStep] = useState([true, true, true])
+  const [disabledStep, setDisabledStep] = useState([true, true, true, true])
   const [openSelectorPopup, setOpenSelectorPopup] = useState(false)
 
   const updateDisabledStep = (step: number) => (disabled: boolean) => {
@@ -63,12 +64,14 @@ const GenAIPrototypeWizard = () => {
   useEffect(() => {
     // console.log('wizardGeneratedCode:', wizardGeneratedCode)
     if (wizardPrototype.code && wizardPrototype.code.length > 0) {
+      updateDisabledStep(3)(false)
       updateDisabledStep(2)(false)
       updateDisabledStep(1)(false)
       setLoading(false)
     } else {
       updateDisabledStep(2)(true)
       updateDisabledStep(1)(true)
+      updateDisabledStep(3)(true)
     }
   }, [wizardPrototype.code])
 
@@ -144,15 +147,15 @@ const GenAIPrototypeWizard = () => {
   }
 
   const handleNext = async () => {
-    if (currentStep === 3) {
-      finish()
+    if (currentStep === 4) {
+      // finish()
     }
 
     if (soFarSteps <= currentStep) {
       setSoFarSteps(currentStep + 1)
     }
-    if (currentStep < 3) {
-      if (currentStep < 3) {
+    if (currentStep < 4) {
+      if (currentStep < 4) {
         setCurrentStep(currentStep + 1)
       }
     }
@@ -176,7 +179,10 @@ const GenAIPrototypeWizard = () => {
             <DaStep disabled={soFarSteps < 2 || disabledStep[1]}>
               Simulate
             </DaStep>
-            <DaStep disabled={soFarSteps < 3 || disabledStep[2]}>Deploy</DaStep>
+            <DaStep disabled={soFarSteps < 3 || disabledStep[2]}>
+              Validate
+            </DaStep>
+            <DaStep disabled={soFarSteps < 4 || disabledStep[3]}>Deploy</DaStep>
           </DaStepper>
         </div>
         <div className="flex flex-1"></div>
@@ -226,6 +232,16 @@ const GenAIPrototypeWizard = () => {
         <div
           className={cn(
             currentStep !== 3
+              ? 'hidden'
+              : 'flex h-full w-full justify-center overflow-y-auto',
+          )}
+        >
+          <DaHomologation isWizard={true} />
+        </div>
+
+        <div
+          className={cn(
+            currentStep !== 4
               ? 'hidden'
               : 'flex h-full w-full justify-center overflow-y-auto',
           )}
@@ -282,14 +298,14 @@ const GenAIPrototypeWizard = () => {
             </DaButton>
           </div>
         )}
-        {currentStep < 3 && (
+        {currentStep < 4 && (
           <DaButton
             onClick={handleNext}
             className="min-w-20"
             variant="outline"
             disabled={disabledStep[currentStep] || loading}
           >
-            {currentStep < 3 && 'Next'}
+            {currentStep < 4 && 'Next'}
             <TbArrowRight className="size-4 ml-1" />
           </DaButton>
         )}
