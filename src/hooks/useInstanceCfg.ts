@@ -1,4 +1,6 @@
-import instance from '../../instance.js'
+import _instance from '../../instance.js'
+
+const instance = _instance as any
 
 const useParnerList = () => {
   let instances = [] as any[]
