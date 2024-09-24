@@ -11,19 +11,19 @@ const Homologation = ({ isWizard }: HomologationProps) => {
   const [selectedAPIs, setSelectedAPIs] = useState<Set<VehicleAPI>>(new Set([]))
 
   return (
-    <div className="w-full overflow-y-auto scroll-gray">
-      <div className="flex gap-5 min-h-[calc(100%-20px)]">
+    <div className="flex h-full w-full">
+      <div className="flex gap-5 w-1/2">
         {/* Left section */}
         <HomologationLeftSection
           selectedAPIs={selectedAPIs}
           setSelectedAPIs={setSelectedAPIs}
           isWizard={isWizard}
         />
-
         {/* Divider */}
         <div className="border-r mt-5 mb-2  border-r-gray-200" />
-
-        {/* Right section */}
+      </div>
+      {/* Right section */}
+      <div className="flex w-1/2 pl-5 h-full">
         <HomologationRegulationResult selectedAPIs={selectedAPIs} />
       </div>
     </div>

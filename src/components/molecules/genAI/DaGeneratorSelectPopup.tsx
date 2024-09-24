@@ -3,6 +3,7 @@ import { TbStarFilled, TbCheck } from 'react-icons/tb'
 import { AddOn } from '@/types/addon.type'
 import { DaText } from '@/components/atoms/DaText'
 import config from '@/configs/config'
+import { cn } from '@/lib/utils'
 
 type DaGeneratorSelectorProps = {
   builtInAddOns?: AddOn[]
@@ -22,14 +23,22 @@ const DaGeneratorSelectPopup = ({
 
   // Function to save the selected generator to localStorage
   const saveSelectedGeneratorToLocalStorage = (addOn: AddOn) => {
-    localStorage.setItem('selectedGenerator', JSON.stringify(addOn))
+    localStorage.setItem('lastUsedGenAIWizardGenerator', JSON.stringify(addOn))
   }
 
   // Function to retrieve the selected generator from localStorage
   const getSelectedGeneratorFromLocalStorage = (): AddOn | null => {
-    const storedAddOn = localStorage.getItem('selectedGenerator')
+    const storedAddOn = localStorage.getItem('lastUsedGenAIWizardGenerator')
     return storedAddOn ? JSON.parse(storedAddOn) : null
   }
+
+  useEffect(() => {
+    const lastUsedGenAI = getSelectedGeneratorFromLocalStorage()
+    // console.log('lastUsedGenAI', lastUsedGenAI)
+    if (lastUsedGenAI) {
+      setSelectedAddOn(lastUsedGenAI)
+    }
+  }, [])
 
   useEffect(() => {
     if (selectedAddOn) {
@@ -88,11 +97,14 @@ const DaGeneratorSelectPopup = ({
               <DaText variant="small-bold" className="p-1 border-b">
                 Built-in AI Generators
               </DaText>
-              <div className="flex flex-col h-full overflow-y-auto">
+              <div className="flex flex-col h-full overflow-y-auto pr-2 mt-2">
                 {builtInAddOns.map((addOn) => (
                   <div
                     key={addOn.id}
-                    className="flex cursor-pointer items-center justify-between rounded hover:bg-da-gray-light overflow-y-auto"
+                    className={cn(
+                      'flex cursor-pointer items-center justify-between rounded hover:bg-da-gray-light',
+                      selectedAddOn?.id === addOn.id && 'bg-gray-100',
+                    )}
                     onClick={() => {
                       handleAddOnSelect(addOn)
                       onClick && onClick()
@@ -138,11 +150,14 @@ const DaGeneratorSelectPopup = ({
                     Marketplace AI Generators
                   </DaText>
 
-                  <div className="flex flex-col h-full overflow-y-auto">
+                  <div className="flex flex-col h-full overflow-y-auto pr-2 mt-2">
                     {marketplaceAddOns.map((addOn) => (
                       <div
                         key={addOn.id}
-                        className="flex cursor-pointer items-center justify-between rounded hover:bg-da-gray-light "
+                        className={cn(
+                          'flex cursor-pointer items-center justify-between rounded hover:bg-da-gray-light',
+                          selectedAddOn?.id === addOn.id && 'bg-gray-100',
+                        )}
                         onClick={() => {
                           handleAddOnSelect(addOn)
                           onClick && onClick()
@@ -164,7 +179,7 @@ const DaGeneratorSelectPopup = ({
                             )}
                           </div>
                           <TbCheck
-                            className={`h-4 w-4 text-da-gray-dark ${
+                            className={`h-4 w-4 text-da-primary-500 ${
                               selectedAddOn?.id === addOn.id ? '' : 'hidden'
                             }`}
                           />
@@ -176,7 +191,9 @@ const DaGeneratorSelectPopup = ({
               )}
 
               {marketplaceAddOns && marketplaceAddOns.length === 0 && (
-                <div className="p-1">No marketplace AI generators found</div>
+                <div className="flex w-full h-1/2 justify-center">
+                  No marketplace AI generators found
+                </div>
               )}
             </>
           )}

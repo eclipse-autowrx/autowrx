@@ -18,12 +18,7 @@ const HomologationLeftSection = ({
   isWizard,
 }: HomologationLeftSectionProps) => {
   return (
-    <div
-      className="flex flex-1 flex-col pt-5 pl-5"
-      style={{
-        height: `calc(100vh - ${headerHeight}px)`,
-      }}
-    >
+    <div className="flex flex-1 flex-col h-full overflow-y-auto pt-5 pl-5">
       <div className="flex-[3] min-h-0">
         {!isWizard ? (
           <DaHomologationUsedAPIs
