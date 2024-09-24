@@ -275,15 +275,14 @@ const DaGenAI_Base = ({
 
           <DaSpeechToText onRecognize={setInputPrompt} />
         </div>
-        <div className="mt-1 flex h-fit w-full">
+        <div className="mt-1 flex h-full w-full">
           <DaTextarea
             value={inputPrompt}
             onChange={(e) => setInputPrompt(e.target.value)}
-            rows={isWizard ? 12 : 7}
             placeholder={placeholderText}
-            className="w-full"
+            className="w-full h-full"
             textareaClassName={cn(
-              'resize-none !bg-gray-50 text-da-gray-dark',
+              'flex h-full resize-none !bg-gray-50 text-da-gray-dark',
               isWizard && '!text-lg',
             )}
           />
@@ -311,7 +310,7 @@ const DaGenAI_Base = ({
             <div className="da-label-small-medium mb-1 mt-2">Status</div>
             <div
               className={cn(
-                'mt-2 flex h-10 rounded-md bg-da-gray-dark p-3',
+                'mt-2 flex flex-shrink-0 h-full max-h-[100px] xl:max-h-[150px] 2xl:max-h-[200px] rounded-md bg-da-gray-dark p-3',
                 isWizard && 'mb-2 mt-0 h-full',
               )}
             >

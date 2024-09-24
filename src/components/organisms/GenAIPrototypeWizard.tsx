@@ -64,6 +64,7 @@ const GenAIPrototypeWizard = () => {
   useEffect(() => {
     // console.log('wizardGeneratedCode:', wizardGeneratedCode)
     if (wizardPrototype.code && wizardPrototype.code.length > 0) {
+      console.log('wizardPrototype.code: ', wizardPrototype.code)
       updateDisabledStep(3)(false)
       updateDisabledStep(2)(false)
       updateDisabledStep(1)(false)
@@ -73,10 +74,10 @@ const GenAIPrototypeWizard = () => {
       updateDisabledStep(1)(true)
       updateDisabledStep(3)(true)
     }
-  }, [wizardPrototype.code])
+  }, [wizardPrototype])
 
   useEffect(() => {
-    resetWizardStore() // Reset prototype state on mount
+    // resetWizardStore() // Reset prototype state on mount
     updateDisabledStep(0)(false)
   }, [])
 
@@ -174,15 +175,13 @@ const GenAIPrototypeWizard = () => {
           <DaStepper currentStep={currentStep} setCurrentStep={setCurrentStep}>
             <DaStep>Introduction</DaStep>
             <DaStep disabled={soFarSteps < 1 || disabledStep[0]}>
-              Generate Vehicle Application
+              Generate
             </DaStep>
             <DaStep disabled={soFarSteps < 2 || disabledStep[1]}>
               Simulate
             </DaStep>
-            <DaStep disabled={soFarSteps < 3 || disabledStep[2]}>
-              Validate
-            </DaStep>
-            <DaStep disabled={soFarSteps < 4 || disabledStep[3]}>Deploy</DaStep>
+            <DaStep disabled={soFarSteps < 3 || disabledStep[2]}>Deploy</DaStep>
+            <DaStep disabled={soFarSteps < 4 || disabledStep[3]}>Verify</DaStep>
           </DaStepper>
         </div>
         <div className="flex flex-1"></div>
@@ -231,7 +230,7 @@ const GenAIPrototypeWizard = () => {
 
         <div
           className={cn(
-            currentStep !== 3
+            currentStep !== 4
               ? 'hidden'
               : 'flex h-full w-full justify-center overflow-y-auto',
           )}
@@ -241,7 +240,7 @@ const GenAIPrototypeWizard = () => {
 
         <div
           className={cn(
-            currentStep !== 4
+            currentStep !== 3
               ? 'hidden'
               : 'flex h-full w-full justify-center overflow-y-auto',
           )}
@@ -287,7 +286,7 @@ const GenAIPrototypeWizard = () => {
               variant="solid"
               disabled={!wizardActiveRtId}
             >
-              {wizardSimulating ? 'Stop Simulate' : 'Run Simulate'}
+              {wizardSimulating ? 'Stop Simulate' : 'Start Simulate'}
             </DaButton>
             <DaButton
               variant="plain"

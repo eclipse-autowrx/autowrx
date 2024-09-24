@@ -109,21 +109,15 @@ const HomologationRegulationResult = ({
   }, [selectedAPIs])
 
   return (
-    <div
-      className="scroll-gray flex-1 overflow-y-auto pr-5"
-      style={{
-        height: `calc(100vh - ${headerHeight}px)`,
-      }}
-    >
-      <div className="h-5" />
+    <div className="flex h-full w-full overflow-y-auto pr-5 pt-5">
       <div
         className={clsx(
-          'bg-da-gray-light/20 p-5 min-h-[calc(100%-40px)] rounded-3xl',
+          'bg-da-gray-light/20 p-5 w-full min-h-[calc(100%-40px)] rounded-3xl',
           (errorMsg || regulationRegions.length === 0 || loading) &&
             'h-[calc(100%-40px)]',
         )}
       >
-        <h1 className="font-bold da-label-huge-bold text-da-gray-dark mb-2">
+        <h1 className="da-label-title text-da-gray-dark mb-2">
           Regulatory Compliance
         </h1>
         {loading ? (
