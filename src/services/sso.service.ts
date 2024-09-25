@@ -5,13 +5,7 @@ export const msalConfig = {
   auth: {
     clientId: import.meta.env.VITE_REACT_SSO_CLIENT_ID,
     authority: import.meta.env.VITE_REACT_SSO_AUTHORITY,
-    redirectUri: window.location.origin.includes('localhost')
-      ? 'http://localhost:3000'
-      : config.instance === 'xhub'
-        ? 'https://xhub.digital.auto'
-        : config.instance === 'etas'
-          ? 'https://etas.digital.auto'
-          : 'https://autowrx.digital.auto',
+    redirectUri: window.location.origin,
   },
   cache: {
     cacheLocation: 'sessionStorage', // This configures where your cache will be stored
