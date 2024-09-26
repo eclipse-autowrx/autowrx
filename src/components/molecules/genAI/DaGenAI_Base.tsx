@@ -116,10 +116,14 @@ const DaGenAI_Base = ({
       }
 
       // Ensure message has both source and content
+      const cleanedContent = message.content
+        .replace(/^=+\s*(.*?)\s*=+$/g, '$1')
+        .trim()
+
       if (message.source && message.content) {
         const newLog = {
           source: message.source.trim().toLowerCase(), // Normalize source (optional)
-          content: message.content.trim(), // Trim any leading/trailing spaces from content
+          content: cleanedContent, // Trim any leading/trailing spaces from content
         }
 
         setUniqueLogs((prevLogs) => {
@@ -409,7 +413,7 @@ const DaGenAI_Base = ({
             >
               {uniqueLogs.map((log, index) => (
                 <div key={index} className="flex w-full items-center">
-                  <div className="uppercase font-bold px-2 py-1 bg-white/50 w-fit h-fit rounded-md mr-1">
+                  <div className="uppercase font-bold px-2 py-1 bg-white/25 w-fit h-fit rounded-md mr-1">
                     {log.source}
                   </div>
                   {log.content}
