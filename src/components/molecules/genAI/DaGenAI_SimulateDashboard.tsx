@@ -85,42 +85,83 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
     })
   }
 
-  // New useEffect to update options.apis of the table-settable widget
   useEffect(() => {
     if (!widgetItems || widgetItems.length === 0) return
 
     let needsUpdate = false
 
-    // Update widgetItems with new apis
+    // Update widgetItems with new APIs and handle VSS3/VSS4 logic for 3DCarModel
     let updatedWidgetItems = widgetItems.map((widget: any) => {
+      let updatedWidget = { ...widget } // Copy the widget to make updates
+      // Handle 3DCarModel logic
+      if (
+        widget.options &&
+        widget.options.url &&
+        widget.options.url.includes('3DCarModel')
+      ) {
+        // Check if there are APIs related to Row1 Doors, only API with correct version is shown
+        // If you have VSS3 Door API in code, dont expect it present in VSS4 Runtime
+        const hasRow1DoorApi = usedApis.some((api) =>
+          api.includes('Vehicle.Cabin.Door.Row1'),
+        )
+        // console.log('usedApis', usedApis)
+        // console.log('wizardActiveRtId', wizardActiveRtId)
+        // console.log('hasRow1DoorApi', hasRow1DoorApi)
+        if (hasRow1DoorApi) {
+          if (wizardActiveRtId) {
+            // Ensure wizardActiveRtId is defined before using it
+            if (wizardActiveRtId.includes('VSS3')) {
+              // Update APIs for VSS3
+              updatedWidget.options.ROW1_LEFT_DOOR_API =
+                'Vehicle.Cabin.Door.Row1.Left.IsOpen'
+              updatedWidget.options.ROW1_RIGHT_DOOR_API =
+                'Vehicle.Cabin.Door.Row1.Right.IsOpen'
+              updatedWidget.options.ROW1_LEFT_SEAT_POSITION_API =
+                'Vehicle.Cabin.Seat.Row1.Pos1.Position'
+              updatedWidget.options.ROW1_RIGHT_SEAT_POSITION_API =
+                'Vehicle.Cabin.Seat.Row1.Pos2.Position'
+            } else if (wizardActiveRtId.includes('VSS4')) {
+              // Update APIs for VSS4
+              updatedWidget.options.ROW1_LEFT_DOOR_API =
+                'Vehicle.Cabin.Door.Row1.DriverSide.IsOpen'
+              updatedWidget.options.ROW1_RIGHT_DOOR_API =
+                'Vehicle.Cabin.Door.Row1.PassengerSide.IsOpen'
+              updatedWidget.options.ROW1_LEFT_SEAT_POSITION_API =
+                'Vehicle.Cabin.Seat.Row1.DriverSide.Position'
+              updatedWidget.options.ROW1_RIGHT_SEAT_POSITION_API =
+                'Vehicle.Cabin.Seat.Row1.PassengerSide.Position'
+            }
+            needsUpdate = true
+          } else {
+            console.warn(
+              'wizardActiveRtId is undefined, skipping API update for 3DCarModel',
+            )
+          }
+        }
+      }
+
+      // Handle table-settable logic
       if (
         widget.options &&
         widget.options.url &&
         widget.options.url.includes('table-settable')
       ) {
-        // Get existing apis from the settable widget
         const existingApis = widget.options.apis || []
-        // Determine if the APIs have changed to avoid unnecessary updates
         const apisChanged =
           existingApis.length !== usedApis.length ||
           !existingApis.every(
-            (api: string, idx: number) => api === usedApis[idx], // Check if each API matches the corresponding used API
-          )
+            (api: string, idx: number) => api === usedApis[idx],
+          ) // Check if each API matches the corresponding used API
+
         if (apisChanged) {
-          needsUpdate = true
-          return {
-            ...widget, // Copy existing widget properties
-            options: {
-              ...widget.options, // Copy existing options
-              apis: usedApis, // Only update the apis array with usedApis
-            },
+          updatedWidget.options = {
+            ...updatedWidget.options, // Copy existing options
+            apis: usedApis, // Only update the apis array with usedApis
           }
-        } else {
-          return widget
+          needsUpdate = true
         }
-      } else {
-        return widget
       }
+      return updatedWidget // Always return the updated or original widget
     })
 
     if (needsUpdate) {
@@ -137,7 +178,7 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
           Array.isArray(dashboard_config.widgets)
         ) {
           updatedConfig = {
-            ...dashboard_config, // Copy the existing config auto_run,...
+            ...dashboard_config, // Copy the existing config auto_run, etc.
             widgets: updatedWidgetItems,
           }
         } else {
@@ -153,7 +194,7 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
         console.error('Error parsing widget config', err)
       }
     }
-  }, [usedApis])
+  }, [usedApis, wizardActiveRtId])
 
   const handleDashboardConfigChanged = (config: any) => {
     let parsedConfig = JSON.parse(config) // Parse the incoming config string to object
