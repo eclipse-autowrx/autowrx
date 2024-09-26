@@ -26,6 +26,15 @@ const config: any = {
     marketplaceUrl: 'https://store-be.digitalauto.tech/marketplace/genai',
     sdvApp: [
       {
+        id: 'etas-sdv-genai',
+        type: 'GenAI_Python',
+        name: 'ETAS SDV GenAI',
+        description: 'ETAS GenAI for Python code generation',
+        apiKey: 'Empty',
+        endpointUrl: 'https://backend-core-dev.digital.auto/v2/genai/etas',
+        customPayload: (prompt: string) => ({ prompt }),
+      },
+      {
         id: 'mock-genai',
         type: 'GenAI_Python',
         name: 'Mock SDV GenAI',

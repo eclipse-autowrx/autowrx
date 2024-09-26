@@ -209,6 +209,19 @@ const DaGenAI_Base = ({
     }
   }, [streamOutput])
 
+  useEffect(() => {
+    // Function to retrieve the last used generator from localStorage
+    const getSelectedGeneratorFromLocalStorage = (): AddOn | null => {
+      const storedAddOn = localStorage.getItem('lastUsedGenAIWizardGenerator')
+      return storedAddOn ? JSON.parse(storedAddOn) : null
+    }
+
+    const lastUsedGenAI = getSelectedGeneratorFromLocalStorage()
+    if (lastUsedGenAI) {
+      setSelectedAddOn(lastUsedGenAI) // Set the last used generator in state
+    }
+  }, [])
+
   return (
     <div className={cn('flex h-full w-full rounded', className)}>
       <div
