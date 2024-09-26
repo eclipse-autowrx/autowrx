@@ -22,6 +22,7 @@ import useGenAIWizardStore from '@/stores/genAIWizardStore.ts'
 import DaPopup from '@/components/atoms/DaPopup.tsx'
 import DaText from '@/components/atoms/DaText.tsx'
 import DaGeneratorSelectPopup from './DaGeneratorSelectPopup.tsx'
+import { io } from 'socket.io-client'
 
 type DaGenAI_BaseProps = {
   type: 'GenAI_Python' | 'GenAI_Dashboard' | 'GenAI_Widget'
@@ -55,6 +56,9 @@ const DaGenAI_Base = ({
   const [isFinished, setIsFinished] = useState<boolean>(false)
   const { data: marketplaceAddOns } = useListMarketplaceAddOns(type)
   const [canUseGenAI] = usePermissionHook([PERMISSIONS.USE_GEN_AI])
+  const [uniqueLogs, setUniqueLogs] = useState<
+    { source: string; content: string }[]
+  >([])
   const access = useAuthStore((state) => state.access)
   const timeouts = useRef<NodeJS.Timeout[]>([])
   const {
@@ -79,24 +83,95 @@ const DaGenAI_Base = ({
     customPayload: addOn.customPayload(inputPrompt),
   }))
 
-  const mockStreamOutput = async () => {
-    setStreamOutput(() => 'Sending request...')
-    timeouts.current.push(
-      setTimeout(() => {
-        setStreamOutput(() => 'Processing request...')
-      }, 500),
-    )
-    timeouts.current.push(
-      setTimeout(() => {
-        setStreamOutput(() => 'Querying context...')
-      }, 650),
-    )
-    timeouts.current.push(
-      setTimeout(() => {
-        setStreamOutput(() => 'LLM processing...')
-      }, 2650),
-    )
-  }
+  useEffect(() => {
+    if (!access) {
+      return
+    }
+
+    // Use socket.io-client to connect to the server
+    const socket = io(config.serverBaseWssUrl, {
+      query: {
+        access_token: access?.token,
+      },
+      transports: ['websocket'], // Make sure to specify WebSocket transport
+    })
+
+    console.log('Connecting to WebSocket with Socket.IO')
+
+    socket.on('connect', () => {
+      console.log('Socket.IO connection established')
+    })
+
+    socket.on('etas-stream', (rawMessage) => {
+      console.log('Received message:', rawMessage) // Log the raw message to inspect
+
+      // Parse the message if it's a JSON string
+      let message
+      try {
+        message =
+          typeof rawMessage === 'string' ? JSON.parse(rawMessage) : rawMessage
+      } catch (error) {
+        console.error('Error parsing JSON:', error, rawMessage)
+        return // Exit early if the message can't be parsed
+      }
+
+      // Ensure message has both source and content
+      if (message.source && message.content) {
+        const newLog = {
+          source: message.source.trim().toLowerCase(), // Normalize source (optional)
+          content: message.content.trim(), // Trim any leading/trailing spaces from content
+        }
+
+        setUniqueLogs((prevLogs) => {
+          // Check if an identical log already exists (case-insensitive comparison for source, exact match for content)
+          const exists = prevLogs.some(
+            (log) =>
+              log.source === newLog.source && log.content === newLog.content,
+          )
+
+          if (!exists) {
+            // console.log('Adding to uniqueLogs:', newLog) // Debugging state update
+            return [...prevLogs, newLog] // Add the new log to the array
+          }
+          return prevLogs
+        })
+      } else {
+        console.warn('Message is missing source or content:', message) // Warn if data is incomplete
+      }
+    })
+
+    socket.on('connect_error', (error) => {
+      console.error('Socket.IO connection error:', error)
+    })
+
+    socket.on('disconnect', () => {
+      console.log('Socket.IO connection closed')
+    })
+
+    // Clean up the socket connection when the component is unmounted
+    return () => {
+      socket.disconnect()
+    }
+  }, [access])
+
+  // const mockStreamOutput = async () => {
+  //   setStreamOutput(() => 'Sending request...')
+  //   timeouts.current.push(
+  //     setTimeout(() => {
+  //       setStreamOutput(() => 'Processing request...')
+  //     }, 500),
+  //   )
+  //   timeouts.current.push(
+  //     setTimeout(() => {
+  //       setStreamOutput(() => 'Querying context...')
+  //     }, 650),
+  //   )
+  //   timeouts.current.push(
+  //     setTimeout(() => {
+  //       setStreamOutput(() => 'LLM processing...')
+  //     }, 2650),
+  //   )
+  // }
 
   const handleGenerate = async () => {
     if (!selectedAddOn) return
@@ -105,8 +180,9 @@ const DaGenAI_Base = ({
     onLoadingChange(true)
     setIsFinished(false)
     onFinishChange(false)
+    setUniqueLogs([])
     try {
-      mockStreamOutput()
+      setStreamOutput('Sending request...')
       // console.log('selectedAddOn at genai base', selectedAddOn)
       if (selectedAddOn.isMock) {
         // console.log('Mock generating code...')
@@ -222,6 +298,10 @@ const DaGenAI_Base = ({
     }
   }, [])
 
+  useEffect(() => {
+    console.log('uniqueLogs', uniqueLogs)
+  }, [uniqueLogs])
+
   return (
     <div className={cn('flex h-full w-full rounded', className)}>
       <div
@@ -318,21 +398,27 @@ const DaGenAI_Base = ({
           </>
         )}
 
-        {(streamOutput || isWizard) && (
+        <div className="da-label-small-medium mb-1 mt-2">Status</div>
+        {((uniqueLogs && uniqueLogs.length > 0) || isWizard) && (
           <>
-            <div className="da-label-small-medium mb-1 mt-2">Status</div>
             <div
               className={cn(
-                'mt-2 flex flex-shrink-0 h-full max-h-[100px] xl:max-h-[150px] 2xl:max-h-[200px] rounded-md bg-da-gray-dark p-3',
+                'mt-2 flex flex-col space-y-2 overflow-y-auto flex-shrink-0 h-full max-h-[100px] xl:max-h-[150px] 2xl:max-h-[200px] rounded-md bg-da-gray-dark p-3 text-white text-sm',
                 isWizard && 'mb-2 mt-0 h-full',
               )}
             >
-              <p className="da-label-small font-mono text-white">
-                {streamOutput ? streamOutput : 'Log messages...'}
-              </p>
+              {uniqueLogs.map((log, index) => (
+                <div key={index} className="flex w-full items-center">
+                  <div className="uppercase font-bold px-2 py-1 bg-white/50 w-fit h-fit rounded-md mr-1">
+                    {log.source}
+                  </div>
+                  {log.content}
+                </div>
+              ))}
             </div>
           </>
         )}
+
         {!isWizard && (
           <>
             {!inputPrompt && (

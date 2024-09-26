@@ -2,6 +2,9 @@ const config: any = {
   serverBaseUrl:
     import.meta.env.VITE_SERVER_BASE_URL ||
     'https://backend-core-dev.digital.auto',
+  serverBaseWssUrl:
+    import.meta.env.VITE_SERVER_BASE_WSS_URL ||
+    'wss://backend-core-dev.digital.auto',
   serverVersion: import.meta.env.VITE_SERVER_VERSION || 'v2',
   logBaseUrl: import.meta.env.PROD
     ? 'https://logs.digital.auto'
@@ -25,15 +28,6 @@ const config: any = {
     defaultEndpointUrl: 'https://backend-core-dev.digital.auto/v2/genai',
     marketplaceUrl: 'https://store-be.digitalauto.tech/marketplace/genai',
     sdvApp: [
-      {
-        id: 'etas-sdv-genai',
-        type: 'GenAI_Python',
-        name: 'ETAS SDV GenAI',
-        description: 'ETAS GenAI for Python code generation',
-        apiKey: 'Empty',
-        endpointUrl: 'https://backend-core-dev.digital.auto/v2/genai/etas',
-        customPayload: (prompt: string) => ({ prompt }),
-      },
       {
         id: 'mock-genai',
         type: 'GenAI_Python',
