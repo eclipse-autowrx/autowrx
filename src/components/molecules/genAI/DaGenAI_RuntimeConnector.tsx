@@ -431,7 +431,7 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
       <div>
         <div className="flex items-center">
           {!hideLabel && (
-            <label className="mr-2 da-label-small">Runtime:</label>
+            <label className="mr-3 da-small-medium">Runtime:</label>
           )}
           <select
             aria-label="deploy-select"

@@ -7,6 +7,7 @@ import DaStageComponent from '../staging/DaStageComponent'
 import { IoMdArrowRoundBack } from 'react-icons/io'
 import config from '@/configs/config'
 import DaGenAI_RuntimeConnector from './DaGenAI_RuntimeConnector'
+import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
 const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
 
@@ -33,6 +34,7 @@ const DaGenAI_EditSystemStaging = ({
   const [activeId, setActiveId] = useState<string>('')
   const runTimeRef = useRef<any>()
   const [log, setLog] = useState<string>('')
+  const { data: profile } = useSelfProfileQuery()
 
   const [prototype] = useModelStore((state) => [state.prototype as Prototype])
 
@@ -63,7 +65,7 @@ const DaGenAI_EditSystemStaging = ({
     <div className="w-full h-full">
       <div className="w-full flex items-center">
         <IoMdArrowRoundBack
-          className="mr-4 cursor-pointer hover:opacity-50"
+          className="mr-2 cursor-pointer hover:opacity-50"
           size={24}
           onClick={() => {
             if (onCancel) {
@@ -78,16 +80,16 @@ const DaGenAI_EditSystemStaging = ({
       </div>
 
       {onTargetMode && (
-        <div className="flex mb-2 justify-between">
-          <div className=" bg-slate-100 rounded w-[32%] border border-da-gray-medium p-2">
-            <DaText variant="sub-title" className="text-da-black">
+        <div className="flex mb-2 justify-between mt-4">
+          <div className=" bg-slate-100 rounded w-[32%] border border-da-gray-medium/50 p-3">
+            <DaText variant="sub-title" className="text-da-primary-500">
               System
             </DaText>
-            <div className="flex">
+            <div className="flex mt-2">
               <div className="w-[80px]">Name:</div>
               <div className="grow">{system && system.name}</div>
             </div>
-            <div className="flex">
+            <div className="flex mt-2">
               <div className="w-[80px]">Version:</div>
               <div className="grow text-da-black">
                 <b>{system && system.version}</b>
@@ -95,21 +97,21 @@ const DaGenAI_EditSystemStaging = ({
             </div>
           </div>
 
-          <div className=" bg-slate-100 rounded w-[32%] border border-da-gray-medium p-2">
-            <DaText variant="sub-title" className="text-da-black">
+          <div className=" bg-slate-100 rounded w-[32%] border border-da-gray-medium/50 p-3">
+            <DaText variant="sub-title" className="text-da-primary-500">
               Stage
             </DaText>
-            <div className="flex">
+            <div className="flex mt-2">
               <div className="w-[80px]">Name:</div>
               <div className="grow">{target && target.name}</div>
             </div>
-            <div className="flex">
+            <div className="flex mt-2">
               <div className="w-[80px]">Version:</div>
-              <div className="grow text-da-black">
+              <div className="grow text-da-gray-dark">
                 <b>{target && target.version}</b>
               </div>
             </div>
-            <div>
+            <div className="mt-2">
               {target && (
                 <DaGenAI_RuntimeConnector
                   targetPrefix={target.prefix || 'runtime-'}
@@ -136,8 +138,8 @@ const DaGenAI_EditSystemStaging = ({
               )}
               {log && (
                 <div className="mt-2 flex">
-                  <div className="da-label-small">Response:</div>
-                  <div className="ml-2 bg-da-black text-da-white px-2 py-0.5 rounded da-label-tiny grow">
+                  <div className="da-small-medium mr-2">Response:</div>
+                  <div className="ml-2 bg-da-black text-da-white px-2 py-1.5 rounded da-label-tiny grow">
                     {log}
                   </div>
                 </div>
@@ -145,18 +147,27 @@ const DaGenAI_EditSystemStaging = ({
             </div>
           </div>
 
-          <div className=" bg-slate-100 rounded w-[32%] border border-da-gray-medium p-2">
-            <DaText variant="sub-title" className="text-da-black">
+          <div className=" bg-slate-100 rounded w-[32%] border border-da-gray-medium/50 p-3">
+            <DaText variant="sub-title" className="text-da-primary-500">
               Update
             </DaText>
-            <div className="flex">
+            <div className="flex mt-2">
               <div className="w-[80px]">Date:</div>
-              <div className="grow">4/15/2024: 12:41</div>
+              <div className="grow">
+                {new Date().toLocaleString('en-GB', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: false,
+                })}
+              </div>
             </div>
-            <div className="flex">
+            <div className="flex mt-2">
               <div className="w-[80px]">By:</div>
-              <div className="grow text-da-black">
-                <b>John Doe</b>
+              <div className="grow text-da-gray-dark">
+                <b>{profile ? profile.name : 'John Doe'}</b>
               </div>
             </div>
           </div>
@@ -182,7 +193,7 @@ const DaGenAI_EditSystemStaging = ({
                 <div className="h-full px-2 flex items-center justify-center w-24 border-l">
                   Update
                 </div>
-                <div className="h-full px-2 flex items-center justify-center w-24 border-l text-[14px]">
+                <div className="h-full px-2 flex items-center justify-center w-24 border-l text-base">
                   {target.short_name || target.name}
                 </div>
               </>

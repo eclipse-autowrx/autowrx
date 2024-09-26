@@ -8,7 +8,7 @@ const TARGETS = [
     name: 'Virtual WS',
     icon: '/imgs/targets/vm.png',
     prefix: 'Runtime-',
-    version: 'v.0.10',
+    version: 'v.0.9',
     state: {
       '3.1.1.1.1.1': '2.3.2',
     },
@@ -18,9 +18,9 @@ const TARGETS = [
     short_name: 'Runtime-',
     icon: '/imgs/targets/automationKit.png',
     prefix: 'Runtime-', // "Kit-"
-    version: 'v.0.9',
+    version: 'v.1.0',
     state: {
-      '3.1.1.1.1.1': '2.3.1',
+      '3.1.1.1.1.1': '0.9.0',
     },
   },
   {
@@ -28,7 +28,7 @@ const TARGETS = [
     short_name: 'XSPACE',
     icon: '/imgs/targets/pilotCar.png',
     prefix: 'PilotCar-', // "PilotCar-"
-    version: 'v.0.8',
+    version: 'v.1.0',
     state: {
       '3.1.1.1.1.1': '2.3.0',
     },
@@ -38,7 +38,7 @@ const TARGETS = [
 const SYSTEM = {
   name: 'Concept Car 2024',
   icon: '/imgs/targets/targetSystem.png',
-  version: 'v.0.11',
+  version: 'v.1.0',
 }
 
 const STANDARD_STAGE = {
@@ -92,7 +92,7 @@ const STANDARD_STAGE = {
                         {
                           id: '3.1.1.1.1.1',
                           name: 'Subscription Event Analyzer',
-                          version: '2.3.4',
+                          version: '1.0.0',
                         },
                       ],
                     },
