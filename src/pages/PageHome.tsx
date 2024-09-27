@@ -55,9 +55,40 @@ const PageHome = () => {
         <HomePrototypeProposal />
       </div>
 
-      <div className="col-span-12 mt-12">
-        <HomePartners />
+      {/* <div className="flex flex-col w-full h-[220px] mt-12 text-center justify-center items-center font-medium">
+        <div className="max-w-2xl">
+          <div className="pb-2 text-xl font-bold text-gray-800">
+            Operated by digital.auto
+          </div>
+          Based on Eclipse SDV autowrx. Join <a>digital.auto</a> to participate
+          in our thriving community, enabling next-generation, SDV-enabled
+          vehicle experiences
+        </div>
+        <img src="./imgs/da.png" className="h-[70px] mx-auto mt-4" />
+      </div> */}
+
+      <div className="flex w-full h-[180px] mt-12 justify-center items-center font-medium bg-gray-100">
+        <div className="flex flex-col w-[40%] ml-12">
+          <div className="flex w-full items-center">
+            <div className="text-base text-da-gray-dark">Operated by</div>
+            <img src="./imgs/da.png" className="h-[50px] w-fit" />
+          </div>
+
+          <div className="w-full">
+            Based on Eclipse SDV autowrx. Join <a>digital.auto</a> to
+            participate in our thriving community, enabling next-generation,
+            SDV-enabled vehicle experiences
+          </div>
+        </div>
+
+        <div className="flex-1 w-full scale-90">
+          <HomePartners />
+        </div>
       </div>
+
+      {/* <div className="col-span-12 mt-12">
+        <HomePartners />
+      </div> */}
     </>
   )
 }
