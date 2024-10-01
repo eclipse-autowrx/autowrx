@@ -32,7 +32,7 @@ const GenAIPrototypeWizard = () => {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
 
-  const [currentStep, setCurrentStep] = useState(3)
+  const [currentStep, setCurrentStep] = useState(0)
   const [soFarSteps, setSoFarSteps] = useState(0)
   const [disabledStep, setDisabledStep] = useState([true, true, true, true])
   const [openSelectorPopup, setOpenSelectorPopup] = useState(false)
@@ -190,12 +190,12 @@ const GenAIPrototypeWizard = () => {
       <div className="flex min-h-0 flex-1 py-2 w-full ">
         <div
           className={cn(
-            'flex h-full w-full px-4',
+            'flex h-full w-full px-4 xl:pt-12',
             currentStep !== 0 && 'hidden',
           )}
         >
           <div className="flex flex-1 flex-col overflow-y-auto">
-            <div className="w-full bg-white pt-4">
+            <div className="w-full bg-white">
               <div className="text-3xl font-semibold text-da-primary-500 mb-10">
                 Let’s generate vehicle apps with AI
               </div>
@@ -233,13 +233,28 @@ const GenAIPrototypeWizard = () => {
           </div>
 
           <div className="flex w-1/2 h-full overflow-y-auto">
-            <DaImage
-              src={
-                config.genAI.wizardCover ?? '/imgs/default_prototype_cover.jpg'
-              }
-              alt="Prototype Wizard"
-              className="h-fit w-full object-contain !overflow-hidden !rounded-lg"
-            />
+            {config.genAI.wizardCover?.endsWith('.mp4') ? (
+              <div className="relative w-full h-fit overflow-hidden">
+                <video
+                  src={config.genAI.wizardCover}
+                  className="flex h-fit w-full object-contain rounded-xl"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                />
+                <div className="absolute inset-0 border-4 border-white rounded-lg pointer-events-none scale-100"></div>
+              </div>
+            ) : (
+              <DaImage
+                src={
+                  config.genAI.wizardCover ??
+                  '/imgs/default_prototype_cover.jpg'
+                }
+                alt="Prototype Wizard"
+                className="h-fit w-full object-contain !overflow-hidden !rounded-lg"
+              />
+            )}
           </div>
         </div>
 
