@@ -159,7 +159,7 @@ const DaGenAI_RuntimeControl = () => {
       <div className="px-1 flex">
         <DaGenAI_RuntimeConnector
           targetPrefix="runtime-"
-          kitServerUrl={DEFAULT_KIT_SERVER}
+          kitServerUrl={config?.runtime?.url || DEFAULT_KIT_SERVER}
           ref={runTimeRef1}
           usedAPIs={usedApis}
           onActiveRtChanged={(rtId: string | undefined) => setActiveRtId(rtId)}

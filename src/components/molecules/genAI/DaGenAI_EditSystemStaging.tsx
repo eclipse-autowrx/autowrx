@@ -115,7 +115,7 @@ const DaGenAI_EditSystemStaging = ({
               {target && (
                 <DaGenAI_RuntimeConnector
                   targetPrefix={target.prefix || 'runtime-'}
-                  kitServerUrl={DEFAULT_KIT_SERVER}
+                  kitServerUrl={config?.runtime?.url || DEFAULT_KIT_SERVER}
                   ref={runTimeRef}
                   usedAPIs={[]}
                   onActiveRtChanged={(rtId: string | undefined) => {
