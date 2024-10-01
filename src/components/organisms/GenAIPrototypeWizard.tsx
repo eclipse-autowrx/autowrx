@@ -191,7 +191,7 @@ const GenAIPrototypeWizard = () => {
       <div className="flex min-h-0 flex-1 py-2 w-full ">
         <div
           className={cn(
-            'flex h-full w-full px-4 xl:pt-12',
+            'flex h-full w-full px-4 pt-12',
             currentStep !== 0 && 'hidden',
           )}
         >

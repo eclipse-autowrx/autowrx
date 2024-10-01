@@ -33,7 +33,7 @@ const DaGenAI_EditSystemStaging = ({
   const [isUpdating, setIsUpdating] = useState<boolean>(false)
   const [activeId, setActiveId] = useState<string>('')
   const runTimeRef = useRef<any>()
-  const [log, setLog] = useState<string>('')
+  const [log, setLog] = useState<string[]>([])
   const { data: profile } = useSelfProfileQuery()
 
   const [prototype] = useModelStore((state) => [state.prototype as Prototype])
@@ -66,14 +66,14 @@ const DaGenAI_EditSystemStaging = ({
       <div className="w-full flex items-center">
         <IoMdArrowRoundBack
           className="mr-2 cursor-pointer hover:opacity-50"
-          size={24}
+          size={26}
           onClick={() => {
             if (onCancel) {
               onCancel()
             }
           }}
         />
-        <DaText variant="huge-bold">
+        <DaText variant="title" className="text-da-gray-dark">
           {!onTargetMode && 'Edit System Definition'}
           {onTargetMode && 'Update Stage'}
         </DaText>
@@ -121,26 +121,32 @@ const DaGenAI_EditSystemStaging = ({
                   onActiveRtChanged={(rtId: string | undefined) => {
                     setActiveRtId(rtId || '')
                   }}
-                  onDeployResponse={(log: string, isDone: boolean) => {
-                    // console.log(`onDeployResponse isDone:`, isDone)
-                    // console.log(`log`, log)
-                    if (log) {
-                      setLog(log)
+                  onDeployResponse={(newLog: string, isDone: boolean) => {
+                    if (newLog) {
+                      // Append new log to the log state, keeping only the last 3 logs
+                      setLog((prevLog) => {
+                        const updatedLog = [...prevLog, newLog].slice(-3)
+                        return updatedLog
+                      })
                     }
                     if (isDone) {
                       setIsUpdating(false)
                       setTimeout(() => {
-                        setLog('')
+                        setLog([]) // Optionally reset the log after a delay
                       }, 2000)
                     }
                   }}
                 />
               )}
-              {log && (
+              {log.length > 0 && (
                 <div className="mt-2 flex">
-                  <div className="da-small-medium mr-2">Response:</div>
-                  <div className="ml-2 bg-da-black text-da-white px-2 py-1.5 rounded da-label-tiny grow">
-                    {log}
+                  <div className="da-small-medium mr-2 line-clamp-3">
+                    Response:
+                  </div>
+                  <div className="ml-2 bg-da-black text-da-white px-2 py-1.5 rounded da-label-tiny grow leading-tight">
+                    {log.map((entry, index) => (
+                      <div key={index}>{entry}</div>
+                    ))}
                   </div>
                 </div>
               )}
