@@ -21,7 +21,7 @@ const config: any = {
   sso: 'bosch',
   instance: 'digitalauto',
   showPrivacyPolicy: false,
-  showGenAIWizard: true,
+  showGenAIWizard: false,
   defaultModelId: '665826e3194aff003dd2f67b',
   genAI: {
     wizardCover: '/imgs/default_prototype_cover.jpg',
