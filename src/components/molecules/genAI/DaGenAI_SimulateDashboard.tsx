@@ -250,7 +250,7 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
               onDashboardConfigChanged={handleDashboardConfigChanged}
               isWizard={true}
             />
-            <DaText variant="sub-title" className="flex text-da-primary-500">
+            {/* <DaText variant="sub-title" className="flex text-da-primary-500">
               Select Dashboard Template
             </DaText>
 
@@ -267,7 +267,7 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
                   />
                 </div>
               ))}
-            </div>
+            </div> */}
           </div>
         )}
       </div>

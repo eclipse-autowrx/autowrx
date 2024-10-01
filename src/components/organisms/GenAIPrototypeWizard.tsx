@@ -163,8 +163,8 @@ const GenAIPrototypeWizard = () => {
   }
 
   return (
-    <div className="flex flex-col h-full w-[calc(100%-4px)]">
-      <div className="-mx-7 -mt-2 flex items-center justify-center border-b px-5 pb-3">
+    <div className="flex flex-col w-full h-full">
+      <div className="px-4 py-3 flex items-center justify-center border-b">
         <DaText
           variant="sub-title"
           className="flex flex-1 text-da-primary-500 "
@@ -189,9 +189,12 @@ const GenAIPrototypeWizard = () => {
 
       <div className="flex min-h-0 flex-1 py-2 w-full ">
         <div
-          className={cn('flex h-full w-full', currentStep !== 0 && 'hidden')}
+          className={cn(
+            'flex h-full w-full px-4',
+            currentStep !== 0 && 'hidden',
+          )}
         >
-          <div className="flex flex-1 -mx-2 flex-col overflow-y-auto mr-6">
+          <div className="flex flex-1 flex-col overflow-y-auto">
             <div className="w-full bg-white pt-4">
               <div className="text-3xl font-semibold text-da-primary-500 mb-10">
                 Let’s generate vehicle apps with AI
@@ -276,7 +279,7 @@ const GenAIPrototypeWizard = () => {
         </div>
       </div>
 
-      <div className="-mx-6 -mb-1 flex flex-shrink-0 justify-between border-t px-5 pt-4">
+      <div className="flex px-6 py-4 flex-shrink-0 justify-between border-t">
         <DaButton
           onClick={handleBack}
           disabled={currentStep === 0}

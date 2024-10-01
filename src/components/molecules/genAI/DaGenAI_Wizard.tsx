@@ -34,7 +34,7 @@ const DaGenAI_Wizard = ({ onCodeGenerated }: DaGenAI_WizardProps) => {
         className="w-1/2"
         isWizard={true}
       />
-      <div className="flex h-full w-1/2 flex-1 flex-col pb-2 pl-2">
+      <div className="flex h-full w-1/2 flex-1 flex-col pb-2 mr-4">
         <div
           className={cn(
             'scroll-gray mt-2 flex h-full w-full overflow-y-auto overflow-x-hidden',

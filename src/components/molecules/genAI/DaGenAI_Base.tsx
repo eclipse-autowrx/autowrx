@@ -307,7 +307,7 @@ const DaGenAI_Base = ({
   }, [uniqueLogs])
 
   return (
-    <div className={cn('flex h-full w-full rounded', className)}>
+    <div className={cn('flex h-full w-full rounded px-4', className)}>
       <div
         className={cn(
           'flex h-full w-full flex-col overflow-y-auto border-r border-da-gray-light pl-0.5 pr-2',
