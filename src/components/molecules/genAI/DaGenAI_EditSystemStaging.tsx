@@ -222,6 +222,7 @@ const DaGenAI_EditSystemStaging = ({
               onItemEditFinished={(id, data) => {
                 updateDefineAtId(id, data)
               }}
+              expandedIds={['3', '3.1', '3.1.1', '3.1.1.1', '3.1.1.1.1']}
             />
           )}
         </div>
