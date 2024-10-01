@@ -163,7 +163,7 @@ const GenAIPrototypeWizard = () => {
   }
 
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className="flex flex-col h-full w-[calc(100%-4px)]">
       <div className="-mx-7 -mt-2 flex items-center justify-center border-b px-5 pb-3">
         <DaText
           variant="sub-title"
@@ -187,7 +187,7 @@ const GenAIPrototypeWizard = () => {
         <div className="flex flex-1"></div>
       </div>
 
-      <div className="flex min-h-0 flex-1 py-2">
+      <div className="flex min-h-0 flex-1 py-2 w-full ">
         <div
           className={cn('flex h-full w-full', currentStep !== 0 && 'hidden')}
         >
