@@ -81,7 +81,7 @@ const DaGenAI_EditSystemStaging = ({
 
       {onTargetMode && (
         <div className="flex mb-2 justify-between mt-4">
-          <div className=" bg-slate-100 rounded w-[32%] border border-da-gray-medium/50 p-3">
+          <div className=" bg-gray-100 rounded w-[32%] border border-gray-300 p-3">
             <DaText variant="sub-title" className="text-da-primary-500">
               System
             </DaText>
@@ -97,7 +97,7 @@ const DaGenAI_EditSystemStaging = ({
             </div>
           </div>
 
-          <div className=" bg-slate-100 rounded w-[32%] border border-da-gray-medium/50 p-3">
+          <div className=" bg-gray-100 rounded w-[32%] border border-gray-300 p-3">
             <DaText variant="sub-title" className="text-da-primary-500">
               Stage
             </DaText>
@@ -147,7 +147,7 @@ const DaGenAI_EditSystemStaging = ({
             </div>
           </div>
 
-          <div className=" bg-slate-100 rounded w-[32%] border border-da-gray-medium/50 p-3">
+          <div className=" bg-gray-100 rounded w-[32%] border border-gray-300 p-3">
             <DaText variant="sub-title" className="text-da-primary-500">
               Update
             </DaText>
@@ -174,9 +174,9 @@ const DaGenAI_EditSystemStaging = ({
         </div>
       )}
 
-      <div className="min-h-[400px] overflow-y-auto mt-2">
+      <div className="min-h-[400px] overflow-y-auto mt-4 xl:mt-6">
         <div className="w-full rounded border">
-          <div className="h-[40px] w-full bg-gradient-to-r from-da-gradient-from to-da-gradient-to rounded-t text-da-white font-bold flex">
+          <div className="flex h-[40px] w-full border-b text-da-gray-dark rounded-t font-bold">
             <div className="h-full px-4 flex items-center grow">
               System Elements
             </div>
@@ -222,6 +222,7 @@ const DaGenAI_EditSystemStaging = ({
               onItemEditFinished={(id, data) => {
                 updateDefineAtId(id, data)
               }}
+              expandedIds={['3', '3.1', '3.1.1', '3.1.1.1', '3.1.1.1.1']}
             />
           )}
         </div>

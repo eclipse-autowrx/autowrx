@@ -22,6 +22,8 @@ type WizardGenAIStoreState = {
   wizardRunSimulationAction: (() => void) | null
   wizardStopSimulationAction: (() => void) | null
 
+  codeGenerating: boolean
+
   wizardPrototype: WizardPrototype
   activeModelApis: any[]
 
@@ -32,6 +34,7 @@ type WizardGenAIStoreState = {
 type WizardGenAIStoreActions = {
   setWizardPrompt: (prompt: string) => void
   setWizardLog: (log: string) => void
+  setCodeGenerating: (isGenerating: boolean) => void
 
   setWizardGeneratedCode: (code: string) => void
   registerWizardGenerateCodeAction: (action: () => void) => void
@@ -94,6 +97,8 @@ const useWizardGenAIStore = create<
   wizardPrompt: '',
   wizardLog: '',
 
+  codeGenerating: false,
+
   wizardGeneratedCode: '',
   wizardGenerateCodeAction: null,
 
@@ -106,6 +111,10 @@ const useWizardGenAIStore = create<
 
   allWizardRuntimes: [],
   wizardActiveRtId: '',
+
+  setCodeGenerating: (isGenerating: boolean) => {
+    set({ codeGenerating: isGenerating })
+  },
 
   setWizardActiveRtId: (rtId: string | undefined) => {
     set((state) => {

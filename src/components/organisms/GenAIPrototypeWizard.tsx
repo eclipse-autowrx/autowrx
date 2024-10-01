@@ -57,6 +57,7 @@ const GenAIPrototypeWizard = () => {
     resetWizardStore,
     allWizardRuntimes,
     wizardActiveRtId,
+    codeGenerating,
     setWizardActiveRtId,
   } = useWizardGenAIStore()
 
@@ -163,8 +164,8 @@ const GenAIPrototypeWizard = () => {
   }
 
   return (
-    <div className="flex flex-col h-full w-full">
-      <div className="-mx-7 -mt-2 flex items-center justify-center border-b px-5 pb-3">
+    <div className="flex flex-col w-full h-full">
+      <div className="px-4 py-3 flex items-center justify-center border-b">
         <DaText
           variant="sub-title"
           className="flex flex-1 text-da-primary-500 "
@@ -187,12 +188,15 @@ const GenAIPrototypeWizard = () => {
         <div className="flex flex-1"></div>
       </div>
 
-      <div className="flex min-h-0 flex-1 py-2">
+      <div className="flex min-h-0 flex-1 py-2 w-full ">
         <div
-          className={cn('flex h-full w-full', currentStep !== 0 && 'hidden')}
+          className={cn(
+            'flex h-full w-full px-4 xl:pt-12',
+            currentStep !== 0 && 'hidden',
+          )}
         >
-          <div className="flex flex-1 -mx-2 flex-col overflow-y-auto mr-6">
-            <div className="w-full bg-white pt-4">
+          <div className="flex flex-1 flex-col overflow-y-auto">
+            <div className="w-full bg-white">
               <div className="text-3xl font-semibold text-da-primary-500 mb-10">
                 Let’s generate vehicle apps with AI
               </div>
@@ -230,13 +234,28 @@ const GenAIPrototypeWizard = () => {
           </div>
 
           <div className="flex w-1/2 h-full overflow-y-auto">
-            <DaImage
-              src={
-                config.genAI.wizardCover ?? '/imgs/default_prototype_cover.jpg'
-              }
-              alt="Prototype Wizard"
-              className="h-fit w-full object-contain !overflow-hidden !rounded-lg"
-            />
+            {config.genAI.wizardCover?.endsWith('.mp4') ? (
+              <div className="relative w-full h-fit overflow-hidden">
+                <video
+                  src={config.genAI.wizardCover}
+                  className="flex h-fit w-full object-contain rounded-xl"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                />
+                <div className="absolute inset-0 border-4 border-white rounded-lg pointer-events-none scale-100"></div>
+              </div>
+            ) : (
+              <DaImage
+                src={
+                  config.genAI.wizardCover ??
+                  '/imgs/default_prototype_cover.jpg'
+                }
+                alt="Prototype Wizard"
+                className="h-fit w-full object-contain !overflow-hidden !rounded-lg"
+              />
+            )}
           </div>
         </div>
 
@@ -276,7 +295,7 @@ const GenAIPrototypeWizard = () => {
         </div>
       </div>
 
-      <div className="-mx-6 -mb-1 flex flex-shrink-0 justify-between border-t px-5 pt-4">
+      <div className="flex px-4 py-4 flex-shrink-0 justify-between border-t">
         <DaButton
           onClick={handleBack}
           disabled={currentStep === 0}
@@ -293,7 +312,7 @@ const GenAIPrototypeWizard = () => {
             }}
             className="w-[300px] min-w-fit"
             variant="solid"
-            disabled={wizardPrompt.length === 0 || loading}
+            disabled={wizardPrompt.length === 0 || loading || codeGenerating}
           >
             {(wizardPrototype.code && wizardPrototype.code.length > 0) ||
             isGeneratedFlag

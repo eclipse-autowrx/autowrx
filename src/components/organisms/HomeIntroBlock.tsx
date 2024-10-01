@@ -6,11 +6,13 @@ import { DaActionCard } from '../molecules/DaActionCard'
 import { FaCar } from 'react-icons/fa'
 import { TbArrowRight, TbCode, TbPackageImport } from 'react-icons/tb'
 import FormCreateModel from '../molecules/forms/FormCreateModel'
+import FormImportPrototype from '../molecules/forms/FormImportPrototype'
 import FormCreatePrototype from '../molecules/forms/FormCreatePrototype'
 import DaPopup from '../atoms/DaPopup'
 import { useState } from 'react'
 import { BsStars } from 'react-icons/bs'
 import { useFeatureCards } from '@/hooks/useInstanceCfg'
+import config from '@/configs/config'
 
 const HomeIntroBlock = () => {
   const navigate = useNavigate()
@@ -57,28 +59,31 @@ const HomeIntroBlock = () => {
           >
             <FormCreatePrototype />
           </DaPopup>
-          <DaActionCard
-            title="Vehicle app generator"
-            content="Create apps with GenAI"
-            icon={<BsStars className="h-7 w-7 text-da-primary-500" />}
-            onClick={() => navigate('/genai-wizard')}
-            className="w-full"
-          />
-          {/* <GenAIPrototypeWizard open={open} setOpen={setOpen} /> */}
-          {/* <DaPopup
-            trigger={
-              <DaActionCard
-                title="Build with AI"
-                content="Build prototype with GenAI"
-                icon={
-                  <TbPackageImport className="h-7 w-7 text-da-primary-500" />
-                }
-                className="w-full"
-              />
-            }
-          >
-            <FormImportPrototype />
-          </DaPopup> */}
+
+          {config && config.showGenAIWizard ? (
+            <DaActionCard
+              title="Vehicle app generator"
+              content="Create apps with GenAI"
+              icon={<BsStars className="h-7 w-7 text-da-primary-500" />}
+              onClick={() => navigate('/genai-wizard')}
+              className="w-full"
+            />
+          ) : (
+            <DaPopup
+              trigger={
+                <DaActionCard
+                  title="Import Prototype"
+                  content="Import existing prototype"
+                  icon={
+                    <TbPackageImport className="h-7 w-7 text-da-primary-500" />
+                  }
+                  className="w-full"
+                />
+              }
+            >
+              <FormImportPrototype />
+            </DaPopup>
+          )}
 
           <DaActionCard
             title="My models"
