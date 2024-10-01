@@ -18,6 +18,7 @@ import { countCodeExecution } from '@/services/prototype.service'
 import { DaInput } from '@/components/atoms/DaInput'
 import { SlOptionsVertical } from 'react-icons/sl'
 import { BiSend } from 'react-icons/bi'
+import config from '@/configs/config'
 
 const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
 
@@ -199,7 +200,7 @@ const DaRuntimeControl: FC = ({}) => {
         ) : (
           <DaRuntimeConnector
             targetPrefix="runtime-"
-            kitServerUrl={DEFAULT_KIT_SERVER}
+            kitServerUrl={config?.runtime?.url || DEFAULT_KIT_SERVER}
             ref={runTimeRef1}
             usedAPIs={usedApis}
             onActiveRtChanged={(rtId: string | undefined) =>
