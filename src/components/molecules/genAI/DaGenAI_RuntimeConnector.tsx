@@ -435,7 +435,7 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
           )}
           <select
             aria-label="deploy-select"
-            className={`border rounded da-label-small px-2 py-1 w-full min-w-[100px] text-da-gray-dark bg-da-gray-light`}
+            className={`border rounded da-label-small px-2 py-1 w-full min-w-[100px] text-da-gray-dark bg-gray-200 !cursor-pointer`}
             value={activeRtId as any}
             onChange={(e) => {
               // console.log(`setActiveRtId(e.target.value) `, e.target.value)
@@ -450,7 +450,7 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
                     key={rt.kit_id}
                     disabled={!rt.is_online}
                   >
-                    <div className="text-[20px] flex items-center disabled:text-white text-white">
+                    <div className="text-[20px] flex items-center disabled:text-white text-white !cursor-pointer">
                       {rt.is_online ? '🟢' : '🟡'} {rt.name}
                     </div>
                   </option>

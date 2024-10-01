@@ -32,7 +32,7 @@ const GenAIPrototypeWizard = () => {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
 
-  const [currentStep, setCurrentStep] = useState(0)
+  const [currentStep, setCurrentStep] = useState(3)
   const [soFarSteps, setSoFarSteps] = useState(0)
   const [disabledStep, setDisabledStep] = useState([true, true, true, true])
   const [openSelectorPopup, setOpenSelectorPopup] = useState(false)
