@@ -163,8 +163,8 @@ const GenAIPrototypeWizard = () => {
   }
 
   return (
-    <div className="flex flex-col h-full w-full ">
-      <div className="-mx-5 -mt-2 flex items-center justify-center border-b px-5 pb-3">
+    <div className="flex flex-col h-full w-full">
+      <div className="-mx-7 -mt-2 flex items-center justify-center border-b px-5 pb-3">
         <DaText
           variant="sub-title"
           className="flex flex-1 text-da-primary-500 "
@@ -191,18 +191,45 @@ const GenAIPrototypeWizard = () => {
         <div
           className={cn('flex h-full w-full', currentStep !== 0 && 'hidden')}
         >
-          <div className="flex flex-1 flex-col">
-            <DaText
-              variant="sub-title"
-              className="mb-4 max-w-full pr-12 text-justify"
-            >
-              Create your prototype entirely with Generative AI. Describe the
-              vehicle app idea then let AI handle the vehicle app logic and
-              interactive widget creation, allowing you to build, visualize, and
-              refine your concepts effortlessly.
-            </DaText>
+          <div className="flex flex-1 -mx-2 flex-col overflow-y-auto mr-6">
+            <div className="w-full bg-white pt-4">
+              <div className="text-3xl font-semibold text-da-primary-500 mb-10">
+                Let’s generate vehicle apps with AI
+              </div>
+              <ul className="list-disc pl-6 space-y-2">
+                <li className="pl-6">
+                  <span className="font-semibold text-da-primary-500">
+                    Generate
+                  </span>{' '}
+                  the envisioned functionality based on its description using
+                  Generative AI.
+                </li>
+                <li className="pl-6">
+                  <span className="font-semibold text-da-primary-500">
+                    Simulate
+                  </span>{' '}
+                  the generated vehicle app in a virtual vehicle or other such
+                  useful widgets.
+                </li>
+                <li className="pl-6">
+                  <span className="font-semibold text-da-primary-500">
+                    Deploy
+                  </span>{' '}
+                  the functionality of the generated vehicle app via various
+                  testing platforms.
+                </li>
+                <li className="pl-6">
+                  <span className="font-semibold text-da-primary-500">
+                    Verify
+                  </span>{' '}
+                  compliance and regulatory requirements to ensure vehicle
+                  homologation.
+                </li>
+              </ul>
+            </div>
           </div>
-          <div className="flex w-1/2 h-full">
+
+          <div className="flex w-1/2 h-full overflow-y-auto">
             <DaImage
               src={
                 config.genAI.wizardCover ?? '/imgs/default_prototype_cover.jpg'
@@ -249,7 +276,7 @@ const GenAIPrototypeWizard = () => {
         </div>
       </div>
 
-      <div className="-mx-5 -mb-1 flex flex-shrink-0 justify-between border-t px-5 pt-4">
+      <div className="-mx-6 -mb-1 flex flex-shrink-0 justify-between border-t px-5 pt-4">
         <DaButton
           onClick={handleBack}
           disabled={currentStep === 0}

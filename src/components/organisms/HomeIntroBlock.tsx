@@ -58,8 +58,8 @@ const HomeIntroBlock = () => {
             <FormCreatePrototype />
           </DaPopup>
           <DaActionCard
-            title="Build with AI"
-            content="Build prototype with GenAI"
+            title="Vehicle app generator"
+            content="Create apps with GenAI"
             icon={<BsStars className="h-7 w-7 text-da-primary-500" />}
             onClick={() => navigate('/genai-wizard')}
             className="w-full"
