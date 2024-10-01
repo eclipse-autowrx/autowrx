@@ -279,7 +279,7 @@ const GenAIPrototypeWizard = () => {
         </div>
       </div>
 
-      <div className="flex px-6 py-4 flex-shrink-0 justify-between border-t">
+      <div className="flex px-4 py-4 flex-shrink-0 justify-between border-t">
         <DaButton
           onClick={handleBack}
           disabled={currentStep === 0}
