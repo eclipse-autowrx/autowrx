@@ -57,6 +57,7 @@ const GenAIPrototypeWizard = () => {
     resetWizardStore,
     allWizardRuntimes,
     wizardActiveRtId,
+    codeGenerating,
     setWizardActiveRtId,
   } = useWizardGenAIStore()
 
@@ -311,7 +312,7 @@ const GenAIPrototypeWizard = () => {
             }}
             className="w-[300px] min-w-fit"
             variant="solid"
-            disabled={wizardPrompt.length === 0 || loading}
+            disabled={wizardPrompt.length === 0 || loading || codeGenerating}
           >
             {(wizardPrototype.code && wizardPrototype.code.length > 0) ||
             isGeneratedFlag

@@ -67,6 +67,7 @@ const DaGenAI_Base = ({
     setPrototypeData,
     setWizardPrompt,
     setWizardLog,
+    setCodeGenerating,
   } = useGenAIWizardStore()
 
   const [openSelectorPopup, setOpenSelectorPopup] = useState(false)
@@ -181,6 +182,7 @@ const DaGenAI_Base = ({
     if (!selectedAddOn) return
     onCodeGenerated('')
     setLoading(true)
+    setCodeGenerating(true)
     onLoadingChange(true)
     setIsFinished(false)
     onFinishChange(false)
@@ -237,6 +239,7 @@ const DaGenAI_Base = ({
       }
     } finally {
       setLoading(false)
+      setCodeGenerating(false)
       onLoadingChange(false)
       setIsFinished(true)
       onFinishChange(true)
