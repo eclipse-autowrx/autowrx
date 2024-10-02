@@ -13,6 +13,7 @@ import useWizardGenAIStore from '@/stores/genAIWizardStore'
 import useRuntimeStore from '@/stores/runtimeStore'
 import config from '@/configs/config'
 import DaGenAI_RuntimeConnector from './DaGenAI_RuntimeConnector'
+import { filterAndCompareVehicleApis } from '@/lib/utils'
 
 const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
 
@@ -84,23 +85,21 @@ const DaGenAI_RuntimeControl = () => {
   }, [])
 
   useEffect(() => {
-    if (
-      !prototypeData.code ||
-      !activeModelApis ||
-      activeModelApis.length === 0
-    ) {
-      setUsedApis([])
+    if (!prototypeData.code) {
       return
     }
-    // console.log('Active Model APIs: ', activeModelApis)
-    let apis: any[] = []
-    let code = prototypeData.code || ''
-    activeModelApis.forEach((item: any) => {
-      if (code.includes(item.shortName)) {
-        apis.push(item.name)
-      }
-    })
-    setUsedApis(apis)
+
+    const { apisInModel, apisNotInModel } = filterAndCompareVehicleApis(
+      prototypeData.code,
+      activeModelApis,
+    )
+
+    // Log the comparison results
+    console.log('APIs used in code and exist in model: ', apisInModel)
+    console.log('APIs used in code but not found in model: ', apisNotInModel)
+
+    // Set the APIs used in the model (you can customize this based on your needs)
+    setUsedApis(apisNotInModel)
   }, [prototypeData.code, activeModelApis])
 
   const appendLog = (content: String) => {
