@@ -97,7 +97,9 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
       if (
         widget.options &&
         widget.options.url &&
-        widget.options.url.includes('3DCarModel')
+        widget.options.url.includes(
+          '3DCarModel' || widget.options.url.includes('d47l1KiTHR1f'),
+        )
       ) {
         // Check if there are APIs related to Row1 Doors, only API with correct version is shown
         // If you have VSS3 Door API in code, dont expect it present in VSS4 Runtime
@@ -144,7 +146,8 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
       if (
         widget.options &&
         widget.options.url &&
-        widget.options.url.includes('table-settable')
+        (widget.options.url.includes('table-settable') ||
+          widget.options.url.includes('sHQtNwric0H7'))
       ) {
         const existingApis = widget.options.apis || []
         const apisChanged =
