@@ -56,7 +56,7 @@ export const parseCvi = (cvi: Cvi) => {
 }
 
 export const parseCvi_alt = (cvi: Cvi): VehicleAPI[] => {
-  console.log('Attemp to parse CVI')
+  // console.log('Attemp to parse CVI')
   const traverse = (
     node: VehicleApi,
     prefix: string = 'Vehicle',
@@ -229,4 +229,80 @@ export const useClickOutside = (
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [ref, handler])
+}
+
+export const filterAndCompareVehicleApis = (
+  code: string,
+  activeModelApis: any,
+) => {
+  if (!code) {
+    console.log('No code found to analyze.')
+    return { apisInCodeOnly: [], apisInModel: [], apisNotInModel: [] }
+  }
+
+  // Step 1: Replace all sequences of whitespace with a single space
+  code = code.replace(/\s+/g, ' ').trim()
+
+  // Step 2: Use the regex pattern to capture APIs, handling spaces and line breaks
+  const vehicleApiPattern = /\bVehicle(?:\s*\.\s*[A-Za-z0-9_]+)+/g
+
+  // Step 3: Capture all matches in the cleaned code
+  const vehicleApisInCode = code.match(vehicleApiPattern) || []
+
+  // List of method names and function calls to exclude
+  const methodNames = ['get', 'set', 'subscribe', 'set_many', 'add', 'apply']
+
+  // Step 4: Process each captured API
+  const processedApis = vehicleApisInCode
+    .map((api) => {
+      // Remove any spaces within the API string
+      let cleanApi = api.replace(/\s+/g, '')
+
+      // Remove any function calls at the end, e.g., .get(), .set(0)
+      cleanApi = cleanApi.replace(/\.\w+\([^)]*\)$/g, '')
+
+      // Split the API into parts
+      const parts = cleanApi.split('.')
+
+      // Remove any parts that are method names or functions
+      const filteredParts = parts.filter((part) => !methodNames.includes(part))
+
+      // Exclude APIs where the second part is a method name (e.g., Vehicle.set_many)
+      if (methodNames.includes(filteredParts[1])) {
+        return null
+      }
+
+      // Reconstruct the API chain
+      const reconstructedApi = filteredParts.join('.')
+
+      return reconstructedApi
+    })
+    .filter((api) => api !== null) // Remove null values from the array
+
+  // Step 5: Remove duplicates
+  const normalizedApis = [...new Set(processedApis)]
+
+  // Step 6: Filter out the base "Vehicle" API from the results
+  const filteredApis = normalizedApis.filter((api) => api !== 'Vehicle')
+
+  // Step 7: Compare `filteredApis` with `activeModelApis`
+  let apisInModel: string[] = []
+  let apisNotInModel: string[] = []
+  let apisInCodeOnly: string[] = [...filteredApis]
+
+  filteredApis.forEach((apiUsedInCode) => {
+    const foundInModel = activeModelApis.includes(apiUsedInCode)
+
+    if (foundInModel) {
+      apisInModel.push(apiUsedInCode)
+    } else {
+      apisNotInModel.push(apiUsedInCode)
+    }
+  })
+
+  return {
+    apisInCodeOnly: apisInCodeOnly || [], // Fallback to empty array if undefined
+    apisInModel: apisInModel || [], // Fallback to empty array
+    apisNotInModel: apisNotInModel || [], // Fallback to empty array
+  }
 }

@@ -119,8 +119,8 @@ const useWizardGenAIStore = create<
   setWizardActiveRtId: (rtId: string | undefined) => {
     set((state) => {
       let cviData
-      if (rtId?.includes('VSS3')) {
-        cviData = CVI // Use CVI data for VSS3
+      if (rtId?.includes('VSS3') || rtId?.includes('ETAS')) {
+        cviData = CVI // Use CVI data for VSS3 or ETAS
       } else if (rtId?.includes('VSS4')) {
         cviData = CVI_v4_1 // Use CVI_v4_1 data for VSS4
       } else {

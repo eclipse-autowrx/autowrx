@@ -3,14 +3,7 @@ import DaText from '../atoms/DaText'
 import { DaButton } from '../atoms/DaButton'
 import DaStepper from '../atoms/DaStepper'
 import DaStep from '../atoms/DaStep'
-import { isAxiosError } from 'axios'
-import default_journey from '@/data/default_journey'
-import { ModelCreate } from '@/types/model.type'
-import { CVI } from '@/data/CVI'
-import { createModelService } from '@/services/model.service'
-import { createPrototypeService } from '@/services/prototype.service'
 import { useNavigate } from 'react-router-dom'
-import { toast } from 'react-toastify'
 import DaGenAI_Wizard from '../molecules/genAI/DaGenAI_Wizard'
 import useWizardGenAIStore from '@/stores/genAIWizardStore'
 import DaGenAI_Simulate from '../molecules/genAI/DaGenAI_Simulate'
@@ -65,7 +58,7 @@ const GenAIPrototypeWizard = () => {
   useEffect(() => {
     // console.log('wizardGeneratedCode:', wizardGeneratedCode)
     if (wizardPrototype.code && wizardPrototype.code.length > 0) {
-      console.log('wizardPrototype.code: ', wizardPrototype.code)
+      // console.log('wizardPrototype.code: ', wizardPrototype.code)
       updateDisabledStep(3)(false)
       updateDisabledStep(2)(false)
       updateDisabledStep(1)(false)
@@ -93,55 +86,6 @@ const GenAIPrototypeWizard = () => {
     }
   }, [currentStep])
 
-  const finish = async () => {
-    try {
-      setLoading(true)
-
-      let modelId = wizardPrototype.model_id
-      if (!modelId) {
-        const modelBody: ModelCreate = {
-          cvi: CVI,
-          main_api: 'Vehicle',
-          name: wizardPrototype.model_id as string,
-        }
-
-        const newModelId = await createModelService(modelBody)
-        modelId = newModelId
-        setPrototypeData({ model_id: newModelId })
-      }
-
-      const body = {
-        model_id: modelId,
-        name: wizardPrototype.name,
-        state: 'development',
-        apis: { VSC: [], VSS: [] },
-        wizardGeneratedCode: wizardPrototype.code,
-        complexity_level: 3,
-        customer_journey: default_journey,
-        description: { problem: '', says_who: '', solution: '', status: '' },
-        image_file: '/imgs/default_prototype_cover.jpg',
-        skeleton: '{}',
-        tags: [],
-        widget_config: wizardPrototype.widget_config,
-        autorun: true,
-      }
-
-      const response = await createPrototypeService(body)
-
-      resetWizardStore()
-      navigate(`/model/${modelId}/library/prototype/${response.id}/dashboard`)
-    } catch (error) {
-      if (isAxiosError(error)) {
-        return toast.error(
-          error.response?.data?.message || 'Error creating the prototype',
-        )
-      }
-      toast.error('Error creating the prototype')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const handleBack = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1)
@@ -162,6 +106,13 @@ const GenAIPrototypeWizard = () => {
       }
     }
   }
+
+  useEffect(() => {
+    const lastRuntimeId = localStorage.getItem('last-wizard-rt')
+    if (lastRuntimeId) {
+      setWizardActiveRtId(lastRuntimeId)
+    }
+  }, [setWizardActiveRtId])
 
   return (
     <div className="flex flex-col w-full h-full">
