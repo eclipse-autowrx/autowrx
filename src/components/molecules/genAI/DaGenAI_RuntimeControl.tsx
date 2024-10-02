@@ -89,17 +89,15 @@ const DaGenAI_RuntimeControl = () => {
       return
     }
 
-    const { apisInModel, apisNotInModel } = filterAndCompareVehicleApis(
+    const { apisInCodeOnly } = filterAndCompareVehicleApis(
       prototypeData.code,
       activeModelApis,
     )
 
-    // Log the comparison results
-    console.log('APIs used in code and exist in model: ', apisInModel)
-    console.log('APIs used in code but not found in model: ', apisNotInModel)
+    console.log('APIs used in code: ', apisInCodeOnly)
 
     // Set the APIs used in the model (you can customize this based on your needs)
-    setUsedApis(apisNotInModel)
+    setUsedApis(apisInCodeOnly)
   }, [prototypeData.code, activeModelApis])
 
   const appendLog = (content: String) => {

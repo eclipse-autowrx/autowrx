@@ -9,6 +9,7 @@ import DaDashboardTemplate from '../DaDashboardTemplate'
 import dashboard_templates from '@/data/dashboard_templates'
 import { cloneDeep } from 'lodash'
 import DaText from '@/components/atoms/DaText'
+import { filterAndCompareVehicleApis } from '@/lib/utils'
 
 const MODE_RUN = 'run'
 const MODE_EDIT = 'edit'
@@ -54,8 +55,6 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
   }, [prototypeData.widget_config])
 
   useEffect(() => {
-    // console.log('Prototype Code: ', prototypeData.code)
-    // console.log('Active Model APIs: ', activeModelApis)
     if (
       !prototypeData.code ||
       !activeModelApis ||
@@ -64,14 +63,15 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
       setUsedApis([])
       return
     }
-    let apis: any[] = []
+
     let code = prototypeData.code || ''
-    activeModelApis.forEach((item: any) => {
-      if (code.includes(item.shortName)) {
-        apis.push(item.name)
-      }
-    })
-    setUsedApis(apis)
+
+    const { apisInCodeOnly } = filterAndCompareVehicleApis(
+      code,
+      activeModelApis,
+    )
+
+    setUsedApis(apisInCodeOnly)
   }, [prototypeData.code, activeModelApis])
 
   const processWidgetItems = (widgetItems: any[]) => {

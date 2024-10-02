@@ -56,7 +56,7 @@ export const parseCvi = (cvi: Cvi) => {
 }
 
 export const parseCvi_alt = (cvi: Cvi): VehicleAPI[] => {
-  console.log('Attemp to parse CVI')
+  // console.log('Attemp to parse CVI')
   const traverse = (
     node: VehicleApi,
     prefix: string = 'Vehicle',
@@ -237,7 +237,7 @@ export const filterAndCompareVehicleApis = (
 ) => {
   if (!code) {
     console.log('No code found to analyze.')
-    return { apisInModel: [], apisNotInModel: [] }
+    return { apisInCodeOnly: [], apisInModel: [], apisNotInModel: [] }
   }
 
   // Step 1: Replace all sequences of whitespace with a single space
@@ -286,8 +286,9 @@ export const filterAndCompareVehicleApis = (
   const filteredApis = normalizedApis.filter((api) => api !== 'Vehicle')
 
   // Step 7: Compare `filteredApis` with `activeModelApis`
-  let apisInModel: string[] = [] // Explicitly declare as string[]
-  let apisNotInModel: string[] = [] // Explicitly declare as string[]
+  let apisInModel: string[] = []
+  let apisNotInModel: string[] = []
+  let apisInCodeOnly: string[] = [...filteredApis]
 
   filteredApis.forEach((apiUsedInCode) => {
     const foundInModel = activeModelApis.includes(apiUsedInCode)
@@ -300,7 +301,8 @@ export const filterAndCompareVehicleApis = (
   })
 
   return {
-    apisInModel,
-    apisNotInModel,
+    apisInCodeOnly: apisInCodeOnly || [], // Fallback to empty array if undefined
+    apisInModel: apisInModel || [], // Fallback to empty array
+    apisNotInModel: apisNotInModel || [], // Fallback to empty array
   }
 }

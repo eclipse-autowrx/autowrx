@@ -112,7 +112,7 @@ const HomologationRegulationResult = ({
     <div className="flex h-full w-full overflow-y-auto pr-5 pt-5">
       <div
         className={clsx(
-          'bg-da-gray-light/20 p-5 w-full min-h-[calc(100%-40px)] rounded-3xl',
+          ' p-5 w-full h-full min-h-[calc(100%-40px)] rounded-3xl',
           (errorMsg || regulationRegions.length === 0 || loading) &&
             'h-[calc(100%-40px)]',
         )}
