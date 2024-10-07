@@ -9,11 +9,13 @@ Ensure that all operations occur smoothly and sequentially. Add valuable logging
   },
   {
     title: 'Front collision warning',
-    prompt: `Create the Velocitas app "Collision Guard".
+    prompt: `The Collision Guard vehicle app shall execute the following actions when a front proximity warning is detected:
  
-If a front proximity warning is detected, the vehicle's low beam lights and the red interior light shall blink 3 times, and the front wipers shall be set to fast mode for 3 seconds. After the proximity warning, all actuators should be turned off.
+- The vehicle's low beam lights blinks 3 times
+- The interior light fade in red
+- Front wipers set to fast mode for a duration of 3 seconds
  
-Ensure that all operations occur smoothly and sequentially. Add valuable logging information.`,
+After 3 seconds executing the proximity warning actions, all activated responses should be automatically turned off`,
   },
   {
     title: 'Welcome scenario',

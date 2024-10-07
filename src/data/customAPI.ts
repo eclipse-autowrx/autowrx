@@ -2,6 +2,24 @@ import { VehicleAPI } from '@/types/api.type'
 
 export const customAPIs: VehicleAPI[] = [
   {
+    description: 'Current speed of the vehicle.',
+    isWishlist: false,
+    name: 'Vehicle.Speed',
+    parent: 'Vehicle',
+    shortName: '.Speed',
+    type: 'sensor',
+    uuid: 'custom-uuid-speed',
+  },
+  {
+    description: 'Type of vehicle body.',
+    isWishlist: false,
+    name: 'Vehicle.Body.BodyType',
+    parent: 'Vehicle.Body',
+    shortName: '.Body.BodyType',
+    type: 'attribute',
+    uuid: 'custom-uuid-bodytype',
+  },
+  {
     description: 'Status of high beam lights. True = On, False = Off.',
     isWishlist: false,
     name: 'Vehicle.Body.Lights.Beam.High.IsOn',
@@ -82,5 +100,23 @@ export const customAPIs: VehicleAPI[] = [
     shortName: '.Chassis.Springs.HeightAdjustment',
     type: 'actuator',
     uuid: 'custom-uuid-springs-height-adjustment',
+  },
+  {
+    description: 'Warning state for front proximity detection.',
+    isWishlist: false,
+    name: 'Vehicle.ADAS.ProximityDetection.Front.IsWarning',
+    parent: 'Vehicle.ADAS.ProximityDetection.Front',
+    shortName: '.ADAS.ProximityDetection.Front.IsWarning',
+    type: 'sensor',
+    uuid: 'custom-uuid-front-iswarning',
+  },
+  {
+    description: 'Warning state for left proximity detection.',
+    isWishlist: false,
+    name: 'Vehicle.ADAS.ProximityDetection.Left.IsWarning',
+    parent: 'Vehicle.ADAS.ProximityDetection.Left',
+    shortName: '.ADAS.ProximityDetection.Left.IsWarning',
+    type: 'sensor',
+    uuid: 'custom-uuid-left-iswarning',
   },
 ]

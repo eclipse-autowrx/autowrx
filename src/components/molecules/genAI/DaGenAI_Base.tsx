@@ -45,7 +45,12 @@ const DaGenAI_Base = ({
   onFinishChange,
   isWizard,
 }: DaGenAI_BaseProps) => {
+  const { wizardPrompt, setWizardPrompt } = useGenAIWizardStore()
   const [inputPrompt, setInputPrompt] = useState<string>('')
+
+  const prompt = isWizard ? wizardPrompt : inputPrompt
+  const setPrompt = isWizard ? setWizardPrompt : setInputPrompt
+
   const [selectedAddOn, setSelectedAddOn] = useState<AddOn | undefined>(
     undefined,
   )
@@ -65,11 +70,9 @@ const DaGenAI_Base = ({
     registerWizardGenerateCodeAction,
     setWizardGeneratedCode,
     setPrototypeData,
-    setWizardPrompt,
     setWizardLog,
     setCodeGenerating,
   } = useGenAIWizardStore()
-
   const [openSelectorPopup, setOpenSelectorPopup] = useState(false)
 
   const addOnsArray =
@@ -81,7 +84,7 @@ const DaGenAI_Base = ({
 
   const builtInAddOns: AddOn[] = addOnsArray.map((addOn: any) => ({
     ...addOn,
-    customPayload: addOn.customPayload(inputPrompt),
+    customPayload: addOn.customPayload(prompt),
   }))
 
   useEffect(() => {
@@ -89,59 +92,50 @@ const DaGenAI_Base = ({
       return
     }
 
-    // Use socket.io-client to connect to the server
     const socket = io(config.serverBaseWssUrl, {
       query: {
         access_token: access?.token,
       },
-      transports: ['websocket'], // Make sure to specify WebSocket transport
+      transports: ['websocket'],
     })
-
-    console.log('Connecting to WebSocket with Socket.IO')
 
     socket.on('connect', () => {
       console.log('Socket.IO connection established')
     })
 
     socket.on('etas-stream', (rawMessage) => {
-      console.log('Received message:', rawMessage) // Log the raw message to inspect
-
-      // Parse the message if it's a JSON string
       let message
       try {
         message =
           typeof rawMessage === 'string' ? JSON.parse(rawMessage) : rawMessage
       } catch (error) {
         console.error('Error parsing JSON:', error, rawMessage)
-        return // Exit early if the message can't be parsed
+        return
       }
 
-      // Ensure message has both source and content
       const cleanedContent = message.content
         .replace(/^=+\s*(.*?)\s*=+$/g, '$1')
         .trim()
 
       if (message.source && message.content) {
         const newLog = {
-          source: message.source.trim().toLowerCase(), // Normalize source (optional)
-          content: cleanedContent, // Trim any leading/trailing spaces from content
+          source: message.source.trim().toLowerCase(),
+          content: cleanedContent,
         }
 
         setUniqueLogs((prevLogs) => {
-          // Check if an identical log already exists (case-insensitive comparison for source, exact match for content)
           const exists = prevLogs.some(
             (log) =>
               log.source === newLog.source && log.content === newLog.content,
           )
 
           if (!exists) {
-            // console.log('Adding to uniqueLogs:', newLog) // Debugging state update
-            return [...prevLogs, newLog] // Add the new log to the array
+            return [...prevLogs, newLog]
           }
           return prevLogs
         })
       } else {
-        console.warn('Message is missing source or content:', message) // Warn if data is incomplete
+        console.warn('Message is missing source or content:', message)
       }
     })
 
@@ -153,30 +147,10 @@ const DaGenAI_Base = ({
       console.log('Socket.IO connection closed')
     })
 
-    // Clean up the socket connection when the component is unmounted
     return () => {
       socket.disconnect()
     }
   }, [access])
-
-  // const mockStreamOutput = async () => {
-  //   setStreamOutput(() => 'Sending request...')
-  //   timeouts.current.push(
-  //     setTimeout(() => {
-  //       setStreamOutput(() => 'Processing request...')
-  //     }, 500),
-  //   )
-  //   timeouts.current.push(
-  //     setTimeout(() => {
-  //       setStreamOutput(() => 'Querying context...')
-  //     }, 650),
-  //   )
-  //   timeouts.current.push(
-  //     setTimeout(() => {
-  //       setStreamOutput(() => 'LLM processing...')
-  //     }, 2650),
-  //   )
-  // }
 
   const handleGenerate = async () => {
     if (!selectedAddOn) return
@@ -189,11 +163,8 @@ const DaGenAI_Base = ({
     setUniqueLogs([])
     try {
       setStreamOutput('Sending request...')
-      // console.log('selectedAddOn at genai base', selectedAddOn)
       if (selectedAddOn.isMock) {
-        // console.log('Mock generating code...')
         await new Promise((resolve) => setTimeout(resolve, 1000))
-        // console.log('Mock generated code:', default_generated_code)
         onCodeGenerated && onCodeGenerated(default_generated_code)
         setPrototypeData({ code: default_generated_code })
         return
@@ -208,7 +179,7 @@ const DaGenAI_Base = ({
       ) {
         response = await axios.post(
           selectedAddOn.endpointUrl,
-          { prompt: inputPrompt },
+          { prompt },
           { headers: { Authorization: `Bearer ${access?.token}` } },
         )
         onCodeGenerated(response.data.payload.code)
@@ -218,7 +189,7 @@ const DaGenAI_Base = ({
           config.genAI.defaultEndpointUrl,
           {
             endpointURL: selectedAddOn.endpointUrl,
-            inputPrompt: inputPrompt,
+            inputPrompt: prompt,
             systemMessage: selectedAddOn.samples || '',
           },
           { headers: { Authorization: `Bearer ${access?.token}` } },
@@ -281,10 +252,17 @@ const DaGenAI_Base = ({
 
   useEffect(() => {
     if (isWizard) {
-      setWizardPrompt(inputPrompt)
+      setWizardPrompt(prompt)
       registerWizardGenerateCodeAction(handleGenerate)
     }
-  }, [inputPrompt, selectedAddOn])
+  }, [prompt, selectedAddOn])
+
+  useEffect(() => {
+    console.log('Current prompt is: ', prompt)
+    if ((isWizard && prompt.length === 0) || prompt.length === 0) {
+      setUniqueLogs([])
+    }
+  }, [wizardPrompt, prompt])
 
   useEffect(() => {
     if (isWizard) {
@@ -293,7 +271,6 @@ const DaGenAI_Base = ({
   }, [streamOutput])
 
   useEffect(() => {
-    // Function to retrieve the last used generator from localStorage
     const getSelectedGeneratorFromLocalStorage = (): AddOn | null => {
       const storedAddOn = localStorage.getItem('lastUsedGenAIWizardGenerator')
       return storedAddOn ? JSON.parse(storedAddOn) : null
@@ -301,13 +278,9 @@ const DaGenAI_Base = ({
 
     const lastUsedGenAI = getSelectedGeneratorFromLocalStorage()
     if (lastUsedGenAI) {
-      setSelectedAddOn(lastUsedGenAI) // Set the last used generator in state
+      setSelectedAddOn(lastUsedGenAI)
     }
   }, [])
-
-  useEffect(() => {
-    console.log('uniqueLogs', uniqueLogs)
-  }, [uniqueLogs])
 
   return (
     <div className={cn('flex h-full w-full rounded px-4', className)}>
@@ -344,7 +317,7 @@ const DaGenAI_Base = ({
                         key={template.title}
                         className="da-txt-small flex w-full min-w-full shrink-0 cursor-pointer border-b p-2 hover:bg-da-gray-light"
                         onClick={() => {
-                          setInputPrompt(template.prompt)
+                          setPrompt(template.prompt)
                           setShowDropdown(!showDropdown)
                         }}
                       >
@@ -356,7 +329,7 @@ const DaGenAI_Base = ({
                 <DaButton
                   variant="plain"
                   size="sm"
-                  onClick={() => setInputPrompt('')}
+                  onClick={() => setPrompt('')}
                 >
                   <TbRotate className="mr-1 size-4 rotate-[270deg]" />
                   Clear
@@ -373,12 +346,12 @@ const DaGenAI_Base = ({
             </div>
           )}
 
-          <DaSpeechToText onRecognize={setInputPrompt} />
+          <DaSpeechToText onRecognize={setPrompt} />
         </div>
         <div className="mt-1 flex h-full w-full">
           <DaTextarea
-            value={inputPrompt}
-            onChange={(e) => setInputPrompt(e.target.value)}
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
             placeholder={placeholderText}
             className="w-full h-full"
             textareaClassName={cn(
@@ -428,7 +401,7 @@ const DaGenAI_Base = ({
 
         {!isWizard && (
           <>
-            {!inputPrompt && (
+            {!prompt && (
               <div className="mt-auto flex w-full select-none justify-center text-sm text-gray-400">
                 You need to enter prompt and select generator
               </div>
@@ -436,8 +409,8 @@ const DaGenAI_Base = ({
 
             <DaButton
               variant="solid"
-              disabled={!inputPrompt || loading}
-              className={`mt-auto !h-8 w-full ${!inputPrompt ? '!mt-1' : 'mt-auto'}`}
+              disabled={!prompt || loading}
+              className={`mt-auto !h-8 w-full ${!prompt ? '!mt-1' : 'mt-auto'}`}
               onClick={handleGenerate}
             >
               <BsStars
@@ -470,4 +443,5 @@ const DaGenAI_Base = ({
     </div>
   )
 }
+
 export default DaGenAI_Base

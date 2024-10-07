@@ -78,6 +78,7 @@ const GenAIPrototypeWizard = () => {
   useEffect(() => {
     if (currentStep === 0) {
       // Clear the wizard store on step 0 (introduction)
+      setIsGeneratedFlag(false)
       resetWizardStore()
     }
     if (currentStep === 1) {
