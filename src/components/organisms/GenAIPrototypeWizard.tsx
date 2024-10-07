@@ -122,7 +122,7 @@ const GenAIPrototypeWizard = () => {
           variant="sub-title"
           className="flex flex-1 text-da-primary-500 "
         >
-          Build Prototype with AI
+          Vehicle App Generator
         </DaText>
         <div className="flex min-w-0 flex-[4] justify-center">
           <DaStepper currentStep={currentStep} setCurrentStep={setCurrentStep}>
@@ -284,7 +284,7 @@ const GenAIPrototypeWizard = () => {
               variant="solid"
               disabled={!wizardActiveRtId}
             >
-              {wizardSimulating ? 'Stop Simulate' : 'Start Simulate'}
+              {wizardSimulating ? 'Stop Simulation' : 'Start Simulation'}
             </DaButton>
             <DaButton
               variant="plain"

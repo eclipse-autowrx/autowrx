@@ -258,7 +258,6 @@ const DaGenAI_Base = ({
   }, [prompt, selectedAddOn])
 
   useEffect(() => {
-    console.log('Current prompt is: ', prompt)
     if ((isWizard && prompt.length === 0) || prompt.length === 0) {
       setUniqueLogs([])
     }
