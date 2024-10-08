@@ -73,12 +73,17 @@ const DaGenAI_EditSystemStaging = ({
             'Request timeout, please try again as the runtime may be busy or experiencing issues.',
           ])
           setIsUpdating(false)
+
+          // Clear log after 3 seconds
+          setTimeout(() => {
+            setLog([])
+          }, 3000)
         }
       }, timeoutDuration)
 
       return () => clearTimeout(timer) // Clear timeout if updating finishes early or log changes
     }
-  }, [isUpdating, log]) // Dependencies include both isUpdating and log
+  }, [isUpdating, log])
 
   return (
     <div className="w-full h-full">
