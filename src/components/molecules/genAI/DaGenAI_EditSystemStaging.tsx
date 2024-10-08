@@ -61,6 +61,25 @@ const DaGenAI_EditSystemStaging = ({
     }
   }
 
+  // Timeout effect to handle server response delay
+  useEffect(() => {
+    if (isUpdating) {
+      const timeoutDuration = 15000 // 10 seconds
+
+      const timer = setTimeout(() => {
+        // If still updating and no new log messages were received in 10s, mark timeout
+        if (isUpdating && log.length === 0) {
+          setLog([
+            'Request timeout, please try again as the runtime may be busy or experiencing issues.',
+          ])
+          setIsUpdating(false)
+        }
+      }, timeoutDuration)
+
+      return () => clearTimeout(timer) // Clear timeout if updating finishes early or log changes
+    }
+  }, [isUpdating, log]) // Dependencies include both isUpdating and log
+
   return (
     <div className="w-full h-full">
       <div className="w-full flex items-center">
