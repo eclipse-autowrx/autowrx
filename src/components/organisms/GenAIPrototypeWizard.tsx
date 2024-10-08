@@ -120,9 +120,15 @@ const GenAIPrototypeWizard = () => {
   }
 
   useEffect(() => {
-    const lastRuntimeId = localStorage.getItem('last-wizard-rt')
-    if (lastRuntimeId) {
-      setWizardActiveRtId(lastRuntimeId)
+    console.log('allRuntimes: ', allWizardRuntimes)
+
+    // Find the first runtime with kit_id that starts with "RunTime-ETAS-E2E"
+    const matchingRuntime = allWizardRuntimes.find((runtime) =>
+      runtime.kit_id.startsWith('RunTime-ETAS-E2E'),
+    )
+    console.log('matchingRuntime: ', matchingRuntime)
+    if (matchingRuntime) {
+      setWizardActiveRtId(matchingRuntime.kit_id)
     }
   }, [setWizardActiveRtId])
 
