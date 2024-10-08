@@ -129,23 +129,41 @@ const DaGenAI_RuntimeControl = () => {
   useEffect(() => {
     // Restart the simulation when the code or runtime change
     handleStop()
-  }, [prototypeData.code])
+  }, [prototypeData.code, activeRtId])
 
   const clearApisValue = (apisValue: any) => {
-    // Iterate over the keys in apisValue, set the new values, and write them at the same time
     Object.keys(apisValue).forEach((key) => {
       let newValue
+
       if (typeof apisValue[key] === 'number') {
-        newValue = 0 // Set number values to 0
+        newValue = 0 // Reset number values to 0
       } else if (typeof apisValue[key] === 'boolean') {
-        newValue = false // Set boolean values to false
+        newValue = false // Reset boolean values to false
+      } else if (typeof apisValue[key] === 'string') {
+        // Handle specific uppercase string values based on API key and possible value
+        switch (apisValue[key]) {
+          case 'ACTIVE':
+            newValue = 'IN-ACTIVE'
+            break
+          case 'FADE-IN':
+            newValue = 'OFF'
+            break
+          case 'FAST':
+          case 'SLOW':
+          case 'MEDIUM':
+            newValue = 'OFF'
+            break
+          default:
+            newValue = apisValue[key] // Retain other strings
+        }
       } else {
-        newValue = apisValue[key] // Keep other types as is (or modify as needed)
+        // For any other types, retain original value
+        newValue = apisValue[key]
       }
 
-      const obj = { [key]: newValue } // Construct a key-value pair
+      const obj = { [key]: newValue }
       writeSignalValue(obj)
-      // console.log('clearApisValue', obj)
+      console.log('Clear API value: ', obj)
     })
   }
 
