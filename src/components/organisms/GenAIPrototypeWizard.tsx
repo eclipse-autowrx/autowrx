@@ -3,14 +3,7 @@ import DaText from '../atoms/DaText'
 import { DaButton } from '../atoms/DaButton'
 import DaStepper from '../atoms/DaStepper'
 import DaStep from '../atoms/DaStep'
-import { isAxiosError } from 'axios'
-import default_journey from '@/data/default_journey'
-import { ModelCreate } from '@/types/model.type'
-import { CVI } from '@/data/CVI'
-import { createModelService } from '@/services/model.service'
-import { createPrototypeService } from '@/services/prototype.service'
 import { useNavigate } from 'react-router-dom'
-import { toast } from 'react-toastify'
 import DaGenAI_Wizard from '../molecules/genAI/DaGenAI_Wizard'
 import useWizardGenAIStore from '@/stores/genAIWizardStore'
 import DaGenAI_Simulate from '../molecules/genAI/DaGenAI_Simulate'
@@ -29,6 +22,7 @@ import DaPopup from '../atoms/DaPopup'
 import DaHomologation from '../molecules/homologation'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
+import { toast } from 'react-toastify'
 
 const GenAIPrototypeWizard = () => {
   const navigate = useNavigate()
@@ -61,6 +55,7 @@ const GenAIPrototypeWizard = () => {
     resetWizardStore,
     allWizardRuntimes,
     wizardActiveRtId,
+    codeGenerating,
     setWizardActiveRtId,
   } = useWizardGenAIStore()
 
@@ -68,7 +63,7 @@ const GenAIPrototypeWizard = () => {
   useEffect(() => {
     // console.log('wizardGeneratedCode:', wizardGeneratedCode)
     if (wizardPrototype.code && wizardPrototype.code.length > 0) {
-      console.log('wizardPrototype.code: ', wizardPrototype.code)
+      // console.log('wizardPrototype.code: ', wizardPrototype.code)
       updateDisabledStep(3)(false)
       updateDisabledStep(2)(false)
       updateDisabledStep(1)(false)
@@ -88,6 +83,7 @@ const GenAIPrototypeWizard = () => {
   useEffect(() => {
     if (currentStep === 0) {
       // Clear the wizard store on step 0 (introduction)
+      setIsGeneratedFlag(false)
       resetWizardStore()
     }
     if (currentStep === 1) {
@@ -95,55 +91,6 @@ const GenAIPrototypeWizard = () => {
       executeWizardSimulationStop()
     }
   }, [currentStep])
-
-  const finish = async () => {
-    try {
-      setLoading(true)
-
-      let modelId = wizardPrototype.model_id
-      if (!modelId) {
-        const modelBody: ModelCreate = {
-          cvi: CVI,
-          main_api: 'Vehicle',
-          name: wizardPrototype.model_id as string,
-        }
-
-        const newModelId = await createModelService(modelBody)
-        modelId = newModelId
-        setPrototypeData({ model_id: newModelId })
-      }
-
-      const body = {
-        model_id: modelId,
-        name: wizardPrototype.name,
-        state: 'development',
-        apis: { VSC: [], VSS: [] },
-        wizardGeneratedCode: wizardPrototype.code,
-        complexity_level: 3,
-        customer_journey: default_journey,
-        description: { problem: '', says_who: '', solution: '', status: '' },
-        image_file: '/imgs/default_prototype_cover.jpg',
-        skeleton: '{}',
-        tags: [],
-        widget_config: wizardPrototype.widget_config,
-        autorun: true,
-      }
-
-      const response = await createPrototypeService(body)
-
-      resetWizardStore()
-      navigate(`/model/${modelId}/library/prototype/${response.id}/dashboard`)
-    } catch (error) {
-      if (isAxiosError(error)) {
-        return toast.error(
-          error.response?.data?.message || 'Error creating the prototype',
-        )
-      }
-      toast.error('Error creating the prototype')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleBack = () => {
     if (currentStep > 0) {
@@ -172,14 +119,21 @@ const GenAIPrototypeWizard = () => {
     }
   }
 
+  useEffect(() => {
+    const lastRuntimeId = localStorage.getItem('last-wizard-rt')
+    if (lastRuntimeId) {
+      setWizardActiveRtId(lastRuntimeId)
+    }
+  }, [setWizardActiveRtId])
+
   return (
-    <div className="flex flex-col h-full w-full">
-      <div className="-mx-7 -mt-2 flex items-center justify-center border-b px-5 pb-3">
+    <div className="flex flex-col w-full h-full">
+      <div className="px-4 py-3 flex items-center justify-center border-b">
         <DaText
           variant="sub-title"
           className="flex flex-1 text-da-primary-500 "
         >
-          Build Prototype with AI
+          Vehicle App Generator
         </DaText>
         <div className="flex min-w-0 flex-[4] justify-center">
           <DaStepper currentStep={currentStep} setCurrentStep={setCurrentStep}>
@@ -197,12 +151,15 @@ const GenAIPrototypeWizard = () => {
         <div className="flex flex-1"></div>
       </div>
 
-      <div className="flex min-h-0 flex-1 py-2">
+      <div className="flex min-h-0 flex-1 py-2 w-full ">
         <div
-          className={cn('flex h-full w-full', currentStep !== 0 && 'hidden')}
+          className={cn(
+            'flex h-full w-full px-4 pt-12',
+            currentStep !== 0 && 'hidden',
+          )}
         >
-          <div className="flex flex-1 -mx-2 flex-col overflow-y-auto mr-6">
-            <div className="w-full bg-white pt-4">
+          <div className="flex flex-1 flex-col overflow-y-auto">
+            <div className="w-full bg-white">
               <div className="text-3xl font-semibold text-da-primary-500 mb-10">
                 Let’s generate vehicle apps with AI
               </div>
@@ -240,13 +197,28 @@ const GenAIPrototypeWizard = () => {
           </div>
 
           <div className="flex w-1/2 h-full overflow-y-auto">
-            <DaImage
-              src={
-                config.genAI.wizardCover ?? '/imgs/default_prototype_cover.jpg'
-              }
-              alt="Prototype Wizard"
-              className="h-fit w-full object-contain !overflow-hidden !rounded-lg"
-            />
+            {config.genAI.wizardCover?.endsWith('.mp4') ? (
+              <div className="relative w-full h-fit overflow-hidden">
+                <video
+                  src={config.genAI.wizardCover}
+                  className="flex h-fit w-full object-contain rounded-xl"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                />
+                <div className="absolute inset-0 border-4 border-white rounded-lg pointer-events-none scale-100"></div>
+              </div>
+            ) : (
+              <DaImage
+                src={
+                  config.genAI.wizardCover ??
+                  '/imgs/default_prototype_cover.jpg'
+                }
+                alt="Prototype Wizard"
+                className="h-fit w-full object-contain !overflow-hidden !rounded-lg"
+              />
+            )}
           </div>
         </div>
 
@@ -286,7 +258,7 @@ const GenAIPrototypeWizard = () => {
         </div>
       </div>
 
-      <div className="-mx-6 -mb-1 flex flex-shrink-0 justify-between border-t px-5 pt-4">
+      <div className="flex px-4 py-4 flex-shrink-0 justify-between border-t">
         <DaButton
           onClick={handleBack}
           disabled={currentStep === 0}
@@ -303,7 +275,7 @@ const GenAIPrototypeWizard = () => {
             }}
             className="w-[300px] min-w-fit"
             variant="solid"
-            disabled={wizardPrompt.length === 0 || loading}
+            disabled={wizardPrompt.length === 0 || loading || codeGenerating}
           >
             {(wizardPrototype.code && wizardPrototype.code.length > 0) ||
             isGeneratedFlag
@@ -323,7 +295,7 @@ const GenAIPrototypeWizard = () => {
               variant="solid"
               disabled={!wizardActiveRtId}
             >
-              {wizardSimulating ? 'Stop Simulate' : 'Start Simulate'}
+              {wizardSimulating ? 'Stop Simulation' : 'Start Simulation'}
             </DaButton>
             <DaButton
               variant="plain"

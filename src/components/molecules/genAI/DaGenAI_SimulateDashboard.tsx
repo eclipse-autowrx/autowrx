@@ -9,6 +9,7 @@ import DaDashboardTemplate from '../DaDashboardTemplate'
 import dashboard_templates from '@/data/dashboard_templates'
 import { cloneDeep } from 'lodash'
 import DaText from '@/components/atoms/DaText'
+import { filterAndCompareVehicleApis } from '@/lib/utils'
 
 const MODE_RUN = 'run'
 const MODE_EDIT = 'edit'
@@ -54,8 +55,6 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
   }, [prototypeData.widget_config])
 
   useEffect(() => {
-    // console.log('Prototype Code: ', prototypeData.code)
-    // console.log('Active Model APIs: ', activeModelApis)
     if (
       !prototypeData.code ||
       !activeModelApis ||
@@ -64,14 +63,15 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
       setUsedApis([])
       return
     }
-    let apis: any[] = []
+
     let code = prototypeData.code || ''
-    activeModelApis.forEach((item: any) => {
-      if (code.includes(item.shortName)) {
-        apis.push(item.name)
-      }
-    })
-    setUsedApis(apis)
+
+    const { apisInCodeOnly } = filterAndCompareVehicleApis(
+      code,
+      activeModelApis,
+    )
+
+    setUsedApis(apisInCodeOnly)
   }, [prototypeData.code, activeModelApis])
 
   const processWidgetItems = (widgetItems: any[]) => {
@@ -94,57 +94,60 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
     let updatedWidgetItems = widgetItems.map((widget: any) => {
       let updatedWidget = { ...widget } // Copy the widget to make updates
       // Handle 3DCarModel logic
-      if (
-        widget.options &&
-        widget.options.url &&
-        widget.options.url.includes('3DCarModel')
-      ) {
-        // Check if there are APIs related to Row1 Doors, only API with correct version is shown
-        // If you have VSS3 Door API in code, dont expect it present in VSS4 Runtime
-        const hasRow1DoorApi = usedApis.some((api) =>
-          api.includes('Vehicle.Cabin.Door.Row1'),
-        )
-        // console.log('usedApis', usedApis)
-        // console.log('wizardActiveRtId', wizardActiveRtId)
-        // console.log('hasRow1DoorApi', hasRow1DoorApi)
-        if (hasRow1DoorApi) {
-          if (wizardActiveRtId) {
-            // Ensure wizardActiveRtId is defined before using it
-            if (wizardActiveRtId.includes('VSS3')) {
-              // Update APIs for VSS3
-              updatedWidget.options.ROW1_LEFT_DOOR_API =
-                'Vehicle.Cabin.Door.Row1.Left.IsOpen'
-              updatedWidget.options.ROW1_RIGHT_DOOR_API =
-                'Vehicle.Cabin.Door.Row1.Right.IsOpen'
-              updatedWidget.options.ROW1_LEFT_SEAT_POSITION_API =
-                'Vehicle.Cabin.Seat.Row1.Pos1.Position'
-              updatedWidget.options.ROW1_RIGHT_SEAT_POSITION_API =
-                'Vehicle.Cabin.Seat.Row1.Pos2.Position'
-            } else if (wizardActiveRtId.includes('VSS4')) {
-              // Update APIs for VSS4
-              updatedWidget.options.ROW1_LEFT_DOOR_API =
-                'Vehicle.Cabin.Door.Row1.DriverSide.IsOpen'
-              updatedWidget.options.ROW1_RIGHT_DOOR_API =
-                'Vehicle.Cabin.Door.Row1.PassengerSide.IsOpen'
-              updatedWidget.options.ROW1_LEFT_SEAT_POSITION_API =
-                'Vehicle.Cabin.Seat.Row1.DriverSide.Position'
-              updatedWidget.options.ROW1_RIGHT_SEAT_POSITION_API =
-                'Vehicle.Cabin.Seat.Row1.PassengerSide.Position'
-            }
-            needsUpdate = true
-          } else {
-            console.warn(
-              'wizardActiveRtId is undefined, skipping API update for 3DCarModel',
-            )
-          }
-        }
-      }
+      // if (
+      //   widget.options &&
+      //   widget.options.url &&
+      //   widget.options.url.includes(
+      //     '3DCarModel' || widget.options.url.includes('d47l1KiTHR1f'),
+      //   )
+      // ) {
+      //   // Check if there are APIs related to Row1 Doors, only API with correct version is shown
+      //   // If you have VSS3 Door API in code, dont expect it present in VSS4 Runtime
+      //   const hasRow1DoorApi = usedApis.some((api) =>
+      //     api.includes('Vehicle.Cabin.Door.Row1'),
+      //   )
+      //   // console.log('usedApis', usedApis)
+      //   // console.log('wizardActiveRtId', wizardActiveRtId)
+      //   // console.log('hasRow1DoorApi', hasRow1DoorApi)
+      //   if (hasRow1DoorApi) {
+      //     if (wizardActiveRtId) {
+      //       // Ensure wizardActiveRtId is defined before using it
+      //       if (wizardActiveRtId.includes('VSS3')) {
+      //         // Update APIs for VSS3
+      //         updatedWidget.options.ROW1_LEFT_DOOR_API =
+      //           'Vehicle.Cabin.Door.Row1.Left.IsOpen'
+      //         updatedWidget.options.ROW1_RIGHT_DOOR_API =
+      //           'Vehicle.Cabin.Door.Row1.Right.IsOpen'
+      //         updatedWidget.options.ROW1_LEFT_SEAT_POSITION_API =
+      //           'Vehicle.Cabin.Seat.Row1.Pos1.Position'
+      //         updatedWidget.options.ROW1_RIGHT_SEAT_POSITION_API =
+      //           'Vehicle.Cabin.Seat.Row1.Pos2.Position'
+      //       } else if (wizardActiveRtId.includes('VSS4')) {
+      //         // Update APIs for VSS4
+      //         updatedWidget.options.ROW1_LEFT_DOOR_API =
+      //           'Vehicle.Cabin.Door.Row1.DriverSide.IsOpen'
+      //         updatedWidget.options.ROW1_RIGHT_DOOR_API =
+      //           'Vehicle.Cabin.Door.Row1.PassengerSide.IsOpen'
+      //         updatedWidget.options.ROW1_LEFT_SEAT_POSITION_API =
+      //           'Vehicle.Cabin.Seat.Row1.DriverSide.Position'
+      //         updatedWidget.options.ROW1_RIGHT_SEAT_POSITION_API =
+      //           'Vehicle.Cabin.Seat.Row1.PassengerSide.Position'
+      //       }
+      //       needsUpdate = true
+      //     } else {
+      //       console.warn(
+      //         'wizardActiveRtId is undefined, skipping API update for 3DCarModel',
+      //       )
+      //     }
+      //   }
+      // }
 
       // Handle table-settable logic
       if (
         widget.options &&
         widget.options.url &&
-        widget.options.url.includes('table-settable')
+        (widget.options.url.includes('table-settable') ||
+          widget.options.url.includes('sHQtNwric0H7'))
       ) {
         const existingApis = widget.options.apis || []
         const apisChanged =
@@ -212,7 +215,7 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
 
   return (
     <div className="flex flex-col w-full h-full overflow-y-auto pr-2">
-      <div className="flex w-full h-fit items-start pb-3">
+      {/* <div className="flex w-full h-fit items-start pb-3">
         <DaButton
           className="flex w-fit"
           size="sm"
@@ -233,7 +236,7 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
             )}
           </div>
         </DaButton>
-      </div>
+      </div> */}
 
       <div className="flex flex-col w-full h-full ">
         {mode === MODE_RUN && (
@@ -250,7 +253,7 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
               onDashboardConfigChanged={handleDashboardConfigChanged}
               isWizard={true}
             />
-            <DaText variant="sub-title" className="flex text-da-primary-500">
+            {/* <DaText variant="sub-title" className="flex text-da-primary-500">
               Select Dashboard Template
             </DaText>
 
@@ -267,7 +270,7 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
                   />
                 </div>
               ))}
-            </div>
+            </div> */}
           </div>
         )}
       </div>

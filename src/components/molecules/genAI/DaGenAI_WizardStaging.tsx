@@ -8,7 +8,7 @@ const TARGETS = [
     name: 'Virtual WS',
     icon: '/imgs/targets/vm.png',
     prefix: 'Runtime-',
-    version: 'v.0.9',
+    version: 'v.1.0',
     state: {
       '3.1.1.1.1.1': '2.3.2',
     },
@@ -16,7 +16,7 @@ const TARGETS = [
   {
     name: 'Automation Kit',
     short_name: 'Runtime-',
-    icon: '/imgs/targets/automationKit.png',
+    icon: '/imgs/targets/automationKit.jpg',
     prefix: 'Runtime-', // "Kit-"
     version: 'v.1.0',
     state: {
@@ -76,18 +76,22 @@ const STANDARD_STAGE = {
         {
           id: '3.1',
           name: 'Central Compute',
+          isExpanded: true, // Expand by default
           children: [
             {
               id: '3.1.1',
               name: 'VCU',
+              isExpanded: true, // Expand by default
               children: [
                 {
                   id: '3.1.1.1',
                   name: 'Linux Instance eL1',
+                  isExpanded: true, // Expand by default
                   children: [
                     {
                       id: '3.1.1.1.1',
                       name: 'Container 4711',
+                      isExpanded: true, // Expand by default
                       children: [
                         {
                           id: '3.1.1.1.1.1',
@@ -222,8 +226,7 @@ const DaGenAI_WizardStaging = () => {
       {mode == MODE_OVERVIEW && (
         <div>
           <div className="mt-4 w-full rounded border">
-            {/* Title */}
-            <div className="flex h-[40px] w-full rounded-t bg-gradient-to-r from-da-gradient-from to-da-gradient-to text-da-white">
+            <div className="flex h-[40px] w-full rounded-t bg-gray-200 text-da-gray-dark">
               <div className="flex w-[25%] items-center justify-center border-r border-da-white font-bold ">
                 System
               </div>
@@ -232,9 +235,15 @@ const DaGenAI_WizardStaging = () => {
               </div>
             </div>
             <div className="flex">
-              <div className="flex min-w-[100px] flex-1 flex-col items-center justify-center overflow-x-hidden rounded-s bg-[#DADADA] px-1 py-1">
+              <div className="flex min-w-[100px] flex-1 flex-col items-center justify-center overflow-x-hidden rounded-s px-1 py-1">
                 <div className="flex h-[140px] w-full items-center justify-center">
-                  <img width={150} height={70} src={system.icon} alt="System" />
+                  <img
+                    width={150}
+                    height={70}
+                    src={system.icon}
+                    alt="System"
+                    className="scale-90"
+                  />
                 </div>
                 <DaText variant="small-bold" className="mt-1">
                   {system.name}
@@ -247,6 +256,7 @@ const DaGenAI_WizardStaging = () => {
                   onClick={() => {
                     setMode(MODE_EDIT_DEFINE)
                   }}
+                  size="sm"
                 >
                   Edit
                 </DaButton>
@@ -264,6 +274,7 @@ const DaGenAI_WizardStaging = () => {
                         height={70}
                         src={target.icon}
                         alt={target.name}
+                        className="rounded-lg"
                       />
                     </div>
                     <DaText variant="small-bold" className="mt-1">
@@ -279,6 +290,7 @@ const DaGenAI_WizardStaging = () => {
                         setActiveTarget(target)
                         setMode(MODE_ON_TARGET)
                       }}
+                      size="sm"
                     >
                       Update
                     </DaButton>

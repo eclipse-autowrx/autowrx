@@ -1,13 +1,10 @@
 import { useEffect, useState } from 'react'
-import { IoIosArrowForward } from 'react-icons/io'
-import { IoIosArrowDown } from 'react-icons/io'
+import { IoIosArrowForward, IoIosArrowDown } from 'react-icons/io'
 import { BsDot } from 'react-icons/bs'
 import { cn } from '@/lib/utils'
 import { CiEdit } from 'react-icons/ci'
-import { DaButton } from '@/components/atoms/DaButton'
 import { IoSaveOutline } from 'react-icons/io5'
 import { MdOutlineCancel } from 'react-icons/md'
-import { DaInput } from '@/components/atoms/DaInput'
 
 interface DaStageComponentProps {
   id: string
@@ -21,6 +18,7 @@ interface DaStageComponentProps {
   level: number
   isUpdating: boolean
   isTargetConnected: boolean
+  expandedIds?: string[] // NEW PROP to control expanded items
   onItemEditFinished?: (id: string, data: string) => void
   onRequestUpdate?: (id: string, data: string) => void
 }
@@ -37,14 +35,16 @@ const DaStageComponent = ({
   item,
   className,
   level,
+  expandedIds = [], // Default to an empty array
   onItemEditFinished,
   onRequestUpdate,
 }: DaStageComponentProps) => {
-  const [isEpanded, setIsExpanded] = useState<boolean>(false)
+  // Initialize expansion state based on whether the item's id is in expandedIds
+  const [isExpanded, setIsExpanded] = useState<boolean>(
+    expandedIds.includes(item.id), // Check if the item should be expanded by default
+  )
   const [inEditMode, setInEditMode] = useState<boolean>(false)
   const [editVersion, setEditVersion] = useState<string>(item.version || '')
-
-  const COOK_ID = '3.1.1.1.1.1'
 
   return (
     <>
@@ -57,42 +57,33 @@ const DaStageComponent = ({
             ))}
             {item.children && item.children.length > 0 ? (
               <>
-                {!isEpanded && (
+                {!isExpanded && (
                   <IoIosArrowForward
                     className="cursor-pointer mr-2"
                     size={20}
-                    onClick={() => {
-                      setIsExpanded(true)
-                    }}
+                    onClick={() => setIsExpanded(true)} // Toggle expansion
                   />
                 )}
-                {isEpanded && (
+                {isExpanded && (
                   <IoIosArrowDown
                     className="cursor-pointer mr-2"
                     size={20}
-                    onClick={() => {
-                      setIsExpanded(false)
-                    }}
+                    onClick={() => setIsExpanded(false)} // Toggle collapse
                   />
                 )}
               </>
             ) : (
               <BsDot size={20} className="mr-2"></BsDot>
             )}
-            {item.id == COOK_ID
-              ? `Subscription ${prototype?.name || 'Event Analyzer'}`
-              : item.name}
+            {item.name}
           </div>
+
           <div className="h-full px-2 flex items-center justify-center w-24 border-l">
             {!inEditMode && (item.version || '')}
             {inEditMode && (
               <input
                 className={cn(
-                  ` grow bg-da-white rounded flex px-2 py-1 h-6 w-full
-                          placeholder:text-da-gray-dark
-                          focus-visible:ring-0 focus-visible:outline-none
-                          border border-da-gray-medium
-                          disabled:cursor-not-allowed`,
+                  `grow bg-da-white rounded flex px-2 py-1 h-6 w-full placeholder:text-da-gray-dark focus-visible:ring-0 focus-visible:outline-none border border-da-gray-medium disabled:cursor-not-allowed`,
                 )}
                 value={editVersion}
                 onChange={(e) => setEditVersion(e.target.value)}
@@ -118,9 +109,7 @@ const DaStageComponent = ({
                     <CiEdit
                       size={26}
                       className="cursor-pointer hover:opacity-50"
-                      onClick={() => {
-                        setInEditMode(true)
-                      }}
+                      onClick={() => setInEditMode(true)}
                     />
                   )}
                   {inEditMode && (
@@ -128,9 +117,7 @@ const DaStageComponent = ({
                       <MdOutlineCancel
                         size={24}
                         className="cursor-pointer hover:opacity-50"
-                        onClick={() => {
-                          setInEditMode(false)
-                        }}
+                        onClick={() => setInEditMode(false)}
                       />
                       <IoSaveOutline
                         size={24}
@@ -205,9 +192,12 @@ const DaStageComponent = ({
           )}
         </div>
       )}
-      {(isEpanded || item.isTopMost) &&
+
+      {/* Recursively render child components */}
+      {(isExpanded || item.isTopMost) &&
         item.children.map((it: any, index: number) => (
           <DaStageComponent
+            key={index}
             prototype={prototype}
             onTargetMode={onTargetMode}
             onItemEditFinished={onItemEditFinished}
@@ -220,8 +210,8 @@ const DaStageComponent = ({
             level={level + 1}
             editMode={editMode}
             className=""
-            key={index}
             item={it}
+            expandedIds={expandedIds} // Pass down expandedIds to child components
           />
         ))}
     </>

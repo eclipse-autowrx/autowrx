@@ -14,8 +14,7 @@ const DaGenAI_Wizard = ({ onCodeGenerated }: DaGenAI_WizardProps) => {
   const [loading, setLoading] = useState<boolean>(false)
   const [genCode, setGenCode] = useState<string>('')
   const [isFinished, setIsFinished] = useState<boolean>(false)
-  const { wizardPrototype: prototypeData, setPrototypeData } =
-    useWizardGenAIStore()
+  const { wizardPrototype, setPrototypeData } = useWizardGenAIStore()
 
   return (
     <div className="flex h-full w-full rounded">
@@ -34,7 +33,7 @@ const DaGenAI_Wizard = ({ onCodeGenerated }: DaGenAI_WizardProps) => {
         className="w-1/2"
         isWizard={true}
       />
-      <div className="flex h-full w-1/2 flex-1 flex-col pb-2 pl-2">
+      <div className="flex h-full w-1/2 flex-1 flex-col pb-2 mr-4">
         <div
           className={cn(
             'scroll-gray mt-2 flex h-full w-full overflow-y-auto overflow-x-hidden',
@@ -44,7 +43,7 @@ const DaGenAI_Wizard = ({ onCodeGenerated }: DaGenAI_WizardProps) => {
             // <DaGenAI_ResponseDisplay code={genCode} language={'python'} />
             <div className="flex w-full h-full rounded-md overflow-hidden border">
               <CodeEditor
-                code={genCode}
+                code={wizardPrototype.code || ''} // Change here
                 setCode={(code) => {
                   onCodeGenerated && onCodeGenerated(code)
                   setPrototypeData({ code })

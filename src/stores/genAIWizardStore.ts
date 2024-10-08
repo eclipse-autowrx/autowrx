@@ -22,6 +22,8 @@ type WizardGenAIStoreState = {
   wizardRunSimulationAction: (() => void) | null
   wizardStopSimulationAction: (() => void) | null
 
+  codeGenerating: boolean
+
   wizardPrototype: WizardPrototype
   activeModelApis: any[]
 
@@ -32,6 +34,7 @@ type WizardGenAIStoreState = {
 type WizardGenAIStoreActions = {
   setWizardPrompt: (prompt: string) => void
   setWizardLog: (log: string) => void
+  setCodeGenerating: (isGenerating: boolean) => void
 
   setWizardGeneratedCode: (code: string) => void
   registerWizardGenerateCodeAction: (action: () => void) => void
@@ -94,6 +97,8 @@ const useWizardGenAIStore = create<
   wizardPrompt: '',
   wizardLog: '',
 
+  codeGenerating: false,
+
   wizardGeneratedCode: '',
   wizardGenerateCodeAction: null,
 
@@ -107,11 +112,15 @@ const useWizardGenAIStore = create<
   allWizardRuntimes: [],
   wizardActiveRtId: '',
 
+  setCodeGenerating: (isGenerating: boolean) => {
+    set({ codeGenerating: isGenerating })
+  },
+
   setWizardActiveRtId: (rtId: string | undefined) => {
     set((state) => {
       let cviData
-      if (rtId?.includes('VSS3')) {
-        cviData = CVI // Use CVI data for VSS3
+      if (rtId?.includes('VSS3') || rtId?.includes('ETAS')) {
+        cviData = CVI // Use CVI data for VSS3 or ETAS
       } else if (rtId?.includes('VSS4')) {
         cviData = CVI_v4_1 // Use CVI_v4_1 data for VSS4
       } else {

@@ -22,7 +22,7 @@ const breadcrumbNames: { [key: string]: string } = {
   prototype: 'Vehicle Prototypes',
   api: 'Vehicle Signals',
   architecture: 'Vehicle Architecture',
-  genai: 'Build Prototype with AI',
+  genai: 'Vehicle App Generator',
 }
 
 const DaBreadcrumbBar = () => {

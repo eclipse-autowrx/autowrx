@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import HomologationUsedAPIsHeader from './DaHomologationUsedAPIsHeader'
 import { VehicleAPI } from '@/types/api.type'
-import useCurrentModel from '@/hooks/useCurrentModel'
 import { supportedCertivityApis } from '@/services/certivity.service'
 import DaHomologationApiListItem from './DaHomologationApiListItem'
 import { CVI } from '@/data/CVI'
 import useWizardGenAIStore from '@/stores/genAIWizardStore'
 import { parseCvi_alt } from '@/lib/utils'
+import { customAPIs } from '@/data/customAPI'
+import { filterAndCompareVehicleApis } from '@/lib/utils'
+import { filter } from 'jszip'
 
 type DaHomologationUsedAPIsProps = {
   selectedAPIs: Set<VehicleAPI>
@@ -23,46 +25,35 @@ const DaGenAI_HomologationUsedAPIs = ({
   const fetchAPIs = useCallback(async () => {
     const parsedCviData = typeof CVI === 'string' ? JSON.parse(CVI) : CVI
     const parsedApiList = parseCvi_alt(parsedCviData)
-    console.log('Parsed API List: ', parsedApiList)
+    // console.log('Parsed API List: ', parsedApiList)
     return parsedApiList
   }, [CVI, parseCvi_alt])
-
-  // Sort by supported and not supported APIs
-  const compareFn = useCallback((a: VehicleAPI, b: VehicleAPI) => {
-    const aIsSupported = supportedCertivityApis.has('Vehicle' + a.shortName)
-    const bIsSupported = supportedCertivityApis.has('Vehicle' + b.shortName)
-    if (Number(aIsSupported) < Number(bIsSupported)) return 1
-    if (Number(aIsSupported) > Number(bIsSupported)) return -1
-    return a.name.localeCompare(b.name)
-  }, [])
 
   useEffect(() => {
     ;(async () => {
       if (prototype?.code) {
-        const allAPIs = await fetchAPIs()
-        console.log('GenAI Homo:', allAPIs)
-        console.log('GenAI Homo Code: ', prototype.code)
-        const res: VehicleAPI[] = []
-        for (let api of allAPIs) {
-          if (
-            api.shortName &&
-            prototype.code.includes(api.shortName) &&
-            api.type !== 'branch'
-          ) {
-            console.log('Api used: ', api)
-            res.push(api)
-          }
-        }
+        let allAPIs = await fetchAPIs()
+        allAPIs = [...allAPIs, ...customAPIs]
+        // console.log('GenAI Homo:', allAPIs)
+        // console.log('GenAI Homo Code: ', prototype.code)
+        // console.log('CustomAPIs: ', customAPIs)
+        const { apisInCodeOnly } = filterAndCompareVehicleApis(
+          prototype.code,
+          allAPIs,
+        )
 
-        return setUsedAPIs(res.sort(compareFn))
+        const res: VehicleAPI[] = allAPIs.filter(
+          (api) =>
+            api.name &&
+            apisInCodeOnly.includes(api.name) &&
+            api.type !== 'branch',
+        )
+
+        return setUsedAPIs(res)
       }
       setUsedAPIs([])
     })()
   }, [CVI, prototype.code])
-
-  useEffect(() => {
-    console.log('Used api: ', usedAPIs)
-  }, [usedAPIs])
 
   const selectAPIHandler = (api: VehicleAPI) => () => {
     if (selectedAPIs.has(api)) {
@@ -104,7 +95,7 @@ const DaGenAI_HomologationUsedAPIs = ({
 
       {/* List of used APIs */}
       {usedAPIs.length > 0 ? (
-        <ul className="flex-1 min-h-0 overflow-y-auto scroll-gray -mx-2">
+        <ul className="flex-1 min-h-0 overflow-y-auto  scroll-gray -mx-2">
           {usedAPIs.map((api, index) => (
             <div key={api.name}>
               <DaHomologationApiListItem
