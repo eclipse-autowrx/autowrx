@@ -27,6 +27,8 @@ import {
 } from 'react-icons/tb'
 import DaPopup from '../atoms/DaPopup'
 import DaHomologation from '../molecules/homologation'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
 
 const GenAIPrototypeWizard = () => {
   const navigate = useNavigate()
@@ -36,6 +38,8 @@ const GenAIPrototypeWizard = () => {
   const [soFarSteps, setSoFarSteps] = useState(0)
   const [disabledStep, setDisabledStep] = useState([true, true, true, true])
   const [openSelectorPopup, setOpenSelectorPopup] = useState(false)
+
+  const [hasGenAIPermission] = usePermissionHook([PERMISSIONS.USE_GEN_AI])
 
   const updateDisabledStep = (step: number) => (disabled: boolean) => {
     setDisabledStep((prev) => {
@@ -148,6 +152,12 @@ const GenAIPrototypeWizard = () => {
   }
 
   const handleNext = async () => {
+    if (!hasGenAIPermission) {
+      return toast.error(
+        'You do not have permission to use Gen AI. Please contact administrator.',
+      )
+    }
+
     if (currentStep === 4) {
       // finish()
     }
