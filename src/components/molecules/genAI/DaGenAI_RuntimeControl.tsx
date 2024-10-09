@@ -163,7 +163,7 @@ const DaGenAI_RuntimeControl = () => {
 
       const obj = { [key]: newValue }
       writeSignalValue(obj)
-      console.log('Clear API value: ', obj)
+      // console.log('Clear API value: ', obj)
     })
   }
 
