@@ -1,4 +1,3 @@
-import { HomeIntroBlock } from '@/components/organisms/HomeIntroBlock'
 import { HomePrototypeProposal } from '@/components/organisms/HomePrototypeProposal'
 import { cn } from '@/lib/utils'
 import { DaButton } from '@/components/atoms/DaButton'
@@ -50,9 +49,7 @@ const PageHome = () => {
         </div>
       </div>
 
-      <div className="col-span-12 mt-12 mb-3">
-        <HomeIntroBlock />
-      </div>
+      <div className="col-span-12 mt-12 mb-3"></div>
 
       <div className="col-span-12">
         <HomePrototypeProposal />
