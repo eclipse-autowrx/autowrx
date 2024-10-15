@@ -1,4 +1,6 @@
-import policy from '../../instance/policy'
+import _policy from '../../instance/policy'
+
+const policy = _policy as any
 
 export const usePolicy = () => {
   if (policy && policy.policy_url && policy.policy_url.length > 0) {
