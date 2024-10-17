@@ -345,7 +345,7 @@ const DaGenAI_Base = ({
             </div>
           )}
 
-          <DaSpeechToText onRecognize={setPrompt} />
+          <DaSpeechToText onRecognize={setPrompt} prompt={prompt} />
         </div>
         <div className="mt-1 flex h-full w-full">
           <DaTextarea

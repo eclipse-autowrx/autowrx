@@ -40,6 +40,7 @@
     "jszip": "^3.10.1",
     "konva": "^9.3.11",
     "lodash": "^4.17.21",
+    "microsoft-cognitiveservices-speech-sdk": "^1.41.0",
     "non.geist": "^1.0.3",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.2.0",
