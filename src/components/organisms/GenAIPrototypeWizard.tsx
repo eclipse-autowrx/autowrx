@@ -1,4 +1,3 @@
-// GenAIPrototypeWizard.tsx
 import React, { useEffect, useState } from 'react'
 import DaText from '../atoms/DaText'
 import { DaButton } from '../atoms/DaButton'
@@ -17,6 +16,8 @@ import { toast } from 'react-toastify'
 import DaGenAI_IntroductionStep from '../molecules/genAI/DaGenAI_Introduction'
 import DaGenAI_RuntimeSelectorPopup from '../molecules/genAI/DaGenAI_RuntimeSelectorPopup'
 import DaHomologation from '../molecules/homologation'
+import DaPopup from '../atoms/DaPopup'
+import FormCreatePrototype from '../molecules/forms/FormCreatePrototype'
 
 const GenAIPrototypeWizard = () => {
   const navigate = useNavigate()
@@ -27,6 +28,8 @@ const GenAIPrototypeWizard = () => {
   const [openSelectorPopup, setOpenSelectorPopup] = useState(false)
   const [hasGenAIPermission] = usePermissionHook([PERMISSIONS.USE_GEN_AI])
   const [isGeneratedFlag, setIsGeneratedFlag] = useState(false)
+  const [openCreatePrototypeModal, setOpenCreatePrototypeModal] =
+    useState(false)
 
   const {
     executeWizardGenerateCodeAction,
@@ -221,12 +224,37 @@ const GenAIPrototypeWizard = () => {
             <TbArrowRight className="size-4 ml-1" />
           </DaButton>
         )}
+        {currentStep === 4 && (
+          <DaButton
+            onClick={() => setOpenCreatePrototypeModal(true)}
+            className="w-[90px]"
+            variant="solid"
+          >
+            Save
+          </DaButton>
+        )}
       </div>
 
       <DaGenAI_RuntimeSelectorPopup
         open={openSelectorPopup}
         setOpen={setOpenSelectorPopup}
       />
+
+      {openCreatePrototypeModal && (
+        <DaPopup
+          state={[openCreatePrototypeModal, setOpenCreatePrototypeModal]}
+          onClose={() => setOpenCreatePrototypeModal(false)}
+          trigger={<span></span>}
+          className="flex flex-col h-fit"
+        >
+          <FormCreatePrototype
+            onClose={() => setOpenCreatePrototypeModal(false)}
+            code={wizardPrototype.code}
+            widget_config={wizardPrototype.widget_config}
+            title="Save as Prototype"
+          />
+        </DaPopup>
+      )}
     </div>
   )
 }
