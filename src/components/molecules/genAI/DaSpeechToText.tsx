@@ -1,10 +1,40 @@
 import React, { useState, useEffect, useRef } from 'react'
 import * as SpeechSDK from 'microsoft-cognitiveservices-speech-sdk'
 import { TbMicrophoneFilled, TbPlayerStopFilled } from 'react-icons/tb'
+import { cn } from '@/lib/utils'
 
 type DaSpeechToTextProps = {
   onRecognize: (text: string) => void
   prompt?: string
+}
+
+const BouncingDotsLoader = () => {
+  const dotStyle = {
+    width: '5px',
+    height: '5px',
+    margin: '0 2px',
+    borderRadius: '50%',
+    backgroundColor: '#005072',
+    animation: 'bounce 0.6s infinite alternate',
+  }
+
+  const bounceKeyframes = `
+    @keyframes bounce {
+      0% { transform: translateY(0); opacity: 1; }
+      100% { transform: translateY(-4px); opacity: 0.3; }
+    }
+  `
+
+  return (
+    <>
+      <style>{bounceKeyframes}</style>
+      <div className="flex items-center justify-center">
+        <div style={{ ...dotStyle, animationDelay: '0s' }}></div>
+        <div style={{ ...dotStyle, animationDelay: '0.2s' }}></div>
+        <div style={{ ...dotStyle, animationDelay: '0.4s' }}></div>
+      </div>
+    </>
+  )
 }
 
 const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({
@@ -13,29 +43,37 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({
 }) => {
   const [isListening, setIsListening] = useState(false)
   const [isMicActive, setIsMicActive] = useState(false)
-  const [manuallyStopped, setManuallyStopped] = useState(false) // Use state for manual stop flag
-  const [recognizer, setRecognizer] =
-    useState<SpeechSDK.SpeechRecognizer | null>(null)
-  const accumulatedTextRef = useRef('') // Use ref for accumulated text
-  const inactivityTimeout = useRef<NodeJS.Timeout | null>(null) // Keep timer as ref
+
+  // useRef to store and immediately access the accumulated text and inactivity timeout
+  const accumulatedTextRef = useRef('')
+  const inactivityTimeout = useRef<NodeJS.Timeout | null>(null)
+
+  // Refs for the recognizer and audio configuration
+  // to have immediate access and avoid issues with asynchronous state updates
+  const recognizerRef = useRef<SpeechSDK.SpeechRecognizer | null>(null)
+  const audioConfigRef = useRef<SpeechSDK.AudioConfig | null>(null)
 
   const AZURE_SPEECH_KEY = import.meta.env.VITE_AZURE_SPEECH_SDK_KEY
   const AZURE_REGION = 'germanywestcentral'
-  const INACTIVITY_DURATION = 10000 // in milliseconds
+  const INACTIVITY_DURATION = 8000 // in milliseconds
 
   const initializeRecognizer = () => {
+    // Create a speech configuration instance
     const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(
       AZURE_SPEECH_KEY,
       AZURE_REGION,
     )
     speechConfig.speechRecognitionLanguage = 'en-US'
-
-    const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput()
-    const recognizerInstance = new SpeechSDK.SpeechRecognizer(
+    // Create an audio configuration instance using the default microphone
+    audioConfigRef.current = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput()
+    // Create a speech recognizer instance
+    recognizerRef.current = new SpeechSDK.SpeechRecognizer(
       speechConfig,
-      audioConfig,
+      audioConfigRef.current,
     )
-
+    // Reference to the recognizer instance for easier access
+    const recognizerInstance = recognizerRef.current
+    // Event handler for intermediate recognition results
     recognizerInstance.recognizing = (
       s: SpeechSDK.Recognizer,
       e: SpeechSDK.SpeechRecognitionEventArgs,
@@ -43,16 +81,15 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({
       console.debug(`Recognizing: ${e.result.text}`)
       setIsMicActive(true) // Microphone is active while recognizing
 
-      // Use ref to prevent overwriting by recognizing events
-      const interimText = `${accumulatedTextRef.current} ${e.result.text}`
-        .replace(/\s+/g, ' ')
-        .trim()
-      onRecognize(interimText)
+      const intermediateRecognizedText =
+        `${accumulatedTextRef.current} ${e.result.text}`
+          .replace(/\s+/g, ' ')
+          .trim()
+      onRecognize(intermediateRecognizedText)
 
-      // Reset inactivity timeout on each recognizing event
-      resetInactivityTimeout()
+      resetInactivityTimeout() // Reset the inactivity timeout
     }
-
+    // Event handler for final recognition results
     recognizerInstance.recognized = (
       s: SpeechSDK.Recognizer,
       e: SpeechSDK.SpeechRecognitionEventArgs,
@@ -60,20 +97,18 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({
       if (e.result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
         console.debug(`Recognized: ${e.result.text}`)
 
-        // Update the ref for accumulated text, so it is not overwritten by next recognizing event
         accumulatedTextRef.current =
           `${accumulatedTextRef.current} ${e.result.text}`
             .replace(/\s+/g, ' ')
             .trim()
         onRecognize(accumulatedTextRef.current)
 
-        // Reset inactivity timeout on each recognized event
-        resetInactivityTimeout()
+        resetInactivityTimeout() // Reset the inactivity timeout
       } else if (e.result.reason === SpeechSDK.ResultReason.NoMatch) {
         console.debug('No match found for the speech input.')
       }
     }
-
+    // Event handler for recognition cancellation
     recognizerInstance.canceled = (
       s: SpeechSDK.Recognizer,
       e: SpeechSDK.SpeechRecognitionCanceledEventArgs,
@@ -81,7 +116,10 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({
       console.error(
         `Recognition canceled: Reason=${e.reason}, ErrorDetails=${e.errorDetails}`,
       )
-      handleStop()
+      setIsListening(false)
+      setIsMicActive(false)
+      clearInactivityTimeout()
+      cleanupResources()
     }
 
     recognizerInstance.sessionStopped = (
@@ -89,25 +127,28 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({
       e: SpeechSDK.SessionEventArgs,
     ) => {
       console.debug('Session stopped.')
-      handleStop()
+      setIsListening(false)
+      setIsMicActive(false)
+      clearInactivityTimeout()
+      cleanupResources()
     }
-
-    setRecognizer(recognizerInstance)
   }
 
+  // Function to start speech recognition
   const handleStart = () => {
     console.debug('Starting recognition...')
-    setManuallyStopped(false) // Reset manual stop flag
 
-    if (!recognizer) {
+    // Initialize the recognizer if it hasn't been already
+    if (!recognizerRef.current) {
       initializeRecognizer()
     }
 
-    recognizer?.startContinuousRecognitionAsync(
+    // Start continuous speech recognitio
+    recognizerRef.current?.startContinuousRecognitionAsync(
       () => {
         setIsListening(true)
-        resetInactivityTimeout() // Set the inactivity timeout
-        setIsMicActive(true) // Start the microphone indicator
+        resetInactivityTimeout()
+        setIsMicActive(true)
       },
       (error: string) => {
         console.error('Failed to start recognition:', error)
@@ -116,22 +157,30 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({
     )
   }
 
+  // Function to stop speech recognition
   const handleStop = () => {
     console.debug('Stopping recognition...')
-    setManuallyStopped(true) // Set the manual stop flag
 
-    recognizer?.stopContinuousRecognitionAsync(() => {
+    recognizerRef.current?.stopContinuousRecognitionAsync(() => {
       setIsListening(false)
-      clearInactivityTimeout() // Clear the timeout
-      setIsMicActive(false) // Ensure microphone indicator turns off
+      clearInactivityTimeout()
+      setIsMicActive(false)
+      cleanupResources()
     })
   }
 
+  const cleanupResources = () => {
+    recognizerRef.current?.close()
+    recognizerRef.current = null
+    audioConfigRef.current?.close()
+    audioConfigRef.current = null
+  }
+
   const resetInactivityTimeout = () => {
-    clearInactivityTimeout() // Clear any existing timeout
+    clearInactivityTimeout()
     inactivityTimeout.current = setTimeout(() => {
       console.debug('Inactivity timeout reached, stopping recognition...')
-      handleStop() // Stop completely on timeout
+      handleStop()
     }, INACTIVITY_DURATION)
   }
 
@@ -154,32 +203,36 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({
   useEffect(() => {
     if (prompt === '') {
       console.debug('Clearing accumulated text')
-      accumulatedTextRef.current = '' // Clear ref variable
+      accumulatedTextRef.current = ''
     }
   }, [prompt])
 
-  // Restart if not manually stopped
-  useEffect(() => {
-    if (isListening && !manuallyStopped) {
-      recognizer?.startContinuousRecognitionAsync()
-    }
-  }, [recognizer, isListening, manuallyStopped])
-
   return (
-    <button onClick={handleClick} className="flex items-center p-2 border">
+    <button
+      onClick={handleClick}
+      className={cn(
+        'flex cursor-pointer items-center rounded-lg p-1 px-2 text-da-primary-500 hover:bg-da-primary-100',
+        isListening && 'bg-da-primary-100',
+      )}
+    >
       {isListening ? (
         <>
           {isMicActive ? (
-            <span className="w-2 h-2 mr-2 bg-red-500 rounded-full"></span>
+            <>
+              <BouncingDotsLoader />
+              <TbPlayerStopFilled className="ml-1 size-4 text-red-500" />
+            </>
           ) : (
-            <TbPlayerStopFilled className="mr-2" />
+            <>
+              <TbPlayerStopFilled className="mr-2" />
+              Stop
+            </>
           )}
-          Stop
         </>
       ) : (
         <>
-          <TbMicrophoneFilled className="mr-2" />
-          Start
+          <TbMicrophoneFilled className="mr-1 size-6 text-da-primary-500" />
+          <p className="font-medium text-da-gray-medium">Voice input</p>
         </>
       )}
     </button>
