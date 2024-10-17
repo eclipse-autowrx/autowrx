@@ -11,6 +11,7 @@ import DaPopup from '../atoms/DaPopup'
 import { useState } from 'react'
 import { BsStars } from 'react-icons/bs'
 import { useFeatureCards } from '@/hooks/useInstanceCfg'
+import FormImportPrototype from '../molecules/forms/FormImportPrototype'
 
 const HomeIntroBlock = () => {
   const navigate = useNavigate()
@@ -57,19 +58,19 @@ const HomeIntroBlock = () => {
           >
             <FormCreatePrototype />
           </DaPopup>
-          <DaActionCard
+          {/* <DaActionCard
             title="Build with AI"
             content="Build prototype with GenAI"
             icon={<BsStars className="h-7 w-7 text-da-primary-500" />}
             onClick={() => navigate('/genai-wizard')}
             className="w-full"
-          />
+          /> */}
           {/* <GenAIPrototypeWizard open={open} setOpen={setOpen} /> */}
-          {/* <DaPopup
+          <DaPopup
             trigger={
               <DaActionCard
-                title="Build with AI"
-                content="Build prototype with GenAI"
+                title="Import Prototype"
+                content="Import existing prototype"
                 icon={
                   <TbPackageImport className="h-7 w-7 text-da-primary-500" />
                 }
@@ -78,7 +79,7 @@ const HomeIntroBlock = () => {
             }
           >
             <FormImportPrototype />
-          </DaPopup> */}
+          </DaPopup>
 
           <DaActionCard
             title="My models"
