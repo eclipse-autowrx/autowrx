@@ -6,6 +6,7 @@ import DaGenAI_ResponseDisplay from './DaGenAI_ResponseDisplay.tsx'
 import clsx from 'clsx'
 import DaSectionTitle from '@/components/atoms/DaSectionTitle.tsx'
 import DaGenAI_Base from './DaGenAI_Base.tsx'
+import CodeEditor from '../CodeEditor.tsx'
 
 type DaGenAI_PythonProps = {
   onCodeChanged?: (code: string) => void
@@ -22,7 +23,7 @@ const DaGenAI_Python = ({
   const [isFinished, setIsFinished] = useState<boolean>(false)
 
   return (
-    <div className="mt-2 flex h-full w-full rounded">
+    <div className="flex h-full max-h-[calc(100%-10px)] w-full mt-2 rounded">
       <DaGenAI_Base
         type="GenAI_Python"
         buttonText="Generate SDV App"
@@ -41,11 +42,19 @@ const DaGenAI_Python = ({
         <DaSectionTitle number={3} title="Preview Code" />
         <div
           className={clsx(
-            'scroll-gray mt-4 flex h-full max-h-[380px] w-full overflow-y-auto overflow-x-hidden',
+            'scroll-gray flex mt-2 mb-2 h-full border rounded-lg w-full overflow-y-auto overflow-x-hidden',
           )}
         >
           {genCode ? (
-            <DaGenAI_ResponseDisplay code={genCode} language={'python'} />
+            <CodeEditor
+              code={genCode || ''} // Change here
+              setCode={(code) => {
+                setGenCode(code)
+              }}
+              language="python"
+              onBlur={() => {}}
+              editable={true}
+            />
           ) : (
             <LoadingLineAnimation
               loading={loading}

@@ -23,12 +23,12 @@ const DaGeneratorSelectPopup = ({
 
   // Function to save the selected generator to localStorage
   const saveSelectedGeneratorToLocalStorage = (addOn: AddOn) => {
-    localStorage.setItem('lastUsedGenAIWizardGenerator', JSON.stringify(addOn))
+    localStorage.setItem('lastUsed_GenAIWizardGenerator', JSON.stringify(addOn))
   }
 
   // Function to retrieve the selected generator from localStorage
   const getSelectedGeneratorFromLocalStorage = (): AddOn | null => {
-    const storedAddOn = localStorage.getItem('lastUsedGenAIWizardGenerator')
+    const storedAddOn = localStorage.getItem('lastUsed_GenAIWizardGenerator')
     return storedAddOn ? JSON.parse(storedAddOn) : null
   }
 
