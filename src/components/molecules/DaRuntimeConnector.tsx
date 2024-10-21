@@ -54,6 +54,8 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         runApp,
         stopApp,
         deploy,
+        listPythonLibs,
+        requestInstallLib,
         setMockSignals,
         loadMockSignals,
         writeSignalsValue,
@@ -155,6 +157,25 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       }
     }
 
+    const listPythonLibs = () => {
+      if (prototype && prototype.id && currentUser) {
+        socketio.emit('messageToKit', {
+          cmd: 'list_python_packages',
+          to_kit_id: activeRtId
+        })
+      }
+    }
+
+    const requestInstallLib = (libName: string) => {
+      if (prototype && prototype.id && currentUser && libName) {
+        socketio.emit('messageToKit', {
+          cmd: 'install_python_packages',
+          data: libName.trim(),
+          to_kit_id: activeRtId
+        })
+      }
+    }
+
     const setMockSignals = (signals: any[]) => {
       socketio.emit('messageToKit', {
         cmd: 'set_mock_signals',
@@ -232,7 +253,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     }, [socketio, socketio?.connected])
 
     useEffect(() => {
-      console.log(`activeRtId`, activeRtId)
+      // console.log(`activeRtId`, activeRtId)
       if (activeRtId) {
         localStorage.setItem('last-rt', activeRtId)
       }
@@ -400,6 +421,17 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         if (payload && payload.data && Array.isArray(payload.data)) {
           onLoadedMockSignals(payload.data)
         }
+      }
+
+      if(payload.cmd == 'list_python_packages' && onNewLog) {
+        // console.log(payload)
+        onNewLog(`Installed python libs on "${payload.kit_id}"\r\n`)
+        onNewLog(payload.data)
+      }
+
+      if(payload.cmd == 'install_python_packages' && onNewLog && payload.data) {
+        // console.log(payload)
+        onNewLog(payload.data)
       }
     }
 
