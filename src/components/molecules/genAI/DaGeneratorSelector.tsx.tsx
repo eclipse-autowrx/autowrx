@@ -68,7 +68,7 @@ const DaGeneratorSelector = ({
   return (
     <div
       ref={dropdownRef}
-      className="relative flex flex-col text-da-gray-medium"
+      className="relative flex flex-col w-full text-da-gray-medium"
     >
       <DaButton
         variant="outline-nocolor"

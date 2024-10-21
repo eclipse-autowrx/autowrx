@@ -105,7 +105,7 @@ const PrototypeTabCode: FC = ({}) => {
                   </DaButton>
                 }
               >
-                <div className="flex h-[500px] w-[1000px] flex-col">
+                <div className="flex flex-col h-[80vh] xl:h-[600px] max-h-[90vh] w-[1200px] max-w-[80vw] ">
                   <DaText variant="title" className="text-da-primary-500">
                     {' '}
                     SDV ProtoPilot{' '}

@@ -28,7 +28,7 @@ class WelcomeAssistent(VehicleApp):
         if door_is_open:
             logger.info("Driver's door opened.")
             await asyncio.gather(self.Vehicle.Cabin.Seat.Row1.Pos1.Position
-                .set(1000), self.Vehicle.Body.Trunk.Rear.IsOpen.set(True),
+                .set(1000),
                 self.Vehicle.set_many().add(self.Vehicle.Cabin.Lights.
                 InteriorLight.Blue, 255).add(self.Vehicle.Cabin.Lights.
                 InteriorLight.Red, 0).add(self.Vehicle.Cabin.Lights.
@@ -45,11 +45,11 @@ class WelcomeAssistent(VehicleApp):
         else:
             logger.info("Driver's door closed.")
             await asyncio.gather(self.Vehicle.Cabin.Seat.Row1.Pos1.Position
-                .set(500), self.Vehicle.Body.Trunk.Rear.IsOpen.set(False),
+                .set(500),
                 self.Vehicle.set_many().add(self.Vehicle.Cabin.Lights.
-                InteriorLight.Red, 255).add(self.Vehicle.Cabin.Lights.
-                InteriorLight.Blue, 0).add(self.Vehicle.Cabin.Lights.
-                InteriorLight.Green, 0).apply(), self.Vehicle.Cabin.Lights.
+                InteriorLight.Red, 0).add(self.Vehicle.Cabin.Lights.
+                InteriorLight.Blue, 255).add(self.Vehicle.Cabin.Lights.
+                InteriorLight.Green, 255).apply(), self.Vehicle.Cabin.Lights.
                 InteriorLight.Mode.set('FADE-IN'), asyncio.sleep(3), self.
                 Vehicle.Cabin.Lights.InteriorLight.Mode.set('OFF'), self.
                 Vehicle.Chassis.Springs.HeightAdjustment.set(800))
