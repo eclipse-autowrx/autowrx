@@ -80,14 +80,14 @@ const DaDashboard: FC<iDaDashboardProps> = ({ setFullScreenMode }) => {
   }
 
   return (
-    <div className="w-full h-full relative">
-      <div className="absolute left-3 top-2 px-3 py-1 shadow-xl bg-white rounded-full z-10 flex items-center">
+    <div className="w-full h-full relative border">
+      <div className="absolute opacity-90 hover:opacity-100 left-0 px-2 top-0 w-full py-1 shadow-xl bg-white z-10 flex items-center">
         {!isFullscreen && (
           <BsArrowsFullscreen
             onClick={() => {
               setIsFullScreen(true)
             }}
-            size={22}
+            size={18}
             className="ml-2 cursor-pointer hover:opacity-80"
           />
         )}
@@ -96,13 +96,13 @@ const DaDashboard: FC<iDaDashboardProps> = ({ setFullScreenMode }) => {
             onClick={() => {
               setIsFullScreen(false)
             }}
-            size={24}
+            size={20}
             className="ml-2 cursor-pointer hover:opacity-80"
           />
         )}
 
         {isAuthorized && (
-          <div className="ml-4 flex w-full h-fit items-center justify-start px-2 ">
+          <div className="ml-2 flex w-full h-fit items-center justify-start px-1">
             {mode == MODE_RUN && (
               <DaButton
                 variant="plain"
@@ -111,8 +111,8 @@ const DaDashboard: FC<iDaDashboardProps> = ({ setFullScreenMode }) => {
                   setMode(MODE_EDIT)
                 }}
               >
-                <MdOutlineDesignServices className="size-5 mr-2" />
-                <div className="font-medium">Config</div>
+                <MdOutlineDesignServices className="size-6" />
+                <div className="font-medium ml-1">Config</div>
               </DaButton>
             )}
 
@@ -163,7 +163,7 @@ const DaDashboard: FC<iDaDashboardProps> = ({ setFullScreenMode }) => {
         )}
       </div>
 
-      <div className="w-full h-full absolute top-0 left-0 right-0 bottom-0">
+      <div className="w-full h-full absolute top-0 left-0 right-0 bottom-0 pt-[38px]">
         <div className="flex flex-col w-full h-full pt-1">
           {mode == MODE_RUN && (
             <div className="flex w-full h-full px-1 pb-1">

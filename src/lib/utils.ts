@@ -288,9 +288,10 @@ export const filterAndCompareVehicleApis = (
   // Step 7: Compare `filteredApis` with `activeModelApis`
   let apisInModel: string[] = []
   let apisNotInModel: string[] = []
-  let apisInCodeOnly: string[] = [...filteredApis]
+  let apisInCodeOnly: string[] = [...filteredApis] as string[]
 
   filteredApis.forEach((apiUsedInCode) => {
+    if(!apiUsedInCode) return
     const foundInModel = activeModelApis.includes(apiUsedInCode)
 
     if (foundInModel) {
