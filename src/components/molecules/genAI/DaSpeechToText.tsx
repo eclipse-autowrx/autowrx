@@ -1,14 +1,11 @@
-import { DaButton } from '@/components/atoms/DaButton'
-import { cn } from '@/lib/utils'
 import React, { useState, useEffect, useRef } from 'react'
-import {
-  TbMicrophone,
-  TbMicrophoneFilled,
-  TbPlayerStopFilled,
-} from 'react-icons/tb'
+import * as SpeechSDK from 'microsoft-cognitiveservices-speech-sdk'
+import { TbMicrophoneFilled, TbPlayerStopFilled } from 'react-icons/tb'
+import { cn } from '@/lib/utils'
 
 type DaSpeechToTextProps = {
   onRecognize: (text: string) => void
+  prompt?: string
 }
 
 const BouncingDotsLoader = () => {
@@ -40,112 +37,205 @@ const BouncingDotsLoader = () => {
   )
 }
 
-const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({ onRecognize }) => {
+const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({
+  onRecognize,
+  prompt,
+}) => {
   const [isListening, setIsListening] = useState(false)
-  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null)
-  const [accumulatedText, setAccumulatedText] = useState<string>('')
+  const [isMicActive, setIsMicActive] = useState(false)
+
+  // useRef to store and immediately access the accumulated text and inactivity timeout
+  const accumulatedTextRef = useRef('')
   const inactivityTimeout = useRef<NodeJS.Timeout | null>(null)
-  const manuallyStopped = useRef<boolean>(false) // Track whether the mic was stopped manually
 
-  useEffect(() => {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition
+  // Refs for the recognizer and audio configuration
+  // to have immediate access and avoid issues with asynchronous state updates
+  const recognizerRef = useRef<SpeechSDK.SpeechRecognizer | null>(null)
+  const audioConfigRef = useRef<SpeechSDK.AudioConfig | null>(null)
 
-    if (SpeechRecognition) {
-      const recognitionInstance = new SpeechRecognition()
-      recognitionInstance.continuous = true
-      recognitionInstance.interimResults = false
-      recognitionInstance.lang = 'en-US'
+  const AZURE_SPEECH_KEY = import.meta.env.VITE_AZURE_SPEECH_SDK_KEY
+  const AZURE_REGION = 'germanywestcentral'
+  const INACTIVITY_DURATION = 8000 // in milliseconds
 
-      recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
-        const transcript = event.results[event.results.length - 1][0].transcript
+  const initializeRecognizer = () => {
+    // Create a speech configuration instance
+    const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(
+      AZURE_SPEECH_KEY,
+      AZURE_REGION,
+    )
+    speechConfig.speechRecognitionLanguage = 'en-US'
+    // Create an audio configuration instance using the default microphone
+    audioConfigRef.current = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput()
+    // Create a speech recognizer instance
+    recognizerRef.current = new SpeechSDK.SpeechRecognizer(
+      speechConfig,
+      audioConfigRef.current,
+    )
+    // Reference to the recognizer instance for easier access
+    const recognizerInstance = recognizerRef.current
+    // Event handler for intermediate recognition results
+    recognizerInstance.recognizing = (
+      s: SpeechSDK.Recognizer,
+      e: SpeechSDK.SpeechRecognitionEventArgs,
+    ) => {
+      console.debug(`Recognizing: ${e.result.text}`)
+      setIsMicActive(true) // Microphone is active while recognizing
 
-        setAccumulatedText((prevText) => {
-          const updatedText = prevText + ' ' + transcript
-          onRecognize(updatedText.trim())
-          return updatedText.trim()
-        })
+      const intermediateRecognizedText =
+        `${accumulatedTextRef.current} ${e.result.text}`
+          .replace(/\s+/g, ' ')
+          .trim()
+      onRecognize(intermediateRecognizedText)
 
-        if (inactivityTimeout.current) {
-          clearTimeout(inactivityTimeout.current)
-        }
-
-        inactivityTimeout.current = setTimeout(() => {
-          recognitionInstance.stop()
-        }, 3000)
-      }
-
-      recognitionInstance.onend = () => {
-        if (isListening && !manuallyStopped.current) {
-          recognitionInstance.start()
-        } else {
-          setIsListening(false)
-          if (inactivityTimeout.current) {
-            clearTimeout(inactivityTimeout.current)
-            inactivityTimeout.current = null
-          }
-        }
-      }
-
-      recognitionInstance.onerror = (event: SpeechRecognitionErrorEvent) => {
-        console.error('Speech recognition error:', event)
-        setIsListening(false)
-        if (inactivityTimeout.current) {
-          clearTimeout(inactivityTimeout.current)
-          inactivityTimeout.current = null
-        }
-      }
-
-      setRecognition(recognitionInstance)
-    } else {
-      console.warn('Speech Recognition API not supported in this browser.')
+      resetInactivityTimeout() // Reset the inactivity timeout
     }
-  }, [onRecognize])
+    // Event handler for final recognition results
+    recognizerInstance.recognized = (
+      s: SpeechSDK.Recognizer,
+      e: SpeechSDK.SpeechRecognitionEventArgs,
+    ) => {
+      if (e.result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
+        console.debug(`Recognized: ${e.result.text}`)
 
-  const handleClick = () => {
-    if (isListening) {
-      if (recognition) {
-        manuallyStopped.current = true // Set the manual stop flag
-        recognition.stop()
-        recognition.onend = () => {
-          setIsListening(false)
-        }
+        accumulatedTextRef.current =
+          `${accumulatedTextRef.current} ${e.result.text}`
+            .replace(/\s+/g, ' ')
+            .trim()
+        onRecognize(accumulatedTextRef.current)
+
+        resetInactivityTimeout() // Reset the inactivity timeout
+      } else if (e.result.reason === SpeechSDK.ResultReason.NoMatch) {
+        console.debug('No match found for the speech input.')
       }
-      if (inactivityTimeout.current) {
-        clearTimeout(inactivityTimeout.current)
-        inactivityTimeout.current = null
-      }
-    } else {
-      setAccumulatedText('')
-      onRecognize('')
-      manuallyStopped.current = false // Reset the manual stop flag
-      setIsListening(true)
-      recognition?.start()
+    }
+    // Event handler for recognition cancellation
+    recognizerInstance.canceled = (
+      s: SpeechSDK.Recognizer,
+      e: SpeechSDK.SpeechRecognitionCanceledEventArgs,
+    ) => {
+      console.error(
+        `Recognition canceled: Reason=${e.reason}, ErrorDetails=${e.errorDetails}`,
+      )
+      setIsListening(false)
+      setIsMicActive(false)
+      clearInactivityTimeout()
+      cleanupResources()
+    }
+
+    recognizerInstance.sessionStopped = (
+      s: SpeechSDK.Recognizer,
+      e: SpeechSDK.SessionEventArgs,
+    ) => {
+      console.debug('Session stopped.')
+      setIsListening(false)
+      setIsMicActive(false)
+      clearInactivityTimeout()
+      cleanupResources()
     }
   }
 
+  // Function to start speech recognition
+  const handleStart = () => {
+    console.debug('Starting recognition...')
+
+    // Initialize the recognizer if it hasn't been already
+    if (!recognizerRef.current) {
+      initializeRecognizer()
+    }
+
+    // Start continuous speech recognitio
+    recognizerRef.current?.startContinuousRecognitionAsync(
+      () => {
+        setIsListening(true)
+        resetInactivityTimeout()
+        setIsMicActive(true)
+      },
+      (error: string) => {
+        console.error('Failed to start recognition:', error)
+        handleStop()
+      },
+    )
+  }
+
+  // Function to stop speech recognition
+  const handleStop = () => {
+    console.debug('Stopping recognition...')
+
+    recognizerRef.current?.stopContinuousRecognitionAsync(() => {
+      setIsListening(false)
+      clearInactivityTimeout()
+      setIsMicActive(false)
+      cleanupResources()
+    })
+  }
+
+  const cleanupResources = () => {
+    recognizerRef.current?.close()
+    recognizerRef.current = null
+    audioConfigRef.current?.close()
+    audioConfigRef.current = null
+  }
+
+  const resetInactivityTimeout = () => {
+    clearInactivityTimeout()
+    inactivityTimeout.current = setTimeout(() => {
+      console.debug('Inactivity timeout reached, stopping recognition...')
+      handleStop()
+    }, INACTIVITY_DURATION)
+  }
+
+  const clearInactivityTimeout = () => {
+    if (inactivityTimeout.current) {
+      clearTimeout(inactivityTimeout.current)
+      inactivityTimeout.current = null
+    }
+  }
+
+  const handleClick = () => {
+    if (isListening) {
+      handleStop()
+    } else {
+      handleStart()
+    }
+  }
+
+  // Clear accumulated text when prompt is set to an empty string
+  useEffect(() => {
+    if (prompt === '') {
+      console.debug('Clearing accumulated text')
+      accumulatedTextRef.current = ''
+    }
+  }, [prompt])
+
   return (
-    <DaButton
-      variant="plain"
-      size="sm"
+    <button
+      onClick={handleClick}
       className={cn(
         'flex cursor-pointer items-center rounded-lg p-1 px-2 text-da-primary-500 hover:bg-da-primary-100',
         isListening && 'bg-da-primary-100',
       )}
-      onClick={handleClick}
     >
       {isListening ? (
         <>
-          <BouncingDotsLoader />
-          <TbPlayerStopFilled className="ml-1 size-4 text-da-primary-500" />
+          {isMicActive ? (
+            <>
+              <BouncingDotsLoader />
+              <TbPlayerStopFilled className="ml-1 size-4 text-red-500" />
+            </>
+          ) : (
+            <>
+              <TbPlayerStopFilled className="mr-2" />
+              Stop
+            </>
+          )}
         </>
       ) : (
         <>
           <TbMicrophoneFilled className="mr-1 size-6 text-da-primary-500" />
-          <p className="font-medium">Voice input</p>
+          <p className="font-medium text-da-gray-medium">Voice input</p>
         </>
       )}
-    </DaButton>
+    </button>
   )
 }
 

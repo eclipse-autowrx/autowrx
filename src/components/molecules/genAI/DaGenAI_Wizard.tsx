@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import LoadingLineAnimation from './DaGenAI_LoadingLineAnimation.tsx'
-import DaGenAI_Base from './DaGenAI_Base.tsx'
 import { cn } from '@/lib/utils.ts'
 import CodeEditor from '../CodeEditor.tsx'
 import useWizardGenAIStore from '@/stores/genAIWizardStore.ts'
+import DaGenAI_WizardBase from './DaGenAI_WizardBase.tsx'
 
 type DaGenAI_WizardProps = {
   onCodeGenerated?: (code: string) => void
@@ -12,39 +12,30 @@ type DaGenAI_WizardProps = {
 
 const DaGenAI_Wizard = ({ onCodeGenerated }: DaGenAI_WizardProps) => {
   const [loading, setLoading] = useState<boolean>(false)
-  const [genCode, setGenCode] = useState<string>('')
-  const [isFinished, setIsFinished] = useState<boolean>(false)
-  const { wizardPrototype: prototypeData, setPrototypeData } =
-    useWizardGenAIStore()
+  const { wizardPrototype, setPrototypeData } = useWizardGenAIStore()
 
   return (
     <div className="flex h-full w-full rounded">
-      <DaGenAI_Base
+      <DaGenAI_WizardBase
         type="GenAI_Python"
-        buttonText="Generate SDV App"
-        placeholderText="Please describe your vehicle application in human readable language"
         onCodeGenerated={(code) => {
-          setGenCode(code)
-          if (onCodeGenerated) {
-            onCodeGenerated(code)
-          }
+          onCodeGenerated && onCodeGenerated(code)
+          setPrototypeData({ code })
         }}
-        onFinishChange={setIsFinished}
-        onLoadingChange={setLoading}
+        onLoadingChange={(loading) => setLoading(loading)}
         className="w-1/2"
-        isWizard={true}
       />
-      <div className="flex h-full w-1/2 flex-1 flex-col pb-2 pl-2">
+
+      <div className="flex h-full w-1/2 flex-1 flex-col pb-2 mr-4">
         <div
           className={cn(
             'scroll-gray mt-2 flex h-full w-full overflow-y-auto overflow-x-hidden',
           )}
         >
-          {genCode ? (
-            // <DaGenAI_ResponseDisplay code={genCode} language={'python'} />
+          {wizardPrototype.code ? (
             <div className="flex w-full h-full rounded-md overflow-hidden border">
               <CodeEditor
-                code={genCode}
+                code={wizardPrototype.code || ''} // Change here
                 setCode={(code) => {
                   onCodeGenerated && onCodeGenerated(code)
                   setPrototypeData({ code })

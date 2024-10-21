@@ -33,7 +33,7 @@ const DaGenAI_EditSystemStaging = ({
   const [isUpdating, setIsUpdating] = useState<boolean>(false)
   const [activeId, setActiveId] = useState<string>('')
   const runTimeRef = useRef<any>()
-  const [log, setLog] = useState<string>('')
+  const [log, setLog] = useState<string[]>([])
   const { data: profile } = useSelfProfileQuery()
 
   const [prototype] = useModelStore((state) => [state.prototype as Prototype])
@@ -61,19 +61,43 @@ const DaGenAI_EditSystemStaging = ({
     }
   }
 
+  // Timeout effect to handle server response delay
+  useEffect(() => {
+    if (isUpdating) {
+      const timeoutDuration = 10000 // 10 seconds
+
+      const timer = setTimeout(() => {
+        // If still updating and no new log messages were received in 10s, mark timeout
+        if (isUpdating && log.length === 0) {
+          setLog([
+            'Request timeout, please try again as the runtime may be busy or experiencing issues.',
+          ])
+          setIsUpdating(false)
+
+          // Clear log after 3 seconds
+          setTimeout(() => {
+            setLog([])
+          }, 3000)
+        }
+      }, timeoutDuration)
+
+      return () => clearTimeout(timer) // Clear timeout if updating finishes early or log changes
+    }
+  }, [isUpdating, log])
+
   return (
     <div className="w-full h-full">
       <div className="w-full flex items-center">
         <IoMdArrowRoundBack
           className="mr-2 cursor-pointer hover:opacity-50"
-          size={24}
+          size={26}
           onClick={() => {
             if (onCancel) {
               onCancel()
             }
           }}
         />
-        <DaText variant="huge-bold">
+        <DaText variant="title" className="text-da-gray-dark">
           {!onTargetMode && 'Edit System Definition'}
           {onTargetMode && 'Update Stage'}
         </DaText>
@@ -81,7 +105,7 @@ const DaGenAI_EditSystemStaging = ({
 
       {onTargetMode && (
         <div className="flex mb-2 justify-between mt-4">
-          <div className=" bg-slate-100 rounded w-[32%] border border-da-gray-medium/50 p-3">
+          <div className=" bg-gray-100 rounded w-[32%] border border-gray-300 p-3">
             <DaText variant="sub-title" className="text-da-primary-500">
               System
             </DaText>
@@ -97,7 +121,7 @@ const DaGenAI_EditSystemStaging = ({
             </div>
           </div>
 
-          <div className=" bg-slate-100 rounded w-[32%] border border-da-gray-medium/50 p-3">
+          <div className=" bg-gray-100 rounded w-[32%] border border-gray-300 p-3">
             <DaText variant="sub-title" className="text-da-primary-500">
               Stage
             </DaText>
@@ -115,39 +139,45 @@ const DaGenAI_EditSystemStaging = ({
               {target && (
                 <DaGenAI_RuntimeConnector
                   targetPrefix={target.prefix || 'runtime-'}
-                  kitServerUrl={DEFAULT_KIT_SERVER}
+                  kitServerUrl={config?.runtime?.url || DEFAULT_KIT_SERVER}
                   ref={runTimeRef}
                   usedAPIs={[]}
                   onActiveRtChanged={(rtId: string | undefined) => {
                     setActiveRtId(rtId || '')
                   }}
-                  onDeployResponse={(log: string, isDone: boolean) => {
-                    // console.log(`onDeployResponse isDone:`, isDone)
-                    // console.log(`log`, log)
-                    if (log) {
-                      setLog(log)
+                  onDeployResponse={(newLog: string, isDone: boolean) => {
+                    if (newLog) {
+                      // Append new log to the log state, keeping only the last 3 logs
+                      setLog((prevLog) => {
+                        const updatedLog = [...prevLog, newLog].slice(-3)
+                        return updatedLog
+                      })
                     }
                     if (isDone) {
                       setIsUpdating(false)
                       setTimeout(() => {
-                        setLog('')
+                        setLog([]) // Optionally reset the log after a delay
                       }, 2000)
                     }
                   }}
                 />
               )}
-              {log && (
+              {log.length > 0 && (
                 <div className="mt-2 flex">
-                  <div className="da-small-medium mr-2">Response:</div>
-                  <div className="ml-2 bg-da-black text-da-white px-2 py-1.5 rounded da-label-tiny grow">
-                    {log}
+                  <div className="da-small-medium mr-2 line-clamp-3">
+                    Response:
+                  </div>
+                  <div className="ml-2 bg-da-black text-da-white px-2 py-1.5 rounded da-label-tiny grow leading-tight">
+                    {log.map((entry, index) => (
+                      <div key={index}>{entry}</div>
+                    ))}
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          <div className=" bg-slate-100 rounded w-[32%] border border-da-gray-medium/50 p-3">
+          <div className=" bg-gray-100 rounded w-[32%] border border-gray-300 p-3">
             <DaText variant="sub-title" className="text-da-primary-500">
               Update
             </DaText>
@@ -174,9 +204,9 @@ const DaGenAI_EditSystemStaging = ({
         </div>
       )}
 
-      <div className="min-h-[400px] overflow-y-auto mt-2">
+      <div className="min-h-[400px] overflow-y-auto mt-4 xl:mt-6">
         <div className="w-full rounded border">
-          <div className="h-[40px] w-full bg-gradient-to-r from-da-gradient-from to-da-gradient-to rounded-t text-da-white font-bold flex">
+          <div className="flex h-[40px] w-full border-b text-da-gray-dark rounded-t font-bold">
             <div className="h-full px-4 flex items-center grow">
               System Elements
             </div>
@@ -222,6 +252,7 @@ const DaGenAI_EditSystemStaging = ({
               onItemEditFinished={(id, data) => {
                 updateDefineAtId(id, data)
               }}
+              expandedIds={['3', '3.1', '3.1.1', '3.1.1.1', '3.1.1.1.1']}
             />
           )}
         </div>

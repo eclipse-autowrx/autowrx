@@ -36,6 +36,9 @@ interface FormCreatePrototypeProps {
   }) => void
   disabledState?: [boolean, (disabled: boolean) => void]
   hideCreateButton?: boolean
+  code?: string
+  widget_config?: string
+  title?: string
 }
 
 const FormCreatePrototype = ({
@@ -43,6 +46,9 @@ const FormCreatePrototype = ({
   onPrototypeChange,
   disabledState,
   hideCreateButton,
+  code,
+  widget_config,
+  title,
 }: FormCreatePrototypeProps) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
@@ -97,7 +103,9 @@ const FormCreatePrototype = ({
         name: data.prototypeName,
         state: 'development',
         apis: { VSC: [], VSS: [] },
-        code: `from vehicle import Vehicle
+        code:
+          code ??
+          `from vehicle import Vehicle
 import time
 import asyncio
 import signal
@@ -122,7 +130,6 @@ async def main():
     vehicle_app = TestApp(vehicle)
     await vehicle_app.run()
 
-
 LOOP = asyncio.get_event_loop()
 LOOP.add_signal_handler(signal.SIGTERM, LOOP.stop)
 LOOP.run_until_complete(main())
@@ -138,7 +145,7 @@ LOOP.close()`,
         image_file: '/imgs/default_prototype_cover.jpg',
         skeleton: '{}',
         tags: [],
-        widget_config: '[]',
+        widget_config: widget_config ?? '[]',
         autorun: true,
       }
 
@@ -239,7 +246,7 @@ LOOP.close()`,
       className="flex max-h-[80vh] w-[40vw] min-w-[400px] flex-col bg-da-white p-4 lg:w-[25vw]"
     >
       <DaText variant="title" className="text-da-primary-500">
-        New Prototype
+        {title ?? 'New Prototype'}
       </DaText>
 
       {!currentModel &&

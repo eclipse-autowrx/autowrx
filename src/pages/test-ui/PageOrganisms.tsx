@@ -1,4 +1,3 @@
-import { HomeIntroBlock } from '@/components/organisms/HomeIntroBlock'
 import { HomePrototypeProposal } from '@/components/organisms/HomePrototypeProposal'
 import { DaText } from '@/components/atoms/DaText'
 import { HomePartners } from '@/components/organisms/HomePartners'

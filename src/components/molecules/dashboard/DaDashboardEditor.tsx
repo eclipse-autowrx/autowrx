@@ -408,7 +408,7 @@ const DaDashboardEditor = ({
         {widgetGrid()}
       </div>
       {editable && (
-        <DaText variant="small-bold" className="py-2 text-orange-700">
+        <DaText variant="small-bold" className="py-2 text-orange-500">
           Click on empty cell to place new widget
         </DaText>
       )}

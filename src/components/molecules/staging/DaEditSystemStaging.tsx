@@ -9,6 +9,7 @@ import { Prototype } from '@/types/model.type'
 import { DaButton } from '@/components/atoms/DaButton'
 import DaStageComponent from './DaStageComponent'
 import { IoMdArrowRoundBack } from 'react-icons/io'
+import config from '@/configs/config'
 
 const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
 
@@ -115,7 +116,7 @@ const DaEditSystemStaging = ({
               {target && (
                 <DaRuntimeConnector
                   targetPrefix={target.prefix || 'runtime-'}
-                  kitServerUrl={DEFAULT_KIT_SERVER}
+                  kitServerUrl={config?.runtime?.url || DEFAULT_KIT_SERVER}
                   ref={runTimeRef}
                   usedAPIs={[]}
                   onActiveRtChanged={(rtId: string | undefined) => {
@@ -167,8 +168,8 @@ const DaEditSystemStaging = ({
 
       <div className="min-h-[400px] max-h-[70vh] overflow-y-auto mt-2">
         <div className="w-full rounded border">
-          <div className="h-[40px] w-full bg-gradient-to-r from-da-gradient-from to-da-gradient-to rounded-t text-da-white font-bold flex">
-            <div className="h-full px-4 flex items-center grow">
+          <div className="h-[40px] w-full rounded-t text-da-white font-bold flex">
+            <div className="h-full px-4 flex items-center grow ">
               System Elements
             </div>
             <div className="h-full px-2 flex items-center justify-center w-24 border-l">

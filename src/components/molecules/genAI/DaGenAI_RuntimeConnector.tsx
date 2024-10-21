@@ -128,8 +128,8 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
     }
 
     const stopApp = () => {
-      if (!socketio) {
-        console.error('SocketIO is not initialized.')
+      if (!socketio || !socketio.connected) {
+        console.error('SocketIO is not initialized or connected.')
         return
       }
       socketio.emit('messageToKit', {
@@ -168,8 +168,8 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
     }
 
     const writeSignalsValue = (obj: any) => {
-      if (!socketio) {
-        console.error('SocketIO is not initialized.')
+      if (!socketio || !socketio.connected) {
+        console.error('SocketIO is not initialized or connected.')
         return
       }
       socketio.emit('messageToKit', {
@@ -201,13 +201,35 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
     }, [activeRtId])
 
     useEffect(() => {
-      if (!kitServerUrl) return
-      setSocketIo(io(kitServerUrl))
+      if (!kitServerUrl) {
+        console.log('Kit Server URL is undefined')
+        return
+      }
+      console.log('Try to connect to KIT Server URL: ', kitServerUrl)
+      const socket = io(kitServerUrl, {
+        transports: ['websocket'],
+        reconnectionAttempts: 5,
+      })
+
+      socket.on('connect_error', (err) => {
+        console.error('Connection error:', err)
+      })
+
+      socket.on('error', (err) => {
+        console.error('Socket error:', err)
+      })
+
+      setSocketIo(socket)
+
+      // Clean up the socket connection on unmount
+      return () => {
+        socket.disconnect()
+      }
     }, [kitServerUrl])
 
     useEffect(() => {
       // console.log('Wizard Active RuntimeID: ', wizardActiveRtId)
-      // console.log('Active RuntimeID: ', activeRtId)
+      console.log('Wizard Active RuntimeID: ', activeRtId)
       if (!socketio) return
 
       if (!socketio.connected) {
@@ -239,7 +261,7 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
         unregisterClient()
         socketio.disconnect()
       }
-    }, [socketio, socketio?.connected, wizardActiveRtId])
+    }, [socketio]) // Remove socketio?.connected to prevent un-necessary change
 
     useEffect(() => {
       console.log(`activeRtId`, activeRtId)
@@ -257,7 +279,8 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
 
     useEffect(() => {
       if (allRuntimes && allRuntimes.length > 0) {
-        if (activeRtId) return
+        if (activeRtId) return // Do not change activeRtId if it's already set by the user
+
         let onlineRuntimes = allRuntimes.filter((rt: any) => rt.is_online)
 
         if (onlineRuntimes.length <= 0) {
@@ -267,16 +290,32 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
           return
         }
 
+        // Try to find the default runtime with kit_id starting with 'RunTime-ETAS-E2E'
+        let defaultRuntime = onlineRuntimes.find((rt: any) =>
+          rt.kit_id.startsWith('RunTime-ETAS-E2E'),
+        )
+
+        if (defaultRuntime) {
+          console.log(`setActiveRtId to defaultRuntime`, defaultRuntime.kit_id)
+          setActiveRtId(defaultRuntime.kit_id)
+          setWizardActiveRtId(defaultRuntime.kit_id)
+          localStorage.setItem('last-wizard-rt', defaultRuntime.kit_id)
+          return
+        }
+
+        // If not found, use the last selected runtime from localStorage if it's online
         let lastOnlineRuntime = localStorage.getItem('last-wizard-rt')
         if (
           lastOnlineRuntime &&
-          onlineRuntimes.map((rt: any) => rt.kit_id).includes(lastOnlineRuntime)
+          onlineRuntimes.some((rt: any) => rt.kit_id === lastOnlineRuntime)
         ) {
           console.log(`lastOnlineRuntime `, lastOnlineRuntime)
           setActiveRtId(lastOnlineRuntime)
           setWizardActiveRtId(lastOnlineRuntime)
           return
         }
+
+        // If none of the above, set activeRtId to the first online runtime
         console.log(`setActiveRtId `, onlineRuntimes[0].kit_id)
         setActiveRtId(onlineRuntimes[0].kit_id)
         setWizardActiveRtId(onlineRuntimes[0].kit_id)
@@ -435,7 +474,7 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
           )}
           <select
             aria-label="deploy-select"
-            className={`border rounded da-label-small px-2 py-1 w-full min-w-[100px] text-da-gray-dark bg-da-gray-light`}
+            className={`border rounded da-label-small px-2 py-1 w-full min-w-[100px] text-da-gray-dark bg-gray-200 !cursor-pointer`}
             value={activeRtId as any}
             onChange={(e) => {
               // console.log(`setActiveRtId(e.target.value) `, e.target.value)
@@ -450,7 +489,7 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
                     key={rt.kit_id}
                     disabled={!rt.is_online}
                   >
-                    <div className="text-[20px] flex items-center disabled:text-white text-white">
+                    <div className="text-[20px] flex items-center disabled:text-white text-white !cursor-pointer">
                       {rt.is_online ? '🟢' : '🟡'} {rt.name}
                     </div>
                   </option>
