@@ -22,7 +22,7 @@ const HomePartners: FC = ({ items }: HomePartnersProps) => {
     >
       {config && config.instance === 'digitalauto' ? (
         <>
-          <div className="flex flex-col w-full xl:w-[30%] ml-12 py-12">
+          <div className="flex flex-col w-full xl:w-[30%] ml-12 my-12">
             <div className="flex w-full items-center">
               <div className="text-xl font-bold mb-2 text-da-gray-dark">
                 Partnership
@@ -43,8 +43,8 @@ const HomePartners: FC = ({ items }: HomePartnersProps) => {
             {items?.map((group: any, gIndex: number) => (
               <div key={gIndex} className="text-center w-fit">
                 <DaText
-                  variant="regular"
-                  className="flex my-2 justify-center text-da-gray-dark"
+                  variant="small-medium"
+                  className="xl:flex hidden mt-2 justify-center text-da-gray-medium"
                 >
                   {group?.title}
                 </DaText>

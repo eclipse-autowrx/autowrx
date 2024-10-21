@@ -39,6 +39,7 @@ interface FormCreatePrototypeProps {
   code?: string
   widget_config?: string
   title?: string
+  buttonText?: string
 }
 
 const FormCreatePrototype = ({
@@ -49,6 +50,7 @@ const FormCreatePrototype = ({
   code,
   widget_config,
   title,
+  buttonText,
 }: FormCreatePrototypeProps) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
@@ -307,7 +309,7 @@ LOOP.close()`,
         className={clsx('mt-8 w-full', hideCreateButton && '!hidden')}
       >
         {loading && <TbLoader className="mr-2 animate-spin text-lg" />}
-        Create
+        {buttonText ?? 'Create Prototype'}
       </DaButton>
     </form>
   )

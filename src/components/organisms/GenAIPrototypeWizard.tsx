@@ -251,7 +251,8 @@ const GenAIPrototypeWizard = () => {
             onClose={() => setOpenCreatePrototypeModal(false)}
             code={wizardPrototype.code}
             widget_config={wizardPrototype.widget_config}
-            title="Save as Prototype"
+            title="Save as prototype"
+            buttonText="Save"
           />
         </DaPopup>
       )}
