@@ -3,24 +3,33 @@ import { DaText } from '../atoms/DaText'
 import { DaImage } from '../atoms/DaImage'
 import { Partner } from '@/types/common.type'
 import config from '@/configs/config'
+import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { cn } from '@/lib/utils'
 
 type HomePartnersProps = {
   items?: Partner[]
 }
 
 const HomePartners: FC = ({ items }: HomePartnersProps) => {
+  const { data: user } = useSelfProfileQuery()
+
   return (
-    <div className="flex flex-col xl:flex-row xl:items-center justify-center w-full min-h-[180px] mt-12 bg-gray-100">
+    <div
+      className={cn(
+        'flex flex-col xl:flex-row xl:items-center justify-center w-full min-h-[180px]',
+        user && 'bg-gray-100',
+      )}
+    >
       {config && config.instance === 'digitalauto' ? (
         <>
-          <div className="flex flex-col w-[60%] xl:w-[30%] ml-12 py-12">
+          <div className="flex flex-col w-full xl:w-[30%] ml-12 py-12">
             <div className="flex w-full items-center">
               <div className="text-xl font-bold mb-2 text-da-gray-dark">
                 Partnership
               </div>
             </div>
 
-            <div className="w-full">
+            <div className="w-full text-sm xl:max-w-lg">
               Interoperability is key. Therefore, we have teamed up with many
               partners to start an SDV interoperability initiative.
             </div>
@@ -32,7 +41,7 @@ const HomePartners: FC = ({ items }: HomePartnersProps) => {
             }}
           >
             {items?.map((group: any, gIndex: number) => (
-              <div key={gIndex} className="text-center">
+              <div key={gIndex} className="text-center w-fit">
                 <DaText
                   variant="regular"
                   className="flex my-2 justify-center text-da-gray-dark"
@@ -58,10 +67,10 @@ const HomePartners: FC = ({ items }: HomePartnersProps) => {
         <div className="flex flex-col w-full text-center justify-center items-center font-medium">
           <div className="flex pt-6 w-fit items-center">
             <a href="https://www.digital.auto/" target="_blank">
-              <img src="./imgs/da.png" className="h-[100px]" />
+              <img src="./imgs/da.png" className="h-[70px]" />
             </a>
           </div>
-          <div className="max-w-2xl pb-10">
+          <div className="max-w-xl pb-10 text-sm">
             Operated by{' '}
             <a
               href="https://www.digital.auto/"
