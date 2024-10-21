@@ -35,6 +35,8 @@ const FormCreateModel = () => {
     setData((prev) => ({ ...prev, [name]: value }))
   }
 
+  const handleVSSChange = () => {}
+
   const createNewModel = async (e: FormEvent<HTMLFormElement>) => {
     if (!currentUser) {
       console.error('User not found')
@@ -103,13 +105,15 @@ const FormCreateModel = () => {
       />
 
       <DaSelect
-        defaultValue="vss-api-4.1"
+        onValueChange={handleVSSChange}
+        defaultValue="4.1"
         label="VSS API *"
         wrapperClassName="mt-4"
       >
-        <DaSelectItem value="vss-api">COVESA VSS API v3.1</DaSelectItem>
-        <DaSelectItem value="vss-api-4.0">COVESA VSS API v4.0</DaSelectItem>
-        <DaSelectItem value="vss-api-4.1">COVESA VSS API v4.1</DaSelectItem>
+        <DaSelectItem value="3.1">COVESA VSS API v3.1</DaSelectItem>
+        <DaSelectItem value="4.0">COVESA VSS API v4.0</DaSelectItem>
+        <DaSelectItem value="4.1">COVESA VSS API v4.1</DaSelectItem>
+        <DaSelectItem value="5.0">COVESA VSS API v5.0</DaSelectItem>
         <DaSelectItem value="from-scratch">Start from scratch</DaSelectItem>
       </DaSelect>
 
