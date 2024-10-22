@@ -16,7 +16,7 @@ type ModelState = {
 type Actions = {
   setActiveModel: (_: Model) => Promise<void>
   setActivePrototype: (_: Prototype) => void
-  refreshModel: () => void
+  refreshModel: () => Promise<void>
 }
 
 const useModelStore = create<ModelState & Actions>()((set, get) => ({
@@ -80,8 +80,6 @@ const useModelStore = create<ModelState & Actions>()((set, get) => ({
       model,
       activeModelApis: ret,
     }))
-
-    console.log(ret)
   },
   setActivePrototype: (prototype) =>
     set((state) => {

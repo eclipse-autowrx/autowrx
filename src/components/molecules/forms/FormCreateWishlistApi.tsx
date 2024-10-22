@@ -163,6 +163,15 @@ const FormCreateWishlistApi = ({
 
       await refreshModel()
 
+      addLog({
+        name: `Create wishlist Signal ${customApi.name}`,
+        description: `User ${currentUser?.email} created wishlist Signal ${customApi.name} in model ${modelId}`,
+        type: 'create-wishlist',
+        create_by: currentUser?.id!,
+        ref_id: modelId,
+        ref_type: 'model',
+      })
+
       onApiCreate(customApi)
       onClose()
     } catch (error) {
@@ -188,7 +197,6 @@ const FormCreateWishlistApi = ({
   }
 
   const handleDatatypeChange = (value: string) => {
-    console.log(value)
     setData((prev) => ({
       ...prev,
       datatype: value,

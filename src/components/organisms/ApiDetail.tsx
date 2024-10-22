@@ -27,6 +27,8 @@ import {
 import useCurrentExtendedApiIssue from '@/hooks/useCurrentExtendedApiIssue'
 import DaMenu from '../atoms/DaMenu'
 import DaConsumedPrototypes from '../molecules/DaConsumedPrototypes'
+import { deleteExtendedApi } from '@/services/extendedApis.service'
+import useModelStore from '@/stores/modelStore'
 
 interface ApiDetailProps {
   apiDetails: any
@@ -48,24 +50,30 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
 
   const { onTriggerAuth, loading, user, access, error } = useGithubAuth()
   const { data, refetch: refetchCurrIssue } = useCurrentExtendedApiIssue()
+  const refreshModel = useModelStore((state) => state.refreshModel)
 
   const handleDeleteWishlistApi = async () => {
-    if (model && model.custom_apis) {
-      const updatedCustomApis = model.custom_apis.filter(
-        (api: CustomApi) => api.name !== apiDetails.name,
-      )
-      try {
-        setIsLoading(true)
-        const customApisJson = JSON.stringify(updatedCustomApis)
-        await updateModelService(model.id, {
-          custom_apis: customApisJson as any,
-        })
-        setIsLoading(false)
-        await refetch()
-        navigate(`/model/${model.id}/api/Vehicle`)
-      } catch (error) {
-        setIsLoading(false)
-        console.error('Error deleting wishlist API:', error)
+    if (model) {
+      if (model.api_version && apiDetails?.id) {
+        await deleteExtendedApi(apiDetails.id)
+        await refreshModel()
+      } else if (model.custom_apis) {
+        const updatedCustomApis = model.custom_apis.filter(
+          (api: CustomApi) => api.name !== apiDetails.name,
+        )
+        try {
+          setIsLoading(true)
+          const customApisJson = JSON.stringify(updatedCustomApis)
+          await updateModelService(model.id, {
+            custom_apis: customApisJson as any,
+          })
+          setIsLoading(false)
+          await refetch()
+          navigate(`/model/${model.id}/api/Vehicle`)
+        } catch (error) {
+          setIsLoading(false)
+          console.error('Error deleting wishlist API:', error)
+        }
       }
     }
   }

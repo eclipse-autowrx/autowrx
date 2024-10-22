@@ -41,3 +41,7 @@ export const updateExtendedApi = async (
     )
   ).data
 }
+
+export const deleteExtendedApi = async (id: string) => {
+  return (await serverAxios.delete(`/extendedApis/${id}`)).data
+}
