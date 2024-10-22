@@ -43,6 +43,7 @@ export type Model = {
 export type Prototype = {
   id: string
   apis: any
+  language: string
   model_id: string
   name: string
   code: string

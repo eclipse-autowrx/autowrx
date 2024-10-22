@@ -140,7 +140,7 @@ const PrototypeTabCode: FC = ({}) => {
             code={code || ''}
             setCode={setCode}
             editable={isAuthorized}
-            language="python"
+            language={prototype.language || "python"}
             onBlur={saveCodeToDb}
           />
         </Suspense>
