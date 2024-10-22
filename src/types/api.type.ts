@@ -93,10 +93,16 @@ export type ExtendedApi = {
   apiName: string
   description?: string
   type?: string
-  data_type?: string
+  datatype?: string
   skeleton: string
   tags?: Tag[]
   created_at?: string
+}
+
+export type ExtendedApiRet = Omit<ExtendedApi, 'type' | 'description'> & {
+  name: string
+  type: string
+  description: string
 }
 
 export type ExtendedApiCreate = Omit<ExtendedApi, 'id'>

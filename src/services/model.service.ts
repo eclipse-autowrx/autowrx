@@ -120,3 +120,7 @@ export const updateModelService = async (
 export const deleteModelService = async (model_id: string) => {
   return await serverAxios.delete(`/models/${model_id}`)
 }
+
+export const getComputedAPIs = async (model_id: string) => {
+  return (await serverAxios.get(`/models/${model_id}/api`)).data
+}

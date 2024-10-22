@@ -19,6 +19,7 @@ export type ModelLite = {
 export type Model = {
   id: string
   custom_apis?: Record<string, any>
+  api_version?: string
   main_api: string
   model_home_image_file?: string
   model_files?: Record<string, unknown>
@@ -78,7 +79,7 @@ export type ModelCreate = {
   name: string
   cvi: string
   main_api: string
-  api_version: string
+  api_version?: string
   custom_apis?: string
   model_home_image_file?: string
   model_files?: object
