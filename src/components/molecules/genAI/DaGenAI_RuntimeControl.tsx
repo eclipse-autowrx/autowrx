@@ -1,7 +1,6 @@
 import { DaButton } from '@/components/atoms/DaButton'
 import { useEffect, useRef, useState } from 'react'
 import { FaAnglesLeft, FaAnglesRight } from 'react-icons/fa6'
-import DaRuntimeConnector from '../DaRuntimeConnector'
 import { IoPlay, IoStop } from 'react-icons/io5'
 import CodeEditor from '../CodeEditor'
 import usePermissionHook from '@/hooks/usePermissionHook'
