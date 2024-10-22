@@ -86,6 +86,7 @@ const HomeButtonList = ({ items, requiredLogin }: HomeButtonListProps) => {
             if (button.type === 'import-prototype')
               return (
                 <DaPopup
+                  key={index}
                   trigger={
                     <DaActionCard
                       title="Import Prototype"

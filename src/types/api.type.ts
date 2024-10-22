@@ -1,5 +1,11 @@
 import { Tag } from './model.type'
 
+export type VSSRelease = {
+  name: string
+  published_at: string
+  browser_download_url: string
+}
+
 export type VehicleAPI = {
   name: string
   type: string

@@ -78,6 +78,7 @@ export type ModelCreate = {
   name: string
   cvi: string
   main_api: string
+  api_version: string
   custom_apis?: string
   model_home_image_file?: string
   model_files?: object

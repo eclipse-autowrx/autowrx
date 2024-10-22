@@ -13,11 +13,13 @@ import { useToast } from '../toaster/use-toast'
 import useListModelLite from '@/hooks/useListModelLite'
 import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import useListVSSVersions from '@/hooks/useListVSSVersions'
 
 const initialState = {
   cvi: JSON.stringify(CVI),
   name: '',
   mainApi: 'Vehicle',
+  api_version: 'v4.1',
 }
 
 const FormCreateModel = () => {
@@ -25,6 +27,7 @@ const FormCreateModel = () => {
   const [error, setError] = useState<string>('')
   const [data, setData] = useState(initialState)
   const { refetch: refetchModelLite } = useListModelLite()
+  const { data: versions } = useListVSSVersions()
   const { toast } = useToast()
 
   const { data: currentUser } = useSelfProfileQuery()
@@ -35,7 +38,9 @@ const FormCreateModel = () => {
     setData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleVSSChange = () => {}
+  const handleVSSChange = (version: string) => {
+    setData((prev) => ({ ...prev, api_version: version }))
+  }
 
   const createNewModel = async (e: FormEvent<HTMLFormElement>) => {
     if (!currentUser) {
@@ -49,12 +54,13 @@ const FormCreateModel = () => {
         cvi: data.cvi,
         main_api: data.mainApi,
         name: data.name,
+        api_version: data.api_version,
       }
       const modelId = await createModelService(body)
       await refetchModelLite()
       addLog({
         name: `New model '${body.name}' with visibility: ${body.visibility}`,
-        description: `New model '${body.name}' was created by ${currentUser.email || currentUser.name || currentUser.id}`,
+        description: `New model '${body.name}' was created by ${currentUser.email || currentUser.name || currentUser.id} version ${'a'}`,
         type: 'new-model',
         create_by: currentUser.id,
         ref_id: modelId,
@@ -106,15 +112,24 @@ const FormCreateModel = () => {
 
       <DaSelect
         onValueChange={handleVSSChange}
-        defaultValue="4.1"
+        defaultValue="v4.1"
         label="VSS API *"
         wrapperClassName="mt-4"
       >
-        <DaSelectItem value="3.1">COVESA VSS API v3.1</DaSelectItem>
-        <DaSelectItem value="4.0">COVESA VSS API v4.0</DaSelectItem>
-        <DaSelectItem value="4.1">COVESA VSS API v4.1</DaSelectItem>
-        <DaSelectItem value="5.0">COVESA VSS API v5.0</DaSelectItem>
-        <DaSelectItem value="from-scratch">Start from scratch</DaSelectItem>
+        {versions ? (
+          versions.map((version) => (
+            <DaSelectItem key={version.name} value={version.name}>
+              COVESA VSS API {version.name}
+            </DaSelectItem>
+          ))
+        ) : (
+          <>
+            <DaSelectItem value="v5.0">COVESA VSS API v5.0</DaSelectItem>
+            <DaSelectItem value="v4.1">COVESA VSS API v4.1</DaSelectItem>
+            <DaSelectItem value="v4.0">COVESA VSS API v4.0</DaSelectItem>
+            <DaSelectItem value="v3.1">COVESA VSS API v3.1</DaSelectItem>
+          </>
+        )}
       </DaSelect>
 
       <div className="grow"></div>
