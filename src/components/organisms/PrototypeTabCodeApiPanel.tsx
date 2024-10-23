@@ -183,7 +183,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
           variant="small-bold"
           className="text-da-primary-500 py-0.5 mr-1"
         >
-          {(model && model.api_version) ?? 'COVESA VSS 4.1'}
+          COVESA VSS {(model && model.api_version) ?? 'v4.1'}
         </DaText>
       </div>
 

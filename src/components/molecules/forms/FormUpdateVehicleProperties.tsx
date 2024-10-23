@@ -121,7 +121,7 @@ const FormUpdateVehicleProperties = ({
         Custom Properties
       </DaText>
 
-      <div className="flex flex-col space-y-2">
+      <div className="flex flex-col space-y-2 max-h-[40vh] overflow-auto pr-2">
         {customProperties && customProperties.length > 0 ? (
           customProperties.map((property, index) => (
             <DaCustomPropertyItem

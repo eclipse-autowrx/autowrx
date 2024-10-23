@@ -113,13 +113,14 @@ const FormCreateModel = () => {
       <DaSelect
         onValueChange={handleVSSChange}
         defaultValue="v4.1"
-        label="VSS API *"
+        label="VSS Signal Version*"
+        className="mt-1"
         wrapperClassName="mt-4"
       >
         {versions ? (
           versions.map((version) => (
             <DaSelectItem key={version.name} value={version.name}>
-              COVESA VSS API {version.name}
+              COVESA VSS {version.name}
             </DaSelectItem>
           ))
         ) : (
