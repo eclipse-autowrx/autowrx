@@ -32,7 +32,7 @@ import { cn } from '@/lib/utils'
 import { downloadPrototypeZip } from '@/lib/zipUtils'
 import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
-import DaInputWithLabel from '../DaInputWithLabel'
+import DaInputWithLabel from '../atoms/DaInputWithLabel'
 
 interface PrototypeTabJourneyProps {
   prototype: Prototype
