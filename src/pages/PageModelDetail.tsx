@@ -8,7 +8,7 @@ import DaLoading from '@/components/atoms/DaLoading'
 import DaConfirmPopup from '@/components/molecules/DaConfirmPopup'
 import useModelStore from '@/stores/modelStore'
 import { Model } from '@/types/model.type'
-import DaVehicleProperties from '@/components/molecules/DaVehicleProperties'
+import DaVehicleProperties from '@/components/molecules/vehicle_properties/DaVehicleProperties'
 import DaContributorList from '@/components/molecules/DaContributorList'
 import {
   deleteModelService,

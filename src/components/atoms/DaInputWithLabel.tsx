@@ -1,6 +1,6 @@
-import DaText from './atoms/DaText'
-import { DaInput } from './atoms/DaInput'
-import { DaTextarea } from './atoms/DaTextarea'
+import DaText from './DaText'
+import { DaInput } from './DaInput'
+import { DaTextarea } from './DaTextarea'
 import { cn } from '@/lib/utils'
 
 interface DaInputWithLabel {

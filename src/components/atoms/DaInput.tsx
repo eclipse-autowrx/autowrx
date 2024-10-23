@@ -8,6 +8,7 @@ export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string
   inputClassName?: string
+  wrapperClassName?: string
   Icon?: IconType
   iconBefore?: boolean
   IconOnClick?: () => void
@@ -19,6 +20,7 @@ const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
     {
       className,
       inputClassName,
+      wrapperClassName,
       label,
       type,
       Icon,
@@ -49,6 +51,7 @@ const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
           da-txt-regular shadow-sm transition-colors text-da-gray-gray`,
             !focused && 'border-da-gray-light',
             focused && 'border-da-primary-500 text-da-primary-500',
+            wrapperClassName,
           )}
         >
           {Icon && iconBefore && (
@@ -65,7 +68,7 @@ const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
             onBlur={() => setFocused(false)}
             className={cn(
               `grow flex px-2 py-1 h-8 w-full
-                placeholder:text-da-gray-medium
+                placeholder:text-da-gray-300
                 focus-visible:ring-0 focus-visible:outline-none
                 disabled:cursor-not-allowed`,
               inputClassName,
