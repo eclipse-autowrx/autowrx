@@ -20,6 +20,7 @@ import { SlOptionsVertical } from 'react-icons/sl'
 import { BiSend } from 'react-icons/bi'
 import config from '@/configs/config'
 import DaMenu from '@/components/atoms/DaMenu'
+import DaRemoteCompileRust from '../remote-compiler/DaRemoteCompileRust'
 
 const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
 
@@ -51,6 +52,8 @@ const DaRuntimeControl: FC = ({}) => {
   const [log, setLog] = useState<string>('')
   const runTimeRef = useRef<any>()
   const runTimeRef1 = useRef<any>()
+
+  const rustCompilerRef = useRef<any>()
 
   const [activeTab, setActiveTab] = useState<string>('output')
   const { data: model } = useCurrentModel()
@@ -245,12 +248,21 @@ const DaRuntimeControl: FC = ({}) => {
                 setIsRunning(true)
                 setActiveTab('output')
                 setLog('')
-                if (runTimeRef.current) {
-                  runTimeRef.current?.runApp(code || '')
+                switch(prototype?.language) {
+                  case 'rust':
+                    if (rustCompilerRef.current) {
+                      rustCompilerRef.current?.requestCompile(code || '')
+                    }
+                    break;
+                  default:
+                    if (runTimeRef.current) {
+                      runTimeRef.current?.runApp(code || '')
+                    }
+                    if (runTimeRef1.current) {
+                      runTimeRef1.current?.runApp(code || '')
+                    }
                 }
-                if (runTimeRef1.current) {
-                  runTimeRef1.current?.runApp(code || '')
-                }
+                
                 const userId = currentUser?.id || 'Anonymous'
                 addLog({
                   name: `User ${userId} run prototype`,
@@ -268,17 +280,30 @@ const DaRuntimeControl: FC = ({}) => {
               disabled={!isRunning}
               onClick={() => {
                 setIsRunning(false)
-                if (runTimeRef.current) {
-                  runTimeRef.current?.stopApp()
+                switch(prototype?.language) {
+                  case 'rust':
+                  default:
+                    if (runTimeRef.current) {
+                      runTimeRef.current?.stopApp()
+                    }
+                    if (runTimeRef1.current) {
+                      runTimeRef1.current?.stopApp()
+                    }
+                    break;
                 }
-                if (runTimeRef1.current) {
-                  runTimeRef1.current?.stopApp()
-                }
+                
               }}
               className={`${isExpand && 'mx-2'} da-label-regular-bold mt-1 flex items-center justify-center rounded border border-da-gray-medium p-2 hover:bg-da-gray-medium disabled:text-da-gray-medium`}
             >
               <IoStop />
             </button>
+
+            { prototype?.language == 'rust' && <DaRemoteCompileRust 
+              ref={rustCompilerRef}
+              onResponse={(log, isDone) => {
+                appendLog(log)
+              }}
+              /> } 
           </>
         )}
         <div className="grow"></div>
