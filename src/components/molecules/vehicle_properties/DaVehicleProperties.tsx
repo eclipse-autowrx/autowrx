@@ -25,6 +25,8 @@ const DaVehicleProperties = ({
   const [vehicleProperties, setVehicleProperties] = useState<
     CustomPropertyType[]
   >([])
+  const [vehicleCategory, setVehicleCategory] =
+    useState<string>('Passenger cars')
 
   const toggleVisibility = () => {
     setIsVisible(!isVisible)
@@ -66,15 +68,20 @@ const DaVehicleProperties = ({
         </div>
       )}
       <DaPopup state={[isOpenUpdateForm, setIsOpenUpdateForm]} trigger={<></>}>
-        <div className="flex flex-col h-fit max-h-[90vh] w-[1000px] max-w-[70vw] md:max-w-[55vw] 2xl:max-w-[45vw] p-4">
+        <div className="flex flex-col h-fit max-h-[90vh] min-w-[600px] lg:min-w-[800px] max-w-[70vw] md:max-w-[55vw] 2xl:max-w-[45vw] p-4">
           <DaText variant="title" className="text-da-primary-500">
             Update vehicle properties
           </DaText>
           <div className="rounded-lgtext-sm flex h-full w-full flex-col bg-white">
             <FormUpdateVehicleProperties
-              onSaveRequirements={() => {}}
+              onSaveRequirements={() => {
+                console.log('Properties will be saved: ', vehicleProperties)
+                console.log('Vehicle category will be save: ', vehicleCategory)
+              }}
               customProperties={vehicleProperties}
               setCustomProperties={setVehicleProperties}
+              vehicleCategory={vehicleCategory}
+              setVehicleCategory={setVehicleCategory}
             />
           </div>
         </div>

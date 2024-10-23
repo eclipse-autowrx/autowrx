@@ -20,15 +20,30 @@ const handleChange = (
 ) => {
   let updatedValue: string | number | boolean | null = value
 
-  // Convert the value based on the type
-  if (property.type === 'boolean') {
-    updatedValue = value === 'true'
-  } else if (property.type === 'number') {
-    updatedValue = Number(value)
-  } else if (property.type === 'null') {
-    updatedValue = null
+  if (name === 'type') {
+    // When type changes, reset the value appropriately
+    if (value === 'boolean') {
+      updatedValue = false
+    } else if (value === 'number') {
+      updatedValue = 0
+    } else if (value === 'null') {
+      updatedValue = null
+    } else {
+      updatedValue = ''
+    }
+    // Update the property with the new type and reset value
+    onUpdate({ ...property, type: value as PropertyType, value: updatedValue })
+  } else {
+    // Handle other changes like name or value based on the current type
+    if (property.type === 'boolean') {
+      updatedValue = value === 'true'
+    } else if (property.type === 'number') {
+      updatedValue = Number(value)
+    } else if (property.type === 'null') {
+      updatedValue = null
+    }
+    onUpdate({ ...property, [name]: updatedValue })
   }
-  onUpdate({ ...property, [name]: updatedValue })
 }
 
 const DaCustomPropertyItem = ({
@@ -55,9 +70,10 @@ const DaCustomPropertyItem = ({
       />
       <DaSelect
         value={property.type}
-        onValueChange={(type) =>
+        onValueChange={(type) => {
+          // console.log('selected type', type)
           handleChange('type', type as PropertyType, property, onUpdate)
-        }
+        }}
         wrapperClassName="col-span-2 bg-gray-100"
       >
         <DaSelectItem value="string">String</DaSelectItem>

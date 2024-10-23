@@ -1,16 +1,19 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import { DaButton } from '@/components/atoms/DaButton'
 import DaCustomPropertyItem from '../vehicle_properties/DaCustomPropertyItem'
 import { CustomPropertyType } from '@/types/property.type'
 import DaText from '@/components/atoms/DaText'
 import * as lodash from 'lodash'
+import { vehicleClasses } from '@/data/vehicle_classification'
 
 interface FormUpdateVehiclePropertiesProps {
   customProperties: CustomPropertyType[]
   setCustomProperties: React.Dispatch<
     React.SetStateAction<CustomPropertyType[]>
   >
+  vehicleCategory: string
+  setVehicleCategory: React.Dispatch<React.SetStateAction<string>>
   onSaveRequirements: () => void
 }
 
@@ -20,31 +23,34 @@ const isPropertyEmpty = (property: CustomPropertyType) => {
       ? property.value.trim() === ''
       : property.value === null || property.value === undefined
 
-  return (property.name?.trim() === '' || !property.name) && isValueEmpty
+  const isNameEmpty =
+    typeof property.name === 'string'
+      ? property.name.trim() === ''
+      : !property.name // If it's not a string, consider it empty
+
+  return isNameEmpty && isValueEmpty
 }
 
 const FormUpdateVehicleProperties = ({
   customProperties,
   setCustomProperties,
   onSaveRequirements,
+  setVehicleCategory,
+  vehicleCategory,
 }: FormUpdateVehiclePropertiesProps) => {
-  const [vehicleType, setVehicleType] = useState('Passenger cars')
+  // Initialize the initial values once when the component mounts
+  const [initialCustomProperties, setInitialCustomProperties] = useState<
+    CustomPropertyType[]
+  >(lodash.cloneDeep(customProperties))
 
-  // Initial refs to store initial values of vehicleType and customProperties
-  const initialCustomPropertiesRef = useRef<CustomPropertyType[] | null>(null)
-  const initialVehicleTypeRef = useRef<string | null>(null)
+  const [initialVehicleType, setInitialVehicleType] =
+    useState<string>(vehicleCategory)
 
-  // Populate the refs on the first render
+  // Reset initial values when new props are received (optional)
   useEffect(() => {
-    if (
-      initialCustomPropertiesRef.current === null &&
-      Array.isArray(customProperties) && // Ensure it's an array
-      customProperties.length > 0
-    ) {
-      initialCustomPropertiesRef.current = lodash.cloneDeep(customProperties)
-      initialVehicleTypeRef.current = vehicleType
-    }
-  }, [customProperties, vehicleType])
+    setInitialCustomProperties(lodash.cloneDeep(customProperties))
+    setInitialVehicleType(vehicleCategory)
+  }, [])
 
   const addCustomProperty = () => {
     setCustomProperties([
@@ -73,40 +79,35 @@ const FormUpdateVehicleProperties = ({
     (property) => !isPropertyEmpty(property),
   )
 
-  const filteredInitialProperties = initialCustomPropertiesRef.current
-    ? initialCustomPropertiesRef.current.filter(
-        (property) => !isPropertyEmpty(property),
-      )
-    : []
+  const filteredInitialProperties = initialCustomProperties.filter(
+    (property) => !isPropertyEmpty(property),
+  )
 
   const hasChanges =
-    initialCustomPropertiesRef.current !== null &&
-    (initialVehicleTypeRef.current !== vehicleType ||
-      !lodash.isEqual(filteredInitialProperties, filteredCurrentProperties))
+    initialVehicleType !== vehicleCategory || // Compare the initial and current vehicle categories
+    !lodash.isEqual(filteredInitialProperties, filteredCurrentProperties) // Compare initial and current custom properties
 
   // Reset to initial values when "Discard Changes" is clicked
   const handleCancelChanges = () => {
-    if (initialCustomPropertiesRef.current) {
-      setCustomProperties(lodash.cloneDeep(initialCustomPropertiesRef.current))
-      setVehicleType(initialVehicleTypeRef.current!)
-    }
+    setCustomProperties(lodash.cloneDeep(initialCustomProperties))
+    setVehicleCategory(initialVehicleType)
   }
 
-  // Save changes and reset the initial references
+  // Save changes and reset the initial state variables
   const handleSaveRequirements = () => {
     onSaveRequirements()
-    initialCustomPropertiesRef.current = lodash.cloneDeep(customProperties)
-    initialVehicleTypeRef.current = vehicleType
+    setInitialCustomProperties(lodash.cloneDeep(customProperties))
+    setInitialVehicleType(vehicleCategory)
   }
 
-  const vehicleTypes = ['Passenger cars', 'Trucks', 'Buses', 'Motorcycles']
+  const vehicleTypes = vehicleClasses.map((vehicleClass) => vehicleClass.name)
 
   return (
     <div className="flex flex-col mt-4">
       <DaText variant="regular-bold">Category</DaText>
       <DaSelect
-        value={vehicleType}
-        onValueChange={setVehicleType}
+        value={vehicleCategory}
+        onValueChange={setVehicleCategory}
         wrapperClassName="bg-gray-100 rounded-lg mt-1"
       >
         {vehicleTypes.map((type) => (
