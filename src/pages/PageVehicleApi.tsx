@@ -9,6 +9,8 @@ import DaTreeView from '@/components/molecules/DaTreeView'
 import DaLoadingWrapper from '@/components/molecules/DaLoadingWrapper'
 import useModelStore from '@/stores/modelStore'
 import { TbBinaryTree2, TbList } from 'react-icons/tb'
+import useCurrentModel from '@/hooks/useCurrentModel'
+import DaText from '@/components/atoms/DaText'
 
 const PageVehicleApi = () => {
   const { model_id, tab } = useParams()
@@ -16,6 +18,7 @@ const PageVehicleApi = () => {
   const [selectedApi, setSelectedApi] = useState<VehicleApi | null>(null)
   const [activeTab, setActiveTab] = useState<'list' | 'tree'>('list')
   const [activeModelApis] = useModelStore((state) => [state.activeModelApis])
+  const { data: model } = useCurrentModel()
 
   const handleApiClick = (apiDetails: VehicleApi) => {
     // console.log('apiDetails', apiDetails)
@@ -51,6 +54,9 @@ const PageVehicleApi = () => {
               Tree View
             </DaTabItem>
           </div>
+          <DaText variant="regular-bold" className="text-da-primary-500 pr-4">
+            {(model && model.api_version) ?? 'COVESA VSS 4.1'}
+          </DaText>
         </div>
         {activeTab === 'list' && (
           <>

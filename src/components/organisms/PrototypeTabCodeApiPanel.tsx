@@ -5,12 +5,10 @@ import useModelStore from '@/stores/modelStore'
 import { DaText } from '../atoms/DaText'
 import { DaApiListItem } from '../molecules/DaApiList'
 import ModelApiList from './ModelApiList'
-import { TbCopy, TbSearch } from 'react-icons/tb'
 import { getApiTypeClasses } from '@/lib/utils'
 import { DaCopy } from '../atoms/DaCopy'
 import DaTabItem from '../atoms/DaTabItem'
-import { DaInput } from '../atoms/DaInput'
-import DaFilter from '../atoms/DaFilter'
+import useCurrentModel from '@/hooks/useCurrentModel'
 
 interface ApiCodeBlockProps {
   apiName: string
@@ -18,29 +16,26 @@ interface ApiCodeBlockProps {
 }
 
 const ApiCodeBlock = ({ apiName, sampleLabel }: ApiCodeBlockProps) => {
-  const [code, setCode] = useState<any>(null)
-  useEffect(() => {
-    setCode(`await v${apiName.substring(1)}`)
-  }, [apiName])
   return (
     <div className="flex flex-col">
-      <DaCopy textToCopy={code} className="items-center w-fit pt-3">
-        <div className="flex w-full items-center">
-          <DaText
-            variant="regular-bold"
-            className="w-fit shrink-0 text-da-gray-medium"
-          >
-            Sample code to subscribe API value
-          </DaText>
-        </div>
+      <DaCopy
+        textToCopy={`await ${apiName}`}
+        className="flex h-6 items-center w-fit mt-3"
+      >
+        <DaText
+          variant="small"
+          className="flex w-fit shrink-0 text-da-gray-medium"
+        >
+          {sampleLabel}
+        </DaText>
       </DaCopy>
 
-      <div className="flex flex-wrap w-full min-w-fit px-3 py-3 mt-2 bg-gray-100 rounded justify-between">
+      <div className="flex flex-wrap w-full min-w-fit px-3 py-3 mt-2 bg-gray-100 rounded-lg justify-between border">
         <DaText
-          variant="regular"
-          className="w-full font-mono whitespace-pre-line"
+          variant="small"
+          className="w-full font-mono text-da-gray-dark whitespace-pre-line"
         >
-          {code}
+          <span className="text-blue-600 font-mono">await</span> {apiName}
         </DaText>
       </div>
     </div>
@@ -61,7 +56,7 @@ const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
     <div className="flex flex-col">
       {activeApi && (
         <div className="flex flex-col w-full">
-          <div className="flex py-1 items-center da-label-sub-title border-b border-da-gray-light justify-between">
+          <div className="flex pb-2 items-center da-label-sub-title border-b border-da-gray-light justify-between">
             <DaCopy textToCopy={activeApi.name}>
               <DaText
                 variant="sub-title"
@@ -84,22 +79,31 @@ const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
                 </div>
               </div>
             )}
+            {['attribute'].includes(activeApi.type) && (
+              <div>
+                <div className="mt-4 text-da-gray-dark py-1 flex items-center da-label-regular">
+                  An attribute has a default value, but not all Vehicle Signal
+                  Specification attributes include one. OEMs must define or
+                  override defaults if needed to match the actual vehicle.
+                </div>
+              </div>
+            )}
             {['actuator', 'sensor'].includes(activeApi.type) && (
               <ApiCodeBlock
                 apiName={activeApi.name + '.get()'}
-                sampleLabel="Sample code to get API value"
+                sampleLabel="Sample code to get signal value"
               />
             )}
             {['actuator'].includes(activeApi.type) && (
               <ApiCodeBlock
                 apiName={activeApi.name + '.set(value)'}
-                sampleLabel="Sample code to set API value"
+                sampleLabel="Sample code to set signal value"
               />
             )}
             {['actuator', 'sensor'].includes(activeApi.type) && (
               <ApiCodeBlock
                 apiName={activeApi.name + '.subscribe(function_name)'}
-                sampleLabel="Sample code to subscribe API value"
+                sampleLabel="Sample code to subscribe signal value"
               />
             )}
           </div>
@@ -117,6 +121,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   code,
 }) => {
   const [tab, setTab] = useState<'used-signals' | 'all-signals'>('used-signals')
+  const { data: model } = useCurrentModel()
 
   const [activeModelApis] = useModelStore(
     (state) => [state.activeModelApis],
@@ -159,19 +164,27 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
         />
       </DaPopup>
 
-      <div className="flex border-b mx-3 mt-2">
-        <DaTabItem
-          onClick={() => setTab('used-signals')}
-          active={tab === 'used-signals'}
+      <div className="flex justify-between border-b mx-3 mt-2">
+        <div className="flex">
+          <DaTabItem
+            onClick={() => setTab('used-signals')}
+            active={tab === 'used-signals'}
+          >
+            Used Signals
+          </DaTabItem>
+          <DaTabItem
+            onClick={() => setTab('all-signals')}
+            active={tab === 'all-signals'}
+          >
+            All Signals
+          </DaTabItem>
+        </div>
+        <DaText
+          variant="small-bold"
+          className="text-da-primary-500 py-0.5 mr-1"
         >
-          Used Signals
-        </DaTabItem>
-        <DaTabItem
-          onClick={() => setTab('all-signals')}
-          active={tab === 'all-signals'}
-        >
-          All Signals
-        </DaTabItem>
+          {(model && model.api_version) ?? 'COVESA VSS 4.1'}
+        </DaText>
       </div>
 
       {tab === 'used-signals' && (
