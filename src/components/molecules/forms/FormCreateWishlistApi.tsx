@@ -10,6 +10,8 @@ import useCurrentModel from '@/hooks/useCurrentModel'
 import { CustomApi } from '@/types/model.type'
 import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { createExtendedApi } from '@/services/extendedApis.service'
+import useModelStore from '@/stores/modelStore'
 
 interface FormCreateWishlistApiProps {
   onClose: () => void
@@ -59,7 +61,8 @@ const FormCreateWishlistApi = ({
   const [error, setError] = useState('')
   const [data, setData] = useState(initialData)
   const { refetch } = useCurrentModel()
-
+  const refreshModel = useModelStore((state) => state.refreshModel)
+  const { data: currentModel } = useCurrentModel()
   const { data: currentUser } = useSelfProfileQuery()
 
   const validate = useCallback((data: CreateWishlistAPI) => {
@@ -146,6 +149,40 @@ const FormCreateWishlistApi = ({
       setError('Something went wrong')
     }
   }
+
+  const createWishlistApiAlt = async (data: any) => {
+    try {
+      const customApi = await createExtendedApi({
+        apiName: data.name,
+        model: modelId,
+        skeleton: '{}',
+        description: data.description,
+        type: data.type,
+        datatype: data.datatype,
+      })
+
+      await refreshModel()
+
+      addLog({
+        name: `Create wishlist Signal ${customApi.name}`,
+        description: `User ${currentUser?.email} created wishlist Signal ${customApi.name} in model ${modelId}`,
+        type: 'create-wishlist',
+        create_by: currentUser?.id!,
+        ref_id: modelId,
+        ref_type: 'model',
+      })
+
+      onApiCreate(customApi)
+      onClose()
+    } catch (error) {
+      if (isAxiosError(error)) {
+        setError(error.response?.data?.message ?? 'Something went wrong')
+        return
+      }
+      setError('Something went wrong')
+    }
+  }
+
   const handleChange =
     (key: keyof typeof data) => (e: React.ChangeEvent<HTMLInputElement>) => {
       setData((prev) => ({ ...prev, [key]: e.target.value }))
@@ -160,7 +197,6 @@ const FormCreateWishlistApi = ({
   }
 
   const handleDatatypeChange = (value: string) => {
-    console.log(value)
     setData((prev) => ({
       ...prev,
       datatype: value,
@@ -170,7 +206,11 @@ const FormCreateWishlistApi = ({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
-    await createWishlistApi(data)
+    if (currentModel?.api_version) {
+      await createWishlistApiAlt(data)
+    } else {
+      await createWishlistApi(data)
+    }
     setLoading(false)
   }
 

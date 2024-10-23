@@ -23,7 +23,7 @@ const PageVehicleApi = () => {
     navigate(`/model/${model_id}/api/${apiDetails.name}`)
   }
 
-  const isLoading = activeModelApis.length === 0
+  const isLoading = activeModelApis?.length === 0
 
   return (
     <DaLoadingWrapper

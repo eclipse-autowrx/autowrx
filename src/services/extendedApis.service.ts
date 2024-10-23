@@ -1,10 +1,25 @@
 import { serverAxios } from './base'
-import { ExtendedApi, ExtendedApiCreate } from '@/types/api.type'
+import {
+  ExtendedApi,
+  ExtendedApiCreate,
+  ExtendedApiRet,
+} from '@/types/api.type'
 
 export const createExtendedApi = async (
   data: ExtendedApiCreate,
-): Promise<ExtendedApi> => {
-  return (await serverAxios.post<ExtendedApi>('/extendedApis', data)).data
+): Promise<ExtendedApiRet> => {
+  const res = (
+    await serverAxios.post<ExtendedApi>('/extendedApis', {
+      ...data,
+      type: data.type ?? 'branch',
+    })
+  ).data
+  return {
+    ...res,
+    name: res.apiName,
+    type: res.type ?? 'branch',
+    description: res.description ?? '',
+  }
 }
 
 export const getExtendedApi = async (name: string, model_id: string) => {
@@ -25,4 +40,8 @@ export const updateExtendedApi = async (
       data,
     )
   ).data
+}
+
+export const deleteExtendedApi = async (id: string) => {
+  return (await serverAxios.delete(`/extendedApis/${id}`)).data
 }

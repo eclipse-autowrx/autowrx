@@ -51,11 +51,11 @@ const ModelApiList = ({ onApiClick, readOnly }: ModelApiListProps) => {
 
     let foundApi
     if (api) {
-      foundApi = activeModelApis.find((apiItem) => apiItem.name === api) // set active api from params
+      foundApi = activeModelApis?.find((apiItem) => apiItem.name === api) // set active api from params
     }
 
-    if (!foundApi && activeModelApis.length > 0) {
-      foundApi = activeModelApis[0] // set "Vehicle" as active if no api found in params
+    if (!foundApi && activeModelApis && activeModelApis.length > 0) {
+      foundApi = activeModelApis && activeModelApis[0] // set "Vehicle" as active if no api found in params
     }
 
     const querys = new URLSearchParams(location.search) // set search term from query params
@@ -73,7 +73,9 @@ const ModelApiList = ({ onApiClick, readOnly }: ModelApiListProps) => {
   const debouncedFilter = useCallback(
     debounce(
       (searchTerm, selectedFilters, activeModelApis, setFilteredApiList) => {
-        let filteredList = activeModelApis.filter((apiItem: any) =>
+        if (!activeModelApis) return
+
+        let filteredList = activeModelApis?.filter((apiItem: any) =>
           apiItem.name.toLowerCase().includes(searchTerm.toLowerCase()),
         )
 

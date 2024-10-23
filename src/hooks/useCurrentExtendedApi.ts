@@ -9,6 +9,7 @@ const useCurrentExtendedApi = () => {
     queryKey: ['current-extended-api', model_id, api],
     queryFn: () => getExtendedApi(api!, model_id!),
     enabled: !!model_id && !!api,
+    retry: false,
   })
 }
 
