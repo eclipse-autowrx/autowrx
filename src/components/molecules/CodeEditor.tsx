@@ -9,7 +9,7 @@ export interface CodeEditorProps {
   code: string
   setCode: (code: string) => void
   editable?: boolean
-  language: 'python' | 'json'
+  language: string
   // onFocus: () => void,
   onBlur: () => void
 }

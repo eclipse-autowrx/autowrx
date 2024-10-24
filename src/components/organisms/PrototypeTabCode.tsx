@@ -125,6 +125,10 @@ const PrototypeTabCode: FC = ({}) => {
             </div>
           )}
 
+          <div className='mr-2'>
+            Language: <b>{(prototype.language||'python').toUpperCase()}</b>
+          </div>
+
           {/* <div className="flex h-full w-fit justify-end">
               <DaTabItem
                 small
@@ -140,7 +144,7 @@ const PrototypeTabCode: FC = ({}) => {
             code={code || ''}
             setCode={setCode}
             editable={isAuthorized}
-            language="python"
+            language={prototype.language || "python"}
             onBlur={saveCodeToDb}
           />
         </Suspense>
