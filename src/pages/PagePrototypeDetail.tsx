@@ -23,24 +23,16 @@ import { DaButton } from '@/components/atoms/DaButton'
 import { TbMessage } from 'react-icons/tb'
 import DaDiscussions from '@/components/molecules/DaDiscussions'
 import DaStaging from '@/components/molecules/staging/DaStaging'
+import PrototypeTabJourney from '@/components/organisms/PrototypeTabJourney'
+import PrototypeTabArchitecture from '@/components/organisms/PrototypeTabArchitecture'
+import PrototypeTabCode from '@/components/organisms/PrototypeTabCode'
+import PrototypeTabDashboard from '@/components/organisms/PrototypeTabDashboard'
 
-const PrototypeTabCode = lazy(
-  () => import('@/components/organisms/PrototypeTabCode'),
-)
-const PrototypeTabDashboard = lazy(
-  () => import('@/components/organisms/PrototypeTabDashboard'),
-)
-const PrototypeTabJourney = lazy(
-  () => import('@/components/organisms/PrototypeTabJourney'),
-)
 const PrototypeTabFeedback = lazy(
   () => import('@/components/organisms/PrototypeTabFeedback'),
 )
 const PrototypeTabHomologation = lazy(
   () => import('@/components/organisms/PrototypeTabHomologation'),
-)
-const PrototypeTabArchitecture = lazy(
-  () => import('@/components/organisms/PrototypeTabArchitecture'),
 )
 
 interface ViewPrototypeProps {
@@ -153,31 +145,15 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
       </div>
 
       <div className="flex flex-col h-full overflow-y-auto">
-        {isDefaultTab && (
-          <Suspense>
-            <PrototypeTabJourney prototype={prototype} />
-          </Suspense>
-        )}
-        {tab == 'architecture' && (
-          <Suspense>
-            <PrototypeTabArchitecture />
-          </Suspense>
-        )}
-        {tab == 'code' && (
-          <Suspense>
-            <PrototypeTabCode />
-          </Suspense>
-        )}
+        {isDefaultTab && <PrototypeTabJourney prototype={prototype} />}
+        {tab == 'architecture' && <PrototypeTabArchitecture />}
+        {tab == 'code' && <PrototypeTabCode />}
         {tab == 'flow' && (
           <div className="p-8">
             <DaText variant="huge">Flow Page</DaText>
           </div>
         )}
-        {tab == 'dashboard' && (
-          <Suspense>
-            <PrototypeTabDashboard />
-          </Suspense>
-        )}
+        {tab == 'dashboard' && <PrototypeTabDashboard />}
         {tab == 'homologation' && (
           <Suspense>
             <PrototypeTabHomologation />
