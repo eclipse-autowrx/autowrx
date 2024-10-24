@@ -12,7 +12,7 @@ interface RemoteCompileRustProps {
   }
 
 //const DEFAULT_RUST_COMPILER_SERVER = "http://127.0.0.1:5001"
-const DEFAULT_RUST_COMPILER_SERVER = localStorage.get("rusturl") || "https://rust-compiler.digital.auto"
+const DEFAULT_RUST_COMPILER_SERVER = localStorage.getItem("rusturl") || "https://rust-compiler.digital.auto"
 
 const DaRemoteCompileRust = forwardRef<any, RemoteCompileRustProps>(({remoteServer, onResponse}, ref) => {
     useImperativeHandle(ref, () => {
