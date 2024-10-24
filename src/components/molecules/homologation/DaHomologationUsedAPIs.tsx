@@ -8,6 +8,7 @@ import DaHomologationApiListItem from './DaHomologationApiListItem'
 import useCurrentModelApi from '@/hooks/useCurrentModelApi'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import DaLoading from '@/components/atoms/DaLoading'
+import { TbLoader } from 'react-icons/tb'
 
 type DaHomologationUsedAPIsProps = {
   selectedAPIs: Set<VehicleAPI>
@@ -19,9 +20,13 @@ const DaHomologationUsedAPIs = ({
   setSelectedAPIs,
 }: DaHomologationUsedAPIsProps) => {
   const [usedAPIs, setUsedAPIs] = useState<VehicleAPI[]>([])
-  const { data: prototype } = useCurrentPrototype()
+  const { data: prototype, refetch } = useCurrentPrototype()
   const { data: currentApi, isLoading } = useCurrentModelApi()
   const { data: model } = useCurrentModel()
+
+  useEffect(() => {
+    refetch()
+  }, [])
 
   const convertNodeToItem = useCallback(
     (
@@ -117,7 +122,7 @@ const DaHomologationUsedAPIs = ({
       }
       setUsedAPIs([])
     })()
-  }, [fetchAPIs])
+  }, [fetchAPIs, prototype])
 
   const selectAPIHandler = (api: VehicleAPI) => () => {
     if (selectedAPIs.has(api)) {
@@ -159,7 +164,7 @@ const DaHomologationUsedAPIs = ({
 
       {/* List of used APIs */}
       {isLoading ? (
-        <DaLoading />
+        <TbLoader className="animate-spin text-lg m-auto" />
       ) : usedAPIs.length > 0 ? (
         <ul className="flex-1 min-h-0 overflow-y-auto scroll-gray -mx-2">
           {usedAPIs.map((api, index) => (
