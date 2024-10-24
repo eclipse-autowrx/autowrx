@@ -54,7 +54,9 @@ const DaVisibilityControl: React.FC<VisibilityControlProps> = ({
     <div className="flex justify-between items-center border px-4 py-2.5 mt-3 rounded-lg">
       <DaText variant="sub-title" className="text-da-gray-medium">
         Visibility:{' '}
-        <DaText className="text-da-accent-500 capitalize ">{visibility}</DaText>
+        <DaText className="text-da-accent-500 capitalize !font-medium">
+          {visibility}
+        </DaText>
       </DaText>
       <DaButton
         onClick={toggleVisibility}
