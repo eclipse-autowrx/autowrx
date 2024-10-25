@@ -125,8 +125,8 @@ const PrototypeTabCode: FC = ({}) => {
             </div>
           )}
 
-          <div className='mr-2'>
-            Language: <b>{(prototype.language||'python').toUpperCase()}</b>
+          <div className="mr-2 da-label-small">
+            Language: <b>{(prototype.language || 'python').toUpperCase()}</b>
           </div>
 
           {/* <div className="flex h-full w-fit justify-end">
@@ -144,7 +144,7 @@ const PrototypeTabCode: FC = ({}) => {
             code={code || ''}
             setCode={setCode}
             editable={isAuthorized}
-            language={prototype.language || "python"}
+            language={prototype.language || 'python'}
             onBlur={saveCodeToDb}
           />
         </Suspense>
