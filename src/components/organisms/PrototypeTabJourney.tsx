@@ -33,6 +33,8 @@ import { downloadPrototypeZip } from '@/lib/zipUtils'
 import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import DaInputWithLabel from '../atoms/DaInputWithLabel'
+import { CustomRequirement } from '@/types/model.type'
+import DaCustomRequirements from '../molecules/prototype_requirements/DaCustomRequirements'
 
 interface PrototypeTabJourneyProps {
   prototype: Prototype
@@ -57,6 +59,9 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
   const [isUploading, setIsUploading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [confirmPopupOpen, setConfirmPopupOpen] = useState(false)
+  const [customRequirements, setCustomRequirements] = useState<
+    CustomRequirement[]
+  >([])
 
   const { data: currentUser } = useSelfProfileQuery()
 
@@ -399,6 +404,16 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
           defaultValue={localPrototype.customer_journey}
           onChange={(value) => handleChange('customer_journey', value)}
           isEditing={isEditing}
+        />
+      </div>
+      <div className="flex flex-col w-full items-center justify-center py-8 space-y-8">
+        <DaText variant="title" className="text-da-primary-500">
+          Requirements
+        </DaText>
+        <DaCustomRequirements
+          customRequirements={JSON.parse(localPrototype.requirements ?? '[]')}
+          setCustomRequirements={setCustomRequirements}
+          onSaveRequirements={() => handleSave()}
         />
       </div>
     </div>

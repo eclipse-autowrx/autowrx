@@ -50,10 +50,10 @@ const DaVehicleProperties = ({
 
   useEffect(() => {
     if (model) {
-      setVehicleProperties(JSON.parse(model.property))
+      setVehicleProperties(JSON.parse(model.property ?? '[]'))
       setVehicleCategory(model.vehicle_category)
     }
-  }, [model])
+  }, [model, isOpenUpdateForm])
 
   return (
     <div className={cn('border rounded-md py-2 px-4', className)}>
@@ -100,14 +100,19 @@ const DaVehicleProperties = ({
           )}
         </div>
       )}
-      <DaPopup state={[isOpenUpdateForm, setIsOpenUpdateForm]} trigger={<></>}>
+      <DaPopup
+        state={[isOpenUpdateForm, setIsOpenUpdateForm]}
+        trigger={<></>}
+        onClose={() => setIsOpenUpdateForm(false)}
+        closeBtnClassName="top-10 right-10 size-6"
+      >
         <div className="flex flex-col h-fit max-h-[90vh] min-w-[600px] lg:min-w-[800px] max-w-[70vw] md:max-w-[55vw] 2xl:max-w-[45vw] p-4">
           <DaText variant="title" className="text-da-primary-500">
             Update vehicle properties
           </DaText>
           <div className="rounded-lgtext-sm flex h-full w-full flex-col bg-white">
             <FormUpdateVehicleProperties
-              onSaveRequirements={() => {
+              onSaveProperties={() => {
                 // console.log('Properties will be saved: ', vehicleProperties)
                 // console.log('Vehicle category will be save: ', vehicleCategory)
                 handleSave()

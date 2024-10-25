@@ -2,6 +2,7 @@ import React, { Fragment, forwardRef, useState } from 'react'
 import Modal from '@mui/material/Modal'
 import clsx from 'clsx'
 import { TbX } from 'react-icons/tb'
+import { cn } from '@/lib/utils'
 
 interface PopupProps {
   trigger: React.ReactElement
@@ -11,6 +12,7 @@ interface PopupProps {
   className?: string
   disableBackdropClick?: boolean
   onClose?: () => void
+  closeBtnClassName?: string
 }
 
 const DaPopup = forwardRef<HTMLDivElement, PopupProps>(
@@ -23,6 +25,7 @@ const DaPopup = forwardRef<HTMLDivElement, PopupProps>(
       className,
       disableBackdropClick,
       onClose,
+      closeBtnClassName,
     },
     ref,
   ) => {
@@ -49,7 +52,10 @@ const DaPopup = forwardRef<HTMLDivElement, PopupProps>(
           >
             {onClose && (
               <TbX
-                className="absolute size-5 top-5 right-5 hover:text-red-500 hover:cursor-pointer"
+                className={cn(
+                  'absolute size-5 top-5 right-5 hover:text-red-500 hover:cursor-pointer',
+                  closeBtnClassName,
+                )}
                 onClick={onClose}
               />
             )}
