@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 
-import { headerHeight } from './constants'
 import clsx from 'clsx'
 import { RegulationRegion } from './types'
 import HomologationRegulationResultList from './DaHomologationRegulationResultList'
@@ -10,6 +9,7 @@ import {
   Regulation,
   getCertivityRegulationsService,
   supportedCertivityApis,
+  supportedCertivityApis_v4_map,
 } from '@/services/certivity.service'
 
 type HomologationRegulationResultProps = {
@@ -89,7 +89,11 @@ const HomologationRegulationResult = ({
 
           const regulationsResponse = await getCertivityRegulationsService(
             Array.from(selectedAPIs.values())
-              .map((api) => api.name)
+              .map((api) => {
+                return supportedCertivityApis.has(api.name)
+                  ? api.name
+                  : supportedCertivityApis_v4_map[api.name]
+              })
               .filter((value) => supportedCertivityApis.has(value)),
           )
           if (!regulationsResponse) throw new Error('No regulations found')
