@@ -125,10 +125,10 @@ const FormCreateModel = () => {
           ))
         ) : (
           <>
-            <DaSelectItem value="v5.0">COVESA VSS API v5.0</DaSelectItem>
-            <DaSelectItem value="v4.1">COVESA VSS API v4.1</DaSelectItem>
-            <DaSelectItem value="v4.0">COVESA VSS API v4.0</DaSelectItem>
-            <DaSelectItem value="v3.1">COVESA VSS API v3.1</DaSelectItem>
+            <DaSelectItem value="v5.0">COVESA VSS v5.0</DaSelectItem>
+            <DaSelectItem value="v4.1">COVESA VSS v4.1</DaSelectItem>
+            <DaSelectItem value="v4.0">COVESA VSS v4.0</DaSelectItem>
+            <DaSelectItem value="v3.1">COVESA VSS v3.1</DaSelectItem>
           </>
         )}
       </DaSelect>
