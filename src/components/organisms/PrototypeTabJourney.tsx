@@ -354,6 +354,20 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                   ))}
                 </DaSelect>
               </div>
+
+              <div className="flex items-center mb-4">
+                <DaText className="w-[150px]" variant="small-bold">
+                  Status
+                </DaText>
+                <DaSelect
+                  value={localPrototype.state || 'development'}
+                  onValueChange={(value) => handleChange('state', value)}
+                  className="w-full"
+                >
+                  <DaSelectItem value="development">Developing</DaSelectItem>
+                  <DaSelectItem value="Released">Released</DaSelectItem>
+                </DaSelect>
+              </div>
             </div>
           ) : (
             <DaTableProperty
@@ -371,19 +385,16 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                   value: prototype.description.solution,
                 },
                 {
-                  name: 'Status',
-                  value:
-                    prototype.state === 'Released' ||
-                    prototype.state === 'Developing'
-                      ? prototype.state
-                      : 'Developing',
-                },
-                {
                   name: 'Complexity',
                   value:
                     complexityLevels[
                       (Number(prototype.complexity_level) || 3) - 1
                     ],
+                },
+                {
+                  name: 'Status',
+                  value:
+                    prototype.state === 'Released' ? 'Released' : 'Developing',
                 },
               ]}
               className=""
