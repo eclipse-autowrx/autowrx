@@ -14,7 +14,7 @@ interface FormUpdateVehiclePropertiesProps {
   >
   vehicleCategory: string
   setVehicleCategory: React.Dispatch<React.SetStateAction<string>>
-  onSaveRequirements: () => void
+  onSaveProperties: () => void
 }
 
 const isPropertyEmpty = (property: CustomPropertyType) => {
@@ -34,7 +34,7 @@ const isPropertyEmpty = (property: CustomPropertyType) => {
 const FormUpdateVehicleProperties = ({
   customProperties,
   setCustomProperties,
-  onSaveRequirements,
+  onSaveProperties,
   setVehicleCategory,
   vehicleCategory,
 }: FormUpdateVehiclePropertiesProps) => {
@@ -94,8 +94,8 @@ const FormUpdateVehicleProperties = ({
   }
 
   // Save changes and reset the initial state variables
-  const handleSaveRequirements = () => {
-    onSaveRequirements()
+  const handleSaveProperties = () => {
+    onSaveProperties()
     setInitialCustomProperties(lodash.cloneDeep(customProperties))
     setInitialVehicleType(vehicleCategory)
   }
@@ -140,11 +140,12 @@ const FormUpdateVehicleProperties = ({
         )}
       </div>
 
-      <div className="flex mt-4 w-full items-center justify-between">
+      <div className="flex mt-6 w-full items-center justify-between">
         <DaButton
           variant="outline-nocolor"
           onClick={addCustomProperty}
           className=" w-fit"
+          size="sm"
         >
           Add Property
         </DaButton>
@@ -153,13 +154,16 @@ const FormUpdateVehicleProperties = ({
             variant="outline-nocolor"
             onClick={handleCancelChanges}
             disabled={!hasChanges} // Disable if there are no changes to discard
+            size="sm"
           >
             Discard Changes
           </DaButton>
           <DaButton
             variant="solid"
-            onClick={handleSaveRequirements}
+            onClick={handleSaveProperties}
             disabled={!hasChanges} // Disable the save button when no changes are detected
+            className="w-20"
+            size="sm"
           >
             Save
           </DaButton>

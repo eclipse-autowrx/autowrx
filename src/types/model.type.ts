@@ -64,6 +64,11 @@ export type Prototype = {
   created_at?: Date
   tags?: Tag[]
   avg_score?: number
+  requirements?: string
+}
+export interface CustomRequirement {
+  text?: string
+  url?: string
 }
 
 export type SearchPrototype = {

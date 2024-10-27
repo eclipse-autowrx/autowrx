@@ -154,7 +154,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   }
 
   return (
-    <div className="flex flex-col w-full h-full">
+    <div className="flex flex-col w-full h-full p-1">
       <DaPopup state={popupApi} width={'800px'} trigger={<span></span>}>
         <APIDetails
           activeApi={activeApi}

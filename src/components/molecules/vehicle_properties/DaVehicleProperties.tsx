@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import DaText from '@/components/atoms/DaText'
 import { DaTableProperty } from '../DaTableProperty'
 import { DaButton } from '@/components/atoms/DaButton'
@@ -8,6 +8,8 @@ import { Property } from '@/types/property.type'
 import DaPopup from '@/components/atoms/DaPopup'
 import FormUpdateVehicleProperties from '../forms/FormUpdateVehicleProperties'
 import { CustomPropertyType } from '@/types/property.type'
+import { updateModelService } from '@/services/model.service'
+import useCurrentModel from '@/hooks/useCurrentModel'
 
 interface VehiclePropertiesProps {
   category: string
@@ -22,6 +24,7 @@ const DaVehicleProperties = ({
 }: VehiclePropertiesProps) => {
   const [isVisible, setIsVisible] = useState(false)
   const [isOpenUpdateForm, setIsOpenUpdateForm] = useState(false)
+  const { data: model, refetch } = useCurrentModel()
   const [vehicleProperties, setVehicleProperties] = useState<
     CustomPropertyType[]
   >([])
@@ -31,6 +34,26 @@ const DaVehicleProperties = ({
   const toggleVisibility = () => {
     setIsVisible(!isVisible)
   }
+
+  const handleSave = async () => {
+    if (!model) return
+    try {
+      await updateModelService(model.id, {
+        property: JSON.stringify(vehicleProperties),
+        vehicle_category: vehicleCategory,
+      })
+      await refetch()
+    } catch (error) {
+      console.error('Error updating model properties', error)
+    }
+  }
+
+  useEffect(() => {
+    if (model) {
+      setVehicleProperties(JSON.parse(model.property ?? '[]'))
+      setVehicleCategory(model.vehicle_category)
+    }
+  }, [model, isOpenUpdateForm])
 
   return (
     <div className={cn('border rounded-md py-2 px-4', className)}>
@@ -58,25 +81,41 @@ const DaVehicleProperties = ({
         </div>
       </div>
       {isVisible && (
-        <div className="mt-2 flex flex-col">
-          <DaText className="font-semibold">Category: {category}</DaText>
-          {properties.length > 0 ? (
-            <DaTableProperty properties={properties} />
+        <div className="flex flex-col mt-4 border-t pt-2">
+          <DaText variant="small-bold" className="font-semibold mr-2">
+            Category: {category}
+          </DaText>
+
+          {vehicleProperties.length > 0 ? (
+            <div className="space-y-1 mt-2">
+              {vehicleProperties.map((item, index) => (
+                <div className="flex space-x-2 text-sm" key={index}>
+                  <div>{item.name}: </div>
+                  <div>{item.value}</div>
+                </div>
+              ))}
+            </div>
           ) : (
             <DaText>No properties available.</DaText>
           )}
         </div>
       )}
-      <DaPopup state={[isOpenUpdateForm, setIsOpenUpdateForm]} trigger={<></>}>
+      <DaPopup
+        state={[isOpenUpdateForm, setIsOpenUpdateForm]}
+        trigger={<></>}
+        onClose={() => setIsOpenUpdateForm(false)}
+        closeBtnClassName="top-10 right-10 size-6"
+      >
         <div className="flex flex-col h-fit max-h-[90vh] min-w-[600px] lg:min-w-[800px] max-w-[70vw] md:max-w-[55vw] 2xl:max-w-[45vw] p-4">
           <DaText variant="title" className="text-da-primary-500">
             Update vehicle properties
           </DaText>
           <div className="rounded-lgtext-sm flex h-full w-full flex-col bg-white">
             <FormUpdateVehicleProperties
-              onSaveRequirements={() => {
-                console.log('Properties will be saved: ', vehicleProperties)
-                console.log('Vehicle category will be save: ', vehicleCategory)
+              onSaveProperties={() => {
+                // console.log('Properties will be saved: ', vehicleProperties)
+                // console.log('Vehicle category will be save: ', vehicleCategory)
+                handleSave()
               }}
               customProperties={vehicleProperties}
               setCustomProperties={setVehicleProperties}
