@@ -4,6 +4,9 @@ import DaRequirementItem from './DaRequirementItems'
 import * as lodash from 'lodash'
 import { DaButton } from '@/components/atoms/DaButton'
 import { cn } from '@/lib/utils'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
+import useCurrentModel from '@/hooks/useCurrentModel'
 
 interface DaCustomRequirementsProps {
   customRequirements: CustomRequirement[]
@@ -21,6 +24,8 @@ const DaCustomRequirements = ({
   const [initialCustomRequirements, setInitialCustomRequirements] = useState<
     CustomRequirement[]
   >(lodash.cloneDeep(customRequirements))
+  const { data: model } = useCurrentModel()
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
 
   useEffect(() => {
     setInitialCustomRequirements(lodash.cloneDeep(customRequirements))
@@ -91,6 +96,7 @@ const DaCustomRequirements = ({
               onDelete={() => {
                 deleteCustomRequirement(index)
               }}
+              isAuthorized={isAuthorized}
             />
           ))
         ) : (
@@ -99,40 +105,42 @@ const DaCustomRequirements = ({
           </div>
         )}
       </div>
-      <div
-        className={cn(
-          'flex w-full items-center justify-between mt-6 ',
-          customRequirements && customRequirements.length > 0
-            ? 'pr-[30px]'
-            : '',
-        )}
-      >
-        <DaButton
-          size="sm"
-          variant="outline-nocolor"
-          onClick={addCustomRequirement}
+      {isAuthorized && (
+        <div
+          className={cn(
+            'flex w-full items-center justify-between mt-6 ',
+            customRequirements && customRequirements.length > 0
+              ? 'pr-[30px]'
+              : '',
+          )}
         >
-          Add Requirement
-        </DaButton>
-        <div className="space-x-2">
           <DaButton
             size="sm"
             variant="outline-nocolor"
-            onClick={handleDiscardChanges}
-            disabled={!hasChanges}
+            onClick={addCustomRequirement}
           >
-            Discard Changes
+            Add Requirement
           </DaButton>
-          <DaButton
-            size="sm"
-            variant="solid"
-            onClick={handleSaveRequirements}
-            disabled={!hasChanges}
-          >
-            Save Requirements
-          </DaButton>
+          <div className="space-x-2">
+            <DaButton
+              size="sm"
+              variant="outline-nocolor"
+              onClick={handleDiscardChanges}
+              disabled={!hasChanges}
+            >
+              Discard Changes
+            </DaButton>
+            <DaButton
+              size="sm"
+              variant="solid"
+              onClick={handleSaveRequirements}
+              disabled={!hasChanges}
+            >
+              Save Requirements
+            </DaButton>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

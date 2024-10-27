@@ -84,7 +84,7 @@ const PrototypeSummary = ({ prototype }: PrototypeSummaryProps) => {
             >
               <DaText
                 variant="small-bold"
-                className="flex min-w-[110px] items-center"
+                className="flex min-w-[110px] items-center text-da-gray-dark"
               >
                 Feedback <TbExternalLink className="size-4 ml-1" />
               </DaText>

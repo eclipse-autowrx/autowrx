@@ -10,7 +10,7 @@ const DaTablePropertyItem = ({ property, value }: DaTablePropertyItemProps) => {
   return (
     <div className="flex w-full h-fit py-2 text-da-gray-medium space-x-4">
       <div className="flex min-w-[100px]">
-        <DaText variant="small-bold" className="!flex">
+        <DaText variant="small-bold" className="!flex text-da-gray-dark">
           {property}
         </DaText>
       </div>

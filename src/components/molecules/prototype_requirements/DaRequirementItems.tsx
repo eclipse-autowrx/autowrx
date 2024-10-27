@@ -10,12 +10,14 @@ interface RequirementItemProps {
   index: number
   onUpdate: (updateRequirement: CustomRequirement) => void
   onDelete: () => void
+  isAuthorized?: boolean
 }
 const DaRequirementItem = ({
   requirement,
   index,
   onUpdate,
   onDelete,
+  isAuthorized,
 }: RequirementItemProps) => {
   const [showTrashButton, setShowTrashButton] = useState(false)
 
@@ -43,6 +45,7 @@ const DaRequirementItem = ({
           wrapperClassName="!bg-gray-100"
           inputClassName="!bg-gray-100"
           className="mt-1"
+          disabled={!isAuthorized}
         />
         <DaText variant="small-bold" className="text-gray-500 mt-2">
           URL:
@@ -57,18 +60,21 @@ const DaRequirementItem = ({
           wrapperClassName="!bg-gray-100"
           inputClassName="!bg-gray-100 w-full"
           className="mt-1"
+          disabled={!isAuthorized}
         />
       </div>
 
-      <div
-        onClick={onDelete}
-        className={cn(
-          'mt-6 ml-2 text-red-500 transition-opacity ease-in-out duration-200 cursor-pointer',
-          showTrashButton ? 'opacity-100' : 'opacity-100',
-        )}
-      >
-        <TbTrash className="size-6" />
-      </div>
+      {isAuthorized && (
+        <div
+          onClick={onDelete}
+          className={cn(
+            'mt-6 ml-2 text-red-500 transition-opacity ease-in-out duration-200 cursor-pointer',
+            showTrashButton ? 'opacity-100' : 'opacity-100',
+          )}
+        >
+          <TbTrash className="size-6" />
+        </div>
+      )}
     </div>
   )
 }
