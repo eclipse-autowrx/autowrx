@@ -27,7 +27,10 @@ const DaItemVerticalStandard: React.FC<DaItemVerticalStandardProps> = ({
           className="w-full h-auto rounded-lg aspect-video object-cover shadow border"
         />
         <div className="flex flex-col items-start w-full space-y-0">
-          <DaText variant="regular-bold" className="line-clamp-1">
+          <DaText
+            variant="regular-bold"
+            className="line-clamp-1 !text-da-gray-dark"
+          >
             {title}
           </DaText>
           <DaText

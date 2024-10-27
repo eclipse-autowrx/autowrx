@@ -24,7 +24,10 @@ const DaItemVerticalType2: React.FC<DaItemVerticalType2Props> = ({
       style={{ maxWidth: maxWidth }}
       onClick={onClick}
     >
-      <DaText variant="sub-title" className="px-2 py-1 line-clamp-1">
+      <DaText
+        variant="sub-title"
+        className="px-2 py-1 line-clamp-1 !text-da-gray-dark"
+      >
         {title}
       </DaText>
       <DaImage

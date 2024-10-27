@@ -106,7 +106,7 @@ const home = [
           'Join us to harness the power of GenAI for the software-defined vehicle (SDV). Win the digital.auto GenAI award by participating in our quarterly competitions. We are looking for novel ways to apply multimodel GenAI to create visually rich',
         imageURL:
           'https://bewebstudio.digitalauto.tech/data/projects/8go3BVLvQX3B/GenAI_Cover.png',
-        redirectURL: 'https://www.bosch-connected-world.com/',
+        redirectURL: 'https://www.digital.auto/genai-award',
       },
     ],
   },
