@@ -94,7 +94,7 @@ const FormUpdateVehicleProperties = ({
   }
 
   // Save changes and reset the initial state variables
-  const handleSaveRequirements = () => {
+  const handleSaveProperties = () => {
     onSaveProperties()
     setInitialCustomProperties(lodash.cloneDeep(customProperties))
     setInitialVehicleType(vehicleCategory)
@@ -160,7 +160,7 @@ const FormUpdateVehicleProperties = ({
           </DaButton>
           <DaButton
             variant="solid"
-            onClick={handleSaveRequirements}
+            onClick={handleSaveProperties}
             disabled={!hasChanges} // Disable the save button when no changes are detected
             className="w-20"
             size="sm"

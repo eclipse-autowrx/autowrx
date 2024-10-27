@@ -30,7 +30,7 @@ const DaRequirementItem = ({
       onMouseLeave={() => setShowTrashButton(false)}
     >
       <div className="flex flex-col w-full">
-        <DaText variant="small-bold" className="text-gray-500">
+        <DaText variant="small-bold" className="text-da-primary-500">
           Requirement {index}
         </DaText>
         <DaInput
@@ -44,7 +44,7 @@ const DaRequirementItem = ({
           inputClassName="!bg-gray-100"
           className="mt-1"
         />
-        <DaText variant="small-bold" className="text-gray-500 mt-4">
+        <DaText variant="small-bold" className="text-gray-500 mt-2">
           URL:
         </DaText>
         <DaInput

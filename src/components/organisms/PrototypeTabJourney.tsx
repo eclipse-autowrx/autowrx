@@ -61,7 +61,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
   const [confirmPopupOpen, setConfirmPopupOpen] = useState(false)
   const [customRequirements, setCustomRequirements] = useState<
     CustomRequirement[]
-  >([])
+  >(JSON.parse(prototype.requirements ?? '[]'))
 
   const { data: currentUser } = useSelfProfileQuery()
 
@@ -85,6 +85,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
       customer_journey: localPrototype.customer_journey,
       image_file: localPrototype.image_file,
       state: localPrototype.state,
+      requirements: JSON.stringify(customRequirements),
     }
     try {
       await updatePrototypeService(prototype.id, updateData)
@@ -411,7 +412,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
           Requirements
         </DaText>
         <DaCustomRequirements
-          customRequirements={JSON.parse(localPrototype.requirements ?? '[]')}
+          customRequirements={customRequirements}
           setCustomRequirements={setCustomRequirements}
           onSaveRequirements={() => handleSave()}
         />

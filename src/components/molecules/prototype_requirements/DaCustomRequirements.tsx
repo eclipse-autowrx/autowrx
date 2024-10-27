@@ -3,6 +3,7 @@ import { CustomRequirement } from '@/types/model.type'
 import DaRequirementItem from './DaRequirementItems'
 import * as lodash from 'lodash'
 import { DaButton } from '@/components/atoms/DaButton'
+import { cn } from '@/lib/utils'
 
 interface DaCustomRequirementsProps {
   customRequirements: CustomRequirement[]
@@ -25,6 +26,12 @@ const DaCustomRequirements = ({
     setInitialCustomRequirements(lodash.cloneDeep(customRequirements))
   }, [])
 
+  const isEmptyRequirement = (requirement: CustomRequirement) => {
+    const text = requirement.text?.trim() ?? ''
+    const url = requirement.url?.trim() ?? ''
+    return !text && !url
+  }
+
   const addCustomRequirement = () => {
     setCustomRequirements([...customRequirements, { text: '', url: '' }])
   }
@@ -44,27 +51,62 @@ const DaCustomRequirements = ({
   }
 
   const handleDiscardChanges = () => {
-    setCustomRequirements(initialCustomRequirements)
+    setCustomRequirements(lodash.cloneDeep(initialCustomRequirements))
   }
 
+  const handleSaveRequirements = () => {
+    const nonEmptyRequirements = customRequirements.filter(
+      (requirement) => !isEmptyRequirement(requirement),
+    )
+    setCustomRequirements(nonEmptyRequirements)
+    onSaveRequirements()
+    setInitialCustomRequirements(lodash.cloneDeep(nonEmptyRequirements))
+  }
+
+  const filteredCurrentRequirements = customRequirements.filter(
+    (requirement) => !isEmptyRequirement(requirement),
+  )
+
+  const filteredInitialRequirements = initialCustomRequirements.filter(
+    (requirement) => !isEmptyRequirement(requirement),
+  )
+
+  const hasChanges = !lodash.isEqual(
+    filteredCurrentRequirements,
+    filteredInitialRequirements,
+  )
+
   return (
-    <div className="flex flex-col w-full">
-      <div className="flex flex-col w-full space-y-2">
-        {customRequirements.map((requirement, index) => (
-          <DaRequirementItem
-            key={index}
-            index={index + 1}
-            requirement={requirement}
-            onUpdate={(updateRequirement) => {
-              updateCustomRequirement(index, updateRequirement)
-            }}
-            onDelete={() => {
-              deleteCustomRequirement(index)
-            }}
-          />
-        ))}
+    <div className="flex flex-col w-full max-w-5xl">
+      <div className="flex flex-col w-full space-y-8">
+        {customRequirements && customRequirements.length > 0 ? (
+          customRequirements.map((requirement, index) => (
+            <DaRequirementItem
+              key={index}
+              index={index + 1}
+              requirement={requirement}
+              onUpdate={(updatedRequirement) => {
+                updateCustomRequirement(index, updatedRequirement)
+              }}
+              onDelete={() => {
+                deleteCustomRequirement(index)
+              }}
+            />
+          ))
+        ) : (
+          <div className="flex h-10 w-full mt-1 px-4 py-2 items-center bg-gray-100 border rounded-md">
+            There's no custom properties yet.
+          </div>
+        )}
       </div>
-      <div className="flex w-full items-center justify-between mt-4 pr-[30px]">
+      <div
+        className={cn(
+          'flex w-full items-center justify-between mt-6 ',
+          customRequirements && customRequirements.length > 0
+            ? 'pr-[30px]'
+            : '',
+        )}
+      >
         <DaButton
           size="sm"
           variant="outline-nocolor"
@@ -76,11 +118,17 @@ const DaCustomRequirements = ({
           <DaButton
             size="sm"
             variant="outline-nocolor"
-            onClick={() => handleDiscardChanges()}
+            onClick={handleDiscardChanges}
+            disabled={!hasChanges}
           >
             Discard Changes
           </DaButton>
-          <DaButton size="sm" variant="solid" onClick={onSaveRequirements}>
+          <DaButton
+            size="sm"
+            variant="solid"
+            onClick={handleSaveRequirements}
+            disabled={!hasChanges}
+          >
             Save Requirements
           </DaButton>
         </div>
