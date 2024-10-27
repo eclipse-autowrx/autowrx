@@ -42,7 +42,7 @@ const LargeCard = ({ item }: { item: CardProps }) => {
           <img
             src={item.imageURL}
             alt={item.title}
-            className="w-full h-[350px]"
+            className="w-full h-[300px] xl:h-[350px] object-cover"
           />
         </div>
         <div className="flex mt-4 items-center">
@@ -122,17 +122,27 @@ const HomeNews = ({ title, items }: HomeNewsProps) => {
       <DaText variant="sub-title" className="text-da-primary-500">
         {title || 'Recent Prototypes'}
       </DaText>
-      <div className="flex space-x-8 mt-4">
-        <div className="w-1/2">
-          {items && items.length > 0 && <LargeCard item={items[0]} />}
-        </div>
-        <div className="w-1/2 flex flex-col space-y-8">
-          {items &&
-            items
-              .slice(1)
-              .map((item, index) => <SmallCard key={index} item={item} />)}
-        </div>
-      </div>
+      {items && items.length > 0 && (
+        <>
+          {/* For small screens, display a grid of 2 columns with LargeCards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 xl:hidden">
+            {items.slice(0, 4).map((item, index) => (
+              <LargeCard key={index} item={item} />
+            ))}
+          </div>
+          {/* For xl screens and above, display the original layout */}
+          <div className="hidden xl:flex space-x-8 mt-4">
+            <div className="w-1/2">
+              <LargeCard item={items[0]} />
+            </div>
+            <div className="w-1/2 flex flex-col space-y-8">
+              {items.slice(1).map((item, index) => (
+                <SmallCard key={index} item={item} />
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
