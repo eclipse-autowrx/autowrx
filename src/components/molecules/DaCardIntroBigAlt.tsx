@@ -24,7 +24,7 @@ const DaCardIntroBig = ({ title, content, url }: CardIntroProps) => {
       onClick={handleLinkClick}
       className={clsx(
         'flex flex-col min-h-28 w-full h-full bg-da-white rounded-lg border p-4 select-none',
-        url ? 'hover:border-da-primary-300' : 'pointer-events-none',
+        url ? '' : 'pointer-events-none',
       )}
     >
       <div className="flex w-full items-center space-x-2">
