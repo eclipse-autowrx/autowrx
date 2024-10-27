@@ -38,7 +38,7 @@ const LargeCard = ({ item }: { item: CardProps }) => {
   return (
     <div className="flex flex-col rounded-md mb-4">
       <a href={item.redirectURL} target="_blank" rel="noopener noreferrer">
-        <div className="flex w-full h-fit border shadow rounded-xl overflow-hidden">
+        <div className="flex w-full h-fit border shadow rounded-lg overflow-hidden">
           <img
             src={item.imageURL}
             alt={item.title}
@@ -77,7 +77,7 @@ const SmallCard = ({ item }: { item: CardProps }) => {
   return (
     <div className="flex space-x-4">
       <a href={item.redirectURL} target="_blank" rel="noopener noreferrer">
-        <div className="flex min-w-[250px] h-fit border shadow rounded-xl overflow-hidden">
+        <div className="flex min-w-[250px] h-fit border shadow rounded-lg overflow-hidden">
           <img
             src={item.imageURL}
             alt={item.title}
