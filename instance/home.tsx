@@ -92,7 +92,7 @@ const home = [
         title: 'digital.auto at ETAS Connections 2024',
         type: 'Event',
         description:
-          'Join us at Bosch Connected World 2024 to learn more about digital.auto',
+          `Check out the digital.auto demo stand and don't miss the panel discussion on continous homologation`,
         imageURL:
           'https://media.licdn.com/dms/image/v2/D5622AQGDWg4yDt6r6A/feedshare-shrink_2048_1536/feedshare-shrink_2048_1536/0/1728543615217?e=1732752000&v=beta&t=X5_hY7cHDgph813Mn2O4I7sctrcxv_wWdXQ7IVYYThU',
         redirectURL:
