@@ -117,7 +117,6 @@ const home = [
   {
     type: 'popular',
     title: 'Popular Prototypes',
-    requiredLogin: true,
   },
   {
     type: 'partner-list',

@@ -113,19 +113,21 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
             {loading && <TbLoader className="animate-spin text-lg mr-2" />}
             Sign in
           </DaButton>
-          <div className="mt-4 flex w-full justify-center items-center">
-            <DaText className="text-da-gray-medium">
-              Don't have an account?
-            </DaText>
-            <DaButton
-              type="button"
-              onClick={() => setAuthType('register')}
-              variant="text"
-              className="text-da-primary-500 !da-label-small !px-1.5"
-            >
-              Register
-            </DaButton>
-          </div>
+          {!config.strictAuth && (
+            <div className="mt-4 flex w-full justify-center items-center">
+              <DaText className="text-da-gray-medium">
+                Don't have an account?
+              </DaText>
+              <DaButton
+                type="button"
+                onClick={() => setAuthType('register')}
+                variant="text"
+                className="text-da-primary-500 !da-label-small !px-1.5"
+              >
+                Register
+              </DaButton>
+            </div>
+          )}
         </div>
       )}
 
