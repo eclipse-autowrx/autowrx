@@ -51,7 +51,6 @@ const FormCreateModel = () => {
     try {
       setLoading(true)
       const body: ModelCreate = {
-        cvi: data.cvi,
         main_api: data.mainApi,
         name: data.name,
         api_version: data.api_version,

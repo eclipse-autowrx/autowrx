@@ -1,3 +1,4 @@
+import { List } from '@/types/common.type'
 import { serverAxios } from './base'
 import {
   ExtendedApi,
@@ -44,4 +45,10 @@ export const updateExtendedApi = async (
 
 export const deleteExtendedApi = async (id: string) => {
   return (await serverAxios.delete(`/extendedApis/${id}`)).data
+}
+
+export const listExtendedApis = async (model_id: string) => {
+  return (
+    await serverAxios.get<List<ExtendedApi>>(`/extendedApis?model=${model_id}`)
+  ).data
 }
