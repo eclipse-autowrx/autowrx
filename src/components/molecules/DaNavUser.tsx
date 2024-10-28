@@ -28,12 +28,12 @@ const DaNavUser = () => {
         <DaUserMenu user={user} />
       ) : (
         <DaButton
-          variant="plain"
+          variant="outline-nocolor"
           onClick={() => {
             setOpenLoginDialog(true) // Open the login dialog
           }}
         >
-          Sign in
+          Sign In
         </DaButton>
       )}
 
