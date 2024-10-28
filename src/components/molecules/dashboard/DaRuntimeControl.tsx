@@ -63,8 +63,8 @@ const DaRuntimeControl: FC = ({}) => {
   const [usedApis, setUsedApis] = useState<any[]>([])
   const [code, setCode] = useState<string>('')
   const [showManageRt, setShowManageRt] = useState<boolean>(false)
-  const [requestContent, setRequestContent] = useState<string>("")
-  const [requestMode, setRequestMode] = useState<string>("")
+  const [requestContent, setRequestContent] = useState<string>('')
+  const [requestMode, setRequestMode] = useState<string>('')
 
   const [isAdvantageMode, setIsAdvantageMode] = useState<number>(-5)
 
@@ -147,7 +147,7 @@ const DaRuntimeControl: FC = ({}) => {
 
   return (
     <div
-      className={`absolute bottom-0 right-0 top-0 z-10 ${isExpand ? 'w-[500px]' : 'w-16'} flex flex-col justify-center bg-da-gray-dark px-1 py-2 text-da-gray-light`}
+      className={`absolute bottom-0 right-0 top-0 z-10 ${isExpand ? 'w-[500px]' : 'w-16'} flex flex-col justify-center bg-da-gray-darkest px-1 py-2 text-da-gray-light`}
     >
       {/* <div>{customKitServer}</div> */}
       {isExpand && isShowEditKitServer && (
@@ -220,12 +220,17 @@ const DaRuntimeControl: FC = ({}) => {
             }}
           />
         )}
-        <div className='pl-2'>
-          <DaButton variant='plain' size="sm"
+        <div className="pl-2">
+          <DaButton
+            variant="plain"
+            size="sm"
             onClick={() => {
               setShowManageRt(true)
-            }}>
-            <div className='text-da-white hover:underline hover:text-da-gray-dark font-semibold text-yellow-300'>Config RT</div>
+            }}
+          >
+            <div className="text-da-white hover:underline hover:text-da-gray-darkest font-semibold text-yellow-300">
+              Config RT
+            </div>
           </DaButton>
         </div>
         <div className="grow" />
@@ -248,12 +253,12 @@ const DaRuntimeControl: FC = ({}) => {
                 setIsRunning(true)
                 setActiveTab('output')
                 setLog('')
-                switch(prototype?.language) {
+                switch (prototype?.language) {
                   case 'rust':
                     if (rustCompilerRef.current) {
                       rustCompilerRef.current?.requestCompile(code || '')
                     }
-                    break;
+                    break
                   default:
                     if (runTimeRef.current) {
                       runTimeRef.current?.runApp(code || '')
@@ -262,7 +267,7 @@ const DaRuntimeControl: FC = ({}) => {
                       runTimeRef1.current?.runApp(code || '')
                     }
                 }
-                
+
                 const userId = currentUser?.id || 'Anonymous'
                 addLog({
                   name: `User ${userId} run prototype`,
@@ -280,7 +285,7 @@ const DaRuntimeControl: FC = ({}) => {
               disabled={!isRunning}
               onClick={() => {
                 setIsRunning(false)
-                switch(prototype?.language) {
+                switch (prototype?.language) {
                   case 'rust':
                   default:
                     if (runTimeRef.current) {
@@ -289,21 +294,22 @@ const DaRuntimeControl: FC = ({}) => {
                     if (runTimeRef1.current) {
                       runTimeRef1.current?.stopApp()
                     }
-                    break;
+                    break
                 }
-                
               }}
               className={`${isExpand && 'mx-2'} da-label-regular-bold mt-1 flex items-center justify-center rounded border border-da-gray-medium p-2 hover:bg-da-gray-medium disabled:text-da-gray-medium`}
             >
               <IoStop />
             </button>
 
-            { prototype?.language == 'rust' && <DaRemoteCompileRust 
-              ref={rustCompilerRef}
-              onResponse={(log, isDone) => {
-                appendLog(log)
-              }}
-              /> } 
+            {prototype?.language == 'rust' && (
+              <DaRemoteCompileRust
+                ref={rustCompilerRef}
+                onResponse={(log, isDone) => {
+                  appendLog(log)
+                }}
+              />
+            )}
           </>
         )}
         <div className="grow"></div>
@@ -349,87 +355,101 @@ const DaRuntimeControl: FC = ({}) => {
       <div className="mt-1 grow overflow-y-auto">
         {isExpand && (
           <>
-            {activeTab == 'output' && <>
-              <div className='h-full flex flex-col'>
-                <p className="da-label-small flex-1 overflow-y-auto whitespace-pre-wrap rounded bg-da-black px-2 py-1 text-da-white">
-                  {log}
-                  <AlwaysScrollToBottom />
-                </p>
-                <div className='bg-gray-700 flex-shrink flex items-center'>
-                  { requestMode && <div className='flex items-center'>
-                    <DaInput
-                      className="grow text-da-black w-[260px]"
-                      value={requestContent}
-                      onChange={(e) => {
-                        setRequestContent(e.target.value)
-                      }}
-                    />
-                    <div className={`ml-2 mr-2 px-2 py-1 rounded ${requestContent.trim()?'text-yellow-500 font-semibold cursor-pointer hover:underline':'text-gray-400 font-thin'} `}
-                      onClick={() => {
-                        if(!requestContent.trim()) return
-                        if (runTimeRef.current) {
-                          runTimeRef.current?.requestInstallLib(requestContent)
-                        }
-                        if (runTimeRef1.current) {
-                          runTimeRef1.current?.requestInstallLib(requestContent)
-                        }
-                        setRequestMode('')
-                        setRequestContent('')
-                      }}
-                      >
-                        Request Install</div>
-                    <div className='px-2 py-1 rounded cursor-pointer hover:underline text-yellow-500 font-semibold'
-                      onClick={() => {
-                        setRequestMode('')
-                        setRequestContent('')
-                      }}
-                      >Cancel</div>
-                  </div>
-                  }
-                  <div className='grow'></div>
-                  { !requestMode &&
-                    <div>
-                      <DaMenu
-                        trigger={
-                          <div className='text-da-white text-sm cursor-pointer px-2 py-1 hover:underline'>Send Request</div>
-                        }
-                      >
-                        <div className="flex flex-col">
-                          <DaButton
-                            onClick={() => {
-                              if (runTimeRef.current) {
-                                runTimeRef.current?.listPythonLibs()
-                              }
-                              if (runTimeRef1.current) {
-                                runTimeRef1.current?.listPythonLibs()
-                              }
-                            }}
-                            variant="plain"
-                            className="da-menu-item "
-                          >
-                            <div className="flex w-full items-center">
-                              List All Python Libraries
-                            </div>
-                          </DaButton>
-                          <DaButton
-                            onClick={() => {
-                              setRequestContent('libname')
-                              setRequestMode('pip-install')
-                            }}
-                            variant="plain"
-                            className="da-menu-item "
-                          >
-                            <div className="flex w-full items-center">
-                              Install New Python Library: pip install libname
-                            </div>
-                          </DaButton>
+            {activeTab == 'output' && (
+              <>
+                <div className="h-full flex flex-col">
+                  <p className="da-label-small flex-1 overflow-y-auto whitespace-pre-wrap rounded bg-da-black px-2 py-1 text-da-white">
+                    {log}
+                    <AlwaysScrollToBottom />
+                  </p>
+                  <div className="bg-gray-700 flex-shrink flex items-center">
+                    {requestMode && (
+                      <div className="flex items-center">
+                        <DaInput
+                          className="grow text-da-black w-[260px]"
+                          value={requestContent}
+                          onChange={(e) => {
+                            setRequestContent(e.target.value)
+                          }}
+                        />
+                        <div
+                          className={`ml-2 mr-2 px-2 py-1 rounded ${requestContent.trim() ? 'text-yellow-500 font-semibold cursor-pointer hover:underline' : 'text-gray-400 font-thin'} `}
+                          onClick={() => {
+                            if (!requestContent.trim()) return
+                            if (runTimeRef.current) {
+                              runTimeRef.current?.requestInstallLib(
+                                requestContent,
+                              )
+                            }
+                            if (runTimeRef1.current) {
+                              runTimeRef1.current?.requestInstallLib(
+                                requestContent,
+                              )
+                            }
+                            setRequestMode('')
+                            setRequestContent('')
+                          }}
+                        >
+                          Request Install
                         </div>
-                      </DaMenu>
-                    </div>
-                  }
-                 </div> 
-              </div>
-            </>}
+                        <div
+                          className="px-2 py-1 rounded cursor-pointer hover:underline text-yellow-500 font-semibold"
+                          onClick={() => {
+                            setRequestMode('')
+                            setRequestContent('')
+                          }}
+                        >
+                          Cancel
+                        </div>
+                      </div>
+                    )}
+                    <div className="grow"></div>
+                    {!requestMode && (
+                      <div>
+                        <DaMenu
+                          trigger={
+                            <div className="text-da-white text-sm cursor-pointer px-2 py-1 hover:underline">
+                              Send Request
+                            </div>
+                          }
+                        >
+                          <div className="flex flex-col">
+                            <DaButton
+                              onClick={() => {
+                                if (runTimeRef.current) {
+                                  runTimeRef.current?.listPythonLibs()
+                                }
+                                if (runTimeRef1.current) {
+                                  runTimeRef1.current?.listPythonLibs()
+                                }
+                              }}
+                              variant="plain"
+                              className="da-menu-item "
+                            >
+                              <div className="flex w-full items-center">
+                                List All Python Libraries
+                              </div>
+                            </DaButton>
+                            <DaButton
+                              onClick={() => {
+                                setRequestContent('libname')
+                                setRequestMode('pip-install')
+                              }}
+                              variant="plain"
+                              className="da-menu-item "
+                            >
+                              <div className="flex w-full items-center">
+                                Install New Python Library: pip install libname
+                              </div>
+                            </DaButton>
+                          </div>
+                        </DaMenu>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
 
             {activeTab == 'apis' && (
               <DaApisWatch
