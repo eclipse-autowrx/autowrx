@@ -5,6 +5,10 @@ import { Model, Prototype } from '@/types/model.type'
 // import { getPlugins }
 import { listModelPrototypes } from '@/services/prototype.service'
 import { CVI_v4_1 } from '@/data/CVI_v4.1'
+import {
+  getExtendedApi,
+  listExtendedApis,
+} from '@/services/extendedApis.service'
 
 const removeSpecialCharacters = (str: string) => {
   return str.replace(/[^a-zA-Z0-9 ]/g, '')
@@ -90,10 +94,15 @@ export const downloadModelZip = async (model: Model) => {
   if (!model) return
 
   try {
+    const extended_apis = (await listExtendedApis(model.id))?.results || []
+
     const zip = new JSZip()
     const zipFilename = `model_${removeSpecialCharacters(model.name)}.zip`
+    // Deprecated
     zip.file('vss.json', JSON.stringify(JSON.parse(CVI_v4_1), null, 4)) // Using default CVI while waiting for new CVI api
     zip.file('custom_api.json', JSON.stringify(model.custom_apis, null, 4))
+
+    zip.file('extended_apis.json', JSON.stringify(extended_apis, null, 4))
     zip.file(
       'metadata.json',
       JSON.stringify(
@@ -103,6 +112,7 @@ export const downloadModelZip = async (model: Model) => {
           main_api: model.main_api,
           model_home_image_file: model.model_home_image_file,
           visibility: model.visibility,
+          api_version: model.api_version,
         },
         null,
         4,
@@ -133,6 +143,8 @@ export const zipToModel = async (file: File) => {
     model_files: {},
     model_home_image_file: '',
     visibility: '',
+    extended_apis: [],
+    api_version: 'v4.1',
   }
   let plugins: any[] = []
   let prototypes: any[] = []
@@ -149,6 +161,9 @@ export const zipToModel = async (file: File) => {
     model.cvi = (await zipFile.file('vss.json')?.async('string')) || '{}'
     model.custom_apis = JSON.parse(
       (await zipFile.file('custom_api.json')?.async('string')) || '{}',
+    )
+    model.extended_apis = JSON.parse(
+      (await zipFile.file('extended_apis.json')?.async('string')) || '[]',
     )
 
     const prototypesStr =

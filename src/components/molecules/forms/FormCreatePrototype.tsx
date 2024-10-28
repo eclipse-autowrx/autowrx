@@ -113,7 +113,7 @@ const FormCreatePrototype = ({
   }
 
   const getDefaultCode = (lang: string) => {
-    if(lang == 'rust') return DEFAULT_RUST_APP
+    if (lang == 'rust') return DEFAULT_RUST_APP
 
     return DEFAULT_PYTHON_APP
   }
@@ -134,9 +134,9 @@ const FormCreatePrototype = ({
       } else if (data.modelName) {
         // Scenario 2: `localModel` does not exist, create a new model
         const modelBody: ModelCreate = {
-          cvi: data.cvi,
           main_api: data.mainApi,
           name: data.modelName,
+          api_version: 'v4.1',
         }
 
         const newModelId = await createModelService(modelBody)
@@ -319,7 +319,7 @@ const FormCreatePrototype = ({
         onValueChange={(v) => {
           handleChange('language', v)
         }}
-      >    
+      >
         <DaSelectItem value="python">Python</DaSelectItem>
         <DaSelectItem value="rust">Rust</DaSelectItem>
       </DaSelect>

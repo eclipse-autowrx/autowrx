@@ -14,9 +14,13 @@ import { Model, ModelCreate } from '@/types/model.type'
 import { Prototype } from '@/types/model.type'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { addLog } from '@/services/log.service'
+import { useNavigate } from 'react-router-dom'
+import useListModelLite from '@/hooks/useListModelLite'
 
 const PageModelList = () => {
   const [isImporting, setIsImporting] = useState(false)
+  const navigate = useNavigate()
+  const { refetch: refetchModelList } = useListModelLite()
   const { data: user } = useSelfProfileQuery()
 
   const handleImportModelZip = async (file: File) => {
@@ -41,6 +45,8 @@ const PageModelList = () => {
           'https://firebasestorage.googleapis.com/v0/b/digital-auto.appspot.com/o/media%2Fcar_full_ed.PNG?alt=media&token=ea75b8c1-a57a-44ea-9edb-9816131f9905',
         model_files: importedModel.model.model_files || {},
         name: importedModel.model.name || 'New Imported Model',
+        extended_apis: importedModel.model.extended_apis || [],
+        api_version: importedModel.model.api_version || 'v4.1',
         visibility: 'private',
       }
       //
@@ -82,6 +88,9 @@ const PageModelList = () => {
         )
         await Promise.all(prototypePromises)
       }
+
+      await refetchModelList()
+      navigate(`/model/${createdModel}`)
     } catch (err) {
     } finally {
       setIsImporting(false)
