@@ -9,18 +9,32 @@ interface DaFilterProps {
   categories: { [key: string]: string[] }
   onChange: (selectedOptions: string[]) => void
   className?: string
+  showCategory?: boolean
+  singleSelect?: boolean
+  defaultValue?: string[]
 }
 
-const DaFilter = ({ categories, onChange, className }: DaFilterProps) => {
+const DaFilter = ({
+  categories,
+  onChange,
+  className,
+  showCategory = true,
+  singleSelect = false,
+  defaultValue,
+}: DaFilterProps) => {
   const [selectedOptions, setSelectedOptions] = useState<string[]>([])
   const [isDropdownVisible, setIsDropdownVisible] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const allOptions = Object.values(categories).flat()
-    setSelectedOptions(allOptions)
-    onChange(allOptions)
-  }, [])
+    console.log('Default value receive: ', defaultValue)
+    if (singleSelect) {
+      setSelectedOptions(defaultValue || [])
+    } else {
+      setSelectedOptions(defaultValue?.length ? defaultValue : allOptions)
+    }
+  }, [defaultValue])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -39,11 +53,20 @@ const DaFilter = ({ categories, onChange, className }: DaFilterProps) => {
   }, [])
 
   const handleOptionChange = (option: string) => {
-    const updatedOptions = selectedOptions.includes(option)
-      ? selectedOptions.filter((opt) => opt !== option)
-      : [...selectedOptions, option]
-    setSelectedOptions(updatedOptions)
-    onChange(updatedOptions)
+    if (singleSelect) {
+      if (!selectedOptions.includes(option)) {
+        const updatedOptions = [option]
+        setSelectedOptions(updatedOptions)
+        onChange(updatedOptions)
+      }
+      // No action if the selected option is already active (prevents unchecking)
+    } else {
+      const updatedOptions = selectedOptions.includes(option)
+        ? selectedOptions.filter((opt) => opt !== option)
+        : [...selectedOptions, option]
+      setSelectedOptions(updatedOptions)
+      onChange(updatedOptions)
+    }
   }
 
   const toggleDropdownVisibility = () => {
@@ -65,9 +88,11 @@ const DaFilter = ({ categories, onChange, className }: DaFilterProps) => {
           {Object.entries(categories).map(([category, options], index) => (
             <li key={category}>
               {index > 0 && <hr className="my-2 border-t" />}
-              <DaText variant="regular-bold" className="ml-2">
-                {category}
-              </DaText>
+              {showCategory && (
+                <div className="ml-2 text-sm font-bold text-da-gray-medium !mt-2 mb-1">
+                  {category}
+                </div>
+              )}
               {options.map((option) => (
                 <DaCheckbox
                   key={option}

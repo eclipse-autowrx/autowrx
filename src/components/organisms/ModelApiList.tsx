@@ -16,7 +16,6 @@ import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import { DaText } from '../atoms/DaText'
 import DaLoading from '../atoms/DaLoading'
-import { on } from 'events'
 
 interface ModelApiListProps {
   onApiClick?: (details: any) => void
@@ -175,12 +174,23 @@ const ModelApiList = ({ onApiClick, readOnly }: ModelApiListProps) => {
         )}
       </div>
       <div className="flex h-full w-full flex-col overflow-y-auto">
-        {filteredApiList && filteredApiList.length > 0 ? (
-          <DaApiList
-            apis={filteredApiList}
-            onApiClick={onApiClick}
-            selectedApi={selectedApi}
-          />
+        {filteredApiList ? (
+          filteredApiList.length > 0 ? (
+            <DaApiList
+              apis={filteredApiList}
+              onApiClick={onApiClick}
+              selectedApi={selectedApi}
+            />
+          ) : (
+            <div className="flex w-full h-full items-center justify-center mb-24">
+              <DaText
+                variant="regular-bold"
+                className="flex justify-center mt-6"
+              >
+                No signal found
+              </DaText>
+            </div>
+          )
         ) : (
           <DaLoading
             text="Loading API List..."
