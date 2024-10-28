@@ -162,6 +162,56 @@ const PageModelList = () => {
       <div className="flex w-full h-[calc(100%-52px)] items-start bg-slate-200 p-2">
         <div className="flex flex-col w-full h-full bg-white rounded-lg overflow-y-auto">
           <div className="flex flex-col w-full h-full container">
+            {!isImporting &&
+              !isLoadingContributionModel &&
+              !isLoadingMyModels &&
+              !isLoadingPublicModel && (
+                <div className="flex w-full py-6 items-center justify-between">
+                  <DaText
+                    variant="small-medium"
+                    className="text-da-primary-500"
+                  >
+                    Select a vehicle model to start
+                  </DaText>
+                  {user && (
+                    <div className="flex">
+                      {!isImporting ? (
+                        <DaImportFile
+                          accept=".zip"
+                          onFileChange={handleImportModelZip}
+                        >
+                          <DaButton
+                            variant="outline-nocolor"
+                            size="sm"
+                            className="mr-2"
+                          >
+                            <TbPackageExport className="mr-1 text-lg" /> Import
+                            Model
+                          </DaButton>
+                        </DaImportFile>
+                      ) : (
+                        <DaText
+                          variant="regular"
+                          className="flex items-center text-da-gray-medium mr-2"
+                        >
+                          <TbLoader className="animate-spin text-lg mr-2" />
+                          Importing model ...
+                        </DaText>
+                      )}
+                      <DaPopup
+                        trigger={
+                          <DaButton variant="solid" size="sm" className="">
+                            <HiPlus className="mr-1 text-lg" />
+                            Create New Model
+                          </DaButton>
+                        }
+                      >
+                        <FormCreateModel />
+                      </DaPopup>
+                    </div>
+                  )}
+                </div>
+              )}
             <DaLoadingWrapper
               loadingMessage="Loading models..."
               isLoading={
@@ -173,48 +223,6 @@ const PageModelList = () => {
               emptyMessage="No models found. Please create a new model."
               timeoutMessage="Failed to load models. Please try again."
             >
-              <div className="flex w-full py-6 items-center justify-between">
-                <DaText variant="small-medium" className="text-da-primary-500">
-                  Select a vehicle model to start
-                </DaText>
-                {user && (
-                  <div className="flex">
-                    {!isImporting ? (
-                      <DaImportFile
-                        accept=".zip"
-                        onFileChange={handleImportModelZip}
-                      >
-                        <DaButton
-                          variant="outline-nocolor"
-                          size="sm"
-                          className="mr-2"
-                        >
-                          <TbPackageExport className="mr-1 text-lg" /> Import
-                          Model
-                        </DaButton>
-                      </DaImportFile>
-                    ) : (
-                      <DaText
-                        variant="regular"
-                        className="flex items-center text-da-gray-medium mr-2"
-                      >
-                        <TbLoader className="animate-spin text-lg mr-2" />
-                        Importing model ...
-                      </DaText>
-                    )}
-                    <DaPopup
-                      trigger={
-                        <DaButton variant="solid" size="sm" className="">
-                          <HiPlus className="mr-1 text-lg" />
-                          Create New Model
-                        </DaButton>
-                      }
-                    >
-                      <FormCreateModel />
-                    </DaPopup>
-                  </div>
-                )}
-              </div>
               <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-4 pb-4">
                 {filteredModels?.map((item, index) => (
                   <Link key={index} to={`/model/${item.id}`}>

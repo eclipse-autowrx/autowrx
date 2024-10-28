@@ -41,14 +41,14 @@ const DaRequirementItem = ({
           onChange={(e) => {
             handleChange('text')(e.target.value)
           }}
-          placeholder="Property Name"
+          placeholder="Specify the requirement"
           wrapperClassName="!bg-white"
-          inputClassName="!bg-white"
+          inputClassName="!bg-white text-sm"
           className="mt-1"
           disabled={!isAuthorized}
         />
         <DaText variant="small-bold" className="text-gray-500 mt-2">
-          URL:
+          URL
         </DaText>
         <DaInput
           type="text"
@@ -56,9 +56,9 @@ const DaRequirementItem = ({
           onChange={(e) => {
             handleChange('url')(e.target.value)
           }}
-          placeholder="Value"
+          placeholder="External URL to the requirement"
           wrapperClassName="!bg-white"
-          inputClassName="!bg-white w-full"
+          inputClassName="!bg-white w-full text-sm"
           className="mt-1"
           disabled={!isAuthorized}
         />

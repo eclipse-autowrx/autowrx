@@ -65,7 +65,7 @@ const DaCustomPropertyItem = ({
         }
         placeholder="Property Name"
         wrapperClassName="!bg-white"
-        inputClassName="!bg-white"
+        inputClassName="!bg-white text-sm"
         className="col-span-5"
       />
       <DaSelect
@@ -74,12 +74,20 @@ const DaCustomPropertyItem = ({
           // console.log('selected type', type)
           handleChange('type', type as PropertyType, property, onUpdate)
         }}
-        wrapperClassName="col-span-2 bg-white"
+        wrapperClassName="col-span-2 bg-white  text-sm"
       >
-        <DaSelectItem value="string">String</DaSelectItem>
-        <DaSelectItem value="number">Number</DaSelectItem>
-        <DaSelectItem value="boolean">Boolean</DaSelectItem>
-        <DaSelectItem value="null">Null</DaSelectItem>
+        <DaSelectItem className="text-sm" value="string">
+          String
+        </DaSelectItem>
+        <DaSelectItem className="text-sm" value="number">
+          Number
+        </DaSelectItem>
+        <DaSelectItem className="text-sm" value="boolean">
+          Boolean
+        </DaSelectItem>
+        <DaSelectItem className="text-sm" value="null">
+          Null
+        </DaSelectItem>
       </DaSelect>
 
       <div className="flex col-span-5 items-center">
@@ -89,10 +97,14 @@ const DaCustomPropertyItem = ({
             onValueChange={(val) =>
               handleChange('value', val, property, onUpdate)
             }
-            wrapperClassName="w-full bg-white"
+            wrapperClassName="w-full bg-white text-sm"
           >
-            <DaSelectItem value="true">True</DaSelectItem>
-            <DaSelectItem value="false">False</DaSelectItem>
+            <DaSelectItem className="text-sm" value="true">
+              True
+            </DaSelectItem>
+            <DaSelectItem className="text-sm" value="false">
+              False
+            </DaSelectItem>
           </DaSelect>
         ) : property.type === 'null' ? (
           <DaInput
@@ -100,7 +112,7 @@ const DaCustomPropertyItem = ({
             value="null"
             placeholder="null"
             wrapperClassName="!bg-white"
-            inputClassName="!bg-white w-full"
+            inputClassName="!bg-white w-full text-sm"
             className="col-span-5 w-full"
           />
         ) : (
@@ -112,7 +124,7 @@ const DaCustomPropertyItem = ({
             }
             placeholder="Value"
             wrapperClassName="!bg-white"
-            inputClassName="!bg-white w-full"
+            inputClassName="!bg-white w-full text-sm"
             className="col-span-5 w-full"
           />
         )}

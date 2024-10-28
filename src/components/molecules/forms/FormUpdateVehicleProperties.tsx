@@ -108,10 +108,10 @@ const FormUpdateVehicleProperties = ({
       <DaSelect
         value={vehicleCategory}
         onValueChange={setVehicleCategory}
-        wrapperClassName="bg-white rounded-lg mt-1"
+        wrapperClassName="bg-white rounded-lg mt-1 text-sm"
       >
         {vehicleTypes.map((type) => (
-          <DaSelectItem key={type} value={type}>
+          <DaSelectItem className="text-sm" key={type} value={type}>
             {type}
           </DaSelectItem>
         ))}
