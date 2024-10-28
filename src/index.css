@@ -354,9 +354,14 @@ body {
   --da-white: 0 0% 100%;
   --da-black: 0 0% 0%;
 
+  /* Card background */
   --da-gray-light: 214 32% 91%;
+  /* Text */
   --da-gray-medium: 215 16% 47%;
+  /* Title */
   --da-gray-dark: 215 13.8% 34.1%;
+  /* Background */
+  --da-gray-darkest: 217 33% 17%;
 
   --da-destructive: 0 84% 60%;
 
