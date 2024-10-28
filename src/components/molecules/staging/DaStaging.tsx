@@ -28,21 +28,21 @@ const TARGETS = [
       '3.1.1.1.1.1': '2.3.2',
     },
   },
-  // {
-  //   name: 'Education Kit: MakerKit',
-  //   short_name: 'MaketKit',
-  //   icon: '/imgs/targets/edukit.png',
-  //   prefix: 'Runtime-', // "Kit-"
-  //   version: 'v.0.9',
-  //   state: {
-  //     '3.1.1.1.1.1': '2.3.1',
-  //   },
-  // },
   {
-    name: 'Automation Kit',
+    name: 'Education Kit: MakerKit',
+    short_name: 'MaketKit',
+    icon: '/imgs/targets/edukit.png',
+    prefix: 'makerkit-', // "Kit-"
+    version: 'v.0.9',
+    state: {
+      '3.1.1.1.1.1': '2.3.1',
+    },
+  },
+  {
+    name: 'dreamKIT',
     short_name: 'Runtime-',
     icon: '/imgs/targets/automationKit.png',
-    prefix: 'Runtime-', // "Kit-"
+    prefix: 'dreamkit-', // "Kit-"
     version: 'v.0.9',
     state: {
       '3.1.1.1.1.1': '2.3.1',
@@ -274,7 +274,7 @@ const DaStaging = ({
           <div className="mt-4 w-full rounded border">
             {/* Title */}
             <div className="flex h-[40px] w-full rounded-t bg-gradient-to-r from-da-gradient-from to-da-gradient-to text-da-white">
-              <div className="flex w-[25%] items-center justify-center border-r border-da-white font-bold">
+              <div className="flex w-[20%] items-center justify-center border-r border-da-white font-bold">
                 System
               </div>
               <div className="flex grow items-center justify-center border-da-white font-bold">

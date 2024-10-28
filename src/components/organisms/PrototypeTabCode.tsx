@@ -79,7 +79,7 @@ const PrototypeTabCode: FC = ({}) => {
   }
 
   return (
-    <div className="flex h-[calc(100%-0px)] bg-da-g w-full pb-2 px-2 gap-2 bg-da-gray-light">
+    <div className="flex h-[calc(100%-0px)] bg-da-g w-full p-2 gap-2 bg-da-gray-light">
       <div className="flex h-full flex-[2] min-w-[360px] flex-col bg-da-white rounded-md">
         {activeTab == 'api' && (
           <Suspense>

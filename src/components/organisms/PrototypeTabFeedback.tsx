@@ -61,163 +61,174 @@ const PrototypeTabFeedback = () => {
   }
 
   return (
-    <div className="container h-full mt-6">
-      <div className="flex w-full justify-between">
-        <div>
-          <DaText variant="title" className="text-da-primary-500">
-            End-User Feedback
-          </DaText>
-          <div className="items-center flex">
-            <DaText variant="regular">Overall:</DaText>
-            <DaStarsRating
-              readonly={true}
-              initialRating={(prototype as Prototype)?.avg_score ?? 0}
-            />
-            ({(prototype as Prototype)?.avg_score?.toFixed(2) ?? 0})
-          </div>
-        </div>
-        <div className="flex">
-          <Link to={`/model/${model_id}/library/portfolio`}>
-            <DaButton size="sm" variant="outline-nocolor" className="mr-2">
-              <TbChartDots className="w-4 h-4 mr-1" />
-              View Portfolio
-            </DaButton>
-          </Link>
-          <DaPopup
-            state={[isOpenPopup, setIsOpenPopup]}
-            trigger={
-              <DaButton
-                size="sm"
-                onClick={() =>
-                  document
-                    .getElementById('feedbackForm')
-                    ?.scrollIntoView({ behavior: 'smooth' })
+    <div className="flex flex-col w-full h-full bg-slate-200 p-2">
+      <div className="flex flex-col w-full h-full bg-white rounded-lg  overflow-y-auto">
+        <div className="flex flex-col container h-full mt-6">
+          <div className="flex w-full justify-between">
+            <div>
+              <DaText variant="title" className="text-da-primary-500">
+                End-User Feedback
+              </DaText>
+              <div className="items-center flex">
+                <DaText variant="regular">Overall:</DaText>
+                <DaStarsRating
+                  readonly={true}
+                  initialRating={(prototype as Prototype)?.avg_score ?? 0}
+                />
+                ({(prototype as Prototype)?.avg_score?.toFixed(2) ?? 0})
+              </div>
+            </div>
+            <div className="flex">
+              <Link to={`/model/${model_id}/library/portfolio`}>
+                <DaButton size="sm" variant="outline-nocolor" className="mr-2">
+                  <TbChartDots className="w-4 h-4 mr-1" />
+                  View Portfolio
+                </DaButton>
+              </Link>
+              <DaPopup
+                state={[isOpenPopup, setIsOpenPopup]}
+                trigger={
+                  <DaButton
+                    size="sm"
+                    onClick={() =>
+                      document
+                        .getElementById('feedbackForm')
+                        ?.scrollIntoView({ behavior: 'smooth' })
+                    }
+                  >
+                    + Add Feedback
+                  </DaButton>
                 }
               >
-                + Add Feedback
-              </DaButton>
-            }
+                <FeedbackForm
+                  onClose={() => {
+                    setIsOpenPopup(false)
+                  }}
+                />
+              </DaPopup>
+            </div>
+          </div>
+          <DaLoadingWrapper
+            isLoading={isLoading}
+            data={prototypeFeedbacks?.results}
+            loadingMessage="Loading feedbacks..."
+            emptyMessage="No feedback found."
+            timeoutMessage="Failed to load feedbacks. Please try again."
+            timeout={20}
           >
-            <FeedbackForm
-              onClose={() => {
-                setIsOpenPopup(false)
-              }}
-            />
-          </DaPopup>
+            {prototypeFeedbacks && prototypeFeedbacks.results.length > 0 && (
+              <div className="mt-8 w-full">
+                {prototypeFeedbacks.results.map((feedback) => (
+                  <div key={feedback.id} className="border p-4 mb-4 rounded-lg">
+                    <div className="flex w-full">
+                      <div className="space-x-6">
+                        <DaText
+                          variant="sub-title"
+                          className="text-da-primary-500"
+                        >
+                          {feedback.interviewee.name}
+                        </DaText>
+                        <DaText variant="small" className="ml-auto">
+                          Organization: {feedback.interviewee.organization}
+                        </DaText>
+                      </div>
+                      {profile && profile?.id === feedback.created_by && (
+                        <DaConfirmPopup
+                          onConfirm={() => handleDeleteFeedback(feedback.id)}
+                          label="Are you sure you want to delete this feedback?"
+                        >
+                          <DaButton
+                            variant="destructive"
+                            size="sm"
+                            className="ml-auto"
+                          >
+                            <TbTrash className="w-4 h-4 mr-1" /> Delete Your
+                            Feedback
+                          </DaButton>
+                        </DaConfirmPopup>
+                      )}
+                    </div>
+                    <div className="flex w-full">
+                      <div className="flex-1">
+                        <div className="mt-2 flex items-center">
+                          <DaText variant="regular-bold">
+                            Needs addressed:
+                          </DaText>
+                          <DaStarsRating
+                            readonly
+                            initialRating={feedback.score.need_address || 0}
+                          />
+                        </div>
+                        <div className="mt-2 flex items-center">
+                          <DaText variant="regular-bold">Relevance:</DaText>
+                          <DaStarsRating
+                            readonly
+                            initialRating={feedback.score.relevance || 0}
+                          />
+                        </div>
+                        <div className="mt-2 flex items-center">
+                          <DaText variant="regular-bold">Ease of use:</DaText>
+                          <DaStarsRating
+                            readonly
+                            initialRating={feedback.score.easy_to_use || 0}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="mt-2">
+                          <DaText variant="regular-bold" className="mr-2">
+                            Questions:
+                          </DaText>
+                          <DaText variant="regular">{feedback.question}</DaText>
+                        </div>
+                        <div className="mt-2">
+                          <DaText variant="regular-bold" className="mr-2">
+                            Recommendations:
+                          </DaText>
+                          <DaText variant="regular">
+                            {feedback.recommendation}
+                          </DaText>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <DaPaging className="pt-3 pb-6">
+                  <DaPaginationContent>
+                    <DaPaginationItem>
+                      <DaPaginationPrevious
+                        href={`#${currentPage - 1}`}
+                        onClick={() => setCurrentPage(currentPage - 1)}
+                        disabled={currentPage == 1}
+                      />
+                    </DaPaginationItem>
+                    {[...Array(prototypeFeedbacks.totalPages)].map(
+                      (_, index) => (
+                        <DaPaginationItem key={index}>
+                          <DaPaginationLink
+                            href={`#${index + 1}`}
+                            isActive={currentPage === index + 1}
+                            onClick={() => setCurrentPage(index + 1)}
+                          >
+                            {index + 1}
+                          </DaPaginationLink>
+                        </DaPaginationItem>
+                      ),
+                    )}
+                    <DaPaginationItem>
+                      <DaPaginationNext
+                        href={`#${currentPage + 1}`}
+                        onClick={() => setCurrentPage(currentPage + 1)}
+                        disabled={currentPage == prototypeFeedbacks.totalPages}
+                      />
+                    </DaPaginationItem>
+                  </DaPaginationContent>
+                </DaPaging>
+              </div>
+            )}
+          </DaLoadingWrapper>
         </div>
       </div>
-      <DaLoadingWrapper
-        isLoading={isLoading}
-        data={prototypeFeedbacks?.results}
-        loadingMessage="Loading feedbacks..."
-        emptyMessage="No feedback found."
-        timeoutMessage="Failed to load feedbacks. Please try again."
-        timeout={20}
-      >
-        {prototypeFeedbacks && prototypeFeedbacks.results.length > 0 && (
-          <div className="mt-8 w-full">
-            {prototypeFeedbacks.results.map((feedback) => (
-              <div key={feedback.id} className="border p-4 mb-4 rounded-lg">
-                <div className="flex w-full">
-                  <div className="space-x-6">
-                    <DaText variant="sub-title" className="text-da-primary-500">
-                      {feedback.interviewee.name}
-                    </DaText>
-                    <DaText variant="small" className="ml-auto">
-                      Organization: {feedback.interviewee.organization}
-                    </DaText>
-                  </div>
-                  {profile && profile?.id === feedback.created_by && (
-                    <DaConfirmPopup
-                      onConfirm={() => handleDeleteFeedback(feedback.id)}
-                      label="Are you sure you want to delete this feedback?"
-                    >
-                      <DaButton
-                        variant="destructive"
-                        size="sm"
-                        className="ml-auto"
-                      >
-                        <TbTrash className="w-4 h-4 mr-1" /> Delete Your
-                        Feedback
-                      </DaButton>
-                    </DaConfirmPopup>
-                  )}
-                </div>
-                <div className="flex w-full">
-                  <div className="flex-1">
-                    <div className="mt-2 flex items-center">
-                      <DaText variant="regular-bold">Needs addressed:</DaText>
-                      <DaStarsRating
-                        readonly
-                        initialRating={feedback.score.need_address || 0}
-                      />
-                    </div>
-                    <div className="mt-2 flex items-center">
-                      <DaText variant="regular-bold">Relevance:</DaText>
-                      <DaStarsRating
-                        readonly
-                        initialRating={feedback.score.relevance || 0}
-                      />
-                    </div>
-                    <div className="mt-2 flex items-center">
-                      <DaText variant="regular-bold">Ease of use:</DaText>
-                      <DaStarsRating
-                        readonly
-                        initialRating={feedback.score.easy_to_use || 0}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="mt-2">
-                      <DaText variant="regular-bold" className="mr-2">
-                        Questions:
-                      </DaText>
-                      <DaText variant="regular">{feedback.question}</DaText>
-                    </div>
-                    <div className="mt-2">
-                      <DaText variant="regular-bold" className="mr-2">
-                        Recommendations:
-                      </DaText>
-                      <DaText variant="regular">
-                        {feedback.recommendation}
-                      </DaText>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-            <DaPaging className="pt-3 pb-6">
-              <DaPaginationContent>
-                <DaPaginationItem>
-                  <DaPaginationPrevious
-                    href={`#${currentPage - 1}`}
-                    onClick={() => setCurrentPage(currentPage - 1)}
-                    disabled={currentPage == 1}
-                  />
-                </DaPaginationItem>
-                {[...Array(prototypeFeedbacks.totalPages)].map((_, index) => (
-                  <DaPaginationItem key={index}>
-                    <DaPaginationLink
-                      href={`#${index + 1}`}
-                      isActive={currentPage === index + 1}
-                      onClick={() => setCurrentPage(index + 1)}
-                    >
-                      {index + 1}
-                    </DaPaginationLink>
-                  </DaPaginationItem>
-                ))}
-                <DaPaginationItem>
-                  <DaPaginationNext
-                    href={`#${currentPage + 1}`}
-                    onClick={() => setCurrentPage(currentPage + 1)}
-                    disabled={currentPage == prototypeFeedbacks.totalPages}
-                  />
-                </DaPaginationItem>
-              </DaPaginationContent>
-            </DaPaging>
-          </div>
-        )}
-      </DaLoadingWrapper>
     </div>
   )
 }
