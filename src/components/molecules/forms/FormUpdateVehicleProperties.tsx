@@ -108,7 +108,7 @@ const FormUpdateVehicleProperties = ({
       <DaSelect
         value={vehicleCategory}
         onValueChange={setVehicleCategory}
-        wrapperClassName="bg-gray-100 rounded-lg mt-1"
+        wrapperClassName="bg-white rounded-lg mt-1"
       >
         {vehicleTypes.map((type) => (
           <DaSelectItem key={type} value={type}>
@@ -134,7 +134,7 @@ const FormUpdateVehicleProperties = ({
             />
           ))
         ) : (
-          <div className="flex h-10 w-full mt-1 px-4 py-2 items-center bg-gray-100 border rounded-md">
+          <div className="flex h-10 w-full mt-1 px-4 py-2 items-center bg-white border rounded-md">
             There's no custom properties yet.
           </div>
         )}

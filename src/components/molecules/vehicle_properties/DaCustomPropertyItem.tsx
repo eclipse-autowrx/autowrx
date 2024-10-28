@@ -64,8 +64,8 @@ const DaCustomPropertyItem = ({
           handleChange('name', e.target.value, property, onUpdate)
         }
         placeholder="Property Name"
-        wrapperClassName="!bg-gray-100"
-        inputClassName="!bg-gray-100"
+        wrapperClassName="!bg-white"
+        inputClassName="!bg-white"
         className="col-span-5"
       />
       <DaSelect
@@ -74,7 +74,7 @@ const DaCustomPropertyItem = ({
           // console.log('selected type', type)
           handleChange('type', type as PropertyType, property, onUpdate)
         }}
-        wrapperClassName="col-span-2 bg-gray-100"
+        wrapperClassName="col-span-2 bg-white"
       >
         <DaSelectItem value="string">String</DaSelectItem>
         <DaSelectItem value="number">Number</DaSelectItem>
@@ -89,7 +89,7 @@ const DaCustomPropertyItem = ({
             onValueChange={(val) =>
               handleChange('value', val, property, onUpdate)
             }
-            wrapperClassName="w-full bg-gray-100"
+            wrapperClassName="w-full bg-white"
           >
             <DaSelectItem value="true">True</DaSelectItem>
             <DaSelectItem value="false">False</DaSelectItem>
@@ -99,8 +99,8 @@ const DaCustomPropertyItem = ({
             disabled
             value="null"
             placeholder="null"
-            wrapperClassName="!bg-gray-100"
-            inputClassName="!bg-gray-100 w-full"
+            wrapperClassName="!bg-white"
+            inputClassName="!bg-white w-full"
             className="col-span-5 w-full"
           />
         ) : (
@@ -111,8 +111,8 @@ const DaCustomPropertyItem = ({
               handleChange('value', e.target.value, property, onUpdate)
             }
             placeholder="Value"
-            wrapperClassName="!bg-gray-100"
-            inputClassName="!bg-gray-100 w-full"
+            wrapperClassName="!bg-white"
+            inputClassName="!bg-white w-full"
             className="col-span-5 w-full"
           />
         )}
