@@ -42,8 +42,8 @@ const DaRequirementItem = ({
             handleChange('text')(e.target.value)
           }}
           placeholder="Property Name"
-          wrapperClassName="!bg-gray-100"
-          inputClassName="!bg-gray-100"
+          wrapperClassName="!bg-white"
+          inputClassName="!bg-white"
           className="mt-1"
           disabled={!isAuthorized}
         />
@@ -57,8 +57,8 @@ const DaRequirementItem = ({
             handleChange('url')(e.target.value)
           }}
           placeholder="Value"
-          wrapperClassName="!bg-gray-100"
-          inputClassName="!bg-gray-100 w-full"
+          wrapperClassName="!bg-white"
+          inputClassName="!bg-white w-full"
           className="mt-1"
           disabled={!isAuthorized}
         />

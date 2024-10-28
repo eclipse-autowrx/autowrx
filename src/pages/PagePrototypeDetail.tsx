@@ -9,6 +9,7 @@ import {
   TbBinaryTree,
   TbCode,
   TbGauge,
+  TbListCheck,
   TbMessagePlus,
   TbRoute,
   TbScale,
@@ -62,7 +63,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
 
   return prototype ? (
     <div className={`flex flex-col w-full h-full relative`}>
-      <div className="sticky flex top-0 py-0 bg-da-gray-light min-h-10 justify-between">
+      <div className="flex min-h-[52px] border-b border-da-gray-medium/50 bg-da-white">
         <div className="flex w-fit">
           <DaTabItem
             active={isDefaultTab}
@@ -118,7 +119,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           <DaPopup
             trigger={
               <DaTabItem>
-                {/* <TbMessage className="w-5 h-5 mr-2" /> */}
+                <TbListCheck className="w-5 h-5 mr-2" />
                 Staging
               </DaTabItem>
             }
