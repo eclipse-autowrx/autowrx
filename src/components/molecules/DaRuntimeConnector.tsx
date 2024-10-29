@@ -146,6 +146,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       if (prototype && prototype.id && currentUser) {
         socketio.emit('messageToKit', {
           cmd: 'deploy_request',
+          disable_code_convert: true,
           to_kit_id: activeRtId,
           code: prototype.code || '',
           prototype: {
@@ -373,7 +374,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     const onKitReply = (payload: any) => {
       if (!payload) return
 
-      if (payload.cmd == 'deploy-request') {
+      if (payload.cmd == 'deploy_request' || payload.cmd == 'deploy-request') {
         // console.log(payload)
         if (onDeployResponse) {
           onDeployResponse(payload.result, payload.is_finish)
