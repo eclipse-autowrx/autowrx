@@ -66,7 +66,9 @@ export const getPrototype = async (prototype_id: string) => {
 
 export const listModelPrototypes = async (model_id: string) => {
   return (
-    await serverAxios.get<List<Prototype>>(`/prototypes?model_id=${model_id}`)
+    await serverAxios.get<List<Prototype>>(
+      `/prototypes?model_id=${model_id}&limit=50`,
+    )
   ).data.results
 }
 

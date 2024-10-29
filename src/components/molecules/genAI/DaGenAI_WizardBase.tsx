@@ -294,14 +294,14 @@ const DaGenAI_WizardBase = ({
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="Ask AI to generate based on this prompt..."
             className="w-full h-full"
-            textareaClassName="flex h-full resize-none !bg-gray-50 text-da-gray-dark !text-lg"
+            textareaClassName="flex h-full resize-none !bg-gray-50 text-da-gray-darkest !text-lg"
           />
         </div>
 
         {/* Status Section */}
         <div className="da-label-small-medium mb-1 mt-2">Status</div>
 
-        <div className="flex flex-col mt-0 h-full mb-2 space-y-2 overflow-y-auto flex-shrink-0 max-h-[100px] xl:max-h-[150px] 2xl:max-h-[200px] rounded-md bg-da-gray-dark p-3 text-white text-sm">
+        <div className="flex flex-col mt-0 h-full mb-2 space-y-2 overflow-y-auto flex-shrink-0 max-h-[100px] xl:max-h-[150px] 2xl:max-h-[200px] rounded-md bg-da-gray-darkest p-3 text-white text-sm">
           {uniqueLogs.map((log, index) => (
             <div key={index} className="flex w-full items-center">
               <div className="uppercase font-bold px-2 py-1 bg-white/25 w-fit h-fit rounded-md mr-1">

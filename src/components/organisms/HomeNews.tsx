@@ -67,8 +67,11 @@ const LargeCard = ({ item }: { item: CardProps }) => {
         <div className="text-lg font-bold mt-4 text-da-gray-dark">
           {item.title}
         </div>
+
+        <div className="text-gray-600 mt-2 line-clamp-2">
+          {item.description}
+        </div>
       </a>
-      <div className="text-gray-600 mt-2 line-clamp-2">{item.description}</div>
     </div>
   )
 }
@@ -85,7 +88,7 @@ const SmallCard = ({ item }: { item: CardProps }) => {
           />
         </div>
       </a>
-      <div className="">
+      <a href={item.redirectURL} target="_blank" rel="noopener noreferrer">
         <div className="flex items-center">
           <div
             className={cn(
@@ -111,7 +114,7 @@ const SmallCard = ({ item }: { item: CardProps }) => {
         <div className="mt-2 text-da-gray-medium line-clamp-2">
           {item.description}
         </div>
-      </div>
+      </a>
     </div>
   )
 }
