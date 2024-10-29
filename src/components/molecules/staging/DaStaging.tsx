@@ -23,29 +23,29 @@ const TARGETS = [
     name: 'Virtual WS',
     icon: '/imgs/targets/vm.png',
     prefix: 'Runtime-',
-    version: 'v.0.10',
+    version: 'v.1.0',
     state: {
-      '3.1.1.1.1.1': '2.3.2',
+      '3.1.1.1.1.1': '0.9',
     },
   },
   {
     name: 'Education Kit: MakerKit',
-    short_name: 'MaketKit',
+    short_name: 'MakerKit',
     icon: '/imgs/targets/edukit.png',
     prefix: 'makerkit-', // "Kit-"
-    version: 'v.0.9',
+    version: 'v.1.0',
     state: {
-      '3.1.1.1.1.1': '2.3.1',
+      '3.1.1.1.1.1': '0.9',
     },
   },
   {
     name: 'dreamKIT',
-    short_name: 'Runtime-',
-    icon: '/imgs/targets/automationKit.png',
+    short_name: 'dreamKIT-',
+    icon: '/imgs/targets/desktopKit.png',
     prefix: 'dreamkit-', // "Kit-"
-    version: 'v.0.9',
+    version: 'v.1.0',
     state: {
-      '3.1.1.1.1.1': '2.3.1',
+      '3.1.1.1.1.1': '0.9',
     },
   },
   {
@@ -53,9 +53,9 @@ const TARGETS = [
     short_name: 'XSPACE',
     icon: '/imgs/targets/pilotCar.png',
     prefix: 'PilotCar-', // "PilotCar-"
-    version: 'v.0.8',
+    version: 'v.1.0',
     state: {
-      '3.1.1.1.1.1': '2.3.0',
+      '3.1.1.1.1.1': '0.9',
     },
   },
 ]
@@ -63,7 +63,7 @@ const TARGETS = [
 const SYSTEM = {
   name: 'Concept Car 2024',
   icon: '/imgs/targets/targetSystem.png',
-  version: 'v.0.11',
+  version: 'v.1.0',
 }
 
 const STANDARD_STAGE = {
@@ -117,7 +117,7 @@ const STANDARD_STAGE = {
                         {
                           id: '3.1.1.1.1.1',
                           name: 'Subscription Event Analyzer',
-                          version: '2.3.4',
+                          version: '1.0',
                         },
                       ],
                     },
@@ -239,7 +239,7 @@ const DaStaging = ({
   // }, [prototype?.code])
 
   return (
-    <div className="min-h-[400px] w-[90vw] min-w-[400px] max-w-[1200px]">
+    <div className="min-h-[300px] max-h-[90vh] w-[90vw] min-w-[400px] max-w-[1200px]">
       {mode == MODE_EDIT_DEFINE && (
         <DaEditSystemStaging
           onTargetMode={false}
@@ -270,7 +270,11 @@ const DaStaging = ({
 
       {mode == MODE_OVERVIEW && (
         <div>
-          {!isWizard && <DaText variant="huge-bold">Staging</DaText>}
+          {!isWizard && (
+            <DaText variant="title" className="text-da-primary-500">
+              Staging
+            </DaText>
+          )}
           <div className="mt-4 w-full rounded border">
             {/* Title */}
             <div className="flex h-[40px] w-full rounded-t bg-gradient-to-r from-da-gradient-from to-da-gradient-to text-da-white">
@@ -282,9 +286,15 @@ const DaStaging = ({
               </div>
             </div>
             <div className="flex">
-              <div className="flex min-w-[100px] flex-1 flex-col items-center justify-center overflow-x-hidden rounded-s bg-[#DADADA] px-1 py-1">
+              <div className="flex min-w-[100px] flex-1 flex-col items-center justify-center overflow-x-hidden rounded-s px-1 py-1">
                 <div className="flex h-[140px] w-full items-center justify-center">
-                  <img width={150} height={70} src={system.icon} alt="System" />
+                  <img
+                    width={150}
+                    height={70}
+                    src={system.icon}
+                    alt="System"
+                    className="scale-90"
+                  />
                 </div>
                 <DaText variant="small-bold" className="mt-1">
                   {system.name}
@@ -293,10 +303,11 @@ const DaStaging = ({
                   {system.version}
                 </DaText>
                 <DaButton
-                  className="my-1 w-[100px]"
+                  className="my-2 w-[100px]"
                   onClick={() => {
                     setMode(MODE_EDIT_DEFINE)
                   }}
+                  size="sm"
                 >
                   Edit
                 </DaButton>
@@ -306,7 +317,7 @@ const DaStaging = ({
                 targets.map((target: any) => (
                   <div
                     key={target.name}
-                    className="flex min-w-[100px] flex-1 flex-col items-center justify-center overflow-x-hidden border-l px-1 pb-2 pt-1"
+                    className="flex min-w-[100px] flex-1 flex-col items-center justify-center overflow-x-hidden border-l px-1 pb-2 pt-1 "
                   >
                     <div className="flex h-[140px] w-full items-center justify-center">
                       <img
@@ -314,6 +325,7 @@ const DaStaging = ({
                         height={70}
                         src={target.icon}
                         alt={target.name}
+                        className="rounded-lg"
                       />
                     </div>
                     <DaText variant="small-bold" className="mt-1">
@@ -324,25 +336,18 @@ const DaStaging = ({
                     </DaText>
                     <DaButton
                       variant="outline"
-                      className="my-1 w-[100px]"
+                      className="my-2 w-[100px]"
                       onClick={() => {
                         setActiveTarget(target)
                         setMode(MODE_ON_TARGET)
                       }}
+                      size="sm"
                     >
                       Update
                     </DaButton>
                   </div>
                 ))}
-
-              {/* <DaRuntimeConnector
-                        targetPrefix={target.prefix}
-                        hideLabel={true}
-                        kitServerUrl={DEFAULT_KIT_SERVER}
-                        usedAPIs={[]}
-                        onNewLog={() => {}}/> */}
             </div>
-
             {/* <div className="my-2 flex min-h-[100px] bg-slate-50">
                 <div className="min-w-[100px] w-[100px] flex-shrink-0 flex items-center justify-center px-2">
                     <DaText variant="regular-bold">QM App</DaText>

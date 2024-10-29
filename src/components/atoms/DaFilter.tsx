@@ -28,7 +28,7 @@ const DaFilter = ({
 
   useEffect(() => {
     const allOptions = Object.values(categories).flat()
-    console.log('Default value receive: ', defaultValue)
+    // console.log('Default value receive: ', defaultValue)
     if (singleSelect) {
       setSelectedOptions(defaultValue || [])
     } else {
