@@ -162,7 +162,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       if (prototype && prototype.id && currentUser) {
         socketio.emit('messageToKit', {
           cmd: 'list_python_packages',
-          to_kit_id: activeRtId
+          to_kit_id: activeRtId,
         })
       }
     }
@@ -172,7 +172,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         socketio.emit('messageToKit', {
           cmd: 'install_python_packages',
           data: libName.trim(),
-          to_kit_id: activeRtId
+          to_kit_id: activeRtId,
         })
       }
     }
@@ -424,13 +424,17 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         }
       }
 
-      if(payload.cmd == 'list_python_packages' && onNewLog) {
+      if (payload.cmd == 'list_python_packages' && onNewLog) {
         // console.log(payload)
         onNewLog(`Installed python libs on "${payload.kit_id}"\r\n`)
         onNewLog(payload.data)
       }
 
-      if(payload.cmd == 'install_python_packages' && onNewLog && payload.data) {
+      if (
+        payload.cmd == 'install_python_packages' &&
+        onNewLog &&
+        payload.data
+      ) {
         // console.log(payload)
         onNewLog(payload.data)
       }
@@ -440,11 +444,13 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       <div>
         <div className="flex items-center">
           {!hideLabel && (
-            <label className="mr-2 da-label-small">Runtime:</label>
+            <label className="w-[122px] text-da-gray-dark font-medium ">
+              Runtime:
+            </label>
           )}
           <select
             aria-label="deploy-select"
-            className={`border rounded da-label-small px-2 py-1 w-full min-w-[100px] text-da-gray-dark bg-da-gray-light`}
+            className={`border rounded da-label-small px-2 py-1 w-full min-w-[90px] text-da-gray-dark bg-da-gray-light`}
             value={activeRtId as any}
             onChange={(e) => {
               // console.log(`setActiveRtId(e.target.value) `, e.target.value)

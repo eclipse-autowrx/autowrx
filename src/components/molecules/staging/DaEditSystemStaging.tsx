@@ -10,6 +10,7 @@ import { DaButton } from '@/components/atoms/DaButton'
 import DaStageComponent from './DaStageComponent'
 import { IoMdArrowRoundBack } from 'react-icons/io'
 import config from '@/configs/config'
+import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
 const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
 
@@ -35,7 +36,8 @@ const DaEditSystemStaging = ({
   const [isUpdating, setIsUpdating] = useState<boolean>(false)
   const [activeId, setActiveId] = useState<string>('')
   const runTimeRef = useRef<any>()
-  const [log, setLog] = useState<string>('')
+  const [log, setLog] = useState<string[]>([])
+  const { data: profile } = useSelfProfileQuery()
 
   const [prototype] = useModelStore((state) => [state.prototype as Prototype])
 
@@ -62,57 +64,88 @@ const DaEditSystemStaging = ({
     }
   }
 
+  useEffect(() => {
+    if (isUpdating) {
+      const timeoutDuration = 10000 // 10 seconds
+
+      const timer = setTimeout(() => {
+        // If still updating and no new log messages were received in 10s, mark timeout
+        if (isUpdating && log.length === 0) {
+          setLog([
+            'Request timeout, please try again as the runtime may be busy or experiencing issues.',
+          ])
+          setIsUpdating(false)
+
+          // Clear log after 3 seconds
+          setTimeout(() => {
+            setLog([])
+          }, 3000)
+        }
+      }, timeoutDuration)
+
+      return () => clearTimeout(timer) // Clear timeout if updating finishes early or log changes
+    }
+  }, [isUpdating, log])
+
   return (
     <div className="w-full h-full">
       <div className="w-full flex items-center">
         <IoMdArrowRoundBack
-          className="mr-4 cursor-pointer hover:opacity-50"
-          size={24}
+          className="mr-2 cursor-pointer hover:opacity-50"
+          size={26}
           onClick={() => {
             if (onCancel) {
               onCancel()
             }
           }}
         />
-        <DaText variant="huge-bold">
+        <DaText variant="title" className="text-da-gray-dark">
           {!onTargetMode && 'Edit System Definition'}
           {onTargetMode && 'Update Stage'}
         </DaText>
       </div>
 
       {onTargetMode && (
-        <div className="flex mb-2 justify-between">
-          <div className=" bg-slate-100 rounded w-[32%] border border-da-gray-medium p-2">
-            <DaText variant="sub-title" className="text-da-black">
+        <div className=" mb-2 justify-between mt-4 grid grid-cols-12 gap-3">
+          <div className=" bg-gray-100 rounded col-span-3 border border-gray-300 p-3">
+            <DaText variant="sub-title" className="text-da-primary-500">
               System
             </DaText>
-            <div className="flex">
-              <div className="w-[80px]">Name:</div>
+            <div className="flex mt-2">
+              <div className="w-[80px] text-da-gray-dark font-medium">
+                Name:
+              </div>
               <div className="grow">{system && system.name}</div>
             </div>
-            <div className="flex">
-              <div className="w-[80px]">Version:</div>
-              <div className="grow text-da-black">
+            <div className="flex mt-2">
+              <div className="w-[80px] text-da-gray-dark font-medium">
+                Version:
+              </div>
+              <div className="grow text-da-gray-dark">
                 <b>{system && system.version}</b>
               </div>
             </div>
           </div>
 
-          <div className=" bg-slate-100 rounded w-[32%] border border-da-gray-medium p-2">
-            <DaText variant="sub-title" className="text-da-black">
+          <div className=" bg-gray-100 rounded col-span-6 border border-gray-300 p-3">
+            <DaText variant="sub-title" className="text-da-primary-500">
               Stage
             </DaText>
-            <div className="flex">
-              <div className="w-[80px]">Name:</div>
+            <div className="flex mt-2">
+              <div className="w-[100px] text-da-gray-dark font-medium">
+                Name:
+              </div>
               <div className="grow">{target && target.name}</div>
             </div>
-            <div className="flex">
-              <div className="w-[80px]">Version:</div>
-              <div className="grow text-da-black">
+            <div className="flex mt-2">
+              <div className="w-[100px] text-da-gray-dark font-medium">
+                Version:
+              </div>
+              <div className="grow text-da-gray-dark">
                 <b>{target && target.version}</b>
               </div>
             </div>
-            <div>
+            <div className="mt-2">
               {target && (
                 <DaRuntimeConnector
                   targetPrefix={target.prefix || 'runtime-'}
@@ -122,54 +155,71 @@ const DaEditSystemStaging = ({
                   onActiveRtChanged={(rtId: string | undefined) => {
                     setActiveRtId(rtId || '')
                   }}
-                  onDeployResponse={(log: string, isDone: boolean) => {
-                    // console.log(`onDeployResponse isDone:`, isDone)
-                    // console.log(`log`, log)
-                    if (log) {
-                      setLog(log)
+                  onDeployResponse={(newLog: string, isDone: boolean) => {
+                    if (newLog) {
+                      // Append new log to the log state, keeping only the last 3 logs
+                      setLog((prevLog) => {
+                        const updatedLog = [...prevLog, newLog].slice(-3)
+                        return updatedLog
+                      })
                     }
                     if (isDone) {
                       setIsUpdating(false)
                       setTimeout(() => {
-                        setLog('')
+                        setLog([]) // Optionally reset the log after a delay
                       }, 2000)
                     }
                   }}
                 />
               )}
-              {log && (
+              {log.length > 0 && (
                 <div className="mt-2 flex">
-                  <div className="da-label-small">Response:</div>
-                  <div className="ml-2 bg-da-black text-da-white px-2 py-0.5 rounded da-label-tiny grow">
-                    {log}
+                  <div className="w-[100px] font-medium text-da-gray-dark line-clamp-3">
+                    Response:
+                  </div>
+                  <div className="min-h-8 bg-da-black text-da-white px-2 py-1.5 rounded da-label-tiny grow leading-tight">
+                    {log.map((entry, index) => (
+                      <div key={index}>{entry}</div>
+                    ))}
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          <div className=" bg-slate-100 rounded w-[32%] border border-da-gray-medium p-2">
-            <DaText variant="sub-title" className="text-da-black">
+          <div className=" bg-gray-100 rounded col-span-3 border border-gray-300 p-3">
+            <DaText variant="sub-title" className="text-da-primary-500">
               Update
             </DaText>
-            <div className="flex">
-              <div className="w-[80px]">Date:</div>
-              <div className="grow">4/15/2024: 12:41</div>
+            <div className="flex mt-2">
+              <div className="w-[80px] font-medium text-da-gray-dark">
+                Date:
+              </div>
+              <div className="grow">
+                {new Date().toLocaleString('en-GB', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: false,
+                })}
+              </div>
             </div>
-            <div className="flex">
-              <div className="w-[80px]">By:</div>
-              <div className="grow text-da-black">
-                <b>John Doe</b>
+            <div className="flex mt-2">
+              <div className="w-[80px] font-medium text-da-gray-dark">By:</div>
+              <div className="grow text-da-gray-dark">
+                <b>{profile ? profile.name : 'John Doe'}</b>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      <div className="min-h-[400px] max-h-[70vh] overflow-y-auto mt-2">
+      <div className="flex flex-col max-h-[50vh] overflow-y-auto mt-3">
         <div className="w-full rounded border">
-          <div className="h-[40px] w-full rounded-t text-da-white font-bold flex">
-            <div className="h-full px-4 flex items-center grow ">
+          <div className="flex h-[40px] w-full border-b text-da-gray-dark rounded-t font-bold">
+            <div className="h-full px-4 flex items-center grow">
               System Elements
             </div>
             <div className="h-full px-2 flex items-center justify-center w-24 border-l">
@@ -185,7 +235,7 @@ const DaEditSystemStaging = ({
                 <div className="h-full px-2 flex items-center justify-center w-24 border-l">
                   Update
                 </div>
-                <div className="h-full px-2 flex items-center justify-center w-24 border-l text-[14px]">
+                <div className="h-full px-2 flex items-center justify-center w-32 border-l text-base">
                   {target.short_name || target.name}
                 </div>
               </>
@@ -214,12 +264,13 @@ const DaEditSystemStaging = ({
               onItemEditFinished={(id, data) => {
                 updateDefineAtId(id, data)
               }}
+              expandedIds={['3', '3.1', '3.1.1', '3.1.1.1', '3.1.1.1.1']}
             ></DaStageComponent>
           )}
         </div>
       </div>
 
-      {!onTargetMode && (
+      {/* {!onTargetMode && (
         <div className="flex mt-2">
           <div className="grow"></div>
           <DaButton
@@ -261,7 +312,7 @@ const DaEditSystemStaging = ({
           </DaButton>
           <div className="grow"></div>
         </div>
-      )}
+      )} */}
     </div>
   )
 }

@@ -46,6 +46,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
   const { data: model } = useCurrentModel()
   const prototype = useModelStore((state) => state.prototype as Prototype)
   const [isDefaultTab, setIsDefaultTab] = useState(false)
+  const [openStagingDialog, setOpenStagingDialog] = useState(false)
 
   useEffect(() => {
     if (!tab || tab === 'journey' || tab === 'view') {
@@ -123,6 +124,11 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
                 Staging
               </DaTabItem>
             }
+            state={[openStagingDialog, setOpenStagingDialog]}
+            onClose={() => {
+              setOpenStagingDialog(false)
+            }}
+            closeBtnClassName="top-5 size-5"
           >
             <DaStaging />
           </DaPopup>
