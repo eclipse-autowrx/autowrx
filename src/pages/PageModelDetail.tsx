@@ -263,6 +263,7 @@ const PageModelDetail = () => {
             </DaMenu>
             <DaConfirmPopup
               onConfirm={handleDeleteModel}
+              title="Delete Model"
               label="This action cannot be undone and will delete all of your model and prototypes data. Please proceed with caution."
               confirmText={model.name}
               state={[confirmPopupOpen, setConfirmPopupOpen]}

@@ -10,7 +10,8 @@ interface RequirementItemProps {
   index: number
   onUpdate: (updateRequirement: CustomRequirement) => void
   onDelete: () => void
-  isAuthorized?: boolean
+  isAuthorized: boolean
+  isEditing: boolean
 }
 const DaRequirementItem = ({
   requirement,
@@ -18,6 +19,7 @@ const DaRequirementItem = ({
   onUpdate,
   onDelete,
   isAuthorized,
+  isEditing,
 }: RequirementItemProps) => {
   const [showTrashButton, setShowTrashButton] = useState(false)
 
@@ -45,7 +47,7 @@ const DaRequirementItem = ({
           wrapperClassName="!bg-white"
           inputClassName="!bg-white text-sm"
           className="mt-1"
-          disabled={!isAuthorized}
+          disabled={!isAuthorized && !isEditing}
         />
         <DaText variant="small-bold" className="text-gray-500 mt-2">
           URL
@@ -60,11 +62,11 @@ const DaRequirementItem = ({
           wrapperClassName="!bg-white"
           inputClassName="!bg-white w-full text-sm"
           className="mt-1"
-          disabled={!isAuthorized}
+          disabled={!isAuthorized && !isEditing}
         />
       </div>
 
-      {isAuthorized && (
+      {isAuthorized && isEditing && (
         <div
           onClick={onDelete}
           className={cn(

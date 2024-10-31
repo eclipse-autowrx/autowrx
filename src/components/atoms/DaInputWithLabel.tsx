@@ -19,7 +19,10 @@ const DaInputWithLabel = ({
   isTextarea = false,
 }: DaInputWithLabel) => (
   <div className={cn('flex w-full items-center mb-4', className)}>
-    <DaText className="flex min-w-[150px]" variant="small-bold">
+    <DaText
+      className="flex min-w-[150px] text-da-gray-dark"
+      variant="small-bold"
+    >
       {label}
     </DaText>
     {isTextarea ? (

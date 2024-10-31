@@ -280,6 +280,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
           <DaConfirmPopup
             onConfirm={handleDeleteWishlistApi}
             state={[confirmPopupOpen, setConfirmPopupOpen]}
+            title="Delete Wishlist Signal"
             label="Are you sure you want to delete this wishlist signal?"
           >
             <></>
