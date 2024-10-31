@@ -223,7 +223,7 @@ const DaGenAI_EditSystemStaging = ({
                 <div className="h-full px-2 flex items-center justify-center w-24 border-l">
                   Update
                 </div>
-                <div className="h-full px-2 flex items-center justify-center w-24 border-l text-base">
+                <div className="h-full px-2 flex items-center justify-center w-32 border-l text-base">
                   {target.short_name || target.name}
                 </div>
               </>
