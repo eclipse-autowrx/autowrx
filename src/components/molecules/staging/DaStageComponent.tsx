@@ -76,7 +76,7 @@ const DaStageComponent = ({
               <BsDot size={20} className="mr-2"></BsDot>
             )}
             {item.id === '3.1.1.1.1.1' ? (
-              prototype.name ? (
+              prototype && prototype.name ? (
                 <span className="font-medium text-da-primary-500 truncate w-[40vw] max-w-[600px]">
                   {prototype.name}
                 </span>
