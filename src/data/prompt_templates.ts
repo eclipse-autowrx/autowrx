@@ -38,12 +38,14 @@ When the driver door closes, the app will:
   {
     title: "Welcome Passenger",
     prompt: `The "Welcome Passenger" vehicle app reacts on the state of the driver’s door.
-    When the driver door is opened: 
-    - fade in the interior light to blue 
-    - move the driver’s seat to the backmost position (value 1000)
-    When the driver door is closed: 
-    - Move the driver’s seat to the front position (value 0)
-    - Turn off the interior light 2 seconds after the driver’s door is closed`
+    
+When the driver door is opened: 
+  - fade in the interior light to blue 
+  - move the driver’s seat to the backmost position (value 1000)
+
+When the driver door is closed: 
+  - Move the driver’s seat to the front position (value 0)
+  - Turn off the interior light 2 seconds after the driver’s door is closed`
   }
 ]
 
