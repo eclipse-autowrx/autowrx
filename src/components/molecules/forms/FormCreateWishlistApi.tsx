@@ -159,6 +159,7 @@ const FormCreateWishlistApi = ({
         description: data.description,
         type: data.type,
         datatype: data.datatype,
+        isWishlist: true
       })
 
       await refreshModel()
