@@ -81,6 +81,7 @@ const home = [
       },
       {
         title: 'Zonal E/E architecture | digital.auto x MiX',
+        date: '25 October 2025',
         type: 'News',
         description:
           'The Bosch MiX project has developed a demonstrator platform for real-time applications in a zonal E/E architecture utilizing NXP hashtag#S32G3 and Yocto Linux.',
@@ -90,6 +91,7 @@ const home = [
       },
       {
         title: 'digital.auto at ETAS Connections 2024',
+        date: '9 October 2025',
         type: 'Event',
         description:
           `Check out the digital.auto demo stand and don't miss the panel discussion on continous homologation`,
