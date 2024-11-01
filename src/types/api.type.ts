@@ -97,6 +97,7 @@ export type ExtendedApi = {
   skeleton: string
   tags?: Tag[]
   created_at?: string
+  isWishlist?: boolean
 }
 
 export type ExtendedApiRet = Omit<ExtendedApi, 'type' | 'description'> & {
