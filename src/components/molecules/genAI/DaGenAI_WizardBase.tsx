@@ -18,6 +18,7 @@ import { io } from 'socket.io-client'
 import useListMarketplaceAddOns from '@/hooks/useListMarketplaceAddOns'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
+import Prompt_Templates from '../../../../instance/prompt_templates.js'
 
 type DaGenAI_WizardBaseProps = {
   type: 'GenAI_Python' | 'GenAI_Dashboard' | 'GenAI_Widget'
@@ -232,21 +233,7 @@ const DaGenAI_WizardBase = ({
   }, [builtInAddOns])
 
   useEffect(() => {
-    let isMounted = true
-    const importPath = '../../../../instance/prompt_templates'
-    import(importPath)
-      .then((module) => {
-        if (isMounted) {
-          setPromptTemplates(module.default)
-        }
-      })
-      .catch((error) => {
-        console.error('prompt_templates module not found:', error)
-        setPromptTemplates([])
-      })
-    return () => {
-      isMounted = false
-    }
+    setPromptTemplates(Prompt_Templates)
   }, [])
 
   return (
