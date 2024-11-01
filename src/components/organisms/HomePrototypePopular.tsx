@@ -128,8 +128,8 @@ const HomePrototypePopular = ({
         state={[openRemindDialog, setOpenRemindDialog]}
         trigger={<span></span>}
       >
-        <div className="flex flex-col p-2 max-w-xl">
-          <DaText variant="title" className="text-da-primary-500">
+        <div className="flex flex-col max-w-xl">
+          <DaText variant="sub-title" className="text-da-primary-500">
             Sign In Required
           </DaText>
           <DaText className="mt-4">

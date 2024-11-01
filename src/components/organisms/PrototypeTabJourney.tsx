@@ -185,14 +185,14 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                   <DaButton
                     variant="outline-nocolor"
                     onClick={handleCancel}
-                    className="text-da-white px-4 py-2 rounded"
+                    className="min-w-[70px] text-da-white px-4 py-2 rounded"
                     size="sm"
                   >
                     Cancel
                   </DaButton>
                   <DaButton
                     onClick={handleSave}
-                    className=" text-white px-4 py-2 rounded"
+                    className="min-w-[70px] text-white px-4 py-2 rounded"
                     size="sm"
                   >
                     Save
@@ -268,6 +268,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                     </DaMenu>
                     <DaConfirmPopup
                       onConfirm={handleDeletePrototype}
+                      title="Delete Prototype"
                       label="This action cannot be undone and will delete all prototypes data. Please proceed with caution."
                       confirmText={prototype.name}
                       state={[confirmPopupOpen, setConfirmPopupOpen]}
@@ -344,7 +345,10 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                     isTextarea
                   />
                   <div className="flex items-center mb-4">
-                    <DaText className="w-[150px]" variant="small-bold">
+                    <DaText
+                      className="w-[150px] text-da-gray-dark"
+                      variant="small-bold"
+                    >
                       Complexity
                     </DaText>
                     <DaSelect
@@ -359,10 +363,14 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                           complexityLevels.indexOf(value) + 1,
                         )
                       }
-                      className="w-full"
+                      className="w-full text-sm"
                     >
                       {complexityLevels.map((level, index) => (
-                        <DaSelectItem key={index} value={level}>
+                        <DaSelectItem
+                          className="text-sm"
+                          key={index}
+                          value={level}
+                        >
                           {level}
                         </DaSelectItem>
                       ))}
@@ -370,18 +378,23 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                   </div>
 
                   <div className="flex items-center mb-4">
-                    <DaText className="w-[150px]" variant="small-bold">
+                    <DaText
+                      className="w-[150px] text-da-gray-dark"
+                      variant="small-bold"
+                    >
                       Status
                     </DaText>
                     <DaSelect
                       value={localPrototype.state || 'development'}
                       onValueChange={(value) => handleChange('state', value)}
-                      className="w-full"
+                      className="w-full text-sm"
                     >
-                      <DaSelectItem value="development">
+                      <DaSelectItem className="text-sm" value="development">
                         Developing
                       </DaSelectItem>
-                      <DaSelectItem value="Released">Released</DaSelectItem>
+                      <DaSelectItem className="text-sm" value="Released">
+                        Released
+                      </DaSelectItem>
                     </DaSelect>
                   </div>
                 </div>
@@ -438,6 +451,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
               customRequirements={customRequirements}
               setCustomRequirements={setCustomRequirements}
               onSaveRequirements={() => handleSave()}
+              isEditing={isEditing}
             />
           </div>
         </div>

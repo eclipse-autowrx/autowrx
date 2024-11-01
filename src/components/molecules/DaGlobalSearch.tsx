@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom'
 import { searchService } from '@/services/search.service'
 import DaLoading from '../atoms/DaLoading'
 
-interface DaConfirmPopupProps {
+interface DaGlobalSearchProps {
   state?: [boolean, React.Dispatch<React.SetStateAction<boolean>>]
   children: ReactElement
 }
@@ -22,7 +22,7 @@ interface SearchResult {
   parent?: { model_id: string }
 }
 
-const DaGlobalSearch = ({ state, children }: DaConfirmPopupProps) => {
+const DaGlobalSearch = ({ state, children }: DaGlobalSearchProps) => {
   const selfManaged = useState(false)
   const [isOpen, setIsOpen] = state ?? selfManaged
   const navigate = useNavigate()

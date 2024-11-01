@@ -40,7 +40,7 @@ const HomologationUsedAPIsHeader = ({
   return (
     <div className="items-center -mt-1 flex flex-shrink-0 mb-1">
       {/* Title */}
-      <h1 className="da-label-title text-da-black">
+      <h1 className="da-label-title text-da-gray-dark">
         Used Signals
         {usedAPIs.length > 0 && ` (${usedAPIs.length})`}
       </h1>

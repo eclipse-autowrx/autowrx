@@ -134,6 +134,7 @@ const PrototypeTabFeedback = () => {
                       </div>
                       {profile && profile?.id === feedback.created_by && (
                         <DaConfirmPopup
+                          title="Delete Feedback"
                           onConfirm={() => handleDeleteFeedback(feedback.id)}
                           label="Are you sure you want to delete this feedback?"
                         >

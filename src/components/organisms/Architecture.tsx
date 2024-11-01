@@ -247,6 +247,7 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
                   <div className="flex text-xs font-bold space-x-2">
                     {isAuthorized && (
                       <DaConfirmPopup
+                        title="Delete Node"
                         label="Are you sure you want to delete this node?"
                         onConfirm={() => handleDeleteNode(node.id)}
                       >
