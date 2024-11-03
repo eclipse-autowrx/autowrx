@@ -3,6 +3,7 @@ import RootLayout from '@/layouts/RootLayout'
 import SuspenseProvider from '@/providers/SuspenseProvider'
 import { RouteConfig } from '@/types/common.type'
 import ModelDetailLayout from '@/layouts/ModelDetailLayout'
+import AuthCallback from '@/components/molecules/velocitas_project/AuthCallback'
 
 const PageHome = lazy(() => import('@/pages/PageHome'))
 const PageAbout = lazy(() => import('@/pages/PageAbout'))
@@ -301,6 +302,15 @@ const routesConfig: RouteConfig[] = [
                 <PageDiscussions />
               </SuspenseProvider>
             ),
+          },
+        ],
+      },
+      {
+        path: '/auth/callback',
+        children: [
+          {
+            index: true,
+            element: <AuthCallback />,
           },
         ],
       },
