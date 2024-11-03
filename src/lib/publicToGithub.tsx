@@ -1,4 +1,4 @@
-import axios from 'axios'
+// publicToGithub.tsx
 import { Buffer } from 'buffer'
 import { Branch } from '@/types/api.type'
 
@@ -14,31 +14,32 @@ const publishToGithub = async (params: {
   vss_payload: { [key: string]: Branch }
 }) => {
   try {
-    // API endpoint for creating a new repo based on a template
-    const templateRepoOwner = 'eclipse-velocitas'
-    const templateRepoName = 'vehicle-app-python-template'
-
-    const response = await axios.post(
-      `https://api.github.com/repos/${templateRepoOwner}/${templateRepoName}/generate`,
-      {
-        owner: params.user_login, // Set the new repo's owner as the authenticated user
-        name: params.repo, // New repository name
-        description: 'Repository generated from Velocitas vehicle app template',
-        include_all_branches: false, // Optional, whether to include all branches
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${params.accessToken}`,
-          Accept: 'application/vnd.github.baptiste-preview+json', // Required preview header for templates API
-        },
-      },
+    // Import and instantiate ProjectGenerator from velocitas-project-generator
+    const { ProjectGenerator } = await import(
+      '@eclipse-velocitas/velocitas-project-generator'
     )
 
-    console.log('Repository created successfully:', response.data)
-    return response.data // Return data for the created repository if needed
+    const generator = new ProjectGenerator(
+      params.user_login, // Owner (authenticated user’s account)
+      params.repo, // Repository name to create
+      params.accessToken, // GitHub access token
+    )
+
+    // Prepare payloads for the generator
+    const appName = params.repo.replace(/[^a-zA-Z0-9]/gi, '')
+    const codePayload = encodeToBase64(params.code)
+    const vssPayload = encodeToBase64(JSON.stringify(params.vss_payload))
+
+    // Run the generator with the provided payloads
+    await generator.runWithPayload(codePayload, appName, vssPayload)
+    console.log(
+      `Repository ${params.repo} created successfully in user ${params.user_login}'s GitHub account.`,
+    )
   } catch (error) {
     console.error('Failed to create repository:', error)
-    throw new Error('Failed to create repository from template.')
+    throw new Error(
+      'Failed to create repository from template using ProjectGenerator.',
+    )
   }
 }
 
