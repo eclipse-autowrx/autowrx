@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { DaButton } from '@/components/atoms/DaButton'
 import { DaInput } from '@/components/atoms/DaInput'
-import { initializeGitHubLogin } from '@/lib/githubAuth' // Import the new GitHub login function
 import publishToGithub from '@/lib/publicToGithub'
+import DaText from '@/components/atoms/DaText'
 
 interface DaVelocitasProjectCreatorProps {
   code: string
@@ -23,15 +23,32 @@ const DaVelocitasProjectCreator: React.FC<DaVelocitasProjectCreatorProps> = ({
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    const token = sessionStorage.getItem('githubAccessToken')
-    const user = sessionStorage.getItem('githubUser')
+    // Listen for the GitHub OAuth code message
+    const handleMessage = (event: MessageEvent) => {
+      // Check if the message is from the expected origin
+      if (event.origin !== 'https://digitalauto-dev.netlify.app') return
 
-    if (token && user) {
-      setAccessToken(token)
-      setUserLogin(JSON.parse(user).login)
-    } else {
-      // Initiate GitHub login if no token is available
-      initializeGitHubLogin()
+      // Ensure the message contains the GitHub auth code
+      if (event.data && event.data.type === 'github-auth-code') {
+        const { code } = event.data
+        console.log(
+          'Received GitHub auth code in DaVelocitasProjectCreator:',
+          code,
+        )
+
+        // Store the code as accessToken or proceed with further actions
+        if (code) {
+          setAccessToken(code) // Replace with actual token exchange logic if needed
+        }
+      }
+    }
+
+    // Add the event listener for messages
+    window.addEventListener('message', handleMessage)
+
+    // Cleanup the event listener on component unmount
+    return () => {
+      window.removeEventListener('message', handleMessage)
     }
   }, [])
 
@@ -68,25 +85,32 @@ const DaVelocitasProjectCreator: React.FC<DaVelocitasProjectCreatorProps> = ({
   }
 
   return (
-    <div className="max-w-md mx-auto">
-      <h2 className="text-2xl font-bold mb-4">
+    <div className="max-w-xl min-w-[400px] mx-auto">
+      <DaText variant="sub-title" className="text-da-primary-500">
         Create Velocitas Project Repository
-      </h2>
-      {error && <p className="text-red-500 mb-4">{error}</p>}
+      </DaText>
+      {error && <p className="text-red-500 my-4">{error}</p>}
       <DaInput
         label="Repository Name"
         value={repoName}
         onChange={(e) => setRepoName(e.target.value)}
+        className="my-4"
       />
-      <div className="flex justify-end mt-4">
-        <DaButton onClick={handleCreateRepo} disabled={loading || !repoName}>
-          {loading ? 'Creating...' : 'Create Repository'}
-        </DaButton>
+      <div className="flex justify-end mt-4 space-x-2">
         <DaButton
           onClick={onClose}
+          size="sm"
+          variant="outline-nocolor"
           className="ml-2 bg-gray-500 hover:bg-gray-600"
         >
           Cancel
+        </DaButton>
+        <DaButton
+          size="sm"
+          onClick={handleCreateRepo}
+          disabled={loading || !repoName}
+        >
+          {loading ? 'Creating...' : 'Create Repository'}
         </DaButton>
       </div>
       {repoUrl && (
