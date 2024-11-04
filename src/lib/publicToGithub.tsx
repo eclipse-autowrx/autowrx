@@ -1,6 +1,7 @@
 // publicToGithub.tsx
 import { Buffer } from 'buffer'
 import { Branch } from '@/types/api.type'
+import { ProjectGenerator } from '@digital-auto/velocitas-project-generator'
 
 const encodeToBase64 = (code: string) => {
   return Buffer.from(code).toString('base64')
@@ -16,7 +17,7 @@ const publishToGithub = async (params: {
   try {
     // Import and instantiate ProjectGenerator from velocitas-project-generator
     const { ProjectGenerator } = await import(
-      '@eclipse-velocitas/velocitas-project-generator'
+      '@digital-auto/velocitas-project-generator'
     )
 
     const generator = new ProjectGenerator(

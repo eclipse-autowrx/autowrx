@@ -3,6 +3,7 @@ import { DaButton } from '@/components/atoms/DaButton'
 import { DaInput } from '@/components/atoms/DaInput'
 import publishToGithub from '@/lib/publicToGithub'
 import DaText from '@/components/atoms/DaText'
+import { loginToGithub } from '@/lib/githubAuth'
 
 interface DaVelocitasProjectCreatorProps {
   code: string
@@ -23,32 +24,28 @@ const DaVelocitasProjectCreator: React.FC<DaVelocitasProjectCreatorProps> = ({
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    // Listen for the GitHub OAuth code message
-    const handleMessage = (event: MessageEvent) => {
-      // Check if the message is from the expected origin
-      if (event.origin !== 'https://digitalauto-dev.netlify.app') return
-
-      // Ensure the message contains the GitHub auth code
-      if (event.data && event.data.type === 'github-auth-code') {
-        const { code } = event.data
-        console.log(
-          'Received GitHub auth code in DaVelocitasProjectCreator:',
-          code,
-        )
-
-        // Store the code as accessToken or proceed with further actions
-        if (code) {
-          setAccessToken(code) // Replace with actual token exchange logic if needed
-        }
+    const authenticate = async () => {
+      try {
+        // Initiates GitHub login flow if no token is available
+        const { user, accessToken } = await loginToGithub()
+        setAccessToken(accessToken)
+        setUserLogin(user.login)
+        sessionStorage.setItem('githubAccessToken', accessToken)
+        sessionStorage.setItem('githubUser', JSON.stringify(user))
+      } catch (error) {
+        setError('Authentication failed. Please try again.')
       }
     }
 
-    // Add the event listener for messages
-    window.addEventListener('message', handleMessage)
+    // Check session storage for an existing access token
+    const token = sessionStorage.getItem('githubAccessToken')
+    const user = sessionStorage.getItem('githubUser')
 
-    // Cleanup the event listener on component unmount
-    return () => {
-      window.removeEventListener('message', handleMessage)
+    if (token && user) {
+      setAccessToken(token)
+      setUserLogin(JSON.parse(user).login)
+    } else {
+      authenticate() // Trigger GitHub login if no session data is found
     }
   }, [])
 
