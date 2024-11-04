@@ -79,7 +79,7 @@ const PrototypeTabCode: FC = ({}) => {
   }
 
   return (
-    <div className="flex h-[calc(100%-0px)] bg-da-g w-full pb-2 px-2 gap-2 bg-da-gray-light">
+    <div className="flex h-[calc(100%-0px)] bg-da-g w-full p-2 gap-2 bg-da-gray-light">
       <div className="flex h-full flex-[2] min-w-[360px] flex-col bg-da-white rounded-md">
         {activeTab == 'api' && (
           <Suspense>
@@ -105,7 +105,7 @@ const PrototypeTabCode: FC = ({}) => {
                   </DaButton>
                 }
               >
-                <div className="flex h-[500px] w-[1000px] flex-col">
+                <div className="flex flex-col h-[80vh] xl:h-[600px] max-h-[90vh] w-[1200px] max-w-[80vw] ">
                   <DaText variant="title" className="text-da-primary-500">
                     {' '}
                     SDV ProtoPilot{' '}
@@ -125,6 +125,10 @@ const PrototypeTabCode: FC = ({}) => {
             </div>
           )}
 
+          <div className="mr-2 da-label-small">
+            Language: <b>{(prototype.language || 'python').toUpperCase()}</b>
+          </div>
+
           {/* <div className="flex h-full w-fit justify-end">
               <DaTabItem
                 small
@@ -140,7 +144,7 @@ const PrototypeTabCode: FC = ({}) => {
             code={code || ''}
             setCode={setCode}
             editable={isAuthorized}
-            language="python"
+            language={prototype.language || 'python'}
             onBlur={saveCodeToDb}
           />
         </Suspense>

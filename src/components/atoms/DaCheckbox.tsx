@@ -15,7 +15,9 @@ const DaCheckbox = ({
   className,
 }: DaCheckboxProps) => {
   return (
-    <label className={cn('flex items-center p-2 cursor-pointer', className)}>
+    <label
+      className={cn('flex items-center relative p-2 cursor-pointer', className)}
+    >
       <input
         type="checkbox"
         checked={checked}

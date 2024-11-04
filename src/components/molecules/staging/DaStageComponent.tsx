@@ -75,7 +75,17 @@ const DaStageComponent = ({
             ) : (
               <BsDot size={20} className="mr-2"></BsDot>
             )}
-            {item.name}
+            {item.id === '3.1.1.1.1.1' ? (
+              prototype && prototype.name ? (
+                <span className="font-medium text-da-primary-500 truncate w-[40vw] max-w-[600px]">
+                  {prototype.name}
+                </span>
+              ) : (
+                item.name
+              )
+            ) : (
+              item.name
+            )}
           </div>
 
           <div className="h-full px-2 flex items-center justify-center w-24 border-l">
@@ -169,7 +179,7 @@ const DaStageComponent = ({
                     </>
                   )}
               </div>
-              <div className="h-full px-2 flex items-center justify-center w-24 border-l">
+              <div className="h-full px-2 flex items-center justify-center w-32 border-l">
                 {isTargetConnected && (
                   <>
                     {item.version &&

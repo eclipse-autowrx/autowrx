@@ -8,6 +8,7 @@ const useCurrentExtendedApiIssue = () => {
     queryKey: ['current-extended-api-issue', data?.id],
     queryFn: () => getIssueByApiService(data?.id!),
     enabled: !!data?.id,
+    retry: false,
   })
 }
 

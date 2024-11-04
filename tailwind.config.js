@@ -44,6 +44,7 @@ module.exports = {
         'da-gray-light': 'hsl(var(--da-gray-light))',
         'da-gray-medium': 'hsl(var(--da-gray-medium))',
         'da-gray-dark': 'hsl(var(--da-gray-dark))',
+        'da-gray-darkest': 'hsl(var(--da-gray-darkest))',
         'da-gradient-from': 'hsl(var(--da-gradient-from))',
         'da-gradient-to': 'hsl(var(--da-gradient-to))',
         'da-destructive': 'hsl(var(--da-destructive))',

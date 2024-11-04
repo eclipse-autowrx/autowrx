@@ -32,7 +32,9 @@ import { cn } from '@/lib/utils'
 import { downloadPrototypeZip } from '@/lib/zipUtils'
 import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
-import DaInputWithLabel from '../DaInputWithLabel'
+import DaInputWithLabel from '../atoms/DaInputWithLabel'
+import { CustomRequirement } from '@/types/model.type'
+import DaCustomRequirements from '../molecules/prototype_requirements/DaCustomRequirements'
 
 interface PrototypeTabJourneyProps {
   prototype: Prototype
@@ -57,6 +59,9 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
   const [isUploading, setIsUploading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [confirmPopupOpen, setConfirmPopupOpen] = useState(false)
+  const [customRequirements, setCustomRequirements] = useState<
+    CustomRequirement[]
+  >(JSON.parse(prototype.requirements ?? '[]'))
 
   const { data: currentUser } = useSelfProfileQuery()
 
@@ -80,6 +85,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
       customer_journey: localPrototype.customer_journey,
       image_file: localPrototype.image_file,
       state: localPrototype.state,
+      requirements: JSON.stringify(customRequirements),
     }
     try {
       await updatePrototypeService(prototype.id, updateData)
@@ -166,240 +172,289 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
   }
 
   return (
-    <div className="flex flex-col h-full w-full container pt-6">
-      <div className="flex mr-4 mb-3 justify-between items-center">
-        {isEditing ? (
-          <>
-            <DaText variant="title" className="text-da-primary-500">
-              Editing Prototype
-            </DaText>
-            <div className="flex space-x-2">
-              <DaButton
-                variant="outline-nocolor"
-                onClick={handleCancel}
-                className="text-da-white px-4 py-2 rounded"
-                size="sm"
-              >
-                Cancel
-              </DaButton>
-              <DaButton
-                onClick={handleSave}
-                className=" text-white px-4 py-2 rounded"
-                size="sm"
-              >
-                Save
-              </DaButton>
-            </div>
-          </>
-        ) : (
-          <>
-            <DaText variant="huge-bold" className="text-da-primary-500">
-              {localPrototype.name}
-            </DaText>
-            {isAuthorized && (
+    <div className="flex flex-col h-full w-full p-2 bg-slate-200">
+      <div className="flex flex-col h-full w-full bg-white rounded-lg overflow-y-auto">
+        <div className="flex flex-col h-full w-full pt-6 container bg-white">
+          <div className="flex mr-4 mb-3 justify-between items-center">
+            {isEditing ? (
               <>
-                <DaMenu
-                  trigger={
-                    <DaButton
-                      variant="solid"
-                      size="sm"
-                      className={cn(
-                        'flex w-full',
-                        isEditing && '!pointer-events-none opacity-50',
-                      )}
-                    >
-                      {!isDeleting && !isEditing && !isSaving && (
-                        <>
-                          Prototype Action
-                          <TbChevronDown className="w-4 h-4 ml-1" />
-                        </>
-                      )}
-                      {isSaving && (
-                        <div className="flex items-center">
-                          <TbLoader className="w-4 h-4 mr-1 animate-spin" />
-                          Saving...
-                        </div>
-                      )}
-                      {isDeleting && (
-                        <div className="flex items-center">
-                          <TbLoader className="w-4 h-4 mr-1 animate-spin" />
-                          Deleting...
-                        </div>
-                      )}
-                    </DaButton>
-                  }
-                >
-                  <div className="flex flex-col px-1">
-                    <DaButton
-                      onClick={() => setIsEditing(true)}
-                      className="!justify-start"
-                      variant="plain"
-                      size="sm"
-                    >
-                      <TbEdit className="w-4 h-4 mr-2" /> Edit Prototype
-                    </DaButton>
-                    <DaButton
-                      variant="plain"
-                      size="sm"
-                      className="!justify-start"
-                      onClick={() => downloadPrototypeZip(prototype)}
-                    >
-                      <TbDownload className="w-4 h-4 mr-2" />
-                      Export Prototype{' '}
-                    </DaButton>
-                    <DaButton
-                      variant="destructive"
-                      size="sm"
-                      className="!justify-start"
-                      onClick={() => setConfirmPopupOpen(true)}
-                    >
-                      <TbTrashX className="w-4 h-4 mr-2" />
-                      Delete Prototype
-                    </DaButton>
-                  </div>
-                </DaMenu>
-                <DaConfirmPopup
-                  onConfirm={handleDeletePrototype}
-                  label="This action cannot be undone and will delete all prototypes data. Please proceed with caution."
-                  confirmText={prototype.name}
-                  state={[confirmPopupOpen, setConfirmPopupOpen]}
-                >
-                  <></>
-                </DaConfirmPopup>
+                <DaText variant="title" className="text-da-primary-500">
+                  Editing Prototype
+                </DaText>
+                <div className="flex space-x-2">
+                  <DaButton
+                    variant="outline-nocolor"
+                    onClick={handleCancel}
+                    className="min-w-[70px] text-da-white px-4 py-2 rounded"
+                    size="sm"
+                  >
+                    Cancel
+                  </DaButton>
+                  <DaButton
+                    onClick={handleSave}
+                    className="min-w-[70px] text-white px-4 py-2 rounded"
+                    size="sm"
+                  >
+                    Save
+                  </DaButton>
+                </div>
               </>
-            )}
-          </>
-        )}
-      </div>
-      <div className="flex w-full">
-        <div className="flex-1 h-fit relative">
-          <DaImage
-            src={
-              localPrototype.image_file
-                ? localPrototype.image_file
-                : '/imgs/default_prototype_cover.jpg'
-            }
-            className="w-full object-cover max-h-[400px] rounded-lg"
-          />
-          {isAuthorized && (
-            <DaImportFile
-              onFileChange={handlePrototypeImageChange}
-              accept=".png, .jpg, .jpeg, .gif, .webp"
-            >
-              <DaButton
-                variant="outline-nocolor"
-                className="absolute bottom-2 right-2"
-                size="sm"
-              >
-                {isUploading ? (
-                  <div className="flex items-center">
-                    <TbLoader className="w-4 h-4 mr-1 animate-spin" />
-                    Uploading Image...
-                  </div>
-                ) : (
+            ) : (
+              <>
+                <DaText variant="huge-bold" className="text-da-primary-500">
+                  {localPrototype.name}
+                </DaText>
+                {isAuthorized && (
                   <>
-                    <TbPhotoEdit className="w-4 h-4 mr-1" /> Update Image
+                    <DaMenu
+                      trigger={
+                        <DaButton
+                          variant="solid"
+                          size="sm"
+                          className={cn(
+                            'flex w-full',
+                            isEditing && '!pointer-events-none opacity-50',
+                          )}
+                        >
+                          {!isDeleting && !isEditing && !isSaving && (
+                            <>
+                              Prototype Action
+                              <TbChevronDown className="w-4 h-4 ml-1" />
+                            </>
+                          )}
+                          {isSaving && (
+                            <div className="flex items-center">
+                              <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                              Saving...
+                            </div>
+                          )}
+                          {isDeleting && (
+                            <div className="flex items-center">
+                              <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                              Deleting...
+                            </div>
+                          )}
+                        </DaButton>
+                      }
+                    >
+                      <div className="flex flex-col px-1">
+                        <DaButton
+                          onClick={() => setIsEditing(true)}
+                          className="!justify-start"
+                          variant="plain"
+                          size="sm"
+                        >
+                          <TbEdit className="w-4 h-4 mr-2" /> Edit Prototype
+                        </DaButton>
+                        <DaButton
+                          variant="plain"
+                          size="sm"
+                          className="!justify-start"
+                          onClick={() => downloadPrototypeZip(prototype)}
+                        >
+                          <TbDownload className="w-4 h-4 mr-2" />
+                          Export Prototype{' '}
+                        </DaButton>
+                        <DaButton
+                          variant="destructive"
+                          size="sm"
+                          className="!justify-start"
+                          onClick={() => setConfirmPopupOpen(true)}
+                        >
+                          <TbTrashX className="w-4 h-4 mr-2" />
+                          Delete Prototype
+                        </DaButton>
+                      </div>
+                    </DaMenu>
+                    <DaConfirmPopup
+                      onConfirm={handleDeletePrototype}
+                      title="Delete Prototype"
+                      label="This action cannot be undone and will delete all prototypes data. Please proceed with caution."
+                      confirmText={prototype.name}
+                      state={[confirmPopupOpen, setConfirmPopupOpen]}
+                    >
+                      <></>
+                    </DaConfirmPopup>
                   </>
                 )}
-              </DaButton>
-            </DaImportFile>
-          )}
-        </div>
-        <div className="flex flex-1 h-full px-4 ml-4">
-          {isEditing ? (
-            <div className="flex flex-col w-full">
-              <DaInputWithLabel
-                label="Prototype Name"
-                value={localPrototype.name}
-                onChange={(value) => handleChange('name', value)}
+              </>
+            )}
+          </div>
+          <div className="flex w-full">
+            <div className="flex-1 h-fit relative">
+              <DaImage
+                src={
+                  localPrototype.image_file
+                    ? localPrototype.image_file
+                    : '/imgs/default_prototype_cover.jpg'
+                }
+                className="w-full object-cover max-h-[400px] rounded-lg"
               />
-              <DaInputWithLabel
-                label="Problem"
-                value={localPrototype.description.problem}
-                onChange={(value) => handleDescriptionChange('problem', value)}
-              />
-              <DaInputWithLabel
-                label="Says who?"
-                value={localPrototype.description.says_who}
-                onChange={(value) => handleDescriptionChange('says_who', value)}
-              />
-              <DaInputWithLabel
-                label="Solution"
-                value={localPrototype.description.solution}
-                onChange={(value) => handleDescriptionChange('solution', value)}
-                isTextarea
-              />
-              <div className="flex items-center mb-4">
-                <DaText className="w-[150px]" variant="small-bold">
-                  Complexity
-                </DaText>
-                <DaSelect
-                  value={
-                    complexityLevels[
-                      (Number(localPrototype.complexity_level) || 3) - 1
-                    ]
-                  }
-                  onValueChange={(value) =>
-                    handleChange(
-                      'complexity_level',
-                      complexityLevels.indexOf(value) + 1,
-                    )
-                  }
-                  className="w-full"
+              {isAuthorized && (
+                <DaImportFile
+                  onFileChange={handlePrototypeImageChange}
+                  accept=".png, .jpg, .jpeg, .gif, .webp"
                 >
-                  {complexityLevels.map((level, index) => (
-                    <DaSelectItem key={index} value={level}>
-                      {level}
-                    </DaSelectItem>
-                  ))}
-                </DaSelect>
-              </div>
+                  <DaButton
+                    variant="outline-nocolor"
+                    className="absolute bottom-2 right-2"
+                    size="sm"
+                  >
+                    {isUploading ? (
+                      <div className="flex items-center">
+                        <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                        Uploading Image...
+                      </div>
+                    ) : (
+                      <>
+                        <TbPhotoEdit className="w-4 h-4 mr-1" /> Update Image
+                      </>
+                    )}
+                  </DaButton>
+                </DaImportFile>
+              )}
             </div>
-          ) : (
-            <DaTableProperty
-              properties={[
-                {
-                  name: 'Problem',
-                  value: prototype.description.problem,
-                },
-                {
-                  name: 'Says who?',
-                  value: prototype.description.says_who,
-                },
-                {
-                  name: 'Solution',
-                  value: prototype.description.solution,
-                },
-                {
-                  name: 'Status',
-                  value:
-                    prototype.state === 'Released' ||
-                    prototype.state === 'Developing'
-                      ? prototype.state
-                      : 'Developing',
-                },
-                {
-                  name: 'Complexity',
-                  value:
-                    complexityLevels[
-                      (Number(prototype.complexity_level) || 3) - 1
-                    ],
-                },
-              ]}
-              className=""
+            <div className="flex flex-1 h-full px-4 ml-4">
+              {isEditing ? (
+                <div className="flex flex-col w-full">
+                  <DaInputWithLabel
+                    label="Prototype Name"
+                    value={localPrototype.name}
+                    onChange={(value) => handleChange('name', value)}
+                  />
+                  <DaInputWithLabel
+                    label="Problem"
+                    value={localPrototype.description.problem}
+                    onChange={(value) =>
+                      handleDescriptionChange('problem', value)
+                    }
+                  />
+                  <DaInputWithLabel
+                    label="Says who?"
+                    value={localPrototype.description.says_who}
+                    onChange={(value) =>
+                      handleDescriptionChange('says_who', value)
+                    }
+                  />
+                  <DaInputWithLabel
+                    label="Solution"
+                    value={localPrototype.description.solution}
+                    onChange={(value) =>
+                      handleDescriptionChange('solution', value)
+                    }
+                    isTextarea
+                  />
+                  <div className="flex items-center mb-4">
+                    <DaText
+                      className="w-[150px] text-da-gray-dark"
+                      variant="small-bold"
+                    >
+                      Complexity
+                    </DaText>
+                    <DaSelect
+                      value={
+                        complexityLevels[
+                          (Number(localPrototype.complexity_level) || 3) - 1
+                        ]
+                      }
+                      onValueChange={(value) =>
+                        handleChange(
+                          'complexity_level',
+                          complexityLevels.indexOf(value) + 1,
+                        )
+                      }
+                      className="w-full text-sm"
+                    >
+                      {complexityLevels.map((level, index) => (
+                        <DaSelectItem
+                          className="text-sm"
+                          key={index}
+                          value={level}
+                        >
+                          {level}
+                        </DaSelectItem>
+                      ))}
+                    </DaSelect>
+                  </div>
+
+                  <div className="flex items-center mb-4">
+                    <DaText
+                      className="w-[150px] text-da-gray-dark"
+                      variant="small-bold"
+                    >
+                      Status
+                    </DaText>
+                    <DaSelect
+                      value={localPrototype.state || 'development'}
+                      onValueChange={(value) => handleChange('state', value)}
+                      className="w-full text-sm"
+                    >
+                      <DaSelectItem className="text-sm" value="development">
+                        Developing
+                      </DaSelectItem>
+                      <DaSelectItem className="text-sm" value="Released">
+                        Released
+                      </DaSelectItem>
+                    </DaSelect>
+                  </div>
+                </div>
+              ) : (
+                <DaTableProperty
+                  properties={[
+                    {
+                      name: 'Problem',
+                      value: prototype.description.problem,
+                    },
+                    {
+                      name: 'Says who?',
+                      value: prototype.description.says_who,
+                    },
+                    {
+                      name: 'Solution',
+                      value: prototype.description.solution,
+                    },
+                    {
+                      name: 'Complexity',
+                      value:
+                        complexityLevels[
+                          (Number(prototype.complexity_level) || 3) - 1
+                        ],
+                    },
+                    {
+                      name: 'Status',
+                      value:
+                        prototype.state === 'Released'
+                          ? 'Released'
+                          : 'Developing',
+                    },
+                  ]}
+                  className=""
+                />
+              )}
+            </div>
+          </div>
+          <div className="flex flex-col w-full items-center justify-center py-8 space-y-8">
+            <DaText variant="title" className="text-da-primary-500">
+              Customer Journey
+            </DaText>
+            <DaTableEditor
+              defaultValue={localPrototype.customer_journey}
+              onChange={(value) => handleChange('customer_journey', value)}
+              isEditing={isEditing}
             />
-          )}
+          </div>
+          <div className="flex flex-col w-full items-center justify-center py-8 space-y-8">
+            <DaText variant="title" className="text-da-primary-500">
+              Requirements
+            </DaText>
+            <DaCustomRequirements
+              customRequirements={customRequirements}
+              setCustomRequirements={setCustomRequirements}
+              onSaveRequirements={() => handleSave()}
+              isEditing={isEditing}
+            />
+          </div>
         </div>
-      </div>
-      <div className="flex flex-col w-full items-center justify-center py-8 space-y-8">
-        <DaText variant="title" className="text-da-primary-500">
-          Customer Journey
-        </DaText>
-        <DaTableEditor
-          defaultValue={localPrototype.customer_journey}
-          onChange={(value) => handleChange('customer_journey', value)}
-          isEditing={isEditing}
-        />
       </div>
     </div>
   )

@@ -9,6 +9,7 @@ import {
   TbBinaryTree,
   TbCode,
   TbGauge,
+  TbListCheck,
   TbMessagePlus,
   TbRoute,
   TbScale,
@@ -23,24 +24,16 @@ import { DaButton } from '@/components/atoms/DaButton'
 import { TbMessage } from 'react-icons/tb'
 import DaDiscussions from '@/components/molecules/DaDiscussions'
 import DaStaging from '@/components/molecules/staging/DaStaging'
+import PrototypeTabJourney from '@/components/organisms/PrototypeTabJourney'
+import PrototypeTabArchitecture from '@/components/organisms/PrototypeTabArchitecture'
+import PrototypeTabCode from '@/components/organisms/PrototypeTabCode'
+import PrototypeTabDashboard from '@/components/organisms/PrototypeTabDashboard'
 
-const PrototypeTabCode = lazy(
-  () => import('@/components/organisms/PrototypeTabCode'),
-)
-const PrototypeTabDashboard = lazy(
-  () => import('@/components/organisms/PrototypeTabDashboard'),
-)
-const PrototypeTabJourney = lazy(
-  () => import('@/components/organisms/PrototypeTabJourney'),
-)
 const PrototypeTabFeedback = lazy(
   () => import('@/components/organisms/PrototypeTabFeedback'),
 )
 const PrototypeTabHomologation = lazy(
   () => import('@/components/organisms/PrototypeTabHomologation'),
-)
-const PrototypeTabArchitecture = lazy(
-  () => import('@/components/organisms/PrototypeTabArchitecture'),
 )
 
 interface ViewPrototypeProps {
@@ -53,6 +46,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
   const { data: model } = useCurrentModel()
   const prototype = useModelStore((state) => state.prototype as Prototype)
   const [isDefaultTab, setIsDefaultTab] = useState(false)
+  const [openStagingDialog, setOpenStagingDialog] = useState(false)
 
   useEffect(() => {
     if (!tab || tab === 'journey' || tab === 'view') {
@@ -70,7 +64,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
 
   return prototype ? (
     <div className={`flex flex-col w-full h-full relative`}>
-      <div className="sticky flex top-0 py-0 bg-da-gray-light min-h-10 justify-between">
+      <div className="flex min-h-[52px] border-b border-da-gray-medium/50 bg-da-white">
         <div className="flex w-fit">
           <DaTabItem
             active={isDefaultTab}
@@ -126,10 +120,15 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           <DaPopup
             trigger={
               <DaTabItem>
-                {/* <TbMessage className="w-5 h-5 mr-2" /> */}
+                <TbListCheck className="w-5 h-5 mr-2" />
                 Staging
               </DaTabItem>
             }
+            state={[openStagingDialog, setOpenStagingDialog]}
+            onClose={() => {
+              setOpenStagingDialog(false)
+            }}
+            closeBtnClassName="top-5 size-5"
           >
             <DaStaging />
           </DaPopup>
@@ -153,31 +152,15 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
       </div>
 
       <div className="flex flex-col h-full overflow-y-auto">
-        {isDefaultTab && (
-          <Suspense>
-            <PrototypeTabJourney prototype={prototype} />
-          </Suspense>
-        )}
-        {tab == 'architecture' && (
-          <Suspense>
-            <PrototypeTabArchitecture />
-          </Suspense>
-        )}
-        {tab == 'code' && (
-          <Suspense>
-            <PrototypeTabCode />
-          </Suspense>
-        )}
+        {isDefaultTab && <PrototypeTabJourney prototype={prototype} />}
+        {tab == 'architecture' && <PrototypeTabArchitecture />}
+        {tab == 'code' && <PrototypeTabCode />}
         {tab == 'flow' && (
           <div className="p-8">
             <DaText variant="huge">Flow Page</DaText>
           </div>
         )}
-        {tab == 'dashboard' && (
-          <Suspense>
-            <PrototypeTabDashboard />
-          </Suspense>
-        )}
+        {tab == 'dashboard' && <PrototypeTabDashboard />}
         {tab == 'homologation' && (
           <Suspense>
             <PrototypeTabHomologation />

@@ -4,7 +4,12 @@ import { DaTag } from '../atoms/DaTag'
 import { DaTableProperty } from '../molecules/DaTableProperty'
 import { DaAvatar } from '../atoms/DaAvatar'
 import { DaButton } from '../atoms/DaButton'
-import { TbArrowRight, TbArrowUpRight, TbLink } from 'react-icons/tb'
+import {
+  TbArrowRight,
+  TbArrowUpRight,
+  TbExternalLink,
+  TbLink,
+} from 'react-icons/tb'
 import { Link } from 'react-router-dom'
 import { Prototype } from '@/types/model.type'
 import DaUserProfile from '../molecules/DaUserProfile'
@@ -79,9 +84,9 @@ const PrototypeSummary = ({ prototype }: PrototypeSummaryProps) => {
             >
               <DaText
                 variant="small-bold"
-                className="flex min-w-[110px] items-center"
+                className="flex min-w-[110px] items-center text-da-gray-dark"
               >
-                Feedback <TbArrowUpRight className="h-5 w-5 stroke-[1.75]" />
+                Feedback <TbExternalLink className="size-4 ml-1" />
               </DaText>
             </Link>
             <DaStarsRating

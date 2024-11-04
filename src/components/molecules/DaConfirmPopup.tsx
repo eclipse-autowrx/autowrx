@@ -7,6 +7,7 @@ import { DaInput } from '../atoms/DaInput'
 interface DaConfirmPopupProps {
   onConfirm: () => void
   label: string
+  title?: string
   confirmText?: string
   children: ReactElement
   state?: [boolean, React.Dispatch<React.SetStateAction<boolean>>]
@@ -15,6 +16,7 @@ interface DaConfirmPopupProps {
 const DaConfirmPopup = ({
   onConfirm,
   label,
+  title,
   confirmText,
   children,
   state,
@@ -36,6 +38,11 @@ const DaConfirmPopup = ({
       trigger={React.cloneElement(children, { onClick: () => setIsOpen(true) })}
     >
       <div className="flex flex-col max-w-[500px]">
+        {title && (
+          <DaText variant="sub-title" className="text-da-primary-500 mb-4">
+            {title}
+          </DaText>
+        )}
         <DaText className="mb-4">{label}</DaText>
         {confirmText && (
           <div className="mb-4">

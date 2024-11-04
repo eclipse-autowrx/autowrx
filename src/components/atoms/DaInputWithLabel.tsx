@@ -1,6 +1,6 @@
-import DaText from './atoms/DaText'
-import { DaInput } from './atoms/DaInput'
-import { DaTextarea } from './atoms/DaTextarea'
+import DaText from './DaText'
+import { DaInput } from './DaInput'
+import { DaTextarea } from './DaTextarea'
 import { cn } from '@/lib/utils'
 
 interface DaInputWithLabel {
@@ -19,7 +19,10 @@ const DaInputWithLabel = ({
   isTextarea = false,
 }: DaInputWithLabel) => (
   <div className={cn('flex w-full items-center mb-4', className)}>
-    <DaText className="flex min-w-[150px]" variant="small-bold">
+    <DaText
+      className="flex min-w-[150px] text-da-gray-dark"
+      variant="small-bold"
+    >
       {label}
     </DaText>
     {isTextarea ? (

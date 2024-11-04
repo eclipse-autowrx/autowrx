@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
-
-import clsx from 'clsx'
 import HomologationUsedAPIsHeader from './DaHomologationUsedAPIsHeader'
 import { VehicleAPI } from '@/types/api.type'
-import useCurrentModel from '@/hooks/useCurrentModel'
 import { supportedCertivityApis } from '@/services/certivity.service'
-import { DaApiListItem } from '../DaApiList'
+import { supportedCertivityApis_v4_map } from '@/services/certivity.service'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
-import useApiByModelId from '@/hooks/useApisByModelId'
 import DaHomologationApiListItem from './DaHomologationApiListItem'
+import useCurrentModelApi from '@/hooks/useCurrentModelApi'
+import useCurrentModel from '@/hooks/useCurrentModel'
+import DaLoading from '@/components/atoms/DaLoading'
+import { TbLoader } from 'react-icons/tb'
 
 type DaHomologationUsedAPIsProps = {
   selectedAPIs: Set<VehicleAPI>
@@ -20,9 +20,13 @@ const DaHomologationUsedAPIs = ({
   setSelectedAPIs,
 }: DaHomologationUsedAPIsProps) => {
   const [usedAPIs, setUsedAPIs] = useState<VehicleAPI[]>([])
+  const { data: prototype, refetch } = useCurrentPrototype()
+  const { data: currentApi, isLoading } = useCurrentModelApi()
   const { data: model } = useCurrentModel()
-  const { data: prototype } = useCurrentPrototype()
-  const { data: api } = useApiByModelId(model?.id)
+
+  useEffect(() => {
+    refetch()
+  }, [])
 
   const convertNodeToItem = useCallback(
     (
@@ -55,6 +59,15 @@ const DaHomologationUsedAPIs = ({
     [],
   )
 
+  // Sort by supported and not supported APIs
+  const compareFn = useCallback((a: VehicleAPI, b: VehicleAPI) => {
+    const aIsSupported = supportedCertivityApis.has('Vehicle' + a.shortName)
+    const bIsSupported = supportedCertivityApis.has('Vehicle' + b.shortName)
+    if (Number(aIsSupported) < Number(bIsSupported)) return 1
+    if (Number(aIsSupported) > Number(bIsSupported)) return -1
+    return a.name.localeCompare(b.name)
+  }, [])
+
   const convertCVITreeToList = useCallback(
     (apiData: any) => {
       if (!apiData) return []
@@ -66,11 +79,10 @@ const DaHomologationUsedAPIs = ({
   )
 
   const fetchAPIs = useCallback(async () => {
-    const cvi = JSON.parse(api?.cvi ?? '{}')
-    const cviList = convertCVITreeToList(cvi)
+    const cviList = convertCVITreeToList(currentApi)
     let wishlistApi: VehicleAPI[] = []
 
-    if (model?.custom_apis) {
+    if (model?.custom_apis && !model.api_version) {
       for (let key in model.custom_apis) {
         let node: any = model.custom_apis[key]
         for (let childKey in node) {
@@ -80,6 +92,7 @@ const DaHomologationUsedAPIs = ({
 
       wishlistApi.forEach((a) => (a.isWishlist = true))
     }
+
     const combine = [...wishlistApi, ...cviList]
     const finalResult: VehicleAPI[] = []
     combine.forEach((item) => {
@@ -92,16 +105,7 @@ const DaHomologationUsedAPIs = ({
     })
 
     return finalResult
-  }, [convertCVITreeToList, convertNodeToItem, model?.custom_apis, api?.cvi])
-
-  // Sort by supported and not supported APIs
-  const compareFn = useCallback((a: VehicleAPI, b: VehicleAPI) => {
-    const aIsSupported = supportedCertivityApis.has('Vehicle' + a.shortName)
-    const bIsSupported = supportedCertivityApis.has('Vehicle' + b.shortName)
-    if (Number(aIsSupported) < Number(bIsSupported)) return 1
-    if (Number(aIsSupported) > Number(bIsSupported)) return -1
-    return a.name.localeCompare(b.name)
-  }, [])
+  }, [convertCVITreeToList, convertNodeToItem, currentApi])
 
   useEffect(() => {
     ;(async () => {
@@ -118,7 +122,7 @@ const DaHomologationUsedAPIs = ({
       }
       setUsedAPIs([])
     })()
-  }, [])
+  }, [fetchAPIs, prototype])
 
   const selectAPIHandler = (api: VehicleAPI) => () => {
     if (selectedAPIs.has(api)) {
@@ -159,7 +163,9 @@ const DaHomologationUsedAPIs = ({
       />
 
       {/* List of used APIs */}
-      {usedAPIs.length > 0 ? (
+      {isLoading ? (
+        <TbLoader className="animate-spin text-lg m-auto" />
+      ) : usedAPIs.length > 0 ? (
         <ul className="flex-1 min-h-0 overflow-y-auto scroll-gray -mx-2">
           {usedAPIs.map((api, index) => (
             <div key={api.name}>
@@ -172,7 +178,8 @@ const DaHomologationUsedAPIs = ({
                 isSelected={selectedAPIs.has(api)}
                 className={getRoundedClassesOfRow(index).join(' ')}
                 isDisabled={
-                  !supportedCertivityApis.has('Vehicle' + api.shortName)
+                  !supportedCertivityApis.has('Vehicle' + api.shortName) &&
+                  !supportedCertivityApis_v4_map['Vehicle' + api.shortName]
                 }
               />
             </div>

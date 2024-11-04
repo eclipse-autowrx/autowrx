@@ -211,7 +211,7 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
 
   return (
     <div className="flex w-full h-full bg-da-white text-da-gray-medium select-none">
-      <div className="flex flex-col min-w-fit max-w-[400px] px-4 h-full border-r pt-3">
+      <div className="flex w-[30%] flex-col min-w-fit max-w-[400px] px-4 h-full border-r pt-3">
         <div className="flex py-1 mb-2 items-center justify-between space-x-8">
           <DaText variant="sub-title">Architecture Mapping</DaText>
           {isAuthorized && (
@@ -247,6 +247,7 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
                   <div className="flex text-xs font-bold space-x-2">
                     {isAuthorized && (
                       <DaConfirmPopup
+                        title="Delete Node"
                         label="Are you sure you want to delete this node?"
                         onConfirm={() => handleDeleteNode(node.id)}
                       >
@@ -284,8 +285,8 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
         )}
       </div>
       {activeNode && (
-        <div className="relative flex flex-col h-full w-full overflow-y-auto">
-          <div className="sticky top-0 z-10 flex w-full px-3 bg-white items-center justify-between min-h-16">
+        <div className="relative flex flex-1 flex-col h-full w-full overflow-y-auto ">
+          <div className="sticky top-0 z-0 flex w-full px-3 bg-white items-center justify-between min-h-16">
             <div className="flex items-center">
               {!isEditName && (
                 <div className="flex items-center">
@@ -371,8 +372,8 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
             </div>
           </div>
 
-          <div className="flex w-full h-full items-center justify-center ">
-            <div className="flex w-full h-full max-w-[85%] overflow-x-hidden">
+          <div className="flex w-full h-full items-center justify-center">
+            <div className="flex w-full h-full max-w-[75%] overflow-x-hidden">
               {!isEditMode && (
                 <ImageAreaPreview
                   shapes={activeNode?.shapes}

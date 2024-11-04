@@ -19,6 +19,7 @@ export type ModelLite = {
 export type Model = {
   id: string
   custom_apis?: Record<string, any>
+  api_version?: string
   main_api: string
   model_home_image_file?: string
   model_files?: Record<string, unknown>
@@ -43,6 +44,7 @@ export type Model = {
 export type Prototype = {
   id: string
   apis: any
+  language: string
   model_id: string
   name: string
   code: string
@@ -62,6 +64,11 @@ export type Prototype = {
   created_at?: Date
   tags?: Tag[]
   avg_score?: number
+  requirements?: string
+}
+export interface CustomRequirement {
+  text?: string
+  url?: string
 }
 
 export type SearchPrototype = {
@@ -76,12 +83,14 @@ export type SearchPrototype = {
 
 export type ModelCreate = {
   name: string
-  cvi: string
+  cvi?: string
   main_api: string
+  api_version?: string
   custom_apis?: string
   model_home_image_file?: string
   model_files?: object
   visibility?: 'public' | 'private'
+  extended_apis?: any[]
 }
 
 export type VehicleApi = {

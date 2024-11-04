@@ -23,6 +23,7 @@ import default_journey from '@/data/default_journey'
 const initialState = {
   prototypeName: '',
   modelName: '',
+  language: 'python',
   cvi: JSON.stringify(CVI),
   mainApi: 'Vehicle',
 }
@@ -36,68 +37,21 @@ interface FormCreatePrototypeProps {
   }) => void
   disabledState?: [boolean, (disabled: boolean) => void]
   hideCreateButton?: boolean
+  code?: string
+  widget_config?: string
+  title?: string
+  buttonText?: string
 }
 
-const FormCreatePrototype = ({
-  onClose,
-  onPrototypeChange,
-  disabledState,
-  hideCreateButton,
-}: FormCreatePrototypeProps) => {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string>('')
-  const [data, setData] = useState(initialState)
-  const [disabled, setDisabled] = disabledState ?? useState(false)
+const DEFAULT_RUST_APP = `// This is Rust app
 
-  const { data: currentModel } = useCurrentModel()
-  const { data: contributionModels, isLoading: isFetchingModelContribution } =
-    useListModelContribution()
-  const [localModel, setLocalModel] = useState<ModelLite>()
-  const { refetch } = useListModelPrototypes(
-    currentModel ? currentModel.id : '',
-  )
-  const navigate = useNavigate()
-  const { toast } = useToast()
+fn main() {
 
-  const { data: currentUser } = useSelfProfileQuery()
+    // Print text to the console.
+    println!("Hello World!");
+}`
 
-  const handleChange = (name: keyof typeof data, value: string | number) => {
-    setData((prev) => ({ ...prev, [name]: value }))
-  }
-
-  const createNewPrototype = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault() // Prevent the form from submitting
-
-    try {
-      setLoading(true)
-
-      // Initialize variables to hold the model ID and response from prototype creation
-      let modelId: string
-      let response
-
-      if (localModel) {
-        // Scenario 1: `localModel` exists, use its ID
-        modelId = localModel.id
-      } else if (data.modelName) {
-        // Scenario 2: `localModel` does not exist, create a new model
-        const modelBody: ModelCreate = {
-          cvi: data.cvi,
-          main_api: data.mainApi,
-          name: data.modelName,
-        }
-
-        const newModelId = await createModelService(modelBody)
-        modelId = newModelId
-      } else {
-        throw new Error('Model data is missing')
-      }
-
-      const body = {
-        model_id: modelId,
-        name: data.prototypeName,
-        state: 'development',
-        apis: { VSC: [], VSS: [] },
-        code: `from vehicle import Vehicle
+const DEFAULT_PYTHON_APP = `from vehicle import Vehicle
 import time
 import asyncio
 import signal
@@ -122,11 +76,82 @@ async def main():
     vehicle_app = TestApp(vehicle)
     await vehicle_app.run()
 
-
 LOOP = asyncio.get_event_loop()
 LOOP.add_signal_handler(signal.SIGTERM, LOOP.stop)
 LOOP.run_until_complete(main())
-LOOP.close()`,
+LOOP.close()`
+
+const FormCreatePrototype = ({
+  onClose,
+  onPrototypeChange,
+  disabledState,
+  hideCreateButton,
+  code,
+  widget_config,
+  title,
+  buttonText,
+}: FormCreatePrototypeProps) => {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string>('')
+  const [data, setData] = useState(initialState)
+  const [disabled, setDisabled] = disabledState ?? useState(false)
+
+  const { data: currentModel } = useCurrentModel()
+  const { data: contributionModels, isLoading: isFetchingModelContribution } =
+    useListModelContribution()
+  const [localModel, setLocalModel] = useState<ModelLite>()
+  const { refetch } = useListModelPrototypes(
+    currentModel ? currentModel.id : '',
+  )
+  const navigate = useNavigate()
+  const { toast } = useToast()
+
+  const { data: currentUser } = useSelfProfileQuery()
+
+  const handleChange = (name: keyof typeof data, value: string | number) => {
+    setData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const getDefaultCode = (lang: string) => {
+    if (lang == 'rust') return DEFAULT_RUST_APP
+
+    return DEFAULT_PYTHON_APP
+  }
+
+  const createNewPrototype = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault() // Prevent the form from submitting
+
+    try {
+      setLoading(true)
+
+      // Initialize variables to hold the model ID and response from prototype creation
+      let modelId: string
+      let response
+
+      if (localModel) {
+        // Scenario 1: `localModel` exists, use its ID
+        modelId = localModel.id
+      } else if (data.modelName) {
+        // Scenario 2: `localModel` does not exist, create a new model
+        const modelBody: ModelCreate = {
+          main_api: data.mainApi,
+          name: data.modelName,
+          api_version: 'v4.1',
+        }
+
+        const newModelId = await createModelService(modelBody)
+        modelId = newModelId
+      } else {
+        throw new Error('Model data is missing')
+      }
+
+      const body = {
+        model_id: modelId,
+        name: data.prototypeName,
+        language: data.language,
+        state: 'development',
+        apis: { VSC: [], VSS: [] },
+        code: code ?? getDefaultCode(data.language),
         complexity_level: 3,
         customer_journey: default_journey,
         description: {
@@ -138,7 +163,7 @@ LOOP.close()`,
         image_file: '/imgs/default_prototype_cover.jpg',
         skeleton: '{}',
         tags: [],
-        widget_config: '[]',
+        widget_config: widget_config ?? '[]',
         autorun: true,
       }
 
@@ -239,7 +264,7 @@ LOOP.close()`,
       className="flex max-h-[80vh] w-[40vw] min-w-[400px] flex-col bg-da-white p-4 lg:w-[25vw]"
     >
       <DaText variant="title" className="text-da-primary-500">
-        New Prototype
+        {title ?? 'New Prototype'}
       </DaText>
 
       {!currentModel &&
@@ -287,6 +312,18 @@ LOOP.close()`,
         className="mt-4"
       />
 
+      <DaSelect
+        defaultValue={data.language}
+        label="Programming Language *"
+        wrapperClassName="mt-4"
+        onValueChange={(v) => {
+          handleChange('language', v)
+        }}
+      >
+        <DaSelectItem value="python">Python</DaSelectItem>
+        <DaSelectItem value="rust">Rust</DaSelectItem>
+      </DaSelect>
+
       {error && (
         <DaText variant="small" className="mt-4 text-da-accent-500">
           {error}
@@ -300,7 +337,7 @@ LOOP.close()`,
         className={clsx('mt-8 w-full', hideCreateButton && '!hidden')}
       >
         {loading && <TbLoader className="mr-2 animate-spin text-lg" />}
-        Create
+        {buttonText ?? 'Create Prototype'}
       </DaButton>
     </form>
   )

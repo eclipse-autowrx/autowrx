@@ -31,7 +31,7 @@ const DaActionCard = ({
         <div className="p-2 rounded-full bg-da-primary-300/25">{icon}</div>
       )}
       <div className="flex flex-col">
-        <DaText variant="regular-bold" className="text-da-gray-medium ">
+        <DaText variant="regular-bold" className="text-da-gray-dark">
           {title}
         </DaText>
         <DaText variant="small" className=" text-gray-500">

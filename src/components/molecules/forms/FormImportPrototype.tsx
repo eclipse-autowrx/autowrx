@@ -60,6 +60,7 @@ const FormImportPrototype = () => {
           cvi: data.cvi,
           main_api: data.mainApi,
           name: data.modelName,
+          api_version: 'v4.1',
         }
 
         const newModelId = await createModelService(modelBody)

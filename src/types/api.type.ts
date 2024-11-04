@@ -1,5 +1,11 @@
 import { Tag } from './model.type'
 
+export type VSSRelease = {
+  name: string
+  published_at: string
+  browser_download_url: string
+}
+
 export type VehicleAPI = {
   name: string
   type: string
@@ -87,10 +93,17 @@ export type ExtendedApi = {
   apiName: string
   description?: string
   type?: string
-  data_type?: string
+  datatype?: string
   skeleton: string
   tags?: Tag[]
   created_at?: string
+  isWishlist?: boolean
+}
+
+export type ExtendedApiRet = Omit<ExtendedApi, 'type' | 'description'> & {
+  name: string
+  type: string
+  description: string
 }
 
 export type ExtendedApiCreate = Omit<ExtendedApi, 'id'>

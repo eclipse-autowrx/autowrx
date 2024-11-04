@@ -128,8 +128,8 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
     }
 
     const stopApp = () => {
-      if (!socketio) {
-        console.error('SocketIO is not initialized.')
+      if (!socketio || !socketio.connected) {
+        console.error('SocketIO is not initialized or connected.')
         return
       }
       socketio.emit('messageToKit', {
@@ -148,6 +148,7 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
       if (wizardPrototype && wizardPrototype.id && currentUser) {
         socketio.emit('messageToKit', {
           cmd: 'deploy_request',
+          disable_code_convert: true,
           to_kit_id: activeRtId,
           code: wizardPrototype.code || '',
           prototype: {
@@ -168,8 +169,8 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
     }
 
     const writeSignalsValue = (obj: any) => {
-      if (!socketio) {
-        console.error('SocketIO is not initialized.')
+      if (!socketio || !socketio.connected) {
+        console.error('SocketIO is not initialized or connected.')
         return
       }
       socketio.emit('messageToKit', {
@@ -201,13 +202,35 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
     }, [activeRtId])
 
     useEffect(() => {
-      if (!kitServerUrl) return
-      setSocketIo(io(kitServerUrl))
+      if (!kitServerUrl) {
+        console.log('Kit Server URL is undefined')
+        return
+      }
+      console.log('Try to connect to KIT Server URL: ', kitServerUrl)
+      const socket = io(kitServerUrl, {
+        transports: ['websocket'],
+        reconnectionAttempts: 5,
+      })
+
+      socket.on('connect_error', (err) => {
+        console.error('Connection error:', err)
+      })
+
+      socket.on('error', (err) => {
+        console.error('Socket error:', err)
+      })
+
+      setSocketIo(socket)
+
+      // Clean up the socket connection on unmount
+      return () => {
+        socket.disconnect()
+      }
     }, [kitServerUrl])
 
     useEffect(() => {
       // console.log('Wizard Active RuntimeID: ', wizardActiveRtId)
-      // console.log('Active RuntimeID: ', activeRtId)
+      console.log('Wizard Active RuntimeID: ', activeRtId)
       if (!socketio) return
 
       if (!socketio.connected) {
@@ -239,7 +262,7 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
         unregisterClient()
         socketio.disconnect()
       }
-    }, [socketio, socketio?.connected, wizardActiveRtId])
+    }, [socketio]) // Remove socketio?.connected to prevent un-necessary change
 
     useEffect(() => {
       console.log(`activeRtId`, activeRtId)
@@ -393,7 +416,7 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
     const onKitReply = (payload: any) => {
       if (!payload) return
 
-      if (payload.cmd == 'deploy-request') {
+      if (payload.cmd == 'deploy_request' || payload.cmd == 'deploy-request') {
         // console.log(payload)
         if (onDeployResponse) {
           onDeployResponse(payload.result, payload.is_finish)

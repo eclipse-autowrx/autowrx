@@ -20,6 +20,7 @@ import { DaText } from '../atoms/DaText'
 import { useLocation, useParams, useNavigate } from 'react-router-dom'
 import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import DaFilter from '../atoms/DaFilter'
 
 const PrototypeLibraryList = () => {
   const { data: model } = useCurrentModel()
@@ -28,14 +29,21 @@ const PrototypeLibraryList = () => {
   )
   const [open, setOpen] = useState(false)
   const [selectedPrototype, setSelectedPrototype] = useState<Prototype>()
+  const [filteredPrototypes, setFilteredPrototypes] = useState<Prototype[]>()
   const [isLoading, setIsLoading] = useState(false)
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
   const [searchInput, setSearchInput] = useState('')
   const location = useLocation()
   const navigate = useNavigate()
   const { prototype_id } = useParams()
-
   const { data: currentUser } = useSelfProfileQuery()
+
+  // Initialize selectedFilters from localStorage or default to ['Newest']
+  const [selectedFilters, setSelectedFilters] = useState<string[]>(() =>
+    JSON.parse(
+      localStorage.getItem('prototypeLibrary-selectedFilter') || '["Newest"]',
+    ),
+  )
 
   const handleSearchChange = (searchTerm: string) => {
     setSearchInput(searchTerm)
@@ -51,7 +59,7 @@ const PrototypeLibraryList = () => {
   useEffect(() => {
     if (fetchedPrototypes && fetchedPrototypes.length > 0) {
       setSelectedPrototype(fetchedPrototypes[0] as Prototype)
-      const querys = new URLSearchParams(location.search) // set search term from querys
+      const querys = new URLSearchParams(location.search)
       const searchQuery = querys.get('search')
       if (searchQuery) {
         setSearchInput(searchQuery)
@@ -76,27 +84,16 @@ const PrototypeLibraryList = () => {
     }
   }, [prototype_id, fetchedPrototypes])
 
-  if (!model || !fetchedPrototypes) {
-    return (
-      <DaLoading
-        text="Loading prototypes..."
-        timeoutText="Failed to load prototype library or access denied"
-      />
-    )
-  }
-
   const handleImportPrototypeZip = async (file: File) => {
     if (!file) return
+    if (!model) return
     setIsLoading(true)
     const prototype = await zipToPrototype(model.id, file)
     try {
       if (prototype) {
         const prototypePayload: Partial<Prototype> = {
           state: prototype.state || 'development',
-          apis: {
-            VSS: [],
-            VSC: [],
-          },
+          apis: { VSS: [], VSC: [] },
           code: prototype.code || '',
           widget_config: prototype.widget_config || '{}',
           description: prototype.description,
@@ -127,23 +124,76 @@ const PrototypeLibraryList = () => {
     }
   }
 
-  const filteredPrototypes = fetchedPrototypes.filter((prototype) =>
-    prototype.name.toLowerCase().includes(searchInput.toLowerCase()),
-  )
+  const handleFilterChange = (option: string[]) => {
+    if (option.length === 0) {
+      option = ['Newest']
+    } else {
+      setSelectedFilters(option)
+      localStorage.setItem(
+        'prototypeLibrary-selectedFilter',
+        JSON.stringify(option),
+      ) // Save filter to localStorage
+    }
+  }
+
+  useEffect(() => {
+    if (!fetchedPrototypes) return
+    setFilteredPrototypes(
+      fetchedPrototypes
+        .filter((prototype) =>
+          prototype.name.toLowerCase().includes(searchInput.toLowerCase()),
+        )
+        .sort((a: Prototype, b: Prototype) => {
+          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
+          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
+
+          if (selectedFilters.includes('Newest')) {
+            return dateB - dateA
+          } else if (selectedFilters.includes('Oldest')) {
+            return dateA - dateB
+          } else if (selectedFilters.includes('Name A-Z')) {
+            return a.name.localeCompare(b.name)
+          }
+          return 0
+        }),
+    )
+  }, [searchInput, selectedFilters, fetchedPrototypes])
+
+  console.log('filteredPrototypes', filteredPrototypes)
+
+  if (!model || !fetchedPrototypes) {
+    return (
+      <DaLoading
+        text="Loading prototypes..."
+        timeoutText="Failed to load prototype library or access denied"
+      />
+    )
+  }
 
   return (
     <div className="flex flex-col w-full h-full">
       <div className="grid grid-cols-12 w-full h-full">
         <div className="relative flex flex-col h-full col-span-5 xl:col-span-4 overflow-auto">
-          <DaInput
-            type="text"
-            Icon={TbSearch}
-            iconBefore={true}
-            placeholder="Enter to search"
-            className="w-full p-3 !bg-white z-10"
-            value={searchInput}
-            onChange={(e) => handleSearchChange(e.target.value)}
-          />
+          <div className="flex items-center pr-3">
+            <DaInput
+              type="text"
+              Icon={TbSearch}
+              iconBefore={true}
+              placeholder="Enter to search"
+              className="w-full p-3 !bg-white z-10"
+              value={searchInput}
+              onChange={(e) => handleSearchChange(e.target.value)}
+            />
+            <DaFilter
+              categories={{
+                'Sort By': ['Newest', 'Oldest', 'Name A-Z'],
+              }}
+              onChange={(option) => handleFilterChange(option)}
+              className="w-full"
+              singleSelect={true}
+              defaultValue={selectedFilters}
+            />
+          </div>
 
           {filteredPrototypes && filteredPrototypes.length > 0 ? (
             <div className="flex flex-col w-full h-full overflow-y-auto px-3">

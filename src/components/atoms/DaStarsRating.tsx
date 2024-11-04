@@ -20,9 +20,12 @@ const DaStarsRating = ({
   const RatingComponent = Rating as any
 
   const handleRatingChange = (value: number) => {
-    setRating(value)
-    if (onChange) {
-      onChange(value)
+    if (value !== rating) {
+      // Only update if value has changed
+      setRating(value)
+      if (onChange) {
+        onChange(value)
+      }
     }
   }
 
@@ -31,7 +34,7 @@ const DaStarsRating = ({
       className={cn('h-6 mx-2', className)}
       readonly={readonly}
       emptySymbol={<HiStar className="text-gray-300" size={24} />}
-      initialRating={rating}
+      initialRating={initialRating} // Set only on initial load
       fullSymbol={<HiStar className="text-[#FFDB58]" size={24} />}
       onChange={handleRatingChange}
     />

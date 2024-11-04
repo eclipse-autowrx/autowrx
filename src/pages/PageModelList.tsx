@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { ModelGrid } from '@/components/organisms/ModelGrid'
 import { DaText } from '@/components/atoms/DaText'
 import { DaButton } from '@/components/atoms/DaButton'
 import { HiPlus } from 'react-icons/hi'
@@ -14,10 +13,52 @@ import { Model, ModelCreate } from '@/types/model.type'
 import { Prototype } from '@/types/model.type'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { addLog } from '@/services/log.service'
+import { useNavigate } from 'react-router-dom'
+import useListModelLite from '@/hooks/useListModelLite'
+import { DaItemVerticalType2 } from '@/components/molecules/DaItemVerticalType2'
+import { Link } from 'react-router-dom'
+import useListModelContribution from '@/hooks/useListModelContribution'
+import DaLoadingWrapper from '@/components/molecules/DaLoadingWrapper'
+import DaTabItem from '@/components/atoms/DaTabItem'
+import { ModelLite } from '@/types/model.type'
 
 const PageModelList = () => {
   const [isImporting, setIsImporting] = useState(false)
+  const navigate = useNavigate()
+  const { refetch: refetchModelList } = useListModelLite()
+
+  const { data: allModel, isLoading: isLoadingPublicModel } = useListModelLite()
+  const { data: contributionModel, isLoading: isLoadingContributionModel } =
+    useListModelContribution()
   const { data: user } = useSelfProfileQuery()
+  const { data: myModels, isLoading: isLoadingMyModels } = useListModelLite({
+    created_by: user?.id,
+  })
+  const [activeTab, setActiveTab] = useState<
+    'public' | 'myModel' | 'myContribution'
+  >('myModel')
+  const [filteredModels, setFilteredModels] = useState<ModelLite[]>([])
+
+  useEffect(() => {
+    if (user) {
+      setActiveTab('myModel')
+    } else {
+      setActiveTab('public')
+    }
+  }, [user])
+
+  useEffect(() => {
+    if (activeTab === 'myContribution' && user) {
+      setFilteredModels(contributionModel?.results || [])
+    } else if (activeTab === 'myModel' && user) {
+      setFilteredModels(myModels?.results || [])
+    } else if (activeTab === 'public') {
+      const publicModels =
+        allModel?.results?.filter((model) => model.visibility === 'public') ||
+        []
+      setFilteredModels(publicModels)
+    }
+  }, [activeTab, contributionModel, allModel, myModels, user])
 
   const handleImportModelZip = async (file: File) => {
     const model = await zipToModel(file)
@@ -41,6 +82,8 @@ const PageModelList = () => {
           'https://firebasestorage.googleapis.com/v0/b/digital-auto.appspot.com/o/media%2Fcar_full_ed.PNG?alt=media&token=ea75b8c1-a57a-44ea-9edb-9816131f9905',
         model_files: importedModel.model.model_files || {},
         name: importedModel.model.name || 'New Imported Model',
+        extended_apis: importedModel.model.extended_apis || [],
+        api_version: importedModel.model.api_version || 'v4.1',
         visibility: 'private',
       }
       //
@@ -82,45 +125,119 @@ const PageModelList = () => {
         )
         await Promise.all(prototypePromises)
       }
+
+      await refetchModelList()
+      navigate(`/model/${createdModel}`)
     } catch (err) {
     } finally {
       setIsImporting(false)
     }
   }
 
+  const cardIntro = user
+    ? [
+        { title: 'My Models', value: 'myModel' },
+        { title: 'My Contributions', value: 'myContribution' },
+        { title: 'Public', value: 'public' },
+      ]
+    : [{ title: 'Public', value: 'public' }]
+
   return (
-    <div className="col-span-full h-full flex flex-col px-2 py-4 container space-y-2">
-      <div className="relative flex w-full h-full mt-4 items-start">
-        <ModelGrid />
-        {user && (
-          <div className="absolute right-0 flex">
-            {!isImporting ? (
-              <DaImportFile accept=".zip" onFileChange={handleImportModelZip}>
-                <DaButton variant="outline-nocolor" size="sm" className="mr-2">
-                  <TbPackageExport className="mr-1 text-lg" /> Import Model
-                </DaButton>
-              </DaImportFile>
-            ) : (
-              <DaText
-                variant="regular"
-                className="flex items-center text-da-gray-medium mr-2"
-              >
-                <TbLoader className="animate-spin text-lg mr-2" />
-                Importing model ...
-              </DaText>
-            )}
-            <DaPopup
-              trigger={
-                <DaButton variant="solid" size="sm" className="">
-                  <HiPlus className="mr-1 text-lg" />
-                  Create New Model
-                </DaButton>
+    <div className="flex flex-col w-full h-full relative">
+      <div className="sticky top-0 flex min-h-[52px] border-b border-da-gray-medium/50 bg-da-white z-50">
+        {cardIntro.map((intro, index) => (
+          <DaTabItem
+            active={activeTab === intro.value}
+            key={index}
+            onClick={() =>
+              setActiveTab(
+                intro.value as 'public' | 'myModel' | 'myContribution',
+              )
+            }
+          >
+            {intro.title}
+          </DaTabItem>
+        ))}
+      </div>
+      <div className="flex w-full h-[calc(100%-52px)] items-start bg-slate-200 p-2">
+        <div className="flex flex-col w-full h-full bg-white rounded-lg overflow-y-auto">
+          <div className="flex flex-col w-full h-full container">
+            {!isImporting &&
+              !isLoadingContributionModel &&
+              !isLoadingMyModels &&
+              !isLoadingPublicModel && (
+                <div className="flex w-full py-6 items-center justify-between">
+                  <DaText
+                    variant="small-medium"
+                    className="text-da-primary-500"
+                  >
+                    Select a vehicle model to start
+                  </DaText>
+                  {user && (
+                    <div className="flex">
+                      {!isImporting ? (
+                        <DaImportFile
+                          accept=".zip"
+                          onFileChange={handleImportModelZip}
+                        >
+                          <DaButton
+                            variant="outline-nocolor"
+                            size="sm"
+                            className="mr-2"
+                          >
+                            <TbPackageExport className="mr-1 text-lg" /> Import
+                            Model
+                          </DaButton>
+                        </DaImportFile>
+                      ) : (
+                        <DaText
+                          variant="regular"
+                          className="flex items-center text-da-gray-medium mr-2"
+                        >
+                          <TbLoader className="animate-spin text-lg mr-2" />
+                          Importing model ...
+                        </DaText>
+                      )}
+                      <DaPopup
+                        trigger={
+                          <DaButton variant="solid" size="sm" className="">
+                            <HiPlus className="mr-1 text-lg" />
+                            Create New Model
+                          </DaButton>
+                        }
+                      >
+                        <FormCreateModel />
+                      </DaPopup>
+                    </div>
+                  )}
+                </div>
+              )}
+            <DaLoadingWrapper
+              loadingMessage="Loading models..."
+              isLoading={
+                isLoadingPublicModel ||
+                isLoadingContributionModel ||
+                isLoadingMyModels
               }
+              data={filteredModels}
+              emptyMessage="No models found. Please create a new model."
+              timeoutMessage="Failed to load models. Please try again."
             >
-              <FormCreateModel />
-            </DaPopup>
+              <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-4 pb-4">
+                {filteredModels?.map((item, index) => (
+                  <Link key={index} to={`/model/${item.id}`}>
+                    <DaItemVerticalType2
+                      title={item.name}
+                      imageUrl={item.model_home_image_file}
+                      tags={item.tags?.map((tag) => `${tag.tag}`) || []}
+                      maxWidth="800px"
+                    />
+                  </Link>
+                ))}
+              </div>
+            </DaLoadingWrapper>
           </div>
-        )}
+        </div>
       </div>
     </div>
   )

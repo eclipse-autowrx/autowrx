@@ -37,7 +37,7 @@ const HomeButtonList = ({ items, requiredLogin }: HomeButtonListProps) => {
   return (
     meetConditions && (
       <div className="container pb-6 flex w-full flex-col justify-center">
-        <div className="grid w-full grid-cols-1 gap-12 md:grid-cols-4">
+        <div className="grid w-full grid-cols-2 grid-rows-2 xl:grid-cols-4 xl:grid-rows-1 gap-12">
           {items?.map((button, index) => {
             if (button.type === 'new-model')
               return (
@@ -86,6 +86,7 @@ const HomeButtonList = ({ items, requiredLogin }: HomeButtonListProps) => {
             if (button.type === 'import-prototype')
               return (
                 <DaPopup
+                  key={index}
                   trigger={
                     <DaActionCard
                       title="Import Prototype"
