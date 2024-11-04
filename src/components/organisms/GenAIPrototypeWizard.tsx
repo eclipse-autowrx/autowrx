@@ -9,7 +9,12 @@ import useWizardGenAIStore from '@/stores/genAIWizardStore'
 import DaGenAI_Simulate from '../molecules/genAI/DaGenAI_Simulate'
 import DaGenAI_WizardStaging from '../molecules/genAI/DaGenAI_WizardStaging'
 import { cn } from '@/lib/utils'
-import { TbArrowRight, TbArrowLeft, TbSettings } from 'react-icons/tb'
+import {
+  TbArrowRight,
+  TbArrowLeft,
+  TbSettings,
+  TbDeviceFloppy,
+} from 'react-icons/tb'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import { toast } from 'react-toastify'
@@ -18,9 +23,9 @@ import DaGenAI_RuntimeSelectorPopup from '../molecules/genAI/DaGenAI_RuntimeSele
 import DaHomologation from '../molecules/homologation'
 import DaPopup from '../atoms/DaPopup'
 import FormCreatePrototype from '../molecules/forms/FormCreatePrototype'
+import { MdOutlineDesignServices } from 'react-icons/md'
 
 const GenAIPrototypeWizard = () => {
-  const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
   const [soFarSteps, setSoFarSteps] = useState(0)
@@ -44,6 +49,8 @@ const GenAIPrototypeWizard = () => {
     wizardActiveRtId,
     codeGenerating,
     setWizardActiveRtId,
+    isEditDashboard,
+    setIsEditDashboard,
   } = useWizardGenAIStore()
 
   const updateDisabledStep = (step: number, disabled: boolean) => {
@@ -191,7 +198,7 @@ const GenAIPrototypeWizard = () => {
           </DaButton>
         )}
         {currentStep === 2 && (
-          <div className="flex items-center justify-center ml-8">
+          <div className="flex items-center justify-center ml-16">
             <DaButton
               onClick={() =>
                 wizardSimulating
@@ -210,6 +217,17 @@ const GenAIPrototypeWizard = () => {
               className="ml-2 !p-2"
             >
               <TbSettings className="size-6" />
+            </DaButton>
+            <DaButton
+              variant="plain"
+              onClick={() => setIsEditDashboard(!isEditDashboard)}
+              className="ml-2 !p-2"
+            >
+              {!isEditDashboard ? (
+                <MdOutlineDesignServices className="size-6" />
+              ) : (
+                <TbDeviceFloppy className="size-6" />
+              )}
             </DaButton>
           </div>
         )}

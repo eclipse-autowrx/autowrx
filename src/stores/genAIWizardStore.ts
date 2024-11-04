@@ -22,6 +22,8 @@ type WizardGenAIStoreState = {
   wizardRunSimulationAction: (() => void) | null
   wizardStopSimulationAction: (() => void) | null
 
+  isEditDashboard: boolean
+
   codeGenerating: boolean
 
   wizardPrototype: WizardPrototype
@@ -45,6 +47,8 @@ type WizardGenAIStoreActions = {
   registerWizardSimulationStop: (action: () => void) => void
   executeWizardSimulationRun: () => boolean
   executeWizardSimulationStop: () => boolean
+
+  setIsEditDashboard: (isEdit: boolean) => void
 
   setPrototypeData: (data: Partial<WizardPrototype>) => void
   resetWizardStore: () => void
@@ -99,6 +103,8 @@ const useWizardGenAIStore = create<
 
   codeGenerating: false,
 
+  isEditDashboard: false,
+
   wizardGeneratedCode: '',
   wizardGenerateCodeAction: null,
 
@@ -111,6 +117,8 @@ const useWizardGenAIStore = create<
 
   allWizardRuntimes: [],
   wizardActiveRtId: '',
+
+  setIsEditDashboard: (isEdit: boolean) => set({ isEditDashboard: isEdit }),
 
   setCodeGenerating: (isGenerating: boolean) => {
     set({ codeGenerating: isGenerating })
