@@ -465,7 +465,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
           )}
           <select
             aria-label="deploy-select"
-            className={`border rounded da-label-small px-2 py-1 w-full min-w-[90px] text-da-gray-dark bg-da-gray-light`}
+            className={`border rounded da-label-small px-2 py-1 w-full min-w-[90px] text-da-gray-dark bg-gray-200`}
             value={activeRtId as any}
             onChange={(e) => {
               // console.log(`setActiveRtId(e.target.value) `, e.target.value)

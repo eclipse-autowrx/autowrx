@@ -14,12 +14,14 @@ interface DaCustomRequirementsProps {
     React.SetStateAction<CustomRequirement[]>
   >
   onSaveRequirements: () => void
+  isEditing: boolean
 }
 
 const DaCustomRequirements = ({
   customRequirements,
   setCustomRequirements,
   onSaveRequirements,
+  isEditing,
 }: DaCustomRequirementsProps) => {
   const [initialCustomRequirements, setInitialCustomRequirements] = useState<
     CustomRequirement[]
@@ -97,6 +99,7 @@ const DaCustomRequirements = ({
                 deleteCustomRequirement(index)
               }}
               isAuthorized={isAuthorized}
+              isEditing={isEditing}
             />
           ))
         ) : (
@@ -105,7 +108,7 @@ const DaCustomRequirements = ({
           </div>
         )}
       </div>
-      {isAuthorized && (
+      {isAuthorized && isEditing && (
         <div
           className={cn(
             'flex w-full items-center justify-between mt-6 ',
@@ -130,14 +133,14 @@ const DaCustomRequirements = ({
             >
               Discard Changes
             </DaButton>
-            <DaButton
+            {/* <DaButton
               size="sm"
               variant="solid"
               onClick={handleSaveRequirements}
               disabled={!hasChanges}
             >
               Save Requirements
-            </DaButton>
+            </DaButton> */}
           </div>
         </div>
       )}

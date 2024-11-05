@@ -10,7 +10,6 @@ import useAuthStore from '@/stores/authStore'
 import default_generated_code from '@/data/default_generated_code'
 import { cn, useClickOutside } from '@/lib/utils'
 import { TbHistory, TbRotate, TbSettings } from 'react-icons/tb'
-import promptTemplates from '@/data/prompt_templates'
 import useGenAIWizardStore from '@/stores/genAIWizardStore'
 import DaPopup from '@/components/atoms/DaPopup'
 import DaText from '@/components/atoms/DaText'
@@ -19,7 +18,7 @@ import { io } from 'socket.io-client'
 import useListMarketplaceAddOns from '@/hooks/useListMarketplaceAddOns'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
-import { add } from 'lodash'
+import Prompt_Templates from '../../../../instance/prompt_templates.js'
 
 type DaGenAI_WizardBaseProps = {
   type: 'GenAI_Python' | 'GenAI_Dashboard' | 'GenAI_Widget'
@@ -54,6 +53,7 @@ const DaGenAI_WizardBase = ({
     setCodeGenerating,
   } = useGenAIWizardStore()
   const [openSelectorPopup, setOpenSelectorPopup] = useState(false)
+  const [promptTemplates, setPromptTemplates] = useState<any[]>([])
 
   const prompt = wizardPrompt
   const setPrompt = setWizardPrompt
@@ -232,40 +232,48 @@ const DaGenAI_WizardBase = ({
     }
   }, [builtInAddOns])
 
+  useEffect(() => {
+    setPromptTemplates(Prompt_Templates)
+  }, [])
+
   return (
     <div className={cn('flex h-full w-full rounded px-4', className)}>
       <div className="flex h-full w-full flex-col overflow-y-auto border-none pl-0.5 pr-2">
         <div className="flex w-full items-center justify-between">
           <div className="space-x-2">
             <div className="relative flex">
-              <DaButton
-                variant="plain"
-                size="sm"
-                onClick={() => {
-                  setShowDropdown(!showDropdown)
-                }}
-              >
-                <TbHistory className="mr-1 size-4 rotate-[0deg]" />
-                History
-              </DaButton>
+              {promptTemplates && promptTemplates.length > 0 && (
+                <DaButton
+                  variant="plain"
+                  size="sm"
+                  onClick={() => {
+                    setShowDropdown(!showDropdown)
+                  }}
+                >
+                  <TbHistory className="mr-1 size-4 rotate-[0deg]" />
+                  History
+                </DaButton>
+              )}
 
               {showDropdown && (
                 <div
                   ref={dropdownRef}
                   className="absolute top-6 z-10 mt-2 w-full min-w-full rounded-lg border border-gray-300 bg-white shadow-lg"
                 >
-                  {promptTemplates.map((template) => (
-                    <div
-                      key={template.title}
-                      className="da-txt-small flex w-full min-w-full shrink-0 cursor-pointer border-b p-2 hover:bg-da-gray-light"
-                      onClick={() => {
-                        setPrompt(template.prompt)
-                        setShowDropdown(!showDropdown)
-                      }}
-                    >
-                      {template.title}
-                    </div>
-                  ))}
+                  {promptTemplates &&
+                    promptTemplates.length > 0 &&
+                    promptTemplates.map((template) => (
+                      <div
+                        key={template.title}
+                        className="da-txt-small flex w-full min-w-full shrink-0 cursor-pointer border-b p-2 hover:bg-da-gray-light"
+                        onClick={() => {
+                          setPrompt(template.prompt)
+                          setShowDropdown(!showDropdown)
+                        }}
+                      >
+                        {template.title}
+                      </div>
+                    ))}
                 </div>
               )}
               <DaButton variant="plain" size="sm" onClick={() => setPrompt('')}>

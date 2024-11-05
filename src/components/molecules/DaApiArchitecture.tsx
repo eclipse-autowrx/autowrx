@@ -107,9 +107,11 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
     if (!modelID || !apiName) return
     setIsFetching(true)
 
+    let res
+
     try {
       // Fetch the current selected API skeleton
-      const res = await getExtendedApi(apiName, modelID)
+      res = await getExtendedApi(apiName, modelID)
       if (res && res.skeleton && res.skeleton !== '{}') {
         setExtendedApi(res)
         const parsedSkeleton: Skeleton = JSON.parse(res.skeleton)
@@ -172,7 +174,28 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
         setExtendedApi(res)
         setSkeleton(tmpSkele)
       } else {
-        console.error('Error fetching extended API:', error)
+        const parentSkeletonObject = await fetchParentAPISkeleton(
+          apiName,
+          modelID,
+        )
+        if (
+          !parentSkeletonObject ||
+          !parentSkeletonObject.nodes ||
+          parentSkeletonObject.nodes.length === 0
+        ) {
+          throw new Error('Parent skeleton not found or empty')
+        }
+        const tmpSkele = await createNodeWithImage(
+          parentSkeletonObject.nodes[0].bgImage,
+        )
+        if (res && res.skeleton === '{}') {
+          updateExtendedApi(
+            {
+              skeleton: JSON.stringify(tmpSkele),
+            },
+            res.id,
+          )
+        }
       }
     } finally {
       setIsFetching(false)
