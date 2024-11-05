@@ -1,13 +1,12 @@
 import config from '@/configs/config'
-
-import { Socket, io } from 'socket.io-client'
-import useSelfProfileQuery from './useSelfProfile'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { getGithubCurrentUser } from '@/services/github.service'
 import { GithubUser } from '@/types/github.type'
 import useGithubAuthStore from '@/stores/githubAuthStore'
 import { shallow } from 'zustand/shallow'
 import dayjs from 'dayjs'
+import useSocketIO from './useSocketIO'
+import useSelfProfileQuery from './useSelfProfile'
 
 const useGithubAuth = () => {
   const [access, setAccess, clear] = useGithubAuthStore(
@@ -18,25 +17,16 @@ const useGithubAuth = () => {
   const [loading, setLoading] = useState(false)
   const [user, setUser] = useState<GithubUser>()
 
+  const socket = useSocketIO()
   const { data: self } = useSelfProfileQuery()
-  const socketRef = useRef<Socket | null>(null)
 
   const redirectUri = encodeURIComponent(
     `${config.serverBaseUrl}/${config.serverVersion}/auth/github/callback?userId=${self?.id}&origin=${window.location.origin}`,
   )
 
-  useEffect(() => {
-    if (!self) return
-    socketRef.current = io(config.serverBaseUrl, {
-      query: {
-        userId: self.id,
-      },
-    })
-  }, [self?.id])
-
   const listenForAuth = () => {
     setLoading(true)
-    socketRef.current?.on(
+    socket?.on(
       'auth/github',
       async (data: { accessToken: string; expiresIn?: number }) => {
         setAccess({
@@ -55,18 +45,18 @@ const useGithubAuth = () => {
         } finally {
           setLoading(false)
           setError('')
-          socketRef.current?.off('auth/github')
-          socketRef.current?.off('auth/github/error')
+          socket?.off('auth/github')
+          socket?.off('auth/github/error')
         }
       },
     )
-    socketRef.current?.on('auth/github/error', (data: { message: string }) => {
+    socket?.on('auth/github/error', (data: { message: string }) => {
       setError(data.message)
       setLoading(false)
       clear()
       setUser(undefined)
-      socketRef.current?.off('auth/github')
-      socketRef.current?.off('auth/github/error')
+      socket?.off('auth/github')
+      socket?.off('auth/github/error')
     })
   }
 

@@ -19,6 +19,7 @@ import useListMarketplaceAddOns from '@/hooks/useListMarketplaceAddOns'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import Prompt_Templates from '../../../../instance/prompt_templates.js'
+import useSocketIO from '@/hooks/useSocketIO.js'
 
 type DaGenAI_WizardBaseProps = {
   type: 'GenAI_Python' | 'GenAI_Dashboard' | 'GenAI_Widget'
@@ -54,6 +55,7 @@ const DaGenAI_WizardBase = ({
   } = useGenAIWizardStore()
   const [openSelectorPopup, setOpenSelectorPopup] = useState(false)
   const [promptTemplates, setPromptTemplates] = useState<any[]>([])
+  const socket = useSocketIO()
 
   const prompt = wizardPrompt
   const setPrompt = setWizardPrompt
@@ -71,16 +73,9 @@ const DaGenAI_WizardBase = ({
   }))
 
   useEffect(() => {
-    if (!access) {
+    if (!socket) {
       return
     }
-
-    const socket = io(config.serverBaseWssUrl, {
-      query: {
-        access_token: access?.token,
-      },
-      transports: ['websocket'],
-    })
 
     socket.on('connect', () => {
       console.log('Socket.IO connection established')
@@ -133,7 +128,7 @@ const DaGenAI_WizardBase = ({
     return () => {
       socket.disconnect()
     }
-  }, [access])
+  }, [access, socket])
 
   const handleGenerate = async () => {
     if (!selectedAddOn) return

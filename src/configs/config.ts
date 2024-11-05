@@ -44,7 +44,7 @@ const config: any = {
     widget: [],
   },
   github: {
-    clientId: 'Ov23liR5WNMLsalUFa6N',
+    clientId: import.meta.env.VITE_GITHUB_CLIENT_ID,
   },
   disableEmailLogin: false,
   runtime: {

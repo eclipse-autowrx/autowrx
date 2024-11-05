@@ -4,11 +4,10 @@ import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import useRuntimeStore from '@/stores/runtimeStore'
 import { io } from 'socket.io-client'
-import { SocketAddress } from "net"
 
 interface RemoteCompileRustProps {
     remoteServer?: string
-    onResponse?: (log: string, isDone: boolean) => void
+    onResponse?: (log: string, isDone: boolean, status: string, app_name: string) => void
   }
 
 //const DEFAULT_RUST_COMPILER_SERVER = "http://127.0.0.1:5001"
@@ -42,6 +41,8 @@ const DaRemoteCompileRust = forwardRef<any, RemoteCompileRustProps>(({remoteServ
             console.log("Try to connect")
             socketio.connect()
         }
+        // console.log(">>>>>>>>>>>>>>>>>>>>>>>>")
+        // console.log(socketio)
         socketio.on('connect', onConnected)
         socketio.on('disconnect', onDisconnect)
         socketio.on('compile_rust_reply', onCompileResponse)
@@ -73,27 +74,27 @@ const DaRemoteCompileRust = forwardRef<any, RemoteCompileRustProps>(({remoteServ
         //     "code": retcode
         // }, to=master_id)
         if(payload && payload.result && onResponse) {
-            onResponse(payload.result, payload.isDone || false)
+            onResponse(payload.result, payload.isDone || false, payload.status, `app_${socketio.id}`)
         }
     }
     
     const requestCompile = (code: string) => {
         if(!code) {
             if(onResponse) {
-                onResponse("There is no code to run!", true)
+                onResponse("There is no code to run!", true, '', '')
             }
             return
         }
         if(!socketio || !socketio.connected) {
             if(onResponse) {
-                onResponse("Connect to compiler fail!", true)
+                onResponse("Connect to compiler fail!", true, '', '')
             }
             return
         }
         socketio.emit("compile_rust", {
             "code": code,
             "app_name": "app",
-            "run": true
+            "run": false
         })
     }
 
