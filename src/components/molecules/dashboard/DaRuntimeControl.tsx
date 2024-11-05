@@ -305,8 +305,20 @@ const DaRuntimeControl: FC = ({}) => {
             {prototype?.language == 'rust' && (
               <DaRemoteCompileRust
                 ref={rustCompilerRef}
-                onResponse={(log, isDone) => {
+                onResponse={(log, isDone, status, appName) => {
                   appendLog(log)
+                  if(isDone) {
+                    if(status == 'compile-done' && appName) {
+                      if (runTimeRef.current) {
+                        runTimeRef.current?.runBinApp(appName)
+                      }
+                      if (runTimeRef1.current) {
+                        runTimeRef1.current?.runBinApp(appName)
+                      }
+                    } else {
+                      setIsRunning(false)
+                    }
+                  }
                 }}
               />
             )}

@@ -52,6 +52,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     useImperativeHandle(ref, () => {
       return {
         runApp,
+        runBinApp,
         stopApp,
         deploy,
         listPythonLibs,
@@ -131,6 +132,20 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         data: {
           code: code,
         },
+      })
+    }
+
+    const runBinApp = (appName: string) => {
+      if (onNewLog) {
+        onNewLog(`Run app\r\n`)
+      }
+      if (setAppLog) {
+        setAppLog(`Run app\r\n`)
+      }
+      socketio.emit('messageToKit', {
+        cmd: 'run_bin_app',
+        to_kit_id: activeRtId,
+        data: appName
       })
     }
 
@@ -386,7 +401,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
           onNewLog(payload.result || '')
         }
       }
-      if (payload.cmd == 'run_python_app') {
+      if (['run_python_app', 'run_rust_app', 'run_bin_app'].includes(payload.cmd)) {
         if (payload.isDone) {
           if (setAppLog) {
             setAppLog(`Exit code ${payload.code}\r\n`)
