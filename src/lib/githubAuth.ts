@@ -15,8 +15,9 @@ const getLoginCode = () => {
 
     // Ensure the tab opened successfully
     if (!authTab) {
-      console.error('Failed to open authentication tab.')
-      reject(new Error('Failed to open authentication tab.'))
+      console.error(
+        'Failed to open authentication tab or tab already be closed',
+      )
       return
     }
 
@@ -100,8 +101,8 @@ export const loginToGithub = async () => {
       })
       .then((res) => res.data)
 
-    sessionStorage.setItem('githubAccessToken', accessToken)
-    sessionStorage.setItem('githubUser', JSON.stringify(user))
+    // sessionStorage.setItem('githubAccessToken', accessToken)
+    // sessionStorage.setItem('githubUser', JSON.stringify(user))
 
     return { user, accessToken }
   } catch (error) {

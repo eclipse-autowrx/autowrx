@@ -30,23 +30,13 @@ const DaVelocitasProjectCreator: React.FC<DaVelocitasProjectCreatorProps> = ({
         const { user, accessToken } = await loginToGithub()
         setAccessToken(accessToken)
         setUserLogin(user.login)
-        sessionStorage.setItem('githubAccessToken', accessToken)
-        sessionStorage.setItem('githubUser', JSON.stringify(user))
       } catch (error) {
         setError('Authentication failed. Please try again.')
+        console.log('error', error)
       }
     }
 
-    // Check session storage for an existing access token
-    const token = sessionStorage.getItem('githubAccessToken')
-    const user = sessionStorage.getItem('githubUser')
-
-    if (token && user) {
-      setAccessToken(token)
-      setUserLogin(JSON.parse(user).login)
-    } else {
-      authenticate() // Trigger GitHub login if no session data is found
-    }
+    authenticate() // Trigger GitHub login if no session data is found
   }, [])
 
   const handleCreateRepo = async () => {
@@ -82,23 +72,23 @@ const DaVelocitasProjectCreator: React.FC<DaVelocitasProjectCreatorProps> = ({
   }
 
   return (
-    <div className="max-w-xl min-w-[400px] mx-auto">
+    <div className="max-w-xl min-w-[400px] lg:min-w-[550px] mx-auto">
       <DaText variant="sub-title" className="text-da-primary-500">
         Create Velocitas Project Repository
       </DaText>
-      {error && <p className="text-red-500 my-4">{error}</p>}
       <DaInput
         label="Repository Name"
         value={repoName}
         onChange={(e) => setRepoName(e.target.value)}
         className="my-4"
       />
+      {error && <p className="text-red-500 my-4">{error}</p>}
       <div className="flex justify-end mt-4 space-x-2">
         <DaButton
           onClick={onClose}
           size="sm"
           variant="outline-nocolor"
-          className="ml-2 bg-gray-500 hover:bg-gray-600"
+          className="ml-2"
         >
           Cancel
         </DaButton>
@@ -111,7 +101,7 @@ const DaVelocitasProjectCreator: React.FC<DaVelocitasProjectCreatorProps> = ({
         </DaButton>
       </div>
       {repoUrl && (
-        <p className="mt-4 text-green-600">
+        <p className="mt-4 text-da-primary-500 underline">
           Repository created:{' '}
           <a href={repoUrl} target="_blank" rel="noopener noreferrer">
             {repoUrl}

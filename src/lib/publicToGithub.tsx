@@ -1,7 +1,5 @@
-// publicToGithub.tsx
 import { Buffer } from 'buffer'
 import { Branch } from '@/types/api.type'
-import { ProjectGenerator } from '@digital-auto/velocitas-project-generator'
 
 const encodeToBase64 = (code: string) => {
   return Buffer.from(code).toString('base64')

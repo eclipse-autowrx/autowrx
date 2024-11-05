@@ -44,7 +44,7 @@ const config: any = {
     widget: [],
   },
   github: {
-    clientId: 'Ov23livVYo2MXyqoIHox',
+    clientId: 'Ov23liR5WNMLsalUFa6N',
   },
   disableEmailLogin: false,
   runtime: {
