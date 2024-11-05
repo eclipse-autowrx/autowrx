@@ -133,6 +133,8 @@ const PrototypeTabCode: FC = ({}) => {
                     Create Velocitas Project
                   </DaButton>
                 }
+                onClose={() => setIsOpenVelocitasDialog(false)}
+                closeBtnClassName="top-6 right-6"
               >
                 <DaVelocitasProjectCreator
                   code={prototype?.code || ''}

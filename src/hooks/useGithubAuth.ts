@@ -82,7 +82,7 @@ const useGithubAuth = () => {
     const user = await retrieveUser(access?.token!)
     if (isExpired() || !user) {
       window.open(
-        `https://github.com/login/oauth/authorize/?client_id=${config.github.clientId}&redirect_uri=${redirectUri}&scope=user:email%20public_repo`,
+        `https://github.com/login/oauth/authorize/?client_id=${config.github.clientId}&redirect_uri=${redirectUri}&scope=user:email%20public_repo%20repo`,
         '_blank',
       )
       listenForAuth()
