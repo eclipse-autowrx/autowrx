@@ -75,7 +75,7 @@ const home = [
         description:
           'Join Prof. Dirk Slama to discuss the roadmap and priorities of our digital.auto community in 2025. Meet Fabio Violante (CEO Arduino) to discuss our plans for an open E/E Starter Kit for SDVs',
         imageURL:
-          'https://media.licdn.com/dms/image/v2/D4E1EAQF2KZYqcFNjKA/event-background-image-crop_720_1280/event-background-image-crop_720_1280/0/1729941730210?e=1730649600&v=beta&t=fLHZA_-D_YigsPh3bcLCacvo2-ZuFIYcg5xbjXebXnA',
+          'https://bewebstudio.digitalauto.tech/data/projects/VOMpcykPhfIC/digital.auto%20Meetup.png',
         redirectURL:
           'https://www.linkedin.com/posts/digitalauto_join-prof-dirk-slama-to-discuss-the-roadmap-activity-7255901526752219137-RFLH?utm_source=share&utm_medium=member_desktop',
       },
@@ -86,7 +86,7 @@ const home = [
         description:
           'The Bosch MiX project has developed a demonstrator platform for real-time applications in a zonal E/E architecture utilizing NXP hashtag#S32G3 and Yocto Linux.',
         imageURL:
-          'https://media.licdn.com/dms/image/sync/v2/D4E27AQHF2nzxsUzlEA/articleshare-shrink_480/articleshare-shrink_480/0/1729929741955?e=1730649600&v=beta&t=rHA_91WtXvpSs5h9AcZb8JB3daqhJcnzdNd0TOzdQGA',
+          'https://bewebstudio.digitalauto.tech/data/projects/VOMpcykPhfIC/Central%20Compute%20with%20Zones.png',
         redirectURL: 'https://www.youtube.com/watch?v=M2o3h4anJ_s',
       },
       {
