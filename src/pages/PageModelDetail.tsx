@@ -51,7 +51,7 @@ const DaVisibilityControl: React.FC<VisibilityControlProps> = ({
   }
 
   return (
-    <div className="flex justify-between items-center border px-4 py-2.5 mt-3 rounded-lg">
+    <div className="flex justify-between items-center border p-2 mt-3 rounded-lg">
       <DaText variant="sub-title" className="text-da-gray-medium">
         Visibility:{' '}
         <DaText className="text-da-accent-500 capitalize !font-medium">
@@ -144,7 +144,7 @@ const PageModelDetail = () => {
   }
 
   return (
-    <div className="bg-white p-4 h-full rounded-md">
+    <div className="flex flex-col bg-white p-4 h-full rounded-md">
       <div className="flex h-fit pb-3">
         <div className="flex w-full justify-between items-center">
           <div className="flex items-center">
@@ -276,9 +276,9 @@ const PageModelDetail = () => {
 
       <div className="grid gap-4 grid-cols-12 w-full overflow-auto">
         <div className="col-span-6 flex flex-col overflow-y-auto">
-          <div className="flex w-full relative border rounded-lg overflow-hidden">
+          <div className="flex w-full relative overflow-hidden">
             <DaImage
-              className="object-contain aspect-video w-full p-4"
+              className="w-full object-cover max-h-[400px] aspect-video rounded-lg border"
               src={model.model_home_image_file}
               alt={model.name}
             />
@@ -308,7 +308,7 @@ const PageModelDetail = () => {
             )}
           </div>
         </div>
-        <div className="col-span-6 overflow-y-auto h-[99%]">
+        <div className="col-span-6">
           {isAuthorized && (
             <>
               <DaVehicleProperties

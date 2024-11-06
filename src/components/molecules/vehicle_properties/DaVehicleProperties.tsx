@@ -56,7 +56,7 @@ const DaVehicleProperties = ({
   }, [model, isOpenUpdateForm])
 
   return (
-    <div className={cn('border rounded-md py-2 px-4', className)}>
+    <div className={cn('border rounded-md p-2', className)}>
       <div className="flex justify-between items-center">
         <DaText variant="sub-title" className="text-lg font-medium">
           Vehicle Properties

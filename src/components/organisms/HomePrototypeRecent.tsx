@@ -80,6 +80,7 @@ const HomePrototypeRecent = ({ title }: HomePrototypeRecentProps) => {
                         content={prototype.description?.solution}
                         imageUrl={prototype.image_file}
                         maxWidth="400px"
+                        className="!w-full !h-full"
                       />
                     </Link>
                   ))}
