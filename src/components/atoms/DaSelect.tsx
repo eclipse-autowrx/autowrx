@@ -36,7 +36,8 @@ const DaSelect = React.forwardRef<
       onValueChange={onValueChange}
     >
       <div className={cn('flex, flex-col', wrapperClassName)}>
-        <DaText className="mb-1 !font-medium">{label}</DaText>
+        <DaText className="!font-medium">{label}</DaText>
+        {label && <div className="pb-1"></div>}
         <SelectTrigger
           ref={ref}
           {...props}
