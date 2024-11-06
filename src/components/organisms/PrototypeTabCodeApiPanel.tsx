@@ -35,7 +35,8 @@ const ApiCodeBlock = ({ apiName, sampleLabel }: ApiCodeBlockProps) => {
           variant="small"
           className="w-full font-mono text-da-gray-dark whitespace-pre-line"
         >
-          <span className="text-blue-600 font-mono">await</span> {apiName}
+          <span className="text-blue-600 font-mono">await self.</span>
+          {apiName}
         </DaText>
       </div>
     </div>

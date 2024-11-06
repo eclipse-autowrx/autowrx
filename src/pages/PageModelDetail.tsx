@@ -309,19 +309,6 @@ const PageModelDetail = () => {
           </div>
         </div>
         <div className="col-span-6 overflow-y-auto h-[99%]">
-          {/* {cardIntro.map((card, index) => (
-            <Link key={index} to={card.path}>
-              <div className="space-y-3 cursor-pointer">
-                <DaCardIntro
-                  key={index}
-                  title={card.title}
-                  content={card.content}
-                  maxWidth={'1000px'}
-                  className="mb-3"
-                />
-              </div>
-            </Link>
-          ))} */}
           {isAuthorized && (
             <>
               <DaVehicleProperties

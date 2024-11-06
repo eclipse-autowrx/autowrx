@@ -5,15 +5,11 @@ import { cn } from '@/lib/utils'
 import {
   DaBreadcrumb,
   DaBreadcrumbItem,
-  DaBreadcrumbLink,
   DaBreadcrumbList,
   DaBreadcrumbSeparator,
 } from '@/components/atoms/DaBreadcrumb'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
-import { PERMISSIONS } from '@/data/permission'
-import usePermissionHook from '@/hooks/usePermissionHook'
-import path from 'path'
 
 const breadcrumbNames: { [key: string]: string } = {
   home: 'Home',
@@ -82,7 +78,7 @@ const DaBreadcrumbBar = () => {
         })
       }
 
-      if (pathnames.includes('library')) {
+      if (pathnames.includes('prototype')) {
         paths.push({
           path: `/model/${model?.id}/library`,
           name: breadcrumbNames['library'],
@@ -96,25 +92,6 @@ const DaBreadcrumbBar = () => {
             key: prototype.id,
           })
         }
-      }
-
-      if (pathnames.includes('api')) {
-        paths.push({
-          path: `/model/${model?.id}/api`,
-          name: breadcrumbNames['api'],
-          key: 'api',
-        })
-      }
-
-      if (
-        pathnames.includes('architecture') &&
-        !pathnames.includes('library')
-      ) {
-        paths.push({
-          path: `/model/${model?.id}/architecture`,
-          name: breadcrumbNames['architecture'],
-          key: 'architecture',
-        })
       }
     }
 
@@ -149,7 +126,7 @@ const DaBreadcrumbBar = () => {
   }, [location.pathname, model, prototype])
 
   return (
-    <div className="flex w-full justify-between">
+    <div className="flex h-[52px] w-full justify-between">
       <DaBreadcrumb className="da-label-regular-bold flex text-da-white">
         <DaBreadcrumbList>{breadcrumbs}</DaBreadcrumbList>
       </DaBreadcrumb>

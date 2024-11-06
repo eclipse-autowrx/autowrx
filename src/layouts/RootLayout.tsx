@@ -55,7 +55,7 @@ const RootLayout = () => {
       <Suspense>
         <NavigationBar />
         {!pathsWithoutBreadcrumb.has(location.pathname) && (
-          <div className="flex h-14 items-center justify-between bg-da-primary-500 px-4 py-2">
+          <div className="flex items-center justify-between bg-da-primary-500 px-4">
             <DaBreadcrumbBar />
           </div>
         )}
