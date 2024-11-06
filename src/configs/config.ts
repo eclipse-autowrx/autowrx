@@ -43,6 +43,9 @@ const config: any = {
     dashboard: [],
     widget: [],
   },
+  ga4: {
+    measurementId: import.meta.env.VITE_GA4_MEASUREMENT_ID,
+  },
   github: {
     clientId: import.meta.env.VITE_GITHUB_CLIENT_ID,
   },

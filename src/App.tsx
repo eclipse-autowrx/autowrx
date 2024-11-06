@@ -1,15 +1,24 @@
-import { useRoutes } from 'react-router-dom'
+import { useLocation, useRoutes } from 'react-router-dom'
 import routesConfig from './configs/routes'
 import 'non.geist'
 import 'non.geist/mono'
 import useSelfProfileQuery from './hooks/useSelfProfile'
 import { useEffect } from 'react'
 import { addLog } from './services/log.service'
+import ReactGA from 'react-ga4'
+import config from './configs/config'
+
+ReactGA.initialize(config?.ga4?.measurementId)
 
 function App() {
   const routes = useRoutes(routesConfig)
+  const location = useLocation()
 
   const { data: currentUser } = useSelfProfileQuery()
+
+  useEffect(() => {
+    ReactGA.send({ hitType: 'pageview', page: window.location.pathname })
+  }, [location.pathname])
 
   useEffect(() => {
     if (!currentUser) {
