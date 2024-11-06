@@ -10,6 +10,8 @@ import usePermissionHook from '@/hooks/usePermissionHook'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { PERMISSIONS } from '@/data/permission'
 import { updatePrototypeService } from '@/services/prototype.service'
+import { TbBrandGithub } from 'react-icons/tb'
+import DaVelocitasProjectCreator from '../molecules/velocitas_project/DaVelocitasProjectCreator'
 
 const CodeEditor = lazy(() => import('../molecules/CodeEditor'))
 
@@ -34,6 +36,7 @@ const PrototypeTabCode: FC = ({}) => {
   const [isOpenGenAI, setIsOpenGenAI] = useState(false)
   const { data: model } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
+  const [isOpenVelocitasDialog, setIsOpenVelocitasDialog] = useState(false)
 
   useEffect(() => {
     let timer = setInterval(() => {
@@ -95,7 +98,7 @@ const PrototypeTabCode: FC = ({}) => {
       <div className="flex h-full flex-[3] min-w-0 flex-col border-r bg-da-white rounded-md">
         <div className="flex min-h-12 w-full items-center justify-between">
           {isAuthorized && (
-            <div className="flex mx-2">
+            <div className="flex mx-2 space-x-4">
               <DaPopup
                 state={[isOpenGenAI, setIsOpenGenAI]}
                 trigger={
@@ -122,8 +125,27 @@ const PrototypeTabCode: FC = ({}) => {
                   </div>
                 </div>
               </DaPopup>
+              <DaPopup
+                state={[isOpenVelocitasDialog, setIsOpenVelocitasDialog]}
+                trigger={
+                  <DaButton size="sm" className="ml-2" variant="plain">
+                    <TbBrandGithub className="mr-1 size-4" />
+                    Create Velocitas Project
+                  </DaButton>
+                }
+                onClose={() => setIsOpenVelocitasDialog(false)}
+                closeBtnClassName="top-6 right-6"
+              >
+                <DaVelocitasProjectCreator
+                  code={prototype?.code || ''}
+                  onClose={() => setIsOpenVelocitasDialog(false)}
+                  vssPayload={{}}
+                />
+              </DaPopup>
             </div>
           )}
+
+          <div className="grow"></div>
 
           <div className="mr-2 da-label-small">
             Language: <b>{(prototype.language || 'python').toUpperCase()}</b>

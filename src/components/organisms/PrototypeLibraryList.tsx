@@ -159,8 +159,6 @@ const PrototypeLibraryList = () => {
     )
   }, [searchInput, selectedFilters, fetchedPrototypes])
 
-  console.log('filteredPrototypes', filteredPrototypes)
-
   if (!model || !fetchedPrototypes) {
     return (
       <DaLoading

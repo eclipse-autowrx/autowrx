@@ -309,6 +309,15 @@ const routesConfig: RouteConfig[] = [
           },
         ],
       },
+      // {
+      //   path: '/auth/callback',
+      //   children: [
+      //     {
+      //       index: true,
+      //       element: <AuthCallback />,
+      //     },
+      //   ],
+      // },
     ],
   },
 ]
