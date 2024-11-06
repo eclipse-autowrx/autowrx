@@ -17,6 +17,13 @@ const cardIntro = [
     subs: ['/model/:model_id/architecture'],
   },
   {
+    title: 'Vehicle Signals',
+    content:
+      'Browse, explore and enhance the catalogue of Connected Vehicle Interfaces',
+    path: 'api',
+    subs: ['/model/:model_id/api', '/model/:model_id/api/:api'],
+  },
+  {
     title: 'Prototype Library',
     content:
       'Build up, evaluate and prioritize your portfolio of connected vehicle applications',
@@ -26,13 +33,6 @@ const cardIntro = [
       '/model/:model_id/library/:tab',
       '/model/:model_id/library/:tab/:prototype_id',
     ],
-  },
-  {
-    title: 'Vehicle Signals',
-    content:
-      'Browse, explore and enhance the catalogue of Connected Vehicle Interfaces',
-    path: 'api',
-    subs: ['/model/:model_id/api', '/model/:model_id/api/:api'],
   },
 ]
 

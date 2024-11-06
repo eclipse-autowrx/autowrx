@@ -28,12 +28,12 @@ const NavigationBar = ({}) => {
       {user && (
         <>
           <DaGlobalSearch>
-            <DaButton variant="outline-nocolor" className="!pr-24 mr-3">
+            <DaButton variant="outline-nocolor" className="!pr-24">
               <TbZoom className="w-4 h-4 mr-1" />
               Search
             </DaButton>
           </DaGlobalSearch>{' '}
-          {model ? (
+          {/* {model ? (
             <Link to={`/model/${model.id}`}>
               <DaButton variant="plain">
                 <div className="flex items-center">
@@ -53,7 +53,7 @@ const NavigationBar = ({}) => {
                 </div>
               </DaButton>
             </Link>
-          )}
+          )} */}
         </>
       )}
 
