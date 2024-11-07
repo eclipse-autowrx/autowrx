@@ -1,7 +1,12 @@
-import { title } from 'process'
-import { BsStars } from 'react-icons/bs'
 import { FaCar } from 'react-icons/fa'
-import { TbArrowRight, TbCode, TbPackageImport } from 'react-icons/tb'
+import {
+  TbArrowRight,
+  TbCode,
+  TbExternalLink,
+  TbPackageImport,
+} from 'react-icons/tb'
+import { DaButton } from '@/components/atoms/DaButton'
+import { Link } from 'react-router-dom'
 
 const home = [
   {
@@ -14,55 +19,95 @@ const home = [
     type: 'feature-list',
     items: [
       {
-        title: 'Vehicle Signal Catalogue',
+        title: 'Overview',
         description:
-          'Browse, explore and enhance the catalogue of Connected Vehicle Interfaces',
-        url: 'https://digital.auto',
+          'Get an overview of the cloud-based prototyping environment for SDV functions.',
+        children: (
+          <DaButton size="sm" className="mt-4">
+            <a
+              href="https://docs.digital.auto/basics/overview/"
+              target="_blank"
+              className="flex items-center"
+            >
+              <TbExternalLink className="size-4 mr-1" />
+              Graphic
+            </a>
+          </DaButton>
+        ),
       },
       {
-        title: 'Prototyping',
+        title: 'Get Started',
         description:
-          'Build and test new connected vehicle app prototypes in the browser, using Python and the Vehicle Signals',
-        url: 'https://digital.auto',
+          'Learn about creating efficient SDV applications, using Python and Vehicle Signals',
+        children: (
+          <div className="flex space-x-2 items-center">
+            <DaButton size="sm">
+              <a
+                href="https://docs.digital.auto/basics/play/"
+                target="_blank"
+                className="flex items-center"
+              >
+                <TbExternalLink className="size-4 mr-1" />
+                Documentation
+              </a>
+            </DaButton>
+            <DaButton variant="outline-nocolor" size="sm">
+              <a
+                href="https://www.youtube.com/@sdvpg"
+                target="_blank"
+                className="flex items-center"
+              >
+                <TbExternalLink className="size-4 mr-1" />
+                Video
+              </a>
+            </DaButton>
+          </div>
+        ),
       },
       {
-        title: 'User Feedback',
+        title: 'Vehicle Catelog',
         description:
-          'Collect and evaluate user feedback to prioritize your development portfolio',
-        url: 'https://digital.auto',
+          'Create a model to start building new connected vehicle app prototypes.',
+        children: (
+          <DaButton size="sm">
+            <Link to="/model" className="flex items-center">
+              Vehicle Models
+            </Link>
+          </DaButton>
+        ),
       },
     ],
   },
-  {
-    type: 'button-list',
-    requiredLogin: true,
-    items: [
-      {
-        type: 'new-model',
-        title: 'New model',
-        description: 'Create a vehicle model',
-        icon: <FaCar className="h-7 w-7 text-da-primary-500" />,
-      },
-      {
-        type: 'new-prototype',
-        title: 'New prototype',
-        description: 'Quickly develop vehicle app',
-        icon: <TbCode className="h-7 w-7 text-da-primary-500" />,
-      },
-      {
-        type: 'import-prototype',
-        title: 'Import prototype',
-        description: 'Import existing prototype',
-        icon: <TbPackageImport className="h-7 w-7 text-da-primary-500" />,
-      },
-      {
-        title: 'My models',
-        description: 'Go to my models',
-        url: '/model',
-        icon: <TbArrowRight className="h-7 w-7 text-da-primary-500" />,
-      },
-    ],
-  },
+  // {
+  //   type: 'button-list',
+  //   requiredLogin: true,
+  //   items: [
+  //     {
+  //       type: 'new-model',
+  //       title: 'New model',
+  //       description: 'Create a vehicle model',
+  //       icon: <FaCar className="h-7 w-7 text-da-primary-500" />,
+  //     },
+  //     {
+  //       type: 'new-prototype',
+  //       title: 'New prototype',
+  //       description: 'Develop vehicle app',
+  //       icon: <TbCode className="h-7 w-7 text-da-primary-500" />,
+  //     },
+  //     {
+  //       type: 'import-prototype',
+  //       title: 'Import prototype',
+  //       description: 'Import existing prototype',
+  //       icon: <TbPackageImport className="h-7 w-7 text-da-primary-500" />,
+  //     },
+  //     {
+  //       title: 'My models',
+  //       description: 'Go to my models',
+  //       url: '/model',
+  //       icon: <TbArrowRight className="h-7 w-7 text-da-primary-500" />,
+  //     },
+  //   ],
+  // },
   {
     type: 'news',
     title: 'Top News',
