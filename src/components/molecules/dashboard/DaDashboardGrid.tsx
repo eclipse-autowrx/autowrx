@@ -1,6 +1,7 @@
 import { FC, useEffect, useState, useRef } from 'react'
 import useRuntimeStore from '@/stores/runtimeStore'
 import { WidgetConfig } from '@/types/widget.type'
+import DaPopup from '@/components/atoms/DaPopup'
 
 interface DaDashboardGridProps {
   widgetItems: any[]
@@ -108,6 +109,9 @@ const WidgetItem: FC<PropsWidgetItem> = ({
 
 const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
   // const CELLS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  const [showModal, setShowModal] = useState(false)
+  const [payload, setPayload] = useState<any>()
+
   const [renderCell, setRenderCell] = useState<any[]>([])
 
   useEffect(() => {
@@ -133,8 +137,40 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
     state.appLog,
   ])
 
+  useEffect(() => {
+    const onMessageFromIframe = (event: MessageEvent) => {
+      let data = event.data || {}
+      try {
+        data = JSON.parse(event.data)
+      } catch (error) {
+        // Do nothing
+      }
+
+      if (data.action === 'open-modal') {
+        setShowModal(true)
+      }
+
+      setPayload(data.payload)
+    }
+
+    window.addEventListener('message', onMessageFromIframe)
+    return () => {
+      window.removeEventListener('message', onMessageFromIframe)
+    }
+  }, [])
+
   return (
     <div className={`grid h-full w-full grid-cols-5 grid-rows-2`}>
+      <DaPopup trigger={<></>} state={[showModal, setShowModal]}>
+        <div className="h-[calc(100vh-200px)] m-auto w-[calc(100vw-200px)]">
+          <video
+            controls
+            className="w-full h-full bg-black rounded-md"
+            loop
+            src={payload?.url}
+          />
+        </div>
+      </DaPopup>
       {renderCell.map((widgetItem, wIndex) => (
         <WidgetItem
           key={wIndex}
