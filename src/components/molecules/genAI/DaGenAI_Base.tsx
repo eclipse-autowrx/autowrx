@@ -14,7 +14,13 @@ import { toast } from 'react-toastify'
 import useAuthStore from '@/stores/authStore'
 import default_generated_code from '@/data/default_generated_code'
 import { cn } from '@/lib/utils'
-import { on } from 'events'
+import DaSpeechToText from './DaSpeechToText.tsx'
+import {
+  TbAlertCircle,
+  TbCheck,
+  TbCopy,
+  TbExclamationMark,
+} from 'react-icons/tb'
 
 type DaGenAI_BaseProps = {
   type: 'GenAI_Python' | 'GenAI_Dashboard' | 'GenAI_Widget'
@@ -44,6 +50,7 @@ const DaGenAI_Base = ({
   const [canUseGenAI] = usePermissionHook([PERMISSIONS.USE_GEN_AI])
   const access = useAuthStore((state) => state.access)
   const timeouts = useRef<NodeJS.Timeout[]>([])
+  const [copied, setCopied] = useState(false)
 
   const addOnsArray =
     {
@@ -112,6 +119,12 @@ const DaGenAI_Base = ({
     }
   }
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText('info@digital.auto')
+    setCopied(true)
+    setTimeout(() => setCopied(false), 3000) // Reset after 2 seconds
+  }
+
   useEffect(() => {
     const getSelectedGeneratorFromLocalStorage = (): AddOn | null => {
       const storedAddOn = localStorage.getItem('lastUsed_GenAIGenerator')
@@ -134,6 +147,11 @@ const DaGenAI_Base = ({
       <div className="flex h-full w-full flex-col  border-r border-da-gray-light pl-0.5 pr-2">
         <div className="flex w-full items-center justify-between">
           <DaSectionTitle number={1} title="Prompting" />
+          <div
+            className={cn(canUseGenAI ? '' : 'opacity-50 pointer-events-none')}
+          >
+            <DaSpeechToText onRecognize={setPrompt} prompt={prompt} />
+          </div>
         </div>
         <div className="mt-1 flex h-full max-h-[300px] w-full">
           <DaTextarea
@@ -162,10 +180,31 @@ const DaGenAI_Base = ({
           />
         </div>
 
-        {!prompt && (
-          <div className=" flex w-full select-none justify-center text-sm text-gray-400">
-            You need to enter prompt and select generator
+        {!canUseGenAI ? (
+          <div className="flex w-full select-none justify-center items-center text-sm text-da-gray-dark py-1 font-medium">
+            <TbAlertCircle className="text-red-500 mr-1 size-5" />
+            Permission required
+            <span className="xl:flex hidden ml-1"> for GenAI access</span>.
+            Contact
+            <span
+              className="ml-1 py-0.5 px-1 rounded-lg bg-gray-100 hover:bg-gray-200 cursor-pointer"
+              onClick={handleCopy}
+            >
+              info@digital.auto{' '}
+              {copied ? (
+                <TbCheck className="text-green-500 h-4 w-4 inline-block" />
+              ) : (
+                <TbCopy className="h-4 w-4 inline-block" />
+              )}
+            </span>
           </div>
+        ) : (
+          !prompt && (
+            <div className="flex w-full select-none justify-center items-center text-sm text-da-gray-dark py-1 font-medium">
+              <TbExclamationMark className="text-orange-500 mr-1 size-5" />
+              You need to enter prompt and select generator
+            </div>
+          )
         )}
 
         <DaButton

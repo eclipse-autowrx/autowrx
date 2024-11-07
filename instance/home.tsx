@@ -6,9 +6,8 @@ import { TbArrowRight, TbCode, TbPackageImport } from 'react-icons/tb'
 const home = [
   {
     type: 'hero',
-    title: 'Welcome to digital.auto playground for virtual exploration',
-    description:
-      'To support shift-level testing for software-defined vehicle (SDV) applications, we have created the digital.auto playground. This is a cloud-based, rapid prototyping environment for new, SDV-enabled features. The prototypes are built against real-world vehicle APIs and can be seamlessly migrated to automotive runtimes, such as Eclipse Velocitas. The playground is open and free to use.',
+    title: 'Welcome to the digital.auto Playground for Virtual Exploration!',
+    description: `To support shift-left testing for software-defined vehicle (SDV) applications, we've created the digital.auto Playground—a cloud-based environment designed for rapid prototyping of new SDV-enabled features. Prototypes are developed against real-world vehicle APIs and can seamlessly transition to automotive runtimes, such as Eclipse Velocitas. The playground is open and free to use.`,
     image: '/imgs/autowrx-bg.jpg',
   },
   {
@@ -93,8 +92,7 @@ const home = [
         title: 'digital.auto at ETAS Connections 2024',
         date: '9 October 2024',
         type: 'Event',
-        description:
-          `Check out the digital.auto demo stand and don't miss the panel discussion on continous homologation`,
+        description: `Check out the digital.auto demo stand and don't miss the panel discussion on continous homologation`,
         imageURL:
           'https://media.licdn.com/dms/image/v2/D5622AQGDWg4yDt6r6A/feedshare-shrink_2048_1536/feedshare-shrink_2048_1536/0/1728543615217?e=1732752000&v=beta&t=X5_hY7cHDgph813Mn2O4I7sctrcxv_wWdXQ7IVYYThU',
         redirectURL:

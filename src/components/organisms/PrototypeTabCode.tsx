@@ -107,6 +107,8 @@ const PrototypeTabCode: FC = ({}) => {
                     SDV ProtoPilot
                   </DaButton>
                 }
+                onClose={() => setIsOpenGenAI(false)}
+                closeBtnClassName="top-6 right-6"
               >
                 <div className="flex flex-col h-[80vh] xl:h-[600px] max-h-[90vh] w-[1200px] max-w-[80vw] ">
                   <DaText variant="title" className="text-da-primary-500">

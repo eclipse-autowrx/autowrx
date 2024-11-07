@@ -1,13 +1,15 @@
 import DaText from '@/components/atoms/DaText'
-import DaRuntimeConnector from '../DaRuntimeConnector'
-import { useEffect, useState } from 'react'
-import useRuntimeStore from '@/stores/runtimeStore'
-import { shallow } from 'zustand/shallow'
-import useCurrentPrototype from '@/hooks/useCurrentPrototype'
-import useModelStore from '@/stores/modelStore'
-import { Prototype } from '@/types/model.type'
+import { useState } from 'react'
 import { DaButton } from '@/components/atoms/DaButton'
 import DaEditSystemStaging from './DaEditSystemStaging'
+import {
+  TbExternalLink,
+  TbPlayerPlay,
+  TbPlayerPlayFilled,
+  TbTriangleFilled,
+} from 'react-icons/tb'
+import { cn } from '@/lib/utils'
+import { TbChevronRight } from 'react-icons/tb'
 
 interface DaStagingProps {
   onCancel?: () => void
@@ -16,14 +18,13 @@ interface DaStagingProps {
   isWizard?: boolean
 }
 
-const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
-
 const TARGETS = [
   {
     name: 'Virtual WS',
     icon: '/imgs/targets/vm.png',
     prefix: 'Runtime-',
     version: 'v.1.0',
+    target_document_url: '',
     state: {
       '3.1.1.1.1.1': '0.9',
     },
@@ -34,6 +35,7 @@ const TARGETS = [
     icon: '/imgs/targets/edukit.png',
     prefix: 'makerkit-', // "Kit-"
     version: 'v.1.0',
+    target_document_url: '',
     state: {
       '3.1.1.1.1.1': '0.9',
     },
@@ -44,6 +46,7 @@ const TARGETS = [
     icon: '/imgs/targets/desktopKit.png',
     prefix: 'dreamkit-', // "Kit-"
     version: 'v.1.0',
+    target_document_url: 'https://docs.digital.auto/dreamkit/overview/',
     state: {
       '3.1.1.1.1.1': '0.9',
     },
@@ -54,6 +57,7 @@ const TARGETS = [
     icon: '/imgs/targets/pilotCar.png',
     prefix: 'PilotCar-', // "PilotCar-"
     version: 'v.1.0',
+    target_document_url: 'https://www.digital.auto/#comp-lm8xcdpg',
     state: {
       '3.1.1.1.1.1': '0.9',
     },
@@ -203,40 +207,19 @@ const STANDARD_STAGE = {
   ],
 }
 
-const DaStaging = ({
-  onCancel,
-  loading,
-  onClose,
-  isWizard,
-}: DaStagingProps) => {
+const DaStaging = ({ isWizard }: DaStagingProps) => {
   const [system, setSystem] = useState<any>(SYSTEM)
   const [targets, setTargets] = useState<any[]>(TARGETS)
   const [activeTarget, setActiveTarget] = useState<any>(null)
-  const [usedApis, setUsedApis] = useState<any[]>([])
-  const [code, setCode] = useState<string>('')
-
   const MODE_OVERVIEW = 'overview'
   const MODE_EDIT_DEFINE = 'edit_define'
   const MODE_ON_TARGET = 'on_target'
   const [mode, setMode] = useState<string>(MODE_OVERVIEW)
   const [stageDefine, setStageDefine] = useState<any>(STANDARD_STAGE)
 
-  const [prototype, setActivePrototype, activeModelApis] = useModelStore(
-    (state) => [
-      state.prototype as Prototype,
-      state.setActivePrototype,
-      state.activeModelApis,
-    ],
-    shallow,
-  )
-
-  // useEffect(() => {
-  //     if (prototype) {
-  //       setCode(prototype.code || '')
-  //     } else {
-  //       setCode('')
-  //     }
-  // }, [prototype?.code])
+  const handleOpenTargetDocs = (url: string): void => {
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
 
   return (
     <div className="min-h-[300px] max-h-[90vh] w-[90vw] min-w-[400px] max-w-[1200px]">
@@ -286,7 +269,7 @@ const DaStaging = ({
               </div>
             </div>
             <div className="flex">
-              <div className="flex min-w-[100px] flex-1 flex-col items-center justify-center overflow-x-hidden rounded-s px-1 py-1">
+              <div className="flex min-w-[100px] flex-1 flex-col border-r items-center justify-center overflow-x-hidden rounded-s px-1 py-1">
                 <div className="flex h-[140px] w-full items-center justify-center">
                   <img
                     width={150}
@@ -314,96 +297,64 @@ const DaStaging = ({
               </div>
 
               {targets &&
-                targets.map((target: any) => (
-                  <div
-                    key={target.name}
-                    className="flex min-w-[100px] flex-1 flex-col items-center justify-center overflow-x-hidden border-l px-1 pb-2 pt-1 "
-                  >
-                    <div className="flex h-[140px] w-full items-center justify-center">
-                      <img
-                        width={120}
-                        height={70}
-                        src={target.icon}
-                        alt={target.name}
-                        className="rounded-lg"
-                      />
+                targets.map((target: any, index: number) => (
+                  <div key={target.name} className="flex w-[20%]">
+                    {index > 0 && (
+                      <div className="relative flex items-center">
+                        <div className="h-full border-l"></div>
+                        <TbPlayerPlayFilled className="absolute transform -translate-x-1/2  text-gray-400 bg-white rounded-lg size-8" />
+                      </div>
+                    )}
+                    {/* Target content */}
+                    <div className="flex min-w-[100px] flex-1 flex-col items-center justify-center overflow-x-hidden px-1 pb-2 pt-1">
+                      <div className="flex h-[140px] w-full items-center justify-center">
+                        <img
+                          width={120}
+                          height={70}
+                          src={target.icon}
+                          alt={target.name}
+                          className="rounded-lg"
+                        />
+                      </div>
+                      <div
+                        className={cn(
+                          'flex items-center  px-2 py-1 rounded-lg',
+                          target.target_document_url &&
+                            'hover:bg-gray-100  cursor-pointer',
+                        )}
+                        onClick={() => {
+                          if (target.target_document_url) {
+                            handleOpenTargetDocs(target.target_document_url)
+                          }
+                        }}
+                      >
+                        <DaText variant="small-bold" className="">
+                          {target.name}
+                        </DaText>
+                        {target.target_document_url && (
+                          <div className="ml-1">
+                            <TbExternalLink className="size-4" />
+                          </div>
+                        )}
+                      </div>
+                      <DaText variant="small" className="mt-1">
+                        {target.version}
+                      </DaText>
+                      <DaButton
+                        variant="outline-nocolor"
+                        className="my-2 w-[100px]"
+                        onClick={() => {
+                          setActiveTarget(target)
+                          setMode(MODE_ON_TARGET)
+                        }}
+                        size="sm"
+                      >
+                        Update
+                      </DaButton>
                     </div>
-                    <DaText variant="small-bold" className="mt-1">
-                      {target.name}
-                    </DaText>
-                    <DaText variant="small" className="mt-1">
-                      {target.version}
-                    </DaText>
-                    <DaButton
-                      variant="outline"
-                      className="my-2 w-[100px]"
-                      onClick={() => {
-                        setActiveTarget(target)
-                        setMode(MODE_ON_TARGET)
-                      }}
-                      size="sm"
-                    >
-                      Update
-                    </DaButton>
                   </div>
                 ))}
             </div>
-            {/* <div className="my-2 flex min-h-[100px] bg-slate-50">
-                <div className="min-w-[100px] w-[100px] flex-shrink-0 flex items-center justify-center px-2">
-                    <DaText variant="regular-bold">QM App</DaText>
-                </div>
-                {targets && targets.map((target: any) => <div key={target.name} className="min-w-[100px] flex-1 flex flex-col items-center justify-center">
-                    { prototype && <div className="w-full px-1 flex flex-col">
-                        <div className="px-2 py-1 rounded border border-slate-300 text-sm bg-slate-200">
-                            <div>App: <b>{prototype.name}</b></div>
-                            <div className="flex items-center">
-                                <div className="grow">Version: <b>1.0.2</b></div>
-                                <div  className="!text-orange-500 hover:underline cursor-pointer">Deploy New Ver</div>
-                            </div>
-                        </div>
-                    </div>
-                    }
-                </div>
-                )}
-            </div> */}
-
-            {/*
-            <div className="my-2 flex min-h-[100px] bg-slate-50">
-                <div className="min-w-[100px] w-[100px] flex-shrink-0 flex items-center justify-center px-2">
-                    <DaText variant="regular-bold">VCU</DaText>
-                </div>
-                {targets && targets.map((target: any) => <div key={target.name} className="min-w-[100px] text-[12px] flex-1 flex flex-col items-start justify-center">
-                    <div className="flex"><div className="w-20">Data broker:</div> <div><b>{target.VCU.dataBroker}</b></div></div>
-                    <div className="flex"><div className="w-20">API Version:</div> <div><b>{target.VCU.vss}</b></div></div>
-                    <div className="flex"><div className="w-20">Device:</div> <div><b>{target.VCU.device}</b></div></div>
-                    <div>
-                        { usedApis && usedApis.map((api) => <div key={api} className="flex items-center pl-2">
-                            <div className="font-bold text-[11px] grow">- {api}</div>
-                        </div>)}
-                    </div>
-                </div>
-                )}
-            </div>
-        */}
-
-            {/* <div className="my-2 flex min-h-[100px] bg-slate-50">
-                <div className="min-w-[100px] w-[100px] flex-shrink-0 flex items-center justify-center px-2">
-                    <DaText variant="regular-bold">ECU</DaText>
-                </div>
-                {targets && targets.map((target: any) => <div key={target.name} className="min-w-[100px] flex-1 flex flex-col items-center justify-center">
-                    <div className="flex">
-                        { target.ECUs && target.ECUs.map((ecu:any, eIndex:number) => <div key={eIndex} className="m-1 px-2 py-1 flex flex-col pl-2 border-2 border-slate-300 rounded">
-                            <div className="text-[11px] flex">Name: <b>{ecu.name}</b></div>
-                            <div className="text-[11px] flex">App: <b>{ecu.app}</b></div>
-                            <div className="text-[11px] flex">
-                                <div>Ver: <b>{ecu.version}</b></div>
-                                <div className="ml-2 cursor-pointer text-orange-500 hover:underline">Upgrade</div>
-                            </div>
-                        </div>)}
-                    </div>
-                </div>
-                )}
-            </div> */}
           </div>
         </div>
       )}

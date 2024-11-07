@@ -211,8 +211,8 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
 
   return (
     <div className="flex w-full h-full bg-da-white text-da-gray-medium select-none">
-      <div className="flex w-[30%] flex-col min-w-fit max-w-[400px] px-4 h-full border-r pt-3">
-        <div className="flex py-1 mb-2 items-center justify-between space-x-8">
+      <div className="flex flex-col p-3 w-[40%] max-w-[350px] h-full border-r">
+        <div className="flex mb-2 items-center justify-between space-x-8">
           <DaText variant="sub-title">Architecture Mapping</DaText>
           {isAuthorized && (
             <DaButton onClick={createNewNode} size="sm" variant="solid">
@@ -285,8 +285,8 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
         )}
       </div>
       {activeNode && (
-        <div className="relative flex flex-1 flex-col h-full w-full overflow-y-auto ">
-          <div className="sticky top-0 z-0 flex w-full px-3 bg-white items-center justify-between min-h-16">
+        <div className="flex flex-1 flex-col h-full w-full overflow-y-auto ">
+          <div className="flex w-full p-3 bg-white items-center justify-between">
             <div className="flex items-center">
               {!isEditName && (
                 <div className="flex items-center">

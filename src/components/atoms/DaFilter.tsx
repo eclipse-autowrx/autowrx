@@ -12,6 +12,7 @@ interface DaFilterProps {
   showCategory?: boolean
   singleSelect?: boolean
   defaultValue?: string[]
+  label?: string
 }
 
 const DaFilter = ({
@@ -21,6 +22,7 @@ const DaFilter = ({
   showCategory = true,
   singleSelect = false,
   defaultValue,
+  label,
 }: DaFilterProps) => {
   const [selectedOptions, setSelectedOptions] = useState<string[]>([])
   const [isDropdownVisible, setIsDropdownVisible] = useState(false)
@@ -81,7 +83,7 @@ const DaFilter = ({
         size="md"
         onClick={toggleDropdownVisibility}
       >
-        <TbSortDescending className="w-4 h-4 mr-1.5" /> Filter
+        <TbSortDescending className="size-5 mr-1.5" /> {label || 'Filter'}
       </DaButton>
       {isDropdownVisible && (
         <ul className="absolute right-0 z-10 bg-white border rounded-md shadow-lg mt-2 max-w-fit p-1 select-none min-w-[140px]">

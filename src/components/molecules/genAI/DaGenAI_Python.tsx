@@ -47,7 +47,7 @@ const DaGenAI_Python = ({
         >
           {genCode ? (
             <CodeEditor
-              code={genCode || ''} // Change here
+              code={genCode || ''}
               setCode={(code) => {
                 setGenCode(code)
               }}
