@@ -158,7 +158,7 @@ const DaContributorList = ({ className }: ContributorListProps) => {
   return (
     <div
       className={cn(
-        'mx-auto flex flex-col rounded-lg border border-da-gray-light bg-white p-4',
+        'mx-auto flex flex-col rounded-lg border border-da-gray-light bg-white p-2',
         className,
       )}
     >
@@ -187,7 +187,7 @@ const DaContributorList = ({ className }: ContributorListProps) => {
           <TbUserPlus className="mr-2" /> Add user
         </DaButton>
       </div>
-      <div className="flex max-h-[400px] flex-col overflow-y-auto pr-2">
+      <div className="flex h-full flex-col overflow-y-auto pr-2">
         {activeTab === 'contributors' ? (
           <>
             {' '}

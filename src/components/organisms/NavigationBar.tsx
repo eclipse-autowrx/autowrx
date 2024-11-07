@@ -28,8 +28,11 @@ const NavigationBar = ({}) => {
       {user && (
         <>
           <DaGlobalSearch>
-            <DaButton variant="outline-nocolor" className="!pr-24">
-              <TbZoom className="w-4 h-4 mr-1" />
+            <DaButton
+              variant="outline-nocolor"
+              className="w-[250px] flex items-center !justify-start !border-gray-300 shadow-lg"
+            >
+              <TbZoom className="size-5 mr-2" />
               Search
             </DaButton>
           </DaGlobalSearch>{' '}

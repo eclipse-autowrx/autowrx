@@ -1,12 +1,14 @@
 import * as React from 'react'
 import { DaImage } from '../atoms/DaImage'
 import { DaText } from '../atoms/DaText'
+import { cn } from '@/lib/utils'
 
 interface DaItemVerticalStandardProps {
   title: string
   content: string
   imageUrl: string
   maxWidth?: string
+  className?: string
 }
 
 const DaItemVerticalStandard: React.FC<DaItemVerticalStandardProps> = ({
@@ -14,17 +16,23 @@ const DaItemVerticalStandard: React.FC<DaItemVerticalStandardProps> = ({
   content,
   imageUrl,
   maxWidth = '500px',
+  className,
 }) => {
   return (
-    <div className="p-2 hover:bg-gray-100 hover:border-da-gray-medium bg-da-white rounded-lg cursor-pointer">
+    <div
+      className={cn(
+        'p-2 hover:bg-gray-100 hover:border-da-gray-medium bg-da-white rounded-lg cursor-pointer',
+        className,
+      )}
+    >
       <div
-        className="flex w-full flex-col items-center space-y-1 text-da-gray-medium overflow-hidden"
+        className="flex flex-col w-full h-full items-center space-y-1 text-da-gray-medium overflow-hidden"
         style={{ maxWidth: maxWidth }}
       >
         <DaImage
           src={imageUrl ? imageUrl : '/imgs/default_prototype_cover.jpg'}
           alt="Image"
-          className="w-full h-auto rounded-lg aspect-video object-cover shadow border"
+          className="w-full h-full rounded-lg aspect-video object-cover shadow border"
         />
         <div className="flex flex-col items-start w-full space-y-0">
           <DaText

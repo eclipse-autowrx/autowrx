@@ -288,7 +288,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                     ? localPrototype.image_file
                     : '/imgs/default_prototype_cover.jpg'
                 }
-                className="w-full object-cover max-h-[400px] rounded-lg"
+                className="w-full object-cover max-h-[400px] aspect-video rounded-xl border shadow"
               />
               {isAuthorized && (
                 <DaImportFile
