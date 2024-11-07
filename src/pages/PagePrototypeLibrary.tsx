@@ -17,10 +17,11 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { zipToPrototype } from '@/lib/zipUtils'
 import { Prototype } from '@/types/model.type'
 import DaPopup from '@/components/atoms/DaPopup'
-import { TbFileImport, TbPlus } from 'react-icons/tb'
+import { TbFileImport, TbPlus, TbSearch } from 'react-icons/tb'
 import FormCreatePrototype from '@/components/molecules/forms/FormCreatePrototype'
 import { useNavigate } from 'react-router-dom'
 import DaFilter from '@/components/atoms/DaFilter'
+import { DaInput } from '@/components/atoms/DaInput'
 
 const PagePrototypeLibrary = () => {
   const [activeTab, setActiveTab] = useState('list')
@@ -37,6 +38,7 @@ const PagePrototypeLibrary = () => {
       localStorage.getItem('prototypeLibrary-selectedFilter') || '["Newest"]',
     ),
   )
+  const [searchInput, setSearchInput] = useState('')
 
   useEffect(() => {
     if (tab) {
@@ -104,91 +106,111 @@ const PagePrototypeLibrary = () => {
 
   return (
     <div className="flex flex-col w-full h-full rounded-md overflow-y-auto bg-white">
-      <div className="flex flex-col w-full h-full container">
+      <div className="flex flex-col w-full h-full px-6 lg:container">
         <div className="flex w-full items-center sticky">
-          <div className="flex space-x-2 py-6 h-full w-full items-center">
+          <div className="flex py-6 h-full w-full items-center">
             {activeTab === 'list' && (
-              <DaText variant="small-medium" className="text-da-primary-500">
+              <DaText
+                variant="small-medium"
+                className="text-da-primary-500 flex-shrink-0 hidden xl:flex"
+              >
                 Select a prototype to start
               </DaText>
             )}
-            <div className="grow"></div>
-            <DaButton
-              variant="outline-nocolor"
-              size="sm"
-              className={`flex items-center ${activeTab === 'list' ? '' : ''}`}
-              onClick={handleTabChange}
-            >
-              {activeTab === 'list' ? (
-                <>
-                  <TbChartScatter className="w-5 h-5 mr-2" />
-                  Portfolio View
-                </>
-              ) : (
-                <>
-                  <TbListDetails className="w-5 h-5 mr-2" />
-                  List View
-                </>
-              )}
-            </DaButton>
-            <DaFilter
-              categories={{
-                'Sort By': ['Newest', 'Oldest', 'Name A-Z'],
-              }}
-              onChange={(option) => handleFilterChange(option)}
-              className="w-fit mr-0 !h-8 !shadow !px-2 !text-sm "
-              singleSelect={true}
-              defaultValue={selectedFilters}
-              label="Sort By"
-            />
-            {isAuthorized && (
-              <div className="flex h-fit bg-white">
-                <DaImportFile
-                  accept=".zip"
-                  onFileChange={handleImportPrototypeZip}
-                  className="flex w-full"
-                >
-                  <DaButton
-                    variant="outline-nocolor"
-                    size="sm"
-                    className="flex"
+            <div className="xl:grow"></div>
+            <div className="flex w-full items-center justify-end space-x-2">
+              <DaInput
+                type="text"
+                Icon={TbSearch}
+                iconBefore={true}
+                placeholder="Search prototypes"
+                className="w-full xl:max-w-[200px] !text-da-gray-dark"
+                wrapperClassName="h-8 shadow"
+                inputClassName="h-6 text-sm placeholder:text-da-gray-medium font-medium"
+                iconSize={20}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+              />
+              <DaButton
+                variant="outline-nocolor"
+                size="sm"
+                className={`!hidden lg:!flex items-center ${activeTab === 'list' ? '' : ''}`}
+                onClick={handleTabChange}
+              >
+                {activeTab === 'list' ? (
+                  <>
+                    <TbChartScatter className="w-5 h-5 mr-2" />
+                    Portfolio View
+                  </>
+                ) : (
+                  <>
+                    <TbListDetails className="w-5 h-5 mr-2" />
+                    List View
+                  </>
+                )}
+              </DaButton>
+              <DaFilter
+                categories={{
+                  'Sort By': ['Newest', 'Oldest', 'Name A-Z'],
+                }}
+                onChange={(option) => handleFilterChange(option)}
+                className="w-fit mr-0 !h-8 !shadow !px-2 !text-sm "
+                singleSelect={true}
+                defaultValue={selectedFilters}
+                label="Sort By"
+              />
+              {isAuthorized && (
+                <div className="flex h-fit bg-white">
+                  <DaImportFile
+                    accept=".zip"
+                    onFileChange={handleImportPrototypeZip}
+                    className="flex w-full"
                   >
-                    {isLoading ? (
-                      <div className="flex items-center">
-                        <DaLoader className="mr-2" />
-                        Importing...
-                      </div>
-                    ) : (
-                      <>
-                        <TbFileImport className="w-5 h-5 mr-2" />
-                        Import Prototype
-                      </>
-                    )}
-                  </DaButton>
-                </DaImportFile>
-
-                <DaPopup
-                  state={[open, setOpen]}
-                  trigger={
-                    <DaButton variant="solid" size="sm" className="flex ml-2">
-                      <TbPlus className="w-5 h-5 mr-2" />
-                      Create New Prototype
+                    <DaButton
+                      variant="outline-nocolor"
+                      size="sm"
+                      className="flex"
+                    >
+                      {isLoading ? (
+                        <div className="flex items-center">
+                          <DaLoader className="mr-2" />
+                          Importing...
+                        </div>
+                      ) : (
+                        <>
+                          <TbFileImport className="w-5 h-5 mr-2" />
+                          Import Prototype
+                        </>
+                      )}
                     </DaButton>
-                  }
-                >
-                  <FormCreatePrototype
-                    onClose={() => {
-                      setOpen(false)
-                    }}
-                  />
-                </DaPopup>
-              </div>
-            )}
+                  </DaImportFile>
+
+                  <DaPopup
+                    state={[open, setOpen]}
+                    trigger={
+                      <DaButton variant="solid" size="sm" className="flex ml-2">
+                        <TbPlus className="w-5 h-5 mr-2" />
+                        Create New Prototype
+                      </DaButton>
+                    }
+                  >
+                    <FormCreatePrototype
+                      onClose={() => {
+                        setOpen(false)
+                      }}
+                    />
+                  </DaPopup>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex h-full w-full">
           {activeTab === 'list' && (
-            <PrototypeLibraryList selectedFilters={selectedFilters} />
+            <PrototypeLibraryList
+              selectedFilters={selectedFilters}
+              searchInput={searchInput}
+            />
           )}
           {activeTab === 'portfolio' && <PrototypeLibraryPortfolio />}
         </div>

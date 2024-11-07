@@ -21,12 +21,12 @@ const DaItemVerticalStandard: React.FC<DaItemVerticalStandardProps> = ({
   return (
     <div
       className={cn(
-        'p-2 hover:bg-gray-100 hover:border-da-gray-medium bg-da-white rounded-lg cursor-pointer',
+        'p-2 lg:w-full lg:h-full hover:bg-gray-100 hover:border-da-gray-medium bg-da-white rounded-lg cursor-pointer',
         className,
       )}
     >
       <div
-        className="flex flex-col w-full h-full items-center space-y-1 text-da-gray-medium overflow-hidden"
+        className="flex flex-col items-center space-y-1 text-da-gray-medium overflow-hidden"
         style={{ maxWidth: maxWidth }}
       >
         <DaImage

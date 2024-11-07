@@ -3,18 +3,18 @@ import { Prototype } from '@/types/model.type'
 import DaLoading from '@/components/atoms/DaLoading'
 import useListModelPrototypes from '@/hooks/useListModelPrototypes'
 import useCurrentModel from '@/hooks/useCurrentModel'
-import usePermissionHook from '@/hooks/usePermissionHook'
-import { PERMISSIONS } from '@/data/permission'
 import { DaText } from '../atoms/DaText'
-import { useLocation, useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { DaItemVerticalStandard } from '../molecules/DaItemVerticalStandard'
 
 interface PrototypeLibraryListProps {
   selectedFilters?: string[]
+  searchInput?: string
 }
 
 const PrototypeLibraryList = ({
   selectedFilters,
+  searchInput,
 }: PrototypeLibraryListProps) => {
   const { data: model } = useCurrentModel()
   const { data: fetchedPrototypes, refetch } = useListModelPrototypes(
@@ -22,32 +22,8 @@ const PrototypeLibraryList = ({
   )
   const [selectedPrototype, setSelectedPrototype] = useState<Prototype>()
   const [filteredPrototypes, setFilteredPrototypes] = useState<Prototype[]>()
-  const [searchInput, setSearchInput] = useState('')
-  const location = useLocation()
   const navigate = useNavigate()
   const { prototype_id } = useParams()
-
-  // const handleSearchChange = (searchTerm: string) => {
-  //   setSearchInput(searchTerm)
-  //   const querys = new URLSearchParams(location.search)
-  //   if (searchTerm) {
-  //     querys.set('search', searchTerm)
-  //   } else {
-  //     querys.delete('search')
-  //   }
-  //   navigate({ search: querys.toString() }, { replace: true })
-  // }
-
-  useEffect(() => {
-    if (fetchedPrototypes && fetchedPrototypes.length > 0) {
-      setSelectedPrototype(fetchedPrototypes[0] as Prototype)
-      const querys = new URLSearchParams(location.search)
-      const searchQuery = querys.get('search')
-      if (searchQuery) {
-        setSearchInput(searchQuery)
-      }
-    }
-  }, [fetchedPrototypes])
 
   useEffect(() => {
     if (!selectedPrototype) return
@@ -70,9 +46,13 @@ const PrototypeLibraryList = ({
     if (!fetchedPrototypes) return
     setFilteredPrototypes(
       fetchedPrototypes
-        .filter((prototype) =>
-          prototype.name.toLowerCase().includes(searchInput.toLowerCase()),
-        )
+        .filter((prototype) => {
+          // If searchInput is empty, don't filter out any prototypes
+          if (!searchInput) return true
+          return prototype.name
+            .toLowerCase()
+            .includes(searchInput.toLowerCase())
+        })
         .sort((a: Prototype, b: Prototype) => {
           const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
           const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
@@ -120,7 +100,6 @@ const PrototypeLibraryList = ({
                   content={prototype.description?.solution}
                   imageUrl={prototype.image_file}
                   maxWidth="400px"
-                  className="!w-full !h-full"
                 />
               </div>
             ))}
@@ -131,36 +110,6 @@ const PrototypeLibraryList = ({
           </div>
         )}
       </div>
-
-      {/* <div className="col-span-7 xl:col-span-8 border-l flex w-full h-full overflow-auto">
-          {selectedPrototype ? (
-            <PrototypeSummary prototype={selectedPrototype as Prototype} />
-          ) : (
-            <div className="flex w-full h-full items-center justify-center">
-              <DaText variant="title">No prototype selected.</DaText>
-            </div>
-          )}
-        </div> */}
-      {/* <div className="flex items-center pr-3">
-            <DaInput
-              type="text"
-              Icon={TbSearch}
-              iconBefore={true}
-              placeholder="Enter to search"
-              className="w-full p-3 !bg-white z-10"
-              value={searchInput}
-              onChange={(e) => handleSearchChange(e.target.value)}
-            />
-            <DaFilter
-              categories={{
-                'Sort By': ['Newest', 'Oldest', 'Name A-Z'],
-              }}
-              onChange={(option) => handleFilterChange(option)}
-              className="w-full"
-              singleSelect={true}
-              defaultValue={selectedFilters}
-            />
-          </div> */}
     </div>
   )
 }
