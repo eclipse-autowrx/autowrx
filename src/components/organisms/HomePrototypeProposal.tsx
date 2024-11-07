@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { DaItemVerticalStandard } from '../molecules/DaItemVerticalStandard'
 import { Link } from 'react-router-dom'
 import { Prototype } from '@/types/model.type'
 import {
@@ -9,6 +8,7 @@ import {
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import DaLoading from '../atoms/DaLoading'
 import DaText from '../atoms/DaText'
+import { DaPrototypeItem } from '../molecules/DaPrototypeItem'
 
 const HomePrototypeProposal = () => {
   const { data: user } = useSelfProfileQuery()
@@ -31,11 +31,6 @@ const HomePrototypeProposal = () => {
     fetchProposalPrototypes()
   }, [user])
 
-  // useEffect(() => {
-  //   console.log('popularPrototypes', popularPrototypes)
-  //   console.log('recentPrototypes', recentPrototypes)
-  // }, [popularPrototypes, recentPrototypes])
-
   return (
     user && (
       <div className="flex flex-col w-full container ">
@@ -51,13 +46,7 @@ const HomePrototypeProposal = () => {
                     to={`/model/${prototype.model_id}/library/prototype/${prototype.id}/view`}
                     key={pIndex}
                   >
-                    <DaItemVerticalStandard
-                      title={prototype.name}
-                      content={prototype.description?.solution}
-                      imageUrl={prototype.image_file}
-                      maxWidth="400px"
-                      className="!w-full !h-full"
-                    />
+                    <DaPrototypeItem prototype={prototype} />
                   </Link>
                 ))}
             </div>
@@ -75,12 +64,7 @@ const HomePrototypeProposal = () => {
                     to={`/model/${prototype.model_id}/library/prototype/${prototype.id}/view`}
                     key={pIndex}
                   >
-                    <DaItemVerticalStandard
-                      title={prototype.name}
-                      content={prototype.description?.solution}
-                      imageUrl={prototype.image_file}
-                      maxWidth="400px"
-                    />
+                    <DaPrototypeItem prototype={prototype} />
                   </Link>
                 ))}
             </div>

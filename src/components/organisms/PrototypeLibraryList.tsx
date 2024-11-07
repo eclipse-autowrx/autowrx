@@ -5,7 +5,7 @@ import useListModelPrototypes from '@/hooks/useListModelPrototypes'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { DaText } from '../atoms/DaText'
 import { useParams, useNavigate } from 'react-router-dom'
-import { DaItemVerticalStandard } from '../molecules/DaItemVerticalStandard'
+import { DaPrototypeItem } from '../molecules/DaPrototypeItem'
 
 interface PrototypeLibraryListProps {
   selectedFilters?: string[]
@@ -87,7 +87,7 @@ const PrototypeLibraryList = ({
           <div className="w-full grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredPrototypes.map((prototype, index) => (
               <div
-                key={index}
+                key={prototype.id}
                 onClick={() => {
                   navigate(
                     `/model/${model.id}/library/prototype/${prototype.id}/view`,
@@ -95,12 +95,7 @@ const PrototypeLibraryList = ({
                 }}
                 className="flex w-full cursor-pointer mb-2"
               >
-                <DaItemVerticalStandard
-                  title={prototype.name}
-                  content={prototype.description?.solution}
-                  imageUrl={prototype.image_file}
-                  maxWidth="400px"
-                />
+                <DaPrototypeItem prototype={prototype} />
               </div>
             ))}
           </div>

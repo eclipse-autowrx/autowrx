@@ -10,6 +10,7 @@ import { TbChevronDown, TbChevronRight } from 'react-icons/tb'
 import { DaButton } from '../atoms/DaButton'
 import DaPopup from '../atoms/DaPopup'
 import useAuthStore from '@/stores/authStore'
+import { DaPrototypeItem } from '../molecules/DaPrototypeItem'
 
 type HomePrototypePopularProps = {
   requiredLogin?: boolean
@@ -102,12 +103,7 @@ const HomePrototypePopular = ({
                     onClick={() => handlePrototypeClick(prototype)}
                     className="cursor-pointer"
                   >
-                    <DaItemVerticalStandard
-                      title={prototype.name}
-                      content={prototype.description?.solution}
-                      imageUrl={prototype.image_file}
-                      maxWidth="400px"
-                    />
+                    <DaPrototypeItem prototype={prototype} />
                   </div>
                 ))}
           </div>

@@ -65,6 +65,7 @@ export type Prototype = {
   tags?: Tag[]
   avg_score?: number
   requirements?: string
+  executed_turns?: number
 }
 export interface CustomRequirement {
   text?: string

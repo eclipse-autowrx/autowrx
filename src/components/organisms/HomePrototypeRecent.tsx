@@ -8,6 +8,7 @@ import DaLoading from '../atoms/DaLoading'
 import DaText from '../atoms/DaText'
 import { TbChevronDown, TbChevronLeft, TbChevronRight } from 'react-icons/tb' // Import icons
 import { DaButton } from '../atoms/DaButton'
+import { DaPrototypeItem } from '../molecules/DaPrototypeItem'
 
 type HomePrototypeRecentProps = {
   title?: string
@@ -75,13 +76,7 @@ const HomePrototypeRecent = ({ title }: HomePrototypeRecentProps) => {
                       to={`/model/${prototype.model_id}/library/prototype/${prototype.id}/view`}
                       key={pIndex}
                     >
-                      <DaItemVerticalStandard
-                        title={prototype.name}
-                        content={prototype.description?.solution}
-                        imageUrl={prototype.image_file}
-                        maxWidth="400px"
-                        className="!w-full !h-full"
-                      />
+                      <DaPrototypeItem prototype={prototype} />
                     </Link>
                   ))}
             </div>
