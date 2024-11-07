@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import { Prototype } from '@/types/model.type'
 import { TbCode, TbGauge, TbTerminal2 } from 'react-icons/tb'
 import { DaAvatar } from '../atoms/DaAvatar'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import DaTooltip from '../atoms/DaTooltip'
 
 interface DaPrototypeItemProps {
@@ -14,17 +14,6 @@ interface DaPrototypeItemProps {
 }
 
 const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
-  const navigate = useNavigate()
-  // console.log('Prototype: ', prototype)
-
-  const handleQuickAccess = (target: string) => {
-    if (prototype?.model_id && prototype?.id) {
-      navigate(
-        `/model/${prototype.model_id}/library/prototype/${prototype.id}/${target}`,
-      )
-    }
-  }
-
   return (
     <div
       className={cn(
@@ -44,9 +33,9 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
             alt="Image"
             className="w-full h-full rounded-lg aspect-video object-cover shadow border"
           />
-          <div className="absolute bottom-0 w-full h-[55px] p-[1px] blur bg-black/75 transition-opacity duration-200 ease-in-out opacity-0 group-hover:opacity-100"></div>
-          <div className="absolute bottom-0 w-full h-[55px] p-[1px] transition-opacity duration-200 ease-in-out opacity-0 group-hover:opacity-100">
-            <div className="flex h-full w-full px-2 items-center justify-between text-white rounded-b-lg ">
+          <div className="absolute bottom-0 w-full h-[30px] p-[1px] blur-xl bg-black/80 transition-opacity duration-200 ease-in-out opacity-0 group-hover:opacity-100"></div>
+          <div className="absolute bottom-0 w-full h-[50px] p-[1px] transition-opacity duration-200 ease-in-out opacity-0 group-hover:opacity-100">
+            <div className="flex h-full w-full px-3 items-center justify-between text-white rounded-b-lg ">
               {prototype?.created_by && (
                 <div className="flex gap-2 items-center">
                   <DaAvatar
@@ -60,28 +49,28 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
                 </div>
               )}
               <div className="grow"></div>
-              <div className="flex w-fit justify-end items-center gap-2">
+              <div className="flex w-fit justify-end items-center gap-2 ml-2">
                 <DaTooltip content="View Code" delay={150}>
-                  <div
-                    className="p-1 rounded-full bg-white opacity-80 hover:opacity-100"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleQuickAccess('code')
-                    }}
+                  <Link
+                    to={`/model/${prototype?.model_id}/library/prototype/${prototype?.id}/code`}
+                    className="flex"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <TbCode className="size-4 !text-da-gray-darkest" />
-                  </div>
+                    <div className="p-1 rounded-full bg-white opacity-80 hover:opacity-100">
+                      <TbCode className="size-4 !text-da-gray-darkest" />
+                    </div>
+                  </Link>
                 </DaTooltip>
                 <DaTooltip content="View Dashboard" delay={150}>
-                  <div
-                    className="p-1 rounded-full bg-white opacity-80 hover:opacity-100"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleQuickAccess('dashboard')
-                    }}
+                  <Link
+                    to={`/model/${prototype?.model_id}/library/prototype/${prototype?.id}/code`}
+                    className="flex"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <TbGauge className="size-4 !text-da-gray-darkest" />
-                  </div>
+                    <div className="p-1 rounded-full bg-white opacity-80 hover:opacity-100">
+                      <TbGauge className="size-4 !text-da-gray-darkest" />
+                    </div>
+                  </Link>
                 </DaTooltip>
               </div>
             </div>

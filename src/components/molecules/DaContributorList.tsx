@@ -33,7 +33,7 @@ const UserItem = ({ user, onRemoveUser }: UserItemProps) => {
   }
 
   return (
-    <div className="my-2 flex cursor-pointer items-center justify-between rounded-lg border border-da-gray-light bg-da-gray-light/25 p-2">
+    <div className="my-1 flex cursor-pointer items-center justify-between rounded-lg border border-da-gray-light bg-da-gray-light/25 p-2">
       <div className="flex items-center">
         <DaAvatar
           src={user.image_file}

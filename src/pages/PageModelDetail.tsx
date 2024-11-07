@@ -278,7 +278,7 @@ const PageModelDetail = () => {
         <div className="col-span-6 flex flex-col overflow-y-auto">
           <div className="flex w-full relative overflow-hidden">
             <DaImage
-              className="w-full object-cover max-h-[400px] aspect-video rounded-lg border"
+              className="w-full object-cover max-h-[500px] aspect-video rounded-lg border"
               src={model.model_home_image_file}
               alt={model.name}
             />
