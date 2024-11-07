@@ -107,7 +107,7 @@ const PagePrototypeLibrary = () => {
   return (
     <div className="flex flex-col w-full h-full rounded-md overflow-y-auto bg-white">
       <div className="flex flex-col w-full h-full px-6 lg:container">
-        <div className="flex w-full items-center sticky">
+        <div className="flex w-full items-center">
           <div className="flex py-6 h-full w-full items-center">
             {activeTab === 'list' && (
               <DaText
