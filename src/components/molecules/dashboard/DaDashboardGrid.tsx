@@ -148,9 +148,8 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
 
       if (data.action === 'open-modal') {
         setShowModal(true)
+        setPayload(data.payload)
       }
-
-      setPayload(data.payload)
     }
 
     window.addEventListener('message', onMessageFromIframe)
@@ -162,13 +161,21 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
   return (
     <div className={`grid h-full w-full grid-cols-5 grid-rows-2`}>
       <DaPopup trigger={<></>} state={[showModal, setShowModal]}>
-        <div className="h-[calc(100vh-200px)] m-auto w-[calc(100vw-200px)]">
-          <video
-            controls
-            className="w-full h-full bg-black rounded-md"
-            loop
-            src={payload?.url}
-          />
+        <div className="max-h-[calc(100vh-200px)] m-auto max-w-[calc(100vw-200px)]">
+          {payload?.type === 'video' && (
+            <video
+              controls
+              className="w-full h-full bg-black rounded-md"
+              loop
+              src={payload?.url}
+            />
+          )}
+          {payload?.type === 'image' && (
+            <img
+              src={payload?.url}
+              className="h-fit w-fit max-h-full max-w-full object-contain"
+            />
+          )}
         </div>
       </DaPopup>
       {renderCell.map((widgetItem, wIndex) => (
