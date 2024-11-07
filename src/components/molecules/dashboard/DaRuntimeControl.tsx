@@ -145,6 +145,13 @@ const DaRuntimeControl: FC = ({}) => {
     }
   }
 
+  const notifyWidgetIframes = (data: any) => {
+    const iframes = document.querySelectorAll('iframe')
+    iframes.forEach((iframe) => {
+      iframe.contentWindow?.postMessage(JSON.stringify(data), '*')
+    })
+  }
+
   return (
     <div
       className={`absolute bottom-0 right-0 top-0 z-10 ${isExpand ? 'w-[500px]' : 'w-16'} flex flex-col justify-center bg-da-gray-darkest px-1 py-2 text-da-gray-light`}
@@ -268,6 +275,10 @@ const DaRuntimeControl: FC = ({}) => {
                     }
                 }
 
+                notifyWidgetIframes({
+                  action: 'run-app',
+                })
+
                 const userId = currentUser?.id || 'Anonymous'
                 addLog({
                   name: `User ${userId} run prototype`,
@@ -296,6 +307,9 @@ const DaRuntimeControl: FC = ({}) => {
                     }
                     break
                 }
+                notifyWidgetIframes({
+                  action: 'stop-app',
+                })
               }}
               className={`${isExpand && 'mx-2'} da-label-regular-bold mt-1 flex items-center justify-center rounded border border-da-gray-medium p-2 hover:bg-da-gray-medium disabled:text-da-gray-medium`}
             >
@@ -307,8 +321,8 @@ const DaRuntimeControl: FC = ({}) => {
                 ref={rustCompilerRef}
                 onResponse={(log, isDone, status, appName) => {
                   appendLog(log)
-                  if(isDone) {
-                    if(status == 'compile-done' && appName) {
+                  if (isDone) {
+                    if (status == 'compile-done' && appName) {
                       if (runTimeRef.current) {
                         runTimeRef.current?.runBinApp(appName)
                       }
