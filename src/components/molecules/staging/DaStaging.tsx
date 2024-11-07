@@ -2,7 +2,12 @@ import DaText from '@/components/atoms/DaText'
 import { useState } from 'react'
 import { DaButton } from '@/components/atoms/DaButton'
 import DaEditSystemStaging from './DaEditSystemStaging'
-import { TbExternalLink } from 'react-icons/tb'
+import {
+  TbExternalLink,
+  TbPlayerPlay,
+  TbPlayerPlayFilled,
+  TbTriangleFilled,
+} from 'react-icons/tb'
 import { cn } from '@/lib/utils'
 import { TbChevronRight } from 'react-icons/tb'
 
@@ -297,7 +302,7 @@ const DaStaging = ({ isWizard }: DaStagingProps) => {
                     {index > 0 && (
                       <div className="relative flex items-center">
                         <div className="h-full border-l"></div>
-                        <TbChevronRight className="absolute transform -translate-x-1/2  text-da-secondary-500 bg-white rounded-lg size-10" />
+                        <TbPlayerPlayFilled className="absolute transform -translate-x-1/2  text-gray-400 bg-white rounded-lg size-8" />
                       </div>
                     )}
                     {/* Target content */}
