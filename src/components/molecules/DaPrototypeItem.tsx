@@ -17,7 +17,7 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
   return (
     <div
       className={cn(
-        'p-2 lg:w-full lg:h-full hover:bg-gray-100 group bg-white rounded-lg cursor-pointer',
+        'lg:w-full lg:h-full group bg-white rounded-lg cursor-pointer',
         className,
       )}
       id={prototype?.id ?? ''}
@@ -50,25 +50,25 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
               )}
               <div className="grow"></div>
               <div className="flex w-fit justify-end items-center gap-2 ml-2">
-                <DaTooltip content="View Code" delay={150}>
+                <DaTooltip content="View Code" delay={300}>
                   <Link
                     to={`/model/${prototype?.model_id}/library/prototype/${prototype?.id}/code`}
                     className="flex"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="p-1 rounded-full bg-white opacity-80 hover:opacity-100">
-                      <TbCode className="size-4 !text-da-gray-darkest" />
+                      <TbCode className="size-4 !text-da-gray-dark" />
                     </div>
                   </Link>
                 </DaTooltip>
-                <DaTooltip content="View Dashboard" delay={150}>
+                <DaTooltip content="View Dashboard" delay={300}>
                   <Link
-                    to={`/model/${prototype?.model_id}/library/prototype/${prototype?.id}/code`}
+                    to={`/model/${prototype?.model_id}/library/prototype/${prototype?.id}/dashboard`}
                     className="flex"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="p-1 rounded-full bg-white opacity-80 hover:opacity-100">
-                      <TbGauge className="size-4 !text-da-gray-darkest" />
+                      <TbGauge className="size-4 !text-da-gray-dark" />
                     </div>
                   </Link>
                 </DaTooltip>
@@ -86,7 +86,7 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
           <div className="grow"></div>
           <DaTooltip
             content={`This prototype has been run ${prototype?.executed_turns} times`}
-            delay={150}
+            delay={300}
           >
             {Number(prototype?.executed_turns ?? 0) > 1 && (
               <div className="flex w-fit items-center text-sm font-semibold mx-2">

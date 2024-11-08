@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { DaButton } from '@/components/atoms/DaButton'
 import DaEditSystemStaging from './DaEditSystemStaging'
 import {
+  TbChevronsRight,
   TbExternalLink,
   TbPlayerPlay,
   TbPlayerPlayFilled,
@@ -258,7 +259,7 @@ const DaStaging = ({ isWizard }: DaStagingProps) => {
               Staging
             </DaText>
           )}
-          <div className="mt-4 w-full rounded border">
+          <div className="mt-4 w-full rounded border border-gray-300">
             {/* Title */}
             <div className="flex h-[40px] w-full rounded-t bg-gradient-to-r from-da-gradient-from to-da-gradient-to text-da-white">
               <div className="flex w-[20%] items-center justify-center border-r border-da-white font-bold">
@@ -269,7 +270,7 @@ const DaStaging = ({ isWizard }: DaStagingProps) => {
               </div>
             </div>
             <div className="flex">
-              <div className="flex min-w-[100px] flex-1 flex-col border-r items-center justify-center overflow-x-hidden rounded-s px-1 py-1">
+              <div className="flex min-w-[100px] flex-1 flex-col border-r border-gray-300 items-center justify-center overflow-x-hidden rounded-s px-1 py-1">
                 <div className="flex h-[140px] w-full items-center justify-center">
                   <img
                     width={150}
@@ -301,8 +302,8 @@ const DaStaging = ({ isWizard }: DaStagingProps) => {
                   <div key={target.name} className="flex w-[20%]">
                     {index > 0 && (
                       <div className="relative flex items-center">
-                        <div className="h-full border-l"></div>
-                        <TbPlayerPlayFilled className="absolute transform -translate-x-1/2  text-gray-400 bg-white rounded-lg size-8" />
+                        <div className="h-full border-l border-gray-300"></div>
+                        <TbChevronRight className="absolute transform -translate-x-1/2  text-da-secondary-500 bg-white rounded-lg size-10" />
                       </div>
                     )}
                     {/* Target content */}

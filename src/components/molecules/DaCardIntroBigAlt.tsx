@@ -1,30 +1,18 @@
 import { DaText } from '../atoms/DaText'
-import { Link } from 'react-router-dom'
+import { ReactNode } from 'react'
 import clsx from 'clsx'
 
 interface CardIntroProps {
   title: string
   content: string
-  url?: string
+  children?: ReactNode // Accepting children as a prop
 }
 
-const DaCardIntroBig = ({ title, content, url }: CardIntroProps) => {
-  const handleLinkClick = (
-    event: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
-  ) => {
-    if (url) {
-      event.preventDefault() // Prevent the default navigation
-      window.open(url, '_blank') // Open the URL in a new tab
-    }
-  }
-
+const DaCardIntroBig = ({ title, content, children }: CardIntroProps) => {
   return (
-    <Link
-      to={url || '#'}
-      onClick={handleLinkClick}
+    <div
       className={clsx(
         'flex flex-col min-h-28 w-full h-full bg-da-white rounded-lg border p-4 select-none',
-        url ? '' : 'pointer-events-none',
       )}
     >
       <div className="flex w-full items-center space-x-2">
@@ -35,7 +23,10 @@ const DaCardIntroBig = ({ title, content, url }: CardIntroProps) => {
       <DaText variant="small" className=" text-da-gray-medium mt-2">
         {content}
       </DaText>
-    </Link>
+      <div className="mt-4 lg:mt-auto">
+        {children} {/* Render any passed children here */}
+      </div>
+    </div>
   )
 }
 
