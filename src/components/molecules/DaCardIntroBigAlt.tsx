@@ -5,7 +5,7 @@ import clsx from 'clsx'
 interface CardIntroProps {
   title: string
   content: string
-  children?: ReactNode // Accepting children as a prop
+  children?: ReactNode
 }
 
 const DaCardIntroBig = ({ title, content, children }: CardIntroProps) => {
@@ -23,9 +23,7 @@ const DaCardIntroBig = ({ title, content, children }: CardIntroProps) => {
       <DaText variant="small" className=" text-da-gray-medium mt-2">
         {content}
       </DaText>
-      <div className="mt-4 lg:mt-auto">
-        {children} {/* Render any passed children here */}
-      </div>
+      <div className="mt-4 lg:mt-auto">{children}</div>
     </div>
   )
 }

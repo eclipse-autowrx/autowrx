@@ -7,6 +7,7 @@ import { TbCode, TbGauge, TbTerminal2 } from 'react-icons/tb'
 import { DaAvatar } from '../atoms/DaAvatar'
 import { Link } from 'react-router-dom'
 import DaTooltip from '../atoms/DaTooltip'
+import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
 interface DaPrototypeItemProps {
   prototype?: Prototype // Make prototype optional
@@ -14,6 +15,7 @@ interface DaPrototypeItemProps {
 }
 
 const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
+  const { data: user } = useSelfProfileQuery()
   return (
     <div
       className={cn(
@@ -49,30 +51,32 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
                 </div>
               )}
               <div className="grow"></div>
-              <div className="flex w-fit justify-end items-center gap-2 ml-2">
-                <DaTooltip content="View Code" delay={300}>
-                  <Link
-                    to={`/model/${prototype?.model_id}/library/prototype/${prototype?.id}/code`}
-                    className="flex"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="p-1 rounded-full bg-white opacity-80 hover:opacity-100">
-                      <TbCode className="size-4 !text-da-gray-dark" />
-                    </div>
-                  </Link>
-                </DaTooltip>
-                <DaTooltip content="View Dashboard" delay={300}>
-                  <Link
-                    to={`/model/${prototype?.model_id}/library/prototype/${prototype?.id}/dashboard`}
-                    className="flex"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="p-1 rounded-full bg-white opacity-80 hover:opacity-100">
-                      <TbGauge className="size-4 !text-da-gray-dark" />
-                    </div>
-                  </Link>
-                </DaTooltip>
-              </div>
+              {user && (
+                <div className="flex w-fit justify-end items-center gap-2 ml-2">
+                  <DaTooltip content="View Code" delay={300}>
+                    <Link
+                      to={`/model/${prototype?.model_id}/library/prototype/${prototype?.id}/code`}
+                      className="flex"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="p-1 rounded-full bg-white opacity-80 hover:opacity-100">
+                        <TbCode className="size-4 !text-da-gray-dark" />
+                      </div>
+                    </Link>
+                  </DaTooltip>
+                  <DaTooltip content="View Dashboard" delay={300}>
+                    <Link
+                      to={`/model/${prototype?.model_id}/library/prototype/${prototype?.id}/dashboard`}
+                      className="flex"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="p-1 rounded-full bg-white opacity-80 hover:opacity-100">
+                        <TbGauge className="size-4 !text-da-gray-dark" />
+                      </div>
+                    </Link>
+                  </DaTooltip>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -1,12 +1,7 @@
-import { FaCar } from 'react-icons/fa'
-import {
-  TbArrowRight,
-  TbCode,
-  TbExternalLink,
-  TbPackageImport,
-} from 'react-icons/tb'
+import { TbExternalLink } from 'react-icons/tb'
 import { DaButton } from '@/components/atoms/DaButton'
-import { Link } from 'react-router-dom'
+import DaRequireSignedIn from '@/components/molecules/DaRequireSignedIn'
+import DisabledLink from '@/components/molecules/DaDisableLink'
 
 const home = [
   {
@@ -69,11 +64,13 @@ const home = [
         description:
           'Create a model to start building new connected vehicle app prototypes.',
         children: (
-          <DaButton size="sm">
-            <Link to="/model" className="flex items-center">
-              Vehicle Models
-            </Link>
-          </DaButton>
+          <DaRequireSignedIn message="You must first sign in to explore vehicle models and prototypes">
+            <DaButton size="sm">
+              <DisabledLink to="/model" className="flex items-center">
+                Vehicle Models
+              </DisabledLink>
+            </DaButton>
+          </DaRequireSignedIn>
         ),
       },
     ],
