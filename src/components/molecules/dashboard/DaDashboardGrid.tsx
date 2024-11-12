@@ -176,6 +176,12 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
               className="h-fit w-fit max-h-full max-w-full object-contain"
             />
           )}
+          {payload?.type === 'iframe' && (
+            <iframe
+              className="h-[calc(100vh-200px)] w-[calc(100vw-200px)]"
+              srcDoc={`<div style="height:100%; width:100%">${payload?.html}</div>`}
+            ></iframe>
+          )}
         </div>
       </DaPopup>
       {renderCell.map((widgetItem, wIndex) => (
