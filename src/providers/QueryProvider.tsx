@@ -43,7 +43,12 @@ const QueryProvider = ({ children }: QueryProviderProps) => {
                 queryClient.invalidateQueries({ queryKey: query.queryKey })
               } catch (error) {
                 console.error('Error refreshing token', error)
-                navigate('/')
+                if (
+                  location.pathname !== '/reset-password' &&
+                  location.pathname !== '/'
+                ) {
+                  navigate('/')
+                }
               }
             }
           },
