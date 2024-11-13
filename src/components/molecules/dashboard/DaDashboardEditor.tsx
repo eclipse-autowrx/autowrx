@@ -8,8 +8,12 @@ import {
   TbCategoryPlus,
   TbExternalLink,
   TbCategory,
+  TbLink,
+  TbLinkPlus,
 } from 'react-icons/tb'
-import BUILT_IN_WIDGETS from '@/data/builtinWidgets'
+import BUILT_IN_WIDGETS, {
+  BUILT_IN_EMBEDDED_WIDGETS,
+} from '@/data/builtinWidgets'
 import DaTooltip from '../../atoms/DaTooltip'
 import config from '@/configs/config'
 import DaWidgetLibrary from '../widgets/DaWidgetLibrary'
@@ -52,6 +56,7 @@ const DaDashboardEditor = ({
   const [targetSelectionCells, setTargetSelectionCells] = useState<number[]>([]) // New state to track selected cells
 
   const codeEditorPopup = useState<boolean>(false)
+  const [isAddingFromURL, setIsAddingFromURL] = useState<boolean>(false)
   const [buildinWidgets, setBuildinWidgets] = useState<any[]>(BUILT_IN_WIDGETS)
 
   // This useEffect used to load the existed widget configuration
@@ -207,6 +212,22 @@ const DaDashboardEditor = ({
     }
   }
 
+  const handleAddWidgetFromURL = () => {
+    const widgetConfig = JSON.parse(selectedWidget)
+    const newWidgetConfigs = [...widgetConfigs, widgetConfig]
+    onDashboardConfigChanged(JSON.stringify(newWidgetConfigs, null, 4))
+    setSelectedCells([])
+  }
+
+  const handleOnWidgetEditorSave = () => {
+    if (isAddingFromURL) {
+      handleAddWidgetFromURL()
+      setIsAddingFromURL(false)
+    } else {
+      handleUpdateWidget()
+    }
+  }
+
   const handleOnDashboardConfigChanged = (newConfigString: string) => {
     try {
       onDashboardConfigChanged(newConfigString)
@@ -265,6 +286,7 @@ const DaDashboardEditor = ({
                 className="!px-0 hover:text-da-primary-500"
                 onClick={() => {
                   setSelectedWidget(JSON.stringify(widgetConfig, null, 2))
+                  setIsAddingFromURL(false)
                   codeEditorPopup[1](true)
                 }}
               >
@@ -343,7 +365,7 @@ const DaDashboardEditor = ({
             <div
               key={`merged-${cell}`}
               className={cn(
-                'relative flex cursor-pointer items-center justify-center border-2 border-da-primary-500 !bg-da-white text-da-gray-dark',
+                'relative flex cursor-pointer items-center justify-center border-2 border-da-primary-500 !bg-da-white text-da-gray-dark gap-2 flex-wrap',
                 `col-span-${colSpan} row-span-${rowSpan}`,
               )}
             >
@@ -356,6 +378,30 @@ const DaDashboardEditor = ({
                 >
                   <TbCategoryPlus className="mr-1 h-4 w-4" />
                   Add widget
+                </DaButton>
+              </DaTooltip>
+
+              <DaTooltip content="Add widget from URL">
+                <DaButton
+                  size="sm"
+                  variant="outline-nocolor"
+                  className="hover:text-da-gray-dark"
+                  onClick={() => {
+                    setSelectedWidget(
+                      JSON.stringify(
+                        {
+                          ...BUILT_IN_EMBEDDED_WIDGETS,
+                          boxes: selectedCells,
+                        },
+                        null,
+                        2,
+                      ),
+                    )
+                    setIsAddingFromURL(true)
+                    codeEditorPopup[1](true)
+                  }}
+                >
+                  <TbLinkPlus className="h-4 w-4" />
                 </DaButton>
               </DaTooltip>
 
@@ -425,7 +471,7 @@ const DaDashboardEditor = ({
             widgetEditorPopupState={codeEditorPopup}
             selectedWidget={selectedWidget}
             setSelectedWidget={setSelectedWidget}
-            handleUpdateWidget={handleUpdateWidget}
+            handleUpdateWidget={handleOnWidgetEditorSave}
             isWizard={isWizard}
           />
 
