@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { DaButton } from '@/components/atoms/DaButton'
 import { BsStars } from 'react-icons/bs'
 import { AddOn } from '@/types/addon.type'
@@ -14,13 +14,15 @@ import { toast } from 'react-toastify'
 import useAuthStore from '@/stores/authStore'
 import default_generated_code from '@/data/default_generated_code'
 import { cn } from '@/lib/utils'
-import DaSpeechToText from './DaSpeechToText.tsx'
 import {
   TbAlertCircle,
   TbCheck,
   TbCopy,
   TbExclamationMark,
 } from 'react-icons/tb'
+import { retry } from '@/lib/retry.ts'
+
+const DaSpeechToText = lazy(() => retry(() => import('./DaSpeechToText')))
 
 type DaGenAI_BaseProps = {
   type: 'GenAI_Python' | 'GenAI_Dashboard' | 'GenAI_Widget'
@@ -150,7 +152,9 @@ const DaGenAI_Base = ({
           <div
             className={cn(canUseGenAI ? '' : 'opacity-50 pointer-events-none')}
           >
-            <DaSpeechToText onRecognize={setPrompt} prompt={prompt} />
+            <Suspense>
+              <DaSpeechToText onRecognize={setPrompt} prompt={prompt} />
+            </Suspense>
           </div>
         </div>
         <div className="mt-1 flex h-full max-h-[300px] w-full">
