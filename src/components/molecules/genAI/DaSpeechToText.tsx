@@ -1,7 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react'
-import * as SpeechSDK from 'microsoft-cognitiveservices-speech-sdk'
+import React, { useState, useEffect, useRef, lazy } from 'react'
 import { TbMicrophoneFilled, TbPlayerStopFilled } from 'react-icons/tb'
 import { cn } from '@/lib/utils'
+import { retry } from '@/lib/retry'
+
+import {
+  AudioConfig,
+  Recognizer,
+  ResultReason,
+  SessionEventArgs,
+  SpeechConfig,
+  SpeechRecognitionCanceledEventArgs,
+  SpeechRecognitionEventArgs,
+  SpeechRecognizer,
+} from 'microsoft-cognitiveservices-speech-sdk'
 
 type DaSpeechToTextProps = {
   onRecognize: (text: string) => void
@@ -50,8 +61,8 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({
 
   // Refs for the recognizer and audio configuration
   // to have immediate access and avoid issues with asynchronous state updates
-  const recognizerRef = useRef<SpeechSDK.SpeechRecognizer | null>(null)
-  const audioConfigRef = useRef<SpeechSDK.AudioConfig | null>(null)
+  const recognizerRef = useRef<SpeechRecognizer | null>(null)
+  const audioConfigRef = useRef<AudioConfig | null>(null)
 
   const AZURE_SPEECH_KEY = import.meta.env.VITE_AZURE_SPEECH_SDK_KEY
   const AZURE_REGION = 'germanywestcentral'
@@ -59,15 +70,15 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({
 
   const initializeRecognizer = () => {
     // Create a speech configuration instance
-    const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(
+    const speechConfig = SpeechConfig.fromSubscription(
       AZURE_SPEECH_KEY,
       AZURE_REGION,
     )
     speechConfig.speechRecognitionLanguage = 'en-US'
     // Create an audio configuration instance using the default microphone
-    audioConfigRef.current = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput()
+    audioConfigRef.current = AudioConfig.fromDefaultMicrophoneInput()
     // Create a speech recognizer instance
-    recognizerRef.current = new SpeechSDK.SpeechRecognizer(
+    recognizerRef.current = new SpeechRecognizer(
       speechConfig,
       audioConfigRef.current,
     )
@@ -75,8 +86,8 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({
     const recognizerInstance = recognizerRef.current
     // Event handler for intermediate recognition results
     recognizerInstance.recognizing = (
-      s: SpeechSDK.Recognizer,
-      e: SpeechSDK.SpeechRecognitionEventArgs,
+      s: Recognizer,
+      e: SpeechRecognitionEventArgs,
     ) => {
       console.debug(`Recognizing: ${e.result.text}`)
       setIsMicActive(true) // Microphone is active while recognizing
@@ -91,10 +102,10 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({
     }
     // Event handler for final recognition results
     recognizerInstance.recognized = (
-      s: SpeechSDK.Recognizer,
-      e: SpeechSDK.SpeechRecognitionEventArgs,
+      s: Recognizer,
+      e: SpeechRecognitionEventArgs,
     ) => {
-      if (e.result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
+      if (e.result.reason === ResultReason.RecognizedSpeech) {
         console.debug(`Recognized: ${e.result.text}`)
 
         accumulatedTextRef.current =
@@ -104,14 +115,14 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({
         onRecognize(accumulatedTextRef.current)
 
         resetInactivityTimeout() // Reset the inactivity timeout
-      } else if (e.result.reason === SpeechSDK.ResultReason.NoMatch) {
+      } else if (e.result.reason === ResultReason.NoMatch) {
         console.debug('No match found for the speech input.')
       }
     }
     // Event handler for recognition cancellation
     recognizerInstance.canceled = (
-      s: SpeechSDK.Recognizer,
-      e: SpeechSDK.SpeechRecognitionCanceledEventArgs,
+      s: Recognizer,
+      e: SpeechRecognitionCanceledEventArgs,
     ) => {
       console.error(
         `Recognition canceled: Reason=${e.reason}, ErrorDetails=${e.errorDetails}`,
@@ -123,8 +134,8 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({
     }
 
     recognizerInstance.sessionStopped = (
-      s: SpeechSDK.Recognizer,
-      e: SpeechSDK.SessionEventArgs,
+      s: Recognizer,
+      e: SessionEventArgs,
     ) => {
       console.debug('Session stopped.')
       setIsListening(false)

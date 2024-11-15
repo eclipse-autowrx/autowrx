@@ -2,31 +2,64 @@ import { lazy } from 'react'
 import RootLayout from '@/layouts/RootLayout'
 import SuspenseProvider from '@/providers/SuspenseProvider'
 import { RouteConfig } from '@/types/common.type'
-import ModelDetailLayout from '@/layouts/ModelDetailLayout'
 import PageAuthSuccess from '@/pages/PageAuthSuccess'
+import { retry } from '@/lib/retry'
 
-const PageHome = lazy(() => import('@/pages/PageHome'))
-const PageAbout = lazy(() => import('@/pages/PageAbout'))
-const PageModelList = lazy(() => import('@/pages/PageModelList'))
-const PageModelDetail = lazy(() => import('@/pages/PageModelDetail'))
+const PageHome = lazy(() => retry(() => import('@/pages/PageHome')))
+const PageAbout = lazy(() => retry(() => import('@/pages/PageAbout')))
+const PageModelList = lazy(() => retry(() => import('@/pages/PageModelList')))
+const ModelDetailLayout = lazy(() =>
+  retry(() => import('@/layouts/ModelDetailLayout')),
+)
+const PageModelDetail = lazy(() =>
+  retry(() => import('@/pages/PageModelDetail')),
+)
 const PageModelArchitecture = lazy(
   () => import('@/pages/PageModelArchitecture'),
 )
-const PageVehicleApi = lazy(() => import('@/pages/PageVehicleApi'))
-const PagePrototypeDetail = lazy(() => import('@/pages/PagePrototypeDetail'))
-const PageComponent = lazy(() => import('@/pages/test-ui/PageComponent'))
-const PageMolecules = lazy(() => import('@/pages/test-ui/PageMolecules'))
-const PageOrganisms = lazy(() => import('@/pages/test-ui/PageOrganisms'))
-const PageTestHome = lazy(() => import('@/pages/test-ui/PageTestHome'))
-const PageTestForm = lazy(() => import('@/pages/test-ui/PageTestForm'))
-const PagePrototypeLibrary = lazy(() => import('@/pages/PagePrototypeLibrary'))
-const PageResetPassword = lazy(() => import('@/pages/PageResetPassword'))
-const PageManageUsers = lazy(() => import('@/pages/PageManageUsers'))
-const PageDiscussions = lazy(() => import('@/pages/test-ui/PageDiscussions'))
-const PageUserProfile = lazy(() => import('@/pages/PageUserProfile'))
-const PageManageFeatures = lazy(() => import('@/pages/PageManageFeatures'))
-const PageGenAIWizard = lazy(() => import('@/pages/PageGenAIWizard'))
-const PagePrivacyPolicy = lazy(() => import('@/pages/PagePrivacyPolicy'))
+const PageVehicleApi = lazy(() => retry(() => import('@/pages/PageVehicleApi')))
+const PagePrototypeDetail = lazy(() =>
+  retry(() => import('@/pages/PagePrototypeDetail')),
+)
+const PageComponent = lazy(() =>
+  retry(() => import('@/pages/test-ui/PageComponent')),
+)
+const PageMolecules = lazy(() =>
+  retry(() => import('@/pages/test-ui/PageMolecules')),
+)
+const PageOrganisms = lazy(() =>
+  retry(() => import('@/pages/test-ui/PageOrganisms')),
+)
+const PageTestHome = lazy(() =>
+  retry(() => import('@/pages/test-ui/PageTestHome')),
+)
+const PageTestForm = lazy(() =>
+  retry(() => import('@/pages/test-ui/PageTestForm')),
+)
+const PagePrototypeLibrary = lazy(() =>
+  retry(() => import('@/pages/PagePrototypeLibrary')),
+)
+const PageResetPassword = lazy(() =>
+  retry(() => import('@/pages/PageResetPassword')),
+)
+const PageManageUsers = lazy(() =>
+  retry(() => import('@/pages/PageManageUsers')),
+)
+const PageDiscussions = lazy(() =>
+  retry(() => import('@/pages/test-ui/PageDiscussions')),
+)
+const PageUserProfile = lazy(() =>
+  retry(() => import('@/pages/PageUserProfile')),
+)
+const PageManageFeatures = lazy(() =>
+  retry(() => import('@/pages/PageManageFeatures')),
+)
+const PageGenAIWizard = lazy(() =>
+  retry(() => import('@/pages/PageGenAIWizard')),
+)
+const PagePrivacyPolicy = lazy(() =>
+  retry(() => import('@/pages/PagePrivacyPolicy')),
+)
 
 const routesConfig: RouteConfig[] = [
   {

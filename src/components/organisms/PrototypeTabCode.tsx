@@ -12,13 +12,16 @@ import { PERMISSIONS } from '@/data/permission'
 import { updatePrototypeService } from '@/services/prototype.service'
 import { TbBrandGithub } from 'react-icons/tb'
 import DaVelocitasProjectCreator from '../molecules/velocitas_project/DaVelocitasProjectCreator'
+import { retry } from '@/lib/retry'
 
-const CodeEditor = lazy(() => import('../molecules/CodeEditor'))
+const CodeEditor = lazy(() => retry(() => import('../molecules/CodeEditor')))
 
-const PrototypeTabCodeApiPanel = lazy(
-  () => import('./PrototypeTabCodeApiPanel'),
+const PrototypeTabCodeApiPanel = lazy(() =>
+  retry(() => import('./PrototypeTabCodeApiPanel')),
 )
-const DaGenAI_Python = lazy(() => import('../molecules/genAI/DaGenAI_Python'))
+const DaGenAI_Python = lazy(() =>
+  retry(() => import('../molecules/genAI/DaGenAI_Python')),
+)
 
 const PrototypeTabCode: FC = ({}) => {
   const [prototype, setActivePrototype, activeModelApis] = useModelStore(

@@ -28,13 +28,15 @@ import PrototypeTabJourney from '@/components/organisms/PrototypeTabJourney'
 import PrototypeTabArchitecture from '@/components/organisms/PrototypeTabArchitecture'
 import PrototypeTabCode from '@/components/organisms/PrototypeTabCode'
 import PrototypeTabDashboard from '@/components/organisms/PrototypeTabDashboard'
+import PrototypeTabHomologation from '@/components/organisms/PrototypeTabHomologation'
+import PrototypeTabFeedback from '@/components/organisms/PrototypeTabFeedback'
 
-const PrototypeTabFeedback = lazy(
-  () => import('@/components/organisms/PrototypeTabFeedback'),
-)
-const PrototypeTabHomologation = lazy(
-  () => import('@/components/organisms/PrototypeTabHomologation'),
-)
+// const PrototypeTabFeedback = lazy(
+//   () => import('@/components/organisms/PrototypeTabFeedback'),
+// )
+// const PrototypeTabHomologation = lazy(
+//   () => import('@/components/organisms/PrototypeTabHomologation'),
+// )
 
 interface ViewPrototypeProps {
   display?: 'tree' | 'list'
@@ -161,16 +163,8 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           </div>
         )}
         {tab == 'dashboard' && <PrototypeTabDashboard />}
-        {tab == 'homologation' && (
-          <Suspense>
-            <PrototypeTabHomologation />
-          </Suspense>
-        )}
-        {tab == 'feedback' && (
-          <Suspense>
-            <PrototypeTabFeedback />
-          </Suspense>
-        )}
+        {tab == 'homologation' && <PrototypeTabHomologation />}
+        {tab == 'feedback' && <PrototypeTabFeedback />}
       </div>
     </div>
   ) : (

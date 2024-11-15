@@ -7,11 +7,14 @@ import { useLocation } from 'react-router-dom'
 import config from '@/configs/config'
 import routesConfig from '@/configs/routes'
 import { RouteConfig } from '@/types/common.type'
+import { retry } from '@/lib/retry'
 
-const ActiveObjectManagement = lazy(
-  () => import('@/components/organisms/ActiveObjectManagement'),
+const ActiveObjectManagement = lazy(() =>
+  retry(() => import('@/components/organisms/ActiveObjectManagement')),
 )
-const NavigationBar = lazy(() => import('@/components/organisms/NavigationBar'))
+const NavigationBar = lazy(() =>
+  retry(() => import('@/components/organisms/NavigationBar')),
+)
 
 const traverse = (
   route: RouteConfig,

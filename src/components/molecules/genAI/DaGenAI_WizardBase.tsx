@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { DaButton } from '@/components/atoms/DaButton'
 import { AddOn } from '@/types/addon.type'
 import { DaTextarea } from '@/components/atoms/DaTextarea'
-import DaSpeechToText from './DaSpeechToText'
 import config from '@/configs/config'
 import axios from 'axios'
 import { toast } from 'react-toastify'
@@ -20,6 +19,9 @@ import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import Prompt_Templates from '../../../../instance/prompt_templates.js'
 import useSocketIO from '@/hooks/useSocketIO.js'
+import { retry } from '@/lib/retry.js'
+
+const DaSpeechToText = lazy(() => retry(() => import('./DaSpeechToText')))
 
 type DaGenAI_WizardBaseProps = {
   type: 'GenAI_Python' | 'GenAI_Dashboard' | 'GenAI_Widget'
@@ -287,7 +289,9 @@ const DaGenAI_WizardBase = ({
           </div>
 
           {/* Speech to Text component */}
-          <DaSpeechToText onRecognize={setPrompt} prompt={prompt} />
+          <Suspense>
+            <DaSpeechToText onRecognize={setPrompt} prompt={prompt} />
+          </Suspense>
         </div>
 
         {/* Prompt Textarea */}
