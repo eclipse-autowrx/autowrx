@@ -164,4 +164,14 @@ const BUILT_IN_WIDGETS = [
   //   },
 ]
 
+export const BUILT_IN_EMBEDDED_WIDGETS = {
+  id: 'Embedded-Widget',
+  plugin: 'Builtin',
+  widget: 'Embedded-Widget',
+  // icon: '/imgs/widget_iframe.png',
+  options: {
+    url: '<place_widget_url_here>',
+  },
+}
+
 export default BUILT_IN_WIDGETS
