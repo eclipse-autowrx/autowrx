@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { Prototype } from '@/types/model.type'
-import DaLoading from '@/components/atoms/DaLoading'
 import useListModelPrototypes from '@/hooks/useListModelPrototypes'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { DaText } from '../atoms/DaText'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { DaPrototypeItem } from '../molecules/DaPrototypeItem'
+import DaErrorDisplay from '../molecules/DaErrorDisplay'
+import DaSkeletonGrid from '../molecules/DaSkeletonGrid'
 
 interface PrototypeLibraryListProps {
   selectedFilters?: string[]
@@ -22,6 +23,8 @@ const PrototypeLibraryList = ({
   )
   const [selectedPrototype, setSelectedPrototype] = useState<Prototype>()
   const [filteredPrototypes, setFilteredPrototypes] = useState<Prototype[]>()
+  const [loading, setLoading] = useState(true)
+  const [timeoutReached, setTimeoutReached] = useState(false)
   const navigate = useNavigate()
   const { prototype_id } = useParams()
 
@@ -57,7 +60,7 @@ const PrototypeLibraryList = ({
           const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
           const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
 
-          console.log('Selected Filters: ', selectedFilters)
+          // console.log('Selected Filters: ', selectedFilters)
 
           if (selectedFilters?.includes('Newest')) {
             return dateB - dateA
@@ -71,12 +74,49 @@ const PrototypeLibraryList = ({
     )
   }, [searchInput, selectedFilters, fetchedPrototypes])
 
-  if (!model || !fetchedPrototypes) {
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (!model || !fetchedPrototypes) {
+        setTimeoutReached(true)
+      }
+      setLoading(false)
+    }, 15000)
+
+    if (fetchedPrototypes) {
+      setLoading(false)
+      clearTimeout(timeout)
+    }
+
+    return () => clearTimeout(timeout)
+  }, [model, fetchedPrototypes])
+
+  if (loading) {
     return (
-      <DaLoading
-        text="Loading prototypes..."
-        timeoutText="Failed to load prototype library or access denied"
+      <div className="flex flex-col w-full h-full">
+        <DaSkeletonGrid
+          maxItems={{
+            sm: 1,
+            md: 2,
+            lg: 3,
+            xl: 8,
+          }}
+        />
+      </div>
+    )
+  }
+
+  if (timeoutReached) {
+    return (
+      <DaErrorDisplay
+        error="Failed to load prototype library or access denied"
+        className="-mt-24"
       />
+    )
+  }
+
+  if (!model) {
+    return (
+      <DaErrorDisplay error="Model data is not available" className="-mt-24" />
     )
   }
 
@@ -96,8 +136,8 @@ const PrototypeLibraryList = ({
             ))}
           </div>
         ) : (
-          <div className="flex w-full h-full items-center justify-center">
-            <DaText variant="title">No prototype found.</DaText>
+          <div className="flex w-full h-full items-center justify-center -mt-16">
+            <DaText variant="sub-title">No prototype found.</DaText>
           </div>
         )}
       </div>
