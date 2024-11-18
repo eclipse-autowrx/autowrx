@@ -2,6 +2,7 @@ import DaTabItem from '@/components/atoms/DaTabItem'
 import useModelStore from '@/stores/modelStore'
 import { Model } from '@/types/model.type'
 import { matchRoutes, Outlet, useLocation } from 'react-router-dom'
+import { DaSkeleton } from '@/components/atoms/DaSkeleton'
 
 const cardIntro = [
   {
@@ -38,28 +39,35 @@ const cardIntro = [
 
 const ModelDetailLayout = () => {
   const [model] = useModelStore((state) => [state.model as Model])
-
   const location = useLocation()
 
   return (
     <div className="flex flex-col w-full h-full rounded-md bg-da-gray-light">
       <div className="flex min-h-[52px] border-b border-da-gray-medium/50 bg-da-white">
-        {cardIntro.map((intro, index) => (
-          <DaTabItem
-            to={`/model/${model?.id}/${intro.path === 'overview' ? '' : intro.path}`}
-            active={
-              !!matchRoutes(
-                intro.subs.map((sub) => ({
-                  path: sub,
-                })),
-                location.pathname,
-              )?.at(0)
-            }
-            key={index}
-          >
-            {intro.title}
-          </DaTabItem>
-        ))}
+        {model ? (
+          cardIntro.map((intro, index) => (
+            <DaTabItem
+              to={`/model/${model.id}/${intro.path === 'overview' ? '' : intro.path}`}
+              active={
+                !!matchRoutes(
+                  intro.subs.map((sub) => ({
+                    path: sub,
+                  })),
+                  location.pathname,
+                )?.at(0)
+              }
+              key={index}
+            >
+              {intro.title}
+            </DaTabItem>
+          ))
+        ) : (
+          <div className="flex items-center h-full space-x-6 px-4">
+            {cardIntro.map((_, index) => (
+              <DaSkeleton className="w-[100px] h-6" />
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="p-2 h-[calc(100%-52px)] flex flex-col">
