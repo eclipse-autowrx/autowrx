@@ -4,12 +4,14 @@ type HomeHeroSectionProps = {
   title?: string
   description?: string
   image?: string
+  children?: React.ReactNode
 }
 
 const HomeHeroSection = ({
   title,
   description,
   image,
+  children,
 }: HomeHeroSectionProps) => {
   return (
     <>
@@ -38,7 +40,7 @@ const HomeHeroSection = ({
 
         {(title || description) && (
           <div className="absolute flex h-full items-center justify-end w-full">
-            <div className="lg:w-[50%] lg:px-24 px-12 z-30">
+            <div className="lg:w-[50%] xl:px-24 lg:px-12 z-30">
               <div className="flex flex-col sm:text-xs">
                 {title && (
                   <div
@@ -57,6 +59,7 @@ const HomeHeroSection = ({
                   />
                 )}
               </div>
+              {children}
             </div>
           </div>
         )}
