@@ -59,19 +59,21 @@ const HomePartners: FC = ({ items, children }: HomePartnersProps) => {
             </div>
           </>
         ) : (
-          <div className="flex gap-16">
+          <div className="flex gap-8 lg:gap-16 max-w-[1400px] px-8 md:flex-row flex-col">
             <div
               className={cn(
-                'flex w-full flex-col justify-center font-medium',
-                !children && 'items-center text-center',
+                'flex flex-1 min-w-0 flex-col font-medium',
+                !children && 'items-center text-center justify-center',
               )}
             >
-              <div className="-ml-4 flex w-fit items-center">
+              <div
+                className={cn(children && '-ml-4', 'flex w-fit items-center')}
+              >
                 <a href="https://www.digital.auto/" target="_blank">
                   <img src="./imgs/da.png" className="h-[70px]" />
                 </a>
               </div>
-              <div className="max-w-xl text-sm">
+              <div className="text-sm mt-3 max-w-xl">
                 Operated by{' '}
                 <a
                   href="https://www.digital.auto/"
