@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { TbX } from 'react-icons/tb'
 import { DaButton } from './DaButton'
 import { DaText } from './DaText'
+import DaErrorDisplay from '../molecules/DaErrorDisplay'
+import { cn } from '@/lib/utils'
 
 interface DaLoadingProps {
   text?: string
@@ -11,6 +13,7 @@ interface DaLoadingProps {
   fullScreen?: boolean
   showRetry?: boolean
   stopLoading?: boolean
+  className?: string
 }
 
 const DaLoading = ({
@@ -21,6 +24,7 @@ const DaLoading = ({
   fullScreen = true,
   showRetry = true,
   stopLoading = false, // Default to false
+  className,
 }: DaLoadingProps) => {
   const [hasTimedOut, setHasTimedOut] = useState(false)
 
@@ -41,9 +45,13 @@ const DaLoading = ({
 
   return (
     <div
-      className={`flex flex-col justify-center items-center select-none ${fullScreen ? 'w-full h-full' : ''}`}
+      className={cn(
+        `flex flex-col justify-center items-center select-none`,
+        fullScreen ? 'w-full h-full' : '',
+        className,
+      )}
     >
-      {!hasTimedOut ? (
+      {!hasTimedOut && (
         <svg
           className="loading-spinner"
           width={size}
@@ -74,20 +82,18 @@ const DaLoading = ({
             </linearGradient>
           </defs>
         </svg>
-      ) : (
-        showRetry && <TbX className="text-da-gray-medium mb-6" size={size} />
       )}
-      <DaText variant="title" className="text-da-gray-medium">
-        {hasTimedOut ? timeoutText : text}
-      </DaText>
+
+      {!hasTimedOut && (
+        <DaText variant="sub-title" className="text-da-gray-medium mt-4">
+          {text}
+        </DaText>
+      )}
+
       {hasTimedOut && showRetry && (
-        <DaButton
-          variant="outline-nocolor"
-          className="mt-4"
-          onClick={() => window.location.reload()}
-        >
-          Try to reload the page
-        </DaButton>
+        <div className="flex w-full h-full">
+          <DaErrorDisplay error={timeoutText} />
+        </div>
       )}
       <style>
         {`

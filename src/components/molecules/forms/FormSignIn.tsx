@@ -49,7 +49,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
   return (
     <form
       onSubmit={signIn}
-      className="flex flex-col w-[30vw] lg:w-[25vw] min-w-[400px] max-w-[500px] h-fit max-h-[550px] p-4 bg-da-white"
+      className="flex flex-col w-[30vw] lg:w-[25vw] min-w-[400px] max-w-[500px] h-fit max-h-[550px] p-4 bg-da-white overflow-auto"
     >
       {config.disableEmailLogin ? (
         <div className="flex flex-col h-full mb-16">

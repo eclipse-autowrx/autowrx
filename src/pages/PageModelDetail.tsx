@@ -136,8 +136,9 @@ const PageModelDetail = () => {
       <div className="h-full w-full p-4 bg-white rounded-lg">
         <DaLoading
           text="Loading model..."
-          timeout={10}
+          timeout={20}
           timeoutText="Model not found or access denied"
+          className="h-[80%]"
         />
       </div>
     )

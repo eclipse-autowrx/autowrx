@@ -35,7 +35,7 @@ const home = [
         description:
           'Learn about creating efficient SDV applications, using Python and Vehicle Signals',
         children: (
-          <div className="flex space-x-2 items-center">
+          <div className="flex space-x-2 items-center mt-4">
             <DaButton size="sm">
               <a
                 href="https://docs.digital.auto/basics/play/"
@@ -65,7 +65,7 @@ const home = [
           'Create a model to start building new connected vehicle app prototypes.',
         children: (
           <DaRequireSignedIn message="You must first sign in to explore vehicle models and prototypes">
-            <DaButton size="sm">
+            <DaButton size="sm" className="mt-4">
               <DisabledLink to="/model" className="flex items-center">
                 Vehicle Models
               </DisabledLink>

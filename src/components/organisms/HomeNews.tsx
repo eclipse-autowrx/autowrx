@@ -111,7 +111,7 @@ const SmallCard = ({ item }: { item: CardProps }) => {
         <div className="mt-4 text-lg font-semibold text-da-gray-dark">
           {item.title}
         </div>
-        <div className="mt-2 text-da-gray-medium text-sm line-clamp-2">
+        <div className="mt-2 text-da-gray-medium line-clamp-2">
           {item.description}
         </div>
       </a>

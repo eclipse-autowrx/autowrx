@@ -157,22 +157,54 @@ const PageModelList = () => {
     }
   })()
 
+  const getModelCount = (tab: 'public' | 'myModel' | 'myContribution') => {
+    switch (tab) {
+      case 'public':
+        return (
+          allModel?.results?.filter((model) => model.visibility === 'public')
+            .length || 0
+        )
+      case 'myModel':
+        return myModels?.results?.length || 0
+      case 'myContribution':
+        return contributionModel?.results?.length || 0
+      default:
+        return 0
+    }
+  }
+
+  const isLoadingAny =
+    isLoadingPublicModel || isLoadingMyModels || isLoadingContributionModel
+
   return (
     <div className="flex flex-col w-full h-full relative">
       <div className="sticky top-0 flex min-h-[52px] border-b border-da-gray-medium/50 bg-da-white z-50">
-        {cardIntro.map((intro, index) => (
-          <DaTabItem
-            active={activeTab === intro.value}
-            key={index}
-            onClick={() =>
-              setActiveTab(
-                intro.value as 'public' | 'myModel' | 'myContribution',
-              )
-            }
-          >
-            {intro.title}
-          </DaTabItem>
-        ))}
+        {isLoadingAny ? (
+          <div className="flex items-center h-full space-x-6 px-4">
+            {cardIntro.map((_, index) => (
+              <DaSkeleton className="w-[100px] h-6" />
+            ))}
+          </div>
+        ) : (
+          cardIntro.map((intro, index) => (
+            <DaTabItem
+              active={activeTab === intro.value}
+              key={index}
+              onClick={() =>
+                setActiveTab(
+                  intro.value as 'public' | 'myModel' | 'myContribution',
+                )
+              }
+            >
+              {intro.title}
+              <div className="flex size-6 items-center justify-center text-[11px] ml-1 bg-gray-100 rounded-full">
+                {getModelCount(
+                  intro.value as 'public' | 'myModel' | 'myContribution',
+                )}
+              </div>
+            </DaTabItem>
+          ))
+        )}
       </div>
       <div className="flex w-full h-[calc(100%-52px)] items-start bg-slate-200 p-2">
         <div className="flex flex-col w-full h-full bg-white rounded-lg overflow-y-auto">
