@@ -21,6 +21,8 @@ import useListModelContribution from '@/hooks/useListModelContribution'
 import DaLoadingWrapper from '@/components/molecules/DaLoadingWrapper'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import { ModelLite } from '@/types/model.type'
+import DaSkeletonGrid from '@/components/molecules/DaSkeletonGrid'
+import { DaSkeleton } from '@/components/atoms/DaSkeleton'
 
 const PageModelList = () => {
   const [isImporting, setIsImporting] = useState(false)
@@ -142,6 +144,19 @@ const PageModelList = () => {
       ]
     : [{ title: 'Public', value: 'public' }]
 
+  const isLoading = (() => {
+    switch (activeTab) {
+      case 'public':
+        return isLoadingPublicModel
+      case 'myModel':
+        return isLoadingMyModels
+      case 'myContribution':
+        return isLoadingContributionModel
+      default:
+        return false
+    }
+  })()
+
   return (
     <div className="flex flex-col w-full h-full relative">
       <div className="sticky top-0 flex min-h-[52px] border-b border-da-gray-medium/50 bg-da-white z-50">
@@ -162,80 +177,88 @@ const PageModelList = () => {
       <div className="flex w-full h-[calc(100%-52px)] items-start bg-slate-200 p-2">
         <div className="flex flex-col w-full h-full bg-white rounded-lg overflow-y-auto">
           <div className="flex flex-col w-full h-full container">
-            {!isImporting &&
-              !isLoadingContributionModel &&
-              !isLoadingMyModels &&
-              !isLoadingPublicModel && (
-                <div className="flex w-full py-6 items-center justify-between">
-                  <DaText
-                    variant="small-medium"
-                    className="text-da-primary-500"
-                  >
-                    Select a vehicle model to start
-                  </DaText>
-                  {user && (
-                    <div className="flex">
-                      {!isImporting ? (
-                        <DaImportFile
-                          accept=".zip"
-                          onFileChange={handleImportModelZip}
-                        >
-                          <DaButton
-                            variant="outline-nocolor"
-                            size="sm"
-                            className="mr-2"
-                          >
-                            <TbPackageExport className="mr-1 text-lg" /> Import
-                            Model
-                          </DaButton>
-                        </DaImportFile>
-                      ) : (
-                        <DaText
-                          variant="regular"
-                          className="flex items-center text-da-gray-medium mr-2"
-                        >
-                          <TbLoader className="animate-spin text-lg mr-2" />
-                          Importing model ...
-                        </DaText>
-                      )}
-                      <DaPopup
-                        trigger={
-                          <DaButton variant="solid" size="sm" className="">
-                            <HiPlus className="mr-1 text-lg" />
-                            Create New Model
-                          </DaButton>
-                        }
+            {user ? (
+              <div className="flex w-full py-6 items-center justify-between">
+                <DaText variant="small-medium" className="text-da-primary-500">
+                  Select a vehicle model to start
+                </DaText>
+
+                <div className="flex">
+                  {!isImporting ? (
+                    <DaImportFile
+                      accept=".zip"
+                      onFileChange={handleImportModelZip}
+                    >
+                      <DaButton
+                        variant="outline-nocolor"
+                        size="sm"
+                        className="mr-2"
                       >
-                        <FormCreateModel />
-                      </DaPopup>
-                    </div>
+                        <TbPackageExport className="mr-1 text-lg" /> Import
+                        Model
+                      </DaButton>
+                    </DaImportFile>
+                  ) : (
+                    <DaText
+                      variant="regular"
+                      className="flex items-center text-da-gray-medium mr-2"
+                    >
+                      <TbLoader className="animate-spin text-lg mr-2" />
+                      Importing model ...
+                    </DaText>
                   )}
+                  <DaPopup
+                    trigger={
+                      <DaButton variant="solid" size="sm" className="">
+                        <HiPlus className="mr-1 text-lg" />
+                        Create New Model
+                      </DaButton>
+                    }
+                  >
+                    <FormCreateModel />
+                  </DaPopup>
+                </div>
+              </div>
+            ) : (
+              <div className="flex py-6 items-center">
+                <DaSkeleton className="w-[210px] h-[32px]" />
+                <div className="flex-grow" />
+                <DaSkeleton className="w-[125px] h-[32px] mr-2" />
+                <DaSkeleton className="w-[157px] h-[32px]" />
+              </div>
+            )}
+            <DaSkeletonGrid
+              maxItems={{
+                sm: 1,
+                md: 2,
+                lg: 3,
+                xl: 8,
+              }}
+              primarySkeletonClassName="h-[240px]"
+              secondarySkeletonClassName="hidden"
+              timeout={20}
+              timeoutText="Failed to load models. Please reload the page."
+              timeoutContainerClassName="h-[50%]"
+              data={filteredModels}
+              isLoading={isLoading}
+              emptyText="No models found. Please create a new model"
+              emptyContainerClassName="h-[50%]"
+            >
+              {filteredModels?.length > 0 && (
+                <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-4 pb-4">
+                  {filteredModels.map((item, index) => (
+                    <Link key={index} to={`/model/${item.id}`}>
+                      <DaItemVerticalType2
+                        title={item.name}
+                        imageUrl={item.model_home_image_file}
+                        tags={item.tags?.map((tag) => `${tag.tag}`) || []}
+                        maxWidth="800px"
+                      />
+                    </Link>
+                  ))}
                 </div>
               )}
-            <DaLoadingWrapper
-              loadingMessage="Loading models..."
-              isLoading={
-                isLoadingPublicModel ||
-                isLoadingContributionModel ||
-                isLoadingMyModels
-              }
-              data={filteredModels}
-              emptyMessage="No models found. Please create a new model."
-              timeoutMessage="Failed to load models. Please try again."
-            >
-              <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-4 pb-4">
-                {filteredModels?.map((item, index) => (
-                  <Link key={index} to={`/model/${item.id}`}>
-                    <DaItemVerticalType2
-                      title={item.name}
-                      imageUrl={item.model_home_image_file}
-                      tags={item.tags?.map((tag) => `${tag.tag}`) || []}
-                      maxWidth="800px"
-                    />
-                  </Link>
-                ))}
-              </div>
-            </DaLoadingWrapper>
+            </DaSkeletonGrid>
           </div>
         </div>
       </div>

@@ -114,12 +114,6 @@ const PrototypeLibraryList = ({
     )
   }
 
-  if (!model) {
-    return (
-      <DaErrorDisplay error="Model data is not available" className="-mt-24" />
-    )
-  }
-
   return (
     <div className="flex flex-col w-full h-full">
       <div className="flex flex-col h-full">
@@ -128,7 +122,7 @@ const PrototypeLibraryList = ({
             {filteredPrototypes.map((prototype, index) => (
               <Link
                 key={prototype.id}
-                to={`/model/${model.id}/library/prototype/${prototype.id}/view`}
+                to={`/model/${model!.id}/library/prototype/${prototype.id}/view`}
                 className="flex w-full cursor-pointer mb-2"
               >
                 <DaPrototypeItem prototype={prototype} />
