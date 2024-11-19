@@ -21,7 +21,7 @@ const HomePartners: FC = ({ items, children }: HomePartnersProps) => {
           'flex flex-col xl:flex-row xl:items-center justify-center w-full min-h-[180px]',
         )}
       >
-        {config && config.instance === 'digitalauto' ? (
+        {config && config.instance === 'digitalauto' && !children ? (
           <>
             <div className="flex flex-col w-fit xl:w-[30%] ml-12 my-6 lg:my-12">
               <div className="text-xl font-bold mb-2 text-da-gray-dark">
@@ -59,28 +59,37 @@ const HomePartners: FC = ({ items, children }: HomePartnersProps) => {
             </div>
           </>
         ) : (
-          <div className="flex flex-col w-full text-center justify-center items-center font-medium">
-            <div className="flex w-fit items-center">
-              <a href="https://www.digital.auto/" target="_blank">
-                <img src="./imgs/da.png" className="h-[70px]" />
-              </a>
-            </div>
-            <div className="max-w-xl text-sm">
-              Operated by{' '}
-              <a
-                href="https://www.digital.auto/"
-                target="_blank"
-                className="text-da-primary-500 hover:underline"
+          <div className="flex gap-8 lg:gap-16 max-w-[1400px] px-8 md:flex-row flex-col">
+            <div
+              className={cn(
+                'flex flex-1 min-w-0 flex-col font-medium',
+                !children && 'items-center text-center justify-center',
+              )}
+            >
+              <div
+                className={cn(children && '-ml-4', 'flex w-fit items-center')}
               >
-                digital.auto
-              </a>{' '}
-              and based on Eclipse SDV autowrx. Join our thriving community to
-              participate in next-generation, SDV-enabled vehicle experiences.
+                <a href="https://www.digital.auto/" target="_blank">
+                  <img src="./imgs/da.png" className="h-[70px]" />
+                </a>
+              </div>
+              <div className="text-sm mt-3 max-w-xl">
+                Operated by{' '}
+                <a
+                  href="https://www.digital.auto/"
+                  target="_blank"
+                  className="text-da-primary-500 hover:underline"
+                >
+                  digital.auto
+                </a>{' '}
+                and based on Eclipse SDV autowrx. Join our thriving community to
+                participate in next-generation, SDV-enabled vehicle experiences.
+              </div>
             </div>
+            {children}
           </div>
         )}
       </div>
-      {children}
     </div>
   )
 }
