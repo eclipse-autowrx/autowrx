@@ -1,8 +1,10 @@
+import { useEffect, useState } from 'react'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import useModelStore from '@/stores/modelStore'
 import { Model } from '@/types/model.type'
 import { matchRoutes, Outlet, useLocation } from 'react-router-dom'
 import { DaSkeleton } from '@/components/atoms/DaSkeleton'
+import DaLoading from '@/components/atoms/DaLoading'
 
 const cardIntro = [
   {
@@ -40,6 +42,13 @@ const cardIntro = [
 const ModelDetailLayout = () => {
   const [model] = useModelStore((state) => [state.model as Model])
   const location = useLocation()
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    // Simulate loading state for demonstration
+    const timeout = setTimeout(() => setIsLoading(false), 500) // Adjust the time if needed
+    return () => clearTimeout(timeout)
+  }, [location.pathname])
 
   return (
     <div className="flex flex-col w-full h-full rounded-md bg-da-gray-light">
@@ -71,7 +80,13 @@ const ModelDetailLayout = () => {
       </div>
 
       <div className="p-2 h-[calc(100%-52px)] flex flex-col">
-        <Outlet />
+        {isLoading ? (
+          <div className="flex w-full h-full bg-white rounded-lg">
+            <DaLoading className="h-[80%] pt-2" text="Loading Model..." />
+          </div>
+        ) : (
+          <Outlet />
+        )}
       </div>
     </div>
   )
