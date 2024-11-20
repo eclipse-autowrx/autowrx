@@ -130,7 +130,7 @@ const PrototypeLibraryList = ({
             ))}
           </div>
         ) : (
-          <div className="flex w-full h-full items-center justify-center -mt-16">
+          <div className="flex w-full h-[70%] items-center justify-center">
             <DaText variant="sub-title">No prototype found.</DaText>
           </div>
         )}
