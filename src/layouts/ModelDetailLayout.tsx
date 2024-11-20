@@ -85,7 +85,9 @@ const ModelDetailLayout = () => {
             <DaLoading className="h-[80%] pt-2" text="Loading Model..." />
           </div>
         ) : (
-          <Outlet />
+          <div className="w-full h-full bg-white rounded-lg">
+            <Outlet />
+          </div>
         )}
       </div>
     </div>
