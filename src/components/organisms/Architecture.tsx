@@ -11,11 +11,17 @@ import { DaButton } from '@/components/atoms/DaButton'
 import { DaText } from '@/components/atoms/DaText'
 import { DaInput } from '../atoms/DaInput'
 import DaLoading from '../atoms/DaLoading'
-import { TbEdit, TbPlus } from 'react-icons/tb'
+import {
+  TbArrowsMaximize,
+  TbArrowsMinimize,
+  TbEdit,
+  TbPlus,
+} from 'react-icons/tb'
 import DaConfirmPopup from '@/components/molecules/DaConfirmPopup'
 import { cn } from '@/lib/utils'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
+import clsx from 'clsx'
 
 const MASTER_ITEM = 'MASTER_ITEM'
 
@@ -37,6 +43,8 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
   const [isEditName, setIsEditName] = useState<boolean>(false)
   const [tmpNodeName, setTmpNodeName] = useState<string>('')
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
+
+  const [isFullscreen, setFullscreen] = useState(false)
 
   useEffect(() => {
     const inputSkeleton =
@@ -285,7 +293,12 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
         )}
       </div>
       {activeNode && (
-        <div className="flex flex-1 flex-col h-full w-full overflow-y-auto ">
+        <div
+          className={clsx(
+            'flex flex-1 flex-col h-full w-full overflow-y-auto',
+            isFullscreen && 'fixed top-0 left-0 right-0 bottom z-30 bg-white',
+          )}
+        >
           <div className="flex w-full p-3 bg-white items-center justify-between">
             <div className="flex items-center">
               {!isEditName && (
@@ -369,6 +382,17 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
                   Edit Mode
                 </DaButton>
               )}
+              <DaButton
+                onClick={() => setFullscreen((prev) => !prev)}
+                size="sm"
+                variant="plain"
+              >
+                {isFullscreen ? (
+                  <TbArrowsMinimize className="w-5 h-5" />
+                ) : (
+                  <TbArrowsMaximize className="w-5 h-5" />
+                )}
+              </DaButton>
             </div>
           </div>
 
