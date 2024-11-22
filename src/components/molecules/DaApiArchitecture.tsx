@@ -130,10 +130,10 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
           ) {
             throw new Error('Parent skeleton not found or empty')
           }
-          const tmpSkele = await createNodeWithImage(
-            parentSkeletonObject.nodes[0].bgImage,
-          )
-          setSkeleton(tmpSkele)
+          // const tmpSkele = await createNodeWithImage(
+          //   parentSkeletonObject.nodes[0].bgImage,
+          // )
+          setSkeleton(parentSkeletonObject)
         } else {
           // If the skeleton is found and not empty, set the skeleton
           //
@@ -159,20 +159,20 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
         ) {
           throw new Error('Parent skeleton not found or empty')
         }
-        const tmpSkele = await createNodeWithImage(
-          parentSkeletonObject.nodes[0].bgImage,
-        )
+        // const tmpSkele = await createNodeWithImage(
+        //   parentSkeletonObject.nodes[0].bgImage,
+        // )
         //
         const createPayload: ExtendedApiCreate = {
           apiName: apiName,
           model: modelID,
-          skeleton: JSON.stringify(tmpSkele),
+          skeleton: JSON.stringify(parentSkeletonObject),
         }
         const res = await createExtendedApi(createPayload)
         //
         // The ImageArea lib will trigger onSaveRequested to save the skeleton so no need to set it here
         setExtendedApi(res)
-        setSkeleton(tmpSkele)
+        setSkeleton(parentSkeletonObject)
       } else {
         const parentSkeletonObject = await fetchParentAPISkeleton(
           apiName,
@@ -185,16 +185,21 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
         ) {
           throw new Error('Parent skeleton not found or empty')
         }
-        const tmpSkele = await createNodeWithImage(
-          parentSkeletonObject.nodes[0].bgImage,
-        )
+        // const tmpSkele = await createNodeWithImage(
+        //   parentSkeletonObject.nodes[0].bgImage,
+        // )
         if (res && res.skeleton === '{}') {
           updateExtendedApi(
             {
-              skeleton: JSON.stringify(tmpSkele),
+              skeleton: JSON.stringify(parentSkeletonObject),
             },
             res.id,
           )
+          setExtendedApi({
+            ...res,
+            skeleton: JSON.stringify(parentSkeletonObject),
+          })
+          setSkeleton(parentSkeletonObject)
         }
       }
     } finally {

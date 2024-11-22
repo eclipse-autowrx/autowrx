@@ -163,9 +163,7 @@ const ModelApiList = ({ onApiClick, readOnly }: ModelApiListProps) => {
                   setIsOpenPopup(false)
                 }}
                 onApiCreate={(api) => {
-                  const path = `/model/${model_id}/api/${api.name}`
-                  setSelectedApi(api)
-                  navigate(path, { replace: true })
+                  onApiClick?.(api)
                   // window.location.reload() // Try to optimize later
                 }}
               />
