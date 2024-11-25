@@ -30,6 +30,7 @@ import PrototypeTabCode from '@/components/organisms/PrototypeTabCode'
 import PrototypeTabDashboard from '@/components/organisms/PrototypeTabDashboard'
 import PrototypeTabHomologation from '@/components/organisms/PrototypeTabHomologation'
 import PrototypeTabFeedback from '@/components/organisms/PrototypeTabFeedback'
+import PrototypeTabFlow from '@/components/organisms/PrototypeTabFlow'
 
 // const PrototypeTabFeedback = lazy(
 //   () => import('@/components/organisms/PrototypeTabFeedback'),
@@ -89,12 +90,13 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
             <TbCode className="w-5 h-5 mr-2" />
             SDV Code
           </DaTabItem>
-          {/* <DaTabItem
-          active={tab === 'flow'}
-          to={`/model/${model_id}/library/prototype/${prototype_id}/flow`}
-        >
-          Flow
-        </DaTabItem> */}
+          <DaTabItem
+            active={tab === 'flow'}
+            to={`/model/${model_id}/library/prototype/${prototype_id}/flow`}
+          >
+            <TbRoute className="w-5 h-5 mr-2" />
+            Flow
+          </DaTabItem>
           <DaTabItem
             active={tab === 'dashboard'}
             to={`/model/${model_id}/library/prototype/${prototype_id}/dashboard`}
@@ -157,11 +159,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
         {isDefaultTab && <PrototypeTabJourney prototype={prototype} />}
         {tab == 'architecture' && <PrototypeTabArchitecture />}
         {tab == 'code' && <PrototypeTabCode />}
-        {tab == 'flow' && (
-          <div className="p-8">
-            <DaText variant="huge">Flow Page</DaText>
-          </div>
-        )}
+        {tab == 'flow' && <PrototypeTabFlow />}
         {tab == 'dashboard' && <PrototypeTabDashboard />}
         {tab == 'homologation' && <PrototypeTabHomologation />}
         {tab == 'feedback' && <PrototypeTabFeedback />}

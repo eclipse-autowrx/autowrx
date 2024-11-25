@@ -2,6 +2,9 @@ import { useEffect, useRef } from 'react'
 import { VehicleApi } from '@/types/model.type'
 import { DaText } from '../atoms/DaText'
 import { getApiTypeClasses } from '@/lib/utils'
+import { DaCopy } from '../atoms/DaCopy'
+import { TbCopy } from 'react-icons/tb'
+import { useState } from 'react'
 
 interface DaApiListItemProps {
   api: VehicleApi
@@ -17,6 +20,22 @@ const DaApiListItem = ({
   itemRef,
 }: DaApiListItemProps) => {
   const { textClass } = getApiTypeClasses(api.type)
+
+  const [isHovered, setIsHovered] = useState(false)
+  const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null)
+
+  const handleMouseEnter = () => {
+    const timeout = setTimeout(() => setIsHovered(true), 500) // Set hover state after 500ms
+    setHoverTimeout(timeout)
+  }
+
+  const handleMouseLeave = () => {
+    if (hoverTimeout) {
+      clearTimeout(hoverTimeout) // Clear timeout if the hover ends early
+    }
+    setIsHovered(false) // Reset hover state
+  }
+
   return (
     <div
       ref={itemRef}
@@ -24,6 +43,8 @@ const DaApiListItem = ({
         isSelected ? 'bg-da-primary-100 text-da-primary-500' : ''
       }`}
       onClick={onClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <div className="flex w-full cursor-pointer items-center">
         <DaText
@@ -37,6 +58,8 @@ const DaApiListItem = ({
             W
           </div>
         )}
+        {/* Only show DaCopy if hovered for 500ms */}
+        {isHovered && <DaCopy textToCopy={api.name} className="ml-1 w-fit" />}
       </div>
       <div className="flex w-fit justify-end cursor-pointer pl-4">
         <DaText

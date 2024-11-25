@@ -19,7 +19,7 @@ const ApiCodeBlock = ({ apiName, sampleLabel }: ApiCodeBlockProps) => {
   return (
     <div className="flex flex-col">
       <DaCopy
-        textToCopy={`await ${apiName}`}
+        textToCopy={`await self.${apiName}`}
         className="flex h-6 items-center w-fit mt-3"
       >
         <DaText
@@ -91,7 +91,7 @@ const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
             )}
             {['actuator', 'sensor'].includes(activeApi.type) && (
               <ApiCodeBlock
-                apiName={activeApi.name + '.get()'}
+                apiName={activeApi.name + '.get().value'}
                 sampleLabel="Sample code to get signal value"
               />
             )}
