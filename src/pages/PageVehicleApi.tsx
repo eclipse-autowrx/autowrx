@@ -11,12 +11,13 @@ import useModelStore from '@/stores/modelStore'
 import { TbBinaryTree2, TbList } from 'react-icons/tb'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import DaText from '@/components/atoms/DaText'
+import VssComparator from '@/components/organisms/VssComparator'
 
 const PageVehicleApi = () => {
   const { model_id, tab } = useParams()
   const navigate = useNavigate()
   const [selectedApi, setSelectedApi] = useState<VehicleApi | null>(null)
-  const [activeTab, setActiveTab] = useState<'list' | 'tree'>('list')
+  const [activeTab, setActiveTab] = useState<'list' | 'tree' | 'compare'>('list')
   const [activeModelApis] = useModelStore((state) => [state.activeModelApis])
   const { data: model } = useCurrentModel()
 
@@ -46,12 +47,21 @@ const PageVehicleApi = () => {
               <TbList className="w-5 h-5 mr-2" />
               List View
             </DaTabItem>
+
             <DaTabItem
               active={activeTab === 'tree'}
               onClick={() => setActiveTab('tree')}
             >
               <TbBinaryTree2 className="w-5 h-5 mr-2 rotate-[270deg]" />
               Tree View
+            </DaTabItem>
+
+            <DaTabItem
+              active={activeTab === 'compare'}
+              onClick={() => setActiveTab('compare')}
+            >
+              <TbBinaryTree2 className="w-5 h-5 mr-2 rotate-[270deg]" />
+              VSS Comparator
             </DaTabItem>
           </div>
           <DaText variant="regular-bold" className="text-da-primary-500 pr-4">
@@ -80,6 +90,11 @@ const PageVehicleApi = () => {
         {activeTab === 'tree' && (
           <div className="col-span-12 flex w-full h-[85vh] overflow-auto items-center justify-center">
             <DaTreeView />
+          </div>
+        )}
+        {activeTab === 'compare' && (
+          <div className="col-span-12 flex w-full h-full overflow-auto items-center justify-center">
+            <VssComparator/>
           </div>
         )}
       </div>
