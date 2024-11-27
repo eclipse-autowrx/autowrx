@@ -18,6 +18,7 @@ import {
   ContextMenuItem,
   ContextMenuContent,
 } from '@/components/atoms/context-menu'
+import { cn } from '@/lib/utils'
 
 interface TextCellProps {
   value: string
@@ -129,31 +130,27 @@ interface SignalFlowEditorProps {
 }
 
 const SignalFlowEditor = ({ flow, onChange }: SignalFlowEditorProps) => {
-  if (!flow) {
-    return (
-      <div className="flex min-h-[75px]">
-        <button
-          className="flex w-full items-center justify-center text-xs  p-2 text-da-primary-500 hover:bg-da-primary-100 border border-dashed border-da-primary-500 rounded"
-          onClick={() => onChange({ direction: 'right', signal: '' })}
-        >
-          <TbPlus className="size-3 mr-1 hidden xl:flex" /> Add Signal
-        </button>
-      </div>
-    )
-  }
+  // Initialize with default values if flow is null
+  const currentFlow = flow || { direction: 'left', signal: '' }
 
   return (
-    <div className="flex flex-col gap-1 ">
+    <div className="flex flex-col gap-1 min-h-[75px]">
       <DirectionSelect
-        value={flow.direction}
-        onChange={(direction) => onChange({ ...flow, direction })}
+        value={currentFlow.direction}
+        onChange={(direction) => onChange({ ...currentFlow, direction })}
       />
-      <input
-        value={flow.signal}
-        onChange={(e) => onChange({ ...flow, signal: e.target.value })}
-        className="w-full rounded-md h-9 border p-1 ring-0 outline-none"
-        placeholder="Signal"
-      />
+      <DaTooltip
+        content={currentFlow.signal}
+        className={cn(currentFlow.signal.length > 0 ? '' : 'bg-transparent')}
+        delay={200}
+      >
+        <input
+          value={currentFlow.signal}
+          onChange={(e) => onChange({ ...currentFlow, signal: e.target.value })}
+          className="w-full rounded-md h-9 border px-2 ring-0 outline-none"
+          placeholder="Signal"
+        />
+      </DaTooltip>
     </div>
   )
 }
@@ -233,19 +230,31 @@ const DaPrototypeFlowEditor = ({
     setData(newData)
   }
 
+  const deleteStep = (stepIndex: number) => {
+    const newData = [...data]
+    newData.splice(stepIndex, 1)
+    setData(newData)
+  }
+
+  const deleteFlow = (stepIndex: number, flowIndex: number) => {
+    const newData = [...data]
+    newData[stepIndex].flows.splice(flowIndex, 1)
+    setData(newData)
+  }
+
   return (
     <div className="flex flex-col w-full h-full">
       <table className=" table-fixed w-full">
         <colgroup>
-          <col className="w-[16%]" />
-          <col className="w-[8%]" />
-          <col className="w-[16%]" />
-          <col className="w-[8%]" />
-          <col className="w-[16%]" />
-          <col className="w-[8%]" />
-          <col className="w-[16%]" />
-          <col className="w-[8%]" />
-          <col className="w-[16%]" />
+          <col className="w-[11.11%]" />
+          <col className="w-[11.11%]" />
+          <col className="w-[11.11%]" />
+          <col className="w-[11.11%]" />
+          <col className="w-[11.11%]" />
+          <col className="w-[11.11%]" />
+          <col className="w-[11.11%]" />
+          <col className="w-[11.11%]" />
+          <col className="w-[11.11%]" />
         </colgroup>
         <thead>
           <tr className="text-sm text-white uppercase">
@@ -290,7 +299,7 @@ const DaPrototypeFlowEditor = ({
                 <div className="cursor-pointer">s2e</div>
               </DaTooltip>
             </th>
-            <th className="border p-2">Sensors/Actuators</th>
+            <th className="border p-2 truncate">Sensors/Actuators</th>
           </tr>
         </thead>
 
@@ -299,29 +308,43 @@ const DaPrototypeFlowEditor = ({
             <React.Fragment key={stepIndex}>
               <tr>
                 <td colSpan={9} className="border p-2">
-                  <DaInput
-                    type="text"
-                    value={step.title}
-                    onChange={(e) => {
-                      const newData = [...data]
-                      newData[stepIndex].title = e.target.value
-                      setData(newData)
-                    }}
-                    className="w-full rounded !text-xs"
-                    inputClassName="text-sm font-medium text-da-primary-500"
-                  />
+                  <ContextMenu>
+                    <ContextMenuTrigger>
+                      <DaInput
+                        type="text"
+                        value={step.title}
+                        onChange={(e) => {
+                          const newData = [...data]
+                          newData[stepIndex].title = e.target.value
+                          setData(newData)
+                        }}
+                        className="w-full rounded !text-xs"
+                        inputClassName="text-sm font-medium text-da-primary-500 bg-da-primary-100"
+                        wrapperClassName="bg-da-primary-100 border-da-primary-300 hover:border-da-primary-500"
+                      />
+                    </ContextMenuTrigger>
+                    <ContextMenuContent className="bg-white z-100">
+                      <ContextMenuItem
+                        className="cursor-pointer hover:text-red-500"
+                        onClick={() => deleteStep(stepIndex)}
+                      >
+                        <TbTrash className="size-4 mr-1" />
+                        Delete Step
+                      </ContextMenuItem>
+                    </ContextMenuContent>
+                  </ContextMenu>
                 </td>
               </tr>
               {step.flows.map((flow, flowIndex) => (
                 <tr key={flowIndex}>
                   {FLOW_CELLS.map((cell) => (
-                    <td
-                      key={cell.key}
-                      className={`border p-2 ${cell.key === 'v2c' ? '' : ''}`}
-                    >
-                      {cell.isSignalFlow ? (
-                        <ContextMenu>
-                          <ContextMenuTrigger>
+                    <ContextMenu>
+                      <td
+                        key={cell.key}
+                        className={`border p-2 ${cell.key === 'v2c' ? '' : ''}`}
+                      >
+                        <ContextMenuTrigger>
+                          {cell.isSignalFlow ? (
                             <SignalFlowEditor
                               flow={getNestedValue(flow, cell.path)}
                               onChange={(newFlow) =>
@@ -333,26 +356,31 @@ const DaPrototypeFlowEditor = ({
                                 )
                               }
                             />
-                          </ContextMenuTrigger>
+                          ) : (
+                            <TextCell
+                              value={getNestedValue(flow, cell.path)}
+                              onChange={(value) =>
+                                updateFlow(
+                                  stepIndex,
+                                  flowIndex,
+                                  cell.path,
+                                  value,
+                                )
+                              }
+                            />
+                          )}
                           <ContextMenuContent className="bg-white z-100">
                             <ContextMenuItem
                               className="cursor-pointer hover:text-red-500"
-                              onClick={() => console.log('Delete item index')}
+                              onClick={() => deleteFlow(stepIndex, flowIndex)}
                             >
                               <TbTrash className="size-4 mr-1" />
-                              Delete
+                              Delete Flow
                             </ContextMenuItem>
                           </ContextMenuContent>
-                        </ContextMenu>
-                      ) : (
-                        <TextCell
-                          value={getNestedValue(flow, cell.path)}
-                          onChange={(value) =>
-                            updateFlow(stepIndex, flowIndex, cell.path, value)
-                          }
-                        />
-                      )}
-                    </td>
+                        </ContextMenuTrigger>
+                      </td>
+                    </ContextMenu>
                   ))}
                 </tr>
               ))}
