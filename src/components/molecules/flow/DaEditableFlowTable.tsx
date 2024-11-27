@@ -4,6 +4,7 @@ import {
   TbArrowRight,
   TbArrowsHorizontal,
   TbPlus,
+  TbTrash,
 } from 'react-icons/tb'
 import DaTooltip from '@/components/atoms/DaTooltip'
 import { FlowStep, Direction, SignalFlow } from '@/types/flow.type'
@@ -11,6 +12,12 @@ import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import { DaButton } from '@/components/atoms/DaButton'
 import { DaInput } from '@/components/atoms/DaInput'
 import { DaTextarea } from '@/components/atoms/DaTextarea'
+import {
+  ContextMenu,
+  ContextMenuTrigger,
+  ContextMenuItem,
+  ContextMenuContent,
+} from '@/components/atoms/context-menu'
 
 interface TextCellProps {
   value: string
@@ -200,7 +207,6 @@ const DaPrototypeFlowEditor = ({
   const getNestedValue = (obj: any, path: string[]) => {
     return path.reduce((acc, key) => acc?.[key], obj)
   }
-
   const setNestedValue = (obj: any, path: string[], value: any) => {
     const newObj = { ...obj }
     let current = newObj
@@ -242,15 +248,18 @@ const DaPrototypeFlowEditor = ({
           <col className="w-[16%]" />
         </colgroup>
         <thead>
-          <tr className="text-sm bg-da-primary-500 text-white uppercase">
+          <tr className="text-sm text-white uppercase">
             <th
               colSpan={3}
-              className="border border-r-transparent font-semibold p-2 "
+              className="bg-da-primary-100 text-da-primary-500 border border-r-transparent font-semibold p-2 "
             >
               Off-board
             </th>
             <th className="border border-r-transparent"></th>
-            <th colSpan={5} className="border font-semibold p-2">
+            <th
+              colSpan={5}
+              className="bg-da-primary-500 border font-semibold p-2"
+            >
               On-board
             </th>
           </tr>
@@ -264,7 +273,7 @@ const DaPrototypeFlowEditor = ({
             </th>
 
             <th className="border p-2">Cloud</th>
-            <th className="border p-2 border-x-2 border-x-da-primary-500">
+            <th className="border p-2">
               <DaTooltip content="Vehicle to Cloud" className="normal-case">
                 <div className="cursor-pointer">v2c</div>
               </DaTooltip>
@@ -284,6 +293,7 @@ const DaPrototypeFlowEditor = ({
             <th className="border p-2">Sensors/Actuators</th>
           </tr>
         </thead>
+
         <tbody>
           {data.map((step, stepIndex) => (
             <React.Fragment key={stepIndex}>
@@ -307,19 +317,33 @@ const DaPrototypeFlowEditor = ({
                   {FLOW_CELLS.map((cell) => (
                     <td
                       key={cell.key}
-                      className={`border p-2 ${
-                        cell.key === 'v2c'
-                          ? 'border-x-2 border-x-da-primary-500'
-                          : ''
-                      }`}
+                      className={`border p-2 ${cell.key === 'v2c' ? '' : ''}`}
                     >
                       {cell.isSignalFlow ? (
-                        <SignalFlowEditor
-                          flow={getNestedValue(flow, cell.path)}
-                          onChange={(newFlow) =>
-                            updateFlow(stepIndex, flowIndex, cell.path, newFlow)
-                          }
-                        />
+                        <ContextMenu>
+                          <ContextMenuTrigger>
+                            <SignalFlowEditor
+                              flow={getNestedValue(flow, cell.path)}
+                              onChange={(newFlow) =>
+                                updateFlow(
+                                  stepIndex,
+                                  flowIndex,
+                                  cell.path,
+                                  newFlow,
+                                )
+                              }
+                            />
+                          </ContextMenuTrigger>
+                          <ContextMenuContent className="bg-white z-100">
+                            <ContextMenuItem
+                              className="cursor-pointer hover:text-red-500"
+                              onClick={() => console.log('Delete item index')}
+                            >
+                              <TbTrash className="size-4 mr-1" />
+                              Delete
+                            </ContextMenuItem>
+                          </ContextMenuContent>
+                        </ContextMenu>
                       ) : (
                         <TextCell
                           value={getNestedValue(flow, cell.path)}
