@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   TbArrowLeft,
   TbArrowRight,
@@ -105,22 +105,28 @@ interface DirectionSelectProps {
 }
 
 const DirectionSelect = ({ value, onChange }: DirectionSelectProps) => {
+  // Define the order of toggling and map to the corresponding icons
+  const directions: Direction[] = ['left', 'right', 'bi-direction']
+  const icons = {
+    left: <TbArrowLeft className="size-4" />,
+    right: <TbArrowRight className="size-4" />,
+    'bi-direction': <TbArrowsHorizontal className="size-4" />,
+  }
+
+  // Handle button click to toggle to the next direction
+  const handleToggle = () => {
+    const currentIndex = directions.indexOf(value)
+    const nextIndex = (currentIndex + 1) % directions.length
+    onChange(directions[nextIndex])
+  }
+
   return (
-    <DaSelect
-      value={value}
-      onValueChange={(value) => onChange(value as Direction)}
-      className="h-9 border"
+    <button
+      onClick={handleToggle}
+      className="h-9 flex justify-center items-center border rounded-md w-full focus:outline-none"
     >
-      <DaSelectItem value="left">
-        <TbArrowLeft className="mx-auto size-4" />
-      </DaSelectItem>
-      <DaSelectItem value="right">
-        <TbArrowRight className="mx-auto size-4" />
-      </DaSelectItem>
-      <DaSelectItem value="bi-direction">
-        <TbArrowsHorizontal className="mx-auto size-4" />
-      </DaSelectItem>
-    </DaSelect>
+      {icons[value]}
+    </button>
   )
 }
 
@@ -144,13 +150,14 @@ const SignalFlowEditor = ({ flow, onChange }: SignalFlowEditorProps) => {
         className={cn(currentFlow.signal.length > 0 ? '' : 'bg-transparent')}
         delay={200}
       >
-        <input
-          value={currentFlow.signal}
-          onChange={(e) => onChange({ ...currentFlow, signal: e.target.value })}
-          className="w-full rounded-md h-9 border px-2 ring-0 outline-none"
-          placeholder="Signal"
-        />
+        {' '}
       </DaTooltip>
+      <input
+        value={currentFlow.signal}
+        onChange={(e) => onChange({ ...currentFlow, signal: e.target.value })}
+        className="w-full rounded-md h-9 border px-2 ring-0 outline-none"
+        placeholder="Signal"
+      />
     </div>
   )
 }
@@ -253,6 +260,12 @@ const DaPrototypeFlowEditor = ({
     onSave(jsonString)
   }
 
+  useEffect(() => {
+    if (initialData.length === 0) {
+      addStep()
+    }
+  }, [initialData])
+
   return (
     <div className="flex flex-col w-full h-full">
       <div className="flex items-center justify-between border-b pb-2 mb-4 ">
@@ -299,7 +312,7 @@ const DaPrototypeFlowEditor = ({
               >
                 Off-board
               </th>
-              <th className="border border-r-transparent"></th>
+              <th className="border border-x-2 border-x-da-primary-500"></th>
               <th
                 colSpan={5}
                 className="bg-da-primary-500 border font-semibold p-2"
@@ -317,7 +330,7 @@ const DaPrototypeFlowEditor = ({
               </th>
 
               <th className="border p-2">Cloud</th>
-              <th className="border p-2">
+              <th className="border p-2 border-x-2 border-x-da-primary-500">
                 <DaTooltip content="Vehicle to Cloud" className="normal-case">
                   <div className="cursor-pointer">v2c</div>
                 </DaTooltip>
@@ -376,7 +389,7 @@ const DaPrototypeFlowEditor = ({
                       <ContextMenu>
                         <td
                           key={cell.key}
-                          className={`border p-2 ${cell.key === 'v2c' ? '' : ''}`}
+                          className={`border p-2 ${cell.key === 'v2c' ? 'border-x-2 border-x-da-primary-500' : ''}`}
                         >
                           <ContextMenuTrigger>
                             {cell.isSignalFlow ? (
@@ -435,7 +448,7 @@ const DaPrototypeFlowEditor = ({
             ))}
             <tr>
               <td colSpan={9} className="px-2">
-                <DaButton onClick={addStep} className="w-full" size="sm">
+                <DaButton onClick={addStep} className="w-full mt-2" size="sm">
                   <TbPlus className="size-4 mr-2" /> Add Step
                 </DaButton>
               </td>

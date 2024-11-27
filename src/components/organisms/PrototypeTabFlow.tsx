@@ -22,12 +22,14 @@ const DirectionArrow: React.FC<{ direction: Direction }> = ({ direction }) => {
 }
 
 const SignalFlowCell: React.FC<{ flow: SignalFlow | null }> = ({ flow }) => {
-  if (!flow) return null
+  if (!flow) return <div className="p-2"></div>
   return (
     <div className="flex flex-col items-center gap-1 cursor-pointer">
-      <DaTooltip content={flow.signal}>
-        <DirectionArrow direction={flow.direction} />
-      </DaTooltip>
+      {flow.signal && (
+        <DaTooltip content={flow.signal}>
+          <DirectionArrow direction={flow.direction} />
+        </DaTooltip>
+      )}
     </div>
   )
 }
@@ -88,15 +90,18 @@ const PrototypeTabFlow = () => {
                   <col className="w-[16%]" />
                 </colgroup>
                 <thead>
-                  <tr className="text-sm bg-da-primary-500 text-white uppercase">
+                  <tr className="text-sm text-white uppercase">
                     <th
                       colSpan={3}
-                      className="border border-r-transparent font-semibold p-2 "
+                      className="bg-da-primary-100 text-da-primary-500 border border-r-transparent font-semibold p-2 "
                     >
                       Off-board
                     </th>
-                    <th className="border border-r-transparent"></th>
-                    <th colSpan={5} className="border font-semibold p-2">
+                    <th className="border border-x-2 border-x-da-primary-500"></th>
+                    <th
+                      colSpan={5}
+                      className="bg-da-primary-500 border font-semibold p-2"
+                    >
                       On-board
                     </th>
                   </tr>
@@ -143,49 +148,60 @@ const PrototypeTabFlow = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {flowData.map((step, stepIndex) => (
-                    <React.Fragment key={stepIndex}>
-                      <tr>
-                        <td
-                          colSpan={9}
-                          className="border p-2 font-semibold bg-da-primary-100 text-da-primary-500"
-                        >
-                          {step.title}
-                        </td>
-                      </tr>
-                      {step.flows.map((flow, flowIndex) => (
-                        <tr key={flowIndex}>
-                          <td className="border p-2 text-center">
-                            {flow.offBoard.smartPhone}
-                          </td>
-                          <td className="border p-2 text-center">
-                            <SignalFlowCell flow={flow.offBoard.p2c} />
-                          </td>
-                          <td className="border p-2 text-center">
-                            {flow.offBoard.cloud}
-                          </td>
-                          <td className="border border-x-2 border-x-da-primary-500 p-2 text-center">
-                            <SignalFlowCell flow={flow.v2c} />
-                          </td>
-                          <td className="border p-2 text-center">
-                            {flow.onBoard.sdvRuntime}
-                          </td>
-                          <td className="border p-2 text-center">
-                            <SignalFlowCell flow={flow.onBoard.s2s} />
-                          </td>
-                          <td className="border p-2 text-center">
-                            {flow.onBoard.embedded}
-                          </td>
-                          <td className="border p-2 text-center">
-                            <SignalFlowCell flow={flow.onBoard.s2e} />
-                          </td>
-                          <td className="border p-2 text-center">
-                            {flow.onBoard.sensors}
+                  {flowData && flowData.length > 0 ? (
+                    flowData.map((step, stepIndex) => (
+                      <React.Fragment key={stepIndex}>
+                        <tr>
+                          <td
+                            colSpan={9}
+                            className="border p-2 font-semibold bg-da-primary-100 text-da-primary-500"
+                          >
+                            {step.title}
                           </td>
                         </tr>
-                      ))}
-                    </React.Fragment>
-                  ))}
+                        {step.flows.map((flow, flowIndex) => (
+                          <tr key={flowIndex}>
+                            <td className="border p-2 text-center">
+                              {flow.offBoard.smartPhone}
+                            </td>
+                            <td className="border p-2 text-center">
+                              <SignalFlowCell flow={flow.offBoard.p2c} />
+                            </td>
+                            <td className="border p-2 text-center">
+                              {flow.offBoard.cloud}
+                            </td>
+                            <td className="border border-x-2 border-x-da-primary-500 p-2 text-center">
+                              <SignalFlowCell flow={flow.v2c} />
+                            </td>
+                            <td className="border p-2 text-center">
+                              {flow.onBoard.sdvRuntime}
+                            </td>
+                            <td className="border p-2 text-center">
+                              <SignalFlowCell flow={flow.onBoard.s2s} />
+                            </td>
+                            <td className="border p-2 text-center">
+                              {flow.onBoard.embedded}
+                            </td>
+                            <td className="border p-2 text-center">
+                              <SignalFlowCell flow={flow.onBoard.s2e} />
+                            </td>
+                            <td className="border p-2 text-center">
+                              {flow.onBoard.sensors}
+                            </td>
+                          </tr>
+                        ))}
+                      </React.Fragment>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={9}
+                        className="border p-2 text-center py-4 text-sm"
+                      >
+                        No flow available. Please edit to add flow data.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </>
