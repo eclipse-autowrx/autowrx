@@ -14,8 +14,9 @@ const DaTextarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         {/* Put textarea before label to enable peer-focus */}
         <textarea
           className={clsx(
-            'da-textarea flex rounded-lg px-3 py-2 mt-1 border h-full peer',
+            'da-textarea flex rounded-lg px-3 py-2 border h-full peer',
             textareaClassName,
+            label && 'mt-1',
           )}
           ref={ref}
           {...props}
