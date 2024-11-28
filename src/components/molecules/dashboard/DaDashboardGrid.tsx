@@ -168,12 +168,17 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
               className="w-full h-full bg-black rounded-md"
               loop
               src={payload?.url}
+              muted={payload?.options?.muted}
+              autoPlay={payload?.options?.autoPlay}
             />
           )}
           {payload?.type === 'image' && (
             <img
               src={payload?.url}
-              className="h-fit w-fit max-h-full max-w-full object-contain"
+              className="max-h-full max-w-full object-contain"
+              alt={payload?.options?.alt}
+              width={payload?.options?.width}
+              height={payload?.options?.height}
             />
           )}
           {payload?.type === 'iframe' && (
