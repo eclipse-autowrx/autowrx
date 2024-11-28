@@ -55,7 +55,7 @@ const PrototypeTabFlow = () => {
   const { data: prototype } = useCurrentPrototype()
   const flowData: FlowStep[] = [
     {
-      title: 'Step 1: Detect Person Behind Vehicle',
+      title: 'Step 1: Detect Driver Approaching Vehicle',
       flows: [
         {
           offBoard: {
@@ -67,10 +67,10 @@ const PrototypeTabFlow = () => {
           onBoard: {
             sdvRuntime: '',
             s2s: null,
-            embedded: 'Initialize Sensors',
+            embedded: 'Initialize Proximity Sensors',
             s2e: {
               direction: 'bi-direction',
-              signal: 'Vehicle.ADAS.Proximity.Rear.IsActive',
+              signal: 'Vehicle.ADAS.Proximity.Front.IsActive',
             },
             sensors: 'Start Monitoring',
           },
@@ -79,22 +79,19 @@ const PrototypeTabFlow = () => {
           offBoard: {
             smartPhone: '',
             p2c: null,
-            cloud: 'Process Detection',
+            cloud: '',
           },
-          v2c: {
-            direction: 'left',
-            signal: 'Vehicle.ADAS.HumanDetection.IsDetected',
-          },
+          v2c: null,
           onBoard: {
-            sdvRuntime: 'Person Detected',
+            sdvRuntime: 'Driver Detected',
             s2s: {
               direction: 'left',
-              signal: 'Vehicle.ADAS.Proximity.Rear.IsWarning',
+              signal: 'Vehicle.ADAS.Proximity.Front.IsWarning',
             },
             embedded: 'Process Proximity Data',
             s2e: {
               direction: 'left',
-              signal: 'Vehicle.ADAS.Proximity.Rear.Distance',
+              signal: 'Vehicle.ADAS.Proximity.Front.Distance',
             },
             sensors: 'Distance Reading',
           },
@@ -102,116 +99,103 @@ const PrototypeTabFlow = () => {
       ],
     },
     {
-      title: 'Step 2: Analyze Person with Heavy Load',
+      title: 'Step 2: Authenticate Driver and Open Driver Door',
       flows: [
         {
           offBoard: {
-            smartPhone: '',
-            p2c: null,
-            cloud: 'Start Analysis',
+            smartPhone: 'Provide Driver Location and Authentication',
+            p2c: {
+              direction: 'bi-direction',
+              signal: 'User.Device.Authentication',
+            },
+            cloud: 'Process Authentication',
           },
           v2c: {
-            direction: 'right',
-            signal: 'Vehicle.Cabin.Camera.Rear.IsActive',
+            direction: 'left',
+            signal: 'Vehicle.ADAS.Driver.Authentication.Request',
           },
           onBoard: {
-            sdvRuntime: 'Activate Camera',
-            s2s: {
-              direction: 'right',
-              signal: 'Vehicle.Cabin.Camera.Rear.IsStreaming',
-            },
-            embedded: 'Configure Camera',
-            s2e: {
-              direction: 'right',
-              signal: 'Vehicle.Cabin.Camera.Rear.IsPowered',
-            },
-            sensors: 'Capture Image',
+            sdvRuntime: 'Request Driver Authentication',
+            s2s: null,
+            embedded: '',
+            s2e: null,
+            sensors: '',
           },
         },
         {
           offBoard: {
-            smartPhone: 'Popup Quick Access Request',
-            p2c: {
-              direction: 'left',
-              signal: 'User.Notification.QuickAccess',
-            },
-            cloud: 'Heavy Load Detected',
+            smartPhone: '',
+            p2c: null,
+            cloud: 'Authorize Door Opening',
           },
           v2c: {
-            direction: 'left',
-            signal: 'Vehicle.ADAS.LoadDetection.IsConfirmed',
+            direction: 'right',
+            signal: 'Vehicle.Cabin.Door.Row1.DriverSide.UnlockCommand',
           },
           onBoard: {
-            sdvRuntime: 'Send Detection Result',
+            sdvRuntime: 'Unlock Driver Door',
             s2s: {
-              direction: 'left',
-              signal: 'Vehicle.ADAS.LoadDetection.Confidence',
+              direction: 'right',
+              signal: 'Vehicle.Cabin.Door.Row1.DriverSide.IsUnlocked',
             },
-            embedded: 'Process Image Analysis',
+            embedded: 'Control Door Actuator',
             s2e: {
-              direction: 'left',
-              signal: 'Vehicle.Cabin.Camera.Rear.Quality',
+              direction: 'right',
+              signal: 'Vehicle.Cabin.Door.Row1.DriverSide.IsOpen',
             },
-            sensors: 'Raw Image Data',
+            sensors: 'Open Door',
           },
         },
       ],
     },
     {
-      title: 'Step 3: Open Trunk Automatically',
+      title: 'Step 3: Turn on Dome Light',
       flows: [
         {
           offBoard: {
-            smartPhone: 'Quick Access Granted',
-            p2c: {
-              direction: 'right',
-              signal: 'User.Authorization.Granted',
-            },
-            cloud: 'Authorize Opening',
+            smartPhone: '',
+            p2c: null,
+            cloud: '',
           },
-          v2c: {
-            direction: 'right',
-            signal: 'Vehicle.Body.Trunk.IsLocked',
-          },
+          v2c: null,
           onBoard: {
-            sdvRuntime: 'Unlock Trunk',
+            sdvRuntime: 'Turn Dome Light On',
             s2s: {
               direction: 'right',
-              signal: 'Vehicle.Body.Trunk.IsOpen',
+              signal: 'Vehicle.Cabin.Light.DomeIntensity',
             },
-            embedded: 'Control Motor',
+            embedded: 'Activate Dome Light',
             s2e: {
               direction: 'right',
-              signal: 'Vehicle.Body.Trunk.Position',
+              signal: 'Vehicle.Cabin.Light.IsDomeOn',
             },
-            sensors: 'Actuate Trunk',
+            sensors: 'Turn on Light',
           },
         },
+      ],
+    },
+    {
+      title: 'Step 4: Adjust Seat Height',
+      flows: [
         {
           offBoard: {
-            smartPhone: 'Show Status',
-            p2c: {
-              direction: 'left',
-              signal: 'User.Notification.Status',
-            },
-            cloud: 'Operation Complete',
+            smartPhone: '',
+            p2c: null,
+            cloud: '',
           },
-          v2c: {
-            direction: 'left',
-            signal: 'Vehicle.Body.Trunk.IsOpen',
-          },
+          v2c: null,
           onBoard: {
-            sdvRuntime: 'Verify Status',
+            sdvRuntime: 'Set Seat Height',
             s2s: {
-              direction: 'left',
-              signal: 'Vehicle.Body.Trunk.Position',
+              direction: 'right',
+              signal: 'Vehicle.Cabin.Seat.Row1.DriverSide.Position',
             },
-            embedded: 'Monitor Position',
+            embedded: 'Control Seat Motor',
             s2e: {
-              direction: 'left',
-              signal: 'Vehicle.Body.Trunk.IsOpen',
+              direction: 'right',
+              signal: 'Vehicle.Cabin.Seat.Row1.DriverSide.Height',
             },
-            sensors: 'Position Reading',
+            sensors: 'Adjust Seat Position',
           },
         },
       ],
@@ -222,7 +206,7 @@ const PrototypeTabFlow = () => {
     <div className="flex w-full h-full p-2 gap-2 bg-slate-100 text-xs">
       <div className="flex w-full h-full flex-col bg-white rounded-md p-4">
         <h2 className="text-sm font-semibold border-b pb-2 mb-4 text-da-primary-500">
-          End-to-End Flow: Smart Trunk
+          End-to-End Flow: Passenger Welcome
         </h2>
 
         <div className="w-full overflow-x-auto">
