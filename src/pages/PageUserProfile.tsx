@@ -5,7 +5,7 @@ import { DaText } from '@/components/atoms/DaText'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { DaAvatar } from '@/components/atoms/DaAvatar'
 import DaImportFile from '@/components/atoms/DaImportFile'
-import { TbPhotoEdit } from 'react-icons/tb'
+import { TbCircleDotFilled, TbCircleFilled, TbPhotoEdit } from 'react-icons/tb'
 import { uploadFileService } from '@/services/upload.service'
 import { partialUpdateUserService } from '@/services/user.service'
 import FormUpdatePassword from '@/components/molecules/forms/FormUpdatePassword'
@@ -48,76 +48,191 @@ const PageUserProfile = () => {
   }
 
   return (
-    <div className="flex flex-col items-center p-12 container w-full">
-      <div className="flex w-full items-center justify-center">
-        <div className="flex relative">
-          <DaAvatar
-            className="w-36 h-36 border"
-            src={user?.image_file ? user.image_file : 'imgs/profile.png'}
-          />
-          <DaImportFile
-            onFileChange={handleAvatarChange}
-            accept=".png, .jpg, .jpeg"
-          >
-            <button className="absolute p-1 top-1 right-1 bg-white border rounded-full">
-              <TbPhotoEdit className="w-5 h-5" />
-            </button>
-          </DaImportFile>
-        </div>
-        <div className="ml-6 flex-1 max-w-[600px] space-y-3">
-          <div className="mb-2">
-            <DaText variant="regular-bold" className="mr-2">
-              Email:
-            </DaText>
-            <DaText variant="regular">{user?.email}</DaText>
-          </div>
-
-          <div className="flex pb-4 w-full items-center">
-            <div className="flex mr-6 items-center">
-              <DaText variant="regular-bold" className="mr-2">
-                Name:{' '}
+    <div className="flex w-full h-full bg-slate-200 p-2">
+      <div className="flex w-full h-full justify-center bg-white rounded-xl ">
+        <div className="flex flex-col w-full max-w-[70vw] xl:max-w-[50vw] 2xl:max-w-[40vw] border border-red-500">
+          <div className="flex flex-col items-center container mt-6 w-full">
+            <div className="flex flex-col w-full">
+              <DaText
+                variant="title"
+                className="text-da-gray-dark font-semibold"
+              >
+                Profile
               </DaText>
-              {isEditing ? (
-                <DaInput
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="h-8"
-                  inputClassName="h-6"
-                />
-              ) : (
-                <DaText variant="regular">{user?.name}</DaText>
-              )}
+              <DaText variant="small" className="mt-1">
+                You can edit your profile information and manage assets here.
+              </DaText>
             </div>
-            {isEditing ? (
-              <div>
-                <DaButton
-                  variant="destructive"
-                  size="sm"
-                  className="mr-2"
-                  onClick={() => setIsEditing(false)}
-                >
-                  Cancel
-                </DaButton>
-                <DaButton size="sm" onClick={handleUpdateUser}>
-                  Save
-                </DaButton>
+            <div className="flex flex-col w-full pt-6">
+              <div className="flex items-center">
+                <div className="flex relative">
+                  <DaAvatar
+                    className="w-24 h-24 border"
+                    src={
+                      user?.image_file ? user.image_file : 'imgs/profile.png'
+                    }
+                  />
+                  <DaImportFile
+                    onFileChange={handleAvatarChange}
+                    accept=".png, .jpg, .jpeg"
+                  >
+                    <button className="absolute p-1 top-0 right-0 bg-white border rounded-full">
+                      <TbPhotoEdit className="w-5 h-5" />
+                    </button>
+                  </DaImportFile>
+                </div>
+                <div className="flex flex-col w-full ml-6 xl:ml-12">
+                  <div className="flex w-full items-center justify-between">
+                    {isEditing ? (
+                      <DaInput
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="h-8 w-full max-w-[350px]"
+                        inputClassName="h-6"
+                      />
+                    ) : (
+                      <div className="truncate max-w-[350px]">
+                        <DaText
+                          variant="title"
+                          className="text-da-gray-dark truncate "
+                        >
+                          {user?.name}asdsadasdsadasd
+                        </DaText>
+                      </div>
+                    )}
+                    {isEditing ? (
+                      <div>
+                        <DaButton
+                          variant="outline-nocolor"
+                          size="sm"
+                          className="mr-2"
+                          onClick={() => setIsEditing(false)}
+                        >
+                          Cancel
+                        </DaButton>
+                        <DaButton size="sm" onClick={handleUpdateUser}>
+                          Save
+                        </DaButton>
+                      </div>
+                    ) : (
+                      <DaButton
+                        size="sm"
+                        variant="outline-nocolor"
+                        onClick={() => setIsEditing(true)}
+                      >
+                        Change name
+                      </DaButton>
+                    )}
+                  </div>
+
+                  <DaText variant="regular" className="mx-1 mt-1">
+                    {user?.email}
+                  </DaText>
+                </div>
               </div>
-            ) : (
-              <DaButton size="sm" onClick={() => setIsEditing(true)}>
-                Edit
-              </DaButton>
-            )}
-          </div>
+              <div className="flex flex-col mt-6">
+                <DaText variant="regular-bold" className="text-da-gray-dark">
+                  UID
+                </DaText>
+                <DaText variant="small" className="text-da-gray-medium">
+                  {user?.id}
+                </DaText>
+              </div>
+              <div className="flex flex-col w-full mt-6">
+                <DaText variant="regular-bold" className="text-da-gray-dark">
+                  Passworld
+                </DaText>
+                <div className="flex w-full items-start justify-between">
+                  <div className="flex space-x-1 mt-2">
+                    {[...Array(8)].map((_, index) => (
+                      <TbCircleFilled
+                        className="size-3 text-gray-300"
+                        key={index}
+                      />
+                    ))}
+                  </div>
+                  <div className="">
+                    <DaPopup
+                      state={[isOpenPopup, setIsOpenPopup]}
+                      trigger={
+                        <DaButton
+                          size="sm"
+                          variant="outline-nocolor"
+                          className=""
+                        >
+                          Change password
+                        </DaButton>
+                      }
+                    >
+                      <FormUpdatePassword />
+                    </DaPopup>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-6">
+                <DaText variant="regular-bold" className="text-da-gray-dark">
+                  Assets
+                </DaText>
+              </div>
+              {/* <div className="ml-6 flex-1 max-w-[600px] space-y-3">
+                <div className="mb-2">
+                  <DaText variant="regular-bold" className="mr-2">
+                    Email:
+                  </DaText>
+                  <DaText variant="regular">{user?.email}</DaText>
+                </div>
 
-          <div className="flex justify-between items-center w-full pt-2 border-t">
-            <DaText variant="regular">Do you want to change password?</DaText>
+                <div className="flex pb-4 w-full items-center">
+                  <div className="flex mr-6 items-center">
+                    <DaText variant="regular-bold" className="mr-2">
+                      Name:{' '}
+                    </DaText>
+                    {isEditing ? (
+                      <DaInput
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="h-8"
+                        inputClassName="h-6"
+                      />
+                    ) : (
+                      <DaText variant="regular">{user?.name}</DaText>
+                    )}
+                  </div>
+                  {isEditing ? (
+                    <div>
+                      <DaButton
+                        variant="destructive"
+                        size="sm"
+                        className="mr-2"
+                        onClick={() => setIsEditing(false)}
+                      >
+                        Cancel
+                      </DaButton>
+                      <DaButton size="sm" onClick={handleUpdateUser}>
+                        Save
+                      </DaButton>
+                    </div>
+                  ) : (
+                    <DaButton size="sm" onClick={() => setIsEditing(true)}>
+                      Edit
+                    </DaButton>
+                  )}
+                </div>
 
-            <DaPopup
-              state={[isOpenPopup, setIsOpenPopup]}
-              trigger={<DaButton size="sm">Change password</DaButton>}
-            >
-              <FormUpdatePassword />
-            </DaPopup>
+                <div className="flex justify-between items-center w-full pt-2 border-t">
+                  <DaText variant="regular">
+                    Do you want to change password?
+                  </DaText>
+
+                  <DaPopup
+                    state={[isOpenPopup, setIsOpenPopup]}
+                    trigger={<DaButton size="sm">Change password</DaButton>}
+                  >
+                    <FormUpdatePassword />
+                  </DaPopup>
+                </div>
+              </div> */}
+            </div>
           </div>
         </div>
       </div>
