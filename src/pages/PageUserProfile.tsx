@@ -10,12 +10,15 @@ import { uploadFileService } from '@/services/upload.service'
 import { partialUpdateUserService } from '@/services/user.service'
 import FormUpdatePassword from '@/components/molecules/forms/FormUpdatePassword'
 import DaPopup from '@/components/atoms/DaPopup'
+import { Asset } from '@/types/asset.type'
+import DaKitManager from '@/components/molecules/assets/DaKitManager'
 
 const PageUserProfile = () => {
   const [isEditing, setIsEditing] = useState(false)
   const { data: user, refetch } = useSelfProfileQuery()
   const [isOpenPopup, setIsOpenPopup] = useState(false)
   const [name, setName] = useState('')
+  const [assets, setAssets] = useState<Asset[]>([])
 
   useEffect(() => {
     if (user) {
@@ -50,20 +53,20 @@ const PageUserProfile = () => {
   return (
     <div className="flex w-full h-full bg-slate-200 p-2">
       <div className="flex w-full h-full justify-center bg-white rounded-xl ">
-        <div className="flex flex-col w-full max-w-[70vw] xl:max-w-[50vw] 2xl:max-w-[40vw] border border-red-500">
+        <div className="flex flex-col w-full max-w-[70vw] xl:max-w-[50vw] 2xl:max-w-[40vw]">
           <div className="flex flex-col items-center container mt-6 w-full">
             <div className="flex flex-col w-full">
               <DaText
-                variant="title"
+                variant="huge-bold"
                 className="text-da-gray-dark font-semibold"
               >
                 Profile
               </DaText>
               <DaText variant="small" className="mt-1">
-                You can edit your profile information and manage assets here.
+                You can edit your profile information and manage kits here.
               </DaText>
             </div>
-            <div className="flex flex-col w-full pt-6">
+            <div className="flex flex-col w-full mt-8">
               <div className="flex items-center">
                 <div className="flex relative">
                   <DaAvatar
@@ -96,7 +99,7 @@ const PageUserProfile = () => {
                           variant="title"
                           className="text-da-gray-dark truncate "
                         >
-                          {user?.name}asdsadasdsadasd
+                          {user?.name}
                         </DaText>
                       </div>
                     )}
@@ -130,7 +133,7 @@ const PageUserProfile = () => {
                   </DaText>
                 </div>
               </div>
-              <div className="flex flex-col mt-6">
+              <div className="flex flex-col mt-8">
                 <DaText variant="regular-bold" className="text-da-gray-dark">
                   UID
                 </DaText>
@@ -140,7 +143,7 @@ const PageUserProfile = () => {
               </div>
               <div className="flex flex-col w-full mt-6">
                 <DaText variant="regular-bold" className="text-da-gray-dark">
-                  Passworld
+                  Password
                 </DaText>
                 <div className="flex w-full items-start justify-between">
                   <div className="flex space-x-1 mt-2">
@@ -171,67 +174,18 @@ const PageUserProfile = () => {
               </div>
               <div className="mt-6">
                 <DaText variant="regular-bold" className="text-da-gray-dark">
-                  Assets
+                  Kit Management
                 </DaText>
               </div>
-              {/* <div className="ml-6 flex-1 max-w-[600px] space-y-3">
-                <div className="mb-2">
-                  <DaText variant="regular-bold" className="mr-2">
-                    Email:
-                  </DaText>
-                  <DaText variant="regular">{user?.email}</DaText>
-                </div>
-
-                <div className="flex pb-4 w-full items-center">
-                  <div className="flex mr-6 items-center">
-                    <DaText variant="regular-bold" className="mr-2">
-                      Name:{' '}
-                    </DaText>
-                    {isEditing ? (
-                      <DaInput
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="h-8"
-                        inputClassName="h-6"
-                      />
-                    ) : (
-                      <DaText variant="regular">{user?.name}</DaText>
-                    )}
-                  </div>
-                  {isEditing ? (
-                    <div>
-                      <DaButton
-                        variant="destructive"
-                        size="sm"
-                        className="mr-2"
-                        onClick={() => setIsEditing(false)}
-                      >
-                        Cancel
-                      </DaButton>
-                      <DaButton size="sm" onClick={handleUpdateUser}>
-                        Save
-                      </DaButton>
-                    </div>
-                  ) : (
-                    <DaButton size="sm" onClick={() => setIsEditing(true)}>
-                      Edit
-                    </DaButton>
-                  )}
-                </div>
-
-                <div className="flex justify-between items-center w-full pt-2 border-t">
-                  <DaText variant="regular">
-                    Do you want to change password?
-                  </DaText>
-
-                  <DaPopup
-                    state={[isOpenPopup, setIsOpenPopup]}
-                    trigger={<DaButton size="sm">Change password</DaButton>}
-                  >
-                    <FormUpdatePassword />
-                  </DaPopup>
-                </div>
-              </div> */}
+              <div className="flex flex-col mt-2 w-full">
+                <DaKitManager
+                  assets={assets}
+                  setAssets={setAssets}
+                  onSave={(updatedAssets) => {
+                    console.log('Assets saved:', updatedAssets)
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>
