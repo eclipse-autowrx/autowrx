@@ -1,20 +1,16 @@
 import React, { useState, useEffect } from 'react'
-import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import { DaButton } from '@/components/atoms/DaButton'
 import DaKitItem from './DaKitItem'
 import { DaKitItemType } from './DaKitItem'
-import DaText from '@/components/atoms/DaText'
 import * as lodash from 'lodash'
+import { useAssets } from '@/hooks/useAssets'
 import { Asset } from '@/types/asset.type'
 
-interface DaKitManagerProps {
-  assets: Asset[]
-  setAssets: React.Dispatch<React.SetStateAction<Asset[]>>
-  onSave: (assets: Asset[]) => void
-}
-
-const DaKitManager = ({ assets, setAssets, onSave }: DaKitManagerProps) => {
+const DaKitManager = () => {
   const validCategories = ['RunTime', 'dreamKIT', 'markerKIT'] as const
+
+  const { useFetchAssets, createAsset, deleteAsset } = useAssets()
+  const { data: assets, isLoading } = useFetchAssets() // Fetch assets using the updated useAssets hook
 
   const isValidCategory = (
     category: string,
@@ -25,70 +21,109 @@ const DaKitManager = ({ assets, setAssets, onSave }: DaKitManagerProps) => {
   const isKitValid = (kit: DaKitItemType) => {
     return kit.id.trim() !== '' && isValidCategory(kit.category)
   }
+  // Calculate kits from assets
+  const calculatedKits = Array.isArray(assets)
+    ? assets
+        .filter((asset: Asset) => isValidCategory(asset.type))
+        .map((asset: Asset) => ({
+          id: asset.name.split('-')[1] || '',
+          category: asset.type as 'RunTime' | 'dreamKIT' | 'markerKIT',
+          assetId: asset.id,
+        }))
+    : []
 
-  const kits = assets
-    .filter((asset) => isValidCategory(asset.type)) // Filter assets with valid types
-    .map((asset) => ({
-      id: asset.name.split('-')[1] || '',
-      category: asset.type as 'RunTime' | 'dreamKIT' | 'markerKIT', // Safe cast after filtering
-    }))
+  const [currentKits, setCurrentKits] =
+    useState<DaKitItemType[]>(calculatedKits)
 
-  const [internalKits, setInternalKits] = useState<DaKitItemType[]>(kits)
-  const [initialKits, setInitialKits] = useState<DaKitItemType[]>(
-    lodash.cloneDeep(kits),
-  )
+  const [initialKits, setInitialKits] =
+    useState<DaKitItemType[]>(calculatedKits)
 
   useEffect(() => {
-    setInitialKits(lodash.cloneDeep(kits))
-  }, [assets])
+    if (!lodash.isEqual(initialKits, calculatedKits)) {
+      setCurrentKits(calculatedKits)
+      setInitialKits(calculatedKits)
+    }
+  }, [calculatedKits, initialKits])
 
   const hasValidChanges = () => {
-    // Filter valid kits from current and initial states
-    const validCurrentKits = internalKits.filter(isKitValid)
+    const validCurrentKits = currentKits.filter(isKitValid)
     const validInitialKits = initialKits.filter(isKitValid)
-
-    // Compare the valid kits for changes
     return !lodash.isEqual(validCurrentKits, validInitialKits)
   }
 
   const addKit = () => {
-    setInternalKits([...internalKits, { category: 'RunTime', id: '' }])
+    setCurrentKits([...currentKits, { category: 'RunTime', id: '' }])
   }
 
   const updateKit = (index: number, updatedKit: DaKitItemType) => {
-    const updatedKits = internalKits.map((kit, i) =>
+    const updatedKits = currentKits.map((kit, i) =>
       i === index ? updatedKit : kit,
     )
-    setInternalKits(updatedKits)
+    setCurrentKits(updatedKits)
   }
 
   const deleteKit = (index: number) => {
-    setInternalKits(internalKits.filter((_, i) => i !== index))
+    setCurrentKits(currentKits.filter((_, i) => i !== index))
   }
 
   const handleCancelChanges = () => {
-    setInternalKits(lodash.cloneDeep(initialKits))
+    setCurrentKits(lodash.cloneDeep(initialKits))
   }
 
-  const handleSaveKits = () => {
-    const updatedAssets: Asset[] = internalKits
-      .filter(isKitValid)
-      .map((kit) => ({
-        name: `${kit.category}-${kit.id}`,
-        type: kit.category,
-        data: '', // Add other fields as necessary
-      }))
+  const handleSaveKits = async () => {
+    const validCurrentKits = currentKits.filter(isKitValid)
 
-    setAssets(updatedAssets)
-    onSave(updatedAssets)
-    setInitialKits(lodash.cloneDeep(internalKits))
+    // Find newly added kits
+    const newKits = validCurrentKits.filter(
+      (kit) =>
+        !initialKits.some(
+          (initialKit) =>
+            initialKit.id === kit.id && initialKit.category === kit.category,
+        ),
+    )
+
+    // Find deleted kits
+    const deletedKits = initialKits.filter(
+      (initialKit) =>
+        !validCurrentKits.some(
+          (kit) =>
+            kit.id === initialKit.id && kit.category === initialKit.category,
+        ),
+    )
+
+    try {
+      // Delete kits
+      await Promise.all(
+        deletedKits.map((kit) =>
+          kit.assetId
+            ? deleteAsset.mutateAsync(kit.assetId)
+            : Promise.resolve(),
+        ),
+      )
+
+      // Create new kits
+      await Promise.all(
+        newKits.map((kit) =>
+          createAsset.mutateAsync({
+            name: `${kit.category}-${kit.id}`,
+            type: kit.category,
+            data: '', // Add other necessary fields if required
+          }),
+        ),
+      )
+
+      // Update initialKits to reflect the new state
+      setInitialKits(validCurrentKits)
+    } catch (error) {
+      console.error('Failed to save kits:', error)
+    }
   }
 
   return (
     <div className="flex flex-col">
       <div className="flex flex-col space-y-2 max-h-[40vh] overflow-auto pr-2">
-        {internalKits && internalKits.length > 0 ? (
-          internalKits.map((kit, index) => (
+        {currentKits.length > 0 ? (
+          currentKits.map((kit, index) => (
             <DaKitItem
               key={index}
               item={kit}
@@ -97,16 +132,16 @@ const DaKitManager = ({ assets, setAssets, onSave }: DaKitManagerProps) => {
             />
           ))
         ) : (
-          <div className="flex h-10 w-full mt-1 px-4 py-2 items-center bg-white border rounded-md">
-            There's no kits yet.
+          <div className="flex h-10 w-full mt-1 px-4 py-2 text-sm items-center bg-white border rounded-md">
+            There are no kits yet.
           </div>
         )}
       </div>
-      <div className="flex mt-6 w-full items-center justify-between">
+      <div className="flex mt-4 w-full items-center justify-between">
         <DaButton
           variant="outline-nocolor"
           onClick={addKit}
-          className="w-fit"
+          className="w-20"
           size="sm"
         >
           Add Kit
@@ -115,7 +150,7 @@ const DaKitManager = ({ assets, setAssets, onSave }: DaKitManagerProps) => {
           <DaButton
             variant="outline-nocolor"
             onClick={handleCancelChanges}
-            disabled={!hasValidChanges()} // Disable if no valid changes
+            disabled={!hasValidChanges()}
             size="sm"
           >
             Discard Changes
@@ -123,7 +158,7 @@ const DaKitManager = ({ assets, setAssets, onSave }: DaKitManagerProps) => {
           <DaButton
             variant="solid"
             onClick={handleSaveKits}
-            disabled={!hasValidChanges()} // Disable if no valid changes
+            disabled={!hasValidChanges()}
             className="w-20"
             size="sm"
           >

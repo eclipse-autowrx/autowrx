@@ -18,7 +18,6 @@ const PageUserProfile = () => {
   const { data: user, refetch } = useSelfProfileQuery()
   const [isOpenPopup, setIsOpenPopup] = useState(false)
   const [name, setName] = useState('')
-  const [assets, setAssets] = useState<Asset[]>([])
 
   useEffect(() => {
     if (user) {
@@ -178,13 +177,7 @@ const PageUserProfile = () => {
                 </DaText>
               </div>
               <div className="flex flex-col mt-2 w-full">
-                <DaKitManager
-                  assets={assets}
-                  setAssets={setAssets}
-                  onSave={(updatedAssets) => {
-                    console.log('Assets saved:', updatedAssets)
-                  }}
-                />
+                <DaKitManager />
               </div>
             </div>
           </div>
