@@ -4,46 +4,37 @@ import DaKitItem from './DaKitItem'
 import { DaKitItemType } from './DaKitItem'
 import * as lodash from 'lodash'
 import { useAssets } from '@/hooks/useAssets'
-import { Asset } from '@/types/asset.type'
 
 const DaKitManager = () => {
-  const validCategories = ['RunTime', 'dreamKIT', 'markerKIT'] as const
+  const { useFetchAssets, createAsset, updateAsset } = useAssets()
+  const { data: assets, isLoading } = useFetchAssets()
 
-  const { useFetchAssets, createAsset, deleteAsset } = useAssets()
-  const { data: assets, isLoading } = useFetchAssets() // Fetch assets using the updated useAssets hook
+  const [currentKits, setCurrentKits] = useState<DaKitItemType[]>([])
+  const [initialKits, setInitialKits] = useState<DaKitItemType[]>([])
+  const [assetId, setAssetId] = useState<string | null>(null)
 
-  const isValidCategory = (
-    category: string,
-  ): category is (typeof validCategories)[number] => {
-    return validCategories.includes(category as any)
-  }
+  useEffect(() => {
+    if (Array.isArray(assets)) {
+      const kitAsset = assets.find((asset) => asset.name === 'UserKits')
+      if (kitAsset && kitAsset.id) {
+        setAssetId(kitAsset.id)
+      } else {
+        setAssetId(null)
+      }
+      if (kitAsset) {
+        const kits = JSON.parse(kitAsset.data || '[]')
+        setCurrentKits(kits)
+        setInitialKits(kits)
+      }
+    }
+  }, [assets])
+
+  const isValidCategory = (category: string) =>
+    ['RunTime', 'dreamKIT', 'markerKIT'].includes(category)
 
   const isKitValid = (kit: DaKitItemType) => {
     return kit.id.trim() !== '' && isValidCategory(kit.category)
   }
-  // Calculate kits from assets
-  const calculatedKits = Array.isArray(assets)
-    ? assets
-        .filter((asset: Asset) => isValidCategory(asset.type))
-        .map((asset: Asset) => ({
-          id: asset.name.split('-')[1] || '',
-          category: asset.type as 'RunTime' | 'dreamKIT' | 'markerKIT',
-          assetId: asset.id,
-        }))
-    : []
-
-  const [currentKits, setCurrentKits] =
-    useState<DaKitItemType[]>(calculatedKits)
-
-  const [initialKits, setInitialKits] =
-    useState<DaKitItemType[]>(calculatedKits)
-
-  useEffect(() => {
-    if (!lodash.isEqual(initialKits, calculatedKits)) {
-      setCurrentKits(calculatedKits)
-      setInitialKits(calculatedKits)
-    }
-  }, [calculatedKits, initialKits])
 
   const hasValidChanges = () => {
     const validCurrentKits = currentKits.filter(isKitValid)
@@ -72,47 +63,23 @@ const DaKitManager = () => {
 
   const handleSaveKits = async () => {
     const validCurrentKits = currentKits.filter(isKitValid)
-
-    // Find newly added kits
-    const newKits = validCurrentKits.filter(
-      (kit) =>
-        !initialKits.some(
-          (initialKit) =>
-            initialKit.id === kit.id && initialKit.category === kit.category,
-        ),
-    )
-
-    // Find deleted kits
-    const deletedKits = initialKits.filter(
-      (initialKit) =>
-        !validCurrentKits.some(
-          (kit) =>
-            kit.id === initialKit.id && kit.category === initialKit.category,
-        ),
-    )
+    const payload = JSON.stringify(validCurrentKits)
 
     try {
-      // Delete kits
-      await Promise.all(
-        deletedKits.map((kit) =>
-          kit.assetId
-            ? deleteAsset.mutateAsync(kit.assetId)
-            : Promise.resolve(),
-        ),
-      )
-
-      // Create new kits
-      await Promise.all(
-        newKits.map((kit) =>
-          createAsset.mutateAsync({
-            name: `${kit.category}-${kit.id}`,
-            type: kit.category,
-            data: '', // Add other necessary fields if required
-          }),
-        ),
-      )
-
-      // Update initialKits to reflect the new state
+      if (assetId) {
+        // Update existing asset
+        await updateAsset.mutateAsync({
+          id: assetId,
+          payload: { data: payload },
+        })
+      } else {
+        // Create new asset
+        await createAsset.mutateAsync({
+          name: 'UserKits',
+          type: 'KitManagement',
+          data: payload,
+        })
+      }
       setInitialKits(validCurrentKits)
     } catch (error) {
       console.error('Failed to save kits:', error)

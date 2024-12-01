@@ -1,18 +1,37 @@
 import { serverAxios } from './base'
 import { Asset } from '@/types/asset.type'
 
-export const listAssetsService = async () => {
-  return (await serverAxios.get('/assets')).data.results
+// Type for asset creation/update payload
+interface AssetPayload {
+  name: string
+  type: string
+  data: string
 }
 
+// List all assets
+export const listAssetsService = async (): Promise<Asset[]> => {
+  const response = await serverAxios.get('/assets')
+  return response.data.results
+}
+
+// Create a new asset
 export const createAssetService = async (
-  name: string,
-  type: string,
-  data: string,
-) => {
-  return (await serverAxios.post('/assets', { name, type, data })).data
+  payload: AssetPayload,
+): Promise<Asset> => {
+  const response = await serverAxios.post('/assets', payload)
+  return response.data
 }
 
-export const deleteAssetService = async (assetId: string) => {
-  return (await serverAxios.delete(`/assets/${assetId}`)).data
+// Delete an asset by ID
+export const deleteAssetService = async (assetId: string): Promise<void> => {
+  await serverAxios.delete(`/assets/${assetId}`)
+}
+
+// Update an asset by ID
+export const updateAssetService = async (
+  assetId: string,
+  payload: Partial<AssetPayload>,
+): Promise<Asset> => {
+  const response = await serverAxios.patch(`/assets/${assetId}`, payload)
+  return response.data
 }

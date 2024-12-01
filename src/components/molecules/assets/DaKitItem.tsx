@@ -7,7 +7,6 @@ import { cn } from '@/lib/utils'
 export type DaKitItemType = {
   category: 'RunTime' | 'dreamKIT' | 'markerKIT'
   id: string
-  assetId?: string
 }
 
 interface DaKitItemProps {
