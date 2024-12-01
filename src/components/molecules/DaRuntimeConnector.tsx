@@ -5,6 +5,7 @@ import { shallow } from 'zustand/shallow'
 // import useModelStore from '@/stores/modelStore'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { useAssets } from '@/hooks/useAssets'
 
 import { io } from 'socket.io-client'
 
@@ -48,6 +49,9 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     const [rawApisPackage, setRawApisPackage] = useState<any>(null)
     const { data: prototype } = useCurrentPrototype()
     const { data: currentUser } = useSelfProfileQuery()
+    const { useFetchAssets } = useAssets()
+    const { data: assets } = useFetchAssets()
+    const [renderRuntimes, setRenderRuntimes] = useState([])
 
     useImperativeHandle(ref, () => {
       return {
@@ -145,7 +149,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       socketio.emit('messageToKit', {
         cmd: 'run_bin_app',
         to_kit_id: activeRtId,
-        data: appName
+        data: appName,
       })
     }
 
@@ -401,7 +405,9 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
           onNewLog(payload.result || '')
         }
       }
-      if (['run_python_app', 'run_rust_app', 'run_bin_app'].includes(payload.cmd)) {
+      if (
+        ['run_python_app', 'run_rust_app', 'run_bin_app'].includes(payload.cmd)
+      ) {
         if (payload.isDone) {
           if (setAppLog) {
             setAppLog(`Exit code ${payload.code}\r\n`)
@@ -455,6 +461,25 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       }
     }
 
+    useEffect(() => {
+      if (Array.isArray(assets)) {
+        // Find the UserKits asset and parse its data
+        const userKitsAsset = assets.find((asset) => asset.name === 'UserKits')
+        if (userKitsAsset) {
+          const kits = JSON.parse(userKitsAsset.data || '[]') // Parse the data field
+          const kitIds = kits.map(
+            (kit: any) => `${kit.category}-${kit.id}`, // Combine category and id
+          )
+          // console.log('User kit assets: ', kitIds)
+          // Filter allRuntimes to include only those in the UserKits asset
+          const filteredRuntimes = allRuntimes.filter((rt: any) =>
+            kitIds.includes(rt.kit_id),
+          )
+          setRenderRuntimes(filteredRuntimes)
+        }
+      }
+    }, [assets, allRuntimes])
+
     return (
       <div>
         <div className="flex items-center">
@@ -472,8 +497,8 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
               setActiveRtId(e.target.value)
             }}
           >
-            {allRuntimes &&
-              allRuntimes.map((rt: any) => {
+            {renderRuntimes &&
+              renderRuntimes.map((rt: any) => {
                 return (
                   <option
                     value={rt.kit_id}

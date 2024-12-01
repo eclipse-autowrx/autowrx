@@ -65,7 +65,7 @@ const PrototypeTabFlow = () => {
             <>
               <div className="flex items-center justify-between border-b pb-2 mb-4 ">
                 <h2 className="text-sm font-semibold text-da-primary-500">
-                  End-to-End Flow: Smart Trunk
+                  End-to-End Flow: {prototype?.name}
                 </h2>
 
                 <DaButton
@@ -93,7 +93,7 @@ const PrototypeTabFlow = () => {
                   <tr className="text-sm text-white uppercase">
                     <th
                       colSpan={3}
-                      className="bg-da-primary-100 text-da-primary-500 border border-r-transparent font-semibold p-2 "
+                      className="bg-gray-100 text-da-primary-500 border border-r-transparent font-semibold p-2 "
                     >
                       Off-board
                     </th>
