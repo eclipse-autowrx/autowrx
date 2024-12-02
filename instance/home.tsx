@@ -110,6 +110,16 @@ const home = [
     title: 'Top News',
     items: [
       {
+        title: 'Playground Introduction',
+        type: 'News',
+        date: '2 December 2024',
+        description:
+          'Explore the future of our digital.auto community with Prof. Dirk Slama with digital.auto playground.',
+        imageURL:
+          'https://bewebstudio.digitalauto.tech/data/projects/scqSwlCPJDj9/playground-introduction.png',
+        redirectURL: 'https://youtu.be/K3pindMCq1c',
+      },
+      {
         title: 'digital.auto Meetup',
         type: 'Event',
         date: '26 November 2024',
@@ -129,16 +139,6 @@ const home = [
         imageURL:
           'https://bewebstudio.digitalauto.tech/data/projects/VOMpcykPhfIC/Central%20Compute%20with%20Zones.png',
         redirectURL: 'https://www.youtube.com/watch?v=M2o3h4anJ_s',
-      },
-      {
-        title: 'digital.auto at ETAS Connections 2024',
-        date: '9 October 2024',
-        type: 'Event',
-        description: `Check out the digital.auto demo stand and don't miss the panel discussion on continous homologation`,
-        imageURL:
-          'https://media.licdn.com/dms/image/v2/D5622AQGDWg4yDt6r6A/feedshare-shrink_2048_1536/feedshare-shrink_2048_1536/0/1728543615217?e=1732752000&v=beta&t=X5_hY7cHDgph813Mn2O4I7sctrcxv_wWdXQ7IVYYThU',
-        redirectURL:
-          'https://www.linkedin.com/posts/digitalauto_etas-connections-2024-panel-session-activity-7240339277119705088-bEhz?utm_source=share&utm_medium=member_desktop',
       },
       {
         title: 'GenAI Awards',
