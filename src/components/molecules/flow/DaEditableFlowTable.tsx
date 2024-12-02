@@ -278,11 +278,11 @@ const DaPrototypeFlowEditor = ({
           </div>
           <DaButton
             onClick={onCancel}
-            className="w-[60px]"
+            className="w-fit"
             variant="outline-nocolor"
             size="sm"
           >
-            Cancel
+            Discard Changes
           </DaButton>
           <DaButton
             onClick={handleSave}

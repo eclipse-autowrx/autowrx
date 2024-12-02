@@ -21,6 +21,8 @@ interface KitConnectProps {
   onNewLog?: (log: string) => void
   onAppExit?: (code: any) => void
   onDeployResponse?: (log: string, isDone: boolean) => void
+  // Filter by user's asset
+  isDeployMode?: boolean
 }
 
 // const socketio = io(DEFAULT_KIT_SERVER);
@@ -37,6 +39,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       onNewLog,
       onAppExit,
       onDeployResponse,
+      isDeployMode = false,
     },
     ref,
   ) => {
@@ -462,23 +465,26 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     }
 
     useEffect(() => {
-      if (Array.isArray(assets)) {
-        // Find the UserKits asset and parse its data
-        const userKitsAsset = assets.find((asset) => asset.name === 'UserKits')
-        if (userKitsAsset) {
-          const kits = JSON.parse(userKitsAsset.data || '[]') // Parse the data field
-          const kitIds = kits.map(
-            (kit: any) => `${kit.category}-${kit.id}`, // Combine category and id
+      if (isDeployMode) {
+        // Deploy mode: Check assets and filter runtimes
+        if (Array.isArray(assets)) {
+          const userKitsAsset = assets.find(
+            (asset) => asset.name === 'UserKits',
           )
-          // console.log('User kit assets: ', kitIds)
-          // Filter allRuntimes to include only those in the UserKits asset
-          const filteredRuntimes = allRuntimes.filter((rt: any) =>
-            kitIds.includes(rt.kit_id),
-          )
-          setRenderRuntimes(filteredRuntimes)
+          if (userKitsAsset) {
+            const kits = JSON.parse(userKitsAsset.data || '[]')
+            const kitIds = kits.map((kit: any) => `${kit.category}-${kit.id}`)
+            const filteredRuntimes = allRuntimes.filter((rt: any) =>
+              kitIds.includes(rt.kit_id),
+            )
+            setRenderRuntimes(filteredRuntimes)
+          }
         }
+      } else {
+        // Simulation mode: Use all runtimes
+        setRenderRuntimes(allRuntimes)
       }
-    }, [assets, allRuntimes])
+    }, [assets, allRuntimes, isDeployMode])
 
     return (
       <div>

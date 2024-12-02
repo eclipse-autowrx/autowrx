@@ -148,6 +148,7 @@ const DaEditSystemStaging = ({
             <div className="mt-2">
               {target && (
                 <DaRuntimeConnector
+                  isDeployMode={true}
                   targetPrefix={target.prefix || 'runtime-'}
                   kitServerUrl={config?.runtime?.url || DEFAULT_KIT_SERVER}
                   ref={runTimeRef}
