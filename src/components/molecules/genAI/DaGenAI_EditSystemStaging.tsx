@@ -138,6 +138,7 @@ const DaGenAI_EditSystemStaging = ({
             <div className="mt-2">
               {target && (
                 <DaGenAI_RuntimeConnector
+                  isDeployMode={true}
                   targetPrefix={target.prefix || 'runtime-'}
                   kitServerUrl={config?.runtime?.url || DEFAULT_KIT_SERVER}
                   ref={runTimeRef}

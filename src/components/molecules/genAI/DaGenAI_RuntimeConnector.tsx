@@ -6,6 +6,8 @@ import { shallow } from 'zustand/shallow'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import useWizardGenAIStore from '@/stores/genAIWizardStore'
+import { Runtime } from '../DaRuntimeConnector'
+import { useAssets } from '@/hooks/useAssets'
 
 import { io } from 'socket.io-client'
 
@@ -21,6 +23,7 @@ interface KitConnectProps {
   onNewLog?: (log: string) => void
   onAppExit?: (code: any) => void
   onDeployResponse?: (log: string, isDone: boolean) => void
+  isDeployMode?: boolean
 }
 
 const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
@@ -35,6 +38,7 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
       onNewLog,
       onAppExit,
       onDeployResponse,
+      isDeployMode = false,
     },
     ref,
   ) => {
@@ -44,6 +48,9 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
     const [allRuntimes, setAllRuntimes] = useState<any>([])
     const [ticker, setTicker] = useState(0)
     const [rawApisPackage, setRawApisPackage] = useState<any>(null)
+    const { useFetchAssets } = useAssets()
+    const { data: assets } = useFetchAssets()
+    const [renderRuntimes, setRenderRuntimes] = useState<Runtime[]>([])
 
     const {
       wizardPrototype,
@@ -264,70 +271,6 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
       }
     }, [socketio]) // Remove socketio?.connected to prevent un-necessary change
 
-    useEffect(() => {
-      console.log(`activeRtId`, activeRtId)
-      if (activeRtId) {
-        localStorage.setItem('last-wizard-rt', activeRtId)
-      }
-    }, [activeRtId])
-
-    useEffect(() => {
-      // console.log(`activeRtId `, wizardActiveRtId)
-      if (wizardActiveRtId) {
-        setActiveRtId(wizardActiveRtId)
-      }
-    }, [wizardActiveRtId])
-
-    useEffect(() => {
-      if (allRuntimes && allRuntimes.length > 0) {
-        if (activeRtId) return // Do not change activeRtId if it's already set by the user
-
-        let onlineRuntimes = allRuntimes.filter((rt: any) => rt.is_online)
-
-        if (onlineRuntimes.length <= 0) {
-          console.log(`setActiveRtId(undefined) cause: no onlineRuntimes`)
-          setActiveRtId(undefined)
-          setWizardActiveRtId(undefined)
-          return
-        }
-
-        // Try to find the default runtime with kit_id starting with 'RunTime-ETAS-E2E'
-        let defaultRuntime = onlineRuntimes.find((rt: any) =>
-          rt.kit_id.startsWith('RunTime-ETAS-E2E'),
-        )
-
-        if (defaultRuntime) {
-          console.log(`setActiveRtId to defaultRuntime`, defaultRuntime.kit_id)
-          setActiveRtId(defaultRuntime.kit_id)
-          setWizardActiveRtId(defaultRuntime.kit_id)
-          localStorage.setItem('last-wizard-rt', defaultRuntime.kit_id)
-          return
-        }
-
-        // If not found, use the last selected runtime from localStorage if it's online
-        let lastOnlineRuntime = localStorage.getItem('last-wizard-rt')
-        if (
-          lastOnlineRuntime &&
-          onlineRuntimes.some((rt: any) => rt.kit_id === lastOnlineRuntime)
-        ) {
-          console.log(`lastOnlineRuntime `, lastOnlineRuntime)
-          setActiveRtId(lastOnlineRuntime)
-          setWizardActiveRtId(lastOnlineRuntime)
-          return
-        }
-
-        // If none of the above, set activeRtId to the first online runtime
-        console.log(`setActiveRtId `, onlineRuntimes[0].kit_id)
-        setActiveRtId(onlineRuntimes[0].kit_id)
-        setWizardActiveRtId(onlineRuntimes[0].kit_id)
-        localStorage.setItem('last-wizard-rt', onlineRuntimes[0].kit_id)
-      } else {
-        console.log(`setActiveRtId(undefined) cause: noRuntime`)
-        setActiveRtId(undefined)
-        setWizardActiveRtId(undefined)
-      }
-    }, [allRuntimes])
-
     const onConnected = () => {
       registerClient()
       setTimeout(() => {
@@ -467,6 +410,122 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
       }
     }
 
+    useEffect(() => {
+      console.log(`activeRtId`, activeRtId)
+      if (activeRtId) {
+        localStorage.setItem('last-wizard-rt', activeRtId)
+      }
+    }, [activeRtId])
+
+    useEffect(() => {
+      // console.log(`activeRtId `, wizardActiveRtId)
+      if (wizardActiveRtId) {
+        setActiveRtId(wizardActiveRtId)
+      }
+    }, [wizardActiveRtId])
+
+    useEffect(() => {
+      if (allRuntimes && allRuntimes.length > 0) {
+        if (activeRtId) return // Do not change activeRtId if it's already set by the user
+
+        let onlineRuntimes = allRuntimes.filter((rt: any) => rt.is_online)
+
+        if (onlineRuntimes.length <= 0) {
+          console.log(`setActiveRtId(undefined) cause: no onlineRuntimes`)
+          setActiveRtId(undefined)
+          setWizardActiveRtId(undefined)
+          return
+        }
+
+        // Try to find the default runtime with kit_id starting with 'RunTime-ETAS-E2E'
+        let defaultRuntime = onlineRuntimes.find((rt: any) =>
+          rt.kit_id.startsWith('RunTime-ETAS-E2E'),
+        )
+
+        if (defaultRuntime) {
+          console.log(`setActiveRtId to defaultRuntime`, defaultRuntime.kit_id)
+          setActiveRtId(defaultRuntime.kit_id)
+          setWizardActiveRtId(defaultRuntime.kit_id)
+          localStorage.setItem('last-wizard-rt', defaultRuntime.kit_id)
+          return
+        }
+
+        // If not found, use the last selected runtime from localStorage if it's online
+        let lastOnlineRuntime = localStorage.getItem('last-wizard-rt')
+        if (
+          lastOnlineRuntime &&
+          onlineRuntimes.some((rt: any) => rt.kit_id === lastOnlineRuntime)
+        ) {
+          console.log(`lastOnlineRuntime `, lastOnlineRuntime)
+          setActiveRtId(lastOnlineRuntime)
+          setWizardActiveRtId(lastOnlineRuntime)
+          return
+        }
+
+        // If none of the above, set activeRtId to the first online runtime
+        console.log(`setActiveRtId `, onlineRuntimes[0].kit_id)
+        setActiveRtId(onlineRuntimes[0].kit_id)
+        setWizardActiveRtId(onlineRuntimes[0].kit_id)
+        localStorage.setItem('last-wizard-rt', onlineRuntimes[0].kit_id)
+      } else {
+        console.log(`setActiveRtId(undefined) cause: noRuntime`)
+        setActiveRtId(undefined)
+        setWizardActiveRtId(undefined)
+      }
+    }, [allRuntimes])
+
+    useEffect(() => {
+      if (renderRuntimes && renderRuntimes.length > 0) {
+        if (activeRtId) return
+        let onlineRuntimes = renderRuntimes.filter(
+          (rt: Runtime) => rt.is_online,
+        )
+        if (onlineRuntimes.length <= 0) {
+          console.log(`setActiveRtId(undefined) cause: no onlineRuntimes`)
+          setActiveRtId(undefined)
+          return
+        }
+        let lastOnlineRuntime = localStorage.getItem('last-rt')
+        if (
+          lastOnlineRuntime &&
+          onlineRuntimes
+            .map((rt: Runtime) => rt.kit_id)
+            .includes(lastOnlineRuntime)
+        ) {
+          console.log(`lastOnlineRuntime `, lastOnlineRuntime)
+          setActiveRtId(lastOnlineRuntime)
+          return
+        }
+        console.log(`setActiveRtId `, onlineRuntimes[0].kit_id)
+        setActiveRtId(onlineRuntimes[0].kit_id)
+        localStorage.setItem('last-rt', onlineRuntimes[0].kit_id)
+      } else {
+        console.log(`setActiveRtId(undefined) cause: noRuntime`)
+        setActiveRtId(undefined)
+      }
+    }, [renderRuntimes])
+
+    // Also update the second useEffect
+    useEffect(() => {
+      if (isDeployMode) {
+        if (Array.isArray(assets)) {
+          const userKitsAsset = assets.find(
+            (asset) => asset.name === 'UserKits',
+          )
+          if (userKitsAsset) {
+            const kits = JSON.parse(userKitsAsset.data || '[]')
+            const kitIds = kits.map((kit: any) => `${kit.category}-${kit.id}`)
+            const filteredRuntimes = allRuntimes.filter((rt: Runtime) =>
+              kitIds.includes(rt.kit_id),
+            )
+            setRenderRuntimes(filteredRuntimes)
+          }
+        }
+      } else {
+        setRenderRuntimes(allRuntimes)
+      }
+    }, [assets, allRuntimes, isDeployMode])
+
     return (
       <div>
         <div className="flex items-center">
@@ -482,20 +541,23 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
               setActiveRtId(e.target.value)
             }}
           >
-            {allRuntimes &&
-              allRuntimes.map((rt: any) => {
+            {renderRuntimes && renderRuntimes.length > 0 ? (
+              renderRuntimes.map((rt: any) => {
                 return (
                   <option
                     value={rt.kit_id}
                     key={rt.kit_id}
                     disabled={!rt.is_online}
                   >
-                    <div className="text-[20px] flex items-center disabled:text-white text-white !cursor-pointer">
+                    <div className="text-[20px] flex items-center disabled:text-white text-white">
                       {rt.is_online ? '🟢' : '🟡'} {rt.name}
                     </div>
                   </option>
                 )
-              })}
+              })
+            ) : (
+              <option>No runtime available</option>
+            )}
           </select>
         </div>
       </div>

@@ -9,6 +9,16 @@ import { useAssets } from '@/hooks/useAssets'
 
 import { io } from 'socket.io-client'
 
+export interface Runtime {
+  desc: string
+  is_online: boolean
+  kit_id: string
+  last_seen: number
+  name: string
+  socket_id: string
+  support_apis: any[] // You can be more specific with the API type if needed
+}
+
 interface KitConnectProps {
   // code: string;
   kitServerUrl?: string
@@ -54,7 +64,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     const { data: currentUser } = useSelfProfileQuery()
     const { useFetchAssets } = useAssets()
     const { data: assets } = useFetchAssets()
-    const [renderRuntimes, setRenderRuntimes] = useState([])
+    const [renderRuntimes, setRenderRuntimes] = useState<Runtime[]>([])
 
     useImperativeHandle(ref, () => {
       return {
@@ -282,33 +292,6 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       }
     }, [activeRtId])
 
-    useEffect(() => {
-      if (allRuntimes && allRuntimes.length > 0) {
-        if (activeRtId) return
-        let onlineRuntimes = allRuntimes.filter((rt: any) => rt.is_online)
-        if (onlineRuntimes.length <= 0) {
-          console.log(`setActiveRtId(undefined) cause: no onlineRuntimes`)
-          setActiveRtId(undefined)
-          return
-        }
-        let lastOnlineRuntime = localStorage.getItem('last-rt')
-        if (
-          lastOnlineRuntime &&
-          onlineRuntimes.map((rt: any) => rt.kit_id).includes(lastOnlineRuntime)
-        ) {
-          console.log(`lastOnlineRuntime `, lastOnlineRuntime)
-          setActiveRtId(lastOnlineRuntime)
-          return
-        }
-        console.log(`setActiveRtId `, onlineRuntimes[0].kit_id)
-        setActiveRtId(onlineRuntimes[0].kit_id)
-        localStorage.setItem('last-rt', onlineRuntimes[0].kit_id)
-      } else {
-        console.log(`setActiveRtId(undefined) cause: noRuntime`)
-        setActiveRtId(undefined)
-      }
-    }, [allRuntimes])
-
     const onConnected = () => {
       registerClient()
       setTimeout(() => {
@@ -465,8 +448,39 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     }
 
     useEffect(() => {
+      if (renderRuntimes && renderRuntimes.length > 0) {
+        if (activeRtId) return
+        let onlineRuntimes = renderRuntimes.filter(
+          (rt: Runtime) => rt.is_online,
+        )
+        if (onlineRuntimes.length <= 0) {
+          console.log(`setActiveRtId(undefined) cause: no onlineRuntimes`)
+          setActiveRtId(undefined)
+          return
+        }
+        let lastOnlineRuntime = localStorage.getItem('last-rt')
+        if (
+          lastOnlineRuntime &&
+          onlineRuntimes
+            .map((rt: Runtime) => rt.kit_id)
+            .includes(lastOnlineRuntime)
+        ) {
+          console.log(`lastOnlineRuntime `, lastOnlineRuntime)
+          setActiveRtId(lastOnlineRuntime)
+          return
+        }
+        console.log(`setActiveRtId `, onlineRuntimes[0].kit_id)
+        setActiveRtId(onlineRuntimes[0].kit_id)
+        localStorage.setItem('last-rt', onlineRuntimes[0].kit_id)
+      } else {
+        console.log(`setActiveRtId(undefined) cause: noRuntime`)
+        setActiveRtId(undefined)
+      }
+    }, [renderRuntimes])
+
+    // Also update the second useEffect
+    useEffect(() => {
       if (isDeployMode) {
-        // Deploy mode: Check assets and filter runtimes
         if (Array.isArray(assets)) {
           const userKitsAsset = assets.find(
             (asset) => asset.name === 'UserKits',
@@ -474,14 +488,13 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
           if (userKitsAsset) {
             const kits = JSON.parse(userKitsAsset.data || '[]')
             const kitIds = kits.map((kit: any) => `${kit.category}-${kit.id}`)
-            const filteredRuntimes = allRuntimes.filter((rt: any) =>
+            const filteredRuntimes = allRuntimes.filter((rt: Runtime) =>
               kitIds.includes(rt.kit_id),
             )
             setRenderRuntimes(filteredRuntimes)
           }
         }
       } else {
-        // Simulation mode: Use all runtimes
         setRenderRuntimes(allRuntimes)
       }
     }, [assets, allRuntimes, isDeployMode])
@@ -503,7 +516,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
               setActiveRtId(e.target.value)
             }}
           >
-            {renderRuntimes &&
+            {renderRuntimes && renderRuntimes.length > 0 ? (
               renderRuntimes.map((rt: any) => {
                 return (
                   <option
@@ -516,7 +529,10 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
                     </div>
                   </option>
                 )
-              })}
+              })
+            ) : (
+              <option>No runtime available</option>
+            )}
           </select>
         </div>
       </div>
