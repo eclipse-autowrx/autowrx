@@ -14,6 +14,7 @@ interface DaButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     | 'gradient'
     | 'secondary'
     | 'destructive'
+    | 'dash'
   size?: 'sm' | 'md' | 'lg'
 }
 

@@ -63,7 +63,7 @@ const NavigationBar = ({}) => {
       {isAuthorized && (
         <DaMenu
           trigger={
-            <div className="cursor-pointer flex !h-10 items-center !mx-2 da-btn-sm text-da-gray-medium da-btn-plain">
+            <div className="cursor-pointer flex !h-10 items-center da-btn-sm text-da-gray-medium da-btn-plain ml-2">
               <HiMenu size={22} />
             </div>
           }

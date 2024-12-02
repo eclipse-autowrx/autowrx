@@ -58,7 +58,7 @@ const FormUpdatePassword = ({}) => {
   return (
     <form
       onSubmit={resetPassword}
-      className="w-[30vw] lg:w-[25vw] max-h-[80vh] p-4 bg-da-white"
+      className="w-[30vw] lg:w-[25vw] max-h-[80vh] bg-da-white"
     >
       {/* Title */}
       <DaText variant="title" className="text-da-primary-500">
@@ -70,7 +70,7 @@ const FormUpdatePassword = ({}) => {
           <DaText className="block mt-4">
             Reset password success! Please login with your new password.
           </DaText>
-          <TbCircleCheckFilled className="text-8xl text-green-500 mx-auto mt-10" />
+          <TbCircleCheckFilled className="text-6xl text-green-500 mx-auto my-4" />
         </>
       ) : (
         <>
@@ -99,7 +99,7 @@ const FormUpdatePassword = ({}) => {
 
           {/* Error */}
           {error && (
-            <DaText variant="small" className="mt-2 block text-da-accent-500">
+            <DaText variant="small" className="mt-2 block text-red-500">
               {error}
             </DaText>
           )}
@@ -107,7 +107,7 @@ const FormUpdatePassword = ({}) => {
           <DaButton
             disabled={loading}
             type="submit"
-            variant="gradient"
+            variant="solid"
             className="w-full mt-6"
           >
             {loading && <TbLoader className="animate-spin text-lg mr-2" />}
