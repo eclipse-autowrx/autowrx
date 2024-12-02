@@ -235,9 +235,9 @@ const DaRuntimeControl: FC = ({}) => {
               setShowManageRt(true)
             }}
           >
-            <div className="text-da-white hover:underline hover:text-da-gray-darkest font-semibold text-yellow-300">
+            {/* <div className="text-da-white hover:underline hover:text-da-gray-darkest font-semibold text-yellow-300">
               Config RT
-            </div>
+            </div> */}
           </DaButton>
         </div>
         <div className="grow" />

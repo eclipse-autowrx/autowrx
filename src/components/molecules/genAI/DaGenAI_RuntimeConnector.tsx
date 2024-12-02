@@ -199,13 +199,13 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
         onActiveRtChanged(activeRtId)
       }
 
-      if (activeRtId) {
-        socketio.emit('messageToKit', {
-          cmd: 'subscribe_apis',
-          to_kit_id: activeRtId,
-          apis: ['Vehicle.AverageSpeed'],
-        })
-      }
+      // if (activeRtId) {
+      //   socketio.emit('messageToKit', {
+      //     cmd: 'subscribe_apis',
+      //     to_kit_id: activeRtId,
+      //     apis: ['Vehicle.AverageSpeed'],
+      //   })
+      // }
     }, [activeRtId])
 
     useEffect(() => {
@@ -281,15 +281,16 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
         }
       }, 1000)
       if (usedAPIs) {
-        setTimeout(() => {
-          if (activeRtId) {
-            socketio.emit('messageToKit', {
-              cmd: 'subscribe_apis',
-              to_kit_id: activeRtId,
-              apis: usedAPIs,
-            })
-          }
-        }, 1000)
+        setTicker((oldTicker) => oldTicker + 1)
+        // setTimeout(() => {
+        //   if (activeRtId) {
+        //     socketio.emit('messageToKit', {
+        //       cmd: 'subscribe_apis',
+        //       to_kit_id: activeRtId,
+        //       apis: usedAPIs,
+        //     })
+        //   }
+        // }, 1000)
       }
     }
 

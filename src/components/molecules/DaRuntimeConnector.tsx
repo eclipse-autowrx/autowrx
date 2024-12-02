@@ -119,6 +119,8 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     }, [])
 
     useEffect(() => {
+      // console.log(`>>>>>>>>>>>>>>>>>>>>>>>>>`)
+      // console.log(`subscribe_apis activeRtId:${activeRtId} usedAPIs:${usedAPIs}`)
       if (activeRtId) {
         socketio.emit('messageToKit', {
           cmd: 'subscribe_apis',
@@ -237,13 +239,13 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         onActiveRtChanged(activeRtId)
       }
 
-      if (activeRtId) {
-        socketio.emit('messageToKit', {
-          cmd: 'subscribe_apis',
-          to_kit_id: activeRtId,
-          apis: ['Vehicle.AverageSpeed'],
-        })
-      }
+      // if (activeRtId) {
+      //   socketio.emit('messageToKit', {
+      //     cmd: 'subscribe_apis',
+      //     to_kit_id: activeRtId,
+      //     apis: ['Vehicle.AverageSpeed'],
+      //   })
+      // }
     }, [activeRtId])
 
     useEffect(() => {
@@ -302,15 +304,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         }
       }, 1000)
       if (usedAPIs) {
-        setTimeout(() => {
-          if (activeRtId) {
-            socketio.emit('messageToKit', {
-              cmd: 'subscribe_apis',
-              to_kit_id: activeRtId,
-              apis: usedAPIs,
-            })
-          }
-        }, 1000)
+        setTicker((oldTicker) => oldTicker + 1)
       }
     }
 
