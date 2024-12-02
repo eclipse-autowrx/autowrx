@@ -339,7 +339,7 @@ const DaRuntimeControl: FC = ({}) => {
           </>
         )}
         <div className="grow"></div>
-        {isExpand && (
+        {/* {isExpand && (
           <DaButton
             size="sm"
             variant="outline"
@@ -357,7 +357,7 @@ const DaRuntimeControl: FC = ({}) => {
             Deploy
             <BiSend className="ml-1" size={20} />
           </DaButton>
-        )}
+        )} */}
         {/* { isExpand && <DaButton size='sm' variant="outline" className='mt-1 ml-2 !text-white hover:!text-da-gray-medium !border-da-white hover:!border-da-gray-medium'
           onClick={() => { setShowStaging(true) }}>
           Staging
