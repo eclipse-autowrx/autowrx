@@ -31,7 +31,8 @@ import { deleteExtendedApi } from '@/services/extendedApis.service'
 import useModelStore from '@/stores/modelStore'
 
 interface ApiDetailProps {
-  apiDetails: any
+  apiDetails: any,
+  forceSimpleMode?: boolean
 }
 
 // Randomly select one of the items from the list based on the name length
@@ -39,7 +40,7 @@ const OneOfFromName = (list: string[], name: string) => {
   return list[name.length % list.length]
 }
 
-const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
+const ApiDetail = ({ apiDetails, forceSimpleMode }: ApiDetailProps) => {
   const { bgClass } = getApiTypeClasses(apiDetails.type)
   const { data: model, refetch } = useCurrentModel()
   const [isLoading, setIsLoading] = useState(false)
@@ -169,7 +170,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
 
   return (
     <div className="flex h-full w-full flex-col px-2">
-      <DaApiArchitecture apiName={apiDetails.name} />
+      { !forceSimpleMode && <DaApiArchitecture apiName={apiDetails.name} /> }
       <div className="grow"></div>
       <div className="flex h-fit w-full flex-row items-center justify-between space-x-2 bg-da-primary-100 py-2 pl-4 pr-2">
         <DaCopy textToCopy={apiDetails.name}>
@@ -192,6 +193,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
               <DaText variant="small-bold">Deleting...</DaText>
             </div>
           ) : (
+            !forceSimpleMode &&
             apiDetails.isWishlist &&
             isAuthorized && (
               <DaMenu
@@ -304,13 +306,13 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
         </DaText>
         <DaTableProperty properties={vssSpecificationProperties} />
 
-        <DaConsumedPrototypes
+        { !forceSimpleMode && <DaConsumedPrototypes
           signal={
             ['actuator', 'sensor'].includes(apiDetails.type)
               ? apiDetails?.name || apiDetails?.shortName || ''
               : ''
           }
-        />
+        /> }
 
         <DaText
           variant="regular-bold"
@@ -320,7 +322,7 @@ const ApiDetail = ({ apiDetails }: ApiDetailProps) => {
         </DaText>
         <DaTableProperty properties={implementationProperties} />
       </div>
-      {model && model.id && (
+      { !forceSimpleMode && model && model.id && (
         <div ref={discussionsRef} className="flex h-full">
           <DaDiscussions
             className="h-full min-w-[0px] pb-2"

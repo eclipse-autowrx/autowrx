@@ -14,7 +14,7 @@ const DaTablePropertyItem = ({ property, value }: DaTablePropertyItemProps) => {
           {property}
         </DaText>
       </div>
-      <div className="flex w-full">
+      <div className="flex w-full max-h-[180px] overflow-auto">
         <DaText variant="small" className="!flex">
           {value}
         </DaText>

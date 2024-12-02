@@ -47,12 +47,13 @@ const DaApiListItem = ({
       onMouseLeave={handleMouseLeave}
     >
       <div className="flex w-full cursor-pointer items-center">
-        <DaText
+        {/* <DaText
           variant={isSelected ? 'small-bold' : 'small'}
           className="cursor-pointer"
         >
           {api.name}
-        </DaText>
+        </DaText> */}
+        <div className={`text-[12.5px] cursor-pointer ${isSelected?'font-bold':'font-medium'}`}>{api.name}</div>
         {api.isWishlist && (
           <div className="flex font-bold rounded-full w-4 h-4 ml-2 bg-fuchsia-500 text-da-white items-center justify-center text-[9px]">
             W

@@ -20,6 +20,7 @@ const VssComparator = ({ }: DaVssCompareProps) => {
 
   const [modelsApi, setModelsApi] = useState<VehicleApi[]>([])
   const [selectedApi, setSelectedApi] = useState<VehicleApi>()
+  const [selectedCompareObj, setSelectedCompareObj] = useState<any>()
   const [activeTargetVer, setActiveTargetVer] = useState<string>('')
   const [activeCurrentVer, setActiveCurrentVer] = useState<string>('')
   const [mergedMap, setMergeMap] = useState<any>(null)
@@ -40,6 +41,19 @@ const VssComparator = ({ }: DaVssCompareProps) => {
   useEffect(() => {
     setModelsApi(activeModelApis as VehicleApi[])
   }, [activeModelApis])
+
+  useEffect(() => {
+    if(!selectedApi || !mergedMap) {
+      setSelectedCompareObj(null)
+      return
+    }
+    let obj = mergedMap.get(selectedApi?.name)
+    setSelectedCompareObj(obj)
+  }, [selectedApi])
+
+  useEffect(() => {
+    setSelectedApi(undefined)
+  }, [newAPIs, deletedAPIs, modifiedAPIs])
 
   useEffect(() => {
     // console.log("versions", versions)
@@ -166,19 +180,23 @@ const VssComparator = ({ }: DaVssCompareProps) => {
       // console.log("TARGET_MAP")
       // console.log(TARGET_MAP)
 
-      CURRENT_LIST.forEach((api: any) => {
+      CURRENT_LIST.forEach(async (api: any) => {
         if (!TARGET_MAP.get(api.name)) {
-          console.log(api)
+          // console.log(api?.name)
           if (api.type != 'branch') {
             newAPIs.push(api)
           }
         }
         let existItem = _mergeMap.get(api.name) || { current: null, target: null, isMetaChanged: false }
         existItem.current = api
-        _mergeMap.set(api, existItem)
+        _mergeMap.set(api.name, existItem)
       })
 
-      TARGET_LIST.forEach((api: any) => {
+      // console.log("_mergeMap 001", _mergeMap)
+
+      // console.log("EXIST API")
+
+      TARGET_LIST.forEach(async (api: any) => {
         if (!CURRENT_MAP.get(api.name)) {
           if (api.type != 'branch') {
             deletedAPIs.push(api)
@@ -187,13 +205,15 @@ const VssComparator = ({ }: DaVssCompareProps) => {
         let existItem = _mergeMap.get(api.name) || { current: null, target: null, isMetaChanged: false }
         existItem.target = api
         if (existItem.current) {
-          if (JSON.stringify(existItem.current) != JSON.stringify(existItem.target)) {
+          if (existItem.current?.datatype != api?.datatype || existItem.current?.description != api?.description || existItem.current?.type != api?.type || existItem.current?.unit != api?.unit ) {
             existItem.isMetaChanged = true
             modifiedAPIs.push(api)
           }
         }
-        _mergeMap.set(api, existItem)
+        console.log(existItem)
+        _mergeMap.set(api.name, existItem)
       })
+      // console.log("_mergeMap 002", _mergeMap)
     } catch (err) {
       console.log("downloadaAndProcessVssData")
       console.log(err)
@@ -267,7 +287,7 @@ const VssComparator = ({ }: DaVssCompareProps) => {
       </div>
 
       <div className="w-full grow flex overflow-auto">
-        <div className="w-1/2 border-r-2 border-slate-200 h-full overflow-auto">
+        <div className="w-[720px] min-w-[720px] border-r-2 border-slate-200 h-full overflow-auto">
           <div className="mt-4 pl-2">
             <DaText variant='sub-title'>New Signals ({newAPIs.length}):</DaText>
             <div className="max-h-[180px] overflow-y-auto bg-green-50">
@@ -302,8 +322,15 @@ const VssComparator = ({ }: DaVssCompareProps) => {
           </div>
         </div>
 
-        <div className="w-1/2 border-slate-100 h-full overflow-auto">
-          {selectedApi && <ApiDetail apiDetails={selectedApi} /> }
+        <div className="grow border-slate-100 h-full overflow-auto flex">
+          {selectedCompareObj && selectedCompareObj.current && <div className="flex-1">
+            <div className="text-xl font-semibold py-1 px-4 text-slate-700 bg-slate-300 border-r-2 border-slate-100">New Version</div>
+            <ApiDetail apiDetails={selectedCompareObj?.current} forceSimpleMode={true} />
+          </div>}
+          {selectedCompareObj && selectedCompareObj.target && <div className="flex-1">
+            <div className="text-xl font-semibold py-1 px-4 text-slate-700 bg-slate-300">Old Version</div>
+            <ApiDetail apiDetails={selectedCompareObj?.target} forceSimpleMode={true} />
+          </div>}
         </div>
       </div>
     </div>
