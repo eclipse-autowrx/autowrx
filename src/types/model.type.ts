@@ -66,6 +66,7 @@ export type Prototype = {
   avg_score?: number
   requirements?: string
   executed_turns?: number
+  flow?: string
 }
 export interface CustomRequirement {
   text?: string

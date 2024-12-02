@@ -273,6 +273,9 @@ const DaPrototypeFlowEditor = ({
           End-to-End Flow: Smart Trunk
         </h2>
         <div className="flex items-center space-x-2">
+          <div className="text-sm mr-2">
+            Right-click on any row to access delete options
+          </div>
           <DaButton
             onClick={onCancel}
             className="w-[60px]"

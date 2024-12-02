@@ -1,12 +1,9 @@
 import React from 'react'
 import { TbArrowLeft, TbArrowRight, TbArrowsHorizontal } from 'react-icons/tb'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
+import { updatePrototypeService } from '@/services/prototype.service'
 import DaTooltip from '../atoms/DaTooltip'
 import { FlowStep, Direction, SignalFlow } from '@/types/flow.type'
-import {
-  objectFlowData,
-  stringifiedFlowData,
-} from '../molecules/flow/flowMockData'
 import DaPrototypeFlowEditor from '../molecules/flow/DaEditableFlowTable'
 import { DaButton } from '../atoms/DaButton'
 
@@ -37,14 +34,61 @@ const SignalFlowCell: React.FC<{ flow: SignalFlow | null }> = ({ flow }) => {
 const PrototypeTabFlow = () => {
   const { data: prototype } = useCurrentPrototype()
   const [isEditing, setIsEditing] = React.useState(false)
-  const [flowData, setFlowData] = React.useState<FlowStep[]>(
-    JSON.parse(stringifiedFlowData),
-  )
+  const getInitialFlowData = () => {
+    if (!prototype?.flow) {
+      return [
+        {
+          title: '[Example] Step 1: Open The Driver Door',
+          flows: [
+            {
+              offBoard: {
+                smartPhone: 'Request Door Open',
+                p2c: {
+                  direction: 'right',
+                  signal: 'Vehicle.Cabin.Door.Row1.DriverSide.IsLocked',
+                },
+                cloud: 'Authorize Door Opening',
+              },
+              v2c: {
+                direction: 'right',
+                signal: 'Vehicle.Cabin.Door.Row1.DriverSide.UnlockCommand',
+              },
+              onBoard: {
+                sdvRuntime: 'Unlock Driver Door',
+                s2s: {
+                  direction: 'right',
+                  signal: 'Vehicle.Cabin.Door.Row1.DriverSide.IsUnlocked',
+                },
+                embedded: 'Control Door Actuator',
+                s2e: {
+                  direction: 'right',
+                  signal: 'Vehicle.Cabin.Door.Row1.DriverSide.IsOpen',
+                },
+                sensors: 'Open Door',
+              },
+            },
+          ],
+        },
+      ]
+    }
+
+    try {
+      const parsedFlow = JSON.parse(prototype.flow)
+      return Array.isArray(parsedFlow) ? parsedFlow : []
+    } catch (error) {
+      console.error('Error parsing flow data:', error)
+      return []
+    }
+  }
+  const [flowData, setFlowData] =
+    React.useState<FlowStep[]>(getInitialFlowData())
 
   const handleSave = async (stringJsonData: string) => {
+    if (!prototype) return
     try {
-      console.log('Saving flow data:', stringJsonData)
+      // console.log('Saving flow data:', stringJsonData)
       setFlowData(JSON.parse(stringJsonData))
+      updatePrototypeService(prototype?.id, { flow: stringJsonData })
       setIsEditing(false)
     } catch (error) {
       console.error('Error saving flow data:', error)
