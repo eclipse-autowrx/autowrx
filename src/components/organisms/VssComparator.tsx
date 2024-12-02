@@ -6,17 +6,23 @@ import useModelStore from '@/stores/modelStore'
 import { shallow } from 'zustand/shallow'
 import DaText from "../atoms/DaText"
 import useListVSSVersions from "@/hooks/useListVSSVersions"
+import useCurrentModel from '@/hooks/useCurrentModel'
+import ApiDetail from "./ApiDetail"
 
 interface DaVssCompareProps {
 
 }
 
+
 const VssComparator = ({ }: DaVssCompareProps) => {
+
+  const CURRENT_MODEL = 'CURRENT_MODEL'
 
   const [modelsApi, setModelsApi] = useState<VehicleApi[]>([])
   const [selectedApi, setSelectedApi] = useState<VehicleApi>()
   const [activeTargetVer, setActiveTargetVer] = useState<string>('')
-  const [activeCurrentVer, setActiveCurrentVer] = useState<string>('my-model')
+  const [activeCurrentVer, setActiveCurrentVer] = useState<string>('')
+  const [mergedMap, setMergeMap] = useState<any>(null)
 
   const [newAPIs, setNewAPIs] = useState<any[]>([])
   const [deletedAPIs, setDeletedAPIs] = useState<any[]>([])
@@ -24,6 +30,7 @@ const VssComparator = ({ }: DaVssCompareProps) => {
 
 
   const { data: versions } = useListVSSVersions()
+  const { data: model } = useCurrentModel()
 
   const [activeModelApis] = useModelStore(
     (state) => [state.activeModelApis],
@@ -35,17 +42,21 @@ const VssComparator = ({ }: DaVssCompareProps) => {
   }, [activeModelApis])
 
   useEffect(() => {
-    console.log("versions", versions)
+    // console.log("versions", versions)
+    if(versions) {
+      setActiveTargetVer(model?.api_version || 'v4.1')
+      setActiveCurrentVer(CURRENT_MODEL)
+    }
   }, [versions])
 
   const convertTree2List = (vssTree: any, VSS_MAP: any) => {
     // let VSS_MAP = new Map()
     const traverse: any = (
       node: any,
-      prefix ='Vehicle',
+      prefix = 'Vehicle',
     ) => {
       let result = []
-      if(node.type != "branch") {
+      if (node.type != "branch") {
         VSS_MAP.set(prefix, { ...node, name: prefix })
         result.push({ ...node, name: prefix })
       }
@@ -65,70 +76,138 @@ const VssComparator = ({ }: DaVssCompareProps) => {
   }
 
   useEffect(() => {
-    if(!activeTargetVer || !versions) {
+    if (!activeTargetVer || !activeCurrentVer || !versions) {
       return
     }
 
-    console.log("activeTargetVer", activeTargetVer)
-    let version = versions.find(v => v.name == activeTargetVer)
-    if(!version || !version.browser_download_url) return
-    console.log("version", version)
-    console.log(version.browser_download_url)
-    downloadaAndProcessVssData(version.browser_download_url)
+    // console.log("activeTargetVer", activeTargetVer)
+    // console.log("activeCurrentVer", activeCurrentVer)
+    let targetVersion = null
+    if (activeTargetVer == CURRENT_MODEL) {
+      targetVersion = {
+        name: CURRENT_MODEL
+      }
+    } else {
+      targetVersion = versions.find(v => v.name == activeTargetVer)
+    }
 
-  }, [activeTargetVer])
+    let currentVersion = null
+    if (activeCurrentVer == CURRENT_MODEL) {
+      currentVersion = {
+        name: CURRENT_MODEL
+      }
+    } else {
+      currentVersion = versions.find(v => v.name == activeCurrentVer)
+    }
 
-  const downloadaAndProcessVssData = async (url: string) => {
+    // console.log("currentVersion", currentVersion)
+    // console.log("targetVersion", targetVersion)
+
+    downloadaAndProcessVssData(currentVersion, targetVersion)
+
+  }, [activeTargetVer, activeCurrentVer])
+
+  const downloadaAndProcessVssData = async (currentVersion: any, targetVersion: any) => {
     let newAPIs = [] as any
     let deletedAPIs = [] as any
     let modifiedAPIs = [] as any
+    let _mergeMap = new Map()
     try {
-      if(!url) throw "No URL"
-      let newUrl = url.replace('https://github.com/COVESA/vehicle_signal_specification/releases/download/', '/vss/')
-      let response = await fetch(newUrl)
-      let VSS_TREE = await response.json()
-      let VSS_MAP = new Map()
-      let VSS_LIST = convertTree2List(VSS_TREE, VSS_MAP)
-      // console.log("VSS_LIST")
-      // console.log(VSS_LIST)
-      // console.log("VSS_MAP")
-      // console.log(VSS_MAP)
 
-      modelsApi.forEach((api: any) => {
-        if(!VSS_MAP.get(api.name)) {
-          console.log(api)
-          if(api.type!='branch') {
-            deletedAPIs.push(api)
-          }
+      let CURRENT_TREE = null
+      let CURRENT_MAP = new Map()
+      let CURRENT_LIST = null
+      let TARGET_TREE = null
+      let TARGET_MAP = new Map()
+      let TARGET_LIST = null
+
+      if (targetVersion?.name == CURRENT_MODEL) {
+        TARGET_LIST = modelsApi
+        TARGET_MAP = new Map()
+        modelsApi.forEach((api: any) => {
+          TARGET_MAP.set(api.name, api)
+        })
+      } else {
+        if (!targetVersion?.browser_download_url) {
+          throw "No target URL"
         }
-      })
-      
+        let newUrl = targetVersion?.browser_download_url.replace('https://github.com/COVESA/vehicle_signal_specification/releases/download/', '/vss/')
+        let response = await fetch(newUrl)
+        TARGET_TREE = await response.json()
+        TARGET_MAP = new Map()
+        TARGET_LIST = convertTree2List(TARGET_TREE, TARGET_MAP)
+      }
 
-      let myModelMap = new Map()
-      modelsApi.forEach((api:any) => {
-        myModelMap.set(api.name, api)
-      })
+      if (currentVersion?.name == CURRENT_MODEL) {
+        CURRENT_LIST = modelsApi
+        CURRENT_MAP = new Map()
+        modelsApi.forEach((api: any) => {
+          CURRENT_MAP.set(api.name, api)
+        })
+      } else {
+        if (!currentVersion?.browser_download_url) {
+          throw "No current URL"
+        }
+        let newUrl = currentVersion?.browser_download_url.replace('https://github.com/COVESA/vehicle_signal_specification/releases/download/', '/vss/')
+        let response = await fetch(newUrl)
+        CURRENT_TREE = await response.json()
+        CURRENT_MAP = new Map()
+        CURRENT_LIST = convertTree2List(CURRENT_TREE, CURRENT_MAP)
+      }
 
-      VSS_LIST.forEach((api: any) => {
-        if(!myModelMap.get(api.name)) {
-          if(api.type!='branch') {
+
+      // console.log("CURRENT_LIST")
+      // console.log(CURRENT_LIST)
+      // console.log("CURRENT_MAP")
+      // console.log(CURRENT_MAP)
+
+      // console.log("TARGET_LIST")
+      // console.log(TARGET_LIST)
+      // console.log("TARGET_MAP")
+      // console.log(TARGET_MAP)
+
+      CURRENT_LIST.forEach((api: any) => {
+        if (!TARGET_MAP.get(api.name)) {
+          console.log(api)
+          if (api.type != 'branch') {
             newAPIs.push(api)
           }
         }
+        let existItem = _mergeMap.get(api.name) || { current: null, target: null, isMetaChanged: false }
+        existItem.current = api
+        _mergeMap.set(api, existItem)
       })
-    } catch(err) {
+
+      TARGET_LIST.forEach((api: any) => {
+        if (!CURRENT_MAP.get(api.name)) {
+          if (api.type != 'branch') {
+            deletedAPIs.push(api)
+          }
+        }
+        let existItem = _mergeMap.get(api.name) || { current: null, target: null, isMetaChanged: false }
+        existItem.target = api
+        if (existItem.current) {
+          if (JSON.stringify(existItem.current) != JSON.stringify(existItem.target)) {
+            existItem.isMetaChanged = true
+            modifiedAPIs.push(api)
+          }
+        }
+        _mergeMap.set(api, existItem)
+      })
+    } catch (err) {
       console.log("downloadaAndProcessVssData")
       console.log(err)
     }
     setNewAPIs(newAPIs)
     setDeletedAPIs(deletedAPIs)
     setModifiedAPIs(modifiedAPIs)
+    setMergeMap(_mergeMap)
   }
 
-  return <div className="w-full h-full flex">
-    <div className="flex-1 h-full flex flex-col">
+  return <div className="w-full h-full flex items-start">
+    <div className="flex-1 h-full hidden">
       <div className="bg-slate-100 pl-2 mt-1">
-        <DaText variant='sub-title'>Model:</DaText>
+        {/* <DaText variant='sub-title'>Model:</DaText>
         <select
           aria-label="deploy-select"
           className={`w-[220px] ml-2 border rounded font-semibold text-center px-2 py-1 min-w-[90px] text-da-gray-dark bg-white`}
@@ -137,73 +216,96 @@ const VssComparator = ({ }: DaVssCompareProps) => {
             setActiveCurrentVer(e.target.value)
           }}
         >
-          <option value="current-model">Current Model</option>
+          <option value="CURRENT_MODEL">Current Model</option>
           { versions && versions?.length>0  && versions.map((version: any, vIndex:number) => <option key={vIndex} value={version.name}
             className="px-2 py-1">
             {version.name.toUpperCase()}
           </option> )}
-        </select>
+        </select> */}
       </div>
       <div className="grow overflow-y-auto">
-         <DaApiList
+        <DaApiList
           apis={modelsApi}
-          onApiClick={() => { }}
+          onApiClick={(api) => { setSelectedApi(api)}}
           selectedApi={selectedApi}
-        /> 
+        />
       </div>
     </div>
-    <div className="flex-1 h-full">
-      <div className="bg-slate-100 px-2 mt-1 flex items-center border-l-2 border-slate-200">
-        <DaText variant='sub-title'>Compare with:</DaText>
-          <select
-            aria-label="deploy-select"
-            className={`w-[220px] ml-2 border rounded font-semibold text-center px-2 py-1 min-w-[90px] text-da-gray-dark bg-white`}
-            value={activeTargetVer}
-            onChange={(e) => {
-              setActiveTargetVer(e.target.value)
-            }}
-          >
-            <option value="">Select a version</option>
-            { versions && versions?.length>0  && versions.map((version: any, vIndex:number) => <option key={vIndex} value={version.name}
-              className="px-2 py-1">
-              {version.name.toUpperCase()}
-            </option> )}
-          </select>
+
+    <div className="flex-1 h-full flex flex-col">
+      <div className="bg-slate-100 px-2 pt-4 pb-2 flex items-center border-l-2 border-slate-200">
+        <DaText variant='regular-bold' className="mx-2">Compare</DaText>
+        <select
+          aria-label="deploy-select"
+          className={`w-[280px] ml-2 border rounded font-semibold text-center px-2 py-1 min-w-[90px] text-da-gray-dark bg-lime-200`}
+          value={activeCurrentVer}
+          onChange={(e) => {
+            setActiveCurrentVer(e.target.value)
+          }}
+        >
+          <option value={CURRENT_MODEL}>Current Model (base on {(model && model.api_version) || 'v4.1'})</option>
+          {versions && versions?.length > 0 && versions.map((version: any, vIndex: number) => <option key={vIndex} value={version.name}
+            className="px-2 py-1">
+            {version.name.toUpperCase()}
+          </option>)}
+        </select>
+        <DaText variant='regular-bold' className="mx-4">with</DaText>
+        <select
+          aria-label="deploy-select"
+          className={`w-[280px] ml-2 border rounded font-semibold text-center px-2 py-1 min-w-[90px] text-da-gray-dark bg-lime-200`}
+          value={activeTargetVer}
+          onChange={(e) => {
+            setActiveTargetVer(e.target.value)
+          }}
+        >
+          <option value={CURRENT_MODEL}>Current Model (base on {(model && model.api_version) || 'v4.1'})</option>
+          {versions && versions?.length > 0 && versions.map((version: any, vIndex: number) => <option key={vIndex} value={version.name}
+            className="px-2 py-1">
+            {version.name.toUpperCase()}
+          </option>)}
+        </select>
       </div>
-      <div className="mt-4 pl-2">
-        <DaText variant='sub-title'>New Signals ({newAPIs.length}):</DaText>
-        <div className="max-h-[200px] overflow-y-auto">
-          <DaApiList
-            apis={newAPIs}
-            onApiClick={() => { }}
-            // selectedApi={selectedApi}
-          /> 
+
+      <div className="w-full grow flex overflow-auto">
+        <div className="w-1/2 border-r-2 border-slate-200 h-full overflow-auto">
+          <div className="mt-4 pl-2">
+            <DaText variant='sub-title'>New Signals ({newAPIs.length}):</DaText>
+            <div className="max-h-[180px] overflow-y-auto bg-green-50">
+              <DaApiList
+                apis={newAPIs}
+                onApiClick={(api) => { setSelectedApi(api)}}
+                selectedApi={selectedApi}
+              />
+            </div>
+          </div>
+
+          <div className="mt-4 pl-2">
+            <DaText variant='sub-title'>Deleted Signals ({deletedAPIs.length}):</DaText>
+            <div className="max-h-[180px] overflow-y-auto bg-red-50">
+              <DaApiList
+                apis={deletedAPIs}
+                onApiClick={(api) => { setSelectedApi(api)}}
+                selectedApi={selectedApi}
+              />
+            </div>
+          </div>
+
+          <div className="mt-4 pl-2">
+            <DaText variant='sub-title'>Metadata changed Signals ({modifiedAPIs.length}):</DaText>
+            <div className="max-h-[180px] overflow-y-auto bg-orange-50">
+              <DaApiList
+                apis={modifiedAPIs}
+                onApiClick={(api) => { setSelectedApi(api)}}
+                selectedApi={selectedApi}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="w-1/2 border-slate-100 h-full overflow-auto">
+          {selectedApi && <ApiDetail apiDetails={selectedApi} /> }
         </div>
       </div>
-
-      <div className="mt-4 pl-2">
-        <DaText variant='sub-title'>Deleted Signals ({deletedAPIs.length}):</DaText>
-        <div className="max-h-[200px] overflow-y-auto">
-          <DaApiList
-            apis={deletedAPIs}
-            onApiClick={() => { }}
-            // selectedApi={selectedApi}
-          /> 
-        </div>
-      </div>
-
-      <div className="mt-4 pl-2">
-        <DaText variant='sub-title'>Metadata changed Signals ({modifiedAPIs.length}):</DaText>
-        <div className="max-h-[200px] overflow-y-auto">
-          <DaApiList
-            apis={modifiedAPIs}
-            onApiClick={() => { }}
-            // selectedApi={selectedApi}
-          /> 
-        </div>
-      </div>
-
-
     </div>
   </div>
 }
