@@ -128,6 +128,7 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
       socketio.emit('messageToKit', {
         cmd: 'run_python_app',
         to_kit_id: activeRtId,
+        usedAPIs: usedAPIs || [],
         data: {
           code: code,
         },

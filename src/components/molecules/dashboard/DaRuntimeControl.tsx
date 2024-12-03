@@ -119,15 +119,16 @@ const DaRuntimeControl: FC = ({}) => {
       setUsedApis([])
       return
     }
+    let dashboardCfg = prototype?.widget_config || ''
     let apis: any[] = []
     activeModelApis.forEach((item: any) => {
-      if (code.includes(item.shortName)) {
+      if (code.includes(item.shortName) || dashboardCfg.includes(item.shortName)) {
         apis.push(item.name)
       }
     })
     //
     setUsedApis(apis)
-  }, [code, activeModelApis])
+  }, [code, activeModelApis, prototype?.widget_config])
 
   const appendLog = (content: String) => {
     if (!content) return

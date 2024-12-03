@@ -67,19 +67,115 @@ class TestApp(VehicleApp):
         self.Vehicle = vehicle_client
 
     async def on_start(self):
-        for i in range(10):
+        # on app started, this function will be trigger, your logic SHOULD start from HERE
+        while True:
+            # sleep for 2 second
+            await asyncio.sleep(2)
+            # write an actuator signal with value
+            await self.Vehicle.Body.Lights.Beam.Low.IsOn.set(True)
             await asyncio.sleep(1)
-            speed = (await self.Vehicle.AverageSpeed.get()).value
-            print(f"[{i}] speed {speed}")
+            # read an actuator back
+            value = (await self.Vehicle.Body.Lights.Beam.Low.IsOn.get()).value
+            print("Light value ", value)
+            
+            await asyncio.sleep(2)
+            # write an actuator signal with value
+            await self.Vehicle.Body.Lights.Beam.Low.IsOn.set(False)
+            await asyncio.sleep(1)
+            # read an actuator back
+            value = (await self.Vehicle.Body.Lights.Beam.Low.IsOn.get()).value
+            print("Light value ", value)
 
 async def main():
     vehicle_app = TestApp(vehicle)
     await vehicle_app.run()
 
+
 LOOP = asyncio.get_event_loop()
 LOOP.add_signal_handler(signal.SIGTERM, LOOP.stop)
 LOOP.run_until_complete(main())
 LOOP.close()`
+
+const DEFAULT_DASHBOARD_CFG = `{
+  "autorun": false,
+  "widgets": [
+    {
+      "plugin": "Builtin",
+      "widget": "Embedded-Widget",
+      "options": {
+        "api": "Vehicle.Body.Lights.Beam.Low.IsOn",
+        "defaultImgUrl": "https://bestudio.digitalauto.tech/project/Ml2Sc9TYoOHc/light_off.png",
+        "displayExactMatch": true,
+        "valueMaps": [
+          {
+            "value": true,
+            "imgUrl": "https://bestudio.digitalauto.tech/project/Ml2Sc9TYoOHc/light_on.png"
+          },
+          {
+            "value": false,
+            "imgUrl": "https://bestudio.digitalauto.tech/project/Ml2Sc9TYoOHc/light_off.png"
+          }
+        ],
+        "url": "https://store-be.digitalauto.tech/data/store-be/Image%20by%20Signal%20value/latest/index/index.html",
+        "iconURL": "https://upload.digitalauto.tech/data/store-be/3c3685b3-0b58-4f75-820e-9af0180cf3f0.png"
+      },
+      "boxes": [
+        2,
+        3,
+        7,
+        8
+      ],
+      "path": ""
+    },
+    {
+      "plugin": "Builtin",
+      "widget": "Embedded-Widget",
+      "options": {
+        "url": "https://store-be.digitalauto.tech/data/store-be/Terminal/latest/terminal/index.html",
+        "iconURL": "https://upload.digitalauto.tech/data/store-be/e991ea29-5fbf-42e9-9d3d-cceae23600f0.png"
+      },
+      "boxes": [
+        1,
+        6
+      ],
+      "path": ""
+    },
+    {
+      "plugin": "Builtin",
+      "widget": "Embedded-Widget",
+      "options": {
+        "api": "Vehicle.Body.Lights.Beam.Low.IsOn",
+        "lineColor": "#005072",
+        "dataUpdateInterval": "1000",
+        "maxDataPoints": "30",
+        "url": "https://store-be.digitalauto.tech/data/store-be/Chart%20Signal%20Widget/latest/index/index.html",
+        "iconURL": "https://upload.digitalauto.tech/data/store-be/f25ceb29-b9e8-470e-897a-4d843e16a0cf.png"
+      },
+      "boxes": [
+        4,
+        5
+      ],
+      "path": ""
+    },
+    {
+      "plugin": "Builtin",
+      "widget": "Embedded-Widget",
+      "options": {
+        "apis": [
+          "Vehicle.Body.Lights.Beam.Low.IsOn"
+        ],
+        "vss_json": "https://bewebstudio.digitalauto.tech/data/projects/sHQtNwric0H7/vss_rel_4.0.json",
+        "url": "https://store-be.digitalauto.tech/data/store-be/Signal%20List%20Settable/latest/table-settable/index.html",
+        "iconURL": "https://upload.digitalauto.tech/data/store-be/dccabc84-2128-4e5d-9e68-bc20333441c4.png"
+      },
+      "boxes": [
+        9,
+        10
+      ],
+      "path": ""
+    }
+  ]
+}`
 
 const FormCreatePrototype = ({
   onClose,
@@ -116,6 +212,11 @@ const FormCreatePrototype = ({
     if (lang == 'rust') return DEFAULT_RUST_APP
 
     return DEFAULT_PYTHON_APP
+  }
+
+  const getDefaultDashboardCfg = (lang: string) => {
+    if(lang=='rust') return `{"autorun": false, "widgets": [] }`
+    return DEFAULT_DASHBOARD_CFG
   }
 
   const createNewPrototype = async (e: FormEvent<HTMLFormElement>) => {
@@ -163,7 +264,7 @@ const FormCreatePrototype = ({
         image_file: '/imgs/default_prototype_cover.jpg',
         skeleton: '{}',
         tags: [],
-        widget_config: widget_config ?? '[]',
+        widget_config: widget_config || getDefaultDashboardCfg(data.language) ||  '[]',
         autorun: true,
       }
 
