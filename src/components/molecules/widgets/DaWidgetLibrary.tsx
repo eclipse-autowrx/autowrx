@@ -156,20 +156,23 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
   useEffect(() => {
     setActiveWidget(activeTab === 'genAI' ? {} : null)
     setIsWidgetGenAI(activeTab === 'genAI')
-    let widgets = JSON.parse(JSON.stringify(marketWidgets))
-    widgets.forEach((w:any) => {
-      let match = PIN_WIDGETS.find(p => p.name == w.label)
-      if(match) {
-        w.weight = match.weight
-      } else {
-        w.weight = 999
-      }
-    })
-    widgets.sort((a:any, b:any) => {
-      if (a.weight < b.weight) return -1;
-      if (a.weight > b.weight) return 1;
-      return 0;
-    })
+    let widgets = []
+    try {
+      widgets = JSON.parse(JSON.stringify(marketWidgets))
+      widgets.forEach((w:any) => {
+        let match = PIN_WIDGETS.find(p => p.name == w.label)
+        if(match) {
+          w.weight = match.weight
+        } else {
+          w.weight = 999
+        }
+      })
+      widgets.sort((a:any, b:any) => {
+        if (a.weight < b.weight) return -1;
+        if (a.weight > b.weight) return 1;
+        return 0;
+      })
+    } catch(e) { }
     setRenderWidgets(widgets)
     // setRenderWidgets(activeTab === 'builtin' ? buildinWidgets : marketWidgets)
   }, [activeTab, marketWidgets])

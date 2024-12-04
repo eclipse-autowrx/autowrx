@@ -112,7 +112,7 @@ const DaDashboard: FC<iDaDashboardProps> = ({ setFullScreenMode }) => {
                 }}
               >
                 <MdOutlineDesignServices className="size-6" />
-                <div className="font-medium ml-1">Config</div>
+                <div className="font-medium ml-1">Edit dashboard</div>
               </DaButton>
             )}
 
