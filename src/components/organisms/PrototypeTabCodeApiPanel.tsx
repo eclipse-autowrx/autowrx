@@ -11,15 +11,15 @@ import DaTabItem from '../atoms/DaTabItem'
 import useCurrentModel from '@/hooks/useCurrentModel'
 
 interface ApiCodeBlockProps {
-  apiName: string
+  content: string
   sampleLabel: string
 }
 
-const ApiCodeBlock = ({ apiName, sampleLabel }: ApiCodeBlockProps) => {
+const ApiCodeBlock = ({ content, sampleLabel }: ApiCodeBlockProps) => {
   return (
     <div className="flex flex-col">
       <DaCopy
-        textToCopy={`await self.${apiName}`}
+        textToCopy={content}
         className="flex h-6 items-center w-fit mt-3"
       >
         <DaText
@@ -35,8 +35,8 @@ const ApiCodeBlock = ({ apiName, sampleLabel }: ApiCodeBlockProps) => {
           variant="small"
           className="w-full font-mono text-da-gray-dark whitespace-pre-line"
         >
-          <span className="text-blue-600 font-mono">await self.</span>
-          {apiName}
+          {/* <span className="text-blue-600 font-mono">await self.</span> */}
+          {content}
         </DaText>
       </div>
     </div>
@@ -91,19 +91,19 @@ const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
             )}
             {['actuator', 'sensor'].includes(activeApi.type) && (
               <ApiCodeBlock
-                apiName={activeApi.name + '.get().value'}
+                content={`(await self.${activeApi.name}.get()).value`}
                 sampleLabel="Sample code to get signal value"
               />
             )}
             {['actuator'].includes(activeApi.type) && (
               <ApiCodeBlock
-                apiName={activeApi.name + '.set(value)'}
+                content={`await self.${activeApi.name}.set(value)`}
                 sampleLabel="Sample code to set signal value"
               />
             )}
             {['actuator', 'sensor'].includes(activeApi.type) && (
               <ApiCodeBlock
-                apiName={activeApi.name + '.subscribe(function_name)'}
+                content={`await self.${activeApi.name}.subscribe(function_name)`}
                 sampleLabel="Sample code to subscribe signal value"
               />
             )}
