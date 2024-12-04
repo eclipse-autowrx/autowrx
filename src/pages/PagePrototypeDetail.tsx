@@ -84,18 +84,18 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
             Architecture
           </DaTabItem>
           <DaTabItem
-            active={tab === 'code'}
-            to={`/model/${model_id}/library/prototype/${prototype_id}/code`}
-          >
-            <TbCode className="w-5 h-5 mr-2" />
-            SDV Code
-          </DaTabItem>
-          <DaTabItem
             active={tab === 'flow'}
             to={`/model/${model_id}/library/prototype/${prototype_id}/flow`}
           >
             <TbRoute className="w-5 h-5 mr-2" />
             Flow
+          </DaTabItem>
+          <DaTabItem
+            active={tab === 'code'}
+            to={`/model/${model_id}/library/prototype/${prototype_id}/code`}
+          >
+            <TbCode className="w-5 h-5 mr-2" />
+            SDV Code
           </DaTabItem>
           <DaTabItem
             active={tab === 'dashboard'}
