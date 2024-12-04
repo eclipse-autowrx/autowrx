@@ -46,6 +46,26 @@ const DaDashboardWidgetEditor = ({
 
   const { wizardPrototype: prototypeData } = useWizardGenAIStore()
 
+  const [optionString, setOptionStr] = useState("")
+  const [widgetUrl, setWidgetUrl] = useState("")
+  const [widgetIcon, setWidgetIcon] = useState("")
+
+  useEffect(() => {
+    // console.log('selectedWidget', selectedWidget)
+    if (selectedWidget) {
+      let options = {} as any
+      try {
+        let widget = JSON.parse(selectedWidget)
+        options = widget.options
+        setWidgetIcon(options.iconURL)
+        setWidgetUrl(options.url)
+        delete options.iconURL
+        delete options.url
+      } catch (e) { }
+      setOptionStr(JSON.stringify(options, null, 4))
+    }
+  }, [selectedWidget])
+
   useEffect(() => {
     if (isWizard) {
       setLocalPrototype(prototypeData)
@@ -124,11 +144,25 @@ const DaDashboardWidgetEditor = ({
         <CodeEditor
           language="json"
           editable={true}
-          code={selectedWidget}
+          code={optionString}
           setCode={(e) => {
-            setSelectedWidget(e)
+            // setSelectedWidget(e)
+            let newOption = {} as any
+            try {
+              newOption = JSON.parse(e)
+            } catch (err) { }
+            newOption.url = `${widgetUrl}`
+            newOption.iconURL = `${widgetIcon}`
+            // console.log("newOption", newOption)
+            let widget = {} as any
+            try {
+              widget = JSON.parse(selectedWidget)
+            } catch (err) { }
+            widget.options = newOption
+            // console.log("XXX", JSON.stringify(widget, null, 4))
+            setSelectedWidget(JSON.stringify(widget, null, 4))
           }}
-          onBlur={() => {}}
+          onBlur={() => { }}
         />
         <div className="flex w-full space-x-2 justify-end pt-4">
           <DaButton
