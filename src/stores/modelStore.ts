@@ -27,7 +27,7 @@ const useModelStore = create<ModelState & Actions>()((set, get) => ({
     let ret: any
     if (model) {
       // New way
-      console.log("model", model)
+      // console.log("model", model)
       try {
         ret = model.api_version
           ? await getComputedAPIs(model.id)

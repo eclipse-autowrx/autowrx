@@ -174,10 +174,10 @@ const DaDashboardEditor = ({
     setSelectedCells([]) // unselect any selected cells
   }
 
-  const handleUpdateWidget = () => {
+  const handleUpdateWidget = (widgetConfig: string) => {
     if (selectedWidgetIndex !== null) {
       try {
-        const updatedWidgetConfig = JSON.parse(selectedWidget)
+        const updatedWidgetConfig = JSON.parse(widgetConfig)
         console.log('updatedWidgetConfig', updatedWidgetConfig)
         if (
           isContinuousRectangle(updatedWidgetConfig.boxes) &&
@@ -212,19 +212,19 @@ const DaDashboardEditor = ({
     }
   }
 
-  const handleAddWidgetFromURL = () => {
-    const widgetConfig = JSON.parse(selectedWidget)
+  const handleAddWidgetFromURL = (wConfig: string) => {
+    const widgetConfig = JSON.parse(wConfig)
     const newWidgetConfigs = [...widgetConfigs, widgetConfig]
     onDashboardConfigChanged(JSON.stringify(newWidgetConfigs, null, 4))
     setSelectedCells([])
   }
 
-  const handleOnWidgetEditorSave = () => {
+  const handleOnWidgetEditorSave = (widgetConfig: string) => {
     if (isAddingFromURL) {
-      handleAddWidgetFromURL()
+      handleAddWidgetFromURL(widgetConfig)
       setIsAddingFromURL(false)
     } else {
-      handleUpdateWidget()
+      handleUpdateWidget(widgetConfig)
     }
   }
 
@@ -285,7 +285,7 @@ const DaDashboardEditor = ({
                 variant="plain"
                 className="!px-0 hover:text-da-primary-500"
                 onClick={() => {
-                  setSelectedWidget(JSON.stringify(widgetConfig, null, 2))
+                  setSelectedWidget(JSON.stringify(widgetConfig, null, 4))
                   setIsAddingFromURL(false)
                   codeEditorPopup[1](true)
                 }}
@@ -394,7 +394,7 @@ const DaDashboardEditor = ({
                           boxes: selectedCells,
                         },
                         null,
-                        2,
+                        4,
                       ),
                     )
                     setIsAddingFromURL(true)
@@ -470,7 +470,6 @@ const DaDashboardEditor = ({
           <DaDashboardWidgetEditor
             widgetEditorPopupState={codeEditorPopup}
             selectedWidget={selectedWidget}
-            setSelectedWidget={setSelectedWidget}
             handleUpdateWidget={handleOnWidgetEditorSave}
             isWizard={isWizard}
           />
