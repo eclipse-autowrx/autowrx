@@ -7,4 +7,5 @@ export const PERMISSIONS = {
   // model_id
   READ_MODEL: 'readModel',
   WRITE_MODEL: 'writeModel',
+  DEPLOY_HARDWARE: 'deployHardware',
 }

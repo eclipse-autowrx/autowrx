@@ -8,7 +8,8 @@ import { IoMdArrowRoundBack } from 'react-icons/io'
 import config from '@/configs/config'
 import DaGenAI_RuntimeConnector from './DaGenAI_RuntimeConnector'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
-
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
 const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
 
 interface DaEditSystemStagingProps {
@@ -35,7 +36,7 @@ const DaGenAI_EditSystemStaging = ({
   const runTimeRef = useRef<any>()
   const [log, setLog] = useState<string[]>([])
   const { data: profile } = useSelfProfileQuery()
-
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.DEPLOY_HARDWARE])
   const [prototype] = useModelStore((state) => [state.prototype as Prototype])
 
   useEffect(() => {
@@ -138,7 +139,6 @@ const DaGenAI_EditSystemStaging = ({
             <div className="mt-2">
               {target && (
                 <DaGenAI_RuntimeConnector
-                  isDeployMode={true}
                   targetPrefix={target.prefix || 'runtime-'}
                   kitServerUrl={config?.runtime?.url || DEFAULT_KIT_SERVER}
                   ref={runTimeRef}
@@ -230,31 +230,36 @@ const DaGenAI_EditSystemStaging = ({
               </>
             )}
           </div>
-
-          {define && (
-            <DaStageComponent
-              onTargetMode={onTargetMode}
-              id="none"
-              prototype={prototype}
-              isTargetConnected={!!activeRtId}
-              activeId={activeId}
-              isUpdating={isUpdating}
-              editMode={true}
-              item={define}
-              level={-1}
-              targetState={target && target.state}
-              onRequestUpdate={(id: string, data: string) => {
-                if (activeRtId && runTimeRef && runTimeRef.current) {
-                  runTimeRef.current.deploy()
-                  setActiveId(id)
-                  setIsUpdating(true)
-                }
-              }}
-              onItemEditFinished={(id, data) => {
-                updateDefineAtId(id, data)
-              }}
-              expandedIds={['3', '3.1', '3.1.1', '3.1.1.1', '3.1.1.1.1']}
-            />
+          {isAuthorized ? (
+            define && (
+              <DaStageComponent
+                onTargetMode={onTargetMode}
+                id="none"
+                prototype={prototype}
+                isTargetConnected={!!activeRtId}
+                activeId={activeId}
+                isUpdating={isUpdating}
+                editMode={true}
+                item={define}
+                level={-1}
+                targetState={target && target.state}
+                onRequestUpdate={(id: string, data: string) => {
+                  if (activeRtId && runTimeRef && runTimeRef.current) {
+                    runTimeRef.current.deploy()
+                    setActiveId(id)
+                    setIsUpdating(true)
+                  }
+                }}
+                onItemEditFinished={(id, data) => {
+                  updateDefineAtId(id, data)
+                }}
+                expandedIds={['3', '3.1', '3.1.1', '3.1.1.1', '3.1.1.1.1']}
+              />
+            )
+          ) : (
+            <div className="flex py-4 justify-center">
+              You dont have permisison to deploy
+            </div>
           )}
         </div>
       </div>
