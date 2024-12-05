@@ -82,8 +82,16 @@ const HomePartners: FC = ({ items, children }: HomePartnersProps) => {
                 >
                   digital.auto
                 </a>{' '}
-                and based on Eclipse SDV autowrx. Join our thriving community to
-                participate in next-generation, SDV-enabled vehicle experiences.
+                and based on{' '}
+                <a
+                  href="https://gitlab.eclipse.org/eclipse/autowrx/autowrx"
+                  target="_blank"
+                  className="text-da-primary-500 hover:underline"
+                >
+                  Eclipse SDV autowrx
+                </a>
+                . Join our thriving community to participate in next-generation,
+                SDV-enabled vehicle experiences.
               </div>
             </div>
             {children}
