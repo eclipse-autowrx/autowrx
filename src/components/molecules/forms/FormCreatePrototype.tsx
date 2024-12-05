@@ -215,7 +215,7 @@ const FormCreatePrototype = ({
   }
 
   const getDefaultDashboardCfg = (lang: string) => {
-    if(lang=='rust') return `{"autorun": false, "widgets": [] }`
+    if (lang == 'rust') return `{"autorun": false, "widgets": [] }`
     return DEFAULT_DASHBOARD_CFG
   }
 
@@ -264,7 +264,8 @@ const FormCreatePrototype = ({
         image_file: '/imgs/default_prototype_cover.jpg',
         skeleton: '{}',
         tags: [],
-        widget_config: widget_config || getDefaultDashboardCfg(data.language) ||  '[]',
+        widget_config:
+          widget_config || getDefaultDashboardCfg(data.language) || '[]',
         autorun: true,
       }
 
@@ -295,7 +296,7 @@ const FormCreatePrototype = ({
       })
 
       // Navigate to the new prototype's page
-      navigate(`/model/${modelId}/library/list/${response.id}`)
+      await navigate(`/model/${modelId}/library/prototype/${response.id}`)
 
       // Optionally close the form/modal
       if (onClose) onClose()
