@@ -10,10 +10,15 @@ type ErrorFallbackProps = {
 const ErrorFallback = ({ error }: ErrorFallbackProps) => {
   useEffect(() => {
     const chunkFailedMessage = /Loading chunk [\d]+ failed/
-    if (error?.message && chunkFailedMessage.test(error.message)) {
+    if (
+      error?.message &&
+      (chunkFailedMessage.test(error.message) ||
+        error.message.includes('Failed to fetch dynamically imported module') ||
+        error.message.includes('Importing a module script failed'))
+    ) {
       if (!getWithExpiry('chunk_failed')) {
-        setWithExpiry('chunk_failed', true, 10000)
-        window.location.reload()
+        setWithExpiry('chunk_failed', true, 3000)
+        window.location.href = window.location.href
       }
     }
   }, [error])
