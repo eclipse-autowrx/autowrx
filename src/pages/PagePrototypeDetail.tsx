@@ -31,6 +31,7 @@ import PrototypeTabDashboard from '@/components/organisms/PrototypeTabDashboard'
 import PrototypeTabHomologation from '@/components/organisms/PrototypeTabHomologation'
 import PrototypeTabFeedback from '@/components/organisms/PrototypeTabFeedback'
 import PrototypeTabFlow from '@/components/organisms/PrototypeTabFlow'
+import DaRuntimeControl from '@/components/molecules/dashboard/DaRuntimeControl'
 
 // const PrototypeTabFeedback = lazy(
 //   () => import('@/components/organisms/PrototypeTabFeedback'),
@@ -50,6 +51,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
   const prototype = useModelStore((state) => state.prototype as Prototype)
   const [isDefaultTab, setIsDefaultTab] = useState(false)
   const [openStagingDialog, setOpenStagingDialog] = useState(false)
+  const [showRt, setShowRt] = useState(false)
 
   useEffect(() => {
     if (!tab || tab === 'journey' || tab === 'view') {
@@ -57,6 +59,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
     } else {
       setIsDefaultTab(false)
     }
+    setShowRt(['code', 'dashboard'].includes(tab||''))
   }, [tab])
 
   useEffect(() => {
@@ -84,18 +87,18 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
             Architecture
           </DaTabItem>
           <DaTabItem
-            active={tab === 'code'}
-            to={`/model/${model_id}/library/prototype/${prototype_id}/code`}
-          >
-            <TbCode className="w-5 h-5 mr-2" />
-            SDV Code
-          </DaTabItem>
-          <DaTabItem
             active={tab === 'flow'}
             to={`/model/${model_id}/library/prototype/${prototype_id}/flow`}
           >
             <TbRoute className="w-5 h-5 mr-2" />
             Flow
+          </DaTabItem>
+          <DaTabItem
+            active={tab === 'code'}
+            to={`/model/${model_id}/library/prototype/${prototype_id}/code`}
+          >
+            <TbCode className="w-5 h-5 mr-2" />
+            SDV Code
           </DaTabItem>
           <DaTabItem
             active={tab === 'dashboard'}
@@ -155,14 +158,17 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
         }
       </div>
 
-      <div className="flex flex-col h-full overflow-y-auto">
-        {isDefaultTab && <PrototypeTabJourney prototype={prototype} />}
-        {tab == 'architecture' && <PrototypeTabArchitecture />}
-        {tab == 'code' && <PrototypeTabCode />}
-        {tab == 'flow' && <PrototypeTabFlow />}
-        {tab == 'dashboard' && <PrototypeTabDashboard />}
-        {tab == 'homologation' && <PrototypeTabHomologation />}
-        {tab == 'feedback' && <PrototypeTabFeedback />}
+      <div className="flex flex-col h-full overflow-y-auto relative">
+        <div className={`absolute left-0 bottom-0 top-0 right-${showRt?'16': '0'} grow h-full z-0`}>
+          {isDefaultTab && <PrototypeTabJourney prototype={prototype} />}
+          {tab == 'architecture' && <PrototypeTabArchitecture />}
+          {tab == 'code' && <PrototypeTabCode />}
+          {tab == 'flow' && <PrototypeTabFlow />}
+          {tab == 'dashboard' && <PrototypeTabDashboard />}
+          {tab == 'homologation' && <PrototypeTabHomologation />}
+          {tab == 'feedback' && <PrototypeTabFeedback />}
+        </div>
+        { showRt && <DaRuntimeControl /> }
       </div>
     </div>
   ) : (

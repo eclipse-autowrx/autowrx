@@ -23,6 +23,7 @@ const DaWidgetList: FC<DaWidgetListProps> = ({
   const [optionsStr, setOptionStr] = useState<string>('')
   const [widgetReviews, setWidgetReviews] = useState<any[]>([])
   const [editorHeight, setEditorHeight] = useState('')
+  const [activeWidgetUrl, setActiveWidgetUrl] = useState('')
 
   const fetchWidgetDetails = async (widget: any) => {
     if (!widget) return
@@ -33,6 +34,7 @@ const DaWidgetList: FC<DaWidgetListProps> = ({
         if (widgetDetails) {
           //
           // Update the active widget with detail information and media
+          // console.log('widgetDetails', widgetDetails)
           setActiveWidget(widgetDetails)
         }
       } catch (error) {
@@ -65,7 +67,9 @@ const DaWidgetList: FC<DaWidgetListProps> = ({
 
   useEffect(() => {
     if (activeWidget && activeWidget.options) {
-      setOptionStr(JSON.stringify(activeWidget.options, null, 4))
+      let options = JSON.parse(JSON.stringify(activeWidget.options))
+      delete options.url
+      setOptionStr(JSON.stringify(options, null, 4))
     } else {
       setOptionStr('{}')
     }

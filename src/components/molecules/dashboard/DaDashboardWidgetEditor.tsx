@@ -9,6 +9,8 @@ import { Prototype } from '@/types/model.type'
 import { shallow } from 'zustand/shallow'
 import { DaCopy } from '@/components/atoms/DaCopy'
 import useWizardGenAIStore from '@/stores/genAIWizardStore'
+import { DaInput } from '@/components/atoms/DaInput'
+import ModelApiList from '@/components/organisms/ModelApiList'
 
 interface DaDashboardWidgetEditorprototype {
   widgetEditorPopupState: [
@@ -16,15 +18,15 @@ interface DaDashboardWidgetEditorprototype {
     React.Dispatch<React.SetStateAction<boolean>>,
   ]
   selectedWidget: any
-  setSelectedWidget: React.Dispatch<React.SetStateAction<any>>
-  handleUpdateWidget: () => void
+  // setSelectedWidget: React.Dispatch<React.SetStateAction<any>>
+  handleUpdateWidget: (widgetConfig: string) => void
   isWizard?: boolean
 }
 
 const DaDashboardWidgetEditor = ({
   widgetEditorPopupState: codeEditorPopup,
   selectedWidget,
-  setSelectedWidget,
+  // setSelectedWidget,
   handleUpdateWidget,
   isWizard = false,
 }: DaDashboardWidgetEditorprototype) => {
@@ -45,6 +47,34 @@ const DaDashboardWidgetEditor = ({
   )
 
   const { wizardPrototype: prototypeData } = useWizardGenAIStore()
+
+  const [optionStr, setOptionStr] = useState("")
+  const [widgetUrl, setWidgetUrl] = useState("")
+  const [widgetIcon, setWidgetIcon] = useState("")
+  const [boxes, setBoxes] = useState("")
+
+  useEffect(() => {
+    if(codeEditorPopup[0]) {
+      setIsExpanded(false)
+    }
+  }, [codeEditorPopup[0]])
+
+  useEffect(() => {
+    if (selectedWidget) {
+      let options = {} as any
+      try {
+        let widget = JSON.parse(selectedWidget)
+        // console.log(widget)
+        setBoxes(JSON.stringify(widget.boxes, null, 4))
+        options = widget.options
+        setWidgetIcon(options.iconURL)
+        setWidgetUrl(options.url)
+        delete options.iconURL
+        delete options.url
+      } catch (e) { }
+      setOptionStr(JSON.stringify(options, null, 4))
+    }
+  }, [selectedWidget])
 
   useEffect(() => {
     if (isWizard) {
@@ -75,7 +105,7 @@ const DaDashboardWidgetEditor = ({
   return (
     <DaPopup
       state={codeEditorPopup}
-      className="flex w-[90%] max-w-[880px] h-[500px] bg-da-white rounded"
+      className="flex w-[90%] max-w-[1400px] h-fit overflow-auto bg-da-white rounded"
       trigger={<span></span>}
     >
       <div className="flex flex-col w-full h-full">
@@ -98,7 +128,7 @@ const DaDashboardWidgetEditor = ({
                   }}
                 >
                   <TbSelector className="mr-2 flex justify-end w-fit" />{' '}
-                  Recently used signals
+                  Used signals
                 </DaButton>
               </div>
               {isExpanded && (
@@ -121,15 +151,55 @@ const DaDashboardWidgetEditor = ({
             </div>
           )}
         </div>
-        <CodeEditor
-          language="json"
-          editable={true}
-          code={selectedWidget}
-          setCode={(e) => {
-            setSelectedWidget(e)
-          }}
-          onBlur={() => {}}
-        />
+
+        <div className='flex grow overflow-auto'>
+          <div className='grow'>
+            <div className='overflow-auto h-[220px] max-h-[262px]'>
+              <div className='font-semibold text-slate-800'>Options</div>
+              <CodeEditor
+                language="json"
+                editable={true}
+                code={optionStr}
+                setCode={(e) => {
+                  // setSelectedWidget(e)
+                  setOptionStr(e)
+                }}
+                onBlur={() => { }}
+              />
+            </div>
+
+            <div className='py-2 flex items-center'>
+              <div className='font-semibold text-slate-800'>Boxes:</div>
+              <div className='w-full pl-2'>
+                <DaInput
+                  value={boxes}
+                  onChange={(e) => setBoxes(e.target.value)}
+                  placeholder="Boxs"
+                  wrapperClassName="!bg-white"
+                  inputClassName="!bg-white text-sm"
+                  className="w-full"
+                />
+              </div>
+            </div>
+            <div className='py-2 flex items-center'>
+              <div className='font-semibold text-slate-800'>URL:</div>
+              <div className='w-full pl-2'>
+                <DaInput
+                  value={widgetUrl}
+                  onChange={(e) => setWidgetUrl(e.target.value)}
+                  placeholder="URL"
+                  wrapperClassName="!bg-white"
+                  inputClassName="!bg-white text-sm"
+                  className="w-full"
+                />
+              </div>
+            </div>
+          </div>
+          <div className='min-w-[500px] max-h-[400px] overflow-auto'>
+            <ModelApiList />
+          </div>
+        </div>
+
         <div className="flex w-full space-x-2 justify-end pt-4">
           <DaButton
             size="sm"
@@ -144,7 +214,22 @@ const DaDashboardWidgetEditor = ({
             variant="solid"
             className="!min-w-16"
             onClick={() => {
-              handleUpdateWidget()
+
+              let newOption = {} as any
+              try {
+                newOption = JSON.parse(optionStr)
+              } catch (err) { }
+              newOption.url = `${widgetUrl}`
+              newOption.iconURL = `${widgetIcon}`
+              let widget = {} as any
+              try {
+                widget = JSON.parse(selectedWidget)
+              } catch (err) { }
+              widget.options = newOption
+              try {
+                widget.boxes = JSON.parse(boxes)
+              } catch (err) { }
+              handleUpdateWidget(JSON.stringify(widget, null, 4))
               codeEditorPopup[1](false)
             }}
           >

@@ -45,7 +45,7 @@ const DaDashboard: FC<iDaDashboardProps> = ({ setFullScreenMode }) => {
     let widgetItems = []
     // prototype.widget_config: JSON string
     if (prototype?.widget_config) {
-      console.log('prototype.widget_config', prototype.widget_config)
+      // console.log('prototype.widget_config', prototype.widget_config)
       try {
         let dashboard_config = JSON.parse(prototype.widget_config) // prototype.dashboard_config: JSON object
         // console.log('dashboard_config', dashboard_config)
@@ -112,7 +112,7 @@ const DaDashboard: FC<iDaDashboardProps> = ({ setFullScreenMode }) => {
                 }}
               >
                 <MdOutlineDesignServices className="size-6" />
-                <div className="font-medium ml-1">Config</div>
+                <div className="font-medium ml-1">Edit dashboard</div>
               </DaButton>
             )}
 
