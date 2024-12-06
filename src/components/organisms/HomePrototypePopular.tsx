@@ -10,6 +10,7 @@ import DaPopup from '../atoms/DaPopup'
 import useAuthStore from '@/stores/authStore'
 import { DaPrototypeItem } from '../molecules/DaPrototypeItem'
 import DaSkeletonGrid from '../molecules/DaSkeletonGrid'
+import config from '@/configs/config'
 
 type HomePrototypePopularProps = {
   requiredLogin?: boolean
@@ -50,13 +51,13 @@ const HomePrototypePopular = ({
   }
 
   const handlePrototypeClick = (prototype: Prototype) => {
-    if (!user) {
-      setSelectedPrototype(prototype)
-      setOpenRemindDialog(true)
-    } else {
+    if (!config.strictAuth || user) {
       navigate(
         `/model/${prototype.model_id}/library/prototype/${prototype.id}/view`,
       )
+    } else {
+      setSelectedPrototype(prototype)
+      setOpenRemindDialog(true)
     }
   }
 
