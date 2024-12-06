@@ -31,7 +31,7 @@ import { deleteExtendedApi } from '@/services/extendedApis.service'
 import useModelStore from '@/stores/modelStore'
 
 interface ApiDetailProps {
-  apiDetails: any,
+  apiDetails: any
   forceSimpleMode?: boolean
 }
 
@@ -170,7 +170,7 @@ const ApiDetail = ({ apiDetails, forceSimpleMode }: ApiDetailProps) => {
 
   return (
     <div className="flex h-full w-full flex-col px-2">
-      { !forceSimpleMode && <DaApiArchitecture apiName={apiDetails.name} /> }
+      {!forceSimpleMode && <DaApiArchitecture apiName={apiDetails.name} />}
       <div className="grow"></div>
       <div className="flex h-fit w-full flex-row items-center justify-between space-x-2 bg-da-primary-100 py-2 pl-4 pr-2">
         <DaCopy textToCopy={apiDetails.name}>
@@ -217,52 +217,19 @@ const ApiDetail = ({ apiDetails, forceSimpleMode }: ApiDetailProps) => {
                       View COVESA Issue
                     </Link>
                   ) : (
-                    <DaPopup
-                      state={popupSubmitIssueState}
-                      trigger={
-                        <DaButton
-                          variant="plain"
-                          size="sm"
-                          onClick={() => {
-                            popupSubmitIssueState[1](true)
-                            onTriggerAuth()
-                          }}
-                        >
-                          <FaGithub className="mr-2 h-5 w-5" />
-                          <span className="da-label-small-bold">
-                            Propose this Signal to COVESA
-                          </span>
-                        </DaButton>
-                      }
+                    <DaButton
+                      variant="plain"
+                      size="sm"
+                      onClick={() => {
+                        popupSubmitIssueState[1](true)
+                        onTriggerAuth()
+                      }}
                     >
-                      {loading && (
-                        <div className="flex flex-col items-center gap-4 p-4">
-                          <DaLoader />
-                          <p>
-                            Please wait while we are authenticating with
-                            Github...
-                          </p>
-                        </div>
-                      )}
-
-                      {!loading && error && (
-                        <div className="flex flex-col items-center gap-4 p-4">
-                          <p>{error}</p>
-                        </div>
-                      )}
-
-                      {!loading && !error && access && (
-                        <FormSubmitIssue
-                          user={user}
-                          api={apiDetails}
-                          refetch={refetchCurrIssue}
-                          onClose={async () => {
-                            popupSubmitIssueState[1](false)
-                          }}
-                          access={access}
-                        />
-                      )}
-                    </DaPopup>
+                      <FaGithub className="mr-2 h-5 w-5" />
+                      <span className="da-label-small-bold">
+                        Propose this Signal to COVESA
+                      </span>
+                    </DaButton>
                   )}
                   <DaButton
                     variant="destructive"
@@ -287,6 +254,32 @@ const ApiDetail = ({ apiDetails, forceSimpleMode }: ApiDetailProps) => {
           >
             <></>
           </DaConfirmPopup>
+          <DaPopup state={popupSubmitIssueState} trigger={<></>}>
+            {loading && (
+              <div className="flex flex-col items-center gap-4 p-4">
+                <DaLoader />
+                <p>Please wait while we are authenticating with Github...</p>
+              </div>
+            )}
+
+            {!loading && error && (
+              <div className="flex flex-col items-center gap-4 p-4">
+                <p>{error}</p>
+              </div>
+            )}
+
+            {!loading && !error && access && (
+              <FormSubmitIssue
+                user={user}
+                api={apiDetails}
+                refetch={refetchCurrIssue}
+                onClose={async () => {
+                  popupSubmitIssueState[1](false)
+                }}
+                access={access}
+              />
+            )}
+          </DaPopup>
           <div
             className={cn(
               'hidden h-8 items-center rounded-md px-2 xl:flex',
@@ -306,13 +299,15 @@ const ApiDetail = ({ apiDetails, forceSimpleMode }: ApiDetailProps) => {
         </DaText>
         <DaTableProperty properties={vssSpecificationProperties} />
 
-        { !forceSimpleMode && <DaConsumedPrototypes
-          signal={
-            ['actuator', 'sensor'].includes(apiDetails.type)
-              ? apiDetails?.name || apiDetails?.shortName || ''
-              : ''
-          }
-        /> }
+        {!forceSimpleMode && (
+          <DaConsumedPrototypes
+            signal={
+              ['actuator', 'sensor'].includes(apiDetails.type)
+                ? apiDetails?.name || apiDetails?.shortName || ''
+                : ''
+            }
+          />
+        )}
 
         <DaText
           variant="regular-bold"
@@ -322,7 +317,7 @@ const ApiDetail = ({ apiDetails, forceSimpleMode }: ApiDetailProps) => {
         </DaText>
         <DaTableProperty properties={implementationProperties} />
       </div>
-      { !forceSimpleMode && model && model.id && (
+      {!forceSimpleMode && model && model.id && (
         <div ref={discussionsRef} className="flex h-full">
           <DaDiscussions
             className="h-full min-w-[0px] pb-2"
