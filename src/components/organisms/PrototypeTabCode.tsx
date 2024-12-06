@@ -86,18 +86,6 @@ const PrototypeTabCode: FC = ({}) => {
 
   return (
     <div className="flex h-[calc(100%-0px)] bg-da-g w-full p-2 gap-2 bg-da-gray-light">
-      <div className="flex h-full flex-[2] min-w-[360px] flex-col bg-da-white rounded-md">
-        {activeTab == 'api' && (
-          <Suspense>
-            <PrototypeTabCodeApiPanel code={code || ''} />
-          </Suspense>
-        )}
-        {/* {activeTab == 'dashboard' && (
-            <Suspense>
-              <PrototypeTabCodeDashboardCfg />
-            </Suspense>
-          )} */}
-      </div>
       <div className="flex h-full flex-[3] min-w-0 flex-col border-r bg-da-white rounded-md">
         <div className="flex min-h-12 w-full items-center justify-between">
           {isAuthorized && (
@@ -175,6 +163,13 @@ const PrototypeTabCode: FC = ({}) => {
             onBlur={saveCodeToDb}
           />
         </Suspense>
+      </div>
+      <div className="flex h-full flex-[2] min-w-[360px] flex-col bg-da-white rounded-md">
+        {activeTab == 'api' && (
+          <Suspense>
+            <PrototypeTabCodeApiPanel code={code || ''} />
+          </Suspense>
+        )}
       </div>
     </div>
   )

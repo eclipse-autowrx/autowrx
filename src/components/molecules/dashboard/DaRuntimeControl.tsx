@@ -91,7 +91,7 @@ const DaRuntimeControl: FC = ({}) => {
         writeSignalValue(obj)
       }
     } catch (err) {
-      console.log(err)
+      // console.log(err)
     }
   }
 
