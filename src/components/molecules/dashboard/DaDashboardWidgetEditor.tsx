@@ -54,6 +54,12 @@ const DaDashboardWidgetEditor = ({
   const [boxes, setBoxes] = useState("")
 
   useEffect(() => {
+    if(codeEditorPopup[0]) {
+      setIsExpanded(false)
+    }
+  }, [codeEditorPopup[0]])
+
+  useEffect(() => {
     if (selectedWidget) {
       let options = {} as any
       try {
@@ -99,7 +105,7 @@ const DaDashboardWidgetEditor = ({
   return (
     <DaPopup
       state={codeEditorPopup}
-      className="flex w-[90%] max-w-[1024px] h-fit overflow-auto bg-da-white rounded"
+      className="flex w-[90%] max-w-[1400px] h-fit overflow-auto bg-da-white rounded"
       trigger={<span></span>}
     >
       <div className="flex flex-col w-full h-full">
@@ -122,7 +128,7 @@ const DaDashboardWidgetEditor = ({
                   }}
                 >
                   <TbSelector className="mr-2 flex justify-end w-fit" />{' '}
-                  Recently used signals
+                  Used signals
                 </DaButton>
               </div>
               {isExpanded && (
