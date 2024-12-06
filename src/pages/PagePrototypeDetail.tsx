@@ -159,7 +159,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
       </div>
 
       <div className="flex flex-col h-full overflow-y-auto relative">
-        <div className={`absolute left-0 bottom-0 top-0 right-${showRt?'16': '0'} grow h-full z-0`}>
+        <div style={{right: showRt?'4rem': '0' }} className={`absolute left-0 bottom-0 top-0 grow h-full z-0`}>
           {isDefaultTab && <PrototypeTabJourney prototype={prototype} />}
           {tab == 'architecture' && <PrototypeTabArchitecture />}
           {tab == 'code' && <PrototypeTabCode />}
