@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react'
-import ModelApiList from './ModelApiList'
+import { useEffect, useMemo, useState } from 'react'
 import { DaApiList } from '../molecules/DaApiList'
 import { VehicleApi } from '@/types/model.type'
 import useModelStore from '@/stores/modelStore'
@@ -8,6 +7,8 @@ import DaText from '../atoms/DaText'
 import useListVSSVersions from '@/hooks/useListVSSVersions'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import ApiDetail from './ApiDetail'
+import Diff from 'diff-match-patch'
+import _ from 'lodash'
 
 interface DaVssCompareProps {}
 
@@ -24,6 +25,12 @@ const VssComparator = ({}: DaVssCompareProps) => {
   const [newAPIs, setNewAPIs] = useState<any[]>([])
   const [deletedAPIs, setDeletedAPIs] = useState<any[]>([])
   const [modifiedAPIs, setModifiedAPIs] = useState<any[]>([])
+
+  const [metadataDiff, setMetadataDiff] = useState<{
+    current: any
+    target: any
+  } | null>(null)
+  const dmp = useMemo(() => new Diff(), [])
 
   const { data: versions } = useListVSSVersions()
   const { data: model } = useCurrentModel()
@@ -106,8 +113,8 @@ const VssComparator = ({}: DaVssCompareProps) => {
       currentVersion = versions.find((v) => v.name == activeCurrentVer)
     }
 
-    // console.log("currentVersion", currentVersion)
-    // console.log("targetVersion", targetVersion)
+    // console.log('currentVersion', currentVersion)
+    // console.log('targetVersion', targetVersion)
 
     downloadaAndProcessVssData(currentVersion, targetVersion)
   }, [activeTargetVer, activeCurrentVer])
@@ -221,7 +228,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
             modifiedAPIs.push(api)
           }
         }
-        console.log(existItem)
+        // console.log(existItem)
         _mergeMap.set(api.name, existItem)
       })
       // console.log("_mergeMap 002", _mergeMap)
@@ -235,7 +242,74 @@ const VssComparator = ({}: DaVssCompareProps) => {
     setMergeMap(_mergeMap)
   }
 
-  const compareMetadata = (current: any, target: any) => {}
+  const compareMetadata = (current: any, target: any) => {
+    if (!current || !target) {
+      return null
+    }
+    const resultCurrent: Record<string, any> = {}
+    const resultTarget: Record<string, any> = {}
+    try {
+      for (const key of Object.keys(current)) {
+        const currentValue = current[key]
+        const targetValue = target[key]
+
+        if (currentValue === targetValue) {
+          continue
+        }
+
+        if (!targetValue) {
+          resultCurrent[key] = { diff: -1 }
+          continue
+        }
+
+        if (
+          typeof currentValue === 'string' &&
+          typeof targetValue === 'string'
+        ) {
+          const diff = dmp.diff_main(currentValue, targetValue)
+          dmp.diff_cleanupSemantic(diff)
+
+          resultCurrent[key] = {
+            valueDiff: diff.filter(([type]) => type === -1 || type === 0),
+          }
+          resultTarget[key] = {
+            valueDiff: diff.filter(([type]) => type === 1 || type === 0),
+          }
+          continue
+        }
+
+        resultCurrent[key] = { valueDiff: -1 }
+        resultTarget[key] = { valueDiff: 1 }
+      }
+
+      for (const key of Object.keys(target)) {
+        if (!current[key]) {
+          resultTarget[key] = { diff: 1 }
+        }
+      }
+    } catch (error) {
+      console.error('Error comparing metadata:', error)
+    }
+
+    return {
+      current: _.isEmpty(resultCurrent) ? null : resultCurrent,
+      target: _.isEmpty(resultTarget) ? null : resultTarget,
+    }
+  }
+
+  useEffect(() => {
+    if (
+      !selectedCompareObj ||
+      !selectedCompareObj.current ||
+      !selectedCompareObj.target
+    ) {
+      return setMetadataDiff(null)
+    }
+
+    setMetadataDiff(
+      compareMetadata(selectedCompareObj.current, selectedCompareObj.target),
+    )
+  }, [selectedCompareObj])
 
   return (
     <div className="w-full h-full flex items-start">
@@ -372,6 +446,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
                 </div>
                 <ApiDetail
                   apiDetails={selectedCompareObj?.current}
+                  diffDetail={metadataDiff?.current}
                   forceSimpleMode={true}
                 />
               </div>
@@ -383,6 +458,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
                 </div>
                 <ApiDetail
                   apiDetails={selectedCompareObj?.target}
+                  diffDetail={metadataDiff?.target}
                   forceSimpleMode={true}
                 />
               </div>

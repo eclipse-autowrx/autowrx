@@ -33,6 +33,7 @@ import useModelStore from '@/stores/modelStore'
 interface ApiDetailProps {
   apiDetails: any
   forceSimpleMode?: boolean
+  diffDetail?: any
 }
 
 // Randomly select one of the items from the list based on the name length
@@ -40,7 +41,11 @@ const OneOfFromName = (list: string[], name: string) => {
   return list[name.length % list.length]
 }
 
-const ApiDetail = ({ apiDetails, forceSimpleMode }: ApiDetailProps) => {
+const ApiDetail = ({
+  apiDetails,
+  forceSimpleMode,
+  diffDetail,
+}: ApiDetailProps) => {
   const { bgClass } = getApiTypeClasses(apiDetails.type)
   const { data: model, refetch } = useCurrentModel()
   const [isLoading, setIsLoading] = useState(false)
@@ -165,6 +170,20 @@ const ApiDetail = ({ apiDetails, forceSimpleMode }: ApiDetailProps) => {
     },
     apiDetails.comment && { name: 'Comment', value: apiDetails.comment },
   ].filter(Boolean)
+  const translatedDiffDetail = diffDetail
+    ? {
+        Signal: diffDetail.name,
+        UUID: diffDetail.uuid,
+        Type: diffDetail.type,
+        Description: diffDetail.description,
+        'Data Type': diffDetail.datatype,
+        Unit: diffDetail.unit,
+        Max: diffDetail.max,
+        Min: diffDetail.min,
+        'Allowed Values': diffDetail.allowed,
+        Comment: diffDetail.comment,
+      }
+    : null
 
   const [confirmPopupOpen, setConfirmPopupOpen] = useState(false)
 
@@ -297,7 +316,10 @@ const ApiDetail = ({ apiDetails, forceSimpleMode }: ApiDetailProps) => {
         <DaText variant="regular-bold" className="flex text-da-secondary-500">
           VSS Specification
         </DaText>
-        <DaTableProperty properties={vssSpecificationProperties} />
+        <DaTableProperty
+          diffDetail={translatedDiffDetail}
+          properties={vssSpecificationProperties}
+        />
 
         {!forceSimpleMode && (
           <DaConsumedPrototypes
