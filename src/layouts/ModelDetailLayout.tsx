@@ -73,7 +73,7 @@ const ModelDetailLayout = () => {
         ) : (
           <div className="flex items-center h-full space-x-6 px-4">
             {cardIntro.map((_, index) => (
-              <DaSkeleton className="w-[100px] h-6" />
+              <DaSkeleton key={index} className="w-[100px] h-6" />
             ))}
           </div>
         )}
