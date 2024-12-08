@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { TbArrowLeft, TbArrowRight, TbArrowsHorizontal } from 'react-icons/tb'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import { updatePrototypeService } from '@/services/prototype.service'
@@ -34,61 +34,114 @@ const SignalFlowCell: React.FC<{ flow: SignalFlow | null }> = ({ flow }) => {
 const PrototypeTabFlow = () => {
   const { data: prototype } = useCurrentPrototype()
   const [isEditing, setIsEditing] = React.useState(false)
-  const getInitialFlowData = () => {
-    if (!prototype?.flow) {
-      return [
-        {
-          title: '[Example] Step 1: Open The Driver Door',
+  const [customerJourneySteps, setCustomerJourneySteps] = React.useState<
+    string[]
+  >([])
+  const [flowData, setFlowData] = React.useState<FlowStep[]>([])
+
+  // Parse customer journey steps
+  const parseCustomerJourneySteps = (journeyText: string | undefined) => {
+    if (!journeyText) return []
+    return journeyText
+      .split('#')
+      .filter((step) => step.trim())
+      .map((step) => step.split('\n')[0].trim())
+  }
+
+  // Initialize or update data when prototype changes
+  useEffect(() => {
+    if (prototype) {
+      // console.log('Prototype Flow:', prototype.flow)
+      // console.log('Customer Journey:', prototype.customer_journey)
+
+      // Parse customer journey steps
+      const steps = parseCustomerJourneySteps(prototype.customer_journey)
+      setCustomerJourneySteps(steps)
+
+      // Initialize flow data
+      try {
+        if (prototype.flow) {
+          const parsedFlow = JSON.parse(prototype.flow)
+          // console.log('Parsed Flow:', parsedFlow)
+          setFlowData(parsedFlow)
+        } else {
+          // Create initial empty flows for steps
+          const initialFlows = steps.map((step) => ({
+            title: step,
+            flows: [
+              {
+                offBoard: {
+                  smartPhone: '',
+                  p2c: null,
+                  cloud: '',
+                },
+                v2c: null,
+                onBoard: {
+                  sdvRuntime: '',
+                  s2s: null,
+                  embedded: '',
+                  s2e: null,
+                  sensors: '',
+                },
+              },
+            ],
+          }))
+          setFlowData(initialFlows)
+        }
+      } catch (error) {
+        console.error('Error parsing flow data:', error)
+      }
+    }
+  }, [prototype])
+
+  // Synchronize flow data with customer journey steps
+  useEffect(() => {
+    if (flowData.length > 0 && customerJourneySteps.length > 0) {
+      const synchronizedFlows = customerJourneySteps.map((stepTitle, index) => {
+        // Use index to find existing flow instead of title matching
+        const existingFlow = flowData[index]
+
+        if (existingFlow) {
+          return {
+            ...existingFlow, // Keep ALL existing flow data
+            title: stepTitle, // Only update the title from customer journey
+          }
+        }
+
+        // Create new empty flow for new step
+        return {
+          title: stepTitle,
           flows: [
             {
               offBoard: {
-                smartPhone: 'Request Door Open',
-                p2c: {
-                  direction: 'right',
-                  signal: 'Vehicle.Cabin.Door.Row1.DriverSide.IsLocked',
-                },
-                cloud: 'Authorize Door Opening',
+                smartPhone: '',
+                p2c: null,
+                cloud: '',
               },
-              v2c: {
-                direction: 'right',
-                signal: 'Vehicle.Cabin.Door.Row1.DriverSide.UnlockCommand',
-              },
+              v2c: null,
               onBoard: {
-                sdvRuntime: 'Unlock Driver Door',
-                s2s: {
-                  direction: 'right',
-                  signal: 'Vehicle.Cabin.Door.Row1.DriverSide.IsUnlocked',
-                },
-                embedded: 'Control Door Actuator',
-                s2e: {
-                  direction: 'right',
-                  signal: 'Vehicle.Cabin.Door.Row1.DriverSide.IsOpen',
-                },
-                sensors: 'Open Door',
+                sdvRuntime: '',
+                s2s: null,
+                embedded: '',
+                s2e: null,
+                sensors: '',
               },
             },
           ],
-        },
-      ]
-    }
+        }
+      })
 
-    try {
-      const parsedFlow = JSON.parse(prototype.flow)
-      return Array.isArray(parsedFlow) ? parsedFlow : []
-    } catch (error) {
-      console.error('Error parsing flow data:', error)
-      return []
+      setFlowData(synchronizedFlows)
     }
-  }
-  const [flowData, setFlowData] =
-    React.useState<FlowStep[]>(getInitialFlowData())
+  }, [customerJourneySteps])
 
   const handleSave = async (stringJsonData: string) => {
     if (!prototype) return
     try {
-      // console.log('Saving flow data:', stringJsonData)
-      setFlowData(JSON.parse(stringJsonData))
-      updatePrototypeService(prototype?.id, { flow: stringJsonData })
+      const parsedData = JSON.parse(stringJsonData)
+      console.log('Saving flow data:', parsedData)
+      setFlowData(parsedData)
+      await updatePrototypeService(prototype.id, { flow: stringJsonData })
       setIsEditing(false)
     } catch (error) {
       console.error('Error saving flow data:', error)

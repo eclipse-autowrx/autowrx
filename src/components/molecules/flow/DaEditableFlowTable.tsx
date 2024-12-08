@@ -8,7 +8,6 @@ import {
 } from 'react-icons/tb'
 import DaTooltip from '@/components/atoms/DaTooltip'
 import { FlowStep, Direction, SignalFlow } from '@/types/flow.type'
-import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import { DaButton } from '@/components/atoms/DaButton'
 import { DaInput } from '@/components/atoms/DaInput'
 import { DaTextarea } from '@/components/atoms/DaTextarea'
@@ -362,6 +361,7 @@ const DaPrototypeFlowEditor = ({
                     <ContextMenu>
                       <ContextMenuTrigger>
                         <DaInput
+                          disabled
                           type="text"
                           value={step.title}
                           onChange={(e) => {
@@ -374,7 +374,7 @@ const DaPrototypeFlowEditor = ({
                           wrapperClassName="bg-da-primary-100 border-da-primary-300 hover:border-da-primary-500"
                         />
                       </ContextMenuTrigger>
-                      <ContextMenuContent className="bg-white z-100">
+                      {/* <ContextMenuContent className="bg-white z-100">
                         <ContextMenuItem
                           className="cursor-pointer hover:text-red-500"
                           onClick={() => deleteStep(stepIndex)}
@@ -382,7 +382,7 @@ const DaPrototypeFlowEditor = ({
                           <TbTrash className="size-4 mr-1" />
                           Delete Step
                         </ContextMenuItem>
-                      </ContextMenuContent>
+                      </ContextMenuContent> */}
                     </ContextMenu>
                   </td>
                 </tr>
@@ -449,13 +449,13 @@ const DaPrototypeFlowEditor = ({
                 </tr>
               </React.Fragment>
             ))}
-            <tr>
+            {/* <tr>
               <td colSpan={9} className="px-2">
                 <DaButton onClick={addStep} className="w-full mt-2" size="sm">
                   <TbPlus className="size-4 mr-2" /> Add Step
                 </DaButton>
               </td>
-            </tr>
+            </tr> */}
           </tbody>
         </table>
       </div>
