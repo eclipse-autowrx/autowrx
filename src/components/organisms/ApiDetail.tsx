@@ -34,6 +34,7 @@ interface ApiDetailProps {
   apiDetails: any
   forceSimpleMode?: boolean
   diffDetail?: any
+  syncHeight?: boolean
 }
 
 // Randomly select one of the items from the list based on the name length
@@ -45,6 +46,7 @@ const ApiDetail = ({
   apiDetails,
   forceSimpleMode,
   diffDetail,
+  syncHeight,
 }: ApiDetailProps) => {
   const { bgClass } = getApiTypeClasses(apiDetails.type)
   const { data: model, refetch } = useCurrentModel()
@@ -319,6 +321,7 @@ const ApiDetail = ({
         <DaTableProperty
           diffDetail={translatedDiffDetail}
           properties={vssSpecificationProperties}
+          syncHeight={syncHeight}
         />
 
         {!forceSimpleMode && (

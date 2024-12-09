@@ -498,6 +498,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
                   apiDetails={selectedCompareObj?.current}
                   diffDetail={metadataDiff?.current}
                   forceSimpleMode={true}
+                  syncHeight
                 />
               </div>
             )}
@@ -510,6 +511,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
                   apiDetails={selectedCompareObj?.target}
                   diffDetail={metadataDiff?.target}
                   forceSimpleMode={true}
+                  syncHeight
                 />
               </div>
             )}
