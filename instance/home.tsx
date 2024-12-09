@@ -60,7 +60,7 @@ const home = [
         ),
       },
       {
-        title: 'Vehicle Catelog',
+        title: 'Vehicle Catalog',
         description:
           'Create a model to start building new connected vehicle app prototypes.',
         children: (
