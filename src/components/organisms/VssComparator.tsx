@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { DaApiList } from '../molecules/DaApiList'
 import { VehicleApi } from '@/types/model.type'
 import useModelStore from '@/stores/modelStore'
@@ -7,13 +7,28 @@ import DaText from '../atoms/DaText'
 import useListVSSVersions from '@/hooks/useListVSSVersions'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import ApiDetail from './ApiDetail'
-import Diff from 'diff-match-patch'
-import _ from 'lodash'
+import { DaButton } from '../atoms/DaButton'
+import { TbPlayerPlayFilled } from 'react-icons/tb'
+import clsx from 'clsx'
+import { compareMetadata } from '@/lib/vss'
 
 interface DaVssCompareProps {}
 
 const VssComparator = ({}: DaVssCompareProps) => {
   const CURRENT_MODEL = 'CURRENT_MODEL'
+
+  const [collapsed, setCollapsed] = useState({
+    new: false,
+    deleted: false,
+    modified: false,
+  })
+
+  const leftElement = useRef<HTMLDivElement>(null)
+  const drag = useRef({
+    x: 0,
+    leftWidth: 720,
+  })
+  const [isActive, setActive] = useState(false)
 
   const [modelsApi, setModelsApi] = useState<VehicleApi[]>([])
   const [selectedApi, setSelectedApi] = useState<VehicleApi>()
@@ -30,7 +45,6 @@ const VssComparator = ({}: DaVssCompareProps) => {
     current: any
     target: any
   } | null>(null)
-  const dmp = useMemo(() => new Diff(), [])
 
   const { data: versions } = useListVSSVersions()
   const { data: model } = useCurrentModel()
@@ -242,61 +256,6 @@ const VssComparator = ({}: DaVssCompareProps) => {
     setMergeMap(_mergeMap)
   }
 
-  const compareMetadata = (current: any, target: any) => {
-    if (!current || !target) {
-      return null
-    }
-    const resultCurrent: Record<string, any> = {}
-    const resultTarget: Record<string, any> = {}
-    try {
-      for (const key of Object.keys(current)) {
-        const currentValue = current[key]
-        const targetValue = target[key]
-
-        if (currentValue === targetValue) {
-          continue
-        }
-
-        if (!targetValue) {
-          resultCurrent[key] = { diff: -1 }
-          continue
-        }
-
-        if (
-          typeof currentValue === 'string' &&
-          typeof targetValue === 'string'
-        ) {
-          const diff = dmp.diff_main(currentValue, targetValue)
-          dmp.diff_cleanupSemantic(diff)
-
-          resultCurrent[key] = {
-            valueDiff: diff.filter(([type]) => type === -1 || type === 0),
-          }
-          resultTarget[key] = {
-            valueDiff: diff.filter(([type]) => type === 1 || type === 0),
-          }
-          continue
-        }
-
-        resultCurrent[key] = { valueDiff: -1 }
-        resultTarget[key] = { valueDiff: 1 }
-      }
-
-      for (const key of Object.keys(target)) {
-        if (!current[key]) {
-          resultTarget[key] = { diff: 1 }
-        }
-      }
-    } catch (error) {
-      console.error('Error comparing metadata:', error)
-    }
-
-    return {
-      current: _.isEmpty(resultCurrent) ? null : resultCurrent,
-      target: _.isEmpty(resultTarget) ? null : resultTarget,
-    }
-  }
-
   useEffect(() => {
     if (
       !selectedCompareObj ||
@@ -311,9 +270,43 @@ const VssComparator = ({}: DaVssCompareProps) => {
     )
   }, [selectedCompareObj])
 
+  const startResize = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    setActive(true)
+    drag.current = {
+      ...drag.current,
+      x: e.clientX,
+    }
+  }
+
+  const resizeFrame = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    const { x, leftWidth } = drag.current
+    if (isActive) {
+      const xDiff = Math.abs(e.clientX - x)
+      let newW = x > e.clientX ? leftWidth - xDiff : leftWidth + xDiff
+      newW = Math.max(200, newW)
+      newW = Math.min(800, newW)
+      drag.current = {
+        x: e.clientX,
+        leftWidth: newW,
+      }
+      leftElement.current?.style.setProperty('width', `${newW}px`)
+    }
+  }
+
+  const stopResize = () => {
+    setActive(false)
+  }
+
   return (
-    <div className="w-full h-full flex items-start">
-      <div className="flex-1 h-full hidden">
+    <div
+      className={clsx(
+        'w-full h-full flex items-start',
+        isActive && 'select-none',
+      )}
+      onMouseUp={stopResize}
+      onMouseMove={resizeFrame}
+    >
+      <div className="w-full h-full hidden">
         <div className="bg-slate-100 pl-2 mt-1">
           {/* <DaText variant='sub-title'>Model:</DaText>
         <select
@@ -342,8 +335,8 @@ const VssComparator = ({}: DaVssCompareProps) => {
         </div>
       </div>
 
-      <div className="flex-1 h-full flex flex-col">
-        <div className="bg-slate-100 px-2 pt-4 pb-2 flex items-center border-l-2 border-slate-200">
+      <div className="flex-1 h-full w-full flex flex-col">
+        <div className="bg-slate-100 px-2 pt-4 pb-2 flex items-center">
           <DaText variant="regular-bold" className="mx-2">
             Compare
           </DaText>
@@ -391,12 +384,28 @@ const VssComparator = ({}: DaVssCompareProps) => {
         </div>
 
         <div className="w-full grow flex overflow-auto">
-          <div className="w-[720px] min-w-[720px] border-r-2 border-slate-200 h-full overflow-auto">
-            <div className="mt-4 pl-2">
-              <DaText variant="sub-title">
-                New Signals ({newAPIs.length}):
-              </DaText>
-              <div className="max-h-[180px] overflow-y-auto bg-green-50">
+          <div ref={leftElement} className="h-full w-[720px] overflow-auto">
+            <div className="mt-4 pl-2 bg-green-50">
+              <div className="flex py-1 items-center gap-1">
+                <DaButton
+                  onClick={() =>
+                    setCollapsed((prev) => ({
+                      ...prev,
+                      new: !prev.new,
+                    }))
+                  }
+                  variant="plain"
+                  size="sm"
+                >
+                  <TbPlayerPlayFilled
+                    className={clsx(!collapsed.new && 'rotate-90')}
+                  />
+                </DaButton>
+                <DaText className="flex-1" variant="sub-title">
+                  New Signals ({newAPIs.length}):
+                </DaText>
+              </div>
+              {!collapsed.new && (
                 <DaApiList
                   apis={newAPIs}
                   onApiClick={(api) => {
@@ -404,14 +413,31 @@ const VssComparator = ({}: DaVssCompareProps) => {
                   }}
                   selectedApi={selectedApi}
                 />
-              </div>
+              )}
             </div>
 
-            <div className="mt-4 pl-2">
-              <DaText variant="sub-title">
-                Deleted Signals ({deletedAPIs.length}):
-              </DaText>
-              <div className="max-h-[180px] overflow-y-auto bg-red-50">
+            <div className="mt-4 pl-2 bg-red-50">
+              <div className="flex py-1 items-center gap-1">
+                <DaButton
+                  onClick={() =>
+                    setCollapsed((prev) => ({
+                      ...prev,
+                      deleted: !prev.deleted,
+                    }))
+                  }
+                  variant="plain"
+                  size="sm"
+                >
+                  <TbPlayerPlayFilled
+                    className={clsx(!collapsed.deleted && 'rotate-90')}
+                  />
+                </DaButton>
+                <DaText className="flex-1" variant="sub-title">
+                  Deleted Signals ({deletedAPIs.length}):
+                </DaText>
+              </div>
+
+              {!collapsed.deleted && (
                 <DaApiList
                   apis={deletedAPIs}
                   onApiClick={(api) => {
@@ -419,14 +445,31 @@ const VssComparator = ({}: DaVssCompareProps) => {
                   }}
                   selectedApi={selectedApi}
                 />
-              </div>
+              )}
             </div>
 
-            <div className="mt-4 pl-2">
-              <DaText variant="sub-title">
-                Metadata changed Signals ({modifiedAPIs.length}):
-              </DaText>
-              <div className="max-h-[180px] overflow-y-auto bg-orange-50">
+            <div className="mt-4 pl-2 bg-orange-50">
+              <div className="flex py-1 items-center gap-1">
+                <DaButton
+                  onClick={() =>
+                    setCollapsed((prev) => ({
+                      ...prev,
+                      modified: !prev.modified,
+                    }))
+                  }
+                  variant="plain"
+                  size="sm"
+                >
+                  <TbPlayerPlayFilled
+                    className={clsx(!collapsed.modified && 'rotate-90')}
+                  />
+                </DaButton>
+                <DaText className="flex-1" variant="sub-title">
+                  Metadata changed Signals ({modifiedAPIs.length}):
+                </DaText>
+              </div>
+
+              {!collapsed.modified && (
                 <DaApiList
                   apis={modifiedAPIs}
                   onApiClick={(api) => {
@@ -434,13 +477,20 @@ const VssComparator = ({}: DaVssCompareProps) => {
                   }}
                   selectedApi={selectedApi}
                 />
-              </div>
+              )}
             </div>
           </div>
 
-          <div className="grow border-slate-100 h-full overflow-auto flex">
+          <div
+            className="h-full w-3 justify-center bg-slate-100 flex cursor-w-resize"
+            onMouseDown={startResize}
+          >
+            <div className="w-[1px] h-full bg-da-gray-medium" />
+          </div>
+
+          <div className="flex-1 min-w-0 border-slate-100 h-full overflow-y-auto flex">
             {selectedCompareObj && selectedCompareObj.current && (
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <div className="text-xl font-semibold py-1 px-4 text-slate-700 bg-slate-300 border-r-2 border-slate-100">
                   New Version
                 </div>
@@ -452,7 +502,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
               </div>
             )}
             {selectedCompareObj && selectedCompareObj.target && (
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <div className="text-xl font-semibold py-1 px-4 text-slate-700 bg-slate-300">
                   Old Version
                 </div>

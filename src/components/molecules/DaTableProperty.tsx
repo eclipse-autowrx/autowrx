@@ -30,7 +30,7 @@ const DaTablePropertyItem = ({
         diffDetail?.diff === 1 && 'bg-green-50',
       )}
     >
-      <div className="flex min-w-[100px]">
+      <div className="flex min-w-[120px]">
         <DaText variant="small-bold" className="!flex text-da-gray-dark">
           {property}
         </DaText>
@@ -49,6 +49,7 @@ const DaTablePropertyItem = ({
                 variant="small"
                 key={index}
                 className={clsx(
+                  'break-words',
                   item[0] === -1 && 'bg-red-50',
                   item[0] === 1 && 'bg-green-50',
                 )}
@@ -58,7 +59,7 @@ const DaTablePropertyItem = ({
             ))}
           </div>
         ) : (
-          <DaText variant="small" className="!flex">
+          <DaText variant="small" className="!flex break-words">
             {value}
           </DaText>
         )}
