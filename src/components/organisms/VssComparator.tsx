@@ -23,11 +23,12 @@ const VssComparator = ({}: DaVssCompareProps) => {
     modified: false,
   })
 
-  const [leftWidth, setLeftWidth] = useState(720)
-  const [drag, setDrag] = useState({
-    active: false,
+  const leftElement = useRef<HTMLDivElement>(null)
+  const drag = useRef({
     x: 0,
+    leftWidth: 720,
   })
+  const [isActive, setActive] = useState(false)
 
   const [modelsApi, setModelsApi] = useState<VehicleApi[]>([])
   const [selectedApi, setSelectedApi] = useState<VehicleApi>()
@@ -270,34 +271,37 @@ const VssComparator = ({}: DaVssCompareProps) => {
   }, [selectedCompareObj])
 
   const startResize = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    setDrag({
-      active: true,
+    setActive(true)
+    drag.current = {
+      ...drag.current,
       x: e.clientX,
-    })
+    }
   }
 
   const resizeFrame = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    const { active, x } = drag
-    if (active) {
+    const { x, leftWidth } = drag.current
+    if (isActive) {
       const xDiff = Math.abs(e.clientX - x)
-      const newW = x > e.clientX ? leftWidth - xDiff : leftWidth + xDiff
-      setDrag((prev) => ({
-        ...prev,
+      let newW = x > e.clientX ? leftWidth - xDiff : leftWidth + xDiff
+      newW = Math.max(200, newW)
+      newW = Math.min(800, newW)
+      drag.current = {
         x: e.clientX,
-      }))
-      setLeftWidth(newW)
+        leftWidth: newW,
+      }
+      leftElement.current?.style.setProperty('width', `${newW}px`)
     }
   }
 
   const stopResize = () => {
-    setDrag({ ...drag, active: false })
+    setActive(false)
   }
 
   return (
     <div
       className={clsx(
         'w-full h-full flex items-start',
-        drag.active && 'select-none',
+        isActive && 'select-none',
       )}
       onMouseUp={stopResize}
       onMouseMove={resizeFrame}
@@ -380,12 +384,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
         </div>
 
         <div className="w-full grow flex overflow-auto">
-          <div
-            className="h-full min-w-[200px] max-w-[720px] overflow-auto"
-            style={{
-              width: leftWidth,
-            }}
-          >
+          <div ref={leftElement} className="h-full w-[720px] overflow-auto">
             <div className="mt-4 pl-2 bg-green-50">
               <div className="flex py-1 items-center gap-1">
                 <DaButton
