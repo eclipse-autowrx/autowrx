@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import {
+  TbAlertCircle,
   TbArrowLeft,
   TbArrowRight,
   TbArrowsHorizontal,
@@ -207,6 +208,10 @@ const DaPrototypeFlowEditor = ({
     ])
   }
 
+  const isLastFlowInStep = (stepIndex: number, flowIndex: number) => {
+    return data[stepIndex].flows.length === 1
+  }
+
   const getNestedValue = (obj: any, path: string[]) => {
     return path.reduce((acc, key) => acc?.[key], obj)
   }
@@ -393,13 +398,22 @@ const DaPrototypeFlowEditor = ({
                               />
                             )}
                             <ContextMenuContent className="bg-white z-100">
-                              <ContextMenuItem
-                                className="cursor-pointer hover:text-red-500"
-                                onClick={() => deleteFlow(stepIndex, flowIndex)}
-                              >
-                                <TbTrash className="size-4 mr-1" />
-                                Delete Flow
-                              </ContextMenuItem>
+                              {isLastFlowInStep(stepIndex, flowIndex) ? (
+                                <ContextMenuItem className="cursor-not-allowed text-gray-400">
+                                  <TbAlertCircle className="size-4 mr-1" />
+                                  Cannot delete last flow in step
+                                </ContextMenuItem>
+                              ) : (
+                                <ContextMenuItem
+                                  className="cursor-pointer hover:text-red-500"
+                                  onClick={() =>
+                                    deleteFlow(stepIndex, flowIndex)
+                                  }
+                                >
+                                  <TbTrash className="size-4 mr-1" />
+                                  Delete Flow
+                                </ContextMenuItem>
+                              )}
                             </ContextMenuContent>
                           </ContextMenuTrigger>
                         </td>
