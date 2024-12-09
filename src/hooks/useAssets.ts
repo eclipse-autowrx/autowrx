@@ -4,6 +4,8 @@ import {
   createAssetService,
   deleteAssetService,
   updateAssetService,
+  shareMyAsset,
+  getAssetById
 } from '@/services/assset.service'
 import { Asset } from '@/types/asset.type'
 
@@ -20,6 +22,7 @@ export const useAssets = () => {
       queryKey: ASSET_QUERY_KEY.assets,
       queryFn: listAssetsService,
     })
+
 
   // Create a new asset
   const createAsset = useMutation({
@@ -54,5 +57,7 @@ export const useAssets = () => {
     createAsset,
     deleteAsset,
     updateAsset,
+    shareMyAsset,
+    getAssetById
   }
 }

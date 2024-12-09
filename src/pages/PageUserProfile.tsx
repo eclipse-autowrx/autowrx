@@ -132,14 +132,14 @@ const PageUserProfile = () => {
                   </DaText>
                 </div>
               </div>
-              <div className="flex flex-col mt-8">
+              {/* <div className="flex flex-col mt-8">
                 <DaText variant="regular-bold" className="text-da-gray-dark">
                   UID
                 </DaText>
                 <DaText variant="small" className="text-da-gray-medium">
                   {user?.id}
                 </DaText>
-              </div>
+              </div> */}
               <div className="flex flex-col w-full mt-6">
                 <DaText variant="regular-bold" className="text-da-gray-dark">
                   Password

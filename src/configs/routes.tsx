@@ -51,6 +51,9 @@ const PageDiscussions = lazy(() =>
 const PageUserProfile = lazy(() =>
   retry(() => import('@/pages/PageUserProfile')),
 )
+const PageMyAssets = lazy(() =>
+  retry(() => import('@/pages/PageMyAssets')),
+)
 const PageManageFeatures = lazy(() =>
   retry(() => import('@/pages/PageManageFeatures')),
 )
@@ -229,6 +232,19 @@ const routesConfig: RouteConfig[] = [
             element: (
               <SuspenseProvider>
                 <PageUserProfile />
+              </SuspenseProvider>
+            ),
+          },
+        ],
+      },
+      {
+        path: '/my-assets',
+        children: [
+          {
+            index: true,
+            element: (
+              <SuspenseProvider>
+                <PageMyAssets />
               </SuspenseProvider>
             ),
           },
