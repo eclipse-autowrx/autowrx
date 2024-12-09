@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState, useMemo } from 'react'
 import { DaButton } from '@/components/atoms/DaButton'
 import { BsStars } from 'react-icons/bs'
 import { AddOn } from '@/types/addon.type'
@@ -61,10 +61,28 @@ const DaGenAI_Base = ({
       GenAI_Widget: config.genAI.widget,
     }[type] || []
 
-  const builtInAddOns: AddOn[] = addOnsArray.map((addOn: any) => ({
-    ...addOn,
-    customPayload: addOn.customPayload(prompt),
-  }))
+  const builtInAddOns = useMemo(() => {
+    return addOnsArray.map((addOn: any) => {
+      // Try to find matching addon from marketplace
+      const marketplaceMatch = marketplaceAddOns?.find(
+        (marketAddOn) => marketAddOn.id === addOn.id,
+      )
+
+      // If found in marketplace, merge marketplace data with built-in config
+      if (marketplaceMatch) {
+        return {
+          ...marketplaceMatch,
+          customPayload: addOn.customPayload(prompt),
+        }
+      }
+
+      // If not found, use original built-in addon
+      return {
+        ...addOn,
+        customPayload: addOn.customPayload(prompt),
+      }
+    })
+  }, [addOnsArray, marketplaceAddOns, prompt])
 
   const handleGenerate = async () => {
     if (!selectedAddOn) return
@@ -144,6 +162,13 @@ const DaGenAI_Base = ({
     }
   }, [builtInAddOns])
 
+  const filteredMarketplaceAddOns = useMemo(() => {
+    if (!marketplaceAddOns) return []
+
+    const builtInIds = builtInAddOns.map((addon: AddOn) => addon.id)
+    return marketplaceAddOns.filter((addon) => !builtInIds.includes(addon.id))
+  }, [marketplaceAddOns, builtInAddOns])
+
   return (
     <div className={cn('flex h-full w-full rounded', className)}>
       <div className="flex h-full w-full flex-col  border-r border-da-gray-light pl-0.5 pr-2">
@@ -172,7 +197,11 @@ const DaGenAI_Base = ({
           <DaGeneratorSelector
             builtInAddOns={builtInAddOns}
             marketplaceAddOns={
-              marketplaceAddOns ? (canUseGenAI ? marketplaceAddOns : []) : []
+              marketplaceAddOns
+                ? canUseGenAI
+                  ? filteredMarketplaceAddOns
+                  : []
+                : []
             }
             onSelectedGeneratorChange={(addOn: AddOn) => {
               setSelectedAddOn(addOn)
@@ -188,8 +217,10 @@ const DaGenAI_Base = ({
           <div className="flex w-full select-none justify-center items-center text-sm text-da-gray-dark py-1 font-medium">
             <TbAlertCircle className="text-red-500 mr-1 size-5" />
             Permission required
-            <span className="xl:flex hidden ml-1"> for GenAI access</span>.
-            Contact
+            <span className="xl:flex hidden ml-1">
+              {' '}
+              for GenAI access
+            </span>. Contact
             <span
               className="ml-1 py-0.5 px-1 rounded-lg bg-gray-100 hover:bg-gray-200 cursor-pointer"
               onClick={handleCopy}
@@ -214,11 +245,11 @@ const DaGenAI_Base = ({
         <DaButton
           variant="solid"
           disabled={!prompt || loading}
-          className={` !h-8 w-full ${!prompt ? '!mt-1' : ''}`}
+          className={cn('min-h-8 w-full py-1', prompt ? '!mt-1' : '')}
           onClick={handleGenerate}
         >
           <BsStars
-            className={`mb-0.5 mr-1 inline-block ${loading ? 'animate-pulse' : ''}`}
+            className={`mb-0.5 mr-1 inline-block size-4 ${loading ? 'animate-pulse' : ''}`}
           />
           {!loading && <div>{buttonText}</div>}
         </DaButton>

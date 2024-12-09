@@ -30,14 +30,13 @@ const config: any = {
     marketplaceUrl: 'https://store-be.digitalauto.tech/marketplace/genai',
     sdvApp: [
       {
-        id: 'mock-genai',
+        id: '674fed13c2a9e9b37198ff2a',
         type: 'GenAI_Python',
-        name: 'Mock SDV GenAI',
-        description: 'Mock GenAI for Python code generation',
+        name: 'SDV Copilot',
+        description: 'Support develop basic SDV Python App',
         apiKey: 'Empty',
-        endpointUrl: 'https://backend-core-etas.digital.auto/v2/genai/etas',
+        endpointUrl: 'https://backend-core-dev.digital.auto/v2/genai',
         customPayload: (prompt: string) => ({ prompt }),
-        isMock: true,
       },
     ],
     dashboard: [],
