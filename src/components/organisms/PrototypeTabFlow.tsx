@@ -10,11 +10,13 @@ import { DaButton } from '../atoms/DaButton'
 const DirectionArrow: React.FC<{ direction: Direction }> = ({ direction }) => {
   switch (direction) {
     case 'left':
-      return <TbArrowLeft className="mx-auto size-4" />
+      return <TbArrowLeft className="mx-auto size-5 text-da-primary-500" />
     case 'right':
-      return <TbArrowRight className="mx-auto size-4" />
+      return <TbArrowRight className="mx-auto size-5 text-da-primary-500" />
     case 'bi-direction':
-      return <TbArrowsHorizontal className="mx-auto size-4" />
+      return (
+        <TbArrowsHorizontal className="mx-auto size-5 text-da-primary-500" />
+      )
   }
 }
 
@@ -190,14 +192,14 @@ const PrototypeTabFlow = () => {
                   <tr className="text-sm text-white uppercase">
                     <th
                       colSpan={3}
-                      className="bg-gray-100 text-da-primary-500 border border-r-transparent font-semibold p-2 "
+                      className="bg-gray-100 text-da-primary-500 border border-da-primary-500 font-semibold p-2 "
                     >
                       Off-board
                     </th>
-                    <th className="border border-x-2 border-x-da-primary-500"></th>
+                    <th className=""></th>
                     <th
                       colSpan={5}
-                      className="bg-da-primary-500 border font-semibold p-2"
+                      className="bg-gray-100 text-da-primary-500 border border-da-primary-500 font-semibold p-2"
                     >
                       On-board
                     </th>
@@ -205,7 +207,7 @@ const PrototypeTabFlow = () => {
                   <tr className="text-xs text-da-gray-dark uppercase">
                     <th className="border p-2">Smart Phone</th>
 
-                    <th className="border p-2">
+                    <th className="border p-2 bg-da-primary-100 text-da-primary-500">
                       <DaTooltip
                         content="Phone to Cloud"
                         className="normal-case"
@@ -215,7 +217,7 @@ const PrototypeTabFlow = () => {
                     </th>
 
                     <th className="border p-2">Cloud</th>
-                    <th className="border p-2 border-x-2 border-x-da-primary-500">
+                    <th className="border p-2 bg-da-primary-100 text-da-primary-500">
                       <DaTooltip
                         content="Vehicle to Cloud"
                         className="normal-case"
@@ -224,7 +226,7 @@ const PrototypeTabFlow = () => {
                       </DaTooltip>
                     </th>
                     <th className="border p-2">SDV Runtime</th>
-                    <th className="border p-2">
+                    <th className="border p-2 bg-da-primary-100 text-da-primary-500">
                       <DaTooltip
                         content="System to System"
                         className="normal-case"
@@ -233,7 +235,7 @@ const PrototypeTabFlow = () => {
                       </DaTooltip>
                     </th>
                     <th className="border p-2">Embedded</th>
-                    <th className="border p-2">
+                    <th className="border p-2 bg-da-primary-100 text-da-primary-500">
                       <DaTooltip
                         content="System to ECU"
                         className="normal-case"
@@ -251,35 +253,35 @@ const PrototypeTabFlow = () => {
                         <tr>
                           <td
                             colSpan={9}
-                            className="border p-2 font-semibold bg-da-primary-100 text-da-primary-500"
+                            className="border p-2 font-semibold bg-da-primary-500 text-white"
                           >
                             {step.title}
                           </td>
                         </tr>
                         {step.flows.map((flow, flowIndex) => (
-                          <tr key={flowIndex}>
+                          <tr key={flowIndex} className="font-medium">
                             <td className="border p-2 text-center">
                               {flow.offBoard.smartPhone}
                             </td>
-                            <td className="border p-2 text-center">
+                            <td className="border p-2 text-center bg-da-primary-100">
                               <SignalFlowCell flow={flow.offBoard.p2c} />
                             </td>
                             <td className="border p-2 text-center">
                               {flow.offBoard.cloud}
                             </td>
-                            <td className="border border-x-2 border-x-da-primary-500 p-2 text-center">
+                            <td className="border p-2 text-center bg-da-primary-100">
                               <SignalFlowCell flow={flow.v2c} />
                             </td>
                             <td className="border p-2 text-center">
                               {flow.onBoard.sdvRuntime}
                             </td>
-                            <td className="border p-2 text-center">
+                            <td className="border p-2 text-center bg-da-primary-100">
                               <SignalFlowCell flow={flow.onBoard.s2s} />
                             </td>
                             <td className="border p-2 text-center">
                               {flow.onBoard.embedded}
                             </td>
-                            <td className="border p-2 text-center">
+                            <td className="border p-2 text-center bg-da-primary-100">
                               <SignalFlowCell flow={flow.onBoard.s2e} />
                             </td>
                             <td className="border p-2 text-center">
