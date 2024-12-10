@@ -101,6 +101,7 @@ const DaCollaboratorSearchPicker = ({
                   selected={selectedUsers.has(user.id)}
                   onSelect={onToggle}
                   user={user}
+                  isInviting={true}
                 />
               ))}
             </div>
@@ -136,10 +137,7 @@ const DaCollaboratorSearchPicker = ({
             {matchedInvitedUsers.map((user) => (
               <DaUserInviteItem
                 accessLevel={user.access_level}
-                allowUpdateAccess={
-                  user.access_level_id !== 'owner' &&
-                  user.access_level_id !== 'unknown'
-                }
+                forbidRemove={user.forbid_remove}
                 onRemoveAccess={onRemoveAccess}
                 selected={selectedUsers.has(user.id)}
                 onSelect={onToggle}
