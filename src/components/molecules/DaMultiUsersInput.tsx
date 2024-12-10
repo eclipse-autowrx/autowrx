@@ -3,28 +3,38 @@ import DaText from '../atoms/DaText'
 import { TbX } from 'react-icons/tb'
 import { InvitedUser } from '@/types/user.type'
 import { DaSelect, DaSelectItem } from '../atoms/DaSelect'
+import { AccessLevel } from '../organisms/AccessInvitation'
+import { useEffect } from 'react'
 
 type DaMultiUsersInputProps = {
   inputString: string
-  setInputString: React.Dispatch<React.SetStateAction<string>>
+  onInputStringChange: React.Dispatch<React.SetStateAction<string>>
   selectedUsers: InvitedUser[]
   onRemoveUser: (user: InvitedUser) => void
   inputRef: React.RefObject<HTMLInputElement>
   accessLevelId: string
-  setAccessLevelId: React.Dispatch<React.SetStateAction<string>>
+  onAccessLevelIdChange: React.Dispatch<React.SetStateAction<string>>
   className?: string
+  accessLevels?: AccessLevel[]
 }
 
 const DaMultiUsersInput = ({
   inputString,
-  setInputString,
+  onInputStringChange,
   selectedUsers,
   onRemoveUser,
   inputRef,
   accessLevelId,
-  setAccessLevelId,
+  onAccessLevelIdChange,
   className,
+  accessLevels,
 }: DaMultiUsersInputProps) => {
+  useEffect(() => {
+    if (accessLevels && accessLevels.length > 0) {
+      onAccessLevelIdChange(accessLevels[0].value)
+    }
+  }, [accessLevels])
+
   return (
     <div
       className={clsx(
@@ -57,7 +67,7 @@ const DaMultiUsersInput = ({
         <input
           ref={inputRef}
           value={inputString}
-          onChange={(e) => setInputString(e.target.value)}
+          onChange={(e) => onInputStringChange(e.target.value)}
           autoFocus
           className="block w-full bg-transparent text-da-gray-dark outline-none"
           placeholder="Email of users"
@@ -66,28 +76,24 @@ const DaMultiUsersInput = ({
         <div className="min-h-[6px]" />
       </div>
 
-      {selectedUsers.length > 0 && (
+      {accessLevels && selectedUsers.length > 0 && (
         <DaSelect
           wrapperClassName="ml-auto sticky self-start -top-[5px] -mt-[5px] -mb-1 -mr-1"
           className="h-7 border-none !shadow-none"
-          defaultValue="vss-api-4.1"
           value={accessLevelId}
-          onValueChange={(value) => setAccessLevelId(value)}
+          onValueChange={(value) => onAccessLevelIdChange(value)}
         >
-          <DaSelectItem
-            helperText="Can view and create prototype"
-            value="model_contributor"
-          >
-            <DaText className="da-label-small text-da-gray-dark">
-              Contributor
-            </DaText>
-          </DaSelectItem>
-          <DaSelectItem
-            helperText="Can view, create prototype and update model"
-            value="model_member"
-          >
-            <DaText className="da-label-small text-da-gray-dark">Member</DaText>
-          </DaSelectItem>
+          {accessLevels.map((accessLevel, index) => (
+            <DaSelectItem
+              helperText={accessLevel.helperText}
+              value={accessLevel.value}
+              key={index}
+            >
+              <DaText className="da-label-small text-da-gray-dark">
+                {accessLevel.label}
+              </DaText>
+            </DaSelectItem>
+          ))}
         </DaSelect>
       )}
     </div>

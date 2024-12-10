@@ -10,9 +10,16 @@ import { toast } from 'react-toastify'
 import { useMutation } from '@tanstack/react-query'
 import DaLoader from '../atoms/DaLoader'
 
+export type AccessLevel = {
+  value: string
+  label: string
+  helperText?: string
+}
+
 type AccessInvitationProps = {
   open: boolean
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>
+  onClose: () => void
+  accessLevels: AccessLevel[]
   invitedUsers?: InvitedUser[]
   onInviteUsers: (users: InvitedUser[], accessLevelId: string) => Promise<void>
   onInviteSuccess?: (accessLevelId?: string) => void
@@ -22,16 +29,17 @@ type AccessInvitationProps = {
 
 const AccessInvitation = ({
   open,
-  setOpen,
+  onClose,
   invitedUsers,
   onInviteUsers,
   onInviteSuccess,
   onRemoveUserAccess,
   label,
+  accessLevels,
 }: AccessInvitationProps) => {
   const inputRef = useRef<HTMLInputElement>(null)
   const [inputString, setInputString] = useState('')
-  const [accessLevelId, setAccessLevelId] = useState('model_contributor')
+  const [accessLevelId, setAccessLevelId] = useState('')
   const [selectedUsers, setSelectedUsers] = useState<Map<string, InvitedUser>>(
     new Map(),
   )
@@ -64,7 +72,7 @@ const AccessInvitation = ({
     },
     onSuccess: () => {
       setSelectedUsers(new Map())
-      setOpen(false)
+      onClose()
       onInviteSuccess && onInviteSuccess(accessLevelId)
     },
     onError: (error) => {
@@ -90,7 +98,7 @@ const AccessInvitation = ({
   })
 
   return (
-    <DaPopup state={[open, setOpen]} trigger={<></>}>
+    <DaPopup state={[open, onClose]} trigger={<></>}>
       <div className="flex h-[500px] max-h-[calc(100vw-160px)] min-h-[400px] w-[560px] max-w-[calc(100vw-80px)] flex-col rounded">
         <div className="mb-4">
           <DaText variant="sub-title" className="text-da-primary-500">
@@ -100,12 +108,13 @@ const AccessInvitation = ({
           <div className="mt-2 flex gap-4">
             <DaMultiUsersInput
               inputString={inputString}
-              setInputString={setInputString}
+              onInputStringChange={setInputString}
               selectedUsers={Array.from(selectedUsers.values())}
               onRemoveUser={(user) => removeUser(user)}
               inputRef={inputRef}
+              accessLevels={accessLevels}
               accessLevelId={accessLevelId}
-              setAccessLevelId={setAccessLevelId}
+              onAccessLevelIdChange={setAccessLevelId}
               className="min-w-0 flex-1"
             />
             <DaButton

@@ -36,6 +36,7 @@ export type InvitedUser = {
   image_file?: string
   name: string
   id: string
-  access_level?: string
-  access_level_id?: string
+  access_level?: string // Label of access level: Eg. Owner, Member, Contributor, ...
+  access_level_id?: string // ID of access level: Eg. owner, model_member, model_contributor, ...
+  forbid_remove?: boolean
 }
