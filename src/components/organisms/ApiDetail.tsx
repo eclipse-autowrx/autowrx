@@ -34,6 +34,7 @@ interface ApiDetailProps {
   apiDetails: any
   forceSimpleMode?: boolean
   diffDetail?: any
+  syncHeight?: boolean
 }
 
 // Randomly select one of the items from the list based on the name length
@@ -45,6 +46,7 @@ const ApiDetail = ({
   apiDetails,
   forceSimpleMode,
   diffDetail,
+  syncHeight,
 }: ApiDetailProps) => {
   const { bgClass } = getApiTypeClasses(apiDetails.type)
   const { data: model, refetch } = useCurrentModel()
@@ -188,7 +190,7 @@ const ApiDetail = ({
   const [confirmPopupOpen, setConfirmPopupOpen] = useState(false)
 
   return (
-    <div className="flex h-full w-full flex-col px-2">
+    <div className="flex h-full w-full flex-col">
       {!forceSimpleMode && <DaApiArchitecture apiName={apiDetails.name} />}
       <div className="grow"></div>
       <div className="flex h-fit w-full flex-row items-center justify-between space-x-2 bg-da-primary-100 py-2 pl-4 pr-2">
@@ -319,6 +321,7 @@ const ApiDetail = ({
         <DaTableProperty
           diffDetail={translatedDiffDetail}
           properties={vssSpecificationProperties}
+          syncHeight={syncHeight}
         />
 
         {!forceSimpleMode && (
