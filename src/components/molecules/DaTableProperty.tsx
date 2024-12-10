@@ -71,7 +71,7 @@ const DaTablePropertyItem = ({
         diffDetail?.diff === 1 && 'bg-green-50',
       )}
     >
-      <div className="flex min-w-[120px]">
+      <div className="flex w-[120px] min-w-[120px]">
         <DaText variant="small-bold" className="!flex text-da-gray-dark">
           {property}
         </DaText>

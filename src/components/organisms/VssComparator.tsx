@@ -10,7 +10,8 @@ import ApiDetail from './ApiDetail'
 import { DaButton } from '../atoms/DaButton'
 import { TbPlayerPlayFilled } from 'react-icons/tb'
 import clsx from 'clsx'
-import { compareMetadata } from '@/lib/vss'
+import Diff from 'diff-match-patch'
+import _ from 'lodash'
 
 interface DaVssCompareProps {}
 
@@ -45,6 +46,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
     current: any
     target: any
   } | null>(null)
+  const dmp = useMemo(() => new Diff(), [])
 
   const { data: versions } = useListVSSVersions()
   const { data: model } = useCurrentModel()
@@ -256,6 +258,77 @@ const VssComparator = ({}: DaVssCompareProps) => {
     setMergeMap(_mergeMap)
   }
 
+  const compareMetadata = (current: any, target: any) => {
+    if (!current || !target) {
+      return null
+    }
+    const resultCurrent: Record<string, any> = {}
+    const resultTarget: Record<string, any> = {}
+    try {
+      for (const key of Object.keys(current)) {
+        const currentValue = current[key]
+        const targetValue = target[key]
+
+        if (currentValue === targetValue) {
+          continue
+        }
+
+        if (!targetValue) {
+          resultCurrent[key] = { diff: 1 }
+          continue
+        }
+
+        if (Array.isArray(currentValue) && Array.isArray(targetValue)) {
+          resultCurrent[key] = {
+            valueDiff: currentValue.map((i, index) => [
+              targetValue.includes(i) ? 0 : 1,
+              `${String(i) + (index === currentValue.length - 1 ? '' : ', ')}`,
+            ]),
+          }
+          resultTarget[key] = {
+            valueDiff: targetValue.map((i, index) => [
+              currentValue.includes(i) ? 0 : -1,
+              `${String(i) + (index === currentValue.length - 1 ? '' : ', ')}`,
+            ]),
+          }
+          continue
+        }
+
+        if (
+          typeof currentValue === 'string' &&
+          typeof targetValue === 'string'
+        ) {
+          const diff = dmp.diff_main(currentValue, targetValue)
+          dmp.diff_cleanupSemantic(diff)
+
+          resultCurrent[key] = {
+            valueDiff: diff.filter(([type]) => type === 1 || type === 0),
+          }
+          resultTarget[key] = {
+            valueDiff: diff.filter(([type]) => type === -1 || type === 0),
+          }
+          continue
+        }
+
+        resultCurrent[key] = { valueDiff: 1 }
+        resultTarget[key] = { valueDiff: -1 }
+      }
+
+      for (const key of Object.keys(target)) {
+        if (!current[key]) {
+          resultTarget[key] = { diff: -1 }
+        }
+      }
+    } catch (error) {
+      console.error('Error comparing metadata:', error)
+    }
+
+    return {
+      current: _.isEmpty(resultCurrent) ? null : resultCurrent,
+      target: _.isEmpty(resultTarget) ? null : resultTarget,
+    }
+  }
+
   useEffect(() => {
     if (
       !selectedCompareObj ||
@@ -336,13 +409,13 @@ const VssComparator = ({}: DaVssCompareProps) => {
       </div>
 
       <div className="flex-1 h-full w-full flex flex-col">
-        <div className="bg-slate-100 px-2 pt-4 pb-2 flex items-center">
-          <DaText variant="regular-bold" className="mx-2">
+        <div className="bg-slate-100 p-2 flex items-center">
+          <DaText variant="small-bold" className="mx-2">
             Compare
           </DaText>
           <select
             aria-label="deploy-select"
-            className={`w-[280px] ml-2 border rounded font-semibold text-center px-2 py-1 min-w-[90px] text-da-gray-dark bg-lime-200`}
+            className={`w-[280px] cursor-pointer transition ml-2 border rounded font-semibold text-center da-label-small px-2 py-1 min-w-[90px] text-da-gray-dark bg-white shadow-small`}
             value={activeCurrentVer}
             onChange={(e) => {
               setActiveCurrentVer(e.target.value)
@@ -359,12 +432,12 @@ const VssComparator = ({}: DaVssCompareProps) => {
                 </option>
               ))}
           </select>
-          <DaText variant="regular-bold" className="mx-4">
+          <DaText variant="small-bold" className="mx-4">
             with
           </DaText>
           <select
             aria-label="deploy-select"
-            className={`w-[280px] ml-2 border rounded font-semibold text-center px-2 py-1 min-w-[90px] text-da-gray-dark bg-lime-200`}
+            className={`w-[280px] cursor-pointer transition ml-2 border rounded font-semibold da-label-small text-center px-2 py-1 min-w-[90px] text-da-gray-dark bg-white shadow-small`}
             value={activeTargetVer}
             onChange={(e) => {
               setActiveTargetVer(e.target.value)
@@ -401,7 +474,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
                     className={clsx(!collapsed.new && 'rotate-90')}
                   />
                 </DaButton>
-                <DaText className="flex-1" variant="sub-title">
+                <DaText className="flex-1" variant="regular-bold">
                   New Signals ({newAPIs.length}):
                 </DaText>
               </div>
@@ -432,7 +505,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
                     className={clsx(!collapsed.deleted && 'rotate-90')}
                   />
                 </DaButton>
-                <DaText className="flex-1" variant="sub-title">
+                <DaText className="flex-1" variant="regular-bold">
                   Deleted Signals ({deletedAPIs.length}):
                 </DaText>
               </div>
@@ -464,8 +537,8 @@ const VssComparator = ({}: DaVssCompareProps) => {
                     className={clsx(!collapsed.modified && 'rotate-90')}
                   />
                 </DaButton>
-                <DaText className="flex-1" variant="sub-title">
-                  Metadata changed Signals ({modifiedAPIs.length}):
+                <DaText className="flex-1" variant="regular-bold">
+                  Changed Signals ({modifiedAPIs.length}):
                 </DaText>
               </div>
 
@@ -488,10 +561,10 @@ const VssComparator = ({}: DaVssCompareProps) => {
             <div className="w-[1px] h-full bg-da-gray-medium" />
           </div>
 
-          <div className="flex-1 min-w-0 border-slate-100 h-full overflow-y-auto flex">
+          <div className="flex-1 min-w-0 border-slate-100 gap-0.5 h-full overflow-y-auto flex">
             {selectedCompareObj && selectedCompareObj.current && (
               <div className="flex-1 min-w-0">
-                <div className="text-xl font-semibold py-1 px-4 text-slate-700 bg-slate-300 border-r-2 border-slate-100">
+                <div className="text-lg font-semibold py-1 px-4 text-slate-700 bg-slate-300">
                   New Version
                 </div>
                 <ApiDetail
@@ -504,7 +577,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
             )}
             {selectedCompareObj && selectedCompareObj.target && (
               <div className="flex-1 min-w-0">
-                <div className="text-xl font-semibold py-1 px-4 text-slate-700 bg-slate-300">
+                <div className="text-lg font-semibold py-1 px-4 text-slate-700 bg-slate-300">
                   Old Version
                 </div>
                 <ApiDetail

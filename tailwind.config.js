@@ -77,6 +77,11 @@ module.exports = {
         lg: '32rem',
         xl: '36rem',
       },
+      boxShadow: {
+        small: '0 0 1px rgba(54, 61, 73, 0.7)',
+        medium: '0 0 4px rgba(54, 61, 73, 0.333)',
+        large: '0 0 8px rgba(54, 61, 73, 0.2)',
+      },
     },
   },
   plugins: [require('tailwindcss-animate')],
