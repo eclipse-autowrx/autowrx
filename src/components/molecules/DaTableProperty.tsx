@@ -1,6 +1,10 @@
 import { cn } from '@/lib/utils'
 import { DaText } from '../atoms/DaText'
 import clsx from 'clsx'
+import { useCallback, useEffect, useMemo } from 'react'
+import useRefStore from '@/stores/refStore'
+import useResizeObserver from '@/hooks/useResizeObserver'
+import _ from 'lodash'
 
 interface DaTablePropertyItemProps {
   property: string
@@ -9,28 +13,65 @@ interface DaTablePropertyItemProps {
     diff?: number
     valueDiff?: number | [number, string][]
   }
+  syncHeight?: boolean
 }
 
 const DaTablePropertyItem = ({
   property,
   value,
   diffDetail,
+  syncHeight,
 }: DaTablePropertyItemProps) => {
+  const [ref, rect] = useResizeObserver()
+  const setStoreValue = useRefStore((state) => state.setValue)
+
   const isValidValue =
     Array.isArray(diffDetail?.valueDiff) &&
     diffDetail.valueDiff.every(
       (item) => typeof item[0] === 'number' && typeof item[1] === 'string',
     )
 
+  const onLoad = useCallback((el: HTMLDivElement | null) => {
+    ref.current = el
+    if (!el || !syncHeight) return
+    const others = (useRefStore.getState().value[property] || []).filter(
+      Boolean,
+    )
+    if (others.includes(ref.current)) return
+    setStoreValue(property, [...others, ref.current])
+  }, [])
+
+  const syncHeightValue = useMemo(
+    () =>
+      _.debounce(async () => {
+        try {
+          ref.current?.style.setProperty('height', 'auto')
+          await new Promise((resolve) => setTimeout(resolve, 300))
+          const elements = useRefStore.getState().value[property] || []
+          const height = Math.max(...elements.map((el: any) => el.clientHeight))
+          if (height && height !== ref.current?.clientHeight)
+            ref.current?.style.setProperty('height', `${height}px`)
+        } catch (error) {
+          console.error('Error syncing height:', error)
+        }
+      }, 200),
+    [],
+  )
+
+  useEffect(() => {
+    if (syncHeight) syncHeightValue()
+  }, [rect?.width, syncHeightValue, syncHeight, value])
+
   return (
     <div
+      ref={onLoad}
       className={clsx(
         'flex w-[calc(100%+16px)] rounded-md h-fit py-2 text-da-gray-medium space-x-4 -mx-2 px-2',
         diffDetail?.diff === -1 && 'bg-red-50',
         diffDetail?.diff === 1 && 'bg-green-50',
       )}
     >
-      <div className="flex min-w-[100px]">
+      <div className="flex w-[120px] min-w-[120px]">
         <DaText variant="small-bold" className="!flex text-da-gray-dark">
           {property}
         </DaText>
@@ -49,6 +90,7 @@ const DaTablePropertyItem = ({
                 variant="small"
                 key={index}
                 className={clsx(
+                  'break-words',
                   item[0] === -1 && 'bg-red-50',
                   item[0] === 1 && 'bg-green-50',
                 )}
@@ -58,7 +100,7 @@ const DaTablePropertyItem = ({
             ))}
           </div>
         ) : (
-          <DaText variant="small" className="!flex">
+          <DaText variant="small" className="!flex break-words">
             {value}
           </DaText>
         )}
@@ -71,12 +113,14 @@ interface DaTablePropertyProps {
   properties: { name: string; value: string }[]
   className?: string
   diffDetail?: any
+  syncHeight?: boolean
 }
 
 export const DaTableProperty = ({
   properties,
   className,
   diffDetail,
+  syncHeight,
 }: DaTablePropertyProps) => {
   return (
     <div
@@ -91,6 +135,7 @@ export const DaTableProperty = ({
           property={item.name}
           value={item.value}
           diffDetail={diffDetail?.[item.name]}
+          syncHeight={syncHeight}
         />
       ))}
     </div>

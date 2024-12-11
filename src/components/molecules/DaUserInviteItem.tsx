@@ -9,19 +9,21 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
 type DaUserInviteItemProps = {
   user: InvitedUser
+  isInviting?: boolean
   selected?: boolean
   onSelect: (user: InvitedUser) => void
   accessLevel?: string
-  allowUpdateAccess?: boolean
+  forbidRemove?: boolean
   onRemoveAccess?: (user: InvitedUser) => void
 }
 
 const DaUserInviteItem = ({
   user,
+  isInviting,
   selected,
   onSelect,
-  accessLevel,
-  allowUpdateAccess,
+  accessLevel = 'Action',
+  forbidRemove,
   onRemoveAccess,
 }: DaUserInviteItemProps) => {
   const { data: self } = useSelfProfileQuery()
@@ -29,11 +31,11 @@ const DaUserInviteItem = ({
   return (
     <div
       onClick={() => {
-        if (!accessLevel) onSelect(user)
+        if (isInviting) onSelect(user)
       }}
       className={clsx(
         'flex items-center gap-2 px-5 py-2 text-left hover:bg-da-black/5',
-        accessLevel ? 'cursor-default' : 'cursor-pointer',
+        !isInviting ? 'cursor-default' : 'cursor-pointer',
       )}
     >
       <DaAvatar src={user.image_file} />
@@ -47,13 +49,13 @@ const DaUserInviteItem = ({
         </DaText>
       </div>
 
-      {accessLevel ? (
-        <div className={clsx(!allowUpdateAccess && 'pointer-events-none')}>
+      {!isInviting ? (
+        <div className={clsx(forbidRemove && 'pointer-events-none')}>
           <DaMenu
             trigger={
               <DaText className="da-label-small flex !cursor-pointer items-center text-da-gray-medium">
                 {accessLevel}{' '}
-                {allowUpdateAccess && <TbChevronDown className="ml-1" />}
+                {!forbidRemove && <TbChevronDown className="ml-1" />}
               </DaText>
             }
           >

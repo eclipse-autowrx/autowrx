@@ -27,6 +27,19 @@ interface UserItemProps {
   onRemoveUser: (userId: string) => void
 }
 
+const accessLevels = [
+  {
+    value: 'model_contributor',
+    label: 'Contributor',
+    helperText: 'Can view and create prototype',
+  },
+  {
+    value: 'model_member',
+    label: 'Member',
+    helperText: 'Can view, create prototype and update model',
+  },
+]
+
 const UserItem = ({ user, onRemoveUser }: UserItemProps) => {
   if (!user) {
     return null
@@ -123,6 +136,7 @@ const DaContributorList = ({ className }: ContributorListProps) => {
         image_file: model.created_by.image_file,
         access_level: 'Owner',
         access_level_id: 'owner',
+        forbid_remove: true,
       })
     }
 
@@ -212,7 +226,8 @@ const DaContributorList = ({ className }: ContributorListProps) => {
       <AccessInvitation
         label="Collaborator Invitation"
         open={open}
-        setOpen={setOpen}
+        onClose={() => setOpen(false)}
+        accessLevels={accessLevels}
         invitedUsers={invitedUsers}
         onInviteUsers={handleInviteUsers}
         onInviteSuccess={(role) => {
