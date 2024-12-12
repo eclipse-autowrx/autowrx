@@ -6,6 +6,7 @@ import DaTooltip from '../atoms/DaTooltip'
 import { FlowStep, Direction, SignalFlow } from '@/types/flow.type'
 import DaPrototypeFlowEditor from '../molecules/flow/DaEditableFlowTable'
 import { DaButton } from '../atoms/DaButton'
+import { GoTriangleRight } from 'react-icons/go'
 
 const DirectionArrow: React.FC<{ direction: Direction }> = ({ direction }) => {
   switch (direction) {
@@ -152,8 +153,8 @@ const PrototypeTabFlow = () => {
 
   return (
     <div className="flex w-full h-full p-2 gap-2 bg-slate-100 text-xs">
-      <div className="flex w-full h-full flex-col bg-white rounded-md p-4">
-        <div className="w-full overflow-x-auto">
+      <div className="flex w-full h-full flex-col bg-white rounded-md py-4 px-6">
+        <div className="w-full ">
           {isEditing ? (
             <DaPrototypeFlowEditor
               initialData={flowData}
@@ -188,26 +189,26 @@ const PrototypeTabFlow = () => {
                   <col className="w-[8%]" />
                   <col className="w-[16%]" />
                 </colgroup>
-                <thead>
-                  <tr className="text-sm text-white uppercase">
+                <thead className="bg-gradient-to-r from-da-primary-500 to-da-secondary-500 text-white">
+                  <tr className="text-sm uppercase">
                     <th
                       colSpan={3}
-                      className="bg-gray-100 text-da-primary-500 border border-da-primary-500 font-semibold p-2 "
+                      className="font-semibold p-2 border border-white"
                     >
                       Off-board
                     </th>
-                    <th className=""></th>
+                    <th className="border border-white"></th>
                     <th
                       colSpan={5}
-                      className="bg-gray-100 text-da-primary-500 border border-da-primary-500 font-semibold p-2"
+                      className="font-semibold p-2 border border-white"
                     >
                       On-board
                     </th>
                   </tr>
-                  <tr className="text-xs text-da-gray-dark uppercase">
-                    <th className="border p-2">Smart Phone</th>
+                  <tr className="text-xs uppercase">
+                    <th className="p-2 border border-white">Smart Phone</th>
 
-                    <th className="border p-2 bg-da-primary-100 text-da-primary-500">
+                    <th className="p-2 border border-white bg-opacity-20">
                       <DaTooltip
                         content="Phone to Cloud"
                         className="normal-case"
@@ -216,8 +217,8 @@ const PrototypeTabFlow = () => {
                       </DaTooltip>
                     </th>
 
-                    <th className="border p-2">Cloud</th>
-                    <th className="border p-2 bg-da-primary-100 text-da-primary-500">
+                    <th className="p-2 border border-white">Cloud</th>
+                    <th className="p-2 border border-white bg-opacity-20">
                       <DaTooltip
                         content="Vehicle to Cloud"
                         className="normal-case"
@@ -225,8 +226,8 @@ const PrototypeTabFlow = () => {
                         <div className="cursor-pointer">v2c</div>
                       </DaTooltip>
                     </th>
-                    <th className="border p-2">SDV Runtime</th>
-                    <th className="border p-2 bg-da-primary-100 text-da-primary-500">
+                    <th className="p-2 border border-white">SDV Runtime</th>
+                    <th className="p-2 border border-white bg-opacity-20">
                       <DaTooltip
                         content="System to System"
                         className="normal-case"
@@ -234,8 +235,8 @@ const PrototypeTabFlow = () => {
                         <div className="cursor-pointer">s2s</div>
                       </DaTooltip>
                     </th>
-                    <th className="border p-2">Embedded</th>
-                    <th className="border p-2 bg-da-primary-100 text-da-primary-500">
+                    <th className="p-2 border border-white">Embedded</th>
+                    <th className="p-2 border border-white bg-opacity-20">
                       <DaTooltip
                         content="System to ECU"
                         className="normal-case"
@@ -243,9 +244,12 @@ const PrototypeTabFlow = () => {
                         <div className="cursor-pointer">s2e</div>
                       </DaTooltip>
                     </th>
-                    <th className="border p-2">Sensors/Actuators</th>
+                    <th className="p-2 border border-white truncate">
+                      Sensors/Actuators
+                    </th>
                   </tr>
                 </thead>
+
                 <tbody>
                   {flowData && flowData.length > 0 ? (
                     flowData.map((step, stepIndex) => (
@@ -253,9 +257,11 @@ const PrototypeTabFlow = () => {
                         <tr>
                           <td
                             colSpan={9}
-                            className="border p-2 font-semibold bg-da-primary-500 text-white"
+                            className="relative border font-semibold bg-da-primary-500 text-white h-8 px-8"
                           >
+                            <GoTriangleRight className="absolute -left-2 top-0 -translate-x-1/4 -translate-y-1/4 size-[60px] bg-transparent text-white" />
                             {step.title}
+                            <GoTriangleRight className="absolute -right-[7px] top-[0.5px] translate-x-1/2  -translate-y-1/4 size-[60px] bg-transparent text-da-primary-500" />
                           </td>
                         </tr>
                         {step.flows.map((flow, flowIndex) => (

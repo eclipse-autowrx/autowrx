@@ -305,50 +305,46 @@ const DaPrototypeFlowEditor = ({
             <col className="w-[11.11%]" />
             <col className="w-[11.11%]" />
           </colgroup>
-          <thead>
-            <tr className="text-sm text-white uppercase">
-              <th
-                colSpan={3}
-                className="bg-gray-100 text-da-primary-500 border border-da-primary-500 font-semibold p-2 "
-              >
+          <thead className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+            <tr className="text-sm uppercase">
+              <th colSpan={3} className="font-semibold p-2 border border-white">
                 Off-board
               </th>
-              <th className=""></th>
-              <th
-                colSpan={5}
-                className="bg-gray-100 text-da-primary-500 border border-da-primary-500 font-semibold p-2"
-              >
+              <th className="border border-white"></th>
+              <th colSpan={5} className="font-semibold p-2 border border-white">
                 On-board
               </th>
             </tr>
-            <tr className="text-xs text-da-gray-dark uppercase">
-              <th className="border p-2">Smart Phone</th>
+            <tr className="text-xs uppercase">
+              <th className="p-2 border border-white">Smart Phone</th>
 
-              <th className="border p-2 bg-da-primary-100 text-da-primary-500">
+              <th className="p-2 border border-white bg-opacity-20">
                 <DaTooltip content="Phone to Cloud" className="normal-case">
                   <div className="cursor-pointer">p2c</div>
                 </DaTooltip>
               </th>
 
-              <th className="border p-2">Cloud</th>
-              <th className="border p-2 bg-da-primary-100 text-da-primary-500">
+              <th className="p-2 border border-white">Cloud</th>
+              <th className="p-2 border border-white bg-opacity-20">
                 <DaTooltip content="Vehicle to Cloud" className="normal-case">
                   <div className="cursor-pointer">v2c</div>
                 </DaTooltip>
               </th>
-              <th className="border p-2">SDV Runtime</th>
-              <th className="border p-2 bg-da-primary-100 text-da-primary-500">
+              <th className="p-2 border border-white">SDV Runtime</th>
+              <th className="p-2 border border-white bg-opacity-20">
                 <DaTooltip content="System to System" className="normal-case">
                   <div className="cursor-pointer">s2s</div>
                 </DaTooltip>
               </th>
-              <th className="border p-2">Embedded</th>
-              <th className="border p-2 bg-da-primary-100 text-da-primary-500">
+              <th className="p-2 border border-white">Embedded</th>
+              <th className="p-2 border border-white bg-opacity-20">
                 <DaTooltip content="System to ECU" className="normal-case">
                   <div className="cursor-pointer">s2e</div>
                 </DaTooltip>
               </th>
-              <th className="border p-2 truncate">Sensors/Actuators</th>
+              <th className="p-2 border border-white truncate">
+                Sensors/Actuators
+              </th>
             </tr>
           </thead>
 
