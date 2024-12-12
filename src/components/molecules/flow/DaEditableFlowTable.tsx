@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import {
-  TbAlertCircle,
   TbArrowLeft,
   TbArrowRight,
   TbArrowsHorizontal,
@@ -10,16 +9,9 @@ import {
 import DaTooltip from '@/components/atoms/DaTooltip'
 import { FlowStep, Direction, SignalFlow } from '@/types/flow.type'
 import { DaButton } from '@/components/atoms/DaButton'
-import { DaInput } from '@/components/atoms/DaInput'
+import { GoTriangleRight } from 'react-icons/go'
 import { DaTextarea } from '@/components/atoms/DaTextarea'
-import {
-  ContextMenu,
-  ContextMenuTrigger,
-  ContextMenuItem,
-  ContextMenuContent,
-} from '@/components/atoms/context-menu'
 import { cn } from '@/lib/utils'
-
 interface TextCellProps {
   value: string
   onChange: (value: string) => void
@@ -27,6 +19,7 @@ interface TextCellProps {
 
 const TextCell = ({ value, onChange }: TextCellProps) => (
   <DaTextarea
+    placeholder="Enter description"
     value={value}
     onChange={(e) => onChange(e.target.value)}
     className="font-medium w-full h-full text-center resize-none p-2"
@@ -123,7 +116,7 @@ const DirectionSelect = ({ value, onChange }: DirectionSelectProps) => {
   return (
     <button
       onClick={handleToggle}
-      className="h-9 flex justify-center items-center border border-da-primary-500 rounded-md w-full focus:outline-none text-da-primary-500"
+      className="h-9 flex justify-center items-center border rounded-md w-full focus:outline-none text-da-primary-500"
     >
       {icons[value]}
     </button>
@@ -140,7 +133,7 @@ const SignalFlowEditor = ({ flow, onChange }: SignalFlowEditorProps) => {
   const currentFlow = flow || { direction: 'left', signal: '' }
 
   return (
-    <div className="flex flex-col gap-1 min-h-[75px] bg-da-primary-100 p-2">
+    <div className="flex flex-col gap-1 min-h-[75px] p-2">
       <DirectionSelect
         value={currentFlow.direction}
         onChange={(direction) => onChange({ ...currentFlow, direction })}
@@ -155,7 +148,7 @@ const SignalFlowEditor = ({ flow, onChange }: SignalFlowEditorProps) => {
       <input
         value={currentFlow.signal}
         onChange={(e) => onChange({ ...currentFlow, signal: e.target.value })}
-        className="w-full font-medium rounded-md h-9 border border-da-primary-500 px-2 ring-0 outline-none bg-da-primary-100 text-da-primary-500 placeholder:text-da-primary-500"
+        className="w-full text-xs font-medium rounded-md h-9 border px-2 ring-0 outline-none focus-within:border-da-primary-500  text-da-primary-500 placeholder:text-da-primary-500"
         placeholder="Signal"
       />
     </div>
@@ -292,8 +285,8 @@ const DaPrototypeFlowEditor = ({
           </DaButton>
         </div>
       </div>
-      <div className="flex flex-col w-full h-full overflow-y-auto">
-        <table className=" table-fixed w-full overflow">
+      <>
+        <table className="table-fixed w-full">
           <colgroup>
             <col className="w-[11.11%]" />
             <col className="w-[11.11%]" />
@@ -305,50 +298,46 @@ const DaPrototypeFlowEditor = ({
             <col className="w-[11.11%]" />
             <col className="w-[11.11%]" />
           </colgroup>
-          <thead>
-            <tr className="text-sm text-white uppercase">
-              <th
-                colSpan={3}
-                className="bg-gray-100 text-da-primary-500 border border-da-primary-500 font-semibold p-2 "
-              >
+          <thead className="bg-gradient-to-r from-da-primary-500 to-da-secondary-500 text-white">
+            <tr className="text-sm uppercase">
+              <th colSpan={3} className="font-semibold p-2 border border-white">
                 Off-board
               </th>
-              <th className=""></th>
-              <th
-                colSpan={5}
-                className="bg-gray-100 text-da-primary-500 border border-da-primary-500 font-semibold p-2"
-              >
+              <th className="border border-white"></th>
+              <th colSpan={5} className="font-semibold p-2 border border-white">
                 On-board
               </th>
             </tr>
-            <tr className="text-xs text-da-gray-dark uppercase">
-              <th className="border p-2">Smart Phone</th>
+            <tr className="text-xs uppercase">
+              <th className="p-2 border border-white">Smart Phone</th>
 
-              <th className="border p-2 bg-da-primary-100 text-da-primary-500">
+              <th className="p-2 border border-white bg-opacity-20">
                 <DaTooltip content="Phone to Cloud" className="normal-case">
                   <div className="cursor-pointer">p2c</div>
                 </DaTooltip>
               </th>
 
-              <th className="border p-2">Cloud</th>
-              <th className="border p-2 bg-da-primary-100 text-da-primary-500">
+              <th className="p-2 border border-white">Cloud</th>
+              <th className="p-2 border border-white bg-opacity-20">
                 <DaTooltip content="Vehicle to Cloud" className="normal-case">
                   <div className="cursor-pointer">v2c</div>
                 </DaTooltip>
               </th>
-              <th className="border p-2">SDV Runtime</th>
-              <th className="border p-2 bg-da-primary-100 text-da-primary-500">
+              <th className="p-2 border border-white">SDV Runtime</th>
+              <th className="p-2 border border-white bg-opacity-20">
                 <DaTooltip content="System to System" className="normal-case">
                   <div className="cursor-pointer">s2s</div>
                 </DaTooltip>
               </th>
-              <th className="border p-2">Embedded</th>
-              <th className="border p-2 bg-da-primary-100 text-da-primary-500">
+              <th className="p-2 border border-white">Embedded</th>
+              <th className="p-2 border border-white bg-opacity-20">
                 <DaTooltip content="System to ECU" className="normal-case">
                   <div className="cursor-pointer">s2e</div>
                 </DaTooltip>
               </th>
-              <th className="border p-2 truncate">Sensors/Actuators</th>
+              <th className="p-2 border border-white truncate">
+                Sensors/Actuators
+              </th>
             </tr>
           </thead>
 
@@ -358,67 +347,50 @@ const DaPrototypeFlowEditor = ({
                 <tr>
                   <td
                     colSpan={9}
-                    className="border p-2 bg-da-primary-500 text-white font-semibold text-sm"
+                    className="relative text-xs border font-semibold bg-da-primary-500 text-white h-9 px-8"
                   >
+                    <GoTriangleRight className="absolute -left-2 top-0 -translate-x-1/4 -translate-y-1/4 size-[66px] bg-transparent text-white" />
                     {step.title}
+                    <GoTriangleRight className="absolute -right-[8px] top-[0.5px] translate-x-1/2  -translate-y-1/4 size-[66px] bg-transparent text-da-primary-500" />
                   </td>
                 </tr>
                 {step.flows.map((flow, flowIndex) => (
-                  <tr key={flowIndex}>
+                  <tr key={flowIndex} className="group">
                     {FLOW_CELLS.map((cell) => (
-                      <ContextMenu>
-                        <td
-                          key={cell.key}
-                          className={`border ${cell.key === 'v2c' ? '' : ''}`}
-                        >
-                          <ContextMenuTrigger>
-                            {cell.isSignalFlow ? (
-                              <SignalFlowEditor
-                                flow={getNestedValue(flow, cell.path)}
-                                onChange={(newFlow) =>
-                                  updateFlow(
-                                    stepIndex,
-                                    flowIndex,
-                                    cell.path,
-                                    newFlow,
-                                  )
-                                }
-                              />
-                            ) : (
-                              <TextCell
-                                value={getNestedValue(flow, cell.path)}
-                                onChange={(value) =>
-                                  updateFlow(
-                                    stepIndex,
-                                    flowIndex,
-                                    cell.path,
-                                    value,
-                                  )
-                                }
-                              />
-                            )}
-                            <ContextMenuContent className="bg-white z-100">
-                              {isLastFlowInStep(stepIndex, flowIndex) ? (
-                                <ContextMenuItem className="cursor-not-allowed text-gray-400">
-                                  <TbAlertCircle className="size-4 mr-1" />
-                                  Cannot delete last flow in step
-                                </ContextMenuItem>
-                              ) : (
-                                <ContextMenuItem
-                                  className="cursor-pointer hover:text-red-500"
-                                  onClick={() =>
-                                    deleteFlow(stepIndex, flowIndex)
-                                  }
-                                >
-                                  <TbTrash className="size-4 mr-1" />
-                                  Delete Flow
-                                </ContextMenuItem>
-                              )}
-                            </ContextMenuContent>
-                          </ContextMenuTrigger>
-                        </td>
-                      </ContextMenu>
+                      <td
+                        key={cell.key}
+                        className={`border ${cell.key === 'v2c' ? '' : ''}`}
+                      >
+                        {cell.isSignalFlow ? (
+                          <SignalFlowEditor
+                            flow={getNestedValue(flow, cell.path)}
+                            onChange={(newFlow) =>
+                              updateFlow(
+                                stepIndex,
+                                flowIndex,
+                                cell.path,
+                                newFlow,
+                              )
+                            }
+                          />
+                        ) : (
+                          <TextCell
+                            value={getNestedValue(flow, cell.path)}
+                            onChange={(value) =>
+                              updateFlow(stepIndex, flowIndex, cell.path, value)
+                            }
+                          />
+                        )}
+                      </td>
                     ))}
+                    {!isLastFlowInStep(stepIndex, flowIndex) && (
+                      <button
+                        className="min-h-[90px] ml-1 cursor-pointer hover:text-red-500 group-hover:block"
+                        onClick={() => deleteFlow(stepIndex, flowIndex)}
+                      >
+                        <TbTrash className="size-5" />
+                      </button>
+                    )}
                   </tr>
                 ))}
                 <tr>
@@ -437,7 +409,7 @@ const DaPrototypeFlowEditor = ({
             ))}
           </tbody>
         </table>
-      </div>
+      </>
     </div>
   )
 }
