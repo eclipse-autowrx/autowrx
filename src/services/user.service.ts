@@ -9,8 +9,8 @@ export const getSelfService = async () => {
   return (await serverAxios.get<User>('/users/self')).data
 }
 
-export const getUserService = async (id: string) => {
-  return (await serverAxios.get<User>(`/users/${id}`)).data
+export const getUsersService = async (ids: string) => {
+  return (await serverAxios.get<any>(`/users/${ids}`)).data
 }
 
 export const listUsersService = async (

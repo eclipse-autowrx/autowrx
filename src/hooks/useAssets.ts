@@ -5,6 +5,7 @@ import {
   deleteAssetService,
   updateAssetService,
   shareMyAsset,
+  removeUserFromShareList,
   getAssetById
 } from '@/services/assset.service'
 import { Asset } from '@/types/asset.type'
@@ -58,6 +59,7 @@ export const useAssets = () => {
     deleteAsset,
     updateAsset,
     shareMyAsset,
+    removeUserFromShareList,
     getAssetById
   }
 }
