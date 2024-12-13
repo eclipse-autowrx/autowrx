@@ -1,5 +1,6 @@
 import { User } from '@/types/user.type'
 import { TbLogout, TbUser } from 'react-icons/tb'
+import { BsBox } from "react-icons/bs";
 import { DaButton } from '../atoms/DaButton'
 import useAuthStore from '@/stores/authStore'
 import DaMenu from '../atoms/DaMenu'
@@ -47,6 +48,14 @@ const DaUserMenu = ({ user }: DaUserDropdownProps) => {
         >
           <DaText variant="small-medium" className="flex items-center gap-2 ">
             <TbUser /> User Profile
+          </DaText>
+        </Link>
+        <Link
+          to="/my-assets"
+          className="flex px-4 py-2 da-menu-item items-center"
+        >
+          <DaText variant="small-medium" className="flex items-center gap-2 ">
+            <BsBox /> My Assets
           </DaText>
         </Link>
         <div

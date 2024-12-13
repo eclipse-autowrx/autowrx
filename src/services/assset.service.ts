@@ -35,3 +35,15 @@ export const updateAssetService = async (
   const response = await serverAxios.patch(`/assets/${assetId}`, payload)
   return response.data
 }
+
+export const shareMyAsset = async (assetId: string, payload: any): Promise<any> => {
+  const response = await serverAxios.post(`/assets/${assetId}/permissions`, payload)
+  return response.data
+}
+
+export const getAssetById = async (assetId: string): Promise<any> => {
+  const response = await serverAxios.get(`/assets/${assetId}`)
+  return response.data
+}
+
+
