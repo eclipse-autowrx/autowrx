@@ -41,9 +41,16 @@ export const shareMyAsset = async (assetId: string, payload: any): Promise<any> 
   return response.data
 }
 
+export const removeUserFromShareList =  async (assetId: string, userId: string, role: string): Promise<any> => {
+  const response = await serverAxios.delete(`/assets/${assetId}/permissions?userId=${userId}&role=${role}`)
+  return response.data
+}
+
+
 export const getAssetById = async (assetId: string): Promise<any> => {
   const response = await serverAxios.get(`/assets/${assetId}`)
   return response.data
 }
+
 
 

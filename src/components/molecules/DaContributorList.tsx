@@ -1,8 +1,6 @@
 import { useMemo, useState } from 'react'
-import { DaText } from '@/components/atoms/DaText'
 import { TbMinus, TbUserPlus } from 'react-icons/tb'
 import { DaButton } from '../atoms/DaButton'
-import { DaAvatar } from '../atoms/DaAvatar'
 import { cn } from '@/lib/utils'
 import DaSelectUserPopup from './DaSelectUserPopup'
 import { InvitedUser, User } from '@/types/user.type'
@@ -15,17 +13,14 @@ import DaLoading from '../atoms/DaLoading'
 import DaTabItem from '../atoms/DaTabItem'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { addLog } from '@/services/log.service'
-import { maskEmail } from '@/lib/utils'
 import AccessInvitation from '../organisms/AccessInvitation'
+import UserList from './UserList'
 
 interface ContributorListProps {
   className?: string
 }
 
-interface UserItemProps {
-  user: User
-  onRemoveUser: (userId: string) => void
-}
+
 
 const accessLevels = [
   {
@@ -40,37 +35,7 @@ const accessLevels = [
   },
 ]
 
-const UserItem = ({ user, onRemoveUser }: UserItemProps) => {
-  if (!user) {
-    return null
-  }
 
-  return (
-    <div className="my-1 flex cursor-pointer items-center justify-between rounded-lg border border-da-gray-light bg-da-gray-light/25 p-2">
-      <div className="flex items-center">
-        <DaAvatar
-          src={user.image_file}
-          alt="user"
-          className="mr-4 h-10 w-10 rounded-full"
-        />
-        <div className="flex flex-col">
-          <DaText variant="regular" className="font-bold text-da-gray-dark">
-            {user.name ?? 'Loading...'}
-          </DaText>
-          <DaText variant="small" className="text-da-gray-medium">
-            {maskEmail(user?.email ?? '')}
-          </DaText>
-        </div>
-      </div>
-      <div
-        className="rounded-lg p-2 hover:bg-red-200"
-        onClick={() => onRemoveUser(user.id)}
-      >
-        <TbMinus className="cursor-pointer text-red-500" />
-      </div>
-    </div>
-  )
-}
 
 const DaContributorList = ({ className }: ContributorListProps) => {
   const { data: model, refetch } = useCurrentModel()
@@ -206,19 +171,15 @@ const DaContributorList = ({ className }: ContributorListProps) => {
           <>
             {' '}
             {model &&
-              model.contributors &&
-              model.contributors.map((user: any, index: number) => (
-                <UserItem key={index} user={user} onRemoveUser={onRemoveUser} />
-              ))}
+              model.contributors && <UserList users={model.contributors} onRemoveUser={onRemoveUser}/>
+            }
           </>
         ) : (
           <>
             {' '}
-            {model &&
-              model.members &&
-              model.members.map((user, index) => (
-                <UserItem key={index} user={user} onRemoveUser={onRemoveUser} />
-              ))}
+            { model &&
+              model.members && <UserList users={model.members} onRemoveUser={onRemoveUser}/>
+            }
           </>
         )}
       </div>
