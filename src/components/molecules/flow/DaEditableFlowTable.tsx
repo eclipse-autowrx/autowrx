@@ -5,11 +5,13 @@ import {
   TbArrowsHorizontal,
   TbPlus,
   TbTrash,
+  TbArrowsMinimize,
+  TbArrowsMaximize,
 } from 'react-icons/tb'
 import DaTooltip from '@/components/atoms/DaTooltip'
 import { FlowStep, Direction, SignalFlow } from '@/types/flow.type'
 import { DaButton } from '@/components/atoms/DaButton'
-import { GoTriangleRight } from 'react-icons/go'
+import { VscTriangleRight } from 'react-icons/vsc'
 import { DaTextarea } from '@/components/atoms/DaTextarea'
 import { cn } from '@/lib/utils'
 interface TextCellProps {
@@ -116,7 +118,7 @@ const DirectionSelect = ({ value, onChange }: DirectionSelectProps) => {
   return (
     <button
       onClick={handleToggle}
-      className="h-9 flex justify-center items-center border rounded-md w-full focus:outline-none text-da-primary-500"
+      className="h-9 flex justify-center items-center border rounded-md w-full focus:outline-none"
     >
       {icons[value]}
     </button>
@@ -148,8 +150,8 @@ const SignalFlowEditor = ({ flow, onChange }: SignalFlowEditorProps) => {
       <input
         value={currentFlow.signal}
         onChange={(e) => onChange({ ...currentFlow, signal: e.target.value })}
-        className="w-full text-xs font-medium rounded-md h-9 border px-2 ring-0 outline-none focus-within:border-da-primary-500  text-da-primary-500 placeholder:text-da-primary-500"
-        placeholder="Signal"
+        className="w-full text-xs font-medium rounded-md h-9 border px-2 focus-within:ring-1 outline-none focus-within:ring-da-primary-500"
+        placeholder="Description"
       />
     </div>
   )
@@ -167,7 +169,7 @@ const DaPrototypeFlowEditor = ({
   onCancel,
 }: DaPrototypeFlowEditorProps) => {
   const [data, setData] = useState<FlowStep[]>(initialData)
-
+  const [isFullscreen, setFullscreen] = useState(false)
   const createEmptyFlow = () => ({
     offBoard: {
       smartPhone: '',
@@ -258,30 +260,47 @@ const DaPrototypeFlowEditor = ({
   }, [initialData])
 
   return (
-    <div className="flex flex-col w-full h-full">
+    <div
+      className={cn(
+        'flex w-full h-full flex-col bg-white rounded-md',
+        isFullscreen
+          ? 'fixed inset-0 z-50 overflow-auto bg-white py-4 px-8'
+          : '',
+      )}
+    >
       <div className="flex items-center justify-between border-b pb-2 mb-4 ">
         <h2 className="text-sm font-semibold text-da-primary-500">
           End-to-End Flow: Smart Trunk
         </h2>
-        <div className="flex items-center space-x-2">
-          <div className="text-sm mr-2">
-            Right-click on any row to access delete options
-          </div>
+        <div className="flex space-x-2">
           <DaButton
-            onClick={onCancel}
-            className="w-fit"
-            variant="outline-nocolor"
+            className={cn('w-[90px]', 'text-da-gray-medium')}
+            variant="plain"
             size="sm"
+            onClick={() => handleSave()}
           >
-            Discard Changes
+            View Mode
           </DaButton>
           <DaButton
-            onClick={handleSave}
-            className="w-[60px]"
-            variant="solid"
+            className={cn(
+              'w-[90px]',
+              '!border-da-primary-500 !text-da-primary-500 bg-da-primary-100',
+            )}
+            variant="plain"
             size="sm"
           >
-            Save
+            Edit Mode
+          </DaButton>
+          <DaButton
+            onClick={() => setFullscreen((prev) => !prev)}
+            size="sm"
+            variant="plain"
+          >
+            {isFullscreen ? (
+              <TbArrowsMinimize className="w-5 h-5 stroke-[1.5]" />
+            ) : (
+              <TbArrowsMaximize className="w-5 h-5 stroke-[1.5]" />
+            )}
           </DaButton>
         </div>
       </div>
@@ -298,7 +317,7 @@ const DaPrototypeFlowEditor = ({
             <col className="w-[11.11%]" />
             <col className="w-[11.11%]" />
           </colgroup>
-          <thead className="bg-gradient-to-r from-da-primary-500 to-da-secondary-500 text-white">
+          <thead className="bg-gradient-to-tr from-da-secondary-500 to-da-primary-500 text-white">
             <tr className="text-sm uppercase">
               <th colSpan={3} className="font-semibold p-2 border border-white">
                 Off-board
@@ -342,6 +361,7 @@ const DaPrototypeFlowEditor = ({
           </thead>
 
           <tbody>
+            <td colSpan={9} className="h-3"></td>
             {data.map((step, stepIndex) => (
               <React.Fragment key={stepIndex}>
                 <tr>
@@ -349,9 +369,9 @@ const DaPrototypeFlowEditor = ({
                     colSpan={9}
                     className="relative text-xs border font-semibold bg-da-primary-500 text-white h-9 px-8"
                   >
-                    <GoTriangleRight className="absolute -left-2 top-0 -translate-x-1/4 -translate-y-1/4 size-[66px] bg-transparent text-white" />
+                    <VscTriangleRight className="absolute -left-[5px] top-[5.5px] -translate-x-1/4 -translate-y-1/4 size-[47px] bg-transparent text-white" />
                     {step.title}
-                    <GoTriangleRight className="absolute -right-[8px] top-[0.5px] translate-x-1/2  -translate-y-1/4 size-[66px] bg-transparent text-da-primary-500" />
+                    <VscTriangleRight className="absolute -right-[7px] top-[5.5px] translate-x-1/2  -translate-y-1/4 size-[47px] bg-transparent text-da-primary-500" />
                   </td>
                 </tr>
                 {step.flows.map((flow, flowIndex) => (

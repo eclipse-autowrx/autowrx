@@ -12,10 +12,11 @@ import DaTooltip from '../atoms/DaTooltip'
 import { FlowStep, Direction, SignalFlow } from '@/types/flow.type'
 import DaPrototypeFlowEditor from '../molecules/flow/DaEditableFlowTable'
 import { DaButton } from '../atoms/DaButton'
-import { GoTriangleRight } from 'react-icons/go'
+import { VscTriangleRight } from 'react-icons/vsc'
 import { cn } from '@/lib/utils'
 import { useSystemUI } from '@/hooks/useSystemUI'
 import DaCheckbox from '../atoms/DaCheckbox'
+import { useParams } from 'react-router-dom'
 
 const DirectionArrow: React.FC<{ direction: Direction }> = ({ direction }) => {
   switch (direction) {
@@ -52,7 +53,7 @@ const SafetyLevelRenderer: React.FC<{ text: string }> = ({ text }) => {
       : matchedLevel.replace(/[<>]/g, '') // Handle "<QM>"
 
     return (
-      <div className="p-1 flex items-center justify-center gap-1">
+      <div className="p-1 flex items-center justify-center gap-1 min-h-7">
         <span className="">{renderedText}</span>
         {showPrototypeFlowASIL && (
           <span
@@ -71,9 +72,20 @@ const SafetyLevelRenderer: React.FC<{ text: string }> = ({ text }) => {
   return <div className="p-1 font-medium">{text}</div>
 }
 const SignalFlowCell: React.FC<{ flow: SignalFlow | null }> = ({ flow }) => {
+  const { model_id } = useParams()
+
   if (!flow) return <div className="p-2"></div>
 
   const isLink = flow.signal?.startsWith('https://')
+  const isVehicle = flow.signal?.startsWith('Vehicle.')
+
+  const handleClick = () => {
+    if (isVehicle && flow.signal) {
+      // Construct the URL with origin
+      const url = `${window.location.origin}/model/${model_id}/api/${flow.signal}`
+      window.open(url, '_blank')
+    }
+  }
 
   const Content = (
     <DaTooltip content={flow.signal}>
@@ -82,12 +94,14 @@ const SignalFlowCell: React.FC<{ flow: SignalFlow | null }> = ({ flow }) => {
   )
 
   return (
-    <div className="flex flex-col items-center gap-1 cursor-pointer">
+    <div className="flex flex-col items-center gap-1 cursor-pointer min-h-7 justify-center">
       {flow.signal &&
         (isLink ? (
           <a href={flow.signal} target="_blank" rel="noopener noreferrer">
             {Content}
           </a>
+        ) : isVehicle ? (
+          <div onClick={handleClick}>{Content}</div>
         ) : (
           Content
         ))}
@@ -234,7 +248,7 @@ const PrototypeTabFlow = () => {
               </h2>
               <div className="flex space-x-2">
                 <DaButton
-                  onClick={() => setIsEditing(!isEditing)}
+                  onClick={() => setIsEditing(false)}
                   className={cn(
                     'w-[90px]',
                     !isEditing
@@ -247,7 +261,7 @@ const PrototypeTabFlow = () => {
                   View Mode
                 </DaButton>
                 <DaButton
-                  onClick={() => setIsEditing(!isEditing)}
+                  onClick={() => setIsEditing(true)}
                   className={cn(
                     'w-[90px]',
                     isEditing
@@ -284,7 +298,7 @@ const PrototypeTabFlow = () => {
                 <col className="w-[8%]" />
                 <col className="w-[16%]" />
               </colgroup>
-              <thead className="bg-gradient-to-r from-da-primary-500 to-da-secondary-500 text-white">
+              <thead className="bg-gradient-to-tr from-da-secondary-500 to-da-primary-500 text-white">
                 <tr className="text-sm uppercase">
                   <th
                     colSpan={3}
@@ -304,32 +318,29 @@ const PrototypeTabFlow = () => {
                   <th className="p-2 border border-white">Smart Phone</th>
 
                   <th className="p-2 border border-white bg-opacity-20">
-                    <DaTooltip content="Phone to Cloud" className="normal-case">
+                    <DaTooltip content="Phone2Cloud" className="normal-case">
                       <div className="cursor-pointer">p2c</div>
                     </DaTooltip>
                   </th>
 
                   <th className="p-2 border border-white">Cloud</th>
                   <th className="p-2 border border-white bg-opacity-20">
-                    <DaTooltip
-                      content="Vehicle to Cloud"
-                      className="normal-case"
-                    >
+                    <DaTooltip content="Vehicle2Cloud" className="normal-case">
                       <div className="cursor-pointer">v2c</div>
                     </DaTooltip>
                   </th>
                   <th className="p-2 border border-white">SDV Runtime</th>
                   <th className="p-2 border border-white bg-opacity-20">
-                    <DaTooltip
-                      content="System to System"
-                      className="normal-case"
-                    >
+                    <DaTooltip content="Signal2Service" className="normal-case">
                       <div className="cursor-pointer">s2s</div>
                     </DaTooltip>
                   </th>
                   <th className="p-2 border border-white">Embedded</th>
                   <th className="p-2 border border-white bg-opacity-20">
-                    <DaTooltip content="System to ECU" className="normal-case">
+                    <DaTooltip
+                      content="System2Embedded"
+                      className="normal-case"
+                    >
                       <div className="cursor-pointer">s2e</div>
                     </DaTooltip>
                   </th>
@@ -340,6 +351,7 @@ const PrototypeTabFlow = () => {
               </thead>
 
               <tbody>
+                <td colSpan={9} className="h-3"></td>
                 {flowData && flowData.length > 0 ? (
                   flowData.map((step, stepIndex) => (
                     <React.Fragment key={stepIndex}>
@@ -348,9 +360,9 @@ const PrototypeTabFlow = () => {
                           colSpan={9}
                           className="relative text-xs border font-semibold bg-da-primary-500 text-white h-9 px-8"
                         >
-                          <GoTriangleRight className="absolute -left-2 top-0 -translate-x-1/4 -translate-y-1/4 size-[66px] bg-transparent text-white" />
+                          <VscTriangleRight className="absolute -left-[5px] top-[5.5px] -translate-x-1/4 -translate-y-1/4 size-[47px] bg-transparent text-white" />
                           {step.title}
-                          <GoTriangleRight className="absolute -right-[8px] top-[0.5px] translate-x-1/2  -translate-y-1/4 size-[66px] bg-transparent text-da-primary-500" />
+                          <VscTriangleRight className="absolute -right-[7px] top-[5.5px] translate-x-1/2  -translate-y-1/4 size-[47px] bg-transparent text-da-primary-500" />
                         </td>
                       </tr>
                       {step.flows.map((flow, flowIndex) => (
@@ -419,7 +431,7 @@ const PrototypeTabFlow = () => {
           <DaCheckbox
             checked={showPrototypeFlowASIL}
             onChange={() => setShowPrototypeFlowASIL(!showPrototypeFlowASIL)}
-            label={'Show ASIL Levels'}
+            label={'Show ASIL/QM Levels'}
             className="text-sm mt-2"
           />
         )}
