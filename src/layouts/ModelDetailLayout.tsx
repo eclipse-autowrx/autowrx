@@ -5,50 +5,68 @@ import { Model } from '@/types/model.type'
 import { matchRoutes, Outlet, useLocation } from 'react-router-dom'
 import { DaSkeleton } from '@/components/atoms/DaSkeleton'
 import DaLoading from '@/components/atoms/DaLoading'
-
-const cardIntro = [
-  {
-    title: 'Overview',
-    content: 'General information of the vehicle model',
-    path: 'overview',
-    subs: ['/model/:model_id'],
-  },
-  {
-    title: 'Architecture',
-    content: 'Provide the big picture of the vehicle model',
-    path: 'architecture',
-    subs: ['/model/:model_id/architecture'],
-  },
-  {
-    title: 'Vehicle Signals',
-    content:
-      'Browse, explore and enhance the catalogue of Connected Vehicle Interfaces',
-    path: 'api',
-    subs: ['/model/:model_id/api', '/model/:model_id/api/:api'],
-  },
-  {
-    title: 'Prototype Library',
-    content:
-      'Build up, evaluate and prioritize your portfolio of connected vehicle applications',
-    path: 'library/list',
-    subs: [
-      '/model/:model_id/library',
-      '/model/:model_id/library/:tab',
-      '/model/:model_id/library/:tab/:prototype_id',
-    ],
-  },
-]
+import useListModelPrototypes from '@/hooks/useListModelPrototypes'
+import { shallow } from 'zustand/shallow'
 
 const ModelDetailLayout = () => {
   const [model] = useModelStore((state) => [state.model as Model])
   const location = useLocation()
   const [isLoading, setIsLoading] = useState(true)
+  const { data: fetchedPrototypes, refetch } = useListModelPrototypes(
+    model ? model.id : '',
+  )
+  const [activeModelApis] = useModelStore(
+    (state) => [state.activeModelApis],
+    shallow,
+  )
 
   useEffect(() => {
     // Simulate loading state for demonstration
     const timeout = setTimeout(() => setIsLoading(false), 500) // Adjust the time if needed
     return () => clearTimeout(timeout)
   }, [location.pathname])
+
+  const skeleton = JSON.parse(model?.skeleton || '{}')
+  const numberOfNodes = skeleton?.nodes?.length || 0
+  const numberOfPrototypes = fetchedPrototypes?.length || 0
+  const numberOfApis = activeModelApis?.length || 0
+
+  const cardIntro = [
+    {
+      title: `Overview`,
+      content: 'General information of the vehicle model',
+      path: 'overview',
+      subs: ['/model/:model_id'],
+      count: null, // No count for Overview
+    },
+    {
+      title: `Architecture (${numberOfNodes})`,
+      content: 'Provide the big picture of the vehicle model',
+      path: 'architecture',
+      subs: ['/model/:model_id/architecture'],
+      count: numberOfNodes,
+    },
+    {
+      title: `Vehicle Signals (${numberOfApis})`,
+      content:
+        'Browse, explore and enhance the catalogue of Connected Vehicle Interfaces',
+      path: 'api',
+      subs: ['/model/:model_id/api', '/model/:model_id/api/:api'],
+      count: numberOfApis,
+    },
+    {
+      title: `Prototype Library (${numberOfPrototypes})`,
+      content:
+        'Build up, evaluate and prioritize your portfolio of connected vehicle applications',
+      path: 'library/list',
+      subs: [
+        '/model/:model_id/library',
+        '/model/:model_id/library/:tab',
+        '/model/:model_id/library/:tab/:prototype_id',
+      ],
+      count: numberOfPrototypes,
+    },
+  ]
 
   return (
     <div className="flex flex-col w-full h-full rounded-md bg-da-gray-light">

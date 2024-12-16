@@ -48,6 +48,7 @@ const DaGenAI_Base = ({
     undefined,
   )
   const [loading, setLoading] = useState<boolean>(false)
+  const [addonsLoaded, setAddonsLoaded] = useState<boolean>(false) // New state for addon loading
   const { data: marketplaceAddOns } = useListMarketplaceAddOns(type)
   const [canUseGenAI] = usePermissionHook([PERMISSIONS.USE_GEN_AI])
   const access = useAuthStore((state) => state.access)
@@ -63,12 +64,10 @@ const DaGenAI_Base = ({
 
   const builtInAddOns = useMemo(() => {
     return addOnsArray.map((addOn: any) => {
-      // Try to find matching addon from marketplace
       const marketplaceMatch = marketplaceAddOns?.find(
         (marketAddOn) => marketAddOn.id === addOn.id,
       )
 
-      // If found in marketplace, merge marketplace data with built-in config
       if (marketplaceMatch) {
         return {
           ...marketplaceMatch,
@@ -76,13 +75,41 @@ const DaGenAI_Base = ({
         }
       }
 
-      // If not found, use original built-in addon
       return {
         ...addOn,
         customPayload: addOn.customPayload(prompt),
       }
     })
   }, [addOnsArray, marketplaceAddOns, prompt])
+
+  useEffect(() => {
+    if (marketplaceAddOns) {
+      setAddonsLoaded(true) // Set addons as loaded when marketplace data is ready
+    }
+  }, [marketplaceAddOns])
+
+  useEffect(() => {
+    if (addonsLoaded) {
+      const getSelectedGeneratorFromLocalStorage = (): AddOn | null => {
+        const storedAddOn = localStorage.getItem('lastUsed_GenAIGenerator')
+        return storedAddOn ? JSON.parse(storedAddOn) : null
+      }
+
+      const lastUsedGenAI = getSelectedGeneratorFromLocalStorage()
+      if (lastUsedGenAI) {
+        setSelectedAddOn(lastUsedGenAI)
+      } else if (builtInAddOns.length > 0) {
+        setSelectedAddOn(builtInAddOns[0])
+      }
+    }
+  }, [addonsLoaded, builtInAddOns])
+
+  const filteredMarketplaceAddOns = useMemo(() => {
+    if (!marketplaceAddOns) return []
+
+    const builtInIds = builtInAddOns.map((addon: AddOn) => addon.id)
+    return marketplaceAddOns.filter((addon) => !builtInIds.includes(addon.id))
+  }, [marketplaceAddOns, builtInAddOns])
 
   const handleGenerate = async () => {
     if (!selectedAddOn) return
@@ -142,32 +169,8 @@ const DaGenAI_Base = ({
   const handleCopy = () => {
     navigator.clipboard.writeText('info@digital.auto')
     setCopied(true)
-    setTimeout(() => setCopied(false), 3000) // Reset after 2 seconds
+    setTimeout(() => setCopied(false), 3000)
   }
-
-  useEffect(() => {
-    const getSelectedGeneratorFromLocalStorage = (): AddOn | null => {
-      const storedAddOn = localStorage.getItem('lastUsed_GenAIGenerator')
-      return storedAddOn ? JSON.parse(storedAddOn) : null
-    }
-
-    const lastUsedGenAI = getSelectedGeneratorFromLocalStorage()
-    if (lastUsedGenAI) {
-      setSelectedAddOn(lastUsedGenAI)
-    } else {
-      // If not found, select the first built-in AddOn
-      if (builtInAddOns.length > 0) {
-        setSelectedAddOn(builtInAddOns[0])
-      }
-    }
-  }, [builtInAddOns])
-
-  const filteredMarketplaceAddOns = useMemo(() => {
-    if (!marketplaceAddOns) return []
-
-    const builtInIds = builtInAddOns.map((addon: AddOn) => addon.id)
-    return marketplaceAddOns.filter((addon) => !builtInIds.includes(addon.id))
-  }, [marketplaceAddOns, builtInAddOns])
 
   return (
     <div className={cn('flex h-full w-full rounded', className)}>
@@ -194,23 +197,27 @@ const DaGenAI_Base = ({
 
         <DaSectionTitle number={2} title="Select Generator" className="mt-4" />
         <div className="flex h-[150px] xl:h-[300px] w-full">
-          <DaGeneratorSelector
-            builtInAddOns={builtInAddOns}
-            marketplaceAddOns={
-              marketplaceAddOns
-                ? canUseGenAI
-                  ? filteredMarketplaceAddOns
+          {addonsLoaded ? (
+            <DaGeneratorSelector
+              builtInAddOns={builtInAddOns}
+              marketplaceAddOns={
+                marketplaceAddOns
+                  ? canUseGenAI
+                    ? filteredMarketplaceAddOns
+                    : []
                   : []
-                : []
-            }
-            onSelectedGeneratorChange={(addOn: AddOn) => {
-              setSelectedAddOn(addOn)
-              localStorage.setItem(
-                'lastUsed_GenAIGenerator',
-                JSON.stringify(addOn),
-              )
-            }}
-          />
+              }
+              onSelectedGeneratorChange={(addOn: AddOn) => {
+                setSelectedAddOn(addOn)
+                localStorage.setItem(
+                  'lastUsed_GenAIGenerator',
+                  JSON.stringify(addOn),
+                )
+              }}
+            />
+          ) : (
+            <div>Loading Addons...</div> // Fallback while loading addons
+          )}
         </div>
 
         {!canUseGenAI ? (
@@ -244,7 +251,7 @@ const DaGenAI_Base = ({
 
         <DaButton
           variant="solid"
-          disabled={!prompt || loading}
+          disabled={!prompt || loading || !addonsLoaded} // Disable button if addons not loaded
           className={cn('min-h-8 w-full py-1', prompt ? '!mt-1' : '')}
           onClick={handleGenerate}
         >
