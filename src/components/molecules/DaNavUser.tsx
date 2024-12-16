@@ -41,11 +41,15 @@ const DaNavUser = () => {
         state={[openLoginDialog, handleSetOpenLoginDialog]}
         trigger={<span></span>}
       >
-        {authType === 'sign-in' && <FormSignIn setAuthType={setAuthType} />}
-        {authType === 'register' && <FormRegister setAuthType={setAuthType} />}
-        {authType === 'forgot' && (
-          <FormForgotPassword setAuthType={setAuthType} />
-        )}
+        <div className="h-full w-full overflow-auto">
+          {authType === 'sign-in' && <FormSignIn setAuthType={setAuthType} />}
+          {authType === 'register' && (
+            <FormRegister setAuthType={setAuthType} />
+          )}
+          {authType === 'forgot' && (
+            <FormForgotPassword setAuthType={setAuthType} />
+          )}
+        </div>
       </DaPopup>
     </div>
   )

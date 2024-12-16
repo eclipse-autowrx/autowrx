@@ -62,7 +62,7 @@ const FormResetPassword = () => {
   return (
     <form
       onSubmit={resetPassword}
-      className="w-[30vw] lg:w-[25vw] max-h-[80vh] p-4 bg-da-white"
+      className="w-[30vw] lg:w-[25vw] min-w-[400px] max-w-[500px] h-fit max-h-[80vh] p-4 bg-da-white"
     >
       {/* Title */}
       <DaText variant="title" className="text-da-primary-500">
