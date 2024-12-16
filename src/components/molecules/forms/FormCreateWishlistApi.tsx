@@ -159,7 +159,7 @@ const FormCreateWishlistApi = ({
         description: data.description,
         type: data.type,
         datatype: data.datatype,
-        isWishlist: true
+        isWishlist: true,
       })
 
       await refreshModel()
@@ -241,6 +241,12 @@ const FormCreateWishlistApi = ({
         placeholder="Name"
         label="Name"
         className="mt-4"
+        onPaste={(e) => {
+          e.stopPropagation() // Prevent propagation to parent elements
+          e.preventDefault() // Prevent default paste behavior
+          const pastedValue = e.clipboardData.getData('Text')
+          setData((prev) => ({ ...prev, name: pastedValue }))
+        }}
       />
       <DaInput
         value={data.description}
