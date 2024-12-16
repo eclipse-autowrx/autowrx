@@ -1,15 +1,20 @@
 import { FC, useState } from 'react'
 import DaDashboard from '../molecules/dashboard/DaDashboard'
-import DaRuntimeControl from '../molecules/dashboard/DaRuntimeControl'
-
-
+import { cn } from '@/lib/utils'
+import { useSystemUI } from '@/hooks/useSystemUI'
 
 const PrototypeTabDashboard: FC = ({}) => {
-  const [isFullscreen, setIsFullScreen] = useState(false)
+  const { showPrototypeDashboardFullScreen } = useSystemUI()
 
   return (
-    <div className={`${isFullscreen?'w-screen h-screen fixed top-0 bottom-0 left-0 right-0':'w-full h-full'}`}>
-      <DaDashboard setFullScreenMode={setIsFullScreen}/>
+    <div
+      className={cn(
+        'w-full h-full relative border bg-white',
+        showPrototypeDashboardFullScreen &&
+          'fixed top-0 left-0 w-screen h-screen',
+      )}
+    >
+      <DaDashboard />
     </div>
   )
 }

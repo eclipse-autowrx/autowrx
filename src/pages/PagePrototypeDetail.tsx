@@ -59,7 +59,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
     } else {
       setIsDefaultTab(false)
     }
-    setShowRt(['code', 'dashboard'].includes(tab||''))
+    setShowRt(['code', 'dashboard'].includes(tab || ''))
   }, [tab])
 
   useEffect(() => {
@@ -159,7 +159,10 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
       </div>
 
       <div className="flex flex-col h-full overflow-y-auto relative">
-        <div style={{right: showRt?'4rem': '0' }} className={`absolute left-0 bottom-0 top-0 grow h-full z-0`}>
+        <div
+          style={{ right: showRt ? '3.5rem' : '0' }}
+          className={`absolute left-0 bottom-0 top-0 grow h-full z-0`}
+        >
           {isDefaultTab && <PrototypeTabJourney prototype={prototype} />}
           {tab == 'architecture' && <PrototypeTabArchitecture />}
           {tab == 'code' && <PrototypeTabCode />}
@@ -168,7 +171,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           {tab == 'homologation' && <PrototypeTabHomologation />}
           {tab == 'feedback' && <PrototypeTabFeedback />}
         </div>
-        { showRt && <DaRuntimeControl /> }
+        {showRt && <DaRuntimeControl />}
       </div>
     </div>
   ) : (

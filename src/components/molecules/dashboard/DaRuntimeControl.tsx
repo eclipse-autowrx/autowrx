@@ -5,7 +5,6 @@ import DaRuntimeConnector from '../DaRuntimeConnector'
 import { shallow } from 'zustand/shallow'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
-import { IoPlay, IoStop } from 'react-icons/io5'
 import CodeEditor from '../CodeEditor'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
@@ -17,10 +16,12 @@ import DaMockManager from './DaMockManager'
 import { countCodeExecution } from '@/services/prototype.service'
 import { DaInput } from '@/components/atoms/DaInput'
 import { SlOptionsVertical } from 'react-icons/sl'
-import { BiSend } from 'react-icons/bi'
 import config from '@/configs/config'
 import DaMenu from '@/components/atoms/DaMenu'
 import DaRemoteCompileRust from '../remote-compiler/DaRemoteCompileRust'
+import { useSystemUI } from '@/hooks/useSystemUI'
+import { TbPlayerPlayFilled, TbPlayerStopFilled } from 'react-icons/tb'
+import { cn } from '@/lib/utils'
 
 const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
 
@@ -46,6 +47,10 @@ const DaRuntimeControl: FC = ({}) => {
     ],
     shallow,
   )
+  const {
+    showPrototypeDashboardFullScreen,
+    setShowPrototypeDashboardFullScreen,
+  } = useSystemUI()
   const [isExpand, setIsExpand] = useState(false)
   const [isRunning, setIsRunning] = useState(false)
   const [activeRtId, setActiveRtId] = useState<string | undefined>('')
@@ -122,7 +127,10 @@ const DaRuntimeControl: FC = ({}) => {
     let dashboardCfg = prototype?.widget_config || ''
     let apis: any[] = []
     activeModelApis.forEach((item: any) => {
-      if (code.includes(item.shortName) || dashboardCfg.includes(item.shortName)) {
+      if (
+        code.includes(item.shortName) ||
+        dashboardCfg.includes(item.shortName)
+      ) {
         apis.push(item.name)
       }
     })
@@ -155,7 +163,11 @@ const DaRuntimeControl: FC = ({}) => {
 
   return (
     <div
-      className={`absolute bottom-0 right-0 top-0 z-10 ${isExpand ? 'w-[500px]' : 'w-16'} flex flex-col justify-center bg-da-gray-darkest px-1 py-2 text-da-gray-light`}
+      className={cn(
+        `bottom-0 right-0 top-0 z-10 flex flex-col justify-center bg-da-gray-darkest px-1 py-1 text-da-gray-light`,
+        isExpand ? 'w-[500px]' : 'w-14',
+        showPrototypeDashboardFullScreen ? 'fixed top-[58px]' : 'absolute',
+      )}
     >
       {/* <div>{customKitServer}</div> */}
       {isExpand && isShowEditKitServer && (
@@ -291,7 +303,7 @@ const DaRuntimeControl: FC = ({}) => {
               }}
               className="da-label-regular-bold mt-1 flex items-center justify-center rounded border border-da-gray-medium p-2 hover:bg-da-gray-medium disabled:text-da-gray-medium"
             >
-              <IoPlay />
+              <TbPlayerPlayFilled />
             </button>
             <button
               disabled={!isRunning}
@@ -314,7 +326,7 @@ const DaRuntimeControl: FC = ({}) => {
               }}
               className={`${isExpand && 'mx-2'} da-label-regular-bold mt-1 flex items-center justify-center rounded border border-da-gray-medium p-2 hover:bg-da-gray-medium disabled:text-da-gray-medium`}
             >
-              <IoStop />
+              <TbPlayerStopFilled />
             </button>
 
             {prototype?.language == 'rust' && (
@@ -528,11 +540,12 @@ const DaRuntimeControl: FC = ({}) => {
           onClick={() => {
             setIsExpand((v) => !v)
           }}
+          className="group"
         >
           {isExpand ? (
-            <FaAnglesRight className="text-da-white" />
+            <FaAnglesRight className="w-4 h-4 text-da-white group-hover:text-da-gray-dark" />
           ) : (
-            <FaAnglesLeft className="text-da-white" />
+            <FaAnglesLeft className="w-4 h-4 text-da-white group-hover:text-da-gray-dark" />
           )}
         </DaButton>
 

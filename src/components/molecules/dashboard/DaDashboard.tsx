@@ -7,39 +7,29 @@ import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { MdOutlineDesignServices } from 'react-icons/md'
-import config from '@/configs/config'
 import {
-  TbRocket,
-  TbDotsVertical,
-  TbArrowUpRight,
   TbDeviceFloppy,
+  TbArrowsMaximize,
+  TbArrowsMinimize,
 } from 'react-icons/tb'
-import DaText from '@/components/atoms/DaText'
 import { DaButton } from '@/components/atoms/DaButton'
-import { Link } from 'react-router-dom'
-import clsx from 'clsx'
-import { BsArrowsFullscreen } from 'react-icons/bs'
-import { AiOutlineFullscreenExit } from 'react-icons/ai'
-
 const MODE_RUN = 'run'
 const MODE_EDIT = 'edit'
+import { useSystemUI } from '@/hooks/useSystemUI'
+import { cn } from '@/lib/utils'
+import { DaImage } from '@/components/atoms/DaImage'
+import { Link } from 'react-router-dom'
 
-interface iDaDashboardProps {
-  setFullScreenMode: (mode: boolean) => void
-}
-
-const DaDashboard: FC<iDaDashboardProps> = ({ setFullScreenMode }) => {
-  const [isFullscreen, setIsFullScreen] = useState(false)
+const DaDashboard = () => {
   const { data: model } = useCurrentModel()
   const [prototype] = useModelStore((state) => [state.prototype as Prototype])
   const [widgetItems, setWidgetItems] = useState<any>([])
   const [mode, setMode] = useState<string>(MODE_RUN)
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
-
-  useEffect(() => {
-    if (!setFullScreenMode) return
-    setFullScreenMode(isFullscreen)
-  }, [isFullscreen])
+  const {
+    showPrototypeDashboardFullScreen,
+    setShowPrototypeDashboardFullScreen,
+  } = useSystemUI()
 
   useEffect(() => {
     let widgetItems = []
@@ -81,28 +71,19 @@ const DaDashboard: FC<iDaDashboardProps> = ({ setFullScreenMode }) => {
 
   return (
     <div className="w-full h-full relative border">
-      <div className="absolute opacity-90 hover:opacity-100 left-0 px-2 top-0 w-full py-1 shadow-xl bg-white z-10 flex items-center">
-        {!isFullscreen && (
-          <BsArrowsFullscreen
-            onClick={() => {
-              setIsFullScreen(true)
-            }}
-            size={18}
-            className="ml-2 cursor-pointer hover:opacity-80"
-          />
+      <div
+        className={cn(
+          'absolute z-10 left-0 px-2 top-0 flex w-full py-1 shadow-xl bg-white items-center  pr-4',
+          showPrototypeDashboardFullScreen && 'h-[56px]',
         )}
-        {isFullscreen && (
-          <AiOutlineFullscreenExit
-            onClick={() => {
-              setIsFullScreen(false)
-            }}
-            size={20}
-            className="ml-2 cursor-pointer hover:opacity-80"
-          />
+      >
+        {showPrototypeDashboardFullScreen && (
+          <Link to="/" className="w-fit h-[56px] flex items-center px-2">
+            <DaImage src="/imgs/logo-wide.png" className="object-contain" />
+          </Link>
         )}
-
         {isAuthorized && (
-          <div className="ml-2 flex w-full h-fit items-center justify-start px-1">
+          <div className="ml-2 flex w-full h-fit items-center px-1 justify-end">
             {mode == MODE_RUN && (
               <DaButton
                 variant="plain"
@@ -117,7 +98,7 @@ const DaDashboard: FC<iDaDashboardProps> = ({ setFullScreenMode }) => {
             )}
 
             {mode == MODE_EDIT && (
-              <div className="flex flex-col w-full h-full">
+              <div className="flex flex-col w-fit h-full">
                 {/* <DaText
                   className="flex h-fit w-full text-da-primary-500"
                   variant="sub-title"
@@ -161,10 +142,35 @@ const DaDashboard: FC<iDaDashboardProps> = ({ setFullScreenMode }) => {
             )}
           </div>
         )}
+        {!showPrototypeDashboardFullScreen ? (
+          <TbArrowsMaximize
+            onClick={() => {
+              setShowPrototypeDashboardFullScreen(true)
+            }}
+            className="size-5 ml-2 cursor-pointer hover:opacity-80"
+          />
+        ) : (
+          <TbArrowsMinimize
+            onClick={() => {
+              setShowPrototypeDashboardFullScreen(false)
+            }}
+            className="size-5 ml-2 cursor-pointer hover:opacity-80"
+          />
+        )}
       </div>
 
-      <div className="w-full h-full absolute top-0 left-0 right-0 bottom-0 pt-[38px]">
-        <div className="flex flex-col w-full h-full pt-1">
+      <div
+        className={cn(
+          'w-full h-full absolute top-0 left-0 right-0 bottom-0 ',
+          showPrototypeDashboardFullScreen ? 'pt-[56px]' : 'pt-[38px]',
+        )}
+      >
+        <div
+          className={cn(
+            'flex flex-col w-full h-full pt-1',
+            showPrototypeDashboardFullScreen && 'pr-14',
+          )}
+        >
           {mode == MODE_RUN && (
             <div className="flex w-full h-full px-1 pb-1">
               <DaDashboardGrid widgetItems={widgetItems} />
