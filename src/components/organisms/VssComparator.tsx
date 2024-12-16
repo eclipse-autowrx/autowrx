@@ -8,7 +8,7 @@ import useListVSSVersions from '@/hooks/useListVSSVersions'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import ApiDetail from './ApiDetail'
 import { DaButton } from '../atoms/DaButton'
-import { TbPlayerPlayFilled } from 'react-icons/tb'
+import { TbArrowRight, TbPlayerPlayFilled } from 'react-icons/tb'
 import clsx from 'clsx'
 import Diff from 'diff-match-patch'
 import _ from 'lodash'
@@ -411,11 +411,11 @@ const VssComparator = ({}: DaVssCompareProps) => {
       <div className="flex-1 h-full w-full flex flex-col">
         <div className="bg-slate-100 p-2 flex items-center">
           <DaText variant="small-bold" className="mx-2">
-            Compare
+            (new)
           </DaText>
           <select
             aria-label="deploy-select"
-            className={`w-[280px] cursor-pointer transition ml-2 border rounded font-semibold text-center da-label-small px-2 py-1 min-w-[90px] text-da-gray-dark bg-white shadow-small`}
+            className={`w-[280px] cursor-pointer transition border rounded font-semibold text-center da-label-small px-2 py-1 min-w-[90px] text-da-gray-dark bg-white shadow-small`}
             value={activeCurrentVer}
             onChange={(e) => {
               setActiveCurrentVer(e.target.value)
@@ -432,12 +432,13 @@ const VssComparator = ({}: DaVssCompareProps) => {
                 </option>
               ))}
           </select>
-          <DaText variant="small-bold" className="mx-4">
-            with
+          <TbArrowRight className="w-5 h-5 mx-4" />
+          <DaText variant="small-bold" className="mr-2">
+            (old)
           </DaText>
           <select
             aria-label="deploy-select"
-            className={`w-[280px] cursor-pointer transition ml-2 border rounded font-semibold da-label-small text-center px-2 py-1 min-w-[90px] text-da-gray-dark bg-white shadow-small`}
+            className={`w-[280px] cursor-pointer transition border rounded font-semibold da-label-small text-center px-2 py-1 min-w-[90px] text-da-gray-dark bg-white shadow-small`}
             value={activeTargetVer}
             onChange={(e) => {
               setActiveTargetVer(e.target.value)

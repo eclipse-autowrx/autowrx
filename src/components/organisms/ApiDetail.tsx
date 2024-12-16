@@ -192,7 +192,6 @@ const ApiDetail = ({
   return (
     <div className="flex h-full w-full flex-col">
       {!forceSimpleMode && <DaApiArchitecture apiName={apiDetails.name} />}
-      <div className="grow"></div>
       <div className="flex h-fit w-full flex-row items-center justify-between space-x-2 bg-da-primary-100 py-2 pl-4 pr-2">
         <DaCopy textToCopy={apiDetails.name}>
           <DaText
@@ -324,16 +323,6 @@ const ApiDetail = ({
           syncHeight={syncHeight}
         />
 
-        {!forceSimpleMode && (
-          <DaConsumedPrototypes
-            signal={
-              ['actuator', 'sensor'].includes(apiDetails.type)
-                ? apiDetails?.name || apiDetails?.shortName || ''
-                : ''
-            }
-          />
-        )}
-
         <DaText
           variant="regular-bold"
           className="flex pt-4 text-da-secondary-500"
@@ -341,6 +330,14 @@ const ApiDetail = ({
           Implementation
         </DaText>
         <DaTableProperty properties={implementationProperties} />
+
+        <DaConsumedPrototypes
+          signal={
+            ['actuator', 'sensor'].includes(apiDetails.type)
+              ? apiDetails?.name || apiDetails?.shortName || ''
+              : ''
+          }
+        />
       </div>
       {!forceSimpleMode && model && model.id && (
         <div ref={discussionsRef} className="flex h-full">
