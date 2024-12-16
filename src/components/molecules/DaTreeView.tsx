@@ -39,6 +39,7 @@ const RenderRectSvgNode = (
   navigate: NavigateFunction,
   prototype_id: string,
   model: Model,
+  onNodeClick?: () => void,
 ): JSX.Element => {
   const node = nodeDatum as unknown as TreeNode
   const collapsed = nodeDatum.__rd3t.collapsed
@@ -55,12 +56,11 @@ const RenderRectSvgNode = (
   }
 
   const nodeWidth = 8 * node.name.length + 45
-
   return (
     <g>
       <g
         onClick={() => {
-          const cviLink = `/cvi/list/${(node as TreeNode).path}.${node.name}`
+          const cviLink = `/api/${(node as TreeNode).path}.${node.name}`
           const fullLink =
             prototype_id === ''
               ? `/model/${model.id}${cviLink}/`
@@ -68,6 +68,7 @@ const RenderRectSvgNode = (
 
           if (['sensor', 'actuator', 'attribute'].includes(node.type)) {
             navigate(fullLink)
+            onNodeClick?.()
           }
           toggleNode()
         }}
@@ -111,14 +112,15 @@ const RenderRectSvgNode = (
           onClick={() => {
             const cviLink =
               node.path === ''
-                ? `/cvi/list/${node.name}`
-                : `/cvi/list/${node.path}.${node.name}`
+                ? `/api/${node.name}`
+                : `/api/${node.path}.${node.name}`
             const fullLink =
               prototype_id === ''
                 ? `/model/${model.id}${cviLink}/`
                 : `/model/${model.id}/library/prototype/${prototype_id}/view${cviLink}/`
 
             navigate(fullLink)
+            onNodeClick?.()
           }}
         />
       )}
@@ -169,7 +171,11 @@ const getDynamicPathClass: PathFunction = ({ source, target }, orientation) => {
   return 'Node'
 }
 
-const DaTreeView = () => {
+type DaTreeViewProps = {
+  onNodeClick?: () => void
+}
+
+const DaTreeView = ({ onNodeClick }: DaTreeViewProps) => {
   const navigate = useNavigate()
   const { data: prototype } = useCurrentPrototype()
   const { data: model } = useCurrentModel()
@@ -189,7 +195,13 @@ const DaTreeView = () => {
       <Tree
         data={orgChart}
         renderCustomNodeElement={(...args) =>
-          RenderRectSvgNode(...args, navigate, prototype?.id ?? '', model)
+          RenderRectSvgNode(
+            ...args,
+            navigate,
+            prototype?.id ?? '',
+            model,
+            onNodeClick,
+          )
         }
         nodeSize={{ x: 500, y: 70 }}
         collapsible={true}

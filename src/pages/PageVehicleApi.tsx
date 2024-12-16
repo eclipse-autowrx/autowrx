@@ -91,7 +91,7 @@ const PageVehicleApi = () => {
         )}
         {activeTab === 'tree' && (
           <div className="flex w-full grow overflow-auto items-center justify-center">
-            <DaTreeView />
+            <DaTreeView onNodeClick={() => setActiveTab('list')} />
           </div>
         )}
         {activeTab === 'compare' && (
