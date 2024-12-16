@@ -31,10 +31,6 @@ const ModelDetailLayout = () => {
   const numberOfPrototypes = fetchedPrototypes?.length || 0
   const numberOfApis = activeModelApis?.length || 0
 
-  console.log('Number of skeleton: ', numberOfNodes)
-  console.log('Number of prototype', numberOfPrototypes)
-  console.log('Active Model APIs: ', numberOfApis)
-
   const cardIntro = [
     {
       title: `Overview`,
