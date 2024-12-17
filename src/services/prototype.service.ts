@@ -76,6 +76,10 @@ export const createPrototypeService = async (prototype: any) => {
   return (await serverAxios.post<Prototype>('/prototypes', prototype)).data
 }
 
+export const createBulkPrototypesService = async (prototypes: any[]) => {
+  return await serverAxios.post<Prototype[]>('/prototypes/bulk', prototypes)
+}
+
 export const updatePrototypeService = async (
   prototype_id: string,
   data: Partial<Prototype>,
