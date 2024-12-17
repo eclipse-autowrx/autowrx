@@ -8,7 +8,7 @@ import { TbLoader, TbPackageExport } from 'react-icons/tb'
 import DaImportFile from '@/components/atoms/DaImportFile'
 import { zipToModel } from '@/lib/zipUtils'
 import { createModelService } from '@/services/model.service'
-import { createPrototypeService } from '@/services/prototype.service'
+import { createBulkPrototypesService } from '@/services/prototype.service'
 import { ModelCreate } from '@/types/model.type'
 import { Prototype } from '@/types/model.type'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
@@ -78,10 +78,10 @@ const PageModelList = () => {
         ref_type: 'model',
       })
 
-      if (importedModel.prototypes.length > 0) {
-        const prototypePromises = importedModel.prototypes.map(
-          async (proto: Partial<Prototype>) => {
-            const newPrototype: Partial<Prototype> = {
+      try {
+        if (importedModel.prototypes.length > 0) {
+          const prototypesData = importedModel.prototypes.map(
+            (proto: Partial<Prototype>) => ({
               state: proto.state || 'development',
               apis: {
                 VSS: [],
@@ -89,20 +89,26 @@ const PageModelList = () => {
               },
               code: proto.code || '',
               widget_config: proto.widget_config || '{}',
-              description: proto.description,
-              tags: proto.tags || [],
+              description: {
+                problem: proto.description?.problem || '',
+                says_who: proto.description?.says_who || '',
+                solution: proto.description?.solution || '',
+                status: proto.description?.status || '',
+                text: proto.description?.text || '',
+              },
               image_file: proto.image_file,
               model_id: createdModel,
               name: proto.name,
               complexity_level: proto.complexity_level || '3',
               customer_journey: proto.customer_journey || '{}',
               portfolio: proto.portfolio || {},
-            }
+            }),
+          )
 
-            return createPrototypeService(newPrototype)
-          },
-        )
-        await Promise.all(prototypePromises)
+          await createBulkPrototypesService(prototypesData)
+        }
+      } catch (error) {
+        console.error('Failed to import prototypes', error)
       }
 
       await refetchModelList()
