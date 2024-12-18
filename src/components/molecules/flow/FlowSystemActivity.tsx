@@ -6,6 +6,7 @@ import {
 import { useSystemUI } from '@/hooks/useSystemUI'
 import { cn } from '@/lib/utils'
 import { ASILBadge, ASILLevel } from './ASILBadge'
+import { TbX } from 'react-icons/tb'
 
 interface SystemActivityData {
   type: string
@@ -121,8 +122,23 @@ const FlowSystemActivity = ({ text }: FlowSystemActivityProps) => {
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent className="flex flex-col w-full bg-white p-3 border rounded-lg min-w-[250px] max-w-[400px] z-10">
-        <div className="flex text-sm font-bold text-da-primary-500 mb-2">
-          System Activity
+        <div className="flex justify-between items-center mb-2">
+          <div className="flex text-sm font-bold text-da-primary-500 ">
+            System Activity
+          </div>
+          <button
+            className="p-0.5 hover:text-red-500 hover:bg-red-100 rounded-md"
+            onClick={(e) => {
+              const menu = e.currentTarget.closest('[role="menu"]')
+              if (menu) {
+                menu.dispatchEvent(
+                  new KeyboardEvent('keydown', { key: 'Escape' }),
+                )
+              }
+            }}
+          >
+            <TbX className="w-4 h-4" />
+          </button>
         </div>
 
         <div className="flex flex-col space-y-1">
