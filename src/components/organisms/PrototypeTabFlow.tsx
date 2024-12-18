@@ -1,121 +1,29 @@
 import React, { useEffect, useState } from 'react'
-import {
-  TbArrowLeft,
-  TbArrowRight,
-  TbArrowsHorizontal,
-  TbArrowsMaximize,
-  TbArrowsMinimize,
-} from 'react-icons/tb'
+import { TbArrowsMaximize, TbArrowsMinimize } from 'react-icons/tb'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import { updatePrototypeService } from '@/services/prototype.service'
 import DaTooltip from '../atoms/DaTooltip'
-import { FlowStep, Direction, SignalFlow } from '@/types/flow.type'
+import { FlowStep } from '@/types/flow.type'
 import DaPrototypeFlowEditor from '../molecules/flow/DaEditableFlowTable'
 import { DaButton } from '../atoms/DaButton'
-import { VscTriangleRight } from 'react-icons/vsc'
+import { TbChevronCompactRight } from 'react-icons/tb'
 import { cn } from '@/lib/utils'
 import { useSystemUI } from '@/hooks/useSystemUI'
 import DaCheckbox from '../atoms/DaCheckbox'
-import { useParams } from 'react-router-dom'
-
-const DirectionArrow: React.FC<{ direction: Direction }> = ({ direction }) => {
-  switch (direction) {
-    case 'left':
-      return <TbArrowLeft className="mx-auto size-5 text-da-primary-500" />
-    case 'right':
-      return <TbArrowRight className="mx-auto size-5 text-da-primary-500" />
-    case 'bi-direction':
-      return (
-        <TbArrowsHorizontal className="mx-auto size-5 text-da-primary-500" />
-      )
-  }
-}
-
-const SafetyLevelRenderer: React.FC<{ text: string }> = ({ text }) => {
-  const { showPrototypeFlowASIL } = useSystemUI()
-  const safetyLevels = ['<ASIL-D>', '<ASIL-C>', '<ASIL-B>', '<ASIL-A>', '<QM>']
-  const levelColors: Record<string, string> = {
-    '<ASIL-D>': 'bg-red-500 border border-red-700',
-    '<ASIL-C>': 'bg-orange-500 border border-orange-700',
-    '<ASIL-B>': 'bg-yellow-500 border border-yellow-700',
-    '<ASIL-A>': 'bg-green-500 border border-green-700',
-    '<QM>': 'bg-blue-500 border border-blue-700',
-  }
-
-  const matchedLevel = safetyLevels.find((level) => {
-    return text.includes(level)
-  })
-
-  if (matchedLevel) {
-    const renderedText = text.replace(matchedLevel, '').trim()
-    const levelShort = matchedLevel.startsWith('<ASIL-')
-      ? matchedLevel.replace(/<ASIL-|>/g, '') // Extract "A", "B", etc.
-      : matchedLevel.replace(/[<>]/g, '') // Handle "<QM>"
-
-    return (
-      <div className="p-1 flex items-center justify-center gap-1 min-h-7">
-        <span className="">{renderedText}</span>
-        {showPrototypeFlowASIL && (
-          <span
-            className={cn(
-              'flex px-1 items-center justify-center font-bold rounded-md text-white',
-              levelColors[matchedLevel],
-            )}
-          >
-            {levelShort}
-          </span>
-        )}
-      </div>
-    )
-  }
-
-  return <div className="p-1 font-medium">{text}</div>
-}
-const SignalFlowCell: React.FC<{ flow: SignalFlow | null }> = ({ flow }) => {
-  const { model_id } = useParams()
-
-  if (!flow) return <div className="p-2"></div>
-
-  const isLink = flow.signal?.startsWith('https://')
-  const isVehicle = flow.signal?.startsWith('Vehicle.')
-
-  const handleClick = () => {
-    if (isVehicle && flow.signal) {
-      // Construct the URL with origin
-      const url = `${window.location.origin}/model/${model_id}/api/${flow.signal}`
-      window.open(url, '_blank')
-    }
-  }
-
-  const Content = (
-    <DaTooltip content={flow.signal}>
-      <DirectionArrow direction={flow.direction} />
-    </DaTooltip>
-  )
-
-  return (
-    <div className="flex flex-col items-center gap-1 cursor-pointer min-h-7 justify-center">
-      {flow.signal &&
-        (isLink ? (
-          <a href={flow.signal} target="_blank" rel="noopener noreferrer">
-            {Content}
-          </a>
-        ) : isVehicle ? (
-          <div onClick={handleClick}>{Content}</div>
-        ) : (
-          Content
-        ))}
-    </div>
-  )
-}
+import FlowSystemInterface from '../molecules/flow/FlowSystemInterface'
+import FlowSystemActivity from '../molecules/flow/FlowSystemActivity'
 
 const PrototypeTabFlow = () => {
   const { data: prototype } = useCurrentPrototype()
   const [isEditing, setIsEditing] = useState(false)
   const [customerJourneySteps, setCustomerJourneySteps] = useState<string[]>([])
   const [flowData, setFlowData] = useState<FlowStep[]>([])
-  const [isFullscreen, setFullscreen] = useState(false)
-  const { showPrototypeFlowASIL, setShowPrototypeFlowASIL } = useSystemUI()
+  const {
+    showPrototypeFlowASIL,
+    setShowPrototypeFlowASIL,
+    showPrototypeFlowFullScreen,
+    setShowPrototypeFlowFullScreen,
+  } = useSystemUI()
 
   // Parse customer journey steps
   const parseCustomerJourneySteps = (journeyText: string | undefined) => {
@@ -230,7 +138,9 @@ const PrototypeTabFlow = () => {
     <div
       className={cn(
         'flex w-full h-full flex-col bg-white rounded-md py-4 px-8',
-        isFullscreen ? 'fixed inset-0 z-50 overflow-auto bg-white' : '',
+        showPrototypeFlowFullScreen
+          ? 'fixed inset-0 z-50 overflow-auto bg-white'
+          : '',
       )}
     >
       <div className="w-full ">
@@ -274,14 +184,16 @@ const PrototypeTabFlow = () => {
                   Edit Mode
                 </DaButton>
                 <DaButton
-                  onClick={() => setFullscreen((prev) => !prev)}
+                  onClick={() =>
+                    setShowPrototypeFlowFullScreen(!showPrototypeFlowFullScreen)
+                  }
                   size="sm"
                   variant="plain"
                 >
-                  {isFullscreen ? (
-                    <TbArrowsMinimize className="w-5 h-5 stroke-[1.5]" />
+                  {showPrototypeFlowFullScreen ? (
+                    <TbArrowsMinimize className="w-5 h-5 stroke-[1.75]" />
                   ) : (
-                    <TbArrowsMaximize className="w-5 h-5 stroke-[1.5]" />
+                    <TbArrowsMaximize className="w-5 h-5 stroke-[1.75]" />
                   )}
                 </DaButton>
               </div>
@@ -338,7 +250,7 @@ const PrototypeTabFlow = () => {
                   <th className="p-2 border border-white">Embedded</th>
                   <th className="p-2 border border-white bg-opacity-20">
                     <DaTooltip
-                      content="System2Embedded"
+                      content="Signal2Embedded"
                       className="normal-case"
                     >
                       <div className="cursor-pointer">s2e</div>
@@ -351,60 +263,79 @@ const PrototypeTabFlow = () => {
               </thead>
 
               <tbody>
-                <td colSpan={9} className="h-3"></td>
+                <tr>
+                  {[...Array(9)].map((_, index) => (
+                    <td
+                      key={index}
+                      className={`h-3 ${index % 2 === 0 ? 'bg-white' : 'bg-da-primary-100'}`}
+                    ></td>
+                  ))}
+                </tr>
                 {flowData && flowData.length > 0 ? (
                   flowData.map((step, stepIndex) => (
                     <React.Fragment key={stepIndex}>
                       <tr>
                         <td
                           colSpan={9}
-                          className="relative text-xs border font-semibold bg-da-primary-500 text-white h-9 px-8"
+                          className="relative text-xs border font-semibold bg-da-primary-500 text-white h-9 px-8 z-0"
                         >
-                          <VscTriangleRight className="absolute -left-[5px] top-[5.5px] -translate-x-1/4 -translate-y-1/4 size-[47px] bg-transparent text-white" />
+                          <TbChevronCompactRight className="absolute -left-[12px] top-[5.5px] -translate-x-1/4 -translate-y-1/4 size-[47px] bg-transparent text-white fill-current" />
                           {step.title}
-                          <VscTriangleRight className="absolute -right-[7px] top-[5.5px] translate-x-1/2  -translate-y-1/4 size-[47px] bg-transparent text-da-primary-500" />
+                          <TbChevronCompactRight className="absolute -right-[1px] top-[5.5px] translate-x-1/2  -translate-y-1/4 size-[47px] bg-transparent text-da-primary-500 fill-current" />
                         </td>
                       </tr>
                       {step.flows.map((flow, flowIndex) => (
                         <tr key={flowIndex} className="font-medium text-xs">
                           <td className="border p-2 text-center">
-                            <SafetyLevelRenderer
+                            <FlowSystemActivity
                               text={flow.offBoard.smartPhone}
                               key={`${flowIndex}-smartPhone`}
                             />
                           </td>
                           <td className="border p-2 text-center bg-da-primary-100">
-                            <SignalFlowCell flow={flow.offBoard.p2c} />
+                            <FlowSystemInterface
+                              flow={flow.offBoard.p2c}
+                              interfaceType="p2c"
+                            />
                           </td>
                           <td className="border p-2 text-center">
-                            <SafetyLevelRenderer
+                            <FlowSystemActivity
                               text={flow.offBoard.cloud}
                               key={`${flowIndex}-cloud`}
                             />
                           </td>
                           <td className="border p-2 text-center bg-da-primary-100">
-                            <SignalFlowCell flow={flow.v2c} />
+                            <FlowSystemInterface
+                              flow={flow.v2c}
+                              interfaceType="v2c"
+                            />
                           </td>
                           <td className="border p-2 text-center">
-                            <SafetyLevelRenderer
+                            <FlowSystemActivity
                               text={flow.onBoard.sdvRuntime}
                               key={`${flowIndex}-sdvRuntime`}
                             />
                           </td>
                           <td className="border p-2 text-center bg-da-primary-100">
-                            <SignalFlowCell flow={flow.onBoard.s2s} />
+                            <FlowSystemInterface
+                              flow={flow.onBoard.s2s}
+                              interfaceType="s2s"
+                            />
                           </td>
                           <td className="border p-2 text-center">
-                            <SafetyLevelRenderer
+                            <FlowSystemActivity
                               text={flow.onBoard.embedded}
                               key={`${flowIndex}-embedded`}
                             />
                           </td>
                           <td className="border p-2 text-center bg-da-primary-100">
-                            <SignalFlowCell flow={flow.onBoard.s2e} />
+                            <FlowSystemInterface
+                              flow={flow.onBoard.s2e}
+                              interfaceType="s2e"
+                            />
                           </td>
                           <td className="border p-2 text-center">
-                            <SafetyLevelRenderer
+                            <FlowSystemActivity
                               text={flow.onBoard.sensors}
                               key={`${flowIndex}-sensors`}
                             />

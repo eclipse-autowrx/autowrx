@@ -8,8 +8,8 @@ import { TbLoader, TbPackageExport } from 'react-icons/tb'
 import DaImportFile from '@/components/atoms/DaImportFile'
 import { zipToModel } from '@/lib/zipUtils'
 import { createModelService } from '@/services/model.service'
-import { createBulkPrototypesService } from '@/services/prototype.service'
-import { ModelCreate } from '@/types/model.type'
+import { createPrototypeService } from '@/services/prototype.service'
+import { Model, ModelCreate } from '@/types/model.type'
 import { Prototype } from '@/types/model.type'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { addLog } from '@/services/log.service'
@@ -18,7 +18,11 @@ import useListModelLite from '@/hooks/useListModelLite'
 import { DaItemVerticalType2 } from '@/components/molecules/DaItemVerticalType2'
 import { Link } from 'react-router-dom'
 import useListModelContribution from '@/hooks/useListModelContribution'
+import DaLoadingWrapper from '@/components/molecules/DaLoadingWrapper'
+import DaTabItem from '@/components/atoms/DaTabItem'
+import { ModelLite } from '@/types/model.type'
 import DaSkeletonGrid from '@/components/molecules/DaSkeletonGrid'
+import { DaSkeleton } from '@/components/atoms/DaSkeleton'
 
 const PageModelList = () => {
   const [isImporting, setIsImporting] = useState(false)
@@ -32,11 +36,31 @@ const PageModelList = () => {
   const { data: myModels, isLoading: isLoadingMyModels } = useListModelLite({
     created_by: user?.id,
   })
+  const [activeTab, setActiveTab] = useState<
+    'public' | 'myModel' | 'myContribution'
+  >('myModel')
+  const [filteredModels, setFilteredModels] = useState<ModelLite[]>([])
 
-  const publicModels =
-    allModel?.results?.filter((model) => model.visibility === 'public') || []
-  const myModelsList = myModels?.results || []
-  const contributionModels = contributionModel?.results || []
+  useEffect(() => {
+    if (user) {
+      setActiveTab('myModel')
+    } else {
+      setActiveTab('public')
+    }
+  }, [user])
+
+  useEffect(() => {
+    if (activeTab === 'myContribution' && user) {
+      setFilteredModels(contributionModel?.results || [])
+    } else if (activeTab === 'myModel' && user) {
+      setFilteredModels(myModels?.results || [])
+    } else if (activeTab === 'public') {
+      const publicModels =
+        allModel?.results?.filter((model) => model.visibility === 'public') ||
+        []
+      setFilteredModels(publicModels)
+    }
+  }, [activeTab, contributionModel, allModel, myModels, user])
 
   const handleImportModelZip = async (file: File) => {
     const model = await zipToModel(file)
@@ -64,24 +88,23 @@ const PageModelList = () => {
         api_version: importedModel.model.api_version || 'v4.1',
         visibility: 'private',
       }
-
+      //
       const createdModel = await createModelService(newModel)
 
       addLog({
         name: `New model '${createdModel.name}' with visibility: ${createdModel.visibility}`,
-        description: `New model '${createdModel.name}' was created by ${
-          user?.email || user?.name || user?.id
-        }`,
+        description: `New model '${createdModel.name}' was created by ${user?.email || user?.name || user?.id}`,
         type: 'new-model',
         create_by: user?.id!,
         ref_id: createdModel.id,
         ref_type: 'model',
       })
+      //
 
-      try {
-        if (importedModel.prototypes.length > 0) {
-          const prototypesData = importedModel.prototypes.map(
-            (proto: Partial<Prototype>) => ({
+      if (importedModel.prototypes.length > 0) {
+        const prototypePromises = importedModel.prototypes.map(
+          async (proto: Partial<Prototype>) => {
+            const newPrototype: Partial<Prototype> = {
               state: proto.state || 'development',
               apis: {
                 VSS: [],
@@ -89,26 +112,20 @@ const PageModelList = () => {
               },
               code: proto.code || '',
               widget_config: proto.widget_config || '{}',
-              description: {
-                problem: proto.description?.problem || '',
-                says_who: proto.description?.says_who || '',
-                solution: proto.description?.solution || '',
-                status: proto.description?.status || '',
-                text: proto.description?.text || '',
-              },
+              description: proto.description,
+              tags: proto.tags || [],
               image_file: proto.image_file,
               model_id: createdModel,
               name: proto.name,
               complexity_level: proto.complexity_level || '3',
               customer_journey: proto.customer_journey || '{}',
               portfolio: proto.portfolio || {},
-            }),
-          )
+            }
 
-          await createBulkPrototypesService(prototypesData)
-        }
-      } catch (error) {
-        console.error('Failed to import prototypes', error)
+            return createPrototypeService(newPrototype)
+          },
+        )
+        await Promise.all(prototypePromises)
       }
 
       await refetchModelList()
@@ -119,64 +136,81 @@ const PageModelList = () => {
     }
   }
 
-  const renderSection = (
-    title: string,
-    dataArray: any[],
-    isLoading: boolean,
-    isLastSection: boolean = false, // New parameter to check if it's the last section
-  ) => {
-    if (!isLoading && dataArray.length === 0) return null
+  const cardIntro = user
+    ? [
+        { title: 'My Models', value: 'myModel' },
+        { title: 'My Contributions', value: 'myContribution' },
+        { title: 'Public', value: 'public' },
+      ]
+    : [{ title: 'Public', value: 'public' }]
 
-    return (
-      <div className="flex flex-col space-y-2 mb-6 container">
-        <DaText variant="regular-bold" className="text-da-primary-500">
-          {title} ({dataArray.length})
-        </DaText>
-        <DaSkeletonGrid
-          maxItems={{
-            sm: 1,
-            md: 2,
-            lg: 3,
-            xl: 8,
-          }}
-          primarySkeletonClassName="h-[240px]"
-          secondarySkeletonClassName="hidden"
-          timeout={20}
-          timeoutText="Failed to load models. Please reload the page."
-          timeoutContainerClassName="h-[50%]"
-          data={dataArray}
-          isLoading={isLoading}
-          // Remove emptyText since we hide the section if empty
-          emptyText=""
-          emptyContainerClassName=""
-        >
-          {dataArray.length > 0 && (
-            <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-4 pb-4">
-              {dataArray.map((item, index) => (
-                <Link key={index} to={`/model/${item.id}`}>
-                  <DaItemVerticalType2
-                    title={item.name}
-                    imageUrl={item.model_home_image_file}
-                    tags={item.tags?.map((tag: any) => `${tag.tag}`) || []}
-                    maxWidth="800px"
-                  />
-                </Link>
-              ))}
-            </div>
-          )}
-        </DaSkeletonGrid>
-        {!isLastSection && <div className="border-b" />}
-      </div>
-    )
+  const isLoading = (() => {
+    switch (activeTab) {
+      case 'public':
+        return isLoadingPublicModel
+      case 'myModel':
+        return isLoadingMyModels
+      case 'myContribution':
+        return isLoadingContributionModel
+      default:
+        return false
+    }
+  })()
+
+  const getModelCount = (tab: 'public' | 'myModel' | 'myContribution') => {
+    switch (tab) {
+      case 'public':
+        return (
+          allModel?.results?.filter((model) => model.visibility === 'public')
+            .length || 0
+        )
+      case 'myModel':
+        return myModels?.results?.length || 0
+      case 'myContribution':
+        return contributionModel?.results?.length || 0
+      default:
+        return 0
+    }
   }
+
+  const isLoadingAny =
+    isLoadingPublicModel || isLoadingMyModels || isLoadingContributionModel
 
   return (
     <div className="flex flex-col w-full h-full relative">
-      <div className="flex w-full h-full items-start bg-slate-200 p-2">
-        <div className="flex flex-col w-full h-full bg-white rounded-lg overflow-y-auto p-4">
-          {user && (
-            <>
-              <div className="flex w-full pt-3 pb-6 items-center justify-between container">
+      <div className="sticky top-0 flex min-h-[52px] border-b border-da-gray-medium/50 bg-da-white z-50">
+        {isLoadingAny ? (
+          <div className="flex items-center h-full space-x-6 px-4">
+            {cardIntro.map((_, index) => (
+              <DaSkeleton key={index} className="w-[100px] h-6" />
+            ))}
+          </div>
+        ) : (
+          cardIntro.map((intro, index) => (
+            <DaTabItem
+              active={activeTab === intro.value}
+              key={index}
+              onClick={() =>
+                setActiveTab(
+                  intro.value as 'public' | 'myModel' | 'myContribution',
+                )
+              }
+            >
+              {intro.title}
+              <div className="flex min-w-5 px-1.5 !py-0.5 items-center justify-center text-xs ml-1 bg-gray-200 rounded-md">
+                {getModelCount(
+                  intro.value as 'public' | 'myModel' | 'myContribution',
+                )}
+              </div>
+            </DaTabItem>
+          ))
+        )}
+      </div>
+      <div className="flex w-full h-[calc(100%-52px)] items-start bg-slate-200 p-2">
+        <div className="flex flex-col w-full h-full bg-white rounded-lg overflow-y-auto">
+          <div className="flex flex-col w-full h-full container">
+            {user ? (
+              <div className="flex w-full py-6 items-center justify-between">
                 <DaText variant="small-medium" className="text-da-primary-500">
                   Select a vehicle model to start
                 </DaText>
@@ -217,16 +251,47 @@ const PageModelList = () => {
                   </DaPopup>
                 </div>
               </div>
-              {renderSection('My Models', myModelsList, isLoadingMyModels)}
-              {renderSection(
-                'My Contributions',
-                contributionModels,
-                isLoadingContributionModel,
+            ) : (
+              <div className="flex py-6 items-center">
+                <DaSkeleton className="w-[210px] h-[32px]" />
+                <div className="flex-grow" />
+                <DaSkeleton className="w-[125px] h-[32px] mr-2" />
+                <DaSkeleton className="w-[157px] h-[32px]" />
+              </div>
+            )}
+            <DaSkeletonGrid
+              maxItems={{
+                sm: 1,
+                md: 2,
+                lg: 3,
+                xl: 8,
+              }}
+              primarySkeletonClassName="h-[240px]"
+              secondarySkeletonClassName="hidden"
+              timeout={20}
+              timeoutText="Failed to load models. Please reload the page."
+              timeoutContainerClassName="h-[50%]"
+              data={filteredModels}
+              isLoading={isLoading}
+              emptyText="No models found. Please create a new model"
+              emptyContainerClassName="h-[50%]"
+            >
+              {filteredModels?.length > 0 && (
+                <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-4 pb-4">
+                  {filteredModels.map((item, index) => (
+                    <Link key={index} to={`/model/${item.id}`}>
+                      <DaItemVerticalType2
+                        title={item.name}
+                        imageUrl={item.model_home_image_file}
+                        tags={item.tags?.map((tag) => `${tag.tag}`) || []}
+                        maxWidth="800px"
+                      />
+                    </Link>
+                  ))}
+                </div>
               )}
-            </>
-          )}
-
-          {renderSection('Public', publicModels, isLoadingPublicModel, true)}
+            </DaSkeletonGrid>
+          </div>
         </div>
       </div>
     </div>

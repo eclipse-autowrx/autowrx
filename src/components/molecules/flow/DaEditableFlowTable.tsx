@@ -7,13 +7,15 @@ import {
   TbTrash,
   TbArrowsMinimize,
   TbArrowsMaximize,
+  TbChevronCompactRight,
 } from 'react-icons/tb'
 import DaTooltip from '@/components/atoms/DaTooltip'
 import { FlowStep, Direction, SignalFlow } from '@/types/flow.type'
 import { DaButton } from '@/components/atoms/DaButton'
-import { VscTriangleRight } from 'react-icons/vsc'
 import { DaTextarea } from '@/components/atoms/DaTextarea'
 import { cn } from '@/lib/utils'
+import useCurrentPrototype from '@/hooks/useCurrentPrototype'
+import { useSystemUI } from '@/hooks/useSystemUI'
 interface TextCellProps {
   value: string
   onChange: (value: string) => void
@@ -168,8 +170,10 @@ const DaPrototypeFlowEditor = ({
   onSave,
   onCancel,
 }: DaPrototypeFlowEditorProps) => {
+  const { data: prototype } = useCurrentPrototype()
   const [data, setData] = useState<FlowStep[]>(initialData)
-  const [isFullscreen, setFullscreen] = useState(false)
+  const { showPrototypeFlowFullScreen, setShowPrototypeFlowFullScreen } =
+    useSystemUI()
   const createEmptyFlow = () => ({
     offBoard: {
       smartPhone: '',
@@ -185,6 +189,24 @@ const DaPrototypeFlowEditor = ({
       sensors: '',
     },
   })
+
+  const clearFlowValues = (flow: any) => {
+    return {
+      offBoard: {
+        smartPhone: '',
+        p2c: null,
+        cloud: '',
+      },
+      v2c: null,
+      onBoard: {
+        sdvRuntime: '',
+        s2s: null,
+        embedded: '',
+        s2e: null,
+        sensors: '',
+      },
+    }
+  }
 
   const addFlowToStep = (stepIndex: number) => {
     const newData = [...data]
@@ -238,7 +260,17 @@ const DaPrototypeFlowEditor = ({
 
   const deleteFlow = (stepIndex: number, flowIndex: number) => {
     const newData = [...data]
-    newData[stepIndex].flows.splice(flowIndex, 1)
+
+    // If this is the last flow in the step, clear its values instead of removing it
+    if (isLastFlowInStep(stepIndex, flowIndex)) {
+      newData[stepIndex].flows[flowIndex] = clearFlowValues(
+        newData[stepIndex].flows[flowIndex],
+      )
+    } else {
+      // If there are multiple flows, remove the selected flow
+      newData[stepIndex].flows.splice(flowIndex, 1)
+    }
+
     setData(newData)
   }
 
@@ -263,43 +295,43 @@ const DaPrototypeFlowEditor = ({
     <div
       className={cn(
         'flex w-full h-full flex-col bg-white rounded-md',
-        isFullscreen
+        showPrototypeFlowFullScreen
           ? 'fixed inset-0 z-50 overflow-auto bg-white py-4 px-8'
           : '',
       )}
     >
       <div className="flex items-center justify-between border-b pb-2 mb-4 ">
         <h2 className="text-sm font-semibold text-da-primary-500">
-          End-to-End Flow: Smart Trunk
+          End-to-End Flow: {prototype?.name}
         </h2>
         <div className="flex space-x-2">
           <DaButton
-            className={cn('w-[90px]', 'text-da-gray-medium')}
-            variant="plain"
+            onClick={onCancel}
+            className="w-fit"
+            variant="outline-nocolor"
             size="sm"
-            onClick={() => handleSave()}
           >
-            View Mode
+            Discard Changes
           </DaButton>
           <DaButton
-            className={cn(
-              'w-[90px]',
-              '!border-da-primary-500 !text-da-primary-500 bg-da-primary-100',
-            )}
-            variant="plain"
+            onClick={handleSave}
+            className="w-[60px]"
+            variant="solid"
             size="sm"
           >
-            Edit Mode
+            Save
           </DaButton>
           <DaButton
-            onClick={() => setFullscreen((prev) => !prev)}
+            onClick={() =>
+              setShowPrototypeFlowFullScreen(!showPrototypeFlowFullScreen)
+            }
             size="sm"
             variant="plain"
           >
-            {isFullscreen ? (
-              <TbArrowsMinimize className="w-5 h-5 stroke-[1.5]" />
+            {showPrototypeFlowFullScreen ? (
+              <TbArrowsMinimize className="w-5 h-5 stroke-[1.75]" />
             ) : (
-              <TbArrowsMaximize className="w-5 h-5 stroke-[1.5]" />
+              <TbArrowsMaximize className="w-5 h-5 stroke-[1.75]" />
             )}
           </DaButton>
         </div>
@@ -369,9 +401,9 @@ const DaPrototypeFlowEditor = ({
                     colSpan={9}
                     className="relative text-xs border font-semibold bg-da-primary-500 text-white h-9 px-8"
                   >
-                    <VscTriangleRight className="absolute -left-[5px] top-[5.5px] -translate-x-1/4 -translate-y-1/4 size-[47px] bg-transparent text-white" />
+                    <TbChevronCompactRight className="absolute -left-[12px] top-[5.5px] -translate-x-1/4 -translate-y-1/4 size-[47px] bg-transparent text-white fill-current" />
                     {step.title}
-                    <VscTriangleRight className="absolute -right-[7px] top-[5.5px] translate-x-1/2  -translate-y-1/4 size-[47px] bg-transparent text-da-primary-500" />
+                    <TbChevronCompactRight className="absolute -right-[1px] top-[5.5px] translate-x-1/2  -translate-y-1/4 size-[47px] bg-transparent text-da-primary-500 fill-current" />
                   </td>
                 </tr>
                 {step.flows.map((flow, flowIndex) => (
@@ -403,14 +435,12 @@ const DaPrototypeFlowEditor = ({
                         )}
                       </td>
                     ))}
-                    {!isLastFlowInStep(stepIndex, flowIndex) && (
-                      <button
-                        className="min-h-[90px] ml-1 cursor-pointer hover:text-red-500 group-hover:block"
-                        onClick={() => deleteFlow(stepIndex, flowIndex)}
-                      >
-                        <TbTrash className="size-5" />
-                      </button>
-                    )}
+                    <button
+                      className="min-h-[90px] ml-1 cursor-pointer hover:text-red-500 group-hover:block"
+                      onClick={() => deleteFlow(stepIndex, flowIndex)}
+                    >
+                      <TbTrash className="size-5" />
+                    </button>
                   </tr>
                 ))}
                 <tr>
