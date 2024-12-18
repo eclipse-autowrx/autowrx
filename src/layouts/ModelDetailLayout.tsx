@@ -40,14 +40,14 @@ const ModelDetailLayout = () => {
       count: null, // No count for Overview
     },
     {
-      title: `Architecture (${numberOfNodes})`,
+      title: `Architecture`,
       content: 'Provide the big picture of the vehicle model',
       path: 'architecture',
       subs: ['/model/:model_id/architecture'],
       count: numberOfNodes,
     },
     {
-      title: `Vehicle Signals (${numberOfApis})`,
+      title: `Vehicle Signals`,
       content:
         'Browse, explore and enhance the catalogue of Connected Vehicle Interfaces',
       path: 'api',
@@ -55,7 +55,7 @@ const ModelDetailLayout = () => {
       count: numberOfApis,
     },
     {
-      title: `Prototype Library (${numberOfPrototypes})`,
+      title: `Prototype Library`,
       content:
         'Build up, evaluate and prioritize your portfolio of connected vehicle applications',
       path: 'library/list',
@@ -86,6 +86,11 @@ const ModelDetailLayout = () => {
               key={index}
             >
               {intro.title}
+              {intro.count !== null && (
+                <div className="flex min-w-5 px-1.5 !py-0.5 items-center justify-center text-xs ml-1 bg-gray-200 rounded-md">
+                  {intro.count}
+                </div>
+              )}
             </DaTabItem>
           ))
         ) : (

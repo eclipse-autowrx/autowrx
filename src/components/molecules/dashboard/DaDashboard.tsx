@@ -11,6 +11,7 @@ import {
   TbDeviceFloppy,
   TbArrowsMaximize,
   TbArrowsMinimize,
+  TbTools,
 } from 'react-icons/tb'
 import { DaButton } from '@/components/atoms/DaButton'
 const MODE_RUN = 'run'
@@ -73,7 +74,7 @@ const DaDashboard = () => {
     <div className="w-full h-full relative border">
       <div
         className={cn(
-          'absolute z-10 left-0 px-2 top-0 flex w-full py-1 shadow-xl bg-white items-center  pr-4',
+          'absolute z-10 left-0 px-2 top-0 flex w-full py-1 shadow-xl bg-white items-center',
           showPrototypeDashboardFullScreen && 'h-[56px]',
         )}
       >
@@ -92,7 +93,7 @@ const DaDashboard = () => {
                   setMode(MODE_EDIT)
                 }}
               >
-                <MdOutlineDesignServices className="size-6" />
+                <TbTools className="size-5" />
                 <div className="font-medium ml-1">Edit dashboard</div>
               </DaButton>
             )}
@@ -142,21 +143,21 @@ const DaDashboard = () => {
             )}
           </div>
         )}
-        {!showPrototypeDashboardFullScreen ? (
-          <TbArrowsMaximize
-            onClick={() => {
-              setShowPrototypeDashboardFullScreen(true)
-            }}
-            className="size-5 ml-2 cursor-pointer hover:opacity-80"
-          />
-        ) : (
-          <TbArrowsMinimize
-            onClick={() => {
-              setShowPrototypeDashboardFullScreen(false)
-            }}
-            className="size-5 ml-2 cursor-pointer hover:opacity-80"
-          />
-        )}
+        <DaButton
+          variant="plain"
+          size="sm"
+          onClick={() =>
+            setShowPrototypeDashboardFullScreen(
+              !showPrototypeDashboardFullScreen,
+            )
+          }
+        >
+          {showPrototypeDashboardFullScreen ? (
+            <TbArrowsMinimize className="w-5 h-5 stroke-[1.75]" />
+          ) : (
+            <TbArrowsMaximize className="w-5 h-5 stroke-[1.75]" />
+          )}
+        </DaButton>
       </div>
 
       <div

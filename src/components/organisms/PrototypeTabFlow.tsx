@@ -12,7 +12,7 @@ import DaTooltip from '../atoms/DaTooltip'
 import { FlowStep, Direction, SignalFlow } from '@/types/flow.type'
 import DaPrototypeFlowEditor from '../molecules/flow/DaEditableFlowTable'
 import { DaButton } from '../atoms/DaButton'
-import { VscTriangleRight } from 'react-icons/vsc'
+import { TbChevronCompactRight } from 'react-icons/tb'
 import { cn } from '@/lib/utils'
 import { useSystemUI } from '@/hooks/useSystemUI'
 import DaCheckbox from '../atoms/DaCheckbox'
@@ -114,8 +114,12 @@ const PrototypeTabFlow = () => {
   const [isEditing, setIsEditing] = useState(false)
   const [customerJourneySteps, setCustomerJourneySteps] = useState<string[]>([])
   const [flowData, setFlowData] = useState<FlowStep[]>([])
-  const [isFullscreen, setFullscreen] = useState(false)
-  const { showPrototypeFlowASIL, setShowPrototypeFlowASIL } = useSystemUI()
+  const {
+    showPrototypeFlowASIL,
+    setShowPrototypeFlowASIL,
+    showPrototypeFlowFullScreen,
+    setShowPrototypeFlowFullScreen,
+  } = useSystemUI()
 
   // Parse customer journey steps
   const parseCustomerJourneySteps = (journeyText: string | undefined) => {
@@ -230,7 +234,9 @@ const PrototypeTabFlow = () => {
     <div
       className={cn(
         'flex w-full h-full flex-col bg-white rounded-md py-4 px-8',
-        isFullscreen ? 'fixed inset-0 z-50 overflow-auto bg-white' : '',
+        showPrototypeFlowFullScreen
+          ? 'fixed inset-0 z-50 overflow-auto bg-white'
+          : '',
       )}
     >
       <div className="w-full ">
@@ -274,14 +280,16 @@ const PrototypeTabFlow = () => {
                   Edit Mode
                 </DaButton>
                 <DaButton
-                  onClick={() => setFullscreen((prev) => !prev)}
+                  onClick={() =>
+                    setShowPrototypeFlowFullScreen(!showPrototypeFlowFullScreen)
+                  }
                   size="sm"
                   variant="plain"
                 >
-                  {isFullscreen ? (
-                    <TbArrowsMinimize className="w-5 h-5 stroke-[1.5]" />
+                  {showPrototypeFlowFullScreen ? (
+                    <TbArrowsMinimize className="w-5 h-5 stroke-[1.75]" />
                   ) : (
-                    <TbArrowsMaximize className="w-5 h-5 stroke-[1.5]" />
+                    <TbArrowsMaximize className="w-5 h-5 stroke-[1.75]" />
                   )}
                 </DaButton>
               </div>
@@ -351,7 +359,14 @@ const PrototypeTabFlow = () => {
               </thead>
 
               <tbody>
-                <td colSpan={9} className="h-3"></td>
+                <tr>
+                  {[...Array(9)].map((_, index) => (
+                    <td
+                      key={index}
+                      className={`h-3 ${index % 2 === 0 ? 'bg-white' : 'bg-da-primary-100'}`}
+                    ></td>
+                  ))}
+                </tr>
                 {flowData && flowData.length > 0 ? (
                   flowData.map((step, stepIndex) => (
                     <React.Fragment key={stepIndex}>
@@ -360,9 +375,10 @@ const PrototypeTabFlow = () => {
                           colSpan={9}
                           className="relative text-xs border font-semibold bg-da-primary-500 text-white h-9 px-8"
                         >
-                          <VscTriangleRight className="absolute -left-[5px] top-[5.5px] -translate-x-1/4 -translate-y-1/4 size-[47px] bg-transparent text-white" />
+                          <TbChevronCompactRight className="absolute -left-[12px] top-[5.5px] -translate-x-1/4 -translate-y-1/4 size-[47px] bg-transparent text-white fill-current" />
+                          {/* <VscTriangleRight className="absolute -left-[5px] top-[5.5px] -translate-x-1/4 -translate-y-1/4 size-[47px] bg-transparent text-white" /> */}
                           {step.title}
-                          <VscTriangleRight className="absolute -right-[7px] top-[5.5px] translate-x-1/2  -translate-y-1/4 size-[47px] bg-transparent text-da-primary-500" />
+                          <TbChevronCompactRight className="absolute -right-[1px] top-[5.5px] translate-x-1/2  -translate-y-1/4 size-[47px] bg-transparent text-da-primary-500 fill-current" />
                         </td>
                       </tr>
                       {step.flows.map((flow, flowIndex) => (
