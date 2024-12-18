@@ -9,6 +9,15 @@ import {
 import DaTooltip from '@/components/atoms/DaTooltip'
 import { TbArrowLeft, TbArrowRight, TbArrowsHorizontal } from 'react-icons/tb'
 
+type InterfaceType = 'p2c' | 'v2c' | 's2s' | 's2e'
+
+const interfaceTypeLabels: Record<InterfaceType, string> = {
+  p2c: 'Phone to Cloud',
+  v2c: 'Vehicle to Cloud',
+  s2s: 'Signal to Service',
+  s2e: 'Signal to Embedded',
+}
+
 interface DirectionArrowProps {
   direction: Direction
 }
@@ -28,9 +37,13 @@ const DirectionArrow = ({ direction }: DirectionArrowProps) => {
 
 interface FlowSystemInterfaceProps {
   flow: SignalFlow | null
+  interfaceType: InterfaceType
 }
 
-const FlowSystemInterface = ({ flow }: FlowSystemInterfaceProps) => {
+const FlowSystemInterface = ({
+  flow,
+  interfaceType,
+}: FlowSystemInterfaceProps) => {
   const { model_id } = useParams()
 
   if (!flow) return <div className="p-2"></div>
@@ -40,21 +53,68 @@ const FlowSystemInterface = ({ flow }: FlowSystemInterfaceProps) => {
 
   const handleClick = () => {
     if (isVehicle && flow.signal) {
-      // Construct the URL with origin
       const url = `${window.location.origin}/model/${model_id}/api/${flow.signal}`
       window.open(url, '_blank')
     }
   }
 
+  // Helper to get the appropriate label and value for the signal/endpoint
+  const getSignalInfo = () => {
+    if (isLink) {
+      return {
+        label: 'Endpoint URL',
+        value: flow.signal,
+        tooltip: 'External API Endpoint',
+      }
+    }
+    return {
+      label: 'Name',
+      value: flow.signal,
+      tooltip: 'Internal Signal Path',
+    }
+  }
+
+  const signalInfo = getSignalInfo()
+
   const Content = (
     <ContextMenu>
       <ContextMenuTrigger>
-        <DaTooltip content={flow.signal}>
+        <DaTooltip content={signalInfo.tooltip}>
           <DirectionArrow direction={flow.direction} />
         </DaTooltip>
       </ContextMenuTrigger>
-      <ContextMenuContent className="bg-white p-4">
-        {flow.signal}
+      <ContextMenuContent className="flex flex-col w-full bg-white p-3 border rounded-lg min-w-[250px] max-w-[400px] z-10">
+        <div className="flex text-sm font-bold text-da-primary-500 mb-2">
+          System Interface
+        </div>
+
+        <div className="flex flex-col space-y-1">
+          {/* Interface Type */}
+          <div className="flex">
+            <span className="font-semibold text-da-gray-dark mr-1">Type: </span>
+            {interfaceTypeLabels[interfaceType]}
+          </div>
+
+          {/* Signal Path or Endpoint URL */}
+          <div className="flex">
+            <span className="font-semibold text-da-gray-dark mr-1">
+              {signalInfo.label}:{' '}
+            </span>
+            <span className="text-da-gray-dark break-all">
+              {signalInfo.value}
+            </span>
+          </div>
+
+          {/* Direction */}
+          <div className="flex">
+            <span className="font-semibold text-da-gray-dark mr-1">
+              Direction:{' '}
+            </span>
+            <span className="text-da-gray-dark">
+              {flow.direction.charAt(0).toUpperCase() + flow.direction.slice(1)}
+            </span>
+          </div>
+        </div>
       </ContextMenuContent>
     </ContextMenu>
   )

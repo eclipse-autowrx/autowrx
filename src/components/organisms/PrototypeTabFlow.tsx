@@ -250,7 +250,7 @@ const PrototypeTabFlow = () => {
                   <th className="p-2 border border-white">Embedded</th>
                   <th className="p-2 border border-white bg-opacity-20">
                     <DaTooltip
-                      content="System2Embedded"
+                      content="Signal2Embedded"
                       className="normal-case"
                     >
                       <div className="cursor-pointer">s2e</div>
@@ -277,10 +277,9 @@ const PrototypeTabFlow = () => {
                       <tr>
                         <td
                           colSpan={9}
-                          className="relative text-xs border font-semibold bg-da-primary-500 text-white h-9 px-8"
+                          className="relative text-xs border font-semibold bg-da-primary-500 text-white h-9 px-8 z-0"
                         >
                           <TbChevronCompactRight className="absolute -left-[12px] top-[5.5px] -translate-x-1/4 -translate-y-1/4 size-[47px] bg-transparent text-white fill-current" />
-                          {/* <VscTriangleRight className="absolute -left-[5px] top-[5.5px] -translate-x-1/4 -translate-y-1/4 size-[47px] bg-transparent text-white" /> */}
                           {step.title}
                           <TbChevronCompactRight className="absolute -right-[1px] top-[5.5px] translate-x-1/2  -translate-y-1/4 size-[47px] bg-transparent text-da-primary-500 fill-current" />
                         </td>
@@ -294,7 +293,10 @@ const PrototypeTabFlow = () => {
                             />
                           </td>
                           <td className="border p-2 text-center bg-da-primary-100">
-                            <FlowSystemInterface flow={flow.offBoard.p2c} />
+                            <FlowSystemInterface
+                              flow={flow.offBoard.p2c}
+                              interfaceType="p2c"
+                            />
                           </td>
                           <td className="border p-2 text-center">
                             <FlowSystemActivity
@@ -303,7 +305,10 @@ const PrototypeTabFlow = () => {
                             />
                           </td>
                           <td className="border p-2 text-center bg-da-primary-100">
-                            <FlowSystemInterface flow={flow.v2c} />
+                            <FlowSystemInterface
+                              flow={flow.v2c}
+                              interfaceType="v2c"
+                            />
                           </td>
                           <td className="border p-2 text-center">
                             <FlowSystemActivity
@@ -312,7 +317,10 @@ const PrototypeTabFlow = () => {
                             />
                           </td>
                           <td className="border p-2 text-center bg-da-primary-100">
-                            <FlowSystemInterface flow={flow.onBoard.s2s} />
+                            <FlowSystemInterface
+                              flow={flow.onBoard.s2s}
+                              interfaceType="s2s"
+                            />
                           </td>
                           <td className="border p-2 text-center">
                             <FlowSystemActivity
@@ -321,7 +329,10 @@ const PrototypeTabFlow = () => {
                             />
                           </td>
                           <td className="border p-2 text-center bg-da-primary-100">
-                            <FlowSystemInterface flow={flow.onBoard.s2e} />
+                            <FlowSystemInterface
+                              flow={flow.onBoard.s2e}
+                              interfaceType="s2e"
+                            />
                           </td>
                           <td className="border p-2 text-center">
                             <FlowSystemActivity
