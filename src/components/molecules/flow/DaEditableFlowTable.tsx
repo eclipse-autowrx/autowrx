@@ -190,6 +190,24 @@ const DaPrototypeFlowEditor = ({
     },
   })
 
+  const clearFlowValues = (flow: any) => {
+    return {
+      offBoard: {
+        smartPhone: '',
+        p2c: null,
+        cloud: '',
+      },
+      v2c: null,
+      onBoard: {
+        sdvRuntime: '',
+        s2s: null,
+        embedded: '',
+        s2e: null,
+        sensors: '',
+      },
+    }
+  }
+
   const addFlowToStep = (stepIndex: number) => {
     const newData = [...data]
     newData[stepIndex].flows.push(createEmptyFlow())
@@ -242,7 +260,17 @@ const DaPrototypeFlowEditor = ({
 
   const deleteFlow = (stepIndex: number, flowIndex: number) => {
     const newData = [...data]
-    newData[stepIndex].flows.splice(flowIndex, 1)
+
+    // If this is the last flow in the step, clear its values instead of removing it
+    if (isLastFlowInStep(stepIndex, flowIndex)) {
+      newData[stepIndex].flows[flowIndex] = clearFlowValues(
+        newData[stepIndex].flows[flowIndex],
+      )
+    } else {
+      // If there are multiple flows, remove the selected flow
+      newData[stepIndex].flows.splice(flowIndex, 1)
+    }
+
     setData(newData)
   }
 
@@ -407,14 +435,12 @@ const DaPrototypeFlowEditor = ({
                         )}
                       </td>
                     ))}
-                    {!isLastFlowInStep(stepIndex, flowIndex) && (
-                      <button
-                        className="min-h-[90px] ml-1 cursor-pointer hover:text-red-500 group-hover:block"
-                        onClick={() => deleteFlow(stepIndex, flowIndex)}
-                      >
-                        <TbTrash className="size-5" />
-                      </button>
-                    )}
+                    <button
+                      className="min-h-[90px] ml-1 cursor-pointer hover:text-red-500 group-hover:block"
+                      onClick={() => deleteFlow(stepIndex, flowIndex)}
+                    >
+                      <TbTrash className="size-5" />
+                    </button>
                   </tr>
                 ))}
                 <tr>
