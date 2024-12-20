@@ -22,6 +22,8 @@ import DaRemoteCompileRust from '../remote-compiler/DaRemoteCompileRust'
 import { useSystemUI } from '@/hooks/useSystemUI'
 import { TbPlayerPlayFilled, TbPlayerStopFilled } from 'react-icons/tb'
 import { cn } from '@/lib/utils'
+import DaPopup from '@/components/atoms/DaPopup'
+import RuntimeAssetManager from '@/components/organisms/RuntimeAssetManager'
 
 const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
 
@@ -36,7 +38,7 @@ const AlwaysScrollToBottom = () => {
   return <div ref={elementRef} />
 }
 
-const DaRuntimeControl: FC = ({}) => {
+const DaRuntimeControl: FC = ({ }) => {
   const { data: currentUser } = useSelfProfileQuery()
 
   const [prototype, setActivePrototype, activeModelApis] = useModelStore(
@@ -81,6 +83,10 @@ const DaRuntimeControl: FC = ({}) => {
     localStorage.getItem('customKitServer') || '',
   )
   const [isShowEditKitServer, setIsShowEditKitServer] = useState<boolean>(false)
+
+  const [showRtDialog, setShowRtDialog] = useState<boolean>(false)
+
+  const [useRuntime, setUseRuntime] = useState<boolean>(true)
 
   // const [showStaging, setShowStaging] = useState<boolean>(false)
 
@@ -169,6 +175,20 @@ const DaRuntimeControl: FC = ({}) => {
         showPrototypeDashboardFullScreen ? 'fixed top-[58px]' : 'absolute',
       )}
     >
+
+      <DaPopup trigger={<span></span>} state={[showRtDialog, setShowRtDialog]}>
+        <RuntimeAssetManager onClose={() => {
+          setShowRtDialog(false)
+          setUseRuntime(false)
+          setTimeout(() => {
+            setUseRuntime(true)
+          }, 500)
+        }}
+          onCancel={() => {
+            setShowRtDialog(false)
+          }} />
+      </DaPopup>
+
       {/* <div>{customKitServer}</div> */}
       {isExpand && isShowEditKitServer && (
         <div className="flex mb-2">
@@ -199,55 +219,51 @@ const DaRuntimeControl: FC = ({}) => {
         </div>
       )}
       <div className={`px-1 flex ${!isExpand && 'hidden'}`}>
-        {/* <DaRuntimeConnector
-            kitServerUrl={customKitServer}
-            ref={runTimeRef}
-            usedAPIs={usedApis}
-            onActiveRtChanged={(rtId: string | undefined) => setActiveRtId(rtId)}
-            onLoadedMockSignals={setMockSignals}
-            onNewLog={appendLog}
-            onAppExit={() => {
-              setIsRunning(false)
-            }}/> */}
-        {customKitServer && customKitServer.trim().length > 0 ? (
-          <DaRuntimeConnector
-            targetPrefix="runtime-"
-            kitServerUrl={customKitServer}
-            ref={runTimeRef}
-            usedAPIs={usedApis}
-            onActiveRtChanged={(rtId: string | undefined) =>
-              setActiveRtId(rtId)
-            }
-            onLoadedMockSignals={setMockSignals}
-            onNewLog={appendLog}
-            onAppExit={() => {
-              setIsRunning(false)
-            }}
-          />
-        ) : (
-          <DaRuntimeConnector
-            targetPrefix="runtime-"
-            kitServerUrl={config?.runtime?.url || DEFAULT_KIT_SERVER}
-            ref={runTimeRef1}
-            usedAPIs={usedApis}
-            onActiveRtChanged={(rtId: string | undefined) =>
-              setActiveRtId(rtId)
-            }
-            onLoadedMockSignals={setMockSignals}
-            onNewLog={appendLog}
-            onAppExit={() => {
-              setIsRunning(false)
-            }}
-          />
-        )}
+        {useRuntime && <>
+          {customKitServer && customKitServer.trim().length > 0 ? (
+            <DaRuntimeConnector
+              targetPrefix="runtime-"
+              kitServerUrl={customKitServer}
+              ref={runTimeRef}
+              usedAPIs={usedApis}
+              onActiveRtChanged={(rtId: string | undefined) =>
+                setActiveRtId(rtId)
+              }
+              onLoadedMockSignals={setMockSignals}
+              onNewLog={appendLog}
+              onAppExit={() => {
+                setIsRunning(false)
+              }}
+            />
+          ) : (
+            <DaRuntimeConnector
+              targetPrefix="runtime-"
+              kitServerUrl={config?.runtime?.url || DEFAULT_KIT_SERVER}
+              ref={runTimeRef1}
+              usedAPIs={usedApis}
+              onActiveRtChanged={(rtId: string | undefined) =>
+                setActiveRtId(rtId)
+              }
+              onLoadedMockSignals={setMockSignals}
+              onNewLog={appendLog}
+              onAppExit={() => {
+                setIsRunning(false)
+              }}
+            />
+          )}
+        </>}
+
         <div className="pl-2">
           <DaButton
             variant="plain"
             size="sm"
             onClick={() => {
-              setShowManageRt(true)
+              // setShowManageRt(true)
+              setShowRtDialog(true)
             }}
+            className='!text-yellow-400'
           >
+            Add Runtime
             {/* <div className="text-da-white hover:underline hover:text-da-gray-darkest font-semibold text-yellow-300">
               Config RT
             </div> */}
@@ -504,8 +520,8 @@ const DaRuntimeControl: FC = ({}) => {
                 setCode={setCode}
                 editable={isAuthorized}
                 language="python"
-                onBlur={() => {}}
-                // onBlur={saveCodeToDb}
+                onBlur={() => { }}
+              // onBlur={saveCodeToDb}
               />
             )}
 

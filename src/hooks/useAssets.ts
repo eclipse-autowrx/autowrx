@@ -60,6 +60,6 @@ export const useAssets = () => {
     updateAsset,
     shareMyAsset,
     removeUserFromShareList,
-    getAssetById
+    getAssetById,
   }
 }
