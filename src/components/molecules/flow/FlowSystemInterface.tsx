@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { SignalFlow, Direction } from '@/types/flow.type'
 import { useParams } from 'react-router-dom'
 import {
-  ContextMenu,
-  ContextMenuTrigger,
-  ContextMenuContent,
-} from '@radix-ui/react-context-menu'
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+} from '@/components/atoms/dropdown-menu'
 import DaTooltip from '@/components/atoms/DaTooltip'
 import {
   TbArrowLeft,
@@ -57,14 +57,16 @@ interface FlowSystemInterfaceProps {
   interfaceType: InterfaceType
 }
 
-const FlowSystemInterface = ({
+function FlowSystemInterface({
   flow,
   interfaceType,
-}: FlowSystemInterfaceProps) => {
+}: FlowSystemInterfaceProps) {
   const { model_id } = useParams()
-  const [isContextMenuOpen, setIsContextMenuOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
+
   if (!flow) return <div className="p-2"></div>
 
+  // Quick helper to detect JSON
   const isJsonString = (str: string) => {
     try {
       JSON.parse(str)
@@ -74,13 +76,13 @@ const FlowSystemInterface = ({
     }
   }
 
+  // Parse flow.signal into either JSON data or plain text
   const parseInterfaceData = (
     input: string,
   ): {
     displayText: string
     data: SystemInterfaceData | null
   } => {
-    // Handle JSON input
     if (isJsonString(input)) {
       const jsonData = JSON.parse(input) as SystemInterfaceData
       return {
@@ -88,8 +90,6 @@ const FlowSystemInterface = ({
         data: jsonData,
       }
     }
-
-    // Handle traditional text input
     return {
       displayText: input,
       data: null,
@@ -97,125 +97,136 @@ const FlowSystemInterface = ({
   }
 
   const { displayText, data } = parseInterfaceData(flow.signal)
-  const isLink =
-    displayText.startsWith('https://') ||
-    data?.endpointUrl?.startsWith('https://')
-  const isVehicle =
-    displayText.startsWith('Vehicle.') || data?.name?.startsWith('Vehicle.')
-
-  const handleClick = (e: React.MouseEvent) => {
-    // Prevent click if context menu is open
-    if (isContextMenuOpen) {
-      e.preventDefault()
-      return
-    }
-
-    if (isVehicle) {
-      const signalPath = data?.name || displayText
-      const url = `${window.location.origin}/model/${model_id}/api/${signalPath}`
-      window.open(url, '_blank')
-    }
-  }
 
   const getTooltipContent = () => {
     if (data) {
-      // For JSON data, return endpointUrl or name based on what's available
+      // For JSON data, return endpointUrl or name if present; else displayText
       return data.endpointUrl || data.name || displayText
     }
-    // For traditional string input, return the original text
     return displayText
   }
 
-  const Content = (
-    <ContextMenu onOpenChange={setIsContextMenuOpen}>
-      <ContextMenuTrigger>
-        <DaTooltip content={getTooltipContent()}>
-          <DirectionArrow direction={flow.direction} />
-        </DaTooltip>
-      </ContextMenuTrigger>
-      <ContextMenuContent className="flex flex-col w-full bg-white p-3 border rounded-lg min-w-[250px] max-w-[400px] z-10">
-        <div className="flex w-full justify-between items-center mb-2">
-          <div className="flex text-sm font-bold text-da-primary-500">
-            System Interface
-          </div>
-          <button
-            className="p-0.5 hover:text-red-500 hover:bg-red-100 rounded-md"
-            onClick={(e) => {
-              const menu = e.currentTarget.closest('[role="menu"]')
-              if (menu) {
-                menu.dispatchEvent(
-                  new KeyboardEvent('keydown', { key: 'Escape' }),
-                )
-              }
-            }}
-          >
-            <TbX className="w-4 h-4" />
-          </button>
-        </div>
-
-        <div className="flex flex-col space-y-1">
-          {/* Interface Type */}
-          <div className="flex">
-            <span className="font-semibold text-da-gray-dark mr-1">Type: </span>
-            {interfaceTypeLabels[interfaceType]}
-          </div>
-
-          {data ? (
-            // Render JSON data
-            Object.entries(data)
-              .filter(([key]) => key !== '__typename') // Exclude GraphQL typename if present
-              .map(([key, value]) => (
-                <div key={key} className="flex">
-                  <span className="font-semibold text-da-gray-dark mr-1">
-                    {formatFieldLabel(key)}:{' '}
-                  </span>
-                  <span className="text-da-gray-dark break-all">{value}</span>
-                </div>
-              ))
-          ) : (
-            // Render traditional text input
-            <>
-              <div className="flex">
-                <span className="font-semibold text-da-gray-dark mr-1">
-                  {isLink ? 'Endpoint URL' : 'Name'}:{' '}
-                </span>
-                <span className="text-da-gray-dark break-all">
-                  {displayText}
-                </span>
-              </div>
-              <div className="flex">
-                <span className="font-semibold text-da-gray-dark mr-1">
-                  Direction:{' '}
-                </span>
-                <span className="text-da-gray-dark">
-                  {flow.direction.charAt(0).toUpperCase() +
-                    flow.direction.slice(1)}
-                </span>
-              </div>
-            </>
-          )}
-        </div>
-      </ContextMenuContent>
-    </ContextMenu>
-  )
-
   return (
     <div className="flex flex-col items-center gap-1 cursor-pointer min-h-7 justify-center">
-      {flow.signal &&
-        (isLink ? (
-          <a
-            href={data?.endpointUrl || displayText}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => isContextMenuOpen && e.preventDefault()}
-          >
-            {Content}
-          </a>
-        ) : isVehicle ? (
-          <div onClick={handleClick}>{Content}</div>
-        ) : (
-          Content
-        ))}
+      {flow.signal && (
+        <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+          <DropdownMenuTrigger>
+            <DaTooltip content={getTooltipContent()}>
+              <DirectionArrow direction={flow.direction} />
+            </DaTooltip>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent className="flex text-xs flex-col w-full bg-white p-3 border rounded-lg min-w-[250px] max-w-[400px] z-10">
+            <div className="flex w-full justify-between items-center mb-2">
+              <div className="flex text-sm font-bold text-da-primary-500">
+                System Interface
+              </div>
+              <button
+                className="p-0.5 hover:text-red-500 hover:bg-red-100 rounded-md"
+                onClick={(e) => {
+                  // Manually dispatch "Escape" to close the menu
+                  const menu = e.currentTarget.closest('[role="menu"]')
+                  if (menu) {
+                    menu.dispatchEvent(
+                      new KeyboardEvent('keydown', { key: 'Escape' }),
+                    )
+                  }
+                }}
+              >
+                <TbX className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex flex-col space-y-1 text-da-gray-dark">
+              {/* Interface Type */}
+              <div className="flex">
+                <span className="font-semibold mr-1">Type: </span>
+                {interfaceTypeLabels[interfaceType]}
+              </div>
+
+              {data ? (
+                // Render JSON data fields
+                Object.entries(data)
+                  .filter(([key]) => key !== '__typename')
+                  .map(([key, value]) => {
+                    if (!value) return null
+
+                    // Check if the value starts with "https://" or "Vehicle."
+                    const isValueLink = value.startsWith('https://')
+                    const isValueVehicle = value.startsWith('Vehicle.')
+
+                    let linkHref = ''
+                    if (isValueVehicle) {
+                      linkHref = `${window.location.origin}/model/${model_id}/api/${value}`
+                    } else if (isValueLink) {
+                      linkHref = value
+                    }
+
+                    return (
+                      <div key={key} className="flex">
+                        <span className="font-semibold mr-1">
+                          {formatFieldLabel(key)}:{' '}
+                        </span>
+                        {isValueLink || isValueVehicle ? (
+                          <a
+                            href={linkHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline text-blue-500 break-all"
+                          >
+                            {value}
+                          </a>
+                        ) : (
+                          <span className="break-all">{value}</span>
+                        )}
+                      </div>
+                    )
+                  })
+              ) : (
+                // Render traditional text input
+                <>
+                  <div className="flex">
+                    <span className="font-semibold mr-1">Name: </span>
+                    {(() => {
+                      // If `displayText` starts with "https://" or "Vehicle.", make it a link
+                      const isValueLink = displayText.startsWith('https://')
+                      const isValueVehicle = displayText.startsWith('Vehicle.')
+
+                      let linkHref = ''
+                      if (isValueVehicle) {
+                        linkHref = `${window.location.origin}/model/${model_id}/api/${displayText}`
+                      } else if (isValueLink) {
+                        linkHref = displayText
+                      }
+
+                      return isValueLink || isValueVehicle ? (
+                        <a
+                          href={linkHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline text-blue-500 break-all"
+                        >
+                          {displayText}
+                        </a>
+                      ) : (
+                        <span className="break-all">{displayText}</span>
+                      )
+                    })()}
+                  </div>
+
+                  <div className="flex">
+                    <span className="font-semibold mr-1">Direction: </span>
+                    <span>
+                      {flow.direction.charAt(0).toUpperCase() +
+                        flow.direction.slice(1)}
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </div>
   )
 }

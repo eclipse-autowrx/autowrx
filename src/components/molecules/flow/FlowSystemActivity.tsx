@@ -1,12 +1,11 @@
-import {
-  ContextMenu,
-  ContextMenuTrigger,
-  ContextMenuContent,
-} from '@radix-ui/react-context-menu'
-import { useSystemUI } from '@/hooks/useSystemUI'
-import { cn } from '@/lib/utils'
-import { ASILBadge, ASILLevel } from './ASILBadge'
 import { TbX } from 'react-icons/tb'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+} from '@/components/atoms/dropdown-menu'
+import { useSystemUI } from '@/hooks/useSystemUI'
+import { ASILBadge, ASILLevel } from './ASILBadge'
 
 interface SystemActivityData {
   type: string
@@ -96,9 +95,8 @@ const FlowSystemActivity = ({ text }: FlowSystemActivityProps) => {
       }
     }
 
-    // Always return the input text (either cleaned from ASIL or original)
     return {
-      displayText: displayText || input, // Fallback to original input if displayText is empty
+      displayText: displayText || input,
       asilLevel: extractedLevel,
       data: null,
     }
@@ -111,24 +109,25 @@ const FlowSystemActivity = ({ text }: FlowSystemActivityProps) => {
   }
 
   return (
-    <ContextMenu>
-      <ContextMenuTrigger>
+    <DropdownMenu>
+      <DropdownMenuTrigger>
         <div className="p-1 flex items-center justify-center gap-1 min-h-7">
-          <span className="">{displayText || text}</span>{' '}
-          {/* Use original text if displayText is empty */}
+          <span>{displayText || text}</span>
           {asilLevel && (
             <ASILBadge level={asilLevel} showBadge={showPrototypeFlowASIL} />
           )}
         </div>
-      </ContextMenuTrigger>
-      <ContextMenuContent className="flex flex-col w-full bg-white p-3 border rounded-lg min-w-[250px] max-w-[400px] z-10">
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent className="flex flex-col text-xs w-full bg-white p-3 border rounded-lg min-w-[250px] max-w-[400px] z-10">
         <div className="flex justify-between items-center mb-2">
-          <div className="flex text-sm font-bold text-da-primary-500 ">
+          <div className="flex text-sm font-bold text-da-primary-500">
             System Activity
           </div>
           <button
             className="p-0.5 hover:text-red-500 hover:bg-red-100 rounded-md"
             onClick={(e) => {
+              // Manually dispatch an Escape key event to close the menu
               const menu = e.currentTarget.closest('[role="menu"]')
               if (menu) {
                 menu.dispatchEvent(
@@ -143,24 +142,37 @@ const FlowSystemActivity = ({ text }: FlowSystemActivityProps) => {
 
         <div className="flex flex-col space-y-1">
           {data ? (
-            // Render full JSON data
-            Object.entries(data).map(([key, value]) => (
-              <div key={key} className="flex">
-                <span className="font-semibold text-da-gray-dark mr-1">
-                  {formatFieldLabel(key)}:{' '}
-                </span>
-                {formatFieldValue(key, value)}
-              </div>
-            ))
+            Object.entries(data).map(([key, value]) => {
+              // Check if the value is a string that starts with "https://"
+              const isLink =
+                typeof value === 'string' && value.startsWith('https://')
+              return (
+                <div key={key} className="flex">
+                  <span className="font-semibold text-da-gray-dark mr-1">
+                    {formatFieldLabel(key)}:{' '}
+                  </span>
+                  {isLink ? (
+                    <a
+                      href={value}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline text-blue-500"
+                    >
+                      {value}
+                    </a>
+                  ) : (
+                    formatFieldValue(key, value)
+                  )}
+                </div>
+              )
+            })
           ) : (
-            // Render minimal info for traditional text input
             <>
               <div className="flex">
                 <span className="font-semibold text-da-gray-dark mr-1">
                   Description:{' '}
                 </span>
-                {displayText || text}{' '}
-                {/* Use original text if displayText is empty */}
+                {displayText || text}
               </div>
               {asilLevel && (
                 <div className="flex">
@@ -173,8 +185,8 @@ const FlowSystemActivity = ({ text }: FlowSystemActivityProps) => {
             </>
           )}
         </div>
-      </ContextMenuContent>
-    </ContextMenu>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 
