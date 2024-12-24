@@ -183,7 +183,7 @@ const home = [
         items: [
           {
             name: 'COVESA',
-            img: 'https://digitalauto.netlify.app/assets/COVESA-b3f64c5b.png',
+            img: 'https://bewebstudio.digitalauto.tech/data/projects/xT9wA8QU7xEN/covesa.png',
             url: 'https://www.covesa.global',
           },
           {
@@ -198,7 +198,7 @@ const home = [
         items: [
           {
             name: 'Ferdinand-Steinbeis-Institut',
-            img: 'https://digitalauto.netlify.app/assets/FSTI-55cf60eb.png',
+            img: 'https://bewebstudio.digitalauto.tech/data/projects/xT9wA8QU7xEN/university.png',
             url: 'https://ferdinand-steinbeis-institut.de',
           },
         ],
