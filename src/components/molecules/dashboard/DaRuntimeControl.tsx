@@ -133,11 +133,13 @@ const DaRuntimeControl: FC = ({ }) => {
     let dashboardCfg = prototype?.widget_config || ''
     let apis: any[] = []
     activeModelApis.forEach((item: any) => {
-      if (
-        code.includes(item.shortName) ||
-        dashboardCfg.includes(item.shortName)
-      ) {
-        apis.push(item.name)
+      if(item.shortName) {
+        if (
+          code.includes(item.shortName) ||
+          dashboardCfg.includes(item.shortName)
+        ) {
+          apis.push(item.name)
+        }
       }
     })
     //
