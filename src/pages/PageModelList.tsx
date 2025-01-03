@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { DaText } from '@/components/atoms/DaText'
 import { DaButton } from '@/components/atoms/DaButton'
 import { HiPlus } from 'react-icons/hi'
@@ -9,8 +9,7 @@ import DaImportFile from '@/components/atoms/DaImportFile'
 import { zipToModel } from '@/lib/zipUtils'
 import { createModelService } from '@/services/model.service'
 import { createPrototypeService } from '@/services/prototype.service'
-import { ModelCreate } from '@/types/model.type'
-import { Prototype } from '@/types/model.type'
+import { ModelCreate, Prototype } from '@/types/model.type'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { addLog } from '@/services/log.service'
 import { useNavigate } from 'react-router-dom'
@@ -49,7 +48,7 @@ const PageModelList = () => {
   const myContributionRef = useRef<HTMLDivElement>(null)
   const publicRef = useRef<HTMLDivElement>(null)
 
-  // Tab state
+  // If user not logged in, default tab is "public"
   const [activeTab, setActiveTab] = useState<
     'myModel' | 'myContribution' | 'public'
   >(user ? 'myModel' : 'public')
@@ -60,15 +59,31 @@ const PageModelList = () => {
   const publicModelsRaw =
     allModel?.results?.filter((m) => m.visibility === 'public') || []
 
+  console.log('Public models raw', publicModelsRaw)
+
   // Filter out duplicates by ID
   const myModelsIds = myModels.map((m) => m.id)
   const filteredContributions = contributionModelsRaw.filter(
     (m) => !myModelsIds.includes(m.id),
   )
-  const contributionIds = filteredContributions.map((m) => m.id)
-  const filteredPublic = publicModelsRaw.filter(
-    (m) => !myModelsIds.includes(m.id) && !contributionIds.includes(m.id),
-  )
+  let filteredPublic
+  if (!user) {
+    // For a guest user, just show all public
+    filteredPublic = publicModelsRaw
+  } else {
+    // Otherwise, remove duplicates
+    const myModelsIds = myModels.map((m) => m.id)
+    const filteredContributions = contributionModelsRaw.filter(
+      (m) => !myModelsIds.includes(m.id),
+    )
+    const contributionIds = filteredContributions.map((m) => m.id)
+
+    filteredPublic = publicModelsRaw.filter(
+      (m) => !myModelsIds.includes(m.id) && !contributionIds.includes(m.id),
+    )
+  }
+
+  console.log('Filtered public models', filteredPublic)
 
   // Loading states
   const isLoadingAny =
@@ -121,7 +136,9 @@ const PageModelList = () => {
 
       addLog({
         name: `New model '${createdModel.name}' with visibility: ${createdModel.visibility}`,
-        description: `New model '${createdModel.name}' was created by ${user?.email || user?.name || user?.id}`,
+        description: `New model '${createdModel.name}' was created by ${
+          user?.email || user?.name || user?.id
+        }`,
         type: 'new-model',
         create_by: user?.id!,
         ref_id: createdModel.id,
@@ -148,7 +165,6 @@ const PageModelList = () => {
               customer_journey: proto.customer_journey || '{}',
               portfolio: proto.portfolio || {},
             }
-
             return createPrototypeService(newPrototype)
           },
         )
@@ -205,7 +221,7 @@ const PageModelList = () => {
       <div className="flex w-full h-[calc(100%-52px)] items-start bg-slate-200 p-2">
         <div className="flex flex-col w-full h-full bg-white rounded-lg overflow-y-auto">
           <div className="flex flex-col w-full h-full container px-4 py-6">
-            {user ? (
+            {user && (
               <div className="flex w-full items-center justify-between mb-4">
                 <DaText variant="small-medium" className="text-da-primary-500">
                   Select a vehicle model to start
@@ -245,13 +261,6 @@ const PageModelList = () => {
                     <FormCreateModel />
                   </DaPopup>
                 </div>
-              </div>
-            ) : (
-              <div className="flex py-6 items-center">
-                <DaSkeleton className="w-[210px] h-[32px]" />
-                <div className="flex-grow" />
-                <DaSkeleton className="w-[125px] h-[32px] mr-2" />
-                <DaSkeleton className="w-[157px] h-[32px]" />
               </div>
             )}
 
