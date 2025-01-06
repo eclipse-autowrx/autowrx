@@ -16,6 +16,8 @@ import {
   TbArrowsMinimize,
   TbEdit,
   TbPlus,
+  TbLayoutSidebarLeftExpand,
+  TbLayoutSidebarLeftCollapse,
 } from 'react-icons/tb'
 import DaConfirmPopup from '@/components/molecules/DaConfirmPopup'
 import { cn } from '@/lib/utils'
@@ -46,6 +48,10 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
 
   const [isFullscreen, setFullscreen] = useState(false)
 
+  // 1) State for sidebar expand/collapse
+  const [isExpand, setIsExpand] = useState(false)
+
+  // 2) Parse skeleton from model/prototype
   useEffect(() => {
     const inputSkeleton =
       displayMode === 'model' ? model?.skeleton : prototype?.skeleton
@@ -63,36 +69,55 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
     setSkeleton(skele) // Always set skeleton to prevent it from being null
   }, [displayMode, model, prototype])
 
+  // 3) If skeleton is loaded but empty => create a new node
+  useEffect(() => {
+    if (
+      skeleton &&
+      Array.isArray(skeleton.nodes) &&
+      skeleton.nodes.length === 0
+    ) {
+      createNewNode()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [skeleton])
+
+  // 4) Read "id" from URL query params -> activeNodeId
   useEffect(() => {
     let id = searchParams.get('id')
     setActiveNodeId(id || null)
   }, [searchParams])
 
+  // 5) Find activeNode by ID in skeleton
   useEffect(() => {
     setIsEditName(false)
-    let activeNode = null
+    let nodeToSet = null
+
     if (skeleton && skeleton.nodes && skeleton.nodes.length > 0) {
+      // If there's no ID, pick the first node
       if (!activeNodeId) {
         navigate(`${window.location.pathname}?id=${skeleton.nodes[0].id}`, {
           replace: true,
         })
         return
       }
-      activeNode = skeleton.nodes.find((n: any) => n.id == activeNodeId)
+      nodeToSet = skeleton.nodes.find((n: any) => n.id == activeNodeId)
     }
-    setActiveNode(activeNode)
-  }, [activeNodeId, skeleton])
+    setActiveNode(nodeToSet)
+  }, [activeNodeId, skeleton, navigate])
 
+  // 6) If activeNode changes, exit Edit Mode
   useEffect(() => {
     if (activeNode) {
       setIsEditMode(false)
     }
   }, [activeNode])
 
+  // 7) Exiting name-edit mode whenever we toggle isEditMode
   useEffect(() => {
     setIsEditName(false)
   }, [isEditMode])
 
+  // 8) Save skeleton to server
   const callSave = async (skele: any) => {
     if (!skele) return
 
@@ -113,6 +138,7 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
     }
   }
 
+  // 9) Create a brand new node
   const createNewNode = async () => {
     let tmpSkele = JSON.parse(JSON.stringify(skeleton))
     if (!tmpSkele.nodes) tmpSkele.nodes = []
@@ -134,6 +160,7 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
     await callSave(tmpSkele)
   }
 
+  // 10) Callback from ImageAreaEdit -> Save shapes + bgImage
   const onSaveRequested = async (data: any) => {
     if (!data) return
 
@@ -149,12 +176,14 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
     }
   }
 
+  // 11) Handling hyperlinks from shapes
   const handleNavigate = (url: string) => {
     url.toLowerCase().startsWith('http')
       ? window.open(url, '_blank')
       : navigate(url)
   }
 
+  // 12) Upload background image
   const handleUploadImage = async (file: File) => {
     const formData = new FormData()
     formData.append('path', `/${file.name}`)
@@ -180,6 +209,7 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
     }
   }
 
+  // 13) Delete a node
   const handleDeleteNode = async (nodeId: string) => {
     let tmpSkele = JSON.parse(JSON.stringify(skeleton))
     if (!tmpSkele.nodes) tmpSkele.nodes = []
@@ -191,6 +221,7 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
     callSave(tmpSkele)
   }
 
+  // 14) Save name edits
   const handleNameSave = async () => {
     if (tmpNodeName.length <= 0) return
     let tmpSkele = JSON.parse(JSON.stringify(skeleton))
@@ -205,25 +236,37 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
     setIsEditName(false)
   }
 
+  // Debug
   useEffect(() => {
     console.log('Skeleton: ', skeleton)
   }, [skeleton])
 
+  // 15) If still loading
   if (!skeleton)
     return (
       <DaLoading
-        text={`Loading ${displayMode === 'model' ? 'Model' : 'Prototype'} Architecture...`}
-        timeoutText={`Failed to load ${displayMode === 'model' ? 'model' : 'prototype'} architecture. Please try again.`}
+        text={`Loading ${
+          displayMode === 'model' ? 'Model' : 'Prototype'
+        } Architecture...`}
+        timeoutText={`Failed to load ${
+          displayMode === 'model' ? 'model' : 'prototype'
+        } architecture. Please try again.`}
       />
     )
 
   return (
     <div className="flex w-full h-full bg-da-white text-da-gray-medium select-none">
-      <div className="flex flex-col p-3 w-[40%] max-w-[350px] h-full border-r">
+      <div
+        className={clsx(
+          ' flex-col p-3 h-full border-r transition-all duration-300',
+          isExpand ? 'flex w-[40%] max-w-[350px]' : 'hidden overflow-hidden',
+        )}
+      >
         <div className="flex w-full mb-2 items-center justify-between space-x-2">
           <DaText variant="title" className="text-da-primary-500">
             Architecture Mapping
           </DaText>
+
           {isAuthorized && (
             <DaButton onClick={createNewNode} size="sm" variant="solid">
               <TbPlus className="w-4 h-4 mr-1" /> New Node
@@ -238,8 +281,10 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
                 onClick={() =>
                   navigate(`${window.location.pathname}?id=${node.id}`)
                 }
-                className={`flex flex-col px-3 py-2 border border-da-gray-light hover:border-da-primary-500 cursor-pointer rounded-lg
-                    ${node.id == activeNodeId && '!border-da-primary-500'}`}
+                className={cn(
+                  'flex flex-col px-3 py-2 border border-da-gray-light hover:border-da-primary-500 cursor-pointer rounded-lg',
+                  node.id == activeNodeId && '!border-da-primary-500',
+                )}
               >
                 <DaText
                   variant="small-bold"
@@ -294,6 +339,8 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
           </div>
         )}
       </div>
+
+      {/** MAIN CONTENT AREA */}
       {activeNode && (
         <div
           className={clsx(
@@ -303,6 +350,21 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
         >
           <div className="flex w-full p-3 bg-white items-center justify-between">
             <div className="flex items-center">
+              {/** Expand/Collapse toggle right here (optional). 
+                   You could move this to the left sidebar if you prefer. */}
+              <DaButton
+                variant="plain"
+                size="sm"
+                onClick={() => setIsExpand((prev) => !prev)}
+                className="mr-4"
+              >
+                {isExpand ? (
+                  <TbLayoutSidebarLeftCollapse className="w-5 h-5" />
+                ) : (
+                  <TbLayoutSidebarLeftExpand className="w-5 h-5" />
+                )}
+              </DaButton>
+
               {!isEditName && (
                 <div className="flex items-center">
                   <DaText variant="title" className="text-da-primary-500">
@@ -399,7 +461,12 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
           </div>
 
           <div className="flex w-full h-full items-center justify-center">
-            <div className="flex w-full h-full max-w-[75%] overflow-x-hidden">
+            <div
+              className={cn(
+                'flex w-full h-full  overflow-x-hidden',
+                isExpand ? 'max-w-[75%]' : 'max-w-[50%]',
+              )}
+            >
               {!isEditMode && (
                 <ImageAreaPreview
                   shapes={activeNode?.shapes}
