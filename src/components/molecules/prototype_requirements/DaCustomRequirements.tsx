@@ -131,7 +131,7 @@ const DaCustomRequirements = ({
               onClick={handleDiscardChanges}
               disabled={!hasChanges}
             >
-              Discard Changes
+              Cancel
             </DaButton>
             {/* <DaButton
               size="sm"

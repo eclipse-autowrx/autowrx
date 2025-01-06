@@ -12,6 +12,7 @@ import { useSystemUI } from '@/hooks/useSystemUI'
 import DaCheckbox from '../atoms/DaCheckbox'
 import FlowSystemInterface from '../molecules/flow/FlowSystemInterface'
 import FlowSystemActivity from '../molecules/flow/FlowSystemActivity'
+import DaText from '../atoms/DaText'
 
 const PrototypeTabFlow = () => {
   const { data: prototype } = useCurrentPrototype()
@@ -153,9 +154,9 @@ const PrototypeTabFlow = () => {
         ) : (
           <>
             <div className="flex items-center justify-between border-b pb-2 mb-4 ">
-              <h2 className="text-sm font-semibold text-da-primary-500">
+              <DaText variant="title" className="text-da-primary-500">
                 End-to-End Flow: {prototype?.name}
-              </h2>
+              </DaText>
               <div className="flex space-x-2">
                 <DaButton
                   onClick={() => setIsEditing(false)}

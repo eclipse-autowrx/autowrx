@@ -16,6 +16,7 @@ import { DaTextarea } from '@/components/atoms/DaTextarea'
 import { cn } from '@/lib/utils'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import { useSystemUI } from '@/hooks/useSystemUI'
+import DaText from '@/components/atoms/DaText'
 interface TextCellProps {
   value: string
   onChange: (value: string) => void
@@ -301,21 +302,21 @@ const DaPrototypeFlowEditor = ({
       )}
     >
       <div className="flex items-center justify-between border-b pb-2 mb-4 ">
-        <h2 className="text-sm font-semibold text-da-primary-500">
+        <DaText variant="title" className="text-da-primary-500">
           End-to-End Flow: {prototype?.name}
-        </h2>
+        </DaText>
         <div className="flex space-x-2">
           <DaButton
             onClick={onCancel}
-            className="w-fit"
+            className="w-[70px]"
             variant="outline-nocolor"
             size="sm"
           >
-            Discard Changes
+            Cancel
           </DaButton>
           <DaButton
             onClick={handleSave}
-            className="w-[60px]"
+            className="w-[70px]"
             variant="solid"
             size="sm"
           >

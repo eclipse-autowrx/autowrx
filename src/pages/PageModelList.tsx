@@ -217,78 +217,86 @@ const PageModelList = () => {
 
       <div className="flex w-full h-[calc(100%-52px)] items-start bg-slate-200 p-2">
         <div className="flex flex-col w-full h-full bg-white rounded-lg overflow-y-auto">
-          <div className="flex flex-col w-full h-full container px-4 py-6">
+          <div className="flex flex-col w-full h-full container px-4 pb-6">
             {user && (
-              <div className="flex w-full items-center justify-between mb-4">
-                <DaText variant="small-medium" className="text-da-primary-500">
-                  Select a vehicle model to start
-                </DaText>
-                <div className="flex">
-                  {!isImporting ? (
-                    <DaImportFile
-                      accept=".zip"
-                      onFileChange={handleImportModelZip}
-                    >
-                      <DaButton
-                        variant="outline-nocolor"
-                        size="sm"
-                        className="mr-2"
-                      >
-                        <TbPackageExport className="mr-1 text-lg" /> Import
-                        Model
-                      </DaButton>
-                    </DaImportFile>
-                  ) : (
-                    <DaText
-                      variant="regular"
-                      className="flex items-center text-da-gray-medium mr-2"
-                    >
-                      <TbLoader className="animate-spin text-lg mr-2" />
-                      Importing model ...
-                    </DaText>
-                  )}
-                  <DaPopup
-                    trigger={
-                      <DaButton variant="solid" size="sm">
-                        <HiPlus className="mr-1 text-lg" />
-                        Create New Model
-                      </DaButton>
-                    }
+              <div
+                className="flex flex-col w-full h-full pt-6"
+                ref={myModelRef}
+              >
+                <div className="flex w-full items-center justify-between mb-4">
+                  <DaText
+                    variant="small-medium"
+                    className="text-da-primary-500"
                   >
-                    <FormCreateModel />
-                  </DaPopup>
-                </div>
-              </div>
-            )}
-
-            {user && myModels?.length > 0 && (
-              <div ref={myModelRef} className="py-2">
-                <DaText variant="sub-title" className="text-da-primary-500">
-                  My Models
-                </DaText>
-                <DaSkeletonGrid
-                  maxItems={{ sm: 1, md: 2, lg: 3, xl: 4 }}
-                  className="mt-2"
-                  primarySkeletonClassName="h-[240px]"
-                  secondarySkeletonClassName="hidden"
-                  data={myModels}
-                  isLoading={isLoadingMyModels}
-                  emptyText="No models found. Please create a new model."
-                  emptyContainerClassName="h-[50%]"
-                >
-                  <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-4 mt-2">
-                    {myModels.map((item, index) => (
-                      <Link key={index} to={`/model/${item.id}`}>
-                        <DaItemVerticalType2
-                          title={item.name}
-                          imageUrl={item.model_home_image_file}
-                          tags={item.tags?.map((t) => t.tag) || []}
-                          maxWidth="800px"
-                        />
-                      </Link>
-                    ))}
+                    Select a vehicle model to start
+                  </DaText>
+                  <div className="flex">
+                    {!isImporting ? (
+                      <DaImportFile
+                        accept=".zip"
+                        onFileChange={handleImportModelZip}
+                      >
+                        <DaButton
+                          variant="outline-nocolor"
+                          size="sm"
+                          className="mr-2"
+                        >
+                          <TbPackageExport className="mr-1 text-lg" /> Import
+                          Model
+                        </DaButton>
+                      </DaImportFile>
+                    ) : (
+                      <DaText
+                        variant="regular"
+                        className="flex items-center text-da-gray-medium mr-2"
+                      >
+                        <TbLoader className="animate-spin text-lg mr-2" />
+                        Importing model ...
+                      </DaText>
+                    )}
+                    <DaPopup
+                      trigger={
+                        <DaButton variant="solid" size="sm">
+                          <HiPlus className="mr-1 text-lg" />
+                          Create New Model
+                        </DaButton>
+                      }
+                    >
+                      <FormCreateModel />
+                    </DaPopup>
                   </div>
-                </DaSkeletonGrid>
+                </div>
+
+                {myModels?.length > 0 && (
+                  <div className="py-2">
+                    <DaText variant="sub-title" className="text-da-primary-500">
+                      My Models
+                    </DaText>
+                    <DaSkeletonGrid
+                      maxItems={{ sm: 1, md: 2, lg: 3, xl: 4 }}
+                      className="mt-2"
+                      primarySkeletonClassName="h-[240px]"
+                      secondarySkeletonClassName="hidden"
+                      data={myModels}
+                      isLoading={isLoadingMyModels}
+                      emptyText="No models found. Please create a new model."
+                      emptyContainerClassName="h-[50%]"
+                    >
+                      <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-4 mt-2">
+                        {myModels.map((item, index) => (
+                          <Link key={index} to={`/model/${item.id}`}>
+                            <DaItemVerticalType2
+                              title={item.name}
+                              imageUrl={item.model_home_image_file}
+                              tags={item.tags?.map((t) => t.tag) || []}
+                              maxWidth="800px"
+                            />
+                          </Link>
+                        ))}
+                      </div>
+                    </DaSkeletonGrid>
+                  </div>
+                )}
               </div>
             )}
 

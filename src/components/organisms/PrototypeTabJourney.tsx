@@ -201,7 +201,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
               </>
             ) : (
               <>
-                <DaText variant="huge-bold" className="text-da-primary-500">
+                <DaText variant="title" className="text-da-primary-500">
                   {localPrototype.name}
                 </DaText>
                 {isAuthorized && (

@@ -120,7 +120,7 @@ const DaKitManager = () => {
             disabled={!hasValidChanges()}
             size="sm"
           >
-            Discard Changes
+            Cancel
           </DaButton>
           <DaButton
             variant="solid"
