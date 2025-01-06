@@ -220,8 +220,10 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
   return (
     <div className="flex w-full h-full bg-da-white text-da-gray-medium select-none">
       <div className="flex flex-col p-3 w-[40%] max-w-[350px] h-full border-r">
-        <div className="flex mb-2 items-center justify-between space-x-8">
-          <DaText variant="sub-title">Architecture Mapping</DaText>
+        <div className="flex w-full mb-2 items-center justify-between space-x-2">
+          <DaText variant="title" className="text-da-primary-500">
+            Architecture Mapping
+          </DaText>
           {isAuthorized && (
             <DaButton onClick={createNewNode} size="sm" variant="solid">
               <TbPlus className="w-4 h-4 mr-1" /> New Node

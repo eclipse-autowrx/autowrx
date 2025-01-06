@@ -87,7 +87,7 @@ const FormUpdateVehicleProperties = ({
     initialVehicleType !== vehicleCategory || // Compare the initial and current vehicle categories
     !lodash.isEqual(filteredInitialProperties, filteredCurrentProperties) // Compare initial and current custom properties
 
-  // Reset to initial values when "Discard Changes" is clicked
+  // Reset to initial values when "Cancel" is clicked
   const handleCancelChanges = () => {
     setCustomProperties(lodash.cloneDeep(initialCustomProperties))
     setVehicleCategory(initialVehicleType)
@@ -156,7 +156,7 @@ const FormUpdateVehicleProperties = ({
             disabled={!hasChanges} // Disable if there are no changes to discard
             size="sm"
           >
-            Discard Changes
+            Cancel
           </DaButton>
           <DaButton
             variant="solid"
