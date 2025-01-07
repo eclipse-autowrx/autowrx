@@ -11,6 +11,7 @@ import DaGlobalSearch from '../molecules/DaGlobalSearch'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { FaCar } from 'react-icons/fa'
 import useCurrentModel from '@/hooks/useCurrentModel'
+import { IoIosHelpBuoy } from "react-icons/io";
 
 const NavigationBar = ({}) => {
   const { data: user } = useSelfProfileQuery()
@@ -24,6 +25,13 @@ const NavigationBar = ({}) => {
       </Link>
 
       <div className="grow"></div>
+
+      <Link to="https://forms.office.com/e/P5gv3U3dzA">
+        <div className='h-full flex text-orange-600 font-semibold da-txt-medium items-center text-skye-600 mr-4 hover:underline'>
+          <IoIosHelpBuoy className='mr-1 animate-pulse' size={24}/>
+          Support
+        </div>
+      </Link>
 
       {user && (
         <>
