@@ -120,6 +120,16 @@ const home = [
         redirectURL: 'https://youtu.be/K3pindMCq1c',
       },
       {
+        title: 'Version v2.0 release',
+        type: 'News',
+        date: '6th January 2025',
+        description:
+          'We are pleased to announce the release of Version 2. The previous version remains accessible at https://digitalauto.netlify.app until Jan 17th 2025',
+        imageURL:
+          'https://bewebstudio.digitalauto.tech/data/projects/rUQXyRLKlgaL/annoucement.jpg',
+        redirectURL: 'https://docs.digital.auto/releases/version2/',
+      },
+      {
         title: 'digital.auto Meetup',
         type: 'Event',
         date: '26 November 2024',
@@ -129,16 +139,6 @@ const home = [
           'https://bewebstudio.digitalauto.tech/data/projects/VOMpcykPhfIC/digital.auto%20Meetup.png',
         redirectURL:
           'https://www.linkedin.com/posts/digitalauto_join-prof-dirk-slama-to-discuss-the-roadmap-activity-7255901526752219137-RFLH?utm_source=share&utm_medium=member_desktop',
-      },
-      {
-        title: 'Zonal E/E architecture | digital.auto x MiX',
-        date: '25 October 2024',
-        type: 'News',
-        description:
-          'The Bosch MiX project has developed a demonstrator platform for real-time applications in a zonal E/E architecture utilizing NXP hashtag#S32G3 and Yocto Linux.',
-        imageURL:
-          'https://bewebstudio.digitalauto.tech/data/projects/VOMpcykPhfIC/Central%20Compute%20with%20Zones.png',
-        redirectURL: 'https://www.youtube.com/watch?v=M2o3h4anJ_s',
       },
       {
         title: 'GenAI Awards',
