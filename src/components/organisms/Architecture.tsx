@@ -56,17 +56,23 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
     const inputSkeleton =
       displayMode === 'model' ? model?.skeleton : prototype?.skeleton
 
-    let skele = { nodes: [] }
+    // Start with a default skeleton that definitely has a nodes array
+    let skele: { nodes: any[] } = { nodes: [] }
 
     if (inputSkeleton) {
       try {
-        skele = JSON.parse(inputSkeleton) // Try parsing the existing skeleton
+        const parsed = JSON.parse(inputSkeleton)
+        // Ensure the final object always has 'nodes', whether or not parsed includes it
+        skele = {
+          ...parsed,
+          nodes: Array.isArray(parsed?.nodes) ? parsed.nodes : [],
+        }
       } catch (err) {
         console.error('Failed to parse skeleton:', err)
       }
     }
 
-    setSkeleton(skele) // Always set skeleton to prevent it from being null
+    setSkeleton(skele)
   }, [displayMode, model, prototype])
 
   // 3) If skeleton is loaded but empty => create a new node
@@ -78,7 +84,6 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
     ) {
       createNewNode()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [skeleton])
 
   // 4) Read "id" from URL query params -> activeNodeId
@@ -350,13 +355,11 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
         >
           <div className="flex w-full p-3 bg-white items-center justify-between">
             <div className="flex items-center">
-              {/** Expand/Collapse toggle right here (optional). 
-                   You could move this to the left sidebar if you prefer. */}
               <DaButton
                 variant="plain"
                 size="sm"
                 onClick={() => setIsExpand((prev) => !prev)}
-                className="mr-4"
+                className="mr-2"
               >
                 {isExpand ? (
                   <TbLayoutSidebarLeftCollapse className="w-5 h-5" />
