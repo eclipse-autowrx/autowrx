@@ -141,11 +141,6 @@ const DaTableEditor = ({
     const rowNames = tableData.map((row) => row.rowName)
     const uniqueRowNames = new Set(rowNames)
     const noDuplicateRowNames = uniqueRowNames.size === rowNames.length
-    const allValidHeaders =
-      columnNames.every(isValidHeader) &&
-      tableData.every((row) => isValidHeader(row.rowName)) &&
-      noDuplicateColumnNames &&
-      noDuplicateRowNames
 
     if (
       columnNames.some((name) => name === '') ||
@@ -337,18 +332,18 @@ const DaTableEditor = ({
         </div>
 
         <DaButton
-          variant="outline-nocolor"
+          variant="dash"
           className={`absolute bottom-[-2.1rem] left-0 w-full !h-7 py-0.5 z-10 ${
             //   showAddRow && isEditing ? 'block' : '!hidden'
             isEditing ? 'block' : '!hidden'
           }`}
           onClick={addRow}
         >
-          <TbRowInsertTop />
+          <TbRowInsertTop className="size-4" />
         </DaButton>
 
         <DaButton
-          variant="outline-nocolor"
+          variant="dash"
           className={`absolute top-0 right-[-2rem] !h-full w-7 !px-0 z-10 ${
             //   showAddColumn && isEditing ? 'flex' : '!hidden'
             isEditing ? 'flex' : '!hidden'

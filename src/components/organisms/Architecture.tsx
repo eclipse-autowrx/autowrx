@@ -345,7 +345,6 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
         )}
       </div>
 
-      {/** MAIN CONTENT AREA */}
       {activeNode && (
         <div
           className={clsx(
@@ -356,108 +355,73 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
           <div className="flex w-full p-3 bg-white items-center justify-between">
             <div className="flex items-center">
               <DaButton
-                variant="plain"
+                variant="editor"
                 size="sm"
                 onClick={() => setIsExpand((prev) => !prev)}
-                className="mr-2"
+                className="mr-2 w-fit px-1"
               >
                 {isExpand ? (
-                  <TbLayoutSidebarLeftCollapse className="w-5 h-5" />
+                  <TbLayoutSidebarLeftCollapse className="size-4" />
                 ) : (
-                  <TbLayoutSidebarLeftExpand className="w-5 h-5" />
+                  <TbLayoutSidebarLeftExpand className="size-4" />
                 )}
               </DaButton>
 
-              {!isEditName && (
-                <div className="flex items-center">
-                  <DaText variant="title" className="text-da-primary-500">
-                    {activeNode.name}
-                  </DaText>
-                  {isAuthorized && (
-                    <DaButton
-                      onClick={() => {
-                        setTmpNodeName(activeNode.name)
-                        setIsEditName(true)
-                      }}
-                      size="sm"
-                      variant="plain"
-                      className="ml-2"
-                    >
-                      <TbEdit className="w-4 h-4 mr-2" />
-                      Edit Name
-                    </DaButton>
-                  )}
-                </div>
-              )}
-              {isEditName && (
-                <div className="flex items-center">
-                  <DaInput
-                    value={tmpNodeName}
-                    onChange={(e) => setTmpNodeName(e.target.value)}
-                    className="h-8 min-w-[300px]"
-                    inputClassName="h-6"
-                  />
-                  <div className="space-x-2">
-                    <DaButton
-                      variant="plain"
-                      size="sm"
-                      className="ml-4"
-                      onClick={() => setIsEditName(false)}
-                    >
-                      Cancel
-                    </DaButton>
-                    <DaButton
-                      variant="solid"
-                      size="sm"
-                      className="ml-4"
-                      onClick={handleNameSave}
-                    >
-                      Save
-                    </DaButton>
-                  </div>
-                </div>
+              {isEditMode ? (
+                <DaInput
+                  value={tmpNodeName}
+                  onChange={(e) => setTmpNodeName(e.target.value)}
+                  className="h-8 min-w-[300px]"
+                  inputClassName="h-6"
+                />
+              ) : (
+                <DaText variant="title" className="text-da-primary-500">
+                  {activeNode.name}
+                </DaText>
               )}
             </div>
-            <div className="flex space-x-2">
-              <DaButton
-                className={`${
-                  !isEditMode
-                    ? '!border-da-primary-500 !text-da-primary-500 bg-da-primary-100'
-                    : 'text-da-gray-medium'
-                }`}
-                onClick={() => {
-                  setIsEditMode(false)
-                }}
-                size="sm"
-                variant="plain"
-              >
-                View Mode
-              </DaButton>
-              {isAuthorized && (
+            <div className="flex">
+              {!isEditMode ? (
                 <DaButton
-                  className={` ${
-                    isEditMode
-                      ? '!border-da-primary-500 !text-da-primary-500 bg-da-primary-100'
-                      : 'text-da-gray-medium'
-                  }`}
+                  variant="editor"
+                  size="sm"
+                  className="!justify-start"
                   onClick={() => {
                     setIsEditMode(true)
                   }}
-                  size="sm"
-                  variant="plain"
                 >
-                  Edit Mode
+                  <TbEdit className="size-4 mr-1" />
+                  Edit
                 </DaButton>
+              ) : (
+                <div className="flex items-center space-x-2 mr-2">
+                  <DaButton
+                    variant="outline-nocolor"
+                    size="sm"
+                    className="w-16"
+                    onClick={() => setIsEditMode(false)}
+                  >
+                    Cancel
+                  </DaButton>
+                  <DaButton
+                    variant="solid"
+                    size="sm"
+                    className="w-16"
+                    onClick={handleNameSave}
+                  >
+                    Save
+                  </DaButton>
+                </div>
               )}
               <DaButton
                 onClick={() => setFullscreen((prev) => !prev)}
                 size="sm"
-                variant="plain"
+                variant="editor"
               >
                 {isFullscreen ? (
-                  <TbArrowsMinimize className="w-5 h-5" />
+                  <TbArrowsMinimize className="size-4" />
                 ) : (
-                  <TbArrowsMaximize className="w-5 h-5" />
+                  <TbArrowsMaximize className="size-4" />
                 )}
               </DaButton>
             </div>

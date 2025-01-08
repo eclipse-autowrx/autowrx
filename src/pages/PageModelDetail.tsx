@@ -18,6 +18,7 @@ import { uploadFileService } from '@/services/upload.service'
 import { convertJSONToProperty } from '@/lib/vehiclePropertyUtils'
 import {
   TbChevronDown,
+  TbDotsVertical,
   TbDownload,
   TbEdit,
   TbLoader,
@@ -158,24 +159,6 @@ const PageModelDetail = () => {
                     className="h-8 min-w-[300px]"
                     inputClassName="h-6"
                   />
-                  <div className="space-x-2">
-                    <DaButton
-                      variant="plain"
-                      size="sm"
-                      className="ml-4"
-                      onClick={() => setIsEditingName(false)}
-                    >
-                      Cancel
-                    </DaButton>
-                    <DaButton
-                      variant="solid"
-                      size="sm"
-                      className="ml-4"
-                      onClick={handleNameSave}
-                    >
-                      Save
-                    </DaButton>
-                  </div>
                 </div>
               ) : (
                 <DaText
@@ -189,10 +172,44 @@ const PageModelDetail = () => {
           </div>
         </div>
         {isAuthorized && (
-          <div className="flex gap-2">
+          <div className="flex">
+            {!isEditingName ? (
+              <DaButton
+                variant="editor"
+                size="sm"
+                className="!justify-start"
+                onClick={() => {
+                  setNewName(model.name)
+                  setIsEditingName(true)
+                }}
+              >
+                <TbEdit className="w-4 h-4 mr-1" />
+                Edit
+              </DaButton>
+            ) : (
+              <div className="flex items-center space-x-2 mr-2">
+                <DaButton
+                  variant="outline-nocolor"
+                  size="sm"
+                  className="w-16"
+                  onClick={() => setIsEditingName(false)}
+                >
+                  Cancel
+                </DaButton>
+                <DaButton
+                  variant="solid"
+                  size="sm"
+                  className="w-16"
+                  onClick={handleNameSave}
+                >
+                  Save
+                </DaButton>
+              </div>
+            )}
             <DaMenu
               trigger={
                 <DaButton
+                  variant="editor"
                   size="sm"
                   className={cn(
                     'flex w-full space-x-3 pt-1',
@@ -201,8 +218,7 @@ const PageModelDetail = () => {
                 >
                   {!isDeleting && !isExporting && (
                     <>
-                      Model Action
-                      <TbChevronDown />
+                      <TbDotsVertical className="size-4" />
                     </>
                   )}
                   {isDeleting && (
@@ -221,18 +237,6 @@ const PageModelDetail = () => {
               }
             >
               <div className="flex flex-col px-1">
-                <DaButton
-                  variant="plain"
-                  size="sm"
-                  className="!justify-start"
-                  onClick={() => {
-                    setNewName(model.name)
-                    setIsEditingName(true)
-                  }}
-                >
-                  <TbEdit className="w-4 h-4 mr-2" />
-                  Edit Name
-                </DaButton>
                 <DaButton
                   variant="plain"
                   size="sm"

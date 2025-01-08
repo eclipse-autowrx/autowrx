@@ -5,8 +5,6 @@ import {
   TbArrowsHorizontal,
   TbPlus,
   TbTrash,
-  TbArrowsMinimize,
-  TbArrowsMaximize,
   TbChevronCompactRight,
 } from 'react-icons/tb'
 import DaTooltip from '@/components/atoms/DaTooltip'
@@ -15,8 +13,6 @@ import { DaButton } from '@/components/atoms/DaButton'
 import { DaTextarea } from '@/components/atoms/DaTextarea'
 import { cn } from '@/lib/utils'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
-import { useSystemUI } from '@/hooks/useSystemUI'
-import DaText from '@/components/atoms/DaText'
 interface TextCellProps {
   value: string
   onChange: (value: string) => void
@@ -162,19 +158,14 @@ const SignalFlowEditor = ({ flow, onChange }: SignalFlowEditorProps) => {
 
 interface DaPrototypeFlowEditorProps {
   initialData: FlowStep[]
-  onSave: (data: string) => void
-  onCancel: () => void
+  onUpdate: (data: string) => void
 }
 
 const DaPrototypeFlowEditor = ({
   initialData,
-  onSave,
-  onCancel,
+  onUpdate,
 }: DaPrototypeFlowEditorProps) => {
-  const { data: prototype } = useCurrentPrototype()
   const [data, setData] = useState<FlowStep[]>(initialData)
-  const { showPrototypeFlowFullScreen, setShowPrototypeFlowFullScreen } =
-    useSystemUI()
   const createEmptyFlow = () => ({
     offBoard: {
       smartPhone: '',
@@ -283,8 +274,13 @@ const DaPrototypeFlowEditor = ({
     const jsonString = JSON.stringify(cleanedData)
 
     // Call the onSave prop with the JSON string
-    onSave(jsonString)
+    // onSave(jsonString)
   }
+
+  useEffect(() => {
+    const cleanedData = data.filter((step) => step.flows.length > 0)
+    onUpdate(JSON.stringify(cleanedData))
+  }, [data])
 
   useEffect(() => {
     if (initialData.length === 0) {
@@ -293,50 +289,7 @@ const DaPrototypeFlowEditor = ({
   }, [initialData])
 
   return (
-    <div
-      className={cn(
-        'flex w-full h-full flex-col bg-white rounded-md',
-        showPrototypeFlowFullScreen
-          ? 'fixed inset-0 z-50 overflow-auto bg-white py-4 px-8'
-          : '',
-      )}
-    >
-      <div className="flex items-center justify-between border-b pb-2 mb-4 ">
-        <DaText variant="title" className="text-da-primary-500">
-          End-to-End Flow: {prototype?.name}
-        </DaText>
-        <div className="flex space-x-2">
-          <DaButton
-            onClick={onCancel}
-            className="w-[70px]"
-            variant="outline-nocolor"
-            size="sm"
-          >
-            Cancel
-          </DaButton>
-          <DaButton
-            onClick={handleSave}
-            className="w-[70px]"
-            variant="solid"
-            size="sm"
-          >
-            Save
-          </DaButton>
-          <DaButton
-            onClick={() =>
-              setShowPrototypeFlowFullScreen(!showPrototypeFlowFullScreen)
-            }
-            size="sm"
-            variant="plain"
-          >
-            {showPrototypeFlowFullScreen ? (
-              <TbArrowsMinimize className="w-5 h-5 stroke-[1.75]" />
-            ) : (
-              <TbArrowsMaximize className="w-5 h-5 stroke-[1.75]" />
-            )}
-          </DaButton>
-        </div>
-      </div>
+    <div className={cn('flex w-full h-full flex-col bg-white rounded-md')}>
       <>
         <table className="table-fixed w-full">
           <colgroup>

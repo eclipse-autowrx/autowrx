@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { TbArrowsMaximize, TbArrowsMinimize } from 'react-icons/tb'
+import { TbArrowsMaximize, TbArrowsMinimize, TbEdit } from 'react-icons/tb'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import { updatePrototypeService } from '@/services/prototype.service'
 import DaTooltip from '../atoms/DaTooltip'
@@ -19,6 +19,7 @@ const PrototypeTabFlow = () => {
   const [isEditing, setIsEditing] = useState(false)
   const [customerJourneySteps, setCustomerJourneySteps] = useState<string[]>([])
   const [flowData, setFlowData] = useState<FlowStep[]>([])
+  const [flowString, setFlowString] = useState('')
   const {
     showPrototypeFlowASIL,
     setShowPrototypeFlowASIL,
@@ -145,71 +146,72 @@ const PrototypeTabFlow = () => {
       )}
     >
       <div className="w-full ">
+        <div className="flex items-center border-b pb-2 mb-4 ">
+          <DaText variant="title" className="text-da-primary-500">
+            End-to-End Flow: {prototype?.name}
+          </DaText>
+          <div className="grow" />
+
+          {!isEditing ? (
+            <DaButton
+              onClick={() => setIsEditing(true)}
+              className="!justify-start"
+              variant="editor"
+              size="sm"
+            >
+              <TbEdit className="w-4 h-4 mr-1" /> Edit
+            </DaButton>
+          ) : (
+            <div className="flex space-x-2 mr-2">
+              <DaButton
+                variant="outline-nocolor"
+                onClick={() => setIsEditing(false)}
+                className="w-16 text-da-white px-4 py-2 rounded"
+                size="sm"
+              >
+                Cancel
+              </DaButton>
+              <DaButton
+                onClick={() => handleSave(flowString)}
+                className="w-16 text-white px-4 py-2 rounded"
+                size="sm"
+              >
+                Save
+              </DaButton>
+            </div>
+          )}
+          <DaButton
+            onClick={() =>
+              setShowPrototypeFlowFullScreen(!showPrototypeFlowFullScreen)
+            }
+            size="sm"
+            variant="editor"
+          >
+            {showPrototypeFlowFullScreen ? (
+              <TbArrowsMinimize className="size-4" />
+            ) : (
+              <TbArrowsMaximize className="size-4" />
+            )}
+          </DaButton>
+        </div>
         {isEditing ? (
           <DaPrototypeFlowEditor
             initialData={flowData}
-            onSave={(jsonData) => handleSave(jsonData)}
-            onCancel={() => setIsEditing(false)}
+            onUpdate={(jsonData) => setFlowString(jsonData)}
           />
         ) : (
           <>
-            <div className="flex items-center justify-between border-b pb-2 mb-4 ">
-              <DaText variant="title" className="text-da-primary-500">
-                End-to-End Flow: {prototype?.name}
-              </DaText>
-              <div className="flex space-x-2">
-                <DaButton
-                  onClick={() => setIsEditing(false)}
-                  className={cn(
-                    'w-[90px]',
-                    !isEditing
-                      ? '!border-da-primary-500 !text-da-primary-500 bg-da-primary-100'
-                      : 'text-da-gray-medium',
-                  )}
-                  variant="plain"
-                  size="sm"
-                >
-                  View Mode
-                </DaButton>
-                <DaButton
-                  onClick={() => setIsEditing(true)}
-                  className={cn(
-                    'w-[90px]',
-                    isEditing
-                      ? '!border-da-primary-500 !text-da-primary-500 bg-da-primary-100'
-                      : 'text-da-gray-medium',
-                  )}
-                  variant="plain"
-                  size="sm"
-                >
-                  Edit Mode
-                </DaButton>
-                <DaButton
-                  onClick={() =>
-                    setShowPrototypeFlowFullScreen(!showPrototypeFlowFullScreen)
-                  }
-                  size="sm"
-                  variant="plain"
-                >
-                  {showPrototypeFlowFullScreen ? (
-                    <TbArrowsMinimize className="w-5 h-5 stroke-[1.75]" />
-                  ) : (
-                    <TbArrowsMaximize className="w-5 h-5 stroke-[1.75]" />
-                  )}
-                </DaButton>
-              </div>
-            </div>
             <table className="w-full border-collapse table-fixed">
               <colgroup>
-                <col className="w-[16%]" />
-                <col className="w-[8%]" />
-                <col className="w-[16%]" />
-                <col className="w-[8%]" />
-                <col className="w-[16%]" />
-                <col className="w-[8%]" />
-                <col className="w-[16%]" />
-                <col className="w-[8%]" />
-                <col className="w-[16%]" />
+                <col className="w-[19%]" />
+                <col className="w-[3%]" />
+                <col className="w-[19%]" />
+                <col className="w-[3%]" />
+                <col className="w-[19%]" />
+                <col className="w-[3%]" />
+                <col className="w-[19%]" />
+                <col className="w-[3%]" />
+                <col className="w-[19%]" />
               </colgroup>
               <thead className="bg-gradient-to-tr from-da-secondary-500 to-da-primary-500 text-white">
                 <tr className="text-sm uppercase">
