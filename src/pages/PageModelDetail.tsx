@@ -12,6 +12,7 @@ import DaVehicleProperties from '@/components/molecules/vehicle_properties/DaVeh
 import DaContributorList from '@/components/molecules/DaContributorList'
 import {
   deleteModelService,
+  getComputedAPIs,
   updateModelService,
 } from '@/services/model.service'
 import { uploadFileService } from '@/services/upload.service'
@@ -20,6 +21,7 @@ import {
   TbChevronDown,
   TbDownload,
   TbEdit,
+  TbFileExport,
   TbLoader,
   TbPhotoEdit,
   TbTrashX,
@@ -72,10 +74,13 @@ const DaVisibilityControl: React.FC<VisibilityControlProps> = ({
 
 const PageModelDetail = () => {
   const [model] = useModelStore((state) => [state.model as Model])
+
   const [isExporting, setIsExporting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isEditingName, setIsEditingName] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
+
   const [newName, setNewName] = useState(model?.name ?? '')
   const { refetch } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model?.id])
@@ -199,7 +204,7 @@ const PageModelDetail = () => {
                     isEditingName && '!pointer-events-none opacity-50',
                   )}
                 >
-                  {!isDeleting && !isExporting && (
+                  {!isDeleting && !isExporting && !isDownloading && (
                     <>
                       Model Action
                       <TbChevronDown />
@@ -215,6 +220,12 @@ const PageModelDetail = () => {
                     <div className="flex items-center">
                       <TbLoader className="w-4 h-4 mr-1 animate-spin" />
                       Exporting Model...
+                    </div>
+                  )}
+                  {isDownloading && (
+                    <div className="flex items-center">
+                      <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                      Downloading Signal Data...
                     </div>
                   )}
                 </DaButton>
@@ -248,8 +259,32 @@ const PageModelDetail = () => {
                     setIsExporting(false)
                   }}
                 >
-                  <TbDownload className="w-4 h-4 mr-2" />
+                  <TbFileExport className="w-4 h-4 mr-2" />
                   Export Model
+                </DaButton>
+                <DaButton
+                  variant="plain"
+                  size="sm"
+                  className="!justify-start"
+                  onClick={async () => {
+                    if (!model) return
+                    try {
+                      const data = await getComputedAPIs(model.id)
+                      const link = document.createElement('a')
+                      link.href = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data))}`
+                      link.download = `${model.name}_signal_data.json`
+                      document.body.appendChild(link)
+                      link.click()
+                      document.body.removeChild(link)
+                    } catch (e) {
+                      console.error(e)
+                    } finally {
+                      setIsDownloading(false)
+                    }
+                  }}
+                >
+                  <TbDownload className="w-4 h-4 mr-2" />
+                  Download Signal Data
                 </DaButton>
                 <DaButton
                   variant="destructive"

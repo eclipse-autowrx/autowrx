@@ -14,8 +14,17 @@ import useListModelLite from '@/hooks/useListModelLite'
 import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import useListVSSVersions from '@/hooks/useListVSSVersions'
+import DaFileUpload from '@/components/atoms/DaFileUpload'
 
-const initialState = {
+type ModelData = {
+  cvi: string
+  name: string
+  mainApi: string
+  api_version: string
+  api_data_url?: string
+}
+
+const initialState: ModelData = {
   cvi: JSON.stringify(CVI),
   name: '',
   mainApi: 'Vehicle',
@@ -24,6 +33,8 @@ const initialState = {
 
 const FormCreateModel = () => {
   const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
+
   const [error, setError] = useState<string>('')
   const [data, setData] = useState(initialState)
   const { refetch: refetchModelLite } = useListModelLite()
@@ -54,6 +65,9 @@ const FormCreateModel = () => {
         main_api: data.mainApi,
         name: data.name,
         api_version: data.api_version,
+      }
+      if (data.api_data_url) {
+        body.api_data_url = data.api_data_url
       }
       const modelId = await createModelService(body)
       await refetchModelLite()
@@ -109,28 +123,48 @@ const FormCreateModel = () => {
         className="mt-4"
       />
 
-      <DaSelect
-        onValueChange={handleVSSChange}
-        defaultValue="v4.1"
-        label="VSS Signal Version*"
-        className="mt-1"
-        wrapperClassName="mt-4"
-      >
-        {versions ? (
-          versions.map((version) => (
-            <DaSelectItem key={version.name} value={version.name}>
-              COVESA VSS {version.name}
-            </DaSelectItem>
-          ))
-        ) : (
-          <>
-            <DaSelectItem value="v5.0">COVESA VSS v5.0</DaSelectItem>
-            <DaSelectItem value="v4.1">COVESA VSS v4.1</DaSelectItem>
-            <DaSelectItem value="v4.0">COVESA VSS v4.0</DaSelectItem>
-            <DaSelectItem value="v3.1">COVESA VSS v3.1</DaSelectItem>
-          </>
-        )}
-      </DaSelect>
+      <div className="mt-4" />
+
+      <DaText variant="regular-medium">VSS Signal *</DaText>
+      <div className="border mt-1 rounded-lg px-2 pb-2 pt-1">
+        <DaText variant="small">select version</DaText>
+        <DaSelect
+          wrapperClassName="mt-1"
+          onValueChange={handleVSSChange}
+          defaultValue="v4.1"
+        >
+          {versions ? (
+            versions.map((version) => (
+              <DaSelectItem key={version.name} value={version.name}>
+                COVESA VSS {version.name}
+              </DaSelectItem>
+            ))
+          ) : (
+            <>
+              <DaSelectItem value="v5.0">COVESA VSS v5.0</DaSelectItem>
+              <DaSelectItem value="v4.1">COVESA VSS v4.1</DaSelectItem>
+              <DaSelectItem value="v4.0">COVESA VSS v4.0</DaSelectItem>
+              <DaSelectItem value="v3.1">COVESA VSS v3.1</DaSelectItem>
+            </>
+          )}
+        </DaSelect>
+
+        <DaText variant="small">or upload a file</DaText>
+
+        <DaFileUpload
+          onStartUpload={() => {
+            setUploading(true)
+          }}
+          onFileUpload={(url) => {
+            setData((prev) => ({ ...prev, api_data_url: url }))
+            setUploading(false)
+          }}
+          className="mt-1"
+          accept=".json"
+        />
+      </div>
+
+      {/* <DaFileUpload /> */}
 
       <div className="grow"></div>
 
@@ -142,7 +176,7 @@ const FormCreateModel = () => {
       )}
       {/* Action */}
       <DaButton
-        disabled={loading}
+        disabled={loading || uploading}
         type="submit"
         variant="gradient"
         className="mt-8 w-full"
