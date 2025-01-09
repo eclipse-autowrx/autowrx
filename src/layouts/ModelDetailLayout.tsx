@@ -47,7 +47,7 @@ const ModelDetailLayout = () => {
       count: numberOfNodes,
     },
     {
-      title: `Vehicle Signals`,
+      title: `Vehicle API`,
       content:
         'Browse, explore and enhance the catalogue of Connected Vehicle Interfaces',
       path: 'api',

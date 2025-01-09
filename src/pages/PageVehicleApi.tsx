@@ -8,10 +8,13 @@ import DaTabItem from '@/components/atoms/DaTabItem'
 import DaTreeView from '@/components/molecules/DaTreeView'
 import DaLoadingWrapper from '@/components/molecules/DaLoadingWrapper'
 import useModelStore from '@/stores/modelStore'
-import { TbBinaryTree2, TbGitCompare, TbList } from 'react-icons/tb'
+import { TbBinaryTree2, TbGitCompare, TbList, TbDownload } from 'react-icons/tb'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import DaText from '@/components/atoms/DaText'
 import VssComparator from '@/components/organisms/VssComparator'
+import {
+  getComputedAPIs,
+} from '@/services/model.service'
 
 const PageVehicleApi = () => {
   const { model_id, tab } = useParams()
@@ -35,7 +38,7 @@ const PageVehicleApi = () => {
     <DaLoadingWrapper
       isLoading={isLoading}
       data={activeModelApis}
-      loadingMessage="Loading Vehicle Signals..."
+      loadingMessage="Loading Vehicle API..."
       emptyMessage="No Signals found."
       timeoutMessage="Failed to load Signals. Please try again."
     >
@@ -65,6 +68,27 @@ const PageVehicleApi = () => {
               <TbGitCompare className="w-5 h-5 mr-2" />
               Version Diff
             </DaTabItem>
+            <DaTabItem
+              active={false}
+              onClick={async () => {
+                if (!model) return
+                    try {
+                      const data = await getComputedAPIs(model.id)
+                      const link = document.createElement('a')
+                      link.href = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 4))}`
+                      link.download = `${model.name}_vss.json`
+                      document.body.appendChild(link)
+                      link.click()
+                      document.body.removeChild(link)
+                    } catch (e) {
+                      console.error(e)
+                    }
+              }}
+            >
+              <TbDownload className="w-5 h-5 mr-2" />
+              Download as JSON
+            </DaTabItem>
+            
           </div>
           <DaText variant="regular-bold" className="text-da-primary-500 pr-4">
             COVESA VSS {(model && model.api_version) ?? 'v4.1'}

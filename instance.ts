@@ -9,14 +9,14 @@ const instance = {
   },
   featureCards: [
     {
-      title: 'Vehicle Signal Catalogue',
+      title: 'Vehicle API Catalogue',
       content:
         'Browse, explore and enhance the catalogue of Connected Vehicle Interfaces',
     },
     {
       title: 'Prototyping',
       content:
-        'Build and test new connected vehicle app prototypes in the browser, using Python and the Vehicle Signals',
+        'Build and test new connected vehicle app prototypes in the browser, using Python and the Vehicle API',
     },
     {
       title: 'User Feedback',

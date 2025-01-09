@@ -93,6 +93,7 @@ export type ModelCreate = {
   model_files?: object
   visibility?: 'public' | 'private'
   extended_apis?: any[]
+  api_data_url?: string
 }
 
 export type VehicleApi = {

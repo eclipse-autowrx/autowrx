@@ -16,7 +16,7 @@ const breadcrumbNames: { [key: string]: string } = {
   model: 'Vehicle Models',
   library: 'Prototype Library',
   prototype: 'Vehicle Prototypes',
-  api: 'Vehicle Signals',
+  api: 'Vehicle API',
   architecture: 'Vehicle Architecture',
   genai: 'Vehicle App Generator',
 }
