@@ -58,7 +58,9 @@ const PageModelList = () => {
   const myModels = myModelsData?.results || []
   const contributionModelsRaw = contributionModelData?.results || []
   const publicModelsRaw =
-    allModel?.results?.filter((m) => m.visibility === 'public') || []
+    allModel?.results?.filter(
+      (m) => m.visibility === 'public' && m.state === 'released',
+    ) || []
 
   // 1) Collect model IDs for user-owned models
   const userOwnedIds = myModels.map((m) => m.id)

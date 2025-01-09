@@ -14,6 +14,7 @@ export type ModelLite = {
   created_at?: Date
   created_by: string
   tags?: Tag[]
+  state?: 'draft' | 'released' | 'blocked'
 }
 
 export type Model = {
@@ -39,6 +40,7 @@ export type Model = {
   tags?: Tag[]
   contributors?: User[]
   members?: User[]
+  state?: 'draft' | 'released' | 'blocked'
 }
 
 export type Prototype = {
