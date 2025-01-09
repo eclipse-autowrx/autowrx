@@ -33,7 +33,7 @@ const home = [
       {
         title: 'Get Started',
         description:
-          'Learn about creating efficient SDV applications, using Python and Vehicle Signals',
+          'Learn about creating efficient SDV applications, using Python and Vehicle API',
         children: (
           <div className="flex space-x-2 items-center mt-4">
             <DaButton size="sm">

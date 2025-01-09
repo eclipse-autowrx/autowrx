@@ -271,8 +271,8 @@ const PageModelDetail = () => {
                     try {
                       const data = await getComputedAPIs(model.id)
                       const link = document.createElement('a')
-                      link.href = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data))}`
-                      link.download = `${model.name}_signal_data.json`
+                      link.href = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 4))}`
+                      link.download = `${model.name}_vss.json`
                       document.body.appendChild(link)
                       link.click()
                       document.body.removeChild(link)
@@ -284,7 +284,7 @@ const PageModelDetail = () => {
                   }}
                 >
                   <TbDownload className="w-4 h-4 mr-2" />
-                  Download Signal Data
+                  Download Vehicle API JSON file
                 </DaButton>
                 <DaButton
                   variant="destructive"

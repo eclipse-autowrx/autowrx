@@ -22,7 +22,7 @@ export const home = [
       {
         title: 'Prototyping',
         description:
-          'Build and test new connected vehicle app prototypes in the browser, using Python and the Vehicle Signals',
+          'Build and test new connected vehicle app prototypes in the browser, using Python and the Vehicle API',
         url: 'https://digital.auto',
       },
       {
