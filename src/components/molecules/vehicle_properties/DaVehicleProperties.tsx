@@ -104,9 +104,9 @@ const DaVehicleProperties = ({
         state={[isOpenUpdateForm, setIsOpenUpdateForm]}
         trigger={<></>}
         onClose={() => setIsOpenUpdateForm(false)}
-        closeBtnClassName="top-10 right-10 size-6"
+        closeBtnClassName="top-8 right-8 size-6"
       >
-        <div className="flex flex-col h-fit max-h-[90vh] min-w-[600px] lg:min-w-[800px] max-w-[70vw] md:max-w-[55vw] 2xl:max-w-[45vw] p-4">
+        <div className="flex flex-col h-fit max-h-[90vh] min-w-[600px] lg:min-w-[800px] max-w-[70vw] md:max-w-[55vw] 2xl:max-w-[45vw] p-2">
           <DaText variant="title" className="text-da-primary-500">
             Update vehicle properties
           </DaText>

@@ -366,7 +366,7 @@ const PrototypeTabFlow = () => {
             checked={showPrototypeFlowASIL}
             onChange={() => setShowPrototypeFlowASIL(!showPrototypeFlowASIL)}
             label={'Show ASIL/QM Levels'}
-            className="text-sm mt-2"
+            className="text-sm mt-2 w-fit"
           />
         )}
       </div>

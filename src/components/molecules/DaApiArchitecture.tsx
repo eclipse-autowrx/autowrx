@@ -1,4 +1,4 @@
-import { ImageAreaEdit, ImageAreaPreview } from 'image-area-lib'
+import { ImageAreaEdit, ImageAreaPreview } from '@digital-auto/image-area-lib'
 import axios, { AxiosError } from 'axios'
 import { DaButton } from '../atoms/DaButton'
 import { useEffect, useState } from 'react'
@@ -23,10 +23,11 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
   const [skeleton, setSkeleton] = useState<any>({})
   const [extendedApi, setExtendedApi] = useState<ExtendedApi>()
   const [activeSkeleton, setActiveSkeleton] = useState<any>(null)
-  const [activeTab, setActiveTab] = useState<string>('view')
   const [isFetching, setIsFetching] = useState<boolean>(false)
   const { data: model } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model?.id])
+  const [isEditMode, setIsEditMode] = useState<boolean>(false)
+  const [pendingSkeletonUpdate, setPendingSkeletonUpdate] = useState<any>(null)
   const navigate = useNavigate()
 
   if (!model)
@@ -276,14 +277,14 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
     node.bgImage = data.bgImage
     await saveAPISkeleton(tmpSkele)
     setSkeleton(tmpSkele)
-    setActiveTab('view')
+    setIsEditMode(false)
   }
 
   // Fetch api skeleton when changing API
   useEffect(() => {
     setActiveSkeleton(null)
     setSkeleton({})
-    setActiveTab('view')
+    setIsEditMode(false)
     fetchAPISkeleton(model.id, apiName)
   }, [model, apiName])
 
@@ -313,23 +314,37 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
           <div
             className={`flex w-full justify-end py-2 ${isAuthorized ? 'visible' : 'hidden'}`}
           >
-            <DaTooltip
-              content={`Switch to ${activeTab === 'view' ? 'Edit' : 'View'} mode`}
-              space={20}
-            >
+            {!isEditMode ? (
               <DaButton
-                variant="outline-nocolor"
+                variant="editor"
                 size="sm"
-                onClick={() =>
-                  setActiveTab(activeTab === 'view' ? 'edit' : 'view')
-                }
+                onClick={() => setIsEditMode(true)}
               >
-                {activeTab === 'view' ? <TbEdit /> : <TbArrowLeft />}
-                <span className="ml-2">
-                  {activeTab === 'view' ? 'Edit Mapping' : 'Exit Edit Mode'}{' '}
-                </span>
+                <TbEdit className="size-4 mr-1" />
+                Edit
               </DaButton>
-            </DaTooltip>
+            ) : (
+              <div className="flex items-center space-x-2 mr-2">
+                <DaButton
+                  variant="outline-nocolor"
+                  size="sm"
+                  className="w-16"
+                  onClick={() => setIsEditMode(false)}
+                >
+                  Cancel
+                </DaButton>
+                <DaButton
+                  variant="solid"
+                  size="sm"
+                  className="w-16"
+                  onClick={() => {
+                    onSaveRequested(pendingSkeletonUpdate)
+                  }}
+                >
+                  Save
+                </DaButton>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -338,18 +353,19 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
         activeSkeleton.nodes &&
         activeSkeleton.nodes.length > 0 && (
           <div className="flex w-full h-auto">
-            {activeTab === 'view' ? (
-              <ImageAreaPreview
-                shapes={activeSkeleton?.nodes[0]?.shapes}
-                bgImage={activeSkeleton?.nodes[0]?.bgImage}
-                navigate={handleNavigate}
-              />
-            ) : (
+            {isEditMode ? (
               <ImageAreaEdit
                 shapes={activeSkeleton?.nodes[0]?.shapes}
                 bgImage={activeSkeleton?.nodes[0]?.bgImage}
                 onSave={onSaveRequested}
                 handleUploadImage={handleUploadImage}
+                onUpdate={setPendingSkeletonUpdate}
+              />
+            ) : (
+              <ImageAreaPreview
+                shapes={activeSkeleton?.nodes[0]?.shapes}
+                bgImage={activeSkeleton?.nodes[0]?.bgImage}
+                navigate={handleNavigate}
               />
             )}
           </div>

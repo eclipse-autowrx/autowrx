@@ -6,6 +6,7 @@ import {
   TbPlus,
   TbTrash,
   TbChevronCompactRight,
+  TbArrowsLeftRight,
 } from 'react-icons/tb'
 import DaTooltip from '@/components/atoms/DaTooltip'
 import { FlowStep, Direction, SignalFlow } from '@/types/flow.type'
@@ -104,7 +105,7 @@ const DirectionSelect = ({ value, onChange }: DirectionSelectProps) => {
   const icons = {
     left: <TbArrowLeft className="size-5" />,
     right: <TbArrowRight className="size-5" />,
-    'bi-direction': <TbArrowsHorizontal className="size-5" />,
+    'bi-direction': <TbArrowsLeftRight className="size-5" />,
   }
 
   // Handle button click to toggle to the next direction
