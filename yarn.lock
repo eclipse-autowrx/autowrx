@@ -253,6 +253,15 @@
     react-lifecycles-compat "^3.0.4"
     warning "^3.0.0"
 
+"@digital-auto/image-area-lib@1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@digital-auto/image-area-lib/-/image-area-lib-1.0.2.tgz#d62be1c83ee7d8b11edf4670bc3c094a40bcaec2"
+  integrity sha512-MoCotRmOzb7XIAgvz4c3FpQHJVp2xRxPWGH5Suw2JYnerWkHeNN7gjLSY5WzGtOllEuv9xRbwCGkRfj12KwraA==
+  dependencies:
+    its-fine "^1.2.5"
+    react-konva-utils "^1.0.5"
+    styled-components "^6.1.0"
+
 "@digital-auto/velocitas-project-generator@^1.0.1":
   version "1.0.1"
   resolved "https://registry.npmjs.org/@digital-auto/velocitas-project-generator/-/velocitas-project-generator-1.0.1.tgz"
@@ -3345,14 +3354,6 @@ ignore@^5.2.0, ignore@^5.3.1:
   resolved "https://registry.npmjs.org/ignore/-/ignore-5.3.1.tgz"
   integrity sha512-5Fytz/IraMjqpwfd34ke28PTVMjZjJG2MPn5t7OE4eUCUNf8BAa7b5WUS9/Qvr6mwOQS7Mk6vdsMno5he+T8Xw==
 
-image-area-lib@^1.0.11:
-  version "1.0.11"
-  resolved "https://registry.npmjs.org/image-area-lib/-/image-area-lib-1.0.11.tgz"
-  integrity sha512-RKVVWWVFlydHBvLNHBzP1c1X/I0Wdl6pKxNvUUDT7ge5gSpLzyhEJav0Cppq8O7PNNQ7mLcBY3jIXgp2fUHosA==
-  dependencies:
-    react-konva-utils "^1.0.5"
-    styled-components "^6.1.0"
-
 immediate@~3.0.5:
   version "3.0.6"
   resolved "https://registry.npmjs.org/immediate/-/immediate-3.0.6.tgz"
@@ -3643,7 +3644,7 @@ iterator.prototype@^1.1.2:
     reflect.getprototypeof "^1.0.4"
     set-function-name "^2.0.1"
 
-its-fine@^1.1.1:
+its-fine@^1.1.1, its-fine@^1.2.5:
   version "1.2.5"
   resolved "https://registry.npmjs.org/its-fine/-/its-fine-1.2.5.tgz"
   integrity sha512-fXtDA0X0t0eBYAGLVM5YsgJGsJ5jEmqZEPrGbzdf5awjv0xE7nqv3TVnvtUF060Tkes15DbDAKW/I48vsb6SyA==
@@ -3733,10 +3734,10 @@ keyv@^4.5.4:
   dependencies:
     json-buffer "3.0.1"
 
-konva@^9.3.11:
-  version "9.3.14"
-  resolved "https://registry.npmjs.org/konva/-/konva-9.3.14.tgz"
-  integrity sha512-Gmm5lyikGYJyogKQA7Fy6dKkfNh350V6DwfZkid0RVrGYP2cfCsxuMxgF5etKeCv7NjXYpJxKqi1dYkIkX/dcA==
+konva@9.2.3:
+  version "9.2.3"
+  resolved "https://registry.yarnpkg.com/konva/-/konva-9.2.3.tgz#84f0a828a040b4aeb9f90625e89fdfe0662075a2"
+  integrity sha512-oQ6VQ6kUL9IlhOGuEKKhxqnv6g/t8jZpVuWahQQ6hCqAsO8Ydi1zFGv7ef4EOq5GoPNq/d6Fyj/3i5Y/a5NooA==
 
 language-subtag-registry@^0.3.20:
   version "0.3.23"
@@ -4299,7 +4300,7 @@ react-konva-utils@^1.0.5:
     react-konva "^18.0.0-0"
     use-image "^1.1.0"
 
-react-konva@^18.0.0-0:
+react-konva@18.2.10, react-konva@^18.0.0-0:
   version "18.2.10"
   resolved "https://registry.npmjs.org/react-konva/-/react-konva-18.2.10.tgz"
   integrity sha512-ohcX1BJINL43m4ynjZ24MxFI1syjBdrXhqVxYVDw2rKgr3yuS0x/6m1Y2Z4sl4T/gKhfreBx8KHisd0XC6OT1g==

@@ -11,6 +11,7 @@ import {
   TbArrowLeft,
   TbArrowRight,
   TbArrowsHorizontal,
+  TbArrowsLeftRight,
   TbX,
 } from 'react-icons/tb'
 
@@ -47,7 +48,7 @@ const DirectionArrow = ({ direction }: DirectionArrowProps) => {
       return <TbArrowRight className="mx-auto size-5 text-da-primary-500" />
     case 'bi-direction':
       return (
-        <TbArrowsHorizontal className="mx-auto size-5 text-da-primary-500" />
+        <TbArrowsLeftRight className="mx-auto size-5 text-da-primary-500" />
       )
   }
 }

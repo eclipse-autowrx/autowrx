@@ -11,6 +11,8 @@ import {
 } from '@/services/prototype.service'
 import {
   TbChevronDown,
+  TbDots,
+  TbDotsVertical,
   TbDownload,
   TbEdit,
   TbLoader,
@@ -89,7 +91,6 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
     }
     try {
       await updatePrototypeService(prototype.id, updateData)
-      await refetchCurrentPrototype()
       await refetchModelPrototypes()
       addLog({
         name: `User ${currentUser?.email} updated prototype ${localPrototype.name}`,
@@ -100,6 +101,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
         ref_id: localPrototype.id,
         ref_type: 'prototype',
       })
+      await refetchCurrentPrototype()
     } catch (error) {
       console.error('Error updating prototype:', error)
     } finally {
@@ -181,18 +183,18 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                 <DaText variant="title" className="text-da-primary-500">
                   Editing Prototype
                 </DaText>
-                <div className="flex space-x-2">
+                <div className="flex space-x-2 mr-2">
                   <DaButton
                     variant="outline-nocolor"
                     onClick={handleCancel}
-                    className="min-w-[70px] text-da-white px-4 py-2 rounded"
+                    className="w-16 text-da-white px-4 py-2 rounded"
                     size="sm"
                   >
                     Cancel
                   </DaButton>
                   <DaButton
                     onClick={handleSave}
-                    className="min-w-[70px] text-white px-4 py-2 rounded"
+                    className="w-16 text-white px-4 py-2 rounded"
                     size="sm"
                   >
                     Save
@@ -200,16 +202,25 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                 </div>
               </>
             ) : (
-              <>
+              <div className="flex items-center w-full">
                 <DaText variant="title" className="text-da-primary-500">
                   {localPrototype.name}
                 </DaText>
+                <div className="grow" />
                 {isAuthorized && (
                   <>
+                    <DaButton
+                      onClick={() => setIsEditing(true)}
+                      className="!justify-start"
+                      variant="editor"
+                      size="sm"
+                    >
+                      <TbEdit className="w-4 h-4 mr-1" /> Edit
+                    </DaButton>
                     <DaMenu
                       trigger={
                         <DaButton
-                          variant="solid"
+                          variant="editor"
                           size="sm"
                           className={cn(
                             'flex w-full',
@@ -217,10 +228,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                           )}
                         >
                           {!isDeleting && !isEditing && !isSaving && (
-                            <>
-                              Prototype Action
-                              <TbChevronDown className="w-4 h-4 ml-1" />
-                            </>
+                            <TbDotsVertical className="size-4" />
                           )}
                           {isSaving && (
                             <div className="flex items-center">
@@ -238,14 +246,6 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                       }
                     >
                       <div className="flex flex-col px-1">
-                        <DaButton
-                          onClick={() => setIsEditing(true)}
-                          className="!justify-start"
-                          variant="plain"
-                          size="sm"
-                        >
-                          <TbEdit className="w-4 h-4 mr-2" /> Edit Prototype
-                        </DaButton>
                         <DaButton
                           variant="plain"
                           size="sm"
@@ -277,7 +277,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                     </DaConfirmPopup>
                   </>
                 )}
-              </>
+              </div>
             )}
           </div>
           <div className="flex w-full">

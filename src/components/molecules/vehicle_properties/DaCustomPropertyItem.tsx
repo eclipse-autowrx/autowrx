@@ -132,7 +132,7 @@ const DaCustomPropertyItem = ({
         <div
           onClick={onDelete}
           className={cn(
-            'ml-2 text-red-500 transition-opacity ease-in-out duration-200 cursor-pointer',
+            'ml-2 text-da-gray-medium hover:text-red-500 transition-opacity ease-in-out duration-200 cursor-pointer',
             showTrashButton ? 'opacity-100' : 'opacity-100',
           )}
         >

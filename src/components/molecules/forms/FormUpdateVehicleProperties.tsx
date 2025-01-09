@@ -6,6 +6,7 @@ import { CustomPropertyType } from '@/types/property.type'
 import DaText from '@/components/atoms/DaText'
 import * as lodash from 'lodash'
 import { vehicleClasses } from '@/data/vehicle_classification'
+import { TbPlus } from 'react-icons/tb'
 
 interface FormUpdateVehiclePropertiesProps {
   customProperties: CustomPropertyType[]
@@ -121,7 +122,7 @@ const FormUpdateVehicleProperties = ({
         Custom Properties
       </DaText>
 
-      <div className="flex flex-col space-y-2 max-h-[40vh] overflow-auto pr-2">
+      <div className="flex flex-col space-y-2 max-h-[40vh] overflow-auto">
         {customProperties && customProperties.length > 0 ? (
           customProperties.map((property, index) => (
             <DaCustomPropertyItem
@@ -140,16 +141,18 @@ const FormUpdateVehicleProperties = ({
         )}
       </div>
 
+      <DaButton
+        variant="dash"
+        onClick={addCustomProperty}
+        className="w-full mt-2"
+        size="sm"
+      >
+        <TbPlus className="size-4 mr-1" />
+        Add Property
+      </DaButton>
+
       <div className="flex mt-6 w-full items-center justify-between">
-        <DaButton
-          variant="outline-nocolor"
-          onClick={addCustomProperty}
-          className=" w-fit"
-          size="sm"
-        >
-          Add Property
-        </DaButton>
-        <div className="flex items-center space-x-2">
+        <div className="flex w-full justify-end items-center space-x-2">
           <DaButton
             variant="outline-nocolor"
             onClick={handleCancelChanges}

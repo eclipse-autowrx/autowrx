@@ -12,6 +12,7 @@ import {
   TbArrowsMaximize,
   TbArrowsMinimize,
   TbTools,
+  TbEdit,
 } from 'react-icons/tb'
 import { DaButton } from '@/components/atoms/DaButton'
 const MODE_RUN = 'run'
@@ -87,14 +88,14 @@ const DaDashboard = () => {
           <div className="ml-2 flex w-full h-fit items-center px-1 justify-end">
             {mode == MODE_RUN && (
               <DaButton
-                variant="plain"
+                variant="editor"
                 size="sm"
                 onClick={() => {
                   setMode(MODE_EDIT)
                 }}
               >
-                <TbTools className="size-5" />
-                <div className="font-medium ml-1">Edit dashboard</div>
+                <TbEdit className="size-4 mr-1" />
+                Edit
               </DaButton>
             )}
 
@@ -106,15 +107,25 @@ const DaDashboard = () => {
                 >
                   Dashboard Config
                 </DaText> */}
-                <div className="flex w-full h-fit gap-4">
+                <div className="flex w-full h-fit space-x-2 mr-2">
                   <DaButton
                     size="sm"
                     onClick={() => {
                       setMode(MODE_RUN)
                     }}
-                    variant="plain"
+                    variant="outline-nocolor"
+                    className="w-16"
                   >
-                    <TbDeviceFloppy size={20} className="mr-2" />
+                    Cancel
+                  </DaButton>
+                  <DaButton
+                    size="sm"
+                    onClick={() => {
+                      setMode(MODE_RUN)
+                    }}
+                    variant="solid"
+                    className="w-16"
+                  >
                     Save
                   </DaButton>
 
@@ -144,7 +155,7 @@ const DaDashboard = () => {
           </div>
         )}
         <DaButton
-          variant="plain"
+          variant="editor"
           size="sm"
           onClick={() =>
             setShowPrototypeDashboardFullScreen(
@@ -153,9 +164,9 @@ const DaDashboard = () => {
           }
         >
           {showPrototypeDashboardFullScreen ? (
-            <TbArrowsMinimize className="w-5 h-5 stroke-[1.75]" />
+            <TbArrowsMinimize className="size-4" />
           ) : (
-            <TbArrowsMaximize className="w-5 h-5 stroke-[1.75]" />
+            <TbArrowsMaximize className="size-4" />
           )}
         </DaButton>
       </div>

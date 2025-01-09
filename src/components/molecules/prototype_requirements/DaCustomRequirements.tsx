@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import useCurrentModel from '@/hooks/useCurrentModel'
+import { TbPlus } from 'react-icons/tb'
 
 interface DaCustomRequirementsProps {
   customRequirements: CustomRequirement[]
@@ -83,6 +84,17 @@ const DaCustomRequirements = ({
     filteredInitialRequirements,
   )
 
+  useEffect(() => {
+    if (!isEditing) {
+      handleDiscardChanges()
+      const nonEmptyRequirements = customRequirements.filter(
+        (requirement) => !isEmptyRequirement(requirement),
+      )
+      setCustomRequirements(nonEmptyRequirements)
+      setInitialCustomRequirements(lodash.cloneDeep(nonEmptyRequirements))
+    }
+  }, [isEditing])
+
   return (
     <div className="flex flex-col w-full max-w-5xl">
       <div className="flex flex-col w-full space-y-8">
@@ -111,7 +123,7 @@ const DaCustomRequirements = ({
       {isAuthorized && isEditing && (
         <div
           className={cn(
-            'flex w-full items-center justify-between mt-6 ',
+            'flex w-full items-center justify-between mt-2 ',
             customRequirements && customRequirements.length > 0
               ? 'pr-[30px]'
               : '',
@@ -119,20 +131,22 @@ const DaCustomRequirements = ({
         >
           <DaButton
             size="sm"
-            variant="outline-nocolor"
+            variant="dash"
             onClick={addCustomRequirement}
+            className="w-full"
           >
+            <TbPlus className="size-4 mr-1" />
             Add Requirement
           </DaButton>
           <div className="space-x-2">
-            <DaButton
+            {/* <DaButton
               size="sm"
               variant="outline-nocolor"
               onClick={handleDiscardChanges}
               disabled={!hasChanges}
             >
               Cancel
-            </DaButton>
+            </DaButton> */}
             {/* <DaButton
               size="sm"
               variant="solid"

@@ -182,6 +182,7 @@
 .da-btn-dash {
   @apply p-2 text-da-primary-500 hover:bg-da-primary-100 border border-dashed border-da-primary-500 rounded;
 }
+
 .da-btn {
   @apply select-none cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
 }
@@ -200,6 +201,10 @@
 
 .da-btn-plain {
   @apply text-da-gray-medium hover:bg-da-primary-100 hover:text-da-primary-500;
+}
+
+.da-btn-editor {
+  @apply text-da-primary-500 hover:bg-da-primary-100;
 }
 
 .da-btn-text {
