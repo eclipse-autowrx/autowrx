@@ -219,10 +219,7 @@ const PageModelList = () => {
         <div className="flex flex-col w-full h-full bg-white rounded-lg overflow-y-auto">
           <div className="flex flex-col w-full h-full container px-4 pb-6">
             {user && (
-              <div
-                className="flex flex-col w-full h-full pt-6"
-                ref={myModelRef}
-              >
+              <div className="flex flex-col w-full h-fit pt-6" ref={myModelRef}>
                 <div className="flex w-full items-center justify-between mb-4">
                   <DaText
                     variant="small-medium"
@@ -268,7 +265,7 @@ const PageModelList = () => {
                 </div>
 
                 {myModels?.length > 0 && (
-                  <div className="py-2">
+                  <div className="py-2 h-fit">
                     <DaText variant="sub-title" className="text-da-primary-500">
                       My Models
                     </DaText>

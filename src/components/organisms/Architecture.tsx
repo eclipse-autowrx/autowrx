@@ -117,7 +117,7 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
       nodeToSet = skeleton.nodes.find((n: any) => n.id == activeNodeId)
     }
     setActiveNode(nodeToSet)
-  }, [activeNodeId, skeleton, navigate])
+  }, [activeNodeId, skeleton])
 
   // 6) If activeNode changes, exit Edit Mode
   useEffect(() => {
@@ -171,6 +171,7 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
     })
     setSkeleton(tmpSkele)
     setActiveNodeId(id)
+    navigate(`${window.location.pathname}?id=${id}`)
     await callSave(tmpSkele)
   }
 
