@@ -35,6 +35,7 @@ import { cn } from '@/lib/utils'
 import DaMenu from '@/components/atoms/DaMenu'
 import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import clsx from 'clsx'
 
 interface VisibilityControlProps {
   initialVisibility: 'public' | 'private' | undefined
@@ -69,6 +70,73 @@ const DaVisibilityControl: React.FC<VisibilityControlProps> = ({
       >
         Change to {visibility === 'public' ? 'private' : 'public'}
       </DaButton>
+    </div>
+  )
+}
+
+const DaStateControl: React.FC<{
+  initialState: string
+  onStateChange: (value: string) => void
+}> = ({ initialState, onStateChange }) => {
+  const [state, setState] = useState(initialState)
+
+  const handleUpdate = (newState: string) => async () => {
+    setState(newState)
+    onStateChange(newState)
+  }
+
+  return (
+    <div className="flex justify-between items-center border p-2 mt-3 rounded-lg">
+      <DaText variant="sub-title" className="text-da-gray-medium">
+        State:{' '}
+        <DaText
+          className={clsx(
+            'capitalize !font-medium',
+            state === 'blocked' && 'text-da-destructive',
+            state === 'released' && 'text-da-accent-500',
+          )}
+        >
+          {state}
+        </DaText>
+      </DaText>
+      <DaMenu
+        trigger={
+          <DaButton
+            variant="outline-nocolor"
+            size="sm"
+            className="text-da-primary-500"
+          >
+            Change state
+          </DaButton>
+        }
+      >
+        <div className="flex flex-col px-1">
+          <DaButton
+            onClick={handleUpdate('draft')}
+            className="!justify-start"
+            variant="plain"
+            size="sm"
+          >
+            Draft
+          </DaButton>
+          <DaButton
+            onClick={handleUpdate('released')}
+            className="!justify-start"
+            variant="plain"
+            size="sm"
+          >
+            <span className="text-da-accent-500">Released</span>
+          </DaButton>
+          <DaButton
+            onClick={handleUpdate('blocked')}
+            className="!justify-start"
+            variant="destructive"
+            size="sm"
+          >
+            <span className="text-destructive">Blocked</span>
+          </DaButton>
+        </div>
+      </DaMenu>
     </div>
   )
 }
@@ -363,6 +431,16 @@ const PageModelDetail = () => {
                   updateModelService(model.id, {
                     visibility: newVisibility,
                   })
+                }}
+              />
+
+              <DaStateControl
+                initialState={model.state || ''}
+                onStateChange={async (state) => {
+                  await updateModelService(model.id, {
+                    state: (state || 'draft') as Model['state'],
+                  })
+                  await refetch()
                 }}
               />
 
