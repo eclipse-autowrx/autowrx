@@ -72,9 +72,16 @@ const DaVisibilityControl: React.FC<VisibilityControlProps> = ({
 }
 
 const DaStateControl: React.FC<{
-  state: string
+  initialState: string
   onStateChange: (value: string) => void
-}> = ({ state, onStateChange }) => {
+}> = ({ initialState, onStateChange }) => {
+  const [state, setState] = useState(initialState)
+
+  const handleUpdate = (newState: string) => async () => {
+    setState(newState)
+    onStateChange(newState)
+  }
+
   return (
     <div className="flex justify-between items-center border p-2 mt-3 rounded-lg">
       <DaText variant="sub-title" className="text-da-gray-medium">
@@ -82,7 +89,8 @@ const DaStateControl: React.FC<{
         <DaText
           className={clsx(
             'capitalize !font-medium',
-            state === 'blocked' ? 'text-da-destructive' : 'text-da-accent-500',
+            state === 'blocked' && 'text-da-destructive',
+            state === 'released' && 'text-da-accent-500',
           )}
         >
           {state}
@@ -101,7 +109,7 @@ const DaStateControl: React.FC<{
       >
         <div className="flex flex-col px-1">
           <DaButton
-            onClick={() => onStateChange('draft')}
+            onClick={handleUpdate('draft')}
             className="!justify-start"
             variant="plain"
             size="sm"
@@ -109,20 +117,20 @@ const DaStateControl: React.FC<{
             Draft
           </DaButton>
           <DaButton
-            onClick={() => onStateChange('released')}
+            onClick={handleUpdate('released')}
             className="!justify-start"
             variant="plain"
             size="sm"
           >
-            Released
+            <span className="text-da-accent-500">Released</span>
           </DaButton>
           <DaButton
-            onClick={() => onStateChange('blocked')}
+            onClick={handleUpdate('blocked')}
             className="!justify-start"
             variant="destructive"
             size="sm"
           >
-            Blocked
+            <span className="text-destructive">Blocked</span>
           </DaButton>
         </div>
       </DaMenu>
@@ -388,12 +396,12 @@ const PageModelDetail = () => {
               />
 
               <DaStateControl
-                state={model.state || ''}
+                initialState={model.state || ''}
                 onStateChange={async (state) => {
                   await updateModelService(model.id, {
                     state: (state || 'draft') as Model['state'],
                   })
-                  refetch()
+                  await refetch()
                 }}
               />
 
