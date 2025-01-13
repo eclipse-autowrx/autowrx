@@ -16,6 +16,7 @@ const DaSelect = React.forwardRef<
     value?: string
     onValueChange?: (value: string) => void
     defaultValue?: string
+    placeholderClassName?: string
   }
 >(
   (
@@ -43,7 +44,9 @@ const DaSelect = React.forwardRef<
           {...props}
           className={cn('font-normal', props.className)}
         >
-          <SelectValue />
+          <div className={cn(props.placeholderClassName)}>
+            <SelectValue />
+          </div>
         </SelectTrigger>
         <SelectContent>{children}</SelectContent>
       </div>

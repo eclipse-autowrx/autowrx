@@ -1,4 +1,9 @@
-export type Direction = 'left' | 'right' | 'bi-direction'
+export type Direction =
+  | 'left'
+  | 'right'
+  | 'bi-direction'
+  | 'down-right'
+  | 'down-left'
 
 export interface SignalFlow {
   direction: Direction

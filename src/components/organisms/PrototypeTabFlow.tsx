@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import { TbArrowsMaximize, TbArrowsMinimize, TbEdit } from 'react-icons/tb'
+import {
+  TbArrowsMaximize,
+  TbArrowsMinimize,
+  TbEdit,
+  TbLoader,
+} from 'react-icons/tb'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import { updatePrototypeService } from '@/services/prototype.service'
 import DaTooltip from '../atoms/DaTooltip'
@@ -26,6 +31,7 @@ const PrototypeTabFlow = () => {
     showPrototypeFlowFullScreen,
     setShowPrototypeFlowFullScreen,
   } = useSystemUI()
+  const [isSaving, setIsSaving] = useState(false)
 
   // Parse customer journey steps
   const parseCustomerJourneySteps = (journeyText: string | undefined) => {
@@ -126,13 +132,16 @@ const PrototypeTabFlow = () => {
   const handleSave = async (stringJsonData: string) => {
     if (!prototype) return
     try {
+      setIsSaving(true)
       const parsedData = JSON.parse(stringJsonData)
       console.log('Saving flow data:', parsedData)
       setFlowData(parsedData)
       await updatePrototypeService(prototype.id, { flow: stringJsonData })
-      setIsEditing(false)
     } catch (error) {
       console.error('Error saving flow data:', error)
+    } finally {
+      setIsSaving(false)
+      setIsEditing(false)
     }
   }
 
@@ -161,6 +170,11 @@ const PrototypeTabFlow = () => {
             >
               <TbEdit className="w-4 h-4 mr-1" /> Edit
             </DaButton>
+          ) : isSaving ? (
+            <div className="flex items-center text-da-primary-500">
+              <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+              Saving
+            </div>
           ) : (
             <div className="flex space-x-2 mr-2">
               <DaButton
@@ -203,15 +217,15 @@ const PrototypeTabFlow = () => {
           <>
             <table className="w-full border-collapse table-fixed">
               <colgroup>
-                <col className="w-[19%]" />
-                <col className="w-[3%]" />
-                <col className="w-[19%]" />
-                <col className="w-[3%]" />
-                <col className="w-[19%]" />
-                <col className="w-[3%]" />
-                <col className="w-[19%]" />
-                <col className="w-[3%]" />
-                <col className="w-[19%]" />
+                <col className="w-[17.76%]" />
+                <col className="w-[2.80%] min-w-[40px]" />
+                <col className="w-[17.76%]" />
+                <col className="w-[2.80%] min-w-[40px]" />
+                <col className="w-[17.76%]" />
+                <col className="w-[2.80%] min-w-[40px]" />
+                <col className="w-[17.76%]" />
+                <col className="w-[2.80%] min-w-[40px]" />
+                <col className="w-[17.76%]" />
               </colgroup>
               <thead className="bg-gradient-to-tr from-da-secondary-500 to-da-primary-500 text-white">
                 <tr className="text-sm uppercase">

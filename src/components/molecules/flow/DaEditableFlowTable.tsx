@@ -2,18 +2,19 @@ import React, { useEffect, useState } from 'react'
 import {
   TbArrowLeft,
   TbArrowRight,
-  TbArrowsHorizontal,
   TbPlus,
   TbTrash,
   TbChevronCompactRight,
   TbArrowsLeftRight,
+  TbCornerDownLeft,
+  TbCornerDownRight,
 } from 'react-icons/tb'
 import DaTooltip from '@/components/atoms/DaTooltip'
 import { FlowStep, Direction, SignalFlow } from '@/types/flow.type'
 import { DaButton } from '@/components/atoms/DaButton'
 import { DaTextarea } from '@/components/atoms/DaTextarea'
 import { cn } from '@/lib/utils'
-import useCurrentPrototype from '@/hooks/useCurrentPrototype'
+import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 interface TextCellProps {
   value: string
   onChange: (value: string) => void
@@ -100,28 +101,50 @@ interface DirectionSelectProps {
 }
 
 const DirectionSelect = ({ value, onChange }: DirectionSelectProps) => {
-  // Define the order of toggling and map to the corresponding icons
-  const directions: Direction[] = ['left', 'right', 'bi-direction']
-  const icons = {
-    left: <TbArrowLeft className="size-5" />,
-    right: <TbArrowRight className="size-5" />,
-    'bi-direction': <TbArrowsLeftRight className="size-5" />,
-  }
+  const directionOptions = [
+    {
+      value: 'left',
+      icon: <TbArrowLeft className="size-5" />,
+    },
+    {
+      value: 'right',
+      icon: <TbArrowRight className="size-5" />,
+    },
+    {
+      value: 'bi-direction',
+      icon: <TbArrowsLeftRight className="size-5" />,
+    },
+    {
+      value: 'down-left',
+      icon: <TbCornerDownLeft className="size-5" />,
+    },
+    {
+      value: 'down-right',
+      icon: <TbCornerDownRight className="size-5" />,
+    },
+  ] as const
 
-  // Handle button click to toggle to the next direction
-  const handleToggle = () => {
-    const currentIndex = directions.indexOf(value)
-    const nextIndex = (currentIndex + 1) % directions.length
-    onChange(directions[nextIndex])
+  const handleValueChange = (newValue: string) => {
+    onChange(newValue as Direction)
   }
 
   return (
-    <button
-      onClick={handleToggle}
-      className="h-9 flex justify-center items-center border rounded-md w-full focus:outline-none"
+    <DaSelect
+      className="h-9 rounded-md"
+      value={value}
+      onValueChange={handleValueChange}
+      placeholderClassName="flex justify-center items-center w-full"
     >
-      {icons[value]}
-    </button>
+      {directionOptions.map((direction, index) => (
+        <DaSelectItem
+          className="flex w-full justify-center items-center"
+          value={direction.value}
+          key={index}
+        >
+          {direction.icon}
+        </DaSelectItem>
+      ))}
+    </DaSelect>
   )
 }
 

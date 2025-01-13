@@ -10,7 +10,8 @@ import DaTooltip from '@/components/atoms/DaTooltip'
 import {
   TbArrowLeft,
   TbArrowRight,
-  TbArrowsHorizontal,
+  TbCornerDownLeft,
+  TbCornerDownRight,
   TbArrowsLeftRight,
   TbX,
 } from 'react-icons/tb'
@@ -50,6 +51,12 @@ const DirectionArrow = ({ direction }: DirectionArrowProps) => {
       return (
         <TbArrowsLeftRight className="mx-auto size-5 text-da-primary-500" />
       )
+    case 'down-right':
+      return (
+        <TbCornerDownRight className="mx-auto size-5 text-da-primary-500" />
+      )
+    case 'down-left':
+      return <TbCornerDownLeft className="mx-auto size-5 text-da-primary-500" />
   }
 }
 
