@@ -2,11 +2,11 @@ import { FC, useEffect, useState, lazy, Suspense } from 'react'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
 import { useParams } from 'react-router-dom'
-import { DaText } from '@/components/atoms/DaText'
 import DaLoading from '@/components/atoms/DaLoading'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import {
   TbBinaryTree,
+  TbChecklist,
   TbCode,
   TbGauge,
   TbListCheck,
@@ -32,6 +32,7 @@ import PrototypeTabHomologation from '@/components/organisms/PrototypeTabHomolog
 import PrototypeTabFeedback from '@/components/organisms/PrototypeTabFeedback'
 import PrototypeTabFlow from '@/components/organisms/PrototypeTabFlow'
 import DaRuntimeControl from '@/components/molecules/dashboard/DaRuntimeControl'
+import PrototypeTabTestDesign from '@/components/organisms/PagePrototypeTestDesign'
 
 // const PrototypeTabFeedback = lazy(
 //   () => import('@/components/organisms/PrototypeTabFeedback'),
@@ -115,6 +116,13 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
             Homologation
           </DaTabItem>
           <DaTabItem
+            active={tab === 'test-design'}
+            to={`/model/${model_id}/library/prototype/${prototype_id}/test-design`}
+          >
+            <TbChecklist className="w-5 h-5 mr-2" />
+            Test Design
+          </DaTabItem>
+          <DaTabItem
             active={tab === 'feedback'}
             to={`/model/${model_id}/library/prototype/${prototype_id}/feedback`}
           >
@@ -169,6 +177,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           {tab == 'flow' && <PrototypeTabFlow />}
           {tab == 'dashboard' && <PrototypeTabDashboard />}
           {tab == 'homologation' && <PrototypeTabHomologation />}
+          {tab == 'test-design' && <PrototypeTabTestDesign />}
           {tab == 'feedback' && <PrototypeTabFeedback />}
         </div>
         {showRt && <DaRuntimeControl />}

@@ -4,6 +4,7 @@ import { TbTrash } from 'react-icons/tb'
 import { cn } from '@/lib/utils'
 import { CustomRequirement } from '@/types/model.type'
 import DaText from '@/components/atoms/DaText'
+import { DaTextarea } from '@/components/atoms/DaTextarea'
 
 interface RequirementItemProps {
   requirement: CustomRequirement
@@ -37,15 +38,12 @@ const DaRequirementItem = ({
         <DaText variant="small-bold" className="text-da-primary-500">
           Requirement {index}
         </DaText>
-        <DaInput
-          type="textarea"
+        <DaTextarea
           value={requirement.text}
           onChange={(e) => {
             handleChange('text')(e.target.value)
           }}
           placeholder="Specify the requirement"
-          wrapperClassName="!bg-white"
-          inputClassName="!bg-white text-sm"
           className="mt-1"
           disabled={!isAuthorized && !isEditing}
         />
