@@ -424,7 +424,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
           >
             <option value={CURRENT_MODEL}>
               Current Model{' '}
-              {model?.api_version && `base on (${model.api_version})`}{' '}
+              {model?.api_version && `(base on ${model.api_version})`}{' '}
             </option>
             {versions &&
               versions?.length > 0 &&
@@ -448,7 +448,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
           >
             <option value={CURRENT_MODEL}>
               Current Model{' '}
-              {model?.api_version && `base on (${model.api_version})`}
+              {model?.api_version && `(base on ${model.api_version})`}
             </option>
             {versions &&
               versions?.length > 0 &&
