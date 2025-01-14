@@ -74,9 +74,10 @@ const ModelApiList = ({ onApiClick, readOnly }: ModelApiListProps) => {
       (searchTerm, selectedFilters, activeModelApis, setFilteredApiList) => {
         if (!activeModelApis) return
 
-        let filteredList = activeModelApis?.filter((apiItem: any) =>
-          apiItem.name.toLowerCase().includes(searchTerm.toLowerCase()),
-        )
+        let filteredList =
+          activeModelApis?.filter((apiItem: any) =>
+            apiItem.name.toLowerCase().includes(searchTerm.toLowerCase()),
+          ) || []
 
         if (selectedFilters.length > 0) {
           filteredList = filteredList.filter((apiItem: any) => {
@@ -89,7 +90,7 @@ const ModelApiList = ({ onApiClick, readOnly }: ModelApiListProps) => {
           })
 
           filteredList = filteredList.filter((apiItem: any) =>
-            selectedFilters.includes(apiItem.type.toLowerCase()),
+            selectedFilters.includes(apiItem.type?.toLowerCase()),
           )
         }
 

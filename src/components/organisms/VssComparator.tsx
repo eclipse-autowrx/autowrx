@@ -50,6 +50,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
 
   const { data: versions } = useListVSSVersions()
   const { data: model } = useCurrentModel()
+  const mainApi = model?.main_api || 'Vehicle'
 
   const [activeModelApis] = useModelStore(
     (state) => [state.activeModelApis],
@@ -101,7 +102,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
       return result
     }
 
-    return traverse(vssTree.Vehicle)
+    return traverse(vssTree.Vehicle, mainApi)
   }
 
   useEffect(() => {
@@ -422,7 +423,8 @@ const VssComparator = ({}: DaVssCompareProps) => {
             }}
           >
             <option value={CURRENT_MODEL}>
-              Current Model (base on {(model && model.api_version) || 'v4.1'})
+              Current Model{' '}
+              {model?.api_version && `base on (${model.api_version})`}{' '}
             </option>
             {versions &&
               versions?.length > 0 &&
@@ -445,7 +447,8 @@ const VssComparator = ({}: DaVssCompareProps) => {
             }}
           >
             <option value={CURRENT_MODEL}>
-              Current Model (base on {(model && model.api_version) || 'v4.1'})
+              Current Model{' '}
+              {model?.api_version && `base on (${model.api_version})`}
             </option>
             {versions &&
               versions?.length > 0 &&

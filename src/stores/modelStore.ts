@@ -1,10 +1,14 @@
 import { mountStoreDevtool } from 'simple-zustand-devtools'
-import { immer } from 'zustand/middleware/immer'
 import { create } from 'zustand'
 import { CustomApi, Model, Prototype, VehicleApi } from '@/types/model.type'
-import { CVI_v4_1 } from '@/data/CVI_v4.1'
 import { parseCvi } from '@/lib/utils'
 import { getComputedAPIs } from '@/services/model.service'
+
+const defaultNodeData = {
+  type: 'branch',
+  children: {},
+  description: 'Vehicle',
+}
 
 type ModelState = {
   // access?: Token | null
@@ -29,11 +33,21 @@ const useModelStore = create<ModelState & Actions>()((set, get) => ({
       // New way
       // console.log("model", model)
       try {
-        ret = model.api_version
-          ? await getComputedAPIs(model.id)
-          : JSON.parse(CVI_v4_1)
+        ret = await getComputedAPIs(model.id)
       } catch (error) {
-        ret = JSON.parse(CVI_v4_1)
+        ret = { Vehicle: defaultNodeData }
+      }
+
+      // Default fallback value
+      if (!ret) {
+        ret = model.main_api
+          ? {
+              [model.main_api]: {
+                ...defaultNodeData,
+                description: model.main_api,
+              },
+            }
+          : { Vehicle: defaultNodeData }
       }
 
       ret = parseCvi(ret)

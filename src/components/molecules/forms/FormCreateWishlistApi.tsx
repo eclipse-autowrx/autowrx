@@ -49,8 +49,6 @@ const dataTypes = [
   'uint8[]',
 ]
 
-const ROOT_API_NOTATION = 'Vehicle.'
-
 const FormCreateWishlistApi = ({
   onClose,
   modelId,
@@ -64,6 +62,8 @@ const FormCreateWishlistApi = ({
   const refreshModel = useModelStore((state) => state.refreshModel)
   const { data: currentModel } = useCurrentModel()
   const { data: currentUser } = useSelfProfileQuery()
+
+  const ROOT_API_NOTATION = (currentModel?.main_api || 'Vehicle') + '.'
 
   const validate = useCallback((data: CreateWishlistAPI) => {
     if (data.name) {
