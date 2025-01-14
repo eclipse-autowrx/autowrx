@@ -14,6 +14,7 @@ import {
   TbCornerDownRight,
   TbArrowsLeftRight,
   TbX,
+  TbArrowsRightLeft,
 } from 'react-icons/tb'
 
 type InterfaceType = 'p2c' | 'v2c' | 's2s' | 's2e'
@@ -48,6 +49,10 @@ const DirectionArrow = ({ direction }: DirectionArrowProps) => {
     case 'right':
       return <TbArrowRight className="mx-auto size-5 text-da-primary-500" />
     case 'bi-direction':
+      return (
+        <TbArrowsRightLeft className="mx-auto size-5 text-da-primary-500" />
+      )
+    case 'reverse-bi-direction':
       return (
         <TbArrowsLeftRight className="mx-auto size-5 text-da-primary-500" />
       )

@@ -8,6 +8,7 @@ import {
   TbArrowsLeftRight,
   TbCornerDownLeft,
   TbCornerDownRight,
+  TbArrowsRightLeft,
 } from 'react-icons/tb'
 import DaTooltip from '@/components/atoms/DaTooltip'
 import { FlowStep, Direction, SignalFlow } from '@/types/flow.type'
@@ -112,6 +113,10 @@ const DirectionSelect = ({ value, onChange }: DirectionSelectProps) => {
     },
     {
       value: 'bi-direction',
+      icon: <TbArrowsRightLeft className="size-5" />,
+    },
+    {
+      value: 'reverse-bi-direction',
       icon: <TbArrowsLeftRight className="size-5" />,
     },
     {

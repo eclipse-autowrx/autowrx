@@ -23,10 +23,17 @@ const PrototypeTabTestDesign = () => {
 
         const parsedRequirements = JSON.parse(requirements ?? '[]')
 
+        // If description exists and is an object, add the status field.
+        // Otherwise, create a new description object.
+        const updatedDescription =
+          typeof description === 'object' && description !== null
+            ? { ...description, status: '' }
+            : { status: '' }
+
         // Create the filtered payload including the signals
         const filteredPayload = {
           name,
-          description,
+          description: updatedDescription,
           code,
           customer_journey,
           signals,

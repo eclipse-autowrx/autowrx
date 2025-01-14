@@ -32,7 +32,7 @@ import PrototypeTabHomologation from '@/components/organisms/PrototypeTabHomolog
 import PrototypeTabFeedback from '@/components/organisms/PrototypeTabFeedback'
 import PrototypeTabFlow from '@/components/organisms/PrototypeTabFlow'
 import DaRuntimeControl from '@/components/molecules/dashboard/DaRuntimeControl'
-import PrototypeTabTestDesign from '@/components/organisms/PagePrototypeTestDesign'
+import PrototypeTabTestDesign from '@/components/organisms/PrototypeTabTestDesign'
 
 // const PrototypeTabFeedback = lazy(
 //   () => import('@/components/organisms/PrototypeTabFeedback'),

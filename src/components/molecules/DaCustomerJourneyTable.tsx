@@ -333,7 +333,7 @@ const DaTableEditor = ({
 
         <DaButton
           variant="dash"
-          className={`absolute bottom-[-2.1rem] left-0 w-full !h-7 py-0.5 z-10 ${
+          className={`absolute -bottom-10 left-0 w-full !h-8 py-0.5 z-10 ${
             //   showAddRow && isEditing ? 'block' : '!hidden'
             isEditing ? 'block' : '!hidden'
           }`}
@@ -344,7 +344,7 @@ const DaTableEditor = ({
 
         <DaButton
           variant="dash"
-          className={`absolute top-0 right-[-2rem] !h-full w-7 !px-0 z-10 ${
+          className={`absolute top-0 -right-10 !h-full w-8 !px-0 z-10 ${
             //   showAddColumn && isEditing ? 'flex' : '!hidden'
             isEditing ? 'flex' : '!hidden'
           }`}

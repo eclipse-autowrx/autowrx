@@ -2,6 +2,7 @@ export type Direction =
   | 'left'
   | 'right'
   | 'bi-direction'
+  | 'reverse-bi-direction'
   | 'down-right'
   | 'down-left'
 

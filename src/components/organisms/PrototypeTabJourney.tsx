@@ -443,7 +443,12 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
               isEditing={isEditing}
             />
           </div>
-          <div className="flex flex-col w-full items-center justify-center py-8 space-y-8">
+          <div
+            className={cn(
+              'flex flex-col w-full items-center justify-center py-8 space-y-8',
+              !isEditing && 'pointer-events-none',
+            )}
+          >
             <DaText variant="title" className="text-da-primary-500">
               Requirements
             </DaText>
