@@ -75,13 +75,14 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
   const ensureRootVehicleApiExist = async (
     modelID: string,
     modelHomeImageFile: string,
+    mainApi: string,
   ) => {
     try {
-      const vehicleRes = await getExtendedApi('Vehicle', modelID)
+      const vehicleRes = await getExtendedApi(mainApi, modelID)
       if (!vehicleRes || !vehicleRes.skeleton || vehicleRes.skeleton === '{}') {
         const vehicleSkeleton = await createNodeWithImage(modelHomeImageFile)
         const vehiclePayload: ExtendedApiCreate = {
-          apiName: 'Vehicle',
+          apiName: mainApi,
           model: modelID,
           skeleton: JSON.stringify(vehicleSkeleton),
         }
@@ -92,7 +93,7 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
       if (vehicleError.response && vehicleError.response.status === 404) {
         const vehicleSkeleton = await createNodeWithImage(modelHomeImageFile)
         const vehiclePayload: ExtendedApiCreate = {
-          apiName: 'Vehicle',
+          apiName: mainApi,
           model: modelID,
           skeleton: JSON.stringify(vehicleSkeleton),
         }
@@ -104,7 +105,11 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
   }
 
   // Fetch the API skeleton from the database
-  const fetchAPISkeleton = async (modelID: string, apiName: string) => {
+  const fetchAPISkeleton = async (
+    modelID: string,
+    apiName: string,
+    mainApi: string,
+  ) => {
     if (!modelID || !apiName) return
     setIsFetching(true)
 
@@ -123,6 +128,7 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
           const parentSkeletonObject = await fetchParentAPISkeleton(
             apiName,
             modelID,
+            mainApi,
           )
           if (
             !parentSkeletonObject ||
@@ -152,6 +158,7 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
         const parentSkeletonObject = await fetchParentAPISkeleton(
           apiName,
           modelID,
+          mainApi,
         )
         if (
           !parentSkeletonObject ||
@@ -178,6 +185,7 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
         const parentSkeletonObject = await fetchParentAPISkeleton(
           apiName,
           modelID,
+          mainApi,
         )
         if (
           !parentSkeletonObject ||
@@ -212,8 +220,9 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
   const fetchParentAPISkeleton = async (
     apiName: string,
     modelID: string,
+    mainApi: string,
   ): Promise<any> => {
-    if (!apiName || apiName === 'Vehicle') return null
+    if (!apiName || apiName === mainApi) return null
 
     const parentApiName = apiName.substring(0, apiName.lastIndexOf('.'))
 
@@ -226,7 +235,7 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
       console.error(`Error fetching parent API ${parentApiName}:`, error)
     }
 
-    return fetchParentAPISkeleton(parentApiName, modelID) // Recursive call to fetch the next parent if the current one is not found
+    return fetchParentAPISkeleton(parentApiName, modelID, mainApi) // Recursive call to fetch the next parent if the current one is not found
   }
 
   const handleUploadImage = async (file: File) => {
@@ -261,7 +270,7 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
         skeleton: JSON.stringify(skele),
       }
       await updateExtendedApi(createPayload, extendedApi.id)
-      await fetchAPISkeleton(model.id, apiName)
+      await fetchAPISkeleton(model.id, apiName, model.main_api)
     } catch (error) {
       console.error('Error saving extended API:', error)
     }
@@ -285,7 +294,7 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
     setActiveSkeleton(null)
     setSkeleton({})
     setIsEditMode(false)
-    fetchAPISkeleton(model.id, apiName)
+    fetchAPISkeleton(model.id, apiName, model.main_api)
   }, [model, apiName])
 
   // Set active skeleton when changing skeleton
@@ -298,7 +307,11 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
   // Ensure 'Vehicle' API exists when the model becomes available
   useEffect(() => {
     if (model && model.model_home_image_file) {
-      ensureRootVehicleApiExist(model.id, model.model_home_image_file)
+      ensureRootVehicleApiExist(
+        model.id,
+        model.model_home_image_file,
+        model.main_api,
+      )
     }
   }, [model])
 

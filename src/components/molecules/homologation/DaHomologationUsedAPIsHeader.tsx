@@ -5,6 +5,7 @@ import { Tooltip } from '@mui/material'
 import { VehicleAPI } from '@/types/api.type'
 import { supportedCertivityApis } from '@/services/certivity.service'
 import { DaButton } from '@/components/atoms/DaButton'
+import useCurrentModel from '@/hooks/useCurrentModel'
 
 type HomologationUsedAPIsHeaderProps = {
   selectedAPIs: Set<VehicleAPI>
@@ -17,6 +18,9 @@ const HomologationUsedAPIsHeader = ({
   setSelectedAPIs,
   usedAPIs,
 }: HomologationUsedAPIsHeaderProps) => {
+  const { data: model } = useCurrentModel()
+  const mainApi = model?.main_api || 'Vehicle'
+
   const currentSupportedAPIs = useMemo(() => {
     return usedAPIs.filter((api) => supportedCertivityApis.has(api.name))
   }, [usedAPIs])
@@ -87,7 +91,7 @@ const HomologationUsedAPIsHeader = ({
       <Tooltip
         title={`Some signal are not yet supported (${
           usedAPIs.filter(
-            (api) => !supportedCertivityApis.has('Vehicle' + api.shortName),
+            (api) => !supportedCertivityApis.has(mainApi + api.shortName),
           ).length
         })`}
       >

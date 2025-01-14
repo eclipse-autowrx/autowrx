@@ -52,7 +52,9 @@ export const parseCvi = (cvi: Cvi) => {
     return result
   }
 
-  return traverse(cvi.Vehicle)
+  const mainApi = Object.keys(cvi).at(0) || 'Vehicle'
+
+  return traverse(cvi[mainApi], mainApi)
 }
 
 export const parseCvi_alt = (cvi: Cvi): VehicleAPI[] => {
@@ -291,7 +293,7 @@ export const filterAndCompareVehicleApis = (
   let apisInCodeOnly: string[] = [...filteredApis] as string[]
 
   filteredApis.forEach((apiUsedInCode) => {
-    if(!apiUsedInCode) return
+    if (!apiUsedInCode) return
     const foundInModel = activeModelApis.includes(apiUsedInCode)
 
     if (foundInModel) {

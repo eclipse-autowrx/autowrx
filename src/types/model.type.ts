@@ -121,9 +121,7 @@ export type CustomApi = {
   datatype?: string
 }
 
-export interface Cvi {
-  Vehicle: VehicleApi
-}
+export type Cvi = Record<string, VehicleApi>
 
 export interface Feedback {
   id: string

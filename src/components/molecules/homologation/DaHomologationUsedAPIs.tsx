@@ -24,6 +24,8 @@ const DaHomologationUsedAPIs = ({
   const { data: currentApi, isLoading } = useCurrentModelApi()
   const { data: model } = useCurrentModel()
 
+  const mainApi = model?.main_api || 'Vehicle'
+
   useEffect(() => {
     refetch()
   }, [])
@@ -61,8 +63,8 @@ const DaHomologationUsedAPIs = ({
 
   // Sort by supported and not supported APIs
   const compareFn = useCallback((a: VehicleAPI, b: VehicleAPI) => {
-    const aIsSupported = supportedCertivityApis.has('Vehicle' + a.shortName)
-    const bIsSupported = supportedCertivityApis.has('Vehicle' + b.shortName)
+    const aIsSupported = supportedCertivityApis.has(mainApi + a.shortName)
+    const bIsSupported = supportedCertivityApis.has(mainApi + b.shortName)
     if (Number(aIsSupported) < Number(bIsSupported)) return 1
     if (Number(aIsSupported) > Number(bIsSupported)) return -1
     return a.name.localeCompare(b.name)
@@ -72,7 +74,7 @@ const DaHomologationUsedAPIs = ({
     (apiData: any) => {
       if (!apiData) return []
       let ret: any[] = []
-      convertNodeToItem(null, 'Vehicle', apiData['Vehicle'], ret)
+      convertNodeToItem(null, mainApi, apiData[mainApi], ret)
       return ret
     },
     [convertNodeToItem],
@@ -178,8 +180,8 @@ const DaHomologationUsedAPIs = ({
                 isSelected={selectedAPIs.has(api)}
                 className={getRoundedClassesOfRow(index).join(' ')}
                 isDisabled={
-                  !supportedCertivityApis.has('Vehicle' + api.shortName) &&
-                  !supportedCertivityApis_v4_map['Vehicle' + api.shortName]
+                  !supportedCertivityApis.has(mainApi + api.shortName) &&
+                  !supportedCertivityApis_v4_map[mainApi + api.shortName]
                 }
               />
             </div>

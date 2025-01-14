@@ -7,8 +7,7 @@ import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import { CustomNodeElementProps } from 'react-d3-tree'
 import { NavigateFunction } from 'react-router-dom'
 import useCurrentModel from '@/hooks/useCurrentModel'
-import { useEffect } from 'react'
-import { CVI } from '@/data/CVI'
+import useCurrentModelApi from '@/hooks/useCurrentModelApi'
 
 export interface TreeNode {
   name: string
@@ -20,17 +19,19 @@ export interface TreeNode {
 const buildTreeNode = (name: string, path: string, node: Branch): TreeNode => {
   return {
     name,
-    type: node.type,
+    type: node.type || 'branch',
     path,
-    children: Object.entries(node.children)
-      .filter(([sub_node_name, node]) => node.type === 'branch')
-      .map(([sub_node_name, node]) =>
-        buildTreeNode(
-          sub_node_name,
-          path === '' ? name : `${path}.${name}`,
-          node as Branch,
-        ),
-      ),
+    children: node.children
+      ? Object.entries(node.children)
+          .filter(([sub_node_name, node]) => node.type === 'branch')
+          .map(([sub_node_name, node]) =>
+            buildTreeNode(
+              sub_node_name,
+              path === '' ? name : `${path}.${name}`,
+              node as Branch,
+            ),
+          )
+      : [],
   }
 }
 
@@ -179,16 +180,18 @@ const DaTreeView = ({ onNodeClick }: DaTreeViewProps) => {
   const navigate = useNavigate()
   const { data: prototype } = useCurrentPrototype()
   const { data: model } = useCurrentModel()
+  const { data: cvi } = useCurrentModelApi()
 
   if (!model) {
     return <div>Model is not available</div>
   }
 
-  const cvi = JSON.parse(CVI) as {
-    [key: string]: Branch
+  const orgChart = cvi
+    ? buildTreeNode(model.main_api, '', cvi[model.main_api])
+    : null
+  if (!orgChart) {
+    return <div>Tree view is not available</div>
   }
-
-  const orgChart = buildTreeNode(model.main_api, '', cvi[model.main_api])
 
   return (
     <div className="flex h-full w-full">
