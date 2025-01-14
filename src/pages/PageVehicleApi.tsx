@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import ApiDetail from '@/components/organisms/ApiDetail'
 import { VehicleApi } from '@/types/model.type'
@@ -8,13 +8,20 @@ import DaTabItem from '@/components/atoms/DaTabItem'
 import DaTreeView from '@/components/molecules/DaTreeView'
 import DaLoadingWrapper from '@/components/molecules/DaLoadingWrapper'
 import useModelStore from '@/stores/modelStore'
-import { TbBinaryTree2, TbGitCompare, TbList, TbDownload } from 'react-icons/tb'
+import {
+  TbBinaryTree2,
+  TbGitCompare,
+  TbList,
+  TbDownload,
+  TbFileImport,
+} from 'react-icons/tb'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import DaText from '@/components/atoms/DaText'
 import VssComparator from '@/components/organisms/VssComparator'
-import {
-  getComputedAPIs,
-} from '@/services/model.service'
+import { getComputedAPIs } from '@/services/model.service'
+import DaPopup from '@/components/atoms/DaPopup'
+import DaFileUpload from '@/components/atoms/DaFileUpload'
+import { DaButton } from '@/components/atoms/DaButton'
 
 const PageVehicleApi = () => {
   const { model_id, tab } = useParams()
@@ -26,6 +33,10 @@ const PageVehicleApi = () => {
   const [activeModelApis] = useModelStore((state) => [state.activeModelApis])
   const { data: model } = useCurrentModel()
 
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [importedFileUrl, setImportedFileUrl] = useState('')
+
   const handleApiClick = (apiDetails: VehicleApi) => {
     // console.log('apiDetails', apiDetails)
     setSelectedApi(apiDetails)
@@ -33,6 +44,12 @@ const PageVehicleApi = () => {
   }
 
   const isLoading = activeModelApis?.length === 0
+
+  useEffect(() => {
+    if (!showImportModal) {
+      setImportedFileUrl('')
+    }
+  }, [showImportModal])
 
   return (
     <DaLoadingWrapper
@@ -68,27 +85,30 @@ const PageVehicleApi = () => {
               <TbGitCompare className="w-5 h-5 mr-2" />
               Version Diff
             </DaTabItem>
+            <DaTabItem active={false} onClick={() => setShowImportModal(true)}>
+              <TbFileImport className="w-5 h-5 mr-2" />
+              Import from JSON
+            </DaTabItem>
             <DaTabItem
               active={false}
               onClick={async () => {
                 if (!model) return
-                    try {
-                      const data = await getComputedAPIs(model.id)
-                      const link = document.createElement('a')
-                      link.href = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 4))}`
-                      link.download = `${model.name}_vss.json`
-                      document.body.appendChild(link)
-                      link.click()
-                      document.body.removeChild(link)
-                    } catch (e) {
-                      console.error(e)
-                    }
+                try {
+                  const data = await getComputedAPIs(model.id)
+                  const link = document.createElement('a')
+                  link.href = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 4))}`
+                  link.download = `${model.name}_vss.json`
+                  document.body.appendChild(link)
+                  link.click()
+                  document.body.removeChild(link)
+                } catch (e) {
+                  console.error(e)
+                }
               }}
             >
               <TbDownload className="w-5 h-5 mr-2" />
               Download as JSON
             </DaTabItem>
-            
           </div>
           <DaText variant="regular-bold" className="text-da-primary-500 pr-4">
             COVESA VSS {(model && model.api_version) ?? 'v4.1'}
@@ -123,6 +143,30 @@ const PageVehicleApi = () => {
             <VssComparator />
           </div>
         )}
+
+        {/* Import Modal */}
+        <DaPopup trigger={<></>} state={[showImportModal, setShowImportModal]}>
+          <div className="max-w-full w-[320px]">
+            <DaText variant="regular-bold">Import APIS from JSON file</DaText>
+            <DaFileUpload
+              onStartUpload={() => {
+                setUploading(true)
+              }}
+              onFileUpload={(url) => {
+                setImportedFileUrl(url)
+                setUploading(false)
+              }}
+              className="mt-2"
+              accept=".json"
+            />
+            <DaButton
+              disabled={uploading || !importedFileUrl}
+              className="w-full mt-4"
+            >
+              Import
+            </DaButton>
+          </div>
+        </DaPopup>
       </div>
     </DaLoadingWrapper>
   )
