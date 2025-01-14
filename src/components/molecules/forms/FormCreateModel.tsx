@@ -15,6 +15,7 @@ import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import useListVSSVersions from '@/hooks/useListVSSVersions'
 import DaFileUpload from '@/components/atoms/DaFileUpload'
+import DaCheckbox from '@/components/atoms/DaCheckbox'
 
 type ModelData = {
   cvi: string
@@ -27,7 +28,7 @@ type ModelData = {
 const initialState: ModelData = {
   cvi: JSON.stringify(CVI),
   name: '',
-  mainApi: 'Vehicle',
+  mainApi: '',
   api_version: 'v4.1',
 }
 
@@ -37,6 +38,8 @@ const FormCreateModel = () => {
 
   const [error, setError] = useState<string>('')
   const [data, setData] = useState(initialState)
+  const [startFromScratch, setStartFromScratch] = useState(false)
+
   const { refetch: refetchModelLite } = useListModelLite()
   const { data: versions } = useListVSSVersions()
   const { toast } = useToast()
@@ -61,18 +64,27 @@ const FormCreateModel = () => {
     e.preventDefault()
     try {
       setLoading(true)
-      const body: ModelCreate = {
-        main_api: data.mainApi,
-        name: data.name,
-        api_version: data.api_version,
+
+      let body: ModelCreate
+
+      if (startFromScratch) {
+        body = {
+          main_api: data.mainApi,
+          name: data.name,
+        }
+      } else {
+        body = {
+          main_api: 'Vehicle',
+          name: data.name,
+          api_version: data.api_version,
+          ...(data.api_data_url && { api_data_url: data.api_data_url }),
+        }
       }
-      if (data.api_data_url) {
-        body.api_data_url = data.api_data_url
-      }
+
       const modelId = await createModelService(body)
       await refetchModelLite()
       addLog({
-        name: `New model '${body.name}' with visibility: ${body.visibility}`,
+        name: `New model '${body.name}' with visibility: ${body.visibility || 'private'}`,
         description: `New model '${body.name}' was created by ${currentUser.email || currentUser.name || currentUser.id} version ${'a'}`,
         type: 'new-model',
         create_by: currentUser.id,
@@ -106,7 +118,7 @@ const FormCreateModel = () => {
   return (
     <form
       onSubmit={createNewModel}
-      className="flex min-h-[300px] w-[400px] min-w-[400px] flex-col bg-da-white p-4"
+      className="flex min-h-[300px] w-[400px] overflow-y-auto min-w-[400px] flex-col bg-da-white p-4"
     >
       {/* Title */}
       <DaText variant="title" className="text-da-primary-500">
@@ -125,45 +137,67 @@ const FormCreateModel = () => {
 
       <div className="mt-4" />
 
-      <DaText variant="regular-medium">VSS Signal *</DaText>
-      <div className="border mt-1 rounded-lg px-2 pb-2 pt-1">
-        <DaText variant="small">select version</DaText>
-        <DaSelect
-          wrapperClassName="mt-1"
-          onValueChange={handleVSSChange}
-          defaultValue="v4.1"
-        >
-          {versions ? (
-            versions.map((version) => (
-              <DaSelectItem key={version.name} value={version.name}>
-                COVESA VSS {version.name}
-              </DaSelectItem>
-            ))
-          ) : (
-            <>
-              <DaSelectItem value="v5.0">COVESA VSS v5.0</DaSelectItem>
-              <DaSelectItem value="v4.1">COVESA VSS v4.1</DaSelectItem>
-              <DaSelectItem value="v4.0">COVESA VSS v4.0</DaSelectItem>
-              <DaSelectItem value="v3.1">COVESA VSS v3.1</DaSelectItem>
-            </>
-          )}
-        </DaSelect>
+      <DaCheckbox
+        key="start-from-scratch"
+        className="-ml-2 -mt-2 text-sm select-none"
+        checked={startFromScratch}
+        onChange={() => setStartFromScratch(!startFromScratch)}
+        label={'Start from scratch'}
+      />
 
-        <DaText variant="small">or upload a file</DaText>
+      {!startFromScratch ? (
+        <>
+          {' '}
+          <DaText variant="regular-medium">VSS Signal *</DaText>
+          <div className="border mt-1 rounded-lg px-2 pb-2 pt-1">
+            <DaText variant="small">select version</DaText>
+            <DaSelect
+              wrapperClassName="mt-1"
+              onValueChange={handleVSSChange}
+              defaultValue="v4.1"
+            >
+              {versions ? (
+                versions.map((version) => (
+                  <DaSelectItem key={version.name} value={version.name}>
+                    COVESA VSS {version.name}
+                  </DaSelectItem>
+                ))
+              ) : (
+                <>
+                  <DaSelectItem value="v5.0">COVESA VSS v5.0</DaSelectItem>
+                  <DaSelectItem value="v4.1">COVESA VSS v4.1</DaSelectItem>
+                  <DaSelectItem value="v4.0">COVESA VSS v4.0</DaSelectItem>
+                  <DaSelectItem value="v3.1">COVESA VSS v3.1</DaSelectItem>
+                </>
+              )}
+            </DaSelect>
 
-        <DaFileUpload
-          onStartUpload={() => {
-            setUploading(true)
-          }}
-          onFileUpload={(url) => {
-            setData((prev) => ({ ...prev, api_data_url: url }))
-            setUploading(false)
-          }}
-          className="mt-1"
-          accept=".json"
-        />
-      </div>
+            <DaText variant="small">or upload a file</DaText>
 
+            <DaFileUpload
+              onStartUpload={() => {
+                setUploading(true)
+              }}
+              onFileUpload={(url) => {
+                setData((prev) => ({ ...prev, api_data_url: url }))
+                setUploading(false)
+              }}
+              className="mt-1"
+              accept=".json"
+            />
+          </div>
+        </>
+      ) : (
+        <>
+          <DaInput
+            name="mainApi"
+            value={data.mainApi}
+            onChange={(e) => handleChange('mainApi', e.target.value)}
+            placeholder="Eg. Vehicle"
+            label="Main API *"
+          />
+        </>
+      )}
       {/* <DaFileUpload /> */}
 
       <div className="grow"></div>
@@ -175,15 +209,17 @@ const FormCreateModel = () => {
         </DaText>
       )}
       {/* Action */}
-      <DaButton
-        disabled={loading || uploading}
-        type="submit"
-        variant="gradient"
-        className="mt-8 w-full"
-      >
-        {loading && <TbLoader className="mr-2 animate-spin text-lg" />}
-        Create Model
-      </DaButton>
+      <div className="min-h-10 mt-8">
+        <DaButton
+          disabled={loading || uploading}
+          type="submit"
+          variant="gradient"
+          className="w-full"
+        >
+          {loading && <TbLoader className="mr-2 animate-spin text-lg" />}
+          Create Model
+        </DaButton>
+      </div>
     </form>
   )
 }
