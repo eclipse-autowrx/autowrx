@@ -255,7 +255,7 @@
 
 "@digital-auto/image-area-lib@1.0.2":
   version "1.0.2"
-  resolved "https://registry.yarnpkg.com/@digital-auto/image-area-lib/-/image-area-lib-1.0.2.tgz#d62be1c83ee7d8b11edf4670bc3c094a40bcaec2"
+  resolved "https://registry.npmjs.org/@digital-auto/image-area-lib/-/image-area-lib-1.0.2.tgz"
   integrity sha512-MoCotRmOzb7XIAgvz4c3FpQHJVp2xRxPWGH5Suw2JYnerWkHeNN7gjLSY5WzGtOllEuv9xRbwCGkRfj12KwraA==
   dependencies:
     its-fine "^1.2.5"
@@ -490,7 +490,7 @@
 
 "@esbuild/win32-x64@0.20.2":
   version "0.20.2"
-  resolved "https://registry.npmjs.org/@esbuild/win32-x64/-/win32-x64-0.20.2.tgz"
+  resolved "https://registry.yarnpkg.com/@esbuild/win32-x64/-/win32-x64-0.20.2.tgz#9c907b21e30a52db959ba4f80bb01a0cc403d5cc"
   integrity sha512-N49X4lJX27+l9jbLKSqZ6bKNjzQvHaT8IIFUy+YIqmXQdjYCToGWwOItDrfby14c78aDd5NHQl29xingXfCdLQ==
 
 "@eslint-community/eslint-utils@^4.2.0", "@eslint-community/eslint-utils@^4.4.0":
@@ -1512,7 +1512,7 @@
 
 "@rollup/rollup-win32-x64-msvc@4.18.0":
   version "4.18.0"
-  resolved "https://registry.npmjs.org/@rollup/rollup-win32-x64-msvc/-/rollup-win32-x64-msvc-4.18.0.tgz"
+  resolved "https://registry.yarnpkg.com/@rollup/rollup-win32-x64-msvc/-/rollup-win32-x64-msvc-4.18.0.tgz#5d694d345ce36b6ecf657349e03eb87297e68da4"
   integrity sha512-UOo5FdvOL0+eIVTgS4tIdbW+TtnBLWg1YBCcU2KWM7nuNwRz9bksDX1bekJJCpu25N1DVWaCwnT39dVQxzqS8g==
 
 "@socket.io/component-emitter@~3.1.0":
@@ -3736,7 +3736,7 @@ keyv@^4.5.4:
 
 konva@9.2.3:
   version "9.2.3"
-  resolved "https://registry.yarnpkg.com/konva/-/konva-9.2.3.tgz#84f0a828a040b4aeb9f90625e89fdfe0662075a2"
+  resolved "https://registry.npmjs.org/konva/-/konva-9.2.3.tgz"
   integrity sha512-oQ6VQ6kUL9IlhOGuEKKhxqnv6g/t8jZpVuWahQQ6hCqAsO8Ydi1zFGv7ef4EOq5GoPNq/d6Fyj/3i5Y/a5NooA==
 
 language-subtag-registry@^0.3.20:
