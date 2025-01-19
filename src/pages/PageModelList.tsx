@@ -18,7 +18,7 @@ import useListModelContribution from '@/hooks/useListModelContribution'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import DaSkeletonGrid from '@/components/molecules/DaSkeletonGrid'
 import { DaSkeleton } from '@/components/atoms/DaSkeleton'
-import { DaItemVerticalType2 } from '@/components/molecules/DaItemVerticalType2'
+import DaModelItem from '@/components/molecules/DaModelItem'
 import { Link } from 'react-router-dom'
 import { ModelLite } from '@/types/model.type'
 
@@ -191,6 +191,8 @@ const PageModelList = () => {
       ]
     : [{ title: 'Public', value: 'public', count: filteredPublic.length }]
 
+  console.log('myModels', myModels)
+
   return (
     <div className="flex flex-col w-full h-full relative">
       {/* Tabs Bar */}
@@ -216,7 +218,6 @@ const PageModelList = () => {
           ))
         )}
       </div>
-
       <div className="flex w-full h-[calc(100%-52px)] items-start bg-slate-200 p-2">
         <div className="flex flex-col w-full h-full bg-white rounded-lg overflow-y-auto">
           <div className="flex flex-col w-full h-full container px-4 pb-6">
@@ -282,14 +283,9 @@ const PageModelList = () => {
                       emptyContainerClassName="h-[50%]"
                     >
                       <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-4 mt-2">
-                        {myModels.map((item, index) => (
-                          <Link key={index} to={`/model/${item.id}`}>
-                            <DaItemVerticalType2
-                              title={item.name}
-                              imageUrl={item.model_home_image_file}
-                              tags={item.tags?.map((t) => t.tag) || []}
-                              maxWidth="800px"
-                            />
+                        {myModels.map((model, index) => (
+                          <Link key={index} to={`/model/${model.id}`}>
+                            <DaModelItem model={model} />
                           </Link>
                         ))}
                       </div>
@@ -315,14 +311,9 @@ const PageModelList = () => {
                   emptyContainerClassName="h-[50%]"
                 >
                   <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-4 mt-2">
-                    {filteredContributions.map((item, index) => (
-                      <Link key={index} to={`/model/${item.id}`}>
-                        <DaItemVerticalType2
-                          title={item.name}
-                          imageUrl={item.model_home_image_file}
-                          tags={item.tags?.map((t) => t.tag) || []}
-                          maxWidth="800px"
-                        />
+                    {filteredContributions.map((model, index) => (
+                      <Link key={index} to={`/model/${model.id}`}>
+                        <DaModelItem model={model} />
                       </Link>
                     ))}
                   </div>
@@ -346,14 +337,9 @@ const PageModelList = () => {
               >
                 {filteredPublic?.length > 0 && (
                   <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-4 mt-2">
-                    {filteredPublic.map((item, index) => (
-                      <Link key={index} to={`/model/${item.id}`}>
-                        <DaItemVerticalType2
-                          title={item.name}
-                          imageUrl={item.model_home_image_file}
-                          tags={item.tags?.map((t) => t.tag) || []}
-                          maxWidth="800px"
-                        />
+                    {filteredPublic.map((model, index) => (
+                      <Link key={index} to={`/model/${model.id}`}>
+                        <DaModelItem model={model} />
                       </Link>
                     ))}
                   </div>

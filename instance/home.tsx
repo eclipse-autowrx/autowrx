@@ -130,15 +130,14 @@ const home = [
         redirectURL: 'https://docs.digital.auto/releases/version2/',
       },
       {
-        title: 'digital.auto Meetup',
+        title: 'Contribute to playground development',
         type: 'Event',
-        date: '26 November 2024',
+        date: '17 January 2025',
         description:
-          'Join Prof. Dirk Slama to discuss the roadmap and priorities of our digital.auto community in 2025. Meet Fabio Violante (CEO Arduino) to discuss our plans for an open E/E Starter Kit for SDVs',
+          'Join us in developing playground.digital.auto on Eclipse Autowrx - an open platform where developers learn and experiment with software-defined vehicles.',
         imageURL:
-          'https://bewebstudio.digitalauto.tech/data/projects/VOMpcykPhfIC/digital.auto%20Meetup.png',
-        redirectURL:
-          'https://www.linkedin.com/posts/digitalauto_join-prof-dirk-slama-to-discuss-the-roadmap-activity-7255901526752219137-RFLH?utm_source=share&utm_medium=member_desktop',
+          'https://bewebstudio.digitalauto.tech/data/projects/xT9wA8QU7xEN/new_images/autowrx.jpg',
+        redirectURL: 'https://gitlab.eclipse.org/eclipse/autowrx/autowrx',
       },
       {
         title: 'GenAI Awards',

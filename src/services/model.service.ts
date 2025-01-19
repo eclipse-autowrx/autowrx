@@ -23,6 +23,7 @@ export const listModelsLite = async (
           'created_by',
           'tags',
           'state',
+          'stats',
         ].join(','),
         page,
         limit,
