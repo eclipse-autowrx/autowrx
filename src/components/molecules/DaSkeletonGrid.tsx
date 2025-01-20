@@ -13,6 +13,7 @@ const defaultMaxItems = {
 
 interface DaSkeletonGridProps {
   className?: string
+  itemWrapperClassName?: string
   itemClassName?: string
   containerHeight?: string
   maxItems?: {
@@ -36,6 +37,7 @@ interface DaSkeletonGridProps {
 
 const DaSkeletonGrid = ({
   className = '',
+  itemWrapperClassName = '',
   itemClassName = '',
   containerHeight = 'min-h-[200px]',
   maxItems = defaultMaxItems,
@@ -116,7 +118,12 @@ const DaSkeletonGrid = ({
   if (isLoading) {
     return (
       <div className={`flex flex-col w-full ${containerHeight} ${className}`}>
-        <div className="w-full grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div
+          className={cn(
+            'w-full grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6',
+            itemWrapperClassName,
+          )}
+        >
           {Array(numItems)
             .fill(null)
             .map((_, index) => (

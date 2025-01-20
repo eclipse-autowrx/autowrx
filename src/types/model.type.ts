@@ -15,6 +15,23 @@ export type ModelLite = {
   created_by: string
   tags?: Tag[]
   state?: 'draft' | 'released' | 'blocked'
+  api_version?: string
+  stats?: {
+    apis: {
+      total: { count: number }
+      used: { count: number }
+    }
+    prototypes: { count: number }
+    architecture: {
+      prototypes: { count: number }
+      model: { count: number }
+      total: { count: number }
+    }
+    collaboration: {
+      contributors: { count: number }
+      members: { count: number }
+    }
+  }
 }
 
 export type Model = {

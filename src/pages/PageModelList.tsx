@@ -13,14 +13,13 @@ import { ModelCreate, Prototype } from '@/types/model.type'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { addLog } from '@/services/log.service'
 import { useNavigate } from 'react-router-dom'
-import useListModelLite from '@/hooks/useListModelLite'
-import useListModelContribution from '@/hooks/useListModelContribution'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import DaSkeletonGrid from '@/components/molecules/DaSkeletonGrid'
 import { DaSkeleton } from '@/components/atoms/DaSkeleton'
-import { DaItemVerticalType2 } from '@/components/molecules/DaItemVerticalType2'
+import DaModelItem from '@/components/molecules/DaModelItem'
 import { Link } from 'react-router-dom'
 import { ModelLite } from '@/types/model.type'
+import useListAllModels from '@/hooks/useListAllModel'
 
 const PageModelList = () => {
   const navigate = useNavigate()
@@ -28,21 +27,37 @@ const PageModelList = () => {
 
   const { data: user } = useSelfProfileQuery()
 
-  // All public models
+  // Single hook that returns all model types
   const {
-    data: allModel,
-    isLoading: isLoadingAllModel,
-    refetch: refetchModelList,
-  } = useListModelLite()
-  // My own models
-  const { data: myModelsData, isLoading: isLoadingMyModels } = useListModelLite(
-    {
-      created_by: user?.id,
-    },
+    data,
+    isLoading,
+    error,
+    refetch: refetchAllModels,
+  } = useListAllModels()
+
+  // In case `data` isn’t ready, destructure safely
+  const {
+    ownedModels = [],
+    contributedModels = [],
+    publicReleasedModels = [],
+  } = data || {}
+
+  // Overlap filtering
+  const userOwnedIds = ownedModels.map((m) => m.id)
+  const userContributedIds = contributedModels.map((m) => m.id)
+
+  // Remove any public models that the user owns or contributes to
+  const filteredPublic = !user
+    ? publicReleasedModels
+    : publicReleasedModels.filter(
+        (m) =>
+          !userOwnedIds.includes(m.id) && !userContributedIds.includes(m.id),
+      )
+
+  // Remove from 'my contributions' any that are actually owned
+  const filteredContributions = contributedModels.filter(
+    (m) => !userOwnedIds.includes(m.id),
   )
-  // Models I contributed to
-  const { data: contributionModelData, isLoading: isLoadingContributionModel } =
-    useListModelContribution()
 
   // Refs for scrolling
   const myModelRef = useRef<HTMLDivElement>(null)
@@ -53,40 +68,6 @@ const PageModelList = () => {
   const [activeTab, setActiveTab] = useState<
     'myModel' | 'myContribution' | 'public'
   >(user ? 'myModel' : 'public')
-
-  // Prepare data
-  const myModels = myModelsData?.results || []
-  const contributionModelsRaw = contributionModelData?.results || []
-  const publicModelsRaw =
-    allModel?.results?.filter(
-      (m) => m.visibility === 'public' && m.state === 'released',
-    ) || []
-
-  // 1) Collect model IDs for user-owned models
-  const userOwnedIds = myModels.map((m) => m.id)
-
-  // 2) Collect model IDs for user-contributed models
-  const userContributedIds = contributionModelsRaw.map((m) => m.id)
-
-  // 3) Filter out any model the user owns OR contributes to from 'Public'
-  let filteredPublic: ModelLite[]
-  if (!user) {
-    // Guest => show all public
-    filteredPublic = publicModelsRaw
-  } else {
-    // Logged in => remove user-owned or user-contributed models from public
-    filteredPublic = publicModelsRaw.filter(
-      (m) => !userOwnedIds.includes(m.id) && !userContributedIds.includes(m.id),
-    )
-  }
-
-  // 4) Filter 'myContributions' by removing models the user actually owns
-  const filteredContributions = contributionModelsRaw.filter(
-    (m) => !userOwnedIds.includes(m.id),
-  )
-
-  const isLoadingAny =
-    isLoadingAllModel || isLoadingMyModels || isLoadingContributionModel
 
   // Handle tab click -> scroll to respective section
   const handleTabClick = (tab: 'myModel' | 'myContribution' | 'public') => {
@@ -133,6 +114,7 @@ const PageModelList = () => {
 
       const createdModel = await createModelService(newModel)
 
+      // Log
       addLog({
         name: `New model '${createdModel.name}' with visibility: ${createdModel.visibility}`,
         description: `New model '${createdModel.name}' was created by ${
@@ -144,6 +126,7 @@ const PageModelList = () => {
         ref_type: 'model',
       })
 
+      // Prototypes if any
       if (importedModel.prototypes.length > 0) {
         const prototypePromises = importedModel.prototypes.map(
           async (proto: Partial<Prototype>) => {
@@ -170,7 +153,8 @@ const PageModelList = () => {
         await Promise.all(prototypePromises)
       }
 
-      await refetchModelList()
+      // Refetch model list and navigate
+      await refetchAllModels()
       navigate(`/model/${createdModel}`)
     } catch (err) {
       console.error('Error creating model from zip: ', err)
@@ -179,9 +163,10 @@ const PageModelList = () => {
     }
   }
 
+  // Tabs
   const tabItems = user
     ? [
-        { title: 'My Models', value: 'myModel', count: myModels.length },
+        { title: 'My Models', value: 'myModel', count: ownedModels.length },
         {
           title: 'My Contributions',
           value: 'myContribution',
@@ -191,11 +176,17 @@ const PageModelList = () => {
       ]
     : [{ title: 'Public', value: 'public', count: filteredPublic.length }]
 
+  // Logging for debugging
+  console.log('ownedModels', ownedModels)
+  console.log('contributedModels', contributedModels)
+  console.log('publicReleasedModels', publicReleasedModels)
+  console.log('filteredPublic', filteredPublic)
+
   return (
     <div className="flex flex-col w-full h-full relative">
       {/* Tabs Bar */}
       <div className="sticky top-0 flex min-h-[52px] border-b border-da-gray-medium/50 bg-da-white z-50">
-        {isLoadingAny ? (
+        {isLoading ? (
           <div className="flex items-center h-full space-x-6 px-4">
             {tabItems.map((_, index) => (
               <DaSkeleton key={index} className="w-[100px] h-6" />
@@ -266,30 +257,27 @@ const PageModelList = () => {
                   </div>
                 </div>
 
-                {myModels?.length > 0 && (
-                  <div className="py-2 h-fit">
+                {/* My Models */}
+                {ownedModels.length > 0 && (
+                  <div className="pt-6 h-fit">
                     <DaText variant="sub-title" className="text-da-primary-500">
                       My Models
                     </DaText>
                     <DaSkeletonGrid
-                      maxItems={{ sm: 1, md: 2, lg: 3, xl: 4 }}
+                      maxItems={{ sm: 1, md: 2, lg: 3, xl: 3 }}
                       className="mt-2"
-                      primarySkeletonClassName="h-[240px]"
+                      itemWrapperClassName="w-full grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6"
+                      primarySkeletonClassName="h-[270px]"
                       secondarySkeletonClassName="hidden"
-                      data={myModels}
-                      isLoading={isLoadingMyModels}
+                      data={ownedModels}
+                      isLoading={isLoading}
                       emptyText="No models found. Please create a new model."
                       emptyContainerClassName="h-[50%]"
                     >
-                      <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-4 mt-2">
-                        {myModels.map((item, index) => (
-                          <Link key={index} to={`/model/${item.id}`}>
-                            <DaItemVerticalType2
-                              title={item.name}
-                              imageUrl={item.model_home_image_file}
-                              tags={item.tags?.map((t) => t.tag) || []}
-                              maxWidth="800px"
-                            />
+                      <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3 pb-4 mt-2">
+                        {ownedModels.map((model: ModelLite, index: number) => (
+                          <Link key={index} to={`/model/${model.id}`}>
+                            <DaModelItem model={model} />
                           </Link>
                         ))}
                       </div>
@@ -299,61 +287,56 @@ const PageModelList = () => {
               </div>
             )}
 
-            {user && filteredContributions?.length > 0 && (
-              <div ref={myContributionRef} className="py-2">
+            {user && filteredContributions.length > 0 && (
+              <div ref={myContributionRef} className="pt-6">
                 <DaText variant="sub-title" className="text-da-primary-500">
                   My Contributions
                 </DaText>
                 <DaSkeletonGrid
-                  maxItems={{ sm: 1, md: 2, lg: 3, xl: 4 }}
+                  maxItems={{ sm: 1, md: 2, lg: 3, xl: 3 }}
                   className="mt-2"
-                  primarySkeletonClassName="h-[240px]"
+                  itemWrapperClassName="w-full grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6"
+                  primarySkeletonClassName="h-[270px]"
                   secondarySkeletonClassName="hidden"
                   data={filteredContributions}
-                  isLoading={isLoadingContributionModel}
+                  isLoading={isLoading}
                   emptyText="No contributions found."
                   emptyContainerClassName="h-[50%]"
                 >
-                  <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-4 mt-2">
-                    {filteredContributions.map((item, index) => (
-                      <Link key={index} to={`/model/${item.id}`}>
-                        <DaItemVerticalType2
-                          title={item.name}
-                          imageUrl={item.model_home_image_file}
-                          tags={item.tags?.map((t) => t.tag) || []}
-                          maxWidth="800px"
-                        />
-                      </Link>
-                    ))}
+                  <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3 pb-4 mt-2">
+                    {filteredContributions.map(
+                      (model: ModelLite, index: number) => (
+                        <Link key={index} to={`/model/${model.id}`}>
+                          <DaModelItem model={model} />
+                        </Link>
+                      ),
+                    )}
                   </div>
                 </DaSkeletonGrid>
               </div>
             )}
 
-            <div ref={publicRef} className="py-2">
+            {/* Public Models */}
+            <div ref={publicRef} className="py-6">
               <DaText variant="sub-title" className="text-da-primary-500">
                 Public
               </DaText>
               <DaSkeletonGrid
-                maxItems={{ sm: 1, md: 2, lg: 3, xl: 4 }}
+                maxItems={{ sm: 1, md: 2, lg: 3, xl: 3 }}
                 className="mt-2"
-                primarySkeletonClassName="h-[240px]"
+                itemWrapperClassName="w-full grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6"
+                primarySkeletonClassName="h-[270px]"
                 secondarySkeletonClassName="hidden"
                 data={filteredPublic}
-                isLoading={isLoadingAllModel}
+                isLoading={isLoading}
                 emptyText="No public models found."
                 emptyContainerClassName="h-[50%]"
               >
-                {filteredPublic?.length > 0 && (
-                  <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-4 mt-2">
-                    {filteredPublic.map((item, index) => (
-                      <Link key={index} to={`/model/${item.id}`}>
-                        <DaItemVerticalType2
-                          title={item.name}
-                          imageUrl={item.model_home_image_file}
-                          tags={item.tags?.map((t) => t.tag) || []}
-                          maxWidth="800px"
-                        />
+                {filteredPublic.length > 0 && (
+                  <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3 pb-4 mt-2">
+                    {filteredPublic.map((model: ModelLite, index: number) => (
+                      <Link key={index} to={`/model/${model.id}`}>
+                        <DaModelItem model={model} />
                       </Link>
                     ))}
                   </div>
