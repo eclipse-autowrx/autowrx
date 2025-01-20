@@ -16,7 +16,7 @@ export type ModelLite = {
   tags?: Tag[]
   state?: 'draft' | 'released' | 'blocked'
   api_version?: string
-  stats: {
+  stats?: {
     apis: {
       total: { count: number }
       used: { count: number }
