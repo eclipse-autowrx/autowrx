@@ -44,6 +44,36 @@ export const listModelsLite = async (
   }
 }
 
+interface AllModelsResponse {
+  ownedModels: List<ModelLite>
+  contributedModels: List<ModelLite>
+  publicReleasedModels: List<ModelLite>
+}
+
+export const listAllModels = async (): Promise<{
+  ownedModels: ModelLite[]
+  contributedModels: ModelLite[]
+  publicReleasedModels: ModelLite[]
+}> => {
+  try {
+    const { data } = await serverAxios.get<AllModelsResponse>('/models/all')
+    console.log('Raw data from /models/all:', data)
+
+    const ownedModels = data.ownedModels?.results || []
+    const contributedModels = data.contributedModels?.results || []
+    const publicReleasedModels = data.publicReleasedModels?.results || []
+
+    return {
+      ownedModels,
+      contributedModels,
+      publicReleasedModels,
+    }
+  } catch (error: any) {
+    console.error('[listAllModels] error:', error.message)
+    throw error
+  }
+}
+
 export const listModelContributions = async (): Promise<List<ModelLite>> => {
   let page = 1
   const limit = 10

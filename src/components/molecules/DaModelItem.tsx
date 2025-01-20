@@ -7,7 +7,15 @@ import DaTooltip from '../atoms/DaTooltip'
 import { DaAvatar } from '../atoms/DaAvatar'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { Link } from 'react-router-dom'
-import { TbCode, TbGauge } from 'react-icons/tb'
+import {
+  TbAffiliate,
+  TbCategory,
+  TbCode,
+  TbGauge,
+  TbStack,
+  TbStackFilled,
+  TbUsers,
+} from 'react-icons/tb'
 import { cn } from '@/lib/utils'
 
 interface DaModelItemProps {
@@ -17,6 +25,11 @@ interface DaModelItemProps {
 
 const DaModelItem = ({ model, className }: DaModelItemProps) => {
   const { data: user } = useSelfProfileQuery()
+
+  const contributorsCount =
+    model?.stats?.collaboration?.contributors?.count ?? 0
+  const membersCount = model?.stats?.collaboration?.members?.count ?? 0
+  const totalCount = contributorsCount + membersCount
 
   return (
     <div
@@ -40,37 +53,14 @@ const DaModelItem = ({ model, className }: DaModelItemProps) => {
           <div className="absolute bottom-0 w-full h-[30px] p-[1px] blur-xl bg-black/80 transition-opacity duration-200 ease-in-out opacity-0 group-hover:opacity-100"></div>
           <div className="absolute bottom-0 w-full h-[50px] p-[1px] transition-opacity duration-200 ease-in-out opacity-0 group-hover:opacity-100">
             <div className="flex h-full w-full px-3 items-center justify-between text-white rounded-b-lg ">
+              <div className="flex w-fit justify-end items-center gap-2 ml-2">
+                COVESA VSS {model.api_version}
+              </div>
               <div className="grow"></div>
-              {user && (
-                <div className="flex w-fit justify-end items-center gap-2 ml-2">
-                  <DaTooltip content="View Code" delay={300}>
-                    <Link
-                      to={`/model/${model?.id}/library/prototype`}
-                      className="flex"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="p-1 rounded-full bg-white opacity-80 hover:opacity-100">
-                        <TbCode className="size-4 !text-da-gray-dark" />
-                      </div>
-                    </Link>
-                  </DaTooltip>
-                  <DaTooltip content="View Dashboard" delay={300}>
-                    <Link
-                      to={`/model/${model?.id}/library/prototype`}
-                      className="flex"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="p-1 rounded-full bg-white opacity-80 hover:opacity-100">
-                        <TbGauge className="size-4 !text-da-gray-dark" />
-                      </div>
-                    </Link>
-                  </DaTooltip>
-                </div>
-              )}
             </div>
           </div>
         </div>
-        <div className="flex items-center w-full space-y-0">
+        <div className="flex items-center w-full px-1 pt-0.5">
           <DaText
             variant="regular-bold"
             className="line-clamp-1 !text-da-gray-dark"
@@ -78,6 +68,28 @@ const DaModelItem = ({ model, className }: DaModelItemProps) => {
             {model?.name ?? ''}
           </DaText>
           <div className="grow"></div>
+          <div className="flex text-sm items-center gap-3">
+            {totalCount > 0 && (
+              <DaTooltip content="Contributors" delay={300}>
+                <div className="flex items-center font-semibold ">
+                  <TbUsers className="text-da-primary-500 size-4 mr-1" />
+                  {totalCount}
+                </div>
+              </DaTooltip>
+            )}
+            <DaTooltip content="Utilized VSS Signals" delay={300}>
+              <div className="flex items-center font-semibold">
+                <TbAffiliate className="text-da-primary-500 size-4 mr-1" />
+                {model.stats?.apis.used.count}
+              </div>
+            </DaTooltip>
+            <DaTooltip content="Prototypes" delay={300}>
+              <div className="flex items-center font-semibold ">
+                <TbCode className="text-da-primary-500 size-4 mr-1" />
+                {model.stats?.prototypes.count}
+              </div>
+            </DaTooltip>
+          </div>
         </div>
       </div>
     </div>
