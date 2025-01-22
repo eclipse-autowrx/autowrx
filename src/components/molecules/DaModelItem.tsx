@@ -80,13 +80,13 @@ const DaModelItem = ({ model, className }: DaModelItemProps) => {
             <DaTooltip content="Utilized VSS Signals" delay={300}>
               <div className="flex items-center font-semibold">
                 <TbAffiliate className="text-da-primary-500 size-4 mr-1" />
-                {model.stats?.apis.used.count}
+                {model.stats?.apis?.used?.count || 0}
               </div>
             </DaTooltip>
             <DaTooltip content="Prototypes" delay={300}>
               <div className="flex items-center font-semibold ">
                 <TbCode className="text-da-primary-500 size-4 mr-1" />
-                {model.stats?.prototypes.count}
+                {model.stats?.prototypes?.count || 0}
               </div>
             </DaTooltip>
           </div>

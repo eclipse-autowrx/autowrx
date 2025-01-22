@@ -17,6 +17,8 @@ import {
   TbEdit,
   TbLoader,
   TbPhotoEdit,
+  TbStar,
+  TbStarFilled,
   TbTrashX,
 } from 'react-icons/tb'
 import DaTableEditor from '../molecules/DaCustomerJourneyTable'
@@ -37,6 +39,9 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import DaInputWithLabel from '../atoms/DaInputWithLabel'
 import { CustomRequirement } from '@/types/model.type'
 import DaCustomRequirements from '../molecules/prototype_requirements/DaCustomRequirements'
+import DaTooltip from '../atoms/DaTooltip'
+import { toast } from 'react-toastify'
+import { isAxiosError } from 'axios'
 
 interface PrototypeTabJourneyProps {
   prototype: Prototype
@@ -56,7 +61,10 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
   )
   const { refetch: refetchCurrentPrototype } = useCurrentPrototype()
   const navigate = useNavigate()
-  const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
+  const [isAuthorized, isAdmin] = usePermissionHook(
+    [PERMISSIONS.READ_MODEL, model?.id],
+    [PERMISSIONS.MANAGE_USERS],
+  )
   const [isDeleting, setIsDeleting] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -173,6 +181,24 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
     }
   }
 
+  const updateEditorChoice = async () => {
+    try {
+      await updatePrototypeService(prototype.id, {
+        editors_choice: !prototype?.editors_choice,
+      })
+      refetchCurrentPrototype()
+    } catch (error) {
+      console.log(error)
+      if (isAxiosError(error)) {
+        toast.error(
+          error.response?.data.message || 'Failed to update editor choice',
+        )
+        return
+      }
+      toast.error('Failed to update editor choice')
+    }
+  }
+
   return (
     <div className="flex flex-col h-full w-full p-2 bg-slate-200">
       <div className="flex flex-col h-full w-full bg-white rounded-lg overflow-y-auto">
@@ -209,6 +235,24 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                 <div className="grow" />
                 {isAuthorized && (
                   <>
+                    {isAdmin && (
+                      <DaTooltip
+                        content={`${prototype?.editors_choice ? 'Unmark' : 'Mark'} as Editor Choice`}
+                      >
+                        <DaButton
+                          onClick={updateEditorChoice}
+                          className="!justify-start"
+                          variant="editor"
+                          size="sm"
+                        >
+                          {prototype?.editors_choice ? (
+                            <TbStarFilled className="w-4 h-4" />
+                          ) : (
+                            <TbStar className="w-4 h-4" />
+                          )}
+                        </DaButton>
+                      </DaTooltip>
+                    )}
                     <DaButton
                       onClick={() => setIsEditing(true)}
                       className="!justify-start"

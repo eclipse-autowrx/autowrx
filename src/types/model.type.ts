@@ -86,6 +86,7 @@ export type Prototype = {
   requirements?: string
   executed_turns?: number
   flow?: string
+  editors_choice?: boolean
 }
 export interface CustomRequirement {
   text?: string
