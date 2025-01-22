@@ -16,20 +16,12 @@ import { DaButton } from '@/components/atoms/DaButton'
 import { DaTextarea } from '@/components/atoms/DaTextarea'
 import { cn } from '@/lib/utils'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
+import FlowItemEditor from './FlowItemEditor'
+import FlowSystemActivity from './FlowSystemActivity'
 interface TextCellProps {
   value: string
   onChange: (value: string) => void
 }
-
-const TextCell = ({ value, onChange }: TextCellProps) => (
-  <DaTextarea
-    placeholder="Enter description"
-    value={value}
-    onChange={(e) => onChange(e.target.value)}
-    className="font-medium w-full h-full text-center resize-none p-2"
-    textareaClassName="resize-none !h-[75px] !text-xs"
-  />
-)
 
 interface FlowCell {
   key: string
@@ -409,12 +401,24 @@ const DaPrototypeFlowEditor = ({
                             }
                           />
                         ) : (
-                          <TextCell
+                          <FlowItemEditor
                             value={getNestedValue(flow, cell.path)}
                             onChange={(value) =>
                               updateFlow(stepIndex, flowIndex, cell.path, value)
                             }
-                          />
+                          >
+                            <div className="flex h-[95px] p-2 w-full text-xs justify-center items-center cursor-pointer hover:border-[1.5px] hover:border-da-primary-500">
+                              {(() => {
+                                const text = getNestedValue(flow, cell.path)
+                                try {
+                                  const parsed = JSON.parse(text)
+                                  return parsed.description || text
+                                } catch {
+                                  return text
+                                }
+                              })()}
+                            </div>
+                          </FlowItemEditor>
                         )}
                       </td>
                     ))}
