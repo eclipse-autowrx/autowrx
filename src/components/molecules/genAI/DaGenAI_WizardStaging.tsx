@@ -2,6 +2,7 @@ import DaText from '@/components/atoms/DaText'
 import { useEffect, useState } from 'react'
 import { DaButton } from '@/components/atoms/DaButton'
 import DaGenAI_EditSystemStaging from './DaGenAI_EditSystemStaging'
+import { TbExternalLink } from 'react-icons/tb'
 
 const TARGETS = [
   {
@@ -16,12 +17,13 @@ const TARGETS = [
   {
     name: 'Automation Kit',
     short_name: 'Runtime-',
-    icon: '/imgs/targets/automationKit.jpg',
+    icon: '/imgs/targets/automationKitv2.png',
     prefix: 'Runtime-', // "Kit-"
     version: 'v.1.0',
     state: {
       '3.1.1.1.1.1': '0.9.0',
     },
+    link: 'https://www.etas.com/de/portfolio/es830_rapid-prototyping-module.php',
   },
   {
     name: 'Test Fleet',
@@ -277,9 +279,23 @@ const DaGenAI_WizardStaging = () => {
                         className="rounded-lg"
                       />
                     </div>
-                    <DaText variant="small-bold" className="mt-1">
-                      {target.name}
-                    </DaText>
+                    {target.link ? (
+                      <a target="_blank" href={target.link}>
+                        <DaText
+                          variant="small-bold"
+                          className="mt-1 flex items-center gap-1"
+                        >
+                          {target.name}{' '}
+                          {target.link && (
+                            <TbExternalLink className="w-4 h-4" />
+                          )}
+                        </DaText>
+                      </a>
+                    ) : (
+                      <DaText variant="small-bold" className="mt-1">
+                        {target.name}
+                      </DaText>
+                    )}
                     <DaText variant="small" className="mt-1">
                       {target.version}
                     </DaText>
