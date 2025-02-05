@@ -77,6 +77,8 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         setMockSignals,
         loadMockSignals,
         writeSignalsValue,
+        revertToDefaultVehicleModel,
+        builldVehicleModel,
       }
     })
 
@@ -208,6 +210,26 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         socketio.emit('messageToKit', {
           cmd: 'install_python_packages',
           data: libName.trim(),
+          to_kit_id: activeRtId,
+        })
+      }
+    }
+
+    const revertToDefaultVehicleModel = () => {
+      if (prototype && prototype.id && currentUser) {
+        socketio.emit('messageToKit', {
+          cmd: 'revert_vehicle_model',
+          data: "",
+          to_kit_id: activeRtId,
+        })
+      }
+    }
+
+    const builldVehicleModel = (vss_json: string) => {
+      if (prototype && prototype.id && currentUser && vss_json) {
+        socketio.emit('messageToKit', {
+          cmd: 'generate_vehicle_model',
+          data: vss_json || "",
           to_kit_id: activeRtId,
         })
       }
@@ -388,7 +410,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         }
       }
       if (
-        ['run_python_app', 'run_rust_app', 'run_bin_app'].includes(payload.cmd)
+        ['run_python_app', 'run_rust_app', 'run_bin_app', 'generate_vehicle_model', 'revert_vehicle_model'].includes(payload.cmd)
       ) {
         if (payload.isDone) {
           if (setAppLog) {
@@ -402,10 +424,10 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
           }
         } else {
           if (setAppLog) {
-            setAppLog(payload.result || '')
+            setAppLog((payload.result || '') + '\r\n')
           }
           if (onNewLog) {
-            onNewLog(payload.result || '')
+            onNewLog((payload.result || '') + '\r\n')
           }
         }
       }
