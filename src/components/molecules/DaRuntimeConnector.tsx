@@ -396,12 +396,14 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         }
       })
 
+      console.log("onGetAllKitData sortedKits", sortedKits)
+
       setAllRuntimes(sortedKits)
     }
 
     const onBroadCastToClient = (payload: any) => {
       if (!payload) return
-      console.log(`broadcastToClient`, payload)
+      // console.log(`broadcastToClient`, payload)
     }
 
     const onKitReply = (payload: any) => {
@@ -419,7 +421,6 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
           onNewLog(payload.result || '')
         }
       }
-
 
       if (
         ['generate_vehicle_model', 'revert_vehicle_model'].includes(payload.cmd)
@@ -502,7 +503,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
           (rt: Runtime) => rt.is_online,
         )
         if (onlineRuntimes.length <= 0) {
-          console.log(`setActiveRtId(undefined) cause: no onlineRuntimes`)
+          // console.log(`setActiveRtId(undefined) cause: no onlineRuntimes`)
           setActiveRtId(undefined)
           return
         }
@@ -513,15 +514,15 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
             .map((rt: Runtime) => rt.kit_id)
             .includes(lastOnlineRuntime)
         ) {
-          console.log(`lastOnlineRuntime `, lastOnlineRuntime)
+          // console.log(`lastOnlineRuntime `, lastOnlineRuntime)
           setActiveRtId(lastOnlineRuntime)
           return
         }
-        console.log(`setActiveRtId `, onlineRuntimes[0].kit_id)
+        // console.log(`setActiveRtId `, onlineRuntimes[0].kit_id)
         setActiveRtId(onlineRuntimes[0].kit_id)
         localStorage.setItem('last-rt', onlineRuntimes[0].kit_id)
       } else {
-        console.log(`setActiveRtId(undefined) cause: noRuntime`)
+        // console.log(`setActiveRtId(undefined) cause: noRuntime`)
         setActiveRtId(undefined)
       }
     }, [renderRuntimes])
@@ -546,7 +547,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         let publicRuntimes = allRuntimes.filter((rt:any) => rt.name.toLowerCase().startsWith('runtime-public-') || rt.name.toLowerCase().startsWith('runtime-shared-'))
         let myRuntimes = []
         if(Array.isArray(assets)) {
-          console.log("assets", assets)
+          // console.log("assets", assets)
           let runtimesAssets = assets.filter((a:any) => a.type == 'CLOUD_RUNTIME') || []
           let myRuntimeNames = runtimesAssets.map((asset:any) => asset.name.toLowerCase())
           myRuntimes = allRuntimes.filter((rt:any) => {
@@ -565,8 +566,8 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     }, [assets, allRuntimes, isDeployMode])
 
     const onRuntimeStateResponse = (payload: any) => {
-      console.log(`onRuntimeStateResponse`)
-      console.log(payload)
+      // console.log(`onRuntimeStateResponse`)
+      // console.log(payload)
       let newRunningState = false
 
       if(payload.data && payload.data.lsOfRunner && payload.data.lsOfRunner.length > 0){
@@ -610,7 +611,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
                     disabled={!rt.is_online}
                   >
                     <div className="text-[20px] flex items-center disabled:text-white text-white">
-                      {rt.is_online ? '🟢' : '🟡'} {rt.name}
+                      {rt.is_online ? (!rt.noRunner?'🟢':'🔴'): '🟡'} {rt.name} {rt.noRunner?`(${rt.noRunner})`:''}
                     </div>
                   </option>
                 )
