@@ -108,7 +108,7 @@ const DaGenAI_RuntimeControl = () => {
     setWizardSimulating(true)
     setLog('')
     if (runTimeRef1.current) {
-      runTimeRef1.current?.runApp(prototypeData.code)
+      runTimeRef1.current?.runApp(prototypeData.code, prototypeData.name)
     }
   }
 

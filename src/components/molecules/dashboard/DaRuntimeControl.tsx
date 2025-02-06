@@ -27,6 +27,8 @@ import RuntimeAssetManager from '@/components/organisms/RuntimeAssetManager'
 import {
   getComputedAPIs,
 } from '@/services/model.service'
+import { GoDotFill } from "react-icons/go";
+import { set } from 'lodash'
 
 const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
 
@@ -90,6 +92,15 @@ const DaRuntimeControl: FC = ({ }) => {
   const [showRtDialog, setShowRtDialog] = useState<boolean>(false)
 
   const [useRuntime, setUseRuntime] = useState<boolean>(true)
+  const [curRuntimeInfo, setCurRuntimeInfo] = useState<any>(null)
+  const [runningAppsOnRt, setRunningAppsOnRt] = useState<any[]>([])
+  const [listenerOnRt, setListenerOnRt] = useState<any[]>([])
+
+  useEffect(() => {
+    setCurRuntimeInfo(null)
+    setListenerOnRt([])
+    setRunningAppsOnRt([])
+  }, [activeRtId])
 
   // const [showStaging, setShowStaging] = useState<boolean>(false)
 
@@ -119,6 +130,23 @@ const DaRuntimeControl: FC = ({ }) => {
   useEffect(() => {
     localStorage.setItem('customKitServer', customKitServer.trim())
   }, [customKitServer])
+
+  useEffect(() => {
+    if(!curRuntimeInfo) {
+      setRunningAppsOnRt([])
+      setListenerOnRt([])
+    }
+    if (curRuntimeInfo && curRuntimeInfo.lsOfRunner) {
+      setRunningAppsOnRt(curRuntimeInfo.lsOfRunner || [])
+    }
+    if (curRuntimeInfo && curRuntimeInfo.lsOfApiSubscriber) {
+      let lsOfListener = []
+      for (let [key, value] of Object.entries(curRuntimeInfo.lsOfApiSubscriber)) {
+        lsOfListener.push(value)
+      }
+      setListenerOnRt(lsOfListener)
+    }
+  }, [curRuntimeInfo])
 
   useEffect(() => {
     if (prototype) {
@@ -170,6 +198,28 @@ const DaRuntimeControl: FC = ({ }) => {
     iframes.forEach((iframe) => {
       iframe.contentWindow?.postMessage(JSON.stringify(data), '*')
     })
+  }
+
+  const getTimeSpandAsString = (from: number) => {
+    // example from = 1738832993.9763865
+    const now = Date.now()
+    const diff = now - from * 1000
+    const seconds = Math.floor(diff / 1000)
+    const minutes = Math.floor(seconds / 60)
+    const hours = Math.floor(minutes / 60)
+    const days = Math.floor(hours / 24)
+    const weeks = Math.floor(days / 7)
+    const months = Math.floor(weeks / 4)
+    const years = Math.floor(months / 12)
+    if (years > 0) return `${years} years ago`
+    if (months > 0) return `${months} months ago`
+    if (weeks > 0) return `${weeks} weeks ago`
+    if (days > 0) return `${days} days ago`
+    if (hours > 0) return `${hours} hours ago`
+    if (minutes > 0) return `${minutes} minutes ago`
+    if (seconds > 0) return `${seconds} seconds ago`
+    return 'just now'
+
   }
 
   return (
@@ -236,9 +286,10 @@ const DaRuntimeControl: FC = ({ }) => {
               }
               onLoadedMockSignals={setMockSignals}
               onNewLog={appendLog}
-              onAppExit={() => {
-                setIsRunning(false)
+              onAppRunningStateChanged={(state: boolean) => {
+                setIsRunning(state)
               }}
+              onRuntimeInfoReceived={setCurRuntimeInfo}
             />
           ) : (
             <DaRuntimeConnector
@@ -251,9 +302,10 @@ const DaRuntimeControl: FC = ({ }) => {
               }
               onLoadedMockSignals={setMockSignals}
               onNewLog={appendLog}
-              onAppExit={() => {
-                setIsRunning(false)
+              onAppRunningStateChanged={(state: boolean) => {
+                setIsRunning(state)
               }}
+              onRuntimeInfoReceived={setCurRuntimeInfo}
             />
           )}
         </>}
@@ -291,7 +343,7 @@ const DaRuntimeControl: FC = ({ }) => {
             <button
               disabled={isRunning}
               onClick={() => {
-                setIsRunning(true)
+                // setIsRunning(true)
                 setActiveTab('output')
                 setLog('')
                 switch (prototype?.language) {
@@ -302,10 +354,10 @@ const DaRuntimeControl: FC = ({ }) => {
                     break
                   default:
                     if (runTimeRef.current) {
-                      runTimeRef.current?.runApp(code || '')
+                      runTimeRef.current?.runApp(code || '', prototype?.name || 'App name')
                     }
                     if (runTimeRef1.current) {
-                      runTimeRef1.current?.runApp(code || '')
+                      runTimeRef1.current?.runApp(code || '', prototype?.name || 'App name')
                     }
                 }
 
@@ -329,7 +381,7 @@ const DaRuntimeControl: FC = ({ }) => {
             <button
               disabled={!isRunning}
               onClick={() => {
-                setIsRunning(false)
+                // setIsRunning(false)
                 switch (prototype?.language) {
                   case 'rust':
                   default:
@@ -364,7 +416,7 @@ const DaRuntimeControl: FC = ({ }) => {
                         runTimeRef1.current?.runBinApp(appName)
                       }
                     } else {
-                      setIsRunning(false)
+                      // setIsRunning(false)
                     }
                   }
                 }}
@@ -557,6 +609,24 @@ const DaRuntimeControl: FC = ({ }) => {
               />
             )}
 
+            {activeTab == 'rt-usage' && <div className='h-full overflow-auto px-2 py-1 text-sm'>
+              <div className='mt-2 mb-1 font-semibold'>Number of client listen to this runtime: {listenerOnRt.length}</div>
+              <div className='max-h-[300px] overflow-auto'>
+                {listenerOnRt.map((listener: any, idx: number) => <div className='py-0.5 flex italic items-center' key={idx}>
+                  <GoDotFill size={10} className='mr-1' />
+                  <div className='grow'>Number of listened APIs: {listener.apis.length}</div>
+                  <div className='text-xs'>{getTimeSpandAsString(listener.from)}</div>
+                </div>)}
+              </div>
+
+              <div className='mt-4 mb-1 font-semibold'>Number of Prototype running on this runtime: {runningAppsOnRt.length}</div>
+              {runningAppsOnRt.map((app: any, idx: number) => <div className='py-0.5 flex italic items-center' key={idx}>
+                <GoDotFill size={10} className='mr-1' />
+                <div className='grow'>{app.appName}</div>
+                <div className='text-xs'>{getTimeSpandAsString(app.from)}</div>
+              </div>)}
+            </div>}
+
             {activeTab == 'code' && (
               <CodeEditor
                 code={code || ''}
@@ -633,6 +703,14 @@ const DaRuntimeControl: FC = ({ }) => {
               }}
             >
               Signals Watch
+            </div>
+            <div
+              className={`da-label-small flex cursor-pointer items-center px-4 py-0.5 text-da-white hover:bg-da-gray-medium ${activeTab == 'rt-usage' && 'border-b-2 border-da-white'}`}
+              onClick={() => {
+                setActiveTab('rt-usage')
+              }}
+            >
+              Runtime Usage ({runningAppsOnRt.length}-{listenerOnRt.length})
             </div>
 
             {isAdvantageMode > 0 && (
