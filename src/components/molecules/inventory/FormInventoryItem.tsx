@@ -1,8 +1,10 @@
+import { DaInput } from '@/components/atoms/DaInput'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import DaText from '@/components/atoms/DaText'
-import { VehicleApi } from '@/types/model.type'
 import Ajv, { JSONSchemaType } from 'ajv'
 import { useEffect, useState } from 'react'
+import SystemInterfaceFields from './SystemInterfaceFields'
+import { DaButton } from '@/components/atoms/DaButton'
 
 const ajv = new Ajv()
 
@@ -65,7 +67,8 @@ interface SystemInterface {
     | {
         reference: {
           type: string
-          id: string
+          model?: string
+          apiName?: string
         }
       }
     | InterfaceDetail
@@ -90,6 +93,8 @@ const systemInterfaceSchema: JSONSchemaType<SystemInterface> = {
           properties: {
             reference: {
               type: 'string',
+              model: { type: 'string', nullable: true },
+              apiName: { type: 'string', nullable: true },
             },
           },
           required: ['reference'],
@@ -106,7 +111,7 @@ const systemInterfaceSchema: JSONSchemaType<SystemInterface> = {
 }
 
 interface SystemActivity {
-  description?: string
+  description: string
   asilRating?: string
   type?: string
   component?: string
@@ -121,7 +126,7 @@ interface SystemActivity {
 const systemActivitySchema: JSONSchemaType<SystemActivity> = {
   type: 'object',
   properties: {
-    description: { type: 'string', nullable: true },
+    description: { type: 'string' },
     asilRating: { type: 'string', nullable: true },
     type: { type: 'string', nullable: true },
     component: { type: 'string', nullable: true },
@@ -132,6 +137,7 @@ const systemActivitySchema: JSONSchemaType<SystemActivity> = {
     threshold: { type: 'number', nullable: true },
     direction: { type: 'string', nullable: true },
   },
+  required: ['description'],
   additionalProperties: true,
 }
 
@@ -189,7 +195,9 @@ type FormInventoryItemProps = {
 }
 
 const FormInventoryItem = ({ type }: FormInventoryItemProps) => {
-  const [inventoryType, setInventoryType] = useState<string>('system_interface')
+  const [data, setData] = useState({
+    inventoryType: 'system_interface',
+  })
   const [currentSchema, setCurrentSchema] = useState<
     JSONSchemaType<SystemInterface | SystemActivity | FlowHeaders>
   >(systemInterfaceSchema)
@@ -210,7 +218,10 @@ const FormInventoryItem = ({ type }: FormInventoryItemProps) => {
   }, [])
 
   const handleInventoryTypeChange = (value: string) => {
-    setInventoryType(value)
+    setData((prev) => ({
+      ...prev,
+      inventoryType: value,
+    }))
     switch (value) {
       case 'system_interface':
         setCurrentSchema(systemInterfaceSchema)
@@ -226,21 +237,45 @@ const FormInventoryItem = ({ type }: FormInventoryItemProps) => {
     }
   }
 
+  const getUIFields = (
+    schema: 'system_interface' | 'system_activity' | 'flow_headers',
+  ) => {
+    switch (schema) {
+      case 'system_interface':
+        return <SystemInterfaceFields />
+      default:
+        return null
+    }
+  }
+
   return (
-    <form>
+    <form className="w-[600px] py-6 px-[22px]">
       <div>
         <DaText variant="sub-title" className="text-da-primary-500">
           New Inventory Item
         </DaText>
       </div>
-      <div className="mt-2">
-        <DaText variant="small-bold" className="!text-gray-500">
-          Type
+
+      <div className="mt-3">
+        <DaText variant="small-bold" className="!text-da-gray-darkest">
+          Name *
+        </DaText>
+        <DaInput
+          className="mt-1"
+          wrapperClassName="h-8 shadow"
+          inputClassName="text-sm h-6 text-da-gray-darkest"
+          placeholder="Inventory Item Name"
+        />
+      </div>
+
+      <div className="mt-3">
+        <DaText variant="small-bold" className="!text-da-gray-darkest">
+          Type *
         </DaText>
         <DaSelect
-          value={inventoryType}
+          value={data.inventoryType}
           onValueChange={handleInventoryTypeChange}
-          className="mt-1 text-sm text-da-gray-dark"
+          className="mt-1 h-8 text-sm text-da-gray-darkest"
         >
           <DaSelectItem className="text-sm" value="system_interface">
             System Interface
@@ -253,6 +288,19 @@ const FormInventoryItem = ({ type }: FormInventoryItemProps) => {
           </DaSelectItem>
         </DaSelect>
       </div>
+
+      <div className="border-t mt-6" />
+
+      <div className="mt-6 border rounded-md px-5 py-5 text-sm gap-3 text-da-gray-darkest relative">
+        <DaText
+          variant="small-bold"
+          className="absolute !text-da-gray-darkest left-3 bg-white px-1 -top-3"
+        >
+          Inventory Data
+        </DaText>
+        {getUIFields(data.inventoryType as any)}
+      </div>
+
       <div>
         {currentSchema && (
           <>
@@ -262,6 +310,10 @@ const FormInventoryItem = ({ type }: FormInventoryItemProps) => {
           </>
         )}
       </div>
+
+      <DaButton disabled size="sm" className="w-full mt-7">
+        Create
+      </DaButton>
     </form>
   )
 }
