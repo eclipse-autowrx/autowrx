@@ -3,7 +3,13 @@ import { VehicleApi } from '@/types/model.type'
 import { DaText } from '../atoms/DaText'
 import { getApiTypeClasses } from '@/lib/utils'
 import { DaCopy } from '../atoms/DaCopy'
-import { TbChevronRight, TbChevronDown } from 'react-icons/tb'
+import { TbChevronRight, TbChevronDown, TbPlaylistAdd } from 'react-icons/tb'
+import DaPopup from '../atoms/DaPopup'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
+import { useParams } from 'react-router-dom'
+import useCurrentModel from '@/hooks/useCurrentModel'
+import FormCreateWishlistApi from './forms/FormCreateWishlistApi'
 
 interface DaHierarchicalViewItemProps {
   api: VehicleApi
@@ -25,11 +31,17 @@ const DaHierarchicalViewItem = ({
   onApiClick,
   selectedApi,
 }: DaHierarchicalViewItemProps) => {
+  const { model_id } = useParams()
+  const { data: model } = useCurrentModel()
   const { textClass } = getApiTypeClasses(api.type)
   const [isHovered, setIsHovered] = useState(false)
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null)
   // Automatically expand the root (level 0) by default
   const [expanded, setExpanded] = useState(level === 0)
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model_id])
+
+  // New state to control the wishlist popup (for branch APIs)
+  const [isOpenWishlistPopup, setIsOpenWishlistPopup] = useState(false)
 
   const handleMouseEnter = () => {
     const timeout = setTimeout(() => setIsHovered(true), 500)
@@ -134,7 +146,20 @@ const DaHierarchicalViewItem = ({
               </div>
             )}
             {isHovered && (
-              <DaCopy textToCopy={api.name} className="ml-1 w-fit" />
+              <div className="flex space-x-2 ml-2">
+                <DaCopy textToCopy={api.name} className="w-fit" />
+                {api.type === 'branch' && (
+                  // Wrap the TbPlaylistAdd icon in a clickable span that opens the popup
+                  <span
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setIsOpenWishlistPopup(true)
+                    }}
+                  >
+                    <TbPlaylistAdd className="ml-1 size-4 hover:text-fuchsia-500" />
+                  </span>
+                )}
+              </div>
             )}
           </div>
           <div className="flex w-fit justify-end cursor-pointer pl-4">
@@ -167,6 +192,29 @@ const DaHierarchicalViewItem = ({
             ),
           )}
         </div>
+      )}
+
+      {/* Render the popup for creating a wishlist signal when the branch icon is clicked */}
+      {isAuthorized && (
+        <DaPopup
+          state={[isOpenWishlistPopup, setIsOpenWishlistPopup]}
+          trigger={<></>}
+        >
+          {model_id && model && (
+            <FormCreateWishlistApi
+              modelId={model_id}
+              existingCustomApis={model.custom_apis as VehicleApi[]}
+              onClose={() => {
+                setIsOpenWishlistPopup(false)
+              }}
+              onApiCreate={(api: VehicleApi) => {
+                onApiClick?.(api)
+              }}
+              // Set the prefix to the current branch API's name
+              prefix={api.name}
+            />
+          )}
+        </DaPopup>
       )}
     </>
   )

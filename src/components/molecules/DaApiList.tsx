@@ -88,7 +88,6 @@ const DaApiList = ({ apis, onApiClick, selectedApi }: DaApiListProps) => {
   const selectedRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    console.log('Selected API', selectedApi)
     if (selectedRef.current) {
       selectedRef.current.scrollIntoView({
         behavior: 'smooth',

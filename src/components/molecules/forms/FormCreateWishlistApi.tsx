@@ -19,6 +19,7 @@ interface FormCreateWishlistApiProps {
   onApiCreate: (api: CustomApi) => void
   modelId: string
   existingCustomApis: CustomApi[]
+  prefix?: string
 }
 
 interface CreateWishlistAPI {
@@ -55,14 +56,31 @@ const FormCreateWishlistApi = ({
   onApiCreate,
   modelId,
   existingCustomApis,
+  prefix, // new optional prop
 }: FormCreateWishlistApiProps) => {
+  // ------------------------------
+  // Sanitize and normalize the prefix:
+  // ------------------------------
+  // Remove any exclamation marks from the prefix.
+  const sanitizedPrefix = prefix ? prefix.replace(/!/g, '') : ''
+  // Ensure the prefix ends with a period if it exists.
+  const finalPrefix =
+    sanitizedPrefix && !sanitizedPrefix.endsWith('.')
+      ? sanitizedPrefix + '.'
+      : sanitizedPrefix
+
+  // ------------------------------
+  // Initial state: if a prefix (after sanitization) exists, use it.
+  // ------------------------------
+  const [data, setData] = useState<CreateWishlistAPI>({
+    ...initialData,
+    name: finalPrefix || initialData.name,
+  })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [data, setData] = useState<CreateWishlistAPI>(initialData)
   const [showSuggestions, setShowSuggestions] = useState(false)
 
-  const { refetch } = useCurrentModel()
-  const { data: currentModel } = useCurrentModel()
+  const { refetch, data: currentModel } = useCurrentModel()
   const { data: currentUser } = useSelfProfileQuery()
   const refreshModel = useModelStore((state) => state.refreshModel)
   const [activeModelApis] = useModelStore(
@@ -70,7 +88,10 @@ const FormCreateWishlistApi = ({
     shallow,
   )
 
-  const ROOT_API_NOTATION = (currentModel?.main_api || 'Vehicle') + '.'
+  // Use finalPrefix if provided; otherwise default to currentModel main API notation.
+  const ROOT_API_NOTATION = finalPrefix
+    ? finalPrefix
+    : (currentModel?.main_api || 'Vehicle') + '.'
 
   // -----------------------------------------------------
   // Combine all existing names (custom + active model)
@@ -126,11 +147,7 @@ const FormCreateWishlistApi = ({
 
   useEffect(() => {
     const result = validate(data)
-    if (result) {
-      setError(result)
-    } else {
-      setError('')
-    }
+    setError(result || '')
   }, [data, validate])
 
   // -----------------------------------------------------
@@ -138,7 +155,6 @@ const FormCreateWishlistApi = ({
   // -----------------------------------------------------
   const createWishlistApi = async (apiData: CreateWishlistAPI) => {
     try {
-      // Build new wishlist signal
       const customApi = {
         name: apiData.name,
         description: apiData.description,
@@ -148,12 +164,10 @@ const FormCreateWishlistApi = ({
       const updatedCustomApis = [...(existingCustomApis ?? []), customApi]
       const customApisJson = JSON.stringify(updatedCustomApis)
 
-      // Update the model
       await updateModelService(modelId, {
         custom_apis: customApisJson as any,
       })
 
-      // Logging
       addLog({
         name: `Create wishlist Signal ${customApi.name}`,
         description: `User ${currentUser?.email} created wishlist Signal ${customApi.name} in model ${modelId}`,
@@ -164,7 +178,10 @@ const FormCreateWishlistApi = ({
       })
 
       // Reset state
-      setData(initialData)
+      setData({
+        ...initialData,
+        name: finalPrefix || initialData.name,
+      })
       setError('')
       await refetch()
       onApiCreate(customApi)
@@ -190,7 +207,6 @@ const FormCreateWishlistApi = ({
         isWishlist: true,
       })
 
-      // Logging
       addLog({
         name: `Create wishlist Signal ${customApi.name}`,
         description: `User ${currentUser?.email} created wishlist Signal ${customApi.name} in model ${modelId}`,
@@ -200,9 +216,11 @@ const FormCreateWishlistApi = ({
         ref_type: 'model',
       })
 
-      // Reset state
       await refreshModel()
-      setData(initialData)
+      setData({
+        ...initialData,
+        name: finalPrefix || initialData.name,
+      })
       setError('')
       onApiCreate(customApi)
       onClose()
@@ -222,7 +240,6 @@ const FormCreateWishlistApi = ({
     (key: keyof CreateWishlistAPI) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setData((prev) => ({ ...prev, [key]: e.target.value }))
-      // If user types/pastes in `name`, show suggestions
       if (key === 'name') {
         setShowSuggestions(true)
       }
@@ -241,7 +258,6 @@ const FormCreateWishlistApi = ({
     }))
   }
 
-  // For <DaSelect> data-type dropdown
   const handleDatatypeChange = (value: string) => {
     setData((prev) => ({
       ...prev,
@@ -251,7 +267,7 @@ const FormCreateWishlistApi = ({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (error) return // Don’t submit if validation error is present
+    if (error) return
 
     setLoading(true)
 
@@ -264,15 +280,9 @@ const FormCreateWishlistApi = ({
     setLoading(false)
   }
 
-  // -----------------------------------------------------
-  // Computed states
-  // -----------------------------------------------------
   const isButtonDisabled = useMemo(() => {
-    if (loading) return true
-    if (!data.name) return true
-    if (error) return true
-    return false
-  }, [error, loading, data.name])
+    return loading || !data.name || !!error
+  }, [loading, data.name, error])
 
   const filteredSuggestions = useMemo(() => {
     if (!data.name) return []
@@ -282,9 +292,6 @@ const FormCreateWishlistApi = ({
       .slice(0, 20)
   }, [activeModelApis, data.name])
 
-  // -----------------------------------------------------
-  // Render
-  // -----------------------------------------------------
   const typeOptions = [
     {
       value: 'branch',
@@ -317,7 +324,6 @@ const FormCreateWishlistApi = ({
       onSubmit={handleSubmit}
       className="relative flex h-[480px] w-[30vw] min-w-[400px] max-w-[500px] flex-col bg-da-white p-4 text-sm lg:w-[25vw] overflow-y-auto"
     >
-      {/* Title */}
       <DaText variant="title" className="text-da-primary-500">
         New Wishlist Signal
       </DaText>
@@ -338,12 +344,10 @@ const FormCreateWishlistApi = ({
             e.stopPropagation()
             e.preventDefault()
             const pastedValue = e.clipboardData.getData('Text')
-            // set name and show suggestions
             setData((prev) => ({ ...prev, name: pastedValue }))
             setShowSuggestions(true)
           }}
         />
-        {/* Suggestions Dropdown */}
         {showSuggestions && filteredSuggestions.length > 0 && (
           <div className="absolute z-50 mt-1 w-[calc(100%-2rem)] max-h-[18vh] overflow-y-auto scroll rounded-md border border-gray-200 bg-white p-1 shadow-lg">
             {filteredSuggestions.map((apiObj: any) => (
@@ -381,7 +385,6 @@ const FormCreateWishlistApi = ({
               handleTypeChange(option.value as CreateWishlistAPI['type'])
             }
             className={`p-1.5 text-sm font-medium rounded-lg w-full
-            
               ${data.type === option.value ? `${option.bg} ${option.text}` : 'bg-gray-100'}
             `}
           >
@@ -420,7 +423,7 @@ const FormCreateWishlistApi = ({
       </div>
 
       {/* Action Buttons */}
-      <div className="ml-auto mt-auto space-x-2">
+      <div className="flex ml-auto mt-auto space-x-2">
         <DaButton
           onClick={onClose}
           disabled={loading}
@@ -435,11 +438,9 @@ const FormCreateWishlistApi = ({
           disabled={isButtonDisabled}
           type="submit"
           size="sm"
-          className="mt-8 w-20 rounded-lg"
+          className="flex mt-8 w-20 rounded-lg"
         >
-          {loading && (
-            <TbLoader className="da-label-regular mr-2 animate-spin" />
-          )}
+          {loading && <TbLoader className="size-4 mr-1 animate-spin" />}
           Create
         </DaButton>
       </div>

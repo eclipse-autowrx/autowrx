@@ -143,14 +143,16 @@ const ModelApiList = ({
           value={searchTerm}
           onChange={(e) => handleSearchChange(e.target.value)}
         />
-        <DaFilter
-          categories={{
-            Signal: ['Default', 'Wishlist'],
-            Type: ['Branch', 'Sensor', 'Actuator', 'Attribute'],
-          }}
-          onChange={handleFilterChange}
-          className="w-full"
-        />
+        {viewMode !== 'hierarchical' && (
+          <DaFilter
+            categories={{
+              Signal: ['Default', 'Wishlist'],
+              Type: ['Branch', 'Sensor', 'Actuator', 'Attribute'],
+            }}
+            onChange={handleFilterChange}
+            className="w-full"
+          />
+        )}
       </div>
       <div className="py-1">
         {isAuthorized && (
