@@ -36,7 +36,7 @@ const DaSelect = React.forwardRef<
       value={value}
       onValueChange={onValueChange}
     >
-      <div className={cn('flex, flex-col', wrapperClassName)}>
+      <div className={cn('flex flex-col', wrapperClassName)}>
         <DaText className="!font-medium">{label}</DaText>
         {label && <div className="pb-1"></div>}
         <SelectTrigger
@@ -64,7 +64,7 @@ const DaSelectItem = React.forwardRef<
     ref={ref}
     className={clsx(
       'focus:bg-accent relative flex w-full cursor-pointer select-none rounded bg-white py-1.5 pl-2 pr-8 text-da-gray-medium outline-none hover:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
-      helperText ? 'flex-col text-left' : 'items-center',
+      helperText ? 'flex' : 'items-center',
       className,
     )}
     {...props}
@@ -76,7 +76,9 @@ const DaSelectItem = React.forwardRef<
     </span>
 
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
-    {helperText && <DaText className="da-label-small">{helperText}</DaText>}
+    {helperText && (
+      <DaText className="da-label-small pl-4">{helperText}</DaText>
+    )}
   </SelectPrimitive.Item>
 ))
 DaSelectItem.displayName = SelectPrimitive.Item.displayName
