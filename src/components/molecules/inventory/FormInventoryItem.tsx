@@ -10,17 +10,14 @@ const ajv = new Ajv()
 
 interface InterfaceDetail {
   name?: string
+  description?: string
   type?: string
   datatype?: string
-  uuid?: string
+  asilLevel?: string
   allowed?: string[]
-  comment?: string
   unit?: string
   max?: number
   min?: number
-  shortName?: string
-  isWishlist?: boolean
-  asilLevel?: string
   direction?: string
   component?: string
   owner?: string
@@ -34,20 +31,17 @@ const interfaceDetailSchema: JSONSchemaType<InterfaceDetail> = {
   type: 'object',
   properties: {
     name: { nullable: true, type: 'string' },
+    description: { nullable: true, type: 'string' },
     type: { nullable: true, type: 'string' },
     datatype: { nullable: true, type: 'string' },
-    uuid: { nullable: true, type: 'string' },
     allowed: {
       nullable: true,
       type: 'array',
       items: { type: 'string' },
     },
-    comment: { nullable: true, type: 'string' },
     unit: { nullable: true, type: 'string' },
     max: { nullable: true, type: 'number' },
     min: { nullable: true, type: 'number' },
-    shortName: { nullable: true, type: 'string' },
-    isWishlist: { nullable: true, type: 'boolean' },
     direction: { nullable: true, type: 'string' },
     asilLevel: { nullable: true, type: 'string' },
     component: { nullable: true, type: 'string' },
@@ -62,7 +56,6 @@ const interfaceDetailSchema: JSONSchemaType<InterfaceDetail> = {
 
 interface SystemInterface {
   type: string
-  description?: string
   details?:
     | {
         reference: {
@@ -79,10 +72,6 @@ const systemInterfaceSchema: JSONSchemaType<SystemInterface> = {
   properties: {
     type: {
       type: 'string',
-    },
-    description: {
-      type: 'string',
-      nullable: true,
     },
     details: {
       type: 'object',
@@ -249,14 +238,14 @@ const FormInventoryItem = ({ type }: FormInventoryItemProps) => {
   }
 
   return (
-    <form className="w-[600px] py-6 px-[22px]">
+    <form className="w-[600px]">
       <div>
-        <DaText variant="sub-title" className="text-da-primary-500">
+        <DaText variant="huge-bold" className="text-da-primary-500">
           New Inventory Item
         </DaText>
       </div>
 
-      <div className="mt-3">
+      <div className="mt-5">
         <DaText variant="small-bold" className="!text-da-gray-darkest">
           Name *
         </DaText>
@@ -275,7 +264,7 @@ const FormInventoryItem = ({ type }: FormInventoryItemProps) => {
         <DaSelect
           value={data.inventoryType}
           onValueChange={handleInventoryTypeChange}
-          className="mt-1 h-8 text-sm text-da-gray-darkest"
+          className="mt-1 h-8 text-sm !shadow text-da-gray-darkest"
         >
           <DaSelectItem className="text-sm" value="system_interface">
             System Interface
@@ -291,12 +280,12 @@ const FormInventoryItem = ({ type }: FormInventoryItemProps) => {
 
       <div className="border-t mt-6" />
 
-      <div className="mt-6 border rounded-md px-5 py-5 text-sm gap-3 text-da-gray-darkest relative">
+      <div className="mt-6 border rounded-md px-5 py-6 text-sm gap-3 text-da-gray-darkest relative">
         <DaText
           variant="small-bold"
-          className="absolute !text-da-gray-darkest left-3 bg-white px-1 -top-3"
+          className="absolute !text-da-gray-darkest left-4 bg-white px-1 -top-3"
         >
-          Inventory Data
+          Inventory Details
         </DaText>
         {getUIFields(data.inventoryType as any)}
       </div>
@@ -311,7 +300,7 @@ const FormInventoryItem = ({ type }: FormInventoryItemProps) => {
         )}
       </div>
 
-      <DaButton disabled size="sm" className="w-full mt-7">
+      <DaButton disabled size="sm" className="w-full mt-10">
         Create
       </DaButton>
     </form>

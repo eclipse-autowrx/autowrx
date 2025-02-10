@@ -111,6 +111,22 @@ const DaBreadcrumbBar = () => {
       })
     }
 
+    if (pathnames.includes('inventory')) {
+      paths.push({
+        path: `/inventory`,
+        name: 'Inventory',
+        key: 'inventory',
+      })
+
+      if (pathnames.includes('new')) {
+        paths.push({
+          path: `/inventory/new`,
+          name: 'New Inventory Item',
+          key: 'new',
+        })
+      }
+    }
+
     paths.forEach((breadcrumb, index) => {
       const isLast = index === paths.length - 1
       breadcrumbList.push(

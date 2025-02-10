@@ -61,6 +61,10 @@ const PageGenAIWizard = lazy(() =>
 const PagePrivacyPolicy = lazy(() =>
   retry(() => import('@/pages/PagePrivacyPolicy')),
 )
+const PageInventory = lazy(() => retry(() => import('@/pages/PageInventory')))
+const PageNewInventoryItem = lazy(() =>
+  retry(() => import('@/pages/PageNewInventoryItem')),
+)
 
 const routesConfig: RouteConfig[] = [
   {
@@ -243,6 +247,27 @@ const routesConfig: RouteConfig[] = [
             element: (
               <SuspenseProvider>
                 <PageMyAssets />
+              </SuspenseProvider>
+            ),
+          },
+        ],
+      },
+      {
+        path: '/inventory',
+        children: [
+          {
+            index: true,
+            element: (
+              <SuspenseProvider>
+                <PageInventory />
+              </SuspenseProvider>
+            ),
+          },
+          {
+            path: 'new',
+            element: (
+              <SuspenseProvider>
+                <PageNewInventoryItem />
               </SuspenseProvider>
             ),
           },
