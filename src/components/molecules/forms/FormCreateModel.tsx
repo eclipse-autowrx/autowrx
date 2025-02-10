@@ -103,10 +103,35 @@ const FormCreateModel = () => {
     }
   }
 
+  const signalFileValidator = async (file: File) => {
+    if (file.type !== 'application/json') {
+      return 'File must be a JSON file'
+    }
+
+    // Read file as text
+    try {
+      // Read file content
+      const fileText = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as string)
+        reader.onerror = () => reject('Error reading file')
+        reader.readAsText(file)
+      })
+
+      // Validate JSON format
+      JSON.parse(fileText)
+
+      return null // Validation successful
+    } catch (error) {
+      console.error(error)
+      return typeof error === 'string' ? error : 'Invalid JSON file'
+    }
+  }
+
   return (
     <form
       onSubmit={createNewModel}
-      className="flex min-h-[300px] w-[400px] min-w-[400px] flex-col bg-da-white p-4"
+      className="flex min-h-[300px] w-[400px] min-w-[400px] overflow-y-auto flex-col bg-da-white p-4"
     >
       {/* Title */}
       <DaText variant="title" className="text-da-primary-500">
@@ -125,29 +150,33 @@ const FormCreateModel = () => {
 
       <div className="mt-4" />
 
-      <DaText variant="regular-medium">VSS Signal *</DaText>
+      <DaText variant="regular-medium">Signal *</DaText>
       <div className="border mt-1 rounded-lg px-2 pb-2 pt-1">
-        <DaText variant="small">select version</DaText>
-        <DaSelect
-          wrapperClassName="mt-1"
-          onValueChange={handleVSSChange}
-          defaultValue="v4.1"
-        >
-          {versions ? (
-            versions.map((version) => (
-              <DaSelectItem key={version.name} value={version.name}>
-                COVESA VSS {version.name}
-              </DaSelectItem>
-            ))
-          ) : (
-            <>
-              <DaSelectItem value="v5.0">COVESA VSS v5.0</DaSelectItem>
-              <DaSelectItem value="v4.1">COVESA VSS v4.1</DaSelectItem>
-              <DaSelectItem value="v4.0">COVESA VSS v4.0</DaSelectItem>
-              <DaSelectItem value="v3.1">COVESA VSS v3.1</DaSelectItem>
-            </>
-          )}
-        </DaSelect>
+        {!data.api_data_url && (
+          <>
+            <DaText variant="small">select VSS version</DaText>
+            <DaSelect
+              wrapperClassName="mt-1"
+              onValueChange={handleVSSChange}
+              defaultValue="v4.1"
+            >
+              {versions ? (
+                versions.map((version) => (
+                  <DaSelectItem key={version.name} value={version.name}>
+                    COVESA VSS {version.name}
+                  </DaSelectItem>
+                ))
+              ) : (
+                <>
+                  <DaSelectItem value="v5.0">COVESA VSS v5.0</DaSelectItem>
+                  <DaSelectItem value="v4.1">COVESA VSS v4.1</DaSelectItem>
+                  <DaSelectItem value="v4.0">COVESA VSS v4.0</DaSelectItem>
+                  <DaSelectItem value="v3.1">COVESA VSS v3.1</DaSelectItem>
+                </>
+              )}
+            </DaSelect>
+          </>
+        )}
 
         <DaText variant="small">or upload a file</DaText>
 
@@ -161,6 +190,7 @@ const FormCreateModel = () => {
           }}
           className="mt-1"
           accept=".json"
+          validate={signalFileValidator}
         />
       </div>
 

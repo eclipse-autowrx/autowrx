@@ -24,6 +24,9 @@ import { TbPlayerPlayFilled, TbPlayerStopFilled } from 'react-icons/tb'
 import { cn } from '@/lib/utils'
 import DaPopup from '@/components/atoms/DaPopup'
 import RuntimeAssetManager from '@/components/organisms/RuntimeAssetManager'
+import {
+  getComputedAPIs,
+} from '@/services/model.service'
 
 const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
 
@@ -133,7 +136,7 @@ const DaRuntimeControl: FC = ({ }) => {
     let dashboardCfg = prototype?.widget_config || ''
     let apis: any[] = []
     activeModelApis.forEach((item: any) => {
-      if(item.shortName) {
+      if (item.shortName) {
         if (
           code.includes(item.shortName) ||
           dashboardCfg.includes(item.shortName)
@@ -415,11 +418,7 @@ const DaRuntimeControl: FC = ({ }) => {
             {activeTab == 'output' && (
               <>
                 <div className="h-full flex flex-col">
-                  <p className="da-label-small flex-1 overflow-y-auto whitespace-pre-wrap rounded bg-da-black px-2 py-1 text-da-white">
-                    {log}
-                    <AlwaysScrollToBottom />
-                  </p>
-                  <div className="bg-gray-700 flex-shrink flex items-center">
+                <div className="bg-gray-700 flex-shrink flex items-center">
                     {requestMode && (
                       <div className="flex items-center">
                         <DaInput
@@ -465,7 +464,7 @@ const DaRuntimeControl: FC = ({ }) => {
                       <div>
                         <DaMenu
                           trigger={
-                            <div className="text-da-white text-sm cursor-pointer px-2 py-1 hover:underline">
+                            <div className="text-da-white text-sm cursor-pointer px-2 py-0.5 hover:underline">
                               Send Request
                             </div>
                           }
@@ -487,6 +486,7 @@ const DaRuntimeControl: FC = ({ }) => {
                                 List All Python Libraries
                               </div>
                             </DaButton>
+
                             <DaButton
                               onClick={() => {
                                 setRequestContent('libname')
@@ -499,11 +499,52 @@ const DaRuntimeControl: FC = ({ }) => {
                                 Install New Python Library: pip install libname
                               </div>
                             </DaButton>
+
+                            <DaButton
+                              onClick={async () => {
+                                if(!model) return
+                                const vssJson = await getComputedAPIs(model.id)
+                                if (runTimeRef.current) {
+                                  runTimeRef.current?.builldVehicleModel(vssJson)
+                                }
+                                if (runTimeRef1.current) {
+                                  runTimeRef1.current?.builldVehicleModel(vssJson)
+                                }
+                              }}
+                              variant="plain"
+                              className="da-menu-item "
+                            >
+                              <div className="flex w-full items-center">
+                                Rebuild Vehicle Model base on current Vehicle API
+                              </div>
+                            </DaButton>
+
+                            <DaButton
+                              onClick={() => {
+                                if (runTimeRef.current) {
+                                  runTimeRef.current?.revertToDefaultVehicleModel()
+                                }
+                                if (runTimeRef1.current) {
+                                  runTimeRef1.current?.revertToDefaultVehicleModel()
+                                }
+                              }}
+                              variant="plain"
+                              className="da-menu-item "
+                            >
+                              <div className="flex w-full items-center">
+                                Revert to default Vehicle Model
+                              </div>
+                            </DaButton>
                           </div>
                         </DaMenu>
                       </div>
                     )}
                   </div>
+                  <p className="da-label-small flex-1 overflow-y-auto whitespace-pre-wrap rounded bg-da-black px-2 py-1 text-da-white">
+                    {log}
+                    <AlwaysScrollToBottom />
+                  </p>
+                  
                 </div>
               </>
             )}

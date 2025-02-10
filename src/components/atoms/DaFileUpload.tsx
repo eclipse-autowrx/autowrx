@@ -1,10 +1,11 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import DaText from './DaText'
 import { TbLoader, TbUpload, TbX } from 'react-icons/tb'
 import clsx from 'clsx'
 import { DaButton } from './DaButton'
 import { uploadFileService } from '@/services/upload.service'
 import { toast } from 'react-toastify'
+import { createPortal } from 'react-dom'
 
 type DaFileUploadProps = {
   onStartUpload?: () => void
@@ -12,6 +13,7 @@ type DaFileUploadProps = {
   accept?: string
   className?: string
   sizeFormat?: 'KB' | 'MB'
+  validate?: (file: File) => Promise<string | null>
 }
 
 const DaFileUpload = ({
@@ -20,32 +22,99 @@ const DaFileUpload = ({
   accept,
   className,
   sizeFormat = 'KB',
+  validate,
 }: DaFileUploadProps) => {
   const [uploading, setUploading] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const ref = useRef<HTMLInputElement>(null)
+
+  const [dragging, setDragging] = useState(false)
+  const dragAreaRef = useRef<HTMLDivElement>(null)
 
   const handleUploadClick = () => {
     if (file) return
     ref.current?.click()
   }
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const clearFile = () => {
+    setFile(null)
+    if (ref.current) {
+      ref.current.value = ''
+    }
+  }
+
+  const processFile = async (file: File) => {
     try {
       onStartUpload?.()
       setUploading(true)
-      const file = e.target.files?.[0]
-      if (file) {
+      // Validate file
+      const errorMessage = validate ? await validate(file) : null
+      if (errorMessage === null) {
         setFile(file)
+        const data = await uploadFileService(file)
+        onFileUpload?.(data.url)
+      } else {
+        clearFile()
+        toast.error(`Invalid file: ${errorMessage}`)
       }
-      const data = await uploadFileService(file)
-      onFileUpload?.(data.url)
     } catch (error) {
-      toast.error('Failed to upload file')
+      clearFile()
+      toast.error(`Error uploading file`)
+      console.error(`Error uploading file: ${error}`)
     } finally {
       setUploading(false)
     }
   }
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      processFile(file)
+    }
+  }
+
+  // Drag and drop
+  useEffect(() => {
+    const handleDragEnter = (e: DragEvent) => {
+      e.preventDefault()
+      setDragging(true)
+    }
+    const handleDragLeave = (e: DragEvent) => {
+      e.preventDefault()
+      setDragging(false)
+    }
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault()
+    }
+    const handleDrop = async (e: DragEvent) => {
+      e.preventDefault()
+      setDragging(false)
+
+      let file = null
+      if (e.dataTransfer?.items) {
+        file = [...e.dataTransfer.items]
+          .find((item) => item.kind === 'file')
+          ?.getAsFile()
+      } else {
+        file = e.dataTransfer?.files?.[0]
+      }
+
+      if (file) {
+        processFile(file)
+      }
+    }
+
+    window.addEventListener('dragenter', handleDragEnter)
+    window.addEventListener('drop', handleDrop)
+    dragAreaRef.current?.addEventListener('dragleave', handleDragLeave)
+    window.addEventListener('dragover', handleDragOver)
+    return () => {
+      window.removeEventListener('dragenter', handleDragEnter)
+      window.removeEventListener('drop', handleDrop)
+      dragAreaRef.current?.removeEventListener('dragleave', handleDragLeave)
+      window.removeEventListener('dragover', handleDragOver)
+    }
+  }, [])
 
   return (
     <div
@@ -56,6 +125,25 @@ const DaFileUpload = ({
         className,
       )}
     >
+      {createPortal(
+        <div
+          ref={dragAreaRef}
+          onClick={(e) => e.stopPropagation()}
+          className={clsx(
+            'z-[9999] bg-gradient-to-r from-da-gradient-from to-da-gradient-to transition flex fixed top-0 left-0 right-0 bottom-0',
+            dragging ? 'opacity-90' : 'opacity-0 pointer-events-none',
+          )}
+        >
+          <DaText
+            className="m-auto pointer-events-none text-black tracking-wider"
+            variant="huge-bold"
+          >
+            Drop file anywhere
+          </DaText>
+        </div>,
+        document.body,
+      )}
+
       <input
         onChange={handleFileChange}
         accept={accept}
@@ -72,10 +160,7 @@ const DaFileUpload = ({
           {file && (
             <DaButton
               onClick={() => {
-                setFile(null)
-                if (ref.current) {
-                  ref.current.value = ''
-                }
+                clearFile()
                 onFileUpload?.('')
               }}
               className="group-hover:opacity-100 group-hover:pointer-events-auto pointer-events-none opacity-0 right-1 top-1 absolute"

@@ -51,8 +51,7 @@ fn main() {
     println!("Hello World!");
 }`
 
-const DEFAULT_PYTHON_APP = `from vehicle import Vehicle
-import time
+const DEFAULT_PYTHON_APP = `import time
 import asyncio
 import signal
 
