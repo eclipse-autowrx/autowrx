@@ -3,13 +3,22 @@ import { VehicleApi } from '@/types/model.type'
 import { DaText } from '../atoms/DaText'
 import { getApiTypeClasses } from '@/lib/utils'
 import { DaCopy } from '../atoms/DaCopy'
-import { TbChevronRight, TbChevronDown, TbPlaylistAdd } from 'react-icons/tb'
+import {
+  TbChevronRight,
+  TbChevronDown,
+  TbPlaylistAdd,
+  TbTrash,
+  TbPlus,
+} from 'react-icons/tb'
 import DaPopup from '../atoms/DaPopup'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import { useParams } from 'react-router-dom'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import FormCreateWishlistApi from './forms/FormCreateWishlistApi'
+import DaTooltip from '../atoms/DaTooltip'
+import DaConfirmPopup from './DaConfirmPopup'
+import { deleteExtendedApi } from '@/services/extendedApis.service'
 
 interface DaHierarchicalViewItemProps {
   api: VehicleApi
@@ -42,6 +51,33 @@ const DaHierarchicalViewItem = ({
 
   // New state to control the wishlist popup (for branch APIs)
   const [isOpenWishlistPopup, setIsOpenWishlistPopup] = useState(false)
+  const [confirmPopupOpen, setConfirmPopupOpen] = useState(false)
+
+  // const handleDeleteWishlistApi = async () => {
+  //   if (model) {
+  //     if (model.api_version && apiDetails?.id) {
+  //       await deleteExtendedApi(apiDetails.id)
+  //       await refreshModel()
+  //     } else if (model.custom_apis) {
+  //       const updatedCustomApis = model.custom_apis.filter(
+  //         (api: CustomApi) => api.name !== apiDetails.name,
+  //       )
+  //       try {
+  //         setIsLoading(true)
+  //         const customApisJson = JSON.stringify(updatedCustomApis)
+  //         await updateModelService(model.id, {
+  //           custom_apis: customApisJson as any,
+  //         })
+  //         setIsLoading(false)
+  //         await refetch()
+  //         navigate(`/model/${model.id}/api/Vehicle`)
+  //       } catch (error) {
+  //         setIsLoading(false)
+  //         console.error('Error deleting wishlist API:', error)
+  //       }
+  //     }
+  //   }
+  // }
 
   const handleMouseEnter = () => {
     const timeout = setTimeout(() => setIsHovered(true), 500)
@@ -147,21 +183,38 @@ const DaHierarchicalViewItem = ({
             )}
             {isHovered && (
               <div className="flex space-x-2 ml-2">
-                <DaCopy textToCopy={api.name} className="w-fit" />
+                <DaTooltip content="Copy Signal Name" delay={300}>
+                  <DaCopy textToCopy={api.name} className="w-fit" />
+                </DaTooltip>
+
                 {api.type === 'branch' && (
-                  // Wrap the TbPlaylistAdd icon in a clickable span that opens the popup
-                  <span
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setIsOpenWishlistPopup(true)
-                    }}
+                  <DaTooltip
+                    content={`Add wishlist signal from this branch`}
+                    delay={300}
                   >
-                    <TbPlaylistAdd className="ml-1 size-4 hover:text-fuchsia-500" />
-                  </span>
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setIsOpenWishlistPopup(true)
+                      }}
+                    >
+                      <TbPlus className="ml-1 size-4 text-da-gray-medium hover:text-fuchsia-500" />
+                    </span>
+                  </DaTooltip>
                 )}
               </div>
             )}
           </div>
+          {/* {api.isWishlist && isHovered && (
+            <DaConfirmPopup
+              onConfirm={handleDeleteWishlistApi}
+              state={[confirmPopupOpen, setConfirmPopupOpen]}
+              title="Delete Wishlist Signal"
+              label="Are you sure you want to delete this wishlist signal?"
+            >
+              <TbTrash className="ml-1 size-4 text-da-gray-medium hover:text-red-500" />
+            </DaConfirmPopup>
+          )} */}
           <div className="flex w-fit justify-end cursor-pointer pl-4">
             <DaText
               variant="small"
@@ -211,7 +264,7 @@ const DaHierarchicalViewItem = ({
                 onApiClick?.(api)
               }}
               // Set the prefix to the current branch API's name
-              prefix={api.name}
+              prefix={`${api.name}.NewSignal`}
             />
           )}
         </DaPopup>

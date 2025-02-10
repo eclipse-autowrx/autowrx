@@ -58,23 +58,49 @@ const FormCreateWishlistApi = ({
   existingCustomApis,
   prefix, // new optional prop
 }: FormCreateWishlistApiProps) => {
-  // ------------------------------
-  // Sanitize and normalize the prefix:
-  // ------------------------------
-  // Remove any exclamation marks from the prefix.
+  // ------------------------------------------------------------
+  // Process the passed-in prefix into a branch part and a default suffix.
+  //
+  // We want the final input value to be:
+  //   [branchPrefix] + [userSuffix]
+  // where branchPrefix always ends with a dot.
+  //
+  // If the caller wants the full input to start as, for example,
+  // "Vehicle.A.NewSignal" then they can pass either:
+  //   - "Vehicle.A.NewSignal" (which we split into branch "Vehicle.A." and defaultSuffix "NewSignal")
+  //   - or simply "Vehicle.A." (which leaves the default suffix as "NewSignal").
+  // ------------------------------------------------------------
   const sanitizedPrefix = prefix ? prefix.replace(/!/g, '') : ''
-  // Ensure the prefix ends with a period if it exists.
-  const finalPrefix =
-    sanitizedPrefix && !sanitizedPrefix.endsWith('.')
-      ? sanitizedPrefix + '.'
-      : sanitizedPrefix
 
-  // ------------------------------
-  // Initial state: if a prefix (after sanitization) exists, use it.
-  // ------------------------------
+  let branchPrefix = ''
+  let defaultSuffix = 'NewSignal'
+  if (sanitizedPrefix) {
+    if (sanitizedPrefix.endsWith('.')) {
+      // Caller provided only the branch (with trailing dot).
+      branchPrefix = sanitizedPrefix
+    } else if (sanitizedPrefix.includes('.')) {
+      // Caller provided a string that does not end with a dot.
+      // We assume the last token is a default suffix.
+      branchPrefix = sanitizedPrefix.substring(
+        0,
+        sanitizedPrefix.lastIndexOf('.') + 1,
+      )
+      defaultSuffix =
+        sanitizedPrefix.substring(sanitizedPrefix.lastIndexOf('.') + 1) ||
+        defaultSuffix
+    } else {
+      // No dot found: treat the whole string as a branch name.
+      branchPrefix = sanitizedPrefix + '.'
+    }
+  }
+
+  // ------------------------------------------------------------
+  // Initial state: if a branchPrefix exists, use it plus the defaultSuffix.
+  // Otherwise, use the initialData.name (empty).
+  // ------------------------------------------------------------
   const [data, setData] = useState<CreateWishlistAPI>({
     ...initialData,
-    name: finalPrefix || initialData.name,
+    name: branchPrefix ? branchPrefix + defaultSuffix : initialData.name,
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -88,23 +114,23 @@ const FormCreateWishlistApi = ({
     shallow,
   )
 
-  // Use finalPrefix if provided; otherwise default to currentModel main API notation.
-  const ROOT_API_NOTATION = finalPrefix
-    ? finalPrefix
-    : (currentModel?.main_api || 'Vehicle') + '.'
+  // Use branchPrefix if provided; otherwise default to currentModel main API notation.
+  const ROOT_API_NOTATION =
+    branchPrefix || (currentModel?.main_api || 'Vehicle') + '.'
 
-  // -----------------------------------------------------
+  // ------------------------------------------------------------
   // Combine all existing names (custom + active model)
-  // -----------------------------------------------------
+  // ------------------------------------------------------------
   const allExistingNames = useMemo(() => {
     const customNames = existingCustomApis?.map((x) => x.name) ?? []
     const modelNames = (activeModelApis ?? []).map((x: any) => x.name)
     return [...customNames, ...modelNames]
   }, [existingCustomApis, activeModelApis])
 
-  // -----------------------------------------------------
-  // Validation
-  // -----------------------------------------------------
+  // ------------------------------------------------------------
+  // Validation: We now require that the API name starts with the branchPrefix
+  // and that the “suffix” (the part after branchPrefix) is not empty.
+  // ------------------------------------------------------------
   const validate = useCallback(
     (formData: CreateWishlistAPI): string | null => {
       if (formData.name) {
@@ -150,9 +176,6 @@ const FormCreateWishlistApi = ({
     setError(result || '')
   }, [data, validate])
 
-  // -----------------------------------------------------
-  // API creation
-  // -----------------------------------------------------
   const createWishlistApi = async (apiData: CreateWishlistAPI) => {
     try {
       const customApi = {
@@ -177,10 +200,10 @@ const FormCreateWishlistApi = ({
         ref_type: 'model',
       })
 
-      // Reset state
+      // Reset state – use the same branchPrefix and defaultSuffix on reset.
       setData({
         ...initialData,
-        name: finalPrefix || initialData.name,
+        name: branchPrefix ? branchPrefix + defaultSuffix : initialData.name,
       })
       setError('')
       await refetch()
@@ -219,7 +242,7 @@ const FormCreateWishlistApi = ({
       await refreshModel()
       setData({
         ...initialData,
-        name: finalPrefix || initialData.name,
+        name: branchPrefix ? branchPrefix + defaultSuffix : initialData.name,
       })
       setError('')
       onApiCreate(customApi)
@@ -233,9 +256,6 @@ const FormCreateWishlistApi = ({
     }
   }
 
-  // -----------------------------------------------------
-  // Handlers
-  // -----------------------------------------------------
   const handleChange =
     (key: keyof CreateWishlistAPI) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -322,7 +342,7 @@ const FormCreateWishlistApi = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="relative flex h-[480px] w-[30vw] min-w-[400px] max-w-[500px] flex-col bg-da-white p-4 text-sm lg:w-[25vw] overflow-y-auto"
+      className="relative flex h-[490px] w-[30vw] min-w-[400px] max-w-[500px] flex-col bg-da-white p-4 text-sm lg:w-[25vw] overflow-y-auto"
     >
       <DaText variant="title" className="text-da-primary-500">
         New Wishlist Signal
