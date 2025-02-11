@@ -217,7 +217,7 @@ const ApiDetail = ({
             </div>
           ) : (
             !forceSimpleMode &&
-            (apiDetails.isWishlist ||
+            (apiDetails?.id ||
               model?.custom_apis?.some(
                 (api) => api?.name === apiDetails?.name,
               )) &&
