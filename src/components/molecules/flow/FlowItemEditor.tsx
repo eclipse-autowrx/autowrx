@@ -9,13 +9,15 @@ import ASILSelect from './ASILSelect'
 import {
   TbCalendarEvent,
   TbCheck,
+  TbLoader2,
   TbPlus,
   TbTrash,
   TbChevronRight,
   TbTextScan2,
   TbX,
 } from 'react-icons/tb'
-import { BsStars } from 'react-icons/bs'
+import { riskAssessmentGenerationPrompt } from './FlowPromptInventory'
+import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
 interface FlowItemEditorProps {
   value: string
@@ -29,27 +31,31 @@ interface FormData {
   description: string
   preAsilLevel: ASILLevel
   postAsilLevel: ASILLevel
-  [key: string]: string
+  riskAssessment?: string
+  approvedBy?: string
+  approvedAt?: string
+  [key: string]: string | ASILLevel | undefined
 }
 
 const FlowItemEditor = ({ value, onChange, children }: FlowItemEditorProps) => {
+  const { data: currentUser } = useSelfProfileQuery()
+
   const [formData, setFormData] = useState<FormData>(() => {
     try {
       const parsed = JSON.parse(value)
-      // Destructure the fields to remove 'asilLevel' from the rest
       const { asilLevel, preAsilLevel, postAsilLevel, ...rest } = parsed
-
-      // Use 'asilLevel' as a fallback for preAsilLevel
       const newPreAsilLevel = preAsilLevel || 'QM'
       const newPostAsilLevel = postAsilLevel || asilLevel || 'QM'
-
       return {
         type: parsed.type || '',
         component: parsed.component || '',
         description: parsed.description || '',
         preAsilLevel: newPreAsilLevel,
         postAsilLevel: newPostAsilLevel,
-        ...rest, // Spread the rest of the properties except asilLevel
+        riskAssessment: parsed.riskAssessment || '',
+        approvedBy: parsed.approvedBy || '',
+        approvedAt: parsed.approvedAt || '',
+        ...rest,
       }
     } catch {
       return {
@@ -58,18 +64,36 @@ const FlowItemEditor = ({ value, onChange, children }: FlowItemEditorProps) => {
         description: '',
         preAsilLevel: 'QM',
         postAsilLevel: 'QM',
+        riskAssessment: '',
+        approvedBy: '',
+        approvedAt: '',
       }
     }
   })
 
-  // Mandatory keys that are always rendered separately
+  // Keys not to be shown as custom attributes
   const mandatoryKeys = [
     'type',
     'component',
     'description',
     'preAsilLevel',
     'postAsilLevel',
+    'riskAssessment',
+    'approvedBy',
+    'approvedAt',
   ]
+
+  // Evaluation state
+  const [isEvaluating, setIsEvaluating] = useState(false)
+  const [evaluationTime, setEvaluationTime] = useState(0)
+  const [evaluationIntervalId, setEvaluationIntervalId] = useState<
+    number | null
+  >(null)
+  const [isEvaluated, setIsEvaluated] = useState(false)
+  // Backup the current risk assessment before evaluation starts
+  const [backupRiskAssessment, setBackupRiskAssessment] = useState<string>(
+    formData.riskAssessment || '',
+  )
 
   const handleInputChange = (name: keyof FormData, value: string) => {
     setFormData((prev) => ({
@@ -83,7 +107,6 @@ const FlowItemEditor = ({ value, onChange, children }: FlowItemEditorProps) => {
     onChange(jsonString)
   }
 
-  // Function to add a new custom attribute.
   const handleAddCustomAttribute = () => {
     const attributeName = prompt('Enter custom attribute name:')
     if (attributeName && !formData.hasOwnProperty(attributeName)) {
@@ -91,7 +114,6 @@ const FlowItemEditor = ({ value, onChange, children }: FlowItemEditorProps) => {
     }
   }
 
-  // Function to remove a custom attribute.
   const handleRemoveCustomAttribute = (attributeName: string) => {
     setFormData((prev) => {
       const newData = { ...prev }
@@ -100,60 +122,108 @@ const FlowItemEditor = ({ value, onChange, children }: FlowItemEditorProps) => {
     })
   }
 
-  // Markdown content (could later be replaced with a variable)
-  const markdownContent = `
-# Hazards
+  const generateRiskAssessment = async () => {
+    const action = formData.description
+    const message = `Generate Risk Assessment for action "${action}" in automotive`
 
-- The driver door opens unintentionally while the vehicle is in motion.
-- The door creates an obstacle for approaching vehicles, cyclists, or pedestrians.
-- The door fails to remain securely closed during dynamic driving or emergency maneuvers.
-- Passenger ejection becomes a risk if the door opens during high-speed motion.
+    // Backup the current risk assessment before evaluation starts
+    setBackupRiskAssessment(formData.riskAssessment || '')
 
-# Mitigations
+    // Start evaluation timer
+    setIsEvaluating(true)
+    setEvaluationTime(0)
+    const intervalId = window.setInterval(() => {
+      setEvaluationTime((prev) => prev + 0.1)
+    }, 100)
+    setEvaluationIntervalId(intervalId)
 
-- **Speed-Based Interlocks:** Prevent the door from opening when the vehicle is moving above a safe threshold (e.g., 5 km/h).
-- **Environmental Sensing:** Use radar, ultrasonic, or cameras to detect approaching vehicles, cyclists, or pedestrians and restrict door opening if hazards are detected.
-- **Redundant Locking Mechanisms:** Ensure the door remains securely latched even in the event of a primary lock failure.
-- **Fail-Safe Design:** Default the door to a locked state during hardware or software malfunctions.
-- **Audible and Visual Warnings:** Provide clear alerts if the door is not properly latched or is attempting to open unsafely.
-- **User Override Restrictions:** Allow manual override only under safe conditions (e.g., vehicle is stationary, and no nearby hazards are detected).
-- **Robust Testing:** Perform rigorous validation of software and hardware for reliability and robustness under all operational scenarios.
+    try {
+      const response = await fetch('https://digitalauto-ai.com/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          systemMessage: riskAssessmentGenerationPrompt,
+          message: message,
+        }),
+      })
+      const data = await response.json()
+      console.log('Risk assessment generation response:', data)
 
-# Risk Classification (Post-Mitigation)
+      // Use regex to extract preAsilLevel and postAsilLevel since the XML might be malformed
+      const preAsilMatch = data.content.match(
+        /<preAsilLevel>(.*?)<\/preAsilLevel>/s,
+      )
+      const postAsilMatch = data.content.match(
+        /<postAsilLevel>(.*?)<\/postAsilLevel>/s,
+      )
 
-The severity, exposure, and controllability are re-evaluated based on the implemented mitigations:
+      console.log('preAsilMatch', preAsilMatch)
+      console.log('postAsilMatch', postAsilMatch)
 
-## Severity (S)
-- **Pre-Mitigation:** S2-S3 (risk of severe injury or fatality due to collisions or passenger ejection).
-- **Post-Mitigation:** S1-S2 (risk is reduced due to mitigations like interlocks and environmental awareness).
+      const newPreAsilLevel = (
+        preAsilMatch ? preAsilMatch[1].trim() : formData.preAsilLevel
+      ) as ASILLevel
+      const newPostAsilLevel = (
+        postAsilMatch ? postAsilMatch[1].trim() : formData.postAsilLevel
+      ) as ASILLevel
 
-## Exposure (E)
-- **Pre-Mitigation:** E2-E3 (likely to occur in urban or congested environments with frequent door usage).
-- **Post-Mitigation:** E1-E2 (exposure is reduced as mitigations prevent hazardous conditions from arising).
+      // Remove the pre/post ASIL tags and any risk_assessment tags to get the markdown content
+      const cleanedContent = data.content
+        .replace(/<preAsilLevel>.*?<\/preAsilLevel>/s, '')
+        .replace(/<postAsilLevel>.*?<\/postAsilLevel>/s, '')
+        .replace(/<\/?risk_assessment>/g, '')
+        .trim()
 
-## Controllability (C)
-- **Pre-Mitigation:** C2-C3 (limited ability for the driver or others to react quickly to an open door hazard).
-- **Post-Mitigation:** C1-C2 (improved controllability due to driver alerts, restricted functionality, and redundant locks).
+      setFormData((prev) => ({
+        ...prev,
+        riskAssessment: cleanedContent,
+        preAsilLevel: newPreAsilLevel,
+        postAsilLevel: newPostAsilLevel,
+      }))
+      setIsEvaluated(true)
+    } catch (error) {
+      console.error('Error generating risk assessment:', error)
+    } finally {
+      if (evaluationIntervalId) {
+        clearInterval(evaluationIntervalId)
+      } else {
+        clearInterval(intervalId)
+      }
+      setIsEvaluating(false)
+    }
+  }
 
-# ASIL Rating (enum)
+  const handleApprove = () => {
+    if (!currentUser) return
+    setFormData((prev) => {
+      const updated = {
+        ...prev,
+        approvedBy: currentUser.name,
+        approvedAt: new Date().toISOString(),
+      }
+      // Update backup with the approved risk assessment
+      setBackupRiskAssessment(updated.riskAssessment ?? '')
+      return updated
+    })
+    setIsEvaluated(false)
+    handleSubmit()
+  }
 
-Based on the revised risk classification, the ASIL rating is lower post-mitigation:
-- **Pre-Mitigation:** ASIL B-C, due to higher risks from unintended door opening.
-- **Post-Mitigation:** QM or ASIL A, depending on residual risks:
-  - **QM:** If mitigations reduce risks to negligible levels, such as limiting functionality to stationary conditions.
-  - **ASIL A:** If minor residual risks remain, such as rare edge cases in low-speed scenarios.
+  const handleReject = () => {
+    // Revert to the backup risk assessment and remove approval info
+    setFormData((prev) => ({
+      ...prev,
+      riskAssessment: backupRiskAssessment,
+      approvedBy: '',
+      approvedAt: '',
+    }))
+    setIsEvaluated(false)
+  }
 
-# Safety Goals
+  const markdownContent = formData.riskAssessment || ''
 
-- **Prevent Door Opening at Unsafe Speeds:** Ensure the door cannot open when the vehicle is moving above a safe speed threshold (e.g., 5 km/h).
-- **Restrict Operation in Hazardous Scenarios:** Prevent the door from opening when environmental sensors detect approaching vehicles, cyclists, or pedestrians.
-- **Ensure Door Securement:** Implement redundant locking mechanisms to ensure the door remains securely closed at all times.
-- **Alert the Driver:** Provide clear visual and audible feedback if the door is improperly latched or an unsafe opening attempt is detected.
-- **Fail-Safe Mechanisms:** Design the system to default to a locked state during any software or hardware malfunction.
-- **Validate Safety Measures:** Conduct rigorous validation of all mitigations to ensure effectiveness under all operational conditions.
-  `
-
-  // Custom attributes: any key that is not one of the mandatory ones.
   const customAttributes = Object.keys(formData).filter(
     (key) => !mandatoryKeys.includes(key),
   )
@@ -180,7 +250,6 @@ Based on the revised risk classification, the ASIL rating is lower post-mitigati
                 inputClassName="h-6 text-xs"
               />
             </div>
-
             <div className="flex flex-col gap-1">
               <label className="font-medium">
                 Component <span className="text-red-500">*</span>
@@ -193,7 +262,6 @@ Based on the revised risk classification, the ASIL rating is lower post-mitigati
                 inputClassName="h-6 text-xs"
               />
             </div>
-
             <div className="flex flex-col gap-1">
               <label className="font-medium">
                 Description <span className="text-red-500">*</span>
@@ -208,8 +276,6 @@ Based on the revised risk classification, the ASIL rating is lower post-mitigati
                 inputClassName="h-6 text-xs"
               />
             </div>
-
-            {/* Custom Attributes Section */}
             {customAttributes.length > 0 &&
               customAttributes.map((key) => (
                 <div key={key} className="flex flex-col gap-1">
@@ -224,7 +290,7 @@ Based on the revised risk classification, the ASIL rating is lower post-mitigati
                   </div>
                   <DaInput
                     name={key}
-                    value={formData[key]}
+                    value={formData[key] as string}
                     onChange={(e) =>
                       handleInputChange(key as keyof FormData, e.target.value)
                     }
@@ -233,7 +299,6 @@ Based on the revised risk classification, the ASIL rating is lower post-mitigati
                   />
                 </div>
               ))}
-
             <div className="flex justify-between items-center">
               <DaButton
                 type="button"
@@ -247,37 +312,56 @@ Based on the revised risk classification, the ASIL rating is lower post-mitigati
               </DaButton>
             </div>
           </div>
-
           {/* Right Column: Risk Assessment Section */}
           <div className="flex flex-col w-1/2 h-full overflow-y-auto gap-2">
             <div className="flex items-end justify-between">
               <div className="font-medium">Risk Assessment</div>
-              <DaButton
-                size="sm"
-                variant="plain"
-                className="!text-xs !h-6 -mb-1"
-              >
-                <TbTextScan2 className="size-3.5 mr-1.5 text-da-primary-500" />{' '}
-                Evaluate with AI
-              </DaButton>
-              {/* <div className="flex">
+              {isEvaluating ? (
                 <DaButton
                   size="sm"
                   variant="plain"
-                  className="!text-xs !h-6 -mb-1 hover:bg-gray-100"
+                  className="!text-xs !h-6 -mb-1 "
                 >
-                  <TbX className="size-3.5 mr-1.5 text-red-500" /> Reject
+                  <TbLoader2 className="size-3.5 mr-1.5 animate-spin text-da-primary-500" />
+                  Evaluating for
+                  <span className="ml-1 w-[30px]">
+                    {evaluationTime.toFixed(1)}
+                  </span>
+                  s
                 </DaButton>
+              ) : isEvaluated ? (
+                <div className="flex">
+                  <DaButton
+                    size="sm"
+                    variant="plain"
+                    onClick={handleReject}
+                    className="!text-xs !h-6 -mb-1"
+                  >
+                    <TbX className="size-3.5 mr-1.5 text-red-500" />
+                    Reject
+                  </DaButton>
+                  <DaButton
+                    size="sm"
+                    variant="plain"
+                    onClick={handleApprove}
+                    className="!text-xs !h-6 -mb-1"
+                  >
+                    <TbCheck className="size-3.5 mr-1.5 text-green-500" />
+                    Approve
+                  </DaButton>
+                </div>
+              ) : (
                 <DaButton
                   size="sm"
                   variant="plain"
-                  className="!text-xs !h-6 -mb-1 hover:bg-gray-100"
+                  className="!text-xs !h-6 -mb-1"
+                  onClick={generateRiskAssessment}
                 >
-                  <TbCheck className="size-3.5 mr-1.5 text-green-500" /> Approve
+                  <TbTextScan2 className="size-3.5 mr-1.5 text-da-primary-500" />
+                  Evaluate with AI
                 </DaButton>
-              </div> */}
+              )}
             </div>
-            {/* Markdown Risk Assessment */}
             <div className="flex flex-col h-full overflow-y-auto border border-dashed rounded-lg py-2 pl-2 border-da-primary-500">
               <div className="flex h-full overflow-auto scroll-gray pr-1">
                 <ReactMarkdown
@@ -316,8 +400,6 @@ Based on the revised risk classification, the ASIL rating is lower post-mitigati
                 </ReactMarkdown>
               </div>
             </div>
-
-            {/* ASIL Ratings Row */}
             <div className="flex w-full items-center gap-2 my-2">
               <div className="flex w-full flex-col items-center">
                 <label className="text-xs font-medium mb-1.5">
@@ -343,25 +425,28 @@ Based on the revised risk classification, the ASIL rating is lower post-mitigati
             </div>
           </div>
         </div>
-
         <div className="grow" />
-
-        {/* Action Buttons */}
         <div className="flex justify-end items-center gap-1 mt-4">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center mt-2">
-              <div className="p-0.5 w-fit items-center justify-center flex rounded bg-da-primary-100 mr-1">
-                <TbCheck className="size-3.5 text-da-primary-500" />
+          {formData.approvedBy && formData.approvedAt ? (
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center mt-2">
+                <div className="p-0.5 w-fit items-center justify-center flex rounded bg-da-primary-100 mr-1">
+                  <TbCheck className="size-3.5 text-da-primary-500" />
+                </div>
+                Approved by{' '}
+                <span className="ml-1 font-medium">{formData.approvedBy}</span>
               </div>
-              Approved by <span className="ml-1 font-medium">John Doe</span>
-            </div>
-            <div className="flex items-center mt-2">
-              <div className="p-0.5 w-fit items-center justify-center flex rounded bg-da-primary-100 mr-1">
-                <TbCalendarEvent className="size-3.5 text-da-primary-500" />
+              <div className="flex items-center mt-2">
+                <div className="p-0.5 w-fit items-center justify-center flex rounded bg-da-primary-100 mr-1">
+                  <TbCalendarEvent className="size-3.5 text-da-primary-500" />
+                </div>
+                Date{' '}
+                <span className="ml-1 font-medium">
+                  {new Date(formData.approvedAt).toLocaleString()}
+                </span>
               </div>
-              Date <span className="ml-1 font-medium">February 11, 2025</span>
             </div>
-          </div>
+          ) : null}
           <div className="grow" />
           <DialogClose asChild>
             <DaButton variant="outline-nocolor" size="sm">
