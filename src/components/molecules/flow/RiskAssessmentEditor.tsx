@@ -200,7 +200,7 @@ const RiskAssessmentEditor = ({
       {/* Content container with dashed border */}
       <div className="flex flex-col h-full overflow-y-auto border border-dashed rounded-lg py-2 pl-2 border-da-primary-500">
         {/* Display the generation timestamp if available */}
-        {formData.generatedAt && (
+        {formData.generatedAt && formData.riskAssessment && (
           <div className="flex w-full items-center pb-1.5 font-medium">
             <div className="p-0.5 w-fit items-center justify-center flex rounded bg-da-primary-100 mr-1">
               <TbHistory className="size-3.5 text-da-primary-500" />

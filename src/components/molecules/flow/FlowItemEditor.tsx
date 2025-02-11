@@ -34,7 +34,7 @@ export interface FormData {
   [key: string]: string | ASILLevel | undefined
 }
 
-const defaultRiskAssessmentPlaceholder = `# Mitigation
+export const defaultRiskAssessmentPlaceholder = `# Mitigation
 - 
 
 # Risk Classification
@@ -61,9 +61,13 @@ const FlowItemEditor = ({ value, onChange, children }: FlowItemEditorProps) => {
         description: parsed.description || '',
         preAsilLevel: newPreAsilLevel,
         postAsilLevel: newPostAsilLevel,
-        riskAssessment: parsed.riskAssessment || '',
+        riskAssessment:
+          parsed.riskAssessment && parsed.riskAssessment.trim() !== ''
+            ? parsed.riskAssessment
+            : defaultRiskAssessmentPlaceholder,
         approvedBy: parsed.approvedBy || '',
         approvedAt: parsed.approvedAt || '',
+        generatedAt: parsed.generatedAt || '',
         ...rest,
       }
     } catch {
@@ -73,9 +77,10 @@ const FlowItemEditor = ({ value, onChange, children }: FlowItemEditorProps) => {
         description: '',
         preAsilLevel: 'QM',
         postAsilLevel: 'QM',
-        riskAssessment: '',
+        riskAssessment: defaultRiskAssessmentPlaceholder,
         approvedBy: '',
         approvedAt: '',
+        generatedAt: '',
       }
     }
   })
