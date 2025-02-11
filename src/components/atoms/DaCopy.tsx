@@ -65,7 +65,9 @@ const DaCopy = ({
               {label}
             </DaText>
           )}
-          {showIcon && <TbCopy className="text-da-primary-500 ml-1" />}
+          {showIcon && (
+            <TbCopy className="text-da-gray-medium hover:text-da-primary-500 ml-1" />
+          )}
         </div>
       </div>
     </Suspense>

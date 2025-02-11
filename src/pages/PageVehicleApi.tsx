@@ -13,7 +13,7 @@ import {
   TbGitCompare,
   TbList,
   TbDownload,
-  TbReplace,
+  TbListTree,
 } from 'react-icons/tb'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import DaText from '@/components/atoms/DaText'
@@ -25,9 +25,9 @@ const PageVehicleApi = () => {
   const navigate = useNavigate()
 
   const [selectedApi, setSelectedApi] = useState<VehicleApi | null>(null)
-  const [activeTab, setActiveTab] = useState<'list' | 'tree' | 'compare'>(
-    'list',
-  )
+  const [activeTab, setActiveTab] = useState<
+    'list' | 'tree' | 'compare' | 'hierarchical'
+  >('list')
   const [activeModelApis] = useModelStore((state) => [state.activeModelApis])
   const { data: model } = useCurrentModel()
 
@@ -57,6 +57,14 @@ const PageVehicleApi = () => {
               <TbList className="w-5 h-5 mr-2" />
               List View
             </DaTabItem>
+
+            {/* <DaTabItem
+              active={activeTab === 'hierarchical'}
+              onClick={() => setActiveTab('hierarchical')}
+            >
+              <TbListTree className="w-5 h-5 mr-2" />
+              Hierarchical View
+            </DaTabItem> */}
 
             <DaTabItem
               active={activeTab === 'tree'}
@@ -93,24 +101,18 @@ const PageVehicleApi = () => {
               <TbDownload className="w-5 h-5 mr-2" />
               Download as JSON
             </DaTabItem>
-            {/* <DaTabItem
-              active={false}
-              onClick={async () => {
-                if (!model) return
-              }}
-            >
-              <TbReplace className="w-5 h-5 mr-2" />
-              Replace Vehicle API
-            </DaTabItem> */}
           </div>
           <DaText variant="regular-bold" className="text-da-primary-500 pr-4">
             COVESA VSS {(model && model.api_version) ?? 'v4.1'}
           </DaText>
         </div>
-        {activeTab === 'list' && (
+        {(activeTab === 'list' || activeTab === 'hierarchical') && (
           <div className="grow w-full flex overflow-auto">
             <div className="flex-1 flex w-full h-full overflow-auto border-r">
-              <ModelApiList onApiClick={handleApiClick} />
+              <ModelApiList
+                onApiClick={handleApiClick}
+                viewMode={activeTab === 'list' ? 'list' : 'hierarchical'}
+              />
             </div>
             <div className="flex-1 flex w-full h-full overflow-auto">
               {selectedApi ? (
@@ -126,6 +128,7 @@ const PageVehicleApi = () => {
             </div>
           </div>
         )}
+
         {activeTab === 'tree' && (
           <div className="flex w-full grow overflow-auto items-center justify-center">
             <DaTreeView onNodeClick={() => setActiveTab('list')} />

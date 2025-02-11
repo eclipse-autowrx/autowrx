@@ -57,7 +57,7 @@ export const listAllModels = async (): Promise<{
 }> => {
   try {
     const { data } = await serverAxios.get<AllModelsResponse>('/models/all')
-    console.log('Raw data from /models/all:', data)
+    // console.log('Raw data from /models/all:', data)
 
     const ownedModels = data.ownedModels?.results || []
     const contributedModels = data.contributedModels?.results || []
