@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import ApiDetail from '@/components/organisms/ApiDetail'
 import { VehicleApi } from '@/types/model.type'
@@ -42,6 +42,12 @@ const PageVehicleApi = () => {
   const [loading, setLoading] = useState(false)
   const [url, setUrl] = useState('')
   const [showUpload, setShowUpload] = useState(false)
+
+  useEffect(() => {
+    setSelectedApi(
+      (prev) => activeModelApis?.find((api) => api.name === prev?.name) || null,
+    )
+  }, [activeModelApis])
 
   const handleReplaceAPI = async () => {
     try {

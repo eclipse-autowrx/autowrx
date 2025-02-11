@@ -93,10 +93,10 @@ export type ExtendedApi = {
   apiName: string
   description?: string
   type?: string
-  datatype?: string
+  datatype?: string | null
   skeleton: string
   tags?: Tag[]
-  unit?: string
+  unit?: string | null
   created_at?: string
   isWishlist?: boolean
 }
