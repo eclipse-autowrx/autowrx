@@ -96,6 +96,7 @@ export type ExtendedApi = {
   datatype?: string
   skeleton: string
   tags?: Tag[]
+  unit?: string
   created_at?: string
   isWishlist?: boolean
 }

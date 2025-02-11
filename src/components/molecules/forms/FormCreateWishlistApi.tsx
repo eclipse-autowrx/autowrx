@@ -12,26 +12,32 @@ import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { createExtendedApi } from '@/services/extendedApis.service'
 import useModelStore from '@/stores/modelStore'
+import shallow from 'zustand/shallow'
 
 interface FormCreateWishlistApiProps {
   onClose: () => void
   onApiCreate: (api: CustomApi) => void
   modelId: string
   existingCustomApis: CustomApi[]
+  prefix?: string
 }
 
+// 1) Extend the interface with a new unit property (optional).
 interface CreateWishlistAPI {
   name: string
   description: string
   type: 'branch' | 'sensor' | 'actuator' | 'attribute'
   datatype: string
+  unit?: string
 }
 
+// 2) Include `unit` in your initialData
 const initialData: CreateWishlistAPI = {
   name: '',
   description: '',
   type: 'branch',
   datatype: 'boolean',
+  unit: '', // default empty
 }
 
 const dataTypes = [
@@ -51,82 +57,127 @@ const dataTypes = [
 
 const FormCreateWishlistApi = ({
   onClose,
+  onApiCreate,
   modelId,
   existingCustomApis,
-  onApiCreate,
+  prefix,
 }: FormCreateWishlistApiProps) => {
+  // ------------------------------------------------------------
+  // Process prefix
+  // ------------------------------------------------------------
+  const sanitizedPrefix = prefix ? prefix.replace(/!/g, '') : ''
+
+  let branchPrefix = ''
+  let defaultSuffix = 'NewSignal'
+  if (sanitizedPrefix) {
+    if (sanitizedPrefix.endsWith('.')) {
+      branchPrefix = sanitizedPrefix
+    } else if (sanitizedPrefix.includes('.')) {
+      branchPrefix = sanitizedPrefix.substring(
+        0,
+        sanitizedPrefix.lastIndexOf('.') + 1,
+      )
+      defaultSuffix =
+        sanitizedPrefix.substring(sanitizedPrefix.lastIndexOf('.') + 1) ||
+        defaultSuffix
+    } else {
+      branchPrefix = sanitizedPrefix + '.'
+    }
+  }
+
+  // ------------------------------------------------------------
+  // State
+  // ------------------------------------------------------------
+  const [data, setData] = useState<CreateWishlistAPI>({
+    ...initialData,
+    name: branchPrefix ? branchPrefix + defaultSuffix : initialData.name,
+  })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [data, setData] = useState(initialData)
-  const { refetch } = useCurrentModel()
-  const refreshModel = useModelStore((state) => state.refreshModel)
-  const { data: currentModel } = useCurrentModel()
+  const [showSuggestions, setShowSuggestions] = useState(false)
+
+  const { refetch, data: currentModel } = useCurrentModel()
   const { data: currentUser } = useSelfProfileQuery()
+  const refreshModel = useModelStore((state) => state.refreshModel)
+  const [activeModelApis] = useModelStore(
+    (state) => [state.activeModelApis],
+    shallow,
+  )
 
-  const ROOT_API_NOTATION = (currentModel?.main_api || 'Vehicle') + '.'
+  // Use branchPrefix if provided; otherwise default to currentModel main API notation.
+  const ROOT_API_NOTATION =
+    branchPrefix || (currentModel?.main_api || 'Vehicle') + '.'
 
-  const validate = useCallback((data: CreateWishlistAPI) => {
-    if (data.name) {
-      if (!data.name.startsWith(ROOT_API_NOTATION)) {
-        return `Signal name must start with "${ROOT_API_NOTATION}"`
+  const allExistingNames = useMemo(() => {
+    const customNames = existingCustomApis?.map((x) => x.name) ?? []
+    const modelNames = (activeModelApis ?? []).map((x: any) => x.name)
+    return [...customNames, ...modelNames]
+  }, [existingCustomApis, activeModelApis])
+
+  // ------------------------------------------------------------
+  // Validation
+  // ------------------------------------------------------------
+  const validate = useCallback(
+    (formData: CreateWishlistAPI): string | null => {
+      if (formData.name) {
+        if (!formData.name.startsWith(ROOT_API_NOTATION)) {
+          return `Signal name must start with "${ROOT_API_NOTATION}"`
+        }
+        const actualName = formData.name.slice(ROOT_API_NOTATION.length)
+        if (actualName.length === 0) {
+          return `Signal name must have at least 1 character after "${ROOT_API_NOTATION}"`
+        }
+        if (!/^[a-zA-Z][a-zA-Z0-9.]*$/.test(actualName)) {
+          return 'API name must only contain letters, numbers, and periods, and must not start with a number'
+        }
+        if (/\.\./.test(actualName)) {
+          return 'API name must not contain consecutive periods'
+        }
+        if (actualName.endsWith('.')) {
+          return 'API name must not end with a period'
+        }
+        if (formData.name.length > 255) {
+          return 'Signal name must not exceed 255 characters'
+        }
       }
-      const actualName = data.name.slice(ROOT_API_NOTATION.length)
-      if (actualName.length === 0) {
-        return `Signal name must have at least 1 character after "${ROOT_API_NOTATION}"`
+      if (formData.description.length > 4096) {
+        return 'Signal description must not exceed 4096 characters'
       }
-      if (!/^[a-zA-Z][a-zA-Z0-9.]*$/.test(actualName)) {
-        return 'API name must only contain letters, numbers, and periods, and must not start with a number'
+      if (formData.type !== 'branch' && !formData.datatype) {
+        return 'Data type is required for sensor, actuator, and attribute'
       }
-      if (/\.\./.test(actualName)) {
-        return 'API name must not contain consecutive periods' // Prevent case like "Vehicle..Speed"
+      if (allExistingNames.includes(formData.name)) {
+        return 'Signal with this name already exists'
       }
-      if (actualName.endsWith('.')) {
-        return 'API name must not end with a period' // Prevent case like "Vehicle.Speed."
-      }
-      if (data.name.length > 255) {
-        return 'Signal name must not exceed 255 characters'
-      }
-    }
-    if (data.description.length > 4096) {
-      return 'Signal description must not exceed 4096 characters'
-    }
-    if (data.type !== 'branch' && !data.datatype) {
-      return 'Data type is required for sensor, actuator, and attribute'
-    }
-    return null
-  }, [])
+      return null
+    },
+    [ROOT_API_NOTATION, allExistingNames],
+  )
 
   useEffect(() => {
     const result = validate(data)
-    if (result) {
-      setError(result)
-    } else {
-      setError('')
-    }
-  }, [data])
+    setError(result || '')
+  }, [data, validate])
 
-  const createWishlistApi = async (data: any) => {
+  // ------------------------------------------------------------
+  // Creating wishlist APIs
+  // ------------------------------------------------------------
+  const createWishlistApi = async (apiData: CreateWishlistAPI) => {
     try {
-      const currentCustomApis = existingCustomApis ?? []
-      if (currentCustomApis.some((name) => name.name === data.name)) {
-        setError('Signal with this name already exists')
-        return
-      }
-
+      // 4) Pass `unit` as well
       const customApi = {
-        name: data.name,
-        description: data.description,
-        type: data.type,
-        ...(data.type !== 'branch' && { datatype: data.datatype }),
+        name: apiData.name,
+        description: apiData.description,
+        type: apiData.type,
+        ...(apiData.type !== 'branch' && { datatype: apiData.datatype }),
+        ...(apiData.type !== 'branch' && { unit: apiData.unit }),
       }
-      const updatedCustomApis = [...currentCustomApis, customApi]
+      const updatedCustomApis = [...(existingCustomApis ?? []), customApi]
       const customApisJson = JSON.stringify(updatedCustomApis)
 
       await updateModelService(modelId, {
         custom_apis: customApisJson as any,
       })
-      setError('')
-      setData(initialData)
 
       addLog({
         name: `Create wishlist Signal ${customApi.name}`,
@@ -137,32 +188,36 @@ const FormCreateWishlistApi = ({
         ref_type: 'model',
       })
 
+      setData({
+        ...initialData,
+        name: branchPrefix ? branchPrefix + defaultSuffix : initialData.name,
+      })
+      setError('')
       await refetch()
-
       onApiCreate(customApi)
       onClose()
-    } catch (error) {
-      if (isAxiosError(error)) {
-        setError(error.response?.data?.message ?? 'Something went wrong')
+    } catch (err) {
+      if (isAxiosError(err)) {
+        setError(err.response?.data?.message ?? 'Something went wrong')
         return
       }
       setError('Something went wrong')
     }
   }
 
-  const createWishlistApiAlt = async (data: any) => {
+  const createWishlistApiAlt = async (apiData: CreateWishlistAPI) => {
     try {
+      // 4) Pass `unit` here as well
       const customApi = await createExtendedApi({
-        apiName: data.name,
+        apiName: apiData.name,
         model: modelId,
         skeleton: '{}',
-        description: data.description,
-        type: data.type,
-        datatype: data.datatype,
+        description: apiData.description,
+        type: apiData.type,
+        datatype: apiData.datatype,
         isWishlist: true,
+        unit: apiData.unit,
       })
-
-      await refreshModel()
 
       addLog({
         name: `Create wishlist Signal ${customApi.name}`,
@@ -173,11 +228,17 @@ const FormCreateWishlistApi = ({
         ref_type: 'model',
       })
 
+      await refreshModel()
+      setData({
+        ...initialData,
+        name: branchPrefix ? branchPrefix + defaultSuffix : initialData.name,
+      })
+      setError('')
       onApiCreate(customApi)
       onClose()
-    } catch (error) {
-      if (isAxiosError(error)) {
-        setError(error.response?.data?.message ?? 'Something went wrong')
+    } catch (err) {
+      if (isAxiosError(err)) {
+        setError(err.response?.data?.message ?? 'Something went wrong')
         return
       }
       setError('Something went wrong')
@@ -185,15 +246,24 @@ const FormCreateWishlistApi = ({
   }
 
   const handleChange =
-    (key: keyof typeof data) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    (key: keyof CreateWishlistAPI) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
       setData((prev) => ({ ...prev, [key]: e.target.value }))
+      if (key === 'name') {
+        setShowSuggestions(true)
+      }
     }
 
-  const handleTypeChange = (value: string) => {
+  const handleSuggestionSelect = (selectedName: string) => {
+    setData((prev) => ({ ...prev, name: selectedName }))
+    setShowSuggestions(false)
+  }
+
+  const handleTypeChange = (value: CreateWishlistAPI['type']) => {
     setData((prev) => ({
       ...prev,
-      type: value as CreateWishlistAPI['type'],
-      ...(value === 'branch' ? { datatype: prev.datatype ?? 'boolean' } : {}),
+      type: value,
+      ...(value === 'branch' ? { datatype: 'boolean', unit: '' } : {}),
     }))
   }
 
@@ -206,6 +276,7 @@ const FormCreateWishlistApi = ({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (error) return
     setLoading(true)
     if (currentModel?.api_version) {
       await createWishlistApiAlt(data)
@@ -216,99 +287,181 @@ const FormCreateWishlistApi = ({
   }
 
   const isButtonDisabled = useMemo(() => {
-    if (loading) return true
-    if (!data.name) {
-      return true
-    }
-    if (error) return true
-    return false
-  }, [error, loading])
+    return loading || !data.name || !!error
+  }, [loading, data.name, error])
+
+  const filteredSuggestions = useMemo(() => {
+    if (!data.name) return []
+    const normalized = data.name.toLowerCase()
+    return (activeModelApis ?? [])
+      .filter((apiObj: any) => apiObj?.name?.toLowerCase().includes(normalized))
+      .slice(0, 20)
+  }, [activeModelApis, data.name])
+
+  const typeOptions = [
+    {
+      value: 'branch',
+      label: 'Branch',
+      bg: 'bg-fuchsia-600',
+      text: 'text-white',
+    },
+    {
+      value: 'sensor',
+      label: 'Sensor',
+      bg: 'bg-emerald-500',
+      text: 'text-white',
+    },
+    {
+      value: 'actuator',
+      label: 'Actuator',
+      bg: 'bg-yellow-500',
+      text: 'text-black',
+    },
+    {
+      value: 'attribute',
+      label: 'Attribute',
+      bg: 'bg-blue-500',
+      text: 'text-white',
+    },
+  ]
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex h-fit max-h-[550px] w-[30vw] min-w-[400px] max-w-[500px] flex-col bg-da-white p-4 lg:w-[25vw]"
+      className="relative flex h-[540px] w-[30vw] min-w-[700px] max-w-[500px] flex-col bg-da-white p-4 text-sm lg:w-[25vw] overflow-y-auto"
     >
-      {/* Title */}
       <DaText variant="title" className="text-da-primary-500">
         New Wishlist Signal
       </DaText>
-      {/* Content */}
-      <DaInput
-        value={data.name}
-        onChange={handleChange('name')}
-        name="name"
-        placeholder="Name"
-        label="Name"
-        className="mt-4"
-        onPaste={(e) => {
-          e.stopPropagation() // Prevent propagation to parent elements
-          e.preventDefault() // Prevent default paste behavior
-          const pastedValue = e.clipboardData.getData('Text')
-          setData((prev) => ({ ...prev, name: pastedValue }))
-        }}
-      />
+
+      {/* Name Input */}
+      <div className="mt-6">
+        <div className="!text-sm font-medium"> Name</div>
+        <DaInput
+          value={data.name}
+          onChange={handleChange('name')}
+          onFocus={() => setShowSuggestions(true)}
+          onBlur={() => setShowSuggestions(false)}
+          name="name"
+          placeholder="Name"
+          className="relative mt-2"
+          inputClassName="text-sm"
+          onPaste={(e) => {
+            e.stopPropagation()
+            e.preventDefault()
+            const pastedValue = e.clipboardData.getData('Text')
+            setData((prev) => ({ ...prev, name: pastedValue }))
+            setShowSuggestions(true)
+          }}
+        />
+        {showSuggestions && filteredSuggestions.length > 0 && (
+          <div className="absolute z-50 mt-1 w-[calc(100%-2rem)] max-h-[18vh] overflow-y-auto rounded-md border border-gray-200 bg-white p-1 shadow-lg">
+            {filteredSuggestions.map((apiObj: any) => (
+              <div
+                key={apiObj.name}
+                className="cursor-pointer px-2 py-1 hover:bg-gray-100"
+                onMouseDown={() => handleSuggestionSelect(apiObj.name)}
+              >
+                {apiObj.name}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Description */}
+      <div className="mt-4 !text-sm font-medium">Description</div>
       <DaInput
         value={data.description}
         onChange={handleChange('description')}
         name="description"
         placeholder="Description"
-        label="Description"
-        className="mt-4"
+        className="mt-2"
+        inputClassName="text-sm"
       />
-      <DaSelect
-        label="Type"
-        value={data.type}
-        onValueChange={handleTypeChange}
-        wrapperClassName="mt-4"
-      >
-        <DaSelectItem value="branch">Branch</DaSelectItem>
-        <DaSelectItem value="sensor">Sensor</DaSelectItem>
-        <DaSelectItem value="actuator">Actuator</DaSelectItem>
-        <DaSelectItem value="attribute">Attribute</DaSelectItem>
-      </DaSelect>
+
+      {/* Type */}
+      <div className="mt-4 !text-sm font-medium">Type</div>
+      <div className="mt-2 grid grid-cols-4 gap-2">
+        {typeOptions.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() =>
+              handleTypeChange(option.value as CreateWishlistAPI['type'])
+            }
+            className={`p-1.5 text-sm font-medium rounded-lg w-full
+              ${
+                data.type === option.value
+                  ? `${option.bg} ${option.text}`
+                  : 'bg-gray-100'
+              }
+            `}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Data Type + Unit for non-branch */}
       {(data.type === 'sensor' ||
         data.type === 'actuator' ||
         data.type === 'attribute') && (
-        <DaSelect
-          label="Data Type"
-          value={data.datatype ? data.datatype : 'uint8'}
-          onValueChange={handleDatatypeChange}
-          wrapperClassName="mt-4"
-        >
-          {dataTypes.map((type) => (
-            <DaSelectItem key={type} value={type}>
-              {type}
-            </DaSelectItem>
-          ))}
-        </DaSelect>
+        <div>
+          <div className="mt-4 !text-sm font-medium">Data Type</div>
+          <DaSelect
+            value={data.datatype ?? 'uint8'}
+            onValueChange={handleDatatypeChange}
+            wrapperClassName="mt-2"
+          >
+            {dataTypes.map((dt) => (
+              <DaSelectItem className="text-sm" key={dt} value={dt}>
+                {dt}
+              </DaSelectItem>
+            ))}
+          </DaSelect>
+
+          {/* Unit Input */}
+          <div className="mt-4 !text-sm font-medium">Unit</div>
+          <DaInput
+            value={data.unit || ''}
+            onChange={handleChange('unit')}
+            name="unit"
+            placeholder="e.g. km/h, psi, etc."
+            className="mt-2"
+            inputClassName="text-sm"
+          />
+        </div>
       )}
-      <div className="grow"></div>
+
       {/* Error */}
-      {error && (
-        <DaText variant="small" className="mt-2 text-da-accent-500">
-          {error}
-        </DaText>
-      )}
-      {/* Action */}
-      <div className="ml-auto space-x-2">
+      <div className="mt-2 min-h-5">
+        {error && (
+          <DaText variant="small" className="mt-4 text-red-500">
+            {error}
+          </DaText>
+        )}
+      </div>
+
+      {/* Action Buttons */}
+      <div className="ml-auto mt-auto flex space-x-2">
         <DaButton
           onClick={onClose}
           disabled={loading}
           type="button"
-          className="mt-8 w-fit"
-          variant="plain"
+          className="w-20 rounded-lg"
+          size="sm"
+          variant="outline-nocolor"
         >
           Cancel
         </DaButton>
         <DaButton
           disabled={isButtonDisabled}
           type="submit"
-          className="mt-8 w-fit"
+          size="sm"
+          className="flex w-20 rounded-lg"
         >
-          {loading && (
-            <TbLoader className="da-label-regular mr-2 animate-spin" />
-          )}
+          {loading && <TbLoader className="mr-1 h-4 w-4 animate-spin" />}
           Create
         </DaButton>
       </div>
