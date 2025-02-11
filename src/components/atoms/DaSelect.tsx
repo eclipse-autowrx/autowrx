@@ -58,8 +58,9 @@ const DaSelectItem = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item> & {
     helperText?: string
+    helperClassName?: string
   }
->(({ className, children, helperText, ...props }, ref) => (
+>(({ className, children, helperText, helperClassName, ...props }, ref) => (
   <SelectPrimitive.Item
     ref={ref}
     className={clsx(
@@ -77,7 +78,9 @@ const DaSelectItem = React.forwardRef<
 
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
     {helperText && (
-      <DaText className="da-label-small pl-4">{helperText}</DaText>
+      <DaText className={cn('da-label-small pl-4', helperClassName)}>
+        {helperText}
+      </DaText>
     )}
   </SelectPrimitive.Item>
 ))

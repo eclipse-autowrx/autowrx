@@ -27,18 +27,22 @@ const ASILSelect = ({ value, onChange, className }: ASILSelectProps) => {
 
   return (
     <DaSelect
-      className={cn('h-[33px] w-fit rounded-md', className)}
+      className={cn(
+        'h-[33px] w-fit rounded-md border-transparent shadow-none',
+        className,
+      )}
       value={value}
       onValueChange={handleValueChange}
-      placeholderClassName="flex items-center px-1"
-      wrapperClassName="w-fit items-center justify-center"
+      placeholderClassName="flex items-center px-1 "
+      wrapperClassName="w-fit items-center justify-center border-transparent"
     >
       {asilOptions.map((asil) => (
         <DaSelectItem
           className="flex w-fit items-center px-4"
           value={asil.value}
           key={asil.value}
-          helperText={asil.description} // description moved to helperText
+          helperText={asil.description}
+          helperClassName="!text-xs"
         >
           <div
             className={cn(
@@ -49,7 +53,7 @@ const ASILSelect = ({ value, onChange, className }: ASILSelectProps) => {
               level={asil.value}
               showBadge={true}
               showFullText={true}
-              className="w-fit text-xs"
+              className="w-fit !text-xs"
             />
           </div>
         </DaSelectItem>
