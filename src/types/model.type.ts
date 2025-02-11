@@ -36,7 +36,7 @@ export type ModelLite = {
 
 export type Model = {
   id: string
-  custom_apis?: Record<string, any>
+  custom_apis?: [any]
   api_version?: string
   main_api: string
   model_home_image_file?: string

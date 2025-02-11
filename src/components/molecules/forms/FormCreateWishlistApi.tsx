@@ -207,11 +207,7 @@ const FormCreateWishlistApi = ({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
-    if (currentModel?.api_version) {
-      await createWishlistApiAlt(data)
-    } else {
-      await createWishlistApi(data)
-    }
+    await createWishlistApiAlt(data)
     setLoading(false)
   }
 

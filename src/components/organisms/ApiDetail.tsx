@@ -29,6 +29,7 @@ import DaMenu from '../atoms/DaMenu'
 import DaConsumedPrototypes from '../molecules/DaConsumedPrototypes'
 import { deleteExtendedApi } from '@/services/extendedApis.service'
 import useModelStore from '@/stores/modelStore'
+import { customAPIs } from '@/data/customAPI'
 
 interface ApiDetailProps {
   apiDetails: any
@@ -62,7 +63,7 @@ const ApiDetail = ({
 
   const handleDeleteWishlistApi = async () => {
     if (model) {
-      if (model.api_version && apiDetails?.id) {
+      if (apiDetails?.id) {
         await deleteExtendedApi(apiDetails.id)
         await refreshModel()
       } else if (model.custom_apis) {
@@ -85,6 +86,8 @@ const ApiDetail = ({
       }
     }
   }
+
+  console.log(model?.custom_apis)
 
   const implementationProperties = [
     {
@@ -214,7 +217,10 @@ const ApiDetail = ({
             </div>
           ) : (
             !forceSimpleMode &&
-            apiDetails.isWishlist &&
+            (apiDetails.isWishlist ||
+              model?.custom_apis?.some(
+                (api) => api?.name === apiDetails?.name,
+              )) &&
             isAuthorized && (
               <DaMenu
                 trigger={
