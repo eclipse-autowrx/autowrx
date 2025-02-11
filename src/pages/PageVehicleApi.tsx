@@ -57,13 +57,13 @@ const PageVehicleApi = () => {
               List View
             </DaTabItem>
 
-            <DaTabItem
+            {/* <DaTabItem
               active={activeTab === 'hierarchical'}
               onClick={() => setActiveTab('hierarchical')}
             >
               <TbListTree className="w-5 h-5 mr-2" />
               Hierarchical View
-            </DaTabItem>
+            </DaTabItem> */}
 
             <DaTabItem
               active={activeTab === 'tree'}

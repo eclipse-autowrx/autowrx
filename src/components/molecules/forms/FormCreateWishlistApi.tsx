@@ -22,18 +22,22 @@ interface FormCreateWishlistApiProps {
   prefix?: string
 }
 
+// 1) Extend the interface with a new unit property (optional).
 interface CreateWishlistAPI {
   name: string
   description: string
   type: 'branch' | 'sensor' | 'actuator' | 'attribute'
   datatype: string
+  unit?: string
 }
 
+// 2) Include `unit` in your initialData
 const initialData: CreateWishlistAPI = {
   name: '',
   description: '',
   type: 'branch',
   datatype: 'boolean',
+  unit: '', // default empty
 }
 
 const dataTypes = [
@@ -56,19 +60,10 @@ const FormCreateWishlistApi = ({
   onApiCreate,
   modelId,
   existingCustomApis,
-  prefix, // new optional prop
+  prefix,
 }: FormCreateWishlistApiProps) => {
   // ------------------------------------------------------------
-  // Process the passed-in prefix into a branch part and a default suffix.
-  //
-  // We want the final input value to be:
-  //   [branchPrefix] + [userSuffix]
-  // where branchPrefix always ends with a dot.
-  //
-  // If the caller wants the full input to start as, for example,
-  // "Vehicle.A.NewSignal" then they can pass either:
-  //   - "Vehicle.A.NewSignal" (which we split into branch "Vehicle.A." and defaultSuffix "NewSignal")
-  //   - or simply "Vehicle.A." (which leaves the default suffix as "NewSignal").
+  // Process prefix
   // ------------------------------------------------------------
   const sanitizedPrefix = prefix ? prefix.replace(/!/g, '') : ''
 
@@ -76,11 +71,8 @@ const FormCreateWishlistApi = ({
   let defaultSuffix = 'NewSignal'
   if (sanitizedPrefix) {
     if (sanitizedPrefix.endsWith('.')) {
-      // Caller provided only the branch (with trailing dot).
       branchPrefix = sanitizedPrefix
     } else if (sanitizedPrefix.includes('.')) {
-      // Caller provided a string that does not end with a dot.
-      // We assume the last token is a default suffix.
       branchPrefix = sanitizedPrefix.substring(
         0,
         sanitizedPrefix.lastIndexOf('.') + 1,
@@ -89,14 +81,12 @@ const FormCreateWishlistApi = ({
         sanitizedPrefix.substring(sanitizedPrefix.lastIndexOf('.') + 1) ||
         defaultSuffix
     } else {
-      // No dot found: treat the whole string as a branch name.
       branchPrefix = sanitizedPrefix + '.'
     }
   }
 
   // ------------------------------------------------------------
-  // Initial state: if a branchPrefix exists, use it plus the defaultSuffix.
-  // Otherwise, use the initialData.name (empty).
+  // State
   // ------------------------------------------------------------
   const [data, setData] = useState<CreateWishlistAPI>({
     ...initialData,
@@ -118,9 +108,6 @@ const FormCreateWishlistApi = ({
   const ROOT_API_NOTATION =
     branchPrefix || (currentModel?.main_api || 'Vehicle') + '.'
 
-  // ------------------------------------------------------------
-  // Combine all existing names (custom + active model)
-  // ------------------------------------------------------------
   const allExistingNames = useMemo(() => {
     const customNames = existingCustomApis?.map((x) => x.name) ?? []
     const modelNames = (activeModelApis ?? []).map((x: any) => x.name)
@@ -128,8 +115,7 @@ const FormCreateWishlistApi = ({
   }, [existingCustomApis, activeModelApis])
 
   // ------------------------------------------------------------
-  // Validation: We now require that the API name starts with the branchPrefix
-  // and that the “suffix” (the part after branchPrefix) is not empty.
+  // Validation
   // ------------------------------------------------------------
   const validate = useCallback(
     (formData: CreateWishlistAPI): string | null => {
@@ -154,15 +140,12 @@ const FormCreateWishlistApi = ({
           return 'Signal name must not exceed 255 characters'
         }
       }
-
       if (formData.description.length > 4096) {
         return 'Signal description must not exceed 4096 characters'
       }
       if (formData.type !== 'branch' && !formData.datatype) {
         return 'Data type is required for sensor, actuator, and attribute'
       }
-
-      // Check if the name is already used
       if (allExistingNames.includes(formData.name)) {
         return 'Signal with this name already exists'
       }
@@ -176,13 +159,18 @@ const FormCreateWishlistApi = ({
     setError(result || '')
   }, [data, validate])
 
+  // ------------------------------------------------------------
+  // Creating wishlist APIs
+  // ------------------------------------------------------------
   const createWishlistApi = async (apiData: CreateWishlistAPI) => {
     try {
+      // 4) Pass `unit` as well
       const customApi = {
         name: apiData.name,
         description: apiData.description,
         type: apiData.type,
         ...(apiData.type !== 'branch' && { datatype: apiData.datatype }),
+        ...(apiData.type !== 'branch' && { unit: apiData.unit }),
       }
       const updatedCustomApis = [...(existingCustomApis ?? []), customApi]
       const customApisJson = JSON.stringify(updatedCustomApis)
@@ -200,7 +188,6 @@ const FormCreateWishlistApi = ({
         ref_type: 'model',
       })
 
-      // Reset state – use the same branchPrefix and defaultSuffix on reset.
       setData({
         ...initialData,
         name: branchPrefix ? branchPrefix + defaultSuffix : initialData.name,
@@ -220,6 +207,7 @@ const FormCreateWishlistApi = ({
 
   const createWishlistApiAlt = async (apiData: CreateWishlistAPI) => {
     try {
+      // 4) Pass `unit` here as well
       const customApi = await createExtendedApi({
         apiName: apiData.name,
         model: modelId,
@@ -228,6 +216,7 @@ const FormCreateWishlistApi = ({
         type: apiData.type,
         datatype: apiData.datatype,
         isWishlist: true,
+        unit: apiData.unit,
       })
 
       addLog({
@@ -274,7 +263,7 @@ const FormCreateWishlistApi = ({
     setData((prev) => ({
       ...prev,
       type: value,
-      ...(value === 'branch' ? { datatype: 'boolean' } : {}),
+      ...(value === 'branch' ? { datatype: 'boolean', unit: '' } : {}),
     }))
   }
 
@@ -288,15 +277,12 @@ const FormCreateWishlistApi = ({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (error) return
-
     setLoading(true)
-
     if (currentModel?.api_version) {
       await createWishlistApiAlt(data)
     } else {
       await createWishlistApi(data)
     }
-
     setLoading(false)
   }
 
@@ -342,7 +328,7 @@ const FormCreateWishlistApi = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="relative flex h-[490px] w-[30vw] min-w-[400px] max-w-[500px] flex-col bg-da-white p-4 text-sm lg:w-[25vw] overflow-y-auto"
+      className="relative flex h-[540px] w-[30vw] min-w-[700px] max-w-[500px] flex-col bg-da-white p-4 text-sm lg:w-[25vw] overflow-y-auto"
     >
       <DaText variant="title" className="text-da-primary-500">
         New Wishlist Signal
@@ -369,7 +355,7 @@ const FormCreateWishlistApi = ({
           }}
         />
         {showSuggestions && filteredSuggestions.length > 0 && (
-          <div className="absolute z-50 mt-1 w-[calc(100%-2rem)] max-h-[18vh] overflow-y-auto scroll rounded-md border border-gray-200 bg-white p-1 shadow-lg">
+          <div className="absolute z-50 mt-1 w-[calc(100%-2rem)] max-h-[18vh] overflow-y-auto rounded-md border border-gray-200 bg-white p-1 shadow-lg">
             {filteredSuggestions.map((apiObj: any) => (
               <div
                 key={apiObj.name}
@@ -405,7 +391,11 @@ const FormCreateWishlistApi = ({
               handleTypeChange(option.value as CreateWishlistAPI['type'])
             }
             className={`p-1.5 text-sm font-medium rounded-lg w-full
-              ${data.type === option.value ? `${option.bg} ${option.text}` : 'bg-gray-100'}
+              ${
+                data.type === option.value
+                  ? `${option.bg} ${option.text}`
+                  : 'bg-gray-100'
+              }
             `}
           >
             {option.label}
@@ -413,7 +403,7 @@ const FormCreateWishlistApi = ({
         ))}
       </div>
 
-      {/* Data Type for non-branch */}
+      {/* Data Type + Unit for non-branch */}
       {(data.type === 'sensor' ||
         data.type === 'actuator' ||
         data.type === 'attribute') && (
@@ -430,6 +420,17 @@ const FormCreateWishlistApi = ({
               </DaSelectItem>
             ))}
           </DaSelect>
+
+          {/* Unit Input */}
+          <div className="mt-4 !text-sm font-medium">Unit</div>
+          <DaInput
+            value={data.unit || ''}
+            onChange={handleChange('unit')}
+            name="unit"
+            placeholder="e.g. km/h, psi, etc."
+            className="mt-2"
+            inputClassName="text-sm"
+          />
         </div>
       )}
 
@@ -443,12 +444,12 @@ const FormCreateWishlistApi = ({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex ml-auto mt-auto space-x-2">
+      <div className="ml-auto mt-auto flex space-x-2">
         <DaButton
           onClick={onClose}
           disabled={loading}
           type="button"
-          className="mt-8 w-20 rounded-lg"
+          className="w-20 rounded-lg"
           size="sm"
           variant="outline-nocolor"
         >
@@ -458,9 +459,9 @@ const FormCreateWishlistApi = ({
           disabled={isButtonDisabled}
           type="submit"
           size="sm"
-          className="flex mt-8 w-20 rounded-lg"
+          className="flex w-20 rounded-lg"
         >
-          {loading && <TbLoader className="size-4 mr-1 animate-spin" />}
+          {loading && <TbLoader className="mr-1 h-4 w-4 animate-spin" />}
           Create
         </DaButton>
       </div>
