@@ -7,6 +7,7 @@ import {
 import { useSystemUI } from '@/hooks/useSystemUI'
 import { ASILBadge, ASILLevel } from './ASILBadge'
 import RiskAssessmentMarkdown from './RiskAssessmentMarkdown'
+import { defaultRiskAssessmentPlaceholder } from './FlowItemEditor'
 
 interface SystemActivityData {
   type: string
@@ -195,16 +196,19 @@ const FlowItem = ({ text }: FlowItemActivityProps) => {
                     : `ASIL-${data.postAsilLevel}`}
                 </span>
               </div>
-              <div className="flex flex-col">
-                <span className="font-semibold text-da-gray-dark mr-1">
-                  Risk Assessment:
-                </span>
-                <div className="flex h-full overflow-auto mt-1">
-                  <RiskAssessmentMarkdown
-                    markdownText={data.riskAssessment || ''}
-                  />
-                </div>
-              </div>
+              {data.riskAssessment &&
+                data.riskAssessment !== defaultRiskAssessmentPlaceholder && (
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-da-gray-dark mr-1">
+                      Risk Assessment:
+                    </span>
+                    <div className="flex h-full overflow-auto mt-1">
+                      <RiskAssessmentMarkdown
+                        markdownText={data.riskAssessment || ''}
+                      />
+                    </div>
+                  </div>
+                )}
               {data.approvedBy && (
                 <div className="flex">
                   <span className="font-semibold text-da-gray-dark mr-1">

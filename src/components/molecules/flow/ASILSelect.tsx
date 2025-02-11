@@ -54,6 +54,7 @@ const ASILSelect = ({ value, onChange, className }: ASILSelectProps) => {
               showBadge={true}
               showFullText={true}
               className="w-fit !text-xs"
+              preItemClassName="p-0 justify-center items-center h-6 w-12"
             />
           </div>
         </DaSelectItem>

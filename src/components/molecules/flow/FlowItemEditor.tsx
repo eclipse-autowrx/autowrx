@@ -5,13 +5,7 @@ import { DialogClose } from '@/components/atoms/dialog'
 import { DaButton } from '@/components/atoms/DaButton'
 import { DaInput } from '@/components/atoms/DaInput'
 import ASILSelect from './ASILSelect'
-import {
-  TbCalendarEvent,
-  TbCheck,
-  TbPlus,
-  TbTrash,
-  TbChevronRight,
-} from 'react-icons/tb'
+import { TbPlus, TbTrash, TbChevronRight } from 'react-icons/tb'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import RiskAssessmentEditor from './RiskAssessmentEditor'
 
@@ -46,14 +40,40 @@ export const defaultRiskAssessmentPlaceholder = `# Mitigation
 # Safety Goals
 -`
 
+// This helper handles the edge case when the incoming value is plain text (old version).
+// It extracts an ASIL marker (like <QM> or <ASIL-C>) and treats the rest as the description.
+const parseNonJsonFlowItem = (value: string): FormData => {
+  const ratingRegex = /<(?:ASIL-)?(A|B|C|D|QM)>/
+  const match = value.match(ratingRegex)
+  let extractedRating: ASILLevel = 'QM'
+  let description = value
+  if (match) {
+    extractedRating = match[1] as ASILLevel
+    description = value.replace(ratingRegex, '').trim()
+  }
+  return {
+    type: '',
+    component: '',
+    description,
+    preAsilLevel: extractedRating,
+    postAsilLevel: 'QM',
+    riskAssessment: defaultRiskAssessmentPlaceholder,
+    approvedBy: '',
+    approvedAt: '',
+    generatedAt: '',
+  }
+}
+
 const FlowItemEditor = ({ value, onChange, children }: FlowItemEditorProps) => {
   const { data: currentUser } = useSelfProfileQuery()
 
   const [formData, setFormData] = useState<FormData>(() => {
     try {
+      // Try to parse as JSON
       const parsed = JSON.parse(value)
       const { asilLevel, preAsilLevel, postAsilLevel, ...rest } = parsed
-      const newPreAsilLevel = preAsilLevel || 'QM' || asilLevel
+      // Correct fallback order: use preAsilLevel if provided; if not, use asilLevel; if neither, default to 'QM'
+      const newPreAsilLevel = preAsilLevel || asilLevel || 'QM'
       const newPostAsilLevel = postAsilLevel || 'QM'
       return {
         type: parsed.type || '',
@@ -71,21 +91,12 @@ const FlowItemEditor = ({ value, onChange, children }: FlowItemEditorProps) => {
         ...rest,
       }
     } catch {
-      return {
-        type: '',
-        component: '',
-        description: '',
-        preAsilLevel: 'QM',
-        postAsilLevel: 'QM',
-        riskAssessment: defaultRiskAssessmentPlaceholder,
-        approvedBy: '',
-        approvedAt: '',
-        generatedAt: '',
-      }
+      // If JSON parsing fails, assume it's the old plain text format.
+      return parseNonJsonFlowItem(value)
     }
   })
 
-  // Keys not to be shown as custom attributes
+  // Keys that are considered mandatory and should not be rendered as custom attributes.
   const mandatoryKeys = [
     'type',
     'component',

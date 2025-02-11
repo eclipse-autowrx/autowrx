@@ -8,6 +8,8 @@ interface ASILBadgeProps {
   showBadge?: boolean
   showFullText?: boolean
   className?: string
+  preItemClassName?: string
+  postItemClassName?: string
 }
 
 const levelColors: Record<ASILLevel, string> = {
@@ -24,6 +26,8 @@ export const ASILBadge = ({
   showBadge = true,
   showFullText = false,
   className,
+  preItemClassName,
+  postItemClassName,
 }: ASILBadgeProps) => {
   if (!showBadge) return null
 
@@ -49,6 +53,7 @@ export const ASILBadge = ({
         className={cn(
           'flex w-9 h-7 text-[9px] py-0 px-1 items-start justify-start font-bold rounded-md text-white',
           levelColors[preAsilLevel],
+          preItemClassName,
         )}
       >
         {displayPre}
@@ -59,6 +64,7 @@ export const ASILBadge = ({
           className={cn(
             'absolute w-6 !text-[9px] bottom-1 right-1 transform translate-x-1/2 translate-y-1/2 flex px-1 py-0.5 items-center justify-center font-bold rounded-md text-white',
             levelColors[postAsilLevel],
+            postItemClassName,
           )}
         >
           {displayPost}
