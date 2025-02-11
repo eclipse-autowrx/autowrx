@@ -87,8 +87,6 @@ const ApiDetail = ({
     }
   }
 
-  console.log(model?.custom_apis)
-
   const implementationProperties = [
     {
       name: 'Implementation Status',

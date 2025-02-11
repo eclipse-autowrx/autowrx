@@ -13,23 +13,56 @@ import {
   TbGitCompare,
   TbList,
   TbDownload,
-  TbListTree,
+  TbReplace,
+  TbLoader,
 } from 'react-icons/tb'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import DaText from '@/components/atoms/DaText'
 import VssComparator from '@/components/organisms/VssComparator'
-import { getComputedAPIs } from '@/services/model.service'
+import { getComputedAPIs, replaceAPIsService } from '@/services/model.service'
+import { isAxiosError } from 'axios'
+import { toast } from 'react-toastify'
+import DaPopup from '@/components/atoms/DaPopup'
+import DaFileUpload from '@/components/atoms/DaFileUpload'
+import { DaButton } from '@/components/atoms/DaButton'
 
 const PageVehicleApi = () => {
   const { model_id, tab } = useParams()
   const navigate = useNavigate()
-
   const [selectedApi, setSelectedApi] = useState<VehicleApi | null>(null)
   const [activeTab, setActiveTab] = useState<
     'list' | 'tree' | 'compare' | 'hierarchical'
   >('list')
-  const [activeModelApis] = useModelStore((state) => [state.activeModelApis])
-  const { data: model } = useCurrentModel()
+  const [activeModelApis, refreshModel] = useModelStore((state) => [
+    state.activeModelApis,
+    state.refreshModel,
+  ])
+  const { data: model, refetch } = useCurrentModel()
+
+  const [loading, setLoading] = useState(false)
+  const [url, setUrl] = useState('')
+  const [showUpload, setShowUpload] = useState(false)
+
+  const handleReplaceAPI = async () => {
+    try {
+      setLoading(true)
+      await replaceAPIsService(model_id as string, url)
+      await Promise.all([refetch(), refreshModel()])
+      toast.success('APIs replaced successfully')
+
+      setUrl('')
+      setShowUpload(false)
+    } catch (error) {
+      console.error(error)
+      if (isAxiosError(error)) {
+        toast.error(error.response?.data?.message || 'Failed to replace APIs')
+      } else {
+        toast.error('Failed to replace APIs')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleApiClick = (apiDetails: VehicleApi) => {
     // console.log('apiDetails', apiDetails)
@@ -101,9 +134,19 @@ const PageVehicleApi = () => {
               <TbDownload className="w-5 h-5 mr-2" />
               Download as JSON
             </DaTabItem>
+            <DaTabItem
+              active={false}
+              onClick={() => {
+                if (!model) return
+                setShowUpload(true)
+              }}
+            >
+              <TbReplace className="h-5 w-5 mr-2" />
+              Replace Vehicle API
+            </DaTabItem>
           </div>
           <DaText variant="regular-bold" className="text-da-primary-500 pr-4">
-            COVESA VSS {(model && model.api_version) ?? 'v4.1'}
+            {model?.api_version && `COVESA VSS ${model.api_version}`}
           </DaText>
         </div>
         {(activeTab === 'list' || activeTab === 'hierarchical') && (
@@ -139,6 +182,25 @@ const PageVehicleApi = () => {
             <VssComparator />
           </div>
         )}
+
+        <DaPopup trigger={<></>} state={[showUpload, setShowUpload]}>
+          <div className="w-[280px]">
+            <DaText variant="regular-bold" className="text-center">
+              Upload Vehicle API file
+            </DaText>
+            <div className="h-2" />
+            <DaFileUpload onFileUpload={(url) => setUrl(url)} accept=".json" />
+            <DaButton
+              size="sm"
+              className="w-full mt-4"
+              onClick={handleReplaceAPI}
+              disabled={!url || loading}
+            >
+              {loading && <TbLoader className="animate-spin w-4 h-4 mr-2" />}
+              Replace Vehicle API
+            </DaButton>
+          </div>
+        </DaPopup>
       </div>
     </DaLoadingWrapper>
   )
