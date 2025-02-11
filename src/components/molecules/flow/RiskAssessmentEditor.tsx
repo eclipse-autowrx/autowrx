@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import ReactMarkdown from 'react-markdown'
 import { DaButton } from '@/components/atoms/DaButton'
 import {
   TbLoader2,
@@ -13,6 +12,7 @@ import {
 import { riskAssessmentGenerationPrompt } from './FlowPromptInventory'
 import { ASILLevel } from './ASILBadge'
 import { FormData } from './FlowItemEditor'
+import RiskAssessmentMarkdown from './RiskAssessmentMarkdown'
 
 interface RiskAssessmentEditorProps {
   formData: FormData
@@ -221,38 +221,9 @@ const RiskAssessmentEditor = ({
               }
             />
           ) : (
-            <ReactMarkdown
-              className="markdown-content text-muted-foreground text-xs max-w-none"
-              components={{
-                h1: ({ children }) => (
-                  <h1 className="text-xs font-semibold tracking-tight text-da-primary-500 mb-2">
-                    {children}
-                  </h1>
-                ),
-                h2: ({ children }) => (
-                  <h2 className="text-xs font-semibold text-amber-500 mb-2">
-                    {children}
-                  </h2>
-                ),
-                h3: ({ children }) => (
-                  <h3 className="text-xs font-medium text-da-gray-medium mb-2">
-                    {children}
-                  </h3>
-                ),
-                p: ({ children }) => (
-                  <p className="text-muted-foreground mb-4">{children}</p>
-                ),
-                ul: ({ children }) => (
-                  <ul className="list-disc mb-2 space-y-2 ml-6">{children}</ul>
-                ),
-                li: ({ children }) => <li className="mb-1">{children}</li>,
-                strong: ({ children }) => (
-                  <strong className="font-medium">{children}</strong>
-                ),
-              }}
-            >
-              {formData.riskAssessment || ''}
-            </ReactMarkdown>
+            <RiskAssessmentMarkdown
+              markdownText={formData.riskAssessment || ''}
+            />
           )}
         </div>
         {/* Approved by / Approved at info (if available) */}

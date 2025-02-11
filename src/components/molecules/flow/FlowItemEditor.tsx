@@ -53,8 +53,8 @@ const FlowItemEditor = ({ value, onChange, children }: FlowItemEditorProps) => {
     try {
       const parsed = JSON.parse(value)
       const { asilLevel, preAsilLevel, postAsilLevel, ...rest } = parsed
-      const newPreAsilLevel = preAsilLevel || 'QM'
-      const newPostAsilLevel = postAsilLevel || asilLevel || 'QM'
+      const newPreAsilLevel = preAsilLevel || 'QM' || asilLevel
+      const newPostAsilLevel = postAsilLevel || 'QM'
       return {
         type: parsed.type || '',
         component: parsed.component || '',

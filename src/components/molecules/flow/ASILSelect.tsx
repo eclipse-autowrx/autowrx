@@ -50,7 +50,7 @@ const ASILSelect = ({ value, onChange, className }: ASILSelectProps) => {
             )}
           >
             <ASILBadge
-              level={asil.value}
+              preAsilLevel={asil.value}
               showBadge={true}
               showFullText={true}
               className="w-fit !text-xs"

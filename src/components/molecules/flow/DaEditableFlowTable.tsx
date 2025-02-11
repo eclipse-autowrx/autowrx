@@ -17,7 +17,7 @@ import { DaTextarea } from '@/components/atoms/DaTextarea'
 import { cn } from '@/lib/utils'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import FlowItemEditor from './FlowItemEditor'
-import FlowSystemActivity from './FlowSystemActivity'
+import FlowItem from './FlowItem'
 interface TextCellProps {
   value: string
   onChange: (value: string) => void
