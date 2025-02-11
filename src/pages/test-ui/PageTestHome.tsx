@@ -4,9 +4,7 @@ import React from 'react'
 const PageTestHome = () => {
   return (
     <div className="flex h-[800px]">
-      <div className="m-auto">
-        <FormInventoryItem type="create" />
-      </div>
+      <div className="m-auto"></div>
     </div>
   )
 }

@@ -1,7 +1,13 @@
-import React from 'react'
+import FormInventoryItem from '@/components/molecules/inventory/FormInventoryItem'
 
 const PageNewInventoryItem = () => {
-  return <div>PageNewInventoryItem</div>
+  return (
+    <div className="flex p-8">
+      <div className="m-auto">
+        <FormInventoryItem type="create" />
+      </div>
+    </div>
+  )
 }
 
 export default PageNewInventoryItem

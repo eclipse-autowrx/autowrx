@@ -135,7 +135,7 @@ const SystemInterfaceFields = () => {
             <DaInput
               className="flex-1"
               wrapperClassName="h-8 shadow"
-              placeholder="https://playground.digital.auto/model/<model_id>/api/<api>"
+              placeholder={`${location.origin}/model/<model_id>/api/<api>`}
               inputClassName="text-sm h-6 flex-1 text-da-gray-darkest"
             />
             <DaTooltip content="Check reference">
