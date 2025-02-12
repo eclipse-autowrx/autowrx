@@ -19,6 +19,7 @@ interface SystemActivityData {
   approvedBy?: string
   approvedAt?: string
   [key: string]: string | undefined
+  riskAssessmentEvaluation?: string
 }
 
 interface FlowItemActivityProps {
@@ -252,6 +253,8 @@ const FlowItem = ({ stringData }: FlowItemActivityProps) => {
                       'approvedBy',
                       'approvedAt',
                       'asilLevel',
+                      'riskAssessmentEvaluation',
+                      'generatedAt',
                     ].includes(key),
                 )
                 .map(([key, value]) => {
