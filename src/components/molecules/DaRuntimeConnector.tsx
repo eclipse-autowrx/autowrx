@@ -423,7 +423,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       }
 
       if (
-        ['generate_vehicle_model', 'revert_vehicle_model'].includes(payload.cmd)
+        ['run_python_app', 'run_rust_app', 'run_bin_app'].includes(payload.cmd)
       ) {
         if (payload.isDone) {
           if (setAppLog) {

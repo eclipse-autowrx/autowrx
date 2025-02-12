@@ -343,7 +343,7 @@ const DaRuntimeControl: FC = ({ }) => {
             <button
               disabled={isRunning}
               onClick={() => {
-                // setIsRunning(true)
+                setIsRunning(true)
                 setActiveTab('output')
                 setLog('')
                 switch (prototype?.language) {
@@ -381,7 +381,7 @@ const DaRuntimeControl: FC = ({ }) => {
             <button
               disabled={!isRunning}
               onClick={() => {
-                // setIsRunning(false)
+                setIsRunning(false)
                 switch (prototype?.language) {
                   case 'rust':
                   default:
