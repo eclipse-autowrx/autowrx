@@ -34,7 +34,7 @@ const HomePartners: FC = ({ items, children }: HomePartnersProps) => {
               </div>
             </div>
 
-            <div className="flex gap-24 mx-12 pb-6 xl:pb-0">
+            <div className="flex gap-16 2xl:gap-24 mx-12 pb-6 xl:pb-0">
               {items?.map((group: any, gIndex: number) => (
                 <div key={gIndex} className="flex flex-col w-fit">
                   <DaText

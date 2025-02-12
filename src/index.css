@@ -287,13 +287,13 @@
 /*********** For Scrollbar *********/
 *::-webkit-scrollbar-track {
   border-radius: 4px;
-  background-color: #f5f5f5;
+  /* background-color: #f5f5f5; */
 }
 
 *::-webkit-scrollbar {
   width: 8px;
   height: 8px;
-  background-color: #f5f5f5;
+  /* background-color: #f5f5f5; */
 }
 
 *::-webkit-scrollbar-thumb {
@@ -314,7 +314,7 @@ body::-webkit-scrollbar-thumb {
 .scroll-gray::-webkit-scrollbar-thumb {
   border: 2px solid rgba(0, 0, 0, 0);
   background-clip: padding-box;
-  background-color: #aaaaaa;
+  /* background-color: #aaaaaa; */
 }
 
 .scroll-gray-small::-webkit-scrollbar-thumb {

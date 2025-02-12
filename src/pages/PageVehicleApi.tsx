@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import ApiDetail from '@/components/organisms/ApiDetail'
 import { VehicleApi } from '@/types/model.type'
@@ -8,23 +8,67 @@ import DaTabItem from '@/components/atoms/DaTabItem'
 import DaTreeView from '@/components/molecules/DaTreeView'
 import DaLoadingWrapper from '@/components/molecules/DaLoadingWrapper'
 import useModelStore from '@/stores/modelStore'
-import { TbBinaryTree2, TbGitCompare, TbList, TbDownload } from 'react-icons/tb'
+import {
+  TbBinaryTree2,
+  TbGitCompare,
+  TbList,
+  TbDownload,
+  TbReplace,
+  TbLoader,
+} from 'react-icons/tb'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import DaText from '@/components/atoms/DaText'
 import VssComparator from '@/components/organisms/VssComparator'
-import {
-  getComputedAPIs,
-} from '@/services/model.service'
+import { getComputedAPIs, replaceAPIsService } from '@/services/model.service'
+import { isAxiosError } from 'axios'
+import { toast } from 'react-toastify'
+import DaPopup from '@/components/atoms/DaPopup'
+import DaFileUpload from '@/components/atoms/DaFileUpload'
+import { DaButton } from '@/components/atoms/DaButton'
 
 const PageVehicleApi = () => {
   const { model_id, tab } = useParams()
   const navigate = useNavigate()
   const [selectedApi, setSelectedApi] = useState<VehicleApi | null>(null)
-  const [activeTab, setActiveTab] = useState<'list' | 'tree' | 'compare'>(
-    'list',
-  )
-  const [activeModelApis] = useModelStore((state) => [state.activeModelApis])
-  const { data: model } = useCurrentModel()
+  const [activeTab, setActiveTab] = useState<
+    'list' | 'tree' | 'compare' | 'hierarchical'
+  >('list')
+  const [activeModelApis, refreshModel] = useModelStore((state) => [
+    state.activeModelApis,
+    state.refreshModel,
+  ])
+  const { data: model, refetch } = useCurrentModel()
+
+  const [loading, setLoading] = useState(false)
+  const [url, setUrl] = useState('')
+  const [showUpload, setShowUpload] = useState(false)
+
+  useEffect(() => {
+    setSelectedApi(
+      (prev) => activeModelApis?.find((api) => api.name === prev?.name) || null,
+    )
+  }, [activeModelApis])
+
+  const handleReplaceAPI = async () => {
+    try {
+      setLoading(true)
+      await replaceAPIsService(model_id as string, url)
+      await Promise.all([refetch(), refreshModel()])
+      toast.success('APIs replaced successfully')
+
+      setUrl('')
+      setShowUpload(false)
+    } catch (error) {
+      console.error(error)
+      if (isAxiosError(error)) {
+        toast.error(error.response?.data?.message || 'Failed to replace APIs')
+      } else {
+        toast.error('Failed to replace APIs')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleApiClick = (apiDetails: VehicleApi) => {
     // console.log('apiDetails', apiDetails)
@@ -53,6 +97,14 @@ const PageVehicleApi = () => {
               List View
             </DaTabItem>
 
+            {/* <DaTabItem
+              active={activeTab === 'hierarchical'}
+              onClick={() => setActiveTab('hierarchical')}
+            >
+              <TbListTree className="w-5 h-5 mr-2" />
+              Hierarchical View
+            </DaTabItem> */}
+
             <DaTabItem
               active={activeTab === 'tree'}
               onClick={() => setActiveTab('tree')}
@@ -72,32 +124,44 @@ const PageVehicleApi = () => {
               active={false}
               onClick={async () => {
                 if (!model) return
-                    try {
-                      const data = await getComputedAPIs(model.id)
-                      const link = document.createElement('a')
-                      link.href = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 4))}`
-                      link.download = `${model.name}_vss.json`
-                      document.body.appendChild(link)
-                      link.click()
-                      document.body.removeChild(link)
-                    } catch (e) {
-                      console.error(e)
-                    }
+                try {
+                  const data = await getComputedAPIs(model.id)
+                  const link = document.createElement('a')
+                  link.href = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 4))}`
+                  link.download = `${model.name}_vss.json`
+                  document.body.appendChild(link)
+                  link.click()
+                  document.body.removeChild(link)
+                } catch (e) {
+                  console.error(e)
+                }
               }}
             >
               <TbDownload className="w-5 h-5 mr-2" />
               Download as JSON
             </DaTabItem>
-            
+            <DaTabItem
+              active={false}
+              onClick={() => {
+                if (!model) return
+                setShowUpload(true)
+              }}
+            >
+              <TbReplace className="h-5 w-5 mr-2" />
+              Replace Vehicle API
+            </DaTabItem>
           </div>
           <DaText variant="regular-bold" className="text-da-primary-500 pr-4">
-            COVESA VSS {(model && model.api_version) ?? 'v4.1'}
+            {model?.api_version && `COVESA VSS ${model.api_version}`}
           </DaText>
         </div>
-        {activeTab === 'list' && (
+        {(activeTab === 'list' || activeTab === 'hierarchical') && (
           <div className="grow w-full flex overflow-auto">
             <div className="flex-1 flex w-full h-full overflow-auto border-r">
-              <ModelApiList onApiClick={handleApiClick} />
+              <ModelApiList
+                onApiClick={handleApiClick}
+                viewMode={activeTab === 'list' ? 'list' : 'hierarchical'}
+              />
             </div>
             <div className="flex-1 flex w-full h-full overflow-auto">
               {selectedApi ? (
@@ -113,6 +177,7 @@ const PageVehicleApi = () => {
             </div>
           </div>
         )}
+
         {activeTab === 'tree' && (
           <div className="flex w-full grow overflow-auto items-center justify-center">
             <DaTreeView onNodeClick={() => setActiveTab('list')} />
@@ -123,6 +188,25 @@ const PageVehicleApi = () => {
             <VssComparator />
           </div>
         )}
+
+        <DaPopup trigger={<></>} state={[showUpload, setShowUpload]}>
+          <div className="w-[280px]">
+            <DaText variant="regular-bold" className="text-center">
+              Upload Vehicle API file
+            </DaText>
+            <div className="h-2" />
+            <DaFileUpload onFileUpload={(url) => setUrl(url)} accept=".json" />
+            <DaButton
+              size="sm"
+              className="w-full mt-4"
+              onClick={handleReplaceAPI}
+              disabled={!url || loading}
+            >
+              {loading && <TbLoader className="animate-spin w-4 h-4 mr-2" />}
+              Replace Vehicle API
+            </DaButton>
+          </div>
+        </DaPopup>
       </div>
     </DaLoadingWrapper>
   )

@@ -20,6 +20,7 @@ import { FaGithub } from 'react-icons/fa6'
 import useGithubAuth from '@/hooks/useGithubAuth'
 import {
   TbChevronDown,
+  TbEdit,
   TbExternalLink,
   TbLoader,
   TbTrash,
@@ -29,6 +30,8 @@ import DaMenu from '../atoms/DaMenu'
 import DaConsumedPrototypes from '../molecules/DaConsumedPrototypes'
 import { deleteExtendedApi } from '@/services/extendedApis.service'
 import useModelStore from '@/stores/modelStore'
+import { customAPIs } from '@/data/customAPI'
+import DaVehicleAPIEditor from '../molecules/DaVehicleAPIEditor'
 
 interface ApiDetailProps {
   apiDetails: any
@@ -58,11 +61,12 @@ const ApiDetail = ({
 
   const { onTriggerAuth, loading, user, access, error } = useGithubAuth()
   const { data, refetch: refetchCurrIssue } = useCurrentExtendedApiIssue()
+  const [isEditing, setIsEditing] = useState(false)
   const refreshModel = useModelStore((state) => state.refreshModel)
 
   const handleDeleteWishlistApi = async () => {
     if (model) {
-      if (model.api_version && apiDetails?.id) {
+      if (apiDetails?.id) {
         await deleteExtendedApi(apiDetails.id)
         await refreshModel()
       } else if (model.custom_apis) {
@@ -207,14 +211,18 @@ const ApiDetail = ({
           )}
         </DaCopy>
         <div className="flex items-center space-x-2">
-          {isLoading ? (
+          {isLoading && (
             <div className="flex items-center text-da-gray-medium">
               <TbLoader className="animate mr-2 h-5 w-5 animate-spin text-da-gray-medium" />
               <DaText variant="small-bold">Deleting...</DaText>
             </div>
-          ) : (
-            !forceSimpleMode &&
-            apiDetails.isWishlist &&
+          )}
+
+          {!forceSimpleMode &&
+            (apiDetails?.id ||
+              model?.custom_apis?.some(
+                (api) => api?.name === apiDetails?.name,
+              )) &&
             isAuthorized && (
               <DaMenu
                 trigger={
@@ -227,6 +235,15 @@ const ApiDetail = ({
                 }
               >
                 <div className="da-menu-dropdown flex flex-col">
+                  <DaButton
+                    variant="destructive"
+                    size="sm"
+                    className="flex w-full !justify-start"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    <TbEdit className="mr-2 h-5 w-5" />
+                    <div className="da-label-small-bold">Edit Signal</div>
+                  </DaButton>
                   {data ? (
                     <Link
                       to={data.link}
@@ -258,14 +275,11 @@ const ApiDetail = ({
                     onClick={() => setConfirmPopupOpen(true)}
                   >
                     <TbTrash className="mr-2 h-5 w-5" />
-                    <div className="da-label-small-bold">
-                      Delete Wishlist Signal
-                    </div>
+                    <div className="da-label-small-bold">Delete Signal</div>
                   </DaButton>
                 </div>
               </DaMenu>
-            )
-          )}
+            )}
           <DaConfirmPopup
             onConfirm={handleDeleteWishlistApi}
             state={[confirmPopupOpen, setConfirmPopupOpen]}
@@ -317,11 +331,23 @@ const ApiDetail = ({
         <DaText variant="regular-bold" className="flex text-da-secondary-500">
           VSS Specification
         </DaText>
-        <DaTableProperty
-          diffDetail={translatedDiffDetail}
-          properties={vssSpecificationProperties}
-          syncHeight={syncHeight}
-        />
+        {isEditing ? (
+          <DaVehicleAPIEditor
+            onCancel={() => setIsEditing(false)}
+            onUpdate={async () => {
+              await Promise.all([refetch(), refreshModel()])
+              setIsEditing(false)
+            }}
+            apiDetails={apiDetails}
+            className="mt-2"
+          />
+        ) : (
+          <DaTableProperty
+            diffDetail={translatedDiffDetail}
+            properties={vssSpecificationProperties}
+            syncHeight={syncHeight}
+          />
+        )}
 
         <DaText
           variant="regular-bold"

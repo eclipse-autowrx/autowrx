@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils'
 import { useSystemUI } from '@/hooks/useSystemUI'
 import DaCheckbox from '../atoms/DaCheckbox'
 import FlowSystemInterface from '../molecules/flow/FlowSystemInterface'
-import FlowSystemActivity from '../molecules/flow/FlowSystemActivity'
+import FlowItem from '../molecules/flow/FlowItem'
 import DaText from '../atoms/DaText'
 
 const PrototypeTabFlow = () => {
@@ -304,7 +304,7 @@ const PrototypeTabFlow = () => {
                       {step.flows.map((flow, flowIndex) => (
                         <tr key={flowIndex} className="font-medium text-xs">
                           <td className="border p-2 text-center">
-                            <FlowSystemActivity
+                            <FlowItem
                               text={flow.offBoard.smartPhone}
                               key={`${flowIndex}-smartPhone`}
                             />
@@ -316,7 +316,7 @@ const PrototypeTabFlow = () => {
                             />
                           </td>
                           <td className="border p-2 text-center">
-                            <FlowSystemActivity
+                            <FlowItem
                               text={flow.offBoard.cloud}
                               key={`${flowIndex}-cloud`}
                             />
@@ -328,7 +328,7 @@ const PrototypeTabFlow = () => {
                             />
                           </td>
                           <td className="border p-2 text-center">
-                            <FlowSystemActivity
+                            <FlowItem
                               text={flow.onBoard.sdvRuntime}
                               key={`${flowIndex}-sdvRuntime`}
                             />
@@ -340,7 +340,7 @@ const PrototypeTabFlow = () => {
                             />
                           </td>
                           <td className="border p-2 text-center">
-                            <FlowSystemActivity
+                            <FlowItem
                               text={flow.onBoard.embedded}
                               key={`${flowIndex}-embedded`}
                             />
@@ -352,7 +352,7 @@ const PrototypeTabFlow = () => {
                             />
                           </td>
                           <td className="border p-2 text-center">
-                            <FlowSystemActivity
+                            <FlowItem
                               text={flow.onBoard.sensors}
                               key={`${flowIndex}-sensors`}
                             />
