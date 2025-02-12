@@ -177,10 +177,10 @@ const PageModelList = () => {
     : [{ title: 'Public', value: 'public', count: filteredPublic.length }]
 
   // Logging for debugging
-  console.log('ownedModels', ownedModels)
-  console.log('contributedModels', contributedModels)
-  console.log('publicReleasedModels', publicReleasedModels)
-  console.log('filteredPublic', filteredPublic)
+  // console.log('ownedModels', ownedModels)
+  // console.log('contributedModels', contributedModels)
+  // console.log('publicReleasedModels', publicReleasedModels)
+  // console.log('filteredPublic', filteredPublic)
 
   return (
     <div className="flex flex-col w-full h-full relative">

@@ -13,6 +13,7 @@ export interface InputProps
   iconBefore?: boolean
   IconOnClick?: () => void
   iconSize?: number
+  labelClassName?: string
 }
 
 const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
@@ -27,6 +28,7 @@ const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
       iconBefore = false,
       IconOnClick,
       iconSize,
+      labelClassName,
       ...props
     },
     ref,
@@ -40,6 +42,7 @@ const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
             className={cn(
               'mb-1',
               focused ? `text-da-primary-500` : `text-da-gray-medium`,
+              labelClassName,
             )}
           >
             {label}

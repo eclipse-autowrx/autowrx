@@ -167,7 +167,7 @@ const home = [
         items: [
           {
             name: 'Bosch',
-            img: 'https://bewebstudio.digitalauto.tech/data/projects/OezCm7PTy8FT/a/bosch.png',
+            img: 'https://bewebstudio.digitalauto.tech/data/projects/xT9wA8QU7xEN/bosch-logo.png',
             url: 'https://www.bosch.com/',
           },
           {

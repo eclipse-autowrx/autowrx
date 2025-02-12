@@ -36,7 +36,7 @@ export type ModelLite = {
 
 export type Model = {
   id: string
-  custom_apis?: Record<string, any>
+  custom_apis?: any[]
   api_version?: string
   main_api: string
   model_home_image_file?: string
@@ -118,7 +118,7 @@ export type ModelCreate = {
 
 export type VehicleApi = {
   name: string
-  datatype?: string
+  datatype?: string | null
   description: string
   type: string
   uuid?: string
@@ -136,7 +136,7 @@ export type CustomApi = {
   name: string
   description: string
   type: string
-  datatype?: string
+  datatype?: string | null
 }
 
 export type Cvi = Record<string, VehicleApi>

@@ -13,12 +13,10 @@ import useGenAIWizardStore from '@/stores/genAIWizardStore'
 import DaPopup from '@/components/atoms/DaPopup'
 import DaText from '@/components/atoms/DaText'
 import DaGeneratorSelectPopup from './DaGeneratorSelectPopup'
-import { io } from 'socket.io-client'
 import useListMarketplaceAddOns from '@/hooks/useListMarketplaceAddOns'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import Prompt_Templates from '../../../../instance/prompt_templates.js'
-import useSocketIO from '@/hooks/useSocketIO.js'
 import { retry } from '@/lib/retry.js'
 
 const DaSpeechToText = lazy(() => retry(() => import('./DaSpeechToText')))
@@ -57,11 +55,11 @@ const DaGenAI_WizardBase = ({
   } = useGenAIWizardStore()
   const [openSelectorPopup, setOpenSelectorPopup] = useState(false)
   const [promptTemplates, setPromptTemplates] = useState<any[]>([])
-  const socket = useSocketIO()
 
   const prompt = wizardPrompt
   const setPrompt = setWizardPrompt
 
+  // Determine built-in add-ons based on the type.
   const addOnsArray =
     {
       GenAI_Python: config.genAI.sdvApp,
@@ -69,126 +67,130 @@ const DaGenAI_WizardBase = ({
       GenAI_Widget: config.genAI.widget,
     }[type] || []
 
+  // builtInAddOns contain the full definitions including customPayload.
   const builtInAddOns: AddOn[] = addOnsArray.map((addOn: any) => ({
     ...addOn,
-    customPayload: addOn.customPayload(prompt),
+    customPayload: addOn.customPayload,
   }))
 
-  useEffect(() => {
-    if (!socket) {
-      return
-    }
-
-    socket.on('connect', () => {
-      console.log('Socket.IO connection established')
-    })
-
-    socket.on('etas-stream', (rawMessage) => {
-      let message
-      try {
-        message =
-          typeof rawMessage === 'string' ? JSON.parse(rawMessage) : rawMessage
-      } catch (error) {
-        console.error('Error parsing JSON:', error, rawMessage)
-        return
-      }
-
-      const cleanedContent = message.content
-        .replace(/^=+\s*(.*?)\s*=+$/g, '$1')
-        .trim()
-
-      if (message.source && message.content) {
-        const newLog = {
-          source: message.source.trim().toLowerCase(),
-          content: cleanedContent,
-        }
-
-        setUniqueLogs((prevLogs) => {
-          const exists = prevLogs.some(
-            (log) =>
-              log.source === newLog.source && log.content === newLog.content,
-          )
-
-          if (!exists) {
-            return [...prevLogs, newLog]
-          }
-          return prevLogs
-        })
-      } else {
-        console.warn('Message is missing source or content:', message)
-      }
-    })
-
-    socket.on('connect_error', (error) => {
-      console.error('Socket.IO connection error:', error)
-    })
-
-    socket.on('disconnect', () => {
-      console.log('Socket.IO connection closed')
-    })
-
-    return () => {
-      socket.disconnect()
-    }
-  }, [access, socket])
-
+  // -------------------------------
+  // Updated handleGenerate using POST with manual SSE stream parsing
+  // -------------------------------
   const handleGenerate = async () => {
     if (!selectedAddOn) return
     onCodeGenerated('')
     setCodeGenerating(true)
     onLoadingChange(true)
     setUniqueLogs([])
+
+    if (selectedAddOn.isMock) {
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      onCodeGenerated(default_generated_code)
+      setPrototypeData({ code: default_generated_code })
+      setCodeGenerating(false)
+      onLoadingChange(false)
+      return
+    }
+
     try {
-      if (selectedAddOn.isMock) {
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        onCodeGenerated && onCodeGenerated(default_generated_code)
-        setPrototypeData({ code: default_generated_code })
-        return
+      // Create the payload using the add-on’s customPayload function.
+      const payload = selectedAddOn.customPayload(prompt)
+      console.log('Payload:', payload)
+
+      const options = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${access?.token}`,
+        },
+        body: JSON.stringify(payload),
       }
 
-      let response
-      if (
-        selectedAddOn.endpointUrl &&
-        !(marketplaceAddOns || []).some(
-          (addOn) => addOn.id === selectedAddOn.id,
-        )
-      ) {
-        response = await axios.post(
-          selectedAddOn.endpointUrl,
-          { prompt },
-          { headers: { Authorization: `Bearer ${access?.token}` } },
-        )
-        onCodeGenerated(response.data.payload.code)
-        setWizardGeneratedCode(response.data.payload.code)
-      } else {
-        response = await axios.post(
-          config.genAI.defaultEndpointUrl,
-          {
-            endpointURL: selectedAddOn.endpointUrl,
-            inputPrompt: prompt,
-            systemMessage: selectedAddOn.samples || '',
-          },
-          { headers: { Authorization: `Bearer ${access?.token}` } },
-        )
-        onCodeGenerated(response.data)
-        setWizardGeneratedCode(response.data)
+      // A manual implementation to read a streaming response:
+      async function streamSSE(url: string, options: RequestInit) {
+        const response = await fetch(url, options)
+        if (!response.ok) {
+          throw new Error('Network response was not ok')
+        }
+        const reader = response.body?.getReader()
+        if (!reader) {
+          throw new Error('ReadableStream not supported in this browser')
+        }
+        const decoder = new TextDecoder('utf-8')
+        let buffer = ''
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          buffer += decoder.decode(value, { stream: true })
+          // SSE events are typically separated by a double newline.
+          const events = buffer.split('\n\n')
+          // Keep the last incomplete event in the buffer.
+          buffer = events.pop() || ''
+          for (const eventStr of events) {
+            // Process each event block.
+            const lines = eventStr.split('\n')
+            let eventData = ''
+            for (const line of lines) {
+              if (line.startsWith('data:')) {
+                eventData += line.slice(5).trim()
+              }
+            }
+            if (eventData) {
+              try {
+                const eventObj = JSON.parse(eventData)
+                if (eventObj.message && eventObj.message.content) {
+                  const { type: contentType, payload: eventPayload } =
+                    eventObj.message.content
+                  if (contentType === 'code') {
+                    onCodeGenerated(eventPayload)
+                    setWizardGeneratedCode(eventPayload)
+                  } else if (contentType === 'selected-signals') {
+                    // Split the signal string by '%n' and join with newline.
+                    const signals = eventPayload
+                      .split('%n')
+                      .filter((signal: any) => signal.trim() !== '')
+                    const formattedSignals = signals.join('\n')
+                    setUniqueLogs((prevLogs) => {
+                      const existingIndex = prevLogs.findIndex(
+                        (log) => log.source === contentType,
+                      )
+                      if (existingIndex !== -1) {
+                        const newLogs = [...prevLogs]
+                        newLogs[existingIndex] = {
+                          source: contentType,
+                          content: formattedSignals,
+                        }
+                        return newLogs
+                      }
+                      return [
+                        ...prevLogs,
+                        { source: contentType, content: formattedSignals },
+                      ]
+                    })
+                  }
+                }
+              } catch (e) {
+                console.error('Error parsing SSE event:', e)
+              }
+            }
+          }
+        }
       }
+
+      await streamSSE(selectedAddOn.endpointUrl, options)
     } catch (error) {
       timeouts.current.forEach((timeout) => clearTimeout(timeout))
       timeouts.current = []
       console.error('Error generating AI content:', error)
-      if (axios.isAxiosError && axios.isAxiosError(error)) {
-        toast.error(
-          error.response?.data?.message || 'Error generating AI content',
-        )
-      } else {
-        toast.error('Error generating AI content')
-      }
+      toast.error('Error generating AI content')
     } finally {
       setCodeGenerating(false)
       onLoadingChange(false)
     }
   }
+  // -------------------------------
+  // End updated handleGenerate
+  // -------------------------------
 
   useClickOutside(dropdownRef, () => {
     setShowDropdown(false)
@@ -204,28 +206,27 @@ const DaGenAI_WizardBase = ({
     }
   }, [prompt])
 
+  // -------------------------------
+  // Rehydrate the add-on from localStorage
+  // -------------------------------
   useEffect(() => {
-    const getSelectedGeneratorFromLocalStorage = (): AddOn | null => {
-      const storedAddOn = localStorage.getItem('lastUsed_GenAIWizardGenerator')
-      return storedAddOn ? JSON.parse(storedAddOn) : null
+    const storedAddOnStr = localStorage.getItem('lastUsed_GenAIWizardGenerator')
+    let selected: AddOn | undefined = undefined
+
+    if (storedAddOnStr) {
+      const storedAddOn = JSON.parse(storedAddOnStr)
+      selected = builtInAddOns.find((addOn) => addOn.id === storedAddOn.id)
     }
 
-    const lastUsedGenAI = getSelectedGeneratorFromLocalStorage()
-    if (lastUsedGenAI) {
-      setSelectedAddOn(lastUsedGenAI)
-    } else {
-      // If not last used found in localStorage, check builtInAddOns for etas-sdv-genai if instance is etas
-      let defaultAddOn: AddOn | undefined
-      if (config.instance === 'etas') {
-        defaultAddOn = builtInAddOns.find(
-          (addOn) => addOn.id === 'etas-sdv-genai',
-        )
-      } else {
-        defaultAddOn = builtInAddOns[0]
-      }
-      if (defaultAddOn) {
-        setSelectedAddOn(defaultAddOn)
-      }
+    if (!selected) {
+      selected =
+        config.instance === 'etas'
+          ? builtInAddOns.find((addOn) => addOn.id === 'etas-sdv-genai')
+          : builtInAddOns[0]
+    }
+
+    if (selected) {
+      setSelectedAddOn(selected)
     }
   }, [builtInAddOns])
 
@@ -243,11 +244,9 @@ const DaGenAI_WizardBase = ({
                 <DaButton
                   variant="plain"
                   size="sm"
-                  onClick={() => {
-                    setShowDropdown(!showDropdown)
-                  }}
+                  onClick={() => setShowDropdown(!showDropdown)}
                 >
-                  <TbHistory className="mr-1 size-4 rotate-[0deg]" />
+                  <TbHistory className="mr-1 size-4" />
                   History
                 </DaButton>
               )}
@@ -307,14 +306,15 @@ const DaGenAI_WizardBase = ({
 
         {/* Status Section */}
         <div className="da-label-small-medium mb-1 mt-2">Status</div>
-
         <div className="flex flex-col mt-0 h-full mb-2 space-y-2 overflow-y-auto flex-shrink-0 max-h-[100px] xl:max-h-[150px] 2xl:max-h-[200px] rounded-md bg-da-gray-darkest p-3 text-white text-sm">
           {uniqueLogs.map((log, index) => (
-            <div key={index} className="flex w-full items-center">
-              <div className="uppercase font-bold px-2 py-1 bg-white/25 w-fit h-fit rounded-md mr-1">
+            <div key={index} className="flex flex-col w-full">
+              <div className="uppercase text-xs font-bold p-1 mb-2 bg-white/25 w-fit h-fit rounded-md mr-1">
                 {log.source}
               </div>
-              {log.content}
+              <div className="flex whitespace-pre-wrap leading-relaxed">
+                {log.content}
+              </div>
             </div>
           ))}
         </div>
@@ -334,9 +334,11 @@ const DaGenAI_WizardBase = ({
             }
             onSelectedGeneratorChange={(addOn: AddOn) => {
               setSelectedAddOn(addOn)
+              // Remove customPayload before storing so it can be rehydrated later.
+              const { customPayload, ...addOnToStore } = addOn
               localStorage.setItem(
                 'lastUsed_GenAIWizardGenerator',
-                JSON.stringify(addOn),
+                JSON.stringify(addOnToStore),
               )
             }}
             onClick={() => setOpenSelectorPopup(false)}

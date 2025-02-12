@@ -239,43 +239,43 @@ const FormInventoryItem = ({ type }: FormInventoryItemProps) => {
 
   return (
     <form className="w-[600px]">
-      <div>
-        <DaText variant="huge-bold" className="text-da-primary-500">
-          New Inventory Item
-        </DaText>
-      </div>
+      <div className="mt-5 border shadow rounded-lg">
+        <div className="border-b py-4 px-5">
+          <DaText variant="regular-bold" className="!text-da-gray-darkest">
+            Basic Information
+          </DaText>
+        </div>
+        <div className="pb-6 px-5 pt-3">
+          <DaText variant="small-bold" className="!text-da-gray-darkest">
+            Name *
+          </DaText>
+          <DaInput
+            className="mt-1"
+            inputClassName="text-sm text-da-gray-darkest"
+            placeholder="Inventory Item Name"
+          />
 
-      <div className="mt-5">
-        <DaText variant="small-bold" className="!text-da-gray-darkest">
-          Name *
-        </DaText>
-        <DaInput
-          className="mt-1"
-          wrapperClassName="h-8 shadow"
-          inputClassName="text-sm h-6 text-da-gray-darkest"
-          placeholder="Inventory Item Name"
-        />
-      </div>
+          <div className="mt-3" />
 
-      <div className="mt-3">
-        <DaText variant="small-bold" className="!text-da-gray-darkest">
-          Type *
-        </DaText>
-        <DaSelect
-          value={data.inventoryType}
-          onValueChange={handleInventoryTypeChange}
-          className="mt-1 h-8 text-sm !shadow text-da-gray-darkest"
-        >
-          <DaSelectItem className="text-sm" value="system_interface">
-            System Interface
-          </DaSelectItem>
-          <DaSelectItem className="text-sm" value="system_activity">
-            System Activity
-          </DaSelectItem>
-          <DaSelectItem className="text-sm" value="flow_headers">
-            Flow Headers
-          </DaSelectItem>
-        </DaSelect>
+          <DaText variant="small-bold" className="!text-da-gray-darkest">
+            Type *
+          </DaText>
+          <DaSelect
+            value={data.inventoryType}
+            onValueChange={handleInventoryTypeChange}
+            className="mt-1 text-sm text-da-gray-darkest"
+          >
+            <DaSelectItem className="text-sm" value="system_interface">
+              System Interface
+            </DaSelectItem>
+            <DaSelectItem className="text-sm" value="system_activity">
+              System Activity
+            </DaSelectItem>
+            <DaSelectItem className="text-sm" value="flow_headers">
+              Flow Headers
+            </DaSelectItem>
+          </DaSelect>
+        </div>
       </div>
 
       <div className="border-t mt-6" />
@@ -299,10 +299,6 @@ const FormInventoryItem = ({ type }: FormInventoryItemProps) => {
           </>
         )}
       </div>
-
-      <DaButton disabled size="sm" className="w-full mt-10">
-        Create
-      </DaButton>
     </form>
   )
 }

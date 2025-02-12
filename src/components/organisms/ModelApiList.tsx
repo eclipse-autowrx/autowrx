@@ -16,13 +16,19 @@ import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import { DaText } from '../atoms/DaText'
 import DaLoading from '../atoms/DaLoading'
+import { DaHierarchicalView } from '@/components/molecules/DaApiHierarchicalView'
 
 interface ModelApiListProps {
   onApiClick?: (details: any) => void
   readOnly?: boolean
+  viewMode?: 'list' | 'hierarchical'
 }
 
-const ModelApiList = ({ onApiClick, readOnly }: ModelApiListProps) => {
+const ModelApiList = ({
+  onApiClick,
+  readOnly,
+  viewMode = 'list',
+}: ModelApiListProps) => {
   const { model_id, api } = useParams()
   const location = useLocation()
   const navigate = useNavigate()
@@ -137,14 +143,16 @@ const ModelApiList = ({ onApiClick, readOnly }: ModelApiListProps) => {
           value={searchTerm}
           onChange={(e) => handleSearchChange(e.target.value)}
         />
-        <DaFilter
-          categories={{
-            Signal: ['Default', 'Wishlist'],
-            Type: ['Branch', 'Sensor', 'Actuator', 'Attribute'],
-          }}
-          onChange={handleFilterChange}
-          className="w-full"
-        />
+        {viewMode !== 'hierarchical' && (
+          <DaFilter
+            categories={{
+              Signal: ['Default', 'Wishlist'],
+              Type: ['Branch', 'Sensor', 'Actuator', 'Attribute'],
+            }}
+            onChange={handleFilterChange}
+            className="w-full"
+          />
+        )}
       </div>
       <div className="py-1">
         {isAuthorized && (
@@ -175,11 +183,19 @@ const ModelApiList = ({ onApiClick, readOnly }: ModelApiListProps) => {
       <div className="flex h-full w-full flex-col overflow-y-auto">
         {filteredApiList ? (
           filteredApiList.length > 0 ? (
-            <DaApiList
-              apis={filteredApiList}
-              onApiClick={onApiClick}
-              selectedApi={selectedApi}
-            />
+            viewMode === 'list' ? (
+              <DaApiList
+                apis={filteredApiList}
+                onApiClick={onApiClick}
+                selectedApi={selectedApi}
+              />
+            ) : (
+              <DaHierarchicalView
+                apis={filteredApiList}
+                onApiClick={onApiClick}
+                selectedApi={selectedApi}
+              />
+            )
           ) : (
             <div className="flex w-full h-full items-center justify-center mb-24">
               <DaText

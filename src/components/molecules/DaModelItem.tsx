@@ -77,12 +77,16 @@ const DaModelItem = ({ model, className }: DaModelItemProps) => {
                 </div>
               </DaTooltip>
             )}
-            <DaTooltip content="Utilized VSS Signals" delay={300}>
-              <div className="flex items-center font-semibold">
-                <TbAffiliate className="text-da-primary-500 size-4 mr-1" />
-                {model.stats?.apis?.used?.count || 0}
-              </div>
-            </DaTooltip>
+
+            {model.stats && model.stats?.apis?.used?.count > 0 && (
+              <DaTooltip content="Utilized VSS Signals" delay={300}>
+                <div className="flex items-center font-semibold">
+                  <TbAffiliate className="text-da-primary-500 size-4 mr-1" />
+                  {model.stats?.apis?.used?.count || 0}
+                </div>
+              </DaTooltip>
+            )}
+
             <DaTooltip content="Prototypes" delay={300}>
               <div className="flex items-center font-semibold ">
                 <TbCode className="text-da-primary-500 size-4 mr-1" />

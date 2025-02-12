@@ -3,8 +3,13 @@ import { cn } from '@/lib/utils'
 export type ASILLevel = 'A' | 'B' | 'C' | 'D' | 'QM'
 
 interface ASILBadgeProps {
-  level: ASILLevel
+  preAsilLevel: ASILLevel
+  postAsilLevel?: ASILLevel
   showBadge?: boolean
+  showFullText?: boolean
+  className?: string
+  preItemClassName?: string
+  postItemClassName?: string
 }
 
 const levelColors: Record<ASILLevel, string> = {
@@ -15,17 +20,56 @@ const levelColors: Record<ASILLevel, string> = {
   QM: 'bg-blue-500 border border-blue-700',
 }
 
-export const ASILBadge = ({ level, showBadge = true }: ASILBadgeProps) => {
+export const ASILBadge = ({
+  preAsilLevel,
+  postAsilLevel,
+  showBadge = true,
+  showFullText = false,
+  className,
+  preItemClassName,
+  postItemClassName,
+}: ASILBadgeProps) => {
   if (!showBadge) return null
 
+  // Display text: if showFullText is true, then show "ASIL-X" (except QM remains QM)
+  const displayPre = showFullText
+    ? preAsilLevel === 'QM'
+      ? 'QM'
+      : `ASIL-${preAsilLevel}`
+    : preAsilLevel
+
+  const displayPost =
+    postAsilLevel &&
+    (showFullText
+      ? postAsilLevel === 'QM'
+        ? 'QM'
+        : `ASIL-${postAsilLevel}`
+      : postAsilLevel)
+
   return (
-    <span
-      className={cn(
-        'flex px-1 items-center justify-center font-bold rounded-md text-white',
-        levelColors[level],
+    <div className={cn('relative inline-block', className)}>
+      {/* Pre-Mitigation badge (the main, larger badge) */}
+      <span
+        className={cn(
+          'flex w-9 h-7 text-[9px] py-0 px-1 items-start justify-start font-bold rounded-md text-white',
+          levelColors[preAsilLevel],
+          preItemClassName,
+        )}
+      >
+        {displayPre}
+      </span>
+      {/* Post-Mitigation badge (if provided), rendered as a smaller rectangle in the bottom right */}
+      {displayPost && (
+        <span
+          className={cn(
+            'absolute w-6 !text-[9px] bottom-1 right-1 transform translate-x-1/2 translate-y-1/2 flex px-1 py-0.5 items-center justify-center font-bold rounded-md text-white',
+            levelColors[postAsilLevel],
+            postItemClassName,
+          )}
+        >
+          {displayPost}
+        </span>
       )}
-    >
-      {level}
-    </span>
+    </div>
   )
 }

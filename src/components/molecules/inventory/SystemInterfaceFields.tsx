@@ -96,7 +96,7 @@ const SystemInterfaceFields = () => {
           onClick={() => setType('reference')}
           type="button"
           className={clsx(
-            'h-10 px-3 flex items-center border rounded-lg shadow gap-2 flex-1',
+            'h-10 px-3 flex items-center border rounded-md gap-2 flex-1',
             type === 'reference' &&
               'border-da-primary-500 text-da-gray-darkest',
           )}
@@ -112,7 +112,7 @@ const SystemInterfaceFields = () => {
           onClick={() => setType('manual')}
           type="button"
           className={clsx(
-            'h-10 px-3 flex items-center border rounded-lg shadow gap-2 flex-1',
+            'h-10 px-3 flex items-center border rounded-md gap-2 flex-1',
             type === 'manual' && 'border-da-primary-500 text-da-gray-darkest',
           )}
         >
@@ -134,9 +134,8 @@ const SystemInterfaceFields = () => {
           <div className="flex gap-2 mt-1">
             <DaInput
               className="flex-1"
-              wrapperClassName="h-8 shadow"
               placeholder={`${location.origin}/model/<model_id>/api/<api>`}
-              inputClassName="text-sm h-6 flex-1 text-da-gray-darkest"
+              inputClassName="text-sm   flex-1 text-da-gray-darkest"
             />
             <DaTooltip content="Check reference">
               <DaButton
@@ -147,9 +146,8 @@ const SystemInterfaceFields = () => {
                 }
                 type="button"
                 variant="outline-nocolor"
-                size="sm"
                 disabled={loading}
-                className="h-10 !text-da-gray-darkest"
+                className="h-10 !px-3 !text-sm !shadow-sm !text-da-gray-darkest"
               >
                 {loading ? (
                   <TbLoader className="animate-spin w-4 h-4 mr-1" />
@@ -231,8 +229,7 @@ const SystemInterfaceFields = () => {
             </DaText>
             <DaInput
               className="mt-1"
-              wrapperClassName="h-8 shadow"
-              inputClassName="text-sm h-6 text-da-gray-darkest"
+              inputClassName="text-sm text-da-gray-darkest"
               placeholder="Interface Name"
             />
           </div>
@@ -242,8 +239,7 @@ const SystemInterfaceFields = () => {
             </DaText>
             <DaInput
               className="mt-1"
-              wrapperClassName="h-8 shadow"
-              inputClassName="text-sm h-6 text-da-gray-darkest"
+              inputClassName="text-sm text-da-gray-darkest"
               placeholder="Description"
             />
           </div>
@@ -273,8 +269,7 @@ const SystemInterfaceFields = () => {
                 </DaText>
                 <DaInput
                   className="mt-1"
-                  wrapperClassName="h-8 shadow"
-                  inputClassName="text-sm h-6 text-da-gray-darkest"
+                  inputClassName="text-sm text-da-gray-darkest"
                   placeholder="Interface Type"
                 />
               </div>
@@ -284,8 +279,7 @@ const SystemInterfaceFields = () => {
                 </DaText>
                 <DaInput
                   className="mt-1"
-                  wrapperClassName="h-8 shadow"
-                  inputClassName="text-sm h-6 text-da-gray-darkest"
+                  inputClassName="text-sm text-da-gray-darkest"
                   placeholder="eg. string"
                 />
               </div>
@@ -295,8 +289,7 @@ const SystemInterfaceFields = () => {
                 </DaText>
                 <DaInput
                   className="mt-1"
-                  wrapperClassName="h-8 shadow"
-                  inputClassName="text-sm h-6 text-da-gray-darkest"
+                  inputClassName="text-sm text-da-gray-darkest"
                   placeholder="ASIL Level"
                 />
               </div>
@@ -306,8 +299,7 @@ const SystemInterfaceFields = () => {
                 </DaText>
                 <DaInput
                   className="mt-1"
-                  wrapperClassName="h-8 shadow"
-                  inputClassName="text-sm h-6 text-da-gray-darkest"
+                  inputClassName="text-sm text-da-gray-darkest"
                   placeholder="eg. ACTIVE, INACTIVE"
                 />
                 <DaText className="block !text-xs mt-1 !text-da-gray-dark">
@@ -321,8 +313,7 @@ const SystemInterfaceFields = () => {
                 </DaText>
                 <DaInput
                   className="mt-1"
-                  wrapperClassName="h-8 shadow"
-                  inputClassName="text-sm h-6 text-da-gray-darkest"
+                  inputClassName="text-sm text-da-gray-darkest"
                   placeholder="eg. km/h, m/s"
                 />
               </div>
@@ -332,8 +323,7 @@ const SystemInterfaceFields = () => {
                 </DaText>
                 <DaInput
                   className="mt-1"
-                  wrapperClassName="h-8 shadow"
-                  inputClassName="text-sm h-6 text-da-gray-darkest"
+                  inputClassName="text-sm text-da-gray-darkest"
                   placeholder="Max value"
                 />
               </div>
@@ -343,8 +333,7 @@ const SystemInterfaceFields = () => {
                 </DaText>
                 <DaInput
                   className="mt-1"
-                  wrapperClassName="h-8 shadow"
-                  inputClassName="text-sm h-6 text-da-gray-darkest"
+                  inputClassName="text-sm text-da-gray-darkest"
                   placeholder="Min value"
                 />
               </div>
@@ -354,8 +343,7 @@ const SystemInterfaceFields = () => {
                 </DaText>
                 <DaInput
                   className="mt-1"
-                  wrapperClassName="h-8 shadow"
-                  inputClassName="text-sm h-6 text-da-gray-darkest"
+                  inputClassName="text-sm text-da-gray-darkest"
                   placeholder="Threshold value"
                 />
               </div>
@@ -365,8 +353,7 @@ const SystemInterfaceFields = () => {
                 </DaText>
                 <DaInput
                   className="mt-1"
-                  wrapperClassName="h-8 shadow"
-                  inputClassName="text-sm h-6 text-da-gray-darkest"
+                  inputClassName="text-sm text-da-gray-darkest"
                   placeholder="eg. Right"
                 />
               </div>
@@ -376,8 +363,7 @@ const SystemInterfaceFields = () => {
                 </DaText>
                 <DaInput
                   className="mt-1"
-                  wrapperClassName="h-8 shadow"
-                  inputClassName="text-sm h-6 text-da-gray-darkest"
+                  inputClassName="text-sm text-da-gray-darkest"
                   placeholder="Component"
                 />
               </div>
@@ -387,8 +373,7 @@ const SystemInterfaceFields = () => {
                 </DaText>
                 <DaInput
                   className="mt-1"
-                  wrapperClassName="h-8 shadow"
-                  inputClassName="text-sm h-6 text-da-gray-darkest"
+                  inputClassName="text-sm text-da-gray-darkest"
                   placeholder="Owner"
                 />
               </div>
@@ -398,8 +383,7 @@ const SystemInterfaceFields = () => {
                 </DaText>
                 <DaInput
                   className="mt-1"
-                  wrapperClassName="h-8 shadow"
-                  inputClassName="text-sm h-6 text-da-gray-darkest"
+                  inputClassName="text-sm text-da-gray-darkest"
                   placeholder="Version"
                 />
               </div>
@@ -409,8 +393,7 @@ const SystemInterfaceFields = () => {
                 </DaText>
                 <DaInput
                   className="mt-1"
-                  wrapperClassName="h-8 shadow"
-                  inputClassName="text-sm h-6 text-da-gray-darkest"
+                  inputClassName="text-sm text-da-gray-darkest"
                   placeholder="Date"
                 />
               </div>
@@ -420,8 +403,7 @@ const SystemInterfaceFields = () => {
                 </DaText>
                 <DaInput
                   className="mt-1"
-                  wrapperClassName="h-8 shadow"
-                  inputClassName="text-sm h-6 text-da-gray-darkest"
+                  inputClassName="text-sm text-da-gray-darkest"
                   placeholder="Link"
                 />
               </div>
