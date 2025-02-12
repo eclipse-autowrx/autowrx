@@ -215,7 +215,7 @@ const PrototypeTabFlow = () => {
           />
         ) : (
           <>
-            <table className="w-full border-collapse table-fixed">
+            <table className="w-full table-fixed border-separate border-spacing-0">
               <colgroup>
                 <col className="w-[17.76%]" />
                 <col className="w-[2.80%] min-w-[40px]" />
@@ -227,7 +227,7 @@ const PrototypeTabFlow = () => {
                 <col className="w-[2.80%] min-w-[40px]" />
                 <col className="w-[17.76%]" />
               </colgroup>
-              <thead className="bg-gradient-to-tr from-da-secondary-500 to-da-primary-500 text-white">
+              <thead className="sticky top-0 z-10 bg-gradient-to-tr from-da-secondary-500 to-da-primary-500 text-white">
                 <tr className="text-sm uppercase">
                   <th
                     colSpan={3}
@@ -245,13 +245,11 @@ const PrototypeTabFlow = () => {
                 </tr>
                 <tr className="text-xs uppercase">
                   <th className="p-2 border border-white">Smart Phone</th>
-
-                  <th className="p-2 border border-white bg-opacity-20">
+                  <th className="p-2 border border-white">
                     <DaTooltip content="Phone2Cloud" className="normal-case">
                       <div className="cursor-pointer">p2c</div>
                     </DaTooltip>
                   </th>
-
                   <th className="p-2 border border-white">Cloud</th>
                   <th className="p-2 border border-white bg-opacity-20">
                     <DaTooltip content="Vehicle2Cloud" className="normal-case">

@@ -312,7 +312,7 @@ const DaPrototypeFlowEditor = ({
   return (
     <div className={cn('flex w-full h-full flex-col bg-white rounded-md')}>
       <>
-        <table className="table-fixed w-full">
+        <table className="table-fixed w-full border-separate border-spacing-0">
           <colgroup>
             <col className="w-[11.11%]" />
             <col className="w-[11.11%]" />
@@ -324,7 +324,7 @@ const DaPrototypeFlowEditor = ({
             <col className="w-[11.11%]" />
             <col className="w-[11.11%]" />
           </colgroup>
-          <thead className="bg-gradient-to-tr from-da-secondary-500 to-da-primary-500 text-white">
+          <thead className="sticky top-0 z-10 bg-gradient-to-tr from-da-secondary-500 to-da-primary-500 text-white">
             <tr className="text-sm uppercase">
               <th colSpan={3} className="font-semibold p-2 border border-white">
                 Off-board
@@ -336,13 +336,11 @@ const DaPrototypeFlowEditor = ({
             </tr>
             <tr className="text-xs uppercase">
               <th className="p-2 border border-white">Smart Phone</th>
-
               <th className="p-2 border border-white bg-opacity-20">
                 <DaTooltip content="Phone to Cloud" className="normal-case">
                   <div className="cursor-pointer">p2c</div>
                 </DaTooltip>
               </th>
-
               <th className="p-2 border border-white">Cloud</th>
               <th className="p-2 border border-white bg-opacity-20">
                 <DaTooltip content="Vehicle to Cloud" className="normal-case">

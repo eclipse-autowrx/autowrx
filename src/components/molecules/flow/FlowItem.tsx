@@ -239,7 +239,6 @@ const FlowItem = ({ text }: FlowItemActivityProps) => {
                       'approvedBy',
                       'approvedAt',
                       'asilLevel',
-                      'generatedAt',
                     ].includes(key),
                 )
                 .map(([key, value]) => {
