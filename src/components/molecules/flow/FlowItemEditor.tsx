@@ -24,11 +24,13 @@ export interface FormData {
   riskAssessment?: string
   approvedBy?: string
   approvedAt?: string
-  generatedAt?: string
   [key: string]: string | ASILLevel | undefined
 }
 
-export const defaultRiskAssessmentPlaceholder = `# Mitigation
+export const defaultRiskAssessmentPlaceholder = `# Hazards
+-
+
+# Mitigation
 - 
 
 # Risk Classification
@@ -87,7 +89,6 @@ const FlowItemEditor = ({ value, onChange, children }: FlowItemEditorProps) => {
             : defaultRiskAssessmentPlaceholder,
         approvedBy: parsed.approvedBy || '',
         approvedAt: parsed.approvedAt || '',
-        generatedAt: parsed.generatedAt || '',
         ...rest,
       }
     } catch {
@@ -106,7 +107,6 @@ const FlowItemEditor = ({ value, onChange, children }: FlowItemEditorProps) => {
     'riskAssessment',
     'approvedBy',
     'approvedAt',
-    'generatedAt',
   ]
 
   const handleInputChange = (name: keyof FormData, value: string) => {
