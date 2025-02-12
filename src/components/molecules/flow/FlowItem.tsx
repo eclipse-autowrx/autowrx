@@ -22,7 +22,7 @@ interface SystemActivityData {
 }
 
 interface FlowItemActivityProps {
-  text: string
+  stringData: string
 }
 
 const safetyLevels = ['<ASIL-D>', '<ASIL-C>', '<ASIL-B>', '<ASIL-A>', '<QM>']
@@ -56,7 +56,7 @@ const parseActivityData = (
 } => {
   if (isJsonString(input)) {
     const jsonData = JSON.parse(input)
-    // Determine preMitigation ASIL: prefer preAsilLevel, then asilLevel, then default 'QM'
+    // Determine pre-Mitigation ASIL: prefer preAsilLevel, then asilLevel, then default 'QM'
     const preAsil = jsonData.preAsilLevel || jsonData.asilLevel || 'QM'
     const postAsil = jsonData.postAsilLevel || 'QM'
     const riskAssessment = jsonData.riskAssessment || ''
@@ -79,7 +79,7 @@ const parseActivityData = (
     }
   }
 
-  // Fallback for non-JSON text input:
+  // Fallback for non-JSON stringData input:
   const matchedLevel = safetyLevels.find((level) => input.includes(level))
   let displayText = input
   let extractedLevel: ASILLevel | null = null
@@ -95,30 +95,43 @@ const parseActivityData = (
   return {
     displayText: displayText || input,
     preAsilLevel: extractedLevel,
-    postAsilLevel: 'QM', // default for text input
+    postAsilLevel: 'QM', // default for plain text input
     riskAssessment: '',
     data: null,
   }
 }
 
-const FlowItem = ({ text }: FlowItemActivityProps) => {
+const FlowItem = ({ stringData }: FlowItemActivityProps) => {
   const { showPrototypeFlowASIL } = useSystemUI()
 
-  // Parse the input text
-  const { displayText, preAsilLevel, postAsilLevel, riskAssessment, data } =
-    parseActivityData(text)
+  // Parse the input stringData
+  const { displayText, preAsilLevel, postAsilLevel, data } =
+    parseActivityData(stringData)
 
-  // If nothing was parsed, simply return the text.
-  if (!displayText && !preAsilLevel) {
-    return <div>{text}</div>
+  // Determine the content to display.
+  // For JSON input: use only the parsed description (even if empty).
+  // For plain text input: use the parsed text (or fallback to the original stringData).
+  const content = data !== null ? displayText : displayText || stringData
+
+  // Only show the ASILBadge if:
+  // - preAsilLevel exists AND
+  // - For JSON input, the parsed description is non-empty.
+  // - For plain text, the original stringData is non-empty.
+  const shouldShowBadge =
+    preAsilLevel &&
+    (data !== null ? displayText.trim() !== '' : stringData.trim() !== '')
+
+  // If nothing was parsed (and nothing to show), simply return the stringData.
+  if (!content && !preAsilLevel) {
+    return <div>{stringData}</div>
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>
-        <div className="p-1 flex items-center justify-center gap-1 min-h-7">
-          <span>{displayText || text}</span>
-          {preAsilLevel && (
+        <div className="p-1 flex items-center justify-center gap-2.5 min-h-7">
+          <span>{content}</span>
+          {shouldShowBadge && (
             <ASILBadge
               preAsilLevel={preAsilLevel}
               postAsilLevel={postAsilLevel || 'QM'}
@@ -128,7 +141,7 @@ const FlowItem = ({ text }: FlowItemActivityProps) => {
         </div>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent className="flex flex-col text-xs w-full bg-white p-3 border rounded-lg overflow-y-auto  max-h-[40vh] min-w-[250px] max-w-[500px] z-10">
+      <DropdownMenuContent className="flex flex-col text-xs w-full bg-white p-3 border rounded-lg overflow-y-auto max-h-[50vh] min-w-[250px] max-w-[500px] z-10">
         <div className="flex justify-between items-center mb-2">
           <div className="flex text-sm font-bold text-da-primary-500">
             System Activity
@@ -202,7 +215,7 @@ const FlowItem = ({ text }: FlowItemActivityProps) => {
                     <span className="font-semibold text-da-gray-dark mr-1">
                       Risk Assessment:
                     </span>
-                    <div className="flex h-full overflow-auto mt-1">
+                    <div className="flex h-full overflow-auto mt-1 ml-4">
                       <RiskAssessmentMarkdown
                         markdownText={data.riskAssessment || ''}
                       />
@@ -271,7 +284,7 @@ const FlowItem = ({ text }: FlowItemActivityProps) => {
                 <span className="font-semibold text-da-gray-dark mr-1">
                   Description:
                 </span>
-                {displayText || text}
+                {displayText || stringData}
               </div>
               {preAsilLevel && (
                 <div className="flex">

@@ -410,8 +410,10 @@ const DaPrototypeFlowEditor = ({
                                 const text = getNestedValue(flow, cell.path)
                                 try {
                                   const parsed = JSON.parse(text)
-                                  return parsed.description || text
+                                  // Return only the parsed description—even if it's empty.
+                                  return parsed.description
                                 } catch {
+                                  // For plain text input, just return the text.
                                   return text
                                 }
                               })()}

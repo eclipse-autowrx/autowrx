@@ -82,7 +82,7 @@ export const ASILBadge = ({
       {showOverlayBadge && (
         <span
           className={cn(
-            'absolute w-[18px] !text-[9px] bottom-[0px] right-[0px] transform flex items-center justify-center font-bold rounded-md text-white',
+            'absolute size-[16px] !text-[9px] bottom-[3px] right-[3px] transform flex items-center justify-center font-bold rounded text-white',
             levelColors[preAsilLevel],
             preItemClassName,
           )}
