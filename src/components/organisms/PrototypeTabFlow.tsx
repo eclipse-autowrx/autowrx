@@ -303,7 +303,7 @@ const PrototypeTabFlow = () => {
                         <tr key={flowIndex} className="font-medium text-xs">
                           <td className="border p-2 text-center">
                             <FlowItem
-                              text={flow.offBoard.smartPhone}
+                              stringData={flow.offBoard.smartPhone}
                               key={`${flowIndex}-smartPhone`}
                             />
                           </td>
@@ -315,7 +315,7 @@ const PrototypeTabFlow = () => {
                           </td>
                           <td className="border p-2 text-center">
                             <FlowItem
-                              text={flow.offBoard.cloud}
+                              stringData={flow.offBoard.cloud}
                               key={`${flowIndex}-cloud`}
                             />
                           </td>
@@ -327,7 +327,7 @@ const PrototypeTabFlow = () => {
                           </td>
                           <td className="border p-2 text-center">
                             <FlowItem
-                              text={flow.onBoard.sdvRuntime}
+                              stringData={flow.onBoard.sdvRuntime}
                               key={`${flowIndex}-sdvRuntime`}
                             />
                           </td>
@@ -339,7 +339,7 @@ const PrototypeTabFlow = () => {
                           </td>
                           <td className="border p-2 text-center">
                             <FlowItem
-                              text={flow.onBoard.embedded}
+                              stringData={flow.onBoard.embedded}
                               key={`${flowIndex}-embedded`}
                             />
                           </td>
@@ -351,7 +351,7 @@ const PrototypeTabFlow = () => {
                           </td>
                           <td className="border p-2 text-center">
                             <FlowItem
-                              text={flow.onBoard.sensors}
+                              stringData={flow.onBoard.sensors}
                               key={`${flowIndex}-sensors`}
                             />
                           </td>

@@ -60,6 +60,7 @@ const parseNonJsonFlowItem = (value: string): FormData => {
     preAsilLevel: extractedRating,
     postAsilLevel: 'QM',
     riskAssessment: defaultRiskAssessmentPlaceholder,
+    riskAssessmentEvaluation: '',
     approvedBy: '',
     approvedAt: '',
     generatedAt: '',
@@ -87,6 +88,7 @@ const FlowItemEditor = ({ value, onChange, children }: FlowItemEditorProps) => {
           parsed.riskAssessment && parsed.riskAssessment.trim() !== ''
             ? parsed.riskAssessment
             : defaultRiskAssessmentPlaceholder,
+        riskAssessmentEvaluation: parsed.riskAssessmentEvaluation || '',
         approvedBy: parsed.approvedBy || '',
         approvedAt: parsed.approvedAt || '',
         ...rest,
@@ -107,6 +109,8 @@ const FlowItemEditor = ({ value, onChange, children }: FlowItemEditorProps) => {
     'riskAssessment',
     'approvedBy',
     'approvedAt',
+    'generatedAt',
+    'riskAssessmentEvaluation',
   ]
 
   const handleInputChange = (name: keyof FormData, value: string) => {
@@ -144,7 +148,7 @@ const FlowItemEditor = ({ value, onChange, children }: FlowItemEditorProps) => {
     <CustomDialog
       trigger={children}
       dialogTitle="Edit Flow Implementation"
-      className="max-w-[95vw] w-[90vw] xl:w-[80vw] h-[90vh] xl:h-[90vh] text-xs"
+      className="max-w-[98vw] w-[98vw] xl:w-[80vw] h-[90vh] xl:h-[90vh] text-xs"
     >
       <div className="flex flex-col w-full h-full">
         <div className="flex h-full overflow-y-auto space-x-4">
