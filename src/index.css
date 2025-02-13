@@ -383,3 +383,8 @@ body {
   --grid-min-width: 180px;
   grid-template-columns: repeat(auto-fill, minmax(var(--grid-min-width), 1fr));
 }
+
+/* Fix radix-ui select trigger cause overflow problems */
+select[aria-hidden='true'][tabindex='-1'] {
+  display: none;
+}
