@@ -150,9 +150,9 @@ const ReferenceFields = ({ onChange }: ReferenceFieldsProps) => {
   return (
     <div className="mt-3">
       <DaText variant="small-bold" className="!text-da-gray-darkest">
-        Link to Vehicle Signal *
+        Link to Vehicle Signal
       </DaText>
-      <div className="flex gap-2 mt-1">
+      <div className="flex gap-3 mt-1">
         <DaInput
           className="flex-1"
           placeholder={`${location.origin}/model/<model_id>/api/<api>`}
