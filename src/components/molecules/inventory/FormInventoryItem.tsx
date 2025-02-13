@@ -11,7 +11,7 @@ import { CreateInventoryItem } from '@/types/inventory.type'
 type FormInventoryItemProps = {
   data?: CreateInventoryItem
   onChange?: (data: CreateInventoryItem) => void
-  onSubmit?: () => void
+  onSubmit?: (data: CreateInventoryItem) => void
 }
 
 const defaultData: CreateInventoryItem = {
@@ -93,8 +93,14 @@ const FormInventoryItem = ({
     })
   }
 
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    onSubmit?.(innerData)
+    console.log(innerData)
+  }
+
   return (
-    <form>
+    <form onSubmit={handleSubmit}>
       <div className="container flex items-center gap-2 py-4">
         <DaText className="text-da-primary-500" variant="title">
           New Inventory Item
