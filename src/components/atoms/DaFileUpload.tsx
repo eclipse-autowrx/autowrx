@@ -14,7 +14,10 @@ type DaFileUploadProps = {
   className?: string
   sizeFormat?: 'KB' | 'MB'
   validate?: (file: File) => Promise<string | null>
+  isImage?: boolean
 }
+
+const MIN_HEIGHT = '120px'
 
 const DaFileUpload = ({
   onStartUpload,
@@ -23,6 +26,7 @@ const DaFileUpload = ({
   className,
   sizeFormat = 'KB',
   validate,
+  isImage,
 }: DaFileUploadProps) => {
   const [uploading, setUploading] = useState(false)
   const [file, setFile] = useState<File | null>(null)
@@ -104,15 +108,23 @@ const DaFileUpload = ({
       }
     }
 
+    const handleEscapeDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setDragging(false)
+      }
+    }
+
     window.addEventListener('dragenter', handleDragEnter)
     window.addEventListener('drop', handleDrop)
     dragAreaRef.current?.addEventListener('dragleave', handleDragLeave)
     window.addEventListener('dragover', handleDragOver)
+    window.addEventListener('keydown', handleEscapeDown)
     return () => {
       window.removeEventListener('dragenter', handleDragEnter)
       window.removeEventListener('drop', handleDrop)
       dragAreaRef.current?.removeEventListener('dragleave', handleDragLeave)
       window.removeEventListener('dragover', handleDragOver)
+      window.removeEventListener('keydown', handleEscapeDown)
     }
   }, [])
 
@@ -120,10 +132,14 @@ const DaFileUpload = ({
     <div
       onClick={handleUploadClick}
       className={clsx(
-        'relative border border-da-gray-medium rounded-md p-2 h-[120px] group',
+        'relative border border-da-gray-medium rounded-md h-fit overflow-hidden group',
         !file && 'border-dashed hover:border-black cursor-pointer',
+        !isImage && 'p-2',
         className,
       )}
+      style={{
+        minHeight: MIN_HEIGHT,
+      }}
     >
       {createPortal(
         <div
@@ -152,7 +168,12 @@ const DaFileUpload = ({
         className="pointer-events-none hidden"
       />
       {uploading ? (
-        <div className="h-full w-full flex items-center justify-center flex-col">
+        <div
+          style={{
+            minHeight: MIN_HEIGHT,
+          }}
+          className="w-full flex items-center justify-center flex-col"
+        >
           <TbLoader className="h-5 w-5 animate-spin" />
         </div>
       ) : (
@@ -163,36 +184,57 @@ const DaFileUpload = ({
                 clearFile()
                 onFileUpload?.('')
               }}
-              className="group-hover:opacity-100 group-hover:pointer-events-auto pointer-events-none opacity-0 right-1 top-1 absolute"
+              className="group-hover:opacity-50 !h-7 !w-7 !p-0 !rounded-full hover:!opacity-100 group-hover:pointer-events-auto pointer-events-none opacity-0 right-1 top-1 absolute"
               size="sm"
-              variant="plain"
+              variant="outline-nocolor"
             >
               <TbX className="w-4 h-4" />
             </DaButton>
           )}
 
           {file ? (
-            <div className="flex items-center justify-center h-full flex-col">
-              <DaText
-                variant="small-bold"
-                className="max-h-[40px] line-clamp-2 text-ellipsis break-all text-center"
-              >
-                {file.name}
-              </DaText>
-              <div className="space-x-2">
-                <DaText variant="small">
-                  {(
-                    (file.size || 0) /
-                    (sizeFormat === 'MB' ? 1024 * 1024 : 1024)
-                  ).toFixed(2) + sizeFormat}
-                </DaText>
-                <DaText variant="small">{file.type}</DaText>
+            isImage ? (
+              // Image preview
+              <div className="flex" style={{ minHeight: MIN_HEIGHT }}>
+                <img
+                  src={URL.createObjectURL(file)}
+                  alt="preview"
+                  className="text-sm flex h-fit w-fit m-auto"
+                />
               </div>
-            </div>
+            ) : (
+              <div
+                className="flex items-center justify-center flex-col"
+                style={{
+                  minHeight: MIN_HEIGHT,
+                }}
+              >
+                <DaText
+                  variant="small-bold"
+                  className="max-h-[40px] line-clamp-2 text-ellipsis break-all text-center"
+                >
+                  {file.name}
+                </DaText>
+                <div className="space-x-2">
+                  <DaText variant="small">
+                    {(
+                      (file.size || 0) /
+                      (sizeFormat === 'MB' ? 1024 * 1024 : 1024)
+                    ).toFixed(2) + sizeFormat}
+                  </DaText>
+                  <DaText variant="small">{file.type}</DaText>
+                </div>
+              </div>
+            )
           ) : (
-            <div className="w-full h-full flex flex-col gap-1 items-center justify-center">
+            <div
+              style={{
+                minHeight: MIN_HEIGHT,
+              }}
+              className="w-full flex flex-col gap-1 items-center justify-center"
+            >
               <TbUpload className="mb-1" />
-              <DaText variant="small-bold">Click to upload</DaText>
+              <DaText variant="small-bold">Drag drop or click here</DaText>
               {accept && (
                 <DaText variant="small">
                   Accept {accept.split(',').join(', ').toLowerCase()}

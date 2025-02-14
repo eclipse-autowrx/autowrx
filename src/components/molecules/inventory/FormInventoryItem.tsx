@@ -4,9 +4,9 @@ import DaText from '@/components/atoms/DaText'
 import { useEffect, useMemo, useState } from 'react'
 import SystemInterfaceFields from './SystemInterfaceFields'
 import { DaButton } from '@/components/atoms/DaButton'
-import { TbPlus } from 'react-icons/tb'
-
+import { TbPlus, TbReload } from 'react-icons/tb'
 import { CreateInventoryItem } from '@/types/inventory.type'
+import DaFileUpload from '@/components/atoms/DaFileUpload'
 
 type FormInventoryItemProps = {
   data?: CreateInventoryItem
@@ -34,21 +34,6 @@ const FormInventoryItem = ({
     }
   }, [data])
 
-  // useEffect(() => {
-  //   try {
-  //     ajv.addSchema(interfaceDetailSchema, 'interface_detail')
-  //   } catch (error) {}
-  //   try {
-  //     ajv.addSchema(systemActivitySchema, 'system_activity')
-  //   } catch (error) {}
-  //   try {
-  //     ajv.addSchema(flowHeadersSchema, 'flow_headers')
-  //   } catch (error) {}
-  //   try {
-  //     ajv.addSchema(systemInterfaceSchema, 'system_interface')
-  //   } catch (error) {}
-  // }, [])
-
   const handleInventoryTypeChange = (value: string) => {
     setInnerData((prev) => ({
       ...prev,
@@ -58,19 +43,6 @@ const FormInventoryItem = ({
       ...innerData,
       type: value,
     })
-    // switch (value) {
-    //   case 'system_interface':
-    //     setCurrentSchema(systemInterfaceSchema)
-    //     break
-    //   case 'system_activity':
-    //     setCurrentSchema(systemActivitySchema)
-    //     break
-    //   case 'flow_headers':
-    //     setCurrentSchema(
-    //       flowHeadersSchema as unknown as JSONSchemaType<FlowHeaders>,
-    //     )
-    //     break
-    // }
   }
 
   const UIFields = useMemo(() => {
@@ -146,6 +118,23 @@ const FormInventoryItem = ({
                   Public
                 </DaSelectItem>
               </DaSelect>
+
+              <div className="mt-3" />
+
+              <DaText variant="small-bold" className="!text-da-gray-darkest">
+                Image
+              </DaText>
+              <DaFileUpload
+                onFileUpload={(url) =>
+                  setInnerData((prev) => ({
+                    ...prev,
+                    image: url,
+                  }))
+                }
+                isImage={true}
+                className="mt-1"
+                accept="image/*"
+              />
             </div>
           </div>
 
@@ -158,14 +147,18 @@ const FormInventoryItem = ({
                 type="button"
                 variant="text"
                 className="!px-0 !text-da-primary-500"
+                onClick={() => window.open('/inventory/type', '_blank')}
               >
                 <TbPlus className="mr-1" /> Add Type
               </DaButton>
             </div>
             <div className="pb-6 px-4 pt-4">
-              <DaText variant="small-bold" className="!text-da-gray-darkest">
-                Type *
-              </DaText>
+              <div className="flex justify-between items-center">
+                <DaText variant="small-bold" className="!text-da-gray-darkest">
+                  Type *
+                </DaText>
+                <TbReload className="text-da-gray-dark cursor-pointer" />
+              </div>
               <DaSelect
                 value={innerData.type}
                 onValueChange={handleInventoryTypeChange}
