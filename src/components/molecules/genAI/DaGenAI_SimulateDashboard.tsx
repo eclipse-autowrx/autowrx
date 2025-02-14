@@ -241,6 +241,7 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
       <div className="flex flex-col w-full h-full ">
         {mode === MODE_RUN && (
           <DaDashboardGrid
+            vssTree= {{}}
             widgetItems={widgetItems}
             key={JSON.stringify(widgetItems)} // Force re-render when widgetItems
           />

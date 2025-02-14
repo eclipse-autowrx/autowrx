@@ -5,6 +5,7 @@ import DaPopup from '@/components/atoms/DaPopup'
 
 interface DaDashboardGridProps {
   widgetItems: any[]
+  vssTree: any
   appLog?: string
 }
 
@@ -24,17 +25,61 @@ interface PropsWidgetItem {
   widgetConfig: WidgetConfig
   apisValue: any
   appLog?: string
+  vssTree: any
 }
 
 const WidgetItem: FC<PropsWidgetItem> = ({
   widgetConfig,
   apisValue,
   appLog,
+  vssTree
 }) => {
   const [rSpan, setRSpan] = useState<number>(0)
   const [cSpan, setCSpan] = useState<number>(0)
-  const frameElement = useRef<HTMLIFrameElement>(null)
+  // const frameElement = useRef<HTMLIFrameElement>(null)
+  const frameElement = useRef<any>(null)
   const [url, setUrl] = useState<string>()
+
+  const [ticker, setTicker] = useState(0)
+
+  useEffect(() => {
+    let timer = setInterval(() => {
+      setTicker(t => t + 1)
+    }, 500)
+
+    return () => {
+      clearInterval(timer)
+    }
+  }, [])
+
+  useEffect(() => {
+    onTicker()
+  }, [ticker])
+
+  const onTicker = async () => {
+    // trySendVssTreeToWidget()
+  }
+
+  const trySendVssTreeToWidget = () => {
+    if(frameElement?.current?.contentWindow && vssTree) {
+      console.log(">>> Send vss tree to target")
+      frameElement?.current?.contentWindow?.postMessage(
+        JSON.stringify({
+          cmd: 'vss-tree',
+          vssTree: vssTree,
+        }),
+        '*',
+      )
+    }
+  }
+
+  // useEffect(() => {
+  //   trySendVssTreeToWidget()
+  // }, [vssTree, frameElement?.current?.contentWindow])
+
+  useEffect(() => {
+    console.log("contentWindow", frameElement?.current?.contentWindow)
+  }, [frameElement?.current?.contentWindow])
 
   useEffect(() => {
     if (!widgetConfig) return
@@ -107,12 +152,16 @@ const WidgetItem: FC<PropsWidgetItem> = ({
   )
 }
 
-const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
+const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems, vssTree }) => {
   // const CELLS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
   const [showModal, setShowModal] = useState(false)
   const [payload, setPayload] = useState<any>()
 
   const [renderCell, setRenderCell] = useState<any[]>([])
+
+  // useEffect(() => {
+  //   console.log("vssTree", vssTree)
+  // }, [vssTree])
 
   useEffect(() => {
     //
@@ -195,6 +244,7 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
           widgetConfig={widgetItem}
           apisValue={apisValue}
           appLog={appLog}
+          vssTree={vssTree}
         />
       ))}
     </div>
