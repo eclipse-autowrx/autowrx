@@ -491,7 +491,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         setActiveRtId(onlineRuntimes[0].kit_id)
         localStorage.setItem('last-rt', onlineRuntimes[0].kit_id)
       } else {
-        console.log(`setActiveRtId(undefined) cause: noRuntime`)
+        // console.log(`setActiveRtId(undefined) cause: noRuntime`)
         setActiveRtId(undefined)
       }
     }, [renderRuntimes])
@@ -516,7 +516,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         let publicRuntimes = allRuntimes.filter((rt:any) => rt.name.toLowerCase().startsWith('runtime-public-') || rt.name.toLowerCase().startsWith('runtime-shared-'))
         let myRuntimes = []
         if(Array.isArray(assets)) {
-          console.log("assets", assets)
+          // console.log("assets", assets)
           let runtimesAssets = assets.filter((a:any) => a.type == 'CLOUD_RUNTIME') || []
           let myRuntimeNames = runtimesAssets.map((asset:any) => asset.name.toLowerCase())
           myRuntimes = allRuntimes.filter((rt:any) => {

@@ -21,6 +21,7 @@ import { useSystemUI } from '@/hooks/useSystemUI'
 import { cn } from '@/lib/utils'
 import { DaImage } from '@/components/atoms/DaImage'
 import { Link } from 'react-router-dom'
+import { getComputedAPIs, replaceAPIsService } from '@/services/model.service'
 
 const DaDashboard = () => {
   const { data: model } = useCurrentModel()
@@ -28,10 +29,24 @@ const DaDashboard = () => {
   const [widgetItems, setWidgetItems] = useState<any>([])
   const [mode, setMode] = useState<string>(MODE_RUN)
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
+  const [vssTree, setVssTree] = useState({})
   const {
     showPrototypeDashboardFullScreen,
     setShowPrototypeDashboardFullScreen,
   } = useSystemUI()
+
+  useEffect(() => {
+    getVssTree(model?.id)
+  }, [model?.id])
+
+  const getVssTree = async (modelId: any) => {
+    if(!modelId) {
+      setVssTree({})
+      return
+    }
+    const data = await getComputedAPIs(modelId)
+    setVssTree(data)
+  }
 
   useEffect(() => {
     let widgetItems = []
@@ -185,7 +200,7 @@ const DaDashboard = () => {
         >
           {mode == MODE_RUN && (
             <div className="flex w-full h-full px-1 pb-1">
-              <DaDashboardGrid widgetItems={widgetItems} />
+              <DaDashboardGrid widgetItems={widgetItems} vssTree={vssTree}/>
             </div>
           )}
           {mode == MODE_EDIT && (

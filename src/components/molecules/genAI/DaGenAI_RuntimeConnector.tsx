@@ -316,7 +316,7 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
         setWizardActiveRtId(onlineRuntimes[0].kit_id)
         localStorage.setItem('last-wizard-rt', onlineRuntimes[0].kit_id)
       } else {
-        console.log(`setActiveRtId(undefined) cause: noRuntime`)
+        // console.log(`setActiveRtId(undefined) cause: noRuntime`)
         setActiveRtId(undefined)
         setWizardActiveRtId(undefined)
       }
