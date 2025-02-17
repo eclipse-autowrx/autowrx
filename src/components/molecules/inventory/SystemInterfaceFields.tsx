@@ -39,6 +39,7 @@ const keyNames: Record<string, string> = {
 
 type SystemInterfaceFieldsProps = {
   onChange?: (data: any) => void
+  onSummaryChange?: (callback: (prev: any) => any) => void
 }
 
 const SystemInterfaceFields = ({ onChange }: SystemInterfaceFieldsProps) => {
@@ -274,7 +275,7 @@ const ManualFields = ({ onChange }: ManualFieldsProps) => {
     <div className="h-fit">
       <div className="mt-3">
         <DaText variant="small-bold" className="!text-da-gray-darkest">
-          Interface Name
+          Interface Name *
         </DaText>
         <DaInput
           value={innerData.name}
@@ -286,14 +287,14 @@ const ManualFields = ({ onChange }: ManualFieldsProps) => {
       </div>
       <div className="mt-3">
         <DaText variant="small-bold" className="!text-da-gray-darkest">
-          Description
+          Interface Description
         </DaText>
         <DaInput
           value={innerData.description}
           onChange={handleInputChange('description')}
           className="mt-1"
           inputClassName="text-sm text-da-gray-darkest"
-          placeholder="Description"
+          placeholder="Interface Description"
         />
       </div>
 

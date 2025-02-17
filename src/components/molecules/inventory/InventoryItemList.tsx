@@ -149,7 +149,7 @@ const InventoryItemList = () => {
           <>
             <InventoryItem key={index} data={item} />
             {index < MOCK_DATA.length - 1 && (
-              <div className="border-b border-da-gray-light/30 -mx-4" />
+              <div className="border-b border-da-gray-light/30" />
             )}
           </>
         ))}
@@ -172,9 +172,9 @@ const InventoryItem = ({ data }: InventoryItemProps) => {
           className="h-full w-full rounded select-none"
         >
           <img
-            src="/imgs/photo.png"
+            src="/imgs/default_photo.jpg"
             alt={data.name}
-            className="h-full rounded text-sm w-full object-contain"
+            className="h-full rounded text-sm w-full object-cover"
           />
         </object>
       </div>
@@ -187,12 +187,12 @@ const InventoryItem = ({ data }: InventoryItemProps) => {
         </DaText>
 
         <div className="flex mt-1 flex-wrap gap-2">
-          <p className="rounded-full bg-da-gray-darkest text-white text-xs px-2 py-1">
+          <button className="rounded-full bg-da-gray-darkest text-white text-xs px-2 py-1">
             {data.type?.name}
-          </p>
-          <p className="rounded-full text-da-gray-darkest text-xs px-2 py-1 border">
+          </button>
+          <button className="rounded-full text-da-gray-darkest text-xs px-2 py-1 border">
             {data.visibility.at(0)?.toUpperCase() + data.visibility.slice(1)}
-          </p>
+          </button>
         </div>
 
         <div className="flex-1" />
