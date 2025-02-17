@@ -65,6 +65,9 @@ const PageInventory = lazy(() => retry(() => import('@/pages/PageInventory')))
 const PageNewInventoryItem = lazy(() =>
   retry(() => import('@/pages/PageNewInventoryItem')),
 )
+const PageInventoryItemDetail = lazy(() =>
+  retry(() => import('@/pages/PageInventoryItemDetail')),
+)
 
 const routesConfig: RouteConfig[] = [
   {
@@ -268,6 +271,14 @@ const routesConfig: RouteConfig[] = [
             element: (
               <SuspenseProvider>
                 <PageNewInventoryItem />
+              </SuspenseProvider>
+            ),
+          },
+          {
+            path: ':inventory_id',
+            element: (
+              <SuspenseProvider>
+                <PageInventoryItemDetail />
               </SuspenseProvider>
             ),
           },

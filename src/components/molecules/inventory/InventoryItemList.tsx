@@ -4,10 +4,22 @@ import { DaInput } from '@/components/atoms/DaInput'
 import DaText from '@/components/atoms/DaText'
 import DaTooltip from '@/components/atoms/DaTooltip'
 import { InventoryItem as InventorItemType } from '@/types/inventory.type'
-import { TbClock, TbPlus, TbSearch, TbX } from 'react-icons/tb'
+import {
+  TbChevronDown,
+  TbClock,
+  TbFileExport,
+  TbFileImport,
+  TbPlus,
+  TbSearch,
+  TbSettings,
+  TbTableOptions,
+  TbX,
+} from 'react-icons/tb'
+import { Link } from 'react-router-dom'
 
 const MOCK_DATA: InventorItemType[] = [
   {
+    id: '12',
     name: 'ADAS System',
     visibility: 'public',
     type: {
@@ -33,6 +45,7 @@ const MOCK_DATA: InventorItemType[] = [
     updatedAt: '2021-09-01T00:00:00.000Z',
   },
   {
+    id: '12',
     name: 'Autonomous Navigation',
     visibility: 'public',
     type: {
@@ -58,6 +71,7 @@ const MOCK_DATA: InventorItemType[] = [
     updatedAt: '2022-06-15T00:00:00.000Z',
   },
   {
+    id: '12',
     name: 'Vehicle Connectivity',
     visibility: 'public',
     type: {
@@ -83,6 +97,7 @@ const MOCK_DATA: InventorItemType[] = [
     updatedAt: '2023-02-01T00:00:00.000Z',
   },
   {
+    id: '12',
     name: 'Electric Powertrain',
     visibility: 'public',
     type: {
@@ -108,6 +123,7 @@ const MOCK_DATA: InventorItemType[] = [
     updatedAt: '2024-02-12T00:00:00.000Z',
   },
   {
+    id: '12',
     name: 'Infotainment System',
     visibility: 'public',
     type: {
@@ -142,6 +158,41 @@ const InventoryItemList = () => {
         <DaText variant="title" className="text-da-primary-500">
           Inventory
         </DaText>
+        <div className="flex gap-2 mt-2">
+          <Link to="/inventory/new">
+            <DaButton className="!text-xs" size="sm">
+              <TbPlus className="h-4 w-4 mr-1" /> Add Inventory Item
+            </DaButton>
+          </Link>
+          <DaButton
+            className="!text-xs !text-da-gray-dark"
+            size="sm"
+            variant="outline-nocolor"
+          >
+            <TbTableOptions className="h-4 w-4 mr-1" /> Select
+          </DaButton>
+          <DaButton
+            className="!text-xs !text-da-gray-dark"
+            size="sm"
+            variant="outline-nocolor"
+          >
+            <TbFileImport className="h-4 w-4 mr-1" /> Import
+          </DaButton>
+          <DaButton
+            className="!text-xs !text-da-gray-dark"
+            size="sm"
+            variant="outline-nocolor"
+          >
+            <TbFileExport className="h-4 w-4 mr-1" /> Export
+          </DaButton>
+          <DaButton
+            className="!text-xs !text-da-gray-dark ml-auto"
+            size="sm"
+            variant="outline-nocolor"
+          >
+            <TbChevronDown className="h-4 w-4 mr-1" /> Options
+          </DaButton>
+        </div>
         <p className="text-xs text-da-gray-dark mt-4 mb-1">
           1-10 of 100 results
         </p>
@@ -179,12 +230,14 @@ const InventoryItem = ({ data }: InventoryItemProps) => {
         </object>
       </div>
       <div className="flex-1 flex flex-col min-w-0 truncate">
-        <DaText
-          variant="regular-bold"
-          className="!cursor-pointer hover:underline text-da-gray-darkest !block"
-        >
-          {data.name}
-        </DaText>
+        <Link to="/inventory/abcd" className="w-fit">
+          <DaText
+            variant="regular-bold"
+            className="hover:underline text-da-gray-darkest !block"
+          >
+            {data.name}
+          </DaText>
+        </Link>
 
         <div className="flex mt-1 flex-wrap gap-2">
           <button className="rounded-full bg-da-gray-darkest text-white text-xs px-2 py-1">
@@ -198,7 +251,7 @@ const InventoryItem = ({ data }: InventoryItemProps) => {
         <div className="flex-1" />
 
         <div className="flex justify-between items-center gap-8">
-          <button className="flex cursor-pointer items-center gap-2">
+          <button className="hover:underline flex cursor-pointer items-center gap-2">
             <DaAvatar className="h-6 w-6" src={data.created_by?.image_file} />
             <p className="text-xs text-da-gray-dark">{data.created_by?.name}</p>
           </button>

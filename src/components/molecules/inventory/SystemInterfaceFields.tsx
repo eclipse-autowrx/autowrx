@@ -39,10 +39,15 @@ const keyNames: Record<string, string> = {
 
 type SystemInterfaceFieldsProps = {
   onChange?: (data: any) => void
-  onSummaryChange?: (callback: (prev: any) => any) => void
+  onSummaryChange?: (
+    details: Record<string, { name: string; value: string }> | null,
+  ) => void
 }
 
-const SystemInterfaceFields = ({ onChange }: SystemInterfaceFieldsProps) => {
+const SystemInterfaceFields = ({
+  onChange,
+  onSummaryChange,
+}: SystemInterfaceFieldsProps) => {
   const [type, setType] = useState<'reference' | 'manual'>('reference')
 
   return (
@@ -55,7 +60,7 @@ const SystemInterfaceFields = ({ onChange }: SystemInterfaceFieldsProps) => {
           onClick={() => setType('reference')}
           type="button"
           className={clsx(
-            'py-[10px] px-3 flex items-center shadow-sm border rounded-md gap-2 flex-1',
+            'py-[10px] px-3 flex items-center shadow-sm border border-dashed rounded-lg gap-2 flex-1',
             type === 'reference' &&
               'border-da-primary-500 text-da-gray-darkest',
           )}
@@ -71,7 +76,7 @@ const SystemInterfaceFields = ({ onChange }: SystemInterfaceFieldsProps) => {
           onClick={() => setType('manual')}
           type="button"
           className={clsx(
-            'py-[10px] px-3 flex items-center shadow-sm border rounded-md gap-2 flex-1',
+            'py-[10px] px-3 flex items-center shadow-sm border border-dashed rounded-lg gap-2 flex-1',
             type === 'manual' && 'border-da-primary-500 text-da-gray-darkest',
           )}
         >
@@ -85,19 +90,32 @@ const SystemInterfaceFields = ({ onChange }: SystemInterfaceFieldsProps) => {
       </div>
 
       {/* Type Reference */}
-      {type === 'reference' && <ReferenceFields onChange={onChange} />}
+      {type === 'reference' && (
+        <ReferenceFields
+          onSummaryChange={onSummaryChange}
+          onChange={onChange}
+        />
+      )}
 
       {/* Type Manual */}
-      {type === 'manual' && <ManualFields onChange={onChange} />}
+      {type === 'manual' && (
+        <ManualFields onSummaryChange={onSummaryChange} onChange={onChange} />
+      )}
     </div>
   )
 }
 
 type ReferenceFieldsProps = {
   onChange?: (data: any) => void
+  onSummaryChange?: (
+    data: Record<string, { name: string; value: string }> | null,
+  ) => void
 }
 
-const ReferenceFields = ({ onChange }: ReferenceFieldsProps) => {
+const ReferenceFields = ({
+  onChange,
+  onSummaryChange,
+}: ReferenceFieldsProps) => {
   const [link, setLink] = useState('')
   const [referenceData, setReferenceData] = useState<any>(null)
   const [loading, setLoading] = useState(false)
@@ -112,6 +130,7 @@ const ReferenceFields = ({ onChange }: ReferenceFieldsProps) => {
       setWarning('')
       setReferenceData(null)
       onChange?.(null)
+      onSummaryChange?.(null)
 
       // Extract modelId and apiName from reference link
       const regex = /\/model\/([a-zA-Z0-9]+)\/api\/(.+)/
@@ -119,6 +138,12 @@ const ReferenceFields = ({ onChange }: ReferenceFieldsProps) => {
       const response = await getApiDetailService(modelId, apiName)
       setReferenceData(response)
       onChange?.(response)
+      onSummaryChange?.({
+        name: {
+          name: 'Interface Name',
+          value: response.name,
+        },
+      })
 
       // Check unknown keys and set warning
       const unknownKeys = Object.keys(response).filter(
@@ -238,6 +263,9 @@ const ReferenceFields = ({ onChange }: ReferenceFieldsProps) => {
 
 type ManualFieldsProps = {
   onChange?: (data: any) => void
+  onSummaryChange?: (
+    data: Record<string, { name: string; value: string }> | null,
+  ) => void
 }
 
 const defaultManualData = {
@@ -245,7 +273,7 @@ const defaultManualData = {
   description: '',
 }
 
-const ManualFields = ({ onChange }: ManualFieldsProps) => {
+const ManualFields = ({ onChange, onSummaryChange }: ManualFieldsProps) => {
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [innerData, setInnerData] = useState<InterfaceDetail>(defaultManualData)
 
@@ -258,6 +286,14 @@ const ManualFields = ({ onChange }: ManualFieldsProps) => {
       ...innerData,
       [key]: value,
     })
+    if (key === 'name') {
+      onSummaryChange?.({
+        name: {
+          name: 'Interface Name',
+          value: value,
+        },
+      })
+    }
   }
 
   const handleInputChange =

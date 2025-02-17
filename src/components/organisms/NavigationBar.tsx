@@ -57,21 +57,22 @@ const NavigationBar = ({}) => {
             >
               <TbBuildingWarehouse className="text-base" /> Inventory
             </Link>
+            {/* Separate condition checking with component since MUI component does not accept Fragment as children */}
             {isAuthorized && (
-              <>
-                <Link
-                  to="/manage-users"
-                  className="flex items-center px-4 py-2 gap-2 da-menu-item da-label-regular"
-                >
-                  <TbUsers className="text-base" /> Manage Users
-                </Link>
-                <Link
-                  to="/manage-features"
-                  className="flex items-center px-4 py-2 gap-2 da-menu-item da-label-regular"
-                >
-                  <TbStack2 className="text-base" /> Manage Features
-                </Link>
-              </>
+              <Link
+                to="/manage-users"
+                className="flex items-center px-4 py-2 gap-2 da-menu-item da-label-regular"
+              >
+                <TbUsers className="text-base" /> Manage Users
+              </Link>
+            )}
+            {isAuthorized && (
+              <Link
+                to="/manage-features"
+                className="flex items-center px-4 py-2 gap-2 da-menu-item da-label-regular"
+              >
+                <TbStack2 className="text-base" /> Manage Features
+              </Link>
             )}
           </DaMenu>
           {/* {model ? (

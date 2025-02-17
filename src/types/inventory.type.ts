@@ -9,6 +9,8 @@ export type CreateInventoryItem = {
 }
 
 export type InventoryItem = Omit<CreateInventoryItem, 'type'> & {
+  id: string
+  description?: string
   createdAt: string
   updatedAt: string
   created_by?: Partial<User>

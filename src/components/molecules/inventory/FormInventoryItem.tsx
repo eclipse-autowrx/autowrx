@@ -1,12 +1,13 @@
 import { DaInput } from '@/components/atoms/DaInput'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import DaText from '@/components/atoms/DaText'
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import SystemInterfaceFields from './SystemInterfaceFields'
 import { DaButton } from '@/components/atoms/DaButton'
 import { TbPlus, TbReload } from 'react-icons/tb'
 import { CreateInventoryItem } from '@/types/inventory.type'
 import DaFileUpload from '@/components/atoms/DaFileUpload'
+import clsx from 'clsx'
 
 type FormInventoryItemProps = {
   data?: CreateInventoryItem
@@ -27,6 +28,10 @@ const FormInventoryItem = ({
   onSubmit,
 }: FormInventoryItemProps) => {
   const [innerData, setInnerData] = useState(defaultData)
+  const [detailSummary, setDetailSummary] = useState<Record<
+    string,
+    { name: string; value: string }
+  > | null>(null)
 
   useEffect(() => {
     if (data) {
@@ -132,7 +137,11 @@ const FormInventoryItem = ({
                   }))
                 }
                 isImage={true}
-                className="mt-1"
+                className={clsx(
+                  'mt-1',
+                  innerData.image && 'w-full max-w-[140px]',
+                )}
+                imgClassName="object-cover w-full aspect-square max-w-[140px]"
                 accept="image/*"
               />
             </div>
@@ -185,6 +194,7 @@ const FormInventoryItem = ({
             </div>
             <div className="pb-6 px-5 pt-4">
               <UIFields
+                onSummaryChange={(summary) => setDetailSummary(summary)}
                 onChange={(details) =>
                   setInnerData((prev) => ({
                     ...prev,
@@ -196,49 +206,90 @@ const FormInventoryItem = ({
           </div>
         </div>
 
-        <div className="border h-fit shadow flex-[4] rounded-lg">
+        <div className="border h-fit shadow flex-[4] max-w-[512px] rounded-lg">
           <div className="border-b h-[54px] flex items-center px-4">
             <DaText variant="regular-bold" className="!text-da-gray-darkest">
               Summary
             </DaText>
           </div>
-          <div className="pb-4 px-4 pt-3">
-            <DaText variant="small-bold" className="!text-da-gray-darkest">
-              Name
-            </DaText>
-            <DaText className="block" variant="small">
-              New Inventory Item
-            </DaText>
+          <div className="pb-4 px-4">
+            {innerData.name && (
+              <>
+                <div className="mt-3" />
+                <DaText variant="small-bold" className="!text-da-gray-darkest">
+                  Name
+                </DaText>
+                <DaText className="block" variant="small">
+                  {innerData.name}
+                </DaText>
+              </>
+            )}
 
             <div className="mt-3" />
             <DaText variant="small-bold" className="!text-da-gray-darkest">
               Visibility
             </DaText>
             <DaText className="block" variant="small">
-              Private
+              {innerData.visibility.at(0)?.toUpperCase() +
+                innerData.visibility.slice(1)}
             </DaText>
 
-            <div className="mt-3" />
-            <DaText variant="small-bold" className="!text-da-gray-darkest">
-              Interface Name
-            </DaText>
-            <DaText className="block" variant="small">
-              Vehicle.ADAS
-            </DaText>
+            {innerData.image && (
+              <>
+                <div className="mt-3" />
+                <DaText variant="small-bold" className="!text-da-gray-darkest">
+                  Image
+                </DaText>{' '}
+                <object
+                  data={innerData.image}
+                  className="mt-1 w-full max-w-[140px] rounded-md object-cover aspect-square"
+                >
+                  <img
+                    src="/imgs/default_photo.jpg"
+                    alt={innerData.name}
+                    className="rounded w-full h-full text-sm object-cover"
+                  />
+                </object>
+              </>
+            )}
 
-            <div className="mt-3" />
-            <DaText variant="small-bold" className="!text-da-gray-darkest">
-              Allowed
-            </DaText>
-            <DaText className="block" variant="small">
-              ACTIVE, INACTIVE
-            </DaText>
+            {detailSummary && (
+              <>
+                <div className="mt-3" />
+                <DaText variant="small-bold" className="!text-da-gray-darkest">
+                  Inventory Details
+                </DaText>
+                <div className="mt-1 border rounded-md px-3 pb-3 pt-2">
+                  {Object.entries(detailSummary).map(([key, data], index) => (
+                    <Fragment key={key}>
+                      <DaText
+                        variant="small-bold"
+                        className="!text-da-gray-darkest"
+                      >
+                        {data.name}
+                      </DaText>
+                      <DaText className="block" variant="small">
+                        {data.value}
+                      </DaText>
+
+                      {index < Object.keys(detailSummary).length - 1 && (
+                        <div className="mt-3" />
+                      )}
+                    </Fragment>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
           <div className="border-t justify-between flex items-center py-3 px-4">
-            <DaButton type="button" variant="outline-nocolor" className="">
+            <DaButton
+              type="button"
+              variant="outline-nocolor"
+              className="!text-sm"
+            >
               Cancel
             </DaButton>
-            <DaButton className="">Create Item</DaButton>
+            <DaButton className="!text-sm !px-4">Create Item</DaButton>
           </div>
         </div>
       </div>
