@@ -147,7 +147,7 @@ const FlowItemEditor = ({ value, onChange, children }: FlowItemEditorProps) => {
   return (
     <CustomDialog
       trigger={children}
-      dialogTitle="Edit Flow Implementation"
+      dialogTitle="Hazard Analysis and Risk Assessment (HARA)"
       className="max-w-[98vw] w-[98vw] xl:w-[80vw] h-[90vh] xl:h-[90vh] text-xs"
     >
       <div className="flex flex-col w-full h-full">
