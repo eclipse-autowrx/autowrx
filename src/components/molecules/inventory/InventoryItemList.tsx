@@ -4,6 +4,7 @@ import { DaInput } from '@/components/atoms/DaInput'
 import DaText from '@/components/atoms/DaText'
 import DaTooltip from '@/components/atoms/DaTooltip'
 import { InventoryItem as InventorItemType } from '@/types/inventory.type'
+import clsx from 'clsx'
 import {
   TbChevronDown,
   TbClock,
@@ -16,6 +17,7 @@ import {
   TbX,
 } from 'react-icons/tb'
 import { Link } from 'react-router-dom'
+import { Fragment } from 'react/jsx-runtime'
 
 const MOCK_DATA: InventorItemType[] = [
   {
@@ -150,59 +152,65 @@ const MOCK_DATA: InventorItemType[] = [
   },
 ]
 
-const InventoryItemList = () => {
+type InventoryItemListProps = {
+  mode?: 'view' | 'select'
+}
+
+const InventoryItemList = ({ mode = 'view' }: InventoryItemListProps) => {
   return (
     <div className="container flex gap-14">
-      <Filter />
+      <Filter mode={mode} />
       <div className="flex-1 min-w-0">
         <DaText variant="title" className="text-da-primary-500">
           Inventory
         </DaText>
-        <div className="flex gap-2 mt-2">
-          <Link to="/inventory/new">
-            <DaButton className="!text-xs" size="sm">
-              <TbPlus className="h-4 w-4 mr-1" /> Add Inventory Item
+        {mode === 'view' && (
+          <div className="flex gap-2 mt-2">
+            <Link to="/inventory/new">
+              <DaButton className="" size="sm">
+                <TbPlus className="h-4 w-4 mr-1" /> Add Inventory Item
+              </DaButton>
+            </Link>
+            <DaButton
+              className=" !text-da-gray-dark"
+              size="sm"
+              variant="outline-nocolor"
+            >
+              <TbTableOptions className="h-4 w-4 mr-1" /> Select
             </DaButton>
-          </Link>
-          <DaButton
-            className="!text-xs !text-da-gray-dark"
-            size="sm"
-            variant="outline-nocolor"
-          >
-            <TbTableOptions className="h-4 w-4 mr-1" /> Select
-          </DaButton>
-          <DaButton
-            className="!text-xs !text-da-gray-dark"
-            size="sm"
-            variant="outline-nocolor"
-          >
-            <TbFileImport className="h-4 w-4 mr-1" /> Import
-          </DaButton>
-          <DaButton
-            className="!text-xs !text-da-gray-dark"
-            size="sm"
-            variant="outline-nocolor"
-          >
-            <TbFileExport className="h-4 w-4 mr-1" /> Export
-          </DaButton>
-          <DaButton
-            className="!text-xs !text-da-gray-dark ml-auto"
-            size="sm"
-            variant="outline-nocolor"
-          >
-            <TbChevronDown className="h-4 w-4 mr-1" /> Options
-          </DaButton>
-        </div>
+            <DaButton
+              className=" !text-da-gray-dark"
+              size="sm"
+              variant="outline-nocolor"
+            >
+              <TbFileImport className="h-4 w-4 mr-1" /> Import
+            </DaButton>
+            <DaButton
+              className=" !text-da-gray-dark"
+              size="sm"
+              variant="outline-nocolor"
+            >
+              <TbFileExport className="h-4 w-4 mr-1" /> Export
+            </DaButton>
+            <DaButton
+              className=" !text-da-gray-dark ml-auto"
+              size="sm"
+              variant="outline-nocolor"
+            >
+              <TbChevronDown className="h-4 w-4 mr-1" /> Options
+            </DaButton>
+          </div>
+        )}
         <p className="text-xs text-da-gray-dark mt-4 mb-1">
           1-10 of 100 results
         </p>
         {MOCK_DATA.map((item, index) => (
-          <>
+          <Fragment key={index}>
             <InventoryItem key={index} data={item} />
             {index < MOCK_DATA.length - 1 && (
               <div className="border-b border-da-gray-light/30" />
             )}
-          </>
+          </Fragment>
         ))}
       </div>
     </div>
@@ -266,9 +274,18 @@ const InventoryItem = ({ data }: InventoryItemProps) => {
   )
 }
 
-const Filter = () => {
+type FilterProps = {
+  mode: 'view' | 'select'
+}
+
+const Filter = ({ mode }: FilterProps) => {
   return (
-    <div className="h-fit self-start sticky top-6 rounded-lg text-sm text-da-gray-dark shadow-sm border p-5 w-[320px]">
+    <div
+      className={clsx(
+        'h-fit self-start sticky rounded-lg mb-6 text-sm text-da-gray-dark shadow-sm border p-5 w-[320px]',
+        mode === 'view' ? 'top-6' : 'top-0',
+      )}
+    >
       <div className="flex justify-between items-baseline">
         <DaText variant="regular-bold" className="text-da-gray-darkest">
           Filters

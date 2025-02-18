@@ -85,7 +85,10 @@ const DaFileUpload = ({
   useEffect(() => {
     const handleDragEnter = (e: DragEvent) => {
       e.preventDefault()
-      setDragging(true)
+      const isFileTransfer = e.dataTransfer?.types?.includes('Files')
+      if (isFileTransfer) {
+        setDragging(true)
+      }
     }
     const handleDragLeave = (e: DragEvent) => {
       e.preventDefault()

@@ -155,7 +155,7 @@ const FormInventoryItem = ({
               <DaButton
                 type="button"
                 variant="text"
-                className="!px-0 !text-da-primary-500"
+                className="!px-0 !text-sm !text-da-primary-500"
                 onClick={() => window.open('/inventory/type', '_blank')}
               >
                 <TbPlus className="mr-1" /> Add Type

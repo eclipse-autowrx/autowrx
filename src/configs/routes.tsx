@@ -282,6 +282,14 @@ const routesConfig: RouteConfig[] = [
               </SuspenseProvider>
             ),
           },
+          {
+            path: ':inventory_id/:tab',
+            element: (
+              <SuspenseProvider>
+                <PageInventoryItemDetail />
+              </SuspenseProvider>
+            ),
+          },
         ],
       },
       {
