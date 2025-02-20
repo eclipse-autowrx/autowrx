@@ -37,17 +37,17 @@ const keyNames: Record<string, string> = {
   link: 'Link',
 }
 
-type SystemInterfaceFieldsProps = {
+type FieldsSystemInterfaceProps = {
   onChange?: (data: any) => void
   onSummaryChange?: (
     details: Record<string, { name: string; value: string }> | null,
   ) => void
 }
 
-const SystemInterfaceFields = ({
+const FieldsSystemInterface = ({
   onChange,
   onSummaryChange,
-}: SystemInterfaceFieldsProps) => {
+}: FieldsSystemInterfaceProps) => {
   const [type, setType] = useState<'reference' | 'manual'>('reference')
 
   return (
@@ -560,4 +560,4 @@ const ManualFields = ({ onChange, onSummaryChange }: ManualFieldsProps) => {
   )
 }
 
-export default SystemInterfaceFields
+export default FieldsSystemInterface

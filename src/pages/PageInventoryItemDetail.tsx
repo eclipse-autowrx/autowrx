@@ -2,31 +2,27 @@ import { DaAvatar } from '@/components/atoms/DaAvatar'
 import { DaButton } from '@/components/atoms/DaButton'
 import DaFileUpload from '@/components/atoms/DaFileUpload'
 import DaMenu from '@/components/atoms/DaMenu'
-import DaPopup from '@/components/atoms/DaPopup'
 import DaText from '@/components/atoms/DaText'
-import InventoryItemList from '@/components/molecules/inventory/InventoryItemList'
 import { InventoryItem } from '@/types/inventory.type'
 import clsx from 'clsx'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import {
-  TbArrowsMaximize,
-  TbArrowsMinimize,
-  TbBinaryTree,
   TbChevronDown,
   TbCopy,
-  TbDots,
   TbEdit,
   TbExternalLink,
   TbEye,
   TbEyeOff,
-  TbList,
   TbPaperclip,
   TbPlus,
+  TbTrash,
 } from 'react-icons/tb'
 import { Link, useParams } from 'react-router-dom'
-import { Background, Controls, ReactFlow } from '@xyflow/react'
-import '@xyflow/react/dist/style.css'
+import InventoryItemRelationships from '@/components/molecules/inventory/InventoryItemRelationships'
+import { DaInput } from '@/components/atoms/DaInput'
+import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
+import AccessInvitation from '@/components/organisms/AccessInvitation'
 
 const data: InventoryItem = {
   id: '12afwaefj1231jfkawef',
@@ -86,24 +82,34 @@ const data: InventoryItem = {
 
 const tabs = [
   {
-    key: 'details',
-    name: 'Details',
+    key: 'general',
+    name: 'General',
     path: '',
   },
   {
     key: 'relationships',
-    name: 'Relationships',
+    name: 'Relationships (3)',
     path: 'relationships',
   },
   {
     key: 'assets',
-    name: 'Assets',
+    name: 'Assets (3)',
     path: 'assets',
   },
   {
     key: 'activities',
-    name: 'Activities',
+    name: 'Activities (154)',
     path: 'activities',
+  },
+  {
+    key: 'comments',
+    name: 'Comments (5)',
+    path: 'comments',
+  },
+  {
+    key: 'access-control',
+    name: 'Access Control (3)',
+    path: 'access-control',
   },
 ]
 
@@ -165,7 +171,7 @@ const PageInventoryItemDetail = () => {
           <Link
             key={t.key}
             className={clsx(
-              'w-[144px] flex justify-center border-b items-center h-[48px]',
+              'w-[160px] flex justify-center border-b items-center h-[48px]',
               t.path === (tab || '')
                 ? 'text-da-primary-500 border-b-da-primary-500'
                 : 'border-b-transparent',
@@ -177,16 +183,102 @@ const PageInventoryItemDetail = () => {
         ))}
       </div>
 
-      {!tab && <Details />}
+      {!tab && <General />}
 
-      {tab === 'relationships' && <Relationships />}
+      {tab === 'relationships' && <InventoryItemRelationships />}
+
+      {tab === 'assets' && (
+        <div className="flex mt-4 gap-7 flex-col">
+          <div className="border flex-1 min-w-0 shadow rounded-lg flex flex-col">
+            <div className="border-b h-[54px] flex items-center px-4">
+              <DaText className="!text-da-gray-darkest" variant="regular-bold">
+                Diagrams
+              </DaText>
+              <DaButton variant="text" className="ml-auto" size="sm">
+                <TbPlus className="w-4 h-4 mr-1" />
+                Add Diagram
+              </DaButton>
+            </div>
+            <div className="px-4 py-2">
+              <DaText variant="small" className="!block py-3">
+                This item has no diagrams.
+              </DaText>
+            </div>
+          </div>
+          <div className="border flex-1 min-w-0 shadow rounded-lg flex flex-col">
+            <div className="border-b h-[54px] flex items-center px-4">
+              <DaText className="!text-da-gray-darkest" variant="regular-bold">
+                Attachments (2)
+              </DaText>
+            </div>
+            <div className="px-4 py-2">
+              <div className="group flex gap-2 -mx-4 px-4 h-[44px] items-center hover:bg-da-gray-light/20">
+                <DaText
+                  variant="small"
+                  className="flex-1 text-da-gray-darkest truncate"
+                >
+                  hello World.
+                </DaText>
+
+                <DaButton
+                  className="opacity-0 group-hover:opacity-100 transition"
+                  variant="destructive"
+                  size="sm"
+                >
+                  <TbTrash className="w-4 h-4 mr-1" /> Delete
+                </DaButton>
+              </div>
+              <div className="group flex gap-2 -mx-4 px-4 h-[44px] items-center hover:bg-da-gray-light/20">
+                <DaText
+                  variant="small"
+                  className="flex-1 text-da-gray-darkest truncate"
+                >
+                  hello World.
+                </DaText>
+
+                <DaButton
+                  className="opacity-0 group-hover:opacity-100 transition"
+                  variant="destructive"
+                  size="sm"
+                >
+                  <TbTrash className="w-4 h-4 mr-1" /> Delete
+                </DaButton>
+              </div>
+
+              <DaFileUpload
+                className="mb-4 mt-3"
+                label="Drag drop or click here to attach file"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {tab === 'activities' && (
         <>
           <DaText variant="regular-bold" className="text-da-gray-darkest">
             Activities
           </DaText>
-          <div className="mt-5 rounded-lg overflow-hidden shadow border border-da-gray-light/50">
+
+          <div className="mt-4 flex gap-2">
+            <DaInput
+              placeholder="Search by description or user"
+              className="w-[360px]"
+              inputClassName="!text-sm"
+            />
+            <DaSelect className="!w-[240px]" value="timestamp:asc">
+              <DaSelectItem className="text-sm" value="timestamp:asc">
+                Timestamp Ascending
+              </DaSelectItem>
+              <DaSelectItem className="text-sm" value="timestamp:desc">
+                Timestamp Descending
+              </DaSelectItem>
+            </DaSelect>
+
+            <div className="rounded-md border shadow p-2">Date Picker</div>
+          </div>
+
+          <div className="mt-6 rounded-lg overflow-hidden shadow border border-da-gray-light/50">
             <table className="w-full">
               <thead>
                 <tr className="text-left text-da-gray-darkest">
@@ -311,11 +403,105 @@ const PageInventoryItemDetail = () => {
           </div>
         </>
       )}
+
+      {tab === 'access-control' && (
+        <div>
+          <DaText variant="regular-bold" className="text-da-gray-darkest">
+            Access Control
+          </DaText>
+
+          <div className="border flex-1 mt-4 min-w-0 shadow rounded-lg flex flex-col">
+            <div className="border-b h-[54px] flex items-center px-4">
+              <DaText className="!text-da-gray-darkest" variant="regular-bold">
+                Viewers
+              </DaText>
+              <DaButton variant="text" className="ml-auto" size="sm">
+                <TbPlus className="w-4 h-4 mr-1" />
+                Add Viewer
+              </DaButton>
+            </div>
+            <div className="px-4 py-2">
+              <DaText variant="small" className="!block py-3">
+                This item has no diagrams.
+              </DaText>
+            </div>
+          </div>
+          <div className="border mt-7 flex-1 min-w-0 shadow rounded-lg flex flex-col">
+            <div className="border-b h-[54px] flex items-center px-4">
+              <DaText className="!text-da-gray-darkest" variant="regular-bold">
+                Contributors
+              </DaText>
+              <DaButton variant="text" className="ml-auto" size="sm">
+                <TbPlus className="w-4 h-4 mr-1" />
+                Add Contributor
+              </DaButton>
+            </div>
+
+            <div className="px-4 py-2">
+              <div className="group flex gap-2 -mx-4 px-4 h-[44px] items-center hover:bg-da-gray-light/20">
+                <DaText
+                  variant="small"
+                  className="flex-1 text-da-gray-darkest truncate"
+                >
+                  hello World.
+                </DaText>
+
+                <DaButton
+                  className="opacity-0 group-hover:opacity-100 transition"
+                  variant="outline-nocolor"
+                  size="sm"
+                >
+                  <TbEdit className="w-4 h-4 mr-1" /> Edit
+                </DaButton>
+                <DaButton
+                  className="opacity-0 group-hover:opacity-100 transition"
+                  variant="destructive"
+                  size="sm"
+                >
+                  <TbTrash className="w-4 h-4 mr-1" /> Delete
+                </DaButton>
+              </div>
+              <div className="group flex gap-2 -mx-4 px-4 h-[44px] items-center hover:bg-da-gray-light/20">
+                <DaText
+                  variant="small"
+                  className="flex-1 text-da-gray-darkest truncate"
+                >
+                  hello World.
+                </DaText>
+
+                <DaButton
+                  className="opacity-0 group-hover:opacity-100 transition"
+                  variant="outline-nocolor"
+                  size="sm"
+                >
+                  <TbEdit className="w-4 h-4 mr-1" /> Edit
+                </DaButton>
+                <DaButton
+                  className="opacity-0 group-hover:opacity-100 transition"
+                  variant="destructive"
+                  size="sm"
+                >
+                  <TbTrash className="w-4 h-4 mr-1" /> Delete
+                </DaButton>
+              </div>
+            </div>
+          </div>
+
+          <AccessInvitation
+            accessLevels={[]}
+            label="Access Control"
+            onClose={() => {}}
+            onInviteUsers={async (data: any) => {}}
+            onRemoveUserAccess={async (data: any) => {}}
+            open={false}
+          />
+        </div>
+      )}
     </div>
   )
 }
 
-const Details = () => {
+const General = () => {
   const [showDetail, setShowDetail] = useState(false)
 
   const titleCase = (str: string) => {
@@ -532,7 +718,7 @@ const Details = () => {
             }
           >
             <div className="px-2 w-[220px]">
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between -mt-1 items-center">
                 <DaText variant="small">Attachments</DaText>
                 <button className="p-1 border rounded-md">
                   <TbPlus className="w-3 h-3" />
@@ -604,257 +790,6 @@ const Details = () => {
           </Link>
         </div>
       </div>
-    </div>
-  )
-}
-
-const Relationships = () => {
-  const [maximized, setMaximized] = useState(false)
-  const [mode, setMode] = useState<'tree' | 'list'>('tree')
-
-  const [showSearchItem, setShowSearchItem] = useState(false)
-  const [searchType, setSearchType] = useState<'parent' | 'child'>('parent')
-
-  return (
-    <div
-      className={clsx(
-        'bg-white',
-        maximized
-          ? 'fixed top-0 left-0 bottom-0 right-0 z-10 p-8'
-          : 'h-[440px]',
-      )}
-    >
-      <div className="flex items-center">
-        <DaText variant="regular-bold" className="text-da-gray-darkest">
-          Relationships
-        </DaText>
-        <div className="flex-1" />
-        <div className="border font-medium flex rounded-lg overflow-hidden">
-          <button
-            onClick={() => setMode('tree')}
-            className={clsx(
-              'h-8 px-3 flex gap-1.5 items-center',
-              mode === 'tree' && 'bg-da-primary-500 text-white',
-            )}
-          >
-            <TbBinaryTree className="h-4 w-4" /> Tree View
-          </button>
-          <button
-            onClick={() => setMode('list')}
-            className={clsx(
-              'h-8 px-3 flex gap-1.5 items-center',
-              mode === 'list' && 'bg-da-primary-500 text-white',
-            )}
-          >
-            <TbList className="h-4 w-4" /> List View
-          </button>
-        </div>
-        <DaButton
-          size="sm"
-          variant="plain"
-          className="ml-2"
-          onClick={() => setMaximized((prev) => !prev)}
-        >
-          {maximized ? (
-            <TbArrowsMinimize className="h-4 w-4" />
-          ) : (
-            <TbArrowsMaximize className="w-4 h-4" />
-          )}
-        </DaButton>
-      </div>
-
-      {mode === 'tree' && (
-        <div className="h-[calc(100%-50px)] mt-4">
-          <ReactFlow
-            nodes={[
-              {
-                id: '1', // required
-                position: { x: 0, y: 0 }, // required
-                data: { label: 'Hello' }, // required
-              },
-            ]}
-          >
-            <Background />
-            <Controls />
-          </ReactFlow>
-        </div>
-      )}
-      {mode === 'list' && (
-        <div className="flex mt-4 gap-5 lg:flex-row flex-col">
-          <div className="border flex-1 min-w-0 shadow rounded-lg flex flex-col">
-            <div className="border-b h-[54px] flex items-center px-4">
-              <DaText className="!text-da-gray-darkest" variant="regular-bold">
-                Parents
-              </DaText>
-              <DaButton
-                onClick={() => {
-                  setShowSearchItem(true)
-                  setSearchType('parent')
-                }}
-                variant="text"
-                className="ml-auto"
-                size="sm"
-              >
-                <TbPlus className="w-4 h-4 mr-1" />
-                Add Parent
-              </DaButton>
-              <DaMenu
-                trigger={
-                  <DaButton variant="plain" size="sm">
-                    <TbDots className="w-4 h-4" />
-                  </DaButton>
-                }
-              >
-                <div className="flex flex-col px-0.5 -my-0.5">
-                  <DaButton
-                    size="sm"
-                    variant="plain"
-                    className="text-left !justify-start w-[144px]"
-                  >
-                    <TbEye className="w-4 h-4 mr-2" />
-                    View In List
-                  </DaButton>
-                  <DaButton
-                    disabled
-                    size="sm"
-                    variant="plain"
-                    className="text-left !justify-start w-[144px]"
-                  >
-                    <TbEdit className="w-4 h-4 mr-2" />
-                    Edit Multiple
-                  </DaButton>
-                </div>
-              </DaMenu>
-            </div>
-            <div className="px-4 py-2">
-              <DaText variant="small" className="!block py-3">
-                This item has no parents.
-              </DaText>
-            </div>
-          </div>
-          <div className="border flex-1 min-w-0 shadow rounded-lg flex flex-col">
-            <div className="border-b h-[54px] flex items-center px-4">
-              <DaText className="!text-da-gray-darkest" variant="regular-bold">
-                Children (2)
-              </DaText>
-              <DaButton
-                onClick={() => {
-                  setShowSearchItem(true)
-                  setSearchType('child')
-                }}
-                variant="text"
-                className="ml-auto"
-                size="sm"
-              >
-                <TbPlus className="w-4 h-4 mr-1" />
-                Add Child
-              </DaButton>
-              <DaMenu
-                trigger={
-                  <DaButton variant="plain" size="sm">
-                    <TbDots className="w-4 h-4" />
-                  </DaButton>
-                }
-              >
-                <div className="flex flex-col px-0.5 -my-0.5">
-                  <DaButton
-                    size="sm"
-                    variant="plain"
-                    className="text-left !justify-start w-[144px]"
-                  >
-                    <TbEye className="w-4 h-4 mr-2" />
-                    View In List
-                  </DaButton>
-                  <DaButton
-                    size="sm"
-                    variant="plain"
-                    disabled
-                    className="text-left !justify-start w-[144px]"
-                  >
-                    <TbEdit className="w-4 h-4 mr-2" />
-                    Edit Multiple
-                  </DaButton>
-                </div>
-              </DaMenu>
-            </div>
-            <div className="px-4 py-2">
-              <div className="group flex gap-2 -mx-4 px-4 h-[44px] items-center hover:bg-da-gray-light/20">
-                <DaText
-                  variant="small"
-                  className="flex-1 text-da-gray-darkest truncate"
-                >
-                  hello World.
-                </DaText>
-                <DaButton
-                  className="opacity-0 group-hover:opacity-100 transition"
-                  variant="outline-nocolor"
-                  size="sm"
-                >
-                  <TbExternalLink className="w-4 h-4 mr-1" /> View
-                </DaButton>
-                <DaButton
-                  className="opacity-0 group-hover:opacity-100 transition"
-                  variant="outline-nocolor"
-                  size="sm"
-                >
-                  <TbEdit className="w-4 h-4 mr-1" /> Edit
-                </DaButton>
-              </div>
-              <div className="group flex gap-2 -mx-4 px-4 h-[44px] items-center hover:bg-da-gray-light/20">
-                <DaText
-                  variant="small"
-                  className="flex-1 text-da-gray-darkest truncate"
-                >
-                  hello World.
-                </DaText>
-                <DaButton
-                  className="opacity-0 group-hover:opacity-100 transition"
-                  variant="outline-nocolor"
-                  size="sm"
-                >
-                  <TbExternalLink className="w-4 h-4 mr-1" /> View
-                </DaButton>
-                <DaButton
-                  className="opacity-0 group-hover:opacity-100 transition"
-                  variant="outline-nocolor"
-                  size="sm"
-                >
-                  <TbEdit className="w-4 h-4 mr-1" /> Edit
-                </DaButton>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <DaPopup
-        className="container !p-0"
-        state={[showSearchItem, setShowSearchItem]}
-        trigger={<></>}
-      >
-        <div className="container flex flex-col max-h-[90vh]">
-          <div className="flex border-b -mx-8 px-8 py-4 justify-between">
-            <DaText variant="regular-bold" className="text-da-primary-500">
-              Attach {searchType === 'parent' ? 'Parents' : 'Children'}
-            </DaText>
-          </div>
-
-          <div className="-mx-8 mt-5 overflow-y-auto flex-1">
-            <InventoryItemList mode="select" />
-          </div>
-
-          <div className="flex gap-2 justify-end border-t -mx-8 px-8 py-4">
-            <DaButton
-              onClick={() => setShowSearchItem(false)}
-              variant="outline-nocolor"
-              className="!text-sm"
-            >
-              Cancel
-            </DaButton>
-            <DaButton className="!text-sm">Save</DaButton>
-          </div>
-        </div>
-      </DaPopup>
     </div>
   )
 }

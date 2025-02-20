@@ -10,6 +10,7 @@ import { createPortal } from 'react-dom'
 type DaFileUploadProps = {
   onStartUpload?: () => void
   onFileUpload?: (url: string) => void
+  label?: string
   accept?: string
   className?: string
   imgClassName?: string
@@ -24,6 +25,7 @@ const MIN_HEIGHT = '120px'
 const DaFileUpload = ({
   onStartUpload,
   onFileUpload,
+  label,
   accept,
   className,
   imgClassName,
@@ -247,7 +249,9 @@ const DaFileUpload = ({
               className="w-full h-full flex flex-col gap-1 items-center justify-center"
             >
               <TbUpload className="mb-1" />
-              <DaText variant="small-bold">Drag drop or click here</DaText>
+              <DaText variant="small-bold">
+                {label || 'Drag drop or click here'}
+              </DaText>
               {accept && (
                 <DaText variant="small">
                   Accept {accept.split(',').join(', ').toLowerCase()}

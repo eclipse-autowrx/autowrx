@@ -2,7 +2,7 @@ import { DaInput } from '@/components/atoms/DaInput'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import DaText from '@/components/atoms/DaText'
 import { Fragment, useEffect, useMemo, useState } from 'react'
-import SystemInterfaceFields from './SystemInterfaceFields'
+import FieldsSystemInterface from './FieldsSystemInterface'
 import { DaButton } from '@/components/atoms/DaButton'
 import { TbPlus, TbReload } from 'react-icons/tb'
 import { CreateInventoryItem } from '@/types/inventory.type'
@@ -53,9 +53,9 @@ const FormInventoryItem = ({
   const UIFields = useMemo(() => {
     switch (innerData.type) {
       case 'system_interface':
-        return SystemInterfaceFields
+        return FieldsSystemInterface
       default:
-        return SystemInterfaceFields
+        return FieldsSystemInterface
     }
   }, [innerData.type])
 
