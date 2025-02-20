@@ -7,12 +7,12 @@ import { InventoryItem as InventorItemType } from '@/types/inventory.type'
 import clsx from 'clsx'
 import {
   TbChevronDown,
+  TbChevronRight,
   TbClock,
   TbFileExport,
   TbFileImport,
   TbPlus,
   TbSearch,
-  TbSettings,
   TbTableOptions,
   TbX,
 } from 'react-icons/tb'
@@ -164,6 +164,33 @@ const InventoryItemList = ({ mode = 'view' }: InventoryItemListProps) => {
         <DaText variant="title" className="text-da-primary-500">
           Inventory
         </DaText>
+
+        <div className="flex mb-6 mt-4 gap-3">
+          <div className="border rounded-lg shadow flex flex-col gap-2 p-3 w-[200px] text-sm">
+            <span className="text-xs">Inventory Items</span>
+            <DaText variant="title" className="text-da-gray-darkest">
+              100
+            </DaText>
+          </div>
+          <div className="border rounded-lg shadow flex flex-col gap-2 p-3 w-[200px] text-sm">
+            <span className="text-xs">Inventory Types</span>
+            <DaText variant="title" className="text-da-gray-darkest">
+              100
+            </DaText>
+            <div className="-mx-3 -mb-3 border-t">
+              <Link to="/inventory/types">
+                <DaButton
+                  variant="text"
+                  size="sm"
+                  className="w-full !px-3 !rounded-t-none !justify-between !text-xs"
+                >
+                  View List <TbChevronRight className="h-4 w-4" />
+                </DaButton>
+              </Link>
+            </div>
+          </div>
+        </div>
+
         {mode === 'view' && (
           <div className="flex gap-2 mt-2">
             <Link to="/inventory/new">

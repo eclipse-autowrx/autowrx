@@ -126,6 +126,12 @@ const DaBreadcrumbBar = () => {
           name: 'New Inventory Item',
           key: 'new',
         })
+      } else if (pathnames.includes('types')) {
+        paths.push({
+          path: `/inventory/types`,
+          name: 'Types',
+          key: 'types',
+        })
       }
 
       if (inventoryItem) {
