@@ -3,23 +3,24 @@ import { DaButton } from '@/components/atoms/DaButton'
 import { AddOn } from '@/types/addon.type'
 import { DaTextarea } from '@/components/atoms/DaTextarea'
 import config from '@/configs/config'
-import axios from 'axios'
 import { toast } from 'react-toastify'
 import useAuthStore from '@/stores/authStore'
 import default_generated_code from '@/data/default_generated_code'
 import { cn, useClickOutside } from '@/lib/utils'
 import { TbHistory, TbRotate, TbSettings } from 'react-icons/tb'
-import useGenAIWizardStore from '@/stores/genAIWizardStore'
+import useGenAIWizardStore from '@/pages/wizard/useGenAIWizardStore.js'
 import DaPopup from '@/components/atoms/DaPopup'
 import DaText from '@/components/atoms/DaText'
-import DaGeneratorSelectPopup from './DaGeneratorSelectPopup'
+import DaGeneratorSelectPopup from '../../components/molecules/genAI/DaGeneratorSelectPopup.js'
 import useListMarketplaceAddOns from '@/hooks/useListMarketplaceAddOns'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
-import Prompt_Templates from '../../../../instance/prompt_templates.js'
+import Prompt_Templates from '../../../instance/prompt_templates.js'
 import { retry } from '@/lib/retry.js'
 
-const DaSpeechToText = lazy(() => retry(() => import('./DaSpeechToText')))
+const DaSpeechToText = lazy(() =>
+  retry(() => import('../../components/molecules/genAI/DaSpeechToText.js')),
+)
 
 type DaGenAI_WizardBaseProps = {
   type: 'GenAI_Python' | 'GenAI_Dashboard' | 'GenAI_Widget'

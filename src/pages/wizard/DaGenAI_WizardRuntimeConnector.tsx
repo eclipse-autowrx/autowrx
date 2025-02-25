@@ -4,7 +4,7 @@ import useRuntimeStore from '@/stores/runtimeStore'
 import { shallow } from 'zustand/shallow'
 // import useModelStore from '@/stores/modelStore'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
-import useWizardGenAIStore from '@/stores/genAIWizardStore'
+import useWizardGenAIStore from '@/pages/wizard/useGenAIWizardStore'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 
@@ -24,7 +24,7 @@ interface KitConnectProps {
   onDeployResponse?: (log: string, isDone: boolean) => void
 }
 
-const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
+const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
   (
     {
       hideLabel = false,
@@ -497,4 +497,4 @@ const DaGenAI_RuntimeConnector = forwardRef<any, KitConnectProps>(
   },
 )
 
-export default DaGenAI_RuntimeConnector
+export default DaGenAI_WizardRuntimeConnector
