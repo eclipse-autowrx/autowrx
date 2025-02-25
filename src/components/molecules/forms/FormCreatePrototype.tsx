@@ -400,7 +400,7 @@ const FormCreatePrototype = ({
             placeholder="Model name"
             label="Model Name *"
             className="mt-4"
-            inputClassName="bg-da-gray-light"
+            inputClassName="bg-white"
           />
         ))}
 

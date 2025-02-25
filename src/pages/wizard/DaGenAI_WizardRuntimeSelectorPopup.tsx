@@ -11,7 +11,7 @@ interface RuntimeSelectorPopupProps {
   setOpen: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-const DaGenAI_RuntimeSelectorPopup = ({
+const DaGenAI_WizardRuntimeSelectorPopup = ({
   open,
   setOpen,
 }: RuntimeSelectorPopupProps) => {
@@ -62,4 +62,4 @@ const DaGenAI_RuntimeSelectorPopup = ({
   )
 }
 
-export default DaGenAI_RuntimeSelectorPopup
+export default DaGenAI_WizardRuntimeSelectorPopup

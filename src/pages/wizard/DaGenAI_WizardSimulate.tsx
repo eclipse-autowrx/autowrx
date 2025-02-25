@@ -1,11 +1,11 @@
-import DaGenAI_SimulateDashboard from './DaGenAI_SimulateDashboard'
-import DaGenAI_RuntimeControl from './DaGenAI_RuntimeControl'
+import DaGenAI_WizardSimulateDashboard from './DaGenAI_WizardSimulateDashboard'
+import DaGenAI_WizardRuntimeControl from './DaGenAI_WizardRuntimeControl'
 import useWizardGenAIStore from '@/pages/wizard/useGenAIWizardStore'
 import { useEffect } from 'react'
 
 type DaGenAI_SimulateProps = {}
 
-const DaGenAI_Simulate = ({}: DaGenAI_SimulateProps) => {
+const DaGenAI_WizardSimulate = ({}: DaGenAI_SimulateProps) => {
   const { wizardActiveRtId } = useWizardGenAIStore()
 
   useEffect(() => {
@@ -17,10 +17,10 @@ const DaGenAI_Simulate = ({}: DaGenAI_SimulateProps) => {
 
   return (
     <div className="flex h-full w-full flex-col py-2 px-4">
-      <DaGenAI_SimulateDashboard key={wizardActiveRtId} />
-      <DaGenAI_RuntimeControl />
+      <DaGenAI_WizardSimulateDashboard key={wizardActiveRtId} />
+      <DaGenAI_WizardRuntimeControl />
     </div>
   )
 }
 
-export default DaGenAI_Simulate
+export default DaGenAI_WizardSimulate
