@@ -4,7 +4,7 @@ import useRuntimeStore from '@/stores/runtimeStore'
 import { shallow } from 'zustand/shallow'
 // import useModelStore from '@/stores/modelStore'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
-import useWizardGenAIStore from '@/stores/genAIWizardStore'
+import useWizardGenAIStore from '@/pages/wizard/useGenAIWizardStore'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 

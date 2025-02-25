@@ -1,7 +1,7 @@
 import DaText from '@/components/atoms/DaText'
 import { useEffect, useState } from 'react'
 import { DaButton } from '@/components/atoms/DaButton'
-import DaGenAI_EditSystemStaging from './DaGenAI_EditSystemStaging'
+import DaGenAI_EditSystemStaging from '../../components/molecules/genAI/DaGenAI_EditSystemStaging'
 
 const TARGETS = [
   {

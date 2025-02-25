@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import LoadingLineAnimation from './DaGenAI_LoadingLineAnimation.tsx'
+import LoadingLineAnimation from '../../components/molecules/genAI/DaGenAI_LoadingLineAnimation.tsx'
 import { cn } from '@/lib/utils.ts'
-import CodeEditor from '../CodeEditor.tsx'
-import useWizardGenAIStore from '@/stores/genAIWizardStore.ts'
+import CodeEditor from '../../components/molecules/CodeEditor.tsx'
+import useWizardGenAIStore from '@/pages/wizard/useGenAIWizardStore.ts'
 import DaGenAI_WizardBase from './DaGenAI_WizardBase.tsx'
 
 type DaGenAI_WizardProps = {

@@ -1,25 +1,25 @@
 import React, { useEffect, useState } from 'react'
-import DaText from '../atoms/DaText'
-import { DaButton } from '../atoms/DaButton'
-import DaStepper from '../atoms/DaStepper'
-import DaStep from '../atoms/DaStep'
+import DaText from '../../components/atoms/DaText'
+import { DaButton } from '../../components/atoms/DaButton'
+import DaStepper from '../../components/atoms/DaStepper'
+import DaStep from '../../components/atoms/DaStep'
 import { useNavigate } from 'react-router-dom'
-import DaGenAI_Wizard from '../molecules/genAI/DaGenAI_Wizard'
-import useWizardGenAIStore from '@/stores/genAIWizardStore'
-import DaGenAI_Simulate from '../molecules/genAI/DaGenAI_Simulate'
-import DaGenAI_WizardStaging from '../molecules/genAI/DaGenAI_WizardStaging'
+import DaGenAI_Wizard from './DaGenAI_Wizard'
+import useWizardGenAIStore from '@/pages/wizard/useGenAIWizardStore'
+import DaGenAI_Simulate from '../../components/molecules/genAI/DaGenAI_Simulate'
+import DaGenAI_WizardStaging from './DaGenAI_WizardStaging'
 import { cn } from '@/lib/utils'
 import { TbArrowRight, TbArrowLeft, TbSettings } from 'react-icons/tb'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import { toast } from 'react-toastify'
-import DaGenAI_IntroductionStep from '../molecules/genAI/DaGenAI_Introduction'
-import DaGenAI_RuntimeSelectorPopup from '../molecules/genAI/DaGenAI_RuntimeSelectorPopup'
-import DaHomologation from '../molecules/homologation'
-import DaPopup from '../atoms/DaPopup'
-import FormCreatePrototype from '../molecules/forms/FormCreatePrototype'
+import DaGenAI_IntroductionStep from '../../components/molecules/genAI/DaGenAI_Introduction'
+import DaGenAI_RuntimeSelectorPopup from '../../components/molecules/genAI/DaGenAI_RuntimeSelectorPopup'
+import DaHomologation from '../../components/molecules/homologation'
+import DaPopup from '../../components/atoms/DaPopup'
+import FormCreatePrototype from '../../components/molecules/forms/FormCreatePrototype'
 
-const GenAIPrototypeWizard = () => {
+const PageGenAI_Wizard = () => {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
@@ -260,4 +260,4 @@ const GenAIPrototypeWizard = () => {
   )
 }
 
-export default GenAIPrototypeWizard
+export default PageGenAI_Wizard

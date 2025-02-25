@@ -1,6 +1,6 @@
 import DaGenAI_SimulateDashboard from './DaGenAI_SimulateDashboard'
 import DaGenAI_RuntimeControl from './DaGenAI_RuntimeControl'
-import useWizardGenAIStore from '@/stores/genAIWizardStore'
+import useWizardGenAIStore from '@/pages/wizard/useGenAIWizardStore'
 import { useEffect } from 'react'
 
 type DaGenAI_SimulateProps = {}

@@ -4,7 +4,7 @@ import { TbCircleFilled, TbCheck } from 'react-icons/tb'
 import DaPopup from '@/components/atoms/DaPopup'
 import DaText from '@/components/atoms/DaText'
 import { cn } from '@/lib/utils'
-import useWizardGenAIStore from '@/stores/genAIWizardStore'
+import useWizardGenAIStore from '@/pages/wizard/useGenAIWizardStore'
 
 interface RuntimeSelectorPopupProps {
   open: boolean

@@ -3,7 +3,7 @@ import { DaText } from '@/components/atoms/DaText'
 import { HomePartners } from '@/components/organisms/HomePartners'
 import PrototypeSummary from '@/components/organisms/PrototypeSummary'
 import { useState } from 'react'
-import GenAIPrototypeWizard from '@/components/organisms/GenAIPrototypeWizard'
+import PageGenAI_Wizard from '@/pages/wizard/PageGenAIWizard'
 import DaGenAI_SimulateDashboard from '@/components/molecules/genAI/DaGenAI_SimulateDashboard'
 
 // const PageOrganisms = () => {
@@ -55,7 +55,7 @@ import DaGenAI_SimulateDashboard from '@/components/molecules/genAI/DaGenAI_Simu
 
 const PageOrganisms = () => {
   const [open, setOpen] = useState(true)
-  return <GenAIPrototypeWizard />
+  return <PageGenAI_Wizard />
 }
 
 export default PageOrganisms
