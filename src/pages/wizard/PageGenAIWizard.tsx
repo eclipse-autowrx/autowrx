@@ -13,11 +13,10 @@ import { TbArrowRight, TbArrowLeft, TbSettings } from 'react-icons/tb'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import { toast } from 'react-toastify'
-import DaGenAI_WizardIntroductionStep from './DaGenAI_WizardIntroduction'
 import DaGenAI_WizardRuntimeSelectorPopup from './DaGenAI_WizardRuntimeSelectorPopup'
-import DaHomologation from '../../components/molecules/homologation'
 import DaPopup from '../../components/atoms/DaPopup'
 import FormCreatePrototype from '../../components/molecules/forms/FormCreatePrototype'
+import { update } from 'lodash'
 
 const PageGenAIWizard = () => {
   const navigate = useNavigate()
@@ -54,32 +53,6 @@ const PageGenAIWizard = () => {
     })
   }
 
-  // Update disable status for Simulate (step 1) and Deploy (step 2)
-  useEffect(() => {
-    const hasCode = wizardPrototype.code && wizardPrototype.code.length > 0
-    updateDisabledStep(1, !hasCode)
-    updateDisabledStep(2, !hasCode)
-    if (hasCode) {
-      setLoading(false)
-    }
-  }, [wizardPrototype])
-
-  // Ensure Generate (step 0) is always enabled
-  useEffect(() => {
-    updateDisabledStep(0, false)
-  }, [])
-
-  // Reset store when going back to Generate and stop simulation when switching to Simulate
-  useEffect(() => {
-    if (currentStep === 0) {
-      setIsGeneratedFlag(false)
-      resetWizardStore()
-    }
-    if (currentStep === 1) {
-      executeWizardSimulationStop()
-    }
-  }, [currentStep])
-
   const handleBack = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1)
@@ -100,6 +73,31 @@ const PageGenAIWizard = () => {
     }
   }
 
+  // Update disable status for Simulate (step 1) and Deploy (step 2)
+  useEffect(() => {
+    const hasCode = wizardPrototype.code && wizardPrototype.code.length > 0
+    if (hasCode) {
+      setLoading(false)
+    }
+  }, [wizardPrototype])
+
+  // Ensure Generate (step 0) is always enabled
+  useEffect(() => {
+    updateDisabledStep(1, false)
+    updateDisabledStep(0, false)
+  }, [])
+
+  // Reset store when going back to Generate and stop simulation when switching to Simulate
+  useEffect(() => {
+    if (currentStep === 0) {
+      setIsGeneratedFlag(false)
+      resetWizardStore()
+    }
+    if (currentStep === 1) {
+      executeWizardSimulationStop()
+    }
+  }, [currentStep])
+
   useEffect(() => {
     const matchingRuntime = allWizardRuntimes.find((runtime) =>
       runtime.kit_id.startsWith('RunTime-ETAS-E2E'),
@@ -117,31 +115,17 @@ const PageGenAIWizard = () => {
         </DaText>
         <div className="flex min-w-0 flex-[4] justify-center">
           <DaStepper currentStep={currentStep} setCurrentStep={setCurrentStep}>
-            {/* <DaStep>Introduction</DaStep>
-            <DaStep disabled={soFarSteps < 1 || disabledStep[0]}>
-              Generate
-            </DaStep> */}
             <DaStep>Generate</DaStep>
-            {/* <DaStep disabled={soFarSteps < 2 || disabledStep[1]}>
-              Simulate
-            </DaStep> */}
             <DaStep disabled={soFarSteps < 1 || disabledStep[0]}>
               Simulate
             </DaStep>
-            {/* <DaStep disabled={soFarSteps < 3 || disabledStep[2]}>Deploy</DaStep> */}
             <DaStep disabled={soFarSteps < 2 || disabledStep[1]}>Deploy</DaStep>
-            {/* <DaStep disabled={soFarSteps < 4 || disabledStep[3]}>Verify</DaStep> */}
           </DaStepper>
         </div>
         <div className="flex flex-1"></div>
       </div>
 
       <div className="flex min-h-0 flex-1 py-2 w-full">
-        {/* <div
-          className={cn('flex flex-1', currentStep === 0 ? 'block' : 'hidden')}
-        >
-          <DaGenAI_IntroductionStep />
-        </div> */}
         <div
           className={cn('flex flex-1', currentStep === 0 ? 'block' : 'hidden')}
         >
@@ -167,11 +151,6 @@ const PageGenAIWizard = () => {
         >
           <DaGenAI_WizardStaging />
         </div>
-        {/* <div
-          className={cn('flex flex-1', currentStep === 4 ? 'block' : 'hidden')}
-        >
-          <DaHomologation isWizard={true} />
-        </div> */}
       </div>
 
       <div className="flex px-4 py-4 flex-shrink-0 justify-between border-t">
@@ -207,7 +186,9 @@ const PageGenAIWizard = () => {
               }
               className="w-[300px]"
               variant="solid"
-              disabled={!wizardActiveRtId}
+              disabled={
+                !wizardActiveRtId || wizardPrototype?.code?.length === 0
+              }
             >
               {wizardSimulating ? 'Stop Simulation' : 'Start Simulation'}
             </DaButton>
@@ -233,9 +214,14 @@ const PageGenAIWizard = () => {
         )}
         {currentStep === 2 && (
           <DaButton
-            onClick={() => setOpenCreatePrototypeModal(true)}
+            onClick={() => {
+              setOpenCreatePrototypeModal(true)
+            }}
             className="w-[90px]"
             variant="solid"
+            disabled={
+              !wizardPrototype?.code || wizardPrototype.code.length === 0
+            }
           >
             Save
           </DaButton>
