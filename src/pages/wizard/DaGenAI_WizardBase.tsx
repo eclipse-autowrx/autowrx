@@ -35,7 +35,8 @@ const DaGenAI_WizardBase = ({
   onCodeGenerated,
   onLoadingChange,
 }: DaGenAI_WizardBaseProps) => {
-  const { wizardPrompt, setWizardPrompt } = useGenAIWizardStore()
+  const { wizardPrompt, setWizardPrompt, resetWizardStore } =
+    useGenAIWizardStore()
   const [selectedAddOn, setSelectedAddOn] = useState<AddOn | undefined>(
     undefined,
   )
@@ -273,7 +274,11 @@ const DaGenAI_WizardBase = ({
                     ))}
                 </div>
               )}
-              <DaButton variant="plain" size="sm" onClick={() => setPrompt('')}>
+              <DaButton
+                variant="plain"
+                size="sm"
+                onClick={() => resetWizardStore()}
+              >
                 <TbRotate className="mr-1 size-4 rotate-[270deg]" />
                 Clear
               </DaButton>

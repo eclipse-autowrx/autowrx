@@ -16,7 +16,6 @@ import { toast } from 'react-toastify'
 import DaGenAI_WizardRuntimeSelectorPopup from './DaGenAI_WizardRuntimeSelectorPopup'
 import DaPopup from '../../components/atoms/DaPopup'
 import FormCreatePrototype from '../../components/molecules/forms/FormCreatePrototype'
-import { update } from 'lodash'
 
 const PageGenAIWizard = () => {
   const navigate = useNavigate()
@@ -76,6 +75,7 @@ const PageGenAIWizard = () => {
   // Update disable status for Simulate (step 1) and Deploy (step 2)
   useEffect(() => {
     const hasCode = wizardPrototype.code && wizardPrototype.code.length > 0
+    updateDisabledStep(0, !hasCode)
     if (hasCode) {
       setLoading(false)
     }
@@ -84,14 +84,12 @@ const PageGenAIWizard = () => {
   // Ensure Generate (step 0) is always enabled
   useEffect(() => {
     updateDisabledStep(1, false)
-    updateDisabledStep(0, false)
   }, [])
 
   // Reset store when going back to Generate and stop simulation when switching to Simulate
   useEffect(() => {
     if (currentStep === 0) {
       setIsGeneratedFlag(false)
-      resetWizardStore()
     }
     if (currentStep === 1) {
       executeWizardSimulationStop()
