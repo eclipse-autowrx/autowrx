@@ -171,15 +171,12 @@ const SignalFlowEditor = ({ flow, onChange }: SignalFlowEditorProps) => {
   )
 }
 
-interface DaPrototypeFlowEditorProps {
+interface DaFlowEditorProps {
   initialData: FlowStep[]
   onUpdate: (data: string) => void
 }
 
-const DaPrototypeFlowEditor = ({
-  initialData,
-  onUpdate,
-}: DaPrototypeFlowEditorProps) => {
+const DaFlowEditor = ({ initialData, onUpdate }: DaFlowEditorProps) => {
   const [data, setData] = useState<FlowStep[]>(initialData)
   const createEmptyFlow = () => ({
     offBoard: {
@@ -434,4 +431,4 @@ const DaPrototypeFlowEditor = ({
   )
 }
 
-export default DaPrototypeFlowEditor
+export default DaFlowEditor

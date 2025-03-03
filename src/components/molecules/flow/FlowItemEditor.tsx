@@ -14,6 +14,8 @@ interface FlowItemEditorProps {
   value: string
   onChange: (value: string) => void
   children: React.ReactNode
+  open?: boolean
+  onOpenChange?: (value: boolean) => void
 }
 
 export interface FormData {
@@ -68,7 +70,13 @@ const parseNonJsonFlowItem = (value: string): FormData => {
   }
 }
 
-const FlowItemEditor = ({ value, onChange, children }: FlowItemEditorProps) => {
+const FlowItemEditor = ({
+  value,
+  onChange,
+  children,
+  open,
+  onOpenChange,
+}: FlowItemEditorProps) => {
   const { data: currentUser } = useSelfProfileQuery()
 
   const [formData, setFormData] = useState<FormData>(() => {
@@ -150,8 +158,10 @@ const FlowItemEditor = ({ value, onChange, children }: FlowItemEditorProps) => {
       trigger={children}
       dialogTitle="Hazard Analysis and Risk Assessment (HARA)"
       className="max-w-[98vw] w-[98vw] xl:w-[80vw] h-[90vh] xl:h-[90vh] text-xs"
+      open={open}
+      onOpenChange={onOpenChange}
     >
-      <div className="flex flex-col w-full h-full  z-[99999]">
+      <div className="flex flex-col w-full h-full">
         <div className="flex h-full overflow-y-auto space-x-4">
           {/* Left Column: Mandatory Fields and Custom Attributes */}
           <div className="flex flex-col w-1/2 h-full pt-2 pr-1.5 overflow-y-auto scroll-gray gap-4">

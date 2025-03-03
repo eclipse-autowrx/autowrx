@@ -9,9 +9,8 @@ import { ASILBadge, ASILLevel } from './ASILBadge'
 import RiskAssessmentMarkdown from './RiskAssessmentMarkdown'
 import { defaultRiskAssessmentPlaceholder } from './FlowItemEditor'
 import { DaButton } from '@/components/atoms/DaButton'
-import FlowItemEditor from './FlowItemEditor'
 
-interface SystemActivityData {
+interface FlowData {
   type: string
   component: string
   description: string
@@ -24,10 +23,9 @@ interface SystemActivityData {
   riskAssessmentEvaluation?: string
 }
 
-interface FlowItemActivityProps {
+interface FlowItemProps {
   stringData: string
-  // New optional onChange callback to propagate edited content
-  onChange?: (newValue: string) => void
+  onEdit?: (value: string) => void
 }
 
 const safetyLevels = ['<ASIL-D>', '<ASIL-C>', '<ASIL-B>', '<ASIL-A>', '<QM>']
@@ -57,7 +55,7 @@ const parseActivityData = (
   preAsilLevel: ASILLevel | null
   postAsilLevel: ASILLevel | null
   riskAssessment: string
-  data: SystemActivityData | null
+  data: FlowData | null
 } => {
   if (isJsonString(input)) {
     const jsonData = JSON.parse(input)
@@ -106,7 +104,7 @@ const parseActivityData = (
   }
 }
 
-const FlowItem = ({ stringData, onChange }: FlowItemActivityProps) => {
+const FlowItem = ({ stringData, onEdit }: FlowItemProps) => {
   const { showPrototypeFlowASIL } = useSystemUI()
 
   // Parse the input stringData
@@ -150,26 +148,17 @@ const FlowItem = ({ stringData, onChange }: FlowItemActivityProps) => {
             System Activity
           </div>
           <div className="flex items-center space-x-1">
-            {/* Wrap the Edit button with FlowItemEditor so that it opens the modal */}
-            <FlowItemEditor
-              value={stringData}
-              onChange={(updatedValue) => {
-                // Propagate the updated JSON string back to the parent (if provided)
-                if (onChange) onChange(updatedValue)
-              }}
+            <DaButton
+              size="sm"
+              variant="plain"
+              className="flex ml-1 !h-6 !p-2 !text-xs !text-da-primary-500"
+              onClick={() => onEdit && onEdit(stringData)}
             >
-              <DaButton
-                size="sm"
-                variant="plain"
-                className="flex ml-1 !h-6 !p-2 !text-xs !text-da-primary-500"
-              >
-                <TbEdit className="size-3.5 mr-1" /> Edit
-              </DaButton>
-            </FlowItemEditor>
+              <TbEdit className="size-3.5 mr-1" /> Edit
+            </DaButton>
             <button
               className="p-0.5 hover:text-red-500 hover:bg-red-100 rounded-md"
               onClick={(e) => {
-                // Manually dispatch an Escape key event to close the menu
                 const menu = e.currentTarget.closest('[role="menu"]')
                 if (menu) {
                   menu.dispatchEvent(

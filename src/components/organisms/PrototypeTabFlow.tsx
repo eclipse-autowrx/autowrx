@@ -9,7 +9,6 @@ import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import { updatePrototypeService } from '@/services/prototype.service'
 import DaTooltip from '../atoms/DaTooltip'
 import { FlowStep } from '@/types/flow.type'
-import DaPrototypeFlowEditor from '../molecules/flow/DaEditableFlowTable'
 import { DaButton } from '../atoms/DaButton'
 import { TbChevronCompactRight } from 'react-icons/tb'
 import { cn } from '@/lib/utils'
@@ -18,6 +17,8 @@ import DaCheckbox from '../atoms/DaCheckbox'
 import FlowSystemInterface from '../molecules/flow/FlowSystemInterface'
 import FlowItem from '../molecules/flow/FlowItem'
 import DaText from '../atoms/DaText'
+import DaFlowEditor from '../molecules/flow/DaFlowEditor'
+import FlowItemEditor from '../molecules/flow/FlowItemEditor'
 
 const PrototypeTabFlow = () => {
   const { data: prototype } = useCurrentPrototype()
@@ -32,6 +33,13 @@ const PrototypeTabFlow = () => {
     setShowPrototypeFlowFullScreen,
   } = useSystemUI()
   const [isSaving, setIsSaving] = useState(false)
+  const [flowEditorOpen, setFlowEditorOpen] = useState(false)
+  const [currentEditingCell, setCurrentEditingCell] = useState<{
+    stepIndex: number
+    flowIndex: number
+    fieldPath: string[] // e.g. ['offBoard', 'smartPhone']
+    value: string
+  } | null>(null)
 
   // Parse customer journey steps
   const parseCustomerJourneySteps = (journeyText: string | undefined) => {
@@ -173,6 +181,16 @@ const PrototypeTabFlow = () => {
     console.log('New Flow Data:', newData[stepIndex].flows[flowIndex])
   }
 
+  const openFlowEditor = (
+    stepIndex: number,
+    flowIndex: number,
+    fieldPath: string[],
+    value: string,
+  ) => {
+    setCurrentEditingCell({ stepIndex, flowIndex, fieldPath, value })
+    setFlowEditorOpen(true)
+  }
+
   return (
     <div
       className={cn(
@@ -237,7 +255,7 @@ const PrototypeTabFlow = () => {
           </DaButton>
         </div>
         {isEditing ? (
-          <DaPrototypeFlowEditor
+          <DaFlowEditor
             initialData={flowData}
             onUpdate={(jsonData) => setFlowString(jsonData)}
           />
@@ -333,12 +351,12 @@ const PrototypeTabFlow = () => {
                             <FlowItem
                               stringData={flow.offBoard.smartPhone}
                               key={`${flowIndex}-smartPhone`}
-                              onChange={(updatedValue) =>
-                                updateFlowCell(
+                              onEdit={(val) =>
+                                openFlowEditor(
                                   stepIndex,
                                   flowIndex,
                                   ['offBoard', 'smartPhone'],
-                                  updatedValue,
+                                  val,
                                 )
                               }
                             />
@@ -353,12 +371,12 @@ const PrototypeTabFlow = () => {
                             <FlowItem
                               stringData={flow.offBoard.cloud}
                               key={`${flowIndex}-cloud`}
-                              onChange={(updatedValue) =>
-                                updateFlowCell(
+                              onEdit={(val) =>
+                                openFlowEditor(
                                   stepIndex,
                                   flowIndex,
                                   ['offBoard', 'cloud'],
-                                  updatedValue,
+                                  val,
                                 )
                               }
                             />
@@ -373,12 +391,12 @@ const PrototypeTabFlow = () => {
                             <FlowItem
                               stringData={flow.onBoard.sdvRuntime}
                               key={`${flowIndex}-sdvRuntime`}
-                              onChange={(updatedValue) =>
-                                updateFlowCell(
+                              onEdit={(val) =>
+                                openFlowEditor(
                                   stepIndex,
                                   flowIndex,
                                   ['onBoard', 'sdvRuntime'],
-                                  updatedValue,
+                                  val,
                                 )
                               }
                             />
@@ -393,12 +411,12 @@ const PrototypeTabFlow = () => {
                             <FlowItem
                               stringData={flow.onBoard.embedded}
                               key={`${flowIndex}-embedded`}
-                              onChange={(updatedValue) =>
-                                updateFlowCell(
+                              onEdit={(val) =>
+                                openFlowEditor(
                                   stepIndex,
                                   flowIndex,
                                   ['onBoard', 'embedded'],
-                                  updatedValue,
+                                  val,
                                 )
                               }
                             />
@@ -413,12 +431,12 @@ const PrototypeTabFlow = () => {
                             <FlowItem
                               stringData={flow.onBoard.sensors}
                               key={`${flowIndex}-sensors`}
-                              onChange={(updatedValue) =>
-                                updateFlowCell(
+                              onEdit={(val) =>
+                                openFlowEditor(
                                   stepIndex,
                                   flowIndex,
                                   ['onBoard', 'sensors'],
-                                  updatedValue,
+                                  val,
                                 )
                               }
                             />
@@ -450,6 +468,27 @@ const PrototypeTabFlow = () => {
           />
         )}
       </div>
+
+      {currentEditingCell && (
+        <FlowItemEditor
+          value={currentEditingCell.value}
+          onChange={(updatedValue) => {
+            updateFlowCell(
+              currentEditingCell.stepIndex,
+              currentEditingCell.flowIndex,
+              currentEditingCell.fieldPath,
+              updatedValue,
+            )
+            setFlowEditorOpen(false)
+            setCurrentEditingCell(null)
+          }}
+          open={flowEditorOpen}
+          onOpenChange={setFlowEditorOpen}
+        >
+          {/* When used as a controlled dialog, the trigger is not needed */}
+          <></>
+        </FlowItemEditor>
+      )}
     </div>
   )
 }
