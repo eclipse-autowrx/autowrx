@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { ASILLevel } from './ASILBadge'
 import CustomDialog from './CustomDialog'
 import { DialogClose } from '@/components/atoms/dialog'
 import { DaButton } from '@/components/atoms/DaButton'
@@ -9,45 +8,26 @@ import { TbPlus, TbTrash, TbChevronRight } from 'react-icons/tb'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import RiskAssessmentEditor from './RiskAssessmentEditor'
 import { DaTextarea } from '@/components/atoms/DaTextarea'
-
-interface FlowItemEditorProps {
-  value: string
-  onChange: (value: string) => void
-  children: React.ReactNode
-  open?: boolean
-  onOpenChange?: (value: boolean) => void
-}
-
-export interface FormData {
-  type: string
-  component: string
-  description: string
-  preAsilLevel: ASILLevel
-  postAsilLevel: ASILLevel
-  riskAssessment?: string
-  approvedBy?: string
-  approvedAt?: string
-  [key: string]: string | ASILLevel | undefined
-}
+import { ASILLevel } from '@/types/flow.type'
+import { FlowItemData } from '@/types/flow.type'
 
 export const defaultRiskAssessmentPlaceholder = `# Hazards
--
+- 
 
 # Mitigation
 - 
 
 # Risk Classification
--
+- 
 
 # ASIL Rating
--
+- 
 
 # Safety Goals
 -`
 
-// This helper handles the edge case when the incoming value is plain text (old version).
-// It extracts an ASIL marker (like <QM> or <ASIL-C>) and treats the rest as the description.
-const parseNonJsonFlowItem = (value: string): FormData => {
+// Helper to handle legacy plain text values.
+const parseNonJsonFlowItem = (value: string): FlowItemData => {
   const ratingRegex = /<(?:ASIL-)?(A|B|C|D|QM)>/
   const match = value.match(ratingRegex)
   let extractedRating: ASILLevel = 'QM'
@@ -70,6 +50,14 @@ const parseNonJsonFlowItem = (value: string): FormData => {
   }
 }
 
+interface FlowItemEditorProps {
+  value: string
+  onChange: (value: string) => void
+  children: React.ReactNode
+  open?: boolean
+  onOpenChange?: (value: boolean) => void
+}
+
 const FlowItemEditor = ({
   value,
   onChange,
@@ -79,12 +67,10 @@ const FlowItemEditor = ({
 }: FlowItemEditorProps) => {
   const { data: currentUser } = useSelfProfileQuery()
 
-  const [formData, setFormData] = useState<FormData>(() => {
+  const [flowItemData, setFlowItemData] = useState<FlowItemData>(() => {
     try {
-      // Try to parse as JSON
       const parsed = JSON.parse(value)
       const { asilLevel, preAsilLevel, postAsilLevel, ...rest } = parsed
-      // Correct fallback order: use preAsilLevel if provided; if not, use asilLevel; if neither, default to 'QM'
       const newPreAsilLevel = preAsilLevel || asilLevel || 'QM'
       const newPostAsilLevel = postAsilLevel || 'QM'
       return {
@@ -100,15 +86,14 @@ const FlowItemEditor = ({
         riskAssessmentEvaluation: parsed.riskAssessmentEvaluation || '',
         approvedBy: parsed.approvedBy || '',
         approvedAt: parsed.approvedAt || '',
+        generatedAt: parsed.generatedAt || '',
         ...rest,
       }
     } catch {
-      // If JSON parsing fails, assume it's the old plain text format.
       return parseNonJsonFlowItem(value)
     }
   })
 
-  // Keys that are considered mandatory and should not be rendered as custom attributes.
   const mandatoryKeys = [
     'type',
     'component',
@@ -122,34 +107,34 @@ const FlowItemEditor = ({
     'riskAssessmentEvaluation',
   ]
 
-  const handleInputChange = (name: keyof FormData, value: string) => {
-    setFormData((prev) => ({
+  const handleInputChange = (name: keyof FlowItemData, value: string) => {
+    setFlowItemData((prev) => ({
       ...prev,
       [name]: value,
     }))
   }
 
   const handleSubmit = () => {
-    const jsonString = JSON.stringify(formData)
+    const jsonString = JSON.stringify(flowItemData)
     onChange(jsonString)
   }
 
   const handleAddCustomAttribute = () => {
     const attributeName = prompt('Enter custom attribute name:')
-    if (attributeName && !formData.hasOwnProperty(attributeName)) {
-      setFormData((prev) => ({ ...prev, [attributeName]: '' }))
+    if (attributeName && !flowItemData.hasOwnProperty(attributeName)) {
+      setFlowItemData((prev) => ({ ...prev, [attributeName]: '' }))
     }
   }
 
   const handleRemoveCustomAttribute = (attributeName: string) => {
-    setFormData((prev) => {
+    setFlowItemData((prev) => {
       const newData = { ...prev }
       delete newData[attributeName]
       return newData
     })
   }
 
-  const customAttributes = Object.keys(formData).filter(
+  const customAttributes = Object.keys(flowItemData).filter(
     (key) => !mandatoryKeys.includes(key),
   )
 
@@ -163,7 +148,7 @@ const FlowItemEditor = ({
     >
       <div className="flex flex-col w-full h-full">
         <div className="flex h-full overflow-y-auto space-x-4">
-          {/* Left Column: Mandatory Fields and Custom Attributes */}
+          {/* Left Column: Mandatory Fields & Custom Attributes */}
           <div className="flex flex-col w-1/2 h-full pt-2 pr-1.5 overflow-y-auto scroll-gray gap-4">
             <div className="flex flex-col gap-1">
               <label className="font-medium">
@@ -171,7 +156,7 @@ const FlowItemEditor = ({
               </label>
               <DaInput
                 name="type"
-                value={formData.type}
+                value={flowItemData.type}
                 onChange={(e) => handleInputChange('type', e.target.value)}
                 className="h-8 flex"
                 inputClassName="h-6 text-xs"
@@ -183,7 +168,7 @@ const FlowItemEditor = ({
               </label>
               <DaInput
                 name="component"
-                value={formData.component}
+                value={flowItemData.component}
                 onChange={(e) => handleInputChange('component', e.target.value)}
                 className="h-8 flex"
                 inputClassName="h-6 text-xs"
@@ -195,7 +180,7 @@ const FlowItemEditor = ({
               </label>
               <DaTextarea
                 name="description"
-                value={formData.description}
+                value={flowItemData.description}
                 onChange={(e) =>
                   handleInputChange('description', e.target.value)
                 }
@@ -209,7 +194,7 @@ const FlowItemEditor = ({
                   Pre-Mitigation ASIL Rating
                 </label>
                 <ASILSelect
-                  value={formData.preAsilLevel}
+                  value={flowItemData.preAsilLevel}
                   onChange={(value) => handleInputChange('preAsilLevel', value)}
                 />
               </div>
@@ -219,7 +204,7 @@ const FlowItemEditor = ({
                   Post-Mitigation ASIL Rating
                 </label>
                 <ASILSelect
-                  value={formData.postAsilLevel}
+                  value={flowItemData.postAsilLevel}
                   onChange={(value) =>
                     handleInputChange('postAsilLevel', value)
                   }
@@ -240,9 +225,12 @@ const FlowItemEditor = ({
                   </div>
                   <DaInput
                     name={key}
-                    value={formData[key] as string}
+                    value={flowItemData[key] as string}
                     onChange={(e) =>
-                      handleInputChange(key as keyof FormData, e.target.value)
+                      handleInputChange(
+                        key as keyof FlowItemData,
+                        e.target.value,
+                      )
                     }
                     className="h-8 flex"
                     inputClassName="h-6 text-xs"
@@ -264,9 +252,9 @@ const FlowItemEditor = ({
           </div>
           {/* Right Column: Risk Assessment Section */}
           <RiskAssessmentEditor
-            formData={formData}
-            updateFormData={(updates) =>
-              setFormData((prev) => ({ ...prev, ...updates }))
+            flowItemData={flowItemData}
+            updateFlowItemData={(updates) =>
+              setFlowItemData((prev) => ({ ...prev, ...updates }))
             }
             currentUser={currentUser}
           />

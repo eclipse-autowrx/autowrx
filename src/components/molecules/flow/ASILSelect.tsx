@@ -1,7 +1,7 @@
-import { ASILLevel } from './ASILBadge'
 import { ASILBadge } from './ASILBadge'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import { cn } from '@/lib/utils'
+import { ASILLevel } from '@/types/flow.type'
 
 interface ASILSelectProps {
   value: ASILLevel

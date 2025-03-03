@@ -1,21 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import {
-  TbArrowLeft,
-  TbArrowRight,
-  TbPlus,
-  TbTrash,
-  TbChevronCompactRight,
-  TbArrowsLeftRight,
-  TbCornerDownLeft,
-  TbCornerDownRight,
-  TbArrowsRightLeft,
-} from 'react-icons/tb'
+import { TbPlus, TbTrash, TbChevronCompactRight } from 'react-icons/tb'
 import DaTooltip from '@/components/atoms/DaTooltip'
-import { FlowStep, Direction, SignalFlow } from '@/types/flow.type'
+import { FlowStep, SignalFlow } from '@/types/flow.type'
 import { DaButton } from '@/components/atoms/DaButton'
 import { cn } from '@/lib/utils'
-import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import FlowItemEditor from './FlowItemEditor'
+import FlowDirectionSelector from './FlowDirectionSelector'
 
 interface FlowCell {
   key: string
@@ -82,63 +72,6 @@ const FLOW_CELLS: FlowCell[] = [
   },
 ]
 
-interface DirectionSelectProps {
-  value: Direction
-  onChange: (value: Direction) => void
-}
-
-const DirectionSelect = ({ value, onChange }: DirectionSelectProps) => {
-  const directionOptions = [
-    {
-      value: 'left',
-      icon: <TbArrowLeft className="size-5" />,
-    },
-    {
-      value: 'right',
-      icon: <TbArrowRight className="size-5" />,
-    },
-    {
-      value: 'bi-direction',
-      icon: <TbArrowsRightLeft className="size-5" />,
-    },
-    {
-      value: 'reverse-bi-direction',
-      icon: <TbArrowsLeftRight className="size-5" />,
-    },
-    {
-      value: 'down-left',
-      icon: <TbCornerDownLeft className="size-5" />,
-    },
-    {
-      value: 'down-right',
-      icon: <TbCornerDownRight className="size-5" />,
-    },
-  ] as const
-
-  const handleValueChange = (newValue: string) => {
-    onChange(newValue as Direction)
-  }
-
-  return (
-    <DaSelect
-      className="h-9 rounded-md"
-      value={value}
-      onValueChange={handleValueChange}
-      placeholderClassName="flex justify-center items-center w-full"
-    >
-      {directionOptions.map((direction, index) => (
-        <DaSelectItem
-          className="flex w-full justify-center items-center"
-          value={direction.value}
-          key={index}
-        >
-          {direction.icon}
-        </DaSelectItem>
-      ))}
-    </DaSelect>
-  )
-}
-
 interface SignalFlowEditorProps {
   flow: SignalFlow | null
   onChange: (flow: SignalFlow | null) => void
@@ -150,7 +83,7 @@ const SignalFlowEditor = ({ flow, onChange }: SignalFlowEditorProps) => {
 
   return (
     <div className="flex flex-col gap-1 min-h-[75px] p-2">
-      <DirectionSelect
+      <FlowDirectionSelector
         value={currentFlow.direction}
         onChange={(direction) => onChange({ ...currentFlow, direction })}
       />

@@ -12,19 +12,19 @@ import {
   riskAssessmentGenerationPrompt,
   reEvaluationRiskAssessmentPrompt,
 } from './FlowPromptInventory'
-import { ASILLevel } from './ASILBadge'
-import { FormData } from './FlowItemEditor'
 import RiskAssessmentMarkdown from './RiskAssessmentMarkdown'
+import { FlowItemData } from '@/types/flow.type'
+import { ASILLevel } from '@/types/flow.type'
 
 interface RiskAssessmentEditorProps {
-  formData: FormData
-  updateFormData: (updates: Partial<FormData>) => void
+  flowItemData: FlowItemData
+  updateFlowItemData: (updates: Partial<FlowItemData>) => void
   currentUser: { name: string } | undefined
 }
 
 const RiskAssessmentEditor = ({
-  formData,
-  updateFormData,
+  flowItemData: flowItemData,
+  updateFlowItemData,
   currentUser,
 }: RiskAssessmentEditorProps) => {
   // Tab state
@@ -44,7 +44,7 @@ const RiskAssessmentEditor = ({
   const [isFeedbackEvaluated, setIsFeedbackEvaluated] = useState(false)
 
   const [backupRiskAssessment, setBackupRiskAssessment] = useState<string>(
-    formData.riskAssessment || '',
+    flowItemData.riskAssessment || '',
   )
   const [isEditingMarkdown, setIsEditingMarkdown] = useState(false)
 
@@ -52,17 +52,17 @@ const RiskAssessmentEditor = ({
   useEffect(() => {
     setIsRiskAssessmentEvaluated(false)
     setIsFeedbackEvaluated(false)
-  }, [formData.description])
+  }, [flowItemData.description])
 
   const generateContent = async () => {
     let systemPrompt: string, message: string
     if (activeTab === 'riskAssessment') {
       systemPrompt = riskAssessmentGenerationPrompt
-      message = `Generate risk assessment for action "${formData.description}" <timestamp>${new Date().toLocaleString()}</timestamp>`
-      setBackupRiskAssessment(formData.riskAssessment || '')
+      message = `Generate risk assessment for action "${flowItemData.description}" <timestamp>${new Date().toLocaleString()}</timestamp>`
+      setBackupRiskAssessment(flowItemData.riskAssessment || '')
     } else {
       systemPrompt = reEvaluationRiskAssessmentPrompt
-      message = `Generate feedback for risk assessment based on action "${formData.description}" and previous risk assessment: <previous_risk_assessment>${formData.riskAssessment || ''}</previous_risk_assessment> <timestamp>${new Date().toLocaleString()}</timestamp>`
+      message = `Generate feedback for risk assessment based on action "${flowItemData.description}" and previous risk assessment: <previous_risk_assessment>${flowItemData.riskAssessment || ''}</previous_risk_assessment> <timestamp>${new Date().toLocaleString()}</timestamp>`
     }
 
     // Start the evaluation timer
@@ -98,10 +98,10 @@ const RiskAssessmentEditor = ({
         )
 
         const newPreAsilLevel = (
-          preAsilMatch ? preAsilMatch[1].trim() : formData.preAsilLevel
+          preAsilMatch ? preAsilMatch[1].trim() : flowItemData.preAsilLevel
         ) as ASILLevel
         const newPostAsilLevel = (
-          postAsilMatch ? postAsilMatch[1].trim() : formData.postAsilLevel
+          postAsilMatch ? postAsilMatch[1].trim() : flowItemData.postAsilLevel
         ) as ASILLevel
 
         // Clean the generated content.
@@ -111,7 +111,7 @@ const RiskAssessmentEditor = ({
           .replace(/<\/?risk_assessment>/g, '')
           .trim()
 
-        updateFormData({
+        updateFlowItemData({
           riskAssessment: cleanedContent,
           preAsilLevel: newPreAsilLevel,
           postAsilLevel: newPostAsilLevel,
@@ -127,7 +127,7 @@ const RiskAssessmentEditor = ({
           ? feedbackMatch[1].trim()
           : data.content.trim()
 
-        updateFormData({
+        updateFlowItemData({
           riskAssessmentEvaluation: cleanedFeedback,
         })
         setIsFeedbackEvaluated(true)
@@ -146,16 +146,16 @@ const RiskAssessmentEditor = ({
 
   const handleApprove = () => {
     if (!currentUser) return
-    updateFormData({
+    updateFlowItemData({
       approvedBy: currentUser.name,
       approvedAt: new Date().toISOString(),
     })
-    setBackupRiskAssessment(formData.riskAssessment || '')
+    setBackupRiskAssessment(flowItemData.riskAssessment || '')
     setIsRiskAssessmentEvaluated(false)
   }
 
   const handleReject = () => {
-    updateFormData({
+    updateFlowItemData({
       riskAssessment: backupRiskAssessment,
       approvedBy: '',
       approvedAt: '',
@@ -273,40 +273,42 @@ const RiskAssessmentEditor = ({
             isEditingMarkdown ? (
               <textarea
                 className="w-full h-full bg-transparent border-none focus:outline-none resize-none text-xs text-muted-foreground"
-                value={formData.riskAssessment || ''}
+                value={flowItemData.riskAssessment || ''}
                 onChange={(e) =>
-                  updateFormData({ riskAssessment: e.target.value })
+                  updateFlowItemData({ riskAssessment: e.target.value })
                 }
               />
             ) : (
               <RiskAssessmentMarkdown
-                markdownText={formData.riskAssessment || ''}
+                markdownText={flowItemData.riskAssessment || ''}
               />
             )
           ) : (
             <RiskAssessmentMarkdown
-              markdownText={formData.riskAssessmentEvaluation || ''}
+              markdownText={flowItemData.riskAssessmentEvaluation || ''}
             />
           )}
         </div>
         {/* Approved by / Approved at info (only in Risk Assessment tab) */}
         {activeTab === 'riskAssessment' &&
-        formData.approvedBy &&
-        formData.approvedAt ? (
+        flowItemData.approvedBy &&
+        flowItemData.approvedAt ? (
           <div className="flex items-center mt-2 space-x-2 text-[11px]">
             <div className="flex items-center">
               <div className="p-0.5 w-fit flex items-center justify-center rounded bg-da-primary-100 mr-1">
                 <TbCheck className="size-3 text-da-primary-500" />
               </div>
               Approved by{' '}
-              <span className="ml-1 font-semibold">{formData.approvedBy}</span>
+              <span className="ml-1 font-semibold">
+                {flowItemData.approvedBy}
+              </span>
             </div>
             <div className="flex items-center">
               <div className="p-0.5 w-fit flex items-center justify-center rounded bg-da-primary-100 mr-1">
                 <TbCalendarEvent className="size-3 text-da-primary-500" />
               </div>
               <span className="ml-1 font-medium">
-                {new Date(formData.approvedAt).toLocaleString()}
+                {new Date(flowItemData.approvedAt).toLocaleString()}
               </span>
             </div>
           </div>

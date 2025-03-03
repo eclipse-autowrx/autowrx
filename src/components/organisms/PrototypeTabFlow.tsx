@@ -4,21 +4,91 @@ import {
   TbArrowsMinimize,
   TbEdit,
   TbLoader,
+  TbChevronCompactRight,
 } from 'react-icons/tb'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import { updatePrototypeService } from '@/services/prototype.service'
 import DaTooltip from '../atoms/DaTooltip'
 import { FlowStep } from '@/types/flow.type'
 import { DaButton } from '../atoms/DaButton'
-import { TbChevronCompactRight } from 'react-icons/tb'
 import { cn } from '@/lib/utils'
 import { useSystemUI } from '@/hooks/useSystemUI'
 import DaCheckbox from '../atoms/DaCheckbox'
-import FlowSystemInterface from '../molecules/flow/FlowSystemInterface'
 import FlowItem from '../molecules/flow/FlowItem'
 import DaText from '../atoms/DaText'
 import DaFlowEditor from '../molecules/flow/DaFlowEditor'
 import FlowItemEditor from '../molecules/flow/FlowItemEditor'
+import FlowInterface from '../molecules/flow/FlowInterface'
+import { Interface } from '@/types/flow.type'
+
+/**
+ * Define the columns for the flow table.
+ * Each object defines:
+ * - board: the property group (“offBoard”, “onBoard”, or “v2c”)
+ * - field: the key within that group (or the property itself for v2c)
+ * - type: 'item' (editable text) or 'interface' (non-editable system interface)
+ * - label: the header label for the cell
+ * - tooltip: (optional) tooltip text for the header label
+ * - headerClass: (optional) additional header class for styling the header cell
+ */
+const columns = [
+  {
+    board: 'offBoard',
+    field: 'smartPhone',
+    type: 'item',
+    label: 'Smart Phone',
+  },
+  {
+    board: 'offBoard',
+    field: 'p2c',
+    type: 'interface',
+    label: 'p2c',
+    tooltip: 'Phone2Cloud',
+    headerClass: '',
+  },
+  { board: 'offBoard', field: 'cloud', type: 'item', label: 'Cloud' },
+  {
+    board: 'v2c',
+    field: 'v2c',
+    type: 'interface',
+    label: 'v2c',
+    tooltip: 'Vehicle2Cloud',
+    headerClass: 'bg-opacity-20',
+  },
+  { board: 'onBoard', field: 'sdvRuntime', type: 'item', label: 'SDV Runtime' },
+  {
+    board: 'onBoard',
+    field: 's2s',
+    type: 'interface',
+    label: 's2s',
+    tooltip: 'Signal2Service',
+    headerClass: 'bg-opacity-20',
+  },
+  { board: 'onBoard', field: 'embedded', type: 'item', label: 'Embedded' },
+  {
+    board: 'onBoard',
+    field: 's2e',
+    type: 'interface',
+    label: 's2e',
+    tooltip: 'Signal2Embedded',
+    headerClass: 'bg-opacity-20',
+  },
+  {
+    board: 'onBoard',
+    field: 'sensors',
+    type: 'item',
+    label: 'Sensors/Actuators',
+    headerClass: '',
+  },
+]
+
+/**
+ * Helper to extract the value from a flow cell.
+ */
+const getFlowValue = (flow: any, board: string, field: string) => {
+  if (board === 'v2c') return flow.v2c
+  return flow[board]?.[field]
+}
 
 const PrototypeTabFlow = () => {
   const { data: prototype } = useCurrentPrototype()
@@ -37,11 +107,11 @@ const PrototypeTabFlow = () => {
   const [currentEditingCell, setCurrentEditingCell] = useState<{
     stepIndex: number
     flowIndex: number
-    fieldPath: string[] // e.g. ['offBoard', 'smartPhone']
+    fieldPath: string[]
     value: string
   } | null>(null)
 
-  // Parse customer journey steps
+  // Parse customer journey steps (each step starts with "#")
   const parseCustomerJourneySteps = (journeyText: string | undefined) => {
     if (!journeyText) return []
     return journeyText
@@ -50,33 +120,22 @@ const PrototypeTabFlow = () => {
       .map((step) => step.split('\n')[0].trim())
   }
 
-  // Initialize or update data when prototype changes
+  // Initialize or update flow and journey steps when prototype changes
   useEffect(() => {
     if (prototype) {
-      // console.log('Prototype Flow:', prototype.flow)
-      // console.log('Customer Journey:', prototype.customer_journey)
-
-      // Parse customer journey steps
       const steps = parseCustomerJourneySteps(prototype.customer_journey)
       setCustomerJourneySteps(steps)
-
-      // Initialize flow data
       try {
         if (prototype.flow) {
           const parsedFlow = JSON.parse(prototype.flow)
-          // console.log('Parsed Flow:', parsedFlow)
           setFlowData(parsedFlow)
         } else {
-          // Create initial empty flows for steps
+          // Create initial empty flows for each step
           const initialFlows = steps.map((step) => ({
             title: step,
             flows: [
               {
-                offBoard: {
-                  smartPhone: '',
-                  p2c: null,
-                  cloud: '',
-                },
+                offBoard: { smartPhone: '', p2c: null, cloud: '' },
                 v2c: null,
                 onBoard: {
                   sdvRuntime: '',
@@ -96,30 +155,19 @@ const PrototypeTabFlow = () => {
     }
   }, [prototype])
 
-  // Synchronize flow data with customer journey steps
+  // Synchronize flow data with customer journey steps (by index)
   useEffect(() => {
     if (flowData.length > 0 && customerJourneySteps.length > 0) {
       const synchronizedFlows = customerJourneySteps.map((stepTitle, index) => {
-        // Use index to find existing flow instead of title matching
         const existingFlow = flowData[index]
-
         if (existingFlow) {
-          return {
-            ...existingFlow, // Keep ALL existing flow data
-            title: stepTitle, // Only update the title from customer journey
-          }
+          return { ...existingFlow, title: stepTitle }
         }
-
-        // Create new empty flow for new step
         return {
           title: stepTitle,
           flows: [
             {
-              offBoard: {
-                smartPhone: '',
-                p2c: null,
-                cloud: '',
-              },
+              offBoard: { smartPhone: '', p2c: null, cloud: '' },
               v2c: null,
               onBoard: {
                 sdvRuntime: '',
@@ -132,7 +180,6 @@ const PrototypeTabFlow = () => {
           ],
         }
       })
-
       setFlowData(synchronizedFlows)
     }
   }, [customerJourneySteps])
@@ -153,8 +200,8 @@ const PrototypeTabFlow = () => {
     }
   }
 
+  // Update a nested property within a flow cell based on the field path.
   const setNestedValue = (obj: any, path: string[], value: any) => {
-    // Create a shallow copy of the object
     const newObj = { ...obj }
     let current = newObj
     for (let i = 0; i < path.length - 1; i++) {
@@ -181,6 +228,7 @@ const PrototypeTabFlow = () => {
     console.log('New Flow Data:', newData[stepIndex].flows[flowIndex])
   }
 
+  // Open the flow editor for a specific cell.
   const openFlowEditor = (
     stepIndex: number,
     flowIndex: number,
@@ -200,13 +248,12 @@ const PrototypeTabFlow = () => {
           : '',
       )}
     >
-      <div className="w-full ">
-        <div className="flex items-center border-b pb-2 mb-4 ">
+      <div className="w-full">
+        <div className="flex items-center border-b pb-2 mb-4">
           <DaText variant="title" className="text-da-primary-500">
             End-to-End Flow: {prototype?.name}
           </DaText>
           <div className="grow" />
-
           {!isEditing ? (
             <DaButton
               onClick={() => setIsEditing(true)}
@@ -263,15 +310,31 @@ const PrototypeTabFlow = () => {
           <>
             <table className="w-full table-fixed border-separate border-spacing-0">
               <colgroup>
-                <col className="w-[17.76%]" />
-                <col className="w-[2.80%] min-w-[40px]" />
-                <col className="w-[17.76%]" />
-                <col className="w-[2.80%] min-w-[40px]" />
-                <col className="w-[17.76%]" />
-                <col className="w-[2.80%] min-w-[40px]" />
-                <col className="w-[17.76%]" />
-                <col className="w-[2.80%] min-w-[40px]" />
-                <col className="w-[17.76%]" />
+                {columns.map((_, index) => (
+                  <col
+                    key={index}
+                    className={
+                      // For this example, you can adjust individual column widths as needed.
+                      index === 0
+                        ? 'w-[17.76%]'
+                        : index === 1
+                          ? 'w-[2.80%] min-w-[40px]'
+                          : index === 2
+                            ? 'w-[17.76%]'
+                            : index === 3
+                              ? 'w-[2.80%] min-w-[40px]'
+                              : index === 4
+                                ? 'w-[17.76%]'
+                                : index === 5
+                                  ? 'w-[2.80%] min-w-[40px]'
+                                  : index === 6
+                                    ? 'w-[17.76%]'
+                                    : index === 7
+                                      ? 'w-[2.80%] min-w-[40px]'
+                                      : 'w-[17.76%]'
+                    }
+                  />
+                ))}
               </colgroup>
               <thead className="sticky top-0 z-10 bg-gradient-to-tr from-da-secondary-500 to-da-primary-500 text-white">
                 <tr className="text-sm uppercase">
@@ -290,40 +353,31 @@ const PrototypeTabFlow = () => {
                   </th>
                 </tr>
                 <tr className="text-xs uppercase">
-                  <th className="p-2 border border-white">Smart Phone</th>
-                  <th className="p-2 border border-white">
-                    <DaTooltip content="Phone2Cloud" className="normal-case">
-                      <div className="cursor-pointer">p2c</div>
-                    </DaTooltip>
-                  </th>
-                  <th className="p-2 border border-white">Cloud</th>
-                  <th className="p-2 border border-white bg-opacity-20">
-                    <DaTooltip content="Vehicle2Cloud" className="normal-case">
-                      <div className="cursor-pointer">v2c</div>
-                    </DaTooltip>
-                  </th>
-                  <th className="p-2 border border-white">SDV Runtime</th>
-                  <th className="p-2 border border-white bg-opacity-20">
-                    <DaTooltip content="Signal2Service" className="normal-case">
-                      <div className="cursor-pointer">s2s</div>
-                    </DaTooltip>
-                  </th>
-                  <th className="p-2 border border-white">Embedded</th>
-                  <th className="p-2 border border-white bg-opacity-20">
-                    <DaTooltip
-                      content="Signal2Embedded"
-                      className="normal-case"
+                  {columns.map((col, index) => (
+                    <th
+                      key={index}
+                      className={cn(
+                        'p-2 border border-white',
+                        col.headerClass || '',
+                        index === columns.length - 1 ? 'truncate' : '',
+                      )}
                     >
-                      <div className="cursor-pointer">s2e</div>
-                    </DaTooltip>
-                  </th>
-                  <th className="p-2 border border-white truncate">
-                    Sensors/Actuators
-                  </th>
+                      {col.tooltip ? (
+                        <DaTooltip
+                          content={col.tooltip}
+                          className="normal-case"
+                        >
+                          <div className="cursor-pointer">{col.label}</div>
+                        </DaTooltip>
+                      ) : (
+                        col.label
+                      )}
+                    </th>
+                  ))}
                 </tr>
               </thead>
-
               <tbody>
+                {/* Spacer row */}
                 <tr>
                   {[...Array(9)].map((_, index) => (
                     <td
@@ -342,105 +396,52 @@ const PrototypeTabFlow = () => {
                         >
                           <TbChevronCompactRight className="absolute -left-[12px] top-[5.5px] -translate-x-1/4 -translate-y-1/4 size-[47px] bg-transparent text-white fill-current" />
                           {step.title}
-                          <TbChevronCompactRight className="absolute -right-[1px] top-[5.5px] translate-x-1/2  -translate-y-1/4 size-[47px] bg-transparent text-da-primary-500 fill-current" />
+                          <TbChevronCompactRight className="absolute -right-[1px] top-[5.5px] translate-x-1/2 -translate-y-1/4 size-[47px] bg-transparent text-da-primary-500 fill-current" />
                         </td>
                       </tr>
                       {step.flows.map((flow, flowIndex) => (
                         <tr key={flowIndex} className="font-medium text-xs">
-                          <td className="border p-2 text-center">
-                            <FlowItem
-                              stringData={flow.offBoard.smartPhone}
-                              key={`${flowIndex}-smartPhone`}
-                              onEdit={(val) =>
-                                openFlowEditor(
-                                  stepIndex,
-                                  flowIndex,
-                                  ['offBoard', 'smartPhone'],
-                                  val,
-                                )
-                              }
-                            />
-                          </td>
-                          <td className="border p-2 text-center bg-da-primary-100">
-                            <FlowSystemInterface
-                              flow={flow.offBoard.p2c}
-                              interfaceType="p2c"
-                            />
-                          </td>
-                          <td className="border p-2 text-center">
-                            <FlowItem
-                              stringData={flow.offBoard.cloud}
-                              key={`${flowIndex}-cloud`}
-                              onEdit={(val) =>
-                                openFlowEditor(
-                                  stepIndex,
-                                  flowIndex,
-                                  ['offBoard', 'cloud'],
-                                  val,
-                                )
-                              }
-                            />
-                          </td>
-                          <td className="border p-2 text-center bg-da-primary-100">
-                            <FlowSystemInterface
-                              flow={flow.v2c}
-                              interfaceType="v2c"
-                            />
-                          </td>
-                          <td className="border p-2 text-center">
-                            <FlowItem
-                              stringData={flow.onBoard.sdvRuntime}
-                              key={`${flowIndex}-sdvRuntime`}
-                              onEdit={(val) =>
-                                openFlowEditor(
-                                  stepIndex,
-                                  flowIndex,
-                                  ['onBoard', 'sdvRuntime'],
-                                  val,
-                                )
-                              }
-                            />
-                          </td>
-                          <td className="border p-2 text-center bg-da-primary-100">
-                            <FlowSystemInterface
-                              flow={flow.onBoard.s2s}
-                              interfaceType="s2s"
-                            />
-                          </td>
-                          <td className="border p-2 text-center">
-                            <FlowItem
-                              stringData={flow.onBoard.embedded}
-                              key={`${flowIndex}-embedded`}
-                              onEdit={(val) =>
-                                openFlowEditor(
-                                  stepIndex,
-                                  flowIndex,
-                                  ['onBoard', 'embedded'],
-                                  val,
-                                )
-                              }
-                            />
-                          </td>
-                          <td className="border p-2 text-center bg-da-primary-100">
-                            <FlowSystemInterface
-                              flow={flow.onBoard.s2e}
-                              interfaceType="s2e"
-                            />
-                          </td>
-                          <td className="border p-2 text-center">
-                            <FlowItem
-                              stringData={flow.onBoard.sensors}
-                              key={`${flowIndex}-sensors`}
-                              onEdit={(val) =>
-                                openFlowEditor(
-                                  stepIndex,
-                                  flowIndex,
-                                  ['onBoard', 'sensors'],
-                                  val,
-                                )
-                              }
-                            />
-                          </td>
+                          {columns.map((col, colIndex) => {
+                            const cellValue = getFlowValue(
+                              flow,
+                              col.board,
+                              col.field,
+                            )
+                            const tdBgClass =
+                              col.type === 'interface'
+                                ? 'bg-da-primary-100'
+                                : ''
+                            // For the editor callback, use the path – for v2c we use [col.board] otherwise [col.board, col.field]
+                            const fieldPath =
+                              col.board === 'v2c'
+                                ? [col.board]
+                                : [col.board, col.field]
+                            return (
+                              <td
+                                key={colIndex}
+                                className={`border p-2 text-center ${tdBgClass}`}
+                              >
+                                {col.type === 'item' ? (
+                                  <FlowItem
+                                    stringData={cellValue}
+                                    onEdit={(val) =>
+                                      openFlowEditor(
+                                        stepIndex,
+                                        flowIndex,
+                                        fieldPath,
+                                        val,
+                                      )
+                                    }
+                                  />
+                                ) : (
+                                  <FlowInterface
+                                    flow={cellValue}
+                                    interfaceType={col.field as Interface}
+                                  />
+                                )}
+                              </td>
+                            )
+                          })}
                         </tr>
                       ))}
                     </React.Fragment>
@@ -485,7 +486,7 @@ const PrototypeTabFlow = () => {
           open={flowEditorOpen}
           onOpenChange={setFlowEditorOpen}
         >
-          {/* When used as a controlled dialog, the trigger is not needed */}
+          {/* Controlled dialog – no trigger needed */}
           <></>
         </FlowItemEditor>
       )}
