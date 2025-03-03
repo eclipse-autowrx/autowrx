@@ -31,7 +31,18 @@ const TARGETS = [
     },
   },
   {
-    name: 'Education Kit: MakerKit',
+    name: 'Autoverse',
+    short_name: 'MakerKit',
+    icon: '/imgs/targets/autoverse.png',
+    prefix: 'makerkit-', // "Kit-"
+    version: 'v.1.0',
+    target_document_url: '',
+    state: {
+      '3.1.1.1.1.1': '0.9',
+    },
+  },
+  {
+    name: 'StarterKIT',
     short_name: 'MakerKit',
     icon: '/imgs/targets/edukit.png',
     prefix: 'makerkit-', // "Kit-"
@@ -223,7 +234,7 @@ const DaStaging = ({ isWizard }: DaStagingProps) => {
   }
 
   return (
-    <div className="min-h-[300px] max-h-[90vh] w-[90vw] min-w-[400px] max-w-[1200px]">
+    <div className="min-h-[300px] max-h-[90vh] w-[95vw] min-w-[400px] max-w-[1200px]">
       {mode == MODE_EDIT_DEFINE && (
         <DaEditSystemStaging
           onTargetMode={false}
@@ -262,7 +273,7 @@ const DaStaging = ({ isWizard }: DaStagingProps) => {
           <div className="mt-4 w-full rounded border border-gray-300">
             {/* Title */}
             <div className="flex h-[40px] w-full rounded-t bg-gradient-to-r from-da-gradient-from to-da-gradient-to text-da-white">
-              <div className="flex w-[20%] items-center justify-center border-r border-da-white font-bold">
+              <div className="flex w-[18%] items-center justify-center border-r border-da-white font-bold">
                 System
               </div>
               <div className="flex grow items-center justify-center border-da-white font-bold">
@@ -270,7 +281,7 @@ const DaStaging = ({ isWizard }: DaStagingProps) => {
               </div>
             </div>
             <div className="flex">
-              <div className="flex min-w-[100px] flex-1 flex-col border-r border-gray-300 items-center justify-center overflow-x-hidden rounded-s px-1 py-1">
+              <div className="flex min-w-[18%] flex-1 flex-col border-r border-gray-300 items-center justify-center overflow-x-hidden rounded-s px-1 py-1">
                 <div className="flex h-[140px] w-full items-center justify-center">
                   <img
                     width={150}
