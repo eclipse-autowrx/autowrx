@@ -53,7 +53,7 @@ const parseNonJsonFlowItem = (value: string): FlowItemData => {
 interface FlowItemEditorProps {
   value: string
   onChange: (value: string) => void
-  children: React.ReactNode
+  children?: React.ReactNode
   open?: boolean
   onOpenChange?: (value: boolean) => void
 }

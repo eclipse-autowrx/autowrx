@@ -1,3 +1,4 @@
+// PrototypeTabFlow.tsx
 import React, { useEffect, useState } from 'react'
 import {
   TbArrowsMaximize,
@@ -19,76 +20,14 @@ import DaText from '../atoms/DaText'
 import DaFlowEditor from '../molecules/flow/DaFlowEditor'
 import FlowItemEditor from '../molecules/flow/FlowItemEditor'
 import FlowInterface from '../molecules/flow/FlowInterface'
+import {
+  FLOW_CELLS,
+  setNestedValue,
+  getNestedValue,
+  headerGroups,
+} from '../molecules/flow/flow.utils'
 import { Interface } from '@/types/flow.type'
-
-/**
- * Define the columns for the flow table.
- * Each object defines:
- * - board: the property group (“offBoard”, “onBoard”, or “v2c”)
- * - field: the key within that group (or the property itself for v2c)
- * - type: 'item' (editable text) or 'interface' (non-editable system interface)
- * - label: the header label for the cell
- * - tooltip: (optional) tooltip text for the header label
- * - headerClass: (optional) additional header class for styling the header cell
- */
-const columns = [
-  {
-    board: 'offBoard',
-    field: 'smartPhone',
-    type: 'item',
-    label: 'Smart Phone',
-  },
-  {
-    board: 'offBoard',
-    field: 'p2c',
-    type: 'interface',
-    label: 'p2c',
-    tooltip: 'Phone2Cloud',
-    headerClass: '',
-  },
-  { board: 'offBoard', field: 'cloud', type: 'item', label: 'Cloud' },
-  {
-    board: 'v2c',
-    field: 'v2c',
-    type: 'interface',
-    label: 'v2c',
-    tooltip: 'Vehicle2Cloud',
-    headerClass: 'bg-opacity-20',
-  },
-  { board: 'onBoard', field: 'sdvRuntime', type: 'item', label: 'SDV Runtime' },
-  {
-    board: 'onBoard',
-    field: 's2s',
-    type: 'interface',
-    label: 's2s',
-    tooltip: 'Signal2Service',
-    headerClass: 'bg-opacity-20',
-  },
-  { board: 'onBoard', field: 'embedded', type: 'item', label: 'Embedded' },
-  {
-    board: 'onBoard',
-    field: 's2e',
-    type: 'interface',
-    label: 's2e',
-    tooltip: 'Signal2Embedded',
-    headerClass: 'bg-opacity-20',
-  },
-  {
-    board: 'onBoard',
-    field: 'sensors',
-    type: 'item',
-    label: 'Sensors/Actuators',
-    headerClass: '',
-  },
-]
-
-/**
- * Helper to extract the value from a flow cell.
- */
-const getFlowValue = (flow: any, board: string, field: string) => {
-  if (board === 'v2c') return flow.v2c
-  return flow[board]?.[field]
-}
+import { createEmptyFlow } from '../molecules/flow/flow.utils'
 
 const PrototypeTabFlow = () => {
   const { data: prototype } = useCurrentPrototype()
@@ -110,6 +49,9 @@ const PrototypeTabFlow = () => {
     fieldPath: string[]
     value: string
   } | null>(null)
+
+  // Group header labels based on the first element of the path.
+  // In our config: offBoard (first 3 cells), v2c (single cell), and onBoard (last 5 cells)
 
   // Parse customer journey steps (each step starts with "#")
   const parseCustomerJourneySteps = (journeyText: string | undefined) => {
@@ -133,19 +75,7 @@ const PrototypeTabFlow = () => {
           // Create initial empty flows for each step
           const initialFlows = steps.map((step) => ({
             title: step,
-            flows: [
-              {
-                offBoard: { smartPhone: '', p2c: null, cloud: '' },
-                v2c: null,
-                onBoard: {
-                  sdvRuntime: '',
-                  s2s: null,
-                  embedded: '',
-                  s2e: null,
-                  sensors: '',
-                },
-              },
-            ],
+            flows: [createEmptyFlow()],
           }))
           setFlowData(initialFlows)
         }
@@ -165,19 +95,7 @@ const PrototypeTabFlow = () => {
         }
         return {
           title: stepTitle,
-          flows: [
-            {
-              offBoard: { smartPhone: '', p2c: null, cloud: '' },
-              v2c: null,
-              onBoard: {
-                sdvRuntime: '',
-                s2s: null,
-                embedded: '',
-                s2e: null,
-                sensors: '',
-              },
-            },
-          ],
+          flows: [createEmptyFlow()],
         }
       })
       setFlowData(synchronizedFlows)
@@ -200,18 +118,7 @@ const PrototypeTabFlow = () => {
     }
   }
 
-  // Update a nested property within a flow cell based on the field path.
-  const setNestedValue = (obj: any, path: string[], value: any) => {
-    const newObj = { ...obj }
-    let current = newObj
-    for (let i = 0; i < path.length - 1; i++) {
-      current[path[i]] = { ...current[path[i]] }
-      current = current[path[i]]
-    }
-    current[path[path.length - 1]] = value
-    return newObj
-  }
-
+  // Update a nested property within a flow cell using the shared helper.
   const updateFlowCell = (
     stepIndex: number,
     flowIndex: number,
@@ -301,6 +208,7 @@ const PrototypeTabFlow = () => {
             )}
           </DaButton>
         </div>
+
         {isEditing ? (
           <DaFlowEditor
             initialData={flowData}
@@ -310,67 +218,48 @@ const PrototypeTabFlow = () => {
           <>
             <table className="w-full table-fixed border-separate border-spacing-0">
               <colgroup>
-                {columns.map((_, index) => (
-                  <col
-                    key={index}
-                    className={
-                      // For this example, you can adjust individual column widths as needed.
-                      index === 0
-                        ? 'w-[17.76%]'
-                        : index === 1
-                          ? 'w-[2.80%] min-w-[40px]'
-                          : index === 2
-                            ? 'w-[17.76%]'
-                            : index === 3
-                              ? 'w-[2.80%] min-w-[40px]'
-                              : index === 4
-                                ? 'w-[17.76%]'
-                                : index === 5
-                                  ? 'w-[2.80%] min-w-[40px]'
-                                  : index === 6
-                                    ? 'w-[17.76%]'
-                                    : index === 7
-                                      ? 'w-[2.80%] min-w-[40px]'
-                                      : 'w-[17.76%]'
-                    }
-                  />
-                ))}
+                <col className="w-[17.76%]" />
+                <col className="w-[2.80%] min-w-[40px]" />
+                <col className="w-[17.76%]" />
+                <col className="w-[2.80%] min-w-[40px]" />
+                <col className="w-[17.76%]" />
+                <col className="w-[2.80%] min-w-[40px]" />
+                <col className="w-[17.76%]" />
+                <col className="w-[2.80%] min-w-[40px]" />
+                <col className="w-[17.76%]" />
               </colgroup>
+
               <thead className="sticky top-0 z-10 bg-gradient-to-tr from-da-secondary-500 to-da-primary-500 text-white">
+                {/* Header Group Row */}
                 <tr className="text-sm uppercase">
-                  <th
-                    colSpan={3}
-                    className="font-semibold p-2 border border-white"
-                  >
-                    Off-board
-                  </th>
-                  <th className="border border-white"></th>
-                  <th
-                    colSpan={5}
-                    className="font-semibold p-2 border border-white"
-                  >
-                    On-board
-                  </th>
-                </tr>
-                <tr className="text-xs uppercase">
-                  {columns.map((col, index) => (
+                  {headerGroups.map((group, idx) => (
                     <th
-                      key={index}
-                      className={cn(
-                        'p-2 border border-white',
-                        col.headerClass || '',
-                        index === columns.length - 1 ? 'truncate' : '',
-                      )}
+                      key={idx}
+                      colSpan={group.cells.length}
+                      className="font-semibold p-2 border border-white text-center"
                     >
-                      {col.tooltip ? (
+                      {group.label}
+                    </th>
+                  ))}
+                </tr>
+                {/* Individual Column Headers */}
+                <tr className="text-sm uppercase">
+                  {FLOW_CELLS.map((cell) => (
+                    <th
+                      key={cell.key}
+                      className={`p-2 text-xs border border-white ${
+                        cell.tooltip ? 'bg-opacity-20' : ''
+                      }`}
+                    >
+                      {cell.tooltip ? (
                         <DaTooltip
-                          content={col.tooltip}
+                          content={cell.tooltip}
                           className="normal-case"
                         >
-                          <div className="cursor-pointer">{col.label}</div>
+                          <div className="cursor-pointer ">{cell.title}</div>
                         </DaTooltip>
                       ) : (
-                        col.label
+                        cell.title
                       )}
                     </th>
                   ))}
@@ -379,7 +268,7 @@ const PrototypeTabFlow = () => {
               <tbody>
                 {/* Spacer row */}
                 <tr>
-                  {[...Array(9)].map((_, index) => (
+                  {FLOW_CELLS.map((_, index) => (
                     <td
                       key={index}
                       className={`h-3 ${index % 2 === 0 ? 'bg-white' : 'bg-da-primary-100'}`}
@@ -391,7 +280,7 @@ const PrototypeTabFlow = () => {
                     <React.Fragment key={stepIndex}>
                       <tr>
                         <td
-                          colSpan={9}
+                          colSpan={FLOW_CELLS.length}
                           className="relative text-xs border font-semibold bg-da-primary-500 text-white h-9 px-8 z-0"
                         >
                           <TbChevronCompactRight className="absolute -left-[12px] top-[5.5px] -translate-x-1/4 -translate-y-1/4 size-[47px] bg-transparent text-white fill-current" />
@@ -401,42 +290,31 @@ const PrototypeTabFlow = () => {
                       </tr>
                       {step.flows.map((flow, flowIndex) => (
                         <tr key={flowIndex} className="font-medium text-xs">
-                          {columns.map((col, colIndex) => {
-                            const cellValue = getFlowValue(
-                              flow,
-                              col.board,
-                              col.field,
-                            )
-                            const tdBgClass =
-                              col.type === 'interface'
-                                ? 'bg-da-primary-100'
-                                : ''
-                            // For the editor callback, use the path – for v2c we use [col.board] otherwise [col.board, col.field]
-                            const fieldPath =
-                              col.board === 'v2c'
-                                ? [col.board]
-                                : [col.board, col.field]
+                          {FLOW_CELLS.map((cell) => {
+                            const cellValue = getNestedValue(flow, cell.path)
                             return (
                               <td
-                                key={colIndex}
-                                className={`border p-2 text-center ${tdBgClass}`}
+                                key={cell.key}
+                                className={`border p-2 text-center ${
+                                  cell.isSignalFlow ? 'bg-da-primary-100' : ''
+                                }`}
                               >
-                                {col.type === 'item' ? (
+                                {cell.isSignalFlow ? (
+                                  <FlowInterface
+                                    flow={cellValue}
+                                    interfaceType={cell.key as Interface}
+                                  />
+                                ) : (
                                   <FlowItem
                                     stringData={cellValue}
                                     onEdit={(val) =>
                                       openFlowEditor(
                                         stepIndex,
                                         flowIndex,
-                                        fieldPath,
+                                        cell.path,
                                         val,
                                       )
                                     }
-                                  />
-                                ) : (
-                                  <FlowInterface
-                                    flow={cellValue}
-                                    interfaceType={col.field as Interface}
                                   />
                                 )}
                               </td>
@@ -449,7 +327,7 @@ const PrototypeTabFlow = () => {
                 ) : (
                   <tr>
                     <td
-                      colSpan={9}
+                      colSpan={FLOW_CELLS.length}
                       className="border p-2 text-center py-4 text-sm"
                     >
                       No flow available. Please edit to add flow data.
@@ -485,10 +363,7 @@ const PrototypeTabFlow = () => {
           }}
           open={flowEditorOpen}
           onOpenChange={setFlowEditorOpen}
-        >
-          {/* Controlled dialog – no trigger needed */}
-          <></>
-        </FlowItemEditor>
+        />
       )}
     </div>
   )
