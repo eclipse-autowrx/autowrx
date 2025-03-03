@@ -13,15 +13,9 @@ import {
 import DaTooltip from '@/components/atoms/DaTooltip'
 import { FlowStep, Direction, SignalFlow } from '@/types/flow.type'
 import { DaButton } from '@/components/atoms/DaButton'
-import { DaTextarea } from '@/components/atoms/DaTextarea'
 import { cn } from '@/lib/utils'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import FlowItemEditor from './FlowItemEditor'
-import FlowItem from './FlowItem'
-interface TextCellProps {
-  value: string
-  onChange: (value: string) => void
-}
 
 interface FlowCell {
   key: string
@@ -285,17 +279,6 @@ const DaPrototypeFlowEditor = ({
     }
 
     setData(newData)
-  }
-
-  const handleSave = () => {
-    // Filter out empty steps (steps with no flows)
-    const cleanedData = data.filter((step) => step.flows.length > 0)
-
-    // Convert to JSON string
-    const jsonString = JSON.stringify(cleanedData)
-
-    // Call the onSave prop with the JSON string
-    // onSave(jsonString)
   }
 
   useEffect(() => {

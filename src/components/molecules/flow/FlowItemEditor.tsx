@@ -8,6 +8,7 @@ import ASILSelect from './ASILSelect'
 import { TbPlus, TbTrash, TbChevronRight } from 'react-icons/tb'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import RiskAssessmentEditor from './RiskAssessmentEditor'
+import { DaTextarea } from '@/components/atoms/DaTextarea'
 
 interface FlowItemEditorProps {
   value: string
@@ -150,7 +151,7 @@ const FlowItemEditor = ({ value, onChange, children }: FlowItemEditorProps) => {
       dialogTitle="Hazard Analysis and Risk Assessment (HARA)"
       className="max-w-[98vw] w-[98vw] xl:w-[80vw] h-[90vh] xl:h-[90vh] text-xs"
     >
-      <div className="flex flex-col w-full h-full">
+      <div className="flex flex-col w-full h-full  z-[99999]">
         <div className="flex h-full overflow-y-auto space-x-4">
           {/* Left Column: Mandatory Fields and Custom Attributes */}
           <div className="flex flex-col w-1/2 h-full pt-2 pr-1.5 overflow-y-auto scroll-gray gap-4">
@@ -182,14 +183,14 @@ const FlowItemEditor = ({ value, onChange, children }: FlowItemEditorProps) => {
               <label className="font-medium">
                 Description <span className="text-red-500">*</span>
               </label>
-              <DaInput
+              <DaTextarea
                 name="description"
                 value={formData.description}
                 onChange={(e) =>
                   handleInputChange('description', e.target.value)
                 }
-                className="h-8 flex"
-                inputClassName="h-6 text-xs"
+                className="h-28 p-0.5 "
+                textareaClassName="!text-xs"
               />
             </div>
             <div className="flex w-full items-center gap-2 my-2">

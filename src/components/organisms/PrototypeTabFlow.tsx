@@ -145,6 +145,34 @@ const PrototypeTabFlow = () => {
     }
   }
 
+  const setNestedValue = (obj: any, path: string[], value: any) => {
+    // Create a shallow copy of the object
+    const newObj = { ...obj }
+    let current = newObj
+    for (let i = 0; i < path.length - 1; i++) {
+      current[path[i]] = { ...current[path[i]] }
+      current = current[path[i]]
+    }
+    current[path[path.length - 1]] = value
+    return newObj
+  }
+
+  const updateFlowCell = (
+    stepIndex: number,
+    flowIndex: number,
+    path: string[],
+    value: any,
+  ) => {
+    const newData = [...flowData]
+    newData[stepIndex].flows[flowIndex] = setNestedValue(
+      newData[stepIndex].flows[flowIndex],
+      path,
+      value,
+    )
+    setFlowData(newData)
+    console.log('New Flow Data:', newData[stepIndex].flows[flowIndex])
+  }
+
   return (
     <div
       className={cn(
@@ -305,6 +333,14 @@ const PrototypeTabFlow = () => {
                             <FlowItem
                               stringData={flow.offBoard.smartPhone}
                               key={`${flowIndex}-smartPhone`}
+                              onChange={(updatedValue) =>
+                                updateFlowCell(
+                                  stepIndex,
+                                  flowIndex,
+                                  ['offBoard', 'smartPhone'],
+                                  updatedValue,
+                                )
+                              }
                             />
                           </td>
                           <td className="border p-2 text-center bg-da-primary-100">
@@ -317,6 +353,14 @@ const PrototypeTabFlow = () => {
                             <FlowItem
                               stringData={flow.offBoard.cloud}
                               key={`${flowIndex}-cloud`}
+                              onChange={(updatedValue) =>
+                                updateFlowCell(
+                                  stepIndex,
+                                  flowIndex,
+                                  ['offBoard', 'cloud'],
+                                  updatedValue,
+                                )
+                              }
                             />
                           </td>
                           <td className="border p-2 text-center bg-da-primary-100">
@@ -329,6 +373,14 @@ const PrototypeTabFlow = () => {
                             <FlowItem
                               stringData={flow.onBoard.sdvRuntime}
                               key={`${flowIndex}-sdvRuntime`}
+                              onChange={(updatedValue) =>
+                                updateFlowCell(
+                                  stepIndex,
+                                  flowIndex,
+                                  ['onBoard', 'sdvRuntime'],
+                                  updatedValue,
+                                )
+                              }
                             />
                           </td>
                           <td className="border p-2 text-center bg-da-primary-100">
@@ -341,6 +393,14 @@ const PrototypeTabFlow = () => {
                             <FlowItem
                               stringData={flow.onBoard.embedded}
                               key={`${flowIndex}-embedded`}
+                              onChange={(updatedValue) =>
+                                updateFlowCell(
+                                  stepIndex,
+                                  flowIndex,
+                                  ['onBoard', 'embedded'],
+                                  updatedValue,
+                                )
+                              }
                             />
                           </td>
                           <td className="border p-2 text-center bg-da-primary-100">
@@ -353,6 +413,14 @@ const PrototypeTabFlow = () => {
                             <FlowItem
                               stringData={flow.onBoard.sensors}
                               key={`${flowIndex}-sensors`}
+                              onChange={(updatedValue) =>
+                                updateFlowCell(
+                                  stepIndex,
+                                  flowIndex,
+                                  ['onBoard', 'sensors'],
+                                  updatedValue,
+                                )
+                              }
                             />
                           </td>
                         </tr>

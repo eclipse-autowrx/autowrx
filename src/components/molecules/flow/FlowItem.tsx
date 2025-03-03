@@ -1,4 +1,4 @@
-import { TbX } from 'react-icons/tb'
+import { TbEdit, TbX } from 'react-icons/tb'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -8,6 +8,8 @@ import { useSystemUI } from '@/hooks/useSystemUI'
 import { ASILBadge, ASILLevel } from './ASILBadge'
 import RiskAssessmentMarkdown from './RiskAssessmentMarkdown'
 import { defaultRiskAssessmentPlaceholder } from './FlowItemEditor'
+import { DaButton } from '@/components/atoms/DaButton'
+import FlowItemEditor from './FlowItemEditor'
 
 interface SystemActivityData {
   type: string
@@ -24,6 +26,8 @@ interface SystemActivityData {
 
 interface FlowItemActivityProps {
   stringData: string
+  // New optional onChange callback to propagate edited content
+  onChange?: (newValue: string) => void
 }
 
 const safetyLevels = ['<ASIL-D>', '<ASIL-C>', '<ASIL-B>', '<ASIL-A>', '<QM>']
@@ -102,7 +106,7 @@ const parseActivityData = (
   }
 }
 
-const FlowItem = ({ stringData }: FlowItemActivityProps) => {
+const FlowItem = ({ stringData, onChange }: FlowItemActivityProps) => {
   const { showPrototypeFlowASIL } = useSystemUI()
 
   // Parse the input stringData
@@ -110,8 +114,6 @@ const FlowItem = ({ stringData }: FlowItemActivityProps) => {
     parseActivityData(stringData)
 
   // Determine the content to display.
-  // For JSON input: use only the parsed description (even if empty).
-  // For plain text input: use the parsed text (or fallback to the original stringData).
   const content = data !== null ? displayText : displayText || stringData
 
   // Only show the ASILBadge if:
@@ -142,30 +144,48 @@ const FlowItem = ({ stringData }: FlowItemActivityProps) => {
         </div>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent className="flex flex-col text-xs w-full bg-white p-3 border rounded-lg overflow-y-auto max-h-[50vh] min-w-[250px] max-w-[500px] z-10">
+      <DropdownMenuContent className="flex flex-col text-xs bg-white p-3 -my-2 border rounded-lg overflow-y-auto max-h-[50vh] min-w-[250px] w-[500px] z-10">
         <div className="flex justify-between items-center mb-2">
           <div className="flex text-sm font-bold text-da-primary-500">
             System Activity
           </div>
-          <button
-            className="p-0.5 hover:text-red-500 hover:bg-red-100 rounded-md"
-            onClick={(e) => {
-              // Manually dispatch an Escape key event to close the menu
-              const menu = e.currentTarget.closest('[role="menu"]')
-              if (menu) {
-                menu.dispatchEvent(
-                  new KeyboardEvent('keydown', { key: 'Escape' }),
-                )
-              }
-            }}
-          >
-            <TbX className="w-4 h-4" />
-          </button>
+          <div className="flex items-center space-x-1">
+            {/* Wrap the Edit button with FlowItemEditor so that it opens the modal */}
+            <FlowItemEditor
+              value={stringData}
+              onChange={(updatedValue) => {
+                // Propagate the updated JSON string back to the parent (if provided)
+                if (onChange) onChange(updatedValue)
+              }}
+            >
+              <DaButton
+                size="sm"
+                variant="plain"
+                className="flex ml-1 !h-6 !p-2 !text-xs !text-da-primary-500"
+              >
+                <TbEdit className="size-3.5 mr-1" /> Edit
+              </DaButton>
+            </FlowItemEditor>
+            <button
+              className="p-0.5 hover:text-red-500 hover:bg-red-100 rounded-md"
+              onClick={(e) => {
+                // Manually dispatch an Escape key event to close the menu
+                const menu = e.currentTarget.closest('[role="menu"]')
+                if (menu) {
+                  menu.dispatchEvent(
+                    new KeyboardEvent('keydown', { key: 'Escape' }),
+                  )
+                }
+              }}
+            >
+              <TbX className="w-4 h-4" />
+            </button>
+          </div>
         </div>
-        <div className="flex flex-col space-y-1 h-full overflow-y-auto scroll-gray">
+        {/* Existing details in the dropdown */}
+        <div className="flex flex-col h-full overflow-y-auto scroll-gray">
           {data ? (
-            <div className="flex flex-col space-y-1">
-              {/* Fields in desired order */}
+            <div className="flex flex-col space-y-1.5">
               {data.type && (
                 <div className="flex">
                   <span className="font-semibold text-da-gray-dark mr-1">
@@ -214,7 +234,7 @@ const FlowItem = ({ stringData }: FlowItemActivityProps) => {
                 data.riskAssessment !== defaultRiskAssessmentPlaceholder && (
                   <div className="flex flex-col">
                     <span className="font-semibold text-da-gray-dark mr-1">
-                      Risk Assessment:
+                      Hazard Analysis and Risk Assessment:
                     </span>
                     <div className="flex h-full overflow-auto mt-1 ml-4">
                       <RiskAssessmentMarkdown
@@ -239,7 +259,6 @@ const FlowItem = ({ stringData }: FlowItemActivityProps) => {
                   <span>{new Date(data.approvedAt).toLocaleString()}</span>
                 </div>
               )}
-              {/* Render any additional custom attributes */}
               {Object.entries(data)
                 .filter(
                   ([key]) =>
