@@ -56,6 +56,7 @@ interface FlowItemEditorProps {
   children?: React.ReactNode
   open?: boolean
   onOpenChange?: (value: boolean) => void
+  isSaveMode?: boolean
 }
 
 const FlowItemEditor = ({
@@ -64,6 +65,7 @@ const FlowItemEditor = ({
   children,
   open,
   onOpenChange,
+  isSaveMode,
 }: FlowItemEditorProps) => {
   const { data: currentUser } = useSelfProfileQuery()
 
@@ -86,7 +88,7 @@ const FlowItemEditor = ({
         riskAssessmentEvaluation: parsed.riskAssessmentEvaluation || '',
         approvedBy: parsed.approvedBy || '',
         approvedAt: parsed.approvedAt || '',
-        generatedAt: parsed.generatedAt || '',
+        // generatedAt: parsed.generatedAt || '',
         ...rest,
       }
     } catch {
@@ -263,13 +265,13 @@ const FlowItemEditor = ({
         <div className="flex justify-end items-center gap-1 mt-4">
           <div className="grow" />
           <DialogClose asChild>
-            <DaButton variant="outline-nocolor" size="sm">
+            <DaButton variant="outline-nocolor" className="min-w-20" size="sm">
               Cancel
             </DaButton>
           </DialogClose>
           <DialogClose asChild>
-            <DaButton size="sm" onClick={handleSubmit}>
-              Confirm Change
+            <DaButton size="sm" className="min-w-20" onClick={handleSubmit}>
+              {isSaveMode ? 'Save' : 'Confirm Change'}
             </DaButton>
           </DialogClose>
         </div>

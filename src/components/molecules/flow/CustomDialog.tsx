@@ -54,7 +54,7 @@ const CustomDialog = ({
           'flex flex-col w-[90vw] xl:w-[60vw] h-[90vh] xl:h-[75vh] min-w-[700px] max-h-[700px] text-primary outline-none',
           className,
         )}
-        onOpenAutoFocus={(e) => e.preventDefault()}
+        // onOpenAutoFocus={(e) => e.preventDefault()}
         showCloseButton={showCloseButton}
       >
         {dialogTitle && (

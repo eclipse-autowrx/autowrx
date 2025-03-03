@@ -184,29 +184,29 @@ const DaFlowEditor = ({ initialData, onUpdate }: DaFlowEditorProps) => {
                             updateFlow(stepIndex, flowIndex, cell.path, value)
                           }
                         >
-                          <div className="flex h-[95px] p-2 w-full text-xs justify-center items-center cursor-pointer hover:border-[1.5px] hover:border-da-primary-500">
-                            {(() => {
-                              const text = getNestedValue(flow, cell.path)
-                              try {
-                                const parsed = JSON.parse(text)
-                                return parsed.description
-                              } catch {
-                                return text
-                              }
-                            })()}
+                          <div className="flex h-[95px] p-2 text-xs justify-center items-center cursor-pointer hover:border-[1.5px] hover:border-da-primary-500">
+                            <div className="line-clamp-4">
+                              {(() => {
+                                const text = getNestedValue(flow, cell.path)
+                                try {
+                                  const parsed = JSON.parse(text)
+                                  return parsed.description
+                                } catch {
+                                  return text
+                                }
+                              })()}
+                            </div>
                           </div>
                         </FlowItemEditor>
                       )}
                     </td>
                   ))}
-                  <td className="min-h-[90px] ml-1">
-                    <button
-                      className="hover:text-red-500 group-hover:block"
-                      onClick={() => deleteFlow(stepIndex, flowIndex)}
-                    >
-                      <TbTrash className="size-5" />
-                    </button>
-                  </td>
+                  <button
+                    className="hover:text-red-500 group-hover:block pl-1.5 min-h-[90px]"
+                    onClick={() => deleteFlow(stepIndex, flowIndex)}
+                  >
+                    <TbTrash className="size-5" />
+                  </button>
                 </tr>
               ))}
               <tr>

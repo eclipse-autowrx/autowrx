@@ -28,11 +28,17 @@ import {
 } from '../molecules/flow/flow.utils'
 import { Interface } from '@/types/flow.type'
 import { createEmptyFlow } from '../molecules/flow/flow.utils'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
+import useCurrentModel from '@/hooks/useCurrentModel'
 
 const PrototypeTabFlow = () => {
+  const { data: model } = useCurrentModel()
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
   const { data: prototype } = useCurrentPrototype()
   const [isEditing, setIsEditing] = useState(false)
   const [customerJourneySteps, setCustomerJourneySteps] = useState<string[]>([])
+  const [originalFlowData, setOriginalFlowData] = useState<FlowStep[]>([])
   const [flowData, setFlowData] = useState<FlowStep[]>([])
   const [flowString, setFlowString] = useState('')
   const {
@@ -49,9 +55,6 @@ const PrototypeTabFlow = () => {
     fieldPath: string[]
     value: string
   } | null>(null)
-
-  // Group header labels based on the first element of the path.
-  // In our config: offBoard (first 3 cells), v2c (single cell), and onBoard (last 5 cells)
 
   // Parse customer journey steps (each step starts with "#")
   const parseCustomerJourneySteps = (journeyText: string | undefined) => {
@@ -71,6 +74,7 @@ const PrototypeTabFlow = () => {
         if (prototype.flow) {
           const parsedFlow = JSON.parse(prototype.flow)
           setFlowData(parsedFlow)
+          setOriginalFlowData(parsedFlow)
         } else {
           // Create initial empty flows for each step
           const initialFlows = steps.map((step) => ({
@@ -78,6 +82,7 @@ const PrototypeTabFlow = () => {
             flows: [createEmptyFlow()],
           }))
           setFlowData(initialFlows)
+          setOriginalFlowData(initialFlows)
         }
       } catch (error) {
         console.error('Error parsing flow data:', error)
@@ -107,7 +112,7 @@ const PrototypeTabFlow = () => {
     try {
       setIsSaving(true)
       const parsedData = JSON.parse(stringJsonData)
-      console.log('Saving flow data:', parsedData)
+      // console.log('Saving flow data:', parsedData)
       setFlowData(parsedData)
       await updatePrototypeService(prototype.id, { flow: stringJsonData })
     } catch (error) {
@@ -118,6 +123,7 @@ const PrototypeTabFlow = () => {
     }
   }
 
+  // Update a nested property within a flow cell using the shared helper.
   // Update a nested property within a flow cell using the shared helper.
   const updateFlowCell = (
     stepIndex: number,
@@ -132,7 +138,9 @@ const PrototypeTabFlow = () => {
       value,
     )
     setFlowData(newData)
-    console.log('New Flow Data:', newData[stepIndex].flows[flowIndex])
+    // Stringify the updated flow data and update the flowString state
+    setFlowString(JSON.stringify(newData))
+    handleSave(JSON.stringify(newData))
   }
 
   // Open the flow editor for a specific cell.
@@ -149,7 +157,7 @@ const PrototypeTabFlow = () => {
   return (
     <div
       className={cn(
-        'flex w-full h-full flex-col bg-white rounded-md py-4 px-8',
+        'flex w-full h-full flex-col bg-white rounded-md py-4 px-10',
         showPrototypeFlowFullScreen
           ? 'fixed inset-0 z-50 overflow-auto bg-white'
           : '',
@@ -161,38 +169,46 @@ const PrototypeTabFlow = () => {
             End-to-End Flow: {prototype?.name}
           </DaText>
           <div className="grow" />
-          {!isEditing ? (
-            <DaButton
-              onClick={() => setIsEditing(true)}
-              className="!justify-start"
-              variant="editor"
-              size="sm"
-            >
-              <TbEdit className="w-4 h-4 mr-1" /> Edit
-            </DaButton>
-          ) : isSaving ? (
-            <div className="flex items-center text-da-primary-500">
-              <TbLoader className="w-4 h-4 mr-1 animate-spin" />
-              Saving
-            </div>
-          ) : (
-            <div className="flex space-x-2 mr-2">
-              <DaButton
-                variant="outline-nocolor"
-                onClick={() => setIsEditing(false)}
-                className="w-16 text-da-white px-4 py-2 rounded"
-                size="sm"
-              >
-                Cancel
-              </DaButton>
-              <DaButton
-                onClick={() => handleSave(flowString)}
-                className="w-16 text-white px-4 py-2 rounded"
-                size="sm"
-              >
-                Save
-              </DaButton>
-            </div>
+          {isAuthorized && (
+            <>
+              {!isEditing ? (
+                <DaButton
+                  onClick={() => setIsEditing(true)}
+                  className="!justify-start"
+                  variant="editor"
+                  size="sm"
+                >
+                  <TbEdit className="w-4 h-4 mr-1" /> Edit
+                </DaButton>
+              ) : isSaving ? (
+                <div className="flex items-center text-da-primary-500">
+                  <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                  Saving
+                </div>
+              ) : (
+                <div className="flex space-x-2 mr-2">
+                  <DaButton
+                    variant="outline-nocolor"
+                    onClick={() => {
+                      setFlowData(originalFlowData)
+                      setFlowString(JSON.stringify(originalFlowData))
+                      setIsEditing(false)
+                    }}
+                    className="w-16 text-da-white px-4 py-2 rounded"
+                    size="sm"
+                  >
+                    Cancel
+                  </DaButton>
+                  <DaButton
+                    onClick={() => handleSave(flowString)}
+                    className="w-16 text-white px-4 py-2 rounded"
+                    size="sm"
+                  >
+                    Save
+                  </DaButton>
+                </div>
+              )}
+            </>
           )}
           <DaButton
             onClick={() =>
@@ -212,7 +228,9 @@ const PrototypeTabFlow = () => {
         {isEditing ? (
           <DaFlowEditor
             initialData={flowData}
-            onUpdate={(jsonData) => setFlowString(jsonData)}
+            onUpdate={(jsonData) => {
+              setFlowString(jsonData)
+            }}
           />
         ) : (
           <>
@@ -362,7 +380,13 @@ const PrototypeTabFlow = () => {
             setCurrentEditingCell(null)
           }}
           open={flowEditorOpen}
-          onOpenChange={setFlowEditorOpen}
+          onOpenChange={(open) => {
+            setFlowEditorOpen(open)
+            if (!open) {
+              setCurrentEditingCell(null)
+            }
+          }}
+          isSaveMode={true}
         />
       )}
     </div>

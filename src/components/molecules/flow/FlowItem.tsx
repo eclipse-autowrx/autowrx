@@ -11,6 +11,9 @@ import { defaultRiskAssessmentPlaceholder } from './FlowItemEditor'
 import { DaButton } from '@/components/atoms/DaButton'
 import { ASILLevel } from '@/types/flow.type'
 import { FlowItemData } from '@/types/flow.type'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
+import useCurrentModel from '@/hooks/useCurrentModel'
 
 const safetyLevels = ['<ASIL-D>', '<ASIL-C>', '<ASIL-B>', '<ASIL-A>', '<QM>']
 
@@ -54,13 +57,13 @@ const parseActivityData = (
         type: jsonData.type || '',
         component: jsonData.component || '',
         description: jsonData.description || '',
+        riskAssessmentEvaluation: jsonData.riskAssessmentEvaluation || '',
         preAsilLevel: preAsil,
         postAsilLevel: postAsil,
         riskAssessment,
         approvedBy: jsonData.approvedBy || '',
         approvedAt: jsonData.approvedAt || '',
-        riskAssessmentEvaluation: jsonData.riskAssessmentEvaluation || '',
-        generatedAt: jsonData.generatedAt || '',
+        // generatedAt: jsonData.generatedAt || '',
       },
     }
   }
@@ -92,6 +95,8 @@ interface FlowItemProps {
 }
 
 const FlowItem = ({ stringData, onEdit }: FlowItemProps) => {
+  const { data: model } = useCurrentModel()
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
   const { showPrototypeFlowASIL } = useSystemUI()
 
   const { displayText, preAsilLevel, postAsilLevel, data } =
@@ -128,14 +133,27 @@ const FlowItem = ({ stringData, onEdit }: FlowItemProps) => {
             System Activity
           </div>
           <div className="flex items-center space-x-1">
-            <DaButton
-              size="sm"
-              variant="plain"
-              className="flex ml-1 !h-6 !p-2 !text-xs !text-da-primary-500"
-              onClick={() => onEdit && onEdit(stringData)}
-            >
-              <TbEdit className="size-3.5 mr-1" /> Edit
-            </DaButton>
+            {isAuthorized && (
+              <DaButton
+                size="sm"
+                variant="plain"
+                className="flex ml-1 !h-6 !p-2 !text-xs !text-da-primary-500"
+                onClick={(e) => {
+                  // Locate the dropdown menu element and dispatch the escape key event
+                  const menu = e.currentTarget.closest('[role="menu"]')
+                  if (menu) {
+                    menu.dispatchEvent(
+                      new KeyboardEvent('keydown', { key: 'Escape' }),
+                    )
+                  }
+                  // Must escape here else the FlowEditor will fallback to blank DropdownMenu stack cause freeze click
+                  onEdit && onEdit(stringData)
+                }}
+              >
+                <TbEdit className="size-3.5 mr-1" /> Edit
+              </DaButton>
+            )}
+
             <button
               className="p-0.5 hover:text-red-500 hover:bg-red-100 rounded-md"
               onClick={(e) => {
