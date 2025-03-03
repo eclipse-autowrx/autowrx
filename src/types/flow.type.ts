@@ -6,6 +6,8 @@ export type Direction =
   | 'down-right'
   | 'down-left'
 
+export type Interface = 'p2c' | 'v2c' | 's2s' | 's2e'
+
 export interface SignalFlow {
   direction: Direction
   signal: string
@@ -28,4 +30,20 @@ export interface FlowStep {
       sensors: string
     }
   }[]
+}
+
+export type ASILLevel = 'A' | 'B' | 'C' | 'D' | 'QM'
+
+export interface FlowItemData {
+  type: string
+  component: string
+  description: string
+  preAsilLevel: ASILLevel
+  postAsilLevel: ASILLevel
+  riskAssessment?: string
+  riskAssessmentEvaluation?: string
+  approvedBy?: string
+  approvedAt?: string
+  generatedAt?: string
+  [key: string]: string | ASILLevel | undefined
 }

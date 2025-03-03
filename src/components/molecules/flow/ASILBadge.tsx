@@ -1,6 +1,5 @@
 import { cn } from '@/lib/utils'
-
-export type ASILLevel = 'A' | 'B' | 'C' | 'D' | 'QM'
+import { ASILLevel } from '@/types/flow.type'
 
 interface ASILBadgeProps {
   preAsilLevel: ASILLevel

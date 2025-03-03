@@ -16,8 +16,7 @@ import {
   TbX,
   TbArrowsRightLeft,
 } from 'react-icons/tb'
-
-type InterfaceType = 'p2c' | 'v2c' | 's2s' | 's2e'
+import { Interface } from '@/types/flow.type'
 
 interface SystemInterfaceData {
   endpointUrl?: string
@@ -25,7 +24,7 @@ interface SystemInterfaceData {
   [key: string]: string | undefined
 }
 
-const interfaceTypeLabels: Record<InterfaceType, string> = {
+const interfaceTypeLabels: Record<Interface, string> = {
   p2c: 'Phone to Cloud',
   v2c: 'Vehicle to Cloud',
   s2s: 'Signal to Service',
@@ -65,15 +64,12 @@ const DirectionArrow = ({ direction }: DirectionArrowProps) => {
   }
 }
 
-interface FlowSystemInterfaceProps {
+interface FlowInterfaceProps {
   flow: SignalFlow | null
-  interfaceType: InterfaceType
+  interfaceType: Interface
 }
 
-function FlowSystemInterface({
-  flow,
-  interfaceType,
-}: FlowSystemInterfaceProps) {
+function FlowInterface({ flow, interfaceType }: FlowInterfaceProps) {
   const { model_id } = useParams()
   const [isOpen, setIsOpen] = useState(false)
 
@@ -244,4 +240,4 @@ function FlowSystemInterface({
   )
 }
 
-export default FlowSystemInterface
+export default FlowInterface
