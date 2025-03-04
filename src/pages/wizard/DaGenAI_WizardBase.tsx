@@ -146,7 +146,7 @@ const DaGenAI_WizardBase = ({
                   if (contentType === 'code') {
                     onCodeGenerated(eventPayload)
                     setWizardGeneratedCode(eventPayload)
-                  } else if (contentType === 'selected-signals') {
+                  } else if (contentType === 'selected_signals') {
                     // Split the signal string by '%n' and join with newline.
                     const signals = eventPayload
                       .split('%n')
