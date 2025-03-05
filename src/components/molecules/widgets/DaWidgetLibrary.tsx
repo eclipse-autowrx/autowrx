@@ -54,15 +54,15 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
   const [isWidgetDiscrete, setIsWidgetDiscrete] = useState<boolean>(false)
 
   const PIN_WIDGETS = [
-    { name: "Single Signal Widget", weight: 0},
-    { name: "Chart Signal Widget", weight: 1},
-    { name: "Signal List Settable", weight: 2},
-    { name: "Terminal", weight: 3},
-    { name: "Image by Signal value", weight: 4},
-    { name: "Map", weight: 5},
-    { name: "General 3D Car Model", weight: 6},
-    { name: "Simple Fan Widget", weight: 7},
-    { name: "Simple Wiper Widget", weight: 8},
+    { name: 'Single Signal Widget', weight: 0 },
+    { name: 'Chart Signal Widget', weight: 1 },
+    { name: 'Signal List Settable', weight: 2 },
+    { name: 'Terminal', weight: 3 },
+    { name: 'Image by Signal value', weight: 4 },
+    { name: 'Map', weight: 5 },
+    { name: 'General 3D Car Model', weight: 6 },
+    { name: 'Simple Fan Widget', weight: 7 },
+    { name: 'Simple Wiper Widget', weight: 8 },
   ]
 
   const handleAddWidgetClick = async () => {
@@ -159,20 +159,20 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
     let widgets = []
     try {
       widgets = JSON.parse(JSON.stringify(marketWidgets))
-      widgets.forEach((w:any) => {
-        let match = PIN_WIDGETS.find(p => p.name == w.label)
-        if(match) {
+      widgets.forEach((w: any) => {
+        let match = PIN_WIDGETS.find((p) => p.name == w.label)
+        if (match) {
           w.weight = match.weight
         } else {
           w.weight = 999
         }
       })
-      widgets.sort((a:any, b:any) => {
-        if (a.weight < b.weight) return -1;
-        if (a.weight > b.weight) return 1;
-        return 0;
+      widgets.sort((a: any, b: any) => {
+        if (a.weight < b.weight) return -1
+        if (a.weight > b.weight) return 1
+        return 0
       })
-    } catch(e) { }
+    } catch (e) {}
     setRenderWidgets(widgets)
     // setRenderWidgets(activeTab === 'builtin' ? buildinWidgets : marketWidgets)
   }, [activeTab, marketWidgets])
@@ -269,13 +269,11 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
         )}
 
         {activeTab == 'genAI' && (
-          <div className="flex h-full space-x-2 ">
+          <div className="flex h-full overflow-y-auto space-x-2 ">
             <DaWidgetSetup
               setWidgetUrl={setWidgetUrl}
-              modalRef={modalRef}
               isWidgetGenAI={true}
               optionsStr={optionsStr}
-              setOptionStr={setOptionStr}
             />
           </div>
         )}
