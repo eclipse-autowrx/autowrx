@@ -12,13 +12,9 @@ interface DaGenAIWidgetProps {
   onDashboardConfigChanged?: (config: any) => void
   onClose: () => void
   outerSetiWidgetUrl?: React.Dispatch<React.SetStateAction<string>>
-  modalRef?: React.RefObject<HTMLDivElement>
 }
 
-const DaGenAIWidget = ({
-  modalRef,
-  outerSetiWidgetUrl,
-}: DaGenAIWidgetProps) => {
+const DaGenAI_Widget = ({ outerSetiWidgetUrl }: DaGenAIWidgetProps) => {
   const { data: user } = useSelfProfileQuery()
   const [loading, setLoading] = useState(false)
   const [isFinished, setIsFinished] = useState(false)
@@ -62,7 +58,7 @@ const DaGenAIWidget = ({
   }, [loading, isFinished, genCode])
 
   return (
-    <div className="flex h-full w-full">
+    <div className="flex h-full w-full overflow-y-auto">
       <DaGenAI_Base
         type="GenAI_Widget"
         buttonText="Generate Widget"
@@ -74,8 +70,8 @@ const DaGenAIWidget = ({
         onLoadingChange={setLoading}
         className="w-1/2"
       />
-      <div className="flex h-full w-1/2 flex-col pl-2">
-        <div className="mb-2 flex select-none items-center justify-between">
+      <div className="flex h-full overflow-y-auto w-1/2 flex-col pl-2">
+        <div className="mb-1 flex select-none items-center justify-between">
           <DaSectionTitle number={3} title="Preview Widget" />
           <DaButton
             variant="plain"
@@ -89,26 +85,28 @@ const DaGenAIWidget = ({
           </DaButton>
         </div>
 
-        {genCode ? (
-          isPreviewWidget ? (
-            <iframe
-              src={iframeSrc}
-              title="Widget Preview"
-              className="h-full w-full"
-              sandbox="allow-scripts allow-same-origin"
-            ></iframe>
+        <div className="flex w-full h-full border rounded-lg overflow-y-auto">
+          {genCode ? (
+            isPreviewWidget ? (
+              <iframe
+                src={iframeSrc}
+                title="Widget Preview"
+                className="h-full w-full"
+                sandbox="allow-scripts allow-same-origin"
+              ></iframe>
+            ) : (
+              <DaGenAI_ResponseDisplay code={genCode} language="htmlbars" />
+            )
           ) : (
-            <DaGenAI_ResponseDisplay code={genCode} language="htmlbars" />
-          )
-        ) : (
-          <LoadingLineAnimation
-            loading={loading}
-            content={"There's no widget here"}
-          />
-        )}
+            <LoadingLineAnimation
+              loading={loading}
+              content={"There's no widget here"}
+            />
+          )}
+        </div>
       </div>
     </div>
   )
 }
 
-export default DaGenAIWidget
+export default DaGenAI_Widget
