@@ -19,6 +19,7 @@ import {
   TbCheck,
   TbCopy,
   TbExclamationMark,
+  TbLoader,
 } from 'react-icons/tb'
 import { retry } from '@/lib/retry.ts'
 
@@ -48,7 +49,7 @@ const DaGenAI_Base = ({
     undefined,
   )
   const [loading, setLoading] = useState<boolean>(false)
-  const [addonsLoaded, setAddonsLoaded] = useState<boolean>(false) // New state for addon loading
+  const [addonsLoaded, setAddonsLoaded] = useState<boolean>(false)
   const { data: marketplaceAddOns } = useListMarketplaceAddOns(type)
   const [canUseGenAI] = usePermissionHook([PERMISSIONS.USE_GEN_AI])
   const access = useAuthStore((state) => state.access)
@@ -67,14 +68,12 @@ const DaGenAI_Base = ({
       const marketplaceMatch = marketplaceAddOns?.find(
         (marketAddOn) => marketAddOn.id === addOn.id,
       )
-
       if (marketplaceMatch) {
         return {
           ...marketplaceMatch,
           customPayload: addOn.customPayload(prompt),
         }
       }
-
       return {
         ...addOn,
         customPayload: addOn.customPayload(prompt),
@@ -84,7 +83,7 @@ const DaGenAI_Base = ({
 
   useEffect(() => {
     if (marketplaceAddOns) {
-      setAddonsLoaded(true) // Set addons as loaded when marketplace data is ready
+      setAddonsLoaded(true)
     }
   }, [marketplaceAddOns])
 
@@ -94,7 +93,6 @@ const DaGenAI_Base = ({
         const storedAddOn = localStorage.getItem('lastUsed_GenAIGenerator')
         return storedAddOn ? JSON.parse(storedAddOn) : null
       }
-
       const lastUsedGenAI = getSelectedGeneratorFromLocalStorage()
       if (lastUsedGenAI) {
         setSelectedAddOn(lastUsedGenAI)
@@ -106,7 +104,6 @@ const DaGenAI_Base = ({
 
   const filteredMarketplaceAddOns = useMemo(() => {
     if (!marketplaceAddOns) return []
-
     const builtInIds = builtInAddOns.map((addon: AddOn) => addon.id)
     return marketplaceAddOns.filter((addon) => !builtInIds.includes(addon.id))
   }, [marketplaceAddOns, builtInAddOns])
@@ -119,40 +116,32 @@ const DaGenAI_Base = ({
     try {
       if (selectedAddOn.isMock) {
         await new Promise((resolve) => setTimeout(resolve, 1000))
-        onCodeGenerated && onCodeGenerated(default_generated_code)
+        onCodeGenerated(default_generated_code)
         return
       }
 
-      let response
-      if (
-        selectedAddOn.endpointUrl &&
-        !(marketplaceAddOns || []).some(
-          (addOn) => addOn.id === selectedAddOn.id,
-        )
-      ) {
-        response = await axios.post(
-          selectedAddOn.endpointUrl,
-          { prompt },
-          { headers: { Authorization: `Bearer ${access?.token}` } },
-        )
-        onCodeGenerated(response.data.payload.code)
-      } else {
-        response = await axios.post(
-          config.genAI.defaultEndpointUrl,
-          {
-            endpointURL: selectedAddOn.endpointUrl,
-            inputPrompt: prompt,
-            systemMessage: selectedAddOn.samples || '',
+      // Use the new endpoint and payload format
+      const response = await axios.post(
+        'https://digitalauto-ai.com/chat',
+        {
+          systemMessage: selectedAddOn.samples || '',
+          message: prompt,
+        },
+        {
+          headers: {
+            // Authorization: `Bearer ${access?.token}`,
+            'Content-Type': 'application/json',
           },
-          { headers: { Authorization: `Bearer ${access?.token}` } },
-        )
-        onCodeGenerated(response.data)
-      }
+        },
+      )
+
+      // Parse the generated content from the new response structure
+      onCodeGenerated(response.data.content)
     } catch (error) {
       timeouts.current.forEach((timeout) => clearTimeout(timeout))
       timeouts.current = []
       console.error('Error generating AI content:', error)
-      if (axios.isAxiosError && axios.isAxiosError(error)) {
+      if (axios.isAxiosError(error)) {
         toast.error(
           error.response?.data?.message || 'Error generating AI content',
         )
@@ -174,7 +163,7 @@ const DaGenAI_Base = ({
 
   return (
     <div className={cn('flex h-full w-full rounded', className)}>
-      <div className="flex h-full w-full flex-col  border-r border-da-gray-light pl-0.5 pr-2">
+      <div className="flex h-full w-full flex-col border-r border-da-gray-light pl-0.5 pr-2">
         <div className="flex w-full items-center justify-between">
           <DaSectionTitle number={1} title="Prompting" />
           <div
@@ -189,9 +178,18 @@ const DaGenAI_Base = ({
           <DaTextarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
+            // Listen for Enter key to trigger generation (ignoring Shift+Enter for new lines)
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                if (!loading && prompt && addonsLoaded) {
+                  handleGenerate()
+                }
+              }
+            }}
             placeholder={placeholderText}
             className="w-full h-full"
-            textareaClassName="flex h-full  resize-none !bg-gray-50 text-da-gray-dark"
+            textareaClassName="flex h-full resize-none !bg-gray-50 text-da-gray-dark"
           />
         </div>
 
@@ -216,7 +214,10 @@ const DaGenAI_Base = ({
               }}
             />
           ) : (
-            <div>Loading Addons...</div> // Fallback while loading addons
+            <div className="flex items-center mt-2 w-full h-10 border justify-center rounded-md shadow-sm">
+              <TbLoader className="text-da-primary-500 animate-spin mr-1.5" />
+              Loading AI Generator
+            </div>
           )}
         </div>
 
@@ -224,10 +225,8 @@ const DaGenAI_Base = ({
           <div className="flex w-full select-none justify-center items-center text-sm text-da-gray-dark py-1 font-medium">
             <TbAlertCircle className="text-red-500 mr-1 size-5" />
             Permission required
-            <span className="xl:flex hidden ml-1">
-              {' '}
-              for GenAI access
-            </span>. Contact
+            <span className="xl:flex hidden ml-1"> for GenAI access</span>.
+            Contact
             <span
               className="ml-1 py-0.5 px-1 rounded-lg bg-gray-100 hover:bg-gray-200 cursor-pointer"
               onClick={handleCopy}
@@ -251,7 +250,7 @@ const DaGenAI_Base = ({
 
         <DaButton
           variant="solid"
-          disabled={!prompt || loading || !addonsLoaded} // Disable button if addons not loaded
+          disabled={!prompt || loading || !addonsLoaded}
           className={cn('min-h-8 w-full py-1', prompt ? '!mt-1' : '')}
           onClick={handleGenerate}
         >
