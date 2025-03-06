@@ -231,31 +231,31 @@ const DaGenAI_WizardEditSystemStaging = ({
             )}
           </div>
           {isAuthorized ? (
-            define && (
-              <DaStageComponent
-                onTargetMode={onTargetMode}
-                id="none"
-                prototype={prototype}
-                isTargetConnected={!!activeRtId}
-                activeId={activeId}
-                isUpdating={isUpdating}
-                editMode={true}
-                item={define}
-                level={-1}
-                targetState={target && target.state}
-                onRequestUpdate={(id: string, data: string) => {
-                  if (activeRtId && runTimeRef && runTimeRef.current) {
-                    runTimeRef.current.deploy()
-                    setActiveId(id)
-                    setIsUpdating(true)
-                  }
-                }}
-                onItemEditFinished={(id, data) => {
-                  updateDefineAtId(id, data)
-                }}
-                expandedIds={['3', '3.1', '3.1.1', '3.1.1.1', '3.1.1.1.1']}
-              />
-            )
+            define && <></>
+              // <DaStageComponent
+              //   onTargetMode={onTargetMode}
+              //   id="none"
+              //   prototype={prototype}
+              //   isTargetConnected={!!activeRtId}
+              //   activeId={activeId}
+              //   isUpdating={isUpdating}
+              //   editMode={true}
+              //   item={define}
+              //   level={-1}
+              //   targetState={target && target.state}
+              //   onRequestUpdate={(id: string, data: string) => {
+              //     if (activeRtId && runTimeRef && runTimeRef.current) {
+              //       runTimeRef.current.deploy()
+              //       setActiveId(id)
+              //       setIsUpdating(true)
+              //     }
+              //   }}
+              //   onItemEditFinished={(id, data) => {
+              //     updateDefineAtId(id, data)
+              //   }}
+              //   expandedIds={['3', '3.1', '3.1.1', '3.1.1.1', '3.1.1.1.1']}
+              // />
+            
           ) : (
             <div className="flex py-4 justify-center">
               You dont have permisison to deploy

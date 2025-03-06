@@ -243,7 +243,7 @@ const DaEditSystemStaging = ({
             )}
           </div>
 
-          {define && (
+          {/* {define && (
             <DaStageComponent
               onTargetMode={onTargetMode}
               id="none"
@@ -267,7 +267,7 @@ const DaEditSystemStaging = ({
               }}
               expandedIds={['3', '3.1', '3.1.1', '3.1.1.1', '3.1.1.1.1']}
             ></DaStageComponent>
-          )}
+          )} */}
         </div>
       </div>
 
