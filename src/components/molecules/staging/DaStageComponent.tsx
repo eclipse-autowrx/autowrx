@@ -33,6 +33,7 @@ interface VersionRenderProps {
   target: any
   code: string
   activeLifeCycle: string
+  latestVersion: string
 }
 
 const InfrastructureMaturity = [
@@ -100,34 +101,16 @@ const FunctionalMaturity = [
 const DeploymentVersion = [
   {
     ID: '1',
-    name: 'Development',
+    name: 'Older version',
     description: 'Work-in-progress; frequent changes.',
-    icon: '🛠',
+    icon: '✗',
   },
   {
     ID: '2',
-    name: 'Integration',
+    name: 'Latest version',
     description: 'Merged into a shared environment with other components.',
-    icon: '🔄',
-  },
-  {
-    ID: '3',
-    name: 'Pre-Release',
-    description: 'Candidate for production but requires final validation.',
-    icon: '🔍',
-  },
-  {
-    ID: '4',
-    name: 'Production',
-    description: 'Deployed in operational vehicles.',
-    icon: '🚗',
-  },
-  {
-    ID: '5',
-    name: 'Deprecated',
-    description: 'No longer maintained; phased out or replaced.',
-    icon: '🗑',
-  },
+    icon: '🗸',
+  }
 ]
 
 const ComplianceReadiness = [
@@ -231,27 +214,43 @@ const HomologationReadiness = [
   },
 ]
 
+interface LoadingBarProps {
+  progress: number
+}
+
+const LoadingBar = ({ progress }: LoadingBarProps) => {
+  return (
+    <div className="loading-bar-container">
+      <div className="loading-bar" style={{ width: `${progress}%` }}></div>
+    </div>
+  );
+};
+
 const VersionRender = ({
   target,
   code,
   activeLifeCycle,
+  latestVersion,
 }: VersionRenderProps) => {
   const [item, setItem] = useState<any>(null)
   const [icon, setIcon] = useState<string>('')
   const [life, setLife] = useState<any>(null)
   const [options, setOptions] = useState<any[]>([])
   const [activeOption, setActiveOption] = useState<any>(null)
+  const [progress, setProgress] = useState<number>(0)
+  const [version, setVersion] = useState<string>("")
 
   useEffect(() => {
     if (code && target && target.state) {
       setItem(target.state[code])
+      setVersion(target.state[code]?.version || '')
       return
     }
     setItem(null)
   }, [code, target])
 
   useEffect(() => {
-    console.log('activeLifeCycle', activeLifeCycle)
+    // console.log('activeLifeCycle', activeLifeCycle)
     switch (activeLifeCycle) {
       case 'Infrastructure Maturity':
         setOptions(InfrastructureMaturity)
@@ -291,6 +290,9 @@ const VersionRender = ({
   }, [options, item, activeLifeCycle])
 
   if (!item) return <span></span>
+
+  if(progress) return <LoadingBar progress={progress} />
+
   return (
     <div className="flex items-center">
       <DaTooltip
@@ -304,21 +306,33 @@ const VersionRender = ({
         }
         className="normal-case"
       >
-        <div className="flex items-center">
-          <span className="da-label-tiny">{item.version || '1.0.0'}</span>
-          <span className="ml-2 mr-2 text-[18px]">
+        <div className="flex items-center w-20">
+          <span className="da-label-tiny w-6">{version || '1.0.0'}</span>
+          <span className={`ml-2 mr-2 text-[18px] ${activeOption?.icon=='✗' && 'text-red-500'} ${activeOption?.icon=='🗸' && 'text-green-500'}` }>
             {activeOption?.icon}
           </span>
         </div>
       </DaTooltip>
       <DaMenu
-        trigger={<FaCaretDown size={20} />}
+        trigger={<FaCaretDown size={14} />}
       >
         {options &&
           options.map((option: any) => (
             <div className="text-sm py-1 px-2 flex items-center !cursor-pointer hover:bg-slate-200"
               onClick={() => {
-                setActiveOption(option)
+                const interval = setInterval(() => {
+                  setProgress((prevProgress) => {
+                    if (prevProgress > 100) {
+                      clearInterval(interval);
+                      setActiveOption(option)
+                      if(activeLifeCycle == "Deployment Version") {
+                        setVersion(latestVersion || "9.8.3")
+                      }
+                      return 0;
+                    }
+                    return prevProgress + 10;
+                  });
+                }, 500)
               }}>
               <div className="mr-2 w-8 text-[18px]">{option.icon}</div>
               <div className="">{option.name}</div>
@@ -328,6 +342,7 @@ const VersionRender = ({
     </div>
   )
 }
+
 
 const DaStageComponent = ({
   id,
@@ -345,7 +360,7 @@ const DaStageComponent = ({
   expandedIds = [], // Default to an empty array
   onItemEditFinished,
   onRequestUpdate,
-  activeLifeCycle,
+  activeLifeCycle
 }: DaStageComponentProps) => {
   // Initialize expansion state based on whether the item's id is in expandedIds
   const [isExpanded, setIsExpanded] = useState<boolean>(
@@ -392,9 +407,7 @@ const DaStageComponent = ({
               )}
               {item.id === '3.1.1.1.1.1' ? (
                 prototype && prototype.name ? (
-                  <span className="font-medium text-da-primary-500 truncate w-full">
-                    {prototype.name}
-                  </span>
+                  prototype.name
                 ) : (
                   item.name
                 )
@@ -438,6 +451,7 @@ const DaStageComponent = ({
                     target={target}
                     code={item.id}
                     activeLifeCycle={activeLifeCycle}
+                    latestVersion={item.version||''}
                   />
                 </div>
               ))}
