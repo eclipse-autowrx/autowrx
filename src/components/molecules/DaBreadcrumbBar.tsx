@@ -10,6 +10,7 @@ import {
 } from '@/components/atoms/DaBreadcrumb'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
+import useCurrentInventoryItem from '@/hooks/useCurrentInventoryItem'
 
 const breadcrumbNames: { [key: string]: string } = {
   home: 'Home',
@@ -24,6 +25,7 @@ const breadcrumbNames: { [key: string]: string } = {
 const DaBreadcrumbBar = () => {
   const { data: model } = useCurrentModel()
   const { data: prototype } = useCurrentPrototype()
+  const { data: inventoryItem } = useCurrentInventoryItem()
   const location = useLocation()
   const [breadcrumbs, setBreadcrumbs] = useState<JSX.Element[]>([])
 
@@ -109,6 +111,36 @@ const DaBreadcrumbBar = () => {
         name: 'Privacy Policy',
         key: 'privacy-policy',
       })
+    }
+
+    if (pathnames.includes('inventory')) {
+      paths.push({
+        path: `/inventory`,
+        name: 'Inventory',
+        key: 'inventory',
+      })
+
+      if (pathnames.includes('new')) {
+        paths.push({
+          path: `/inventory/new`,
+          name: 'New Inventory Item',
+          key: 'new',
+        })
+      } else if (pathnames.includes('types')) {
+        paths.push({
+          path: `/inventory/types`,
+          name: 'Types',
+          key: 'types',
+        })
+      }
+
+      if (inventoryItem) {
+        paths.push({
+          path: `/inventory/${inventoryItem.id}`,
+          name: inventoryItem.name,
+          key: inventoryItem.id,
+        })
+      }
     }
 
     paths.forEach((breadcrumb, index) => {

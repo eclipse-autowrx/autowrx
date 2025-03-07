@@ -1,6 +1,7 @@
 import { List } from '@/types/common.type'
 import { serverAxios } from './base'
 import { Model, ModelCreate, ModelLite } from '@/types/model.type'
+import { VehicleAPI } from '@/types/api.type'
 
 export const listModelsLite = async (
   params?: Record<string, unknown>,
@@ -156,6 +157,15 @@ export const deleteModelService = async (model_id: string) => {
 
 export const getComputedAPIs = async (model_id: string) => {
   return (await serverAxios.get(`/models/${model_id}/api`)).data
+}
+
+export const getApiDetailService = async (
+  model_id: string,
+  api_name: string,
+) => {
+  return (
+    await serverAxios.get<VehicleAPI>(`/models/${model_id}/api/${api_name}`)
+  ).data
 }
 
 export const replaceAPIsService = async (
