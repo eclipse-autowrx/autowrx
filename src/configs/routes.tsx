@@ -4,6 +4,8 @@ import SuspenseProvider from '@/providers/SuspenseProvider'
 import { RouteConfig } from '@/types/common.type'
 import PageAuthSuccess from '@/pages/PageAuthSuccess'
 import { retry } from '@/lib/retry'
+import InventoryItemList from '@/components/molecules/inventory/InventoryItemList'
+import PageInventoryItemList from '@/pages/PageInventoryItemList'
 
 const PageHome = lazy(() => retry(() => import('@/pages/PageHome')))
 const PageAbout = lazy(() => retry(() => import('@/pages/PageAbout')))
@@ -278,28 +280,30 @@ const routesConfig: RouteConfig[] = [
             ),
           },
           {
-            path: 'types',
+            path: 'role/:role',
             element: (
               <SuspenseProvider>
-                <PageInventoryTypes />
+                <PageInventoryItemList />
               </SuspenseProvider>
             ),
-          },
-          {
-            path: ':inventory_id',
-            element: (
-              <SuspenseProvider>
-                <PageInventoryItemDetail />
-              </SuspenseProvider>
-            ),
-          },
-          {
-            path: ':inventory_id/:tab',
-            element: (
-              <SuspenseProvider>
-                <PageInventoryItemDetail />
-              </SuspenseProvider>
-            ),
+            children: [
+              {
+                path: ':inventory_id',
+                element: (
+                  <SuspenseProvider>
+                    <PageInventoryItemDetail />
+                  </SuspenseProvider>
+                ),
+              },
+              {
+                path: ':inventory_id/:tab',
+                element: (
+                  <SuspenseProvider>
+                    <PageInventoryItemDetail />
+                  </SuspenseProvider>
+                ),
+              },
+            ],
           },
         ],
       },

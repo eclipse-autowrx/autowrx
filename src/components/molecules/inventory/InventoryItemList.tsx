@@ -9,14 +9,17 @@ import {
   TbChevronLeft,
   TbFileExport,
   TbFileImport,
+  TbLoader,
   TbPlus,
   TbSearch,
 } from 'react-icons/tb'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Fragment } from 'react/jsx-runtime'
 import DaTreeBrowser, { Node } from '../DaTreeBrowser'
 import { useEffect, useMemo, useState } from 'react'
 import { instances, joinData, roles, rolesTypeMap, types } from './data'
+import useInventoryItems from '@/hooks/useInventoryItems'
+import DaLoading from '@/components/atoms/DaLoading'
 
 // const MOCK_ITEM_DATA: InventorItemType[] = [
 //   {
@@ -196,21 +199,21 @@ type InventoryItemListProps = {
 
 const InventoryItemList = ({ mode = 'view' }: InventoryItemListProps) => {
   const [searchParams, setSearchParams] = useSearchParams()
+  const { data, isLoading } = useInventoryItems()
+  const { role } = useParams()
 
   useEffect(() => {
-    const role = searchParams.get('role')
-    if (role) {
-      const type = rolesTypeMap[role]
-      if (type && new URLSearchParams(searchParams).get('type') !== type) {
-        searchParams.set('type', type)
-        setSearchParams(searchParams)
-      }
+    if (!role) return
+    const type = rolesTypeMap[role]
+    if (type && new URLSearchParams(searchParams).get('type') !== type) {
+      searchParams.set('type', type)
+      setSearchParams(searchParams)
     }
-  }, [])
+  }, [role])
 
   const refinedMockData = useMemo(() => {
-    return joinData(instances)
-  }, [])
+    return data ? joinData(data as any[]) : []
+  }, [data])
 
   const filteredData = useMemo(() => {
     return refinedMockData.filter((item) => {
@@ -242,6 +245,13 @@ const InventoryItemList = ({ mode = 'view' }: InventoryItemListProps) => {
       return true
     })
   }, [refinedMockData, searchParams])
+
+  if (!data || isLoading)
+    return (
+      <div className="w-full h-[calc(100vh-200px)]">
+        <DaLoading />
+      </div>
+    )
 
   return (
     <div className="flex gap-14">
@@ -352,7 +362,7 @@ type FilterProps = {
 
 const Filter = ({ mode }: FilterProps) => {
   const [searchParams, setSearchParams] = useSearchParams()
-  const role = searchParams.get('role')
+  const { role } = useParams()
   const roleData = roles.find((r) => r.name === role)
   const selected = searchParams.get('type')
   const setSelected = (type: string) => {
@@ -380,20 +390,18 @@ const Filter = ({ mode }: FilterProps) => {
           <img src={roleData.image} className="h-full aspect-square" />
           <div className="h-full flex flex-1 flex-col justify-between pt-3 pb-4 px-5">
             <p className="text-da-gray-darkest font-bold">{roleData.name}</p>
-            <DaButton
-              variant="outline-nocolor"
-              onClick={() => setSearchParams({})}
-              size="sm"
-            >
-              <TbChevronLeft className="mr-2" size={16} /> Select Role
-            </DaButton>
+            <Link to="/inventory" className="w-full">
+              <DaButton variant="outline-nocolor" size="sm" className="w-full">
+                <TbChevronLeft className="mr-2" size={16} /> Select Role
+              </DaButton>
+            </Link>
           </div>
         </div>
       )}
 
       <div
         className={clsx(
-          'rounded-lg mt-4 mb-6 text-sm text-da-gray-dark shadow-sm border p-5',
+          'rounded-lg mt-4 mb-6 overflow-y-auto max-h-[calc(100vh-320px)] text-sm text-da-gray-dark shadow-sm border p-5',
         )}
       >
         <DaText variant="small-bold" className="!block text-da-gray-darkest">
