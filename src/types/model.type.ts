@@ -40,6 +40,7 @@ export type Model = {
   api_version?: string
   main_api: string
   model_home_image_file?: string
+  detail_image_file?: string
   model_files?: Record<string, unknown>
   name: string
   cvi?: string
