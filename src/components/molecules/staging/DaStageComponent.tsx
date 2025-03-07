@@ -220,7 +220,7 @@ interface LoadingBarProps {
 
 const LoadingBar = ({ progress }: LoadingBarProps) => {
   return (
-    <div className="loading-bar-container">
+    <div className="mx-8 loading-bar-container">
       <div className="loading-bar" style={{ width: `${progress}%` }}></div>
     </div>
   );
@@ -233,8 +233,6 @@ const VersionRender = ({
   latestVersion,
 }: VersionRenderProps) => {
   const [item, setItem] = useState<any>(null)
-  const [icon, setIcon] = useState<string>('')
-  const [life, setLife] = useState<any>(null)
   const [options, setOptions] = useState<any[]>([])
   const [activeOption, setActiveOption] = useState<any>(null)
   const [progress, setProgress] = useState<number>(0)
@@ -320,6 +318,10 @@ const VersionRender = ({
           options.map((option: any) => (
             <div className="text-sm py-1 px-2 flex items-center !cursor-pointer hover:bg-slate-200"
               onClick={() => {
+                let tick = 150
+                if(activeLifeCycle == "Deployment Version") {
+                  tick = 400
+                }
                 const interval = setInterval(() => {
                   setProgress((prevProgress) => {
                     if (prevProgress > 100) {
@@ -332,7 +334,7 @@ const VersionRender = ({
                     }
                     return prevProgress + 10;
                   });
-                }, 500)
+                }, tick)
               }}>
               <div className="mr-2 w-8 text-[18px]">{option.icon}</div>
               <div className="">{option.name}</div>

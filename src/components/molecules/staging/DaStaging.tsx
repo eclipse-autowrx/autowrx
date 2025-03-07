@@ -363,11 +363,10 @@ const DaStaging = ({ isWizard }: DaStagingProps) => {
                     className="scale-90 h-full w-full object-contain"
                   />
                 </div>
-                <div>
-                  <div>
+                <div className="w-full">
                     <select
                       aria-label="deploy-select"
-                      className={`border rounded da-label-small px-2 py-1 w-full min-w-[100px] text-da-gray-dark bg-gray-200 !cursor-pointer`}
+                      className={`text-center border rounded da-label-small px-2 py-1 w-full min-w-[100px] text-da-gray-dark bg-gray-200 !cursor-pointer`}
                       value={activeLifeCycle}
                       onChange={(e) => {
                         // console.log(`setActiveRtId(e.target.value) `, e.target.value)
@@ -388,7 +387,6 @@ const DaStaging = ({ isWizard }: DaStagingProps) => {
                           )
                         })}
                     </select>
-                  </div>
                 </div>
                 {/* <DaText variant="small-bold" className="mt-1">
                   {system.name}
