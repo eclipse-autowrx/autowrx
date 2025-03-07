@@ -13,7 +13,10 @@ import { updatePrototypeService } from '@/services/prototype.service'
 import { TbBrandGithub } from 'react-icons/tb'
 import DaVelocitasProjectCreator from '../molecules/velocitas_project/DaVelocitasProjectCreator'
 import { retry } from '@/lib/retry'
-
+import { GrDeploy } from 'react-icons/gr'
+import { deployToEPAM } from '@/lib/deployToEpam'
+import { useToast } from '../molecules/toaster/use-toast'
+import config from '@/configs/config'
 const CodeEditor = lazy(() => retry(() => import('../molecules/CodeEditor')))
 
 const PrototypeTabCodeApiPanel = lazy(() =>
@@ -24,6 +27,7 @@ const DaGenAI_Python = lazy(() =>
 )
 
 const PrototypeTabCode: FC = ({}) => {
+  const { toast } = useToast()
   const [prototype, setActivePrototype, activeModelApis] = useModelStore(
     (state) => [
       state.prototype as Prototype,
@@ -135,6 +139,41 @@ const PrototypeTabCode: FC = ({}) => {
                   vssPayload={{}}
                 />
               </DaPopup>
+
+              {config?.enableDeployToEPAM !== false && (
+                <DaButton
+                  size="sm"
+                  className="ml-2"
+                  variant="plain"
+                  onClick={async () => {
+                    if (code) {
+                      try {
+                        let res = await deployToEPAM(prototype.id, code || '')
+                        if (res?.statusCode == 400) {
+                          toast({
+                            title: `Deploy to EPAM fail!`,
+                            description: (
+                              <DaText
+                                variant="small-medium"
+                                className="py-2 flex items-center text-red-600"
+                              >
+                                {res?.body}
+                              </DaText>
+                            ),
+                            duration: 3000,
+                          })
+                        }
+                      } catch (err) {
+                        console.log('Err on deploy to EPAM')
+                        console.log(err)
+                      }
+                    }
+                  }}
+                >
+                  <GrDeploy className="mr-1" size={16} />
+                  Deploy as EPAM service
+                </DaButton>
+              )}
             </div>
           )}
 

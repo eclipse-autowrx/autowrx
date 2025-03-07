@@ -38,7 +38,7 @@ const DaGenAI_Python = ({
         onLoadingChange={setLoading}
         className="w-1/2"
       />
-      <div className="flex h-full w-1/2 flex-1 flex-col pl-2">
+      <div className="flex h-full w-1/2 flex-1 flex-col pl-2 pt-1">
         <DaSectionTitle number={3} title="Preview Code" />
         <div
           className={clsx(

@@ -56,7 +56,7 @@ const PageManageFeatures = lazy(() =>
   retry(() => import('@/pages/PageManageFeatures')),
 )
 const PageGenAIWizard = lazy(() =>
-  retry(() => import('@/pages/PageGenAIWizard')),
+  retry(() => import('@/pages/wizard/PageGenAIWizard')),
 )
 const PagePrivacyPolicy = lazy(() =>
   retry(() => import('@/pages/PagePrivacyPolicy')),

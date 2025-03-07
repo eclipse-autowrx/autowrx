@@ -1,6 +1,5 @@
 import { cn } from '@/lib/utils'
-
-export type ASILLevel = 'A' | 'B' | 'C' | 'D' | 'QM'
+import { ASILLevel } from '@/types/flow.type'
 
 interface ASILBadgeProps {
   preAsilLevel: ASILLevel
@@ -31,7 +30,7 @@ export const ASILBadge = ({
 }: ASILBadgeProps) => {
   if (!showBadge) return null
 
-  // Display text: if showFullText is true, then show "ASIL-X" (except QM remains QM)
+  // Determine the text to display for each level.
   const displayPre = showFullText
     ? preAsilLevel === 'QM'
       ? 'QM'
@@ -46,28 +45,48 @@ export const ASILBadge = ({
         : `ASIL-${postAsilLevel}`
       : postAsilLevel)
 
+  // Check if both levels are provided and are identical.
+  const areLevelsSame = postAsilLevel ? preAsilLevel === postAsilLevel : false
+
+  // Determine if we need to show the overlay badge:
+  // Only show it if a post-mitigation level is provided and it differs from pre-mitigation.
+  const showOverlayBadge = postAsilLevel && !areLevelsSame
+
+  // Decide which badge is the "main" (larger) badge.
+  // If there's a post-mitigation level that is different from the pre-mitigation level,
+  // then use the post-mitigation values; otherwise, use the pre-mitigation values.
+  const mainBadgeDisplay =
+    postAsilLevel && !areLevelsSame ? displayPost : displayPre
+  const mainBadgeColor =
+    postAsilLevel && !areLevelsSame
+      ? levelColors[postAsilLevel]
+      : levelColors[preAsilLevel]
+  const mainBadgeExtraClasses =
+    postAsilLevel && !areLevelsSame ? postItemClassName : preItemClassName
+
   return (
     <div className={cn('relative inline-block', className)}>
-      {/* Pre-Mitigation badge (the main, larger badge) */}
+      {/* Main badge (larger rectangle) */}
       <span
         className={cn(
-          'flex w-9 h-7 text-[9px] py-0 px-1 items-start justify-start font-bold rounded-md text-white',
-          levelColors[preAsilLevel],
-          preItemClassName,
+          'flex w-10 h-7 text-[9px] py-0 px-1 items-start justify-start font-bold rounded-md text-white',
+          mainBadgeColor,
+          mainBadgeExtraClasses,
         )}
       >
-        {displayPre}
+        {mainBadgeDisplay}
       </span>
-      {/* Post-Mitigation badge (if provided), rendered as a smaller rectangle in the bottom right */}
-      {displayPost && (
+
+      {/* Overlay badge (smaller rectangle) rendered only if levels differ */}
+      {showOverlayBadge && (
         <span
           className={cn(
-            'absolute w-6 !text-[9px] bottom-1 right-1 transform translate-x-1/2 translate-y-1/2 flex px-1 py-0.5 items-center justify-center font-bold rounded-md text-white',
-            levelColors[postAsilLevel],
-            postItemClassName,
+            'absolute size-[16px] !text-[9px] bottom-[3px] right-[3px] transform flex items-center justify-center font-bold rounded text-white',
+            levelColors[preAsilLevel],
+            preItemClassName,
           )}
         >
-          {displayPost}
+          {displayPre}
         </span>
       )}
     </div>

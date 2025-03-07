@@ -1,63 +1,65 @@
-export default `import asyncio
+export default `# pylint: disable=C0103, C0413, E1101
+import asyncio
 import logging
 import signal
-from vehicle import Vehicle, vehicle
-from velocitas_sdk.util.log import get_opentelemetry_log_factory, get_opentelemetry_log_format
+
+from vehicle import Vehicle, vehicle  # type: ignore
+from velocitas_sdk.util.log import (  # type: ignore
+    get_opentelemetry_log_factory,
+    get_opentelemetry_log_format,
+)
 from velocitas_sdk.vdb.reply import DataPointReply
 from velocitas_sdk.vehicle_app import VehicleApp
+
+# Configure the VehicleApp logger with the necessary log config and level.
 logging.setLogRecordFactory(get_opentelemetry_log_factory())
 logging.basicConfig(format=get_opentelemetry_log_format())
-logging.getLogger().setLevel('DEBUG')
+logging.getLogger().setLevel("DEBUG")
 logger = logging.getLogger(__name__)
 
 
-class WelcomeAssistent(VehicleApp):
-
+class WelcomeAssistantVehicleApp(VehicleApp):
     def __init__(self, vehicle_client: Vehicle):
         super().__init__()
         self.Vehicle = vehicle_client
 
     async def on_start(self):
-        await self.Vehicle.Cabin.Door.Row1.Left.IsOpen.subscribe(self.
-            on_door_status_change)
+        # Callback
+        await self.Vehicle.Cabin.Door.Row1.Left.IsOpen.subscribe(
+            self.on_door_status_change
+        )
 
     async def on_door_status_change(self, data: DataPointReply):
         """This will be executed when receiving a new door status update."""
-        door_is_open = (await self.Vehicle.Cabin.Door.Row1.Left.IsOpen.get()
-            ).value
+        door_is_open = (await self.Vehicle.Cabin.Door.Row1.Left.IsOpen.get()).value
+
         if door_is_open:
-            logger.info("Driver's door opened.")
-            await asyncio.gather(self.Vehicle.Cabin.Seat.Row1.Pos1.Position
-                .set(1000),
-                self.Vehicle.set_many().add(self.Vehicle.Cabin.Lights.
-                InteriorLight.Blue, 255).add(self.Vehicle.Cabin.Lights.
-                InteriorLight.Red, 0).add(self.Vehicle.Cabin.Lights.
-                InteriorLight.Green, 0).apply(), self.Vehicle.Cabin.Lights.
-                InteriorLight.Mode.set('FADE-IN'), self.Vehicle.Body.
-                Windshield.Front.Wiping.Mode.set('FAST'), asyncio.sleep(2),
-                self.Vehicle.Body.Windshield.Front.Wiping.Mode.set('OFF'),
-                self.Vehicle.Chassis.Springs.HeightAdjustment.set(100))
-            for _ in range(2):
-                await self.Vehicle.Body.Lights.Beam.Low.IsOn.set(True)
-                await asyncio.sleep(0.3)
-                await self.Vehicle.Body.Lights.Beam.Low.IsOn.set(False)
-                await asyncio.sleep(0.3)
+            logger.info("Door opened.")
+            await self.Vehicle.set_many().add(
+                self.Vehicle.Cabin.Lights.InteriorLight.Mode, "FADE-IN"
+            ).add(self.Vehicle.Cabin.Lights.InteriorLight.Red, 0).add(
+                self.Vehicle.Cabin.Lights.InteriorLight.Green, 0
+            ).add(
+                self.Vehicle.Cabin.Lights.InteriorLight.Blue, 255
+            ).add(
+                self.Vehicle.Cabin.Seat.Row1.Pos1.Position, 1000
+            ).add(
+                self.Vehicle.Chassis.Springs.HeightAdjustment, 100
+            ).apply()
         else:
-            logger.info("Driver's door closed.")
-            await asyncio.gather(self.Vehicle.Cabin.Seat.Row1.Pos1.Position
-                .set(500),
-                self.Vehicle.set_many().add(self.Vehicle.Cabin.Lights.
-                InteriorLight.Red, 0).add(self.Vehicle.Cabin.Lights.
-                InteriorLight.Blue, 255).add(self.Vehicle.Cabin.Lights.
-                InteriorLight.Green, 255).apply(), self.Vehicle.Cabin.Lights.
-                InteriorLight.Mode.set('FADE-IN'), asyncio.sleep(3), self.
-                Vehicle.Cabin.Lights.InteriorLight.Mode.set('OFF'), self.
-                Vehicle.Chassis.Springs.HeightAdjustment.set(800))
+            logger.info("Door closed.")
+            await self.Vehicle.set_many().add(
+                self.Vehicle.Cabin.Seat.Row1.Pos1.Position, 500
+            ).add(
+                self.Vehicle.Chassis.Springs.HeightAdjustment, 800
+            ).apply()
+            await asyncio.sleep(2)
+            await self.Vehicle.Cabin.Lights.InteriorLight.Mode.set("OFF")
 
 
 async def main():
-    logger.info('Starting WelcomeAssistent app...')
-    vehicle_app = WelcomeAssistent(vehicle)
+    logger.info("Starting Welcome Assistant vehicle app...")
+    vehicle_app = WelcomeAssistantVehicleApp(vehicle)
     await vehicle_app.run()
 
 

@@ -2,16 +2,16 @@ import { DaButton } from '@/components/atoms/DaButton'
 import { useEffect, useRef, useState } from 'react'
 import { FaAnglesLeft, FaAnglesRight } from 'react-icons/fa6'
 import { IoPlay, IoStop } from 'react-icons/io5'
-import CodeEditor from '../CodeEditor'
+import CodeEditor from '../../components/molecules/CodeEditor'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import useCurrentModel from '@/hooks/useCurrentModel'
-import DaApisWatch from '../dashboard/DaApisWatch'
-import DaMockManager from '../dashboard/DaMockManager'
-import useWizardGenAIStore from '@/stores/genAIWizardStore'
+import DaApisWatch from '../../components/molecules/dashboard/DaApisWatch'
+import DaMockManager from '../../components/molecules/dashboard/DaMockManager'
+import useWizardGenAIStore from '@/pages/wizard/useGenAIWizardStore'
 import useRuntimeStore from '@/stores/runtimeStore'
 import config from '@/configs/config'
-import DaGenAI_RuntimeConnector from './DaGenAI_RuntimeConnector'
+import DaGenAI_WizardRuntimeConnector from './DaGenAI_WizardRuntimeConnector'
 import { filterAndCompareVehicleApis } from '@/lib/utils'
 
 const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
@@ -27,7 +27,7 @@ const AlwaysScrollToBottom = () => {
   return <div ref={elementRef} />
 }
 
-const DaGenAI_RuntimeControl = () => {
+const DaGenAI_WizardRuntimeControl = () => {
   const [isExpand, setIsExpand] = useState(false)
   const [activeRtId, setActiveRtId] = useState<string | undefined>('')
   const [log, setLog] = useState<string>('')
@@ -108,7 +108,7 @@ const DaGenAI_RuntimeControl = () => {
     setWizardSimulating(true)
     setLog('')
     if (runTimeRef1.current) {
-      runTimeRef1.current?.runApp(prototypeData.code)
+      runTimeRef1.current?.runApp(prototypeData.code, prototypeData.name)
     }
   }
 
@@ -171,7 +171,7 @@ const DaGenAI_RuntimeControl = () => {
       className={`hidden absolute bottom-0 right-0 top-0 z-10 ${isExpand ? 'w-[500px]' : 'w-16'} flex flex-col justify-center bg-da-gray-dark px-1 py-2 text-da-gray-light`}
     >
       <div className="px-1 flex">
-        <DaGenAI_RuntimeConnector
+        <DaGenAI_WizardRuntimeConnector
           targetPrefix="runtime-"
           kitServerUrl={config?.runtime?.url || DEFAULT_KIT_SERVER}
           ref={runTimeRef1}
@@ -295,4 +295,4 @@ const DaGenAI_RuntimeControl = () => {
   )
 }
 
-export default DaGenAI_RuntimeControl
+export default DaGenAI_WizardRuntimeControl

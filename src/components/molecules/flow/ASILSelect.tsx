@@ -1,7 +1,7 @@
-import { ASILLevel } from './ASILBadge'
 import { ASILBadge } from './ASILBadge'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import { cn } from '@/lib/utils'
+import { ASILLevel } from '@/types/flow.type'
 
 interface ASILSelectProps {
   value: ASILLevel
@@ -28,13 +28,13 @@ const ASILSelect = ({ value, onChange, className }: ASILSelectProps) => {
   return (
     <DaSelect
       className={cn(
-        'h-[33px] w-fit rounded-md border-transparent shadow-none',
+        'h-[33px] w-fit rounded-md !border-transparent !shadow-none',
         className,
       )}
       value={value}
       onValueChange={handleValueChange}
       placeholderClassName="flex items-center px-1 "
-      wrapperClassName="w-fit items-center justify-center border-transparent"
+      wrapperClassName="w-fit items-center justify-center border-transparent !shadow-none"
     >
       {asilOptions.map((asil) => (
         <DaSelectItem

@@ -1,9 +1,7 @@
-import React from 'react'
-import DaText from '@/components/atoms/DaText'
 import { DaImage } from '@/components/atoms/DaImage'
 import config from '@/configs/config'
 
-const DaGenAI_IntroductionStep = () => {
+const DaGenAI_WizardIntroductionStep = () => {
   return (
     <div className="flex h-full w-full px-4 pt-12">
       <div className="flex flex-1 flex-col overflow-y-auto">
@@ -66,4 +64,4 @@ const DaGenAI_IntroductionStep = () => {
   )
 }
 
-export default DaGenAI_IntroductionStep
+export default DaGenAI_WizardIntroductionStep

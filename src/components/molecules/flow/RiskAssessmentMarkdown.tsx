@@ -17,12 +17,12 @@ const RiskAssessmentMarkdown = ({
           </h1>
         ),
         h2: ({ children }) => (
-          <h2 className="text-xs font-semibold text-amber-500 mb-2">
+          <h2 className="text-xs font-medium text-da-secondary-500 mb-2">
             {children}
           </h2>
         ),
         h3: ({ children }) => (
-          <h3 className="text-xs font-medium text-da-gray-medium mb-2">
+          <h3 className="text-xs font-medium text-da-secondary-500 pb-1">
             {children}
           </h3>
         ),

@@ -1,25 +1,23 @@
-import React, { useEffect, useState } from 'react'
-import DaText from '../atoms/DaText'
-import { DaButton } from '../atoms/DaButton'
-import DaStepper from '../atoms/DaStepper'
-import DaStep from '../atoms/DaStep'
+import { useEffect, useState } from 'react'
+import DaText from '../../components/atoms/DaText'
+import { DaButton } from '../../components/atoms/DaButton'
+import DaStepper from '../../components/atoms/DaStepper'
+import DaStep from '../../components/atoms/DaStep'
 import { useNavigate } from 'react-router-dom'
-import DaGenAI_Wizard from '../molecules/genAI/DaGenAI_Wizard'
-import useWizardGenAIStore from '@/stores/genAIWizardStore'
-import DaGenAI_Simulate from '../molecules/genAI/DaGenAI_Simulate'
-import DaGenAI_WizardStaging from '../molecules/genAI/DaGenAI_WizardStaging'
+import DaGenAI_Wizard from './DaGenAI_Wizard'
+import useWizardGenAIStore from '@/pages/wizard/useGenAIWizardStore'
+import DaGenAI_WizardSimulate from './DaGenAI_WizardSimulate'
+import DaGenAI_WizardStaging from './DaGenAI_WizardStaging'
 import { cn } from '@/lib/utils'
 import { TbArrowRight, TbArrowLeft, TbSettings } from 'react-icons/tb'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import { toast } from 'react-toastify'
-import DaGenAI_IntroductionStep from '../molecules/genAI/DaGenAI_Introduction'
-import DaGenAI_RuntimeSelectorPopup from '../molecules/genAI/DaGenAI_RuntimeSelectorPopup'
-import DaHomologation from '../molecules/homologation'
-import DaPopup from '../atoms/DaPopup'
-import FormCreatePrototype from '../molecules/forms/FormCreatePrototype'
+import DaGenAI_WizardRuntimeSelectorPopup from './DaGenAI_WizardRuntimeSelectorPopup'
+import DaPopup from '../../components/atoms/DaPopup'
+import FormCreatePrototype from '../../components/molecules/forms/FormCreatePrototype'
 
-const GenAIPrototypeWizard = () => {
+const PageGenAIWizard = () => {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
@@ -54,30 +52,6 @@ const GenAIPrototypeWizard = () => {
     })
   }
 
-  useEffect(() => {
-    const hasCode = wizardPrototype.code && wizardPrototype.code.length > 0
-    updateDisabledStep(1, !hasCode)
-    updateDisabledStep(2, !hasCode)
-    updateDisabledStep(3, !hasCode)
-    if (hasCode) {
-      setLoading(false)
-    }
-  }, [wizardPrototype])
-
-  useEffect(() => {
-    updateDisabledStep(0, false)
-  }, [])
-
-  useEffect(() => {
-    if (currentStep === 0) {
-      setIsGeneratedFlag(false)
-      resetWizardStore()
-    }
-    if (currentStep === 1) {
-      executeWizardSimulationStop()
-    }
-  }, [currentStep])
-
   const handleBack = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1)
@@ -90,13 +64,37 @@ const GenAIPrototypeWizard = () => {
         'You do not have permission to use Gen AI. Please contact administrator.',
       )
     }
-    if (currentStep < 4) {
+    if (currentStep < 2) {
       setCurrentStep(currentStep + 1)
       if (soFarSteps <= currentStep) {
         setSoFarSteps(currentStep + 1)
       }
     }
   }
+
+  // Update disable status for Simulate (step 1) and Deploy (step 2)
+  useEffect(() => {
+    const hasCode = wizardPrototype.code && wizardPrototype.code.length > 0
+    updateDisabledStep(0, !hasCode)
+    if (hasCode) {
+      setLoading(false)
+    }
+  }, [wizardPrototype])
+
+  // Ensure Generate (step 0) is always enabled
+  useEffect(() => {
+    updateDisabledStep(1, false)
+  }, [])
+
+  // Reset store when going back to Generate and stop simulation when switching to Simulate
+  useEffect(() => {
+    if (currentStep === 0) {
+      setIsGeneratedFlag(false)
+    }
+    if (currentStep === 1) {
+      executeWizardSimulationStop()
+    }
+  }, [currentStep])
 
   useEffect(() => {
     const matchingRuntime = allWizardRuntimes.find((runtime) =>
@@ -115,15 +113,11 @@ const GenAIPrototypeWizard = () => {
         </DaText>
         <div className="flex min-w-0 flex-[4] justify-center">
           <DaStepper currentStep={currentStep} setCurrentStep={setCurrentStep}>
-            <DaStep>Introduction</DaStep>
+            <DaStep>Generate</DaStep>
             <DaStep disabled={soFarSteps < 1 || disabledStep[0]}>
-              Generate
-            </DaStep>
-            <DaStep disabled={soFarSteps < 2 || disabledStep[1]}>
               Simulate
             </DaStep>
-            <DaStep disabled={soFarSteps < 3 || disabledStep[2]}>Deploy</DaStep>
-            <DaStep disabled={soFarSteps < 4 || disabledStep[3]}>Verify</DaStep>
+            <DaStep disabled={soFarSteps < 2 || disabledStep[1]}>Deploy</DaStep>
           </DaStepper>
         </div>
         <div className="flex flex-1"></div>
@@ -133,11 +127,6 @@ const GenAIPrototypeWizard = () => {
         <div
           className={cn('flex flex-1', currentStep === 0 ? 'block' : 'hidden')}
         >
-          <DaGenAI_IntroductionStep />
-        </div>
-        <div
-          className={cn('flex flex-1', currentStep === 1 ? 'block' : 'hidden')}
-        >
           <DaGenAI_Wizard
             onCodeGenerated={(code) => {
               setWizardGeneratedCode(code)
@@ -146,24 +135,19 @@ const GenAIPrototypeWizard = () => {
           />
         </div>
         <div
-          className={cn('flex flex-1', currentStep === 2 ? 'block' : 'hidden')}
+          className={cn('flex flex-1', currentStep === 1 ? 'block' : 'hidden')}
         >
-          <DaGenAI_Simulate />
+          <DaGenAI_WizardSimulate />
         </div>
         <div
           className={cn(
             'flex flex-1',
-            currentStep === 3
+            currentStep === 2
               ? 'flex flex-col w-full h-full items-center'
               : 'hidden',
           )}
         >
           <DaGenAI_WizardStaging />
-        </div>
-        <div
-          className={cn('flex flex-1', currentStep === 4 ? 'block' : 'hidden')}
-        >
-          <DaHomologation isWizard={true} />
         </div>
       </div>
 
@@ -177,7 +161,7 @@ const GenAIPrototypeWizard = () => {
           <TbArrowLeft className="size-4 mr-1" />
           Back
         </DaButton>
-        {currentStep === 1 && (
+        {currentStep === 0 && (
           <DaButton
             onClick={executeWizardGenerateCodeAction}
             className="w-[300px] min-w-fit"
@@ -190,7 +174,7 @@ const GenAIPrototypeWizard = () => {
               : 'Generate My Vehicle Application'}
           </DaButton>
         )}
-        {currentStep === 2 && (
+        {currentStep === 1 && (
           <div className="flex items-center justify-center ml-8">
             <DaButton
               onClick={() =>
@@ -200,7 +184,9 @@ const GenAIPrototypeWizard = () => {
               }
               className="w-[300px]"
               variant="solid"
-              disabled={!wizardActiveRtId}
+              disabled={
+                !wizardActiveRtId || wizardPrototype?.code?.length === 0
+              }
             >
               {wizardSimulating ? 'Stop Simulation' : 'Start Simulation'}
             </DaButton>
@@ -213,7 +199,7 @@ const GenAIPrototypeWizard = () => {
             </DaButton>
           </div>
         )}
-        {currentStep < 4 && (
+        {currentStep < 2 && (
           <DaButton
             onClick={handleNext}
             className="min-w-20"
@@ -224,18 +210,23 @@ const GenAIPrototypeWizard = () => {
             <TbArrowRight className="size-4 ml-1" />
           </DaButton>
         )}
-        {currentStep === 4 && (
+        {currentStep === 2 && (
           <DaButton
-            onClick={() => setOpenCreatePrototypeModal(true)}
+            onClick={() => {
+              setOpenCreatePrototypeModal(true)
+            }}
             className="w-[90px]"
             variant="solid"
+            disabled={
+              !wizardPrototype?.code || wizardPrototype.code.length === 0
+            }
           >
             Save
           </DaButton>
         )}
       </div>
 
-      <DaGenAI_RuntimeSelectorPopup
+      <DaGenAI_WizardRuntimeSelectorPopup
         open={openSelectorPopup}
         setOpen={setOpenSelectorPopup}
       />
@@ -260,4 +251,4 @@ const GenAIPrototypeWizard = () => {
   )
 }
 
-export default GenAIPrototypeWizard
+export default PageGenAIWizard

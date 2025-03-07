@@ -1,20 +1,14 @@
 import { FC, useEffect, useState } from 'react'
-import DaDashboardGrid from '../dashboard/DaDashboardGrid'
-import { MdOutlineDesignServices } from 'react-icons/md'
-import { TbDeviceFloppy } from 'react-icons/tb'
-import useWizardGenAIStore from '@/stores/genAIWizardStore'
-import DaDashboardEditor from '../dashboard/DaDashboardEditor'
-import { DaButton } from '@/components/atoms/DaButton'
-import DaDashboardTemplate from '../DaDashboardTemplate'
+import DaDashboardGrid from '../../components/molecules/dashboard/DaDashboardGrid'
+import useWizardGenAIStore from '@/pages/wizard/useGenAIWizardStore'
+import DaDashboardEditor from '../../components/molecules/dashboard/DaDashboardEditor'
 import dashboard_templates from '@/data/dashboard_templates'
-import { cloneDeep } from 'lodash'
-import DaText from '@/components/atoms/DaText'
 import { filterAndCompareVehicleApis } from '@/lib/utils'
 
 const MODE_RUN = 'run'
 const MODE_EDIT = 'edit'
 
-const DaGenAI_SimulateDashboard: FC = ({}) => {
+const DaGenAI_WizardSimulateDashboard: FC = ({}) => {
   const {
     wizardPrototype: prototypeData,
     setPrototypeData,
@@ -23,8 +17,6 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
   } = useWizardGenAIStore()
   const [widgetItems, setWidgetItems] = useState<any>([])
   const [mode, setMode] = useState<string>(MODE_RUN)
-  const [templates, setTemplates] = useState(cloneDeep(dashboard_templates))
-  const [selected, setSelected] = useState<number | null>(0)
   const [usedApis, setUsedApis] = useState<any[]>([])
 
   useEffect(() => {
@@ -278,4 +270,4 @@ const DaGenAI_SimulateDashboard: FC = ({}) => {
   )
 }
 
-export default DaGenAI_SimulateDashboard
+export default DaGenAI_WizardSimulateDashboard

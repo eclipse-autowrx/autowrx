@@ -8,7 +8,7 @@ import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
 import { shallow } from 'zustand/shallow'
 import { DaCopy } from '@/components/atoms/DaCopy'
-import useWizardGenAIStore from '@/stores/genAIWizardStore'
+import useWizardGenAIStore from '@/pages/wizard/useGenAIWizardStore'
 import { DaInput } from '@/components/atoms/DaInput'
 import ModelApiList from '@/components/organisms/ModelApiList'
 
@@ -48,13 +48,13 @@ const DaDashboardWidgetEditor = ({
 
   const { wizardPrototype: prototypeData } = useWizardGenAIStore()
 
-  const [optionStr, setOptionStr] = useState("")
-  const [widgetUrl, setWidgetUrl] = useState("")
-  const [widgetIcon, setWidgetIcon] = useState("")
-  const [boxes, setBoxes] = useState("")
+  const [optionStr, setOptionStr] = useState('')
+  const [widgetUrl, setWidgetUrl] = useState('')
+  const [widgetIcon, setWidgetIcon] = useState('')
+  const [boxes, setBoxes] = useState('')
 
   useEffect(() => {
-    if(codeEditorPopup[0]) {
+    if (codeEditorPopup[0]) {
       setIsExpanded(false)
     }
   }, [codeEditorPopup[0]])
@@ -71,7 +71,7 @@ const DaDashboardWidgetEditor = ({
         setWidgetUrl(options.url)
         delete options.iconURL
         delete options.url
-      } catch (e) { }
+      } catch (e) {}
       setOptionStr(JSON.stringify(options, null, 4))
     }
   }, [selectedWidget])
@@ -127,8 +127,8 @@ const DaDashboardWidgetEditor = ({
                     setIsExpanded(!isExpanded)
                   }}
                 >
-                  <TbSelector className="mr-2 flex justify-end w-fit" />{' '}
-                  Used signals
+                  <TbSelector className="mr-2 flex justify-end w-fit" /> Used
+                  signals
                 </DaButton>
               </div>
               {isExpanded && (
@@ -152,10 +152,10 @@ const DaDashboardWidgetEditor = ({
           )}
         </div>
 
-        <div className='flex grow overflow-auto'>
-          <div className='grow'>
-            <div className='overflow-auto h-[220px] max-h-[262px]'>
-              <div className='font-semibold text-slate-800'>Options</div>
+        <div className="flex grow overflow-auto">
+          <div className="grow">
+            <div className="overflow-auto h-[220px] max-h-[262px]">
+              <div className="font-semibold text-slate-800">Options</div>
               <CodeEditor
                 language="json"
                 editable={true}
@@ -164,13 +164,13 @@ const DaDashboardWidgetEditor = ({
                   // setSelectedWidget(e)
                   setOptionStr(e)
                 }}
-                onBlur={() => { }}
+                onBlur={() => {}}
               />
             </div>
 
-            <div className='py-2 flex items-center'>
-              <div className='font-semibold text-slate-800'>Boxes:</div>
-              <div className='w-full pl-2'>
+            <div className="py-2 flex items-center">
+              <div className="font-semibold text-slate-800">Boxes:</div>
+              <div className="w-full pl-2">
                 <DaInput
                   value={boxes}
                   onChange={(e) => setBoxes(e.target.value)}
@@ -181,9 +181,9 @@ const DaDashboardWidgetEditor = ({
                 />
               </div>
             </div>
-            <div className='py-2 flex items-center'>
-              <div className='font-semibold text-slate-800'>URL:</div>
-              <div className='w-full pl-2'>
+            <div className="py-2 flex items-center">
+              <div className="font-semibold text-slate-800">URL:</div>
+              <div className="w-full pl-2">
                 <DaInput
                   value={widgetUrl}
                   onChange={(e) => setWidgetUrl(e.target.value)}
@@ -195,7 +195,7 @@ const DaDashboardWidgetEditor = ({
               </div>
             </div>
           </div>
-          <div className='min-w-[500px] max-h-[400px] overflow-auto'>
+          <div className="min-w-[500px] max-h-[400px] overflow-auto">
             <ModelApiList />
           </div>
         </div>
@@ -214,21 +214,20 @@ const DaDashboardWidgetEditor = ({
             variant="solid"
             className="!min-w-16"
             onClick={() => {
-
               let newOption = {} as any
               try {
                 newOption = JSON.parse(optionStr)
-              } catch (err) { }
+              } catch (err) {}
               newOption.url = `${widgetUrl}`
               newOption.iconURL = `${widgetIcon}`
               let widget = {} as any
               try {
                 widget = JSON.parse(selectedWidget)
-              } catch (err) { }
+              } catch (err) {}
               widget.options = newOption
               try {
                 widget.boxes = JSON.parse(boxes)
-              } catch (err) { }
+              } catch (err) {}
               handleUpdateWidget(JSON.stringify(widget, null, 4))
               codeEditorPopup[1](false)
             }}

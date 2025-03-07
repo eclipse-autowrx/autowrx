@@ -3,10 +3,10 @@ import { useEffect, useState, useRef } from 'react'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
 import { DaButton } from '@/components/atoms/DaButton'
-import DaStageComponent from '../staging/DaStageComponent'
+import DaStageComponent from '../../components/molecules/staging/DaStageComponent'
 import { IoMdArrowRoundBack } from 'react-icons/io'
 import config from '@/configs/config'
-import DaGenAI_RuntimeConnector from './DaGenAI_RuntimeConnector'
+import DaGenAI_WizardRuntimeConnector from './DaGenAI_WizardRuntimeConnector'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
@@ -21,7 +21,7 @@ interface DaEditSystemStagingProps {
   onCancel?: () => void
 }
 
-const DaGenAI_EditSystemStaging = ({
+const DaGenAI_WizardEditSystemStaging = ({
   stageDefine,
   onTargetMode,
   system,
@@ -138,7 +138,7 @@ const DaGenAI_EditSystemStaging = ({
             </div>
             <div className="mt-2">
               {target && (
-                <DaGenAI_RuntimeConnector
+                <DaGenAI_WizardRuntimeConnector
                   targetPrefix={target.prefix || 'runtime-'}
                   kitServerUrl={config?.runtime?.url || DEFAULT_KIT_SERVER}
                   ref={runTimeRef}
@@ -294,4 +294,4 @@ const DaGenAI_EditSystemStaging = ({
   )
 }
 
-export default DaGenAI_EditSystemStaging
+export default DaGenAI_WizardEditSystemStaging
