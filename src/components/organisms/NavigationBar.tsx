@@ -12,6 +12,7 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { FaCar } from 'react-icons/fa'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { IoIosHelpBuoy } from 'react-icons/io'
+import DaTooltip from '../atoms/DaTooltip'
 
 const NavigationBar = ({}) => {
   const { data: user } = useSelfProfileQuery()
@@ -44,6 +45,14 @@ const NavigationBar = ({}) => {
               Search
             </DaButton>
           </DaGlobalSearch>{' '}
+          <DaTooltip content="Inventory">
+            <Link
+              to="/inventory"
+              className="cursor-pointer flex !h-10 items-center da-btn-sm text-da-gray-medium da-btn-plain ml-3"
+            >
+              <TbBuildingWarehouse size={22} />
+            </Link>
+          </DaTooltip>
           <DaMenu
             trigger={
               <div className="cursor-pointer flex !h-10 items-center da-btn-sm text-da-gray-medium da-btn-plain ml-2">
@@ -51,12 +60,6 @@ const NavigationBar = ({}) => {
               </div>
             }
           >
-            <Link
-              to="/inventory"
-              className="flex items-center px-4 py-2 gap-2 da-menu-item da-label-regular"
-            >
-              <TbBuildingWarehouse className="text-base" /> Inventory
-            </Link>
             {/* Separate condition checking with component since MUI component does not accept Fragment as children */}
             {isAuthorized && (
               <Link

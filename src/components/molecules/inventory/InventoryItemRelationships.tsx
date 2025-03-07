@@ -34,8 +34,16 @@ import {
 } from 'react-icons/tb'
 import InventoryItemList from './InventoryItemList'
 import '@xyflow/react/dist/style.css'
+import { InventoryItem } from '@/types/inventory.type'
+import { instances } from './data'
 
-const InventoryItemRelationships = () => {
+type InventoryItemRelationshipsProps = {
+  data: InventoryItem
+}
+
+const InventoryItemRelationships = ({
+  data,
+}: InventoryItemRelationshipsProps) => {
   const [maximized, setMaximized] = useState(false)
   const [mode, setMode] = useState<'tree' | 'list'>('tree')
 
@@ -47,54 +55,136 @@ const InventoryItemRelationships = () => {
     setShowSearchItem(true)
   }
 
-  const initialNodes = [
-    {
-      id: '1', // required
-      position: { x: 0, y: 0 }, // required
-      data: { label: 'Hello', onCreateNodeClick: handleCreateNodeClick }, // required
-      type: 'inventoryNode',
-    },
-    {
-      id: '2', // required
-      position: { x: 120, y: 0 }, // required
-      data: {
-        label: 'ADAS System',
-        onCreateNodeClick: handleCreateNodeClick,
-        highlight: true,
-      }, // required
-
-      type: 'inventoryNode',
-    },
-    {
-      id: '3', // required
-      position: { x: 280, y: 0 }, // required
-      data: { label: 'Second', onCreateNodeClick: handleCreateNodeClick }, // required
-      type: 'inventoryNode',
-    },
+  const initialNodes: Node[] = [
+    // {
+    //   id: '1', // required
+    //   position: { x: 0, y: 0 }, // required
+    //   data: { label: 'Hello', onCreateNodeClick: handleCreateNodeClick }, // required
+    //   type: 'inventoryNode',
+    // },
+    // {
+    //   id: '2', // required
+    //   position: { x: 120, y: 0 }, // required
+    //   data: {
+    //     label: 'ADAS System',
+    //     onCreateNodeClick: handleCreateNodeClick,
+    //     highlight: true,
+    //   }, // required
+    //   type: 'inventoryNode',
+    // },
+    // {
+    //   id: '3', // required
+    //   position: { x: 280, y: 0 }, // required
+    //   data: { label: 'Second', onCreateNodeClick: handleCreateNodeClick }, // required
+    //   type: 'inventoryNode',
+    // },
   ]
   const initialEdges: Edge[] = [
-    {
-      id: 'e1-2', // required,
-      target: '1', // required
-      source: '2', // required
-      markerStart: {
-        type: MarkerType.Arrow,
-        color: '#000',
-      },
-    },
-    {
-      id: 'e2-3', // required,
-      target: '2', // required
-      source: '3', // required
-      markerStart: {
-        type: MarkerType.Arrow,
-        color: '#000',
-      },
-    },
+    // {
+    //   id: 'e1-2', // required,
+    //   target: '1', // required
+    //   source: '2', // required
+    //   markerStart: {
+    //     type: MarkerType.Arrow,
+    //     color: '#000',
+    //   },
+    // },
+    // {
+    //   id: 'e2-3', // required,
+    //   target: '2', // required
+    //   source: '3', // required
+    //   markerStart: {
+    //     type: MarkerType.Arrow,
+    //     color: '#000',
+    //   },
+    // },
   ]
 
   const [nodes, setNodes] = useState(initialNodes)
   const [edges, setEdges] = useState(initialEdges)
+
+  const lastNodePos = useRef({ x: 0, y: 0 })
+  const addedNodes = useRef<string[]>([])
+
+  /**
+   * Find related instances based on relations.
+   */
+  const findRelatedInstances = (data: any, instances: any[]) => {
+    return instances.filter((i) =>
+      data?.relations?.some((r: any) => r.target === i.id),
+    )
+  }
+
+  /**
+   * Create a new node.
+   */
+  const createNode = (
+    id: string,
+    name: string,
+    x: number,
+    y: number,
+    highlight = false,
+  ) => ({
+    id,
+    position: { x, y },
+    data: {
+      label: name,
+      onCreateNodeClick: handleCreateNodeClick,
+      highlight,
+    },
+    type: 'inventoryNode',
+  })
+
+  /**
+   * Create a new edge.
+   */
+  const createEdge = (source: string, target: string) => ({
+    id: `e${source}-${target}`,
+    target,
+    source,
+    markerStart: {
+      type: MarkerType.Arrow,
+      color: '#000',
+    },
+  })
+
+  /**
+   * Process and add nodes and edges.
+   */
+  const addNodesAndEdges = (data: any, instances: any[]) => {
+    const resultsNode: Node[] = []
+    const resultsEdge: Edge[] = []
+
+    // Create the main node
+    resultsNode.push(createNode(data.id, data.name, 0, 0))
+    addedNodes.current.push(data.id)
+
+    // Find and process related instances
+    const filteredInstances = findRelatedInstances(data, instances)
+    filteredInstances.forEach((instance, index) => {
+      if (addedNodes.current.includes(instance.id)) return
+
+      const x = lastNodePos.current.x + 150
+      const y = lastNodePos.current.y
+
+      resultsNode.push(createNode(instance.id, instance.name, x, y, true))
+      resultsEdge.push(createEdge(instance.id, data.id))
+
+      lastNodePos.current = { x, y }
+      addedNodes.current.push(instance.id)
+    })
+
+    setNodes(resultsNode)
+    setEdges(resultsEdge)
+  }
+
+  useEffect(() => {
+    addNodesAndEdges(data, instances)
+
+    return () => {
+      addedNodes.current = []
+    }
+  }, [data])
 
   const [menu, setMenu] = useState<{
     id: string
@@ -173,9 +263,6 @@ const InventoryItemRelationships = () => {
         <DaText variant="regular-bold" className="text-da-gray-darkest">
           Relationships
         </DaText>
-        <DaText variant="small" className="ml-2 text-da-gray-darkest">
-          (3 nodes, 2 connections)
-        </DaText>
 
         <div className="flex-1" />
         <div className="border font-medium flex rounded-lg overflow-hidden">
@@ -188,7 +275,7 @@ const InventoryItemRelationships = () => {
           >
             <TbBinaryTree className="h-4 w-4" /> Tree View
           </button>
-          <button
+          {/* <button
             onClick={() => setMode('list')}
             className={clsx(
               'h-8 px-3 flex gap-1.5 items-center',
@@ -196,7 +283,7 @@ const InventoryItemRelationships = () => {
             )}
           >
             <TbList className="h-4 w-4" /> List View
-          </button>
+          </button> */}
         </div>
         <DaButton
           size="sm"
@@ -230,13 +317,13 @@ const InventoryItemRelationships = () => {
             onNodeContextMenu={onNodeContextMenu}
           >
             <Background />
-            {menu && <ContextMenu onClose={() => setMenu(null)} {...menu} />}
+            {/* {menu && <ContextMenu onClose={() => setMenu(null)} {...menu} />} */}
           </ReactFlow>
         </div>
       )}
 
       {/* List */}
-      {mode === 'list' && (
+      {/* {mode === 'list' && (
         <div className="flex mt-4 gap-5 lg:flex-row flex-col">
           <div className="border flex-1 min-w-0 shadow rounded-lg flex flex-col">
             <div className="border-b h-[54px] flex items-center px-4">
@@ -382,7 +469,7 @@ const InventoryItemRelationships = () => {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       <DaPopup
         className="container !p-0"
@@ -425,7 +512,7 @@ type TypeInventoryNode = Node<{
 const InventoryNode = ({ data, selected }: NodeProps<TypeInventoryNode>) => {
   return (
     <>
-      {selected && (
+      {/* {selected && (
         <DaButton
           onClick={() => data.onCreateNodeClick?.('parent')}
           size="sm"
@@ -434,7 +521,7 @@ const InventoryNode = ({ data, selected }: NodeProps<TypeInventoryNode>) => {
         >
           <TbPlus className="mr-0.5" /> Parent
         </DaButton>
-      )}
+      )} */}
       <Handle type="source" position={Position.Left} />
       {selected && (
         <div className="flex gap-1 justify-center w-full absolute bottom-[calc(100%+4px)]">
@@ -467,7 +554,7 @@ const InventoryNode = ({ data, selected }: NodeProps<TypeInventoryNode>) => {
         {data.label}
       </div>
       <Handle type="target" position={Position.Right} />
-      {selected && (
+      {/* {selected && (
         <DaButton
           onClick={() => {
             data.onCreateNodeClick?.('child')
@@ -478,7 +565,7 @@ const InventoryNode = ({ data, selected }: NodeProps<TypeInventoryNode>) => {
         >
           <TbPlus className="mr-0.5" /> Child
         </DaButton>
-      )}
+      )} */}
     </>
   )
 }

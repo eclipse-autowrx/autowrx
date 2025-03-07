@@ -16,10 +16,10 @@ type FormInventoryItemProps = {
 }
 
 const defaultData: CreateInventoryItem = {
-  details: {},
+  // details: {},
   name: '',
   type: 'system_interface',
-  visibility: 'private',
+  // visibility: 'private',
 }
 
 const FormInventoryItem = ({
@@ -108,7 +108,7 @@ const FormInventoryItem = ({
 
               <div className="mt-3" />
 
-              <DaText variant="small-bold" className="!text-da-gray-darkest">
+              {/* <DaText variant="small-bold" className="!text-da-gray-darkest">
                 Visibility *
               </DaText>
               <DaSelect
@@ -122,7 +122,7 @@ const FormInventoryItem = ({
                 <DaSelectItem className="text-sm" value="public">
                   Public
                 </DaSelectItem>
-              </DaSelect>
+              </DaSelect> */}
 
               <div className="mt-3" />
 
@@ -225,14 +225,14 @@ const FormInventoryItem = ({
               </>
             )}
 
-            <div className="mt-3" />
+            {/* <div className="mt-3" />
             <DaText variant="small-bold" className="!text-da-gray-darkest">
               Visibility
             </DaText>
             <DaText className="block" variant="small">
               {innerData.visibility.at(0)?.toUpperCase() +
                 innerData.visibility.slice(1)}
-            </DaText>
+            </DaText> */}
 
             {innerData.image && (
               <>
