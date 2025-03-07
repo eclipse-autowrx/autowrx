@@ -143,7 +143,7 @@ const DaStateControl: React.FC<{
 
 const PageModelDetail = () => {
   const [model] = useModelStore((state) => [state.model as Model])
-
+  const [imageError, setImageError] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isEditingName, setIsEditingName] = useState(false)
@@ -219,7 +219,7 @@ const PageModelDetail = () => {
   }
 
   return (
-    <div className="flex flex-col bg-white p-4 h-full rounded-md">
+    <div className="flex flex-col bg-white p-4 h-full rounded-md  overflow-auto">
       <div className="flex h-fit pb-3">
         <div className="flex w-full justify-between items-center">
           <div className="flex items-center">
@@ -382,73 +382,88 @@ const PageModelDetail = () => {
         )}
       </div>
 
-      <div className="grid gap-4 grid-cols-12 w-full overflow-auto">
-        <div className="col-span-6 flex flex-col overflow-y-auto">
-          <div className="flex w-full relative overflow-hidden">
-            <DaImage
-              className="w-full object-cover max-h-[500px] aspect-video rounded-lg border"
-              src={model.model_home_image_file}
-              alt={model.name}
-            />
-            {isAuthorized && (
-              <DaImportFile
-                onFileChange={handleAvatarChange}
-                accept=".png, .jpg, .jpeg"
-              >
-                <DaButton
-                  variant="outline-nocolor"
-                  className="absolute bottom-2 right-2"
-                  size="sm"
+      <div className="flex">
+        <div className=" grid gap-4 grid-cols-12 w-full overflow-auto">
+          <div className="col-span-6 flex flex-col overflow-y-auto">
+            <div className="flex w-full relative overflow-hidden">
+              <DaImage
+                className="w-full object-cover max-h-[500px] aspect-video rounded-lg border"
+                src={model.model_home_image_file}
+                alt={model.name}
+              />
+              {isAuthorized && (
+                <DaImportFile
+                  onFileChange={handleAvatarChange}
+                  accept=".png, .jpg, .jpeg"
                 >
-                  {isUploading ? (
-                    <div className="flex items-center">
-                      <TbLoader className="w-4 h-4 mr-2 animate-spin" />
-                      Updating
-                    </div>
-                  ) : (
-                    <div className="flex items-center">
-                      <TbPhotoEdit className="w-4 h-4 mr-2" />
-                      Update Image
-                    </div>
-                  )}
-                </DaButton>
-              </DaImportFile>
+                  <DaButton
+                    variant="outline-nocolor"
+                    className="absolute bottom-2 right-2"
+                    size="sm"
+                  >
+                    {isUploading ? (
+                      <div className="flex items-center">
+                        <TbLoader className="w-4 h-4 mr-2 animate-spin" />
+                        Updating
+                      </div>
+                    ) : (
+                      <div className="flex items-center">
+                        <TbPhotoEdit className="w-4 h-4 mr-2" />
+                        Update Image
+                      </div>
+                    )}
+                  </DaButton>
+                </DaImportFile>
+              )}
+            </div>
+          </div>
+          <div className="col-span-6">
+            {isAuthorized && (
+              <>
+                <DaVehicleProperties
+                  key={model.id}
+                  category={
+                    model.vehicle_category ? model.vehicle_category : ''
+                  }
+                  properties={convertJSONToProperty(model.property) ?? []}
+                />
+
+                <DaVisibilityControl
+                  initialVisibility={model.visibility}
+                  onVisibilityChange={(newVisibility) => {
+                    updateModelService(model.id, {
+                      visibility: newVisibility,
+                    })
+                  }}
+                />
+
+                <DaStateControl
+                  initialState={model.state || ''}
+                  onStateChange={async (state) => {
+                    await updateModelService(model.id, {
+                      state: (state || 'draft') as Model['state'],
+                    })
+                    await refetch()
+                  }}
+                />
+
+                <DaContributorList className="mt-3" />
+              </>
             )}
           </div>
         </div>
-        <div className="col-span-6">
-          {isAuthorized && (
-            <>
-              <DaVehicleProperties
-                key={model.id}
-                category={model.vehicle_category ? model.vehicle_category : ''}
-                properties={convertJSONToProperty(model.property) ?? []}
-              />
-
-              <DaVisibilityControl
-                initialVisibility={model.visibility}
-                onVisibilityChange={(newVisibility) => {
-                  updateModelService(model.id, {
-                    visibility: newVisibility,
-                  })
-                }}
-              />
-
-              <DaStateControl
-                initialState={model.state || ''}
-                onStateChange={async (state) => {
-                  await updateModelService(model.id, {
-                    state: (state || 'draft') as Model['state'],
-                  })
-                  await refetch()
-                }}
-              />
-
-              <DaContributorList className="mt-3" />
-            </>
-          )}
-        </div>
       </div>
+
+      {model && model.detail_image_file && !imageError && (
+        <div className="flex justify-center items-center mt-6 pt-6 border-t">
+          <img
+            src={model.detail_image_file}
+            className="flex h-full w-[70%]"
+            onError={() => setImageError(true)}
+            alt="Detail"
+          />
+        </div>
+      )}
     </div>
   )
 }
