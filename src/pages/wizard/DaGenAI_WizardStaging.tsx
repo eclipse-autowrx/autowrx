@@ -227,15 +227,15 @@ const DaGenAI_WizardStaging = () => {
         <div>
           <div className="mt-4 w-full rounded border">
             <div className="flex h-[40px] w-full rounded-t bg-gray-200 text-da-gray-dark">
-              <div className="flex w-[25%] items-center justify-center border-r border-da-white font-bold ">
+              {/* <div className="flex w-[25%] items-center justify-center border-r border-da-white font-bold ">
                 System
-              </div>
+              </div> */}
               <div className="flex grow items-center justify-center border-da-white font-bold">
                 Stages
               </div>
             </div>
             <div className="flex">
-              <div className="flex min-w-[100px] flex-1 flex-col items-center justify-center overflow-x-hidden rounded-s px-1 py-1">
+              {/* <div className="flex min-w-[100px] flex-1 flex-col items-center justify-center overflow-x-hidden rounded-s px-1 py-1">
                 <div className="flex h-[140px] w-full items-center justify-center">
                   <img
                     width={150}
@@ -260,7 +260,7 @@ const DaGenAI_WizardStaging = () => {
                 >
                   Edit
                 </DaButton>
-              </div>
+              </div> */}
 
               {targets &&
                 targets.map((target: any) => (

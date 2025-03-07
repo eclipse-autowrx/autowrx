@@ -15,7 +15,7 @@ import { PERMISSIONS } from '@/data/permission'
 import { toast } from 'react-toastify'
 import DaGenAI_WizardRuntimeSelectorPopup from './DaGenAI_WizardRuntimeSelectorPopup'
 import DaPopup from '../../components/atoms/DaPopup'
-import FormCreatePrototype from '../../components/molecules/forms/FormCreatePrototype'
+import WizardFormCreatePrototype from './WizardFormCreatePrototype'
 
 const PageGenAIWizard = () => {
   const navigate = useNavigate()
@@ -26,18 +26,17 @@ const PageGenAIWizard = () => {
   const [openSelectorPopup, setOpenSelectorPopup] = useState(false)
   const [hasGenAIPermission] = usePermissionHook([PERMISSIONS.USE_GEN_AI])
   const [isGeneratedFlag, setIsGeneratedFlag] = useState(false)
-  const [openCreatePrototypeModal, setOpenCreatePrototypeModal] =
-    useState(false)
+  const [openCreatePrototypeModal, setOpenCreatePrototypeModal] = useState(true)
 
   const {
     executeWizardGenerateCodeAction,
     wizardSimulating,
     executeWizardSimulationRun,
     executeWizardSimulationStop,
+    savePrototype,
     wizardPrompt,
     setWizardGeneratedCode,
     wizardPrototype,
-    resetWizardStore,
     allWizardRuntimes,
     wizardActiveRtId,
     codeGenerating,
@@ -72,7 +71,7 @@ const PageGenAIWizard = () => {
     }
   }
 
-  // Update disable status for Simulate (step 1) and Deploy (step 2)
+  // Update disabled status for Simulate (step 1) and Deploy (step 2)
   useEffect(() => {
     const hasCode = wizardPrototype.code && wizardPrototype.code.length > 0
     updateDisabledStep(0, !hasCode)
@@ -81,12 +80,12 @@ const PageGenAIWizard = () => {
     }
   }, [wizardPrototype])
 
-  // Ensure Generate (step 0) is always enabled
+  // Ensure the Simulate step is always enabled
   useEffect(() => {
     updateDisabledStep(1, false)
   }, [])
 
-  // Reset store when going back to Generate and stop simulation when switching to Simulate
+  // Reset some wizard state when going back to Generate and stop simulation when switching to Simulate
   useEffect(() => {
     if (currentStep === 0) {
       setIsGeneratedFlag(false)
@@ -94,8 +93,9 @@ const PageGenAIWizard = () => {
     if (currentStep === 1) {
       executeWizardSimulationStop()
     }
-  }, [currentStep])
+  }, [currentStep, executeWizardSimulationStop])
 
+  // Set an active runtime if one matches a certain criteria.
   useEffect(() => {
     const matchingRuntime = allWizardRuntimes.find((runtime) =>
       runtime.kit_id.startsWith('RunTime-ETAS-E2E'),
@@ -212,8 +212,18 @@ const PageGenAIWizard = () => {
         )}
         {currentStep === 2 && (
           <DaButton
-            onClick={() => {
-              setOpenCreatePrototypeModal(true)
+            onClick={async () => {
+              setLoading(true)
+              try {
+                await savePrototype({
+                  toast: (msg: string) => toast.success(msg),
+                  navigate,
+                })
+              } catch (error: any) {
+                toast.error(error.message || 'Something went wrong')
+              } finally {
+                setLoading(false)
+              }
             }}
             className="w-[90px]"
             variant="solid"
@@ -221,7 +231,7 @@ const PageGenAIWizard = () => {
               !wizardPrototype?.code || wizardPrototype.code.length === 0
             }
           >
-            Save
+            {loading ? 'Saving...' : 'Save'}
           </DaButton>
         )}
       </div>
@@ -231,22 +241,21 @@ const PageGenAIWizard = () => {
         setOpen={setOpenSelectorPopup}
       />
 
-      {openCreatePrototypeModal && (
-        <DaPopup
-          state={[openCreatePrototypeModal, setOpenCreatePrototypeModal]}
+      {/* The popup for creating a prototype is always visible (open by default) */}
+      <DaPopup
+        state={[openCreatePrototypeModal, setOpenCreatePrototypeModal]}
+        onClose={() => setOpenCreatePrototypeModal(false)}
+        trigger={<span></span>}
+        className="flex flex-col h-fit"
+      >
+        <WizardFormCreatePrototype
           onClose={() => setOpenCreatePrototypeModal(false)}
-          trigger={<span></span>}
-          className="flex flex-col h-fit"
-        >
-          <FormCreatePrototype
-            onClose={() => setOpenCreatePrototypeModal(false)}
-            code={wizardPrototype.code}
-            widget_config={wizardPrototype.widget_config}
-            title="Save as prototype"
-            buttonText="Save"
-          />
-        </DaPopup>
-      )}
+          code={wizardPrototype.code}
+          widget_config={wizardPrototype.widget_config}
+          title="New Prototype"
+          buttonText="Confirm"
+        />
+      </DaPopup>
     </div>
   )
 }
