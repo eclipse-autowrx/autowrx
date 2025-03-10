@@ -1,19 +1,15 @@
 import { User } from './user.type'
 
 export type CreateInventoryItem = {
-  name: string
   type: string
-  image?: string
+  data: {
+    [key: string | number | symbol]: any
+  }
 }
 
-export type InventoryItem = Omit<CreateInventoryItem, 'type'> & {
+export type InventoryItem = CreateInventoryItem & {
   id: string
-  description?: string
-  createdAt: string
-  updatedAt: string
-  created_by?: Partial<User>
-  type: string
-  [x: string | number | symbol]: any
+  typeData?: any
 }
 
 export type InventoryType = {

@@ -16,10 +16,11 @@ import {
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Fragment } from 'react/jsx-runtime'
 import DaTreeBrowser, { Node } from '../DaTreeBrowser'
-import { useEffect, useMemo, useState } from 'react'
-import { instances, joinData, roles, rolesTypeMap, types } from './data'
+import { useEffect, useMemo } from 'react'
+import { joinData, roles, rolesTypeMap } from './data'
 import useInventoryItems from '@/hooks/useInventoryItems'
 import DaLoading from '@/components/atoms/DaLoading'
+import useCurrentInventoryData from '@/hooks/useCurrentInventoryData'
 
 // const MOCK_ITEM_DATA: InventorItemType[] = [
 //   {
@@ -126,7 +127,7 @@ const MOCK_TREE_DATA: Node[] = [
             color: '#3498DB',
           },
           {
-            id: 'compute_note',
+            id: 'compute_node',
             name: 'Compute Node',
             color: '#8E44AD',
           },
@@ -200,16 +201,16 @@ type InventoryItemListProps = {
 const InventoryItemList = ({ mode = 'view' }: InventoryItemListProps) => {
   const [searchParams, setSearchParams] = useSearchParams()
   const { data, isLoading } = useInventoryItems()
-  const { role } = useParams()
+  const { inventory_role } = useParams()
 
   useEffect(() => {
-    if (!role) return
-    const type = rolesTypeMap[role]
+    if (!inventory_role) return
+    const type = rolesTypeMap[inventory_role]
     if (type && new URLSearchParams(searchParams).get('type') !== type) {
       searchParams.set('type', type)
       setSearchParams(searchParams)
     }
-  }, [role])
+  }, [inventory_role])
 
   const refinedMockData = useMemo(() => {
     return data ? joinData(data as any[]) : []
@@ -306,7 +307,9 @@ type InventoryItemProps = {
   data: InventorItemType
 }
 
-const InventoryItem = ({ data }: InventoryItemProps) => {
+const InventoryItem = ({ data: item }: InventoryItemProps) => {
+  const { data: inventoryData } = useCurrentInventoryData()
+
   return (
     <div className="p-4 -mx-4 rounded-lg h-[144px] flex gap-8 hover:bg-da-gray-light">
       <div className="h-full aspect-square">
@@ -317,24 +320,27 @@ const InventoryItem = ({ data }: InventoryItemProps) => {
         >
           <img
             src="/imgs/default_photo.jpg"
-            alt={data.name}
+            alt={item.data?.name}
             className="h-full rounded text-sm w-full object-cover"
           />
         </object>
       </div>
       <div className="flex-1 flex flex-col min-w-0 truncate">
-        <Link to={`/inventory/${data.id}`} className="w-fit">
+        <Link
+          to={`/inventory/role/${inventoryData.roleData?.name}/item/${item.id}`}
+          className="w-fit"
+        >
           <DaText
             variant="regular-bold"
             className="hover:underline text-da-gray-darkest !block"
           >
-            {data.name}
+            {item.data?.name}
           </DaText>
         </Link>
 
         <div className="flex mt-1 flex-wrap gap-2">
           <button className="rounded-full bg-da-gray-darkest text-white text-xs px-2 py-1">
-            {data.typeData?.name}
+            {item.typeData?.title}
           </button>
         </div>
 
@@ -342,8 +348,13 @@ const InventoryItem = ({ data }: InventoryItemProps) => {
 
         <div className="flex justify-between items-center gap-8">
           <button className="hover:underline flex cursor-pointer items-center gap-2">
-            <DaAvatar className="h-6 w-6" src={data.created_by?.image_file} />
-            <p className="text-xs text-da-gray-dark">{data.created_by?.name}</p>
+            <DaAvatar
+              className="h-6 w-6"
+              src={item.data?.createdBy?.image_file}
+            />
+            <p className="text-xs text-da-gray-dark">
+              {item.data?.createdBy?.name}
+            </p>
           </button>
           <DaTooltip content="Last Updated">
             <p className="cursor-pointer hover:underline text-xs">
@@ -362,8 +373,8 @@ type FilterProps = {
 
 const Filter = ({ mode }: FilterProps) => {
   const [searchParams, setSearchParams] = useSearchParams()
-  const { role } = useParams()
-  const roleData = roles.find((r) => r.name === role)
+  const { inventory_role } = useParams()
+  const roleData = roles.find((r) => r.name === inventory_role)
   const selected = searchParams.get('type')
   const setSelected = (type: string) => {
     searchParams.set('type', type)

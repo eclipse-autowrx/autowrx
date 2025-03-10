@@ -4,8 +4,6 @@ import SuspenseProvider from '@/providers/SuspenseProvider'
 import { RouteConfig } from '@/types/common.type'
 import PageAuthSuccess from '@/pages/PageAuthSuccess'
 import { retry } from '@/lib/retry'
-import InventoryItemList from '@/components/molecules/inventory/InventoryItemList'
-import PageInventoryItemList from '@/pages/PageInventoryItemList'
 
 const PageHome = lazy(() => retry(() => import('@/pages/PageHome')))
 const PageAbout = lazy(() => retry(() => import('@/pages/PageAbout')))
@@ -70,8 +68,8 @@ const PageNewInventoryItem = lazy(() =>
 const PageInventoryItemDetail = lazy(() =>
   retry(() => import('@/pages/PageInventoryItemDetail')),
 )
-const PageInventoryTypes = lazy(() =>
-  retry(() => import('@/pages/PageInventoryTypes')),
+const PageInventoryItemList = lazy(() =>
+  retry(() => import('@/pages/PageInventoryItemList')),
 )
 
 const routesConfig: RouteConfig[] = [
@@ -280,15 +278,18 @@ const routesConfig: RouteConfig[] = [
             ),
           },
           {
-            path: 'role/:role',
-            element: (
-              <SuspenseProvider>
-                <PageInventoryItemList />
-              </SuspenseProvider>
-            ),
+            path: 'role/:inventory_role',
             children: [
               {
-                path: ':inventory_id',
+                index: true,
+                element: (
+                  <SuspenseProvider>
+                    <PageInventoryItemList />
+                  </SuspenseProvider>
+                ),
+              },
+              {
+                path: 'item/:inventory_id',
                 element: (
                   <SuspenseProvider>
                     <PageInventoryItemDetail />
@@ -296,7 +297,7 @@ const routesConfig: RouteConfig[] = [
                 ),
               },
               {
-                path: ':inventory_id/:tab',
+                path: 'item/:inventory_id/:tab',
                 element: (
                   <SuspenseProvider>
                     <PageInventoryItemDetail />
