@@ -35,7 +35,8 @@ import {
 import InventoryItemList from './InventoryItemList'
 import '@xyflow/react/dist/style.css'
 import { InventoryItem } from '@/types/inventory.type'
-import { instances } from './data'
+import { instanceRelations, instances } from './data'
+import useCurrentInventoryData from '@/hooks/useCurrentInventoryData'
 
 type InventoryItemRelationshipsProps = {
   data: InventoryItem
@@ -50,10 +51,13 @@ const InventoryItemRelationships = ({
   const [showSearchItem, setShowSearchItem] = useState(false)
   const [searchType, setSearchType] = useState<'parent' | 'child'>('parent')
 
-  const handleCreateNodeClick = (type: 'parent' | 'child') => {
-    setSearchType(type)
-    setShowSearchItem(true)
-  }
+  const handleNodeClick =
+    (data: InventoryItem | undefined, x = 0, y = 0) =>
+    () => {
+      if (data) {
+        addNodesAndEdges(data, instances, x, y)
+      }
+    }
 
   const initialNodes: Node[] = [
     // {
@@ -109,27 +113,28 @@ const InventoryItemRelationships = ({
   /**
    * Find related instances based on relations.
    */
-  const findRelatedInstances = (data: any, instances: any[]) => {
-    return instances.filter((i) =>
-      data?.relations?.some((r: any) => r.target === i.id),
-    )
+  const findRelations = (data: any) => {
+    return instanceRelations.filter((ir) => ir.source === data.id)
   }
 
   /**
    * Create a new node.
    */
   const createNode = (
-    id: string,
-    name: string,
+    data: InventoryItem,
     x: number,
     y: number,
     highlight = false,
   ) => ({
-    id,
+    id: data.id,
     position: { x, y },
     data: {
-      label: name,
-      onCreateNodeClick: handleCreateNodeClick,
+      inventoryItem: data,
+      onNodeClick: handleNodeClick(
+        instances.find((i) => i.id == data.id),
+        x,
+        y,
+      ),
       highlight,
     },
     type: 'inventoryNode',
@@ -138,7 +143,7 @@ const InventoryItemRelationships = ({
   /**
    * Create a new edge.
    */
-  const createEdge = (source: string, target: string) => ({
+  const createEdge = (source: string, target: string, type: string) => ({
     id: `e${source}-${target}`,
     target,
     source,
@@ -146,36 +151,74 @@ const InventoryItemRelationships = ({
       type: MarkerType.Arrow,
       color: '#000',
     },
+    data: {
+      type,
+    },
   })
 
   /**
    * Process and add nodes and edges.
    */
-  const addNodesAndEdges = (data: any, instances: any[]) => {
+  const addNodesAndEdges = (
+    data: any,
+    instances: any[],
+    currentX = 0,
+    currentY = 0,
+  ) => {
     const resultsNode: Node[] = []
     const resultsEdge: Edge[] = []
 
-    // Create the main node
-    resultsNode.push(createNode(data.id, data.name, 0, 0))
-    addedNodes.current.push(data.id)
+    let x = currentX,
+      y = currentY
+
+    lastNodePos.current.x = x
+
+    if (!addedNodes.current.includes(data.id)) {
+      // Create the main node
+      resultsNode.push(createNode(data, x, y))
+      addedNodes.current.push(data.id)
+    }
 
     // Find and process related instances
-    const filteredInstances = findRelatedInstances(data, instances)
-    filteredInstances.forEach((instance, index) => {
-      if (addedNodes.current.includes(instance.id)) return
+    const relations = findRelations(data)
+    const filterResults: { instanceItem: InventoryItem; relation: any }[] =
+      instances.reduce((acc, curr) => {
+        const relation = relations.find((r) => r.target === curr.id)
+        if (relation) {
+          acc.push({
+            instanceItem: curr,
+            relation,
+          })
+        }
+        return acc
+      }, [])
+    filterResults.forEach(({ instanceItem, relation }, index) => {
+      if (addedNodes.current.includes(instanceItem.id)) return
 
-      const x = lastNodePos.current.x + 150
-      const y = lastNodePos.current.y
+      x =
+        lastNodePos.current.x +
+        300 * (index - Math.round(filterResults.length / 2) + 1)
+      y = lastNodePos.current.y + 100
 
-      resultsNode.push(createNode(instance.id, instance.name, x, y, true))
-      resultsEdge.push(createEdge(instance.id, data.id))
+      resultsNode.push(createNode(instanceItem, x, y, true))
+      resultsEdge.push(createEdge(instanceItem.id, data.id, relation.type))
 
-      lastNodePos.current = { x, y }
-      addedNodes.current.push(instance.id)
+      addedNodes.current.push(instanceItem.id)
     })
+    lastNodePos.current = { x: 0, y }
 
-    setNodes(resultsNode)
-    setEdges(resultsEdge)
+    setNodes((prev) => [
+      ...prev,
+      ...(resultsNode.filter(
+        (node) => !prev.find((n) => n.id === node.id),
+      ) as never[]),
+    ])
+    setEdges((prev) => [
+      ...prev,
+      ...(resultsEdge.filter(
+        (edge) => !prev.find((e) => e.id === edge.id),
+      ) as never[]),
+    ])
   }
 
   useEffect(() => {
@@ -183,6 +226,7 @@ const InventoryItemRelationships = ({
 
     return () => {
       addedNodes.current = []
+      lastNodePos.current = { x: 0, y: 0 }
     }
   }, [data])
 
@@ -504,12 +548,14 @@ const InventoryItemRelationships = ({
 }
 
 type TypeInventoryNode = Node<{
-  onCreateNodeClick?: (type: 'parent' | 'child') => void
-  label: string
+  onNodeClick?: () => void
+  inventoryItem: InventoryItem
   highlight?: boolean
 }>
 
 const InventoryNode = ({ data, selected }: NodeProps<TypeInventoryNode>) => {
+  const { data: inventoryData } = useCurrentInventoryData()
+
   return (
     <>
       {/* {selected && (
@@ -522,13 +568,18 @@ const InventoryNode = ({ data, selected }: NodeProps<TypeInventoryNode>) => {
           <TbPlus className="mr-0.5" /> Parent
         </DaButton>
       )} */}
-      <Handle type="source" position={Position.Left} />
+      <Handle type="source" position={Position.Top} className="opacity-0" />
       {selected && (
         <div className="flex gap-1 justify-center w-full absolute bottom-[calc(100%+4px)]">
           <DaButton
             size="sm"
             variant="outline-nocolor"
             className="!p-1 !h-5 !text-xs"
+            onClick={() =>
+              open(
+                `${window.location.origin}/inventory/role/${inventoryData.roleData?.name}/item/${data.inventoryItem.id}`,
+              )
+            }
           >
             <TbExternalLink className="w-3 h-3" />
           </DaButton>
@@ -542,8 +593,9 @@ const InventoryNode = ({ data, selected }: NodeProps<TypeInventoryNode>) => {
         </div>
       )}
       <div
+        onClick={data?.onNodeClick}
         className={clsx(
-          'text-sm border shadow-sm rounded-md px-5 py-2',
+          'text-sm border flex flex-col shadow-sm rounded-md px-5 py-3',
           selected
             ? 'border-da-gray-darkest'
             : data?.highlight && 'border-da-gray-medium/50',
@@ -551,9 +603,12 @@ const InventoryNode = ({ data, selected }: NodeProps<TypeInventoryNode>) => {
           data?.highlight ? 'bg-da-gray-light text-black' : 'bg-white',
         )}
       >
-        {data.label}
+        <span className="absolute px-1 border-b border-r border-da-gray-dark opacity-70 rounded-br-md top-0 left-0 text-xs">
+          {data.inventoryItem.type}
+        </span>
+        <p className="mt-2">{data.inventoryItem?.data?.name}</p>
       </div>
-      <Handle type="target" position={Position.Right} />
+      <Handle type="target" position={Position.Bottom} className="opacity-0" />
       {/* {selected && (
         <DaButton
           onClick={() => {

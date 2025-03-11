@@ -25,6 +25,8 @@ import DaUserProfile from '@/components/molecules/DaUserProfile'
 import { types } from '@/components/molecules/inventory/data'
 import useCurrentInventoryData from '@/hooks/useCurrentInventoryData'
 
+const KEY_WIDTH = '240px'
+
 // const data: InventoryItem = {
 //   id: '12afwaefj1231jfkawef',
 //   name: 'ADAS System',
@@ -160,7 +162,7 @@ const PageInventoryItemDetail = () => {
             <DaButton
               size="sm"
               variant="plain"
-              className="text-left !justify-start w-[144px]"
+              className="text-left !justify-start w-[240px]"
             >
               <TbCopy className="w-4 h-4 mr-2" />
               Duplicate Item
@@ -386,6 +388,14 @@ const General = ({ data: item }: { data: InventoryItem }) => {
     return titleCase(str.replace(/([A-Z])/g, ' $1').toLowerCase())
   }
 
+  const snakeToTitleCase = (str: string) => {
+    return titleCase(str.replace(/_/g, ' '))
+  }
+
+  const otherToTitleCase = (str: string) => {
+    return snakeToTitleCase(camelToTitleCase(str))
+  }
+
   return (
     <div className="flex gap-20 lg:flex-row flex-col">
       <div className="flex-1 min-w-0">
@@ -393,11 +403,11 @@ const General = ({ data: item }: { data: InventoryItem }) => {
           Information
         </DaText>
         <div className="flex md:flex-row flex-col gap-4 justify-between pt-5">
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 min-w-0 flex-1">
             <div>
               <DaText
                 variant="small"
-                className="inline-block text-da-gray-dark w-[144px]"
+                className="inline-block text-da-gray-dark w-[240px]"
               >
                 Name
               </DaText>
@@ -408,7 +418,7 @@ const General = ({ data: item }: { data: InventoryItem }) => {
             <div>
               <DaText
                 variant="small"
-                className="inline-block text-da-gray-dark w-[144px]"
+                className="inline-block text-da-gray-dark w-[240px]"
               >
                 Description
               </DaText>
@@ -417,7 +427,7 @@ const General = ({ data: item }: { data: InventoryItem }) => {
               </DaText>
             </div>
 
-            {Object.entries(item)
+            {Object.entries(item.data)
               .filter(
                 ([key, value]) =>
                   ![
@@ -428,27 +438,33 @@ const General = ({ data: item }: { data: InventoryItem }) => {
                     'createdAt',
                     'updatedAt',
                     'createdBy',
-                  ].includes(key) &&
-                  ['string', 'number'].includes(typeof value),
+                  ].includes(key),
               )
               .map(([key, value]) => (
-                <div key={key}>
+                <div key={key} className="flex">
                   <DaText
                     variant="small"
-                    className="inline-block text-da-gray-dark w-[144px]"
+                    className="inline-block text-da-gray-dark w-[240px]"
                   >
-                    {camelToTitleCase(key)}
+                    {otherToTitleCase(key)}
                   </DaText>
-                  <DaText variant="small" className="text-da-gray-darkest ml-2">
-                    {value || '-'}
-                  </DaText>
+                  {['string', 'number'].includes(typeof value) ? (
+                    <DaText
+                      variant="small"
+                      className="text-da-gray-darkest ml-2"
+                    >
+                      {value}
+                    </DaText>
+                  ) : (
+                    <pre>{JSON.stringify(value, null, 4)}</pre>
+                  )}
                 </div>
               ))}
 
             <div>
               <DaText
                 variant="small"
-                className="inline-block text-da-gray-dark w-[144px]"
+                className="inline-block text-da-gray-dark w-[240px]"
               >
                 Created At
               </DaText>
@@ -459,7 +475,7 @@ const General = ({ data: item }: { data: InventoryItem }) => {
             <div>
               <DaText
                 variant="small"
-                className="inline-block text-da-gray-dark w-[144px]"
+                className="inline-block text-da-gray-dark w-[240px]"
               >
                 Updated At
               </DaText>
@@ -470,7 +486,7 @@ const General = ({ data: item }: { data: InventoryItem }) => {
             <div className="flex items-center -mt-0.5">
               <DaText
                 variant="small"
-                className="inline-block text-da-gray-dark w-[144px]"
+                className="inline-block text-da-gray-dark w-[240px]"
               >
                 Owner
               </DaText>
@@ -502,7 +518,7 @@ const General = ({ data: item }: { data: InventoryItem }) => {
           <div className="flex items-center h-[20px]">
             <DaText
               variant="small"
-              className="inline-block text-da-gray-dark w-[144px]"
+              className="inline-block text-da-gray-dark w-[240px]"
             >
               Type
             </DaText>
@@ -514,7 +530,7 @@ const General = ({ data: item }: { data: InventoryItem }) => {
           <div>
             <DaText
               variant="small"
-              className="inline-block text-da-gray-dark w-[144px]"
+              className="inline-block text-da-gray-dark w-[240px]"
             >
               Description
             </DaText>

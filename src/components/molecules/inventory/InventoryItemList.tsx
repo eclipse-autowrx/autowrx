@@ -17,10 +17,17 @@ import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Fragment } from 'react/jsx-runtime'
 import DaTreeBrowser, { Node } from '../DaTreeBrowser'
 import { useEffect, useMemo } from 'react'
-import { joinData, roles, rolesTypeMap } from './data'
+import {
+  joinCreatedByData,
+  joinTypeData as joinTypeData,
+  roles,
+  rolesTypeMap,
+  typeToImage,
+} from './data'
 import useInventoryItems from '@/hooks/useInventoryItems'
 import DaLoading from '@/components/atoms/DaLoading'
 import useCurrentInventoryData from '@/hooks/useCurrentInventoryData'
+import { useListUsers } from '@/hooks/useListUsers'
 
 // const MOCK_ITEM_DATA: InventorItemType[] = [
 //   {
@@ -122,18 +129,28 @@ const MOCK_TREE_DATA: Node[] = [
         color: '#2980B9',
         children: [
           {
+            id: 'asw_domain',
+            name: 'ASW Domain',
+            color: '#7F8C8D',
+          },
+          {
             id: 'asw_component',
             name: 'ASW Component',
             color: '#3498DB',
           },
           {
-            id: 'compute_node',
-            name: 'Compute Node',
+            id: 'asw_service',
+            name: 'ASW Service',
+            color: '#C0392B',
+          },
+          {
+            id: 'asw_layer',
+            name: 'ASW Layer',
             color: '#8E44AD',
           },
           {
-            id: 'network',
-            name: 'Network',
+            id: 'api_layer',
+            name: 'API Layer',
             color: '#27AE60',
           },
           {
@@ -152,14 +169,19 @@ const MOCK_TREE_DATA: Node[] = [
             color: '#D35400',
           },
           {
-            id: 'asw_service',
-            name: 'ASW Service',
-            color: '#C0392B',
+            id: 'compute_node',
+            name: 'Compute Node',
+            color: '#8E44AD',
           },
           {
-            id: 'asw_domain',
-            name: 'ASW Domain',
-            color: '#7F8C8D',
+            id: 'network',
+            name: 'Network',
+            color: '#27AE60',
+          },
+          {
+            id: 'peripheral',
+            name: 'Peripheral',
+            color: '#34495E',
           },
         ],
       },
@@ -179,14 +201,39 @@ const MOCK_TREE_DATA: Node[] = [
             color: '#E74C3C',
           },
           {
-            id: 'requirement',
-            name: 'Requirement',
-            color: '#9B59B6',
-          },
-          {
             id: 'test_plan',
             name: 'Test Plan',
             color: '#95A5A6',
+          },
+          {
+            id: 'test_case',
+            name: 'Test Case',
+            color: '#2ECC71',
+          },
+          {
+            id: 'test_run',
+            name: 'Test Run',
+            color: '#1ABC9C',
+          },
+          {
+            id: 'country',
+            name: 'Country',
+            color: '#2C3E50',
+          },
+          {
+            id: 'regulation',
+            name: 'Regulation',
+            color: '#3498DB',
+          },
+          {
+            id: 'requirements_group',
+            name: 'Requirements Group',
+            color: '#16A085',
+          },
+          {
+            id: 'requirement',
+            name: 'Requirement',
+            color: '#F39C12',
           },
         ],
       },
@@ -202,7 +249,9 @@ const InventoryItemList = ({ mode = 'view' }: InventoryItemListProps) => {
   const [searchParams, setSearchParams] = useSearchParams()
   const { data, isLoading } = useInventoryItems()
   const { inventory_role } = useParams()
-
+  const { data: users } = useListUsers({
+    id: '6724a8cb3e09ac00279ed6f5,6714fe1a9c8a740026eb7f97,6699fa83964f3f002f35ea03',
+  })
   useEffect(() => {
     if (!inventory_role) return
     const type = rolesTypeMap[inventory_role]
@@ -213,7 +262,7 @@ const InventoryItemList = ({ mode = 'view' }: InventoryItemListProps) => {
   }, [inventory_role])
 
   const refinedMockData = useMemo(() => {
-    return data ? joinData(data as any[]) : []
+    return data ? joinCreatedByData(joinTypeData(data as any[]), users) : []
   }, [data])
 
   const filteredData = useMemo(() => {
@@ -221,21 +270,34 @@ const InventoryItemList = ({ mode = 'view' }: InventoryItemListProps) => {
       if (
         searchParams.get('type') === 'sdv_system_artefact' &&
         [
+          'asw_domain',
           'asw_component',
-          'compute_node',
-          'network',
+          'asw_service',
+          'asw_layer',
+          'api_layer',
           'system',
           'sub_system',
           'sw_stack_item',
-          'asw_service',
-          'asw_domain',
+          'compute_node',
+          'network',
+          'peripheral',
         ].includes(item.type)
       )
         return true
 
       if (
         searchParams.get('type') === 'sdv_engineering_artefact' &&
-        ['stage', 'hara', 'requirement', 'test_plan'].includes(item.type)
+        [
+          'stage',
+          'hara',
+          'test_plan',
+          'test_case',
+          'test_run',
+          'country',
+          'regulation',
+          'requirements_group',
+          'requirement',
+        ].includes(item.type)
       )
         return true
 
@@ -291,8 +353,8 @@ const InventoryItemList = ({ mode = 'view' }: InventoryItemListProps) => {
           {filteredData.length} results
         </p>
         {filteredData.map((item, index) => (
-          <Fragment key={index}>
-            <InventoryItem key={index} data={item} />
+          <Fragment key={item.id}>
+            <InventoryItem data={item} />
             {index < filteredData.length - 1 && (
               <div className="border-b border-da-gray-light" />
             )}
@@ -314,7 +376,10 @@ const InventoryItem = ({ data: item }: InventoryItemProps) => {
     <div className="p-4 -mx-4 rounded-lg h-[144px] flex gap-8 hover:bg-da-gray-light">
       <div className="h-full aspect-square">
         <object
-          data="/imgs/default_photo.jpg"
+          data={
+            typeToImage[item.type as keyof typeof typeToImage] ??
+            'https://example.com/not-found'
+          }
           type="image/png"
           className="h-full w-full object-cover border rounded select-none"
         >
@@ -422,7 +487,6 @@ const Filter = ({ mode }: FilterProps) => {
         <DaTreeBrowser
           selected={selected || ''}
           onSelected={(node) => {
-            console.log(node)
             setSelected(node.id)
           }}
           data={MOCK_TREE_DATA}
