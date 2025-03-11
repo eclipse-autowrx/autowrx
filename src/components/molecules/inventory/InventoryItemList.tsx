@@ -9,14 +9,25 @@ import {
   TbChevronLeft,
   TbFileExport,
   TbFileImport,
+  TbLoader,
   TbPlus,
   TbSearch,
 } from 'react-icons/tb'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Fragment } from 'react/jsx-runtime'
 import DaTreeBrowser, { Node } from '../DaTreeBrowser'
-import { useEffect, useMemo, useState } from 'react'
-import { instances, joinData, roles, rolesTypeMap, types } from './data'
+import { useEffect, useMemo } from 'react'
+import {
+  joinCreatedByData,
+  joinTypeData as joinTypeData,
+  roles,
+  rolesTypeMap,
+  typeToImage,
+} from './data'
+import useInventoryItems from '@/hooks/useInventoryItems'
+import DaLoading from '@/components/atoms/DaLoading'
+import useCurrentInventoryData from '@/hooks/useCurrentInventoryData'
+import { useListUsers } from '@/hooks/useListUsers'
 
 // const MOCK_ITEM_DATA: InventorItemType[] = [
 //   {
@@ -118,18 +129,28 @@ const MOCK_TREE_DATA: Node[] = [
         color: '#2980B9',
         children: [
           {
+            id: 'asw_domain',
+            name: 'ASW Domain',
+            color: '#7F8C8D',
+          },
+          {
             id: 'asw_component',
             name: 'ASW Component',
             color: '#3498DB',
           },
           {
-            id: 'compute_note',
-            name: 'Compute Node',
+            id: 'asw_service',
+            name: 'ASW Service',
+            color: '#C0392B',
+          },
+          {
+            id: 'asw_layer',
+            name: 'ASW Layer',
             color: '#8E44AD',
           },
           {
-            id: 'network',
-            name: 'Network',
+            id: 'api_layer',
+            name: 'API Layer',
             color: '#27AE60',
           },
           {
@@ -148,14 +169,19 @@ const MOCK_TREE_DATA: Node[] = [
             color: '#D35400',
           },
           {
-            id: 'asw_service',
-            name: 'ASW Service',
-            color: '#C0392B',
+            id: 'compute_node',
+            name: 'Compute Node',
+            color: '#8E44AD',
           },
           {
-            id: 'asw_domain',
-            name: 'ASW Domain',
-            color: '#7F8C8D',
+            id: 'network',
+            name: 'Network',
+            color: '#27AE60',
+          },
+          {
+            id: 'peripheral',
+            name: 'Peripheral',
+            color: '#34495E',
           },
         ],
       },
@@ -175,14 +201,39 @@ const MOCK_TREE_DATA: Node[] = [
             color: '#E74C3C',
           },
           {
-            id: 'requirement',
-            name: 'Requirement',
-            color: '#9B59B6',
-          },
-          {
             id: 'test_plan',
             name: 'Test Plan',
             color: '#95A5A6',
+          },
+          {
+            id: 'test_case',
+            name: 'Test Case',
+            color: '#2ECC71',
+          },
+          {
+            id: 'test_run',
+            name: 'Test Run',
+            color: '#1ABC9C',
+          },
+          {
+            id: 'country',
+            name: 'Country',
+            color: '#2C3E50',
+          },
+          {
+            id: 'regulation',
+            name: 'Regulation',
+            color: '#3498DB',
+          },
+          {
+            id: 'requirements_group',
+            name: 'Requirements Group',
+            color: '#16A085',
+          },
+          {
+            id: 'requirement',
+            name: 'Requirement',
+            color: '#F39C12',
           },
         ],
       },
@@ -196,42 +247,57 @@ type InventoryItemListProps = {
 
 const InventoryItemList = ({ mode = 'view' }: InventoryItemListProps) => {
   const [searchParams, setSearchParams] = useSearchParams()
-
+  const { data, isLoading } = useInventoryItems()
+  const { inventory_role } = useParams()
+  const { data: users } = useListUsers({
+    id: '6724a8cb3e09ac00279ed6f5,6714fe1a9c8a740026eb7f97,6699fa83964f3f002f35ea03',
+  })
   useEffect(() => {
-    const role = searchParams.get('role')
-    if (role) {
-      const type = rolesTypeMap[role]
-      if (type && new URLSearchParams(searchParams).get('type') !== type) {
-        searchParams.set('type', type)
-        setSearchParams(searchParams)
-      }
+    if (!inventory_role) return
+    const type = rolesTypeMap[inventory_role]
+    if (type && new URLSearchParams(searchParams).get('type') !== type) {
+      searchParams.set('type', type)
+      setSearchParams(searchParams)
     }
-  }, [])
+  }, [inventory_role])
 
   const refinedMockData = useMemo(() => {
-    return joinData(instances)
-  }, [])
+    return data ? joinCreatedByData(joinTypeData(data as any[]), users) : []
+  }, [data])
 
   const filteredData = useMemo(() => {
     return refinedMockData.filter((item) => {
       if (
         searchParams.get('type') === 'sdv_system_artefact' &&
         [
+          'asw_domain',
           'asw_component',
-          'compute_node',
-          'network',
+          'asw_service',
+          'asw_layer',
+          'api_layer',
           'system',
           'sub_system',
           'sw_stack_item',
-          'asw_service',
-          'asw_domain',
+          'compute_node',
+          'network',
+          'peripheral',
         ].includes(item.type)
       )
         return true
 
       if (
         searchParams.get('type') === 'sdv_engineering_artefact' &&
-        ['stage', 'hara', 'requirement', 'test_plan'].includes(item.type)
+        [
+          'stage',
+          'hara',
+          'test_plan',
+          'test_case',
+          'test_run',
+          'country',
+          'regulation',
+          'requirements_group',
+          'requirement',
+        ].includes(item.type)
       )
         return true
 
@@ -242,6 +308,13 @@ const InventoryItemList = ({ mode = 'view' }: InventoryItemListProps) => {
       return true
     })
   }, [refinedMockData, searchParams])
+
+  if (!data || isLoading)
+    return (
+      <div className="w-full h-[calc(100vh-200px)]">
+        <DaLoading />
+      </div>
+    )
 
   return (
     <div className="flex gap-14">
@@ -280,8 +353,8 @@ const InventoryItemList = ({ mode = 'view' }: InventoryItemListProps) => {
           {filteredData.length} results
         </p>
         {filteredData.map((item, index) => (
-          <Fragment key={index}>
-            <InventoryItem key={index} data={item} />
+          <Fragment key={item.id}>
+            <InventoryItem data={item} />
             {index < filteredData.length - 1 && (
               <div className="border-b border-da-gray-light" />
             )}
@@ -296,35 +369,43 @@ type InventoryItemProps = {
   data: InventorItemType
 }
 
-const InventoryItem = ({ data }: InventoryItemProps) => {
+const InventoryItem = ({ data: item }: InventoryItemProps) => {
+  const { data: inventoryData } = useCurrentInventoryData()
+
   return (
     <div className="p-4 -mx-4 rounded-lg h-[144px] flex gap-8 hover:bg-da-gray-light">
       <div className="h-full aspect-square">
         <object
-          data="/imgs/default_photo.jpg"
+          data={
+            typeToImage[item.type as keyof typeof typeToImage] ??
+            'https://example.com/not-found'
+          }
           type="image/png"
           className="h-full w-full object-cover border rounded select-none"
         >
           <img
             src="/imgs/default_photo.jpg"
-            alt={data.name}
+            alt={item.data?.name}
             className="h-full rounded text-sm w-full object-cover"
           />
         </object>
       </div>
       <div className="flex-1 flex flex-col min-w-0 truncate">
-        <Link to={`/inventory/${data.id}`} className="w-fit">
+        <Link
+          to={`/inventory/role/${inventoryData.roleData?.name}/item/${item.id}`}
+          className="w-fit"
+        >
           <DaText
             variant="regular-bold"
             className="hover:underline text-da-gray-darkest !block"
           >
-            {data.name}
+            {item.data?.name}
           </DaText>
         </Link>
 
         <div className="flex mt-1 flex-wrap gap-2">
           <button className="rounded-full bg-da-gray-darkest text-white text-xs px-2 py-1">
-            {data.typeData?.name}
+            {item.typeData?.title}
           </button>
         </div>
 
@@ -332,8 +413,13 @@ const InventoryItem = ({ data }: InventoryItemProps) => {
 
         <div className="flex justify-between items-center gap-8">
           <button className="hover:underline flex cursor-pointer items-center gap-2">
-            <DaAvatar className="h-6 w-6" src={data.created_by?.image_file} />
-            <p className="text-xs text-da-gray-dark">{data.created_by?.name}</p>
+            <DaAvatar
+              className="h-6 w-6"
+              src={item.data?.createdBy?.image_file}
+            />
+            <p className="text-xs text-da-gray-dark">
+              {item.data?.createdBy?.name}
+            </p>
           </button>
           <DaTooltip content="Last Updated">
             <p className="cursor-pointer hover:underline text-xs">
@@ -352,8 +438,8 @@ type FilterProps = {
 
 const Filter = ({ mode }: FilterProps) => {
   const [searchParams, setSearchParams] = useSearchParams()
-  const role = searchParams.get('role')
-  const roleData = roles.find((r) => r.name === role)
+  const { inventory_role } = useParams()
+  const roleData = roles.find((r) => r.name === inventory_role)
   const selected = searchParams.get('type')
   const setSelected = (type: string) => {
     searchParams.set('type', type)
@@ -380,20 +466,18 @@ const Filter = ({ mode }: FilterProps) => {
           <img src={roleData.image} className="h-full aspect-square" />
           <div className="h-full flex flex-1 flex-col justify-between pt-3 pb-4 px-5">
             <p className="text-da-gray-darkest font-bold">{roleData.name}</p>
-            <DaButton
-              variant="outline-nocolor"
-              onClick={() => setSearchParams({})}
-              size="sm"
-            >
-              <TbChevronLeft className="mr-2" size={16} /> Select Role
-            </DaButton>
+            <Link to="/inventory" className="w-full">
+              <DaButton variant="outline-nocolor" size="sm" className="w-full">
+                <TbChevronLeft className="mr-2" size={16} /> Select Role
+              </DaButton>
+            </Link>
           </div>
         </div>
       )}
 
       <div
         className={clsx(
-          'rounded-lg mt-4 mb-6 text-sm text-da-gray-dark shadow-sm border p-5',
+          'rounded-lg mt-4 mb-6 overflow-y-auto max-h-[calc(100vh-320px)] text-sm text-da-gray-dark shadow-sm border p-5',
         )}
       >
         <DaText variant="small-bold" className="!block text-da-gray-darkest">
@@ -403,7 +487,6 @@ const Filter = ({ mode }: FilterProps) => {
         <DaTreeBrowser
           selected={selected || ''}
           onSelected={(node) => {
-            console.log(node)
             setSelected(node.id)
           }}
           data={MOCK_TREE_DATA}

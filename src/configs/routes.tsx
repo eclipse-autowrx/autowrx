@@ -68,8 +68,8 @@ const PageNewInventoryItem = lazy(() =>
 const PageInventoryItemDetail = lazy(() =>
   retry(() => import('@/pages/PageInventoryItemDetail')),
 )
-const PageInventoryTypes = lazy(() =>
-  retry(() => import('@/pages/PageInventoryTypes')),
+const PageInventoryItemList = lazy(() =>
+  retry(() => import('@/pages/PageInventoryItemList')),
 )
 
 const routesConfig: RouteConfig[] = [
@@ -278,28 +278,33 @@ const routesConfig: RouteConfig[] = [
             ),
           },
           {
-            path: 'types',
-            element: (
-              <SuspenseProvider>
-                <PageInventoryTypes />
-              </SuspenseProvider>
-            ),
-          },
-          {
-            path: ':inventory_id',
-            element: (
-              <SuspenseProvider>
-                <PageInventoryItemDetail />
-              </SuspenseProvider>
-            ),
-          },
-          {
-            path: ':inventory_id/:tab',
-            element: (
-              <SuspenseProvider>
-                <PageInventoryItemDetail />
-              </SuspenseProvider>
-            ),
+            path: 'role/:inventory_role',
+            children: [
+              {
+                index: true,
+                element: (
+                  <SuspenseProvider>
+                    <PageInventoryItemList />
+                  </SuspenseProvider>
+                ),
+              },
+              {
+                path: 'item/:inventory_id',
+                element: (
+                  <SuspenseProvider>
+                    <PageInventoryItemDetail />
+                  </SuspenseProvider>
+                ),
+              },
+              {
+                path: 'item/:inventory_id/:tab',
+                element: (
+                  <SuspenseProvider>
+                    <PageInventoryItemDetail />
+                  </SuspenseProvider>
+                ),
+              },
+            ],
           },
         ],
       },

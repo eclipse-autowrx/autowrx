@@ -3,7 +3,7 @@ import { DaButton } from '@/components/atoms/DaButton'
 import DaFileUpload from '@/components/atoms/DaFileUpload'
 import DaMenu from '@/components/atoms/DaMenu'
 import DaText from '@/components/atoms/DaText'
-import { InventoryItem, InventoryType } from '@/types/inventory.type'
+import { InventoryItem } from '@/types/inventory.type'
 import clsx from 'clsx'
 import dayjs from 'dayjs'
 import { useState } from 'react'
@@ -11,10 +11,8 @@ import {
   TbChevronDown,
   TbCopy,
   TbEdit,
-  TbExternalLink,
   TbEye,
   TbEyeOff,
-  TbPaperclip,
   TbPlus,
   TbTrash,
 } from 'react-icons/tb'
@@ -24,7 +22,10 @@ import { DaInput } from '@/components/atoms/DaInput'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import AccessInvitation from '@/components/organisms/AccessInvitation'
 import DaUserProfile from '@/components/molecules/DaUserProfile'
-import { instances, types } from '@/components/molecules/inventory/data'
+import { types, typeToImage } from '@/components/molecules/inventory/data'
+import useCurrentInventoryData from '@/hooks/useCurrentInventoryData'
+
+const KEY_WIDTH = '240px'
 
 // const data: InventoryItem = {
 //   id: '12afwaefj1231jfkawef',
@@ -112,16 +113,16 @@ const tabs = [
 ]
 
 const PageInventoryItemDetail = () => {
-  const { inventory_id, tab } = useParams()
-  const data: InventoryItem | undefined = instances.find(
-    (i) => i.id === inventory_id,
-  )
+  const { tab } = useParams()
+  const { data: inventoryData } = useCurrentInventoryData()
 
-  if (!data) {
+  const itemData = inventoryData.inventoryItem
+
+  if (!itemData) {
     return <div className="p-4">Not found.</div>
   }
 
-  data.typeData = types.find((t) => t.id === data.type)
+  itemData.typeData = types.find((t) => t.$id === itemData.type)
 
   return (
     <div className="container text-sm pb-10 text-da-gray-dark">
@@ -129,10 +130,10 @@ const PageInventoryItemDetail = () => {
       <div className="mt-5 flex gap-2 items-end py-3">
         <div className="flex flex-col gap-2">
           <DaText variant="title" className="!block text-da-primary-500">
-            {data.name}
+            {itemData.data?.name || '-'}
           </DaText>
           <div className="text-sm flex gap-2">
-            <span>{data.typeData?.name}</span>
+            <span>{itemData.typeData?.title}</span>
             <span>•</span>
           </div>
         </div>
@@ -161,7 +162,7 @@ const PageInventoryItemDetail = () => {
             <DaButton
               size="sm"
               variant="plain"
-              className="text-left !justify-start w-[144px]"
+              className="text-left !justify-start w-[240px]"
             >
               <TbCopy className="w-4 h-4 mr-2" />
               Duplicate Item
@@ -180,16 +181,18 @@ const PageInventoryItemDetail = () => {
                 ? 'text-da-primary-500 border-b-da-primary-500'
                 : 'border-b-transparent',
             )}
-            to={`/inventory/${inventory_id}/${t.path}`}
+            to={`/inventory/role/${inventoryData.roleData?.name}/item/${itemData.id}/${t.path}`}
           >
             {t.name}
           </Link>
         ))}
       </div>
 
-      {!tab && <General data={data} />}
+      {!tab && <General data={itemData} />}
 
-      {tab === 'relationships' && <InventoryItemRelationships data={data} />}
+      {tab === 'relationships' && (
+        <InventoryItemRelationships data={itemData} />
+      )}
 
       {tab === 'assets' && (
         <div className="flex mt-4 gap-7 flex-col">
@@ -264,21 +267,24 @@ const PageInventoryItemDetail = () => {
                 <tr className="border-transparent">
                   <td className="p-3">
                     <DaText variant="small">
-                      {dayjs(data.createdAt).format('DD.MM.YYYY - HH:mm')}
+                      {dayjs(itemData.data?.createdAt).format(
+                        'DD.MM.YYYY - HH:mm',
+                      )}
                     </DaText>
                   </td>
                   <td className="p-3">
                     <DaText variant="small">
-                      {data.created_by?.name || 'Anonymous'} created the item.
+                      {itemData.data?.createdBy?.name || 'Anonymous'} created
+                      the item.
                     </DaText>
                   </td>
                   <td className="p-3 flex items-center gap-2 hover:underline cursor-pointer">
                     <DaAvatar
                       className="h-7 w-7"
-                      src={data.created_by?.image_file}
+                      src={itemData.data?.createdBy?.image_file}
                     />
                     <p className="text-sm text-da-gray-darkest">
-                      {data.created_by?.name}
+                      {itemData.data?.createdBy?.name}
                     </p>
                   </td>
                   <td className="p-3">
@@ -368,7 +374,7 @@ const PageInventoryItemDetail = () => {
   )
 }
 
-const General = ({ data }: { data: InventoryItem }) => {
+const General = ({ data: item }: { data: InventoryItem }) => {
   const [showDetail, setShowDetail] = useState(false)
 
   const titleCase = (str: string) => {
@@ -382,6 +388,14 @@ const General = ({ data }: { data: InventoryItem }) => {
     return titleCase(str.replace(/([A-Z])/g, ' $1').toLowerCase())
   }
 
+  const snakeToTitleCase = (str: string) => {
+    return titleCase(str.replace(/_/g, ' '))
+  }
+
+  const otherToTitleCase = (str: string) => {
+    return snakeToTitleCase(camelToTitleCase(str))
+  }
+
   return (
     <div className="flex gap-20 lg:flex-row flex-col">
       <div className="flex-1 min-w-0">
@@ -389,31 +403,31 @@ const General = ({ data }: { data: InventoryItem }) => {
           Information
         </DaText>
         <div className="flex md:flex-row flex-col gap-4 justify-between pt-5">
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 min-w-0 flex-1">
             <div>
               <DaText
                 variant="small"
-                className="inline-block text-da-gray-dark w-[144px]"
+                className="inline-block text-da-gray-dark w-[240px]"
               >
                 Name
               </DaText>
               <DaText variant="small" className="text-da-gray-darkest ml-2">
-                {data.name}
+                {item.data?.name}
               </DaText>
             </div>
             <div>
               <DaText
                 variant="small"
-                className="inline-block text-da-gray-dark w-[144px]"
+                className="inline-block text-da-gray-dark w-[240px]"
               >
                 Description
               </DaText>
               <DaText variant="small" className="text-da-gray-darkest ml-2">
-                {data.description || '-'}
+                {item.data?.description || '-'}
               </DaText>
             </div>
 
-            {Object.entries(data)
+            {Object.entries(item.data)
               .filter(
                 ([key, value]) =>
                   ![
@@ -424,66 +438,72 @@ const General = ({ data }: { data: InventoryItem }) => {
                     'createdAt',
                     'updatedAt',
                     'createdBy',
-                  ].includes(key) &&
-                  ['string', 'number'].includes(typeof value),
+                  ].includes(key),
               )
               .map(([key, value]) => (
-                <div key={key}>
+                <div key={key} className="flex">
                   <DaText
                     variant="small"
-                    className="inline-block text-da-gray-dark w-[144px]"
+                    className="inline-block text-da-gray-dark w-[240px]"
                   >
-                    {camelToTitleCase(key)}
+                    {otherToTitleCase(key)}
                   </DaText>
-                  <DaText variant="small" className="text-da-gray-darkest ml-2">
-                    {value || '-'}
-                  </DaText>
+                  {['string', 'number'].includes(typeof value) ? (
+                    <DaText
+                      variant="small"
+                      className="text-da-gray-darkest ml-2"
+                    >
+                      {value}
+                    </DaText>
+                  ) : (
+                    <pre>{JSON.stringify(value, null, 4)}</pre>
+                  )}
                 </div>
               ))}
 
             <div>
               <DaText
                 variant="small"
-                className="inline-block text-da-gray-dark w-[144px]"
+                className="inline-block text-da-gray-dark w-[240px]"
               >
                 Created At
               </DaText>
               <DaText variant="small" className="text-da-gray-darkest ml-2">
-                {dayjs(data.createdAt).format('DD.MM.YYYY - HH:mm')}
+                {dayjs(item.data?.createdAt).format('DD.MM.YYYY - HH:mm')}
               </DaText>
             </div>
             <div>
               <DaText
                 variant="small"
-                className="inline-block text-da-gray-dark w-[144px]"
+                className="inline-block text-da-gray-dark w-[240px]"
               >
                 Updated At
               </DaText>
               <DaText variant="small" className="text-da-gray-darkest ml-2">
-                {dayjs(data.updatedAt).format('DD.MM.YYYY - HH:mm')}
+                {dayjs(item.data?.updatedAt).format('DD.MM.YYYY - HH:mm')}
               </DaText>
             </div>
             <div className="flex items-center -mt-0.5">
               <DaText
                 variant="small"
-                className="inline-block text-da-gray-dark w-[144px]"
+                className="inline-block text-da-gray-dark w-[240px]"
               >
                 Owner
               </DaText>
               <button className="flex cursor-pointer items-center hover:underline gap-2 ml-2">
                 <DaAvatar
                   className="h-7 w-7"
-                  src={data.created_by?.image_file}
+                  src={item.data?.createdBy?.image_file}
                 />
                 <p className="text-sm text-da-gray-darkest">
-                  {data.created_by?.name}
+                  {item.data?.createdBy?.name}
                 </p>
               </button>
             </div>
           </div>
 
           <DaFileUpload
-            image={data.image}
+            image={typeToImage[item.type as keyof typeof typeToImage]}
             isImage
             className="w-[200px] h-[200px]"
             imgClassName="object-cover !h-full !w-full"
@@ -498,24 +518,24 @@ const General = ({ data }: { data: InventoryItem }) => {
           <div className="flex items-center h-[20px]">
             <DaText
               variant="small"
-              className="inline-block text-da-gray-dark w-[144px]"
+              className="inline-block text-da-gray-dark w-[240px]"
             >
               Type
             </DaText>
             <DaText variant="small" className="text-da-gray-darkest ml-2">
-              {data.typeData?.name || '-'}
+              {item.typeData?.title || '-'}
             </DaText>
           </div>
 
           <div>
             <DaText
               variant="small"
-              className="inline-block text-da-gray-dark w-[144px]"
+              className="inline-block text-da-gray-dark w-[240px]"
             >
               Description
             </DaText>
             <DaText variant="small" className="text-da-gray-darkest ml-2">
-              {data.typeData?.description || '-'}
+              {item.typeData?.description || '-'}
             </DaText>
           </div>
 
@@ -535,9 +555,7 @@ const General = ({ data }: { data: InventoryItem }) => {
             </DaButton>
             {showDetail && (
               <div className="border mt-1 rounded-md p-4 w-full">
-                <pre>
-                  {JSON.stringify(data.typeData?.schema || {}, null, 4)}
-                </pre>
+                <pre>{JSON.stringify(item.typeData || {}, null, 4)}</pre>
               </div>
             )}
           </div>

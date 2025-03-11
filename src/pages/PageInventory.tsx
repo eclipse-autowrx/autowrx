@@ -9,7 +9,7 @@ const PageInventory = () => {
   return (
     <div className="flex">
       <div className="m-auto w-full p-6">
-        {role ? <InventoryItemList /> : <InventoryRoleBrowser />}
+        <InventoryRoleBrowser />
       </div>
     </div>
   )

@@ -14,7 +14,7 @@ const InventoryRoleBrowser = () => {
       <div className="grid grid-cols-2 mt-4 grid-rows-2 gap-6">
         {roles.map((role, index) => (
           <Link
-            to={`/inventory?role=${role.name}`}
+            to={`/inventory/role/${role.name}`}
             key={index}
             className="h-[200px] hover:bg-da-primary-100 transition overflow-hidden flex border shadow rounded-md"
           >
