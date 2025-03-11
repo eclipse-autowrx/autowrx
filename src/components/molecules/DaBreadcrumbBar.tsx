@@ -138,7 +138,9 @@ const DaBreadcrumbBar = () => {
         if (inventoryData.inventoryItem) {
           paths.push({
             path: `/inventory/role/${inventoryData.roleData.name}/item/${inventoryData.inventoryItem.id}`,
-            name: inventoryData.inventoryItem.typeData?.title,
+            name:
+              inventoryData.inventoryItem.data?.name ||
+              inventoryData.inventoryItem.id,
             key: inventoryData.inventoryItem.id,
           })
         }
