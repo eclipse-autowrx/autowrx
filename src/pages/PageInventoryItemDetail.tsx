@@ -22,7 +22,7 @@ import { DaInput } from '@/components/atoms/DaInput'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import AccessInvitation from '@/components/organisms/AccessInvitation'
 import DaUserProfile from '@/components/molecules/DaUserProfile'
-import { types } from '@/components/molecules/inventory/data'
+import { types, typeToImage } from '@/components/molecules/inventory/data'
 import useCurrentInventoryData from '@/hooks/useCurrentInventoryData'
 
 const KEY_WIDTH = '240px'
@@ -503,7 +503,7 @@ const General = ({ data: item }: { data: InventoryItem }) => {
           </div>
 
           <DaFileUpload
-            image={item.data?.image}
+            image={typeToImage[item.type as keyof typeof typeToImage]}
             isImage
             className="w-[200px] h-[200px]"
             imgClassName="object-cover !h-full !w-full"
