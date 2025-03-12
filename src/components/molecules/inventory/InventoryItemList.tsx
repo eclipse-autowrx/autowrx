@@ -9,14 +9,15 @@ import {
   TbChevronLeft,
   TbFileExport,
   TbFileImport,
-  TbLoader,
+  TbHierarchy,
   TbPlus,
   TbSearch,
+  TbSitemap,
 } from 'react-icons/tb'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Fragment } from 'react/jsx-runtime'
 import DaTreeBrowser, { Node } from '../DaTreeBrowser'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   joinCreatedByData,
   joinTypeData as joinTypeData,
@@ -28,89 +29,6 @@ import useInventoryItems from '@/hooks/useInventoryItems'
 import DaLoading from '@/components/atoms/DaLoading'
 import useCurrentInventoryData from '@/hooks/useCurrentInventoryData'
 import { useListUsers } from '@/hooks/useListUsers'
-
-// const MOCK_ITEM_DATA: InventorItemType[] = [
-//   {
-//     id: 'asw_component_1',
-//     name: 'ADAS Perception Module',
-//     type: 'asw_component',
-//     framework: 'ROS',
-//     dependencies: ['grpc', 'protobuf', 'tensorflow-serving-api'],
-//     image: 'https://example.com/images/asw_component_1.png',
-//     createdAt: '2025-02-26T07:15:08.836260',
-//     updatedAt: '2025-03-03T07:15:08.836260',
-//     created_by: {
-//       name: 'Slama Dirk (G7/PJ-DO-SPP)',
-//       image_file:
-//         'https://backend-core-dev.digital.auto/v2/file/data/autowrx/7d0ff6e1-e5a3-4cf9-bd43-549f8593dd47.jpg',
-//       id: '6724a8cb3e09ac00279ed6f5',
-//     },
-//   },
-//   {
-//     id: 'asw_component_2',
-//     name: 'Autonomous Driving Planner',
-//     type: 'asw_component',
-//     framework: 'ROS',
-//     dependencies: ['boost', 'gtest', 'qt'],
-//     image: 'https://example.com/images/asw_component_2.png',
-//     createdAt: '2025-01-11T07:15:08.836303',
-//     updatedAt: '2025-01-19T07:15:08.836303',
-//     created_by: {
-//       name: 'Slama Dirk (G7/PJ-DO-SPP)',
-//       image_file:
-//         'https://backend-core-dev.digital.auto/v2/file/data/autowrx/7d0ff6e1-e5a3-4cf9-bd43-549f8593dd47.jpg',
-//       id: '6724a8cb3e09ac00279ed6f5',
-//     },
-//   },
-//   {
-//     id: 'asw_component_3',
-//     name: 'Battery Management System',
-//     type: 'asw_component',
-//     framework: 'TensorFlow',
-//     dependencies: ['grpc', 'protobuf', 'tensorflow-serving-api'],
-//     image: 'https://example.com/images/asw_component_3.png',
-//     createdAt: '2025-01-04T07:15:08.836317',
-//     updatedAt: '2025-01-06T07:15:08.836317',
-//     created_by: {
-//       name: 'Slama Dirk (G7/PJ-DO-SPP)',
-//       image_file:
-//         'https://backend-core-dev.digital.auto/v2/file/data/autowrx/7d0ff6e1-e5a3-4cf9-bd43-549f8593dd47.jpg',
-//       id: '6724a8cb3e09ac00279ed6f5',
-//     },
-//   },
-//   {
-//     id: 'asw_component_4',
-//     name: 'Vehicle Dynamics Controller',
-//     type: 'asw_component',
-//     framework: 'TensorFlow',
-//     dependencies: ['numpy', 'scipy', 'pandas'],
-//     image: 'https://example.com/images/asw_component_4.png',
-//     createdAt: '2024-12-01T07:15:08.836327',
-//     updatedAt: '2024-12-02T07:15:08.836327',
-//     created_by: {
-//       name: 'Luong Nguyen Nhan (MS/PJ-ETA-Innov)',
-//       image_file:
-//         'https://backend-core-dev.digital.auto/v2/file/data/autowrx/5a4e8b26-66a1-4cfd-9c22-c16150b17739.jpg',
-//       id: '6699fa83964f3f002f35ea03',
-//     },
-//   },
-//   {
-//     id: 'asw_component_5',
-//     name: 'Infotainment Media Processor',
-//     type: 'asw_component',
-//     framework: 'TensorFlow',
-//     dependencies: ['opencv-python', 'matplotlib', 'pillow'],
-//     image: 'https://example.com/images/asw_component_5.png',
-//     createdAt: '2025-02-27T07:15:08.836339',
-//     updatedAt: '2025-03-03T07:15:08.836339',
-//     created_by: {
-//       name: 'Phan Thanh Hoang (MS/ETA-Hub MS/ETA-DAP)',
-//       image_file:
-//         'https://backend-core-dev.digital.auto/v2/file/data/autowrx/209ec591-ccd1-48db-bb23-6437444e84d2.jpg',
-//       id: '6714fe1a9c8a740026eb7f97',
-//     },
-//   },
-// ]
 
 const MOCK_TREE_DATA: Node[] = [
   {
@@ -234,6 +152,151 @@ const MOCK_TREE_DATA: Node[] = [
             id: 'requirement',
             name: 'Requirement',
             color: '#F39C12',
+          },
+        ],
+      },
+    ],
+  },
+]
+
+const MOCK_TREE_COMPOSITION_DATA: Node[] = [
+  {
+    id: 'artefact',
+    name: 'Artefact',
+    color: '#2C3E50',
+    children: [
+      {
+        id: 'tool_artefact',
+        name: 'Tool Artefact',
+        color: '#0F766E',
+      },
+      {
+        id: 'vehicle_model',
+        name: 'Vehicle Model',
+        color: '#2980B9',
+        children: [
+          {
+            id: 'asw_domain',
+            name: 'ASW Domain',
+            color: '#7F8C8D',
+            children: [
+              {
+                id: 'asw_component',
+                name: 'ASW Component',
+                color: '#3498DB',
+                children: [
+                  {
+                    id: 'asw_service',
+                    name: 'ASW Service',
+                    color: '#C0392B',
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            id: 'asw_layer',
+            name: 'ASW Layer',
+            color: '#8E44AD',
+          },
+          {
+            id: 'api_layer',
+            name: 'API Layer',
+            color: '#27AE60',
+          },
+          {
+            id: 'stage',
+            name: 'Stage',
+            color: '#745e07',
+          },
+          {
+            id: 'system',
+            name: 'System',
+            color: '#16A085',
+            children: [
+              {
+                id: 'sub_system',
+                name: 'Sub System',
+                color: '#F39C12',
+                children: [
+                  {
+                    id: 'compute_node',
+                    name: 'Compute Node',
+                    color: '#8E44AD',
+                    children: [
+                      {
+                        id: 'sw_stack_item',
+                        name: 'SW Stack Item',
+                        color: '#D35400',
+                      },
+                    ],
+                  },
+                  {
+                    id: 'network',
+                    name: 'Network',
+                    color: '#27AE60',
+                  },
+                  {
+                    id: 'peripheral',
+                    name: 'Peripheral',
+                    color: '#34495E',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'sdv_engineering_artefact',
+        name: 'SDV Engineering Artefact',
+        color: '#E67E22',
+        children: [
+          {
+            id: 'test_plan',
+            name: 'Test Plan',
+            color: '#95A5A6',
+            children: [
+              {
+                id: 'test_case',
+                name: 'Test Case',
+                color: '#2ECC71',
+                children: [
+                  {
+                    id: 'test_run',
+                    name: 'Test Run',
+                    color: '#1ABC9C',
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            id: 'requirements_group',
+            name: 'Requirements Group',
+            color: '#16A085',
+            children: [
+              {
+                id: 'requirement',
+                name: 'Requirement',
+                color: '#F39C12',
+              },
+            ],
+          },
+          {
+            id: 'hara',
+            name: 'HARA',
+            color: '#E74C3C',
+          },
+          {
+            id: 'country',
+            name: 'Country',
+            color: '#2C3E50',
+          },
+          {
+            id: 'regulation',
+            name: 'Regulation',
+            color: '#3498DB',
           },
         ],
       },
@@ -439,6 +502,11 @@ type FilterProps = {
 const Filter = ({ mode }: FilterProps) => {
   const [searchParams, setSearchParams] = useSearchParams()
   const { inventory_role } = useParams()
+
+  const [browserMode, setBrowserMode] = useState<'inheritance' | 'composition'>(
+    'inheritance',
+  )
+
   const roleData = roles.find((r) => r.name === inventory_role)
   const selected = searchParams.get('type')
   const setSelected = (type: string) => {
@@ -480,16 +548,50 @@ const Filter = ({ mode }: FilterProps) => {
           'rounded-lg mt-4 mb-6 overflow-y-auto max-h-[calc(100vh-320px)] text-sm text-da-gray-dark shadow-sm border p-5',
         )}
       >
-        <DaText variant="small-bold" className="!block text-da-gray-darkest">
-          Tree Browser
-        </DaText>
+        <div className="flex items-center justify-between gap-3 -mt-1">
+          <DaText variant="small-bold" className="!block text-da-gray-darkest">
+            Tree Browser
+          </DaText>
+          <div className="rounded-full flex min-w-0 h-8 border text-xs">
+            <DaTooltip content="Inheritance View">
+              <button
+                onClick={() => setBrowserMode('inheritance')}
+                className={clsx(
+                  browserMode === 'inheritance'
+                    ? 'bg-da-primary-500 text-white'
+                    : 'hover:bg-da-gray-light',
+                  'h-full flex-1 rounded-full px-4 flex items-center gap-1',
+                )}
+              >
+                <TbHierarchy size={14} />
+              </button>
+            </DaTooltip>
+            <DaTooltip content="Composition View">
+              <button
+                onClick={() => setBrowserMode('composition')}
+                className={clsx(
+                  browserMode === 'composition'
+                    ? 'bg-da-primary-500 text-white'
+                    : 'hover:bg-da-gray-light',
+                  'h-full flex-1 rounded-full px-4 flex items-center gap-1',
+                )}
+              >
+                <TbSitemap size={14} />
+              </button>
+            </DaTooltip>
+          </div>
+        </div>
         <div className="mt-3" />
         <DaTreeBrowser
           selected={selected || ''}
           onSelected={(node) => {
             setSelected(node.id)
           }}
-          data={MOCK_TREE_DATA}
+          data={
+            browserMode === 'inheritance'
+              ? MOCK_TREE_DATA
+              : MOCK_TREE_COMPOSITION_DATA
+          }
         />
 
         {/* <div className="border-t border-da-gray-light/50 mt-4" />
