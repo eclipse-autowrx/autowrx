@@ -175,7 +175,7 @@ const InventoryItemRelationships = ({
 
     if (!addedNodes.current.includes(data.id)) {
       // Create the main node
-      resultsNode.push(createNode(data, x, y))
+      resultsNode.push(createNode(data, x, y, true))
       addedNodes.current.push(data.id)
     }
 
@@ -200,7 +200,7 @@ const InventoryItemRelationships = ({
         300 * (index - Math.round(filterResults.length / 2) + 1)
       y = lastNodePos.current.y + 100
 
-      resultsNode.push(createNode(instanceItem, x, y, true))
+      resultsNode.push(createNode(instanceItem, x, y))
       resultsEdge.push(createEdge(instanceItem.id, data.id, relation.type))
 
       addedNodes.current.push(instanceItem.id)
