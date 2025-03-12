@@ -509,21 +509,6 @@ export const types = [
   },
   {
     allOf: [
-      { $ref: 'sdv_system_artefact' },
-      {
-        type: 'object',
-        properties: {
-          rigConfiguration: { type: 'string' },
-          hardwareInLoop: { type: 'boolean' },
-        },
-      },
-    ],
-    $id: 'hil',
-    title: 'HIL',
-    description: 'Hardware-in-the-loop setup or configuration.',
-  },
-  {
-    allOf: [
       { $ref: 'sdv_engineering_artefact' },
       {
         type: 'object',
@@ -828,6 +813,12 @@ export const relations = [
     type: 'deployed_on',
     multiplicity: 'one-to-one',
   },
+  {
+    source: 'hara',
+    target: 'sdv_system_artefact',
+    type: 'governs',
+    multiplicity: 'one-to-many',
+  },
 ]
 
 export const inheritanceRelations = [
@@ -870,10 +861,17 @@ export const inheritanceRelations = [
     type: 'inheritance',
   },
   { source: 'asw_service', target: 'sdv_system_artefact', type: 'inheritance' },
-  { source: 'hara', target: 'sdv_system_artefact', type: 'inheritance' },
-  { source: 'country', target: 'sdv_system_artefact', type: 'inheritance' },
-  { source: 'regulation', target: 'sdv_system_artefact', type: 'inheritance' },
-  { source: 'hil', target: 'sdv_system_artefact', type: 'inheritance' },
+  { source: 'hara', target: 'sdv_engineering_artefact', type: 'inheritance' },
+  {
+    source: 'country',
+    target: 'sdv_engineering_artefact',
+    type: 'inheritance',
+  },
+  {
+    source: 'regulation',
+    target: 'sdv_engineering_artefact',
+    type: 'inheritance',
+  },
   { source: 'peripheral', target: 'sdv_system_artefact', type: 'inheritance' },
   {
     source: 'test_plan',
@@ -894,6 +892,209 @@ export const inheritanceRelations = [
 
 export const instances: InventoryItem[] = [
   // Passenger Welcome Sequence
+  {
+    id: 'inst_hara_2',
+    type: 'hara',
+    data: {
+      name: 'Software Crash in Navigation System',
+      riskLevel: 'High',
+      mitigationPlan:
+        'Implement redundant boot sequences and error recovery protocols to ensure continuous navigation operation.',
+      createdAt: '2025-03-11T12:00:00Z',
+      updatedAt: '2025-03-11T12:05:00Z',
+      createdBy: {
+        name: 'Luong Nguyen Nhan (MS/PJ-ETA-Innov)',
+        image_file:
+          'https://backend-core-dev.digital.auto/v2/file/data/autowrx/5a4e8b26-66a1-4cfd-9c22-c16150b17739.jpg',
+        id: '6699fa83964f3f002f35ea03',
+      },
+    },
+  },
+  {
+    id: 'inst_hara_3',
+    type: 'hara',
+    data: {
+      name: 'Overheating in Subsystem Electronics',
+      riskLevel: 'Critical',
+      mitigationPlan:
+        'Integrate thermal sensors and activate cooling protocols immediately upon detecting overheating in subsystem components.',
+      createdAt: '2025-03-11T12:10:00Z',
+      updatedAt: '2025-03-11T12:15:00Z',
+      createdBy: {
+        name: 'Phan Thanh Hoang (MS/ETA-Hub MS/ETA-DAP)',
+        image_file:
+          'https://backend-core-dev.digital.auto/v2/file/data/autowrx/209ec591-ccd1-48db-bb23-6437444e84d2.jpg',
+        id: '6714fe1a9c8a740026eb7f97',
+      },
+    },
+  },
+  {
+    id: 'inst_hara_4',
+    type: 'hara',
+    data: {
+      name: 'Signal Loss in Communication Network',
+      riskLevel: 'Medium',
+      mitigationPlan:
+        'Deploy backup communication channels and regularly monitor network integrity to quickly recover from signal disruptions.',
+      createdAt: '2025-03-11T12:20:00Z',
+      updatedAt: '2025-03-11T12:25:00Z',
+      createdBy: {
+        name: 'Slama Dirk (G7/PJ-DO-SPP)',
+        image_file:
+          'https://backend-core-dev.digital.auto/v2/file/data/autowrx/7d0ff6e1-e5a3-4cf9-bd43-549f8593dd47.jpg',
+        id: '6724a8cb3e09ac00279ed6f5',
+      },
+    },
+  },
+  {
+    id: 'inst_hara_pw_ambient',
+    type: 'hara',
+    data: {
+      name: 'Delayed Ambient Light Adjustment',
+      riskLevel: 'High',
+      mitigationPlan:
+        'Implement sensor redundancy and backup control algorithms within the Update Ambient Light service to ensure timely adjustment of cabin and exterior lighting.',
+      createdAt: '2025-03-11T14:10:00Z',
+      updatedAt: '2025-03-11T14:15:00Z',
+      createdBy: {
+        name: 'Phan Thanh Hoang (MS/ETA-Hub MS/ETA-DAP)',
+        image_file:
+          'https://backend-core-dev.digital.auto/v2/file/data/autowrx/209ec591-ccd1-48db-bb23-6437444e84d2.jpg',
+        id: '6714fe1a9c8a740026eb7f97',
+      },
+    },
+  },
+  {
+    id: 'inst_hara_door_fail',
+    type: 'hara',
+    data: {
+      name: 'Door Controller Safety Check Failure',
+      riskLevel: 'Critical',
+      mitigationPlan:
+        'Enhance safety algorithms and introduce additional sensor fusion in the Door Controller component to avoid unsafe door operations.',
+      createdAt: '2025-03-11T14:20:00Z',
+      updatedAt: '2025-03-11T14:25:00Z',
+      createdBy: {
+        name: 'Luong Nguyen Nhan (MS/PJ-ETA-Innov)',
+        image_file:
+          'https://backend-core-dev.digital.auto/v2/file/data/autowrx/5a4e8b26-66a1-4cfd-9c22-c16150b17739.jpg',
+        id: '6699fa83964f3f002f35ea03',
+      },
+    },
+  },
+  {
+    id: 'inst_hara_display_glitch',
+    type: 'hara',
+    data: {
+      name: 'Intermittent Dashboard Rendering Glitch',
+      riskLevel: 'Medium',
+      mitigationPlan:
+        'Introduce automated diagnostics and failover routines within the Render Dashboard service to recover quickly from display errors.',
+      createdAt: '2025-03-11T14:30:00Z',
+      updatedAt: '2025-03-11T14:35:00Z',
+      createdBy: {
+        name: 'Phan Thanh Hoang (MS/ETA-Hub MS/ETA-DAP)',
+        image_file:
+          'https://backend-core-dev.digital.auto/v2/file/data/autowrx/209ec591-ccd1-48db-bb23-6437444e84d2.jpg',
+        id: '6714fe1a9c8a740026eb7f97',
+      },
+    },
+  },
+  {
+    id: 'inst_hara_cloud_sync',
+    type: 'hara',
+    data: {
+      name: 'Mismatch in Cloud-Synced Driver Preferences',
+      riskLevel: 'Medium',
+      mitigationPlan:
+        'Validate data integrity in the Cloud Sync Module and implement a fallback to local cached preferences if discrepancies are detected.',
+      createdAt: '2025-03-11T14:40:00Z',
+      updatedAt: '2025-03-11T14:45:00Z',
+      createdBy: {
+        name: 'Slama Dirk (G7/PJ-DO-SPP)',
+        image_file:
+          'https://backend-core-dev.digital.auto/v2/file/data/autowrx/7d0ff6e1-e5a3-4cf9-bd43-549f8593dd47.jpg',
+        id: '6724a8cb3e09ac00279ed6f5',
+      },
+    },
+  },
+  {
+    id: 'inst_hara_onboard_overload',
+    type: 'hara',
+    data: {
+      name: 'Overload in On-Board Vehicle Control System',
+      riskLevel: 'High',
+      mitigationPlan:
+        'Incorporate load balancing and real-time monitoring in the On-Board Vehicle Control system to prevent performance degradation under peak conditions.',
+      createdAt: '2025-03-11T14:50:00Z',
+      updatedAt: '2025-03-11T14:55:00Z',
+      createdBy: {
+        name: 'Luong Nguyen Nhan (MS/PJ-ETA-Innov)',
+        image_file:
+          'https://backend-core-dev.digital.auto/v2/file/data/autowrx/5a4e8b26-66a1-4cfd-9c22-c16150b17739.jpg',
+        id: '6699fa83964f3f002f35ea03',
+      },
+    },
+  },
+  {
+    id: 'inst_network_1',
+    type: 'network',
+    data: {
+      name: 'CAN Bus Network',
+      description:
+        'High-speed CAN bus network connecting multiple vehicle ECUs.',
+      networkType: 'CAN',
+      bandwidth: 1.0,
+      createdAt: '2025-03-11T11:00:00Z',
+      updatedAt: '2025-03-11T11:05:00Z',
+      createdBy: {
+        name: 'Phan Thanh Hoang (MS/ETA-Hub MS/ETA-DAP)',
+        image_file:
+          'https://backend-core-dev.digital.auto/v2/file/data/autowrx/209ec591-ccd1-48db-bb23-6437444e84d2.jpg',
+        id: '6714fe1a9c8a740026eb7f97',
+      },
+    },
+  },
+  {
+    id: 'inst_compute_node_1',
+    type: 'compute_node',
+    data: {
+      name: 'Main ECU Compute Node',
+      description:
+        'Central processing unit handling sensor fusion and control algorithms.',
+      nodeType: 'ECU',
+      cpuArchitecture: 'ARM',
+      ramSize: 8,
+      storageSize: 128,
+      createdAt: '2025-03-11T11:10:00Z',
+      updatedAt: '2025-03-11T11:15:00Z',
+      createdBy: {
+        name: 'Luong Nguyen Nhan (MS/PJ-ETA-Innov)',
+        image_file:
+          'https://backend-core-dev.digital.auto/v2/file/data/autowrx/5a4e8b26-66a1-4cfd-9c22-c16150b17739.jpg',
+        id: '6699fa83964f3f002f35ea03',
+      },
+    },
+  },
+  {
+    id: 'inst_peripheral_1',
+    type: 'peripheral',
+    data: {
+      name: 'Lidar Sensor Module',
+      description:
+        'High-precision Lidar sensor for environment scanning and object detection.',
+      peripheralType: 'Sensor',
+      powerRequirement: 10,
+      createdAt: '2025-03-11T11:20:00Z',
+      updatedAt: '2025-03-11T11:25:00Z',
+      createdBy: {
+        name: 'Luong Nguyen Nhan (MS/PJ-ETA-Innov)',
+        image_file:
+          'https://backend-core-dev.digital.auto/v2/file/data/autowrx/5a4e8b26-66a1-4cfd-9c22-c16150b17739.jpg',
+        id: '6699fa83964f3f002f35ea03',
+      },
+    },
+  },
   {
     id: 'inst_vehicle_model',
     type: 'vehicle_model',
@@ -2705,6 +2906,54 @@ export const instances: InventoryItem[] = [
 
 export const instanceRelations = [
   // Passenger Welcome Sequence
+  {
+    source: 'inst_hara_2',
+    target: 'inst_system_offboard',
+    type: 'governs',
+    multiplicity: 'one-to-many',
+  },
+  {
+    source: 'inst_hara_3',
+    target: 'inst_subsystem_onboard_1',
+    type: 'governs',
+    multiplicity: 'one-to-many',
+  },
+  {
+    source: 'inst_hara_4',
+    target: 'inst_network_1',
+    type: 'governs',
+    multiplicity: 'one-to-many',
+  },
+  {
+    source: 'inst_hara_pw_ambient',
+    target: 'inst_asw_service_1_2',
+    type: 'governs',
+    multiplicity: 'one-to-many',
+  },
+  {
+    source: 'inst_hara_door_fail',
+    target: 'inst_asw_component_2',
+    type: 'governs',
+    multiplicity: 'one-to-many',
+  },
+  {
+    source: 'inst_hara_display_glitch',
+    target: 'inst_asw_service_1_1',
+    type: 'governs',
+    multiplicity: 'one-to-many',
+  },
+  {
+    source: 'inst_hara_cloud_sync',
+    target: 'inst_asw_component_6',
+    type: 'governs',
+    multiplicity: 'one-to-many',
+  },
+  {
+    source: 'inst_hara_onboard_overload',
+    target: 'inst_system_onboard',
+    type: 'governs',
+    multiplicity: 'one-to-many',
+  },
   {
     source: 'inst_asw_component_2',
     target: 'inst_asw_service_2_1',
