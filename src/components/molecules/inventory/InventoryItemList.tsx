@@ -17,7 +17,7 @@ import {
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Fragment } from 'react/jsx-runtime'
 import DaTreeBrowser, { Node } from '../DaTreeBrowser'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   joinCreatedByData,
   joinTypeData as joinTypeData,
@@ -29,129 +29,107 @@ import useInventoryItems from '@/hooks/useInventoryItems'
 import DaLoading from '@/components/atoms/DaLoading'
 import useCurrentInventoryData from '@/hooks/useCurrentInventoryData'
 import { useListUsers } from '@/hooks/useListUsers'
+import { debounce } from 'lodash'
 
 const MOCK_TREE_DATA: Node[] = [
   {
     id: 'artefact',
     name: 'Artefact',
-    color: '#2C3E50',
     children: [
       {
         id: 'tool_artefact',
         name: 'Tool Artefact',
-        color: '#0F766E',
       },
       {
         id: 'sdv_system_artefact',
         name: 'SDV System Artefact',
-        color: '#2980B9',
         children: [
           {
             id: 'asw_domain',
             name: 'ASW Domain',
-            color: '#7F8C8D',
           },
           {
             id: 'asw_component',
             name: 'ASW Component',
-            color: '#3498DB',
           },
           {
             id: 'asw_service',
             name: 'ASW Service',
-            color: '#C0392B',
           },
           {
             id: 'asw_layer',
             name: 'ASW Layer',
-            color: '#8E44AD',
           },
           {
             id: 'api_layer',
             name: 'API Layer',
-            color: '#27AE60',
           },
           {
             id: 'system',
             name: 'System',
-            color: '#16A085',
           },
           {
             id: 'sub_system',
             name: 'Sub System',
-            color: '#F39C12',
           },
           {
             id: 'sw_stack_item',
             name: 'SW Stack Item',
-            color: '#D35400',
           },
           {
             id: 'compute_node',
             name: 'Compute Node',
-            color: '#8E44AD',
           },
           {
             id: 'network',
             name: 'Network',
-            color: '#27AE60',
           },
           {
             id: 'peripheral',
             name: 'Peripheral',
-            color: '#34495E',
           },
         ],
       },
       {
         id: 'sdv_engineering_artefact',
         name: 'SDV Engineering Artefact',
-        color: '#E67E22',
+
         children: [
           {
             id: 'stage',
             name: 'Stage',
-            color: '#745e07',
           },
           {
             id: 'hara',
             name: 'HARA',
-            color: '#E74C3C',
           },
           {
             id: 'test_plan',
             name: 'Test Plan',
-            color: '#95A5A6',
           },
           {
             id: 'test_case',
             name: 'Test Case',
-            color: '#2ECC71',
           },
           {
             id: 'test_run',
             name: 'Test Run',
-            color: '#1ABC9C',
           },
           {
             id: 'country',
             name: 'Country',
-            color: '#2C3E50',
           },
           {
             id: 'regulation',
             name: 'Regulation',
-            color: '#3498DB',
           },
           {
             id: 'requirements_group',
             name: 'Requirements Group',
-            color: '#16A085',
           },
           {
             id: 'requirement',
             name: 'Requirement',
-            color: '#F39C12',
           },
         ],
       },
@@ -163,32 +141,29 @@ const MOCK_TREE_COMPOSITION_DATA: Node[] = [
   {
     id: 'artefact',
     name: 'Artefact',
-    color: '#2C3E50',
     children: [
       {
         id: 'tool_artefact',
         name: 'Tool Artefact',
-        color: '#0F766E',
       },
       {
         id: 'vehicle_model',
         name: 'Vehicle Model',
-        color: '#2980B9',
+
         children: [
           {
             id: 'asw_domain',
             name: 'ASW Domain',
-            color: '#7F8C8D',
+
             children: [
               {
                 id: 'asw_component',
                 name: 'ASW Component',
-                color: '#3498DB',
+
                 children: [
                   {
                     id: 'asw_service',
                     name: 'ASW Service',
-                    color: '#C0392B',
                   },
                 ],
               },
@@ -197,49 +172,43 @@ const MOCK_TREE_COMPOSITION_DATA: Node[] = [
           {
             id: 'asw_layer',
             name: 'ASW Layer',
-            color: '#8E44AD',
           },
           {
             id: 'api_layer',
             name: 'API Layer',
-            color: '#27AE60',
           },
           {
             id: 'stage',
             name: 'Stage',
-            color: '#745e07',
           },
           {
             id: 'system',
             name: 'System',
-            color: '#16A085',
+
             children: [
               {
                 id: 'sub_system',
                 name: 'Sub System',
-                color: '#F39C12',
+
                 children: [
                   {
                     id: 'compute_node',
                     name: 'Compute Node',
-                    color: '#8E44AD',
+
                     children: [
                       {
                         id: 'sw_stack_item',
                         name: 'SW Stack Item',
-                        color: '#D35400',
                       },
                     ],
                   },
                   {
                     id: 'network',
                     name: 'Network',
-                    color: '#27AE60',
                   },
                   {
                     id: 'peripheral',
                     name: 'Peripheral',
-                    color: '#34495E',
                   },
                 ],
               },
@@ -250,22 +219,21 @@ const MOCK_TREE_COMPOSITION_DATA: Node[] = [
       {
         id: 'sdv_engineering_artefact',
         name: 'SDV Engineering Artefact',
-        color: '#E67E22',
+
         children: [
           {
             id: 'test_plan',
             name: 'Test Plan',
-            color: '#95A5A6',
+
             children: [
               {
                 id: 'test_case',
                 name: 'Test Case',
-                color: '#2ECC71',
+
                 children: [
                   {
                     id: 'test_run',
                     name: 'Test Run',
-                    color: '#1ABC9C',
                   },
                 ],
               },
@@ -274,29 +242,25 @@ const MOCK_TREE_COMPOSITION_DATA: Node[] = [
           {
             id: 'requirements_group',
             name: 'Requirements Group',
-            color: '#16A085',
+
             children: [
               {
                 id: 'requirement',
                 name: 'Requirement',
-                color: '#F39C12',
               },
             ],
           },
           {
             id: 'hara',
             name: 'HARA',
-            color: '#E74C3C',
           },
           {
             id: 'country',
             name: 'Country',
-            color: '#2C3E50',
           },
           {
             id: 'regulation',
             name: 'Regulation',
-            color: '#3498DB',
           },
         ],
       },
@@ -315,6 +279,8 @@ const InventoryItemList = ({ mode = 'view' }: InventoryItemListProps) => {
   const { data: users } = useListUsers({
     id: '6724a8cb3e09ac00279ed6f5,6714fe1a9c8a740026eb7f97,6699fa83964f3f002f35ea03',
   })
+  const querySearch = searchParams.get('search') || ''
+
   useEffect(() => {
     if (!inventory_role) return
     const type = rolesTypeMap[inventory_role]
@@ -328,47 +294,58 @@ const InventoryItemList = ({ mode = 'view' }: InventoryItemListProps) => {
     return data ? joinCreatedByData(joinTypeData(data as any[]), users) : []
   }, [data])
 
+  const checkType = (queryType: string, itemType: string) => {
+    if (
+      queryType === 'sdv_system_artefact' &&
+      [
+        'asw_domain',
+        'asw_component',
+        'asw_service',
+        'asw_layer',
+        'api_layer',
+        'system',
+        'sub_system',
+        'sw_stack_item',
+        'compute_node',
+        'network',
+        'peripheral',
+      ].includes(itemType)
+    )
+      return true
+
+    if (
+      queryType === 'sdv_engineering_artefact' &&
+      [
+        'stage',
+        'hara',
+        'test_plan',
+        'test_case',
+        'test_run',
+        'country',
+        'regulation',
+        'requirements_group',
+        'requirement',
+      ].includes(itemType)
+    )
+      return true
+
+    if (queryType === 'artefact') return true
+
+    return queryType == itemType
+  }
+
+  const checkSearch = (querySearch: string, itemName: string) => {
+    if (!querySearch) return true
+    const lcQuerySearch = querySearch.toLowerCase()
+    return itemName.toLowerCase().includes(lcQuerySearch)
+  }
+
   const filteredData = useMemo(() => {
     return refinedMockData.filter((item) => {
-      if (
-        searchParams.get('type') === 'sdv_system_artefact' &&
-        [
-          'asw_domain',
-          'asw_component',
-          'asw_service',
-          'asw_layer',
-          'api_layer',
-          'system',
-          'sub_system',
-          'sw_stack_item',
-          'compute_node',
-          'network',
-          'peripheral',
-        ].includes(item.type)
+      return (
+        checkType(searchParams.get('type') || '', item.type) &&
+        checkSearch(searchParams.get('search') || '', item.data?.name || '')
       )
-        return true
-
-      if (
-        searchParams.get('type') === 'sdv_engineering_artefact' &&
-        [
-          'stage',
-          'hara',
-          'test_plan',
-          'test_case',
-          'test_run',
-          'country',
-          'regulation',
-          'requirements_group',
-          'requirement',
-        ].includes(item.type)
-      )
-        return true
-
-      if (searchParams.get('type') === 'artefact') return true
-      if (searchParams.has('type')) {
-        return item.type === searchParams.get('type')
-      }
-      return true
     })
   }, [refinedMockData, searchParams])
 
@@ -385,7 +362,7 @@ const InventoryItemList = ({ mode = 'view' }: InventoryItemListProps) => {
 
       <div className="flex-1 min-w-0">
         <DaText variant="title" className="text-da-primary-500">
-          Inventory
+          {querySearch ? `Results for '${querySearch}'` : 'Inventory'}
         </DaText>
 
         {mode === 'view' && (
@@ -502,6 +479,8 @@ type FilterProps = {
 const Filter = ({ mode }: FilterProps) => {
   const [searchParams, setSearchParams] = useSearchParams()
   const { inventory_role } = useParams()
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const nodeElementsRef = useRef<{ [key: string]: HTMLDivElement }>({})
 
   const [browserMode, setBrowserMode] = useState<'inheritance' | 'composition'>(
     'inheritance',
@@ -513,6 +492,21 @@ const Filter = ({ mode }: FilterProps) => {
     searchParams.set('type', type)
     setSearchParams(searchParams)
   }
+
+  useEffect(() => {
+    selected && nodeElementsRef.current[selected]?.scrollIntoView()
+  }, [selected])
+
+  const debounceUpdateSearchQuery = useMemo(() => {
+    return debounce((keyword: string) => {
+      const _searchParams = new URLSearchParams(window.location.search)
+
+      if (keyword) _searchParams.set('search', keyword)
+      else _searchParams.delete('search')
+
+      setSearchParams(_searchParams)
+    }, 300)
+  }, [])
 
   return (
     <div
@@ -526,6 +520,7 @@ const Filter = ({ mode }: FilterProps) => {
         inputClassName="text-sm !rounded-lg"
         wrapperClassName="!rounded-lg"
         Icon={TbSearch}
+        onChange={(e) => debounceUpdateSearchQuery(e.target.value)}
         placeholder="Search Inventory Item"
       />
 
@@ -544,6 +539,7 @@ const Filter = ({ mode }: FilterProps) => {
       )}
 
       <div
+        ref={scrollContainerRef}
         className={clsx(
           'rounded-lg mt-4 mb-6 overflow-y-auto max-h-[calc(100vh-320px)] text-sm text-da-gray-dark shadow-sm border p-5',
         )}
@@ -592,6 +588,7 @@ const Filter = ({ mode }: FilterProps) => {
               ? MOCK_TREE_DATA
               : MOCK_TREE_COMPOSITION_DATA
           }
+          nodeElementsRef={nodeElementsRef}
         />
 
         {/* <div className="border-t border-da-gray-light/50 mt-4" />
