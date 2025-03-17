@@ -17,8 +17,10 @@ import {
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Fragment } from 'react/jsx-runtime'
 import DaTreeBrowser, { Node } from '../DaTreeBrowser'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  instanceRelations,
+  instances,
   joinCreatedByData,
   joinTypeData as joinTypeData,
   roles,
@@ -29,129 +31,107 @@ import useInventoryItems from '@/hooks/useInventoryItems'
 import DaLoading from '@/components/atoms/DaLoading'
 import useCurrentInventoryData from '@/hooks/useCurrentInventoryData'
 import { useListUsers } from '@/hooks/useListUsers'
+import { debounce } from 'lodash'
 
 const MOCK_TREE_DATA: Node[] = [
   {
     id: 'artefact',
     name: 'Artefact',
-    color: '#2C3E50',
     children: [
       {
         id: 'tool_artefact',
         name: 'Tool Artefact',
-        color: '#0F766E',
       },
       {
         id: 'sdv_system_artefact',
         name: 'SDV System Artefact',
-        color: '#2980B9',
         children: [
           {
             id: 'asw_domain',
             name: 'ASW Domain',
-            color: '#7F8C8D',
           },
           {
             id: 'asw_component',
             name: 'ASW Component',
-            color: '#3498DB',
           },
           {
             id: 'asw_service',
             name: 'ASW Service',
-            color: '#C0392B',
           },
           {
             id: 'asw_layer',
             name: 'ASW Layer',
-            color: '#8E44AD',
           },
           {
             id: 'api_layer',
             name: 'API Layer',
-            color: '#27AE60',
           },
           {
             id: 'system',
             name: 'System',
-            color: '#16A085',
           },
           {
             id: 'sub_system',
             name: 'Sub System',
-            color: '#F39C12',
           },
           {
             id: 'sw_stack_item',
             name: 'SW Stack Item',
-            color: '#D35400',
           },
           {
             id: 'compute_node',
             name: 'Compute Node',
-            color: '#8E44AD',
           },
           {
             id: 'network',
             name: 'Network',
-            color: '#27AE60',
           },
           {
             id: 'peripheral',
             name: 'Peripheral',
-            color: '#34495E',
           },
         ],
       },
       {
         id: 'sdv_engineering_artefact',
         name: 'SDV Engineering Artefact',
-        color: '#E67E22',
+
         children: [
           {
             id: 'stage',
             name: 'Stage',
-            color: '#745e07',
           },
           {
             id: 'hara',
             name: 'HARA',
-            color: '#E74C3C',
           },
           {
             id: 'test_plan',
             name: 'Test Plan',
-            color: '#95A5A6',
           },
           {
             id: 'test_case',
             name: 'Test Case',
-            color: '#2ECC71',
           },
           {
             id: 'test_run',
             name: 'Test Run',
-            color: '#1ABC9C',
           },
           {
             id: 'country',
             name: 'Country',
-            color: '#2C3E50',
           },
           {
             id: 'regulation',
             name: 'Regulation',
-            color: '#3498DB',
           },
           {
             id: 'requirements_group',
             name: 'Requirements Group',
-            color: '#16A085',
           },
           {
             id: 'requirement',
             name: 'Requirement',
-            color: '#F39C12',
           },
         ],
       },
@@ -159,150 +139,77 @@ const MOCK_TREE_DATA: Node[] = [
   },
 ]
 
-const MOCK_TREE_COMPOSITION_DATA: Node[] = [
-  {
-    id: 'artefact',
-    name: 'Artefact',
-    color: '#2C3E50',
-    children: [
-      {
-        id: 'tool_artefact',
-        name: 'Tool Artefact',
-        color: '#0F766E',
-      },
-      {
-        id: 'vehicle_model',
-        name: 'Vehicle Model',
-        color: '#2980B9',
-        children: [
-          {
-            id: 'asw_domain',
-            name: 'ASW Domain',
-            color: '#7F8C8D',
-            children: [
-              {
-                id: 'asw_component',
-                name: 'ASW Component',
-                color: '#3498DB',
-                children: [
-                  {
-                    id: 'asw_service',
-                    name: 'ASW Service',
-                    color: '#C0392B',
-                  },
-                ],
-              },
-            ],
-          },
-          {
-            id: 'asw_layer',
-            name: 'ASW Layer',
-            color: '#8E44AD',
-          },
-          {
-            id: 'api_layer',
-            name: 'API Layer',
-            color: '#27AE60',
-          },
-          {
-            id: 'stage',
-            name: 'Stage',
-            color: '#745e07',
-          },
-          {
-            id: 'system',
-            name: 'System',
-            color: '#16A085',
-            children: [
-              {
-                id: 'sub_system',
-                name: 'Sub System',
-                color: '#F39C12',
-                children: [
-                  {
-                    id: 'compute_node',
-                    name: 'Compute Node',
-                    color: '#8E44AD',
-                    children: [
-                      {
-                        id: 'sw_stack_item',
-                        name: 'SW Stack Item',
-                        color: '#D35400',
-                      },
-                    ],
-                  },
-                  {
-                    id: 'network',
-                    name: 'Network',
-                    color: '#27AE60',
-                  },
-                  {
-                    id: 'peripheral',
-                    name: 'Peripheral',
-                    color: '#34495E',
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-      {
-        id: 'sdv_engineering_artefact',
-        name: 'SDV Engineering Artefact',
-        color: '#E67E22',
-        children: [
-          {
-            id: 'test_plan',
-            name: 'Test Plan',
-            color: '#95A5A6',
-            children: [
-              {
-                id: 'test_case',
-                name: 'Test Case',
-                color: '#2ECC71',
-                children: [
-                  {
-                    id: 'test_run',
-                    name: 'Test Run',
-                    color: '#1ABC9C',
-                  },
-                ],
-              },
-            ],
-          },
-          {
-            id: 'requirements_group',
-            name: 'Requirements Group',
-            color: '#16A085',
-            children: [
-              {
-                id: 'requirement',
-                name: 'Requirement',
-                color: '#F39C12',
-              },
-            ],
-          },
-          {
-            id: 'hara',
-            name: 'HARA',
-            color: '#E74C3C',
-          },
-          {
-            id: 'country',
-            name: 'Country',
-            color: '#2C3E50',
-          },
-          {
-            id: 'regulation',
-            name: 'Regulation',
-            color: '#3498DB',
-          },
-        ],
-      },
-    ],
-  },
+const SYSTEM_ARTEFACTS = [
+  'asw_domain',
+  'asw_component',
+  'asw_service',
+  'asw_layer',
+  'api_layer',
+  'system',
+  'sub_system',
+  'sw_stack_item',
+  'compute_node',
+  'network',
+  'peripheral',
 ]
+
+const ENGINEERING_ARTEFACTS = [
+  'stage',
+  'hara',
+  'test_plan',
+  'test_case',
+  'test_run',
+  'country',
+  'regulation',
+  'requirements_group',
+  'requirement',
+]
+
+const MOCK_TREE_COMPOSITION_DATA: Node[] = (() => {
+  joinTypeData(instances)
+
+  const traveled = new Set<string>()
+
+  const buildNode: (id: string) => Node | null = (id: string) => {
+    if (traveled.has(id)) return null
+    const inst = instances.find((i) => i.id === id)
+    if (!inst) return null
+
+    traveled.add(id)
+
+    const children = instanceRelations
+      .filter((ir) => ir.source === id && ir.type === 'composition')
+      .map((ir) => buildNode(ir.target))
+      .filter((child): child is Node => child != null)
+
+    return {
+      id,
+      name: inst.data?.name,
+      tooltip: inst.typeData?.title,
+      children,
+    }
+  }
+
+  const root = buildNode('inst_vehicle_model')
+  const result = root ? [root] : []
+
+  const engineeringArtefact: Node = {
+    id: 'sdv_engineering_artefact',
+    name: 'SDV Engineering Artefact',
+    children: [],
+  }
+
+  ENGINEERING_ARTEFACTS.forEach((ar) => {
+    const instIds = instances.filter((i) => i.type === ar).map((i) => i.id)
+    instIds.forEach((id) => {
+      const node = buildNode(id)
+      if (node) engineeringArtefact.children?.push(node)
+    })
+  })
+
+  result.push(engineeringArtefact)
+  return result
+})()
 
 type InventoryItemListProps = {
   mode?: 'view' | 'select'
@@ -315,6 +222,8 @@ const InventoryItemList = ({ mode = 'view' }: InventoryItemListProps) => {
   const { data: users } = useListUsers({
     id: '6724a8cb3e09ac00279ed6f5,6714fe1a9c8a740026eb7f97,6699fa83964f3f002f35ea03',
   })
+  const querySearch = searchParams.get('search') || ''
+
   useEffect(() => {
     if (!inventory_role) return
     const type = rolesTypeMap[inventory_role]
@@ -328,47 +237,49 @@ const InventoryItemList = ({ mode = 'view' }: InventoryItemListProps) => {
     return data ? joinCreatedByData(joinTypeData(data as any[]), users) : []
   }, [data])
 
-  const filteredData = useMemo(() => {
-    return refinedMockData.filter((item) => {
-      if (
-        searchParams.get('type') === 'sdv_system_artefact' &&
-        [
-          'asw_domain',
-          'asw_component',
-          'asw_service',
-          'asw_layer',
-          'api_layer',
-          'system',
-          'sub_system',
-          'sw_stack_item',
-          'compute_node',
-          'network',
-          'peripheral',
-        ].includes(item.type)
-      )
-        return true
-
-      if (
-        searchParams.get('type') === 'sdv_engineering_artefact' &&
-        [
-          'stage',
-          'hara',
-          'test_plan',
-          'test_case',
-          'test_run',
-          'country',
-          'regulation',
-          'requirements_group',
-          'requirement',
-        ].includes(item.type)
-      )
-        return true
-
-      if (searchParams.get('type') === 'artefact') return true
-      if (searchParams.has('type')) {
-        return item.type === searchParams.get('type')
-      }
+  const checkType = (queryType: string, itemType: string) => {
+    if (
+      queryType === 'sdv_system_artefact' &&
+      SYSTEM_ARTEFACTS.includes(itemType)
+    )
       return true
+
+    if (
+      queryType === 'sdv_engineering_artefact' &&
+      ENGINEERING_ARTEFACTS.includes(itemType)
+    )
+      return true
+
+    if (queryType === 'artefact') return true
+
+    return queryType == itemType
+  }
+
+  const checkComposition = (queryId: string | null, itemId: string) => {
+    if (!queryId) return true
+    const isChild = instanceRelations.find(
+      (ir) =>
+        ir.source === queryId &&
+        ir.target === itemId &&
+        ir.type === 'composition',
+    )
+    return isChild || queryId === itemId
+  }
+
+  const checkSearch = (querySearch: string, itemName: string) => {
+    if (!querySearch) return true
+    const lcQuerySearch = querySearch.toLowerCase()
+    return itemName.toLowerCase().includes(lcQuerySearch)
+  }
+
+  const filteredData = useMemo(() => {
+    const browserMode = searchParams.get('mode') || 'inheritance'
+
+    return refinedMockData.filter((item) => {
+      return browserMode === 'inheritance'
+        ? checkType(searchParams.get('type') || '', item.type)
+        : checkComposition(searchParams.get('id'), item.id) &&
+            checkSearch(searchParams.get('search') || '', item.data?.name || '')
     })
   }, [refinedMockData, searchParams])
 
@@ -385,7 +296,7 @@ const InventoryItemList = ({ mode = 'view' }: InventoryItemListProps) => {
 
       <div className="flex-1 min-w-0">
         <DaText variant="title" className="text-da-primary-500">
-          Inventory
+          {querySearch ? `Results for '${querySearch}'` : 'Inventory'}
         </DaText>
 
         {mode === 'view' && (
@@ -502,17 +413,55 @@ type FilterProps = {
 const Filter = ({ mode }: FilterProps) => {
   const [searchParams, setSearchParams] = useSearchParams()
   const { inventory_role } = useParams()
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const nodeElementsRef = useRef<{ [key: string]: HTMLDivElement }>({})
 
-  const [browserMode, setBrowserMode] = useState<'inheritance' | 'composition'>(
-    'inheritance',
-  )
-
-  const roleData = roles.find((r) => r.name === inventory_role)
-  const selected = searchParams.get('type')
-  const setSelected = (type: string) => {
-    searchParams.set('type', type)
+  const browserMode = searchParams.get('mode') || 'inheritance'
+  const setBrowserMode = (mode: 'inheritance' | 'composition') => {
+    searchParams.set('mode', mode)
     setSearchParams(searchParams)
   }
+
+  const modeConfig = useMemo(() => {
+    return {
+      inheritance: {
+        selected: searchParams.get('type'),
+        setSelected: (node: Node) => {
+          searchParams.set('type', node.id)
+          setSearchParams(searchParams)
+        },
+        treeData: MOCK_TREE_DATA,
+      },
+      composition: {
+        selected: searchParams.get('id'),
+        setSelected: (node: Node) => {
+          searchParams.set('id', node.id)
+          setSearchParams(searchParams)
+        },
+        treeData: MOCK_TREE_COMPOSITION_DATA,
+      },
+    }[browserMode]
+  }, [browserMode, searchParams])
+
+  const roleData = roles.find((r) => r.name === inventory_role)
+
+  useEffect(() => {
+    modeConfig?.selected &&
+      nodeElementsRef.current[modeConfig.selected].scrollIntoView({
+        behavior: 'smooth',
+      })
+  }, [modeConfig?.selected])
+
+  const debounceUpdateSearchQuery = useMemo(() => {
+    return debounce((keyword: string) => {
+      const _searchParams = new URLSearchParams(window.location.search)
+
+      if (keyword) _searchParams.set('search', keyword)
+      else _searchParams.delete('search')
+
+      setSearchParams(_searchParams)
+    }, 300)
+  }, [])
 
   return (
     <div
@@ -526,6 +475,7 @@ const Filter = ({ mode }: FilterProps) => {
         inputClassName="text-sm !rounded-lg"
         wrapperClassName="!rounded-lg"
         Icon={TbSearch}
+        onChange={(e) => debounceUpdateSearchQuery(e.target.value)}
         placeholder="Search Inventory Item"
       />
 
@@ -544,6 +494,7 @@ const Filter = ({ mode }: FilterProps) => {
       )}
 
       <div
+        ref={scrollContainerRef}
         className={clsx(
           'rounded-lg mt-4 mb-6 overflow-y-auto max-h-[calc(100vh-320px)] text-sm text-da-gray-dark shadow-sm border p-5',
         )}
@@ -583,46 +534,11 @@ const Filter = ({ mode }: FilterProps) => {
         </div>
         <div className="mt-3" />
         <DaTreeBrowser
-          selected={selected || ''}
-          onSelected={(node) => {
-            setSelected(node.id)
-          }}
-          data={
-            browserMode === 'inheritance'
-              ? MOCK_TREE_DATA
-              : MOCK_TREE_COMPOSITION_DATA
-          }
+          selected={modeConfig?.selected || ''}
+          onSelected={modeConfig?.setSelected}
+          data={modeConfig?.treeData || []}
+          nodeElementsRef={nodeElementsRef}
         />
-
-        {/* <div className="border-t border-da-gray-light/50 mt-4" />
-
-        <DaText
-          variant="small-bold"
-          className="!block mt-4 text-da-gray-darkest"
-        >
-          Visibility
-        </DaText>
-        <div className="flex flex-wrap text-xs text-da-gray-darkest gap-2 mt-3">
-          <button className="rounded-full px-2 py-1 border">Public</button>
-          <button className="rounded-full px-2 py-1 border">Private</button>
-        </div>
-
-        <div className="border-t border-da-gray-light/50 mt-4" />
-
-        <DaText
-          variant="small-bold"
-          className="!block mt-4 text-da-gray-darkest"
-        >
-          Sort By
-        </DaText>
-        <div className="flex flex-wrap text-xs text-da-gray-darkest gap-2 mt-3">
-          <button className="rounded-full px-2 py-1 border">
-            Created Time
-          </button>
-          <button className="rounded-full px-2 py-1 border">
-            Updated Time
-          </button>
-        </div> */}
       </div>
     </div>
   )
