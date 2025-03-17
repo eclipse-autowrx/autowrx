@@ -1,6 +1,7 @@
 import clsx from 'clsx'
 import { useState } from 'react'
 import { TbChevronDown } from 'react-icons/tb'
+import DaTooltip from '../atoms/DaTooltip'
 
 // Start: Common/Shared types
 export type Node = {
@@ -8,6 +9,7 @@ export type Node = {
   name: string
   children?: Node[]
   color?: string
+  tooltip?: string
 }
 // End: Common/Shared types
 
@@ -34,6 +36,7 @@ const DaTreeBrowser = ({
           key={node.id}
           node={node}
           nodeElementsRef={nodeElementsRef}
+          tooltip={node.tooltip}
         />
       ))}
     </div>
@@ -45,6 +48,7 @@ type TreeNodeProps = {
   selected?: string
   onSelected?: (node: Node) => void
   nodeElementsRef?: React.RefObject<{ [key: string]: HTMLDivElement }>
+  tooltip?: string
 }
 
 const TreeNode = ({
@@ -52,8 +56,25 @@ const TreeNode = ({
   selected,
   onSelected,
   nodeElementsRef,
+  tooltip,
 }: TreeNodeProps) => {
   const [isOpen, setIsOpen] = useState(true)
+
+  const Wrapper = ({
+    tooltip,
+    children,
+  }: {
+    tooltip?: string
+    children: React.ReactNode
+  }) => {
+    return tooltip ? (
+      <DaTooltip className="w-fit" content={tooltip}>
+        {children}
+      </DaTooltip>
+    ) : (
+      children
+    )
+  }
 
   const toggle = () => setIsOpen(!isOpen)
   return (
@@ -81,20 +102,22 @@ const TreeNode = ({
             </span>
           )}
         </button>
-        <button
-          onClick={() => {
-            onSelected?.(node)
-          }}
-          className={clsx(
-            'hover:underline',
-            selected === node.id && 'font-bold underline',
-          )}
-          style={{
-            color: node.color,
-          }}
-        >
-          {node.name}
-        </button>
+        <Wrapper tooltip={tooltip}>
+          <button
+            onClick={() => {
+              onSelected?.(node)
+            }}
+            className={clsx(
+              'hover:underline',
+              selected === node.id && 'font-bold underline',
+            )}
+            style={{
+              color: node.color,
+            }}
+          >
+            {node.name}
+          </button>
+        </Wrapper>
       </div>
       {isOpen && node.children && (
         <div className="ml-6 mt-1">
