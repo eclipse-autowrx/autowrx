@@ -276,10 +276,12 @@ const InventoryItemList = ({ mode = 'view' }: InventoryItemListProps) => {
     const browserMode = searchParams.get('mode') || 'inheritance'
 
     return refinedMockData.filter((item) => {
-      return browserMode === 'inheritance'
-        ? checkType(searchParams.get('type') || '', item.type)
-        : checkComposition(searchParams.get('id'), item.id) &&
-            checkSearch(searchParams.get('search') || '', item.data?.name || '')
+      return (
+        (browserMode === 'inheritance'
+          ? checkType(searchParams.get('type') || '', item.type)
+          : checkComposition(searchParams.get('id'), item.id)) &&
+        checkSearch(searchParams.get('search') || '', item.data?.name || '')
+      )
     })
   }, [refinedMockData, searchParams])
 
