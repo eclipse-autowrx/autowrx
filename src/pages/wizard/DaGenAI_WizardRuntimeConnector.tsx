@@ -22,6 +22,7 @@ interface KitConnectProps {
   onNewLog?: (log: string) => void
   onAppExit?: (code: any) => void
   onDeployResponse?: (log: string, isDone: boolean) => void
+  onKitAvailabilityChange?: (isAvailable: boolean) => void
 }
 
 const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
@@ -36,6 +37,7 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
       onNewLog,
       onAppExit,
       onDeployResponse,
+      onKitAvailabilityChange,
     },
     ref,
   ) => {
@@ -200,7 +202,7 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
         console.log('Kit Server URL is undefined')
         return
       }
-      console.log('Try to connect to KIT Server URL: ', kitServerUrl)
+      // console.log('Try to connect to KIT Server URL: ', kitServerUrl)
       const socket = io(kitServerUrl, {
         transports: ['websocket'],
         reconnectionAttempts: 5,
@@ -274,14 +276,16 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
 
     useEffect(() => {
       if (allRuntimes && allRuntimes.length > 0) {
-        if (activeRtId) return // Do not change activeRtId if it's already set by the user
+        if (activeRtId) return // Do not change if already set by the user
 
         let onlineRuntimes = allRuntimes.filter((rt: any) => rt.is_online)
 
         if (onlineRuntimes.length <= 0) {
           console.log(`setActiveRtId(undefined) cause: no onlineRuntimes`)
           setActiveRtId(undefined)
-          setWizardActiveRtId(undefined)
+          if (targetPrefix.toLowerCase().startsWith('runtime-')) {
+            setWizardActiveRtId(undefined)
+          }
           return
         }
 
@@ -293,7 +297,9 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
         if (defaultRuntime) {
           console.log(`setActiveRtId to defaultRuntime`, defaultRuntime.kit_id)
           setActiveRtId(defaultRuntime.kit_id)
-          setWizardActiveRtId(defaultRuntime.kit_id)
+          if (targetPrefix.toLowerCase().startsWith('runtime-')) {
+            setWizardActiveRtId(defaultRuntime.kit_id)
+          }
           localStorage.setItem('last-wizard-rt', defaultRuntime.kit_id)
           return
         }
@@ -306,19 +312,25 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
         ) {
           console.log(`lastOnlineRuntime `, lastOnlineRuntime)
           setActiveRtId(lastOnlineRuntime)
-          setWizardActiveRtId(lastOnlineRuntime)
+          if (targetPrefix.toLowerCase().startsWith('runtime-')) {
+            setWizardActiveRtId(lastOnlineRuntime)
+          }
           return
         }
 
         // If none of the above, set activeRtId to the first online runtime
         console.log(`setActiveRtId `, onlineRuntimes[0].kit_id)
         setActiveRtId(onlineRuntimes[0].kit_id)
-        setWizardActiveRtId(onlineRuntimes[0].kit_id)
+        if (targetPrefix.toLowerCase().startsWith('runtime-')) {
+          setWizardActiveRtId(onlineRuntimes[0].kit_id)
+        }
         localStorage.setItem('last-wizard-rt', onlineRuntimes[0].kit_id)
       } else {
         console.log(`setActiveRtId(undefined) cause: noRuntime`)
         setActiveRtId(undefined)
-        setWizardActiveRtId(undefined)
+        if (targetPrefix.toLowerCase().startsWith('runtime-')) {
+          setWizardActiveRtId(undefined)
+        }
       }
     }, [allRuntimes])
 
@@ -356,34 +368,25 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
         const parts = kit_id.split('-')
         return parts[parts.length - 1]
       }
-      // console.log(data)
-      let kits = [...data].filter((kit: any) => {
-        // return new Date().getTime() - new Date(kit.last_seen).getTime() < 100000000
-        return kit.is_online
-      })
+      // Filter kits that are online
+      let kits = [...data].filter((kit: any) => kit.is_online)
 
-      // First filter the kits
+      // Filter kits based on the targetPrefix (e.g. "runtime-", "kit-", etc.)
       let sortedKits = kits.filter((rt) =>
         rt.kit_id
           .toLowerCase()
           .startsWith(targetPrefix ? targetPrefix.toLowerCase() : 'runtime-'),
       )
 
-      // Then sort by online status and kit_id
+      // Sort the filtered kits by online status and by kit_id numeric parts
       sortedKits.sort((a, b) => {
-        // Sort by online status first
         if (a.is_online !== b.is_online) {
           return b.is_online - a.is_online
         }
-
-        // Extract the parts after the last hyphen
         const aLastPart = getLastPart(a.kit_id)
         const bLastPart = getLastPart(b.kit_id)
-
-        // Compare numeric parts if they are numbers, otherwise compare as strings
         const aNumeric = parseInt(aLastPart, 10)
         const bNumeric = parseInt(bLastPart, 10)
-
         if (!isNaN(aNumeric) && !isNaN(bNumeric)) {
           return aNumeric - bNumeric
         } else {
@@ -392,7 +395,15 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
       })
 
       setAllRuntimes(sortedKits)
-      setAllWizardRuntimes(sortedKits)
+      console.log('Sorted Kit at WizardRuntimeConnector: ', sortedKits)
+
+      // Only update the global wizard store if the targetPrefix starts with "runtime-"
+      if (targetPrefix && targetPrefix.toLowerCase().startsWith('runtime-')) {
+        setAllWizardRuntimes(sortedKits)
+      }
+
+      if (onKitAvailabilityChange)
+        onKitAvailabilityChange(sortedKits.length > 0)
     }
 
     const onBroadCastToClient = (payload: any) => {
@@ -464,30 +475,45 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
             <label className="mr-3 da-small-medium">Runtime:</label>
           )}
           {isAuthorized ? (
-            <select
-              aria-label="deploy-select"
-              className={`border rounded da-label-small px-2 py-1 w-full min-w-[100px] text-da-gray-dark bg-gray-200 !cursor-pointer`}
-              value={activeRtId as any}
-              onChange={(e) => {
-                // console.log(`setActiveRtId(e.target.value) `, e.target.value)
-                setActiveRtId(e.target.value)
-              }}
-            >
-              {allRuntimes &&
-                allRuntimes.map((rt: any) => {
-                  return (
-                    <option
-                      value={rt.kit_id}
-                      key={rt.kit_id}
-                      disabled={!rt.is_online}
-                    >
-                      <div className="text-[20px] flex items-center disabled:text-white text-white !cursor-pointer">
-                        {rt.is_online ? '🟢' : '🟡'} {rt.name}
-                      </div>
-                    </option>
-                  )
-                })}
-            </select>
+            allRuntimes && allRuntimes.length > 0 ? (
+              <div className="border pr-2 rounded-md overflow-hidden">
+                <select
+                  aria-label="deploy-select"
+                  className={`text-sm font-medium px-2 py-1 w-full min-w-[100px] text-da-gray-dark outline-none ring-0 !cursor-pointer`}
+                  value={activeRtId as any}
+                  onChange={(e) => {
+                    console.log(
+                      `setActiveRtId(e.target.value) `,
+                      e.target.value,
+                    )
+                    setActiveRtId(e.target.value)
+                    e.preventDefault()
+                  }}
+                >
+                  {allRuntimes.map((rt: any) => {
+                    return (
+                      <option
+                        value={rt.kit_id}
+                        key={rt.kit_id}
+                        disabled={!rt.is_online}
+                      >
+                        <div className="text-[20px] flex items-center disabled:text-white text-white !cursor-pointer">
+                          {rt.is_online ? '🟢' : '🟡'} {rt.name}
+                        </div>
+                      </option>
+                    )
+                  })}
+                </select>
+              </div>
+            ) : (
+              <div>
+                No{' '}
+                {targetPrefix
+                  ? targetPrefix.toLowerCase().replace(/-/g, '')
+                  : 'runtime'}{' '}
+                available
+              </div>
+            )
           ) : (
             <div>You dont have permission to deploy</div>
           )}

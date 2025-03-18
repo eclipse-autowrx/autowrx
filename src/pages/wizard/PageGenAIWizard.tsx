@@ -25,7 +25,6 @@ const PageGenAIWizard = () => {
   const [disabledStep, setDisabledStep] = useState([true, true, true, true])
   const [openSelectorPopup, setOpenSelectorPopup] = useState(false)
   const [hasGenAIPermission] = usePermissionHook([PERMISSIONS.USE_GEN_AI])
-  const [isGeneratedFlag, setIsGeneratedFlag] = useState(false)
   const [openCreatePrototypeModal, setOpenCreatePrototypeModal] = useState(true)
 
   const {
@@ -34,12 +33,10 @@ const PageGenAIWizard = () => {
     executeWizardSimulationRun,
     executeWizardSimulationStop,
     savePrototype,
-    wizardPrompt,
     setWizardGeneratedCode,
     wizardPrototype,
     allWizardRuntimes,
     wizardActiveRtId,
-    codeGenerating,
     setWizardActiveRtId,
   } = useWizardGenAIStore()
 
@@ -87,13 +84,10 @@ const PageGenAIWizard = () => {
 
   // Reset some wizard state when going back to Generate and stop simulation when switching to Simulate
   useEffect(() => {
-    if (currentStep === 0) {
-      setIsGeneratedFlag(false)
-    }
     if (currentStep === 1) {
       executeWizardSimulationStop()
     }
-  }, [currentStep, executeWizardSimulationStop])
+  }, [currentStep])
 
   // Set an active runtime if one matches a certain criteria.
   useEffect(() => {
@@ -103,7 +97,7 @@ const PageGenAIWizard = () => {
     if (matchingRuntime) {
       setWizardActiveRtId(matchingRuntime.kit_id)
     }
-  }, [allWizardRuntimes, setWizardActiveRtId])
+  }, [allWizardRuntimes])
 
   return (
     <div className="flex flex-col w-full h-full bg-white">
@@ -129,7 +123,6 @@ const PageGenAIWizard = () => {
           <DaGenAI_Wizard
             onCodeGenerated={(code) => {
               setWizardGeneratedCode(code)
-              setIsGeneratedFlag(true)
             }}
           />
         </div>
@@ -160,19 +153,6 @@ const PageGenAIWizard = () => {
           <TbArrowLeft className="size-4 mr-1" />
           Back
         </DaButton>
-        {/* {currentStep === 0 && (
-          <DaButton
-            onClick={executeWizardGenerateCodeAction}
-            className="w-[300px] min-w-fit"
-            variant="solid"
-            disabled={wizardPrompt.length === 0 || loading || codeGenerating}
-          >
-            {(wizardPrototype.code && wizardPrototype.code.length > 0) ||
-            isGeneratedFlag
-              ? 'Regenerate'
-              : 'Generate My Vehicle Application'}
-          </DaButton>
-        )} */}
         {currentStep === 1 && (
           <div className="flex items-center justify-center ml-8">
             <DaButton

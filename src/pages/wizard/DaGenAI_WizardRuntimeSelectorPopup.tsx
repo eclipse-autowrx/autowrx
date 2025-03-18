@@ -1,5 +1,5 @@
 // RuntimeSelectorPopup.tsx
-import React from 'react'
+import React, { useEffect } from 'react'
 import { TbCircleFilled, TbCheck } from 'react-icons/tb'
 import DaPopup from '@/components/atoms/DaPopup'
 import DaText from '@/components/atoms/DaText'
@@ -21,6 +21,14 @@ const DaGenAI_WizardRuntimeSelectorPopup = ({
     setWizardActiveRtId,
     executeWizardSimulationStop,
   } = useWizardGenAIStore()
+
+  useEffect(() => {
+    console.log('Runtime at wizard change at popup selector', wizardActiveRtId)
+    console.log(
+      'All wizard runtimes at wizard change at popup selector',
+      allWizardRuntimes,
+    )
+  }, [wizardActiveRtId, allWizardRuntimes])
 
   return (
     <DaPopup

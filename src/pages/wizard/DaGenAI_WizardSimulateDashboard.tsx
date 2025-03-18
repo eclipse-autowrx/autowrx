@@ -85,55 +85,6 @@ const DaGenAI_WizardSimulateDashboard: FC = ({}) => {
     // Update widgetItems with new APIs and handle VSS3/VSS4 logic for 3DCarModel
     let updatedWidgetItems = widgetItems.map((widget: any) => {
       let updatedWidget = { ...widget } // Copy the widget to make updates
-      // Handle 3DCarModel logic
-      // if (
-      //   widget.options &&
-      //   widget.options.url &&
-      //   widget.options.url.includes(
-      //     '3DCarModel' || widget.options.url.includes('d47l1KiTHR1f'),
-      //   )
-      // ) {
-      //   // Check if there are APIs related to Row1 Doors, only API with correct version is shown
-      //   // If you have VSS3 Door API in code, dont expect it present in VSS4 Runtime
-      //   const hasRow1DoorApi = usedApis.some((api) =>
-      //     api.includes('Vehicle.Cabin.Door.Row1'),
-      //   )
-      //   // console.log('usedApis', usedApis)
-      //   // console.log('wizardActiveRtId', wizardActiveRtId)
-      //   // console.log('hasRow1DoorApi', hasRow1DoorApi)
-      //   if (hasRow1DoorApi) {
-      //     if (wizardActiveRtId) {
-      //       // Ensure wizardActiveRtId is defined before using it
-      //       if (wizardActiveRtId.includes('VSS3')) {
-      //         // Update APIs for VSS3
-      //         updatedWidget.options.ROW1_LEFT_DOOR_API =
-      //           'Vehicle.Cabin.Door.Row1.Left.IsOpen'
-      //         updatedWidget.options.ROW1_RIGHT_DOOR_API =
-      //           'Vehicle.Cabin.Door.Row1.Right.IsOpen'
-      //         updatedWidget.options.ROW1_LEFT_SEAT_POSITION_API =
-      //           'Vehicle.Cabin.Seat.Row1.Pos1.Position'
-      //         updatedWidget.options.ROW1_RIGHT_SEAT_POSITION_API =
-      //           'Vehicle.Cabin.Seat.Row1.Pos2.Position'
-      //       } else if (wizardActiveRtId.includes('VSS4')) {
-      //         // Update APIs for VSS4
-      //         updatedWidget.options.ROW1_LEFT_DOOR_API =
-      //           'Vehicle.Cabin.Door.Row1.DriverSide.IsOpen'
-      //         updatedWidget.options.ROW1_RIGHT_DOOR_API =
-      //           'Vehicle.Cabin.Door.Row1.PassengerSide.IsOpen'
-      //         updatedWidget.options.ROW1_LEFT_SEAT_POSITION_API =
-      //           'Vehicle.Cabin.Seat.Row1.DriverSide.Position'
-      //         updatedWidget.options.ROW1_RIGHT_SEAT_POSITION_API =
-      //           'Vehicle.Cabin.Seat.Row1.PassengerSide.Position'
-      //       }
-      //       needsUpdate = true
-      //     } else {
-      //       console.warn(
-      //         'wizardActiveRtId is undefined, skipping API update for 3DCarModel',
-      //       )
-      //     }
-      //   }
-      // }
-
       // Handle table-settable logic
       if (
         widget.options &&

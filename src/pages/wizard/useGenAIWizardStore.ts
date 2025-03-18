@@ -33,6 +33,7 @@ type WizardGenAIStoreState = {
   activeModelApis: any[]
   allWizardRuntimes: any[]
   wizardActiveRtId: string | undefined
+  wizardDeployRtId: string
 }
 
 type WizardGenAIStoreActions = {
@@ -57,6 +58,7 @@ type WizardGenAIStoreActions = {
   resetWizardStore: () => void
   setAllWizardRuntimes: (runtimes: any[]) => void
   setWizardActiveRtId: (rtId: string | undefined) => void
+  setWizardDeployRtId: (rtId: string) => void
   savePrototype: (options: {
     toast: (msg: string) => void
     navigate: (path: string) => void
@@ -122,6 +124,7 @@ const useWizardGenAIStore = create<
   activeModelApis: parseSignalCVI(CVI_v4_1),
   allWizardRuntimes: [],
   wizardActiveRtId: '',
+  wizardDeployRtId: '',
 
   setCodeGenerating: (isGenerating: boolean) => {
     set({ codeGenerating: isGenerating })
@@ -143,6 +146,10 @@ const useWizardGenAIStore = create<
         activeModelApis: parsedApis,
       }
     })
+  },
+
+  setWizardDeployRtId: (rtId: string) => {
+    set({ wizardDeployRtId: rtId })
   },
 
   setAllWizardRuntimes: (runtimes: any[]) =>

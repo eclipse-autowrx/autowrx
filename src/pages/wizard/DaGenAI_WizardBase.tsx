@@ -243,7 +243,6 @@ const DaGenAI_WizardBase = ({
       </div>
 
       <div className="flex h-full w-full flex-col overflow-y-auto border-none py-2 px-3">
-        {/* Status Section */}
         {uniqueLogs && uniqueLogs.length > 0 ? (
           <div className="flex flex-col mt-0 h-full mb-2 space-y-2 overflow-y-auto rounded-md bg-gray-200 p-3 text-da-gray-darkest text-sm">
             {uniqueLogs.map((log, index) => (

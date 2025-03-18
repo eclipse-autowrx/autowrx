@@ -1,7 +1,11 @@
 import DaText from '@/components/atoms/DaText'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, createRef } from 'react'
 import { DaButton } from '@/components/atoms/DaButton'
-import DaGenAI_WizardEditSystemStaging from './DaGenAI_WizardEditSystemStaging'
+import DaGenAI_WizardRuntimeConnector from './DaGenAI_WizardRuntimeConnector'
+import config from '@/configs/config'
+import { cn } from '@/lib/utils'
+
+const DEFAULT_KIT_SERVER = 'https://re01.digital.auto'
 
 const TARGETS = [
   {
@@ -9,297 +13,193 @@ const TARGETS = [
     icon: '/imgs/targets/vm.png',
     prefix: 'Runtime-',
     version: 'v.1.0',
-    state: {
-      '3.1.1.1.1.1': '2.3.2',
-    },
+    state: { '3.1.1.1.1.1': '2.3.2' },
   },
   {
     name: 'Automation Kit',
-    short_name: 'Runtime-',
+    short_name: 'Kit-',
     icon: '/imgs/targets/automationKit.jpg',
-    prefix: 'Runtime-', // "Kit-"
+    prefix: 'Kit-',
     version: 'v.1.0',
-    state: {
-      '3.1.1.1.1.1': '0.9.0',
-    },
+    state: { '3.1.1.1.1.1': '0.9.0' },
   },
   {
     name: 'Test Fleet',
-    short_name: 'XSPACE',
+    short_name: 'PilotCar-',
     icon: '/imgs/targets/pilotCar.png',
-    prefix: 'PilotCar-', // "PilotCar-"
+    prefix: 'PilotCar-',
     version: 'v.1.0',
-    state: {
-      '3.1.1.1.1.1': '2.3.0',
-    },
+    state: { '3.1.1.1.1.1': '2.3.0' },
   },
 ]
 
-const SYSTEM = {
-  name: 'Concept Car 2024',
-  icon: '/imgs/targets/targetSystem.png',
-  version: 'v.1.0',
-}
-
-const STANDARD_STAGE = {
-  isTopMost: true,
-  name: '',
-  id: '1',
-  children: [
-    {
-      id: '2',
-      name: 'Off-Board',
-      children: [
-        {
-          id: '2.1',
-          name: 'Cloud',
-          children: [
-            {
-              id: '2.1.1',
-              name: 'EZ Instance 4711',
-              children: [
-                {
-                  id: '2.1.1.1',
-                  name: 'Subscription Manager',
-                  version: '1.2.3',
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: '3',
-      name: 'On-Board',
-      children: [
-        {
-          id: '3.1',
-          name: 'Central Compute',
-          isExpanded: true, // Expand by default
-          children: [
-            {
-              id: '3.1.1',
-              name: 'VCU',
-              isExpanded: true, // Expand by default
-              children: [
-                {
-                  id: '3.1.1.1',
-                  name: 'Linux Instance eL1',
-                  isExpanded: true, // Expand by default
-                  children: [
-                    {
-                      id: '3.1.1.1.1',
-                      name: 'Container 4711',
-                      isExpanded: true, // Expand by default
-                      children: [
-                        {
-                          id: '3.1.1.1.1.1',
-                          name: 'Subscription Event Analyzer',
-                          version: '1.0.0',
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-        {
-          id: '3.2',
-          name: 'Front Zone',
-          children: [
-            {
-              id: '3.2.1',
-              name: 'Zone Gateway FZ1',
-              children: [
-                {
-                  id: '3.2.1.1',
-                  name: 'PoSix Instance PL1',
-                  version: '1.3.4',
-                },
-                {
-                  id: '3.2.1.2',
-                  name: 'ECU E7',
-                  version: '7.0.1',
-                  children: [
-                    {
-                      id: '3.2.1.2.1',
-                      name: 'Runtime R8',
-                      version: '8.0.1',
-                      children: [
-                        {
-                          id: '3.2.1.2.1.1',
-                          name: 'ARA:com for wiper fluid Sensor',
-                          version: '0.3.2',
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-        {
-          id: '3.2.2',
-          name: 'Rear Zone',
-          children: [
-            {
-              id: '3.2.2.1',
-              name: 'Zone Gateway ZR1',
-              children: [
-                {
-                  id: '3.2.2.1.1',
-                  name: 'PoSix Instance PL1',
-                  version: '1.3.4',
-                },
-              ],
-            },
-            {
-              id: '3.2.2.2',
-              name: 'ECU E7',
-              children: [
-                {
-                  id: '3.2.2.2.1',
-                  name: 'Runtime R8',
-                  version: '8.0.1',
-                  children: [
-                    {
-                      id: '3.2.2.2.1.1',
-                      name: 'ARA:com for Wiper Fluid Sensor',
-                      version: '0.3.2',
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-  ],
-}
-
 const DaGenAI_WizardStaging = () => {
-  const [system, setSystem] = useState<any>(SYSTEM)
-  const [targets, setTargets] = useState<any[]>(TARGETS)
-  const [activeTarget, setActiveTarget] = useState<any>(null)
+  const [targets] = useState(TARGETS)
+  // Global active runtime id (if needed)
+  const [activeRtId, setActiveRtId] = useState<string>('')
 
-  const MODE_OVERVIEW = 'overview'
-  const MODE_EDIT_DEFINE = 'edit_define'
-  const MODE_ON_TARGET = 'on_target'
-  const [mode, setMode] = useState<string>(MODE_OVERVIEW)
-  const [stageDefine, setStageDefine] = useState<any>(STANDARD_STAGE)
+  // Instead of a single log array, use an object keyed by target name.
+  const [logs, setLogs] = useState<{ [key: string]: string[] }>({})
+
+  // Global updating flag (could be extended per target if needed)
+  const [isUpdating, setIsUpdating] = useState<boolean>(false)
+
+  // Create a ref mapping for each target.
+  const runtimeRefs = useRef<{ [key: string]: any }>({})
+
+  // New state for kit availability per target.
+  const [availability, setAvailability] = useState<{ [key: string]: boolean }>(
+    {},
+  )
+
+  // Timeout effect: for each target, if no log is received within 10 seconds,
+  // add a timeout message then clear it after 3 seconds.
+  useEffect(() => {
+    if (isUpdating) {
+      const timeoutDuration = 10000 // 10 seconds
+      const timer = setTimeout(() => {
+        setLogs((prevLogs) => {
+          const newLogs = { ...prevLogs }
+          targets.forEach((target) => {
+            const targetLog = prevLogs[target.name] || []
+            if (targetLog.length === 0) {
+              newLogs[target.name] = [
+                'Request timeout, please try again as the runtime may be busy or experiencing issues.',
+              ]
+            }
+          })
+          return newLogs
+        })
+        setIsUpdating(false)
+        setTimeout(() => {
+          setLogs((prevLogs) => {
+            const newLogs = { ...prevLogs }
+            targets.forEach((target) => {
+              newLogs[target.name] = []
+            })
+            return newLogs
+          })
+        }, 3000)
+      }, timeoutDuration)
+      return () => clearTimeout(timer)
+    }
+  }, [isUpdating, logs, targets])
 
   return (
-    <div className="min-h-[400px] w-[90vw] min-w-[400px] max-w-[1200px] ">
-      {mode == MODE_EDIT_DEFINE && (
-        <DaGenAI_WizardEditSystemStaging
-          onTargetMode={false}
-          system={system}
-          target={null}
-          stageDefine={stageDefine}
-          onFinish={(data) => {
-            setStageDefine(data)
-            setMode(MODE_OVERVIEW)
-          }}
-          onCancel={() => {
-            setMode(MODE_OVERVIEW)
-          }}
-        />
-      )}
-
-      {mode == MODE_ON_TARGET && (
-        <DaGenAI_WizardEditSystemStaging
-          onTargetMode={true}
-          system={system}
-          stageDefine={stageDefine}
-          target={activeTarget}
-          onCancel={() => {
-            setMode(MODE_OVERVIEW)
-          }}
-        />
-      )}
-
-      {mode == MODE_OVERVIEW && (
-        <div>
-          <div className="mt-4 w-full rounded border">
-            <div className="flex h-[40px] w-full rounded-t bg-gray-200 text-da-gray-dark">
-              {/* <div className="flex w-[25%] items-center justify-center border-r border-da-white font-bold ">
-                System
-              </div> */}
-              <div className="flex grow items-center justify-center bg-gradient-to-r z-10 opacity-100 from-da-gradient-from to-da-gradient-to text-white rounded-t-lg font-bold">
-                Stages
-              </div>
-            </div>
-            <div className="flex">
-              {/* <div className="flex min-w-[100px] flex-1 flex-col items-center justify-center overflow-x-hidden rounded-s px-1 py-1">
-                <div className="flex h-[140px] w-full items-center justify-center">
-                  <img
-                    width={150}
-                    height={70}
-                    src={system.icon}
-                    alt="System"
-                    className="scale-90"
-                  />
-                </div>
-                <DaText variant="small-bold" className="mt-1">
-                  {system.name}
-                </DaText>
-                <DaText variant="small" className="mt-1">
-                  {system.version}
-                </DaText>
-                <DaButton
-                  className="my-1 w-[100px]"
-                  onClick={() => {
-                    setMode(MODE_EDIT_DEFINE)
-                  }}
-                  size="sm"
-                >
-                  Edit
-                </DaButton>
-              </div> */}
-
-              {targets &&
-                targets.map((target: any) => (
-                  <div
-                    key={target.name}
-                    className="flex min-w-[100px] flex-1 flex-col items-center justify-center overflow-x-hidden border-l px-1 pb-2 pt-1 "
-                  >
-                    <div className="flex h-[140px] w-full items-center justify-center">
-                      <img
-                        width={120}
-                        height={70}
-                        src={target.icon}
-                        alt={target.name}
-                        className="rounded-lg"
-                      />
-                    </div>
-                    <DaText variant="small-bold" className="mt-1">
-                      {target.name}
-                    </DaText>
-                    <DaText variant="small" className="mt-1">
-                      {target.version}
-                    </DaText>
-                    <DaButton
-                      variant="outline"
-                      className="my-1 w-[100px]"
-                      onClick={() => {
-                        setActiveTarget(target)
-                        setMode(MODE_ON_TARGET)
-                      }}
-                      size="sm"
-                    >
-                      Update
-                    </DaButton>
-                  </div>
-                ))}
+    <div className="flex w-full h-full items-center justify-center bg-slate-200">
+      <div className="h-full  min-h-[400px] w-[90vw] min-w-[400px] xl:max-w-[70vw] ">
+        <div className="mt-4 w-full">
+          <div className="flex h-[40px] w-full bg-gray-200 text-da-gray-dark">
+            <div className="flex grow items-center justify-center bg-gradient-to-r z-10 opacity-100 from-da-gradient-from to-da-gradient-to text-white rounded-lg font-bold">
+              Stages
             </div>
           </div>
+          <div className="flex space-x-6 mt-6">
+            {targets.map((target) => {
+              if (!runtimeRefs.current[target.name]) {
+                runtimeRefs.current[target.name] = createRef()
+              }
+              return (
+                <div
+                  key={target.name}
+                  className="flex min-w-[100px] bg-white h-[40vh] border rounded-lg p-4 flex-1 flex-col items-center justify-center overflow-x-hidden px-1 pb-2 pt-1 "
+                >
+                  <div className="flex w-full items-center justify-center">
+                    <img
+                      width={160}
+                      src={target.icon}
+                      alt={target.name}
+                      className="rounded-lg"
+                    />
+                  </div>
+                  <DaText
+                    variant="regular-bold"
+                    className="mt-8 text-da-gray-darkest !font-semibold"
+                  >
+                    {target.name}
+                  </DaText>
+                  <div className="mt-2">
+                    <DaGenAI_WizardRuntimeConnector
+                      targetPrefix={target.prefix || 'runtime-'}
+                      kitServerUrl={config?.runtime?.url || DEFAULT_KIT_SERVER}
+                      // Each connector instance notifies the parent of its active runtime.
+                      onActiveRtChanged={(rtId: string | undefined) => {
+                        console.log(
+                          `Active runtime for ${target.name} is: ${rtId}`,
+                        )
+                        setActiveRtId(rtId || '')
+                      }}
+                      usedAPIs={[]}
+                      onDeployResponse={(newLog: string, isDone: boolean) => {
+                        // Update the log only for this target.
+                        if (newLog) {
+                          setLogs((prev) => {
+                            const targetLog = prev[target.name] || []
+                            const updatedLog = [...targetLog, newLog].slice(-3)
+                            return { ...prev, [target.name]: updatedLog }
+                          })
+                        }
+                        if (isDone) {
+                          setIsUpdating(false)
+                          setTimeout(() => {
+                            setLogs((prev) => ({ ...prev, [target.name]: [] }))
+                          }, 2000)
+                        }
+                      }}
+                      hideLabel={true}
+                      onKitAvailabilityChange={(available: boolean) => {
+                        setAvailability((prev) => ({
+                          ...prev,
+                          [target.name]: available,
+                        }))
+                      }}
+                      ref={runtimeRefs.current[target.name]}
+                    />
+                    {logs[target.name] && logs[target.name].length > 0 && (
+                      <div className="mt-2 flex">
+                        <div className="da-small-medium mr-2 line-clamp-3">
+                          Response:
+                        </div>
+                        <div className="ml-2 bg-da-black text-da-white px-2 py-1.5 rounded da-label-tiny grow leading-tight">
+                          {logs[target.name].map((entry, index) => (
+                            <div key={index}>{entry}</div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <DaButton
+                    variant="outline"
+                    className={cn(
+                      'my-1 w-[200px] !rounded-full mt-3',
+                      !availability[target.name] &&
+                        '!opacity-0 pointer-events-none',
+                    )}
+                    onClick={() => {
+                      const currentConnector = runtimeRefs.current[target.name]
+                      console.log(
+                        `Deploying to ${target.name} using active runtime: `,
+                        activeRtId,
+                      )
+                      if (
+                        activeRtId &&
+                        currentConnector &&
+                        currentConnector.current
+                      ) {
+                        currentConnector.current.deploy()
+                        setIsUpdating(true)
+                      }
+                    }}
+                    size="sm"
+                  >
+                    Update
+                  </DaButton>
+                </div>
+              )
+            })}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }
