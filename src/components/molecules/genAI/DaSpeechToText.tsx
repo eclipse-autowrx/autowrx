@@ -228,7 +228,7 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({
     <button
       onClick={handleClick}
       className={cn(
-        'flex cursor-pointer items-center rounded-lg p-1 px-2 text-da-primary-500 hover:bg-da-primary-100',
+        'flex cursor-pointer items-center rounded-lg p-1 px-2 hover:text-da-primary-500 group text-da-gray-medium hover:bg-da-primary-100',
         isListening && 'bg-da-primary-100',
       )}
     >
@@ -249,9 +249,13 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({
       ) : (
         <>
           <TbMicrophone
-            className={cn('mr-1 size-6 text-da-primary-500', iconClassName)}
+            className={cn(
+              'mr-1 size-5 text-da-primary-500',
+              iconClassName,
+              'group-hover:text-da-primary-500',
+            )}
           />
-          <p className="font-medium text-da-gray-medium">Voice input</p>
+          <p className="font-medium">Voice input</p>
         </>
       )}
     </button>

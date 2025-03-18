@@ -106,7 +106,7 @@ const PageGenAIWizard = () => {
   }, [allWizardRuntimes, setWizardActiveRtId])
 
   return (
-    <div className="flex flex-col w-full h-full">
+    <div className="flex flex-col w-full h-full bg-white">
       <div className="px-4 py-3 flex items-center justify-center border-b">
         {/* <DaText variant="sub-title" className="flex flex-1 text-da-primary-500">
           Vehicle App Generator
@@ -122,7 +122,7 @@ const PageGenAIWizard = () => {
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 py-2 w-full">
+      <div className="flex min-h-0 flex-1 w-full">
         <div
           className={cn('flex flex-1', currentStep === 0 ? 'block' : 'hidden')}
         >
@@ -154,7 +154,7 @@ const PageGenAIWizard = () => {
         <DaButton
           onClick={handleBack}
           disabled={currentStep === 0}
-          className="min-w-20"
+          className="min-w-20 !rounded-full"
           variant="outline"
         >
           <TbArrowLeft className="size-4 mr-1" />
@@ -181,7 +181,7 @@ const PageGenAIWizard = () => {
                   ? executeWizardSimulationStop()
                   : executeWizardSimulationRun()
               }
-              className="w-[300px]"
+              className="w-[300px] !rounded-full"
               variant="solid"
               disabled={
                 !wizardActiveRtId || wizardPrototype?.code?.length === 0
@@ -201,7 +201,7 @@ const PageGenAIWizard = () => {
         {currentStep < 2 && (
           <DaButton
             onClick={handleNext}
-            className="min-w-20"
+            className="min-w-20 !rounded-full"
             variant="outline"
             disabled={disabledStep[currentStep] || loading}
           >
@@ -224,7 +224,7 @@ const PageGenAIWizard = () => {
                 setLoading(false)
               }
             }}
-            className="w-[90px]"
+            className="w-[90px] !rounded-full"
             variant="solid"
             disabled={
               !wizardPrototype?.code || wizardPrototype.code.length === 0

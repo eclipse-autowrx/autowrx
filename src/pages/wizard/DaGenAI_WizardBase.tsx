@@ -18,6 +18,7 @@ import { PERMISSIONS } from '@/data/permission'
 import Prompt_Templates from '../../../instance/prompt_templates.js'
 import { retry } from '@/lib/retry.js'
 import { PiLightbulb } from 'react-icons/pi'
+import { BsStars } from 'react-icons/bs'
 
 const DaSpeechToText = lazy(() =>
   retry(() => import('../../components/molecules/genAI/DaSpeechToText.js')),
@@ -236,23 +237,39 @@ const DaGenAI_WizardBase = ({
   }, [])
 
   return (
-    <div className={cn('flex h-full w-full rounded px-4', className)}>
-      <div className="flex h-full w-full flex-col overflow-y-auto border-none pl-0.5 pr-2">
+    <div className={cn('flex flex-col h-full w-full rounded py-1', className)}>
+      <div className="font-semibold text-da-gray-dark border-b py-2 mb-1 px-3">
+        Generate with AI
+      </div>
+
+      <div className="flex h-full w-full flex-col overflow-y-auto border-none py-2 px-3">
         {/* Status Section */}
-        <div className="da-label-small-medium mb-1 mt-2">Status</div>
-        <div className="flex flex-col mt-0 h-full mb-2 space-y-2 overflow-y-auto rounded-md bg-da-gray-darkest p-3 text-white text-sm">
-          {uniqueLogs.map((log, index) => (
-            <div key={index} className="flex flex-col w-full">
-              <div className="uppercase text-xs font-bold p-1 mb-2 bg-white/25 w-fit h-fit rounded-md mr-1">
-                {log.source}
+        {uniqueLogs && uniqueLogs.length > 0 ? (
+          <div className="flex flex-col mt-0 h-full mb-2 space-y-2 overflow-y-auto rounded-md bg-gray-200 p-3 text-da-gray-darkest text-sm">
+            {uniqueLogs.map((log, index) => (
+              <div key={index} className="flex flex-col w-full">
+                {/* <div className="uppercase text-xs font-bold p-1 mb-2 bg-white/25 w-fit h-fit rounded-md mr-1">
+                  {log.source}
+                </div> */}
+                <div className="flex whitespace-pre-wrap leading-relaxed">
+                  {log.content}
+                </div>
               </div>
-              <div className="flex whitespace-pre-wrap leading-relaxed">
-                {log.content}
-              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center w-full h-full">
+            <BsStars className="size-10 text-da-gray-darkest" />
+            <div className="text-xl text-da-gray-darkest font-semibold mt-2">
+              Create vehicle apps with GenAI
             </div>
-          ))}
-          This is example text to test the selected signals and explain why
-        </div>
+            <div className="max-w-[30vw] text-center mt-1">
+              Start your session by entering what the vehicle should do. If you
+              are not satisfied with the results, clear the input and insert a
+              new text.
+            </div>
+          </div>
+        )}
 
         {/* Prompt Textarea */}
         <div className="flex flex-col h-fit w-full ">
@@ -265,7 +282,7 @@ const DaGenAI_WizardBase = ({
                     size="sm"
                     onClick={() => setShowDropdown(!showDropdown)}
                   >
-                    <PiLightbulb className="mr-1 size-4" />
+                    <PiLightbulb className="mr-1 size-5" />
                     Examples
                   </DaButton>
                 )}
@@ -273,7 +290,7 @@ const DaGenAI_WizardBase = ({
                 {showDropdown && (
                   <div
                     ref={dropdownRef}
-                    className="absolute top-6 z-10 mt-2 w-full min-w-full rounded-lg border border-gray-300 bg-white shadow-lg"
+                    className="absolute top-6 z-10 mt-2 w-full min-w-full max-h-[20vh] rounded-lg border border-gray-300 bg-white shadow-lg overflow-y-auto scroll"
                   >
                     {promptTemplates &&
                       promptTemplates.length > 0 &&
@@ -296,7 +313,7 @@ const DaGenAI_WizardBase = ({
                   size="sm"
                   onClick={() => resetWizardStore()}
                 >
-                  <TbCircleX className="mr-1 size-4" />
+                  <TbCircleX className="mr-1 size-5" />
                   Clear
                 </DaButton>
                 <DaButton
@@ -304,19 +321,19 @@ const DaGenAI_WizardBase = ({
                   size="sm"
                   onClick={() => setOpenSelectorPopup(true)}
                 >
-                  <TbSettings className="mr-1 size-4" />
+                  <TbSettings className="mr-1 size-5" />
                   Settings
                 </DaButton>
               </div>
             </div>
           </div>
-          <div className="flex flex-col p-2 border border-da-gray-medium rounded-md">
+          <div className="flex flex-col p-2 mt-2 border border-da-gray-medium rounded-md">
             <DaTextarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="Ask AI to generate based on this prompt..."
-              className="w-full h-[15vh] shadow-none !outline-none"
-              textareaClassName="flex h-full resize-none !outline-none !ring-none !shadow-none border-none text-da-gray-darkest !text-lg"
+              className="w-full h-[15vh] shadow-none !outline-none focus:outline-none"
+              textareaClassName="flex h-full resize-none focus:ring-0 !shadow-none border-none text-da-gray-darkest !text-lg"
             />
             <div className="flex justify-between p-2">
               <Suspense>
@@ -332,7 +349,7 @@ const DaGenAI_WizardBase = ({
                 variant="solid"
                 disabled={wizardPrompt.length === 0 || loading}
               >
-                <TbWand className="size-4 mr-2" /> Generate
+                <TbWand className="size-5 mr-2" /> Generate
               </DaButton>
             </div>
           </div>

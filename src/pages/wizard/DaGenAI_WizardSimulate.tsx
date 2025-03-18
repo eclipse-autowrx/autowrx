@@ -16,7 +16,7 @@ const DaGenAI_WizardSimulate = ({}: DaGenAI_SimulateProps) => {
   }, [wizardActiveRtId])
 
   return (
-    <div className="flex h-full w-full flex-col py-2 px-4">
+    <div className="flex h-full w-full flex-col p-2">
       <DaGenAI_WizardSimulateDashboard key={wizardActiveRtId} />
       <DaGenAI_WizardRuntimeControl />
     </div>

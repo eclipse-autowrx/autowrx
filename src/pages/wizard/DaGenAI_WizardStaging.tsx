@@ -230,7 +230,7 @@ const DaGenAI_WizardStaging = () => {
               {/* <div className="flex w-[25%] items-center justify-center border-r border-da-white font-bold ">
                 System
               </div> */}
-              <div className="flex grow items-center justify-center border-da-white font-bold">
+              <div className="flex grow items-center justify-center bg-gradient-to-r z-10 opacity-100 from-da-gradient-from to-da-gradient-to text-white rounded-t-lg font-bold">
                 Stages
               </div>
             </div>

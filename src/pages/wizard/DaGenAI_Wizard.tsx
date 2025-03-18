@@ -15,41 +15,43 @@ const DaGenAI_Wizard = ({ onCodeGenerated }: DaGenAI_WizardProps) => {
     useWizardGenAIStore()
 
   return (
-    <div className="flex h-full w-full rounded">
-      <DaGenAI_WizardBase
-        type="GenAI_Python"
-        onCodeGenerated={(code) => {
-          onCodeGenerated && onCodeGenerated(code)
-          setPrototypeData({ code })
-        }}
-        className="w-1/2"
-      />
+    <div className="flex h-full w-full rounded bg-slate-200">
+      <div className="flex w-full h-full space-x-2 p-2">
+        <DaGenAI_WizardBase
+          type="GenAI_Python"
+          onCodeGenerated={(code) => {
+            onCodeGenerated && onCodeGenerated(code)
+            setPrototypeData({ code })
+          }}
+          className="w-1/2 bg-white rounded-lg"
+        />
 
-      <div className="flex h-full w-1/2 flex-1 flex-col pb-2 mr-4">
-        <div
-          className={cn(
-            'scroll-gray mt-2 flex h-full w-full overflow-y-auto overflow-x-hidden border rounded-lg',
-          )}
-        >
-          {wizardPrototype.code ? (
-            <div className="flex w-full h-full rounded-md overflow-hidden">
-              <CodeEditor
-                code={wizardPrototype.code || ''} // Change here
-                setCode={(code) => {
-                  onCodeGenerated && onCodeGenerated(code)
-                  setPrototypeData({ code })
-                }}
-                language="python"
-                onBlur={() => {}}
-                editable={true}
+        <div className="flex h-full w-1/2 flex-1 flex-col">
+          <div
+            className={cn(
+              'flex h-full w-full overflow-y-auto scroll-gray overflow-x-hidden border rounded-lg',
+            )}
+          >
+            {wizardPrototype.code ? (
+              <div className="flex w-full h-full rounded-md overflow-hidden">
+                <CodeEditor
+                  code={wizardPrototype.code || ''}
+                  setCode={(code) => {
+                    onCodeGenerated && onCodeGenerated(code)
+                    setPrototypeData({ code })
+                  }}
+                  language="python"
+                  onBlur={() => {}}
+                  editable={true}
+                />
+              </div>
+            ) : (
+              <LoadingLineAnimation
+                loading={codeGenerating}
+                content={"There's no code here"}
               />
-            </div>
-          ) : (
-            <LoadingLineAnimation
-              loading={codeGenerating}
-              content={"There's no code here"}
-            />
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>
