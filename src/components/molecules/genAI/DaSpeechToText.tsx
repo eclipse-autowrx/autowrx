@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useRef, lazy } from 'react'
-import { TbMicrophoneFilled, TbPlayerStopFilled } from 'react-icons/tb'
+import {
+  TbMicrophone,
+  TbMicrophoneFilled,
+  TbPlayerStopFilled,
+} from 'react-icons/tb'
 import { cn } from '@/lib/utils'
 import { retry } from '@/lib/retry'
 
@@ -17,6 +21,7 @@ import {
 type DaSpeechToTextProps = {
   onRecognize: (text: string) => void
   prompt?: string
+  iconClassName?: string
 }
 
 const BouncingDotsLoader = () => {
@@ -51,6 +56,7 @@ const BouncingDotsLoader = () => {
 const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({
   onRecognize,
   prompt,
+  iconClassName,
 }) => {
   const [isListening, setIsListening] = useState(false)
   const [isMicActive, setIsMicActive] = useState(false)
@@ -242,7 +248,9 @@ const DaSpeechToText: React.FC<DaSpeechToTextProps> = ({
         </>
       ) : (
         <>
-          <TbMicrophoneFilled className="mr-1 size-6 text-da-primary-500" />
+          <TbMicrophone
+            className={cn('mr-1 size-6 text-da-primary-500', iconClassName)}
+          />
           <p className="font-medium text-da-gray-medium">Voice input</p>
         </>
       )}

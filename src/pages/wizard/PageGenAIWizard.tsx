@@ -108,10 +108,10 @@ const PageGenAIWizard = () => {
   return (
     <div className="flex flex-col w-full h-full">
       <div className="px-4 py-3 flex items-center justify-center border-b">
-        <DaText variant="sub-title" className="flex flex-1 text-da-primary-500">
+        {/* <DaText variant="sub-title" className="flex flex-1 text-da-primary-500">
           Vehicle App Generator
-        </DaText>
-        <div className="flex min-w-0 flex-[4] justify-center">
+        </DaText> */}
+        <div className="flex min-w-0 justify-center">
           <DaStepper currentStep={currentStep} setCurrentStep={setCurrentStep}>
             <DaStep>Generate</DaStep>
             <DaStep disabled={soFarSteps < 1 || disabledStep[0]}>
@@ -120,7 +120,6 @@ const PageGenAIWizard = () => {
             <DaStep disabled={soFarSteps < 2 || disabledStep[1]}>Deploy</DaStep>
           </DaStepper>
         </div>
-        <div className="flex flex-1"></div>
       </div>
 
       <div className="flex min-h-0 flex-1 py-2 w-full">
@@ -161,7 +160,7 @@ const PageGenAIWizard = () => {
           <TbArrowLeft className="size-4 mr-1" />
           Back
         </DaButton>
-        {currentStep === 0 && (
+        {/* {currentStep === 0 && (
           <DaButton
             onClick={executeWizardGenerateCodeAction}
             className="w-[300px] min-w-fit"
@@ -173,7 +172,7 @@ const PageGenAIWizard = () => {
               ? 'Regenerate'
               : 'Generate My Vehicle Application'}
           </DaButton>
-        )}
+        )} */}
         {currentStep === 1 && (
           <div className="flex items-center justify-center ml-8">
             <DaButton

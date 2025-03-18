@@ -11,8 +11,8 @@ type DaGenAI_WizardProps = {
 }
 
 const DaGenAI_Wizard = ({ onCodeGenerated }: DaGenAI_WizardProps) => {
-  const [loading, setLoading] = useState<boolean>(false)
-  const { wizardPrototype, setPrototypeData } = useWizardGenAIStore()
+  const { wizardPrototype, setPrototypeData, codeGenerating } =
+    useWizardGenAIStore()
 
   return (
     <div className="flex h-full w-full rounded">
@@ -22,18 +22,17 @@ const DaGenAI_Wizard = ({ onCodeGenerated }: DaGenAI_WizardProps) => {
           onCodeGenerated && onCodeGenerated(code)
           setPrototypeData({ code })
         }}
-        onLoadingChange={(loading) => setLoading(loading)}
         className="w-1/2"
       />
 
       <div className="flex h-full w-1/2 flex-1 flex-col pb-2 mr-4">
         <div
           className={cn(
-            'scroll-gray mt-2 flex h-full w-full overflow-y-auto overflow-x-hidden',
+            'scroll-gray mt-2 flex h-full w-full overflow-y-auto overflow-x-hidden border rounded-lg',
           )}
         >
           {wizardPrototype.code ? (
-            <div className="flex w-full h-full rounded-md overflow-hidden border">
+            <div className="flex w-full h-full rounded-md overflow-hidden">
               <CodeEditor
                 code={wizardPrototype.code || ''} // Change here
                 setCode={(code) => {
@@ -47,7 +46,7 @@ const DaGenAI_Wizard = ({ onCodeGenerated }: DaGenAI_WizardProps) => {
             </div>
           ) : (
             <LoadingLineAnimation
-              loading={loading}
+              loading={codeGenerating}
               content={"There's no code here"}
             />
           )}

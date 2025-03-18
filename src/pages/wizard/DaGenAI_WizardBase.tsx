@@ -7,7 +7,7 @@ import { toast } from 'react-toastify'
 import useAuthStore from '@/stores/authStore'
 import default_generated_code from '@/data/default_generated_code'
 import { cn, useClickOutside } from '@/lib/utils'
-import { TbHistory, TbRotate, TbSettings } from 'react-icons/tb'
+import { TbBulb, TbCircleX, TbSettings, TbWand } from 'react-icons/tb'
 import useGenAIWizardStore from '@/pages/wizard/useGenAIWizardStore.js'
 import DaPopup from '@/components/atoms/DaPopup'
 import DaText from '@/components/atoms/DaText'
@@ -17,6 +17,7 @@ import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import Prompt_Templates from '../../../instance/prompt_templates.js'
 import { retry } from '@/lib/retry.js'
+import { PiLightbulb } from 'react-icons/pi'
 
 const DaSpeechToText = lazy(() =>
   retry(() => import('../../components/molecules/genAI/DaSpeechToText.js')),
@@ -25,7 +26,6 @@ const DaSpeechToText = lazy(() =>
 type DaGenAI_WizardBaseProps = {
   type: 'GenAI_Python' | 'GenAI_Dashboard' | 'GenAI_Widget'
   onCodeGenerated: (code: string) => void
-  onLoadingChange: (loading: boolean) => void
   className?: string
 }
 
@@ -33,9 +33,8 @@ const DaGenAI_WizardBase = ({
   type,
   className = '',
   onCodeGenerated,
-  onLoadingChange,
 }: DaGenAI_WizardBaseProps) => {
-  const { wizardPrompt, setWizardPrompt, resetWizardStore } =
+  const { wizardPrompt, wizardPrototype, setWizardPrompt, resetWizardStore } =
     useGenAIWizardStore()
   const [selectedAddOn, setSelectedAddOn] = useState<AddOn | undefined>(
     undefined,
@@ -57,7 +56,7 @@ const DaGenAI_WizardBase = ({
   } = useGenAIWizardStore()
   const [openSelectorPopup, setOpenSelectorPopup] = useState(false)
   const [promptTemplates, setPromptTemplates] = useState<any[]>([])
-
+  const [loading, setLoading] = useState(false)
   const prompt = wizardPrompt
   const setPrompt = setWizardPrompt
 
@@ -82,7 +81,7 @@ const DaGenAI_WizardBase = ({
     if (!selectedAddOn) return
     onCodeGenerated('')
     setCodeGenerating(true)
-    onLoadingChange(true)
+    setLoading(true)
     setUniqueLogs([])
 
     if (selectedAddOn.isMock) {
@@ -90,7 +89,7 @@ const DaGenAI_WizardBase = ({
       onCodeGenerated(default_generated_code)
       setPrototypeData({ code: default_generated_code })
       setCodeGenerating(false)
-      onLoadingChange(false)
+      setLoading(false)
       return
     }
 
@@ -187,7 +186,7 @@ const DaGenAI_WizardBase = ({
       toast.error('Error generating AI content')
     } finally {
       setCodeGenerating(false)
-      onLoadingChange(false)
+      setLoading(false)
     }
   }
   // -------------------------------
@@ -239,80 +238,9 @@ const DaGenAI_WizardBase = ({
   return (
     <div className={cn('flex h-full w-full rounded px-4', className)}>
       <div className="flex h-full w-full flex-col overflow-y-auto border-none pl-0.5 pr-2">
-        <div className="flex w-full items-center justify-between">
-          <div className="space-x-2">
-            <div className="relative flex">
-              {promptTemplates && promptTemplates.length > 0 && (
-                <DaButton
-                  variant="plain"
-                  size="sm"
-                  onClick={() => setShowDropdown(!showDropdown)}
-                >
-                  <TbHistory className="mr-1 size-4" />
-                  History
-                </DaButton>
-              )}
-
-              {showDropdown && (
-                <div
-                  ref={dropdownRef}
-                  className="absolute top-6 z-10 mt-2 w-full min-w-full rounded-lg border border-gray-300 bg-white shadow-lg"
-                >
-                  {promptTemplates &&
-                    promptTemplates.length > 0 &&
-                    promptTemplates.map((template) => (
-                      <div
-                        key={template.title}
-                        className="da-txt-small flex w-full min-w-full shrink-0 cursor-pointer border-b p-2 hover:bg-da-gray-light"
-                        onClick={() => {
-                          setPrompt(template.prompt)
-                          setShowDropdown(!showDropdown)
-                        }}
-                      >
-                        {template.title}
-                      </div>
-                    ))}
-                </div>
-              )}
-              <DaButton
-                variant="plain"
-                size="sm"
-                onClick={() => resetWizardStore()}
-              >
-                <TbRotate className="mr-1 size-4 rotate-[270deg]" />
-                Clear
-              </DaButton>
-              <DaButton
-                variant="plain"
-                size="sm"
-                onClick={() => setOpenSelectorPopup(true)}
-              >
-                <TbSettings className="mr-1 size-4" />
-                Settings
-              </DaButton>
-            </div>
-          </div>
-
-          {/* Speech to Text component */}
-          <Suspense>
-            <DaSpeechToText onRecognize={setPrompt} prompt={prompt} />
-          </Suspense>
-        </div>
-
-        {/* Prompt Textarea */}
-        <div className="mt-1 flex h-full w-full">
-          <DaTextarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Ask AI to generate based on this prompt..."
-            className="w-full h-full"
-            textareaClassName="flex h-full resize-none !bg-gray-50 text-da-gray-darkest !text-lg"
-          />
-        </div>
-
         {/* Status Section */}
         <div className="da-label-small-medium mb-1 mt-2">Status</div>
-        <div className="flex flex-col mt-0 h-full mb-2 space-y-2 overflow-y-auto flex-shrink-0 max-h-[100px] xl:max-h-[150px] 2xl:max-h-[200px] rounded-md bg-da-gray-darkest p-3 text-white text-sm">
+        <div className="flex flex-col mt-0 h-full mb-2 space-y-2 overflow-y-auto rounded-md bg-da-gray-darkest p-3 text-white text-sm">
           {uniqueLogs.map((log, index) => (
             <div key={index} className="flex flex-col w-full">
               <div className="uppercase text-xs font-bold p-1 mb-2 bg-white/25 w-fit h-fit rounded-md mr-1">
@@ -323,6 +251,91 @@ const DaGenAI_WizardBase = ({
               </div>
             </div>
           ))}
+          This is example text to test the selected signals and explain why
+        </div>
+
+        {/* Prompt Textarea */}
+        <div className="flex flex-col h-fit w-full ">
+          <div className="flex w-full items-center justify-between">
+            <div className="space-x-2">
+              <div className="relative flex">
+                {promptTemplates && promptTemplates.length > 0 && (
+                  <DaButton
+                    variant="plain"
+                    size="sm"
+                    onClick={() => setShowDropdown(!showDropdown)}
+                  >
+                    <PiLightbulb className="mr-1 size-4" />
+                    Examples
+                  </DaButton>
+                )}
+
+                {showDropdown && (
+                  <div
+                    ref={dropdownRef}
+                    className="absolute top-6 z-10 mt-2 w-full min-w-full rounded-lg border border-gray-300 bg-white shadow-lg"
+                  >
+                    {promptTemplates &&
+                      promptTemplates.length > 0 &&
+                      promptTemplates.map((template) => (
+                        <div
+                          key={template.title}
+                          className="da-txt-small flex w-full min-w-full shrink-0 cursor-pointer border-b p-2 hover:bg-da-gray-light"
+                          onClick={() => {
+                            setPrompt(template.prompt)
+                            setShowDropdown(!showDropdown)
+                          }}
+                        >
+                          {template.title}
+                        </div>
+                      ))}
+                  </div>
+                )}
+                <DaButton
+                  variant="plain"
+                  size="sm"
+                  onClick={() => resetWizardStore()}
+                >
+                  <TbCircleX className="mr-1 size-4" />
+                  Clear
+                </DaButton>
+                <DaButton
+                  variant="plain"
+                  size="sm"
+                  onClick={() => setOpenSelectorPopup(true)}
+                >
+                  <TbSettings className="mr-1 size-4" />
+                  Settings
+                </DaButton>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col p-2 border border-da-gray-medium rounded-md">
+            <DaTextarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Ask AI to generate based on this prompt..."
+              className="w-full h-[15vh] shadow-none !outline-none"
+              textareaClassName="flex h-full resize-none !outline-none !ring-none !shadow-none border-none text-da-gray-darkest !text-lg"
+            />
+            <div className="flex justify-between p-2">
+              <Suspense>
+                <DaSpeechToText
+                  onRecognize={setPrompt}
+                  prompt={prompt}
+                  iconClassName="text-da-gray-medium"
+                />
+              </Suspense>
+              <DaButton
+                onClick={handleGenerate}
+                className="!px-5 !rounded-full"
+                variant="solid"
+                disabled={wizardPrompt.length === 0 || loading}
+              >
+                <TbWand className="size-4 mr-2" /> Generate
+              </DaButton>
+            </div>
+          </div>
         </div>
 
         {/* Generator Selector Popup */}
