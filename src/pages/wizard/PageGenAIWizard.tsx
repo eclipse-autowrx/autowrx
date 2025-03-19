@@ -16,6 +16,7 @@ import { toast } from 'react-toastify'
 import DaGenAI_WizardRuntimeSelectorPopup from './DaGenAI_WizardRuntimeSelectorPopup'
 import DaPopup from '../../components/atoms/DaPopup'
 import WizardFormCreatePrototype from './WizardFormCreatePrototype'
+import { PiGear } from 'react-icons/pi'
 
 const PageGenAIWizard = () => {
   const navigate = useNavigate()
@@ -172,9 +173,9 @@ const PageGenAIWizard = () => {
             <DaButton
               variant="plain"
               onClick={() => setOpenSelectorPopup(true)}
-              className="ml-2 !p-2"
+              className="ml-2 !p-2 !rounded-full"
             >
-              <TbSettings className="size-6" />
+              <PiGear className="size-6" />
             </DaButton>
           </div>
         )}

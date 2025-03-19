@@ -3,7 +3,6 @@ import { DaInput } from '@/components/atoms/DaInput'
 import { DaText } from '@/components/atoms/DaText'
 import { FormEvent, useEffect, useState } from 'react'
 import { TbLoader } from 'react-icons/tb'
-import { useNavigate } from 'react-router-dom'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import clsx from 'clsx'
 import DaFileUpload from '@/components/atoms/DaFileUpload'
@@ -13,6 +12,7 @@ import useCurrentModel from '@/hooks/useCurrentModel'
 import useListModelContribution from '@/hooks/useListModelContribution'
 import useListVSSVersions from '@/hooks/useListVSSVersions'
 import { createModelService } from '@/services/model.service'
+import { updateGenAIProfile } from './wizard.service'
 
 interface WizardFormCreatePrototypeProps {
   onClose?: () => void
@@ -41,7 +41,6 @@ const WizardFormCreatePrototype = ({
   const { refetch } = useListModelPrototypes(
     currentModel ? currentModel.id : '',
   )
-  const navigate = useNavigate()
   const { data: versions } = useListVSSVersions()
   // controlled value for the dropdown selection
   const [selectedModelId, setSelectedModelId] = useState<string>('')
@@ -132,6 +131,7 @@ const WizardFormCreatePrototype = ({
         }
         const newModelId = await createModelService(modelBody)
         setPrototypeData({ model_id: newModelId })
+        await updateGenAIProfile(newModelId)
       }
       if (onClose) {
         onClose()
@@ -208,7 +208,7 @@ const WizardFormCreatePrototype = ({
               <DaText variant="regular-medium" className="pt-4">
                 Signal
               </DaText>
-              <div className="border mt-1 rounded-lg px-2 pb-2 pt-1">
+              <div className=" mt-1 rounded-lg">
                 {!wizardPrototype.api_data_url && (
                   <>
                     <DaText variant="small">Select VSS version</DaText>

@@ -4,6 +4,9 @@ import { DaButton } from '@/components/atoms/DaButton'
 import DaGenAI_WizardRuntimeConnector from './DaGenAI_WizardRuntimeConnector'
 import config from '@/configs/config'
 import { cn } from '@/lib/utils'
+import ProgressBar from './ProgressBar'
+import { PiInfo } from 'react-icons/pi'
+import DaTooltip from '@/components/atoms/DaTooltip'
 
 const DEFAULT_KIT_SERVER = 'https://re01.digital.auto'
 
@@ -13,7 +16,6 @@ const TARGETS = [
     icon: '/imgs/targets/vm.png',
     prefix: 'Runtime-',
     version: 'v.1.0',
-    state: { '3.1.1.1.1.1': '2.3.2' },
   },
   {
     name: 'Automation Kit',
@@ -21,7 +23,6 @@ const TARGETS = [
     icon: '/imgs/targets/automationKit.jpg',
     prefix: 'Kit-',
     version: 'v.1.0',
-    state: { '3.1.1.1.1.1': '0.9.0' },
   },
   {
     name: 'Test Fleet',
@@ -29,65 +30,67 @@ const TARGETS = [
     icon: '/imgs/targets/pilotCar.png',
     prefix: 'PilotCar-',
     version: 'v.1.0',
-    state: { '3.1.1.1.1.1': '2.3.0' },
   },
 ]
 
 const DaGenAI_WizardStaging = () => {
   const [targets] = useState(TARGETS)
-  // Global active runtime id (if needed)
-  const [activeRtId, setActiveRtId] = useState<string>('')
 
-  // Instead of a single log array, use an object keyed by target name.
-  const [logs, setLogs] = useState<{ [key: string]: string[] }>({})
+  // Store active runtime id per target.
+  const [activeRtIds, setActiveRtIds] = useState<{ [key: string]: string }>({})
 
-  // Global updating flag (could be extended per target if needed)
-  const [isUpdating, setIsUpdating] = useState<boolean>(false)
+  // Current log per target (only the latest log).
+  const [logs, setLogs] = useState<{ [key: string]: string }>({})
+
+  // Progress state for each target (0 to 6 steps).
+  const [progress, setProgress] = useState<{ [key: string]: number }>({})
+
+  // Updating state per target.
+  const [updating, setUpdating] = useState<{ [key: string]: boolean }>({})
 
   // Create a ref mapping for each target.
   const runtimeRefs = useRef<{ [key: string]: any }>({})
 
-  // New state for kit availability per target.
+  // Kit availability per target.
   const [availability, setAvailability] = useState<{ [key: string]: boolean }>(
     {},
   )
 
-  // Timeout effect: for each target, if no log is received within 10 seconds,
-  // add a timeout message then clear it after 3 seconds.
+  // Timeout effect: if no log is received within 10 seconds for a target,
+  // add a timeout message then clear logs and reset progress for that target.
   useEffect(() => {
-    if (isUpdating) {
-      const timeoutDuration = 10000 // 10 seconds
-      const timer = setTimeout(() => {
-        setLogs((prevLogs) => {
-          const newLogs = { ...prevLogs }
-          targets.forEach((target) => {
-            const targetLog = prevLogs[target.name] || []
-            if (targetLog.length === 0) {
-              newLogs[target.name] = [
-                'Request timeout, please try again as the runtime may be busy or experiencing issues.',
-              ]
+    const timers: { [key: string]: ReturnType<typeof setTimeout> } = {}
+    targets.forEach((target) => {
+      if (updating[target.name]) {
+        timers[target.name] = setTimeout(() => {
+          setLogs((prev) => {
+            // Only set the timeout log if there's no current log.
+            if (!prev[target.name]) {
+              return {
+                ...prev,
+                [target.name]:
+                  'Request timeout, please try again as the runtime may be busy or experiencing issues.',
+              }
             }
+            return prev
           })
-          return newLogs
-        })
-        setIsUpdating(false)
-        setTimeout(() => {
-          setLogs((prevLogs) => {
-            const newLogs = { ...prevLogs }
-            targets.forEach((target) => {
-              newLogs[target.name] = []
-            })
-            return newLogs
-          })
-        }, 3000)
-      }, timeoutDuration)
-      return () => clearTimeout(timer)
+          setUpdating((prev) => ({ ...prev, [target.name]: false }))
+          // After 3 seconds, clear the log and reset progress for this target.
+          setTimeout(() => {
+            setLogs((prev) => ({ ...prev, [target.name]: '' }))
+            setProgress((prev) => ({ ...prev, [target.name]: 0 }))
+          }, 3000)
+        }, 10000)
+      }
+    })
+    return () => {
+      Object.values(timers).forEach((timer) => clearTimeout(timer))
     }
-  }, [isUpdating, logs, targets])
+  }, [updating, targets])
 
   return (
     <div className="flex w-full h-full items-center justify-center bg-slate-200">
-      <div className="h-full  min-h-[400px] w-[90vw] min-w-[400px] xl:max-w-[70vw] ">
+      <div className="h-full min-h-[400px] w-[90vw] min-w-[400px] xl:max-w-[70vw]">
         <div className="mt-4 w-full">
           <div className="flex h-[40px] w-full bg-gray-200 text-da-gray-dark">
             <div className="flex grow items-center justify-center bg-gradient-to-r z-10 opacity-100 from-da-gradient-from to-da-gradient-to text-white rounded-lg font-bold">
@@ -96,14 +99,43 @@ const DaGenAI_WizardStaging = () => {
           </div>
           <div className="flex space-x-6 mt-6">
             {targets.map((target) => {
+              // Initialize ref only once.
               if (!runtimeRefs.current[target.name]) {
                 runtimeRefs.current[target.name] = createRef()
               }
+              const targetLog = logs[target.name] || ''
+              const isTimeout = targetLog.includes('Request timeout')
+              // Show progress bar only if kit is available and updating or progress is > 0.
+              const showProgressBar =
+                availability[target.name] &&
+                (updating[target.name] || (progress[target.name] || 0) > 0)
               return (
                 <div
                   key={target.name}
-                  className="flex min-w-[100px] bg-white h-[40vh] border rounded-lg p-4 flex-1 flex-col items-center justify-center overflow-x-hidden px-1 pb-2 pt-1 "
+                  className="relative flex min-w-[100px] bg-white h-[40vh] border rounded-lg p-4 flex-1 flex-col items-center justify-center overflow-x-hidden px-1 pb-2 pt-1"
                 >
+                  {showProgressBar && (
+                    <ProgressBar
+                      value={progress[target.name] || 0}
+                      max={6}
+                      type="default"
+                      className="w-full absolute bottom-0 right-0"
+                    />
+                  )}
+                  {targetLog && (
+                    <DaTooltip
+                      content={<div className="text-sm">{targetLog}</div>}
+                    >
+                      <PiInfo
+                        className={cn(
+                          'absolute bottom-4 right-2 size-6',
+                          isTimeout
+                            ? 'text-yellow-500'
+                            : 'text-da-gray-medium hover:text-da-primary-500',
+                        )}
+                      />
+                    </DaTooltip>
+                  )}
                   <div className="flex w-full items-center justify-center">
                     <img
                       width={160}
@@ -122,28 +154,45 @@ const DaGenAI_WizardStaging = () => {
                     <DaGenAI_WizardRuntimeConnector
                       targetPrefix={target.prefix || 'runtime-'}
                       kitServerUrl={config?.runtime?.url || DEFAULT_KIT_SERVER}
-                      // Each connector instance notifies the parent of its active runtime.
                       onActiveRtChanged={(rtId: string | undefined) => {
-                        console.log(
-                          `Active runtime for ${target.name} is: ${rtId}`,
-                        )
-                        setActiveRtId(rtId || '')
+                        setActiveRtIds((prev) => ({
+                          ...prev,
+                          [target.name]: rtId || '',
+                        }))
                       }}
                       usedAPIs={[]}
                       onDeployResponse={(newLog: string, isDone: boolean) => {
-                        // Update the log only for this target.
+                        // Replace the log with the current log (do not accumulate).
                         if (newLog) {
-                          setLogs((prev) => {
-                            const targetLog = prev[target.name] || []
-                            const updatedLog = [...targetLog, newLog].slice(-3)
-                            return { ...prev, [target.name]: updatedLog }
+                          setLogs((prev) => ({
+                            ...prev,
+                            [target.name]: newLog,
+                          }))
+                          setProgress((prev) => {
+                            const current = prev[target.name] || 0
+                            return {
+                              ...prev,
+                              [target.name]: current < 6 ? current + 1 : 6,
+                            }
                           })
                         }
                         if (isDone) {
-                          setIsUpdating(false)
+                          setUpdating((prev) => ({
+                            ...prev,
+                            [target.name]: false,
+                          }))
+                          setProgress((prev) => ({
+                            ...prev,
+                            [target.name]: 6,
+                          }))
+                          // After 3 seconds, hide progress bar and clear log.
                           setTimeout(() => {
-                            setLogs((prev) => ({ ...prev, [target.name]: [] }))
-                          }, 2000)
+                            setLogs((prev) => ({ ...prev, [target.name]: '' }))
+                            setProgress((prev) => ({
+                              ...prev,
+                              [target.name]: 0,
+                            }))
+                          }, 3000)
                         }
                       }}
                       hideLabel={true}
@@ -155,39 +204,32 @@ const DaGenAI_WizardStaging = () => {
                       }}
                       ref={runtimeRefs.current[target.name]}
                     />
-                    {logs[target.name] && logs[target.name].length > 0 && (
-                      <div className="mt-2 flex">
-                        <div className="da-small-medium mr-2 line-clamp-3">
-                          Response:
-                        </div>
-                        <div className="ml-2 bg-da-black text-da-white px-2 py-1.5 rounded da-label-tiny grow leading-tight">
-                          {logs[target.name].map((entry, index) => (
-                            <div key={index}>{entry}</div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
                   <DaButton
                     variant="outline"
                     className={cn(
                       'my-1 w-[200px] !rounded-full mt-3',
+                      // Disable the button if the kit is not available.
                       !availability[target.name] &&
                         '!opacity-0 pointer-events-none',
                     )}
                     onClick={() => {
+                      // Only trigger deploy if kit is available.
+                      if (!availability[target.name]) return
                       const currentConnector = runtimeRefs.current[target.name]
-                      console.log(
-                        `Deploying to ${target.name} using active runtime: `,
-                        activeRtId,
-                      )
                       if (
-                        activeRtId &&
+                        activeRtIds[target.name] &&
                         currentConnector &&
                         currentConnector.current
                       ) {
+                        // Reset progress and log for this target on deploy.
+                        setProgress((prev) => ({ ...prev, [target.name]: 0 }))
+                        setLogs((prev) => ({ ...prev, [target.name]: '' }))
+                        setUpdating((prev) => ({
+                          ...prev,
+                          [target.name]: true,
+                        }))
                         currentConnector.current.deploy()
-                        setIsUpdating(true)
                       }
                     }}
                     size="sm"

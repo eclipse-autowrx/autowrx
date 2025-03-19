@@ -8,16 +8,16 @@ type DaGenAI_SimulateProps = {}
 const DaGenAI_WizardSimulate = ({}: DaGenAI_SimulateProps) => {
   const { wizardActiveRtId, allWizardRuntimes } = useWizardGenAIStore()
 
-  useEffect(() => {
-    console.log(
-      'Runtime at wizard change at dashboard simulate',
-      wizardActiveRtId,
-    )
-    console.log(
-      'All wizard runtimes at wizard change at dashboard simulate',
-      allWizardRuntimes,
-    )
-  }, [wizardActiveRtId, allWizardRuntimes])
+  // useEffect(() => {
+  //   console.log(
+  //     'Runtime at wizard change at dashboard simulate',
+  //     wizardActiveRtId,
+  //   )
+  //   console.log(
+  //     'All wizard runtimes at wizard change at dashboard simulate',
+  //     allWizardRuntimes,
+  //   )
+  // }, [wizardActiveRtId, allWizardRuntimes])
 
   return (
     <div className="flex h-full w-full flex-col p-2">

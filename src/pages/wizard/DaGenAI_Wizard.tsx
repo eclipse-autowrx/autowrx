@@ -29,9 +29,12 @@ const DaGenAI_Wizard = ({ onCodeGenerated }: DaGenAI_WizardProps) => {
         <div className="flex h-full w-1/2 flex-1 flex-col">
           <div
             className={cn(
-              'flex h-full w-full overflow-y-auto scroll-gray overflow-x-hidden border rounded-lg',
+              'flex flex-col bg-white h-full w-full overflow-y-auto scroll-gray overflow-x-hidden border rounded-lg',
             )}
           >
+            <div className="font-semibold text-da-gray-dark border-b py-[9.51px] mb-1 px-3">
+              Studio
+            </div>
             {wizardPrototype.code ? (
               <div className="flex w-full h-full rounded-md overflow-hidden">
                 <CodeEditor

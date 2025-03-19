@@ -7,7 +7,6 @@ import { toast } from 'react-toastify'
 import useAuthStore from '@/stores/authStore'
 import default_generated_code from '@/data/default_generated_code'
 import { cn, useClickOutside } from '@/lib/utils'
-import { TbBulb, TbCircleX, TbSettings, TbWand } from 'react-icons/tb'
 import useGenAIWizardStore from '@/pages/wizard/useGenAIWizardStore.js'
 import DaPopup from '@/components/atoms/DaPopup'
 import DaText from '@/components/atoms/DaText'
@@ -17,8 +16,14 @@ import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import Prompt_Templates from '../../../instance/prompt_templates.js'
 import { retry } from '@/lib/retry.js'
-import { PiLightbulb } from 'react-icons/pi'
-import { BsStars } from 'react-icons/bs'
+import {
+  PiGear,
+  PiLightbulb,
+  PiMagicWand,
+  PiSparkle,
+  PiXCircle,
+} from 'react-icons/pi'
+import MarkdownRender from './MarkdownRender.js'
 
 const DaSpeechToText = lazy(() =>
   retry(() => import('../../components/molecules/genAI/DaSpeechToText.js')),
@@ -54,6 +59,7 @@ const DaGenAI_WizardBase = ({
     setWizardGeneratedCode,
     setPrototypeData,
     setCodeGenerating,
+    wizardModelId,
   } = useGenAIWizardStore()
   const [openSelectorPopup, setOpenSelectorPopup] = useState(false)
   const [promptTemplates, setPromptTemplates] = useState<any[]>([])
@@ -96,7 +102,10 @@ const DaGenAI_WizardBase = ({
 
     try {
       // Create the payload using the add-on’s customPayload function.
-      const payload = selectedAddOn.customPayload(prompt)
+      // Determine the profile with a fallback.
+      const profile = wizardPrototype.model_id || 'spring_ai_azure_vector_store'
+      // Create the payload using the add-on’s customPayload function with the profile.
+      const payload = selectedAddOn.customPayload(prompt, profile)
       console.log('Payload:', payload)
 
       const options = {
@@ -141,17 +150,62 @@ const DaGenAI_WizardBase = ({
               try {
                 const eventObj = JSON.parse(eventData)
                 if (eventObj.message && eventObj.message.content) {
-                  const { type: contentType, payload: eventPayload } =
-                    eventObj.message.content
+                  const {
+                    type: contentType,
+                    payload: eventPayload,
+                    thoughts,
+                  } = eventObj.message.content
+
                   if (contentType === 'code') {
+                    // Process generated code.
                     onCodeGenerated(eventPayload)
                     setWizardGeneratedCode(eventPayload)
+
+                    // Optionally update logs with the explanation/thoughts.
+                    if (thoughts && thoughts.trim()) {
+                      const cleanThoughts = thoughts
+                        .replace(/```(?:json)?|```/g, '')
+                        .trim()
+                      setUniqueLogs((prevLogs) => {
+                        const existingIndex = prevLogs.findIndex(
+                          (log) => log.source === contentType,
+                        )
+                        if (existingIndex !== -1) {
+                          const newLogs = [...prevLogs]
+                          newLogs[existingIndex] = {
+                            source: contentType,
+                            content: cleanThoughts,
+                          }
+                          return newLogs
+                        }
+                        return [
+                          ...prevLogs,
+                          { source: contentType, content: cleanThoughts },
+                        ]
+                      })
+                    }
                   } else if (contentType === 'selected_signals') {
-                    // Split the signal string by '%n' and join with newline.
-                    const signals = eventPayload
-                      .split('%n')
-                      .filter((signal: any) => signal.trim() !== '')
-                    const formattedSignals = signals.join('\n')
+                    // Process selected signals.
+                    let signals: string[] = []
+                    if (thoughts && thoughts.trim()) {
+                      const cleanThoughts = thoughts
+                        .replace(/```(?:json)?|```/g, '')
+                        .trim()
+                      try {
+                        signals = JSON.parse(cleanThoughts)
+                      } catch (err) {
+                        console.error('Error parsing thoughts JSON:', err)
+                        signals = eventPayload
+                          .split('%n')
+                          .filter((s: string) => s.trim() !== '')
+                      }
+                    } else if (eventPayload) {
+                      signals = eventPayload
+                        .split('%n')
+                        .filter((s: string) => s.trim() !== '')
+                    }
+                    const formattedSignals =
+                      '### Selected Signals  \n' + signals.join('  \n') + '\n'
                     setUniqueLogs((prevLogs) => {
                       const existingIndex = prevLogs.findIndex(
                         (log) => log.source === contentType,
@@ -169,6 +223,14 @@ const DaGenAI_WizardBase = ({
                         { source: contentType, content: formattedSignals },
                       ]
                     })
+                  } else if (contentType === 'error') {
+                    // Handle error response.
+                    setUniqueLogs((prevLogs) => [
+                      ...prevLogs,
+                      { source: contentType, content: eventPayload },
+                    ])
+                    console.error('Error from AI service:', eventPayload)
+                    toast.error(eventPayload)
                   }
                 }
               } catch (e) {
@@ -247,18 +309,13 @@ const DaGenAI_WizardBase = ({
           <div className="flex flex-col mt-0 h-full mb-2 space-y-2 overflow-y-auto rounded-md bg-gray-200 p-3 text-da-gray-darkest text-sm">
             {uniqueLogs.map((log, index) => (
               <div key={index} className="flex flex-col w-full">
-                {/* <div className="uppercase text-xs font-bold p-1 mb-2 bg-white/25 w-fit h-fit rounded-md mr-1">
-                  {log.source}
-                </div> */}
-                <div className="flex whitespace-pre-wrap leading-relaxed">
-                  {log.content}
-                </div>
+                <MarkdownRender markdownText={log.content} />
               </div>
             ))}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center w-full h-full">
-            <BsStars className="size-10 text-da-gray-darkest" />
+            <PiSparkle className="size-10 text-da-gray-darkest" />
             <div className="text-xl text-da-gray-darkest font-semibold mt-2">
               Create vehicle apps with GenAI
             </div>
@@ -312,7 +369,7 @@ const DaGenAI_WizardBase = ({
                   size="sm"
                   onClick={() => resetWizardStore()}
                 >
-                  <TbCircleX className="mr-1 size-5" />
+                  <PiXCircle className="mr-1 size-5" />
                   Clear
                 </DaButton>
                 <DaButton
@@ -320,7 +377,7 @@ const DaGenAI_WizardBase = ({
                   size="sm"
                   onClick={() => setOpenSelectorPopup(true)}
                 >
-                  <TbSettings className="mr-1 size-5" />
+                  <PiGear className="mr-1 size-5" />
                   Settings
                 </DaButton>
               </div>
@@ -348,7 +405,7 @@ const DaGenAI_WizardBase = ({
                 variant="solid"
                 disabled={wizardPrompt.length === 0 || loading}
               >
-                <TbWand className="size-5 mr-2" /> Generate
+                <PiMagicWand className="size-5 mr-2" /> Generate
               </DaButton>
             </div>
           </div>
