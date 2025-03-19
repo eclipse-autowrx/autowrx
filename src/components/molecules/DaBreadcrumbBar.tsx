@@ -11,6 +11,7 @@ import {
 import useCurrentModel from '@/hooks/useCurrentModel'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import useCurrentInventoryData from '@/hooks/useCurrentInventoryData'
+import { rolesTypeMap } from './inventory/data'
 
 const breadcrumbNames: { [key: string]: string } = {
   home: 'Home',
@@ -130,7 +131,7 @@ const DaBreadcrumbBar = () => {
 
       if (inventoryData.roleData) {
         paths.push({
-          path: `/inventory/role/${inventoryData.roleData.name}`,
+          path: `/inventory/role/${inventoryData.roleData.name}?type=${rolesTypeMap[inventoryData.roleData.name]}`,
           key: inventoryData.roleData.name,
           name: inventoryData.roleData.name,
         })
@@ -159,7 +160,7 @@ const DaBreadcrumbBar = () => {
       )
     })
     setBreadcrumbs(breadcrumbList)
-  }, [location.pathname, model, prototype])
+  }, [location.pathname, model, prototype, inventoryData])
 
   return (
     <div className="flex h-[52px] w-full justify-between">
