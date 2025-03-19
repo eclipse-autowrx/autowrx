@@ -33,7 +33,7 @@ const MarkdownRender = ({ markdownText }: MarkdownRenderProps) => {
     // The original safety replacement for horizontal rules
     .replace(/^(\*{3,}|-{3,}|_{3,}|={3,}|)\s*$/gm, '')
 
-  console.log(processedMarkdown)
+  // console.log(processedMarkdown)
 
   return (
     <ReactMarkdown
@@ -113,7 +113,7 @@ const MarkdownRender = ({ markdownText }: MarkdownRenderProps) => {
             const { ref, ...rest } = props
             return (
               <div
-                className="w-fit text-sm font-normal select-text px-1 h-[18px] rounded-sm mx-0.5 font-mono dark:text-fuchsia-400/90"
+                className="w-fit  whitespace-pre-nowrap  text-sm font-normal select-text px-1 h-[18px] rounded-sm mx-0.5 font-mono dark:text-fuchsia-400/90"
                 {...rest}
               >
                 {children}

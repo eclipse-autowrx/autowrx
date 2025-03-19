@@ -106,7 +106,7 @@ const DaGenAI_WizardBase = ({
       const profile = wizardPrototype.model_id || 'spring_ai_azure_vector_store'
       // Create the payload using the add-on’s customPayload function with the profile.
       const payload = selectedAddOn.customPayload(prompt, profile)
-      console.log('Payload:', payload)
+      console.log('Payload at wizard base', payload)
 
       const options = {
         method: 'POST',

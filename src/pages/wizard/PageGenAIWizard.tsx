@@ -29,7 +29,6 @@ const PageGenAIWizard = () => {
   const [openCreatePrototypeModal, setOpenCreatePrototypeModal] = useState(true)
 
   const {
-    executeWizardGenerateCodeAction,
     wizardSimulating,
     executeWizardSimulationRun,
     executeWizardSimulationStop,
@@ -39,6 +38,7 @@ const PageGenAIWizard = () => {
     allWizardRuntimes,
     wizardActiveRtId,
     setWizardActiveRtId,
+    resetWizardStore,
   } = useWizardGenAIStore()
 
   const updateDisabledStep = (step: number, disabled: boolean) => {
@@ -224,9 +224,9 @@ const PageGenAIWizard = () => {
       {/* The popup for creating a prototype is always visible (open by default) */}
       <DaPopup
         state={[openCreatePrototypeModal, setOpenCreatePrototypeModal]}
-        onClose={() => setOpenCreatePrototypeModal(false)}
         trigger={<span></span>}
         className="flex flex-col h-fit"
+        disableBackdropClick={true}
       >
         <WizardFormCreatePrototype
           onClose={() => setOpenCreatePrototypeModal(false)}

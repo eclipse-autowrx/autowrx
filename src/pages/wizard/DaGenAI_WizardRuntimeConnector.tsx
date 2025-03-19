@@ -1,22 +1,17 @@
 import { forwardRef, useState, useEffect, useImperativeHandle } from 'react'
-// import { socketio } from '@/services/socketio.service'
 import useRuntimeStore from '@/stores/runtimeStore'
 import { shallow } from 'zustand/shallow'
-// import useModelStore from '@/stores/modelStore'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import useWizardGenAIStore from '@/pages/wizard/useGenAIWizardStore'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
-
 import { io } from 'socket.io-client'
 
 interface KitConnectProps {
-  // code: string;
   kitServerUrl?: string
   hideLabel?: boolean
   targetPrefix: string
   usedAPIs: string[]
-  // allKit: any[];
   onActiveRtChanged?: (newActiveKitId: string | undefined) => void
   onLoadedMockSignals?: (signals: []) => void
   onNewLog?: (log: string) => void
@@ -41,7 +36,10 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
     },
     ref,
   ) => {
-    // const socketio = io(kitServerUrl || DEFAULT_KIT_SERVER);
+    // Create a storage key based on the targetPrefix so that selections
+    // for runtime and kit are kept separate.
+    const storageKey = `last-wizard-rt-${targetPrefix.toLowerCase()}`
+
     const [socketio, setSocketIo] = useState<any>(null)
     const [activeRtId, setActiveRtId] = useState<string | undefined>('')
     const [allRuntimes, setAllRuntimes] = useState<any>([])
@@ -142,6 +140,7 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
         data: {},
       })
     }
+
     const deploy = () => {
       console.log(
         'Deploy app to RuntimeID: ',
@@ -202,7 +201,6 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
         console.log('Kit Server URL is undefined')
         return
       }
-      // console.log('Try to connect to KIT Server URL: ', kitServerUrl)
       const socket = io(kitServerUrl, {
         transports: ['websocket'],
         reconnectionAttempts: 5,
@@ -225,7 +223,6 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
     }, [kitServerUrl])
 
     useEffect(() => {
-      // console.log('Wizard Active RuntimeID: ', wizardActiveRtId)
       console.log('Wizard Active RuntimeID: ', activeRtId)
       if (!socketio) return
 
@@ -258,17 +255,17 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
         unregisterClient()
         socketio.disconnect()
       }
-    }, [socketio]) // Remove socketio?.connected to prevent un-necessary change
+    }, [socketio])
 
+    // Store activeRtId using the prefix-specific storage key
     useEffect(() => {
       console.log(`activeRtId`, activeRtId)
       if (activeRtId) {
-        localStorage.setItem('last-wizard-rt', activeRtId)
+        localStorage.setItem(storageKey, activeRtId)
       }
-    }, [activeRtId])
+    }, [activeRtId, storageKey])
 
     useEffect(() => {
-      // console.log(`activeRtId `, wizardActiveRtId)
       if (wizardActiveRtId) {
         setActiveRtId(wizardActiveRtId)
       }
@@ -289,23 +286,25 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
           return
         }
 
-        // Try to find the default runtime with kit_id starting with 'RunTime-ETAS-E2E'
-        let defaultRuntime = onlineRuntimes.find((rt: any) =>
-          rt.kit_id.startsWith('RunTime-ETAS-E2E'),
-        )
-
-        if (defaultRuntime) {
-          console.log(`setActiveRtId to defaultRuntime`, defaultRuntime.kit_id)
-          setActiveRtId(defaultRuntime.kit_id)
-          if (targetPrefix.toLowerCase().startsWith('runtime-')) {
+        // For simulation use cases (targetPrefix "runtime-"), try to find the special default
+        if (targetPrefix.toLowerCase().startsWith('runtime-')) {
+          let defaultRuntime = onlineRuntimes.find((rt: any) =>
+            rt.kit_id.toLowerCase().startsWith('runtime-etas-e2e'),
+          )
+          if (defaultRuntime) {
+            console.log(
+              `setActiveRtId to defaultRuntime`,
+              defaultRuntime.kit_id,
+            )
+            setActiveRtId(defaultRuntime.kit_id)
             setWizardActiveRtId(defaultRuntime.kit_id)
+            localStorage.setItem(storageKey, defaultRuntime.kit_id)
+            return
           }
-          localStorage.setItem('last-wizard-rt', defaultRuntime.kit_id)
-          return
         }
 
-        // If not found, use the last selected runtime from localStorage if it's online
-        let lastOnlineRuntime = localStorage.getItem('last-wizard-rt')
+        // Use the last selected runtime from localStorage (using the prefix-specific key)
+        let lastOnlineRuntime = localStorage.getItem(storageKey)
         if (
           lastOnlineRuntime &&
           onlineRuntimes.some((rt: any) => rt.kit_id === lastOnlineRuntime)
@@ -318,13 +317,13 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
           return
         }
 
-        // If none of the above, set activeRtId to the first online runtime
+        // Otherwise, set activeRtId to the first available online kit
         console.log(`setActiveRtId `, onlineRuntimes[0].kit_id)
         setActiveRtId(onlineRuntimes[0].kit_id)
         if (targetPrefix.toLowerCase().startsWith('runtime-')) {
           setWizardActiveRtId(onlineRuntimes[0].kit_id)
         }
-        localStorage.setItem('last-wizard-rt', onlineRuntimes[0].kit_id)
+        localStorage.setItem(storageKey, onlineRuntimes[0].kit_id)
       } else {
         console.log(`setActiveRtId(undefined) cause: noRuntime`)
         setActiveRtId(undefined)
@@ -332,7 +331,7 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
           setWizardActiveRtId(undefined)
         }
       }
-    }, [allRuntimes])
+    }, [allRuntimes, activeRtId, storageKey, targetPrefix])
 
     const onConnected = () => {
       registerClient()
@@ -413,8 +412,10 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
     const onKitReply = (payload: any) => {
       if (!payload) return
 
-      if (payload.cmd == 'deploy_request' || payload.cmd == 'deploy-request') {
-        // console.log(payload)
+      if (
+        payload.cmd === 'deploy_request' ||
+        payload.cmd === 'deploy-request'
+      ) {
         if (onDeployResponse) {
           onDeployResponse(payload.result, payload.is_finish)
         }
@@ -425,7 +426,7 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
           onNewLog(payload.result || '')
         }
       }
-      if (payload.cmd == 'run_python_app') {
+      if (payload.cmd === 'run_python_app') {
         if (payload.isDone) {
           if (setAppLog) {
             setAppLog(`Exit code ${payload.code}\r\n`)
@@ -446,17 +447,13 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
         }
       }
 
-      if (payload.cmd == 'apis-value') {
-        // console.log(`apis-value `, activeRtId)
-        // console.log(payload)
+      if (payload.cmd === 'apis-value') {
         if (payload.result) {
           setRawApisPackage(payload)
-          // console.log(`receive apis-value`)
-          // setActiveApis(payload.result)
         }
       }
 
-      if (payload.cmd == 'list_mock_signal') {
+      if (payload.cmd === 'list_mock_signal') {
         if (!onLoadedMockSignals) return
         if (payload && payload.data && Array.isArray(payload.data)) {
           onLoadedMockSignals(payload.data)
@@ -479,7 +476,7 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
               <div className="border pr-2 rounded-md overflow-hidden">
                 <select
                   aria-label="deploy-select"
-                  className={`text-sm font-medium px-2 py-1 w-full min-w-[100px] text-da-gray-dark outline-none ring-0 !cursor-pointer`}
+                  className="text-sm font-medium px-2 py-1 w-full min-w-[100px] text-da-gray-dark outline-none ring-0 !cursor-pointer"
                   value={activeRtId as any}
                   onChange={(e) => {
                     console.log(
