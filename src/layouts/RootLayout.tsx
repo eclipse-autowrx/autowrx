@@ -1,4 +1,3 @@
-import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { Link, Outlet } from 'react-router-dom'
 import { Toaster } from '@/components/molecules/toaster/toaster'
 import { Suspense, lazy, useEffect, useMemo } from 'react'
@@ -8,6 +7,9 @@ import config from '@/configs/config'
 import routesConfig from '@/configs/routes'
 import { RouteConfig } from '@/types/common.type'
 import { retry } from '@/lib/retry'
+import { toast } from 'react-toastify'
+import { DaButton } from '@/components/atoms/DaButton'
+import useAuthStore from '@/stores/authStore'
 
 const ActiveObjectManagement = lazy(() =>
   retry(() => import('@/components/organisms/ActiveObjectManagement')),
@@ -40,15 +42,61 @@ const getPathsWithoutBreadcrumb = (routes: RouteConfig[]) => {
   return paths
 }
 
+const SessionTimeoutToast = () => {
+  return (
+    <div className="p-2">
+      <p className="text-sm text-da-gray-dark">
+        Your session has expired. <br /> Please refresh the page to continue
+        where you left off.
+      </p>
+      <DaButton
+        onClick={() => (window.location.href = window.location.href)}
+        className="mt-2"
+        size="sm"
+        variant="outline-nocolor"
+      >
+        Refresh
+      </DaButton>
+    </div>
+  )
+}
+
 const RootLayout = () => {
   const location = useLocation()
 
-  const { data: currentUser } = useSelfProfileQuery()
+  const expires = useAuthStore((state) => state.access?.expires)
 
   const pathsWithoutBreadcrumb = useMemo(
     () => getPathsWithoutBreadcrumb(routesConfig),
     [],
   )
+
+  useEffect(() => {
+    let timeout: NodeJS.Timeout | null = null
+    if (expires) {
+      try {
+        const timeRemaining = new Date(expires).getTime() - Date.now()
+        timeout = setTimeout(() => {
+          toast.warn(<SessionTimeoutToast />, {
+            className: 'w-[440px] max-w-[90vw] -ml-[64px]',
+            autoClose: false,
+            draggable: false,
+            closeOnClick: false,
+            theme: 'colored',
+          })
+        }, timeRemaining)
+      } catch (error) {
+        console.error('Error setting session timeout toast', error)
+      }
+    }
+
+    return () => {
+      if (timeout) {
+        clearTimeout(timeout)
+      }
+      timeout = null
+    }
+  }, [expires])
 
   return (
     <div className="flex h-screen flex-col">
