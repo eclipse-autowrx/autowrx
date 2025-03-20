@@ -152,7 +152,7 @@ const DaGenAI_WizardStaging = () => {
                   </DaText>
                   <div className="mt-2">
                     <DaGenAI_WizardRuntimeConnector
-                      targetPrefix={target.prefix || 'runtime-'}
+                      targetPrefix={target.prefix}
                       kitServerUrl={config?.runtime?.url || DEFAULT_KIT_SERVER}
                       onActiveRtChanged={(rtId: string | undefined) => {
                         setActiveRtIds((prev) => ({

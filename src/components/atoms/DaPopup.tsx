@@ -44,6 +44,7 @@ const DaPopup = forwardRef<HTMLDivElement, PopupProps>(
             if (disableBackdropClick && reason === 'backdropClick') return
             setOpen(false)
           }}
+          disableEscapeKeyDown={disableBackdropClick}
           style={{ zIndex: 99 }}
         >
           <div

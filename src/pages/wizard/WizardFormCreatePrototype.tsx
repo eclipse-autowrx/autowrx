@@ -7,7 +7,6 @@ import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import clsx from 'clsx'
 import DaFileUpload from '@/components/atoms/DaFileUpload'
 import useWizardGenAIStore from './useGenAIWizardStore'
-import useListModelPrototypes from '@/hooks/useListModelPrototypes'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import useListModelContribution from '@/hooks/useListModelContribution'
 import useListVSSVersions from '@/hooks/useListVSSVersions'
@@ -37,10 +36,6 @@ const WizardFormCreatePrototype = ({
   const { data: currentModel } = useCurrentModel()
   const { data: contributionModels, isLoading: isFetchingModelContribution } =
     useListModelContribution()
-  const [localModel, setLocalModel] = useState<any>()
-  const { refetch } = useListModelPrototypes(
-    currentModel ? currentModel.id : '',
-  )
   const { data: versions } = useListVSSVersions()
   // controlled value for the dropdown selection
   const [selectedModelId, setSelectedModelId] = useState<string>('')
@@ -55,7 +50,7 @@ const WizardFormCreatePrototype = ({
     if (widget_config) {
       setPrototypeData({ widget_config })
     }
-  }, [code, widget_config, setPrototypeData])
+  }, [code, widget_config])
 
   // Once contributionModels are loaded, if not in new model mode, select the first available model.
   // If there are no models, force the "create new model" mode.
@@ -68,19 +63,13 @@ const WizardFormCreatePrototype = ({
       } else if (!isCreatingNewModel) {
         const firstModel = contributionModels.results[0]
         setSelectedModelId(firstModel.id)
-        setLocalModel(firstModel)
         setPrototypeData({
           model_id: firstModel.id,
-          modelName: '',
+          modelName: firstModel.name,
         })
       }
     }
-  }, [
-    contributionModels,
-    isFetchingModelContribution,
-    isCreatingNewModel,
-    setPrototypeData,
-  ])
+  }, [contributionModels, isFetchingModelContribution, isCreatingNewModel])
 
   // Disable confirm if required fields are missing.
   const disabled =
@@ -130,7 +119,10 @@ const WizardFormCreatePrototype = ({
           ;(modelBody as any).api_data_url = wizardPrototype.api_data_url
         }
         const newModelId = await createModelService(modelBody)
-        setPrototypeData({ model_id: newModelId })
+        setPrototypeData({
+          model_id: newModelId,
+          modelName: wizardPrototype.modelName,
+        })
         await updateGenAIProfile(newModelId)
       }
       if (onClose) {
@@ -172,10 +164,9 @@ const WizardFormCreatePrototype = ({
                     (model: any) => model.id === value,
                   )
                 if (selected) {
-                  setLocalModel(selected)
                   setPrototypeData({
                     model_id: selected.id,
-                    modelName: '',
+                    modelName: selected.name,
                   })
                 }
               }

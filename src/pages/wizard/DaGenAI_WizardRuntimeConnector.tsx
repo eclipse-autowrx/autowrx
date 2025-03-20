@@ -142,12 +142,7 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
     }
 
     const deploy = () => {
-      console.log(
-        'Deploy app to RuntimeID: ',
-        activeRtId,
-        ' with the SDV code: ',
-        wizardPrototype.code,
-      )
+      console.log('Deploy vehicle app to target: ', activeRtId)
       if (wizardPrototype && wizardPrototype.id && currentUser) {
         socketio.emit('messageToKit', {
           cmd: 'deploy_request',
@@ -266,10 +261,14 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
     }, [activeRtId, storageKey])
 
     useEffect(() => {
-      if (wizardActiveRtId) {
+      // Autoselect runtime if the targetPrefix starts with "runtime-" for simulation use cases
+      if (
+        targetPrefix.toLowerCase().startsWith('runtime-') &&
+        wizardActiveRtId
+      ) {
         setActiveRtId(wizardActiveRtId)
       }
-    }, [wizardActiveRtId])
+    }, [wizardActiveRtId, targetPrefix])
 
     useEffect(() => {
       if (allRuntimes && allRuntimes.length > 0) {
@@ -461,10 +460,6 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
       }
     }
 
-    useEffect(() => {
-      console.log('isAuthorized, ', isAuthorized)
-    }, [isAuthorized])
-
     return (
       <div>
         <div className="flex items-center">
@@ -480,7 +475,7 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
                   value={activeRtId as any}
                   onChange={(e) => {
                     console.log(
-                      `setActiveRtId(e.target.value) `,
+                      `Change target at WizardRuntimeConnector: `,
                       e.target.value,
                     )
                     setActiveRtId(e.target.value)

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
-import { Link } from 'react-router-dom'
+import { useLocation, Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import {
   DaBreadcrumb,
@@ -10,6 +9,7 @@ import {
 } from '@/components/atoms/DaBreadcrumb'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
+import useWizardGenAIStore from '@/pages/wizard/useGenAIWizardStore'
 
 const breadcrumbNames: { [key: string]: string } = {
   home: 'Home',
@@ -24,6 +24,7 @@ const breadcrumbNames: { [key: string]: string } = {
 const DaBreadcrumbBar = () => {
   const { data: model } = useCurrentModel()
   const { data: prototype } = useCurrentPrototype()
+  const { wizardPrototype } = useWizardGenAIStore()
   const location = useLocation()
   const [breadcrumbs, setBreadcrumbs] = useState<JSX.Element[]>([])
 
@@ -46,7 +47,7 @@ const DaBreadcrumbBar = () => {
     </React.Fragment>
   )
 
-  const pathnames = location.pathname.split('/').filter((x) => x)
+  const pathnames = location.pathname.split('/').filter((x: string) => x)
 
   useEffect(() => {
     const breadcrumbList: JSX.Element[] = []
@@ -80,14 +81,14 @@ const DaBreadcrumbBar = () => {
 
       if (pathnames.includes('prototype')) {
         paths.push({
-          path: `/model/${model?.id}/library`,
+          path: `/model/${model.id}/library`,
           name: breadcrumbNames['library'],
           key: 'library',
         })
 
         if (prototype && prototype.id && pathnames.includes('prototype')) {
           paths.push({
-            path: `/model/${model?.id}/library/prototype/${prototype.id}`,
+            path: `/model/${model.id}/library/prototype/${prototype.id}`,
             name: prototype.name,
             key: prototype.id,
           })
@@ -96,11 +97,38 @@ const DaBreadcrumbBar = () => {
     }
 
     if (pathnames.includes('genai-wizard')) {
+      // First, add the "Vehicle App Generator" breadcrumb
       paths.push({
         path: `/genai-wizard`,
         name: breadcrumbNames['genai'],
         key: 'genai',
       })
+
+      // Then, add the wizardPrototype.modelName if available
+      if (
+        wizardPrototype &&
+        wizardPrototype.modelName &&
+        wizardPrototype.modelName.trim()
+      ) {
+        paths.push({
+          path: `/genai-wizard`, // Adjust the path if needed
+          name: wizardPrototype.modelName,
+          key: 'genai-modelName',
+        })
+      }
+
+      // And finally, add the wizardPrototype.name if available
+      if (
+        wizardPrototype &&
+        wizardPrototype.name &&
+        wizardPrototype.name.trim()
+      ) {
+        paths.push({
+          path: `/genai-wizard`, // Adjust the path if needed
+          name: wizardPrototype.name,
+          key: 'genai-prototypeName',
+        })
+      }
     }
 
     if (pathnames.includes('privacy-policy')) {
@@ -123,7 +151,7 @@ const DaBreadcrumbBar = () => {
       )
     })
     setBreadcrumbs(breadcrumbList)
-  }, [location.pathname, model, prototype])
+  }, [location.pathname, model, prototype, wizardPrototype])
 
   return (
     <div className="flex h-[52px] w-full justify-between">
