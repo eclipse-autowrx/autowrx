@@ -10,7 +10,10 @@ import useWizardGenAIStore from './useGenAIWizardStore'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import useListModelContribution from '@/hooks/useListModelContribution'
 import useListVSSVersions from '@/hooks/useListVSSVersions'
-import { createModelService } from '@/services/model.service'
+import {
+  createModelService,
+  deleteModelService,
+} from '@/services/model.service'
 import { updateGenAIProfile } from './wizard.service'
 
 interface WizardFormCreatePrototypeProps {
@@ -138,7 +141,7 @@ const WizardFormCreatePrototype = ({
   return (
     <form
       onSubmit={handleConfirm}
-      className="flex max-h-[80vh] w-[40vw] min-w-[400px] flex-col bg-da-white p-4 lg:w-[25vw]"
+      className="flex max-h-[80vh] w-[40vw] min-w-[400px] flex-col bg-da-white p-4 lg:w-[25vw] overflow-y-auto scroll"
     >
       <DaText variant="title" className="text-da-primary-500">
         {title ?? 'New Prototype'}
