@@ -127,6 +127,12 @@ const WizardFormCreatePrototype = ({
           modelName: wizardPrototype.modelName,
         })
         await updateGenAIProfile(newModelId)
+      } else {
+        if (!wizardPrototype.model_id) {
+          throw new Error('Please select a model')
+        } else {
+          await updateGenAIProfile(wizardPrototype.model_id)
+        }
       }
       if (onClose) {
         onClose()
