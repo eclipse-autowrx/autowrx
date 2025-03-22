@@ -123,6 +123,7 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
       socketio.emit('messageToKit', {
         cmd: 'run_python_app',
         to_kit_id: activeRtId,
+        usedAPIs: usedAPIs, // Match current method of DaRuntimeConnector
         data: {
           code: code,
         },
@@ -285,30 +286,13 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
           return
         }
 
-        // For simulation use cases (targetPrefix "runtime-"), try to find the special default
-        if (targetPrefix.toLowerCase().startsWith('runtime-')) {
-          let defaultRuntime = onlineRuntimes.find((rt: any) =>
-            rt.kit_id.toLowerCase().startsWith('runtime-etas-e2e'),
-          )
-          if (defaultRuntime) {
-            console.log(
-              `setActiveRtId to defaultRuntime`,
-              defaultRuntime.kit_id,
-            )
-            setActiveRtId(defaultRuntime.kit_id)
-            setWizardActiveRtId(defaultRuntime.kit_id)
-            localStorage.setItem(storageKey, defaultRuntime.kit_id)
-            return
-          }
-        }
-
-        // Use the last selected runtime from localStorage (using the prefix-specific key)
+        // First, try to use the last selected runtime from localStorage.
         let lastOnlineRuntime = localStorage.getItem(storageKey)
         if (
           lastOnlineRuntime &&
           onlineRuntimes.some((rt: any) => rt.kit_id === lastOnlineRuntime)
         ) {
-          console.log(`lastOnlineRuntime `, lastOnlineRuntime)
+          console.log(`Using last online runtime: `, lastOnlineRuntime)
           setActiveRtId(lastOnlineRuntime)
           if (targetPrefix.toLowerCase().startsWith('runtime-')) {
             setWizardActiveRtId(lastOnlineRuntime)
@@ -316,8 +300,11 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
           return
         }
 
-        // Otherwise, set activeRtId to the first available online kit
-        console.log(`setActiveRtId `, onlineRuntimes[0].kit_id)
+        // Otherwise, set activeRtId to the first available online kit.
+        console.log(
+          `setActiveRtId to first available kit: `,
+          onlineRuntimes[0].kit_id,
+        )
         setActiveRtId(onlineRuntimes[0].kit_id)
         if (targetPrefix.toLowerCase().startsWith('runtime-')) {
           setWizardActiveRtId(onlineRuntimes[0].kit_id)

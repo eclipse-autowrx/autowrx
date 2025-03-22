@@ -22,13 +22,13 @@ const DaGenAI_WizardRuntimeSelectorPopup = ({
     executeWizardSimulationStop,
   } = useWizardGenAIStore()
 
-  useEffect(() => {
-    console.log('Runtime at wizard change at popup selector', wizardActiveRtId)
-    console.log(
-      'All wizard runtimes at wizard change at popup selector',
-      allWizardRuntimes,
-    )
-  }, [wizardActiveRtId, allWizardRuntimes])
+  // useEffect(() => {
+  //   console.log('Runtime at wizard change at popup selector', wizardActiveRtId)
+  //   console.log(
+  //     'All wizard runtimes at wizard change at popup selector',
+  //     allWizardRuntimes,
+  //   )
+  // }, [wizardActiveRtId, allWizardRuntimes])
 
   return (
     <DaPopup

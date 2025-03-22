@@ -90,15 +90,15 @@ const PageGenAIWizard = () => {
     }
   }, [currentStep])
 
-  // Set an active runtime if one matches a certain criteria.
-  useEffect(() => {
-    const matchingRuntime = allWizardRuntimes.find((runtime) =>
-      runtime.kit_id.startsWith('RunTime-ETAS-E2E'),
-    )
-    if (matchingRuntime) {
-      setWizardActiveRtId(matchingRuntime.kit_id)
-    }
-  }, [allWizardRuntimes])
+  // // Set an active runtime if one matches a certain criteria.
+  // useEffect(() => {
+  //   const matchingRuntime = allWizardRuntimes.find((runtime) =>
+  //     runtime.kit_id.startsWith('RunTime-ETAS-E2E'),
+  //   )
+  //   if (matchingRuntime) {
+  //     setWizardActiveRtId(matchingRuntime.kit_id)
+  //   }
+  // }, [allWizardRuntimes])
 
   return (
     <div className="flex flex-col w-full h-full bg-white">
