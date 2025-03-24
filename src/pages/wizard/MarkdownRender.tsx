@@ -112,12 +112,12 @@ const MarkdownRender = ({ markdownText }: MarkdownRenderProps) => {
           if (inline || !className) {
             const { ref, ...rest } = props
             return (
-              <div
-                className="w-fit  whitespace-pre-nowrap  text-sm font-normal select-text px-1 h-[18px] rounded-sm mx-0.5 font-mono dark:text-fuchsia-400/90"
+              <span
+                className="w-fit whitespace-pre-nowrap text-da-primary-500 bg-da-primary-500/10 rounded-lg text-sm font-medium select-text px-1 mx-0.5"
                 {...rest}
               >
                 {children}
-              </div>
+              </span>
             )
           } else {
             const language = className
@@ -126,7 +126,7 @@ const MarkdownRender = ({ markdownText }: MarkdownRenderProps) => {
             const codeContent = String(children).replace(/\n$/, '')
             const codeString = `\`\`\`${language}\n${codeContent}\n\`\`\``
             // return <CodeBlockRender code={codeString} className="w-full my-2" />;
-            return <div>codeString</div>
+            return <div>{codeString}</div>
           }
         },
 

@@ -50,7 +50,7 @@ type WizardGenAIStoreActions = {
   executeWizardSimulationStop: () => boolean
 
   setPrototypeData: (data: Partial<WizardPrototype>) => void
-  resetWizardStore: () => void
+  resetWizardStore: (completeReset?: boolean) => void
   setAllWizardRuntimes: (runtimes: any[]) => void
   setWizardActiveRtId: (rtId: string | undefined) => void
   savePrototype: (options: {
@@ -200,14 +200,27 @@ const useWizardGenAIStore = create<
       wizardPrototype: { ...state.wizardPrototype, ...data },
     })),
 
-  resetWizardStore: () => {
-    const { executeWizardSimulationStop } = get()
+  resetWizardStore: (completeReset = false) => {
+    const { executeWizardSimulationStop, wizardPrototype } = get()
     executeWizardSimulationStop()
-    set({
-      wizardPrompt: '',
-      wizardLog: '',
-      wizardPrototype: defaultWizardPrototype,
-    })
+    if (completeReset) {
+      set({
+        wizardPrompt: '',
+        wizardLog: '',
+        wizardPrototype: defaultWizardPrototype,
+      })
+    } else {
+      set({
+        wizardPrompt: '',
+        wizardLog: '',
+        wizardPrototype: {
+          ...defaultWizardPrototype,
+          name: wizardPrototype.name,
+          model_id: wizardPrototype.model_id,
+          modelName: wizardPrototype.modelName,
+        },
+      })
+    }
   },
 
   savePrototype: async (options: {

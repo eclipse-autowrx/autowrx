@@ -4,6 +4,8 @@ import { cn } from '@/lib/utils.ts'
 import CodeEditor from '../../components/molecules/CodeEditor.tsx'
 import useWizardGenAIStore from '@/pages/wizard/useGenAIWizardStore.ts'
 import DaGenAI_WizardBase from './DaGenAI_WizardBase.tsx'
+import DaGenAI_WizardPrototypeSignal from './DaGenAI_WizardPrototypeSignal.tsx'
+import DaText from '@/components/atoms/DaText.tsx'
 
 type DaGenAI_WizardProps = {
   onCodeGenerated?: (code: string) => void
@@ -36,17 +38,37 @@ const DaGenAI_Wizard = ({ onCodeGenerated }: DaGenAI_WizardProps) => {
               Studio
             </div>
             {wizardPrototype.code ? (
-              <div className="flex w-full h-full rounded-md overflow-hidden">
-                <CodeEditor
-                  code={wizardPrototype.code || ''}
-                  setCode={(code) => {
-                    onCodeGenerated && onCodeGenerated(code)
-                    setPrototypeData({ code })
-                  }}
-                  language="python"
-                  onBlur={() => {}}
-                  editable={true}
-                />
+              <div className="flex flex-col w-full h-full rounded-md overflow-hidden">
+                {wizardPrototype &&
+                  wizardPrototype.code &&
+                  wizardPrototype.model_id && (
+                    <div className="h-1/2 border-b">
+                      <DaGenAI_WizardPrototypeSignal
+                        modelId={wizardPrototype.model_id}
+                        code={wizardPrototype.code}
+                      />
+                    </div>
+                  )}
+                <div className="h-1/2">
+                  <div className="mx-4 py-2">
+                    <DaText
+                      variant="small-bold"
+                      className="text-da-primary-500 mx-4 pb-1"
+                    >
+                      Code
+                    </DaText>
+                  </div>
+                  <CodeEditor
+                    code={wizardPrototype.code || ''}
+                    setCode={(code) => {
+                      onCodeGenerated && onCodeGenerated(code)
+                      setPrototypeData({ code })
+                    }}
+                    language="python"
+                    onBlur={() => {}}
+                    editable={true}
+                  />
+                </div>
               </div>
             ) : (
               <LoadingLineAnimation

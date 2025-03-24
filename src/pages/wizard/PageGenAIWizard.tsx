@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import DaText from '../../components/atoms/DaText'
 import { DaButton } from '../../components/atoms/DaButton'
 import DaStepper from '../../components/atoms/DaStepper'
 import DaStep from '../../components/atoms/DaStep'
@@ -85,27 +84,21 @@ const PageGenAIWizard = () => {
 
   // Reset some wizard state when going back to Generate and stop simulation when switching to Simulate
   useEffect(() => {
-    if (currentStep === 1) {
+    if (currentStep === 0 || currentStep === 2) {
+      console.log(
+        `Stop simulation when switching to ${currentStep === 0 ? 'Generate' : 'Deploy'} `,
+      )
       executeWizardSimulationStop()
     }
   }, [currentStep])
 
-  // // Set an active runtime if one matches a certain criteria.
-  // useEffect(() => {
-  //   const matchingRuntime = allWizardRuntimes.find((runtime) =>
-  //     runtime.kit_id.startsWith('RunTime-ETAS-E2E'),
-  //   )
-  //   if (matchingRuntime) {
-  //     setWizardActiveRtId(matchingRuntime.kit_id)
-  //   }
-  // }, [allWizardRuntimes])
+  useEffect(() => {
+    resetWizardStore(true) // Complete reset on mount
+  }, [])
 
   return (
     <div className="flex flex-col w-full h-full bg-white">
       <div className="px-4 py-3 flex items-center justify-center border-b">
-        {/* <DaText variant="sub-title" className="flex flex-1 text-da-primary-500">
-          Vehicle App Generator
-        </DaText> */}
         <div className="flex min-w-0 justify-center">
           <DaStepper currentStep={currentStep} setCurrentStep={setCurrentStep}>
             <DaStep>Generate</DaStep>
