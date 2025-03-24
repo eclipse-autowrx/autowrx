@@ -93,12 +93,12 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
 
     useEffect(() => {
       if (rawApisPackage) {
-        // console.log(`apis-value `, activeRtId)
-        // console.log(payload)
-        if (rawApisPackage.result) {
-          // console.log(`receive apis-value`)
+        console.log(`apis-value `, activeRtId)
+        console.log(rawApisPackage)
+        if (activeRtId && activeRtId==rawApisPackage?.kit_id) {
+          console.log(`>>>>>>>>> receive apis-value`)
           // console.log(rawApisPackage)
-          setActiveApis(rawApisPackage.result)
+          setActiveApis(rawApisPackage?.result || {})
         }
       }
     }, [rawApisPackage])
