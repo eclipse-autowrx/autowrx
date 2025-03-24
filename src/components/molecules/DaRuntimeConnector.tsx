@@ -93,12 +93,12 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
 
     useEffect(() => {
       if (rawApisPackage) {
-        // console.log(`apis-value `, activeRtId)
-        // console.log(payload)
-        if (rawApisPackage.result) {
-          // console.log(`receive apis-value`)
+        console.log(`apis-value `, activeRtId)
+        console.log(rawApisPackage)
+        if (activeRtId && activeRtId==rawApisPackage?.kit_id) {
+          console.log(`>>>>>>>>> receive apis-value`)
           // console.log(rawApisPackage)
-          setActiveApis(rawApisPackage.result)
+          setActiveApis(rawApisPackage?.result || {})
         }
       }
     }, [rawApisPackage])
@@ -396,7 +396,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         }
       })
 
-      console.log("onGetAllKitData sortedKits", sortedKits)
+      // console.log("onGetAllKitData sortedKits", sortedKits)
 
       setAllRuntimes(sortedKits)
     }
@@ -545,6 +545,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         }
       } else {
         let publicRuntimes = allRuntimes.filter((rt:any) => rt.name.toLowerCase().startsWith('runtime-public-') || rt.name.toLowerCase().startsWith('runtime-shared-'))
+        
         let myRuntimes = []
         if(Array.isArray(assets)) {
           // console.log("assets", assets)
@@ -560,8 +561,17 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
             return result
           })
         }
+
+        if(myRuntimes.length>=3) {
+          setRenderRuntimes([...new Set([...myRuntimes])])
+        } else {
+          let freeRuntimes = publicRuntimes.sort((a:any, b:any) => {
+            return a.noRunner - b.noRunner
+          })
+          setRenderRuntimes([...new Set([...myRuntimes, ...freeRuntimes.slice(0, 3-myRuntimes.length)])])
+        }
         
-        setRenderRuntimes([...new Set([...myRuntimes, ...publicRuntimes])])
+        
       }
     }, [assets, allRuntimes, isDeployMode])
 
