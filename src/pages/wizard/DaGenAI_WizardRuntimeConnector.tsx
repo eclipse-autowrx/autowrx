@@ -74,8 +74,8 @@ const DaGenAI_WizardRuntimeConnector = forwardRef<any, KitConnectProps>(
 
     useEffect(() => {
       if (rawApisPackage) {
-        if (rawApisPackage.result) {
-          setActiveApis(rawApisPackage.result)
+        if (activeRtId && activeRtId==rawApisPackage?.kit_id) {
+          setActiveApis(rawApisPackage?.result || {})
         }
       }
     }, [rawApisPackage])
