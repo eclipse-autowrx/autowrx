@@ -93,10 +93,10 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
 
     useEffect(() => {
       if (rawApisPackage) {
-        console.log(`apis-value `, activeRtId)
-        console.log(rawApisPackage)
+        // console.log(`apis-value `, activeRtId)
+        // console.log(rawApisPackage)
         if (activeRtId && activeRtId==rawApisPackage?.kit_id) {
-          console.log(`>>>>>>>>> receive apis-value`)
+          // console.log(`>>>>>>>>> receive apis-value`)
           // console.log(rawApisPackage)
           setActiveApis(rawApisPackage?.result || {})
         }
@@ -562,6 +562,8 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
           })
         }
 
+        // console.log("myRuntimes", myRuntimes)
+
         if(myRuntimes.length>=3) {
           setRenderRuntimes([...new Set([...myRuntimes])])
         } else {
@@ -570,8 +572,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
           })
           setRenderRuntimes([...new Set([...myRuntimes, ...freeRuntimes.slice(0, 3-myRuntimes.length)])])
         }
-        
-        
+
       }
     }, [assets, allRuntimes, isDeployMode])
 

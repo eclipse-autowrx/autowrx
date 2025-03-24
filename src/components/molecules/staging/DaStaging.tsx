@@ -370,7 +370,7 @@ const DaStaging = ({ isWizard }: DaStagingProps) => {
                       value={activeLifeCycle}
                       onChange={(e) => {
                         // console.log(`setActiveRtId(e.target.value) `, e.target.value)
-                        console.log(e.target.value)
+                        // console.log(e.target.value)
                         setActiveLifeCycle(e.target.value)
                       }}
                     >
@@ -478,7 +478,7 @@ const DaStaging = ({ isWizard }: DaStagingProps) => {
                 targetState={null}
                 onRequestUpdate={(id: string, data: string) => { }}
                 onItemEditFinished={(id, data) => { }}
-                expandedIds={['3', '3.1', '3.1.1', '3.1.1.1', '3.1.1.1.1']}
+                expandedIds={[]}
               ></DaStageComponent>
             </div>
           </div>
