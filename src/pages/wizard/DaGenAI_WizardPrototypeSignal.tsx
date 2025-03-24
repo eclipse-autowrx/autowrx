@@ -10,6 +10,7 @@ import DaTabItem from '@/components/atoms/DaTabItem'
 import ModelApiList from '@/components/organisms/ModelApiList'
 import useGetModel from '@/hooks/useGetModel'
 import { Model } from '@/types/model.type'
+import { TbMaximize, TbMinimize } from 'react-icons/tb'
 
 interface ApiCodeBlockProps {
   content: string
@@ -113,11 +114,17 @@ const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
 interface DaGenAI_WizardPrototypeSignalProps {
   code: string
   modelId: string
+  isExpandSignalTab: boolean
+  setIsExpandSignalTab: (expanded: boolean) => void
+  disableSelectedSignalView?: boolean
 }
 
 const DaGenAI_WizardPrototypeSignal: FC<DaGenAI_WizardPrototypeSignalProps> = ({
   code,
   modelId,
+  isExpandSignalTab,
+  setIsExpandSignalTab,
+  disableSelectedSignalView = false,
 }) => {
   const [tab, setTab] = useState<'used-signals' | 'all-signals'>('used-signals')
   const { data: fetchedModel } = useGetModel(modelId || '')
@@ -155,6 +162,13 @@ const DaGenAI_WizardPrototypeSignal: FC<DaGenAI_WizardPrototypeSignalProps> = ({
     popupApi[1](true)
   }
 
+  // Force tab to 'all-signals' when disableSelectedSignalView is true
+  useEffect(() => {
+    if (disableSelectedSignalView) {
+      setTab('all-signals')
+    }
+  }, [disableSelectedSignalView])
+
   return (
     <div className="flex flex-col w-full h-full p-1">
       <DaPopup state={popupApi} width={'800px'} trigger={<span></span>}>
@@ -166,14 +180,17 @@ const DaGenAI_WizardPrototypeSignal: FC<DaGenAI_WizardPrototypeSignalProps> = ({
         />
       </DaPopup>
 
-      <div className="flex justify-between mx-3">
+      <div className="flex justify-between items-center mx-3">
         <div className="flex">
-          <DaTabItem
-            onClick={() => setTab('used-signals')}
-            active={tab === 'used-signals'}
-          >
-            Used Signals ({useApis.length})
-          </DaTabItem>
+          {/* Conditionally render "Selected Signals" tab */}
+          {!disableSelectedSignalView && (
+            <DaTabItem
+              onClick={() => setTab('used-signals')}
+              active={tab === 'used-signals'}
+            >
+              Selected Signals ({useApis.length})
+            </DaTabItem>
+          )}
           <DaTabItem
             onClick={() => setTab('all-signals')}
             active={tab === 'all-signals'}
@@ -181,6 +198,15 @@ const DaGenAI_WizardPrototypeSignal: FC<DaGenAI_WizardPrototypeSignalProps> = ({
             All Signals ({activeModelApis?.length || 0})
           </DaTabItem>
         </div>
+        {!disableSelectedSignalView && (
+          <div onClick={() => setIsExpandSignalTab(!isExpandSignalTab)}>
+            {isExpandSignalTab ? (
+              <TbMinimize className="size-4 text-da-gray-medium cursor-pointer hover:text-da-primary-500" />
+            ) : (
+              <TbMaximize className="size-4 text-da-gray-medium cursor-pointer hover:text-da-primary-500" />
+            )}
+          </div>
+        )}
       </div>
 
       {tab === 'used-signals' && (
@@ -201,7 +227,7 @@ const DaGenAI_WizardPrototypeSignal: FC<DaGenAI_WizardPrototypeSignalProps> = ({
             </div>
           ) : (
             <div className="items-center flex-1 justify-center flex">
-              <p className="text-da-gray-medium">No signals was used.</p>
+              <p className="text-da-gray-medium">No signals was selected.</p>
             </div>
           )}
         </>

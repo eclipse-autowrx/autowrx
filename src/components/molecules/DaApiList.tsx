@@ -58,14 +58,8 @@ const DaApiListItem = ({
         onMouseLeave={handleMouseLeave}
       >
         <div className="flex flex-1 truncate cursor-pointer items-center">
-          {/* <DaText
-          variant={isSelected ? 'small-bold' : 'small'}
-          className="cursor-pointer"
-        >
-          {api.name}
-        </DaText> */}
           <div
-            className={`text-[12.5px] cursor-pointer ${isSelected ? 'font-bold' : 'font-medium'} truncate`}
+            className={`text-sm cursor-pointer ${isSelected ? 'font-bold' : 'font-medium'} truncate`}
           >
             {api.name}
           </div>
@@ -74,7 +68,6 @@ const DaApiListItem = ({
               W
             </div>
           )}
-          {/* Only show DaCopy if hovered for 500ms */}
           {isHovered && (
             <div className="flex space-x-2 ml-2">
               <DaTooltip content="Copy Signal Name" delay={300}>

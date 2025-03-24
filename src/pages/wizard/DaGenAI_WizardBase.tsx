@@ -154,33 +154,72 @@ const DaGenAI_WizardBase = ({
                   } = eventObj.message.content
 
                   if (contentType === 'code') {
-                    // Process generated code.
+                    setUniqueLogs((prevLogs) => {
+                      let newLogs = prevLogs.filter(
+                        (log) => log.source !== 'selected_signals',
+                      )
+                      if (thoughts && thoughts.trim()) {
+                        const cleanThoughts = thoughts
+                          .replace(/```(?:json)?|```/g, '')
+                          .trim()
+                        const existingIndex = newLogs.findIndex(
+                          (log) => log.source === 'code',
+                        )
+                        if (existingIndex !== -1) {
+                          newLogs[existingIndex] = {
+                            source: 'code',
+                            content: cleanThoughts,
+                          }
+                        } else {
+                          newLogs.push({
+                            source: 'code',
+                            content: cleanThoughts,
+                          })
+                        }
+                      }
+                      return newLogs
+                    })
                     onCodeGenerated(eventPayload)
                     setWizardGeneratedCode(eventPayload)
-
-                    // Optionally update logs with the explanation/thoughts.
+                  } else if (contentType === 'selected_signals') {
+                    // Process selected signals.
+                    let signals: string[] = []
                     if (thoughts && thoughts.trim()) {
                       const cleanThoughts = thoughts
                         .replace(/```(?:json)?|```/g, '')
                         .trim()
-                      setUniqueLogs((prevLogs) => {
-                        const existingIndex = prevLogs.findIndex(
-                          (log) => log.source === contentType,
-                        )
-                        if (existingIndex !== -1) {
-                          const newLogs = [...prevLogs]
-                          newLogs[existingIndex] = {
-                            source: contentType,
-                            content: cleanThoughts,
-                          }
-                          return newLogs
-                        }
-                        return [
-                          ...prevLogs,
-                          { source: contentType, content: cleanThoughts },
-                        ]
-                      })
+                      try {
+                        signals = JSON.parse(cleanThoughts)
+                      } catch (err) {
+                        console.error('Error parsing thoughts JSON:', err)
+                        signals = eventPayload
+                          .split('%n')
+                          .filter((s: string) => s.trim() !== '')
+                      }
+                    } else if (eventPayload) {
+                      signals = eventPayload
+                        .split('%n')
+                        .filter((s: string) => s.trim() !== '')
                     }
+                    const formattedSignals =
+                      '### Selected Signals  \n' + signals.join('  \n') + '\n'
+                    setUniqueLogs((prevLogs) => {
+                      const existingIndex = prevLogs.findIndex(
+                        (log) => log.source === contentType,
+                      )
+                      if (existingIndex !== -1) {
+                        const newLogs = [...prevLogs]
+                        newLogs[existingIndex] = {
+                          source: contentType,
+                          content: formattedSignals,
+                        }
+                        return newLogs
+                      }
+                      return [
+                        ...prevLogs,
+                        { source: contentType, content: formattedSignals },
+                      ]
+                    })
                   } else if (contentType === 'error') {
                     // Handle error response.
                     setUniqueLogs((prevLogs) => [
@@ -342,7 +381,7 @@ const DaGenAI_WizardBase = ({
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="Ask AI to generate based on this prompt..."
               className="w-full h-[15vh] shadow-none !outline-none focus:outline-none"
-              textareaClassName="flex h-full resize-none focus:ring-0 !shadow-none border-none text-da-gray-darkest !text-lg"
+              textareaClassName="flex h-full resize-none focus:ring-0 !shadow-none border-none text-da-gray-darkest !text-base"
             />
             <div className="flex justify-between p-2">
               <Suspense>

@@ -122,20 +122,26 @@ const DaGenAI_WizardStaging = () => {
                       className="w-full absolute bottom-0 right-0"
                     />
                   )}
-                  {targetLog && (
-                    <DaTooltip
-                      content={<div className="text-sm">{targetLog}</div>}
-                    >
-                      <PiInfo
+                  {targetLog &&
+                    (isTimeout ? (
+                      <DaTooltip
+                        content={<div className="text-sm">{targetLog}</div>}
+                      >
+                        <PiInfo
+                          className={cn(
+                            'absolute bottom-4 right-2 size-6 text-amber-500',
+                          )}
+                        />
+                      </DaTooltip>
+                    ) : (
+                      <div
                         className={cn(
-                          'absolute bottom-4 right-2 size-6',
-                          isTimeout
-                            ? 'text-yellow-500'
-                            : 'text-da-gray-medium hover:text-da-primary-500',
+                          'absolute bottom-4 left-0 right-0 px-4 text-sm w-full truncate text-center text-da-gray-medium',
                         )}
-                      />
-                    </DaTooltip>
-                  )}
+                      >
+                        {targetLog}
+                      </div>
+                    ))}
                   <div className="flex w-full items-center justify-center">
                     <img
                       width={160}

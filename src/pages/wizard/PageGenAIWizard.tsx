@@ -22,7 +22,7 @@ const PageGenAIWizard = () => {
   const [loading, setLoading] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
   const [soFarSteps, setSoFarSteps] = useState(0)
-  const [disabledStep, setDisabledStep] = useState([true, true, true, true])
+  const [disabledStep, setDisabledStep] = useState([true, true, true])
   const [openSelectorPopup, setOpenSelectorPopup] = useState(false)
   const [hasGenAIPermission] = usePermissionHook([PERMISSIONS.USE_GEN_AI])
   const [openCreatePrototypeModal, setOpenCreatePrototypeModal] = useState(true)
@@ -34,9 +34,7 @@ const PageGenAIWizard = () => {
     savePrototype,
     setWizardGeneratedCode,
     wizardPrototype,
-    allWizardRuntimes,
     wizardActiveRtId,
-    setWizardActiveRtId,
     resetWizardStore,
   } = useWizardGenAIStore()
 
@@ -72,6 +70,7 @@ const PageGenAIWizard = () => {
   useEffect(() => {
     const hasCode = wizardPrototype.code && wizardPrototype.code.length > 0
     updateDisabledStep(0, !hasCode)
+    updateDisabledStep(1, !hasCode)
     if (hasCode) {
       setLoading(false)
     }

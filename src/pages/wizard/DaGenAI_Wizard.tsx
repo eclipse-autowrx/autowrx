@@ -17,6 +17,7 @@ const DaGenAI_Wizard = ({ onCodeGenerated }: DaGenAI_WizardProps) => {
   const { wizardPrototype, setPrototypeData, codeGenerating } =
     useWizardGenAIStore()
   const [isExpandCodeTab, setIsExpandCodeTab] = useState(false)
+  const [isExpandSignalTab, setIsExpandSignalTab] = useState(false)
 
   return (
     <div className="flex h-full w-full rounded bg-slate-200">
@@ -44,17 +45,25 @@ const DaGenAI_Wizard = ({ onCodeGenerated }: DaGenAI_WizardProps) => {
                 {wizardPrototype && wizardPrototype.model_id && (
                   <div
                     className={cn(
-                      'h-1/2 border-b',
+                      'border-b',
+                      isExpandSignalTab ? 'h-full ' : 'h-1/2',
                       isExpandCodeTab && 'hidden',
                     )}
                   >
                     <DaGenAI_WizardPrototypeSignal
                       modelId={wizardPrototype.model_id}
                       code={wizardPrototype.code || ''}
+                      isExpandSignalTab={isExpandSignalTab}
+                      setIsExpandSignalTab={setIsExpandSignalTab}
                     />
                   </div>
                 )}
-                <div className={isExpandCodeTab ? 'h-full' : 'h-1/2 mt-1'}>
+                <div
+                  className={cn(
+                    isExpandCodeTab ? 'h-full' : 'h-1/2 mt-1',
+                    isExpandSignalTab ? 'hidden' : '',
+                  )}
+                >
                   <div className="flex mx-4 py-1 justify-between items-center">
                     <DaText
                       variant="small-bold"
@@ -82,11 +91,24 @@ const DaGenAI_Wizard = ({ onCodeGenerated }: DaGenAI_WizardProps) => {
                   />
                 </div>
               </div>
-            ) : (
+            ) : codeGenerating ? (
               <LoadingLineAnimation
                 loading={codeGenerating}
                 content={"There's no code here"}
               />
+            ) : (
+              wizardPrototype &&
+              wizardPrototype.model_id && (
+                <div className="flex flex-col h-full overflow-y-auto">
+                  <DaGenAI_WizardPrototypeSignal
+                    modelId={wizardPrototype.model_id}
+                    code={wizardPrototype.code || ''}
+                    isExpandSignalTab={isExpandSignalTab}
+                    setIsExpandSignalTab={setIsExpandSignalTab}
+                    disableSelectedSignalView={true}
+                  />
+                </div>
+              )
             )}
           </div>
         </div>
