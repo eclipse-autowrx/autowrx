@@ -70,17 +70,17 @@ const MarkdownRender = ({ markdownText }: MarkdownRenderProps) => {
 
         // List
         ul: ({ children }) => (
-          <ul className="list-disc ml-4 space-y-2 my-2 leading-normal">
+          <ul className="list-disc ml-6 space-y-2 my-2 leading-normal">
             {children}
           </ul>
         ),
         ol: ({ children }) => (
-          <ol className="list-decimal ml-4 space-y-2 my-2 leading-normal">
+          <ol className="list-decimal ml-6 space-y-2 my-2 leading-normal">
             {children}
           </ol>
         ),
         li: ({ children }) => (
-          <li className="leading-normal pl-1.5">{children}</li>
+          <li className="leading-normal pl-1">{children}</li>
         ),
 
         // Links with blue text and underline on hover.

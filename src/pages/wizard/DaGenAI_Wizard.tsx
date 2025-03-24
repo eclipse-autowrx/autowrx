@@ -6,6 +6,7 @@ import useWizardGenAIStore from '@/pages/wizard/useGenAIWizardStore.ts'
 import DaGenAI_WizardBase from './DaGenAI_WizardBase.tsx'
 import DaGenAI_WizardPrototypeSignal from './DaGenAI_WizardPrototypeSignal.tsx'
 import DaText from '@/components/atoms/DaText.tsx'
+import { TbMaximize, TbMinimize } from 'react-icons/tb'
 
 type DaGenAI_WizardProps = {
   onCodeGenerated?: (code: string) => void
@@ -15,6 +16,7 @@ type DaGenAI_WizardProps = {
 const DaGenAI_Wizard = ({ onCodeGenerated }: DaGenAI_WizardProps) => {
   const { wizardPrototype, setPrototypeData, codeGenerating } =
     useWizardGenAIStore()
+  const [isExpandCodeTab, setIsExpandCodeTab] = useState(false)
 
   return (
     <div className="flex h-full w-full rounded bg-slate-200">
@@ -34,29 +36,39 @@ const DaGenAI_Wizard = ({ onCodeGenerated }: DaGenAI_WizardProps) => {
               'flex flex-col bg-white h-full w-full overflow-y-auto scroll-gray overflow-x-hidden border rounded-lg',
             )}
           >
-            <div className="font-semibold text-da-gray-dark border-b py-[9.51px] mb-1 px-3">
+            <div className="font-semibold text-da-gray-dark border-b py-[9.51px] px-3">
               Studio
             </div>
             {wizardPrototype.code ? (
-              <div className="flex flex-col w-full h-full rounded-md overflow-hidden">
-                {wizardPrototype &&
-                  wizardPrototype.code &&
-                  wizardPrototype.model_id && (
-                    <div className="h-1/2 border-b">
-                      <DaGenAI_WizardPrototypeSignal
-                        modelId={wizardPrototype.model_id}
-                        code={wizardPrototype.code}
-                      />
-                    </div>
-                  )}
-                <div className="h-1/2">
-                  <div className="mx-4 py-2">
+              <div className="flex flex-col mt-1 w-full h-full rounded-md overflow-hidden">
+                {wizardPrototype && wizardPrototype.model_id && (
+                  <div
+                    className={cn(
+                      'h-1/2 border-b',
+                      isExpandCodeTab && 'hidden',
+                    )}
+                  >
+                    <DaGenAI_WizardPrototypeSignal
+                      modelId={wizardPrototype.model_id}
+                      code={wizardPrototype.code || ''}
+                    />
+                  </div>
+                )}
+                <div className={isExpandCodeTab ? 'h-full' : 'h-1/2 mt-1'}>
+                  <div className="flex mx-4 py-1 justify-between items-center">
                     <DaText
                       variant="small-bold"
                       className="text-da-primary-500 mx-4 pb-1"
                     >
                       Code
                     </DaText>
+                    <div onClick={() => setIsExpandCodeTab(!isExpandCodeTab)}>
+                      {isExpandCodeTab ? (
+                        <TbMinimize className="size-4 text-da-gray-medium cursor-pointer hover:text-da-primary-500" />
+                      ) : (
+                        <TbMaximize className="size-4 text-da-gray-medium cursor-pointer hover:text-da-primary-500" />
+                      )}
+                    </div>
                   </div>
                   <CodeEditor
                     code={wizardPrototype.code || ''}

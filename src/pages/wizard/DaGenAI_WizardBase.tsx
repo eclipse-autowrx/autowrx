@@ -81,9 +81,6 @@ const DaGenAI_WizardBase = ({
     customPayload: addOn.customPayload,
   }))
 
-  // -------------------------------
-  // Updated handleGenerate using POST with manual SSE stream parsing
-  // -------------------------------
   const handleGenerate = async () => {
     if (!selectedAddOn) return
     onCodeGenerated('')
@@ -184,45 +181,6 @@ const DaGenAI_WizardBase = ({
                         ]
                       })
                     }
-                    // } else if (contentType === 'selected_signals') {
-                    //   // Process selected signals.
-                    //   let signals: string[] = []
-                    //   if (thoughts && thoughts.trim()) {
-                    //     const cleanThoughts = thoughts
-                    //       .replace(/```(?:json)?|```/g, '')
-                    //       .trim()
-                    //     try {
-                    //       signals = JSON.parse(cleanThoughts)
-                    //     } catch (err) {
-                    //       console.error('Error parsing thoughts JSON:', err)
-                    //       signals = eventPayload
-                    //         .split('%n')
-                    //         .filter((s: string) => s.trim() !== '')
-                    //     }
-                    //   } else if (eventPayload) {
-                    //     signals = eventPayload
-                    //       .split('%n')
-                    //       .filter((s: string) => s.trim() !== '')
-                    //   }
-                    //   const formattedSignals =
-                    //     '### Selected Signals  \n' + signals.join('  \n') + '\n'
-                    //   setUniqueLogs((prevLogs) => {
-                    //     const existingIndex = prevLogs.findIndex(
-                    //       (log) => log.source === contentType,
-                    //     )
-                    //     if (existingIndex !== -1) {
-                    //       const newLogs = [...prevLogs]
-                    //       newLogs[existingIndex] = {
-                    //         source: contentType,
-                    //         content: formattedSignals,
-                    //       }
-                    //       return newLogs
-                    //     }
-                    //     return [
-                    //       ...prevLogs,
-                    //       { source: contentType, content: formattedSignals },
-                    //     ]
-                    //   })
                   } else if (contentType === 'error') {
                     // Handle error response.
                     setUniqueLogs((prevLogs) => [
@@ -252,9 +210,6 @@ const DaGenAI_WizardBase = ({
       setLoading(false)
     }
   }
-  // -------------------------------
-  // End updated handleGenerate
-  // -------------------------------
 
   useClickOutside(dropdownRef, () => {
     setShowDropdown(false)
@@ -270,9 +225,7 @@ const DaGenAI_WizardBase = ({
     }
   }, [prompt])
 
-  // -------------------------------
   // Rehydrate the add-on from localStorage
-  // -------------------------------
   useEffect(() => {
     const storedAddOnStr = localStorage.getItem('lastUsed_GenAIWizardGenerator')
     let selected: AddOn | undefined = undefined

@@ -2,7 +2,6 @@ import { FC, useState, useEffect } from 'react'
 import { shallow } from 'zustand/shallow'
 import useModelStore from '@/stores/modelStore'
 import { getApiTypeClasses } from '@/lib/utils'
-import useCurrentModel from '@/hooks/useCurrentModel'
 import DaPopup from '@/components/atoms/DaPopup'
 import DaText from '@/components/atoms/DaText'
 import { DaApiListItem } from '@/components/molecules/DaApiList'
@@ -28,13 +27,11 @@ const ApiCodeBlock = ({ content, sampleLabel }: ApiCodeBlockProps) => {
           {sampleLabel}
         </DaText>
       </DaCopy>
-
       <div className="flex flex-wrap w-full min-w-fit px-3 py-3 mt-2 bg-gray-100 rounded-lg justify-between border">
         <DaText
           variant="small"
           className="w-full font-mono text-da-gray-dark whitespace-pre-line"
         >
-          {/* <span className="text-blue-600 font-mono">await self.</span> */}
           {content}
         </DaText>
       </div>
@@ -50,6 +47,7 @@ interface APIDetailsProps {
 const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
   useEffect(() => {
     if (activeApi) {
+      // additional logic if needed
     }
   }, [activeApi])
   return (
@@ -74,7 +72,7 @@ const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
               <div>
                 <div className="mt-4 text-da-gray-dark py-1 flex items-center da-label-regular">
                   This is branch node, branch include a list of child API. You
-                  can not call a branch in python code, please select its
+                  cannot call a branch in python code, please select its
                   children.
                 </div>
               </div>
@@ -112,7 +110,6 @@ const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
     </div>
   )
 }
-
 interface DaGenAI_WizardPrototypeSignalProps {
   code: string
   modelId: string
@@ -123,7 +120,6 @@ const DaGenAI_WizardPrototypeSignal: FC<DaGenAI_WizardPrototypeSignalProps> = ({
   modelId,
 }) => {
   const [tab, setTab] = useState<'used-signals' | 'all-signals'>('used-signals')
-  // const { data: model } = useCurrentModel()
   const { data: fetchedModel } = useGetModel(modelId || '')
 
   const [activeModelApis, setActiveModel] = useModelStore(
@@ -150,7 +146,6 @@ const DaGenAI_WizardPrototypeSignal: FC<DaGenAI_WizardPrototypeSignalProps> = ({
         useList.push(item)
       }
     })
-
     setUseApis(useList)
   }, [code, activeModelApis])
 
@@ -177,13 +172,13 @@ const DaGenAI_WizardPrototypeSignal: FC<DaGenAI_WizardPrototypeSignalProps> = ({
             onClick={() => setTab('used-signals')}
             active={tab === 'used-signals'}
           >
-            Used Signals
+            Used Signals ({useApis.length})
           </DaTabItem>
           <DaTabItem
             onClick={() => setTab('all-signals')}
             active={tab === 'all-signals'}
           >
-            All Signals
+            All Signals ({activeModelApis?.length || 0})
           </DaTabItem>
         </div>
       </div>
