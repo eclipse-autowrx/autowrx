@@ -25,9 +25,11 @@ import { toast } from 'react-toastify'
 import DaPopup from '@/components/atoms/DaPopup'
 import DaFileUpload from '@/components/atoms/DaFileUpload'
 import { DaButton } from '@/components/atoms/DaButton'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
 
 const PageVehicleApi = () => {
-  const { model_id, tab } = useParams()
+  const { model_id } = useParams()
   const navigate = useNavigate()
   const [selectedApi, setSelectedApi] = useState<VehicleApi | null>(null)
   const [activeTab, setActiveTab] = useState<
@@ -38,6 +40,11 @@ const PageVehicleApi = () => {
     state.refreshModel,
   ])
   const { data: model, refetch } = useCurrentModel()
+
+  const [hasWritePermission] = usePermissionHook([
+    PERMISSIONS.WRITE_MODEL,
+    model_id,
+  ])
 
   const [loading, setLoading] = useState(false)
   const [url, setUrl] = useState('')
@@ -140,16 +147,18 @@ const PageVehicleApi = () => {
               <TbDownload className="w-5 h-5 mr-2" />
               Download as JSON
             </DaTabItem>
-            <DaTabItem
-              active={false}
-              onClick={() => {
-                if (!model) return
-                setShowUpload(true)
-              }}
-            >
-              <TbReplace className="h-5 w-5 mr-2" />
-              Replace Vehicle API
-            </DaTabItem>
+            {hasWritePermission && (
+              <DaTabItem
+                active={false}
+                onClick={() => {
+                  if (!model) return
+                  setShowUpload(true)
+                }}
+              >
+                <TbReplace className="h-5 w-5 mr-2" />
+                Replace Vehicle API
+              </DaTabItem>
+            )}
           </div>
           <DaText variant="regular-bold" className="text-da-primary-500 pr-4">
             {model?.api_version && `COVESA VSS ${model.api_version}`}
@@ -189,24 +198,29 @@ const PageVehicleApi = () => {
           </div>
         )}
 
-        <DaPopup trigger={<></>} state={[showUpload, setShowUpload]}>
-          <div className="w-[280px]">
-            <DaText variant="regular-bold" className="text-center">
-              Upload Vehicle API file
-            </DaText>
-            <div className="h-2" />
-            <DaFileUpload onFileUpload={(url) => setUrl(url)} accept=".json" />
-            <DaButton
-              size="sm"
-              className="w-full mt-4"
-              onClick={handleReplaceAPI}
-              disabled={!url || loading}
-            >
-              {loading && <TbLoader className="animate-spin w-4 h-4 mr-2" />}
-              Replace Vehicle API
-            </DaButton>
-          </div>
-        </DaPopup>
+        {hasWritePermission && (
+          <DaPopup trigger={<></>} state={[showUpload, setShowUpload]}>
+            <div className="w-[280px]">
+              <DaText variant="regular-bold" className="text-center">
+                Upload Vehicle API file
+              </DaText>
+              <div className="h-2" />
+              <DaFileUpload
+                onFileUpload={(url) => setUrl(url)}
+                accept=".json"
+              />
+              <DaButton
+                size="sm"
+                className="w-full mt-4"
+                onClick={handleReplaceAPI}
+                disabled={!url || loading}
+              >
+                {loading && <TbLoader className="animate-spin w-4 h-4 mr-2" />}
+                Replace Vehicle API
+              </DaButton>
+            </div>
+          </DaPopup>
+        )}
       </div>
     </DaLoadingWrapper>
   )
