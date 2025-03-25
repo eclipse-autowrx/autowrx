@@ -291,11 +291,7 @@ const DaGenAI_WizardBase = ({
   }, [])
 
   return (
-    <div className={cn('flex flex-col h-full w-full rounded py-1', className)}>
-      <div className="font-semibold text-da-gray-dark border-b py-2 mb-1 px-3">
-        Generate with AI
-      </div>
-
+    <div className={cn('flex flex-col h-full w-full py-1', className)}>
       <div className="flex h-full w-full flex-col overflow-y-auto border-none py-2 px-3">
         {uniqueLogs && uniqueLogs.length > 0 ? (
           <div className="flex flex-col mt-0 h-full mb-2 space-y-2 overflow-y-auto rounded-md bg-gray-200 p-3 text-da-gray-darkest text-sm">

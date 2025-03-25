@@ -187,6 +187,7 @@ const DaGenAI_WizardPrototypeSignal: FC<DaGenAI_WizardPrototypeSignalProps> = ({
             <DaTabItem
               onClick={() => setTab('used-signals')}
               active={tab === 'used-signals'}
+              small={true}
             >
               Selected Signals ({useApis.length})
             </DaTabItem>
@@ -212,7 +213,7 @@ const DaGenAI_WizardPrototypeSignal: FC<DaGenAI_WizardPrototypeSignalProps> = ({
       {tab === 'used-signals' && (
         <>
           {useApis && useApis.length > 0 ? (
-            <div className="flex flex-col w-full h-full px-4 overflow-y-auto">
+            <div className="flex flex-col w-full h-full px-3 overflow-y-auto">
               <div className="flex flex-col w-full min-w-fit mt-2">
                 {useApis.map((item: any, index: any) => (
                   <DaApiListItem

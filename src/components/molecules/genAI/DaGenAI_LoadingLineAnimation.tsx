@@ -33,7 +33,7 @@ const LoadingLineAnimation = ({
       ref={(element) => {
         setMaxLeft(element?.clientWidth || 0)
       }}
-      className="relative flex h-full flex-1 select-none items-center justify-center rounded-md bg-gray-50 shadow"
+      className="relative flex h-full flex-1 select-none items-center justify-center bg-gray-50 shadow"
     >
       {!loading ? (
         <div>{content}</div>
