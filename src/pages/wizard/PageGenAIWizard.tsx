@@ -100,7 +100,7 @@ const PageGenAIWizard = () => {
       <div className="px-4 py-3 flex items-center justify-center border-b">
         <div className="flex min-w-0 justify-center">
           <DaStepper currentStep={currentStep} setCurrentStep={setCurrentStep}>
-            <DaStep>Generate</DaStep>
+            <DaStep>Generate with AI</DaStep>
             <DaStep disabled={soFarSteps < 1 || disabledStep[0]}>
               Simulate
             </DaStep>
