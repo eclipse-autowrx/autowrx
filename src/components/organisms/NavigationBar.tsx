@@ -53,31 +53,29 @@ const NavigationBar = ({}) => {
               <TbBuildingWarehouse size={22} />
             </Link>
           </DaTooltip>
-          <DaMenu
-            trigger={
-              <div className="cursor-pointer flex !h-10 items-center da-btn-sm text-da-gray-medium da-btn-plain ml-2">
-                <HiMenu size={22} />
-              </div>
-            }
-          >
-            {/* Separate condition checking with component since MUI component does not accept Fragment as children */}
-            {isAuthorized && (
+          {isAuthorized && (
+            <DaMenu
+              trigger={
+                <div className="cursor-pointer flex !h-10 items-center da-btn-sm text-da-gray-medium da-btn-plain ml-2">
+                  <HiMenu size={22} />
+                </div>
+              }
+            >
+              {/* Separate condition checking with component since MUI component does not accept Fragment as children */}
               <Link
                 to="/manage-users"
                 className="flex items-center px-4 py-2 gap-2 da-menu-item da-label-regular"
               >
                 <TbUsers className="text-base" /> Manage Users
               </Link>
-            )}
-            {isAuthorized && (
               <Link
                 to="/manage-features"
                 className="flex items-center px-4 py-2 gap-2 da-menu-item da-label-regular"
               >
                 <TbStack2 className="text-base" /> Manage Features
               </Link>
-            )}
-          </DaMenu>
+            </DaMenu>
+          )}
           {/* {model ? (
             <Link to={`/model/${model.id}`}>
               <DaButton variant="plain">
