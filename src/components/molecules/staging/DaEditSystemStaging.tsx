@@ -154,6 +154,7 @@ const DaEditSystemStaging = ({
                   ref={runTimeRef}
                   usedAPIs={[]}
                   onActiveRtChanged={(rtId: string | undefined) => {
+                    // console.log(`onActiveRtChanged ${rtId}`)
                     setActiveRtId(rtId || '')
                   }}
                   onDeployResponse={(newLog: string, isDone: boolean) => {
@@ -223,15 +224,15 @@ const DaEditSystemStaging = ({
             <div className="h-full px-4 flex items-center grow">
               System Elements
             </div>
-            <div className="h-full px-2 flex items-center justify-center w-24 border-l">
+            {/* <div className="h-full px-2 flex items-center justify-center w-24 border-l">
               Version
-            </div>
-            {!onTargetMode && (
+            </div> */}
+            {/* {!onTargetMode && (
               <div className="h-full px-2 flex items-center justify-center w-24 border-l">
                 Actions
               </div>
-            )}
-            {onTargetMode && (
+            )} */}
+            {/* {onTargetMode && (
               <>
                 <div className="h-full px-2 flex items-center justify-center w-24 border-l">
                   Update
@@ -240,12 +241,14 @@ const DaEditSystemStaging = ({
                   {target.short_name || target.name}
                 </div>
               </>
-            )}
+            )} */}
           </div>
 
-          {/* {define && (
+          {define && (
             <DaStageComponent
+              activeLifeCycle={"Deployment Version"}
               onTargetMode={onTargetMode}
+              targets={null}
               id="none"
               prototype={prototype}
               isTargetConnected={!!activeRtId}
@@ -267,7 +270,7 @@ const DaEditSystemStaging = ({
               }}
               expandedIds={['3', '3.1', '3.1.1', '3.1.1.1', '3.1.1.1.1']}
             ></DaStageComponent>
-          )} */}
+          )}
         </div>
       </div>
 

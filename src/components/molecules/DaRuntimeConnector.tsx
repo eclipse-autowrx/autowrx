@@ -374,6 +374,8 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
           .startsWith(targetPrefix ? targetPrefix.toLowerCase() : 'runtime-'),
       )
 
+      // console.log("sortedKits", sortedKits)
+
       // Then sort by online status and kit_id
       sortedKits.sort((a, b) => {
         // Sort by online status first
@@ -530,16 +532,18 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     // Also update the second useEffect
     useEffect(() => {
       if (isDeployMode) {
+        // console.log("assets", assets)
         if (Array.isArray(assets)) {
-          const userKitsAsset = assets.find(
-            (asset) => asset.name === 'UserKits',
+          const userKitsAsset = assets.filter(
+            (asset) => asset.type === 'HARDWARE_KIT',
           )
+          // console.log(`userKitsAsset`, userKitsAsset)
           if (userKitsAsset) {
-            const kits = JSON.parse(userKitsAsset.data || '[]')
-            const kitIds = kits.map((kit: any) => `${kit.category}-${kit.id}`)
+            const kitIds = userKitsAsset.map((kit: any) => `${kit.name}`)
             const filteredRuntimes = allRuntimes.filter((rt: Runtime) =>
               kitIds.includes(rt.kit_id),
             )
+            // console.log("filteredRuntimes", filteredRuntimes)
             setRenderRuntimes(filteredRuntimes)
           }
         }

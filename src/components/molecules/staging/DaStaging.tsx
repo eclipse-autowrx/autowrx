@@ -27,7 +27,7 @@ const TARGETS = [
   {
     name: 'SDV Mockup',
     icon: '/imgs/targets/target_mockup.png',
-    prefix: 'Runtime-',
+    prefix: 'runtime-',
     version: 'v.1.0',
     target_document_url: '',
     state: {
@@ -444,20 +444,20 @@ const DaStaging = ({ isWizard }: DaStagingProps) => {
                           </div>
                         )}
                       </div>
-                      {/* <DaText variant="small" className="mt-1">
+                      <DaText variant="small" className="mt-1">
                         {target.version}
-                      </DaText> */}
-                      {/* <DaButton
+                      </DaText>
+                      <DaButton
                         variant="outline-nocolor"
                         className="my-1 w-[100px]"
                         onClick={() => {
-                          // setActiveTarget(target)
-                          // setMode(MODE_ON_TARGET)
+                          setActiveTarget(target)
+                          setMode(MODE_ON_TARGET)
                         }}
                         size="sm"
                       >
                         Update
-                      </DaButton> */}
+                      </DaButton>
                     </div>
                   </div>
                 ))}

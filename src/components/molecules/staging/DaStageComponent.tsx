@@ -442,22 +442,25 @@ const DaStageComponent = ({
             </div>
           </div>
 
-          <div className="grow flex items-center">
-            {targets &&
-              targets.map((target: any, index: number) => (
-                <div
-                  key={target.name}
-                  className="flex flex-1 justify-center items-center"
-                >
-                  <VersionRender
-                    target={target}
-                    code={item.id}
-                    activeLifeCycle={activeLifeCycle}
-                    latestVersion={item.version||''}
-                  />
-                </div>
-              ))}
-          </div>
+
+          { !onTargetMode &&
+            <div className="grow flex items-center">
+              {targets &&
+                targets.map((target: any, index: number) => (
+                  <div
+                    key={target.name}
+                    className="flex flex-1 justify-center items-center"
+                  >
+                    <VersionRender
+                      target={target}
+                      code={item.id}
+                      activeLifeCycle={activeLifeCycle}
+                      latestVersion={item.version||''}
+                    />
+                  </div>
+                ))}
+            </div>
+          }
 
           {/* {!onTargetMode && (
             <div className="h-full px-2 flex items-center justify-center w-24 border-l">
@@ -500,7 +503,7 @@ const DaStageComponent = ({
             </div>
           )} */}
 
-          {/* {onTargetMode && (
+          {onTargetMode && (
             <>
               <div className="h-full px-2 flex items-center justify-center w-24 border-l">
                 {isTargetConnected &&
@@ -527,7 +530,7 @@ const DaStageComponent = ({
                     </>
                   )}
               </div>
-              <div className="h-full px-2 flex items-center justify-center w-32 border-l">
+              {/* <div className="h-full px-2 flex items-center justify-center w-32 border-l">
                 {isTargetConnected && (
                   <>
                     {item.version &&
@@ -545,9 +548,9 @@ const DaStageComponent = ({
                       )}
                   </>
                 )}
-              </div>
+              </div> */}
             </>
-          )} */}
+          )} 
         </div>
       )}
 
