@@ -7,7 +7,7 @@ import DaLoader from '@/components/atoms/DaLoader'
 import { VehicleAPI } from '@/types/api.type'
 import {
   Regulation,
-  getCertivityRegulationsService,
+  getHomologationRegulationsService,
   supportedCertivityApis,
   supportedCertivityApis_v4_map,
 } from '@/services/certivity.service'
@@ -87,7 +87,7 @@ const HomologationRegulationResult = ({
         if (selectedAPIs.size > 0) {
           // const credentials = await retrieveCertivityCredentials();
 
-          const regulationsResponse = await getCertivityRegulationsService(
+          const regulationsResponse = await getHomologationRegulationsService(
             Array.from(selectedAPIs.values())
               .map((api) => {
                 return supportedCertivityApis.has(api.name)

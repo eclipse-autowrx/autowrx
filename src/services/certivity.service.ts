@@ -218,9 +218,9 @@ export const supportedCertivityApis_v4_map: Record<string, string> = {
 // export const getCertivityCredentialsService = async () =>
 //     (await certivityAxios.get<CertivityCredentials>("/certivity/credentials")).data;
 
-export const getCertivityRegulationsService = async (apis: string[]) =>
+export const getHomologationRegulationsService = async (apis: string[]) =>
   (
-    await serverAxios.get<Regulation[]>('/certivity/regulations', {
+    await serverAxios.get<Regulation[]>('/homologation/regulations', {
       params: {
         vehicleApis: apis.join(','),
       },
