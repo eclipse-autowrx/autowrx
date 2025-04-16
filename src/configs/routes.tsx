@@ -71,6 +71,29 @@ const PageInventoryItemDetail = lazy(() =>
 const PageInventoryItemList = lazy(() =>
   retry(() => import('@/pages/PageInventoryItemList')),
 )
+const InventorySchemaList = lazy(() =>
+  retry(
+    () => import('@/components/molecules/inventory/schema/InventorySchemaList'),
+  ),
+)
+const InventorySchemaCreate = lazy(() =>
+  retry(
+    () =>
+      import('@/components/molecules/inventory/schema/InventorySchemaCreate'),
+  ),
+)
+const InventorySchemaDetail = lazy(() =>
+  retry(
+    () =>
+      import('@/components/molecules/inventory/schema/InventorySchemaDetail'),
+  ),
+)
+const InventorySchemaUpdate = lazy(() =>
+  retry(
+    () =>
+      import('@/components/molecules/inventory/schema/InventorySchemaUpdate'),
+  ),
+)
 
 const routesConfig: RouteConfig[] = [
   {
@@ -305,6 +328,38 @@ const routesConfig: RouteConfig[] = [
                 ),
               },
             ],
+          },
+          {
+            path: 'schemas',
+            element: (
+              <SuspenseProvider>
+                <InventorySchemaList />
+              </SuspenseProvider>
+            ),
+          },
+          {
+            path: 'schemas/new',
+            element: (
+              <SuspenseProvider>
+                <InventorySchemaCreate />
+              </SuspenseProvider>
+            ),
+          },
+          {
+            path: 'schemas/:schemaId',
+            element: (
+              <SuspenseProvider>
+                <InventorySchemaDetail />
+              </SuspenseProvider>
+            ),
+          },
+          {
+            path: 'schemas/:schemaId/edit',
+            element: (
+              <SuspenseProvider>
+                <InventorySchemaUpdate />
+              </SuspenseProvider>
+            ),
           },
         ],
       },

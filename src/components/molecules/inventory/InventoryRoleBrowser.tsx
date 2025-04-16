@@ -2,14 +2,20 @@ import { DaButton } from '@/components/atoms/DaButton'
 import DaText from '@/components/atoms/DaText'
 import { Link } from 'react-router-dom'
 import { roles } from './data'
+import { TbListTree } from 'react-icons/tb'
 
 const InventoryRoleBrowser = () => {
   return (
     <div className="container">
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 flex justify-between">
         <DaText variant="title" className="text-da-primary-500">
           Role Browser
         </DaText>
+        <Link to="/inventory/schemas">
+          <DaButton variant="outline-nocolor" size="sm">
+            <TbListTree className="mr-1" /> Schemas
+          </DaButton>
+        </Link>
       </div>
       <div className="grid grid-cols-2 mt-4 grid-rows-2 gap-6">
         {roles.map((role, index) => (
