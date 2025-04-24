@@ -342,13 +342,6 @@ const FormCreateWishlistApi = ({
           placeholder="Name"
           className="relative mt-2"
           inputClassName="text-sm"
-          onPaste={(e) => {
-            e.stopPropagation()
-            e.preventDefault()
-            const pastedValue = e.clipboardData.getData('Text')
-            setData((prev) => ({ ...prev, name: pastedValue }))
-            setShowSuggestions(true)
-          }}
         />
         {showSuggestions && filteredSuggestions.length > 0 && (
           <div className="absolute z-50 mt-1 w-[calc(100%-2rem)] max-h-[18vh] overflow-y-auto rounded-md border border-gray-200 bg-white p-1 shadow-lg">

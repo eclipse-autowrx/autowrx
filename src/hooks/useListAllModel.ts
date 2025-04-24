@@ -1,14 +1,14 @@
 // useListAllModels.ts
 import { useQuery } from '@tanstack/react-query'
 import { listAllModels } from '@/services/model.service'
-import useAuthStore from '@/stores/authStore'
+import useSelfProfileQuery from './useSelfProfile'
 
 const useListAllModels = () => {
-  const access = useAuthStore((state) => state.access)
+  const { data: self } = useSelfProfileQuery()
+
   return useQuery({
-    queryKey: ['listAllModels'],
+    queryKey: ['listAllModels', self?.id],
     queryFn: listAllModels,
-    enabled: access !== undefined,
   })
 }
 
