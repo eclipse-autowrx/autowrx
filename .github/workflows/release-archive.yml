@@ -1,0 +1,51 @@
+name: Release Archive
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract tag name
+        run: echo "RELEASE_TAG=${GITHUB_REF##*/}" >> $GITHUB_ENV
+
+      - name: Prepare archive directory
+        run: |
+          mkdir -p archive
+          rsync -av --exclude=node_modules --exclude=.git --exclude=archive ./ archive/
+
+      - name: Update version in package.json (optional)
+        run: |
+          if [ -f archive/package.json ]; then
+            jq --arg ver "$RELEASE_TAG" '.version=$ver' archive/package.json > archive/package.tmp.json
+            mv archive/package.tmp.json archive/package.json
+          fi
+
+      - name: Create tarball
+        run: |
+          TAR_NAME="${{ github.event.repository.name }}-${RELEASE_TAG}.tgz"
+          tar -czf "$TAR_NAME" -C archive .
+          echo "TAR_NAME=$TAR_NAME" >> $GITHUB_ENV
+
+      - name: Upload release archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.repository.name }}-${{ env.RELEASE_TAG }}
+          path: ${{ env.TAR_NAME }}
+
+      - name: Create GitHub Release
+        if: always()
+        continue-on-error: true
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: Release ${{ env.RELEASE_TAG }}
+          files: ${{ env.TAR_NAME }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

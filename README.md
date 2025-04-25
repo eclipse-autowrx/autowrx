@@ -1,85 +1,116 @@
-# NVM setup
+# autowrx
 
-Setup nvm to automatically change to compatible node version
+`autowrx` is a front-end application built with **Vite** and **React**, designed to work with the [digital.auto Playground](https://digital.auto) ecosystem. It provides a dashboard interface to visualize and interact with vehicle signal data, run prototype code, and demonstrate feature concepts using the Vehicle Signal Specification (VSS).
 
-- If you use `bash`, add this to the end of ~/.bashrc
+---
 
-```
-_nvmrc_hook() {
-  if [[ $PWD == $PREV_PWD ]]; then
-    return
-  fi
+## Overview
 
-  PREV_PWD=$PWD
-  [[ -f ".nvmrc" ]] && nvm use
-}
+This application enables developers to:
 
-if ! [[ "${PROMPT_COMMAND:-}" =~ _nvmrc_hook ]]; then
-  PROMPT_COMMAND="_nvmrc_hook${PROMPT_COMMAND:+;$PROMPT_COMMAND}"
-fi
-```
+- Interact with vehicle APIs and prototypes  
+- Visualize real-time signal data from runtimes  
+- Run Python, C++, or Rust-based logic in a containerized environment  
+- Connect to the KUKSA Data Broker and other services  
+- Showcase customer journeys and feature demos  
+- Support both local and Docker-based workflows  
 
-- If you use `nvm`, add this to the end of ~/.nvmrc
+---
 
-```
-autoload -U add-zsh-hook
-load-nvmrc() {
-  local node_version="$(nvm version)"
-  local nvmrc_path="$(nvm_find_nvmrc)"
+## Prerequisites
 
-  if [ -n "$nvmrc_path" ]; then
-    local nvmrc_node_version=$(nvm version "$(cat "${nvmrc_path}")")
+- Node.js (v18 or higher)
+- Yarn
+- Docker & Docker Compose
 
-    if [ "$nvmrc_node_version" = "N/A" ]; then
-      nvm install
-    elif [ "$nvmrc_node_version" != "$node_version" ]; then
-      nvm use
-    fi
-  elif [ "$node_version" != "$(nvm version default)" ]; then
-    echo "Reverting to nvm default version"
-    nvm use default
-  fi
-}
-add-zsh-hook chpwd load-nvmrc
-load-nvmrc
+---
+
+## Getting Started
+
+### Local Development
+
+```bash
+yarn install
+yarn dev
 ```
 
-> **Close your terminal and open again to apply changes**
+Access the application at: [http://localhost:3000](http://localhost:3000)
 
-# How to use
+### Docker Development
 
-- To local dev: `yarn dev`
-- To check for typescript: `yarn tsc`
-- To build: `yarn build`
-
-# Module missing error
-
-In case you get this error when run `yarn tsc` or `yarn build`:
-
-`Could not find a declaration file for module '<some_package_here>'.`
-
-Try steps below.
-
-1. Check if you already installed package `some_package_here` or not
-2. If already installed the package but still error, try to install types of it: `yarn add -D @types/some_package_here`
-3. If still get error, go to `src/types/index.d.ts`, add this:
-
-```javascript
-declare module 'some_package_here' {
-  const content: any
-  export default content
-}
+```bash
+docker-compose -f docker-compose.dev.yml up --build
 ```
 
-# Atom design
+Access the application at: [http://localhost:3000](http://localhost:3000)
 
-https://blog.logicwind.com/implement-atomic-design-component-in-react/
+### Docker Preview (Production Build)
 
-# React + TypeScript + Vite
+```bash
+docker-compose -f docker-compose.preview.yml up --build
+```
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Access the application at: [http://localhost:4173](http://localhost:4173)
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Project Structure
+
+- `src/` – React components, views, and utilities  
+- `vite.config.js` – Vite configuration with aliasing and plugins  
+- `Dockerfile.dev` – Development container setup  
+- `Dockerfile` – Production container setup  
+- `docker-compose.dev.yml` – Dev container configuration  
+- `docker-compose.preview.yml` – Preview container configuration  
+
+---
+
+## Features
+
+- Real-time signal visualization  
+- Execution and debugging of prototype logic  
+- Integration with KUKSA Data Broker  
+- Modular widget architecture  
+- Deployable as a standalone dashboard  
+
+---
+
+## Aliases
+
+- `@` → `./src` (configured in `vite.config.js`)
+
+---
+
+## Bundle Analysis
+
+To analyze the bundle:
+
+```bash
+yarn build
+```
+
+The visualizer will open automatically after the build completes.
+
+---
+
+## Cleanup
+
+To stop and remove containers:
+
+```bash
+docker-compose -f docker-compose.dev.yml down
+docker-compose -f docker-compose.preview.yml down
+```
+
+---
+
+## Contributing
+
+This project is part of the open-source [digital.auto](https://digital.auto) initiative. Contributions are welcome.
+
+---
+
+## License
+
+**License: [CC BY 4.0 (Creative Commons)](https://creativecommons.org/licenses/by/4.0/)**  
+You are free to share and adapt the material for any purpose, even commercially, with appropriate attribution.

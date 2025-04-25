@@ -5,13 +5,11 @@ import { DaText } from '@/components/atoms/DaText'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { DaAvatar } from '@/components/atoms/DaAvatar'
 import DaImportFile from '@/components/atoms/DaImportFile'
-import { TbCircleDotFilled, TbCircleFilled, TbPhotoEdit } from 'react-icons/tb'
+import { TbCircleFilled, TbPhotoEdit } from 'react-icons/tb'
 import { uploadFileService } from '@/services/upload.service'
 import { partialUpdateUserService } from '@/services/user.service'
 import FormUpdatePassword from '@/components/molecules/forms/FormUpdatePassword'
 import DaPopup from '@/components/atoms/DaPopup'
-import { Asset } from '@/types/asset.type'
-import DaKitManager from '@/components/molecules/assets/DaKitManager'
 
 const PageUserProfile = () => {
   const [isEditing, setIsEditing] = useState(false)
@@ -170,14 +168,6 @@ const PageUserProfile = () => {
                     </DaPopup>
                   </div>
                 </div>
-              </div>
-              <div className="mt-6">
-                <DaText variant="regular-bold" className="text-da-gray-dark">
-                  Kit Management
-                </DaText>
-              </div>
-              <div className="flex flex-col mt-2 w-full">
-                <DaKitManager />
               </div>
             </div>
           </div>
