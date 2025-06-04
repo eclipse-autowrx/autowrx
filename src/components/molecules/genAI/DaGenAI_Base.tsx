@@ -53,6 +53,7 @@ const DaGenAI_Base = ({
   const [addonsLoaded, setAddonsLoaded] = useState<boolean>(false)
   const { data: marketplaceAddOns } = useListMarketplaceAddOns(type)
   const [canUseGenAI] = usePermissionHook([PERMISSIONS.USE_GEN_AI])
+  const [hasGenAIAssets, setHasGenAIAssets] = useState(false)
   const access = useAuthStore((state) => state.access)
   const timeouts = useRef<NodeJS.Timeout[]>([])
   const [copied, setCopied] = useState(false)
@@ -92,8 +93,11 @@ const DaGenAI_Base = ({
       return
     }
     if (type == 'GenAI_Python') {
-      let pythonGenAIs = assets.filter((asset: any) => asset.type == 'GENAI-PYTHON')
+      let pythonGenAIs = assets.filter(
+        (asset: any) => asset.type == 'GENAI-PYTHON',
+      )
       console.log(pythonGenAIs)
+      setHasGenAIAssets(pythonGenAIs.length > 0)
       let pythonAIAddons = pythonGenAIs.map((asset: any) => {
         let url = ''
         let accessToken = ''
@@ -104,10 +108,11 @@ const DaGenAI_Base = ({
           let data = JSON.parse(asset.data)
           url = data.url || ''
           accessToken = data.accessToken || ''
-          method = data.method,
-            requestField = data.requestField
+          ;(method = data.method), (requestField = data.requestField)
           responseField = data.responseField
-        } catch (err) { console.log(err) }
+        } catch (err) {
+          console.log(err)
+        }
         return {
           id: asset.name + '-' + Math.random().toString(36).substring(2, 8),
           type: 'GenAI_Python' as const,
@@ -125,8 +130,6 @@ const DaGenAI_Base = ({
       setUserAIAddOns(pythonAIAddons)
       return
     }
-
-
   }, [assets])
 
   useEffect(() => {
@@ -169,12 +172,12 @@ const DaGenAI_Base = ({
       }
 
       if (selectedAddOn.endpointUrl) {
-
         switch (selectedAddOn.method?.toLowerCase().trim()) {
           case 'get':
             try {
               const response = await axios.get(
-                selectedAddOn.endpointUrl + `?${selectedAddOn.requestField || 'prompt'}=${encodeURIComponent(prompt)}`,
+                selectedAddOn.endpointUrl +
+                  `?${selectedAddOn.requestField || 'prompt'}=${encodeURIComponent(prompt)}`,
                 {
                   headers: {
                     Authorization: `${selectedAddOn.apiKey}`,
@@ -182,16 +185,27 @@ const DaGenAI_Base = ({
                   },
                 },
               )
-              if (response.data && response.data[selectedAddOn.responseField || 'data']) {
-                onCodeGenerated(response.data[selectedAddOn.responseField || 'data'])
+              if (
+                response.data &&
+                response.data[selectedAddOn.responseField || 'data']
+              ) {
+                onCodeGenerated(
+                  response.data[selectedAddOn.responseField || 'data'],
+                )
               } else {
-                onCodeGenerated(`Error: Receive incorrect format data\r\n${JSON.stringify(response.data, null, 4)}`)
+                onCodeGenerated(
+                  `Error: Receive incorrect format data\r\n${JSON.stringify(response.data, null, 4)}`,
+                )
               }
-            } catch (err) { console.log(err) }
+            } catch (err) {
+              console.log(err)
+            }
             break
           case 'post':
             try {
-              let payload = { systemMessage: selectedAddOn.samples || '' } as any
+              let payload = {
+                systemMessage: selectedAddOn.samples || '',
+              } as any
               payload[selectedAddOn.requestField || 'prompt'] = prompt
 
               const response = await axios.post(
@@ -204,15 +218,24 @@ const DaGenAI_Base = ({
                   },
                 },
               )
-              if (response.data && response.data[selectedAddOn.responseField || 'data']) {
-                onCodeGenerated(response.data[selectedAddOn.responseField || 'data'])
+              if (
+                response.data &&
+                response.data[selectedAddOn.responseField || 'data']
+              ) {
+                onCodeGenerated(
+                  response.data[selectedAddOn.responseField || 'data'],
+                )
               } else {
-                onCodeGenerated(`Error: Receive incorrect format data\r\n${JSON.stringify(response.data, null, 4)}`)
+                onCodeGenerated(
+                  `Error: Receive incorrect format data\r\n${JSON.stringify(response.data, null, 4)}`,
+                )
               }
-            } catch (err) { console.log(err) }
+            } catch (err) {
+              console.log(err)
+            }
             break
           default:
-            break;
+            break
         }
         return
       }
@@ -235,8 +258,9 @@ const DaGenAI_Base = ({
 
         // Parse the generated content from the new response structure
         onCodeGenerated(response.data.content)
-      } catch (err) { console.log(err) }
-
+      } catch (err) {
+        console.log(err)
+      }
     } catch (error) {
       timeouts.current.forEach((timeout) => clearTimeout(timeout))
       timeouts.current = []
@@ -267,7 +291,11 @@ const DaGenAI_Base = ({
         <div className="flex w-full items-center justify-between">
           <DaSectionTitle number={1} title="Prompting" />
           <div
-            className={cn(canUseGenAI ? '' : 'opacity-50 pointer-events-none')}
+            className={cn(
+              canUseGenAI || hasGenAIAssets
+                ? ''
+                : 'opacity-50 pointer-events-none',
+            )}
           >
             <Suspense>
               <DaSpeechToText onRecognize={setPrompt} prompt={prompt} />
@@ -322,7 +350,7 @@ const DaGenAI_Base = ({
           )}
         </div>
 
-        {!canUseGenAI ? (
+        {!canUseGenAI && !hasGenAIAssets ? (
           <div className="flex w-full select-none justify-center items-center text-sm text-da-gray-dark py-1 font-medium">
             <TbAlertCircle className="text-red-500 mr-1 size-5" />
             Permission required
@@ -351,7 +379,12 @@ const DaGenAI_Base = ({
 
         <DaButton
           variant="solid"
-          disabled={!prompt || loading || !addonsLoaded}
+          disabled={
+            !prompt ||
+            loading ||
+            !addonsLoaded ||
+            (!canUseGenAI && !hasGenAIAssets)
+          }
           className={cn('min-h-8 w-full py-1', prompt ? '!mt-1' : '')}
           onClick={handleGenerate}
         >
