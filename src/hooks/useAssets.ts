@@ -6,9 +6,9 @@ import {
   updateAssetService,
   shareMyAsset,
   removeUserFromShareList,
-  getAssetById
-} from '@/services/assset.service'
-import { Asset } from '@/types/asset.type'
+  getAssetById,
+} from '@/services/asset.service'
+import { Asset, QueryAssetsParams } from '@/types/asset.type'
 
 export const ASSET_QUERY_KEY = {
   assets: ['assets'],
@@ -18,12 +18,11 @@ export const useAssets = () => {
   const queryClient = useQueryClient()
 
   // Fetch assets
-  const useFetchAssets = () =>
+  const useFetchAssets = (params?: QueryAssetsParams) =>
     useQuery<Asset[]>({
-      queryKey: ASSET_QUERY_KEY.assets,
-      queryFn: listAssetsService,
+      queryKey: [...ASSET_QUERY_KEY.assets, params],
+      queryFn: () => listAssetsService(params),
     })
-
 
   // Create a new asset
   const createAsset = useMutation({

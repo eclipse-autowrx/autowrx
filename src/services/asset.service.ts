@@ -1,5 +1,5 @@
 import { serverAxios } from './base'
-import { Asset } from '@/types/asset.type'
+import { Asset, QueryAssetsParams } from '@/types/asset.type'
 
 // Type for asset creation/update payload
 interface AssetPayload {
@@ -9,8 +9,17 @@ interface AssetPayload {
 }
 
 // List all assets
-export const listAssetsService = async (): Promise<Asset[]> => {
-  const response = await serverAxios.get('/assets')
+export const listAssetsService = async (
+  params?: QueryAssetsParams,
+): Promise<Asset[]> => {
+  if (params?.type) {
+    params.type = Array.isArray(params.type)
+      ? params.type.join(',')
+      : params.type
+  }
+  const response = await serverAxios.get('/assets', {
+    params,
+  })
   return response.data.results
 }
 
@@ -36,21 +45,29 @@ export const updateAssetService = async (
   return response.data
 }
 
-export const shareMyAsset = async (assetId: string, payload: any): Promise<any> => {
-  const response = await serverAxios.post(`/assets/${assetId}/permissions`, payload)
+export const shareMyAsset = async (
+  assetId: string,
+  payload: any,
+): Promise<any> => {
+  const response = await serverAxios.post(
+    `/assets/${assetId}/permissions`,
+    payload,
+  )
   return response.data
 }
 
-export const removeUserFromShareList =  async (assetId: string, userId: string, role: string): Promise<any> => {
-  const response = await serverAxios.delete(`/assets/${assetId}/permissions?userId=${userId}&role=${role}`)
+export const removeUserFromShareList = async (
+  assetId: string,
+  userId: string,
+  role: string,
+): Promise<any> => {
+  const response = await serverAxios.delete(
+    `/assets/${assetId}/permissions?userId=${userId}&role=${role}`,
+  )
   return response.data
 }
-
 
 export const getAssetById = async (assetId: string): Promise<any> => {
   const response = await serverAxios.get(`/assets/${assetId}`)
   return response.data
 }
-
-
-
