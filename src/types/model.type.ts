@@ -58,7 +58,8 @@ export type Model = {
   tags?: Tag[]
   contributors?: User[]
   members?: User[]
-  state?: 'draft' | 'released' | 'blocked'
+  state?: 'draft' | 'released' | 'blocked',
+  extend?: any
 }
 
 export type Prototype = {
@@ -87,8 +88,19 @@ export type Prototype = {
   requirements?: string
   executed_turns?: number
   flow?: string
-  editors_choice?: boolean
+  editors_choice?: boolean,
+  extend?: any
 }
+
+/*
+extend: {
+  vehicle_api: {
+    supports: ['COVESA', 'USP', 'V2C', 'AAOS']
+  }
+}
+
+*/
+
 export interface CustomRequirement {
   text?: string
   url?: string

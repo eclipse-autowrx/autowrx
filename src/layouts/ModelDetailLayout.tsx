@@ -61,7 +61,7 @@ const ModelDetailLayout = () => {
         'Browse, explore and enhance the catalogue of Connected Vehicle Interfaces',
       path: 'api',
       subs: ['/model/:model_id/api', '/model/:model_id/api/:api'],
-      count: numberOfApis,
+      count: model?.extend?.vehicle_api?.supports?.length || numberOfApis,
     },
     {
       title: `Prototype Library`,
