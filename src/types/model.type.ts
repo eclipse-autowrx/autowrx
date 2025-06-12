@@ -95,7 +95,9 @@ export type Prototype = {
 /*
 extend: {
   vehicle_api: {
-    supports: ['COVESA', 'USP', 'V2C', 'AAOS']
+    supports: ['COVESA', 'USP', 'V2C', 'AAOS'],
+    '"USP": [],
+    "V2C": []
   }
 }
 
