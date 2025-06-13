@@ -14,6 +14,7 @@ type ModelState = {
   // access?: Token | null
   model?: Model | null
   activeModelApis?: any[]
+  activeModelUspSevices?: any[]
   prototype?: Prototype | null
   supportApis: any[],
 }
@@ -27,6 +28,7 @@ type Actions = {
 const useModelStore = create<ModelState & Actions>()((set, get) => ({
   model: undefined,
   activeModelApis: [],
+  activeModelUspSevices: [],
   supportApis: [],
   prototype: undefined,
   setActiveModel: async (model) => {
@@ -35,6 +37,7 @@ const useModelStore = create<ModelState & Actions>()((set, get) => ({
       label: 'COVESA',
       code: 'COVESA'
     }]
+    let activeModelUspSevices = []
     if (model) {
       // New way
       // console.log("model", model)
@@ -94,6 +97,7 @@ const useModelStore = create<ModelState & Actions>()((set, get) => ({
       })
       if(Array.isArray(model?.extend?.vehicle_api?.supports)) {
         supportApis = model?.extend?.vehicle_api?.supports
+        activeModelUspSevices = model?.extend?.vehicle_api?.USP || []
       }
     } else {
       ret = []
@@ -104,6 +108,7 @@ const useModelStore = create<ModelState & Actions>()((set, get) => ({
     set((state) => ({
       ...state,
       supportApis,
+      activeModelUspSevices,
       model,
       activeModelApis: ret,
     }))

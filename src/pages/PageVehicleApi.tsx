@@ -22,7 +22,7 @@ const PageVehicleApi = () => {
     }
   }, [supportApis])
 
-  return <div>
+  return <div className='w-full h-full'>
     {<div className='flex items-center justify-start py-0.5 pl-4 bg-da-primary-500 text-white'>
       <DaText variant="small-bold" className='mr-2'>API: </DaText>
       <DaSelect
