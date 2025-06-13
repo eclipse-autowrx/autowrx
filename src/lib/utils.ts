@@ -27,6 +27,10 @@ export const getApiTypeClasses = (type: string) => {
       return { bgClass: 'bg-emerald-500', textClass: 'text-emerald-500' }
     case 'attribute':
       return { bgClass: 'bg-sky-500', textClass: 'text-sky-500' }
+    case 'Atomic Service':
+      return { bgClass: 'bg-purple-500', textClass: 'text-purple-500' }
+    case 'Basic Service':
+      return { bgClass: 'bg-emerald-500', textClass: 'text-emerald-500' }
     default:
       return { bgClass: 'bg-da-gray-medium', textClass: 'text-da-gray-medium' }
   }
