@@ -165,13 +165,17 @@ const DaGenAI_Base = ({
     setLoading(true)
     onLoadingChange(true)
     try {
+      // console.log(`selectedAddOn: ${JSON.stringify(selectedAddOn)}`)
+      // console.log(`selectedAddOn.isMock: ${selectedAddOn.isMock}`)
       if (selectedAddOn.isMock) {
         await new Promise((resolve) => setTimeout(resolve, 1000))
         onCodeGenerated(default_generated_code)
         return
       }
 
-      if (selectedAddOn.endpointUrl) {
+      // console.log(`selectedAddOn.endpointUrl: ${selectedAddOn.endpointUrl}`)
+
+      if (selectedAddOn.endpointUrl && selectedAddOn.name != 'SDV Copilot') {
         switch (selectedAddOn.method?.toLowerCase().trim()) {
           case 'get':
             try {
