@@ -23,7 +23,7 @@ const buildTreeNode = (name: string, path: string, node: Branch): TreeNode => {
     path,
     children: node.children
       ? Object.entries(node.children)
-          .filter(([sub_node_name, node]) => node.type === 'branch')
+          .filter(([sub_node_name, node]) => ['branch', 'sensor', 'actuator'].includes(node.type))
           .map(([sub_node_name, node]) =>
             buildTreeNode(
               sub_node_name,
@@ -67,11 +67,13 @@ const RenderRectSvgNode = (
               ? `/model/${model.id}${cviLink}/`
               : `/model/${model.id}/library/prototype/${prototype_id}/view${cviLink}/`
 
-          if (['sensor', 'actuator', 'attribute'].includes(node.type)) {
-            navigate(fullLink)
-            onNodeClick?.()
+          // if (['sensor', 'actuator', 'attribute'].includes(node.type)) {
+          //   navigate(fullLink)
+          //   onNodeClick?.()
+          // }
+          if (node.type === 'branch') {
+            toggleNode()
           }
-          toggleNode()
         }}
       >
         {
@@ -172,25 +174,25 @@ const getDynamicPathClass: PathFunction = ({ source, target }, orientation) => {
   return 'Node'
 }
 
-type DaTreeViewProps = {
+type DaTreeViewUSPProps = {
   onNodeClick?: () => void
 }
 
-const DaTreeView = ({ onNodeClick }: DaTreeViewProps) => {
+const DaTreeViewUSP = ({ onNodeClick }: DaTreeViewUSPProps) => {
   const navigate = useNavigate()
   const { data: prototype } = useCurrentPrototype()
   const { data: model } = useCurrentModel()
-  const { data: cvi } = useCurrentModelApi()
 
   if (!model) {
     return <div>Model is not available</div>
   }
 
-  console.log('cvi', cvi)
+  console.log(model.extend?.vehicle_api?.USP_Tree)
 
-  const orgChart = cvi
-    ? buildTreeNode(model.main_api, '', cvi[model.main_api])
+  const orgChart = model.extend?.vehicle_api?.USP_Tree
+    ? buildTreeNode(model.main_api, '', model.extend?.vehicle_api?.USP_Tree[model.main_api])
     : null
+  console.log('orgChart', orgChart)
   if (!orgChart) {
     return <div>Tree view is not available</div>
   }
@@ -246,4 +248,4 @@ const DaTreeView = ({ onNodeClick }: DaTreeViewProps) => {
   )
 }
 
-export default DaTreeView
+export default DaTreeViewUSP  

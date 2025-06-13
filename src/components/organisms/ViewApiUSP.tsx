@@ -39,6 +39,7 @@ import DaLoading from '../atoms/DaLoading'
 import { DaHierarchicalView } from '@/components/molecules/DaApiHierarchicalView'
 import { DaCopy } from '../atoms/DaCopy'
 import { GoDotFill } from "react-icons/go";
+import DaTreeViewUSP from '../molecules/DaTreeViewUSP'
 
 // Sample service data
 // [
@@ -1116,7 +1117,7 @@ const ServiceDetail = ({ service }: ServiceDetailProps) => {
           className="object-contain max-h-[340px] min-h-[340px] w-full"
         />
       </div>
-      
+
       <h2 className="text-xl font-bold">{service.ServiceName}</h2>
       <p className="text-sm text-gray-600">{service.ServiceDescription}</p>
       <div className="mt-6">
@@ -1229,26 +1230,55 @@ const ViewApiUSP = () => {
 
   const [loading, setLoading] = useState(false)
 
+  const [activeTab, setActiveTab] = useState('list')
+
   return <div className='w-full min-h-[400px] flex flex-col'>
-    <div className="grow w-full flex overflow-auto">
-      <div className="flex-1 max-w-[680px] flex w-full h-full overflow-auto border-r">
-        <UspSeviceList services={activeModelUspSevices || []}
-          activeService={activeService}
-          onServiceSelected={setActiveService} />
-      </div>
-      <div className="flex-1 flex w-full h-full overflow-auto">
-        {activeService ? (
-          <ServiceDetail service={activeService} />
-        ) : (
-          <div className="flex justify-center w-full h-full">
-            <DaImage
-              src="/misc/BO_Atm_FobKey.png"
-              className="object-contain"
-            />
-          </div>
-        )}
+    <div className="flex w-full min-h-10 items-center justify-between">
+      <div className="flex space-x-2 h-full">
+        <DaTabItem
+          active={activeTab === 'list'}
+          onClick={() => setActiveTab('list')}
+        >
+          <TbList className="w-5 h-5 mr-2" />
+          List View
+        </DaTabItem>
+
+        <DaTabItem
+          active={activeTab === 'tree'}
+          onClick={() => setActiveTab('tree')}
+        >
+          <TbBinaryTree2 className="w-5 h-5 mr-2 rotate-[270deg]" />
+          Tree View
+        </DaTabItem>
       </div>
     </div>
+
+    {activeTab === 'list' && (
+      <div className="grow w-full flex overflow-auto">
+        <div className="flex-1 max-w-[680px] flex w-full h-full overflow-auto border-r">
+          <UspSeviceList services={activeModelUspSevices || []}
+            activeService={activeService}
+            onServiceSelected={setActiveService} />
+        </div>
+        <div className="flex-1 flex w-full h-full overflow-auto">
+          {activeService ? (
+            <ServiceDetail service={activeService} />
+          ) : (
+            <div className="flex justify-center w-full h-full">
+              <DaImage
+                src="/misc/BO_Atm_FobKey.png"
+                className="object-contain"
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    )}
+    {activeTab === 'tree' && (
+      <div className="grow w-full h-[calc(100vh-100px)] flex overflow-auto">
+        <DaTreeViewUSP />
+      </div>
+    )}
   </div>
 }
 
