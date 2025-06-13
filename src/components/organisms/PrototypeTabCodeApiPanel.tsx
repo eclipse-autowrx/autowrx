@@ -9,7 +9,7 @@ import { getApiTypeClasses } from '@/lib/utils'
 import { DaCopy } from '../atoms/DaCopy'
 import DaTabItem from '../atoms/DaTabItem'
 import useCurrentModel from '@/hooks/useCurrentModel'
-
+import { UspSeviceList, ServiceDetail } from './ViewApiUSP'
 interface ApiCodeBlockProps {
   content: string
   sampleLabel: string
@@ -121,8 +121,18 @@ interface PrototypeTabCodeApiPanelProps {
 const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   code,
 }) => {
-  const [tab, setTab] = useState<'used-signals' | 'all-signals'>('used-signals')
+  const [tab, setTab] = useState<'used-signals' | 'all-signals' | 'usp'>('used-signals')
   const { data: model } = useCurrentModel()
+
+  const [activeModelUspSevices] = useModelStore((state) => [
+    state.activeModelUspSevices
+  ])
+
+  useEffect(() => {
+    if (model?.extend?.vehicle_api?.USP) {
+      setTab('usp')
+    }
+  }, [model])
 
   const [activeModelApis] = useModelStore(
     (state) => [state.activeModelApis],
@@ -132,7 +142,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   const [useApis, setUseApis] = useState<any[]>([])
   const [activeApi, setActiveApi] = useState<any>()
   const popupApi = useState<boolean>(false)
-
+  const [activeService, setActiveService] = useState<any>(null)
   useEffect(() => {
     if (!code || !activeModelApis || activeModelApis.length === 0) {
       setUseApis([])
@@ -166,26 +176,38 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
       </DaPopup>
 
       <div className="flex justify-between border-b mx-3 mt-2">
-        <div className="flex">
+      
+        { model?.extend?.vehicle_api?.USP ? <>
           <DaTabItem
-            onClick={() => setTab('used-signals')}
-            active={tab === 'used-signals'}
+            onClick={() => setTab('usp')}
+            active={tab === 'usp'}
           >
-            Used Signals
+            USP 2.0
           </DaTabItem>
+        </>: <>
+          <div className="flex">
           <DaTabItem
-            onClick={() => setTab('all-signals')}
-            active={tab === 'all-signals'}
+              onClick={() => setTab('used-signals')}
+              active={tab === 'used-signals'}
+            >
+              Used Signals
+            </DaTabItem>
+            <DaTabItem
+              onClick={() => setTab('all-signals')}
+              active={tab === 'all-signals'}
+            >
+              All Signals
+            </DaTabItem>
+          </div>
+          <DaText
+            variant="small-bold"
+            className="text-da-primary-500 py-0.5 mr-1"
           >
-            All Signals
-          </DaTabItem>
-        </div>
-        <DaText
-          variant="small-bold"
-          className="text-da-primary-500 py-0.5 mr-1"
-        >
-          COVESA VSS {(model && model.api_version) ?? 'v4.1'}
-        </DaText>
+            COVESA VSS {(model && model.api_version) ?? 'v4.1'}
+          </DaText>
+        </> }
+        
+         
       </div>
 
       {tab === 'used-signals' && (
@@ -215,6 +237,17 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
       {tab === 'all-signals' && (
         <div className="flex w-full overflow-hidden">
           <ModelApiList onApiClick={onApiClicked} readOnly={true} />
+        </div>
+      )}
+
+      {tab === 'usp' && (
+        <div className="w-full">
+          <div className='w-full h-[240px] overflow-y-auto'>
+            <UspSeviceList services={activeModelUspSevices || []} onServiceSelected={setActiveService} activeService={activeService} />
+          </div>
+          <div className='w-full h-[calc(100vh-460px)] overflow-y-auto'>
+            {activeService && <ServiceDetail service={activeService} hideImage={true} hideTitle={true}/>}  
+          </div>
         </div>
       )}
     </div>

@@ -187,12 +187,10 @@ const DaTreeViewUSP = ({ onNodeClick }: DaTreeViewUSPProps) => {
     return <div>Model is not available</div>
   }
 
-  console.log(model.extend?.vehicle_api?.USP_Tree)
 
   const orgChart = model.extend?.vehicle_api?.USP_Tree
     ? buildTreeNode(model.main_api, '', model.extend?.vehicle_api?.USP_Tree[model.main_api])
     : null
-  console.log('orgChart', orgChart)
   if (!orgChart) {
     return <div>Tree view is not available</div>
   }
