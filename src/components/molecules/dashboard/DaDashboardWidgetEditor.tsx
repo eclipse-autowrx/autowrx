@@ -18,22 +18,62 @@ import { DaCopy } from '@/components/atoms/DaCopy'
 import useWizardGenAIStore from '@/pages/wizard/useGenAIWizardStore'
 import { DaInput } from '@/components/atoms/DaInput'
 import ModelApiList from '@/components/organisms/ModelApiList'
-
 interface DaDashboardWidgetEditorprototype {
   widgetEditorPopupState: [
     boolean,
     React.Dispatch<React.SetStateAction<boolean>>,
   ]
   selectedWidget: any
-  // setSelectedWidget: React.Dispatch<React.SetStateAction<any>>
   handleUpdateWidget: (widgetConfig: string) => void
   isWizard?: boolean
+}
+
+// Component for individual signal copy items
+const SignalCopyItem = ({ api }: { api: { name: string } }) => {
+  const [isCopied, setIsCopied] = useState(false)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(`"${api.name}"`)
+    setIsCopied(true)
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
+    timeoutRef.current = setTimeout(() => {
+      setIsCopied(false)
+      timeoutRef.current = null
+    }, 2000)
+  }
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [])
+
+  return (
+    <div
+      className="flex h-50% rounded items-center text-da-gray-medium group px-2 py-1 m-1 hover:bg-da-gray-light w-full"
+      onClick={handleCopy}
+    >
+      {isCopied ? (
+        <TbCheck className="size-4 mr-2 text-green-500" />
+      ) : (
+        <TbCopy className="size-4 mr-2" />
+      )}
+      <DaText variant="small" className="cursor-pointer">
+        {api.name}
+      </DaText>
+    </div>
+  )
 }
 
 const DaDashboardWidgetEditor = ({
   widgetEditorPopupState: codeEditorPopup,
   selectedWidget,
-  // setSelectedWidget,
   handleUpdateWidget,
   isWizard = false,
 }: DaDashboardWidgetEditorprototype) => {
@@ -60,6 +100,10 @@ const DaDashboardWidgetEditor = ({
   const [widgetIcon, setWidgetIcon] = useState('')
   const [boxes, setBoxes] = useState('')
 
+  // State and ref for "Copy all signals"
+  const [isAllCopied, setIsAllCopied] = useState(false)
+  const allCopyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   useEffect(() => {
     if (codeEditorPopup[0]) {
       setIsExpanded(false)
@@ -71,7 +115,6 @@ const DaDashboardWidgetEditor = ({
       let options = {} as any
       try {
         let widget = JSON.parse(selectedWidget)
-        // console.log(widget)
         setBoxes(JSON.stringify(widget.boxes, null, 4))
         options = widget.options
         setWidgetIcon(options.iconURL)
@@ -102,24 +145,26 @@ const DaDashboardWidgetEditor = ({
     let newUsedAPIsList = [] as string[]
     activeModelApis.forEach((item) => {
       if (localPrototype.code && localPrototype.code.includes(item.shortName)) {
-        newUsedAPIsList.push(item) // Assuming item is the object you showed
+        newUsedAPIsList.push(item)
       }
     })
-
     setUsedAPIs(newUsedAPIsList)
   }, [localPrototype.code, activeModelApis])
 
-  const copySignalWithQuotes = (signalName: string) => {
-    navigator.clipboard.writeText(`"${signalName}"`)
-  }
-
   const copyAllSignals = () => {
     if (!usedAPIs || usedAPIs.length === 0) return
-
     const allSignalsText = usedAPIs.map((api) => `"${api.name}"`).join(',')
-
     navigator.clipboard.writeText(allSignalsText)
   }
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (allCopyTimeoutRef.current) {
+        clearTimeout(allCopyTimeoutRef.current)
+      }
+    }
+  }, [])
 
   return (
     <DaPopup
@@ -152,12 +197,26 @@ const DaDashboardWidgetEditor = ({
               </div>
               {isExpanded && (
                 <div className="absolute flex flex-col top-9 right-0 bg-da-white z-10 rounded border border-gray-200 shadow-sm cursor-pointer">
-                  {/* Add Copy All button at the top */}
+                  {/* "Copy all signals" option */}
                   <div
-                    className="flex h-50% rounded items-center text-da-gray-medium group px-2 py-1 m-1 hover:bg-da-gray-light w-full  border-gray-100"
-                    onClick={copyAllSignals}
+                    className="flex h-50% rounded items-center text-da-gray-medium group px-2 py-1 m-1 hover:bg-da-gray-light w-full border-gray-100"
+                    onClick={() => {
+                      copyAllSignals()
+                      setIsAllCopied(true)
+                      if (allCopyTimeoutRef.current) {
+                        clearTimeout(allCopyTimeoutRef.current)
+                      }
+                      allCopyTimeoutRef.current = setTimeout(() => {
+                        setIsAllCopied(false)
+                        allCopyTimeoutRef.current = null
+                      }, 2000)
+                    }}
                   >
-                    <TbCopyPlus className="size-4 mr-2 text-da-primary-500" />
+                    {isAllCopied ? (
+                      <TbCheck className="size-4 mr-2 text-green-500" />
+                    ) : (
+                      <TbCopyPlus className="size-4 mr-2 text-da-primary-500" />
+                    )}
                     <DaText
                       variant="small"
                       className="cursor-pointer font-medium"
@@ -166,17 +225,9 @@ const DaDashboardWidgetEditor = ({
                     </DaText>
                   </div>
 
+                  {/* Individual signal items */}
                   {usedAPIs.map((api) => (
-                    <div
-                      className="flex h-50% rounded items-center text-da-gray-medium group px-2 py-1 m-1 hover:bg-da-gray-light w-full"
-                      key={api.name}
-                      onClick={() => copySignalWithQuotes(api.name)}
-                    >
-                      <TbCopy className="size-4 mr-2" />
-                      <DaText variant="small" className="cursor-pointer">
-                        {api.name}
-                      </DaText>
-                    </div>
+                    <SignalCopyItem key={api.name} api={api} />
                   ))}
                 </div>
               )}
@@ -193,7 +244,6 @@ const DaDashboardWidgetEditor = ({
                 editable={true}
                 code={optionStr}
                 setCode={(e) => {
-                  // setSelectedWidget(e)
                   setOptionStr(e)
                 }}
                 onBlur={() => {}}
@@ -206,7 +256,7 @@ const DaDashboardWidgetEditor = ({
                 <DaInput
                   value={boxes}
                   onChange={(e) => setBoxes(e.target.value)}
-                  placeholder="Boxs"
+                  placeholder="Boxes"
                   wrapperClassName="!bg-white"
                   inputClassName="!bg-white text-sm"
                   className="w-full"

@@ -20,12 +20,20 @@ import { cn } from '@/lib/utils'
 import { DaImage } from '@/components/atoms/DaImage'
 import { Link } from 'react-router-dom'
 import { updatePrototypeService } from '@/services/prototype.service'
+import useGetPrototype from '@/hooks/useGetPrototype'
 
 const DaDashboard = () => {
   const { data: model } = useCurrentModel()
-  const [prototype, setActivePrototype] = useModelStore((state) => [
+  const [
+    prototype,
+    setActivePrototype,
+    prototypeHasUnsavedChanges,
+    setPrototypeHasUnsavedChanges,
+  ] = useModelStore((state) => [
     state.prototype as Prototype,
     state.setActivePrototype,
+    state.prototypeHasUnsavedChanges,
+    state.setPrototypeHasUnsavedChanges,
   ])
   const [widgetItems, setWidgetItems] = useState<any>([])
   const [mode, setMode] = useState<string>(MODE_RUN)
@@ -37,6 +45,22 @@ const DaDashboard = () => {
 
   const originalWidgetConfigRef = useRef<string>('')
   const [pendingChanges, setPendingChanges] = useState(false)
+  const { refetch } = useGetPrototype(prototype?.id || '')
+
+  useEffect(() => {
+    if (prototypeHasUnsavedChanges && prototype?.id) {
+      refetch()
+        .then((response) => {
+          if (response.data) {
+            setActivePrototype(response.data)
+            setPrototypeHasUnsavedChanges(false)
+          }
+        })
+        .catch((error) => {
+          console.error('Error refreshing prototype data:', error)
+        })
+    }
+  }, [])
 
   useEffect(() => {
     let widgetItems = []
@@ -98,6 +122,7 @@ const DaDashboard = () => {
     setActivePrototype(newPrototype)
 
     setPendingChanges(true)
+    setPrototypeHasUnsavedChanges(true) // Mark that we have unsaved changes
   }
 
   const handleSave = async () => {
@@ -107,6 +132,7 @@ const DaDashboard = () => {
         await updatePrototypeService(prototype.id, {
           widget_config: prototype.widget_config,
         })
+        setPrototypeHasUnsavedChanges(false)
       } catch (error) {
         console.error('Error saving widget configuration:', error)
       }
@@ -126,6 +152,7 @@ const DaDashboard = () => {
     }
     setMode(MODE_RUN)
     setPendingChanges(false)
+    setPrototypeHasUnsavedChanges(false)
   }
 
   return (
@@ -159,8 +186,8 @@ const DaDashboard = () => {
                 <div className="flex w-full h-fit justify-between">
                   <DaButton
                     size="sm"
-                    variant="outline-nocolor"
-                    className="w-fit flex"
+                    variant="destructive"
+                    className="w-fit flex !text-red-500"
                     onClick={handleDeleteAllWidgets}
                   >
                     <TbTrash className="size-4 mr-1" />
