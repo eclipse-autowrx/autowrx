@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from 'react'
+import { FC, useEffect, useState, useRef } from 'react'
 import DaDashboardGrid from './DaDashboardGrid'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
@@ -6,13 +6,11 @@ import PrototypeTabCodeDashboardCfg from '@/components/organisms/PrototypeTabCod
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import useCurrentModel from '@/hooks/useCurrentModel'
-import { MdOutlineDesignServices } from 'react-icons/md'
 import {
-  TbDeviceFloppy,
   TbArrowsMaximize,
   TbArrowsMinimize,
-  TbTools,
   TbEdit,
+  TbTrash,
 } from 'react-icons/tb'
 import { DaButton } from '@/components/atoms/DaButton'
 const MODE_RUN = 'run'
@@ -21,10 +19,14 @@ import { useSystemUI } from '@/hooks/useSystemUI'
 import { cn } from '@/lib/utils'
 import { DaImage } from '@/components/atoms/DaImage'
 import { Link } from 'react-router-dom'
+import { updatePrototypeService } from '@/services/prototype.service'
 
 const DaDashboard = () => {
   const { data: model } = useCurrentModel()
-  const [prototype] = useModelStore((state) => [state.prototype as Prototype])
+  const [prototype, setActivePrototype] = useModelStore((state) => [
+    state.prototype as Prototype,
+    state.setActivePrototype,
+  ])
   const [widgetItems, setWidgetItems] = useState<any>([])
   const [mode, setMode] = useState<string>(MODE_RUN)
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
@@ -32,6 +34,9 @@ const DaDashboard = () => {
     showPrototypeDashboardFullScreen,
     setShowPrototypeDashboardFullScreen,
   } = useSystemUI()
+
+  const originalWidgetConfigRef = useRef<string>('')
+  const [pendingChanges, setPendingChanges] = useState(false)
 
   useEffect(() => {
     let widgetItems = []
@@ -71,6 +76,58 @@ const DaDashboard = () => {
     })
   }
 
+  const handleEnterEditMode = () => {
+    originalWidgetConfigRef.current = prototype?.widget_config || ''
+    setMode(MODE_EDIT)
+    setPendingChanges(false)
+  }
+
+  const handleDeleteAllWidgets = async () => {
+    const emptyConfig = JSON.stringify(
+      {
+        autorun: false,
+        widgets: [],
+      },
+      null,
+      4,
+    )
+
+    setWidgetItems([])
+
+    const newPrototype = { ...prototype, widget_config: emptyConfig }
+    setActivePrototype(newPrototype)
+
+    setPendingChanges(true)
+  }
+
+  const handleSave = async () => {
+    // Only save to database if changes were made
+    if (pendingChanges && prototype?.id) {
+      try {
+        await updatePrototypeService(prototype.id, {
+          widget_config: prototype.widget_config,
+        })
+      } catch (error) {
+        console.error('Error saving widget configuration:', error)
+      }
+    }
+    setMode(MODE_RUN)
+    setPendingChanges(false)
+  }
+
+  const handleCancel = () => {
+    // Restore the original configuration
+    if (pendingChanges && originalWidgetConfigRef.current) {
+      const originalPrototype = {
+        ...prototype,
+        widget_config: originalWidgetConfigRef.current,
+      }
+      setActivePrototype(originalPrototype)
+    }
+    setMode(MODE_RUN)
+    setPendingChanges(false)
+  }
+
   return (
     <div className="w-full h-full relative border">
       <div
@@ -90,9 +147,7 @@ const DaDashboard = () => {
               <DaButton
                 variant="editor"
                 size="sm"
-                onClick={() => {
-                  setMode(MODE_EDIT)
-                }}
+                onClick={handleEnterEditMode}
               >
                 <TbEdit className="size-4 mr-1" />
                 Edit
@@ -100,55 +155,35 @@ const DaDashboard = () => {
             )}
 
             {mode == MODE_EDIT && (
-              <div className="flex flex-col w-fit h-full">
-                {/* <DaText
-                  className="flex h-fit w-full text-da-primary-500"
-                  variant="sub-title"
-                >
-                  Dashboard Config
-                </DaText> */}
-                <div className="flex w-full h-fit space-x-2 mr-2">
+              <div className="flex flex-col w-full h-full">
+                <div className="flex w-full h-fit justify-between">
                   <DaButton
                     size="sm"
-                    onClick={() => {
-                      setMode(MODE_RUN)
-                    }}
                     variant="outline-nocolor"
-                    className="w-16"
+                    className="w-fit flex"
+                    onClick={handleDeleteAllWidgets}
                   >
-                    Cancel
+                    <TbTrash className="size-4 mr-1" />
+                    Delete all widgets
                   </DaButton>
-                  <DaButton
-                    size="sm"
-                    onClick={() => {
-                      setMode(MODE_RUN)
-                    }}
-                    variant="solid"
-                    className="w-16"
-                  >
-                    Save
-                  </DaButton>
-
-                  {/* {config?.studioUrl && (
-                    <Link
-                      className="flex da-label-small  gap-2 h-8 items-center justify-center hover:text-da-gray-dark"
-                      target="_blank"
-                      to={config?.studioUrl}
+                  <div className="flex w-fit ml-auto items-center space-x-2 mr-2">
+                    <DaButton
+                      size="sm"
+                      onClick={handleCancel}
+                      variant="outline-nocolor"
+                      className="w-16"
                     >
-                      Studio
-                      <TbArrowUpRight className="w-5 h-5" />
-                    </Link>
-                  )}
-                  {config?.widgetMarketPlaceUrl && (
-                    <Link
-                      className="flex da-label-small gap-2 h-8  items-center justify-center hover:text-da-gray-dark"
-                      target="_blank"
-                      to={config?.widgetMarketPlaceUrl}
+                      Cancel
+                    </DaButton>
+                    <DaButton
+                      size="sm"
+                      onClick={handleSave}
+                      variant="solid"
+                      className="w-16"
                     >
-                      Marketplace
-                      <TbArrowUpRight className="w-5 h-5" />
-                    </Link>
-                  )} */}
+                      Save
+                    </DaButton>
+                  </div>
                 </div>
               </div>
             )}

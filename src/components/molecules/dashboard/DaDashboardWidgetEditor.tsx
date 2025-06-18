@@ -1,6 +1,13 @@
 import React, { useRef, useState, useEffect } from 'react'
 import { DaButton } from '../../atoms/DaButton'
-import { TbEdit, TbX, TbCheck, TbSelector, TbCopy } from 'react-icons/tb'
+import {
+  TbEdit,
+  TbX,
+  TbCheck,
+  TbSelector,
+  TbCopy,
+  TbCopyPlus,
+} from 'react-icons/tb'
 import CodeEditor from '../CodeEditor'
 import DaPopup from '../../atoms/DaPopup'
 import { DaText } from '@/components/atoms/DaText'
@@ -102,6 +109,18 @@ const DaDashboardWidgetEditor = ({
     setUsedAPIs(newUsedAPIsList)
   }, [localPrototype.code, activeModelApis])
 
+  const copySignalWithQuotes = (signalName: string) => {
+    navigator.clipboard.writeText(`"${signalName}"`)
+  }
+
+  const copyAllSignals = () => {
+    if (!usedAPIs || usedAPIs.length === 0) return
+
+    const allSignalsText = usedAPIs.map((api) => `"${api.name}"`).join(',')
+
+    navigator.clipboard.writeText(allSignalsText)
+  }
+
   return (
     <DaPopup
       state={codeEditorPopup}
@@ -133,18 +152,31 @@ const DaDashboardWidgetEditor = ({
               </div>
               {isExpanded && (
                 <div className="absolute flex flex-col top-9 right-0 bg-da-white z-10 rounded border border-gray-200 shadow-sm cursor-pointer">
+                  {/* Add Copy All button at the top */}
+                  <div
+                    className="flex h-50% rounded items-center text-da-gray-medium group px-2 py-1 m-1 hover:bg-da-gray-light w-full  border-gray-100"
+                    onClick={copyAllSignals}
+                  >
+                    <TbCopyPlus className="size-4 mr-2 text-da-primary-500" />
+                    <DaText
+                      variant="small"
+                      className="cursor-pointer font-medium"
+                    >
+                      Copy all signals
+                    </DaText>
+                  </div>
+
                   {usedAPIs.map((api) => (
-                    <DaCopy textToCopy={api.name} showIcon={false}>
-                      <div
-                        className="flex h-50% rounded items-center text-da-gray-medium group px-2 py-1 m-1 hover:bg-da-gray-light w-full"
-                        key={api.name}
-                      >
-                        <TbCopy className="w-3 h-3 mr-2" />
-                        <DaText variant="small" className="cursor-pointer">
-                          {api.name}
-                        </DaText>
-                      </div>
-                    </DaCopy>
+                    <div
+                      className="flex h-50% rounded items-center text-da-gray-medium group px-2 py-1 m-1 hover:bg-da-gray-light w-full"
+                      key={api.name}
+                      onClick={() => copySignalWithQuotes(api.name)}
+                    >
+                      <TbCopy className="size-4 mr-2" />
+                      <DaText variant="small" className="cursor-pointer">
+                        {api.name}
+                      </DaText>
+                    </div>
                   ))}
                 </div>
               )}
