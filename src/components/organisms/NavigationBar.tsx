@@ -179,16 +179,19 @@ const NavigationBar = ({}) => {
       {learningMode && (
         <div
           style={{ zIndex: 999 }}
-          className="fixed top-14 left-0 bottom-0 
-            w-[60%] min-w-[1060px] bg-white learning-appear inset-0 shadow-[4px_4px_6px_rgba(0,0,0,0.3)]"
+          className="fixed top-14 left-0 bottom-0 right-0 
+           bg-[#11111188]"
         >
-          <iframe
-            ref={frameLearning}
-            src={`${config?.learning?.url}?user_id=${encodeURIComponent(user?.id || '')}&token=${encodeURIComponent(access?.token || '')}`}
-            className="m-0 h-full w-full"
-            allow="camera;microphone"
-            onLoad={() => {}}
-          ></iframe>
+          <div className="pt-1 pl-3 pr-3 pb-1 w-full h-full">
+            <iframe
+              ref={frameLearning}
+              src={`${config?.learning?.url}?user_id=${encodeURIComponent(user?.id || '')}&token=${encodeURIComponent(access?.token || '')}`}
+              className="m-0 h-full w-full learning-appear inset-0 shadow-[4px_4px_6px_rgba(0,0,0,0.3)]"
+              allow="camera;microphone"
+              onLoad={() => {}}
+            ></iframe>
+          </div>
+          
         </div>
       )}
       <DaNavUser />
