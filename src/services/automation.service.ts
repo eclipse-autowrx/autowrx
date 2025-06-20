@@ -7,10 +7,12 @@ interface ActionPath {
 
 interface Action {
   path: string;
-  actionType: 'click' | 'focus' | 'hover' | 'input';
+  actionType: 'click' | 'input' | 'show_tooltip' | 'hide_tooltip';
   value?: string | null;
+  tooltipMessage?: string;
   delayBefore?: number;
   delayAfter?: number;
+  autoHideAfter?: number;
 }
 
 /* Sample action
@@ -74,6 +76,7 @@ function parseActionPath(actionPath: string): ActionPath {
 async function navigateToRoute(targetRoute: string): Promise<void> {
     const currentPath = window.location.pathname;
     if (currentPath !== targetRoute) {
+        // Show toast before navigating
         console.log(`Navigating from ${currentPath} to ${targetRoute}`);
         
         // Check if it's an internal link (same domain) or external link
@@ -88,16 +91,19 @@ async function navigateToRoute(targetRoute: string): Promise<void> {
             const navigate = (window as any).reactNavigate;
             if (navigate) {
                 console.log('Using React navigate for internal navigation');
-                navigate(targetRoute);
+                showToast(`Navigating to ${targetRoute} after 3 seconds`);
+                setTimeout(() => {
+                    navigate(targetRoute);
+                }, 3000);
             } else {
                 console.log('React navigate not available, using window.location fallback');
                 // Fallback to window.location if navigate is not available
-                window.location.href = targetRoute;
+                // window.location.href = targetRoute;
             }
         } else {
             console.log('Using window.location for external navigation');
             // Use window.location for external links
-            window.location.href = targetRoute;
+            // window.location.href = targetRoute;
         }
         console.log('Waiting for navigation to complete...');
         await waitForNavigation(targetRoute);
@@ -190,46 +196,142 @@ function findElementByCSS(identifierValue: string): Element | null {
     }
 }
 
-function performElementAction(element: Element, actionType: string, value?: string | null): void {
+function addTooltipToElement(element: Element, message: string, autoHideAfter: number = 0): { tooltip: HTMLDivElement, originalClasses: string } {
+
+    // Try to remove previous tooltip if available
+    if ((element as any)._automationExtraInfo && (element as any)._automationExtraInfo.tooltip) {
+        const prevTooltip = (element as any)._automationExtraInfo.tooltip;
+        if (prevTooltip.parentNode) {
+            prevTooltip.parentNode.removeChild(prevTooltip);
+        }
+        delete (element as any)._automationExtraInfo.tooltip;
+    }
+
+    const originalClasses = element.className;
+    // element.classList.add('ring-4', 'ring-blue-500', 'ring-opacity-75', 'animate-pulse');
+    
+    // Create and show tooltip
+    const tooltip = document.createElement('div');
+    tooltip.className = `absolute z-50 pl-2 pr-8 py-1 text-sm font-medium text-white bg-amber-500 rounded-lg shadow-sm opacity-100 tooltip`;
+    tooltip.textContent = message;
+    tooltip.style.position = 'absolute';
+
+    // Create close button for tooltip
+    const closeButton = document.createElement('button');
+    closeButton.innerHTML = '&times;';
+    closeButton.setAttribute('aria-label', 'Close tooltip');
+    closeButton.className = 'absolute top-0 right-2 bg-transparent border-none text-white text-xl hover:opacity-80 cursor-pointer z-[10000]';
+
+    // Add click event to close tooltip and restore element
+    closeButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (tooltip && tooltip.parentNode) {
+            tooltip.parentNode.removeChild(tooltip);
+        }
+        element.className = originalClasses;
+        // Remove extra info to avoid memory leaks
+        if ((element as any)._automationExtraInfo) {
+            delete (element as any)._automationExtraInfo;
+        }
+    });
+
+    tooltip.appendChild(closeButton);
+    
+    // Position tooltip above the element
+    const rect = element.getBoundingClientRect();
+    // Position tooltip above the element, but ensure it stays within the viewport horizontally
+    const tooltipWidth = 320; // Estimate or set a max width for tooltip
+    tooltip.style.maxWidth = tooltipWidth + 'px';
+    tooltip.style.left = `${rect.left + rect.width / 2}px`;
+    tooltip.style.top = `${rect.top - 10}px`;
+    tooltip.style.transform = 'translateX(-50%) translateY(-100%)';
+    tooltip.style.zIndex = '9999';
+    // Add shadow for tooltip
+    tooltip.style.boxShadow = '0 4px 16px 0 rgba(0,0,0,0.18), 0 1.5px 4px 0 rgba(0,0,0,0.12)';
+
+    // After appending, adjust if tooltip is out of viewport
+    document.body.appendChild(tooltip);
+    const tipRect = tooltip.getBoundingClientRect();
+
+    // Horizontal adjustment
+    let shiftX = 0;
+    if (tipRect.left < 0) {
+        shiftX = -tipRect.left + 8;
+    } else if (tipRect.right > window.innerWidth) {
+        shiftX = window.innerWidth - tipRect.right - 8;
+    }
+    if (shiftX !== 0) {
+        tooltip.style.left = `${rect.left + rect.width / 2 + shiftX}px`;
+    }
+
+    // Vertical adjustment: if tooltip is above the viewport, move it below the element
+    if (tipRect.top < 0) {
+        tooltip.style.top = `${rect.bottom + 10}px`;
+        tooltip.style.transform = 'translateX(-50%)'; // Remove Y translation
+        // Move arrow to top
+        const arrow = tooltip.querySelector('.tooltip-arrow') as HTMLDivElement;
+        if (arrow) {
+            arrow.style.top = '-10px';
+            arrow.style.borderColor = 'transparent transparent #F59E0B transparent';
+        }
+    }
+    
+    // Add arrow to tooltip
+    const arrow = document.createElement('div');
+    arrow.className = 'tooltip-arrow';
+    arrow.style.position = 'absolute';
+    arrow.style.top = '100%';
+    arrow.style.left = '50%';
+    arrow.style.marginLeft = '-8px'; // double the margin to match new width
+    arrow.style.borderWidth = '8px';
+    arrow.style.borderStyle = 'solid';
+    arrow.style.borderColor = '#F59E0B transparent transparent transparent';
+    tooltip.appendChild(arrow);
+
+    document.body.appendChild(tooltip);
+
+    (element as any)._automationExtraInfo = {
+        tooltip: tooltip,
+        originalClasses: originalClasses,
+        createdAt: Date.now()
+    };
+
+    if (autoHideAfter > 0) {
+        setTimeout(() => {
+            restoreElementDefault(element);
+        }, autoHideAfter);
+    }
+
+    return { tooltip, originalClasses };
+}
+
+// Helper function to restore element to its default state
+function restoreElementDefault(element: Element) {
+    if ((element as any)._automationExtraInfo) {
+        const { tooltip, originalClasses } = (element as any)._automationExtraInfo;
+        if (tooltip && tooltip.parentNode) {
+            tooltip.parentNode.removeChild(tooltip);
+        }
+        element.className = originalClasses;
+    }
+}
+
+async function performElementAction(element: Element, action: Action): Promise<void> {
+    const { actionType, value, delayBefore, delayAfter, tooltipMessage, autoHideAfter } = action;
     console.log(`Performing action: ${actionType} on element: ${element}`);
     switch (actionType) {
         case 'click':
             console.log(`Executing click action on element:`, element);
-            
-            // Multi-approach click for better compatibility with React
             try {
-                // Approach 1: Focus first (helps with event handlers)
-                if (element instanceof HTMLElement) {
-                    element.focus();
-                }
-                
-                // Approach 2: Dispatch mouse events manually
-                const mouseDownEvent = new MouseEvent('mousedown', {
-                    view: window,
-                    bubbles: true,
-                    cancelable: true,
-                    button: 0
+                (element as HTMLElement).scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center', 
+                    inline: 'center' 
                 });
-                element.dispatchEvent(mouseDownEvent);
-                
-                const mouseUpEvent = new MouseEvent('mouseup', {
-                    view: window,
-                    bubbles: true,
-                    cancelable: true,
-                    button: 0
-                });
-                element.dispatchEvent(mouseUpEvent);
-                
-                // Approach 3: Dispatch click event
-                const clickEvent = new MouseEvent('click', {
-                    view: window,
-                    bubbles: true,
-                    cancelable: true,
-                    button: 0
-                });
-                element.dispatchEvent(clickEvent);
-                
-                // Approach 4: Native click as fallback
+                await new Promise(resolve => setTimeout(resolve, 500));
+                addTooltipToElement(element, tooltipMessage || 'Auto click this element', autoHideAfter);
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                restoreElementDefault(element);
                 (element as HTMLElement).click();
                 
                 console.log(`Click action completed`);
@@ -238,20 +340,21 @@ function performElementAction(element: Element, actionType: string, value?: stri
                 throw error;
             }
             break;
-        case 'focus':
-            console.log(`Executing focus action on element:`, element);
-            (element as HTMLElement).focus();
-            console.log(`Focus action completed`);
-            break;
-        case 'hover':
-            console.log(`Executing hover action on element:`, element);
-            const hoverEvent = new MouseEvent('mouseover', {
-                view: window,
-                bubbles: true,
-                cancelable: true
+        case 'show_tooltip':
+            console.log(`Executing show tooltip action on element:`, element);
+            (element as HTMLElement).scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center', 
+                inline: 'center' 
             });
-            element.dispatchEvent(hoverEvent);
-            console.log(`Hover action completed`);
+            await new Promise(resolve => setTimeout(resolve, 500));
+            addTooltipToElement(element, tooltipMessage || 'Auto show tooltip', autoHideAfter);
+            console.log(`Show tooltip action completed`);
+            break;
+        case 'hide_tooltip':
+            console.log(`Executing hide tooltip action on element:`, element);
+            restoreElementDefault(element);
+            console.log(`Hide tooltip action completed`);
             break;
         case 'input':
             console.log(`Executing input action on element:`, element, `with value:`, value);
@@ -269,6 +372,22 @@ function performElementAction(element: Element, actionType: string, value?: stri
     }
 }
 
+function showToast(message: string, timeout: number = 3000): void {
+    const reactToast = (window as any).reactToast;
+    if (typeof reactToast === 'function') {
+        reactToast({
+            title: message,
+            description: '',
+            duration: timeout,
+            className: 'bg-green-500 text-white',
+        });
+    } else {
+        // Fallback: use alert if reactToast is not available
+        alert(message);
+    }
+}
+
+
 async function executeAction(action: Action): Promise<void> {
     const { targetRoute, identifierType, identifierValue } = parseActionPath(action.path);
     
@@ -276,10 +395,10 @@ async function executeAction(action: Action): Promise<void> {
     await waitForPageLoad();
     
     const targetElement = findElement(identifierType, identifierValue);
-    console.log(`Found element: ${targetElement}`);
-    console.log(targetElement);
+    // console.log(`Found element: ${targetElement}`);
+    // console.log(targetElement);
 
-    performElementAction(targetElement, action.actionType, action.value);
+    performElementAction(targetElement, action);
 }
 
 // Function to execute a series of actions

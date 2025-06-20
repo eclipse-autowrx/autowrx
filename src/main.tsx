@@ -11,11 +11,14 @@ import { msalConfig } from './services/sso.service'
 import { MsalProvider } from '@azure/msal-react'
 import { ErrorBoundary } from 'react-error-boundary'
 import ErrorFallback from './layouts/ErrorFallback.tsx'
+import DaTestAutomation from './components/molecules/DaTestAutomation.tsx'
 
 const msalInstance = new PublicClientApplication(msalConfig)
+const showTestAutomation = localStorage.getItem('showTestAutomation') == '1'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
+    {showTestAutomation && <DaTestAutomation />}
     <MsalProvider instance={msalInstance}>
       <BrowserRouter>
         <ErrorBoundary FallbackComponent={ErrorFallback}>

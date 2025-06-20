@@ -5,9 +5,20 @@ import 'non.geist/mono'
 import useSelfProfileQuery from './hooks/useSelfProfile'
 import { useEffect } from 'react'
 import { addLog } from './services/log.service'
+import { useNavigate } from 'react-router-dom';
+import { useToast } from './components/molecules/toaster/use-toast'
 
 function App() {
   const routes = useRoutes(routesConfig)
+  const navigate = useNavigate();
+  useEffect(() => {
+    (window as any).reactNavigate = navigate;
+  }, [navigate]);
+
+  const { toast } = useToast()
+  useEffect(() => {
+    (window as any).reactToast = toast;
+  }, [toast])
 
   const { data: currentUser } = useSelfProfileQuery()
 
