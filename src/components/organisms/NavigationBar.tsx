@@ -26,8 +26,14 @@ import { useState, useEffect, useRef } from 'react'
 import useAuthStore from '@/stores/authStore'
 import useLastAccessedModel from '@/hooks/useLastAccessedModel'
 import { FaCar } from 'react-icons/fa'
+import DaTestAutomation from '../molecules/DaTestAutomation'
 
 const NavigationBar = ({}) => {
+
+  const [showTestAutomation, setShowTestAutomation] = useState(() => {
+    return localStorage.getItem('showTestAutomation') == '1'
+  })
+
   const { data: user } = useSelfProfileQuery()
   const { data: model } = useCurrentModel()
   const [isAuthorized, allowUseAgent, allowLearningAccess] = usePermissionHook(
@@ -48,6 +54,8 @@ const NavigationBar = ({}) => {
       <Link to="/">
         <DaImage src="/imgs/logo-wide.png" className="da-nav-bar-logo" />
       </Link>
+
+      {(showTestAutomation) && <DaTestAutomation />}
 
       {config && config.enableBranding && (
         <div className="ml-4 text-sm text-white/90">

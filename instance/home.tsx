@@ -18,7 +18,7 @@ const home = [
         description:
           'Get an overview of the cloud-based prototyping environment for SDV functions.',
         children: (
-          <DaButton size="sm" className="mt-4">
+          <DaButton size="sm" dataId="btn-launch-graphic">
             <a
               href="https://docs.digital.auto/basics/overview/"
               target="_blank"
@@ -36,7 +36,7 @@ const home = [
           'Learn about creating efficient SDV applications, using Python and Vehicle API',
         children: (
           <div className="flex space-x-2 items-center mt-4">
-            <DaButton size="sm">
+            <DaButton size="sm" dataId="btn-launch-documentation">
               <a
                 href="https://docs.digital.auto/basics/play/"
                 target="_blank"
@@ -46,7 +46,7 @@ const home = [
                 Documentation
               </a>
             </DaButton>
-            <DaButton variant="outline-nocolor" size="sm">
+            <DaButton variant="outline-nocolor" size="sm" dataId="btn-launch-video">
               <a
                 href="https://www.youtube.com/@sdvpg"
                 target="_blank"
@@ -66,7 +66,7 @@ const home = [
         children: (
           <DaRequireSignedIn message="You must first sign in to explore vehicle models and prototypes">
             <DaButton size="sm" className="mt-4">
-              <DisabledLink to="/model" className="flex items-center">
+              <DisabledLink to="/model" dataId="btn-launch-vehicle-models" className="flex items-center">
                 Vehicle Models
               </DisabledLink>
             </DaButton>

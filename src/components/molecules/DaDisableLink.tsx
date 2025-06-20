@@ -7,10 +7,11 @@ import config from '@/configs/config'
 interface DisabledLinkProps {
   to: string
   children: ReactNode
-  className?: string
+  className?: string,
+  dataId?: string
 }
 
-const DisabledLink = ({ to, children, className }: DisabledLinkProps) => {
+const DisabledLink = ({ to, children, className, dataId }: DisabledLinkProps) => {
   const { data: user } = useSelfProfileQuery()
 
   const handleClick = (e: React.MouseEvent) => {
@@ -24,6 +25,7 @@ const DisabledLink = ({ to, children, className }: DisabledLinkProps) => {
       to={!config.strictAuth || user ? to : '#'}
       onClick={handleClick}
       className={cn(className)}
+      data-id={dataId}
     >
       {children}
     </Link>

@@ -3,7 +3,8 @@ import { cn } from '@/lib/utils'
 
 interface DaButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children?: React.ReactNode
-  className?: string | undefined
+  className?: string | undefined,
+  dataId?: string,
   variant?:
     | 'solid'
     | 'outline'
@@ -20,9 +21,10 @@ interface DaButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const DaButton = React.forwardRef<HTMLButtonElement, DaButtonProps>(
-  ({ className, variant = 'solid', size = 'md', ...props }, ref) => {
+  ({ className, variant = 'solid', size = 'md', dataId, ...props }, ref) => {
     return (
       <button
+        data-id={dataId}
         className={cn(
           `da-btn`,
           `da-btn-${variant}`,
