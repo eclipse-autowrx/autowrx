@@ -270,7 +270,7 @@ const N8NChatIntegration = ({}) => {
           host = 'https://playground.digital.auto'
         }
         // const regex = new RegExp(`${host}/model/\\w+(/library/prototype/\\w+/(view|code|dashboard))?`, 'g');
-        const regex = new RegExp(`${host}/model/\\w+(/library/prototype/\\w+(/(view|code|dashboard))?)?`, 'g');
+        const regex = new RegExp(`${host}/model/\\w+(/library/prototype/\\w+(/(view|code|dashboard|requirements))?)?`, 'g');
         const links = responseData.match(regex);
 
         if (links && links.length > 0) {
@@ -344,7 +344,7 @@ const N8NChatIntegration = ({}) => {
       <div className="absolute px-1 py-1 bottom-0 left-0 w-full h-[86px] border-t border-gray-300 bg-slate-300">
         <div className='w-full h-full relative'>
           <div className='inline absolute top-0 right-0 z-20'>
-            <DaSpeechToText onRecognize={setInputValue} prompt={inputValue} hideLabel={true}/>
+            {/* <DaSpeechToText onRecognize={setInputValue} prompt={inputValue} hideLabel={true}/> */}
           </div>
           <DaTextarea
             value={inputValue}
@@ -387,7 +387,7 @@ const ChatBox = () => {
         />}
       </div>
       {showAI && (
-        <div className="fixed p-0 right-1 top-[4px] h-[calc(100vh-8px)] w-[310px] rounded-md shadow-xl
+        <div className="fixed p-0 right-1 top-[4px] h-[calc(100vh-8px)] w-[370px] rounded-md shadow-xl
           flex flex-col bg-slate-300"
           style={{zIndex: 99}}>
           <div className="flex text-base py-1 pl-4 pr-2 font-semibold text-white border-b border-slate-400 bg-gradient-to-r from-da-gradient-from to-da-gradient-to rounded-t">

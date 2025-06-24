@@ -55,6 +55,22 @@ const Legend: React.FC = () => (
   </div>
 )
 
+function safeScore(raw: any): number {
+  // 1) if it’s already a number, use it
+  if (typeof raw === 'number' && raw >= 1 && raw <= MAX_RATING) {
+    return raw
+  }
+  // 2) if it’s a string that parses to an integer, use it
+  if (typeof raw === 'string') {
+    const parsed = parseInt(raw, 10)
+    if (!isNaN(parsed) && parsed >= 1 && parsed <= MAX_RATING) {
+      return parsed
+    }
+  }
+  // 3) fallback: random integer from 1…MAX_RATING
+  return Math.floor(Math.random() * MAX_RATING) + 1
+}
+
 const DaRequirementExplorer: React.FC<DaRequirementExplorerProps> = ({
   onDelete,
   onEdit,
@@ -91,34 +107,46 @@ const DaRequirementExplorer: React.FC<DaRequirementExplorerProps> = ({
       // polar angle (start at 12 o'clock)
       const angle = i * angleStep - Math.PI / 2
 
-      // average & normalize your 1 5 score → 0…1
-      const avgScore =
-        (req.rating.priority + req.rating.relevance + req.rating.impact) / 3
+      // safely coerce priority/relevance/impact into 1…5
+      const raw = req.rating || {}
+      const pr = safeScore(raw.priority)
+      const rl = safeScore(raw.relevance)
+      const im = safeScore(raw.impact)
+
+      // average & normalize your 1…5 score → 0…1
+      const avgScore = (pr + rl + im) / 3
       const norm = avgScore / MAX_RATING
 
       // invert: high score = small r, low score = big r
       const baseR = (1 - norm) * MAX_RADIUS
       const scaledR = baseR * DIST_COEFF
-      const radius = Math.max(effectiveMinRadius, Math.min(scaledR, MAX_RADIUS))
+      const radius = Math.max(
+        effectiveMinRadius,
+        Math.min(scaledR, MAX_RADIUS)
+      )
 
       // polar → cartesian
       const x = radius * Math.cos(angle)
       const y = radius * Math.sin(angle)
 
       // color by source
-      const color = req.source.type === 'internal' ? '#005072' : '#aebd38'
+      const color =
+        (req.source?.type || 'external') === 'internal'
+          ? '#005072'
+          : '#aebd38'
 
       return {
-        id: `req-${req.id}`,
+        id: `req-${req.id || req.title}`,
         type: 'requirementNode',
         position: { x, y },
         data: {
-          id: req.id,
+          id: req.id || req.title,
           title: req.title,
           description: req.description,
           type: req.type,
           ratingAvg: avgScore,
-          rating: req.rating,
+          // override with your sanitized scores
+          rating: { priority: pr, relevance: rl, impact: im },
           source: req.source,
           creatorUserId: req.creatorUserId,
           color,

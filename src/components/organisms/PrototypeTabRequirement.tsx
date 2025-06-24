@@ -58,7 +58,23 @@ const PrototypeTabRequirement = () => {
 
   useEffect(() => {
     if (prototype?.extend && Array.isArray(prototype.extend.requirements)) {
-      setRequirements(prototype.extend.requirements as Requirement[])
+      let items = JSON.parse(JSON.stringify(prototype.extend.requirements)) as  Requirement[]
+      items.forEach((item) => {
+        item.title = item.title || item.id
+        item.id = item.id || crypto.randomUUID()
+        item.description = item.description || ''
+        item.type = item.type || 'Functional Requirement'
+        item.source = item.source || {
+          type: 'external',
+          url: 'https://example.com',
+        }
+        item.rating = item.rating || {
+          priority: item.priority || 3,
+          relevance: item.relevance || 4,
+          impact: item.impact || 2,
+        }
+      })
+      setRequirements(items)
     }
   }, [prototype, setRequirements])
 

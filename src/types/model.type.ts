@@ -126,6 +126,9 @@ export interface Requirement {
   creatorUserId: string
   createdAt?: Date
   updatedAt?: Date
+  priority?: number
+  relevance?: number
+  impact?: number
 }
 
 export type SearchPrototype = {
