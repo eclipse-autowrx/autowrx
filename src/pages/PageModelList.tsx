@@ -246,7 +246,7 @@ const PageModelList = () => {
                     )}
                     <DaPopup
                       trigger={
-                        <DaButton variant="solid" size="sm">
+                        <DaButton variant="solid" size="sm" data-id='btn-open-form-create'>
                           <HiPlus className="mr-1 text-lg" />
                           Create New Model
                         </DaButton>

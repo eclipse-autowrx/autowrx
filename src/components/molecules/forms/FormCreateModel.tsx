@@ -130,7 +130,7 @@ const FormCreateModel = () => {
 
   return (
     <form
-      onSubmit={createNewModel}
+      onSubmit={createNewModel} data-id="form-create-model"
       className="flex min-h-[300px] w-[400px] min-w-[400px] overflow-y-auto flex-col bg-da-white p-4"
     >
       {/* Title */}
@@ -146,6 +146,7 @@ const FormCreateModel = () => {
         placeholder="Model name"
         label="Model Name *"
         className="mt-4"
+        data-id="form-create-model-input-name"
       />
 
       <div className="mt-4" />
@@ -159,6 +160,7 @@ const FormCreateModel = () => {
               wrapperClassName="mt-1"
               onValueChange={handleVSSChange}
               defaultValue="v4.1"
+              data-id="form-create-model-select-api"
             >
               {versions ? (
                 versions.map((version) => (
@@ -210,6 +212,7 @@ const FormCreateModel = () => {
         type="submit"
         variant="gradient"
         className="mt-8 w-full"
+        data-id="form-create-model-btn-submit"
       >
         {loading && <TbLoader className="mr-2 animate-spin text-lg" />}
         Create Model

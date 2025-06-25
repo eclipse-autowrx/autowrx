@@ -426,11 +426,38 @@ select[aria-hidden='true'][tabindex='-1'] {
   }
 }
 
-
 .learning-appear {
   animation: slideIn 0.5s ease-out forwards; /* Adjust duration and easing as needed */
 }
 
 .learning-disappear {
   animation: slideOut 0.5s ease-out forwards; /* Adjust duration and easing as needed */
+}
+
+/* Custom tippy.js theme for gradient background */
+.tippy-box[data-theme~='gradient-tooltip'] {
+  background: rgb(226, 126, 12);
+  color: #fff;
+  box-shadow: 0 4px 16px 0 rgba(0,0,0,0.18), 0 1.5px 4px 0 rgba(0,0,0,0.12);
+  border-radius: 0.5rem;
+  font-weight: 500;
+  font-size: 0.8rem;
+  padding: 2px;
+}
+.tippy-box[data-theme~='gradient-tooltip'] .tippy-arrow {
+  color: rgb(226, 126, 12);
+  /* fallback for arrow, can be improved for gradient */
+}
+
+@keyframes tooltip-attention {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.tippy-box[data-theme~='gradient-tooltip'] {
+  animation: tooltip-attention 1.5s ease-in-out infinite;
 }

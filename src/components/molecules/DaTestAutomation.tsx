@@ -20,6 +20,7 @@ const DaTestAutomation: React.FC = () => {
 
         try {
             const action: Action = {
+                name: '',
                 path: `@[/]:<dataid:btn-launch-vehicle-models>`,
                 actionType: 'show_tooltip',
                 value: null,
@@ -45,6 +46,7 @@ const DaTestAutomation: React.FC = () => {
         try {
             const actionSequence: Action[] = [
                 {
+                    name: '1',
                     path: `@[/]:<dataid:btn-launch-graphic>`,
                     actionType: 'show_tooltip',
                     value: null,
@@ -54,6 +56,7 @@ const DaTestAutomation: React.FC = () => {
                     autoHideAfter: 3000
                 },
                 {
+                    name: '2',
                     path: `@[/]:<dataid:btn-launch-documentation>`,
                     actionType: 'show_tooltip',
                     value: null,
@@ -63,6 +66,7 @@ const DaTestAutomation: React.FC = () => {
                     autoHideAfter: 3000
                 },
                 {
+                    name: '3',
                     path: `@[/]:<dataid:btn-launch-video>`,
                     actionType: 'show_tooltip',
                     value: null,
@@ -72,6 +76,7 @@ const DaTestAutomation: React.FC = () => {
                     autoHideAfter: 3000
                 },
                 {
+                    name: '4',
                     path: `@[/]:<dataid:btn-launch-vehicle-models>`,
                     actionType: 'show_tooltip',
                     value: null,
