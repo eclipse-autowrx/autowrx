@@ -123,7 +123,7 @@ const PrototypeLibraryList = ({
               <Link
                 key={prototype.id}
                 to={`/model/${model!.id}/library/prototype/${prototype.id}/view`}
-                className="flex w-full cursor-pointer mb-2"
+                className="flex w-full cursor-pointer mb-2 prototype-grid-item-wrapper"
               >
                 <DaPrototypeItem prototype={prototype} />
               </Link>

@@ -411,12 +411,14 @@ const FormCreatePrototype = ({
         placeholder="Name"
         label="Prototype Name *"
         className="mt-4"
+        dataId='prototype-name-input'
       />
 
       <DaSelect
         defaultValue={data.language}
         label="Programming Language *"
         wrapperClassName="mt-4"
+        dataId="prototype-language-select"
         onValueChange={(v) => {
           handleChange('language', v)
         }}
@@ -435,6 +437,7 @@ const FormCreatePrototype = ({
         disabled={disabled}
         type="submit"
         variant="gradient"
+        dataId='btn-create-prototype'
         className={clsx('mt-8 w-full', hideCreateButton && '!hidden')}
       >
         {loading && <TbLoader className="mr-2 animate-spin text-lg" />}

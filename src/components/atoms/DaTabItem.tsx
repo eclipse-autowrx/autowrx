@@ -7,7 +7,8 @@ interface DaTabItemProps {
   active?: boolean
   to?: string
   small?: boolean
-  onClick?: React.MouseEventHandler<HTMLDivElement>
+  onClick?: React.MouseEventHandler<HTMLDivElement>,
+  dataId?: string
 }
 
 const DaTabItem: FC<DaTabItemProps> = ({
@@ -16,6 +17,7 @@ const DaTabItem: FC<DaTabItemProps> = ({
   to,
   small,
   onClick,
+  dataId
 }) => {
   return (
     <Link
@@ -25,6 +27,7 @@ const DaTabItem: FC<DaTabItemProps> = ({
     >
       <div
         onClick={onClick}
+        data-id={dataId}
         className={cn(
           `flex h-full da-label-small-bold items-center justify-center min-w-20 cursor-pointer hover:opacity-80 border-b-2 border-transparent `,
           small ? 'py-0.5 px-2' : 'py-1 px-4',

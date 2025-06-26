@@ -211,6 +211,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                 </DaText>
                 <div className="flex space-x-2 mr-2">
                   <DaButton
+                    dataId='prototype-cancel-button'
                     variant="outline-nocolor"
                     onClick={handleCancel}
                     className="w-16 text-da-white px-4 py-2 rounded"
@@ -219,6 +220,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                     Cancel
                   </DaButton>
                   <DaButton
+                    dataId="prototype-save-button"
                     onClick={handleSave}
                     className="w-16 text-white px-4 py-2 rounded"
                     size="sm"
@@ -258,6 +260,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                       className="!justify-start"
                       variant="editor"
                       size="sm"
+                      dataId='prototype-edit-button'
                     >
                       <TbEdit className="w-4 h-4 mr-1" /> Edit
                     </DaButton>

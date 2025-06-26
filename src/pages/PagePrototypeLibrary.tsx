@@ -219,7 +219,7 @@ const PagePrototypeLibrary = () => {
                   <DaPopup
                     state={[open, setOpen]}
                     trigger={
-                      <DaButton variant="solid" size="sm" className="flex ml-2">
+                      <DaButton dataId='btn-create-new-prototype' variant="solid" size="sm" className="flex ml-2">
                         <TbPlus className="w-5 h-5 mr-2" />
                         Create New Prototype
                       </DaButton>

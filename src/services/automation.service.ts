@@ -16,11 +16,11 @@ interface Action {
   path: string;
   actionType: 'click' | 'input' | 'show_tooltip' | 'hide_tooltip';
   status?: 'not_started' | 'in_progress' | 'finished';
-  finish_condition?: {
-    type: 'element_exists' | 'element_not_exists' | 'element_visible' | 'element_invisible' | 'location-match' | 'text_contains' | 'text_not_contains' | 'automatic' | 'element_clicked';
+finish_condition?: {
+    type: 'element_exists' | 'element_not_exists' | 'element_visible' | 'element_invisible' | 'location-match' | 'text_contains' | 'text_not_contains' | 'has-value' | 'automatic' | 'element_clicked';
     expectedValue?: any;
     target_element_path?: string;
-  }
+}
   value?: string | null;
   tooltipMessage?: string;
   delayBefore?: number;
@@ -182,6 +182,9 @@ function findElement(identifierType: string, identifierValue: string): Element {
     switch (identifierType) {
         case 'dataid':
             targetElement = document.querySelector(`[data-id="${identifierValue}"]`);
+            if(!targetElement) {
+                targetElement = document.querySelector(`[dataId="${identifierValue}"]`);
+            }
             break;
         case 'id':
             targetElement = document.getElementById(identifierValue);
@@ -201,12 +204,16 @@ function findElement(identifierType: string, identifierValue: string): Element {
 }
 
 function findElementByCSS(identifierValue: string): Element | null {
+    console.log(`findElementByCSS `, identifierValue)
     const indexMatch = identifierValue.match(/^(.+)\[(\d+)\]$/);
+    console.log('indexMatch', indexMatch)
     if (indexMatch) {
         const [, selector, index] = indexMatch;
+        console.log('using document.querySelectorAll; Selector:', selector, 'Index:', index);
         const elements = document.querySelectorAll(selector);
         return elements[parseInt(index)] || null;
     } else {
+        console.log(`Using document.querySelector: ${identifierValue}`);
         return document.querySelector(identifierValue);
     }
 }
@@ -332,7 +339,8 @@ function showToast(message: string, timeout: number = 3000): void {
             title: message,
             description: '',
             duration: timeout,
-            className: 'bg-green-500 text-white',
+            className: 'bg-gradient-purple text-white',
+            position: 'bottom-center',
         });
     } else {
         // Fallback: use alert if reactToast is not available
@@ -349,11 +357,30 @@ async function executeAction(action: Action): Promise<void> {
         await waitForPageLoad();
     }
     
-    const targetElement = findElement(identifierType, identifierValue);
+    // Try to find the element, retrying for up to 10 seconds if not found
+    let targetElement: Element | null = null;
+    const maxWaitTime = 10000; // 10 seconds
+    const pollInterval = 500;
+    const startTime = Date.now();
+
+    while (!targetElement && Date.now() - startTime < maxWaitTime) {
+        try {
+            targetElement = findElement(identifierType, identifierValue);
+        } catch (e) {
+            // Ignore error, will retry
+        }
+        if (!targetElement) {
+            await new Promise(resolve => setTimeout(resolve, pollInterval));
+        }
+    }
+
+    if (!targetElement) {
+        throw new Error(`Element not found after waiting 10 seconds: ${identifierType}:${identifierValue}`);
+    }
     // console.log(`Found element: ${targetElement}`);
     // console.log(targetElement);
 
-    performElementAction(targetElement, action);
+    await performElementAction(targetElement, action);
 }
 
 // Function to execute a series of actions

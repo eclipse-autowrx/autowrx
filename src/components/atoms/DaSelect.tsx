@@ -17,6 +17,7 @@ const DaSelect = React.forwardRef<
     onValueChange?: (value: string) => void
     defaultValue?: string
     placeholderClassName?: string
+    dataId?: string
   }
 >(
   (
@@ -27,6 +28,7 @@ const DaSelect = React.forwardRef<
       value,
       onValueChange,
       defaultValue,
+      dataId,
       ...props
     },
     ref,
@@ -36,7 +38,7 @@ const DaSelect = React.forwardRef<
       value={value}
       onValueChange={onValueChange}
     >
-      <div className={cn('flex flex-col', wrapperClassName)}>
+      <div data-id={dataId} className={cn('flex flex-col', wrapperClassName)}>
         <DaText className="!font-medium">{label}</DaText>
         {label && <div className="pb-1"></div>}
         <SelectTrigger

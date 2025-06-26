@@ -14,6 +14,7 @@ export interface InputProps
   IconOnClick?: () => void
   iconSize?: number
   labelClassName?: string
+  dataId?: string
 }
 
 const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
@@ -29,6 +30,7 @@ const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
       IconOnClick,
       iconSize,
       labelClassName,
+      dataId,
       ...props
     },
     ref,
@@ -69,6 +71,7 @@ const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
             type={type}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
+            data-id={dataId}
             className={cn(
               `grow flex px-2 py-1 h-8 w-full
                 placeholder:text-da-gray-300

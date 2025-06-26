@@ -434,18 +434,48 @@ select[aria-hidden='true'][tabindex='-1'] {
   animation: slideOut 0.5s ease-out forwards; /* Adjust duration and easing as needed */
 }
 
+.bg-gradient-purple {
+  /* background: linear-gradient(135deg, #5e3b98 0%, #c39bd3 100%); */
+  /* border: 2px solid #5e3b98; */
+  /* box-shadow: 0 0 8px rgba(94, 59, 152, 0.5) !important; */
+  /* background: linear-gradient(135deg, #6b46c1, #9f7aea); purple gradient */
+  /* background-color: #6a5acd; */
+  background-image: linear-gradient(20deg, #6a5acd 0%, #c54b8c 37%, #b284be 100%);
+  /* box-shadow: 0 4px 14px #6a5acd; */
+}
+/*
+* Created with https://www.css-gradient.com
+* Gradient link: https://www.css-gradient.com/?c1=632bdb&c2=5f0f84&gt=l&gd=dtl
+*/
+
+.purple-gradient-button {
+/* background: #370796; */
+  /* background: linear-gradient(135deg, #370796, #C1A1EA); */
+  /* background: #632BDB; */
+  background: linear-gradient(135deg, #632BDB, #754f86);
+  box-shadow: 0 4px 15px rgba(123, 47, 247, 0.4);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* .purple-gradient-button:hover {
+  background: linear-gradient(135deg, #9a4dff, #ff1ab8);
+  box-shadow: 0 6px 20px rgba(154, 77, 255, 0.6);
+} */
+
 /* Custom tippy.js theme for gradient background */
 .tippy-box[data-theme~='gradient-tooltip'] {
-  background: rgb(226, 126, 12);
+  background-color: #6a5acd;
+  background-image: linear-gradient(319deg, #6a5acd 0%, #c54b8c 37%, #b284be 100%);
   color: #fff;
-  box-shadow: 0 4px 16px 0 rgba(0,0,0,0.18), 0 1.5px 4px 0 rgba(0,0,0,0.12);
+  box-shadow: 0 0 8px rgba(94, 59, 152, 0.5) !important;
   border-radius: 0.5rem;
   font-weight: 500;
   font-size: 0.8rem;
   padding: 2px;
 }
 .tippy-box[data-theme~='gradient-tooltip'] .tippy-arrow {
-  color: rgb(226, 126, 12);
+  color: #c54b8c;
+  /* Middle color from the purple gradient #5e3b98 -> #c39bd3 */
   /* fallback for arrow, can be improved for gradient */
 }
 

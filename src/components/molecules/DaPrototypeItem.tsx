@@ -19,9 +19,11 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
   return (
     <div
       className={cn(
-        'lg:w-full lg:h-full group bg-white rounded-lg cursor-pointer',
+        'lg:w-full lg:h-full group bg-white rounded-lg cursor-pointer prototype-grid-item',
         className,
       )}
+      data-id={`prototype-item-${prototype?.id ?? ''}`}
+      aria-label={`${prototype?.name || 'Unnamed'}`}
       id={prototype?.id ?? ''}
     >
       <div className="flex flex-col items-center space-y-1 text-da-gray-medium overflow-hidden">
@@ -83,7 +85,7 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
         <div className="flex items-center w-full space-y-0">
           <DaText
             variant="regular-bold"
-            className="line-clamp-1 !text-da-gray-dark"
+            className="line-clamp-1 !text-da-gray-dark prototype-grid-item-name"
           >
             {prototype?.name ?? ''}
           </DaText>

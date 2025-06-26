@@ -12,6 +12,7 @@ type Actions = {
   setIsChatShowed: (value: boolean) => void
   setIsShowedAutomationControl?: (value: boolean) => void
   setAutomationSequence?: (sequence: any) => void
+  setAutomationSequenceActionAt?: (index: number, action: any) => void
 }
 
 const useGlobalStore = create<GlobalState & Actions>()(
@@ -29,8 +30,22 @@ const useGlobalStore = create<GlobalState & Actions>()(
       }),
     setAutomationSequence: (sequence) =>
       set((state) => {
-        state.automationSequence = sequence
+        const newSequence = {...sequence}
+        newSequence.lastUpdated = new Date()
+        state.automationSequence = newSequence
+      }),
+    setAutomationSequenceActionAt: (index, action) => {
+      // console.log('setAutomationSequenceActionAt', index, action)
+      set((state) => {
+        if (state.automationSequence && state.automationSequence.actions.length > index) {
+          // Create a new array to trigger reactivity
+          const newSequence = {...state.automationSequence}
+          newSequence.actions[index] = action
+          newSequence.lastUpdated = new Date()
+          state.automationSequence = newSequence
+        }
       })
+    }
   })),
 )
 

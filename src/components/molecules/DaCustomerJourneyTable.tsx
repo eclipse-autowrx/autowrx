@@ -216,11 +216,12 @@ const DaTableEditor = ({
                     )}
 
                     {/* Column Content */}
-                    <div className="relative mx-2 group h-full flex items-center justify-center z-10">
+                    <div className="journey-edit-column-name relative mx-2 group h-full flex items-center justify-center z-10">
                       {editingColumnHeader === columnIndex ? (
                         <input
+                          data-id='journey-edit-column-name-input'
                           type="textarea"
-                          className="w-full bg-transparent outline-none mx-4"
+                          className="w-full bg-transparent outline-none mx-4 journey-edit-column-name-input"
                           value={columnNames[columnIndex]}
                           onChange={(e) => {
                             const newColumnName = e.target.value
@@ -252,7 +253,7 @@ const DaTableEditor = ({
                         hoveredColumnIndex === columnIndex &&
                         isEditing && (
                           <DaButton
-                            className="m-1 !text-da-gray-dark !p-0 !w-6 !h-6 rounded absolute top-0 -right-4 bg-da-white hover:bg-da-white hover:!text-red-500 z-10 opacity-0 group-hover:opacity-100"
+                            className="journey-edit-btn-delete-column m-1 !text-da-gray-dark !p-0 !w-6 !h-6 rounded absolute top-0 -right-4 bg-da-white hover:bg-da-white hover:!text-red-500 z-10 opacity-0 group-hover:opacity-100"
                             variant="outline"
                             onClick={() => deleteColumn(columnIndex)}
                             size="sm"
@@ -270,14 +271,15 @@ const DaTableEditor = ({
               {tableData.map((row, rowIndex) => (
                 <tr key={rowIndex}>
                   <td
-                    className="border h-full w-36 px-2 py-2 relative font-bold text-gray-700"
+                    className="journey-edit-row-name border h-full w-36 px-2 py-2 relative font-bold text-gray-700"
                     onMouseEnter={() => setHoveredRowIndex(rowIndex)}
                     onMouseLeave={() => setHoveredRowIndex(null)}
                     onClick={() => isEditing && setEditingRowHeader(rowIndex)}
                   >
                     {editingRowHeader === rowIndex ? (
                       <input
-                        className="w-full h-full outline-none"
+                        data-id="journey-edit-row-input"
+                        className="w-full h-full outline-none journey-edit-row-input"
                         value={row.rowName}
                         onChange={(e) => {
                           const updatedTableData = [...tableData]
@@ -295,7 +297,8 @@ const DaTableEditor = ({
                       hoveredRowIndex === rowIndex &&
                       isEditing && (
                         <DaButton
-                          className="m-1 !text-da-gray-dark !p-0 !w-6 !h-6 rounded absolute top-0 right-0 bg-da-white hover:bg-da-white hover:!text-red-500"
+                        data-id="journey-edit-delete-row-btn"
+                          className="journey-edit-content-cell-btn-delete-row m-1 !text-da-gray-dark !p-0 !w-6 !h-6 rounded absolute top-0 right-0 bg-da-white hover:bg-da-white hover:!text-red-500"
                           size="sm"
                           variant="outline-nocolor"
                           onClick={() => deleteRow(rowIndex)}
@@ -312,7 +315,7 @@ const DaTableEditor = ({
                           isEditing &&
                           handleCellChange(rowIndex, columnName, e.target.value)
                         }
-                        className="w-full bg-transparent outline-none resize-vertical text-gray-700"
+                        className="w-full bg-transparent outline-none resize-vertical text-gray-700 journey-edit-content-cell-input"
                         ref={(textareaRef) => {
                           if (textareaRef) {
                             textareaRef.style.height = `${textareaRef.scrollHeight}px`
@@ -333,6 +336,7 @@ const DaTableEditor = ({
 
         <DaButton
           variant="dash"
+          dataId="journey-edit-add-row-btn"
           className={`absolute -bottom-10 left-0 w-full !h-8 py-0.5 z-10 ${
             //   showAddRow && isEditing ? 'block' : '!hidden'
             isEditing ? 'block' : '!hidden'
@@ -344,6 +348,7 @@ const DaTableEditor = ({
 
         <DaButton
           variant="dash"
+          dataId="journey-edit-add-column-btn"
           className={`absolute top-0 -right-10 !h-full w-8 !px-0 z-10 ${
             //   showAddColumn && isEditing ? 'flex' : '!hidden'
             isEditing ? 'flex' : '!hidden'
