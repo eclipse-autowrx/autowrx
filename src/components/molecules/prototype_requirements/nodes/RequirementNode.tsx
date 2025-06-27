@@ -49,6 +49,7 @@ function RequirementNode({
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
   const dropdownRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
+  const { isScanning } = useRequirementStore()
 
   const requirement = data.requirement || data
 
@@ -81,6 +82,7 @@ function RequirementNode({
         <div
           className={cn(
             'relative flex flex-col items-center justify-center w-full h-full cursor-pointer',
+            isScanning && 'animate-pulse',
           )}
           onClick={(e) => {
             e.stopPropagation()

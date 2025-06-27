@@ -38,18 +38,18 @@ const Legend: React.FC = () => (
           className="w-4 h-4 rounded-full mr-2"
           style={{ backgroundColor: '#005072' }}
         />
-        <span>Internal Requirements</span>
+        <span>Local Requirements</span>
       </div>
       <div className="flex items-center">
         <div
           className="w-4 h-4 rounded-full mr-2"
           style={{ backgroundColor: '#aebd38' }}
         />
-        <span>External Requirements</span>
+        <span>Global Requirements</span>
       </div>
     </div>
     <div className="space-y-1  ">
-      <div>Larger circles = Higher impact/effort</div>
+      <div>Larger circles = Higher impact</div>
       <div>Closer to center = More relevant</div>
     </div>
   </div>
@@ -120,10 +120,7 @@ const DaRequirementExplorer: React.FC<DaRequirementExplorerProps> = ({
       // invert: high score = small r, low score = big r
       const baseR = (1 - norm) * MAX_RADIUS
       const scaledR = baseR * DIST_COEFF
-      const radius = Math.max(
-        effectiveMinRadius,
-        Math.min(scaledR, MAX_RADIUS)
-      )
+      const radius = Math.max(effectiveMinRadius, Math.min(scaledR, MAX_RADIUS))
 
       // polar → cartesian
       const x = radius * Math.cos(angle)
@@ -131,9 +128,7 @@ const DaRequirementExplorer: React.FC<DaRequirementExplorerProps> = ({
 
       // color by source
       const color =
-        (req.source?.type || 'external') === 'internal'
-          ? '#005072'
-          : '#aebd38'
+        (req.source?.type || 'external') === 'internal' ? '#005072' : '#aebd38'
 
       return {
         id: `req-${req.id || req.title}`,

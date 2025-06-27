@@ -4,6 +4,7 @@ import {
   TbArrowsMinimize,
   TbLoader2,
   TbPlus,
+  TbScan,
   TbTable,
   TbTarget,
   TbTextScan2,
@@ -58,7 +59,9 @@ const PrototypeTabRequirement = () => {
 
   useEffect(() => {
     if (prototype?.extend && Array.isArray(prototype.extend.requirements)) {
-      let items = JSON.parse(JSON.stringify(prototype.extend.requirements)) as  Requirement[]
+      let items = JSON.parse(
+        JSON.stringify(prototype.extend.requirements),
+      ) as Requirement[]
       items.forEach((item) => {
         item.title = item.title || item.id
         item.id = item.id || crypto.randomUUID()
@@ -162,6 +165,13 @@ const PrototypeTabRequirement = () => {
           <div className="grow" />
           {isAuthorized && (
             <div className="flex items-center space-x-1">
+              <DaButton
+                size="sm"
+                variant="editor"
+                onClick={() => toggleScanning()}
+              >
+                <TbTextScan2 className="size-4 mr-1" /> Run new scan
+              </DaButton>
               <DaButton
                 size="sm"
                 variant="editor"

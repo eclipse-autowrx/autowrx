@@ -15,6 +15,7 @@ import {
   TbRoute,
   TbScale,
   TbTargetArrow,
+  TbListTree,
 } from 'react-icons/tb'
 import { saveRecentPrototype } from '@/services/prototype.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
@@ -73,13 +74,49 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
     <div className={`flex flex-col w-full h-full relative`}>
       <div className="flex min-h-[52px] border-b border-da-gray-medium/50 bg-da-white">
         <div className="flex w-fit">
-          <DaTabItem
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div
+                className={`${['journey', 'view', 'requirements'].includes(tab || '') ? 'text-da-primary-500 border-b-2 border-da-primary-500' : ''} flex text-sm font-semibold items-center px-4 h-[52px] hover:opacity-80 cursor-pointer`}
+              >
+                <TbListTree className="w-5 h-5 mr-2" />
+                Overview
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-white" align="end">
+              <DropdownMenuItem
+                className="hover:bg-da-primary-100 cursor-pointer rounded-md hover:text-da-primary-500 font-medium"
+                asChild
+              >
+                <Link
+                  to={`/model/${model_id}/library/prototype/${prototype_id}/journey`}
+                  className="flex items-center"
+                >
+                  <TbRoute className="w-5 h-5 mr-2" />
+                  Journey
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="hover:bg-da-primary-100 cursor-pointer rounded-md hover:text-da-primary-500 font-medium"
+                asChild
+              >
+                <Link
+                  to={`/model/${model_id}/library/prototype/${prototype_id}/requirements`}
+                  className="flex items-center"
+                >
+                  <TbTargetArrow className="w-5 h-5 mr-2" />
+                  Requirements
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {/* <DaTabItem
             active={isDefaultTab}
             to={`/model/${model_id}/library/prototype/${prototype_id}/journey`}
           >
             <TbRoute className="w-5 h-5 mr-2" />
             Journey
-          </DaTabItem>
+          </DaTabItem> */}
           <DaTabItem
             active={tab === 'flow'}
             to={`/model/${model_id}/library/prototype/${prototype_id}/flow`}
@@ -87,13 +124,13 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
             <MdOutlineDoubleArrow className="w-5 h-5 mr-2" />
             Flow
           </DaTabItem>
-          <DaTabItem
+          {/* <DaTabItem
             active={tab === 'requirements'}
             to={`/model/${model_id}/library/prototype/${prototype_id}/requirements`}
           >
             <TbTargetArrow className="w-5 h-5 mr-2" />
             Requirements
-          </DaTabItem>
+          </DaTabItem> */}
           <DaTabItem
             active={tab === 'code'}
             to={`/model/${model_id}/library/prototype/${prototype_id}/code`}

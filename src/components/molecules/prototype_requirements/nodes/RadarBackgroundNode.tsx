@@ -20,6 +20,7 @@ const RadarBackgroundNode: React.FC<RadarBackgroundNodeProps> = ({
 }) => {
   // helper to decide fill colour for ring i (1 = innermost, rings = outermost)
   const fillColor = (i: number) => (i % 2 === 1 ? SLATE : WHITE)
+  const { isScanning } = useRequirementStore()
 
   // build the sweep-wedge path once
   const beamAngleDeg = 20 // angular width of the wedge
@@ -49,6 +50,7 @@ const RadarBackgroundNode: React.FC<RadarBackgroundNodeProps> = ({
       style={{
         pointerEvents: 'none',
       }}
+      className={cn(isScanning ? 'animate-pulse' : '')}
     >
       {/* 1) Filled bands (out → in) */}
       {Array.from({ length: rings }).map((_, idx) => {
@@ -98,6 +100,22 @@ const RadarBackgroundNode: React.FC<RadarBackgroundNodeProps> = ({
           />
         )
       })}
+
+      {/* 4) Scanning sweep (if enabled) */}
+      {isScanning && (
+        <g transform={`rotate(0 ${size} ${size})`}>
+          {/* animate this <g> from 0° → 360° around the center */}
+          <animateTransform
+            attributeName="transform"
+            type="rotate"
+            from={`0 ${size} ${size}`}
+            to={`360 ${size} ${size}`}
+            dur="3s"
+            repeatCount="indefinite"
+          />
+          <path d={sweepPath} fill={SWEEP_COLOR} />
+        </g>
+      )}
     </svg>
   )
 }
