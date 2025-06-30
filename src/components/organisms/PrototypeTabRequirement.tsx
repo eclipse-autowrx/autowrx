@@ -650,7 +650,7 @@ const PrototypeTabRequirement = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            raw_customer_journey: prototype.customer_journey,
+            raw_customer_journey: prototype?.customer_journey || '',
           }),
           signal: controller.signal,
         });
