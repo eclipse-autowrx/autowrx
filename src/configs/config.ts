@@ -66,6 +66,9 @@ const config: any = {
   learning: {
     url: 'https://learning.digitalauto.tech',
   },
+  requirements: {
+    journey_2_requirements: 'https://workflow.digital.auto/webhook/3dd23494-225b-4254-a121-733af39faa43',
+  },
 }
 
 export default config

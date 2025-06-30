@@ -123,12 +123,15 @@ export interface Requirement {
   type: RequirementType
   source: RequirementSource
   rating: RequirementRating
-  creatorUserId: string
+  creatorUserId?: string
   createdAt?: Date
   updatedAt?: Date
   priority?: number
   relevance?: number
   impact?: number
+  isNew?: boolean
+  isHidden?: boolean
+  angle?: number
 }
 
 export type SearchPrototype = {

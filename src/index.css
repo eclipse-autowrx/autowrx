@@ -434,3 +434,56 @@ select[aria-hidden='true'][tabindex='-1'] {
 .learning-disappear {
   animation: slideOut 0.5s ease-out forwards; /* Adjust duration and easing as needed */
 }
+
+/* React Flow Node Animations */
+@keyframes nodeAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.75) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes nodeBounce {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes nodeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.animate-node-appear {
+  animation: nodeAppear 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-node-bounce {
+  animation: nodeBounce 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+.animate-node-slide-in {
+  animation: nodeSlideIn 0.5s ease-out forwards;
+}

@@ -1,4 +1,29 @@
 // src/molecules/prototype_requirements/DaRequirementExplorer.tsx
+// 
+// React Flow Node Animation Examples:
+// 
+// 1. Default appear animation:
+// <DaRequirementExplorer onDelete={handleDelete} />
+// 
+// 2. Bounce animation with custom delay:
+// <DaRequirementExplorer 
+//   onDelete={handleDelete} 
+//   animationType="bounce" 
+//   animationDelay={200} 
+// />
+// 
+// 3. Slide-in animation:
+// <DaRequirementExplorer 
+//   onDelete={handleDelete} 
+//   animationType="slide-in" 
+// />
+// 
+// 4. No animation:
+// <DaRequirementExplorer 
+//   onDelete={handleDelete} 
+//   animationType="none" 
+// />
+
 import React, { useEffect, useMemo } from 'react'
 import {
   ReactFlow,
@@ -56,11 +81,11 @@ const Legend: React.FC = () => (
 )
 
 function safeScore(raw: any): number {
-  // 1) if it’s already a number, use it
+  // 1) if it's already a number, use it
   if (typeof raw === 'number' && raw >= 1 && raw <= MAX_RATING) {
     return raw
   }
-  // 2) if it’s a string that parses to an integer, use it
+  // 2) if it's a string that parses to an integer, use it
   if (typeof raw === 'string') {
     const parsed = parseInt(raw, 10)
     if (!isNaN(parsed) && parsed >= 1 && parsed <= MAX_RATING) {
@@ -82,7 +107,7 @@ const DaRequirementExplorer: React.FC<DaRequirementExplorerProps> = ({
     const reqs = requirements
     const total = reqs.length
 
-    // 1) ALWAYS build the radar‐background node
+    // 1) ALWAYS build the radar-background node
     const bgNode = {
       id: 'radar-bg',
       type: 'radarBackground',
@@ -103,26 +128,35 @@ const DaRequirementExplorer: React.FC<DaRequirementExplorerProps> = ({
     const effectiveMinRadius = Math.max(MIN_RADIUS, safeMinByAngle)
 
     // 4) map each requirement → a positioned node
+
     const reqNodes = reqs.map((req, i) => {
       // polar angle (start at 12 o'clock)
-      const angle = i * angleStep - Math.PI / 2
+      const angle = req.angle || i * angleStep - Math.PI / 2
 
       // safely coerce priority/relevance/impact into 1…5
       const raw = req.rating || {}
+
       const pr = safeScore(raw.priority)
       const rl = safeScore(raw.relevance)
       const im = safeScore(raw.impact)
 
-      // average & normalize your 1…5 score → 0…1
+      // Make avgScore directly proportional to radius:
+      // - Small radius (near center) means high avgScore
+      // - Large radius (far from center) means low avgScore
+      // So, radius = norm * MAX_RADIUS, where norm = 1 - (avgScore / MAX_RATING)
       const avgScore = (pr + rl + im) / 3
-      const norm = avgScore / MAX_RATING
+      const norm = 1 - (avgScore / MAX_RATING) // norm=0 (center, high score), norm=1 (edge, low score)
 
-      // invert: high score = small r, low score = big r
-      const baseR = (1 - norm) * MAX_RADIUS
+      // 1. For position: higher scores are closer to center (smaller radius)
+      const baseR = norm * MAX_RADIUS
       const scaledR = baseR * DIST_COEFF
       const radius = Math.max(effectiveMinRadius, Math.min(scaledR, MAX_RADIUS))
 
-      // polar → cartesian
+      // 2. For node size: interpolate between min and max node size based on norm (higher norm = bigger node)
+      const MIN_NODE_SIZE = 20
+      const MAX_NODE_SIZE = 60
+      const nodeSize = MIN_NODE_SIZE + (MAX_NODE_SIZE - MIN_NODE_SIZE) * norm
+
       const x = radius * Math.cos(angle)
       const y = radius * Math.sin(angle)
 
@@ -144,6 +178,7 @@ const DaRequirementExplorer: React.FC<DaRequirementExplorerProps> = ({
           rating: { priority: pr, relevance: rl, impact: im },
           source: req.source,
           creatorUserId: req.creatorUserId,
+          isHidden: req.isHidden,
           color,
           showHandles: false,
           requirement: req,

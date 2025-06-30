@@ -32,10 +32,12 @@ type RequirementNodeData = {
   creatorUserId?: string
   childRequirements?: string[]
   color?: string
+  isHidden?: boolean
   showHandles?: boolean
   handlePositions?: string[]
   onEdit?: (id: string) => void
   requirement?: any
+  angle?: number
   onDelete?: (id: string) => void
 }
 
@@ -54,8 +56,8 @@ function RequirementNode({
   const requirement = data.requirement || data
 
   const ratingAvg = data.ratingAvg || 3
-  const baseSize = 15
-  const size = baseSize + ratingAvg * 6
+  const baseSize = 6
+  const size = baseSize + ratingAvg * 8
 
   const handleCloseDropdown = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -90,7 +92,9 @@ function RequirementNode({
           }}
         >
           <div
-            className="rounded-full flex justify-center items-center p-[10px] text-center text-xs font-bold shadow-md transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-lg text-white"
+            className={`rounded-full flex justify-center items-center p-[10px] text-center text-xs font-bold 
+                  shadow-md transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-lg text-white 
+                  ${data.isHidden ? 'hidden' : 'animate-node-appear'}`}
             style={{
               width: `${size}px`,
               height: `${size}px`,
@@ -98,8 +102,8 @@ function RequirementNode({
             }}
           />
           <p
-            className="absolute w-[200px] whitespace-nowrap overflow-hidden text-ellipsis text-center mt-4 text-xs font-medium"
-            style={{ top: `${size}px` }}
+            className="absolute w-[200px] overflow-hidden text-ellipsis text-center mt-4 text-sm leading-tight font-medium"
+            style={{ top: `${size*0.8}px` }}
             title={data.title}
           >
             {data.title}
