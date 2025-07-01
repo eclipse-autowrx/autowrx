@@ -58,7 +58,7 @@ const RootLayout = () => {
 
   return <>
 
-    <div className={`flex h-screen flex-col ${isChatShowed && 'pr-[380px]'}`}>
+    <div className={`flex h-screen flex-col ${isChatShowed && 'pr-[430px]'}`}>
       <Suspense>
         <ActiveObjectManagement />
       </Suspense>

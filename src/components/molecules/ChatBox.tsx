@@ -387,7 +387,7 @@ const ChatBox = () => {
         />}
       </div>
       {showAI && (
-        <div className="fixed p-0 right-1 top-[4px] h-[calc(100vh-8px)] w-[370px] rounded-md shadow-xl
+        <div className="fixed p-0 right-1 top-[4px] h-[calc(100vh-8px)] w-[440px] rounded-md shadow-xl
           flex flex-col bg-slate-300"
           style={{zIndex: 99}}>
           <div className="flex text-base py-1 pl-4 pr-2 font-semibold text-white border-b border-slate-400 bg-gradient-to-r from-da-gradient-from to-da-gradient-to rounded-t">

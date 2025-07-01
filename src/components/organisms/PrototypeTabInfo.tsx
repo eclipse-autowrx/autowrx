@@ -48,7 +48,7 @@ interface PrototypeTabJourneyProps {
 const complexityLevels = ['Lowest', 'Low', 'Medium', 'High', 'Highest']
 const statusOptions = ['Developing', 'Released']
 
-const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
+const PrototypeTabInfo: React.FC<PrototypeTabJourneyProps> = ({
   prototype,
 }) => {
   const [isEditing, setIsEditing] = useState(false)
@@ -322,7 +322,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
               </div>
             )}
           </div>
-          {/* <div className="flex w-full">
+          <div className="flex w-full">
             <div className="flex-1 h-fit relative">
               <DaImage
                 src={
@@ -474,8 +474,8 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                 />
               )}
             </div>
-          </div> */}
-          <div className="flex flex-col w-full items-center justify-center py-8 space-y-8">
+          </div>
+          {/* <div className="flex flex-col w-full items-center justify-center py-8 space-y-8">
             <DaText variant="title" className="text-da-primary-500">
               Customer Journey
             </DaText>
@@ -484,7 +484,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
               onChange={(value) => handleChange('customer_journey', value)}
               isEditing={isEditing}
             />
-          </div>
+          </div> */}
           {/* <div
             className={cn(
               'flex flex-col w-full items-center justify-center py-8 space-y-8',
@@ -503,4 +503,4 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
   )
 }
 
-export default PrototypeTabJourney
+export default PrototypeTabInfo

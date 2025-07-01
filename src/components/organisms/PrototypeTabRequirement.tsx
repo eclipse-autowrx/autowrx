@@ -130,8 +130,8 @@ let mockData: Requirement[] = [
             "link": ""
         },
         "rating": {
-            "priority": 4,
-            "relevance": 4,
+            "priority": 5,
+            "relevance": 5,
             "impact": 5
         }
     },

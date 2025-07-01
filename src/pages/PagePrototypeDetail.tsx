@@ -41,6 +41,7 @@ import {
   DropdownMenuItem,
 } from '@/components/atoms/dropdown-menu'
 import { MdOutlineDoubleArrow } from 'react-icons/md'
+import PrototypeOverview from '@/components/organisms/PrototypeOverview'
 
 interface ViewPrototypeProps {
   display?: 'tree' | 'list'
@@ -77,7 +78,8 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div
-                className={`${['journey', 'view', 'requirements'].includes(tab || '') ? 'text-da-primary-500 border-b-2 border-da-primary-500' : ''} flex text-sm font-semibold items-center px-4 h-[52px] hover:opacity-80 cursor-pointer`}
+                className={`${['journey', 'view', 'requirements'].includes(tab || '') ? 'text-da-primary-500 border-b-2 border-da-primary-500' : ''} 
+                  flex text-sm font-semibold items-center px-4 h-[52px] hover:opacity-80 cursor-pointer`}
               >
                 <TbListTree className="w-5 h-5 mr-2" />
                 Overview
@@ -93,7 +95,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
                   className="flex items-center"
                 >
                   <TbRoute className="w-5 h-5 mr-2" />
-                  Journey
+                  Customer Journey
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem
@@ -242,7 +244,8 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           style={{ right: showRt ? '3.5rem' : '0' }}
           className={`absolute left-0 bottom-0 top-0 grow h-full z-0`}
         >
-          {isDefaultTab && <PrototypeTabJourney prototype={prototype} />}
+          {isDefaultTab && <PrototypeOverview mode="overview" prototype={prototype} />}
+          {tab == 'requirements' && <PrototypeOverview mode="requirement"/> }
           {tab == 'architecture' && <PrototypeTabArchitecture />}
           {tab == 'code' && <PrototypeTabCode />}
           {tab == 'flow' && <PrototypeTabFlow />}
@@ -250,7 +253,6 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           {tab == 'homologation' && <PrototypeTabHomologation />}
           {tab == 'test-design' && <PrototypeTabTestDesign />}
           {tab == 'feedback' && <PrototypeTabFeedback />}
-          {tab == 'requirements' && <PrototypeTabRequirement />}
         </div>
         {showRt && <DaRuntimeControl />}
       </div>

@@ -44,7 +44,7 @@ const nodeTypes = {
 }
 
 const MAX_RADIUS = 600 // maximum radar radius in px
-const MIN_RADIUS = 50 // never go inside this ring
+const MIN_RADIUS = 20 // never go inside this ring
 const MAX_RATING = 5 // rating scale 1…5
 const NODE_SIZE = 60 // diameter in px
 const DIST_COEFF = 1.5 // spread factor
@@ -150,11 +150,17 @@ const DaRequirementExplorer: React.FC<DaRequirementExplorerProps> = ({
       // 1. For position: higher scores are closer to center (smaller radius)
       const baseR = norm * MAX_RADIUS
       const scaledR = baseR * DIST_COEFF
-      const radius = Math.max(effectiveMinRadius, Math.min(scaledR, MAX_RADIUS))
+      // The bigger avgScore, the smaller the radius (closer to center)
+      // So, radius = effectiveMinRadius + (MAX_RADIUS - effectiveMinRadius) * (1 - avgScore / MAX_RATING)
+      // Linear mapping: avgScore = 1 → MAX_RADIUS, avgScore = 5 → MIN_RADIUS
+      const radius =
+        MIN_RADIUS +
+        ((MAX_RADIUS - MIN_RADIUS) * (MAX_RATING - avgScore)) /
+          (MAX_RATING - 1)
 
       // 2. For node size: interpolate between min and max node size based on norm (higher norm = bigger node)
-      const MIN_NODE_SIZE = 20
-      const MAX_NODE_SIZE = 60
+      const MIN_NODE_SIZE = 12
+      const MAX_NODE_SIZE = 70
       const nodeSize = MIN_NODE_SIZE + (MAX_NODE_SIZE - MIN_NODE_SIZE) * norm
 
       const x = radius * Math.cos(angle)
