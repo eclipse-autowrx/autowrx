@@ -28,10 +28,11 @@ import { IoIosHelpBuoy } from 'react-icons/io'
 import config from '@/configs/config'
 import DaTooltip from '../atoms/DaTooltip'
 import ChatBox from '../molecules/ChatBox'
+import LearningIntegration from './LearningIntegration'
 
 import Switch from 'react-switch'
 import { useState, useEffect, useRef, Fragment } from 'react'
-import useAuthStore from '@/stores/authStore'
+
 import useLastAccessedModel from '@/hooks/useLastAccessedModel'
 import { FaCar } from 'react-icons/fa'
 import DaTestAutomation from '../molecules/DaTestAutomation'
@@ -46,9 +47,6 @@ const NavigationBar = ({}) => {
     [PERMISSIONS.LEARNING_MODE],
   )
   const [learningMode, setIsLearningMode] = useState(false)
-  const { access } = useAuthStore()
-
-  const frameLearning = useRef<HTMLIFrameElement>(null)
 
   const { lastAccessedModel } = useLastAccessedModel()
   const isAtInventoryPage = useMatch('/inventory/*')
@@ -186,24 +184,7 @@ const NavigationBar = ({}) => {
         </>
       )}
 
-      {learningMode && (
-        <div
-          style={{ zIndex: 999 }}
-          className="fixed top-14 left-0 bottom-0 right-0 
-           bg-[#11111188]"
-        >
-          <div className="pt-1 pl-3 pr-3 pb-1 w-full h-full">
-            <iframe
-              ref={frameLearning}
-              src={`${config?.learning?.url}?user_id=${encodeURIComponent(user?.id || '')}&token=${encodeURIComponent(access?.token || '')}`}
-              className="m-0 h-full w-full learning-appear inset-0 shadow-[4px_4px_6px_rgba(0,0,0,0.3)]"
-              allow="camera;microphone"
-              onLoad={() => {}}
-            ></iframe>
-          </div>
-          
-        </div>
-      )}
+      {learningMode && <LearningIntegration />}
       <DaNavUser />
     </header>
   )
