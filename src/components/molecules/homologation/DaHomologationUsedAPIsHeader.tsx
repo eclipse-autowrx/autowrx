@@ -1,3 +1,11 @@
+// Copyright (c) 2025 Eclipse Foundation.
+// 
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 import { useEffect, useMemo } from 'react'
 import clsx from 'clsx'
 import { TbHelp, TbSquare, TbSquareCheck, TbX } from 'react-icons/tb'

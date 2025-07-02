@@ -1,3 +1,11 @@
+// Copyright (c) 2025 Eclipse Foundation.
+// 
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { Link, Outlet } from 'react-router-dom'
 import { Toaster } from '@/components/molecules/toaster/toaster'
@@ -58,7 +66,7 @@ const RootLayout = () => {
 
   return <>
 
-    <div className={`flex h-screen flex-col ${isChatShowed && 'pr-[320px]'}`}>
+    <div className={`flex h-screen flex-col ${isChatShowed && 'pr-[430px]'}`}>
       <Suspense>
         <ActiveObjectManagement />
       </Suspense>

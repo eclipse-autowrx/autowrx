@@ -1,3 +1,11 @@
+// Copyright (c) 2025 Eclipse Foundation.
+// 
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 import { DaButton } from '@/components/atoms/DaButton'
 import DaMenu from '@/components/atoms/DaMenu'
 import DaPopup from '@/components/atoms/DaPopup'

@@ -1,3 +1,11 @@
+// Copyright (c) 2025 Eclipse Foundation.
+// 
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 import dashboard_templates from '@/data/dashboard_templates'
 import clsx from 'clsx'
 import { DaImage } from '../atoms/DaImage'

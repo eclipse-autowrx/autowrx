@@ -1,3 +1,11 @@
+// Copyright (c) 2025 Eclipse Foundation.
+// 
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 import { useState } from 'react'
 import { DaText } from '@/components/atoms/DaText'
 import DaImportFile from '@/components/atoms/DaImportFile'
@@ -196,7 +204,6 @@ const PageModelDetail = () => {
         ref_id: model.id,
         ref_type: 'model',
       })
-      await refetch()
       window.location.href = '/model'
     } catch (error) {
       console.error('Failed to delete model:', error)

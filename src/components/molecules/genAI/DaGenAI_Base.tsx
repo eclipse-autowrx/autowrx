@@ -1,3 +1,11 @@
+// Copyright (c) 2025 Eclipse Foundation.
+// 
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 import { lazy, Suspense, useEffect, useRef, useState, useMemo } from 'react'
 import { DaButton } from '@/components/atoms/DaButton'
 import { BsStars } from 'react-icons/bs'

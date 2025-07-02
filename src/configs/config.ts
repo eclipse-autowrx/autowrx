@@ -1,3 +1,11 @@
+// Copyright (c) 2025 Eclipse Foundation.
+// 
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 import { url } from "inspector"
 
 const config: any = {
@@ -65,6 +73,9 @@ const config: any = {
   enableSupport: true,
   learning: {
     url: 'http://localhost:3000',
+  },
+  requirements: {
+    journey_2_requirements: 'https://workflow.digital.auto/webhook/3dd23494-225b-4254-a121-733af39faa43',
   },
 }
 

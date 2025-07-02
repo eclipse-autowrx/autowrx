@@ -1,3 +1,11 @@
+// Copyright (c) 2025 Eclipse Foundation.
+// 
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 export const riskAssessmentGenerationPrompt = `You are a Risk Assessment and ASIL Generator, focusing on automotive safety in alignment with ISO 26262 standards. Your task is to create a new risk assessment when the user requests it (e.g., "Generate Risk Assessment for action X") and no meaningful existing risk assessment data is provided.
 
 Your final output **must** strictly follow this XML structure (and nothing else):

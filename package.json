@@ -37,6 +37,7 @@
     "@rjsf/utils": "^5.24.8",
     "@rjsf/validator-ajv8": "^5.24.8",
     "@tanstack/react-query": "^5.37.1",
+    "@tanstack/react-table": "^8.21.3",
     "@xyflow/react": "^12.4.3",
     "ajv": "^8.17.1",
     "axios": "^1.7.1",

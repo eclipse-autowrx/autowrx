@@ -1,3 +1,11 @@
+// Copyright (c) 2025 Eclipse Foundation.
+// 
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 import { TbExternalLink } from 'react-icons/tb'
 import { DaButton } from '@/components/atoms/DaButton'
 import DaRequireSignedIn from '@/components/molecules/DaRequireSignedIn'
@@ -99,7 +107,7 @@ const home = [
 
         imageURL:
           'https://bewebstudio.digitalauto.tech/data/projects/nTcRsgxcDWgr/image.avif',
-        redirectURL: 'https://sdv.guide/',
+        redirectURL: 'https://www.sdv.guide/',
       },
       {
         title: 'Version v2.0 release',

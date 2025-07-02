@@ -1,3 +1,11 @@
+// Copyright (c) 2025 Eclipse Foundation.
+// 
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 import Form from '@rjsf/fluent-ui'
 import validator from '@rjsf/validator-ajv8' // Use the AJV8 validator
 import { RJSFSchema } from '@rjsf/utils'

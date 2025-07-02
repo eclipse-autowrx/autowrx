@@ -1,3 +1,11 @@
+// Copyright (c) 2025 Eclipse Foundation.
+// 
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 import { TbCopy } from 'react-icons/tb'
 import { useToast } from '../molecules/toaster/use-toast'
 import { Suspense, lazy } from 'react'

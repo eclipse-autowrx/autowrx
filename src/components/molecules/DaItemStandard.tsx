@@ -1,3 +1,11 @@
+// Copyright (c) 2025 Eclipse Foundation.
+// 
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 import { DaImageRatio } from '../atoms/DaImageRatio'
 import { DaTag } from '../atoms/DaTag'
 import { DaText } from '../atoms/DaText'

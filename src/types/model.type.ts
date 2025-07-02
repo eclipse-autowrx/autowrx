@@ -1,3 +1,11 @@
+// Copyright (c) 2025 Eclipse Foundation.
+// 
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 import { User } from './user.type'
 
 export type Tag = {
@@ -58,7 +66,7 @@ export type Model = {
   tags?: Tag[]
   contributors?: User[]
   members?: User[]
-  state?: 'draft' | 'released' | 'blocked',
+  state?: 'draft' | 'released' | 'blocked'
   extend?: any
 }
 
@@ -88,24 +96,50 @@ export type Prototype = {
   requirements?: string
   executed_turns?: number
   flow?: string
-  editors_choice?: boolean,
+  editors_choice?: boolean
   extend?: any
 }
-
-/*
-extend: {
-  vehicle_api: {
-    supports: ['COVESA', 'USP', 'V2C', 'AAOS'],
-    '"USP": [],
-    "V2C": []
-  }
-}
-
-*/
-
 export interface CustomRequirement {
   text?: string
   url?: string
+}
+
+export type RequirementType =
+  | 'Functional Requirement'
+  | 'System Integration Requirement'
+  | 'Safety & Security Requirement'
+  | 'User Experience Requirement'
+  | 'Regulatory & Homologation Requirement'
+  | 'Operational Requirement'
+  | 'Deployment & Ecosystem Requirement'
+
+export interface RequirementSource {
+  type: 'external' | 'internal'
+  link: string
+}
+
+export interface RequirementRating {
+  priority: number
+  relevance: number
+  impact: number
+}
+
+export interface Requirement {
+  id: string
+  title: string
+  description: string
+  type: RequirementType
+  source: RequirementSource
+  rating: RequirementRating
+  creatorUserId?: string
+  createdAt?: Date
+  updatedAt?: Date
+  priority?: number
+  relevance?: number
+  impact?: number
+  isNew?: boolean
+  isHidden?: boolean
+  angle?: number
 }
 
 export type SearchPrototype = {

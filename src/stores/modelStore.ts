@@ -1,3 +1,11 @@
+// Copyright (c) 2025 Eclipse Foundation.
+// 
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 import { mountStoreDevtool } from 'simple-zustand-devtools'
 import { create } from 'zustand'
 import { CustomApi, Model, Prototype, VehicleApi } from '@/types/model.type'

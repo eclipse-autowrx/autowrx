@@ -1,3 +1,11 @@
+// Copyright (c) 2025 Eclipse Foundation.
+// 
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
 import React, { useState } from 'react'
 import { DaText } from '../atoms/DaText'
 import { DaImage } from '../atoms/DaImage'
@@ -10,8 +18,6 @@ import {
   deletePrototypeService,
 } from '@/services/prototype.service'
 import {
-  TbChevronDown,
-  TbDots,
   TbDotsVertical,
   TbDownload,
   TbEdit,
@@ -69,9 +75,9 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
   const [isUploading, setIsUploading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [confirmPopupOpen, setConfirmPopupOpen] = useState(false)
-  const [customRequirements, setCustomRequirements] = useState<
-    CustomRequirement[]
-  >(JSON.parse(prototype.requirements ?? '[]'))
+  // const [customRequirements, setCustomRequirements] = useState<
+  //   CustomRequirement[]
+  // >(JSON.parse(prototype?.requirements ?? '[]'))
 
   const { data: currentUser } = useSelfProfileQuery()
 
@@ -95,7 +101,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
       customer_journey: localPrototype.customer_journey,
       image_file: localPrototype.image_file,
       state: localPrototype.state,
-      requirements: JSON.stringify(customRequirements),
+      // requirements: JSON.stringify(customRequirements),
     }
     try {
       await updatePrototypeService(prototype.id, updateData)
@@ -200,9 +206,9 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
   }
 
   return (
-    <div className="flex flex-col h-full w-full p-2 bg-slate-200">
+    <div className="flex flex-col h-full w-full">
       <div className="flex flex-col h-full w-full bg-white rounded-lg overflow-y-auto">
-        <div className="flex flex-col h-full w-full pt-6 container bg-white">
+        <div className="flex flex-col h-full w-full pt-6 bg-white px-2">
           <div className="flex mr-4 mb-3 justify-between items-center">
             {isEditing ? (
               <>
@@ -327,7 +333,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
               </div>
             )}
           </div>
-          <div className="flex w-full">
+          {/* <div className="flex w-full">
             <div className="flex-1 h-fit relative">
               <DaImage
                 src={
@@ -479,7 +485,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                 />
               )}
             </div>
-          </div>
+          </div> */}
           <div className="flex flex-col w-full items-center justify-center py-8 space-y-8">
             <DaText variant="title" className="text-da-primary-500">
               Customer Journey
@@ -490,22 +496,18 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
               isEditing={isEditing}
             />
           </div>
-          <div
+          {/* <div
             className={cn(
               'flex flex-col w-full items-center justify-center py-8 space-y-8',
-              !isEditing && 'pointer-events-none',
             )}
           >
             <DaText variant="title" className="text-da-primary-500">
               Requirements
             </DaText>
-            <DaCustomRequirements
-              customRequirements={customRequirements}
-              setCustomRequirements={setCustomRequirements}
-              onSaveRequirements={() => handleSave()}
-              isEditing={isEditing}
-            />
-          </div>
+            <ReactFlowProvider>
+              <DaRequirementExplorer />
+            </ReactFlowProvider>
+          </div> */}
         </div>
       </div>
     </div>
