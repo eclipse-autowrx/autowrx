@@ -174,6 +174,7 @@ const DaDashboard = () => {
               <DaButton
                 variant="editor"
                 size="sm"
+                dataId='dashboard-edit-button'
                 onClick={handleEnterEditMode}
               >
                 <TbEdit className="size-4 mr-1" />
@@ -189,6 +190,7 @@ const DaDashboard = () => {
                     variant="destructive"
                     className="w-fit flex !text-red-500"
                     onClick={handleDeleteAllWidgets}
+                    dataId='dashboard-delete-all-widgets'
                   >
                     <TbTrash className="size-4 mr-1" />
                     Delete all widgets
@@ -198,6 +200,7 @@ const DaDashboard = () => {
                       size="sm"
                       onClick={handleCancel}
                       variant="outline-nocolor"
+                      dataId='dashboard-cancel-button'
                       className="w-16"
                     >
                       Cancel
@@ -205,6 +208,7 @@ const DaDashboard = () => {
                     <DaButton
                       size="sm"
                       onClick={handleSave}
+                      dataId='dashboard-save-button'
                       variant="solid"
                       className="w-16"
                     >
@@ -219,6 +223,7 @@ const DaDashboard = () => {
         <DaButton
           variant="editor"
           size="sm"
+          dataId='dashboard-fullscreen-button'
           onClick={() =>
             setShowPrototypeDashboardFullScreen(
               !showPrototypeDashboardFullScreen,

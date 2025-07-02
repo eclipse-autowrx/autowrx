@@ -13,14 +13,16 @@ import { UspSeviceList, ServiceDetail } from './ViewApiUSP'
 interface ApiCodeBlockProps {
   content: string
   sampleLabel: string
+  dataId?: string
+  copyClassName?: string
 }
 
-const ApiCodeBlock = ({ content, sampleLabel }: ApiCodeBlockProps) => {
+const ApiCodeBlock = ({ content, sampleLabel, dataId, copyClassName }: ApiCodeBlockProps) => {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col" data-id={dataId}>
       <DaCopy
         textToCopy={content}
-        className="flex h-6 items-center w-fit mt-3"
+        className={`flex h-6 items-center w-fit mt-3 btn-copy ${copyClassName}`}
       >
         <DaText
           variant="small"
@@ -93,18 +95,21 @@ const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
               <ApiCodeBlock
                 content={`(await self.${activeApi.name}.get()).value`}
                 sampleLabel="Sample code to get signal value"
+                copyClassName='btn-copy-get-code'
               />
             )}
             {['actuator'].includes(activeApi.type) && (
               <ApiCodeBlock
                 content={`await self.${activeApi.name}.set(value)`}
                 sampleLabel="Sample code to set signal value"
+                copyClassName='btn-copy-set-code'
               />
             )}
             {['actuator', 'sensor'].includes(activeApi.type) && (
               <ApiCodeBlock
                 content={`await self.${activeApi.name}.subscribe(function_name)`}
                 sampleLabel="Sample code to subscribe signal value"
+                copyClassName='btn-copy-subscribe-code'
               />
             )}
           </div>
@@ -189,12 +194,14 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
           <DaTabItem
               onClick={() => setTab('used-signals')}
               active={tab === 'used-signals'}
+              dataId='used-signals-tab'
             >
               Used Signals
             </DaTabItem>
             <DaTabItem
               onClick={() => setTab('all-signals')}
               active={tab === 'all-signals'}
+              dataId='all-signals-tab'
             >
               All Signals
             </DaTabItem>

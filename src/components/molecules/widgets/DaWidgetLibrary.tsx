@@ -291,6 +291,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
           {pickedCells && pickedCells.length > 0 && !isWidgetDiscrete && (
             <DaButton
               variant="solid"
+              dataId='btn-add-widget-in-widget-library'
               disabled={(isWidgetGenAI || !activeWidget) && !widgetUrl}
               className="px-4 py-2 !text-base h-8"
               onClick={() => {

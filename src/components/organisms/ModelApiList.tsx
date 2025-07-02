@@ -137,6 +137,7 @@ const ModelApiList = ({
       <div className="mb-2 flex items-center">
         <DaInput
           placeholder="Search Signal"
+          dataId='search-signal-input'
           className="mr-2 w-full"
           Icon={TbSearch}
           iconBefore={true}

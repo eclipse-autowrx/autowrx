@@ -224,6 +224,7 @@ const DaRuntimeControl: FC = ({ }) => {
 
   return (
     <div
+      data-id="runtime-control-panel"
       className={cn(
         `bottom-0 right-0 top-0 z-10 flex flex-col justify-center bg-da-gray-darkest px-1 py-1 text-da-gray-light`,
         isExpand ? 'w-[500px]' : 'w-14',
@@ -319,6 +320,7 @@ const DaRuntimeControl: FC = ({ }) => {
               setShowRtDialog(true)
             }}
             className='!text-yellow-400'
+            dataId='btn-add-runtime'
           >
             Add Runtime
             {/* <div className="text-da-white hover:underline hover:text-da-gray-darkest font-semibold text-yellow-300">
@@ -342,6 +344,7 @@ const DaRuntimeControl: FC = ({ }) => {
           <>
             <button
               disabled={isRunning}
+              data-id="btn-run-prototype"
               onClick={() => {
                 setIsRunning(true)
                 setActiveTab('output')
@@ -379,6 +382,7 @@ const DaRuntimeControl: FC = ({ }) => {
               <TbPlayerPlayFilled />
             </button>
             <button
+              data-id="btn-stop-prototype"
               disabled={!isRunning}
               onClick={() => {
                 setIsRunning(false)
@@ -454,6 +458,7 @@ const DaRuntimeControl: FC = ({ }) => {
           <DaButton
             size="sm"
             variant="plain"
+            dataId='btn-clear-log'
             className="mt-1 ml-2 !text-white hover:!text-da-gray-medium !border-da-white hover:!border-da-gray-medium"
             onClick={() => {
               setLog('')
@@ -592,7 +597,7 @@ const DaRuntimeControl: FC = ({ }) => {
                       </div>
                     )}
                   </div>
-                  <p className="da-label-small flex-1 overflow-y-auto whitespace-pre-wrap rounded bg-da-black px-2 py-1 text-da-white">
+                  <p data-id="current-log" className="da-label-small flex-1 overflow-y-auto whitespace-pre-wrap rounded bg-da-black px-2 py-1 text-da-white">
                     {log}
                     <AlwaysScrollToBottom />
                   </p>
@@ -666,6 +671,7 @@ const DaRuntimeControl: FC = ({ }) => {
       <div className="flex">
         <DaButton
           variant="plain"
+          data-id="btn-expand-runtime-control"
           onClick={() => {
             setIsExpand((v) => !v)
           }}
@@ -689,6 +695,7 @@ const DaRuntimeControl: FC = ({ }) => {
           <>
             <div className="grow"></div>
             <div
+              data-id="btn-runtime-control-tab-output"
               className={`da-label-small flex cursor-pointer items-center px-4 py-0.5 text-da-white hover:bg-da-gray-medium ${activeTab == 'output' && 'border-b-2 border-da-white'}`}
               onClick={() => {
                 setActiveTab('output')
@@ -697,6 +704,7 @@ const DaRuntimeControl: FC = ({ }) => {
               Terminal{' '}
             </div>
             <div
+              data-id="btn-runtime-control-tab-apis"
               className={`da-label-small flex cursor-pointer items-center px-4 py-0.5 text-da-white hover:bg-da-gray-medium ${activeTab == 'apis' && 'border-b-2 border-da-white'}`}
               onClick={() => {
                 setActiveTab('apis')
@@ -705,6 +713,7 @@ const DaRuntimeControl: FC = ({ }) => {
               Signals Watch
             </div>
             <div
+              data-id="btn-runtime-control-runtime-usage"
               className={`da-label-small flex cursor-pointer items-center px-4 py-0.5 text-da-white hover:bg-da-gray-medium ${activeTab == 'rt-usage' && 'border-b-2 border-da-white'}`}
               onClick={() => {
                 setActiveTab('rt-usage')
@@ -715,6 +724,7 @@ const DaRuntimeControl: FC = ({ }) => {
 
             {isAdvantageMode > 0 && (
               <div
+                data-id="btn-runtime-control-tab-code"
                 className={`da-label-small flex cursor-pointer items-center px-4 py-0.5 text-da-white hover:bg-da-gray-medium ${activeTab == 'mock' && 'border-b-2 border-da-white'}`}
                 onClick={() => {
                   setActiveTab('mock')

@@ -365,7 +365,7 @@ const DaDashboardEditor = ({
             <div
               key={`merged-${cell}`}
               className={cn(
-                'relative flex cursor-pointer items-center justify-center border-2 border-da-primary-500 !bg-da-white text-da-gray-dark gap-2 flex-wrap',
+                'widget-grid-cell relative flex cursor-pointer items-center justify-center border-2 border-da-primary-500 !bg-da-white text-da-gray-dark gap-2 flex-wrap',
                 `col-span-${colSpan} row-span-${rowSpan}`,
               )}
             >
@@ -375,6 +375,7 @@ const DaDashboardEditor = ({
                   variant="outline-nocolor"
                   onClick={() => handleAddWidget()}
                   className="hover:text-da-gray-dark"
+                  dataId='dashboard-add-widget-button'
                 >
                   <TbCategoryPlus className="mr-1 h-4 w-4" />
                   Add widget
@@ -386,6 +387,7 @@ const DaDashboardEditor = ({
                   size="sm"
                   variant="outline-nocolor"
                   className="hover:text-da-gray-dark"
+                  dataId='dashboard-add-widget-from-url-button'
                   onClick={() => {
                     setSelectedWidget(
                       JSON.stringify(
@@ -410,6 +412,7 @@ const DaDashboardEditor = ({
                   variant="destructive"
                   size="sm"
                   className="absolute right-1 top-1 mr-0"
+                  dataId='dashboard-cancel-place-widget-button'
                   onClick={() => setSelectedCells([])}
                 >
                   <TbX className="h-5 w-5" />
@@ -429,9 +432,8 @@ const DaDashboardEditor = ({
           <div
             key={`empty-${cell}`}
             className={cn(
-              'da-label-small da-label-sub-title flex select-none items-center justify-center border border-da-gray-medium text-da-gray-medium',
-              selectedCells.includes(cell) &&
-                'bg-da-gray-light text-da-gray-dark',
+              'da-label-small  da-label-sub-title flex select-none items-center justify-center border border-da-gray-medium text-da-gray-medium',
+              selectedCells.includes(cell)?'widget-grid-cell-selected bg-da-gray-light text-da-gray-dark':'widget-grid-cell-empty',
               !editable && 'pointer-events-none',
             )}
             onClick={() => handleSelectCell(cell)}

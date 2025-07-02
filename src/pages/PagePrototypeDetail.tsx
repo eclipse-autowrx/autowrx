@@ -90,6 +90,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           <DaTabItem
             active={tab === 'flow'}
             to={`/model/${model_id}/library/prototype/${prototype_id}/flow`}
+            dataId='tab-flow'
           >
             <TbRoute className="w-5 h-5 mr-2" />
             Flow
@@ -97,6 +98,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           <DaTabItem
             active={tab === 'code'}
             to={`/model/${model_id}/library/prototype/${prototype_id}/code`}
+            dataId='tab-code'
           >
             <TbCode className="w-5 h-5 mr-2" />
             SDV Code
@@ -104,6 +106,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           <DaTabItem
             active={tab === 'dashboard'}
             to={`/model/${model_id}/library/prototype/${prototype_id}/dashboard`}
+            dataId='tab-dashboard'
           >
             <TbGauge className="w-5 h-5 mr-2" />
             Dashboard

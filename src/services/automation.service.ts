@@ -9,12 +9,13 @@ interface ActionPath {
   targetRoute: string;
   identifierType: string;
   identifierValue: string;
+  elementIndex?: number; // Optional index for elements with multiple instances
 }
 
 interface Action {
   name: string;
   path: string;
-  actionType: 'click' | 'input' | 'show_tooltip' | 'hide_tooltip';
+  actionType: 'click' | 'input' | 'show_tooltip' | 'hide_tooltip' | 'wait_for_condition';
   status?: 'not_started' | 'in_progress' | 'finished';
 finish_condition?: {
     type: 'element_exists' | 'element_not_exists' | 'element_visible' | 'element_invisible' | 'location-match' | 'text_contains' | 'text_not_contains' | 'has-value' | 'automatic' | 'element_clicked';
@@ -79,13 +80,17 @@ await executeAction(action)
 
 function parseActionPath(actionPath: string): ActionPath {
     // Updated regex to support empty route (e.g., @[]:<dataid:btn>)
-    const pathMatch = actionPath.match(/@\[(.*?)\]:<([^:>]+):([^>]+)>/);
+    // Updated regex to extract optional element index in identifierValue, e.g. <dataid:btn[2]>
+    const pathMatch = actionPath.match(/@\[(.*?)\]:<([^:>]+):([^\]>]+)(?:\[(\d+)\])?>/);
     if (!pathMatch) {
         console.error(`Invalid action path format: ${actionPath}`);
         throw new Error('Invalid action path format');
     }
-    const [, targetRoute, identifierType, identifierValue] = pathMatch;
-    return { targetRoute, identifierType, identifierValue };
+    const [, targetRoute, identifierType, identifierBaseValue, elementIndexStr] = pathMatch;
+    const identifierValue = identifierBaseValue;
+    const elementIndex = elementIndexStr !== undefined ? parseInt(elementIndexStr, 10) : undefined;
+    // Return elementIndex as part of ActionPath if needed
+    return { targetRoute, identifierType, identifierValue, elementIndex };
 }
 
 async function navigateToRoute(targetRoute: string): Promise<void> {
@@ -176,7 +181,7 @@ async function waitForPageLoad(): Promise<void> {
     await new Promise<void>(resolve => setTimeout(resolve, 1000));
 }
 
-function findElement(identifierType: string, identifierValue: string): Element {
+function findElement(identifierType: string, identifierValue: string, elementIndex?: number): Element {
     let targetElement: Element | null = null;
     
     switch (identifierType) {
@@ -190,7 +195,7 @@ function findElement(identifierType: string, identifierValue: string): Element {
             targetElement = document.getElementById(identifierValue);
             break;
         case 'css':
-            targetElement = findElementByCSS(identifierValue);
+            targetElement = findElementByCSS(identifierValue, elementIndex);
             break;
         default:
             throw new Error(`Unsupported identifier type: ${identifierType}`);
@@ -203,15 +208,12 @@ function findElement(identifierType: string, identifierValue: string): Element {
     return targetElement;
 }
 
-function findElementByCSS(identifierValue: string): Element | null {
-    console.log(`findElementByCSS `, identifierValue)
-    const indexMatch = identifierValue.match(/^(.+)\[(\d+)\]$/);
-    console.log('indexMatch', indexMatch)
-    if (indexMatch) {
-        const [, selector, index] = indexMatch;
-        console.log('using document.querySelectorAll; Selector:', selector, 'Index:', index);
-        const elements = document.querySelectorAll(selector);
-        return elements[parseInt(index)] || null;
+function findElementByCSS(identifierValue: string, elementIndex?: number): Element | null {
+    console.log(`findElementByCSS ${identifierValue} with elementIndex ${elementIndex}`)
+    if (elementIndex !== undefined && elementIndex !== null) {
+        console.log('using document.querySelectorAll; Selector:', identifierValue, 'Index:', elementIndex);
+        const elements = document.querySelectorAll(identifierValue);
+        return elements[elementIndex] || null;
     } else {
         console.log(`Using document.querySelector: ${identifierValue}`);
         return document.querySelector(identifierValue);
@@ -276,11 +278,12 @@ function restoreElementDefault(element: Element) {
     }
 }
 
-async function performElementAction(element: Element, action: Action): Promise<void> {
+async function performElementAction(element: Element | null, action: Action): Promise<void> {
     const { actionType, value, delayBefore, delayAfter, tooltipMessage, autoHideAfter } = action;
     console.log(`Performing action: ${actionType} on element: ${element}`);
     switch (actionType) {
         case 'click':
+            if(!element) break
             // console.log(`Executing click action on element:`, element);
             try {
                 (element as HTMLElement).scrollIntoView({ 
@@ -301,6 +304,7 @@ async function performElementAction(element: Element, action: Action): Promise<v
             }
             break;
         case 'show_tooltip':
+            if(!element) break
             // console.log(`Executing show tooltip action on element:`, element);
             (element as HTMLElement).scrollIntoView({ 
                 behavior: 'smooth', 
@@ -312,11 +316,13 @@ async function performElementAction(element: Element, action: Action): Promise<v
             console.log(`Show tooltip action completed`);
             break;
         case 'hide_tooltip':
+            if(!element) break
             console.log(`Executing hide tooltip action on element:`, element);
             restoreElementDefault(element);
             console.log(`Hide tooltip action completed`);
             break;
         case 'input':
+            if(!element) break
             console.log(`Executing input action on element:`, element, `with value:`, value);
             if (value !== undefined) {
                 (element as HTMLInputElement).value = value || '';
@@ -325,6 +331,9 @@ async function performElementAction(element: Element, action: Action): Promise<v
             } else {
                 console.log(`Input action skipped - no value provided`);
             }
+            break;
+        case 'wait_for_condition':
+            console.log(`Executing wait for condition`,);
             break;
         default:
             console.error(`Unsupported action type: ${actionType}`);
@@ -350,33 +359,38 @@ function showToast(message: string, timeout: number = 3000): void {
 
 
 async function executeAction(action: Action): Promise<void> {
-    const { targetRoute, identifierType, identifierValue } = parseActionPath(action.path);
-    
-    if (targetRoute && targetRoute !== '.' && window.location.pathname !== targetRoute) {
-        await navigateToRoute(targetRoute);
-        await waitForPageLoad();
-    }
-    
-    // Try to find the element, retrying for up to 10 seconds if not found
     let targetElement: Element | null = null;
-    const maxWaitTime = 10000; // 10 seconds
-    const pollInterval = 500;
-    const startTime = Date.now();
-
-    while (!targetElement && Date.now() - startTime < maxWaitTime) {
-        try {
-            targetElement = findElement(identifierType, identifierValue);
-        } catch (e) {
-            // Ignore error, will retry
+    if(action.path) {
+        const { targetRoute, identifierType, identifierValue, elementIndex } = parseActionPath(action.path);
+        console.log(`parseActionPath indentifierType: ${identifierType}, identifierValue: ${identifierValue}, elementIndex: ${elementIndex}`);
+        
+        if (targetRoute && targetRoute !== '.' && window.location.pathname !== targetRoute) {
+            await navigateToRoute(targetRoute);
+            await waitForPageLoad();
         }
+        
+        // Try to find the element, retrying for up to 10 seconds if not found
+        
+        const maxWaitTime = 10000; // 10 seconds
+        const pollInterval = 500;
+        const startTime = Date.now();
+
+        while (!targetElement && Date.now() - startTime < maxWaitTime) {
+            try {
+                targetElement = findElement(identifierType, identifierValue, elementIndex);
+            } catch (e) {
+                // Ignore error, will retry
+            }
+            if (!targetElement) {
+                await new Promise(resolve => setTimeout(resolve, pollInterval));
+            }
+        }
+
         if (!targetElement) {
-            await new Promise(resolve => setTimeout(resolve, pollInterval));
+            throw new Error(`Element not found after waiting 10 seconds: ${identifierType}:${identifierValue}`);
         }
     }
-
-    if (!targetElement) {
-        throw new Error(`Element not found after waiting 10 seconds: ${identifierType}:${identifierValue}`);
-    }
+    
     // console.log(`Found element: ${targetElement}`);
     // console.log(targetElement);
 

@@ -50,7 +50,7 @@ const DaApiListItem = ({
     <>
       <div
         ref={itemRef}
-        className={`flex w-full min-w-full justify-between py-1.5 text-da-gray-medium cursor-pointer hover:bg-da-primary-100 items-center px-2 rounded ${
+        className={`signal-list-item flex w-full min-w-full justify-between py-1.5 text-da-gray-medium cursor-pointer hover:bg-da-primary-100 items-center px-2 rounded ${
           isSelected ? 'bg-da-primary-100 text-da-primary-500' : ''
         }`}
         onClick={onClick}
@@ -59,7 +59,7 @@ const DaApiListItem = ({
       >
         <div className="flex flex-1 truncate cursor-pointer items-center">
           <div
-            className={`text-sm cursor-pointer ${isSelected ? 'font-bold' : 'font-medium'} truncate`}
+            className={`signal-list-item-name text-sm cursor-pointer ${isSelected ? 'font-bold' : 'font-medium'} truncate`}
           >
             {api.name}
           </div>
@@ -71,7 +71,7 @@ const DaApiListItem = ({
           {isHovered && (
             <div className="flex space-x-2 ml-2">
               <DaTooltip content="Copy Signal Name" delay={300}>
-                <DaCopy textToCopy={api.name} className="w-fit" />
+                <DaCopy textToCopy={api.name} className="w-fit signal-list-item-btn-copy" />
               </DaTooltip>
 
               {api.type === 'branch' && (

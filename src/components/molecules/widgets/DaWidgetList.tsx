@@ -82,6 +82,7 @@ const DaWidgetList: FC<DaWidgetListProps> = ({
           <div className="flex flex-col w-full h-full ">
             <DaInput
               inputClassName="text-[16px] "
+              dataId='widget-search-input'
               className="bg-da-white border-da-gray-medium"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
@@ -122,8 +123,8 @@ const DaWidgetList: FC<DaWidgetListProps> = ({
                         />
                       )}
                     </div>
-                    <div className="px-4 py-1 truncate text-ellipsis text-da-primary-500 text-base">
-                      <DaText variant="regular-bold">
+                    <div className="widget-list-item px-4 py-1 truncate text-ellipsis text-da-primary-500 text-base">
+                      <DaText variant="regular-bold" className='widget-list-item-name'>
                         {widget.label || widget.widget}
                       </DaText>
                       {widget.likes != undefined && (
