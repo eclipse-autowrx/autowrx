@@ -9,6 +9,7 @@ const LearningIntegration = () => {
   const { data: user } = useSelfProfileQuery()
   const { access } = useAuthStore()
   const frameLearning = useRef<HTMLIFrameElement>(null)
+  const [isMinimized, setIsMinimized] = useState(false)
 
   const [
     isShowedAutomationControl,
@@ -27,6 +28,22 @@ const LearningIntegration = () => {
     shallow,
   )
 
+  const startListeningForAutomationControl = () => {
+
+    // method 2, listen for messages window.postMessage, this can be post from iframe or other windows
+    window.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'automation_control') {
+        if(event.data?.sequence?.trigger_source === 'learning') {
+          setIsMinimized(true)
+        }
+      }
+    })
+  }
+
+  useEffect(() => {
+    startListeningForAutomationControl()
+  }, [])
+
   useEffect(() => {
     if(frameLearning && frameLearning.current) {
         frameLearning.current.contentWindow?.postMessage(JSON.stringify({
@@ -35,19 +52,21 @@ const LearningIntegration = () => {
             "automationSequence": automationSequence,
         }), '*')
     }
-  }, [isShowedAutomationControl])
+    if(!isShowedAutomationControl) {
+      setIsMinimized(false)
+    }
+  }, [isShowedAutomationControl, automationSequence])
 
   return (
     <div
       style={{ zIndex: 999 }}
-      className="fixed top-14 left-0 bottom-0 right-0 
-           bg-[#11111188]"
+      className={`fixed top-16 left-4 bottom-4 right-4 bg-[#11111188] ${isMinimized ? 'genie-minimize' : 'genie-restore'}`}
     >
-      <div className="pt-1 pl-3 pr-3 pb-1 w-full h-full">
+      <div className="w-full h-full shadow-2xl">
         <iframe
           ref={frameLearning}
           src={`${config?.learning?.url}?user_id=${encodeURIComponent(user?.id || '')}&token=${encodeURIComponent(access?.token || '')}`}
-          className="m-0 h-full w-full learning-appear inset-0 shadow-[4px_4px_6px_rgba(0,0,0,0.3)]"
+          className="m-0 h-full w-full learning-appear1 inset-0 shadow-[4px_4px_6px_rgba(0,0,0,0.3)]"
           allow="camera;microphone"
           onLoad={() => {}}
         ></iframe>

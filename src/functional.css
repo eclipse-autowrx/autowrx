@@ -1,0 +1,58 @@
+.genie-minimize {
+    animation: genieMinimize 0.6s forwards ease-in-out;
+    transform-origin: bottom center; /* Important for the "suck in" effect */
+}
+
+@keyframes genieMinimize {
+    0% {
+        transform: scale(1) translateY(0) skewX(0deg);
+        opacity: 1;
+        border-radius: 12px;
+    }
+    30% {
+        transform: scale(0.8) translateY(50px) skewX(-5deg);
+        opacity: 0.8;
+        border-radius: 10px;
+    }
+    70% {
+        transform: scale(0.2) translateY(300px) skewX(10deg); /* Adjust translateY for taskbar position */
+        opacity: 0.3;
+        border-radius: 5px;
+    }
+    100% {
+        transform: scale(0) translateY(400px) skewX(0deg); /* Final position near taskbar, adjust as needed */
+        opacity: 0;
+        border-radius: 0px;
+        visibility: hidden; /* Hide element after animation */
+    }
+}
+
+/* Restore Animation */
+.genie-restore {
+    animation: genieRestore 0.6s forwards ease-in-out;
+    transform-origin: bottom center; /* Important for the "suck in" effect */
+}
+
+@keyframes genieRestore {
+    0% {
+        transform: scale(0) translateY(400px) skewX(0deg); /* Start from minimized state */
+        opacity: 0;
+        border-radius: 0px;
+        visibility: visible;
+    }
+    30% {
+        transform: scale(0.2) translateY(300px) skewX(10deg);
+        opacity: 0.3;
+        border-radius: 5px;
+    }
+    70% {
+        transform: scale(0.8) translateY(50px) skewX(-5deg);
+        opacity: 0.8;
+        border-radius: 10px;
+    }
+    100% {
+        transform: scale(1) translateY(0) skewX(0deg);
+        opacity: 1;
+        border-radius: 12px;
+    }
+}

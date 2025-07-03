@@ -79,10 +79,20 @@ const DaAutomationControl: React.FC = () => {
   )
 
   const [isRunning, setIsRunning] = useState(false)
+  const [isAutoStart, setIsAutoStart] = useState(false)
   const [isAllowNext, setIsAllowNext] = useState(false)
   const [isWaitingForUser, setIsWaitingForUser] = useState(false)
   const [isFinished, setIsFinished] = useState(false)
   const [currentActionIndex, setCurrentActionIndex] = useState(0)
+
+  const [triggerSource, setTriggerSource] = useState('')
+  const [message, setMessage] = useState('')
+
+  const onDialogClose = () => {
+    if (setIsShowedAutomationControl) {
+      setIsShowedAutomationControl(false)
+    }
+  }
 
   const handleRequest = (request: any) => {
     if (!request || !request.cmd) {
@@ -93,7 +103,16 @@ const DaAutomationControl: React.FC = () => {
       const { sequence } = request
       if (sequence) {
         if (setAutomationSequence) {
+          console.log('setAutomationSequence', sequence)
           setAutomationSequence(sequence)
+
+          if(sequence.auto_start) {
+            setMessage('Auto start automation sequence after 3 seconds')
+            setTimeout(() => {
+              setMessage('')
+              runActionAtIndex(0)
+            }, 3000)
+          }
         }
         if (setIsShowedAutomationControl) {
           setIsShowedAutomationControl(true)
@@ -109,7 +128,7 @@ const DaAutomationControl: React.FC = () => {
   const startListeningForAutomationControl = () => {
     // method 1, test with terminal by direct call window fucntion
     if (!(window as any).handleRequest) {
-      ;(window as any).handleRequest = handleRequest
+      ; (window as any).handleRequest = handleRequest
     }
 
     // method 2, listen for messages window.postMessage, this can be post from iframe or other windows
@@ -139,13 +158,14 @@ const DaAutomationControl: React.FC = () => {
       setIsRunning(inProgressActions.length + finishedActions.length > 0)
       setIsAllowNext(
         inProgressActions.length == 0 &&
-          finishedActions.length > 0 &&
-          finishedActions.length < sequence.actions.length,
+        finishedActions.length > 0 &&
+        finishedActions.length < sequence.actions.length,
       )
-      setIsWaitingForUser(inProgressActions.length >0)
+      setIsAutoStart(!!sequence.auto_start)
+      setIsWaitingForUser(inProgressActions.length > 0)
       setIsFinished(
         finishedActions.length == sequence.actions.length &&
-          inProgressActions.length == 0,
+        inProgressActions.length == 0,
       )
     }
 
@@ -426,7 +446,7 @@ const DaAutomationControl: React.FC = () => {
             {automationSequence.name || ''}
           </div>
           <div className="ml-4 w-fit flex items-center justify-center">
-            {!isRunning && (
+            {!isRunning && !isAutoStart && (
               <div
                 className="rounded cursor-pointer purple-gradient-button px-3 py-0.5 text-sm 
                             font-semibold text-white hover:opacity-60 shadow-sm select-none flex items-center"
@@ -461,16 +481,18 @@ const DaAutomationControl: React.FC = () => {
                 Congratulations! All actions are finished!
               </div>
             )}
+
+            {message && (
+              <div className="text-xs leading-tight text-white font-mono font-bold animate-pulse">
+                {message}
+              </div>
+            )}
           </div>
 
           <div className="grow"></div>
           <div
             className="p-1 select-none cursor-pointer hover:opacity-50"
-            onClick={() => {
-              if (setIsShowedAutomationControl) {
-                setIsShowedAutomationControl(false)
-              }
-            }}
+            onClick={onDialogClose}
           >
             <FaTimes className="text-lg" />
           </div>
