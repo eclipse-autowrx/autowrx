@@ -53,6 +53,7 @@ const PrototypeOverview: React.FC<PrototypeOverviewProps> = ({ mode: externalMod
             <div className="flex border-b border-gray-200 mb-2" aria-label="Prototype Overview Tabs">
                 {(['overview', 'customerJourney', 'requirement'] as Mode[]).map((tab) => (
                     <button
+                        data-id={`prototype-overview-tab-${tab}`}
                         key={tab}
                         className={`px-4 py-2 -mb-px border-b-2 font-medium text-sm focus:outline-none transition-colors
                             ${internalMode === tab

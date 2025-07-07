@@ -83,7 +83,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
     <div className={`flex flex-col w-full h-full relative`}>
       <div className="flex min-h-[52px] border-b border-da-gray-medium/50 bg-da-white">
         <div className="flex w-fit">
-          <DropdownMenu>
+          {/* <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div
                 className={`${['journey', 'view', 'requirements'].includes(tab || '') ? 'text-da-primary-500 border-b-2 border-da-primary-500' : ''} 
@@ -119,14 +119,14 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
-          </DropdownMenu>
-          {/* <DaTabItem
+          </DropdownMenu> */}
+          <DaTabItem
             active={isDefaultTab}
-            to={`/model/${model_id}/library/prototype/${prototype_id}/journey`}
+            to={`/model/${model_id}/library/prototype/${prototype_id}/view`}
           >
             <TbRoute className="w-5 h-5 mr-2" />
             Journey
-          </DaTabItem> */}
+          </DaTabItem>
           <DaTabItem
             active={tab === 'flow'}
             to={`/model/${model_id}/library/prototype/${prototype_id}/flow`}

@@ -103,7 +103,7 @@ const DaAutomationControl: React.FC = () => {
       const { sequence } = request
       if (sequence) {
         if (setAutomationSequence) {
-          console.log('setAutomationSequence', sequence)
+          // console.log('setAutomationSequence', sequence)
           setAutomationSequence(sequence)
 
           if(sequence.auto_start) {

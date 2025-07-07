@@ -184,7 +184,7 @@ const NavigationBar = ({}) => {
         </>
       )}
 
-      {learningMode && <LearningIntegration />}
+      {learningMode && <LearningIntegration requestClose={() => setIsLearningMode(false)} />}
       <DaNavUser />
     </header>
   )

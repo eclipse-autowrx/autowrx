@@ -5,7 +5,11 @@ import useAuthStore from '@/stores/authStore'
 import useGlobalStore from '@/stores/globalStore'
 import { shallow } from 'zustand/shallow'
 
-const LearningIntegration = () => {
+interface LearningIntegrationProps {
+  requestClose: () => void
+}
+
+const LearningIntegration = ({requestClose}: LearningIntegrationProps) => {
   const { data: user } = useSelfProfileQuery()
   const { access } = useAuthStore()
   const frameLearning = useRef<HTMLIFrameElement>(null)
@@ -57,12 +61,35 @@ const LearningIntegration = () => {
     }
   }, [isShowedAutomationControl, automationSequence])
 
+
   return (
     <div
       style={{ zIndex: 999 }}
-      className={`fixed top-16 left-4 bottom-4 right-4 bg-[#11111188] ${isMinimized ? 'genie-minimize' : 'genie-restore'}`}
+      className={`fixed  top-0 left-0 bottom-0 right-0 bg-[#11111188] ${isMinimized ? 'genie-minimize' : 'genie-restore'}`}
     >
-      <div className="w-full h-full shadow-2xl">
+      <div className="w-full h-full pt-6 pl-6 pr-6 pb-2 shadow-2xl relative">
+        {/* Close button */}
+        <button
+          onClick={requestClose}
+          className="absolute top-0.5 right-0.5 z-10 w-8 h-8 bg-red-500 hover:bg-red-600 
+              text-white rounded-full flex items-center justify-center transition-colors duration-200 shadow-lg"
+          title="Close"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+        
         <iframe
           ref={frameLearning}
           src={`${config?.learning?.url}?user_id=${encodeURIComponent(user?.id || '')}&token=${encodeURIComponent(access?.token || '')}`}
