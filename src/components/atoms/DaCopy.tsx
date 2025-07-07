@@ -18,6 +18,7 @@ interface DaCopyProps {
   showIcon?: boolean
   label?: string
   className?: string
+  onCopied?: () => void
 }
 
 const DaCopy = ({
@@ -26,6 +27,7 @@ const DaCopy = ({
   showIcon = true,
   label,
   className,
+  onCopied,
 }: DaCopyProps) => {
   const { toast } = useToast()
 
@@ -52,6 +54,9 @@ const DaCopy = ({
       .catch((err) => {
         console.error('Failed to copy!', err)
       })
+    if(onCopied) {
+      onCopied()
+    }
   }
 
   return (

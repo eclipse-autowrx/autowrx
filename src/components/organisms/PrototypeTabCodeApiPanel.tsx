@@ -23,14 +23,16 @@ interface ApiCodeBlockProps {
   sampleLabel: string
   dataId?: string
   copyClassName?: string
+  onApiCodeCopy?: () => void
 }
 
-const ApiCodeBlock = ({ content, sampleLabel, dataId, copyClassName }: ApiCodeBlockProps) => {
+const ApiCodeBlock = ({ content, sampleLabel, dataId, copyClassName, onApiCodeCopy }: ApiCodeBlockProps) => {
   return (
     <div className="flex flex-col" data-id={dataId}>
       <DaCopy
         textToCopy={content}
         className={`flex h-6 items-center w-fit mt-3 btn-copy ${copyClassName}`}
+        onCopied={onApiCodeCopy}
       >
         <DaText
           variant="small"
@@ -101,9 +103,14 @@ const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
             )}
             {['actuator', 'sensor'].includes(activeApi.type) && (
               <ApiCodeBlock
-                content={`(await self.${activeApi.name}.get()).value`}
+                content={`value = (await self.${activeApi.name}.get()).value`}
                 sampleLabel="Sample code to get signal value"
                 copyClassName='btn-copy-get-code'
+                onApiCodeCopy={() => {
+                  if(requestCancel) {
+                    requestCancel()
+                  }
+                }}
               />
             )}
             {['actuator'].includes(activeApi.type) && (
@@ -111,6 +118,11 @@ const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
                 content={`await self.${activeApi.name}.set(value)`}
                 sampleLabel="Sample code to set signal value"
                 copyClassName='btn-copy-set-code'
+                onApiCodeCopy={() => {
+                  if(requestCancel) {
+                    requestCancel()
+                  }
+                }}
               />
             )}
             {['actuator', 'sensor'].includes(activeApi.type) && (
@@ -118,6 +130,11 @@ const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
                 content={`await self.${activeApi.name}.subscribe(function_name)`}
                 sampleLabel="Sample code to subscribe signal value"
                 copyClassName='btn-copy-subscribe-code'
+                onApiCodeCopy={() => {
+                  if(requestCancel) {
+                    requestCancel()
+                  }
+                }}
               />
             )}
           </div>

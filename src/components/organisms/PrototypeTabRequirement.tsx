@@ -767,6 +767,7 @@ const PrototypeTabRequirement = () => {
                 variant="editor"
                 onClick={() => scanRequirements()}
                 disabled={isScanning}
+                dataId="btn-run-new-scan"
               >
                 <TbTextScan2 className="size-4 mr-1" /> {isScanning ? 'Is scanning' : 'Run new scan'}
               </DaButton>
@@ -774,6 +775,7 @@ const PrototypeTabRequirement = () => {
                 size="sm"
                 variant="editor"
                 onClick={() => setShowCreateRequirementDialog(true)}
+                dataId="btn-new-requirement"
               >
                 <TbPlus className="size-4 mr-1" /> New Requirement
               </DaButton>
@@ -782,6 +784,7 @@ const PrototypeTabRequirement = () => {
                 className="!justify-start"
                 variant="editor"
                 size="sm"
+                dataId="btn-toggle-view"
               >
                 {isEditing ? (
                   <TbTarget className="w-4 h-4 mr-1" />
@@ -800,6 +803,7 @@ const PrototypeTabRequirement = () => {
             }
             size="sm"
             variant="editor"
+            dataId="btn-toggle-full-screen"
           >
             {showPrototypeRequirementFullScreen ? (
               <TbArrowsMinimize className="size-4" />
