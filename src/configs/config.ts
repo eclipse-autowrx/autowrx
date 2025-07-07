@@ -72,7 +72,7 @@ const config: any = {
   strictAuth: false,
   enableSupport: true,
   learning: {
-    url: 'http://localhost:3000',
+    url: 'https://learning.digitalauto.tech',
   },
   requirements: {
     journey_2_requirements: 'https://workflow.digital.auto/webhook/3dd23494-225b-4254-a121-733af39faa43',
