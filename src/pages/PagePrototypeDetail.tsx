@@ -42,6 +42,8 @@ import PrototypeTabFlow from '@/components/organisms/PrototypeTabFlow'
 import DaRuntimeControl from '@/components/molecules/dashboard/DaRuntimeControl'
 import PrototypeTabTestDesign from '@/components/organisms/PrototypeTabTestDesign'
 import PrototypeTabRequirement from '@/components/organisms/PrototypeTabRequirement'
+import PrototypeTabPlayground from '@/components/organisms/PrototypeTabPlayground'
+
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -213,6 +215,13 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          <DaTabItem
+            active={tab === 'playground'}
+            to={`/model/${model_id}/library/prototype/${prototype_id}/playground`}
+          >
+            <TbScale className="w-5 h-5 mr-2" />
+            Playground
+          </DaTabItem>
         </div>
         <div className="grow"></div>
         {
@@ -264,6 +273,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           {tab == 'homologation' && <PrototypeTabHomologation />}
           {tab == 'test-design' && <PrototypeTabTestDesign />}
           {tab == 'feedback' && <PrototypeTabFeedback />}
+          {tab == 'playground' && <PrototypeTabPlayground />}
         </div>
         {showRt && <DaRuntimeControl />}
       </div>
