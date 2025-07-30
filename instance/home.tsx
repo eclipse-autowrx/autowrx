@@ -94,7 +94,7 @@ const home = [
         description:
           'Explore the future of our digital.auto community with Prof. Dirk Slama with digital.auto playground.',
         imageURL:
-          'https://bewebstudio.digitalauto.tech/data/projects/scqSwlCPJDj9/playground-introduction.png',
+          '/ref/playground-introduction.png',
         redirectURL: 'https://youtu.be/K3pindMCq1c',
       },
       {
@@ -106,7 +106,7 @@ const home = [
           'Comprehensive SDV Guide covering Software-Defined Vehicle fundamentals through advanced topics. ',
 
         imageURL:
-          'https://bewebstudio.digitalauto.tech/data/projects/nTcRsgxcDWgr/image.avif',
+          '/ref/image.avif',
         redirectURL: 'https://www.sdv.guide/',
       },
       {
@@ -116,7 +116,7 @@ const home = [
         description:
           'We are pleased to announce the release of Version 2. The previous version remains accessible at https://digitalauto.netlify.app until Jan 17th 2025',
         imageURL:
-          'https://bewebstudio.digitalauto.tech/data/projects/rUQXyRLKlgaL/annoucement.jpg',
+          '/ref/annoucement.jpg',
         redirectURL: 'https://docs.digital.auto/releases/version2/',
       },
       {
@@ -126,7 +126,7 @@ const home = [
         description:
           'Join us in developing playground.digital.auto on Eclipse Autowrx - an open platform where developers learn and experiment with software-defined vehicles.',
         imageURL:
-          'https://bewebstudio.digitalauto.tech/data/projects/xT9wA8QU7xEN/new_images/autowrx.jpg',
+          '/ref/autowrx.jpg',
         redirectURL: 'https://gitlab.eclipse.org/eclipse/autowrx/autowrx',
       },
     ],
@@ -147,12 +147,12 @@ const home = [
         items: [
           {
             name: 'Bosch',
-            img: 'https://bewebstudio.digitalauto.tech/data/projects/xT9wA8QU7xEN/bosch-logo.png',
+            img: '/ref/bosch-logo.png',
             url: 'https://www.bosch.com/',
           },
           {
             name: 'Dassault Systems',
-            img: 'https://www.3ds.com/assets/3ds-navigation/3DS_corporate-logo_blue.svg',
+            img: '/ref/partners/3ds-logo.svg',
             url: 'https://www.3ds.com/',
           },
         ],
@@ -162,12 +162,12 @@ const home = [
         items: [
           {
             name: 'COVESA',
-            img: 'https://bewebstudio.digitalauto.tech/data/projects/xT9wA8QU7xEN/covesa.png',
+            img: '/ref/covesa.png',
             url: 'https://www.covesa.global',
           },
           {
             name: 'Eclipse Foundation',
-            img: 'https://www.eclipse.org/eclipse.org-common/themes/solstice/public/images/logo/eclipse-foundation-grey-orange.svg',
+            img: '/ref/partners/eclipse-logo.svg',
             url: 'https://www.eclipse.org',
           },
         ],
@@ -177,7 +177,7 @@ const home = [
         items: [
           {
             name: 'Ferdinand-Steinbeis-Institut',
-            img: 'https://bewebstudio.digitalauto.tech/data/projects/xT9wA8QU7xEN/university.png',
+            img: '/ref/university.png',
             url: 'https://ferdinand-steinbeis-institut.de',
           },
         ],

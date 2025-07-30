@@ -38,12 +38,12 @@ const instance = {
       items: [
         {
           name: 'Bosch',
-          img: 'https://bewebstudio.digitalauto.tech/data/projects/OezCm7PTy8FT/a/bosch.png',
+          img: '/ref/bosch.png',
           url: 'https://www.bosch.com/',
         },
         {
           name: 'Dassault Systems',
-          img: 'https://www.3ds.com/assets/3ds-navigation/3DS_corporate-logo_blue.svg',
+          img: '/ref/partners/3ds-logo.svg',
           url: 'https://www.3ds.com/',
         },
       ],
@@ -53,12 +53,12 @@ const instance = {
       items: [
         {
           name: 'COVESA',
-          img: 'https://bewebstudio.digitalauto.tech/data/projects/xT9wA8QU7xEN/covesa.png',
+          img: '/ref/covesa.png',
           url: 'https://www.covesa.global',
         },
         {
           name: 'Eclipse Foundation',
-          img: 'https://www.eclipse.org/eclipse.org-common/themes/solstice/public/images/logo/eclipse-foundation-grey-orange.svg',
+          img: '/ref/partners/eclipse-logo.svg',
           url: 'https://www.eclipse.org',
         },
       ],
@@ -68,7 +68,7 @@ const instance = {
       items: [
         {
           name: 'Ferdinand-Steinbeis-Institut',
-          img: 'https://bewebstudio.digitalauto.tech/data/projects/xT9wA8QU7xEN/university.png',
+          img: '/ref/university.png',
           url: 'https://ferdinand-steinbeis-institut.de',
         },
       ],

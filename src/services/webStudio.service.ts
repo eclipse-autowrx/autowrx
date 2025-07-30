@@ -16,7 +16,7 @@ const sampleFileContent = `
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/js/tailwind.min.js"></script>
     <script>
         let API_NAME = "Vehicle.Body.Lights.IsLowBeamOn"
         let interval = null
@@ -47,7 +47,7 @@ const sampleFileContent = `
             setApiValue(API_NAME, false)
         })
     </script>
-    <script defer src="https://bestudio.digitalauto.tech/project/BzR91b49OHqj/syncer.js"></script>
+    <script defer src="/js/syncer.js"></script>
     
 </head>
 

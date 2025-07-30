@@ -12,7 +12,7 @@ export const models = [
     cvi: 'ACME Car (ICE) v0.1',
     main_api: 'main_api_endpoint',
     model_home_image_file:
-      'https://bewebstudio.digitalauto.tech/data/projects/OezCm7PTy8FT/a/E-Car_Full_Vehicle.png',
+      '/ref/E-Car_Full_Vehicle.png',
     name: 'ACME Car (ICE) v0.1',
     visibility: 'public',
     tenant_id: 'tenant_123',
@@ -34,7 +34,7 @@ export const models = [
     cvi: 'AUTOCRYPT',
     main_api: 'main_api_endpoint',
     model_home_image_file:
-      'https://bewebstudio.digitalauto.tech/data/projects/OezCm7PTy8FT/a/car_full_ed.PNG',
+      '/ref/car_full_ed.PNG',
     name: 'AUTOCRYPT',
     visibility: 'public',
     tenant_id: 'tenant_123',
@@ -48,7 +48,7 @@ export const models = [
     cvi: 'Basic Actuators with COVESA',
     main_api: 'main_api_endpoint',
     model_home_image_file:
-      'https://bewebstudio.digitalauto.tech/data/projects/OezCm7PTy8FT/a/car_full_ed.PNG',
+      '/ref/car_full_ed.PNG',
     name: 'Basic Actuators with COVESA',
     visibility: 'public',
     tenant_id: 'tenant_123',
@@ -62,7 +62,7 @@ export const models = [
     cvi: 'BCW24_digital_auto_cool_SBSBM',
     main_api: 'main_api_endpoint',
     model_home_image_file:
-      'https://bewebstudio.digitalauto.tech/data/projects/OezCm7PTy8FT/a/car_full_ed.PNG',
+      '/ref/car_full_ed.PNG',
     name: 'BCW24_digital_auto_cool_SBSBM',
     visibility: 'public',
     tenant_id: 'tenant_123',

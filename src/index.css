@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+/* Local fonts loaded via /css/fonts.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

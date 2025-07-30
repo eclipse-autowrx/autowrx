@@ -186,7 +186,7 @@ const ViewApiCovesa = () => {
                 ) : (
                   <div className="flex justify-center w-full h-full">
                     <DaImage
-                      src="https://bewebstudio.digitalauto.tech/data/projects/OezCm7PTy8FT/a/E-Car_Full_Vehicle.png"
+                      src="/ref/E-Car_Full_Vehicle.png"
                       className="object-contain"
                     />
                   </div>

@@ -14,63 +14,63 @@ export const roles = [
   {
     name: 'SDV Feature Owner',
     image:
-      'https://bewebstudio.digitalauto.tech/data/projects/KlAPnPLdKqnF/Picture1.jpg',
+      '/ref/Picture1.jpg',
     description:
       'Responsible for defining and managing the feature set of Software-Defined Vehicles (SDV), ensuring alignment with business and technical goals.',
   },
   {
     name: 'SDV Requirements Engineer',
     image:
-      'https://bewebstudio.digitalauto.tech/data/projects/KlAPnPLdKqnF/Picture2.jpg',
+      '/ref/Picture2.jpg',
     description:
       'Gathers, analyzes, and defines system and software requirements for SDV components, ensuring compliance with industry standards.',
   },
   {
     name: 'SDV System Architect',
     image:
-      'https://bewebstudio.digitalauto.tech/data/projects/KlAPnPLdKqnF/Picture4.jpg',
+      '/ref/Picture4.jpg',
     description:
       'Designs the architecture of SDV software and systems, integrating components such as compute nodes, networks, and middleware services.',
   },
   {
     name: 'SDV Staging Expert',
     image:
-      'https://bewebstudio.digitalauto.tech/data/projects/KlAPnPLdKqnF/Picture5.jpg',
+      '/ref/Picture5.jpg',
     description:
       'Manages the staging and deployment lifecycle of SDV software, ensuring smooth integration and compatibility across different stages.',
   },
   {
     name: 'SDV Developer',
     image:
-      'https://bewebstudio.digitalauto.tech/data/projects/KlAPnPLdKqnF/developer.png', // Placeholder URL
+      '/ref/developer.png', // Local resource
     description:
       'Develops and implements software components for SDVs, working on embedded, middleware, and cloud-based services.',
   },
   {
     name: 'SDV Test Manager',
     image:
-      'https://bewebstudio.digitalauto.tech/data/projects/KlAPnPLdKqnF/test%20manager.png', // Placeholder URL
+      '/ref/test_manager.png', // Local resource
     description:
       'Leads testing efforts for SDV software, ensuring reliability, security, and compliance through structured test plans and automated testing.',
   },
   {
     name: 'SDV Homologation Expert',
     image:
-      'https://bewebstudio.digitalauto.tech/data/projects/KlAPnPLdKqnF/homologations.png', // Placeholder URL
+      '/ref/homologations.png', // Local resource
     description:
       'Ensures SDV compliance with regulatory standards and homologation requirements for different markets and regions.',
   },
   {
     name: 'Security Engineer',
     image:
-      'https://bewebstudio.digitalauto.tech/data/projects/KlAPnPLdKqnF/security.png', // Placeholder URL
+      '/ref/security.png', // Local resource
     description:
       'Implements cybersecurity measures in SDV software and networks, protecting against vulnerabilities and ensuring secure data communication.',
   },
   {
     name: 'OTA Deployment Manager',
     image:
-      'https://bewebstudio.digitalauto.tech/data/projects/KlAPnPLdKqnF/OTA%20Engineer.png', // Placeholder URL
+      '/ref/OTA_Engineer.png', // Local resource
     description:
       'Manages Over-the-Air (OTA) software updates for SDVs, ensuring smooth and secure remote deployment of new software features and patches.',
   },
