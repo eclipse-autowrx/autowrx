@@ -22,7 +22,18 @@ import { ErrorBoundary } from 'react-error-boundary'
 import ErrorFallback from './layouts/ErrorFallback.tsx'
 import DaTestAutomation from './components/molecules/DaTestAutomation.tsx'
 import DaAutomationControl from './components/molecules/DaAutomationControl.tsx'
+import { generateUUID } from './lib/uuid-generator'
 
+// Global polyfill: patch window.crypto.randomUUID if it doesn't exist
+if (typeof window !== 'undefined') {
+  if (!window.crypto) {
+    window.crypto = {} as Crypto;
+  }
+  
+  if (!window.crypto.randomUUID) {
+    (window.crypto as any).randomUUID = generateUUID;
+  }
+}
 
 const msalInstance = new PublicClientApplication(msalConfig)
 const showTestAutomation = localStorage.getItem('showTestAutomation') == '1'

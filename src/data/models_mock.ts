@@ -12,7 +12,7 @@ export const models = [
     cvi: 'ACME Car (ICE) v0.1',
     main_api: 'main_api_endpoint',
     model_home_image_file:
-      '/ref/E-Car_Full_Vehicle.png',
+      '/imgs/car_full_ed.PNG',
     name: 'ACME Car (ICE) v0.1',
     visibility: 'public',
     tenant_id: 'tenant_123',

@@ -111,8 +111,7 @@ const PageModelList = () => {
         cvi: importedModel.model.cvi,
         main_api: importedModel.model.main_api || 'Vehicle',
         model_home_image_file:
-          importedModel.model.model_home_image_file ||
-          'https://firebasestorage.googleapis.com/v0/b/digital-auto.appspot.com/o/media%2Fcar_full_ed.PNG?alt=media&token=ea75b8c1-a57a-44ea-9edb-9816131f9905',
+          importedModel.model.model_home_image_file || '/ref/E-Car_Full_Vehicle.png',
         model_files: importedModel.model.model_files || {},
         name: importedModel.model.name || 'New Imported Model',
         extended_apis: importedModel.model.extended_apis || [],
