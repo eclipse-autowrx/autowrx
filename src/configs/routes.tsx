@@ -56,6 +56,9 @@ const PageManageUsers = lazy(() =>
 const PageDiscussions = lazy(() =>
   retry(() => import('@/pages/test-ui/PageDiscussions')),
 )
+const PageProjectEditor = lazy(() =>
+  retry(() => import('@/pages/test-ui/PageProjectEditor')),
+)
 const PageUserProfile = lazy(() =>
   retry(() => import('@/pages/PageUserProfile')),
 )
@@ -431,6 +434,19 @@ const routesConfig: RouteConfig[] = [
                   element: (
                     <SuspenseProvider>
                       <PageDiscussions />
+                    </SuspenseProvider>
+                  ),
+                },
+              ],
+            },
+            {
+              path: '/test-ui/project-editor',
+              children: [
+                {
+                  index: true,
+                  element: (
+                    <SuspenseProvider>
+                      <PageProjectEditor />
                     </SuspenseProvider>
                   ),
                 },
