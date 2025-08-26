@@ -25,7 +25,10 @@ import { GrDeploy } from 'react-icons/gr'
 import { deployToEPAM } from '@/lib/deployToEpam'
 import { useToast } from '../molecules/toaster/use-toast'
 import config from '@/configs/config'
+import { getEditorType, extractMainContent } from '@/lib/projectEditorUtils'
+
 const CodeEditor = lazy(() => retry(() => import('../molecules/CodeEditor')))
+const ProjectEditor = lazy(() => retry(() => import('../molecules/project_editor/ProjectEditor')))
 
 const PrototypeTabCodeApiPanel = lazy(() =>
   retry(() => import('./PrototypeTabCodeApiPanel')),
@@ -52,6 +55,9 @@ const PrototypeTabCode: FC = ({}) => {
   const { data: model } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
   const [isOpenVelocitasDialog, setIsOpenVelocitasDialog] = useState(false)
+  
+  // Editor type and project data state
+  const [editorType, setEditorType] = useState<'project' | 'code'>('code')
 
   useEffect(() => {
     let timer = setInterval(() => {
@@ -69,10 +75,16 @@ const PrototypeTabCode: FC = ({}) => {
     if (!prototype) {
       setSavedCode(undefined)
       setCode(undefined)
+      setEditorType('code')
       return
     }
-    setCode(prototype.code || '')
-    setSavedCode(prototype.code || '')
+    
+    const prototypeCode = prototype.code || ''
+    setCode(prototypeCode)
+    setSavedCode(prototypeCode)
+  
+    const newEditorType = getEditorType(prototypeCode)
+    setEditorType(newEditorType)
   }, [prototype])
 
   const saveCodeToDb = async () => {
@@ -88,9 +100,10 @@ const PrototypeTabCode: FC = ({}) => {
         code: code || '',
       })
 
-      // await refetchPrototype()
+      // await refetchLocally()
     } catch (err) {}
   }
+
 
   if (!prototype) {
     return <div></div>
@@ -191,6 +204,15 @@ const PrototypeTabCode: FC = ({}) => {
             Language: <b>{(prototype.language || 'python').toUpperCase()}</b>
           </div>
 
+          {/* Editor Type Indicator */}
+          {/* <div className="mr-2 da-label-small">
+            Editor: <b className={`${editorType === 'project' ? 'text-blue-600' : 'text-green-600'}`}>
+              {editorType === 'project' ? 'PROJECT' : 'CODE'}
+            </b>
+          </div> */}
+
+
+
           {/* <div className="flex h-full w-fit justify-end">
               <DaTabItem
                 small
@@ -202,13 +224,26 @@ const PrototypeTabCode: FC = ({}) => {
             </div> */}
         </div>
         <Suspense>
-          <CodeEditor
-            code={code || ''}
-            setCode={setCode}
-            editable={isAuthorized}
-            language={prototype.language || 'python'}
-            onBlur={saveCodeToDb}
-          />
+          {editorType === 'project' ? (
+            <ProjectEditor
+              data={code || ''}
+              onChange={(data: string) => {
+                // console.log("ProjectEditor onChange", data)
+                setCode(data)
+                setTimeout(() => {
+                  setTicker(ticker + 1)
+                }, 100)
+              }}
+            />
+          ) : (
+            <CodeEditor
+              code={code || ''}
+              setCode={setCode}
+              editable={isAuthorized}
+              language={prototype.language || 'python'}
+              onBlur={saveCodeToDb}
+            />
+          )}
         </Suspense>
       </div>
       <div className="flex h-full flex-[2] min-w-[360px] flex-col bg-da-white rounded-md">
