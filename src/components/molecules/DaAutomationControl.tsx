@@ -294,6 +294,10 @@ const DaAutomationControl: React.FC = () => {
               parseActionPath(action.finish_condition?.target_element_path)
             element = findElement(identifierType, identifierValue) as any
             if (!element) {
+              if(condition === 'element_not_exists') {
+                clearInterval(interval)
+                resolve(true)
+              }
               console.warn(
                 `Element not found for action ${action.name} at index ${index}. Path: ${action.finish_condition.target_element_path}`,
               )
@@ -307,12 +311,6 @@ const DaAutomationControl: React.FC = () => {
             switch (condition) {
               case 'element_exists':
                 if (element) {
-                  clearInterval(interval)
-                  resolve(true)
-                }
-                break
-              case 'element_not_exists':
-                if (!element) {
                   clearInterval(interval)
                   resolve(true)
                 }

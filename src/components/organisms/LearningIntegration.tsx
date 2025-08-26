@@ -15,6 +15,17 @@ const LearningIntegration = ({requestClose}: LearningIntegrationProps) => {
   const frameLearning = useRef<HTMLIFrameElement>(null)
   const [isMinimized, setIsMinimized] = useState(false)
 
+  const [learningUrl, setLearningUrl] = useState('')
+
+  useEffect(() => {
+    // If running on localhost, set learningUrl to http://localhost:3000
+    if (typeof window !== 'undefined' && window.location.hostname.startsWith('localhost')) {
+      setLearningUrl('http://localhost:3000')
+      return
+    }
+    setLearningUrl(config?.learning?.url)
+  }, [])
+
   const [
     isShowedAutomationControl,
     automationSequence,
@@ -92,7 +103,7 @@ const LearningIntegration = ({requestClose}: LearningIntegrationProps) => {
         
         <iframe
           ref={frameLearning}
-          src={`${config?.learning?.url}?user_id=${encodeURIComponent(user?.id || '')}&token=${encodeURIComponent(access?.token || '')}`}
+          src={`${learningUrl}?user_id=${encodeURIComponent(user?.id || '')}&token=${encodeURIComponent(access?.token || '')}`}
           className="m-0 h-full w-full learning-appear1 inset-0 shadow-[4px_4px_6px_rgba(0,0,0,0.3)]"
           allow="camera;microphone"
           onLoad={() => {}}
