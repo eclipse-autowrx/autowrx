@@ -12,7 +12,7 @@ import FileTree from './FileTree';
 import EditorComponent from './Editor';
 import JSZip from 'jszip';
 
-import { VscNewFile, VscNewFolder, VscRefresh, VscCollapseAll, VscChevronLeft, VscChevronRight } from 'react-icons/vsc';
+import { VscNewFile, VscNewFolder, VscRefresh, VscCollapseAll, VscChevronLeft, VscChevronRight, VscCloudDownload, VscCloudUpload } from 'react-icons/vsc';
 
 
 interface ProjectEditorProps {
@@ -402,15 +402,17 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({ data, onChange }) => {
   };
 
   const triggerImport = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.zip';
-    input.onchange = (e) => handleImport(e as any);
-    input.click();
+    if (window.confirm('Are you sure you want to import a new project? This will replace the current project and any unsaved changes will be lost.')) {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.zip';
+        input.onchange = (e) => handleImport(e as any);
+        input.click();
+    }
   };
 
   const root = fsData[0];
-  const projectName = root?.name || 'Editor';
+  const projectName = 'Editor';
   const projectItems = root?.type === 'folder' ? root.items : [];
 
   return (
@@ -460,6 +462,20 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({ data, onChange }) => {
                   className="p-1.5 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors"
                 >
                   <VscNewFolder size={16} />
+                </button>
+                <button
+                  onClick={handleExport}
+                  title="Download Project as ZIP"
+                  className="p-1.5 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  <VscCloudDownload size={16} />
+                </button>
+                <button
+                  onClick={triggerImport}
+                  title="Import Project from ZIP"
+                  className="p-1.5 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  <VscCloudUpload size={16} />
                 </button>
                 {/* <button
                   onClick={handleRefresh}

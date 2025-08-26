@@ -228,9 +228,11 @@ const PrototypeTabCode: FC = ({}) => {
             <ProjectEditor
               data={code || ''}
               onChange={(data: string) => {
-                console.log("ProjectEditor onChange", data)
+                // console.log("ProjectEditor onChange", data)
                 setCode(data)
-                // saveCodeToDb()
+                setTimeout(() => {
+                  setTicker(ticker + 1)
+                }, 100)
               }}
             />
           ) : (
