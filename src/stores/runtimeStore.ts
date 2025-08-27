@@ -12,12 +12,14 @@ import { create } from 'zustand'
 
 type RuntimeState = {
   apisValue?: {}
+  traceVars?: {}
   appLog?: string
 }
 
 type Actions = {
   setActiveApis: (_: any) => void
   setAppLog: (log: string) => void
+  setTraceVars: (_: any) => void
 }
 
 const useRuntimeStore = create<RuntimeState & Actions>()(
@@ -32,6 +34,10 @@ const useRuntimeStore = create<RuntimeState & Actions>()(
     setActiveApis: (values) =>
       set((state) => {
         state.apisValue = values
+      }),
+    setTraceVars: (values) =>
+      set((state) => {
+        state.traceVars = values
       })
   }))
 )
