@@ -641,9 +641,8 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
                     key={rt.kit_id}
                     disabled={!rt.is_online}
                   >
-                    <div className="text-[20px] flex items-center disabled:text-white text-white">
-                      {rt.is_online ? (!rt.noRunner?'🟢':'🔴'): '🟡'} {rt.name} {rt.noRunner?`(${rt.noRunner})`:''}
-                    </div>
+                    {rt.is_online ? (!rt.noRunner ? '🟢' : '🔴') : '🟡'} {rt.name}{' '}
+                    {rt.noRunner ? `(${rt.noRunner})` : ''}
                   </option>
                 )
               })

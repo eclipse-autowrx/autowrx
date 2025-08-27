@@ -605,10 +605,10 @@ const DaRuntimeControl: FC = ({ }) => {
                       </div>
                     )}
                   </div>
-                  <p data-id="current-log" className="da-label-small flex-1 overflow-y-auto whitespace-pre-wrap rounded bg-da-black px-2 py-1 text-da-white">
+                  <div data-id="current-log" className="da-label-small flex-1 overflow-y-auto whitespace-pre-wrap rounded bg-da-black px-2 py-1 text-da-white">
                     {log}
                     <AlwaysScrollToBottom />
-                  </p>
+                  </div>
                   
                 </div>
               </>
