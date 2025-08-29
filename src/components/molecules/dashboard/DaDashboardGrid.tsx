@@ -140,10 +140,25 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
     setRenderCell(tmpCells)
   }, [widgetItems])
 
-  const [apisValue, appLog] = useRuntimeStore((state) => [
+  const [apisValue, traceVars, appLog] = useRuntimeStore((state) => [
     state.apisValue,
+    state.traceVars,
     state.appLog,
   ])
+
+  const [allVars, setAllVars] = useState<any>({})
+
+  useEffect(() => {
+    setAllVars({...traceVars, ...apisValue})
+  }, [traceVars, apisValue])
+
+  // useEffect(() => {
+  //   console.log(`traceVars`, traceVars)
+  // }, [traceVars])
+
+  // useEffect(() => {
+  //   console.log(`apisValue`, apisValue)
+  // }, [apisValue])
 
   useEffect(() => {
     const onMessageFromIframe = (event: MessageEvent) => {
@@ -201,7 +216,7 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
         <WidgetItem
           key={wIndex}
           widgetConfig={widgetItem}
-          apisValue={apisValue}
+          apisValue={allVars}
           appLog={appLog}
         />
       ))}

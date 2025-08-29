@@ -123,6 +123,7 @@ const DaRuntimeControl: FC = ({ }) => {
         let obj = {} as any
         obj[`${payload.api}`] = payload.value
         writeSignalValue(obj)
+        writeVarsValue(obj)
       }
     } catch (err) {
       // console.log(err)
