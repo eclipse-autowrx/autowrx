@@ -1,17 +1,48 @@
 <html>
 
 <head>
+<<<<<<< Updated upstream
     <script src="/js/tailwind.min.js"></script>
     <link rel="stylesheet" href="/css/font-awesome-5.15.3.css" />
     <script defer src="/js/syncer.js"></script>
+=======
+    <script defer src="../syncer.js"></script>
+    <style>
+        body {
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        #api-widget {
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            align-items: center;
+            gap: 24px;
+        }
+        #value {
+            font-size: 1.875rem;
+            font-weight: bold;
+            color: #005072;
+        }
+        #label {
+            font-size: 1.25rem;
+            color: #374151;
+        }
+    </style>
+>>>>>>> Stashed changes
 </head>
 
-<body class="bg-white flex items-center justify-center h-screen">
-    <div id="api-widget" class="flex flex-col p-4 items-center space-y-6">
-        <div id="value" class="text-3xl font-bold text-[#005072]">
+<body>
+    <div id="api-widget">
+        <div id="value">
             0
         </div>
-        <div id="label" class="text-xl text-gray-700">
+        <div id="label">
             Label
         </div>
     </div>
@@ -32,7 +63,8 @@
                 document.getElementById("value").className = options.valueClassname;
             }
             if (options.boxClassname) {
-                document.getElementById("api-widget").className = `p-4 rounded-lg shadow-lg ${options.boxClassname}`;
+                document.getElementById("api-widget").className = options.boxClassname;
+                document.getElementById("api-widget").style.cssText += '; padding: 16px; border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);';
             }
 
             interval = setInterval(() => {

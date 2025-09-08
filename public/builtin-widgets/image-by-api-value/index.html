@@ -1,10 +1,22 @@
 <html>
 
 <head>
+<<<<<<< Updated upstream
     <script src="/js/tailwind.min.js"></script>
     <link rel="stylesheet" href="/css/font-awesome-5.15.3.css" />
     <script defer src="/js/syncer.js"></script>
+=======
+    <script defer src="../syncer.js"></script>
+>>>>>>> Stashed changes
     <style>
+        body {
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
         #image-container {
             width: 100%;
             height: 100%;
@@ -12,7 +24,9 @@
             align-items: center;
             justify-content: center;
             background-color: white;
-            /* Ensure background is white */
+            padding: 16px;
+            gap: 24px;
+            flex-direction: column;
         }
 
         #api-image {
@@ -24,8 +38,8 @@
     </style>
 </head>
 
-<body class="bg-white flex items-center justify-center h-screen">
-    <div id="image-container" class="flex flex-col p-4 items-center space-y-6">
+<body>
+    <div id="image-container">
         <img id="api-image" src="" alt="API Image" onerror="this.style.display='none'" /> <!-- Hide image on error -->
     </div>
 

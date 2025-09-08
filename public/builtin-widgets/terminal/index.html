@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Widget</title>
+  <link rel="icon" href="./favicon.ico" type="image/x-icon">
+  <script defer src="../syncer.js"></script>
+  <style>
+    @font-face {
+      font-family: 'Manrope';
+      src: url('../Manrope-VariableFont.ttf') format('truetype');
+      font-weight: 100 900;
+      font-display: swap;
+    }
+
+    body {
+      font-family: 'Manrope', sans-serif;
+      background-color: #1e293b;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+      margin: 0;
+    }
+
+    .font-medium {
+      font-weight: 500;
+    }
+
+    .header {
+      font-weight: bold;
+      font-size: 0.875rem;
+      background-color: #0f172a;
+      padding: 0.25rem 0.5rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .header:hover {
+      text-decoration: underline;
+    }
+
+    .grow {
+      flex-grow: 1;
+    }
+
+    .terminal-content {
+      flex-grow: 1;
+      overflow-y: auto;
+      color: white;
+      font-size: 0.75rem;
+      font-family: monospace;
+      padding: 0.25rem 0.5rem;
+    }
+
+    .whitespace-pre-line {
+      white-space: pre-line;
+    }
+
+    button {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+
+    button:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    Terminal
+    <div class="grow"></div>
+    <button id='btn-clear'>Clear
+    </button>
+  </div>
+  <div class="terminal-content">
+    <p id="container" class="whitespace-pre-line">
+    <p>
+    <div id="bottom"></div>
+  </div>
+  <script>
+    let btnClear = null;
+    let container = null;
+    let bottom = null;
+    let logs = ""
+    const appendLog = (log) => {
+      if (!log) return;
+      logs += log + (log.endsWith('\r\n') ? '' : '\r\n')
+      if (container) {
+        container.innerText = logs
+        bottom.scrollIntoView()
+      }
+    }
+    const clearLog = () => {
+      logs = ""
+      if (container) {
+        container.innerText = logs
+        bottom.scrollIntoView()
+      }
+    }
+    /*
+      window.onload = () => {
+        console.log("On window loaded")
+        btnClear = document.getElementById('btn-clear')
+        container = document.getElementById('container')
+        bottom = document.getElementById('bottom')
+        if(btnClear) {
+          btnClear.onclick = clearLog
+        }
+      }
+      */
+
+    const onWidgetLoaded = (options) => {
+      //appendLog("On widget loaded")
+      btnClear = document.getElementById('btn-clear')
+      container = document.getElementById('container')
+      bottom = document.getElementById('bottom')
+      if (btnClear) {
+        btnClear.onclick = clearLog
+      }
+    }
+  </script>
+  <script src="index.js"></script>
+</body>
+
+</html>

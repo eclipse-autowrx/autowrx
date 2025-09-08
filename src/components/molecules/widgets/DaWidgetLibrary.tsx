@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -226,13 +226,13 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
         </DaText>
         <div className="flex w-full justify-between items-center">
           <div className="flex mb-2 w-fit rounded !da-label-small mt-2">
-            {/* <DaTabItem
+            <DaTabItem
               active={activeTab === 'builtin'}
               onClick={() => setActiveTab('builtin')}
             >
               <TbLayoutGrid className="mr-2" />
               Built-in ({buildinWidgets.length})
-            </DaTabItem> */}
+            </DaTabItem>
             {marketWidgets && (
               <DaTabItem
                 active={activeTab === 'market'}
@@ -299,7 +299,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
           {pickedCells && pickedCells.length > 0 && !isWidgetDiscrete && (
             <DaButton
               variant="solid"
-              dataId='btn-add-widget-in-widget-library'
+              dataId="btn-add-widget-in-widget-library"
               disabled={(isWidgetGenAI || !activeWidget) && !widgetUrl}
               className="px-4 py-2 !text-base h-8"
               onClick={() => {

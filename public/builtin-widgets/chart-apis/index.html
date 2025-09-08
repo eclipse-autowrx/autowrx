@@ -1,10 +1,15 @@
 <html>
 
 <head>
+<<<<<<< Updated upstream
     <script src="/js/tailwind.min.js"></script>
     <link rel="stylesheet" href="/css/font-awesome-5.15.3.css" />
     <script defer src="/js/syncer.js"></script>
     <script src="/js/chart.js"></script>
+=======
+    <script defer src="../syncer.js"></script>
+    <script src="../chart.min.js"></script>
+>>>>>>> Stashed changes
     <style>
         #chart-container {
             width: 100%;
@@ -18,8 +23,8 @@
     </style>
 </head>
 
-<body class="bg-white flex items-center justify-center h-screen">
-    <div id="chart-container" class="flex flex-col p-4 items-center space-y-6">
+<body style="background-color: white; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0;">
+    <div id="chart-container" style="display: flex; flex-direction: column; padding: 16px; align-items: center;">
         <canvas id="api-chart"></canvas>
     </div>
 
