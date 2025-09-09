@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -126,7 +126,12 @@ const DaDashboardWidgetEditor = ({
         setBoxes(JSON.stringify(widget.boxes, null, 4))
         options = widget.options
         setWidgetIcon(options.iconURL)
-        setWidgetUrl(options.url)
+        // For built-in widgets, show the path as URL, for embedded widgets show the actual URL
+        setWidgetUrl(
+          widget.path && widget.path.trim() !== ''
+            ? widget.path
+            : options.url || '',
+        )
         delete options.iconURL
         delete options.url
       } catch (e) {}
@@ -272,12 +277,12 @@ const DaDashboardWidgetEditor = ({
               </div>
             </div>
             <div className="py-2 flex items-center">
-              <div className="font-semibold text-slate-800">URL:</div>
+              <div className="font-semibold text-slate-800">URL/Path:</div>
               <div className="w-full pl-2">
                 <DaInput
                   value={widgetUrl}
                   onChange={(e) => setWidgetUrl(e.target.value)}
-                  placeholder="URL"
+                  placeholder="Widget URL or path"
                   wrapperClassName="!bg-white"
                   inputClassName="!bg-white text-sm"
                   className="w-full"
@@ -308,12 +313,24 @@ const DaDashboardWidgetEditor = ({
               try {
                 newOption = JSON.parse(optionStr)
               } catch (err) {}
-              newOption.url = `${widgetUrl}`
-              newOption.iconURL = `${widgetIcon}`
+
               let widget = {} as any
               try {
                 widget = JSON.parse(selectedWidget)
               } catch (err) {}
+
+              // Check if this is a built-in widget (has a non-empty path)
+              const isBuiltInWidget = widget.path && widget.path.trim() !== ''
+
+              if (isBuiltInWidget) {
+                // For built-in widgets, update the path property and don't set url in options
+                widget.path = widgetUrl
+              } else {
+                // For embedded/marketplace widgets, set url in options
+                newOption.url = `${widgetUrl}`
+              }
+
+              newOption.iconURL = `${widgetIcon}`
               widget.options = newOption
               try {
                 widget.boxes = JSON.parse(boxes)

@@ -165,8 +165,10 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
     setActiveWidget(activeTab === 'genAI' ? {} : null)
     setIsWidgetGenAI(activeTab === 'genAI')
     let widgets = []
-    try {
-      widgets = JSON.parse(JSON.stringify(marketWidgets))
+
+    if (activeTab === 'builtin') {
+      // For built-in widgets, use the buildinWidgets data
+      widgets = JSON.parse(JSON.stringify(buildinWidgets))
       widgets.forEach((w: any) => {
         let match = PIN_WIDGETS.find((p) => p.name == w.label)
         if (match) {
@@ -180,10 +182,28 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
         if (a.weight > b.weight) return 1
         return 0
       })
-    } catch (e) {}
+    } else if (activeTab === 'market') {
+      // For marketplace widgets
+      try {
+        widgets = JSON.parse(JSON.stringify(marketWidgets))
+        widgets.forEach((w: any) => {
+          let match = PIN_WIDGETS.find((p) => p.name == w.label)
+          if (match) {
+            w.weight = match.weight
+          } else {
+            w.weight = 999
+          }
+        })
+        widgets.sort((a: any, b: any) => {
+          if (a.weight < b.weight) return -1
+          if (a.weight > b.weight) return 1
+          return 0
+        })
+      } catch (e) {}
+    }
+
     setRenderWidgets(widgets)
-    // setRenderWidgets(activeTab === 'builtin' ? buildinWidgets : marketWidgets)
-  }, [activeTab, marketWidgets])
+  }, [activeTab, marketWidgets, buildinWidgets])
 
   useEffect(() => {
     let tmp_usageCells: any[] = []
@@ -266,7 +286,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
             </DaButton>
           )}
         </div>
-        {activeTab == 'market' && (
+        {(activeTab == 'market' || activeTab == 'builtin') && (
           <div className="flex h-full overflow-y-auto space-x-2  my-2">
             <DaWidgetList
               renderWidgets={renderWidgets}

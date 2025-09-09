@@ -127,20 +127,28 @@ const initHandle = () => {
   });
 };
 
+let widgetOptions = null;
+let widgetLoaded = false;
+
 window.addEventListener("load", () => {
   console.log("syncer: on window loaded");
+  widgetLoaded = true;
+  
+  // Try to get options from URL parameters first (for non-builtin widgets)
   try {
-    if (onWidgetLoaded != undefined) {
-      let options = null;
-      try {
-        let urlParams = new URLSearchParams(window.location.search);
-        options = JSON.parse(decodeURIComponent(urlParams.get("options")));
-      } catch (e) {
-        console.log(e);
+    let urlParams = new URLSearchParams(window.location.search);
+    let urlOptions = JSON.parse(decodeURIComponent(urlParams.get("options")));
+    if (urlOptions) {
+      widgetOptions = urlOptions;
+      // If we got options from URL, call onWidgetLoaded immediately
+      if (onWidgetLoaded != undefined) {
+        onWidgetLoaded(widgetOptions);
       }
-      onWidgetLoaded(options);
     }
-  } catch (e) { }
+  } catch (e) {
+    // No URL options, wait for postMessage
+    console.log("No URL options, waiting for postMessage...");
+  }
 
   setTimeout(() => {
     initHandle();
@@ -178,6 +186,16 @@ window.addEventListener("message", function (e) {
   let payload = JSON.parse(e.data);
   if (payload.cmd) {
     switch (payload.cmd) {
+      case "widget-options":
+        // Receive widget options from parent for built-in widgets
+        if (payload.options && widgetLoaded && !widgetOptions) {
+          widgetOptions = payload.options;
+          console.log("Received widget options via postMessage:", widgetOptions);
+          if (onWidgetLoaded != undefined) {
+            onWidgetLoaded(widgetOptions);
+          }
+        }
+        break;
       case "vss-tree":
         if (!payload.vssTree) return;
         window.VSS_TREE = payload.vssTree

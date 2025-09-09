@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -90,7 +90,7 @@ const DaWidgetList: FC<DaWidgetListProps> = ({
           <div className="flex flex-col w-full h-full ">
             <DaInput
               inputClassName="text-[16px] "
-              dataId='widget-search-input'
+              dataId="widget-search-input"
               className="bg-da-white border-da-gray-medium"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
@@ -132,14 +132,17 @@ const DaWidgetList: FC<DaWidgetListProps> = ({
                       )}
                     </div>
                     <div className="widget-list-item px-4 py-1 truncate text-ellipsis text-da-primary-500 text-base">
-                      <DaText variant="regular-bold" className='widget-list-item-name'>
+                      <DaText
+                        variant="regular-bold"
+                        className="widget-list-item-name"
+                      >
                         {widget.label || widget.widget}
                       </DaText>
+                      <div className="py-1 text-sm leading-tight max-h-[30px] max-w-max truncate text-ellipsis text-da-gray-dark">
+                        {widget.desc}
+                      </div>
                       {widget.likes != undefined && (
                         <>
-                          <div className="py-1 text-sm leading-tight max-h-[30px] max-w-max truncate text-ellipsis text-da-gray-dark">
-                            {widget.desc}
-                          </div>
                           <div className="mt-2 flex items-center text-da-gray-dark da-label-small">
                             <TbHeart
                               className="w-4 h-4"

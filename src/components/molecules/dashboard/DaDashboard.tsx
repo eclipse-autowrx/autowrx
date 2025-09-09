@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -103,6 +103,9 @@ const DaDashboard = () => {
       if (!widget?.url) {
         if (widget.options?.url) {
           widget.url = widget.options.url
+        } else if (widget.path) {
+          // For built-in widgets, use the static path
+          widget.url = widget.path
         }
       }
     })
@@ -182,7 +185,7 @@ const DaDashboard = () => {
               <DaButton
                 variant="editor"
                 size="sm"
-                dataId='dashboard-edit-button'
+                dataId="dashboard-edit-button"
                 onClick={handleEnterEditMode}
               >
                 <TbEdit className="size-4 mr-1" />
@@ -198,7 +201,7 @@ const DaDashboard = () => {
                     variant="destructive"
                     className="w-fit flex !text-red-500"
                     onClick={handleDeleteAllWidgets}
-                    dataId='dashboard-delete-all-widgets'
+                    dataId="dashboard-delete-all-widgets"
                   >
                     <TbTrash className="size-4 mr-1" />
                     Delete all widgets
@@ -208,7 +211,7 @@ const DaDashboard = () => {
                       size="sm"
                       onClick={handleCancel}
                       variant="outline-nocolor"
-                      dataId='dashboard-cancel-button'
+                      dataId="dashboard-cancel-button"
                       className="w-16"
                     >
                       Cancel
@@ -216,7 +219,7 @@ const DaDashboard = () => {
                     <DaButton
                       size="sm"
                       onClick={handleSave}
-                      dataId='dashboard-save-button'
+                      dataId="dashboard-save-button"
                       variant="solid"
                       className="w-16"
                     >
@@ -231,7 +234,7 @@ const DaDashboard = () => {
         <DaButton
           variant="editor"
           size="sm"
-          dataId='dashboard-fullscreen-button'
+          dataId="dashboard-fullscreen-button"
           onClick={() =>
             setShowPrototypeDashboardFullScreen(
               !showPrototypeDashboardFullScreen,

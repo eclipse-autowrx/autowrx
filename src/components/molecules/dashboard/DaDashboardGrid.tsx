@@ -47,7 +47,12 @@ const WidgetItem: FC<PropsWidgetItem> = ({
   useEffect(() => {
     if (!widgetConfig) return
     let url = widgetConfig.url
-    if (url && widgetConfig.options) {
+    
+    // Don't append query parameters to built-in widget paths (local static files)
+    // They receive options via postMessage instead
+    if (url && url.startsWith('/builtin-widgets/')) {
+      setUrl(url)
+    } else if (url && widgetConfig.options) {
       let send_options = JSON.parse(JSON.stringify(widgetConfig.options))
       delete send_options.url
       url = url + '?options=' + encodeURIComponent(JSON.stringify(send_options))
@@ -109,7 +114,20 @@ const WidgetItem: FC<PropsWidgetItem> = ({
         src={url}
         className="m-0 h-full w-full"
         allow="camera;microphone"
-        onLoad={() => {}}
+        onLoad={() => {
+          // Send widget options via postMessage for built-in widgets
+          if (widgetConfig?.url?.startsWith('/builtin-widgets/') && widgetConfig?.options) {
+            setTimeout(() => {
+              frameElement?.current?.contentWindow?.postMessage(
+                JSON.stringify({
+                  cmd: 'widget-options',
+                  options: widgetConfig.options,
+                }),
+                '*',
+              )
+            }, 100)
+          }
+        }}
       ></iframe>
     </div>
   )

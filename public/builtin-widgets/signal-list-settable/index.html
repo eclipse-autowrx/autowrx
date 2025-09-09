@@ -62,16 +62,56 @@
       white-space: nowrap;
     }
 
+    .bg-gray-50 {
+      background-color: #f9fafb;
+    }
+
     .bg-gray-100 {
       background-color: #f3f4f6;
+    }
+    
+    .bg-slate-200 {
+      background-color: #e2e8f0;
     }
 
     .text-gray-600 {
       color: #4b5563;
     }
+    
+    .text-gray-800 {
+      color: #1f2937;
+    }
+    
+    .text-slate-600 {
+      color: #475569;
+    }
+    
+    .text-slate-400 {
+      color: #94a3b8;
+    }
 
     .text-blue-700 {
       color: #1d4ed8;
+    }
+    
+    .bg-green-400 {
+      background-color: #4ade80;
+    }
+    
+    .bg-red-400 {
+      background-color: #f87171;
+    }
+    
+    .text-white {
+      color: white;
+    }
+    
+    .border-slate-200 {
+      border-color: #e2e8f0;
+    }
+    
+    .border-slate-400 {
+      border-color: #94a3b8;
     }
 
     input[type="text"], input[type="number"] {
@@ -106,6 +146,99 @@
 
     .gap-2 {
       gap: 0.5rem;
+    }
+    
+    .space-x-1 > * + * {
+      margin-left: 0.25rem;
+    }
+    
+    .rounded {
+      border-radius: 0.25rem;
+    }
+    
+    .hover\:opacity-60:hover {
+      opacity: 0.6;
+    }
+    
+    .leading-tight {
+      line-height: 1.25;
+    }
+    
+    .whitespace-pre-wrap {
+      white-space: pre-wrap;
+    }
+    
+    .font-normal {
+      font-weight: 400;
+    }
+    
+    .text-center {
+      text-align: center;
+    }
+    
+    .text-right {
+      text-align: right;
+    }
+    
+    .justify-center {
+      justify-content: center;
+    }
+    
+    .justify-start {
+      justify-content: start;
+    }
+    
+    .overflow-x-hidden {
+      overflow-x: hidden;
+    }
+    
+    select {
+      cursor: pointer;
+    }
+    
+    .break-words {
+      word-wrap: break-word;
+      word-break: break-word;
+    }
+    
+    .flex-wrap {
+      flex-wrap: wrap;
+    }
+    
+    .max-w-\[12vw\] {
+      max-width: 12vw;
+    }
+    
+    .max-w-\[14vw\] {
+      max-width: 14vw;
+    }
+    
+    .w-\[14vw\] {
+      width: 14vw;
+    }
+    
+    .min-w-\[14vw\] {
+      min-width: 14vw;
+    }
+    
+    .w-\[12vw\] {
+      width: 12vw;
+    }
+    
+    .min-w-\[12vw\] {
+      min-width: 12vw;
+    }
+    
+    .w-\[6vw\] {
+      width: 6vw;
+    }
+    
+    .w-\[70vw\] {
+      width: 70vw;
+    }
+    
+    .max-w-\[70vw\] {
+      max-width: 70vw;
     }
   </style>
 </head>
@@ -184,17 +317,17 @@
       const cell = document.createElement('td');
       switch (col) {
         case 0:
-          cell.className = `px-1 py-2 w-[70vw] max-w-[70vw] overflow-x-hidden font-semibold text-big`;
+          cell.className = `px-1 py-2 w-[70vw] max-w-[70vw] font-semibold text-big`;
           if (signal) {
             cell.innerHTML = `<div class='w-full'>
                 <div class='w-full flex justify-start'>
-                  <div class='font-semibold text-slate-600 overflow-x-hidden whitespace-nowrap rtl'>${content}</div>
+                  <div class='font-semibold text-slate-600 break-words'>${content}</div>
                 </div>
-                <p class='w-full text-content text-slate-600 font-normal whitespace-pre-wrap leading-tight'> [${signal.type.toUpperCase()}] [${signal.datatype}] ${signal.unit ? ("[" + signal.unit + "]") : ''} ${signal.description}</p>
+                <p class='w-full text-content text-slate-600 font-normal flex flex-wrap leading-tight'> [${signal.type.toUpperCase()}] [${signal.datatype}] ${signal.unit ? ("[" + signal.unit + "]") : ''} ${signal.description}</p>
                 </div>`
           } else {
             cell.innerHTML = `<div class='w-full flex justify-start'>
-                <div class='font-semibold text-slate-600 overflow-x-hidden whitespace-nowrap rtl'>${content}</div>
+                <div class='font-semibold text-slate-600 break-words'>${content}</div>
               </div>`
           }
 
@@ -204,10 +337,10 @@
           cell.innerText = content;
           break;
         case 2:
-          cell.className = `px-1 py-1 w-[14vw] min-w-[14vw] items-center justify-center`;
+          cell.className = `px-1 py-1 w-[14vw] min-w-[14vw] text-center`;
           if (signal && signal.datatype == 'boolean') {
             const container = document.createElement('div');
-            container.className = 'flex space-x-1'
+            container.className = 'flex space-x-1 justify-center'
 
             const btn_on = document.createElement('button');
             btn_on.className = `text-big rounded w-[6vw] py-0.5 flex justify-center bg-green-400 text-white hover:opacity-60`
@@ -229,9 +362,9 @@
             cell.appendChild(container)
           } else if (signal && signal.datatype == 'string' && signal.allowed) {
             const container = document.createElement('div');
-            container.className = 'flex space-x-1 w-full'
+            container.className = 'flex w-full justify-center'
             const tag_select = document.createElement('select');
-            tag_select.className = "px-1 py-1 rounded border border-slate-200 w-full text-content font-semibold"
+            tag_select.className = "px-1 py-1 rounded border border-slate-200 w-full max-w-[12vw] text-content font-semibold text-center"
             signal.allowed.forEach(v => {
               let opt = document.createElement('option');
               opt.value = v;
@@ -242,10 +375,12 @@
               console.log(`tag_select VALUE ${tag_select.value}`)
               setApiValue(content, tag_select.value)
             });
-            cell.appendChild(tag_select)
+            cell.appendChild(container)
           } else {
+            const container = document.createElement('div');
+            container.className = 'flex w-full justify-center'
             const input = document.createElement('input');
-            input.className = `rounded w-full border border-slate-400 bg-white px-1 py-1 text-right`
+            input.className = `rounded w-full max-w-[12vw] border border-slate-400 bg-white px-1 py-1 text-center`
             try {
               input.addEventListener("keydown", (e) => {
                 if (e.keyCode == 13) {
@@ -265,7 +400,8 @@
             } catch (ex) {
             }
 
-            cell.appendChild(input)
+            container.appendChild(input)
+            cell.appendChild(container)
           }
 
           break;
@@ -286,8 +422,14 @@
     }
 
     async function onWidgetLoaded(options) {
-      //console.log(">>>>>>> onWidgetLoaded")
+      //console.log(">>>>>>> onWidgetLoaded", options)
       const apiTableBody = document.querySelector('#api-table tbody');
+      
+      // Handle null options gracefully
+      if (!options) {
+        console.log("No options provided, using defaults");
+        options = { apis: [] };
+      }
 
       VSS_JSON_URL = options.vss_json
 
