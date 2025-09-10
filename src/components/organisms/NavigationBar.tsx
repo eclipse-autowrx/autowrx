@@ -41,10 +41,9 @@ const NavigationBar = ({}) => {
 
   const { data: user } = useSelfProfileQuery()
   const { data: model } = useCurrentModel()
-  const [isAuthorized, allowUseAgent, allowLearningAccess] = usePermissionHook(
+  const [isAuthorized, allowUseAgent] = usePermissionHook(
     [PERMISSIONS.MANAGE_USERS],
-    ['aiAgent'],
-    [PERMISSIONS.LEARNING_MODE],
+    ['aiAgent']
   )
   const [learningMode, setIsLearningMode] = useState(false)
 
@@ -75,7 +74,7 @@ const NavigationBar = ({}) => {
       {config && config.learning && config.learning.url && (
         <div className="mr-6 cursor-pointer flex items-center">
           <span className="mr-1 da-txt-regular font-normal">Learning</span>{' '}
-          <span className="mr-2 text-[10px] text-gray-800">beta</span>
+          {/* <span className="mr-2 text-[10px] text-gray-800">beta</span> */}
           <Switch
             onChange={(v) => {
               if (v) {
@@ -84,12 +83,12 @@ const NavigationBar = ({}) => {
                   return
                 }
 
-                if (!allowLearningAccess) {
-                  alert(
-                    'You are not authorized to use learning mode, please contact your administrator to join this feature',
-                  )
-                  return
-                }
+                // if (!allowLearningAccess) {
+                //   alert(
+                //     'You are not authorized to use learning mode, please contact your administrator to join this feature',
+                //   )
+                //   return
+                // }
               }
               setIsLearningMode(v)
             }}
@@ -103,8 +102,8 @@ const NavigationBar = ({}) => {
 
       {config && config.enableSupport && (
         <Link to="https://forms.office.com/e/P5gv3U3dzA">
-          <div className="h-full flex text-orange-600 font-semibold da-txt-medium items-center text-skye-600 mr-4 hover:underline">
-            <IoIosHelpBuoy className="mr-1 animate-pulse" size={24} />
+          <div className="h-full flex text-gray-500 font-medium da-txt-medium items-center text-skye-600 mr-4 hover:underline">
+            <IoIosHelpBuoy className="mr-1" size={22} />
             Support
           </div>
         </Link>

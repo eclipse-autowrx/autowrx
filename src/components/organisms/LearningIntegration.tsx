@@ -19,10 +19,10 @@ const LearningIntegration = ({requestClose}: LearningIntegrationProps) => {
 
   useEffect(() => {
     // If running on localhost, set learningUrl to http://localhost:3000
-    if (typeof window !== 'undefined' && window.location.hostname.startsWith('localhost')) {
-      setLearningUrl('http://localhost:3000')
-      return
-    }
+    // if (typeof window !== 'undefined' && window.location.hostname.startsWith('localhost')) {
+    //   setLearningUrl('http://localhost:3000')
+    //   return
+    // }
     setLearningUrl(config?.learning?.url)
   }, [])
 
@@ -82,7 +82,7 @@ const LearningIntegration = ({requestClose}: LearningIntegrationProps) => {
         {/* Close button */}
         <button
           onClick={requestClose}
-          className="absolute top-0.5 right-0.5 z-10 w-8 h-8 bg-red-500 hover:bg-red-600 
+          className="absolute top-1 right-1 z-10 w-6 h-6 bg-gray-700 hover:opacity-70
               text-white rounded-full flex items-center justify-center transition-colors duration-200 shadow-lg"
           title="Close"
         >
