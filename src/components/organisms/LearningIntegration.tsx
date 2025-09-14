@@ -52,6 +52,10 @@ const LearningIntegration = ({requestClose}: LearningIntegrationProps) => {
           setIsMinimized(true)
         }
       }
+
+      if(event.data && event.data === 'exit_iframe') {
+        requestClose()
+      }
     })
   }
 
@@ -80,7 +84,7 @@ const LearningIntegration = ({requestClose}: LearningIntegrationProps) => {
     >
       <div className="w-full h-full pt-6 pl-6 pr-6 pb-2 shadow-2xl relative">
         {/* Close button */}
-        <button
+        {/* <button
           onClick={requestClose}
           className="absolute top-1 right-1 z-10 w-6 h-6 bg-gray-700 hover:opacity-70
               text-white rounded-full flex items-center justify-center transition-colors duration-200 shadow-lg"
@@ -99,7 +103,7 @@ const LearningIntegration = ({requestClose}: LearningIntegrationProps) => {
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
-        </button>
+        </button> */}
         
         <iframe
           ref={frameLearning}
