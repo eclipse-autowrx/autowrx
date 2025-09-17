@@ -50,3 +50,16 @@ jobs:
           file: Dockerfile
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/autowrx-app:${{ env.TAG }}
+
+      # Call the quevee gh action to create the manifest file for SDV maturity assessment.
+      - name: Collect quality artifacts
+        uses: eclipse-dash/quevee@v1
+        id: quevee
+        with:
+          release_url: ${{ steps.create_release.outputs.url }}
+          artifacts_readme: README.md
+          artifacts_requirements: https://github.com/orgs/eclipse-autowrx/projects/1
+          artifacts_testing: https://github.com/eclipse-autowrx/ui-automation-test
+          artifacts_documentation: docs/development-guuide.md
+          artifacts_coding_guidelines: docs/development-guuide.md
+          artifacts_release_process: https://www.eclipse.org/projects/dev_process/#6_4_Releases
