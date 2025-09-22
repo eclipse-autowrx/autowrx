@@ -63,3 +63,10 @@ jobs:
           artifacts_documentation: docs/development-guuide.md
           artifacts_coding_guidelines: docs/development-guuide.md
           artifacts_release_process: https://www.eclipse.org/projects/dev_process/#6_4_Releases
+          
+      - name: Upload quality manifest to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ${{ steps.quevee.outputs.manifest_file }}
+          tag: ${{ github.ref }}
