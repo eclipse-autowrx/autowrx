@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -111,6 +111,14 @@ const useModelStore = create<ModelState & Actions>()((set, get) => ({
       if (Array.isArray(model?.extend?.vehicle_api?.supports)) {
         supportApis = model?.extend?.vehicle_api?.supports
         activeModelUspSevices = model?.extend?.vehicle_api?.USP || []
+      }
+      // Ensure COVESA is always included
+      if (!supportApis.some((s) => s.code === 'COVESA')) {
+        supportApis.push({ label: 'COVESA', code: 'COVESA' })
+      }
+      // Ensure COVESA is always included
+      if (!supportApis.some((s) => s.code === 'COVESA')) {
+        supportApis.push({ label: 'COVESA', code: 'COVESA' })
       }
     } else {
       ret = []
