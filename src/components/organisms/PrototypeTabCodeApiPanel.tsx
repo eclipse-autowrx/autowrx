@@ -165,10 +165,12 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
 
   const [availableApis, setAvailableApis] = useState<any>([])
 
-  const [activeModelUspSevices, supportApis] = useModelStore((state) => [
-    state.activeModelUspSevices,
-    state.supportApis,
-  ])
+  const [activeModelUspSevices, activeModelV2CApis, supportApis] =
+    useModelStore((state) => [
+      state.activeModelUspSevices,
+      state.activeModelV2CApis,
+      state.supportApis,
+    ])
 
   useEffect(() => {
     if (!supportApis) {
@@ -180,9 +182,9 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   }, [supportApis])
 
   useEffect(() => {
-    if (model?.extend?.vehicle_api?.USP) {
-      setTab('usp')
-    }
+    // if (model?.extend?.vehicle_api?.USP) {
+    //   setTab('usp')
+    // }
   }, [model])
 
   const [activeModelApis] = useModelStore(
@@ -191,6 +193,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   )
 
   const [useApis, setUseApis] = useState<any[]>([])
+  const [usedV2CApis, setUseV2CApis] = useState<any[]>([])
   const [activeApi, setActiveApi] = useState<any>()
   const popupApi = useState<boolean>(false)
   const [activeService, setActiveService] = useState<any>(null)
@@ -206,9 +209,22 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
         useList.push(item)
       }
     })
-
     setUseApis(useList)
   }, [code, activeModelApis])
+
+  useEffect(() => {
+    if (!code || !activeModelV2CApis || activeModelV2CApis.length === 0) {
+      setActiveV2CApi([])
+      return
+    }
+    let useV2CList: any[] = []
+    activeModelV2CApis.forEach((item: any) => {
+      if (code.includes(item.path)) {
+        useV2CList.push(item)
+      }
+    })
+    setUseV2CApis(useV2CList)
+  }, [code, activeModelV2CApis])
 
   const onApiClicked = (api: any) => {
     if (!api) return
@@ -235,7 +251,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
               active={tab === 'used-signals'}
               dataId="used-signals-tab"
             >
-              Used Signals
+              Used APIs
             </DaTabItem>
             <DaTabItem
               onClick={() => setTab('all-signals')}
@@ -276,10 +292,11 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
 
       {tab === 'used-signals' && (
         <>
-          {useApis && useApis.length > 0 ? (
-            <div className="flex flex-col w-full h-full px-4 overflow-y-auto">
-              <div className="flex flex-col w-full min-w-fit mt-2">
-                {useApis.map((item: any, index: any) => (
+          <div className="flex flex-col w-full h-full px-4 overflow-y-auto">
+            <div className="flex flex-col w-full min-w-fit mt-2">
+              <DaText variant='regular-bold'>COVESA:</DaText>
+              {useApis &&
+                useApis.map((item: any, index: any) => (
                   <DaApiListItem
                     key={index}
                     api={item}
@@ -288,13 +305,19 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
                     }}
                   />
                 ))}
-              </div>
+              {/* Render list of used V2C APIs here if exists. */}
+              <div className='mt-4'></div>
+              <DaText variant='regular-bold'>V2C:</DaText>
+              {usedV2CApis && (
+                <V2CApiList
+                  hideSearch={true}
+                  apis={usedV2CApis}
+                  activeApi={null}
+                  onApiSelected={() => {}}
+                />
+              )}
             </div>
-          ) : (
-            <div className="items-center flex-1 justify-center flex">
-              <p className="text-da-gray-medium">No signals was used.</p>
-            </div>
-          )}
+          </div>
         </>
       )}
 

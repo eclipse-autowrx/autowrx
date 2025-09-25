@@ -516,7 +516,8 @@ export const DEFAULT_V2C = [
 interface V2CApiListProps {
   apis: any[]
   onApiSelected: (api: any) => void
-  activeApi: any
+  activeApi: any,
+  hideSearch?: boolean
 }
 
 const V2CApiListItem = ({
@@ -569,7 +570,7 @@ const V2CApiListItem = ({
   )
 }
 
-const V2CApiList = ({ apis, onApiSelected, activeApi }: V2CApiListProps) => {
+const V2CApiList = ({ apis, onApiSelected, activeApi, hideSearch }: V2CApiListProps) => {
   const [searchTerm, setSearchTerm] = useState('')
 
   const filteredApis = apis.filter(
@@ -580,13 +581,13 @@ const V2CApiList = ({ apis, onApiSelected, activeApi }: V2CApiListProps) => {
 
   return (
     <div className="w-full h-full flex flex-col">
-      <div className="p-2 border-b">
+      { !hideSearch && <div className="p-2 border-b">
         <DaInput
           placeholder="Search APIs..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-      </div>
+      </div>}
       <div className="flex-1 overflow-auto">
         {filteredApis.map((api, index) => (
           <V2CApiListItem
@@ -619,7 +620,8 @@ const ApiDetail = ({ api }: { api: any }) => {
       </div>
 
       <div className="mb-4">
-        <div className="flex items-center mb-2">
+
+        { api.path && <div className="flex items-center mb-2">
           <span
             className={`text-sm font-bold px-2 py-1 rounded mr-2 ${
               api.method === 'GET'
@@ -636,7 +638,7 @@ const ApiDetail = ({ api }: { api: any }) => {
           <DaText variant="title" className="text-lg">
             {api.path}
           </DaText>
-        </div>
+        </div> }
 
         <DaText variant="small" className="text-da-gray-medium mb-4">
           {api.description}
@@ -704,7 +706,7 @@ const ApiDetail = ({ api }: { api: any }) => {
         </div>
       )}
 
-      <div className="mb-4">
+      { api.responses && <div className="mb-4">
         <DaText variant="sub-title" className="mb-2">
           Responses
         </DaText>
@@ -764,7 +766,7 @@ const ApiDetail = ({ api }: { api: any }) => {
             ),
           )}
         </div>
-      </div>
+      </div> }
     </div>
   )
 }

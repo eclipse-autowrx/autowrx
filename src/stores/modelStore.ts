@@ -23,6 +23,7 @@ type ModelState = {
   model?: Model | null
   activeModelApis?: any[]
   activeModelUspSevices?: any[]
+  activeModelV2CApis?: any[]
   prototype?: Prototype | null
   supportApis: any[]
   prototypeHasUnsavedChanges: boolean
@@ -39,6 +40,7 @@ const useModelStore = create<ModelState & Actions>()((set, get) => ({
   model: undefined,
   activeModelApis: [],
   activeModelUspSevices: [],
+  activeModelV2CApis: [],
   supportApis: [],
   prototype: undefined,
   prototypeHasUnsavedChanges: false,
@@ -51,6 +53,7 @@ const useModelStore = create<ModelState & Actions>()((set, get) => ({
       },
     ]
     let activeModelUspSevices = []
+    let activeModelV2CApis = []
     if (model) {
       // New way
       // console.log("model", model)
@@ -111,6 +114,7 @@ const useModelStore = create<ModelState & Actions>()((set, get) => ({
       if (Array.isArray(model?.extend?.vehicle_api?.supports)) {
         supportApis = model?.extend?.vehicle_api?.supports
         activeModelUspSevices = model?.extend?.vehicle_api?.USP || []
+        activeModelV2CApis = model?.extend?.vehicle_api?.V2C || []
       }
       // Ensure COVESA is always included
       if (!supportApis.some((s) => s.code === 'COVESA')) {
@@ -128,6 +132,7 @@ const useModelStore = create<ModelState & Actions>()((set, get) => ({
       ...state,
       supportApis,
       activeModelUspSevices,
+      activeModelV2CApis,
       model,
       activeModelApis: ret,
     }))
