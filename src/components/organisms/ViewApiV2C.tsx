@@ -574,7 +574,9 @@ const V2CApiListItem = ({
         </div>
 
         { api.info_url && <div>
-            <a href={api.info_url} target='_blank' className='text-xs underline text-sky-700'>More detail</a>
+          <a href={api.info_url} target="_blank">
+            <img className='w-16 h-8 object-contain' alt='axway' src='https://www.axway.com/themes/custom/axway2020/img/axway-logo-dark-gray.svg'/>
+          </a>
         </div> }
       </div>
     </div>
@@ -592,11 +594,11 @@ const V2CApiList = ({ apis, onApiSelected, activeApi, hideSearch }: V2CApiListPr
 
   return (
     <div className="w-full h-full flex flex-col">
-      <div className='fixed bottom-4 right-24'>
+      {/* <div className='fixed bottom-4 right-24'>
         <a href='https://www.axway.com' target="_blank">
           <img className='w-24 object-contain' alt='axway' src='https://www.axway.com/themes/custom/axway2020/img/axway-logo-dark-gray.svg'/>
         </a>
-      </div>
+      </div> */}
 
       { !hideSearch && <div className="p-2 border-b">
         <DaInput
