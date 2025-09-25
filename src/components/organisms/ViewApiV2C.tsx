@@ -91,6 +91,7 @@ export const DEFAULT_V2C = [
     },
     server:
       'https://central.eu-fr.axway.com/apimocks/523872032437473/driverhvacpreferences',
+    info_url: 'https://digitalauto.marketplace.eu.axway.com/productDetails/8a2d85d6944cd41601944f4c1ea93c80/resources'
   },
   {
     path: '/driver/mirror/preferences',
@@ -167,6 +168,7 @@ export const DEFAULT_V2C = [
     },
     server:
       'https://central.eu-fr.axway.com/apimocks/523872032437473/drivermirrorpreferences',
+    info_url: 'https://digitalauto.marketplace.eu.axway.com/productDetails/8a2d92de944cd40d01944f4c53bb3ec7/overview'
   },
   {
     path: '/driver/preferences',
@@ -239,6 +241,7 @@ export const DEFAULT_V2C = [
     },
     server:
       'https://central.eu-fr.axway.com/apimocks/523872032437473/driverpreferences',
+    info_url: 'https://digitalauto.marketplace.eu.axway.com/productDetails/8a2d83ca944cd30301944f4d09b54427/overview'
   },
   {
     path: '/driver/seating/preferences',
@@ -299,6 +302,7 @@ export const DEFAULT_V2C = [
     },
     server:
       'https://central.eu-fr.axway.com/apimocks/523872032437473/driverseatingpreferences',
+    info_url: 'https://digitalauto.marketplace.eu.axway.com/productDetails/8a2d92de944cd40d01944f4c89a93eec/overview'
   },
   {
     path: '/vehicle/access_log',
@@ -359,6 +363,7 @@ export const DEFAULT_V2C = [
     },
     server:
       'https://central.eu-fr.axway.com/apimocks/523872032437473/vehicle-access-permissions-log',
+    info_url: 'https://digitalauto.marketplace.eu.axway.com/productDetails/8a2d92de944cd40d01944f4cd3253f32/overview'
   },
   {
     path: '/vehicle/access/check',
@@ -434,6 +439,7 @@ export const DEFAULT_V2C = [
     },
     server:
       'https://central.eu-fr.axway.com/apimocks/523872032437473/vehicleaccesspermissions',
+    info_url: 'https://digitalauto.marketplace.eu.axway.com/productDetails/8a2d92de944cd40d01944f4cd3253f32/overview'
   },
   {
     path: '/vehicle/access/history',
@@ -510,6 +516,7 @@ export const DEFAULT_V2C = [
     },
     server:
       'https://central.eu-fr.axway.com/apimocks/523872032437473/vehicleaccesspermissions',
+    info_url: 'https://digitalauto.marketplace.eu.axway.com/productDetails/8a2d92de944cd40d01944f4cd3253f32/resources'
   },
 ]
 
@@ -565,6 +572,10 @@ const V2CApiListItem = ({
             {api.summary}
           </div>
         </div>
+
+        { api.info_url && <div>
+            <a href={api.info_url} target='_blank' className='text-xs underline text-sky-700'>More detail</a>
+        </div> }
       </div>
     </div>
   )
@@ -581,6 +592,12 @@ const V2CApiList = ({ apis, onApiSelected, activeApi, hideSearch }: V2CApiListPr
 
   return (
     <div className="w-full h-full flex flex-col">
+      <div className='fixed bottom-4 right-24'>
+        <a href='https://www.axway.com' target="_blank">
+          <img className='w-24 object-contain' alt='axway' src='https://www.axway.com/themes/custom/axway2020/img/axway-logo-dark-gray.svg'/>
+        </a>
+      </div>
+
       { !hideSearch && <div className="p-2 border-b">
         <DaInput
           placeholder="Search APIs..."
@@ -614,10 +631,6 @@ const ApiDetail = ({ api }: { api: any }) => {
 
   return (
     <div className="w-full h-full overflow-auto p-4">
-
-      <div className='fixed bottom-4 right-24'>
-        <img className='w-24 object-contain' alt='axway' src='https://www.axway.com/themes/custom/axway2020/img/axway-logo-dark-gray.svg'/>
-      </div>
 
       <div className="mb-4">
 

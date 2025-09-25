@@ -308,7 +308,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
               {/* Render list of used V2C APIs here if exists. */}
               <div className='mt-4'></div>
               <DaText variant='regular-bold'>V2C:</DaText>
-              {usedV2CApis && (
+              {usedV2CApis && usedV2CApis.length>0 && (
                 <V2CApiList
                   hideSearch={true}
                   apis={usedV2CApis}
