@@ -1,0 +1,5 @@
+/*!
+ * Font Awesome Free 6.4.0 - Minimal Build
+ * License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1)
+ */
+.fa,.fas,.fa-solid{font-family:"Font Awesome 6 Free";font-weight:900;font-style:normal;font-display:block;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}@font-face{font-family:"Font Awesome 6 Free";font-style:normal;font-weight:900;font-display:block;src:url(./webfonts/fa-solid-900.woff2) format("woff2")}.fa:before,.fas:before,.fa-solid:before{display:inline-block;text-rendering:auto;-webkit-font-smoothing:antialiased}.fa-fan:before{content:"\f863"}
