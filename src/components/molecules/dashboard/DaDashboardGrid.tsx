@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -10,6 +10,7 @@ import { FC, useEffect, useState, useRef } from 'react'
 import useRuntimeStore from '@/stores/runtimeStore'
 import { WidgetConfig } from '@/types/widget.type'
 import DaPopup from '@/components/atoms/DaPopup'
+import useCurrentModelApi from '@/hooks/useCurrentModelApi'
 
 interface DaDashboardGridProps {
   widgetItems: any[]
@@ -32,12 +33,14 @@ interface PropsWidgetItem {
   widgetConfig: WidgetConfig
   apisValue: any
   appLog?: string
+  vssTree?: any
 }
 
 const WidgetItem: FC<PropsWidgetItem> = ({
   widgetConfig,
   apisValue,
   appLog,
+  vssTree,
 }) => {
   const [rSpan, setRSpan] = useState<number>(0)
   const [cSpan, setCSpan] = useState<number>(0)
@@ -47,7 +50,7 @@ const WidgetItem: FC<PropsWidgetItem> = ({
   useEffect(() => {
     if (!widgetConfig) return
     let url = widgetConfig.url
-    
+
     // Don't append query parameters to built-in widget paths (local static files)
     // They receive options via postMessage instead
     if (url && url.startsWith('/builtin-widgets/')) {
@@ -116,15 +119,28 @@ const WidgetItem: FC<PropsWidgetItem> = ({
         allow="camera;microphone"
         onLoad={() => {
           // Send widget options via postMessage for built-in widgets
-          if (widgetConfig?.url?.startsWith('/builtin-widgets/') && widgetConfig?.options) {
+          if (widgetConfig?.url?.startsWith('/builtin-widgets/')) {
             setTimeout(() => {
-              frameElement?.current?.contentWindow?.postMessage(
-                JSON.stringify({
-                  cmd: 'widget-options',
-                  options: widgetConfig.options,
-                }),
-                '*',
-              )
+              if (widgetConfig?.options) {
+                frameElement?.current?.contentWindow?.postMessage(
+                  JSON.stringify({
+                    cmd: 'widget-options',
+                    options: widgetConfig.options,
+                  }),
+                  '*',
+                )
+              }
+
+              // Send VSS tree data to all widgets
+              if (vssTree) {
+                frameElement?.current?.contentWindow?.postMessage(
+                  JSON.stringify({
+                    cmd: 'vss-tree',
+                    vssTree: vssTree,
+                  }),
+                  '*',
+                )
+              }
             }, 100)
           }
         }}
@@ -137,8 +153,10 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
   // const CELLS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
   const [showModal, setShowModal] = useState(false)
   const [payload, setPayload] = useState<any>()
-
+  const { data: cvi } = useCurrentModelApi()
   const [renderCell, setRenderCell] = useState<any[]>([])
+
+  console.log('cvi in dashboard grid', cvi)
 
   useEffect(() => {
     //
@@ -221,6 +239,7 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
           widgetConfig={widgetItem}
           apisValue={apisValue}
           appLog={appLog}
+          vssTree={cvi}
         />
       ))}
     </div>

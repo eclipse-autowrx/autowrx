@@ -54,7 +54,6 @@ const BUILT_IN_WIDGETS = [
         'Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed',
         'Vehicle.Cabin.HVAC.Station.Row1.Passenger.FanSpeed',
       ],
-      vss_json: '/builtin-widgets/signal-list-settable/vss.json',
       iconURL: '/builtin-widgets/signal-list-settable/signal-list-settable.png',
     },
   },

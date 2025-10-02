@@ -205,20 +205,39 @@
       return cell;
     }
 
+    // Listen for VSS tree data from parent dashboard
+    window.addEventListener('message', function (event) {
+      try {
+        const data = JSON.parse(event.data)
+        if (data.cmd === 'vss-tree' && data.vssTree) {
+          VSS_TREE = data.vssTree
+          VSS_LIST = convertTree2List(VSS_TREE)
+          console.log('Received VSS tree from dashboard:', VSS_TREE)
+        }
+      } catch (err) {
+        // Ignore non-JSON messages
+      }
+    })
+
     async function onWidgetLoaded(options) {
       //console.log(">>>>>>> onWidgetLoaded")
       const apiTableBody = document.querySelector('#api-table tbody');
 
+      // VSS tree is now received via postMessage from dashboard
+      // Fallback to old method if vss_json is explicitly provided
       VSS_JSON_URL = options.vss_json
 
       if (VSS_JSON_URL) {
         await loadVssJson()
       } else {
-        await new Promise(r => setTimeout(r, 500))
+        // Wait a bit for the VSS tree to arrive via postMessage
+        await new Promise(r => setTimeout(r, 300))
 
-        //console.log("window.VSS_TREE", window.VSS_TREE)
-        if ("window.VSS_TREE", window.VSS_TREE) {
-          VSS_TREE = window.VSS_TREE
+        // Fallback to window.VSS_TREE if available (legacy support)
+        if (!VSS_TREE || Object.keys(VSS_TREE).length === 0) {
+          if (window.VSS_TREE) {
+            VSS_TREE = window.VSS_TREE
+          }
         }
       }
       //console.log(VSS_TREE)
