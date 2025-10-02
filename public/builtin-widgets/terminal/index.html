@@ -7,6 +7,7 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Widget</title>
   <link rel="icon" href="./favicon.ico" type="image/x-icon">
+  <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="../syncer.js"></script>
   <style>
     @font-face {
@@ -18,71 +19,22 @@
 
     body {
       font-family: 'Manrope', sans-serif;
-      background-color: #1e293b;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      width: 100vw;
-      margin: 0;
     }
 
     .font-medium {
       font-weight: 500;
     }
-
-    .header {
-      font-weight: bold;
-      font-size: 0.875rem;
-      background-color: #0f172a;
-      padding: 0.25rem 0.5rem;
-      display: flex;
-      align-items: center;
-    }
-
-    .header:hover {
-      text-decoration: underline;
-    }
-
-    .grow {
-      flex-grow: 1;
-    }
-
-    .terminal-content {
-      flex-grow: 1;
-      overflow-y: auto;
-      color: white;
-      font-size: 0.75rem;
-      font-family: monospace;
-      padding: 0.25rem 0.5rem;
-    }
-
-    .whitespace-pre-line {
-      white-space: pre-line;
-    }
-
-    button {
-      background: none;
-      border: none;
-      color: white;
-      cursor: pointer;
-      font-size: 0.875rem;
-    }
-
-    button:hover {
-      text-decoration: underline;
-    }
   </style>
 </head>
 
-<body>
-  <div class="header">
+<body class="bg-slate-800 text-white flex flex-col h-screen w-screen">
+  <div class="font-bold text-sm bg-slate-900 px-2 py-1 flex items-center hover:underline">
     Terminal
     <div class="grow"></div>
-    <button id='btn-clear'>Clear
+    <button id='btn-clear' className="text-sm">Clear
     </button>
   </div>
-  <div class="terminal-content">
+  <div class="grow overflow-y-auto text-white text-xs font-mono px-2 py-1">
     <p id="container" class="whitespace-pre-line">
     <p>
     <div id="bottom"></div>

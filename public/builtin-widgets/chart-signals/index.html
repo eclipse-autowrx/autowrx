@@ -1,26 +1,16 @@
 <html>
 
 <head>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
     <script defer src="../syncer.js"></script>
-    <script src="../chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body {
-            background-color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-        }
         #chart-container {
             width: 100%;
             height: 100%;
-            display: flex;
-            flex-direction: column;
-            padding: 16px;
-            align-items: center;
-            gap: 24px;
         }
+
         #api-chart {
             width: 100%;
             height: 100%;
@@ -28,8 +18,8 @@
     </style>
 </head>
 
-<body>
-    <div id="chart-container">
+<body class="bg-white flex items-center justify-center h-screen">
+    <div id="chart-container" class="flex flex-col p-4 items-center space-y-6">
         <canvas id="api-chart"></canvas>
     </div>
 
