@@ -63,7 +63,6 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
 
   const PIN_WIDGETS = [
     { name: 'Single Signal Widget', weight: 0 },
-    { name: 'Chart Signal Widget', weight: 1 },
     { name: 'Signal List Settable', weight: 2 },
     { name: 'Terminal', weight: 3 },
     { name: 'Image by Signal value', weight: 4 },
@@ -71,6 +70,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
     { name: 'General 3D Car Model', weight: 6 },
     { name: 'Simple Fan Widget', weight: 7 },
     { name: 'Simple Wiper Widget', weight: 8 },
+    { name: 'Chart Multiple Signals', weight: 1 },
   ]
 
   const handleAddWidgetClick = async () => {

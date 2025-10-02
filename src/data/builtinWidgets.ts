@@ -24,38 +24,6 @@ const BUILT_IN_WIDGETS = [
     },
   },
   {
-    id: 'Table-APIs-Widget',
-    plugin: 'Builtin',
-    widget: 'Table APIs Widget',
-    label: 'Table APIs Widget',
-    icon: '/builtin-widgets/table-apis/table-apis.png',
-    path: '/builtin-widgets/table-apis/index.html',
-    desc: 'Display multiple signals in a table format',
-    options: {
-      apis: [
-        'Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed',
-        'Vehicle.Cabin.HVAC.Station.Row1.Passenger.FanSpeed',
-      ],
-      iconURL: '/builtin-widgets/table-apis/table-apis.png',
-    },
-  },
-  {
-    id: 'Chart-APIs-Widget',
-    plugin: 'Builtin',
-    widget: 'Chart APIs Widget',
-    label: 'Chart Signal Widget',
-    icon: '/builtin-widgets/chart-apis/chart-apis.png',
-    path: '/builtin-widgets/chart-apis/index.html',
-    desc: 'Visualize signal values over time in a chart',
-    options: {
-      api: 'Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed',
-      lineColor: '#005072',
-      dataUpdateInterval: '1000',
-      maxDataPoints: '30',
-      iconURL: '/builtin-widgets/chart-apis/chart-apis.png',
-    },
-  },
-  {
     id: 'Chart-Signals-Widget',
     plugin: 'Builtin',
     widget: 'Chart Signals Widget',
