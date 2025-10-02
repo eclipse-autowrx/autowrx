@@ -45,8 +45,8 @@ const config: any = {
   },
   disableEmailLogin: false,
   runtime: {
-    url: 'https://uspsimulation-qa.uaes.com/kit',
-    // url: 'https://kit.digitalauto.tech',
+    // url: 'https://uspsimulation-qa.uaes.com/kit',
+    url: 'https://kit.digitalauto.tech',
   },
   strictAuth: false,
   enableSupport: true,
