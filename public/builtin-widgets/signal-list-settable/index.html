@@ -213,11 +213,41 @@
           VSS_TREE = data.vssTree
           VSS_LIST = convertTree2List(VSS_TREE)
           console.log('Received VSS tree from dashboard:', VSS_TREE)
+
+          // If table is already rendered, update it with VSS metadata
+          const apiTableBody = document.querySelector('#api-table tbody');
+          if (apiTableBody && apiTableBody.rows.length > 1) {
+            // Update existing rows with VSS metadata
+            updateTableWithVssMetadata(apiTableBody)
+          }
         }
       } catch (err) {
         // Ignore non-JSON messages
       }
     })
+
+    function updateTableWithVssMetadata(apiTableBody) {
+      // Skip header row (index 0), update data rows
+      for (let i = 1; i < apiTableBody.rows.length; i++) {
+        const row = apiTableBody.rows[i];
+        // Get signal name from data attribute (reliable source)
+        const signalName = row.dataset.signalName
+
+        if (!signalName) continue;
+
+        const signal = VSS_MAP.get(signalName)
+
+        if (signal) {
+          // Update column 0: Signal name and metadata display
+          const newCell0 = createTableCell(signal, signalName, 0)
+          row.replaceChild(newCell0, row.cells[0])
+
+          // Update column 2: Set controls (boolean buttons, dropdown, or input)
+          const newCell2 = createTableCell(signal, signalName, 2)
+          row.replaceChild(newCell2, row.cells[2])
+        }
+      }
+    }
 
     async function onWidgetLoaded(options) {
       //console.log(">>>>>>> onWidgetLoaded")
@@ -267,6 +297,7 @@
         options.apis.forEach((api, index) => {
           const row = document.createElement('tr');
           row.className = index % 2 === 1 ? 'bg-gray-50' : 'bg-gray-100';
+          row.dataset.signalName = api; // Store signal name for later reference
           let signal = VSS_MAP.get(api)
           console.log(`signal ${api}`, signal)
           row.appendChild(createTableCell(signal, api, 0));

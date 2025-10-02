@@ -46,6 +46,7 @@ const WidgetItem: FC<PropsWidgetItem> = ({
   const [cSpan, setCSpan] = useState<number>(0)
   const frameElement = useRef<HTMLIFrameElement>(null)
   const [url, setUrl] = useState<string>()
+  const [iframeLoaded, setIframeLoaded] = useState(false)
 
   useEffect(() => {
     if (!widgetConfig) return
@@ -112,11 +113,11 @@ const WidgetItem: FC<PropsWidgetItem> = ({
     sendAppLogToWidget(appLog)
   }, [appLog])
 
-  // Re-send VSS tree to widget when it changes
+  // Send VSS tree to widget when both iframe is loaded AND vssTree is available
   useEffect(() => {
-    if (!vssTree || !frameElement.current) return
+    if (!iframeLoaded || !vssTree) return
     sendVssTreeToWidget(vssTree)
-  }, [vssTree])
+  }, [vssTree, iframeLoaded])
 
   if (!widgetConfig)
     return (
@@ -135,7 +136,10 @@ const WidgetItem: FC<PropsWidgetItem> = ({
         className="m-0 h-full w-full"
         allow="camera;microphone"
         onLoad={() => {
-          // Send widget options and VSS tree via postMessage for built-in widgets
+          // Mark iframe as loaded
+          setIframeLoaded(true)
+
+          // Send widget options via postMessage for built-in widgets
           if (widgetConfig?.url?.startsWith('/builtin-widgets/')) {
             setTimeout(() => {
               if (widgetConfig?.options) {
@@ -147,8 +151,7 @@ const WidgetItem: FC<PropsWidgetItem> = ({
                   '*',
                 )
               }
-              // Send VSS tree on initial load
-              sendVssTreeToWidget(vssTree)
+              // VSS tree will be sent by useEffect when both iframe and vssTree are ready
             }, 100)
           }
         }}
@@ -194,7 +197,7 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
   const [allVars, setAllVars] = useState<any>({})
 
   useEffect(() => {
-    setAllVars({...traceVars, ...apisValue})
+    setAllVars({ ...traceVars, ...apisValue })
   }, [traceVars, apisValue])
 
   // useEffect(() => {
