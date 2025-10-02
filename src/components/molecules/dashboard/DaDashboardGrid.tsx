@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { FC, useEffect, useState, useRef } from 'react'
+import { FC, useEffect, useState, useRef, useMemo } from 'react'
 import useRuntimeStore from '@/stores/runtimeStore'
 import { WidgetConfig } from '@/types/widget.type'
 import DaPopup from '@/components/atoms/DaPopup'
@@ -96,10 +96,27 @@ const WidgetItem: FC<PropsWidgetItem> = ({
     )
   }
 
+  const sendVssTreeToWidget = (tree: any) => {
+    if (!tree) return
+    frameElement?.current?.contentWindow?.postMessage(
+      JSON.stringify({
+        cmd: 'vss-tree',
+        vssTree: tree,
+      }),
+      '*',
+    )
+  }
+
   useEffect(() => {
     if (!appLog) return
     sendAppLogToWidget(appLog)
   }, [appLog])
+
+  // Re-send VSS tree to widget when it changes
+  useEffect(() => {
+    if (!vssTree || !frameElement.current) return
+    sendVssTreeToWidget(vssTree)
+  }, [vssTree])
 
   if (!widgetConfig)
     return (
@@ -118,7 +135,7 @@ const WidgetItem: FC<PropsWidgetItem> = ({
         className="m-0 h-full w-full"
         allow="camera;microphone"
         onLoad={() => {
-          // Send widget options via postMessage for built-in widgets
+          // Send widget options and VSS tree via postMessage for built-in widgets
           if (widgetConfig?.url?.startsWith('/builtin-widgets/')) {
             setTimeout(() => {
               if (widgetConfig?.options) {
@@ -130,17 +147,8 @@ const WidgetItem: FC<PropsWidgetItem> = ({
                   '*',
                 )
               }
-
-              // Send VSS tree data to all widgets
-              if (vssTree) {
-                frameElement?.current?.contentWindow?.postMessage(
-                  JSON.stringify({
-                    cmd: 'vss-tree',
-                    vssTree: vssTree,
-                  }),
-                  '*',
-                )
-              }
+              // Send VSS tree on initial load
+              sendVssTreeToWidget(vssTree)
             }, 100)
           }
         }}
@@ -156,7 +164,8 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
   const { data: cvi } = useCurrentModelApi()
   const [renderCell, setRenderCell] = useState<any[]>([])
 
-  console.log('cvi in dashboard grid', cvi)
+  // Memoize VSS tree to prevent unnecessary re-renders with large data
+  const memoizedVssTree = useMemo(() => cvi, [cvi])
 
   useEffect(() => {
     //
@@ -239,7 +248,7 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
           widgetConfig={widgetItem}
           apisValue={apisValue}
           appLog={appLog}
-          vssTree={cvi}
+          vssTree={memoizedVssTree}
         />
       ))}
     </div>
