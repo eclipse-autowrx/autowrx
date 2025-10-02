@@ -244,8 +244,7 @@ window.postMessage(
                     error_messeges: {
                         "element_not_found": "Some thing went wrong. Element not found"
                     }
-                },
-                
+                }
             ]
         }
     })

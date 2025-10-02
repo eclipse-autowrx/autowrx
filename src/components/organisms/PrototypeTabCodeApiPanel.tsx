@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -18,19 +18,28 @@ import { DaCopy } from '../atoms/DaCopy'
 import DaTabItem from '../atoms/DaTabItem'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { UspSeviceList, ServiceDetail } from './ViewApiUSP'
+import { V2CApiList, ApiDetail, DEFAULT_V2C } from './ViewApiV2C'
 interface ApiCodeBlockProps {
   content: string
   sampleLabel: string
   dataId?: string
   copyClassName?: string
+  onApiCodeCopy?: () => void
 }
 
-const ApiCodeBlock = ({ content, sampleLabel, dataId, copyClassName }: ApiCodeBlockProps) => {
+const ApiCodeBlock = ({
+  content,
+  sampleLabel,
+  dataId,
+  copyClassName,
+  onApiCodeCopy,
+}: ApiCodeBlockProps) => {
   return (
     <div className="flex flex-col" data-id={dataId}>
       <DaCopy
         textToCopy={content}
         className={`flex h-6 items-center w-fit mt-3 btn-copy ${copyClassName}`}
+        onCopied={onApiCodeCopy}
       >
         <DaText
           variant="small"
@@ -101,23 +110,38 @@ const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
             )}
             {['actuator', 'sensor'].includes(activeApi.type) && (
               <ApiCodeBlock
-                content={`(await self.${activeApi.name}.get()).value`}
+                content={`value = (await self.${activeApi.name}.get()).value`}
                 sampleLabel="Sample code to get signal value"
-                copyClassName='btn-copy-get-code'
+                copyClassName="btn-copy-get-code"
+                onApiCodeCopy={() => {
+                  if (requestCancel) {
+                    requestCancel()
+                  }
+                }}
               />
             )}
             {['actuator'].includes(activeApi.type) && (
               <ApiCodeBlock
                 content={`await self.${activeApi.name}.set(value)`}
                 sampleLabel="Sample code to set signal value"
-                copyClassName='btn-copy-set-code'
+                copyClassName="btn-copy-set-code"
+                onApiCodeCopy={() => {
+                  if (requestCancel) {
+                    requestCancel()
+                  }
+                }}
               />
             )}
             {['actuator', 'sensor'].includes(activeApi.type) && (
               <ApiCodeBlock
                 content={`await self.${activeApi.name}.subscribe(function_name)`}
                 sampleLabel="Sample code to subscribe signal value"
-                copyClassName='btn-copy-subscribe-code'
+                copyClassName="btn-copy-subscribe-code"
+                onApiCodeCopy={() => {
+                  if (requestCancel) {
+                    requestCancel()
+                  }
+                }}
               />
             )}
           </div>
@@ -134,17 +158,33 @@ interface PrototypeTabCodeApiPanelProps {
 const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   code,
 }) => {
-  const [tab, setTab] = useState<'used-signals' | 'all-signals' | 'usp'>('used-signals')
+  const [tab, setTab] = useState<
+    'used-signals' | 'all-signals' | 'usp' | 'v2c'
+  >('used-signals')
   const { data: model } = useCurrentModel()
 
-  const [activeModelUspSevices] = useModelStore((state) => [
-    state.activeModelUspSevices
-  ])
+  const [availableApis, setAvailableApis] = useState<any>([])
+
+  const [activeModelUspSevices, activeModelV2CApis, supportApis] =
+    useModelStore((state) => [
+      state.activeModelUspSevices,
+      state.activeModelV2CApis,
+      state.supportApis,
+    ])
 
   useEffect(() => {
-    if (model?.extend?.vehicle_api?.USP) {
-      setTab('usp')
+    if (!supportApis) {
+      setAvailableApis([])
+      return
     }
+    let apis = supportApis.map((s) => s.code)
+    setAvailableApis(apis || [])
+  }, [supportApis])
+
+  useEffect(() => {
+    // if (model?.extend?.vehicle_api?.USP) {
+    //   setTab('usp')
+    // }
   }, [model])
 
   const [activeModelApis] = useModelStore(
@@ -153,9 +193,11 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   )
 
   const [useApis, setUseApis] = useState<any[]>([])
+  const [usedV2CApis, setUseV2CApis] = useState<any[]>([])
   const [activeApi, setActiveApi] = useState<any>()
   const popupApi = useState<boolean>(false)
   const [activeService, setActiveService] = useState<any>(null)
+  const [activeV2CApi, setActiveV2CApi] = useState<any>(null)
   useEffect(() => {
     if (!code || !activeModelApis || activeModelApis.length === 0) {
       setUseApis([])
@@ -167,9 +209,22 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
         useList.push(item)
       }
     })
-
     setUseApis(useList)
   }, [code, activeModelApis])
+
+  useEffect(() => {
+    if (!code || !activeModelV2CApis || activeModelV2CApis.length === 0) {
+      setActiveV2CApi([])
+      return
+    }
+    let useV2CList: any[] = []
+    activeModelV2CApis.forEach((item: any) => {
+      if (code.includes(item.path)) {
+        useV2CList.push(item)
+      }
+    })
+    setUseV2CApis(useV2CList)
+  }, [code, activeModelV2CApis])
 
   const onApiClicked = (api: any) => {
     if (!api) return
@@ -189,48 +244,59 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
       </DaPopup>
 
       <div className="flex justify-between border-b mx-3 mt-2">
-      
-        { model?.extend?.vehicle_api?.USP ? <>
-          <DaTabItem
-            onClick={() => setTab('usp')}
-            active={tab === 'usp'}
-          >
-            USP 2.0
-          </DaTabItem>
-        </>: <>
+        <>
           <div className="flex">
-          <DaTabItem
+            <DaTabItem
               onClick={() => setTab('used-signals')}
               active={tab === 'used-signals'}
-              dataId='used-signals-tab'
+              dataId="used-signals-tab"
             >
-              Used Signals
+              Used APIs
             </DaTabItem>
             <DaTabItem
               onClick={() => setTab('all-signals')}
               active={tab === 'all-signals'}
-              dataId='all-signals-tab'
+              dataId="all-signals-tab"
             >
-              All Signals
+              COVESA Signals
             </DaTabItem>
+            {availableApis && (
+              <>
+                {availableApis.includes('USP') && (
+                  <DaTabItem
+                    onClick={() => setTab('usp')}
+                    active={tab === 'usp'}
+                  >
+                    USP 2.0
+                  </DaTabItem>
+                )}
+                {availableApis.includes('V2C') && (
+                  <DaTabItem
+                    onClick={() => setTab('v2c')}
+                    active={tab === 'v2c'}
+                  >
+                    V2C
+                  </DaTabItem>
+                )}
+              </>
+            )}
           </div>
-          <DaText
+          {/* <DaText
             variant="small-bold"
             className="text-da-primary-500 py-0.5 mr-1"
           >
             COVESA VSS {(model && model.api_version) ?? 'v4.1'}
-          </DaText>
-        </> }
-        
-         
+          </DaText> */}
+        </>
       </div>
 
       {tab === 'used-signals' && (
         <>
-          {useApis && useApis.length > 0 ? (
-            <div className="flex flex-col w-full h-full px-4 overflow-y-auto">
-              <div className="flex flex-col w-full min-w-fit mt-2">
-                {useApis.map((item: any, index: any) => (
+          <div className="flex flex-col w-full h-full px-4 overflow-y-auto">
+            <div className="flex flex-col w-full min-w-fit mt-2">
+              <DaText variant='regular-bold'>COVESA:</DaText>
+              {useApis &&
+                useApis.map((item: any, index: any) => (
                   <DaApiListItem
                     key={index}
                     api={item}
@@ -239,13 +305,19 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
                     }}
                   />
                 ))}
-              </div>
+              {/* Render list of used V2C APIs here if exists. */}
+              <div className='mt-4'></div>
+              <DaText variant='regular-bold'>V2C:</DaText>
+              {usedV2CApis && usedV2CApis.length>0 && (
+                <V2CApiList
+                  hideSearch={true}
+                  apis={usedV2CApis}
+                  activeApi={null}
+                  onApiSelected={() => {}}
+                />
+              )}
             </div>
-          ) : (
-            <div className="items-center flex-1 justify-center flex">
-              <p className="text-da-gray-medium">No signals was used.</p>
-            </div>
-          )}
+          </div>
         </>
       )}
 
@@ -257,11 +329,36 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
 
       {tab === 'usp' && (
         <div className="w-full">
-          <div className='w-full h-[240px] overflow-y-auto'>
-            <UspSeviceList services={activeModelUspSevices || []} onServiceSelected={setActiveService} activeService={activeService} />
+          <div className="w-full h-[240px] overflow-y-auto">
+            <UspSeviceList
+              services={activeModelUspSevices || []}
+              onServiceSelected={setActiveService}
+              activeService={activeService}
+            />
           </div>
-          <div className='w-full h-[calc(100vh-460px)] overflow-y-auto'>
-            {activeService && <ServiceDetail service={activeService} hideImage={true} hideTitle={true}/>}  
+          <div className="w-full h-[calc(100vh-460px)] overflow-y-auto">
+            {activeService && (
+              <ServiceDetail
+                service={activeService}
+                hideImage={true}
+                hideTitle={true}
+              />
+            )}
+          </div>
+        </div>
+      )}
+
+      {tab === 'v2c' && (
+        <div className="w-full">
+          <div className="w-full h-[240px] overflow-y-auto">
+            <V2CApiList
+              apis={DEFAULT_V2C}
+              activeApi={activeV2CApi}
+              onApiSelected={setActiveV2CApi}
+            />
+          </div>
+          <div className="w-full h-[calc(100vh-460px)] overflow-y-auto">
+            <ApiDetail api={activeV2CApi} />
           </div>
         </div>
       )}

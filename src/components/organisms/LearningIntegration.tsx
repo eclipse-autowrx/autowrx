@@ -15,6 +15,17 @@ const LearningIntegration = ({requestClose}: LearningIntegrationProps) => {
   const frameLearning = useRef<HTMLIFrameElement>(null)
   const [isMinimized, setIsMinimized] = useState(false)
 
+  const [learningUrl, setLearningUrl] = useState('')
+
+  useEffect(() => {
+    // If running on localhost, set learningUrl to http://localhost:3000
+    // if (typeof window !== 'undefined' && window.location.hostname.startsWith('localhost')) {
+    //   setLearningUrl('http://localhost:3000')
+    //   return
+    // }
+    setLearningUrl(config?.learning?.url)
+  }, [])
+
   const [
     isShowedAutomationControl,
     automationSequence,
@@ -40,6 +51,10 @@ const LearningIntegration = ({requestClose}: LearningIntegrationProps) => {
         if(event.data?.sequence?.trigger_source === 'learning') {
           setIsMinimized(true)
         }
+      }
+
+      if(event.data && event.data === 'exit_iframe') {
+        requestClose()
       }
     })
   }
@@ -69,9 +84,9 @@ const LearningIntegration = ({requestClose}: LearningIntegrationProps) => {
     >
       <div className="w-full h-full pt-6 pl-6 pr-6 pb-2 shadow-2xl relative">
         {/* Close button */}
-        <button
+        {/* <button
           onClick={requestClose}
-          className="absolute top-0.5 right-0.5 z-10 w-8 h-8 bg-red-500 hover:bg-red-600 
+          className="absolute top-1 right-1 z-10 w-6 h-6 bg-gray-700 hover:opacity-70
               text-white rounded-full flex items-center justify-center transition-colors duration-200 shadow-lg"
           title="Close"
         >
@@ -88,11 +103,11 @@ const LearningIntegration = ({requestClose}: LearningIntegrationProps) => {
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
-        </button>
+        </button> */}
         
         <iframe
           ref={frameLearning}
-          src={`${config?.learning?.url}?user_id=${encodeURIComponent(user?.id || '')}&token=${encodeURIComponent(access?.token || '')}`}
+          src={`${learningUrl}?user_id=${encodeURIComponent(user?.id || '')}&token=${encodeURIComponent(access?.token || '')}`}
           className="m-0 h-full w-full learning-appear1 inset-0 shadow-[4px_4px_6px_rgba(0,0,0,0.3)]"
           allow="camera;microphone"
           onLoad={() => {}}

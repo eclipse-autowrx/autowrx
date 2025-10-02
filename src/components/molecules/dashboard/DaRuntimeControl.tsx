@@ -32,6 +32,7 @@ import { TbPlayerPlayFilled, TbPlayerStopFilled } from 'react-icons/tb'
 import { cn } from '@/lib/utils'
 import DaPopup from '@/components/atoms/DaPopup'
 import RuntimeAssetManager from '@/components/organisms/RuntimeAssetManager'
+import PrototypeVarsWatch from './PrototypeVarsWatch'
 import {
   getComputedAPIs,
 } from '@/services/model.service'
@@ -122,6 +123,7 @@ const DaRuntimeControl: FC = ({ }) => {
         let obj = {} as any
         obj[`${payload.api}`] = payload.value
         writeSignalValue(obj)
+        writeVarsValue(obj)
       }
     } catch (err) {
       // console.log(err)
@@ -201,6 +203,17 @@ const DaRuntimeControl: FC = ({ }) => {
     }
   }
 
+  const writeVarsValue = (obj: any) => {
+    if (!obj) return
+
+    if (runTimeRef.current) {
+      runTimeRef.current?.writeVarsValue(obj)
+    }
+    if (runTimeRef1.current) {
+      runTimeRef1.current?.writeVarsValue(obj)
+    }
+  }
+
   const notifyWidgetIframes = (data: any) => {
     const iframes = document.querySelectorAll('iframe')
     iframes.forEach((iframe) => {
@@ -254,8 +267,11 @@ const DaRuntimeControl: FC = ({ }) => {
       </DaPopup>
 
       {/* <div>{customKitServer}</div> */}
-      {isExpand && isShowEditKitServer && (
-        <div className="flex mb-2">
+      {isExpand && isShowEditKitServer && <>
+        <div className='mb-1 text-sm px-2'>
+          Runtime server URL: leave empty to use default server
+        </div>
+        <div className="flex mb-2 px-2">
           <DaInput
             className="grow text-da-black"
             value={tmpCustomKitServer}
@@ -281,7 +297,7 @@ const DaRuntimeControl: FC = ({ }) => {
             Cancel
           </DaButton>
         </div>
-      )}
+      </>}
       <div className={`px-1 flex ${!isExpand && 'hidden'}`}>
         {useRuntime && <>
           {customKitServer && customKitServer.trim().length > 0 ? (
@@ -605,10 +621,10 @@ const DaRuntimeControl: FC = ({ }) => {
                       </div>
                     )}
                   </div>
-                  <p data-id="current-log" className="da-label-small flex-1 overflow-y-auto whitespace-pre-wrap rounded bg-da-black px-2 py-1 text-da-white">
+                  <div data-id="current-log" className="da-label-small flex-1 overflow-y-auto whitespace-pre-wrap rounded bg-da-black px-2 py-1 text-da-white">
                     {log}
                     <AlwaysScrollToBottom />
-                  </p>
+                  </div>
                   
                 </div>
               </>
@@ -621,6 +637,13 @@ const DaRuntimeControl: FC = ({ }) => {
                 }}
               />
             )}
+
+            {activeTab == 'vars' && (
+              <PrototypeVarsWatch requestWriteVarValue={(obj: any) => {
+                writeVarsValue(obj)
+              }}/>
+            )
+          }
 
             {activeTab == 'rt-usage' && <div className='h-full overflow-auto px-2 py-1 text-sm'>
               <div className='mt-2 mb-1 font-semibold'>Number of client listen to this runtime: {listenerOnRt.length}</div>
@@ -650,6 +673,8 @@ const DaRuntimeControl: FC = ({ }) => {
               // onBlur={saveCodeToDb}
               />
             )}
+
+            
 
             {activeTab == 'mock' && (
               <DaMockManager
@@ -711,6 +736,17 @@ const DaRuntimeControl: FC = ({ }) => {
             >
               Terminal{' '}
             </div>
+            {prototype?.language === 'cpp' && (
+              <div
+                data-id="btn-runtime-control-tab-vars"
+                className={`da-label-small flex cursor-pointer items-center px-4 py-0.5 text-da-white hover:bg-da-gray-medium ${activeTab == 'vars' && 'border-b-2 border-da-white'}`}
+                onClick={() => {
+                  setActiveTab('vars')
+                }}
+              >
+                Vars Watch
+              </div>
+            )}
             <div
               data-id="btn-runtime-control-tab-apis"
               className={`da-label-small flex cursor-pointer items-center px-4 py-0.5 text-da-white hover:bg-da-gray-medium ${activeTab == 'apis' && 'border-b-2 border-da-white'}`}
@@ -720,7 +756,7 @@ const DaRuntimeControl: FC = ({ }) => {
             >
               Signals Watch
             </div>
-            <div
+            {/* <div
               data-id="btn-runtime-control-runtime-usage"
               className={`da-label-small flex cursor-pointer items-center px-4 py-0.5 text-da-white hover:bg-da-gray-medium ${activeTab == 'rt-usage' && 'border-b-2 border-da-white'}`}
               onClick={() => {
@@ -728,7 +764,7 @@ const DaRuntimeControl: FC = ({ }) => {
               }}
             >
               Runtime Usage ({runningAppsOnRt.length}-{listenerOnRt.length})
-            </div>
+            </div> */}
 
             {isAdvantageMode > 0 && (
               <div

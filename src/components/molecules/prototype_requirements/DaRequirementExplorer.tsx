@@ -112,7 +112,7 @@ const DaRequirementExplorer: React.FC<DaRequirementExplorerProps> = ({
   const { requirements } = useRequirementStore()
 
   const initialNodes = useMemo(() => {
-    const reqs = requirements
+    const reqs = Array.isArray(requirements) ? requirements : []
     const total = reqs.length
 
     // 1) ALWAYS build the radar-background node
@@ -136,43 +136,51 @@ const DaRequirementExplorer: React.FC<DaRequirementExplorerProps> = ({
     const effectiveMinRadius = Math.max(MIN_RADIUS, safeMinByAngle)
 
     // 4) map each requirement → a positioned node
-
     const reqNodes = reqs.map((req, i) => {
-      // polar angle (start at 12 o'clock)
-      const angle = req.angle || i * angleStep - Math.PI / 2
+      // Use pre-calculated position if available, otherwise calculate it
+      let x, y, radius, angle, avgScore, nodeSize
+      
+      if ((req as any).x !== undefined && (req as any).y !== undefined && (req as any).radius !== undefined) {
+        // Use pre-calculated positions (avoid recalculating when only isHidden changes)
+        x = (req as any).x
+        y = (req as any).y
+        radius = (req as any).radius
+        angle = (req as any).angle
+        avgScore = (req as any).avgScore || 3
+        nodeSize = (req as any).nodeSize || 40
+      } else {
+        // Calculate position using DaRequirementExplorer's logic
+        angle = req.angle !== undefined ? req.angle : i * angleStep - Math.PI / 2
 
-      // safely coerce priority/relevance/impact into 1…5
-      const raw = req.rating || {}
+        // safely coerce priority/relevance/impact into 1…5
+        const raw = req.rating || {}
+        const pr = safeScore(raw.priority)
+        const rl = safeScore(raw.relevance)
+        const im = safeScore(raw.impact)
 
-      const pr = safeScore(raw.priority)
-      const rl = safeScore(raw.relevance)
-      const im = safeScore(raw.impact)
+        avgScore = (pr + rl + im) / 3
+        const norm = 1 - (avgScore / MAX_RATING)
 
-      // Make avgScore directly proportional to radius:
-      // - Small radius (near center) means high avgScore
-      // - Large radius (far from center) means low avgScore
-      // So, radius = norm * MAX_RADIUS, where norm = 1 - (avgScore / MAX_RATING)
-      const avgScore = (pr + rl + im) / 3
-      const norm = 1 - (avgScore / MAX_RATING) // norm=0 (center, high score), norm=1 (edge, low score)
+        radius =
+          MIN_RADIUS +
+          ((MAX_RADIUS - MIN_RADIUS) * (MAX_RATING - avgScore)) /
+            (MAX_RATING - 1)
 
-      // 1. For position: higher scores are closer to center (smaller radius)
-      const baseR = norm * MAX_RADIUS
-      const scaledR = baseR * DIST_COEFF
-      // The bigger avgScore, the smaller the radius (closer to center)
-      // So, radius = effectiveMinRadius + (MAX_RADIUS - effectiveMinRadius) * (1 - avgScore / MAX_RATING)
-      // Linear mapping: avgScore = 1 → MAX_RADIUS, avgScore = 5 → MIN_RADIUS
-      const radius =
-        MIN_RADIUS +
-        ((MAX_RADIUS - MIN_RADIUS) * (MAX_RATING - avgScore)) /
-          (MAX_RATING - 1)
+        const MIN_NODE_SIZE = 12
+        const MAX_NODE_SIZE = 70
+        nodeSize = MIN_NODE_SIZE + (MAX_NODE_SIZE - MIN_NODE_SIZE) * norm
 
-      // 2. For node size: interpolate between min and max node size based on norm (higher norm = bigger node)
-      const MIN_NODE_SIZE = 12
-      const MAX_NODE_SIZE = 70
-      const nodeSize = MIN_NODE_SIZE + (MAX_NODE_SIZE - MIN_NODE_SIZE) * norm
+        x = radius * Math.cos(angle)
+        y = radius * Math.sin(angle)
 
-      const x = radius * Math.cos(angle)
-      const y = radius * Math.sin(angle)
+        // Store calculated positions back to the requirement for future use
+        ;(req as any).x = x
+        ;(req as any).y = y
+        ;(req as any).radius = radius
+        ;(req as any).angle = angle
+        ;(req as any).avgScore = avgScore
+        ;(req as any).nodeSize = nodeSize
+      }
 
       // color by source
       const color =
@@ -189,7 +197,7 @@ const DaRequirementExplorer: React.FC<DaRequirementExplorerProps> = ({
           type: req.type,
           ratingAvg: avgScore,
           // override with your sanitized scores
-          rating: { priority: pr, relevance: rl, impact: im },
+          rating: { priority: safeScore(req.rating?.priority), relevance: safeScore(req.rating?.relevance), impact: safeScore(req.rating?.impact) },
           source: req.source,
           creatorUserId: req.creatorUserId,
           isHidden: req.isHidden,

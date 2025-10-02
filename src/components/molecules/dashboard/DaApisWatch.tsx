@@ -67,12 +67,22 @@ const DaApisWatch: FC<DaApisWatchProps> = ({requestWriteSignalValue}) => {
             <ApiInput onEnter={(value:string) => {
                 // console.log("onEntered", value)
                 let sendValue = null
-                if(["true", "false"].includes(value.trim().toLowerCase())) {
-                    sendValue = (value.trim().toLowerCase()=='true')
-                } else {
+                const trimmedValue = value.trim()
+                
+                // Check if it's a boolean
+                if(["true", "false"].includes(trimmedValue.toLowerCase())) {
+                    sendValue = (trimmedValue.toLowerCase()=='true')
+                } 
+                // Check if it's a valid number (preserving original empty string behavior)
+                else if (!isNaN(Number(value)) && value.trim() !== '') {
                     sendValue = Number(value)
                 }
-                if(value.length>0 && requestWriteSignalValue) {
+                // Otherwise, keep it as a string (but preserve original empty string as number behavior)
+                else {
+                    sendValue = value.trim() === '' ? Number(value) : trimmedValue
+                }
+                
+                if(value.length > 0 && requestWriteSignalValue) {
                     let payload = {} as any
                     payload[`${key}`] = sendValue
                     requestWriteSignalValue(payload)

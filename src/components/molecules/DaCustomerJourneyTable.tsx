@@ -89,7 +89,7 @@ const DaTableEditor = ({
   }
 
   const addRow = () => {
-    const newRow: { rowName: string; [key: string]: string } = { rowName: '' }
+    const newRow: { rowName: string;[key: string]: string } = { rowName: '' }
     columnNames.forEach((columnName) => {
       newRow[columnName] = ''
     })
@@ -257,18 +257,16 @@ const DaTableEditor = ({
                       ) : (
                         columnName
                       )}
-                      {hoveredColumnIndex !== null &&
-                        hoveredColumnIndex === columnIndex &&
-                        isEditing && (
-                          <DaButton
-                            className="journey-edit-btn-delete-column m-1 !text-da-gray-dark !p-0 !w-6 !h-6 rounded absolute top-0 -right-4 bg-da-white hover:bg-da-white hover:!text-red-500 z-10 opacity-0 group-hover:opacity-100"
-                            variant="outline"
-                            onClick={() => deleteColumn(columnIndex)}
-                            size="sm"
-                          >
-                            <TbX className="w-4 h-4" />
-                          </DaButton>
-                        )}
+
+                      { isEditing && <DaButton
+                        className="journey-edit-btn-delete-column m-1 !text-da-gray-dark !p-0 !w-6 !h-6 rounded absolute top-0 -right-4 bg-da-white hover:bg-da-white hover:!text-red-500 z-10"
+                        variant="outline"
+                        onClick={() => deleteColumn(columnIndex)}
+                        size="sm"
+                      >
+                        <TbX className="w-4 h-4" />
+                      </DaButton>
+                      }
                     </div>
                   </th>
                 ))}
@@ -301,19 +299,16 @@ const DaTableEditor = ({
                     ) : (
                       row.rowName || ''
                     )}
-                    {hoveredRowIndex !== null &&
-                      hoveredRowIndex === rowIndex &&
-                      isEditing && (
-                        <DaButton
-                        data-id="journey-edit-delete-row-btn"
-                          className="journey-edit-content-cell-btn-delete-row m-1 !text-da-gray-dark !p-0 !w-6 !h-6 rounded absolute top-0 right-0 bg-da-white hover:bg-da-white hover:!text-red-500"
-                          size="sm"
-                          variant="outline-nocolor"
-                          onClick={() => deleteRow(rowIndex)}
-                        >
-                          <TbX className="size-4" />
-                        </DaButton>
-                      )}
+                    { isEditing && 
+                    <DaButton
+                      data-id="journey-edit-delete-row-btn"
+                      className="journey-edit-content-cell-btn-delete-row m-1 !text-da-gray-dark !p-0 !w-6 !h-6 rounded absolute top-0 right-0 bg-da-white hover:bg-da-white hover:!text-red-500"
+                      size="sm"
+                      variant="outline-nocolor"
+                      onClick={() => deleteRow(rowIndex)}
+                    >
+                      <TbX className="size-4" />
+                    </DaButton> }
                   </td>
                   {columnNames.map((columnName, columnIndex) => (
                     <td className="border px-4 py-2" key={columnIndex}>
@@ -348,7 +343,7 @@ const DaTableEditor = ({
           className={`absolute -bottom-10 left-0 w-full !h-8 py-0.5 z-10 ${
             //   showAddRow && isEditing ? 'block' : '!hidden'
             isEditing ? 'block' : '!hidden'
-          }`}
+            }`}
           onClick={addRow}
         >
           <TbRowInsertTop className="size-4" />
@@ -360,7 +355,7 @@ const DaTableEditor = ({
           className={`absolute top-0 -right-10 !h-full w-8 !px-0 z-10 ${
             //   showAddColumn && isEditing ? 'flex' : '!hidden'
             isEditing ? 'flex' : '!hidden'
-          }`}
+            }`}
           onClick={addColumn}
         >
           <TbColumnInsertLeft />

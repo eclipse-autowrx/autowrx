@@ -51,7 +51,7 @@ const config: any = {
   strictAuth: false,
   enableSupport: true,
   learning: {
-    url: '',
+    url: import.meta.env.VITE_LEARNING_URL || 'https://learning-dev.digital.auto',
   },
   requirements: {
     journey_2_requirements: '',

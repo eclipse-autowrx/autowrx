@@ -88,14 +88,15 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         setMockSignals,
         loadMockSignals,
         writeSignalsValue,
+        writeVarsValue,
         revertToDefaultVehicleModel,
         builldVehicleModel,
         getRuntimeInfo
       }
     })
 
-    const [apisValue, setActiveApis, setAppLog] = useRuntimeStore(
-      (state) => [state.apisValue, state.setActiveApis, state.setAppLog],
+    const [apisValue, setActiveApis, setTraceVars, setAppLog] = useRuntimeStore(
+      (state) => [state.apisValue, state.setActiveApis, state.setTraceVars, state.setAppLog],
       shallow,
     )
 
@@ -135,7 +136,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     useEffect(() => {
       // console.log(`>>>>>>>>>>>>>>>>>>>>>>>>>`)
       // console.log(`subscribe_apis activeRtId:${activeRtId} usedAPIs:${usedAPIs}`)
-      if (activeRtId) {
+      if (activeRtId && usedAPIs && usedAPIs.length > 0) {
         socketio.emit('messageToKit', {
           cmd: 'subscribe_apis',
           to_kit_id: activeRtId,
@@ -159,11 +160,27 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       if (setAppLog) {
         setAppLog(`Run app\r\n`)
       }
+      let cmd = "run_python_app"
+      // console.log(`language`, prototype?.language)
+      if(prototype?.language == "python") {
+        cmd = "run_python_app"
+      } else if(prototype?.language == "rust") {
+        cmd = "run_rust_app"
+      } else if(prototype?.language == "cpp") {
+        cmd = "run_cpp_app"
+      }
+      let watch_vars = ""
+      if(prototype?.extend?.watch_vars && Array.isArray(prototype?.extend?.watch_vars)){
+        watch_vars = prototype?.extend?.watch_vars.map((v:any) => v.name).join(', ') || ''
+      }
+      console.log(`watch_vars`, watch_vars)
       socketio.emit('messageToKit', {
-        cmd: 'run_python_app',
+        cmd: cmd,
         to_kit_id: activeRtId,
         usedAPIs: usedAPIs,
         data: {
+          language: prototype?.language,
+          watch_vars: watch_vars,
           code: code,
           name: appName
         },
@@ -254,6 +271,16 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         to_kit_id: activeRtId,
         data: signals || [],
       })
+    }
+
+    const writeVarsValue = (obj: any) => {
+      let payload = {
+        cmd: 'set_vars_value',
+        to_kit_id: activeRtId,
+        data: obj || {},
+      }
+      // console.log(`writeVarsValue`, payload)
+      socketio.emit('messageToKit', payload)
     }
 
     const writeSignalsValue = (obj: any) => {
@@ -425,6 +452,8 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     const onKitReply = (payload: any) => {
       if (!payload) return
 
+      // console.log(`onKitReply`, payload)
+
       if (payload.cmd == 'deploy_request' || payload.cmd == 'deploy-request') {
         // console.log(payload)
         if (onDeployResponse) {
@@ -483,6 +512,13 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
           // console.log(`receive apis-value`)
           // setActiveApis(payload.result)
         }
+      }
+
+      if(payload.cmd == 'trace_vars'){
+        let data = payload.data
+        // console.log(`trace_vars`, data)
+        setTraceVars(data || {})
+        // this is sample data: {counter: '9'}
       }
 
       if (payload.cmd == 'list_mock_signal') {
@@ -641,9 +677,8 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
                     key={rt.kit_id}
                     disabled={!rt.is_online}
                   >
-                    <div className="text-[20px] flex items-center disabled:text-white text-white">
-                      {rt.is_online ? (!rt.noRunner?'🟢':'🔴'): '🟡'} {rt.name} {rt.noRunner?`(${rt.noRunner})`:''}
-                    </div>
+                    {rt.is_online ? (!rt.noRunner ? '🟢' : '🔴') : '🟡'} {rt.name}{' '}
+                    {rt.noRunner ? `(${rt.noRunner})` : ''}
                   </option>
                 )
               })

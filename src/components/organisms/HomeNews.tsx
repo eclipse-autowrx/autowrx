@@ -88,39 +88,41 @@ const SmallCard = ({ item }: { item: CardProps }) => {
   return (
     <div className="flex space-x-4">
       <a href={item.redirectURL} target="_blank" rel="noopener noreferrer">
-        <div className="flex min-w-[250px] h-fit border shadow rounded-lg overflow-hidden">
-          <img
-            src={item.imageURL}
-            alt={item.title}
-            className="w-full h-[140px] object-cover"
-          />
-        </div>
-      </a>
-      <a href={item.redirectURL} target="_blank" rel="noopener noreferrer">
-        <div className="flex items-center">
-          <div
-            className={cn(
-              'text-white font-medium !text-sm px-3 py-0.5 rounded-full',
-              getTypeClass(item.type),
-            )}
-          >
-            {item.type}
+        <div className="flex space-x-4">
+          <div className="flex min-w-[250px] h-fit border shadow rounded-lg overflow-hidden">
+            <img
+              src={item.imageURL}
+              alt={item.title}
+              className="w-full h-[140px] object-cover"
+            />
           </div>
+          <div>
+            <div className="flex items-center">
+              <div
+                className={cn(
+                  'text-white font-medium !text-sm px-3 py-0.5 rounded-full',
+                  getTypeClass(item.type),
+                )}
+              >
+                {item.type}
+              </div>
 
-          <div className="flex w-fit items-center">
-            {item.date && (
-              <>
-                <div className="flex mx-2">|</div>
-                <div className="text-da-gray-medium text-sm">{item.date}</div>
-              </>
-            )}
+              <div className="flex w-fit items-center">
+                {item.date && (
+                  <>
+                    <div className="flex mx-2">|</div>
+                    <div className="text-da-gray-medium text-sm">{item.date}</div>
+                  </>
+                )}
+              </div>
+            </div>
+            <div className="mt-4 text-lg font-semibold text-da-gray-dark">
+              {item.title}
+            </div>
+            <div className="mt-2 da-txt-tiny text-da-gray-medium line-clamp-3">
+              {item.description}
+            </div>
           </div>
-        </div>
-        <div className="mt-4 text-lg font-semibold text-da-gray-dark">
-          {item.title}
-        </div>
-        <div className="mt-2 da-txt-tiny text-da-gray-medium line-clamp-3">
-          {item.description}
         </div>
       </a>
     </div>
