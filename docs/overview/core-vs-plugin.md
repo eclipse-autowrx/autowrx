@@ -1,0 +1,38 @@
+
+Features:
+    - Base:
+        - User/Authentication
+            - Signin/Signup/Register/ForgotPass
+            - UserManager
+            - Profile
+            - SSO:
+                - [Plugin]
+        - Logging
+    - [Model Manager]
+        - Create/Edit/Delete Model
+        - Create/Edit/Delete API
+            - COVESA
+            - USP
+            - V2C
+            - Others: [Plugin] Other APIs
+        - Others: [Plugin] Model Feature 
+    - [Prototype Manager]
+        - Create/Edit/Delete Prototype
+        - Customer Journey
+        - Flow
+        - ProjectEditor
+            - Git Sync
+            - Code Agent
+        - DashboardRender
+            - Widget Render
+            - Widget Generator: [Replit]
+        - Runner
+            - Runtime Connector
+            - Debugger
+        - Deployer
+            - [Plugin] Deploy To Marketplace
+            - [Plugin] Deploy To HW Kit
+            - [Plugin] Deploy To EPAM
+        - Staging
+            - [Plugin]
+        - [Plugin] New Features
