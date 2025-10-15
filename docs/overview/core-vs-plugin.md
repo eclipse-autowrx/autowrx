@@ -26,6 +26,7 @@ Features:
         - DashboardRender
             - Widget Render
             - Widget Generator: [Replit]
+            - [Plugin] Marketplace
         - Runner
             - Runtime Connector
             - Debugger
