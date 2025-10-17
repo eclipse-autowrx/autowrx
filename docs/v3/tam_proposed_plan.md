@@ -464,5 +464,5 @@ The proposed architecture adds complexity for problems shadcn already solves:
 
 ---
 
-**Prepared by**: [Your Name]
+**Prepared by**: Tam Thai Hoang Minh
 **Date**: 2025-10-17
