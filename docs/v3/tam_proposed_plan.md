@@ -163,6 +163,7 @@ ComponentRegistry.register('my-prototype', React.lazy(() => import('./MyPrototyp
 - Multiple loading spinners (poor UX)
 - Requires Suspense boundaries everywhere
 - Overkill for small components
+- Crash frequently happened
 
 ### Reality Check: What Actually Needs Lazy Loading?
 
@@ -331,7 +332,7 @@ import { Button } from "@/components/ui/button";
 | **Initial Bundle** | Large (everything lazy) | Small (~500 KB) | ✅ shadcn |
 | **Component Registry** | Required | Not needed | ✅ shadcn |
 | **Learning Curve** | Custom architecture | Industry standard | ✅ shadcn |
-| **Community** | Custom docs | 50K+ GitHub stars, huge ecosystem | ✅ shadcn |
+| **Community** | Custom docs | 99K+ GitHub stars, huge ecosystem | ✅ shadcn |
 
 ---
 
