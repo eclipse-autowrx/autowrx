@@ -37,9 +37,9 @@ const Banner = ({ option, data }) => {
     width: option?.fullWidth ? '100%' : 'auto',
     backgroundImage: data?.backgroundImageUrl ? `url(${data.backgroundImageUrl})` : 'none',
     // Adheres to Styling Architecture by consuming core theme variables
-    color: 'var(--da--color-text-on-primary)',
-    backgroundColor: 'var(--da--color-primary)',
-    borderRadius: 'var(--da-border-radius)',
+    color: 'var(--var-text-primary)',
+    backgroundColor: 'var(--var-color-secondary)',
+    borderRadius: 'var(--var-border-radius)',
     padding: '4rem 2rem'
   };
 

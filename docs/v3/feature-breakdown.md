@@ -9,14 +9,19 @@ The following list breaks down the platform's features into `Core` and `[Plugin]
         - User Management(Core)
         - User Profile Management(Core)
         - **SSO Providers:** [Plugin] (e.g., Google, SAML, GitHub)
-    - **System Logging**
+    - **System Logging** (Core)
+    - **SiteConfiguration** (Core)
+        - **ModuleConfig**
+        - **HomeConfig**
+        - **StyleConfig**
+        - **PrototypeUIConfig**
 
 - **Model Manager**
     - Create/Edit/Delete Model (Core)
     - Create/Edit/Delete API (Core)
-        - COVESA Support (Core)
-        - USP Support [Plugin]
-        - V2C Support [Plugin]
+        - COVESA Manager (Core)
+        - USP Manager [Plugin]
+        - V2C(REST) Manager [Plugin]
         - **Other API Standards:** [Plugin]
     - **Additional Model Features:** [Plugin]
 
@@ -39,4 +44,50 @@ The following list breaks down the platform's features into `Core` and `[Plugin]
         - **Deploy to HW Kit:** [Plugin]
         - **Deploy to EPAM:** [Plugin]
     - **Staging Environments:** [Plugin]
-    - **Other Major Features:** [Plugin]
+    - **Other Prototype Features:** [Plugin]
+- **Plugin Manager**(Core)
+    - PluginInstaller(Core)
+    - PluginLoader(Core)
+    
+
+## Project Structure
+```
+- public
+- src
+    . routes.tsx
+    - components
+        - atoms
+        - molecules
+        - organisms 
+    - hooks
+    - layouts
+    - lib
+    - pages                             <= contain all pages serve for routes.tsx
+    - services??
+    - stores                            <= global state
+    . App.tsx
+    . main.tsx
+    . index.html
+. .env
+. docker-compose.dev.yml
+. docker-compose.yml
+. Dockerfile
+. Dockerfile.dev
+```
+
+
+## Builtin Page
+```
+- /                                 HomePage
+- /privacy                          PrivacyPage
+- /user/profile                     UserProfilePage
+- /user/asset                       USerAssetPage
+- /admin/manage-user                UserManagerPage
+- /admin/site-config                SiteConfigPage
+- /models                           ModelsPage
+- /models/:mid                      ModelPage
+- /models/:mid/prototypes           PrototypesPage
+- /models/:mid/prototypes/:pid      PrototypePage
+...
+```
+    

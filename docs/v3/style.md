@@ -10,18 +10,34 @@ The foundation of the system is the `global.css` file. This file is controlled b
 -   **Content:** Primarily consists of CSS Custom Properties (variables) for colors, fonts, spacing, etc.
 -   **Extensibility:** Administrators can modify these variables through the admin panel to apply a new theme to the entire platform instantly.
 
+#### global.css 
 ```css
-/* Example global.css */
 :root {
   /* Core Colors */
-  --da--color-primary: #e74266;
-  --da--color-secondary: #3498db;
-  --da--color-text: #333333;
+  --var-color-primary: #e74266;
+  --var-color-secondary: #3498db;
+  --var-color-text: #333333;
 
   /* Base Layout */
-  --da-border-radius: 0.5rem;
+  --var-border-radius: 0.5rem;
+  --var-border-width: 2px;
 }
+
 ```
+#### core.css
+```css
+.text-primary {
+  color: var(--var-color-primary);
+}
+
+.border-primary {
+  border-color: var(--var-color-primary);
+  border-width: var(--var-border-width);
+  border-style: solid;
+}
+
+```
+
 
 ## 2. Plugin & Component Styles
 
@@ -34,7 +50,14 @@ Components **must** use the CSS variables provided by `global.css` for any style
 **CORRECT:**
 ```tsx
 // Consuming a core variable in a React component
-<button className="text-[var(--da--color-primary)] border-[var(--da-border-radius)]">
+<button className="text-[var(--da-color-primary)] border-[var(--var-border-width)]">
+  Click Me
+</button>
+```
+**CORRECT:**
+```tsx
+// Consuming a core variable in a React component
+<button className="text-primary border-primary">
   Click Me
 </button>
 ```
@@ -42,7 +65,7 @@ Components **must** use the CSS variables provided by `global.css` for any style
 **INCORRECT:**
 ```tsx
 // Hardcoding values that should come from the core theme
-<button className="text-red-500 border-8">
+<button className="text-red-500 border-2">
   Click Me
 </button>
 ```

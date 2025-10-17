@@ -159,15 +159,4 @@ To ensure reusability and maintainability, we follow the principles of Atomic De
 
 All components, regardless of their layer, must adhere to the platform's styling rules to ensure a consistent user experience. This means consuming themed variables from a global stylesheet instead of hardcoding style values.
 
-### INCORRECT (Hardcoded values)
-```tsx
-<button className="text-sky-700 border-sky-600"></button>
-```
-
-### CORRECT (Using theme variables)
-```tsx
-<button 
-    className="text-[var(--da-primary-color)] border-[var(--da-primary-color)]">
-</button>
-```
 > For a full explanation and list of available variables, see the **[Styling Architecture](./style.md)** document.

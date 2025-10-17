@@ -124,33 +124,62 @@ export default MyDynamicComponent;
 
 ---
 
-## 3. Asynchronous Loading for Performance
+## 3. Component Loading Strategies: Eager vs. Lazy
 
-To keep the platform lean and ensure fast initial load times, components should be loaded on demand using `React.lazy()`. The registry pattern makes this easy to implement.
+To balance performance with user experience, our architecture supports two component loading strategies: eager loading for core components and lazy loading for plugins or less frequently used components.
 
-### Registering a Lazy-Loaded Component
+### Eager Loading (for Core Feature Components)
+
+For essential components that appear "above the fold" or are critical to the initial user experience on many pages (e.g., a page `Banner` or `UserProfileHeader`), it's best to load them eagerly. This means their code is included in the main application bundle. While this slightly increases the initial bundle size, it ensures these critical components render instantly without any loading delay.
+
+This strategy should be reserved for components that are truly part of the core experience. Small, reusable components like `Button` or `Card` are typically not managed by this dynamic system; they are imported and used directly in code. The dynamic component architecture is best suited for larger, feature-level blocks.
+
+**Registering an Eager-Loaded Component:**
+
+You simply import the component and register it directly.
+
+```jsx
+// src/components/registerCoreComponents.js
+import { ComponentRegistry } from '../lib/ComponentRegistry';
+
+import { MainBanner, schema as MainBannerSchema } from './MainBanner';
+import { UserProfileHeader, schema as UserProfileHeaderSchema } from './UserProfileHeader';
+
+// Registering core components directly
+ComponentRegistry.register('core-main-banner', MainBanner, MainBannerSchema);
+ComponentRegistry.register('core-user-profile-header', UserProfileHeader, UserProfileHeaderSchema);
+```
+
+### Lazy Loading (for External/Plugin Components)
+
+To keep the core platform lean and support a plugin ecosystem, external or non-essential components should be loaded on demand using `React.lazy()`. Their code is split into a separate chunk and is only downloaded by the browser when the component is first needed.
+
+This is the ideal approach for:
+- Components from third-party plugins.
+- Heavy components that are not used on every page (e.g., a complex chart or map).
+- A large number of components where loading them all upfront would be slow.
+
+**Registering a Lazy-Loaded Component:**
 
 Instead of registering the component directly, you register a dynamic `import()`.
 
 ```jsx
-// src/components/registerComponents.js
+// src/plugins/MyChartPlugin/register.js
 import React from 'react';
-import { ComponentRegistry } from '../lib/ComponentRegistry';
+import { ComponentRegistry } from '../../lib/ComponentRegistry';
 
-// Assume the schema is exported from the component file as well
-import { schema as BannerSchema } from './Banner'; 
+// The schema is imported statically for immediate availability
+import { schema as MyChartSchema } from './MyChart'; 
 
-// Registering a lazy-loaded component
+// Registering a lazy-loaded plugin component
 ComponentRegistry.register(
-  'banner01', 
-  React.lazy(() => import('./Banner')),
-  BannerSchema
+  'my-chart', 
+  React.lazy(() => import('./MyChart')),
+  MyChartSchema
 );
-
-// ... register other components
 ```
 
-The `renderComponentByTypeName` function shown earlier is already equipped with a `<Suspense>` boundary to handle these lazy-loaded components without any changes.
+The `renderComponentByTypeName` function is already equipped with a `<Suspense>` boundary, so it handles both eager and lazy components seamlessly.
 
 ---
 
@@ -194,56 +223,17 @@ Elsewhere, in the application's setup code, the components referenced in the con
 import React from 'react';
 import { ComponentRegistry } from '../lib/ComponentRegistry';
 
-// Schemas are imported to be included in the registry
-import { schema as BannerSchema } from './Banner'; 
+// Schemas are imported for all components
+import Banner, { schema as BannerSchema } from './Banner'; // Direct import for eager loading
 import { schema as PopularPrototypeSchema } from './PopularPrototype'; 
 import { schema as MyPrototypeSchema } from './MyPrototype'; 
 
-// Registering the components used in the config
-ComponentRegistry.register('banner01', React.lazy(() => import('./Banner')), BannerSchema);
+// == Register Core/Above-the-Fold Components (Eager) ==
+// The main banner is critical for the homepage, so we load it eagerly for instant rendering.
+ComponentRegistry.register('banner01', Banner, BannerSchema);
+
+// == Register Other Page Components (Lazy) ==
+// These components are further down the page, so we can lazy-load them for better performance.
 ComponentRegistry.register('popular-prototype', React.lazy(() => import('./PopularPrototype')), PopularPrototypeSchema);
 ComponentRegistry.register('my-prototype', React.lazy(() => import('./MyPrototype')), MyPrototypeSchema);
 ```
-
-### 3. The Page & Renderer in Action
-
-Finally, the `HomePage` component itself is quite simple. It takes the configuration object as a prop, iterates over it, and uses the global `renderComponentByTypeName` utility to do the heavy lifting.
-
-```tsx
-// src/pages/HomePage.js
-import { renderComponentByTypeName } from '../lib/renderComponentByTypeName';
-
-const HomePage = ({ config }) => {
-  return (
-    <main>
-      {config?.rows?.map((row, index) => (
-        <section key={index}>
-          {renderComponentByTypeName(row.type, row.option, row.data)}
-        </section>
-      ))}
-    </main>
-  );
-};
-
-export default HomePage;
-```
-
-The renderer then finds the appropriate component in the registry, handles the lazy loading with a Suspense fallback, and renders it with the specified `option` and `data`.
-
----
-
-## Benefits of this Architecture
-
-### Lean and Extensible Core
-
-The core application remains small. New functionality is added by creating new components, which can be loaded on demand.
-
-### AI-Powered Layout Generation
-
-This architecture is ideal for AI. By providing an AI with the **schemas** of all available components, it can reliably generate valid and complex JSON layouts from a simple natural language prompt. The structured schema is much more effective than just providing code examples.
-
-### A True Plugin Ecosystem
-
-This system is the foundation for a powerful plugin architecture. A third-party developer can create a new component, package it as an `npm` module, and provide a single initialization file that calls `ComponentRegistry.register()`. Once the user's platform installs the package and calls the registration function, the new component is immediately available for use in all layouts.
-
-
