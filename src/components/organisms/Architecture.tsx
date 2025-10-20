@@ -364,7 +364,7 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
                 }
                 className={cn(
                   'flex flex-col px-3 py-2 border border-da-gray-light hover:border-da-primary-500 cursor-pointer rounded-lg',
-                  node.id == activeNodeId && '!border-da-primary-500',
+                  node.id == activeNodeId && 'border-da-primary-500!',
                 )}
               >
                 <DaText
@@ -431,7 +431,7 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
                 variant="editor"
                 size="sm"
                 onClick={() => setIsExpand((prev) => !prev)}
-                className="mr-2 w-fit h-[34px] !px-1.5"
+                className="mr-2 w-fit h-[34px] px-1.5!"
               >
                 {isExpand ? (
                   <TbLayoutSidebarLeftCollapse className="size-5" />
@@ -458,7 +458,7 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
                 <DaButton
                   variant="editor"
                   size="sm"
-                  className="!justify-start"
+                  className="justify-start!"
                   onClick={() => {
                     setIsEditMode(true)
                     setTmpNodeName(activeNode.name)

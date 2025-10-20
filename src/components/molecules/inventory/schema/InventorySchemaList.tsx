@@ -160,7 +160,7 @@ function SchemaItem({
               trigger={
                 <DaButton
                   size="sm"
-                  className="!text-da-destructive"
+                  className="text-da-destructive!"
                   variant="destructive"
                 >
                   <TbTrash size={18} className="mr-1" /> Delete

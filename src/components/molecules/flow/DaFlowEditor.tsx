@@ -132,7 +132,7 @@ const DaFlowEditor = ({ initialData, onUpdate }: DaFlowEditorProps) => {
             <col key={index} className="w-[11.11%]" />
           ))}
         </colgroup>
-        <thead className="sticky top-0 z-10 bg-gradient-to-tr from-da-secondary-500 to-da-primary-500 text-white">
+        <thead className="sticky top-0 z-10 bg-linear-to-tr from-da-secondary-500 to-da-primary-500 text-white">
           <tr className="text-sm uppercase">
             {headerGroups.map((group, idx) => (
               <th
@@ -171,7 +171,7 @@ const DaFlowEditor = ({ initialData, onUpdate }: DaFlowEditorProps) => {
                 >
                   <TbChevronCompactRight className="absolute -left-[12px] top-[5.5px] -translate-x-1/4 -translate-y-1/4 size-[47px] bg-transparent text-white fill-current" />
                   {step.title}
-                  <TbChevronCompactRight className="absolute -right-[1px] top-[5.5px] translate-x-1/2 -translate-y-1/4 size-[47px] bg-transparent text-da-primary-500 fill-current" />
+                  <TbChevronCompactRight className="absolute -right-px top-[5.5px] translate-x-1/2 -translate-y-1/4 size-[47px] bg-transparent text-da-primary-500 fill-current" />
                 </td>
               </tr>
               {step.flows.map((flow, flowIndex) => (

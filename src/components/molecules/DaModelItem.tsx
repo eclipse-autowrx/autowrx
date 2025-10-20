@@ -58,8 +58,8 @@ const DaModelItem = ({ model, className }: DaModelItemProps) => {
             alt="Image"
             className="w-full h-full rounded-lg aspect-video object-cover shadow border"
           />
-          <div className="absolute bottom-0 w-full h-[30px] p-[1px] blur-xl bg-black/80 transition-opacity duration-200 ease-in-out opacity-0 group-hover:opacity-100"></div>
-          <div className="absolute bottom-0 w-full h-[50px] p-[1px] transition-opacity duration-200 ease-in-out opacity-0 group-hover:opacity-100">
+          <div className="absolute bottom-0 w-full h-[30px] p-px blur-xl bg-black/80 transition-opacity duration-200 ease-in-out opacity-0 group-hover:opacity-100"></div>
+          <div className="absolute bottom-0 w-full h-[50px] p-px transition-opacity duration-200 ease-in-out opacity-0 group-hover:opacity-100">
             <div className="flex h-full w-full px-3 items-center justify-between text-white rounded-b-lg ">
               <div className="flex w-fit justify-end items-center gap-2 ml-2">
                 COVESA VSS {model.api_version}
@@ -71,7 +71,7 @@ const DaModelItem = ({ model, className }: DaModelItemProps) => {
         <div className="flex items-center w-full px-1 pt-0.5">
           <DaText
             variant="regular-bold"
-            className="line-clamp-1 !text-da-gray-dark"
+            className="line-clamp-1 text-da-gray-dark!"
           >
             {model?.name ?? ''}
           </DaText>

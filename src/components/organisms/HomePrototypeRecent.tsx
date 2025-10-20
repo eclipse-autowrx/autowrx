@@ -55,7 +55,7 @@ const HomePrototypeRecent = ({ title }: HomePrototypeRecentProps) => {
                 size="sm"
                 variant="plain"
                 onClick={() => setShowMore(!showMore)}
-                className="flex items-center !text-da-primary-500"
+                className="flex items-center text-da-primary-500!"
               >
                 {showMore ? (
                   <>

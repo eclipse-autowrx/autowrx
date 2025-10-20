@@ -94,7 +94,7 @@ const DaDiscussionItemOptions = ({
             <DaButton
               onClick={() => setOpenDelete(true)}
               variant="destructive"
-              className="!text-sm !h-fit !px-2 !mx-1"
+              className="text-sm! h-fit! px-2! mx-1!"
             >
               <TbTrash className="mr-2" /> Delete
             </DaButton>

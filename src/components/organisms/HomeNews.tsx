@@ -56,7 +56,7 @@ const LargeCard = ({ item }: { item: CardProps }) => {
         <div className="flex mt-4 items-center">
           <div
             className={cn(
-              'text-white font-medium !text-sm px-3 py-0.5 rounded-full',
+              'text-white font-medium text-sm! px-3 py-0.5 rounded-full',
               getTypeClass(item.type),
             )}
           >
@@ -100,7 +100,7 @@ const SmallCard = ({ item }: { item: CardProps }) => {
             <div className="flex items-center">
               <div
                 className={cn(
-                  'text-white font-medium !text-sm px-3 py-0.5 rounded-full',
+                  'text-white font-medium text-sm! px-3 py-0.5 rounded-full',
                   getTypeClass(item.type),
                 )}
               >

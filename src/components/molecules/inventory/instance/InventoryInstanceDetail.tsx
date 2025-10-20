@@ -80,7 +80,7 @@ const InventoryInstanceDetail = () => {
       {/* Header */}
       <div className="mt-5 flex md:flex-row flex-col gap-2 items-end py-3">
         <div className="flex flex-col gap-2 mr-10">
-          <DaText variant="title" className="!block text-da-primary-500">
+          <DaText variant="title" className="block! text-da-primary-500">
             {inventoryInstance.name || '-'}
           </DaText>
           <div className="rounded-full w-fit bg-da-gray-darkest text-white px-2 py-1">
@@ -90,7 +90,7 @@ const InventoryInstanceDetail = () => {
 
         <div className="flex gap-2 items-end ml-auto">
           <Link to={`/inventory/instance/${instanceId}/edit`}>
-            <DaButton size="sm" variant="plain" className="!text-da-gray-dark">
+            <DaButton size="sm" variant="plain" className="text-da-gray-dark!">
               <TbEdit className="w-4 h-4 mr-1" />
               Edit
             </DaButton>
@@ -100,7 +100,7 @@ const InventoryInstanceDetail = () => {
             trigger={
               <DaButton
                 size="sm"
-                className="!text-da-destructive"
+                className="text-da-destructive!"
                 variant="destructive"
               >
                 <TbTrash size={18} className="mr-1" /> Delete
@@ -275,7 +275,7 @@ const Detail = ({
               onClick={() => setShowDetail((prev) => !prev)}
               size="sm"
               variant="text"
-              className="!px-0 m-0"
+              className="px-0! m-0"
             >
               {showDetail ? (
                 <TbEyeOff className="h-4 w-4 mr-1" />

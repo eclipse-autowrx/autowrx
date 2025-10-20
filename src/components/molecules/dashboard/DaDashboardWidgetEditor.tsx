@@ -270,8 +270,8 @@ const DaDashboardWidgetEditor = ({
                   value={boxes}
                   onChange={(e) => setBoxes(e.target.value)}
                   placeholder="Boxes"
-                  wrapperClassName="!bg-white"
-                  inputClassName="!bg-white text-sm"
+                  wrapperClassName="bg-white!"
+                  inputClassName="bg-white! text-sm"
                   className="w-full"
                 />
               </div>
@@ -283,8 +283,8 @@ const DaDashboardWidgetEditor = ({
                   value={widgetUrl}
                   onChange={(e) => setWidgetUrl(e.target.value)}
                   placeholder="Widget URL or path"
-                  wrapperClassName="!bg-white"
-                  inputClassName="!bg-white text-sm"
+                  wrapperClassName="bg-white!"
+                  inputClassName="bg-white! text-sm"
                   className="w-full"
                 />
               </div>
@@ -299,7 +299,7 @@ const DaDashboardWidgetEditor = ({
           <DaButton
             size="sm"
             variant="outline-nocolor"
-            className="!min-w-16"
+            className="min-w-16!"
             onClick={() => codeEditorPopup[1](false)}
           >
             Cancel
@@ -307,7 +307,7 @@ const DaDashboardWidgetEditor = ({
           <DaButton
             size="sm"
             variant="solid"
-            className="!min-w-16"
+            className="min-w-16!"
             onClick={() => {
               let newOption = {} as any
               try {

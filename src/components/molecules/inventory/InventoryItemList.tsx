@@ -318,14 +318,14 @@ const InventoryItemList = ({ mode = 'view' }: InventoryItemListProps) => {
             {/* </Link> */}
 
             <DaButton
-              className=" !text-da-gray-dark"
+              className=" text-da-gray-dark!"
               size="sm"
               variant="outline-nocolor"
             >
               <TbFileImport className="h-4 w-4 mr-1" /> Import
             </DaButton>
             <DaButton
-              className=" !text-da-gray-dark"
+              className=" text-da-gray-dark!"
               size="sm"
               variant="outline-nocolor"
             >
@@ -381,7 +381,7 @@ const InventoryItem = ({ data: item }: InventoryItemProps) => {
         >
           <DaText
             variant="regular-bold"
-            className="hover:underline text-da-gray-darkest !block"
+            className="hover:underline text-da-gray-darkest block!"
           >
             {item.data?.name}
           </DaText>
@@ -482,8 +482,8 @@ const Filter = ({ mode }: FilterProps) => {
     >
       <DaInput
         iconBefore
-        inputClassName="text-sm !rounded-lg"
-        wrapperClassName="!rounded-lg"
+        inputClassName="text-sm rounded-lg!"
+        wrapperClassName="rounded-lg!"
         Icon={TbSearch}
         onChange={(e) => debounceUpdateSearchQuery(e.target.value)}
         placeholder="Search Inventory Item"
@@ -510,7 +510,7 @@ const Filter = ({ mode }: FilterProps) => {
         )}
       >
         <div className="flex items-center justify-between gap-3 -mt-1">
-          <DaText variant="small-bold" className="!block text-da-gray-darkest">
+          <DaText variant="small-bold" className="block! text-da-gray-darkest">
             Tree Browser
           </DaText>
           <div className="rounded-full flex min-w-0 h-8 border text-xs">

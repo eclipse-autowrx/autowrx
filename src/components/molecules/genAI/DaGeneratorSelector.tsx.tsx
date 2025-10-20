@@ -92,7 +92,7 @@ const DaGeneratorSelector = ({
         variant="outline-nocolor"
         onClick={() => setIsExpandGenerator(!isExpandGenerator)}
         disabled={isLoading}
-        className="mt-2 !shadow-sm hover:bg-da-gray-light"
+        className="mt-2 shadow-sm! hover:bg-da-gray-light"
       >
         <div className="flex w-full items-center justify-between">
           <div className="flex w-full items-center">

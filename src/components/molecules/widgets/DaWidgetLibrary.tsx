@@ -309,7 +309,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
         <div className="flex w-full justify-end items-center mt-4">
           <DaButton
             variant="plain"
-            className="px-4 py-2 !text-base mr-2 h-8"
+            className="px-4 py-2 text-base! mr-2 h-8"
             onClick={() => {
               popupState[1](false)
             }}
@@ -321,7 +321,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
               variant="solid"
               dataId="btn-add-widget-in-widget-library"
               disabled={(isWidgetGenAI || !activeWidget) && !widgetUrl}
-              className="px-4 py-2 !text-base h-8"
+              className="px-4 py-2 text-base! h-8"
               onClick={() => {
                 if (activeTab === 'genAI') {
                   setIsWidgetGenAI(true)

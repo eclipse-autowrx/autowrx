@@ -1,7 +1,117 @@
 /* Local fonts loaded via /css/fonts.css */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@plugin 'tailwindcss-animate';
+
+@custom-variant dark (&:is(.dark *));
+
+@utility container {
+  margin-inline: auto;
+  padding-inline: 2rem;
+  @media (width >= --theme(--breakpoint-sm)) {
+    max-width: none;
+  }
+  @media (width >= 1400px) {
+    max-width: 1400px;
+  }
+}
+
+@theme {
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--da-gray-medium));
+
+  --color-da-primary-100: hsl(var(--da-primary-100));
+  --color-da-primary-300: hsl(var(--da-primary-300));
+  --color-da-primary-500: hsl(var(--da-primary-500));
+
+  --color-da-accent-100: hsl(var(--da-accent-100));
+  --color-da-accent-300: hsl(var(--da-accent-300));
+  --color-da-accent-500: hsl(var(--da-accent-500));
+
+  --color-da-secondary-100: hsl(var(--da-secondary-100));
+  --color-da-secondary-300: hsl(var(--da-secondary-300));
+  --color-da-secondary-500: hsl(var(--da-secondary-500));
+
+  --color-da-white: hsl(var(--da-white));
+  --color-da-black: hsl(var(--da-black));
+  --color-da-gray-light: hsl(var(--da-gray-light));
+  --color-da-gray-medium: hsl(var(--da-gray-medium));
+  --color-da-gray-dark: hsl(var(--da-gray-dark));
+  --color-da-gray-darkest: hsl(var(--da-gray-darkest));
+  --color-da-gradient-from: hsl(var(--da-gradient-from));
+  --color-da-gradient-to: hsl(var(--da-gradient-to));
+  --color-da-destructive: hsl(var(--da-destructive));
+
+  --color-primary-50: #f0fdfa;
+  --color-primary-100: #ccfbf1;
+  --color-primary-200: #99f6e4;
+  --color-primary-300: #5eead4;
+  --color-primary-400: #2dd4bf;
+  --color-primary-500: #14b8a6;
+  --color-primary-600: #0d9488;
+  --color-primary-700: #0f766e;
+  --color-primary-800: #115e59;
+  --color-primary-900: #134e4a;
+  --color-primary-950: #042f2e;
+
+  --color-secondary-50: #f9fafb;
+  --color-secondary-100: #f3f4f6;
+  --color-secondary-200: #e5e7eb;
+  --color-secondary-300: #d1d5db;
+  --color-secondary-400: #9ca3af;
+  --color-secondary-500: #6b7280;
+  --color-secondary-600: #4b5563;
+  --color-secondary-700: #374151;
+  --color-secondary-800: #1f2937;
+  --color-secondary-900: #111827;
+  --color-secondary-950: #030712;
+
+  --color-accent-50: #fff7ed;
+  --color-accent-100: #ffedd5;
+  --color-accent-200: #fed7aa;
+  --color-accent-300: #fdba74;
+  --color-accent-400: #fb923c;
+  --color-accent-500: #f97316;
+  --color-accent-600: #ea580c;
+  --color-accent-700: #c2410c;
+  --color-accent-800: #9a3412;
+  --color-accent-900: #7c2d12;
+  --color-accent-950: #431407;
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --max-height-xs: 20rem;
+  --max-height-sm: 24rem;
+  --max-height-md: 28rem;
+  --max-height-lg: 32rem;
+  --max-height-xl: 36rem;
+
+  --shadow-small: 0 0 1px rgba(54, 61, 73, 0.7);
+  --shadow-medium: 0 0 4px rgba(54, 61, 73, 0.333);
+  --shadow-large: 0 0 8px rgba(54, 61, 73, 0.2);
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
 
 @layer base {
   :root {
@@ -145,68 +255,78 @@
 /*********** For Text Component ********************/
 
 .da-label-regular {
-  @apply da-txt-regular font-normal;
+  font-size: 16px;
+  font-weight: 400;
 }
 
 .da-label-regular-medium {
-  @apply da-txt-regular font-medium;
+  font-size: 16px;
+  font-weight: 500;
 }
 
 .da-label-regular-bold {
-  @apply da-txt-regular font-semibold;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .da-label-tiny {
-  @apply da-txt-tiny;
+  font-size: 12px;
 }
 
 .da-label-small {
-  @apply da-txt-small font-normal;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .da-label-small-bold {
-  @apply da-txt-small font-semibold;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .da-label-small-medium {
-  @apply da-txt-small font-medium;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .da-label-sub-title {
-  @apply da-txt-medium font-semibold;
+  font-size: 18px;
+  font-weight: 600;
 }
 
 .da-label-title {
-  @apply da-txt-large font-semibold;
+  font-size: 20px;
+  font-weight: 600;
 }
 
 .da-label-huge {
-  @apply da-txt-huge font-normal;
+  font-size: 24px;
+  font-weight: 400;
 }
 
 .da-label-huge-bold {
-  @apply da-txt-huge font-semibold;
+  font-size: 24px;
+  font-weight: 600;
 }
 
 /*********** For Button Component ********************/
 .da-btn-dash {
-  @apply p-2 text-da-primary-500 hover:bg-da-primary-100 border border-dashed border-da-primary-500 rounded;
+  @apply p-2 text-da-primary-500 hover:bg-da-primary-100 border border-dashed border-da-primary-500 rounded-sm;
 }
 
 .da-btn {
-  @apply select-none cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
+  @apply select-none cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
 }
 
 .da-btn-solid {
-  @apply bg-da-primary-500 text-da-white shadow hover:bg-da-primary-500/90;
+  @apply bg-da-primary-500 text-da-white shadow-sm hover:bg-da-primary-500/90;
 }
 
 .da-btn-outline {
-  @apply border text-da-primary-500 border-da-primary-500 shadow-sm hover:bg-da-primary-500/10;
+  @apply border text-da-primary-500 border-da-primary-500 shadow-xs hover:bg-da-primary-500/10;
 }
 
 .da-btn-outline-nocolor {
-  @apply border bg-white text-da-gray-medium border-da-gray-light hover:bg-da-gray-light shadow;
+  @apply border bg-white text-da-gray-medium border-da-gray-light hover:bg-da-gray-light shadow-sm;
 }
 
 .da-btn-plain {
@@ -226,11 +346,11 @@
 }
 
 .da-btn-gradient {
-  @apply bg-gradient-to-r from-da-gradient-from to-da-gradient-to text-da-white shadow-sm hover:opacity-90;
+  @apply bg-linear-to-r from-da-gradient-from to-da-gradient-to text-da-white shadow-xs hover:opacity-90;
 }
 
 .da-btn-secondary {
-  @apply bg-da-gray-medium text-da-white shadow-sm hover:bg-da-gray-medium/80;
+  @apply bg-da-gray-medium text-da-white shadow-xs hover:bg-da-gray-medium/80;
 }
 
 .da-btn-destructive {
@@ -238,15 +358,18 @@
 }
 
 .da-btn-sm {
-  @apply h-8 rounded-md px-2 py-1 da-txt-small;
+  @apply h-8 rounded-md px-2 py-1;
+  font-size: 14px;
 }
 
 .da-btn-md {
-  @apply h-10 rounded-md px-4 py-1 da-txt-regular;
+  @apply h-10 rounded-md px-4 py-1;
+  font-size: 16px;
 }
 
 .da-btn-lg {
-  @apply h-12 rounded-md px-4 py-1 da-txt-medium;
+  @apply h-12 rounded-md px-4 py-1;
+  font-size: 18px;
 }
 
 /*********** For Block Component ********************/
@@ -335,17 +458,20 @@ body::-webkit-scrollbar-thumb {
 
 /*********** Textarea Component ****************/
 .da-textarea {
-  @apply flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-da-primary-500 disabled:opacity-50;
+  @apply flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-da-primary-500 disabled:opacity-50;
 }
 
 /*********** Menu Component ********************/
 
 .da-menu-item {
-  @apply da-btn-plain da-btn-sm mx-1 cursor-pointer da-label-small-medium;
+  @apply h-8 rounded-md px-2 py-1 mx-1 cursor-pointer;
+  @apply text-da-gray-medium hover:bg-da-primary-100 hover:text-da-primary-500;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .da-menu-dropdown {
-  @apply !rounded-lg !px-1;
+  @apply rounded-lg! px-1!;
 }
 
 /******** Font and Colors for instances ********/

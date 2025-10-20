@@ -114,7 +114,7 @@ const NavigationBar = ({}) => {
           <DaGlobalSearch>
             <DaButton
               variant="outline-nocolor"
-              className="w-[140px] flex items-center !justify-start !border-gray-300 shadow-lg"
+              className="w-[140px] flex items-center justify-start! border-gray-300! shadow-lg"
             >
               <TbZoom className="size-5 mr-2" />
               Search
@@ -130,7 +130,7 @@ const NavigationBar = ({}) => {
           <DaTooltip content="Inventory">
             <Link
               to="/inventory"
-              className="cursor-pointer flex !h-10 items-center da-btn-sm text-da-gray-medium da-btn-plain ml-3"
+              className="cursor-pointer flex h-10! items-center da-btn-sm text-da-gray-medium da-btn-plain ml-3"
             >
               <TbBuildingWarehouse size={22} />
             </Link>
@@ -139,7 +139,7 @@ const NavigationBar = ({}) => {
           {isAuthorized && (
             <DaMenu
               trigger={
-                <div className="cursor-pointer flex !h-10 items-center da-btn-sm text-da-gray-medium da-btn-plain ml-2">
+                <div className="cursor-pointer flex h-10! items-center da-btn-sm text-da-gray-medium da-btn-plain ml-2">
                   <HiMenu size={22} />
                 </div>
               }

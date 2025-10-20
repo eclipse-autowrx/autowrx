@@ -38,7 +38,7 @@ const DaInputWithLabel = ({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="flex w-full"
-        textareaClassName="!text-sm"
+        textareaClassName="text-sm!"
       />
     ) : (
       <DaInput

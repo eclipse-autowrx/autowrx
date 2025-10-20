@@ -127,7 +127,7 @@ const AccessInvitation = ({
             />
             <DaButton
               onClick={() => mutateInviting()}
-              className="flex-shrink-0"
+              className="shrink-0"
               disabled={isPending || selectedUsers.size === 0}
             >
               Invite {isPending && <DaLoader className="ml-2 text-white" />}

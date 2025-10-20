@@ -209,7 +209,7 @@ const InventoryInstanceItem = ({ data: item }: InventoryInstanceProps) => {
         <Link to={`/inventory/instance/${item.id}`}>
           <DaText
             variant="regular-bold"
-            className="hover:underline truncate text-da-gray-darkest !block focus:outline-none"
+            className="hover:underline truncate text-da-gray-darkest block! focus:outline-none"
           >
             {item.name}
           </DaText>
@@ -329,8 +329,8 @@ const Filter = ({ querySearch, querySchema }: FilterProps) => {
         <DaInput
           value={searchString}
           iconBefore
-          inputClassName="text-sm !rounded-lg"
-          wrapperClassName="!rounded-lg"
+          inputClassName="text-sm rounded-lg!"
+          wrapperClassName="rounded-lg!"
           Icon={TbSearch}
           onChange={(e) => handleSearchChange(e.target.value)}
           placeholder="Search Inventory Item"
@@ -354,7 +354,7 @@ const Filter = ({ querySearch, querySchema }: FilterProps) => {
         )}
       >
         <div className="flex items-center justify-between gap-3 -mt-1">
-          <DaText variant="small-bold" className="!block text-da-gray-darkest">
+          <DaText variant="small-bold" className="block! text-da-gray-darkest">
             Tree Browser
           </DaText>
           {/* Show clear button only if a schema filter is active */}

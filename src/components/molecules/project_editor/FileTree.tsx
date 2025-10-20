@@ -127,25 +127,25 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'jsx':
       case 'mjs':
         return (
-          <VscCode className="mr-2 text-yellow-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-yellow-600 shrink-0" size={16} />
         )
       case 'ts':
       case 'tsx':
         return (
-          <VscCode className="mr-2 text-blue-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-600 shrink-0" size={16} />
         )
 
       // Web Technologies
       case 'json':
         return (
-          <VscJson className="mr-2 text-green-600 flex-shrink-0" size={16} />
+          <VscJson className="mr-2 text-green-600 shrink-0" size={16} />
         )
       case 'html':
       case 'htm':
       case 'xhtml':
         return (
           <VscFileCode
-            className="mr-2 text-orange-600 flex-shrink-0"
+            className="mr-2 text-orange-600 shrink-0"
             size={16}
           />
         )
@@ -155,7 +155,7 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'less':
         return (
           <VscSymbolClass
-            className="mr-2 text-blue-600 flex-shrink-0"
+            className="mr-2 text-blue-600 shrink-0"
             size={16}
           />
         )
@@ -163,7 +163,7 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'svg':
         return (
           <VscFileCode
-            className="mr-2 text-orange-400 flex-shrink-0"
+            className="mr-2 text-orange-400 shrink-0"
             size={16}
           />
         )
@@ -173,14 +173,14 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'markdown':
         return (
           <VscFileMedia
-            className="mr-2 text-gray-700 flex-shrink-0"
+            className="mr-2 text-gray-700 shrink-0"
             size={16}
           />
         )
       case 'rst':
         return (
           <VscFileMedia
-            className="mr-2 text-blue-700 flex-shrink-0"
+            className="mr-2 text-blue-700 shrink-0"
             size={16}
           />
         )
@@ -192,30 +192,30 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'pyx':
       case 'pxd':
         return (
-          <VscCode className="mr-2 text-blue-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-500 shrink-0" size={16} />
         )
 
       // Java & JVM
       case 'java':
       case 'class':
         return (
-          <VscCode className="mr-2 text-orange-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-orange-500 shrink-0" size={16} />
         )
       case 'kt':
         return (
-          <VscCode className="mr-2 text-purple-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-purple-500 shrink-0" size={16} />
         )
       case 'scala':
-        return <VscCode className="mr-2 text-red-500 flex-shrink-0" size={16} />
+        return <VscCode className="mr-2 text-red-500 shrink-0" size={16} />
       case 'groovy':
         return (
-          <VscCode className="mr-2 text-blue-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-500 shrink-0" size={16} />
         )
 
       // C/C++ & Related
       case 'c':
         return (
-          <VscCode className="mr-2 text-blue-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-600 shrink-0" size={16} />
         )
       case 'cpp':
       case 'cc':
@@ -226,101 +226,101 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'hh':
       case 'hxx':
         return (
-          <VscCode className="mr-2 text-blue-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-600 shrink-0" size={16} />
         )
       case 'cs':
         return (
-          <VscCode className="mr-2 text-purple-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-purple-600 shrink-0" size={16} />
         )
       case 'd':
-        return <VscCode className="mr-2 text-red-600 flex-shrink-0" size={16} />
+        return <VscCode className="mr-2 text-red-600 shrink-0" size={16} />
       case 'swift':
         return (
-          <VscCode className="mr-2 text-orange-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-orange-600 shrink-0" size={16} />
         )
       case 'objc':
       case 'm':
         return (
-          <VscCode className="mr-2 text-blue-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-500 shrink-0" size={16} />
         )
 
       // Scripting Languages
       case 'php':
       case 'phtml':
         return (
-          <VscCode className="mr-2 text-purple-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-purple-500 shrink-0" size={16} />
         )
       case 'rb':
       case 'erb':
-        return <VscCode className="mr-2 text-red-500 flex-shrink-0" size={16} />
+        return <VscCode className="mr-2 text-red-500 shrink-0" size={16} />
       case 'go':
       case 'mod':
         return (
-          <VscCode className="mr-2 text-cyan-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-cyan-500 shrink-0" size={16} />
         )
       case 'rs':
         return (
-          <VscCode className="mr-2 text-orange-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-orange-600 shrink-0" size={16} />
         )
       case 'pl':
       case 'pm':
         return (
-          <VscCode className="mr-2 text-blue-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-500 shrink-0" size={16} />
         )
       case 'lua':
         return (
-          <VscCode className="mr-2 text-blue-400 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-400 shrink-0" size={16} />
         )
       case 'r':
         return (
-          <VscCode className="mr-2 text-blue-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-600 shrink-0" size={16} />
         )
       case 'jl':
         return (
-          <VscCode className="mr-2 text-purple-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-purple-600 shrink-0" size={16} />
         )
       case 'clj':
       case 'cljs':
         return (
-          <VscCode className="mr-2 text-green-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-green-500 shrink-0" size={16} />
         )
       case 'hs':
       case 'lhs':
         return (
-          <VscCode className="mr-2 text-purple-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-purple-500 shrink-0" size={16} />
         )
       case 'fs':
       case 'fsx':
         return (
-          <VscCode className="mr-2 text-blue-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-500 shrink-0" size={16} />
         )
       case 'ml':
       case 'mli':
         return (
-          <VscCode className="mr-2 text-orange-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-orange-500 shrink-0" size={16} />
         )
       case 'elm':
         return (
-          <VscCode className="mr-2 text-blue-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-600 shrink-0" size={16} />
         )
       case 'ex':
       case 'exs':
         return (
-          <VscCode className="mr-2 text-purple-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-purple-500 shrink-0" size={16} />
         )
       case 'cr':
-        return <VscCode className="mr-2 text-red-500 flex-shrink-0" size={16} />
+        return <VscCode className="mr-2 text-red-500 shrink-0" size={16} />
       case 'nim':
         return (
-          <VscCode className="mr-2 text-yellow-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-yellow-500 shrink-0" size={16} />
         )
       case 'zig':
         return (
-          <VscCode className="mr-2 text-orange-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-orange-500 shrink-0" size={16} />
         )
       case 'v':
         return (
-          <VscCode className="mr-2 text-blue-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-500 shrink-0" size={16} />
         )
 
       // Shell & Scripts
@@ -330,23 +330,23 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'fish':
         return (
           <VscFileCode
-            className="mr-2 text-green-500 flex-shrink-0"
+            className="mr-2 text-green-500 shrink-0"
             size={16}
           />
         )
       case 'bat':
       case 'cmd':
         return (
-          <VscFileCode className="mr-2 text-gray-600 flex-shrink-0" size={16} />
+          <VscFileCode className="mr-2 text-gray-600 shrink-0" size={16} />
         )
       case 'ps1':
       case 'psm1':
         return (
-          <VscFileCode className="mr-2 text-blue-600 flex-shrink-0" size={16} />
+          <VscFileCode className="mr-2 text-blue-600 shrink-0" size={16} />
         )
       case 'vbs':
         return (
-          <VscFileCode className="mr-2 text-blue-500 flex-shrink-0" size={16} />
+          <VscFileCode className="mr-2 text-blue-500 shrink-0" size={16} />
         )
 
       // Database & Query
@@ -354,15 +354,15 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'ddl':
       case 'dml':
         return (
-          <VscCode className="mr-2 text-blue-400 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-400 shrink-0" size={16} />
         )
       case 'mongo':
         return (
-          <VscCode className="mr-2 text-green-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-green-600 shrink-0" size={16} />
         )
       case 'cypher':
         return (
-          <VscCode className="mr-2 text-blue-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-500 shrink-0" size={16} />
         )
 
       // Configuration & Data
@@ -370,31 +370,31 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'yml':
         return (
           <VscFileCode
-            className="mr-2 text-purple-400 flex-shrink-0"
+            className="mr-2 text-purple-400 shrink-0"
             size={16}
           />
         )
       case 'toml':
         return (
-          <VscFileCode className="mr-2 text-blue-500 flex-shrink-0" size={16} />
+          <VscFileCode className="mr-2 text-blue-500 shrink-0" size={16} />
         )
       case 'ini':
       case 'cfg':
       case 'conf':
         return (
-          <VscFileCode className="mr-2 text-gray-500 flex-shrink-0" size={16} />
+          <VscFileCode className="mr-2 text-gray-500 shrink-0" size={16} />
         )
       case 'env':
         return (
           <VscFileCode
-            className="mr-2 text-green-600 flex-shrink-0"
+            className="mr-2 text-green-600 shrink-0"
             size={16}
           />
         )
       case 'properties':
         return (
           <VscFileCode
-            className="mr-2 text-orange-500 flex-shrink-0"
+            className="mr-2 text-orange-500 shrink-0"
             size={16}
           />
         )
@@ -402,7 +402,7 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'tsv':
         return (
           <VscFileCode
-            className="mr-2 text-green-500 flex-shrink-0"
+            className="mr-2 text-green-500 shrink-0"
             size={16}
           />
         )
@@ -411,23 +411,23 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'cmake':
       case 'cmake.in':
         return (
-          <VscFileCode className="mr-2 text-blue-500 flex-shrink-0" size={16} />
+          <VscFileCode className="mr-2 text-blue-500 shrink-0" size={16} />
         )
       case 'makefile':
       case 'mk':
         return (
           <VscFileCode
-            className="mr-2 text-orange-500 flex-shrink-0"
+            className="mr-2 text-orange-500 shrink-0"
             size={16}
           />
         )
       case 'dockerfile':
         return (
-          <VscFileCode className="mr-2 text-blue-600 flex-shrink-0" size={16} />
+          <VscFileCode className="mr-2 text-blue-600 shrink-0" size={16} />
         )
       case 'lock':
         return (
-          <VscJson className="mr-2 text-yellow-500 flex-shrink-0" size={16} />
+          <VscJson className="mr-2 text-yellow-500 shrink-0" size={16} />
         )
 
       // Assembly & Low-level
@@ -435,11 +435,11 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 's':
       case 'S':
         return (
-          <VscCode className="mr-2 text-gray-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-gray-600 shrink-0" size={16} />
         )
       case 'll':
         return (
-          <VscCode className="mr-2 text-blue-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-500 shrink-0" size={16} />
         )
 
       // Documentation & Help
@@ -447,14 +447,14 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'ltx':
         return (
           <VscFileMedia
-            className="mr-2 text-blue-700 flex-shrink-0"
+            className="mr-2 text-blue-700 shrink-0"
             size={16}
           />
         )
       case 'bib':
         return (
           <VscFileMedia
-            className="mr-2 text-green-700 flex-shrink-0"
+            className="mr-2 text-green-700 shrink-0"
             size={16}
           />
         )
@@ -462,7 +462,7 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'asciidoc':
         return (
           <VscFileMedia
-            className="mr-2 text-blue-600 flex-shrink-0"
+            className="mr-2 text-blue-600 shrink-0"
             size={16}
           />
         )
@@ -471,7 +471,7 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'log':
         return (
           <VscFileMedia
-            className="mr-2 text-gray-600 flex-shrink-0"
+            className="mr-2 text-gray-600 shrink-0"
             size={16}
           />
         )
@@ -479,7 +479,7 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'patch':
         return (
           <VscFileMedia
-            className="mr-2 text-orange-500 flex-shrink-0"
+            className="mr-2 text-orange-500 shrink-0"
             size={16}
           />
         )
@@ -487,11 +487,11 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'gitattributes':
       case 'gitmodules':
         return (
-          <VscFileMedia className="mr-2 text-red-500 flex-shrink-0" size={16} />
+          <VscFileMedia className="mr-2 text-red-500 shrink-0" size={16} />
         )
       case 'editorconfig':
         return (
-          <VscFileCode className="mr-2 text-blue-500 flex-shrink-0" size={16} />
+          <VscFileCode className="mr-2 text-blue-500 shrink-0" size={16} />
         )
       case 'eslintrc':
       case 'prettierrc':
@@ -499,32 +499,32 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'tsconfig':
       case 'jsconfig':
         return (
-          <VscJson className="mr-2 text-green-600 flex-shrink-0" size={16} />
+          <VscJson className="mr-2 text-green-600 shrink-0" size={16} />
         )
       case 'webpack.config':
       case 'rollup.config':
       case 'tailwind.config':
       case 'postcss.config':
         return (
-          <VscCode className="mr-2 text-yellow-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-yellow-600 shrink-0" size={16} />
         )
       case 'vite.config':
         return (
-          <VscCode className="mr-2 text-blue-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-600 shrink-0" size={16} />
         )
       case 'browserslist':
         return (
-          <VscFileCode className="mr-2 text-blue-500 flex-shrink-0" size={16} />
+          <VscFileCode className="mr-2 text-blue-500 shrink-0" size={16} />
         )
       case 'nvmrc':
       case 'node-version':
         return (
-          <VscFile className="mr-2 text-green-500 flex-shrink-0" size={16} />
+          <VscFile className="mr-2 text-green-500 shrink-0" size={16} />
         )
 
       default:
         return (
-          <VscFile className="mr-2 text-gray-500 flex-shrink-0" size={16} />
+          <VscFile className="mr-2 text-gray-500 shrink-0" size={16} />
         )
     }
   }
@@ -729,7 +729,7 @@ const FileTree: React.FC<FileTreeProps> = ({
           {/* Inline rename input for files */}
           {renamingItem && renamingItem.name === item.name && (
             <div
-              className="flex items-center py-[1px] px-2 text-gray-700 text-[13px]"
+              className="flex items-center py-px px-2 text-gray-700 text-[13px]"
               style={{ paddingLeft: `${depth * 16 + 8}px` }}
             >
               <form
@@ -804,7 +804,7 @@ const FileTree: React.FC<FileTreeProps> = ({
           {/* Inline creation input */}
           {creatingItem && creatingItem.parentPath === item.name && (
             <div
-              className="flex items-center py-[1px] px-2 text-gray-700 text-[13px]"
+              className="flex items-center py-px px-2 text-gray-700 text-[13px]"
               style={{ paddingLeft: `${(depth + 1) * 16 + 8}px` }}
             >
               <form
@@ -813,12 +813,12 @@ const FileTree: React.FC<FileTreeProps> = ({
               >
                 {creatingItem.type === 'folder' ? (
                   <VscNewFolder
-                    className="mr-2 text-gray-500 flex-shrink-0"
+                    className="mr-2 text-gray-500 shrink-0"
                     size={16}
                   />
                 ) : (
                   <VscNewFile
-                    className="mr-2 text-gray-500 flex-shrink-0"
+                    className="mr-2 text-gray-500 shrink-0"
                     size={16}
                   />
                 )}
@@ -843,7 +843,7 @@ const FileTree: React.FC<FileTreeProps> = ({
           {/* Inline rename input */}
           {renamingItem && renamingItem.name === item.name && (
             <div
-              className="flex items-center py-[1px] px-2 text-gray-700 text-[13px]"
+              className="flex items-center py-px px-2 text-gray-700 text-[13px]"
               style={{ paddingLeft: `${depth * 16 + 8}px` }}
             >
               <form
@@ -851,7 +851,7 @@ const FileTree: React.FC<FileTreeProps> = ({
                 className="w-full flex items-center"
               >
                 <VscFolder
-                  className="mr-2 text-blue-600 flex-shrink-0"
+                  className="mr-2 text-blue-600 shrink-0"
                   size={16}
                 />
                 <input
@@ -916,7 +916,7 @@ const FileTree: React.FC<FileTreeProps> = ({
         {/* Root level creation input */}
         {creatingItem && creatingItem.parentPath === 'root' && (
           <div
-            className="flex items-center py-[1px] px-2 text-gray-700 text-[13px]"
+            className="flex items-center py-px px-2 text-gray-700 text-[13px]"
             style={{ paddingLeft: '8px' }}
           >
             <form
@@ -925,12 +925,12 @@ const FileTree: React.FC<FileTreeProps> = ({
             >
               {creatingItem.type === 'folder' ? (
                 <VscNewFolder
-                  className="mr-2 text-gray-500 flex-shrink-0"
+                  className="mr-2 text-gray-500 shrink-0"
                   size={16}
                 />
               ) : (
                 <VscNewFile
-                  className="mr-2 text-gray-500 flex-shrink-0"
+                  className="mr-2 text-gray-500 shrink-0"
                   size={16}
                 />
               )}

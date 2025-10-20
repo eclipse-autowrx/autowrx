@@ -114,7 +114,7 @@ const PageManageFeatures = () => {
                     key={feature.id}
                     className={`da-menu-item mt-1 flex items-center truncate whitespace-nowrap ${
                       activeTab === feature.name
-                        ? 'bg-da-primary-100 !text-da-primary-500'
+                        ? 'bg-da-primary-100 text-da-primary-500!'
                         : ''
                     }`}
                     onClick={() => setActiveTab(feature.name)}

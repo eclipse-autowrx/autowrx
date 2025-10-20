@@ -87,7 +87,7 @@ const DaMultiUsersInput = ({
       {accessLevels && selectedUsers.length > 0 && (
         <DaSelect
           wrapperClassName="ml-auto sticky self-start -top-[5px] -mt-[5px] -mb-1 -mr-1"
-          className="h-7 border-none !shadow-none"
+          className="h-7 border-none shadow-none!"
           value={accessLevelId}
           onValueChange={(value) => onAccessLevelIdChange(value)}
         >

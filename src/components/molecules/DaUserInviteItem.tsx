@@ -61,7 +61,7 @@ const DaUserInviteItem = ({
         <div className={clsx(forbidRemove && 'pointer-events-none')}>
           <DaMenu
             trigger={
-              <DaText className="da-label-small flex !cursor-pointer items-center text-da-gray-medium">
+              <DaText className="da-label-small flex cursor-pointer! items-center text-da-gray-medium">
                 {accessLevel}{' '}
                 {!forbidRemove && <TbChevronDown className="ml-1" />}
               </DaText>

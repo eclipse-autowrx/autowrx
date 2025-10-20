@@ -207,7 +207,7 @@ const RiskAssessmentEditor = ({
               size="sm"
               variant="plain"
               onClick={() => setIsEditingMarkdown((prev) => !prev)}
-              className="!text-xs !h-6 -mb-1"
+              className="text-xs! h-6! -mb-1"
             >
               <TbEdit className="size-3.5 mr-1.5 text-da-primary-500" />
               {isEditingMarkdown ? 'Preview' : 'Edit Assessment'}
@@ -218,7 +218,7 @@ const RiskAssessmentEditor = ({
               size="sm"
               variant="plain"
               disabled
-              className="!text-xs !h-6 -mb-1"
+              className="text-xs! h-6! -mb-1"
             >
               <TbLoader2 className="size-3.5 mr-1.5 animate-spin text-da-primary-500" />
               {activeTab === 'riskAssessment'
@@ -233,7 +233,7 @@ const RiskAssessmentEditor = ({
                 size="sm"
                 variant="plain"
                 onClick={handleReject}
-                className="!text-xs !h-6 -mb-1"
+                className="text-xs! h-6! -mb-1"
               >
                 <TbX className="size-3.5 mr-1.5 text-red-500" />
                 Reject
@@ -242,7 +242,7 @@ const RiskAssessmentEditor = ({
                 size="sm"
                 variant="plain"
                 onClick={handleApprove}
-                className="!text-xs !h-6 -mb-1"
+                className="text-xs! h-6! -mb-1"
               >
                 <TbCheck className="size-3.5 mr-1.5 text-green-500" />
                 Approve
@@ -253,7 +253,7 @@ const RiskAssessmentEditor = ({
               size="sm"
               variant="plain"
               onClick={generateContent}
-              className="!text-xs !h-6 -mb-1"
+              className="text-xs! h-6! -mb-1"
             >
               <TbTextScan2 className="size-3.5 mr-1.5 text-da-primary-500" />
               Evaluate with AI
@@ -263,7 +263,7 @@ const RiskAssessmentEditor = ({
               size="sm"
               variant="plain"
               onClick={generateContent}
-              className="!text-xs !h-6 -mb-1"
+              className="text-xs! h-6! -mb-1"
             >
               <TbTextScan2 className="size-3.5 mr-1.5 text-da-primary-500" />
               {activeTab === 'riskAssessment'

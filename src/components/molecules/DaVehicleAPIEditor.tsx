@@ -242,7 +242,7 @@ const DaVehicleAPIEditor = ({
       <div className="flex gap-4 items-center">
         <DaText
           variant="small-bold"
-          className="!flex text-da-gray-dark w-[120px] min-w-[120px]"
+          className="flex! text-da-gray-dark w-[120px] min-w-[120px]"
         >
           Signal *
         </DaText>
@@ -259,7 +259,7 @@ const DaVehicleAPIEditor = ({
       <div className="flex gap-4 items-center">
         <DaText
           variant="small-bold"
-          className="!flex text-da-gray-dark w-[120px] min-w-[120px]"
+          className="flex! text-da-gray-dark w-[120px] min-w-[120px]"
         >
           Type *
         </DaText>
@@ -287,14 +287,14 @@ const DaVehicleAPIEditor = ({
           <div className="flex gap-4 items-center">
             <DaText
               variant="small-bold"
-              className="!flex text-da-gray-dark w-[120px] min-w-[120px]"
+              className="flex! text-da-gray-dark w-[120px] min-w-[120px]"
             >
               Data Type *
             </DaText>
             <DaSelect
               value={data.datatype || undefined}
               onValueChange={(value) => setData({ ...data, datatype: value })}
-              className="h-8 text-sm !w-[120px]"
+              className="h-8 text-sm w-[120px]!"
             >
               {dataTypes.map((dt) => (
                 <DaSelectItem className="text-sm" key={dt} value={dt}>
@@ -306,7 +306,7 @@ const DaVehicleAPIEditor = ({
           <div className="flex gap-4 items-center">
             <DaText
               variant="small-bold"
-              className="!flex text-da-gray-dark w-[120px] min-w-[120px]"
+              className="flex! text-da-gray-dark w-[120px] min-w-[120px]"
             >
               Unit
             </DaText>
@@ -330,7 +330,7 @@ const DaVehicleAPIEditor = ({
         <DaTextarea
           value={data?.description || ''}
           onChange={(e) => setData({ ...data, description: e.target.value })}
-          textareaClassName="!text-sm !px-2 !py-1"
+          textareaClassName="text-sm! px-2! py-1!"
           className="flex-1"
         />
       </div>

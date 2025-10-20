@@ -103,7 +103,7 @@ const DaApiListItem = ({
         <div className="flex w-fit justify-end cursor-pointer pl-4">
           <DaText
             variant="small"
-            className={textClass + ' uppercase !font-medium cursor-pointer'}
+            className={textClass + ' uppercase font-medium! cursor-pointer'}
           >
             {api.type}
           </DaText>

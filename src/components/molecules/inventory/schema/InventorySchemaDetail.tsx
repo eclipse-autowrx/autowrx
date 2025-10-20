@@ -72,8 +72,8 @@ const InventorySchemaDetail: React.FC = () => {
     <div className="container mx-auto p-4">
       <div className="bg-white rounded-lg">
         <div className="flex flex-col sm:flex-row justify-between items-start mb-4 gap-4">
-          <div className="flex-grow">
-            <DaText variant="title" className="!text-da-primary-500">
+          <div className="grow">
+            <DaText variant="title" className="text-da-primary-500!">
               {schema.name}
             </DaText>
             <br />
@@ -82,7 +82,7 @@ const InventorySchemaDetail: React.FC = () => {
             </DaText>
           </div>
           {self?.id === schema.created_by?.id && (
-            <div className="flex flex-shrink-0 space-x-2">
+            <div className="flex shrink-0 space-x-2">
               <Link to={`/inventory/instance/new?schemaId=${schema.id}`}>
                 <DaButton size="sm">
                   <TbPlus size={18} className="mr-1" /> New Instance
@@ -101,7 +101,7 @@ const InventorySchemaDetail: React.FC = () => {
                 trigger={
                   <DaButton
                     size="sm"
-                    className="!text-da-destructive ml-2"
+                    className="text-da-destructive! ml-2"
                     variant="destructive"
                   >
                     <TbTrash size={18} className="mr-1" /> Delete

@@ -195,7 +195,7 @@ const FlowItemEditor = ({
                   handleInputChange('description', e.target.value)
                 }
                 className="h-28 p-0.5 "
-                textareaClassName="!text-xs"
+                textareaClassName="text-xs!"
               />
             </div>
             <div className="flex w-full items-center gap-2 my-2">
@@ -208,7 +208,7 @@ const FlowItemEditor = ({
                   onChange={(value) => handleInputChange('preAsilLevel', value)}
                 />
               </div>
-              <TbChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
+              <TbChevronRight className="w-5 h-5 text-gray-400 shrink-0" />
               <div className="flex w-full flex-col items-center">
                 <label className="text-xs font-medium mb-1.5">
                   Post-Mitigation ASIL Rating
@@ -252,7 +252,7 @@ const FlowItemEditor = ({
                 type="button"
                 size="sm"
                 variant="dash"
-                className="text-da-primary-500 !text-xs w-full"
+                className="text-da-primary-500 text-xs! w-full"
                 onClick={handleAddCustomAttribute}
               >
                 <TbPlus className="size-4 mr-1" />

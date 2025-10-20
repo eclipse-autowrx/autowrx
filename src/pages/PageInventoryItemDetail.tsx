@@ -137,7 +137,7 @@ const PageInventoryItemDetail = () => {
       {/* Header */}
       <div className="mt-5 flex gap-2 items-end py-3">
         <div className="flex flex-col gap-2">
-          <DaText variant="title" className="!block text-da-primary-500">
+          <DaText variant="title" className="block! text-da-primary-500">
             {itemData.data?.name || '-'}
           </DaText>
           <div className="text-sm flex gap-2">
@@ -149,7 +149,7 @@ const PageInventoryItemDetail = () => {
         <DaButton
           size="sm"
           variant="outline-nocolor"
-          className="ml-auto !text-da-gray-dark w-[80px]"
+          className="ml-auto text-da-gray-dark! w-[80px]"
         >
           <TbEdit className="w-4 h-4 mr-1" />
           Edit
@@ -159,7 +159,7 @@ const PageInventoryItemDetail = () => {
             <DaButton
               size="sm"
               variant="outline-nocolor"
-              className="!text-da-gray-dark w-[80px]"
+              className="text-da-gray-dark! w-[80px]"
             >
               <TbChevronDown className="w-4 h-4 mr-1" />
               More
@@ -170,7 +170,7 @@ const PageInventoryItemDetail = () => {
             <DaButton
               size="sm"
               variant="plain"
-              className="text-left !justify-start w-[240px]"
+              className="text-left justify-start! w-[240px]"
             >
               <TbCopy className="w-4 h-4 mr-2" />
               Duplicate Item
@@ -206,7 +206,7 @@ const PageInventoryItemDetail = () => {
         <div className="flex mt-4 gap-7 flex-col">
           <div className="border flex-1 min-w-0 shadow rounded-lg flex flex-col">
             <div className="border-b h-[54px] flex items-center px-4">
-              <DaText className="!text-da-gray-darkest" variant="regular-bold">
+              <DaText className="text-da-gray-darkest!" variant="regular-bold">
                 Diagrams
               </DaText>
               <DaButton variant="text" className="ml-auto" size="sm">
@@ -215,14 +215,14 @@ const PageInventoryItemDetail = () => {
               </DaButton>
             </div>
             <div className="px-4 py-2">
-              <DaText variant="small" className="!block py-3">
+              <DaText variant="small" className="block! py-3">
                 This item has no diagrams.
               </DaText>
             </div>
           </div>
           <div className="border flex-1 min-w-0 shadow rounded-lg flex flex-col">
             <div className="border-b h-[54px] flex items-center px-4">
-              <DaText className="!text-da-gray-darkest" variant="regular-bold">
+              <DaText className="text-da-gray-darkest!" variant="regular-bold">
                 Attachments
               </DaText>
             </div>
@@ -246,9 +246,9 @@ const PageInventoryItemDetail = () => {
             <DaInput
               placeholder="Search by description or user"
               className="w-[360px]"
-              inputClassName="!text-sm"
+              inputClassName="text-sm!"
             />
-            <DaSelect className="!w-[240px]" value="timestamp:asc">
+            <DaSelect className="w-[240px]!" value="timestamp:asc">
               <DaSelectItem className="text-sm" value="timestamp:asc">
                 Timestamp Ascending
               </DaSelectItem>
@@ -316,7 +316,7 @@ const PageInventoryItemDetail = () => {
 
           <div className="border flex-1 mt-4 min-w-0 shadow rounded-lg flex flex-col">
             <div className="border-b h-[54px] flex items-center px-4">
-              <DaText className="!text-da-gray-darkest" variant="regular-bold">
+              <DaText className="text-da-gray-darkest!" variant="regular-bold">
                 Viewers
               </DaText>
               <DaButton variant="text" className="ml-auto" size="sm">
@@ -325,14 +325,14 @@ const PageInventoryItemDetail = () => {
               </DaButton>
             </div>
             <div className="px-4 py-2">
-              <DaText variant="small" className="!block py-3">
+              <DaText variant="small" className="block! py-3">
                 This item has no diagrams.
               </DaText>
             </div>
           </div>
           <div className="border mt-7 flex-1 min-w-0 shadow rounded-lg flex flex-col">
             <div className="border-b h-[54px] flex items-center px-4">
-              <DaText className="!text-da-gray-darkest" variant="regular-bold">
+              <DaText className="text-da-gray-darkest!" variant="regular-bold">
                 Contributors (1)
               </DaText>
               <DaButton variant="text" className="ml-auto" size="sm">
@@ -514,7 +514,7 @@ const General = ({ data: item }: { data: InventoryItem }) => {
             image={typeToImage[item.type as keyof typeof typeToImage]}
             isImage
             className="w-[200px] h-[200px]"
-            imgClassName="object-cover !h-full !w-full"
+            imgClassName="object-cover h-full! w-full!"
           />
         </div>
 
@@ -552,7 +552,7 @@ const General = ({ data: item }: { data: InventoryItem }) => {
               onClick={() => setShowDetail((prev) => !prev)}
               size="sm"
               variant="text"
-              className="!px-0 m-0"
+              className="px-0! m-0"
             >
               {showDetail ? (
                 <TbEyeOff className="h-4 w-4 mr-1" />

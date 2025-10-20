@@ -66,7 +66,7 @@ const DaVisibilityControl: React.FC<VisibilityControlProps> = ({
     <div className="flex justify-between items-center border p-2 mt-3 rounded-lg">
       <DaText variant="sub-title" className="text-da-gray-medium">
         Visibility:{' '}
-        <DaText className="text-da-accent-500 capitalize !font-medium">
+        <DaText className="text-da-accent-500 capitalize font-medium!">
           {visibility}
         </DaText>
       </DaText>
@@ -99,7 +99,7 @@ const DaStateControl: React.FC<{
         State:{' '}
         <DaText
           className={clsx(
-            'capitalize !font-medium',
+            'capitalize font-medium!',
             state === 'blocked' && 'text-da-destructive',
             state === 'released' && 'text-da-accent-500',
           )}
@@ -121,7 +121,7 @@ const DaStateControl: React.FC<{
         <div className="flex flex-col px-1">
           <DaButton
             onClick={handleUpdate('draft')}
-            className="!justify-start"
+            className="justify-start!"
             variant="plain"
             size="sm"
           >
@@ -129,7 +129,7 @@ const DaStateControl: React.FC<{
           </DaButton>
           <DaButton
             onClick={handleUpdate('released')}
-            className="!justify-start"
+            className="justify-start!"
             variant="plain"
             size="sm"
           >
@@ -137,7 +137,7 @@ const DaStateControl: React.FC<{
           </DaButton>
           <DaButton
             onClick={handleUpdate('blocked')}
-            className="!justify-start"
+            className="justify-start!"
             variant="destructive"
             size="sm"
           >
@@ -257,7 +257,7 @@ const PageModelDetail = () => {
               <DaButton
                 variant="editor"
                 size="sm"
-                className="!justify-start"
+                className="justify-start!"
                 onClick={() => {
                   setNewName(model.name)
                   setIsEditingName(true)
@@ -293,7 +293,7 @@ const PageModelDetail = () => {
                   size="sm"
                   className={cn(
                     'flex w-full space-x-3 pt-1',
-                    isEditingName && '!pointer-events-none opacity-50',
+                    isEditingName && 'pointer-events-none! opacity-50',
                   )}
                 >
                   {!isDeleting && !isExporting && !isDownloading && (
@@ -326,7 +326,7 @@ const PageModelDetail = () => {
                 <DaButton
                   variant="plain"
                   size="sm"
-                  className="!justify-start"
+                  className="justify-start!"
                   onClick={async () => {
                     if (!model) return
                     setIsExporting(true)
@@ -344,7 +344,7 @@ const PageModelDetail = () => {
                 <DaButton
                   variant="plain"
                   size="sm"
-                  className="!justify-start"
+                  className="justify-start!"
                   onClick={async () => {
                     if (!model) return
                     try {
@@ -368,7 +368,7 @@ const PageModelDetail = () => {
                 <DaButton
                   variant="destructive"
                   size="sm"
-                  className="!justify-start"
+                  className="justify-start!"
                   onClick={() => setConfirmPopupOpen(true)}
                 >
                   <TbTrashX className="w-4 h-4 mr-2" />

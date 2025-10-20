@@ -155,7 +155,7 @@ const DaHierarchicalViewItem = ({
       <div className="flex">
         {/* Render gutter columns for each indent level */}
         {Array.from({ length: level }).map((_, i) => (
-          <div key={i} className="w-8 flex-shrink-0 flex justify-center">
+          <div key={i} className="w-8 shrink-0 flex justify-center">
             <div className="w-px bg-gray-200 self-stretch" />
           </div>
         ))}
@@ -226,7 +226,7 @@ const DaHierarchicalViewItem = ({
           <div className="flex w-fit justify-end cursor-pointer pl-4">
             <DaText
               variant="small"
-              className={textClass + ' uppercase !font-medium cursor-pointer'}
+              className={textClass + ' uppercase font-medium! cursor-pointer'}
             >
               {api.type}
             </DaText>

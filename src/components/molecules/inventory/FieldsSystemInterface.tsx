@@ -60,7 +60,7 @@ const FieldsSystemInterface = ({
 
   return (
     <div>
-      <DaText variant="small-bold" className="!text-da-gray-darkest">
+      <DaText variant="small-bold" className="text-da-gray-darkest!">
         Choose how to add interface data
       </DaText>
       <div className="flex gap-3 mt-1">
@@ -183,7 +183,7 @@ const ReferenceFields = ({
 
   return (
     <div className="mt-3">
-      <DaText variant="small-bold" className="!text-da-gray-darkest">
+      <DaText variant="small-bold" className="text-da-gray-darkest!">
         Link to Vehicle Signal
       </DaText>
       <div className="flex gap-3 mt-1">
@@ -200,7 +200,7 @@ const ReferenceFields = ({
             type="button"
             variant="outline-nocolor"
             disabled={loading}
-            className="h-10 !px-3 !text-sm !shadow-sm !text-da-gray-darkest"
+            className="h-10 px-3! text-sm! shadow-sm! text-da-gray-darkest!"
           >
             {loading ? (
               <TbLoader className="animate-spin w-4 h-4 mr-1" />
@@ -212,7 +212,7 @@ const ReferenceFields = ({
         </DaTooltip>
       </div>
 
-      <DaText className="block !text-xs mt-1 !text-da-gray-dark">
+      <DaText className="block text-xs! mt-1 text-da-gray-dark!">
         The Vehicle Signal link must be valid and accessible to you.
       </DaText>
 
@@ -230,7 +230,7 @@ const ReferenceFields = ({
               type="button"
               onClick={() => setReferenceData(null)}
               variant="plain"
-              className="!p-3"
+              className="p-3!"
             >
               <TbX className="w-5 h-5" />
             </DaButton>
@@ -260,10 +260,10 @@ const ReferenceFields = ({
         </div>
       )}
 
-      {error && <DaText className="!text-xs text-red-500">{error}</DaText>}
+      {error && <DaText className="text-xs! text-red-500">{error}</DaText>}
 
       {warning && (
-        <DaText className="!text-xs text-da-secondary-500">{warning}</DaText>
+        <DaText className="text-xs! text-da-secondary-500">{warning}</DaText>
       )}
     </div>
   )
@@ -318,7 +318,7 @@ const ManualFields = ({ onChange, onSummaryChange }: ManualFieldsProps) => {
   return (
     <div className="h-fit">
       <div className="mt-3">
-        <DaText variant="small-bold" className="!text-da-gray-darkest">
+        <DaText variant="small-bold" className="text-da-gray-darkest!">
           Interface Name *
         </DaText>
         <DaInput
@@ -330,7 +330,7 @@ const ManualFields = ({ onChange, onSummaryChange }: ManualFieldsProps) => {
         />
       </div>
       <div className="mt-3">
-        <DaText variant="small-bold" className="!text-da-gray-darkest">
+        <DaText variant="small-bold" className="text-da-gray-darkest!">
           Interface Description
         </DaText>
         <DaInput
@@ -359,7 +359,7 @@ const ManualFields = ({ onChange, onSummaryChange }: ManualFieldsProps) => {
       {showAdvanced && (
         <>
           <div className="mt-3">
-            <DaText variant="small-bold" className="!text-da-gray-darkest">
+            <DaText variant="small-bold" className="text-da-gray-darkest!">
               Interface Type
             </DaText>
             <DaSelect
@@ -386,7 +386,7 @@ const ManualFields = ({ onChange, onSummaryChange }: ManualFieldsProps) => {
             </DaSelect>
           </div>
           <div className="mt-3">
-            <DaText variant="small-bold" className="!text-da-gray-darkest">
+            <DaText variant="small-bold" className="text-da-gray-darkest!">
               Data Type
             </DaText>
             <DaInput
@@ -398,7 +398,7 @@ const ManualFields = ({ onChange, onSummaryChange }: ManualFieldsProps) => {
             />
           </div>
           <div className="mt-3">
-            <DaText variant="small-bold" className="!text-da-gray-darkest">
+            <DaText variant="small-bold" className="text-da-gray-darkest!">
               ASIL Level
             </DaText>
             <DaSelect
@@ -425,7 +425,7 @@ const ManualFields = ({ onChange, onSummaryChange }: ManualFieldsProps) => {
             </DaSelect>
           </div>
           <div className="mt-3">
-            <DaText variant="small-bold" className="!text-da-gray-darkest">
+            <DaText variant="small-bold" className="text-da-gray-darkest!">
               Allowed
             </DaText>
             <DaInput
@@ -435,14 +435,14 @@ const ManualFields = ({ onChange, onSummaryChange }: ManualFieldsProps) => {
               inputClassName="text-sm text-da-gray-darkest"
               placeholder="eg. ACTIVE, INACTIVE"
             />
-            <DaText className="block !text-xs mt-1 !text-da-gray-dark">
+            <DaText className="block text-xs! mt-1 text-da-gray-dark!">
               Allowed values for the data type. Separate multiple values with
               comma.
             </DaText>
           </div>
           <div className="grid grid-cols-2 gap-x-6">
             <div className="mt-3">
-              <DaText variant="small-bold" className="!text-da-gray-darkest">
+              <DaText variant="small-bold" className="text-da-gray-darkest!">
                 Unit
               </DaText>
               <DaInput
@@ -454,7 +454,7 @@ const ManualFields = ({ onChange, onSummaryChange }: ManualFieldsProps) => {
               />
             </div>
             <div className="mt-3">
-              <DaText variant="small-bold" className="!text-da-gray-darkest">
+              <DaText variant="small-bold" className="text-da-gray-darkest!">
                 Threshold
               </DaText>
               <DaInput
@@ -466,7 +466,7 @@ const ManualFields = ({ onChange, onSummaryChange }: ManualFieldsProps) => {
               />
             </div>
             <div className="mt-3">
-              <DaText variant="small-bold" className="!text-da-gray-darkest">
+              <DaText variant="small-bold" className="text-da-gray-darkest!">
                 Max
               </DaText>
               <DaInput
@@ -478,7 +478,7 @@ const ManualFields = ({ onChange, onSummaryChange }: ManualFieldsProps) => {
               />
             </div>
             <div className="mt-3">
-              <DaText variant="small-bold" className="!text-da-gray-darkest">
+              <DaText variant="small-bold" className="text-da-gray-darkest!">
                 Min
               </DaText>
               <DaInput
@@ -491,7 +491,7 @@ const ManualFields = ({ onChange, onSummaryChange }: ManualFieldsProps) => {
             </div>
           </div>
           <div className="mt-3">
-            <DaText variant="small-bold" className="!text-da-gray-darkest">
+            <DaText variant="small-bold" className="text-da-gray-darkest!">
               Direction
             </DaText>
             <DaInput
@@ -503,7 +503,7 @@ const ManualFields = ({ onChange, onSummaryChange }: ManualFieldsProps) => {
             />
           </div>
           <div className="mt-3">
-            <DaText variant="small-bold" className="!text-da-gray-darkest">
+            <DaText variant="small-bold" className="text-da-gray-darkest!">
               Component
             </DaText>
             <DaInput
@@ -515,7 +515,7 @@ const ManualFields = ({ onChange, onSummaryChange }: ManualFieldsProps) => {
             />
           </div>
           <div className="mt-3">
-            <DaText variant="small-bold" className="!text-da-gray-darkest">
+            <DaText variant="small-bold" className="text-da-gray-darkest!">
               Owner
             </DaText>
             <DaInput
@@ -527,7 +527,7 @@ const ManualFields = ({ onChange, onSummaryChange }: ManualFieldsProps) => {
             />
           </div>
           <div className="mt-3">
-            <DaText variant="small-bold" className="!text-da-gray-darkest">
+            <DaText variant="small-bold" className="text-da-gray-darkest!">
               Version
             </DaText>
             <DaInput
@@ -539,7 +539,7 @@ const ManualFields = ({ onChange, onSummaryChange }: ManualFieldsProps) => {
             />
           </div>
           <div className="mt-3">
-            <DaText variant="small-bold" className="!text-da-gray-darkest">
+            <DaText variant="small-bold" className="text-da-gray-darkest!">
               Date
             </DaText>
             <DaInput
@@ -551,7 +551,7 @@ const ManualFields = ({ onChange, onSummaryChange }: ManualFieldsProps) => {
             />
           </div>
           <div className="mt-3">
-            <DaText variant="small-bold" className="!text-da-gray-darkest">
+            <DaText variant="small-bold" className="text-da-gray-darkest!">
               Link
             </DaText>
             <DaInput

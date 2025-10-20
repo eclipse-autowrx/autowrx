@@ -164,7 +164,7 @@ const PagePrototypeLibrary = () => {
               {activeTab === 'list' && (
                 <DaText
                   variant="small-medium"
-                  className="text-da-primary-500 flex-shrink-0 hidden xl:flex"
+                  className="text-da-primary-500 shrink-0 hidden xl:flex"
                 >
                   Select a prototype to start
                 </DaText>
@@ -176,7 +176,7 @@ const PagePrototypeLibrary = () => {
                   Icon={TbSearch}
                   iconBefore={true}
                   placeholder="Search prototypes"
-                  className="w-full xl:max-w-[200px] !text-da-gray-dark"
+                  className="w-full xl:max-w-[200px] text-da-gray-dark!"
                   wrapperClassName="h-8 shadow"
                   inputClassName="h-6 text-sm placeholder:text-da-gray-medium font-medium"
                   iconSize={20}
@@ -186,7 +186,7 @@ const PagePrototypeLibrary = () => {
                 <DaButton
                   variant="outline-nocolor"
                   size="sm"
-                  className={`!hidden lg:!flex items-center`}
+                  className={`hidden! lg:flex! items-center`}
                   onClick={handleTabChange}
                 >
                   {activeTab === 'list' ? (
@@ -204,7 +204,7 @@ const PagePrototypeLibrary = () => {
                 <DaFilter
                   categories={{ 'Sort By': ['Newest', 'Oldest', 'Name A-Z'] }}
                   onChange={handleFilterChange}
-                  className="w-fit mr-0 !h-8 !shadow !px-2 !text-sm"
+                  className="w-fit mr-0 h-8! shadow! px-2! text-sm!"
                   singleSelect={true}
                   defaultValue={selectedFilters}
                   label="Sort By"
@@ -241,7 +241,7 @@ const PagePrototypeLibrary = () => {
           ) : (
             <div className="flex w-full py-6 items-center">
               <DaSkeleton className="w-[210px] h-[32px]" />
-              <div className="flex-grow" />
+              <div className="grow" />
               <DaSkeleton className="w-[125px] h-[32px] mr-2" />
               <DaSkeleton className="w-[157px] h-[32px]" />
             </div>

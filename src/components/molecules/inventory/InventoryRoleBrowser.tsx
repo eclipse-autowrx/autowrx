@@ -43,7 +43,7 @@ const InventoryRoleBrowser = () => {
               alt={role.name}
             />
             <div className="flex flex-col flex-1 px-6 py-4">
-              <DaText variant="sub-title" className="!text-da-gray-darkest">
+              <DaText variant="sub-title" className="text-da-gray-darkest!">
                 {role.name}
               </DaText>
               <span className="text-sm mt-1">{role.description}</span>

@@ -45,7 +45,7 @@ const DaItemVerticalStandard: React.FC<DaItemVerticalStandardProps> = ({
         <div className="flex flex-col items-start w-full space-y-0">
           <DaText
             variant="regular-bold"
-            className="line-clamp-1 !text-da-gray-dark"
+            className="line-clamp-1 text-da-gray-dark!"
           >
             {title}
           </DaText>

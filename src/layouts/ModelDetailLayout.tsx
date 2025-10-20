@@ -109,7 +109,7 @@ const ModelDetailLayout = () => {
             >
               {intro.title}
               {intro.count !== null && (
-                <div className="flex min-w-5 px-1.5 !py-0.5 items-center justify-center text-xs ml-1 bg-gray-200 rounded-md">
+                <div className="flex min-w-5 px-1.5 py-0.5! items-center justify-center text-xs ml-1 bg-gray-200 rounded-md">
                   {intro.count}
                 </div>
               )}

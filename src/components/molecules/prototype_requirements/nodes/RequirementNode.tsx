@@ -121,7 +121,7 @@ function RequirementNode({
 
       <DropdownMenuContent
         ref={dropdownRef}
-        className="flex flex-col text-xs bg-white p-3 -my-2 border rounded-lg overflow-y-auto max-h-[50vh] min-w-[250px] w-[500px] z-[9999]"
+        className="flex flex-col text-xs bg-white p-3 -my-2 border rounded-lg overflow-y-auto max-h-[50vh] min-w-[250px] w-[500px] z-9999"
         side="right"
         align="start"
         onEscapeKeyDown={() => setOpen(false)}
@@ -137,7 +137,7 @@ function RequirementNode({
                 <DaButton
                   size="sm"
                   variant="editor"
-                  className="flex ml-1 !h-6 !p-2 !text-xs"
+                  className="flex ml-1 h-6! p-2! text-xs!"
                   onClick={handleEdit}
                 >
                   <TbEdit className="size-3.5 mr-1" /> Edit
@@ -145,7 +145,7 @@ function RequirementNode({
                 <DaButton
                   size="sm"
                   variant="destructive"
-                  className="flex ml-1 !h-6 !p-2 !text-xs"
+                  className="flex ml-1 h-6! p-2! text-xs!"
                   onClick={handleDelete}
                 >
                   <TbTrash className="size-3.5 mr-1" /> Delete

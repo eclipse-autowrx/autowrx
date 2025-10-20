@@ -343,7 +343,7 @@ const DaRuntimeControl: FC = ({ }) => {
               // setShowManageRt(true)
               setShowRtDialog(true)
             }}
-            className='!text-yellow-400'
+            className='text-yellow-400!'
             dataId='btn-add-runtime'
           >
             Add Runtime
@@ -457,7 +457,7 @@ const DaRuntimeControl: FC = ({ }) => {
           <DaButton
             size="sm"
             variant="outline"
-            className="ml-4 mt-1 !text-white hover:!text-da-gray-medium !border-da-white hover:!border-da-gray-medium"
+            className="ml-4 mt-1 text-white! hover:text-da-gray-medium! border-da-white! hover:border-da-gray-medium!"
             onClick={() => {
               setLog('')
               if (runTimeRef.current) {
@@ -472,7 +472,7 @@ const DaRuntimeControl: FC = ({ }) => {
             <BiSend className="ml-1" size={20} />
           </DaButton>
         )} */}
-        {/* { isExpand && <DaButton size='sm' variant="outline" className='mt-1 ml-2 !text-white hover:!text-da-gray-medium !border-da-white hover:!border-da-gray-medium'
+        {/* { isExpand && <DaButton size='sm' variant="outline" className='mt-1 ml-2 text-white! hover:text-da-gray-medium! border-da-white! hover:border-da-gray-medium!'
           onClick={() => { setShowStaging(true) }}>
           Staging
         </DaButton>
@@ -483,7 +483,7 @@ const DaRuntimeControl: FC = ({ }) => {
             size="sm"
             variant="plain"
             dataId='btn-clear-log'
-            className="mt-1 ml-2 !text-white hover:!text-da-gray-medium !border-da-white hover:!border-da-gray-medium"
+            className="mt-1 ml-2 text-white! hover:text-da-gray-medium! border-da-white! hover:border-da-gray-medium!"
             onClick={() => {
               setLog('')
             }}
@@ -499,7 +499,7 @@ const DaRuntimeControl: FC = ({ }) => {
             {activeTab == 'output' && (
               <>
                 <div className="h-full flex flex-col">
-                <div className="bg-gray-700 flex-shrink flex items-center">
+                <div className="bg-gray-700 shrink flex items-center">
                     {requestMode && (
                       <div className="flex items-center">
                         <DaInput

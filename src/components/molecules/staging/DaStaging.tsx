@@ -353,7 +353,7 @@ const DaStaging = ({ isWizard }: DaStagingProps) => {
           )}
           <div className="mt-1 w-full rounded border border-gray-300">
             {/* Title */}
-            <div className="flex h-[28px] w-full rounded-t bg-gradient-to-r from-da-gradient-from to-da-gradient-to text-da-white">
+            <div className="flex h-[28px] w-full rounded-t bg-linear-to-r from-da-gradient-from to-da-gradient-to text-da-white">
               <div className="flex w-[340px] items-center justify-center border-r border-da-white font-bold">
                 System
               </div>
@@ -374,7 +374,7 @@ const DaStaging = ({ isWizard }: DaStagingProps) => {
                 <div className="w-full">
                     <select
                       aria-label="deploy-select"
-                      className={`text-center border rounded da-label-small px-2 py-1 w-full min-w-[100px] text-da-gray-dark bg-gray-200 !cursor-pointer`}
+                      className={`text-center border rounded da-label-small px-2 py-1 w-full min-w-[100px] text-da-gray-dark bg-gray-200 cursor-pointer!`}
                       value={activeLifeCycle}
                       onChange={(e) => {
                         // console.log(`setActiveRtId(e.target.value) `, e.target.value)
@@ -388,7 +388,7 @@ const DaStaging = ({ isWizard }: DaStagingProps) => {
                               value={lifecycle}
                               key={lifecycle}
                             >
-                              <div className="text-[20px] flex items-center !cursor-pointer">
+                              <div className="text-[20px] flex items-center cursor-pointer!">
                                 {lifecycle}
                               </div>
                             </option>

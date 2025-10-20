@@ -411,7 +411,7 @@ const FormCreatePrototype = ({
         type="submit"
         variant="gradient"
         dataId='btn-create-prototype'
-        className={clsx('mt-8 w-full', hideCreateButton && '!hidden')}
+        className={clsx('mt-8 w-full', hideCreateButton && 'hidden!')}
       >
         {loading && <TbLoader className="mr-2 animate-spin text-lg" />}
         {buttonText ?? 'Create Prototype'}

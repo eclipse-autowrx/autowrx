@@ -34,7 +34,7 @@ const DaUserMenu = ({ user }: DaUserDropdownProps) => {
     <div className="flex items-center justify-center ml-2">
       <DaMenu
         trigger={
-          <DaButton variant="plain" className="h-10 w-10 !p-2">
+          <DaButton variant="plain" className="h-10 w-10 p-2!">
             <picture className="cursor-pointer h-full w-full">
               <source
                 srcSet={user.image_file}

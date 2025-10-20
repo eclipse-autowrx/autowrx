@@ -36,7 +36,7 @@ const DaDashboardTemplate = ({
       >
         <DaImage
           src={template.image}
-          className="aspect-[16/9] w-full object-cover hover:scale-110"
+          className="aspect-video w-full object-cover hover:scale-110"
         />
       </div>
 
@@ -52,7 +52,7 @@ const DaDashboardTemplate = ({
 
       {/* <DaButton
         onClick={onEditClick}
-        className="absolute right-[6px] top-[6px] !hidden !h-9 !w-9 !rounded-full group-hover:!block"
+        className="absolute right-[6px] top-[6px] hidden! h-9! w-9! rounded-full! group-hover:block!"
         size="sm"
         variant="secondary"
       >

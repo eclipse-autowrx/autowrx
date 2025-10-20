@@ -1366,7 +1366,7 @@ const PrototypeTabRequirement = () => {
               </DaButton>
               <DaButton
                 onClick={() => setIsEditing(!isEditing)}
-                className="!justify-start"
+                className="justify-start!"
                 variant="editor"
                 size="sm"
                 dataId="btn-toggle-view"
@@ -1398,7 +1398,7 @@ const PrototypeTabRequirement = () => {
           </DaButton>
         </div>
 
-        <div className="fixed bottom-2 right-2 z-[1000] bg-white/95 rounded-2xl shadow-lg px-1 py-1 flex space-x-4 items-center">
+        <div className="fixed bottom-2 right-2 z-1000 bg-white/95 rounded-2xl shadow-lg px-1 py-1 flex space-x-4 items-center">
           {LOGOS.map((logo, idx) => (
             <img
               key={idx}

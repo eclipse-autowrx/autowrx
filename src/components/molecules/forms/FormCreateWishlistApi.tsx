@@ -340,7 +340,7 @@ const FormCreateWishlistApi = ({
 
       {/* Name Input */}
       <div className="mt-6">
-        <div className="!text-sm font-medium"> Name</div>
+        <div className="text-sm! font-medium"> Name</div>
         <DaInput
           value={data.name}
           onChange={handleChange('name')}
@@ -367,7 +367,7 @@ const FormCreateWishlistApi = ({
       </div>
 
       {/* Description */}
-      <div className="mt-4 !text-sm font-medium">Description</div>
+      <div className="mt-4 text-sm! font-medium">Description</div>
       <DaInput
         value={data.description}
         onChange={handleChange('description')}
@@ -378,7 +378,7 @@ const FormCreateWishlistApi = ({
       />
 
       {/* Type */}
-      <div className="mt-4 !text-sm font-medium">Type</div>
+      <div className="mt-4 text-sm! font-medium">Type</div>
       <div className="mt-2 grid grid-cols-4 gap-2">
         {typeOptions.map((option) => (
           <button
@@ -405,7 +405,7 @@ const FormCreateWishlistApi = ({
         data.type === 'actuator' ||
         data.type === 'attribute') && (
         <div>
-          <div className="mt-4 !text-sm font-medium">Data Type</div>
+          <div className="mt-4 text-sm! font-medium">Data Type</div>
           <DaSelect
             value={data.datatype ?? 'uint8'}
             onValueChange={handleDatatypeChange}
@@ -419,7 +419,7 @@ const FormCreateWishlistApi = ({
           </DaSelect>
 
           {/* Unit Input */}
-          <div className="mt-4 !text-sm font-medium">Unit</div>
+          <div className="mt-4 text-sm! font-medium">Unit</div>
           <DaInput
             value={data.unit || ''}
             onChange={handleChange('unit')}

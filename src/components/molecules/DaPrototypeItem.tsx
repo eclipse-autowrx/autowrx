@@ -45,8 +45,8 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
             alt="Image"
             className="w-full h-full rounded-lg aspect-video object-cover shadow border"
           />
-          <div className="absolute bottom-0 w-full h-[30px] p-[1px] blur-xl bg-black/80 transition-opacity duration-200 ease-in-out opacity-0 group-hover:opacity-100"></div>
-          <div className="absolute bottom-0 w-full h-[50px] p-[1px] transition-opacity duration-200 ease-in-out opacity-0 group-hover:opacity-100">
+          <div className="absolute bottom-0 w-full h-[30px] p-px blur-xl bg-black/80 transition-opacity duration-200 ease-in-out opacity-0 group-hover:opacity-100"></div>
+          <div className="absolute bottom-0 w-full h-[50px] p-px transition-opacity duration-200 ease-in-out opacity-0 group-hover:opacity-100">
             <div className="flex h-full w-full px-3 items-center justify-between text-white rounded-b-lg ">
               {prototype?.created_by && (
                 <div className="flex gap-2 items-center">
@@ -70,7 +70,7 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
                       onClick={(e) => e.stopPropagation()}
                     >
                       <div className="p-1 rounded-full bg-white opacity-80 hover:opacity-100">
-                        <TbCode className="size-4 !text-da-gray-dark" />
+                        <TbCode className="size-4 text-da-gray-dark!" />
                       </div>
                     </Link>
                   </DaTooltip>
@@ -81,7 +81,7 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
                       onClick={(e) => e.stopPropagation()}
                     >
                       <div className="p-1 rounded-full bg-white opacity-80 hover:opacity-100">
-                        <TbGauge className="size-4 !text-da-gray-dark" />
+                        <TbGauge className="size-4 text-da-gray-dark!" />
                       </div>
                     </Link>
                   </DaTooltip>
@@ -93,7 +93,7 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
         <div className="flex items-center w-full space-y-0">
           <DaText
             variant="regular-bold"
-            className="line-clamp-1 !text-da-gray-dark prototype-grid-item-name"
+            className="line-clamp-1 text-da-gray-dark! prototype-grid-item-name"
           >
             {prototype?.name ?? ''}
           </DaText>

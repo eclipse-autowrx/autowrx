@@ -249,7 +249,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                       >
                         <DaButton
                           onClick={updateEditorChoice}
-                          className="!justify-start"
+                          className="justify-start!"
                           variant="editor"
                           size="sm"
                         >
@@ -263,7 +263,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                     )}
                     <DaButton
                       onClick={() => setIsEditing(true)}
-                      className="!justify-start"
+                      className="justify-start!"
                       variant="editor"
                       size="sm"
                       dataId='prototype-edit-button'
@@ -277,7 +277,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                           size="sm"
                           className={cn(
                             'flex w-full',
-                            isEditing && '!pointer-events-none opacity-50',
+                            isEditing && 'pointer-events-none! opacity-50',
                           )}
                         >
                           {!isDeleting && !isEditing && !isSaving && (
@@ -302,7 +302,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                         <DaButton
                           variant="plain"
                           size="sm"
-                          className="!justify-start"
+                          className="justify-start!"
                           onClick={() => downloadPrototypeZip(prototype)}
                         >
                           <TbDownload className="w-4 h-4 mr-2" />
@@ -311,7 +311,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                         <DaButton
                           variant="destructive"
                           size="sm"
-                          className="!justify-start"
+                          className="justify-start!"
                           onClick={() => setConfirmPopupOpen(true)}
                         >
                           <TbTrashX className="w-4 h-4 mr-2" />

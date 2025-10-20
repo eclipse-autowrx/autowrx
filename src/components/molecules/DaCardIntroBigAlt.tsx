@@ -31,7 +31,7 @@ const DaCardIntroBig = ({ title, content, children }: CardIntroProps) => {
       <DaText variant="small" className=" text-da-gray-medium mt-2">
         {content}
       </DaText>
-      <div className="flex-grow"></div>
+      <div className="grow"></div>
       <div className="mt-4 lg:mt-3">{children}</div>
     </div>
   )

@@ -199,7 +199,7 @@ const DaDashboard = () => {
                   <DaButton
                     size="sm"
                     variant="destructive"
-                    className="w-fit flex !text-red-500"
+                    className="w-fit flex text-red-500!"
                     onClick={handleDeleteAllWidgets}
                     dataId="dashboard-delete-all-widgets"
                   >

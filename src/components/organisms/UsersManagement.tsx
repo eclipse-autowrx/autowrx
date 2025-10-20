@@ -80,7 +80,7 @@ const UsersManagement = () => {
   return (
     <div className="flex flex-col w-full container">
       {/* Header */}
-      <div className="mb-4 top-0 pt-6 border-b pb-4 z-[50] bg-white sticky flex-shrink-0 items-center">
+      <div className="mb-4 top-0 pt-6 border-b pb-4 z-50 bg-white sticky shrink-0 items-center">
         <div className="flex gap-4">
           <span className="space-x-2 w-32 text-da-primary-500">
             <DaText variant="huge-bold">Users:</DaText>

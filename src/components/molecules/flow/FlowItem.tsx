@@ -145,7 +145,7 @@ const FlowItem = ({ stringData, onEdit }: FlowItemProps) => {
               <DaButton
                 size="sm"
                 variant="plain"
-                className="flex ml-1 !h-6 !p-2 !text-xs !text-da-primary-500"
+                className="flex ml-1 h-6! p-2! text-xs! text-da-primary-500!"
                 onClick={(e) => {
                   // Locate the dropdown menu element and dispatch the escape key event
                   const menu = e.currentTarget.closest('[role="menu"]')

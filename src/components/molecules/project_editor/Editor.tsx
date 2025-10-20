@@ -386,7 +386,7 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
             >
               <span className="truncate max-w-32">{openFile.name}</span>
               {unsavedFiles.has(openFile.name) && (
-                <span className="ml-2 w-2 h-2 bg-yellow-500 rounded-full flex-shrink-0"></span>
+                <span className="ml-2 w-2 h-2 bg-yellow-500 rounded-full shrink-0"></span>
               )}
               <button
                 onClick={(e) => handleClose(e, openFile)}

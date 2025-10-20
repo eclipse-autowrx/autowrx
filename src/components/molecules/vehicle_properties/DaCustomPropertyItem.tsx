@@ -74,8 +74,8 @@ const DaCustomPropertyItem = ({
           handleChange('name', e.target.value, property, onUpdate)
         }
         placeholder="Property Name"
-        wrapperClassName="!bg-white"
-        inputClassName="!bg-white text-sm"
+        wrapperClassName="bg-white!"
+        inputClassName="bg-white! text-sm"
         className="col-span-5"
       />
       <DaSelect
@@ -121,8 +121,8 @@ const DaCustomPropertyItem = ({
             disabled
             value="null"
             placeholder="null"
-            wrapperClassName="!bg-white"
-            inputClassName="!bg-white w-full text-sm"
+            wrapperClassName="bg-white!"
+            inputClassName="bg-white! w-full text-sm"
             className="col-span-5 w-full"
           />
         ) : (
@@ -133,8 +133,8 @@ const DaCustomPropertyItem = ({
               handleChange('value', e.target.value, property, onUpdate)
             }
             placeholder="Value"
-            wrapperClassName="!bg-white"
-            inputClassName="!bg-white w-full text-sm"
+            wrapperClassName="bg-white!"
+            inputClassName="bg-white! w-full text-sm"
             className="col-span-5 w-full"
           />
         )}

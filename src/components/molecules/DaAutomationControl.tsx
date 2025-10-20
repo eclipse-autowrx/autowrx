@@ -435,7 +435,7 @@ const DaAutomationControl: React.FC = () => {
 
   return (
     <div
-      className="fixed bottom-1 left-1 right-1 z-[10000] w-fit h-fit
+      className="fixed bottom-1 left-1 right-1 z-10000 w-fit h-fit
                 p-0 rounded  text-white mx-auto overflow-y-auto shadow-2xl shadow-slate-500"
     >
       <div className="">

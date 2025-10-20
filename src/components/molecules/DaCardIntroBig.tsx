@@ -37,7 +37,7 @@ const DaCardIntroBig = ({
       </div>
       {/* <DaButton
         variant="outline-nocolor"
-        className="flex w-fit !mt-auto"
+        className="flex w-fit mt-auto!"
         onClick={onClick}
       >
         {buttonText}

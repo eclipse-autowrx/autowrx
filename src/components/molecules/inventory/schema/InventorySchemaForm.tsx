@@ -142,7 +142,7 @@ const InventorySchemaForm: React.FC<SchemaFormProps> = ({
           <DaInput
             type="text"
             id="name"
-            inputClassName="!px-3"
+            inputClassName="px-3!"
             {...register('name', {
               required: 'Schema name is required.',
             })}
@@ -279,7 +279,7 @@ const ControlButtons = ({
           disabled={loading}
           className={clsx(
             'bg-da-primary-500 text-white font-bold py-2 px-4 rounded transition duration-300',
-            loading && 'opacity-50 !cursor-not-allowed',
+            loading && 'opacity-50 cursor-not-allowed!',
           )}
         >
           {loading ? (

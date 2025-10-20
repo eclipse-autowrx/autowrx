@@ -84,7 +84,7 @@ const DaRelatedPrototypes = ({ signal }: DaRelatedPrototypesProps) => {
               onClick={() => setExpanded((prev) => !prev)}
               variant="text"
               size="sm"
-              className="mt-1 !px-0"
+              className="mt-1 px-0!"
             >
               {expanded ? 'Show less' : `Show ${prototypes.length - 3} more`}{' '}
               <TbChevronDown

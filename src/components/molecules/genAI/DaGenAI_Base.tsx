@@ -329,7 +329,7 @@ const DaGenAI_Base = ({
             }}
             placeholder={placeholderText}
             className="w-full h-full"
-            textareaClassName="flex h-full resize-none !bg-gray-50 text-da-gray-dark"
+            textareaClassName="flex h-full resize-none bg-gray-50! text-da-gray-dark"
           />
         </div>
 
@@ -397,7 +397,7 @@ const DaGenAI_Base = ({
             !addonsLoaded ||
             (!canUseGenAI && !hasGenAIAssets)
           }
-          className={cn('min-h-8 w-full py-1', prompt ? '!mt-1' : '')}
+          className={cn('min-h-8 w-full py-1', prompt ? 'mt-1!' : '')}
           onClick={handleGenerate}
         >
           <BsStars

@@ -101,15 +101,15 @@ export default FormInventoryItem
 //       <div className="border-b" />
 
 //       <div className="container flex lg:flex-row flex-col m-auto gap-14 py-6">
-//         <div className="flex flex-col flex-[6] min-w-0 gap-4">
+//         <div className="flex flex-col flex-6 min-w-0 gap-4">
 //           <div className="border h-fit shadow rounded-lg">
 //             <div className="border-b h-[54px] flex items-center px-4">
-//               <DaText variant="regular-bold" className="!text-da-gray-darkest">
+//               <DaText variant="regular-bold" className="text-da-gray-darkest!">
 //                 Basic Information
 //               </DaText>
 //             </div>
 //             <div className="pb-6 px-4 pt-4">
-//               <DaText variant="small-bold" className="!text-da-gray-darkest">
+//               <DaText variant="small-bold" className="text-da-gray-darkest!">
 //                 Name *
 //               </DaText>
 //               <DaInput
@@ -122,7 +122,7 @@ export default FormInventoryItem
 
 //               <div className="mt-3" />
 
-//               <DaText variant="small-bold" className="!text-da-gray-darkest">
+//               <DaText variant="small-bold" className="text-da-gray-darkest!">
 //                 Visibility *
 //               </DaText>
 //               <DaSelect
@@ -140,7 +140,7 @@ export default FormInventoryItem
 
 //               <div className="mt-3" />
 
-//               <DaText variant="small-bold" className="!text-da-gray-darkest">
+//               <DaText variant="small-bold" className="text-da-gray-darkest!">
 //                 Image
 //               </DaText>
 //               <DaFileUpload
@@ -163,13 +163,13 @@ export default FormInventoryItem
 
 //           <div className="border h-fit shadow rounded-lg">
 //             <div className="justify-between border-b h-[54px] flex items-center px-4">
-//               <DaText variant="regular-bold" className="!text-da-gray-darkest">
+//               <DaText variant="regular-bold" className="text-da-gray-darkest!">
 //                 Inventory Type
 //               </DaText>
 //               <DaButton
 //                 type="button"
 //                 variant="text"
-//                 className="!px-0 !text-sm !text-da-primary-500"
+//                 className="px-0! text-sm! text-da-primary-500!"
 //                 onClick={() => window.open('/inventory/type', '_blank')}
 //               >
 //                 <TbPlus className="mr-1" /> Add Type
@@ -177,7 +177,7 @@ export default FormInventoryItem
 //             </div>
 //             <div className="pb-6 px-4 pt-4">
 //               <div className="flex justify-between items-center">
-//                 <DaText variant="small-bold" className="!text-da-gray-darkest">
+//                 <DaText variant="small-bold" className="text-da-gray-darkest!">
 //                   Type *
 //                 </DaText>
 //                 <TbReload className="text-da-gray-dark cursor-pointer" />
@@ -202,7 +202,7 @@ export default FormInventoryItem
 
 //           <div className="border min-w-0 h-fit shadow rounded-lg text-sm">
 //             <div className="border-b h-[54px] flex items-center px-5">
-//               <DaText variant="regular-bold" className="!text-da-gray-darkest">
+//               <DaText variant="regular-bold" className="text-da-gray-darkest!">
 //                 Inventory Details
 //               </DaText>
 //             </div>
@@ -220,9 +220,9 @@ export default FormInventoryItem
 //           </div>
 //         </div>
 
-//         <div className="border h-fit shadow flex-[4] max-w-[512px] rounded-lg">
+//         <div className="border h-fit shadow flex-4 max-w-[512px] rounded-lg">
 //           <div className="border-b h-[54px] flex items-center px-4">
-//             <DaText variant="regular-bold" className="!text-da-gray-darkest">
+//             <DaText variant="regular-bold" className="text-da-gray-darkest!">
 //               Summary
 //             </DaText>
 //           </div>
@@ -230,7 +230,7 @@ export default FormInventoryItem
 //             {innerData.name && (
 //               <>
 //                 <div className="mt-3" />
-//                 <DaText variant="small-bold" className="!text-da-gray-darkest">
+//                 <DaText variant="small-bold" className="text-da-gray-darkest!">
 //                   Name
 //                 </DaText>
 //                 <DaText className="block" variant="small">
@@ -240,7 +240,7 @@ export default FormInventoryItem
 //             )}
 
 //             <div className="mt-3" />
-//             <DaText variant="small-bold" className="!text-da-gray-darkest">
+//             <DaText variant="small-bold" className="text-da-gray-darkest!">
 //               Visibility
 //             </DaText>
 //             <DaText className="block" variant="small">
@@ -251,7 +251,7 @@ export default FormInventoryItem
 //             {innerData.image && (
 //               <>
 //                 <div className="mt-3" />
-//                 <DaText variant="small-bold" className="!text-da-gray-darkest">
+//                 <DaText variant="small-bold" className="text-da-gray-darkest!">
 //                   Image
 //                 </DaText>{' '}
 //                 <object
@@ -270,7 +270,7 @@ export default FormInventoryItem
 //             {detailSummary && (
 //               <>
 //                 <div className="mt-3" />
-//                 <DaText variant="small-bold" className="!text-da-gray-darkest">
+//                 <DaText variant="small-bold" className="text-da-gray-darkest!">
 //                   Inventory Details
 //                 </DaText>
 //                 <div className="mt-1 border rounded-md px-3 pb-3 pt-2">
@@ -278,7 +278,7 @@ export default FormInventoryItem
 //                     <Fragment key={key}>
 //                       <DaText
 //                         variant="small-bold"
-//                         className="!text-da-gray-darkest"
+//                         className="text-da-gray-darkest!"
 //                       >
 //                         {data.name}
 //                       </DaText>
@@ -299,11 +299,11 @@ export default FormInventoryItem
 //             <DaButton
 //               type="button"
 //               variant="outline-nocolor"
-//               className="!text-sm"
+//               className="text-sm!"
 //             >
 //               Cancel
 //             </DaButton>
-//             <DaButton className="!text-sm !px-4">Create Item</DaButton>
+//             <DaButton className="text-sm! px-4!">Create Item</DaButton>
 //           </div>
 //         </div>
 //       </div>

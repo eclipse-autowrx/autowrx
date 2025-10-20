@@ -29,7 +29,7 @@ const HomologationVehicleProperties = () => {
 
   return (
     <div className="rounded-3xl h-full flex flex-col bg-da-gray-light/20 p-5">
-      <div className="mb-1 flex justify-between flex-shrink-0 items-center">
+      <div className="mb-1 flex justify-between shrink-0 items-center">
         <h1 className="da-label-sub-title text-da-black">Vehicle Properties</h1>
         <a
           href={`/model/${model_id}`}

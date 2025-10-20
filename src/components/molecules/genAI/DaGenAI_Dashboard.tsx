@@ -64,7 +64,7 @@ const DaGenAI_Dashboard = ({
         <div className="mt-auto flex w-full select-none flex-col">
           <DaButton
             variant="outline-nocolor"
-            className="!h-8 w-full"
+            className="h-8! w-full"
             onClick={() => {
               onCodeChanged ? onCodeChanged(genCode) : null
             }}

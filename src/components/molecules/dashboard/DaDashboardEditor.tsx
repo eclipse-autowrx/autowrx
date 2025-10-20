@@ -257,7 +257,7 @@ const DaDashboardEditor = ({
           'da-label-small group relative flex cursor-pointer select-none border border-da-gray-medium text-da-gray-dark',
           `col-span-${colSpan} row-span-${rowSpan}`,
           selectedWidgetIndex === index &&
-            '!border-da-primary-500 !bg-da-gray-light !text-da-primary-500',
+            'border-da-primary-500! bg-da-gray-light! text-da-primary-500!',
           'bg-da-gray-light hover:bg-da-gray-light',
         )}
         key={`${index}-${cell}`}
@@ -268,7 +268,7 @@ const DaDashboardEditor = ({
             <DaTooltip className="py-1" content="Delete widget">
               <DaButton
                 variant="destructive"
-                className="!px-0"
+                className="px-0!"
                 onClick={() => handleDeleteWidget(index)}
               >
                 <TbTrash className="mx-2 h-5 w-5"></TbTrash>
@@ -280,7 +280,7 @@ const DaDashboardEditor = ({
                 <DaTooltip className="py-1" content="Open widget in Studio">
                   <DaButton
                     variant="plain"
-                    className="!px-0 hover:text-da-primary-500"
+                    className="px-0! hover:text-da-primary-500"
                     onClick={() => handleOpenWidget(index)}
                   >
                     <TbExternalLink className="mx-2 h-5 w-5" />
@@ -291,7 +291,7 @@ const DaDashboardEditor = ({
             <DaTooltip className="py-1" content="Edit widget">
               <DaButton
                 variant="plain"
-                className="!px-0 hover:text-da-primary-500"
+                className="px-0! hover:text-da-primary-500"
                 onClick={() => {
                   setSelectedWidget(JSON.stringify(widgetConfig, null, 4))
                   setIsAddingFromURL(false)
@@ -328,7 +328,7 @@ const DaDashboardEditor = ({
                 }
               })()}
             </div>
-            <div className="w-full pt-2 text-center !text-xs font-semibold">
+            <div className="w-full pt-2 text-center text-xs! font-semibold">
               {/* TODO: need to change '/store-be/' to something smarter */}
               {widgetConfig.options?.url &&
               widgetConfig.options.url.includes('/store-be/')
@@ -373,7 +373,7 @@ const DaDashboardEditor = ({
             <div
               key={`merged-${cell}`}
               className={cn(
-                'widget-grid-cell relative flex cursor-pointer items-center justify-center border-2 border-da-primary-500 !bg-da-white text-da-gray-dark gap-2 flex-wrap',
+                'widget-grid-cell relative flex cursor-pointer items-center justify-center border-2 border-da-primary-500 bg-da-white! text-da-gray-dark gap-2 flex-wrap',
                 `col-span-${colSpan} row-span-${rowSpan}`,
               )}
             >
@@ -459,7 +459,7 @@ const DaDashboardEditor = ({
     <div className="flex w-full flex-col h-full items-center justify-start p-0">
       <div
         className={`grid w-full grid-cols-5 grow grid-rows-2 border border-da-gray-medium ${
-          editable ? 'cursor-pointer' : '!pointer-events-none'
+          editable ? 'cursor-pointer' : 'pointer-events-none!'
         } `}
         style={{ gridTemplateRows: 'repeat(2)' }}
       >

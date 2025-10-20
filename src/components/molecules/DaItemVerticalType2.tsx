@@ -34,7 +34,7 @@ const DaItemVerticalType2: React.FC<DaItemVerticalType2Props> = ({
     >
       <DaText
         variant="sub-title"
-        className="px-2 py-1 line-clamp-1 !text-da-gray-dark"
+        className="px-2 py-1 line-clamp-1 text-da-gray-dark!"
       >
         {title}
       </DaText>

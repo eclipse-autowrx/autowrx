@@ -26,14 +26,14 @@ const HomeHeroSection = ({
       <div className="flex col-span-12 relative min-h-[400px] max-h-[400px] w-full justify-between  scale z-10 overflow-hidden">
         <div
           className={cn(
-            'absolute top-0 left-0 w-full h-full bg-gradient-to-r z-0',
+            'absolute top-0 left-0 w-full h-full bg-linear-to-r z-0',
             'from-da-gradient-from to-da-gradient-to',
           )}
         ></div>
 
         <div
           className={cn(
-            'absolute top-0 left-0 w-full h-full bg-gradient-to-r z-10 opacity-80',
+            'absolute top-0 left-0 w-full h-full bg-linear-to-r z-10 opacity-80',
             'from-da-gradient-from to-da-gradient-to',
           )}
         ></div>

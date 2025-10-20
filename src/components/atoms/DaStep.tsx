@@ -65,7 +65,7 @@ const DaStep = ({
       {index !== undefined && (
         <div
           className={clsx(
-            'da-label-small flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full',
+            'da-label-small flex h-6 w-6 shrink-0 items-center justify-center rounded-full',
             {
               'border border-da-gray-medium bg-transparent':
                 state === 'inactive',

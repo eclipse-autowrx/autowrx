@@ -71,7 +71,7 @@ const VarItem = ({ variable, onEnter, requestDeleteVar }: VarItemProps) => {
             variant="plain"
             size="sm"
             onClick={() => requestDeleteVar(variable.id)}
-            className="!p-1 !text-white"
+            className="p-1! text-white!"
           >
             <TbTrash size={18} />
           </DaButton>
@@ -238,7 +238,7 @@ const PrototypeVarsWatch: FC<PrototypeVarsWatchProps> = ({ requestWriteVarValue 
           variant="outline"
           size="sm"
           onClick={() => setIsAdding(true)}
-          className="!text-da-white !border-da-white"
+          className="text-da-white! border-da-white!"
         >
           <TbPlus size={16} className="mr-1" />
           Add Variable
@@ -259,7 +259,7 @@ const PrototypeVarsWatch: FC<PrototypeVarsWatchProps> = ({ requestWriteVarValue 
               placeholder="Type (e.g. int, uint, boolean)"
               value={newVariable.type}
               onChange={(e) => setNewVariable({ ...newVariable, type: e.target.value })}
-              className="text-da-black !text-xs w-20"
+              className="text-da-black text-xs! w-20"
               style={{ minWidth: 80 }}
             />
             <DaButton
@@ -271,7 +271,7 @@ const PrototypeVarsWatch: FC<PrototypeVarsWatchProps> = ({ requestWriteVarValue 
                   addVariable()
                 }
               }}
-              className="!p-1 !text-da-white"
+              className="p-1! text-da-white!"
               title={editingId ? 'Update' : 'Add'}
             >
               <TbDeviceFloppy size={18} className="mr-1" />
@@ -284,7 +284,7 @@ const PrototypeVarsWatch: FC<PrototypeVarsWatchProps> = ({ requestWriteVarValue 
                 setEditingId(null)
                 setNewVariable({ name: '', type: 'string', value: '' })
               }}
-              className="!p-1 !text-da-gray-light"
+              className="p-1! text-da-gray-light!"
               title="Cancel"
             >
               {/* Use an X icon for cancel, or fallback to text if not available */}

@@ -87,7 +87,7 @@ const DaGenAI_Widget = ({ outerSetiWidgetUrl }: DaGenAIWidgetProps) => {
             onClick={() => {
               setIsPreviewWidget(!isPreviewWidget)
             }}
-            className="bg-transparent !shadow-none"
+            className="bg-transparent shadow-none!"
           >
             {isPreviewWidget ? 'View code' : 'Preview widget'}
           </DaButton>

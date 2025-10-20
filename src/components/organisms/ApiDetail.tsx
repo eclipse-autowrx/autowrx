@@ -254,7 +254,7 @@ const ApiDetail = ({
                   <DaButton
                     variant="destructive"
                     size="sm"
-                    className="flex w-full !justify-start"
+                    className="flex w-full justify-start!"
                     onClick={() => setIsEditing(true)}
                   >
                     <TbEdit className="mr-2 h-5 w-5" />
@@ -287,7 +287,7 @@ const ApiDetail = ({
                   <DaButton
                     variant="destructive"
                     size="sm"
-                    className="flex w-full !justify-start"
+                    className="flex w-full justify-start!"
                     onClick={() => setConfirmPopupOpen(true)}
                   >
                     <TbTrash className="mr-2 h-5 w-5" />

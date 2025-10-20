@@ -182,7 +182,7 @@ const PrototypeTabFlow = () => {
               {!isEditing ? (
                 <DaButton
                   onClick={() => setIsEditing(true)}
-                  className="!justify-start"
+                  className="justify-start!"
                   variant="editor"
                   size="sm"
                 >
@@ -255,7 +255,7 @@ const PrototypeTabFlow = () => {
                 <col className="w-[17.76%]" />
               </colgroup>
 
-              <thead className="sticky top-0 z-10 bg-gradient-to-tr from-da-secondary-500 to-da-primary-500 text-white">
+              <thead className="sticky top-0 z-10 bg-linear-to-tr from-da-secondary-500 to-da-primary-500 text-white">
                 {/* Header Group Row */}
                 <tr className="text-sm uppercase">
                   {headerGroups.map((group, idx) => (
@@ -311,7 +311,7 @@ const PrototypeTabFlow = () => {
                         >
                           <TbChevronCompactRight className="absolute -left-[12px] top-[5.5px] -translate-x-1/4 -translate-y-1/4 size-[47px] bg-transparent text-white fill-current" />
                           {step.title}
-                          <TbChevronCompactRight className="absolute -right-[1px] top-[5.5px] translate-x-1/2 -translate-y-1/4 size-[47px] bg-transparent text-da-primary-500 fill-current" />
+                          <TbChevronCompactRight className="absolute -right-px top-[5.5px] translate-x-1/2 -translate-y-1/4 size-[47px] bg-transparent text-da-primary-500 fill-current" />
                         </td>
                       </tr>
                       {step.flows.map((flow, flowIndex) => (

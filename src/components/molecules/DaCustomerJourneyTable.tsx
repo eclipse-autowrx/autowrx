@@ -200,7 +200,7 @@ const DaTableEditor = ({
   return (
     <div className="flex w-full h-full justify-center items-center relative">
       <div className="flex w-fit h-full relative">
-        <div className="flex-grow text-sm">
+        <div className="grow text-sm">
           <table className="border-collapse">
             <thead>
               <tr>
@@ -208,7 +208,7 @@ const DaTableEditor = ({
                 {columnNames.map((columnName, columnIndex) => (
                   <th
                     key={columnIndex}
-                    className="border w-[18rem] px-2 h-[4rem] text-white relative border-da-primary-500"
+                    className="border w-[18rem] px-2 h-16 text-white relative border-da-primary-500"
                     style={{ backgroundColor: columnColors[columnIndex] }}
                     onMouseEnter={() => setHoveredColumnIndex(columnIndex)}
                     onMouseLeave={() => setHoveredColumnIndex(null)}
@@ -259,7 +259,7 @@ const DaTableEditor = ({
                       )}
 
                       { isEditing && <DaButton
-                        className="journey-edit-btn-delete-column m-1 !text-da-gray-dark !p-0 !w-6 !h-6 rounded absolute top-0 -right-4 bg-da-white hover:bg-da-white hover:!text-red-500 z-10"
+                        className="journey-edit-btn-delete-column m-1 text-da-gray-dark! p-0! w-6! h-6! rounded absolute top-0 -right-4 bg-da-white hover:bg-da-white hover:text-red-500! z-10"
                         variant="outline"
                         onClick={() => deleteColumn(columnIndex)}
                         size="sm"
@@ -302,7 +302,7 @@ const DaTableEditor = ({
                     { isEditing && 
                     <DaButton
                       data-id="journey-edit-delete-row-btn"
-                      className="journey-edit-content-cell-btn-delete-row m-1 !text-da-gray-dark !p-0 !w-6 !h-6 rounded absolute top-0 right-0 bg-da-white hover:bg-da-white hover:!text-red-500"
+                      className="journey-edit-content-cell-btn-delete-row m-1 text-da-gray-dark! p-0! w-6! h-6! rounded absolute top-0 right-0 bg-da-white hover:bg-da-white hover:text-red-500!"
                       size="sm"
                       variant="outline-nocolor"
                       onClick={() => deleteRow(rowIndex)}
@@ -340,9 +340,9 @@ const DaTableEditor = ({
         <DaButton
           variant="dash"
           dataId="journey-edit-add-row-btn"
-          className={`absolute -bottom-10 left-0 w-full !h-8 py-0.5 z-10 ${
-            //   showAddRow && isEditing ? 'block' : '!hidden'
-            isEditing ? 'block' : '!hidden'
+          className={`absolute -bottom-10 left-0 w-full h-8! py-0.5 z-10 ${
+            //   showAddRow && isEditing ? 'block' : 'hidden!'
+            isEditing ? 'block' : 'hidden!'
             }`}
           onClick={addRow}
         >
@@ -352,9 +352,9 @@ const DaTableEditor = ({
         <DaButton
           variant="dash"
           dataId="journey-edit-add-column-btn"
-          className={`absolute top-0 -right-10 !h-full w-8 !px-0 z-10 ${
-            //   showAddColumn && isEditing ? 'flex' : '!hidden'
-            isEditing ? 'flex' : '!hidden'
+          className={`absolute top-0 -right-10 h-full! w-8 px-0! z-10 ${
+            //   showAddColumn && isEditing ? 'flex' : 'hidden!'
+            isEditing ? 'flex' : 'hidden!'
             }`}
           onClick={addColumn}
         >

@@ -163,7 +163,7 @@ const DaFileUpload = ({
           ref={dragAreaRef}
           onClick={(e) => e.stopPropagation()}
           className={clsx(
-            'z-[9999] bg-gradient-to-r from-da-gradient-from to-da-gradient-to transition flex fixed top-0 left-0 right-0 bottom-0',
+            'z-9999 bg-linear-to-r from-da-gradient-from to-da-gradient-to transition flex fixed top-0 left-0 right-0 bottom-0',
             dragging ? 'opacity-90' : 'opacity-0 pointer-events-none',
           )}
         >
@@ -201,7 +201,7 @@ const DaFileUpload = ({
                 clearFile()
                 onFileUpload?.('')
               }}
-              className="group-hover:opacity-50 !h-7 !w-7 !p-0 !rounded-full hover:!opacity-100 group-hover:pointer-events-auto pointer-events-none opacity-0 right-1 top-1 absolute"
+              className="group-hover:opacity-50 h-7! w-7! p-0! rounded-full! hover:opacity-100! group-hover:pointer-events-auto pointer-events-none opacity-0 right-1 top-1 absolute"
               size="sm"
               variant="outline-nocolor"
             >
@@ -269,7 +269,7 @@ const DaFileUpload = ({
           )}
 
           {!file && image && (
-            <div className="absolute top-0 flex left-0 hover:bg-opacity-50 bg-opacity-0 z-[1] w-full h-full bg-black transition">
+            <div className="absolute top-0 flex left-0 hover:bg-opacity-50 bg-opacity-0 z-1 w-full h-full bg-black transition">
               <DaText
                 variant="small-bold"
                 className="text-white m-auto opacity-0 group-hover:opacity-100 transition"

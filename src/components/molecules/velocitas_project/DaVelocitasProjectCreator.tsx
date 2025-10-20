@@ -75,7 +75,7 @@ const DaVelocitasProjectCreator: React.FC<DaVelocitasProjectCreatorProps> = ({
         {repoUrl && (
           <button
             onClick={() => window.open(repoUrl, '_blank')}
-            className="flex items-center !text-blue-500 hover:bg-blue-50 px-2 py-1 rounded-lg !text-sm"
+            className="flex items-center text-blue-500! hover:bg-blue-50 px-2 py-1 rounded-lg text-sm!"
           >
             <TbExternalLink className="size-4 mr-1" />
             Open Repository

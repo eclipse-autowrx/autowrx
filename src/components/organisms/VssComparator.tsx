@@ -570,7 +570,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
             className="h-full w-3 justify-center bg-slate-100 flex cursor-w-resize"
             onMouseDown={startResize}
           >
-            <div className="w-[1px] h-full bg-da-gray-medium" />
+            <div className="w-px h-full bg-da-gray-medium" />
           </div>
 
           <div className="flex-1 min-w-0 border-slate-100 gap-0.5 h-full overflow-y-auto flex">

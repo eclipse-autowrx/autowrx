@@ -65,8 +65,8 @@ const DaRequirementItem = ({
             handleChange('url')(e.target.value)
           }}
           placeholder="External URL to the requirement"
-          wrapperClassName="!bg-white"
-          inputClassName="!bg-white w-full text-sm"
+          wrapperClassName="bg-white!"
+          inputClassName="bg-white! w-full text-sm"
           className="mt-1"
           disabled={!isAuthorized && !isEditing}
         />

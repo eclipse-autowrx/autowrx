@@ -18,15 +18,15 @@ const Introduction: React.FC = () => {
         <h3 className="border-b border-gray-300 pb-3 mb-6 text-gray-700 font-medium">Get Started</h3>
         <ul className="list-none p-0 space-y-4">
           <li className="text-sm flex items-center text-gray-600 hover:text-gray-800 transition-colors">
-            <VscGoToFile className="mr-3 text-lg text-blue-600 flex-shrink-0" />
+            <VscGoToFile className="mr-3 text-lg text-blue-600 shrink-0" />
             Choose a file from the explorer
           </li>
           <li className="text-sm flex items-center text-gray-600 hover:text-gray-800 transition-colors">
-            <VscNewFile className="mr-3 text-lg text-blue-600 flex-shrink-0" />
+            <VscNewFile className="mr-3 text-lg text-blue-600 shrink-0" />
             Create a new file
           </li>
           <li className="text-sm flex items-center text-gray-600 hover:text-gray-800 transition-colors">
-            <VscFolder className="mr-3 text-lg text-blue-600 flex-shrink-0" />
+            <VscFolder className="mr-3 text-lg text-blue-600 shrink-0" />
             Create a new folder
           </li>
         </ul>

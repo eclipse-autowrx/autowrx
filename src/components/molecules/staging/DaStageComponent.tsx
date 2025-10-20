@@ -324,7 +324,7 @@ const VersionRender = ({
       >
         {options &&
           options.map((option: any) => (
-            <div className="text-sm py-1 px-2 flex items-center !cursor-pointer hover:bg-slate-200"
+            <div className="text-sm py-1 px-2 flex items-center cursor-pointer! hover:bg-slate-200"
               onClick={() => {
                 let tick = 150
                 if(activeLifeCycle == "Deployment Version") {

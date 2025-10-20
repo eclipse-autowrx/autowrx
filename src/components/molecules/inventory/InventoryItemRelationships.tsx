@@ -379,7 +379,7 @@ const InventoryItemRelationships = ({
         <div className="flex mt-4 gap-5 lg:flex-row flex-col">
           <div className="border flex-1 min-w-0 shadow rounded-lg flex flex-col">
             <div className="border-b h-[54px] flex items-center px-4">
-              <DaText className="!text-da-gray-darkest" variant="regular-bold">
+              <DaText className="text-da-gray-darkest!" variant="regular-bold">
                 Parents
               </DaText>
               <DaButton
@@ -405,7 +405,7 @@ const InventoryItemRelationships = ({
                   <DaButton
                     size="sm"
                     variant="plain"
-                    className="text-left !justify-start w-[144px]"
+                    className="text-left justify-start! w-[144px]"
                   >
                     <TbEye className="w-4 h-4 mr-2" />
                     View In List
@@ -414,7 +414,7 @@ const InventoryItemRelationships = ({
                     disabled
                     size="sm"
                     variant="plain"
-                    className="text-left !justify-start w-[144px]"
+                    className="text-left justify-start! w-[144px]"
                   >
                     <TbEdit className="w-4 h-4 mr-2" />
                     Edit Multiple
@@ -423,14 +423,14 @@ const InventoryItemRelationships = ({
               </DaMenu>
             </div>
             <div className="px-4 py-2">
-              <DaText variant="small" className="!block py-3">
+              <DaText variant="small" className="block! py-3">
                 This item has no parents.
               </DaText>
             </div>
           </div>
           <div className="border flex-1 min-w-0 shadow rounded-lg flex flex-col">
             <div className="border-b h-[54px] flex items-center px-4">
-              <DaText className="!text-da-gray-darkest" variant="regular-bold">
+              <DaText className="text-da-gray-darkest!" variant="regular-bold">
                 Children (2)
               </DaText>
               <DaButton
@@ -456,7 +456,7 @@ const InventoryItemRelationships = ({
                   <DaButton
                     size="sm"
                     variant="plain"
-                    className="text-left !justify-start w-[144px]"
+                    className="text-left justify-start! w-[144px]"
                   >
                     <TbEye className="w-4 h-4 mr-2" />
                     View In List
@@ -465,7 +465,7 @@ const InventoryItemRelationships = ({
                     size="sm"
                     variant="plain"
                     disabled
-                    className="text-left !justify-start w-[144px]"
+                    className="text-left justify-start! w-[144px]"
                   >
                     <TbEdit className="w-4 h-4 mr-2" />
                     Edit Multiple
@@ -524,7 +524,7 @@ const InventoryItemRelationships = ({
       )} */}
 
       <DaPopup
-        className="container !p-0"
+        className="container p-0!"
         state={[showSearchItem, setShowSearchItem]}
         trigger={<></>}
       >
@@ -543,11 +543,11 @@ const InventoryItemRelationships = ({
             <DaButton
               onClick={() => setShowSearchItem(false)}
               variant="outline-nocolor"
-              className="!text-sm"
+              className="text-sm!"
             >
               Cancel
             </DaButton>
-            <DaButton className="!text-sm">Attach</DaButton>
+            <DaButton className="text-sm!">Attach</DaButton>
           </div>
         </div>
       </DaPopup>
@@ -571,7 +571,7 @@ const InventoryNode = ({ data, selected }: NodeProps<TypeInventoryNode>) => {
           onClick={() => data.onCreateNodeClick?.('parent')}
           size="sm"
           variant="outline"
-          className="absolute hover:bg-white bg-white/70 !border-da-gray-light right-[calc(100%+12px)] !rounded-full top-1/2 -translate-y-1/2 !text-xs !font-light"
+          className="absolute hover:bg-white bg-white/70 border-da-gray-light! right-[calc(100%+12px)] rounded-full! top-1/2 -translate-y-1/2 text-xs! font-light!"
         >
           <TbPlus className="mr-0.5" /> Parent
         </DaButton>
@@ -582,7 +582,7 @@ const InventoryNode = ({ data, selected }: NodeProps<TypeInventoryNode>) => {
           <DaButton
             size="sm"
             variant="outline-nocolor"
-            className="!p-1 !h-5 !text-xs"
+            className="p-1! h-5! text-xs!"
             onClick={() =>
               open(
                 `${window.location.origin}/inventory/role/${inventoryData.roleData?.name}/item/${data.inventoryItem.id}`,
@@ -594,7 +594,7 @@ const InventoryNode = ({ data, selected }: NodeProps<TypeInventoryNode>) => {
           <DaButton
             size="sm"
             variant="outline-nocolor"
-            className="!p-1 !h-5 !text-xs"
+            className="p-1! h-5! text-xs!"
           >
             <TbEdit className="w-3 h-3" />
           </DaButton>
@@ -624,7 +624,7 @@ const InventoryNode = ({ data, selected }: NodeProps<TypeInventoryNode>) => {
           }}
           size="sm"
           variant="outline"
-          className="absolute hover:bg-white bg-white/70 !border-da-gray-light left-[calc(100%+12px)] !rounded-full top-1/2 -translate-y-1/2 !text-xs !font-light"
+          className="absolute hover:bg-white bg-white/70 border-da-gray-light! left-[calc(100%+12px)] rounded-full! top-1/2 -translate-y-1/2 text-xs! font-light!"
         >
           <TbPlus className="mr-0.5" /> Child
         </DaButton>
@@ -681,7 +681,7 @@ const ContextMenu = ({
         onClick={wrapper(deleteNode)}
         variant="plain"
         size="sm"
-        className="w-full text-left !justify-start"
+        className="w-full text-left justify-start!"
       >
         <TbTrash className="h-4 w-4 mr-2" />
         Delete Node

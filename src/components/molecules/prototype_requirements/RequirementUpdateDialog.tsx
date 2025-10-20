@@ -100,8 +100,8 @@ const RequirementUpdateDialog: React.FC<Props> = ({
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          labelClassName="!text-sm font-medium"
-          inputClassName="!text-sm"
+          labelClassName="text-sm! font-medium"
+          inputClassName="text-sm!"
         />
 
         {/* Description */}
@@ -111,7 +111,7 @@ const RequirementUpdateDialog: React.FC<Props> = ({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             className="p-0.5 mt-1"
-            textareaClassName="!text-sm"
+            textareaClassName="text-sm!"
           />
         </div>
 
@@ -153,8 +153,8 @@ const RequirementUpdateDialog: React.FC<Props> = ({
             type="text"
             value={sourceLink}
             onChange={(e) => setSourceLink(e.target.value)}
-            labelClassName="!text-sm font-medium"
-            inputClassName="!text-sm"
+            labelClassName="text-sm! font-medium"
+            inputClassName="text-sm!"
           />
         </div>
 
@@ -177,7 +177,7 @@ const RequirementUpdateDialog: React.FC<Props> = ({
                 max={5}
                 value={value}
                 onChange={(e) => setter(Number(e.target.value))}
-                labelClassName="!text-sm font-medium"
+                labelClassName="text-sm! font-medium"
               />
               <span className="text-xs text-gray-500">Range: 1-5</span>
             </div>

@@ -311,7 +311,7 @@ const ViewApiUSP = () => {
           active={activeTab === 'tree'}
           onClick={() => setActiveTab('tree')}
         >
-          <TbBinaryTree2 className="w-5 h-5 mr-2 rotate-[270deg]" />
+          <TbBinaryTree2 className="w-5 h-5 mr-2 rotate-270" />
           Tree View
         </DaTabItem>
       </div>

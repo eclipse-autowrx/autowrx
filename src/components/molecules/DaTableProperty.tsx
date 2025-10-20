@@ -80,7 +80,7 @@ const DaTablePropertyItem = ({
       )}
     >
       <div className="flex w-[120px] min-w-[120px]">
-        <DaText variant="small-bold" className="!flex text-da-gray-dark">
+        <DaText variant="small-bold" className="flex! text-da-gray-dark">
           {property}
         </DaText>
       </div>
@@ -108,7 +108,7 @@ const DaTablePropertyItem = ({
             ))}
           </div>
         ) : (
-          <DaText variant="small" className="!flex break-words">
+          <DaText variant="small" className="flex! break-words">
             {value}
           </DaText>
         )}

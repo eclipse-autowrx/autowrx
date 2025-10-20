@@ -640,19 +640,19 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({ data, onChange }) => {
             <div className="overflow-y-auto overflow-x-visible">
               {/* Inline creation input at root level */}
               {creatingAtRoot && (
-                <div className="flex items-center py-[1px] px-2 text-gray-700 text-[13px] border-b border-gray-100">
+                <div className="flex items-center py-px px-2 text-gray-700 text-[13px] border-b border-gray-100">
                   <form
                     onSubmit={handleRootCreateSubmit}
                     className="w-full flex items-center"
                   >
                     {creatingAtRoot.type === 'folder' ? (
                       <VscNewFolder
-                        className="mr-2 text-gray-500 flex-shrink-0"
+                        className="mr-2 text-gray-500 shrink-0"
                         size={16}
                       />
                     ) : (
                       <VscNewFile
-                        className="mr-2 text-gray-500 flex-shrink-0"
+                        className="mr-2 text-gray-500 shrink-0"
                         size={16}
                       />
                     )}

@@ -24,17 +24,17 @@ const HomologationLeftSection = ({
 }: HomologationLeftSectionProps) => {
   return (
     <div className="flex flex-1 flex-col h-full overflow-y-auto pt-5 pl-5">
-      <div className="flex-[3] min-h-0">
+      <div className="flex-3 min-h-0">
         <DaHomologationUsedAPIs
           selectedAPIs={selectedAPIs}
           setSelectedAPIs={setSelectedAPIs}
         />
       </div>
-      <div className="flex-[2] mt-5 min-h-0">
+      <div className="flex-2 mt-5 min-h-0">
         <HomologationVehicleProperties />
       </div>
-      <div className="h-fit flex-shrink-0 mt-4 flex flex-col">
-        <p className="da-label-tiny text-center flex-shrink-0 text-da-gray-medium">
+      <div className="h-fit shrink-0 mt-4 flex flex-col">
+        <p className="da-label-tiny text-center shrink-0 text-da-gray-medium">
           This prototype is powered by
         </p>
         <HomologationPoweredBy />

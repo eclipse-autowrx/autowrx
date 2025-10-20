@@ -28,7 +28,7 @@ const DaItemStandard: React.FC<DaItemStandardProps> = ({
   return (
     <div
       className={`flex w-full space-x-4 overflow-hidden rounded-lg border border-da-gray-light bg-da-white p-4 text-da-gray-medium hover:border-da-primary-500 ${
-        isSelected ? 'border-da-primary-500 !bg-da-primary-100' : ''
+        isSelected ? 'border-da-primary-500 bg-da-primary-100!' : ''
       }`}
     >
       <DaImageRatio
@@ -58,7 +58,7 @@ const DaItemStandard: React.FC<DaItemStandardProps> = ({
             userName={prototype.created_by?.name}
             userAvatar={prototype.created_by?.image_file}
             avatarClassName="w-4 h-4 mr-2"
-            textClassName="!text-sm"
+            textClassName="text-sm!"
           />
           <DaText
             variant="small"
