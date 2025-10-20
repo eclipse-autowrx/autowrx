@@ -1,0 +1,14 @@
+{
+  "info": { "name": "Issues", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json" },
+  "item": [
+    {"name":"List","request":{"method":"GET","url":{"raw":"{{baseUrl}}/v2/issues","host":["{{baseUrl}}"],"path":["v2","issues"]}}},
+    {"name":"Create","request":{"method":"POST","url":{"raw":"{{baseUrl}}/v2/issues","host":["{{baseUrl}}"],"path":["v2","issues"]},"body":{"mode":"raw","raw":"{\n  \"extendedApi\": \"{{extendedApiId}}\",\n  \"link\": \"https://example.com\"\n}"}}},
+    {"name":"By API","request":{"method":"GET","url":{"raw":"{{baseUrl}}/v2/issues/by-api?apiId={{extendedApiId}}","host":["{{baseUrl}}"],"path":["v2","issues","by-api"],"query":[{"key":"apiId","value":"{{extendedApiId}}"}]}}},
+    {"name":"Get","request":{"method":"GET","url":{"raw":"{{baseUrl}}/v2/issues/{{id}}","host":["{{baseUrl}}"],"path":["v2","issues","{{id}}"]}}},
+    {"name":"Update","request":{"method":"PATCH","url":{"raw":"{{baseUrl}}/v2/issues/{{id}}","host":["{{baseUrl}}"],"path":["v2","issues","{{id}}"]},"body":{"mode":"raw","raw":"{\n  \"link\": \"https://example.com/updated\"\n}"}}},
+    {"name":"Delete","request":{"method":"DELETE","url":{"raw":"{{baseUrl}}/v2/issues/{{id}}","host":["{{baseUrl}}"],"path":["v2","issues","{{id}}"]}}}
+  ],
+  "variable": [ {"key":"baseUrl","value":"http://localhost:8080"}, {"key":"extendedApiId","value":""}, {"key":"id","value":""} ]
+}
+
+

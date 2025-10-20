@@ -1,0 +1,15 @@
+{
+  "info": { "name": "Models", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json" },
+  "item": [
+    {"name":"List Models","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/models","host":["{{baseUrl}}"],"path":["v2","models"]}}},
+    {"name":"Create Model","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/models","host":["{{baseUrl}}"],"path":["v2","models"]},"body":{"mode":"raw","raw":"{\n  \"name\": \"Model A\",\n  \"main_api\": \"vss\",\n  \"vehicle_category\": \"car\",\n  \"visibility\": \"public\"\n}"}}},
+    {"name":"Get Model","request":{"method":"GET","url":{"raw":"{{baseUrl}}/v2/models/{{modelId}}","host":["{{baseUrl}}"],"path":["v2","models","{{modelId}}"]}}},
+    {"name":"Update Model","request":{"method":"PATCH","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/models/{{modelId}}","host":["{{baseUrl}}"],"path":["v2","models","{{modelId}}"]},"body":{"mode":"raw","raw":"{\n  \"name\": \"Model A Updated\"\n}"}}},
+    {"name":"Delete Model","request":{"method":"DELETE","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/models/{{modelId}}","host":["{{baseUrl}}"],"path":["v2","models","{{modelId}}"]}}},
+    {"name":"Replace API","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/models/{{modelId}}/replace-api","host":["{{baseUrl}}"],"path":["v2","models","{{modelId}}","replace-api"]},"body":{"mode":"raw","raw":"{\n  \"api\": {}\n}"}}},
+    {"name":"Get Computed API","request":{"method":"GET","url":{"raw":"{{baseUrl}}/v2/models/{{modelId}}/api","host":["{{baseUrl}}"],"path":["v2","models","{{modelId}}","api"]}}}
+  ],
+  "variable": [ {"key":"baseUrl","value":"http://localhost:8080"}, {"key":"accessToken","value":""}, {"key":"modelId","value":""} ]
+}
+
+

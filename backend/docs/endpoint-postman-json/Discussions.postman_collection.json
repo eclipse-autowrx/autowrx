@@ -1,0 +1,12 @@
+{
+  "info": { "name": "Discussions", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json" },
+  "item": [
+    {"name":"List Discussions","request":{"method":"GET","url":{"raw":"{{baseUrl}}/v2/discussions","host":["{{baseUrl}}"],"path":["v2","discussions"]}}},
+    {"name":"Create Discussion","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/discussions","host":["{{baseUrl}}"],"path":["v2","discussions"]},"body":{"mode":"raw","raw":"{\n  \"content\": \"Nice!\",\n  \"ref\": \"{{ref}}\",\n  \"ref_type\": \"model\"\n}"}}},
+    {"name":"Update Discussion","request":{"method":"PATCH","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/discussions/{{id}}","host":["{{baseUrl}}"],"path":["v2","discussions","{{id}}"]},"body":{"mode":"raw","raw":"{\n  \"content\": \"Edited\"\n}"}}},
+    {"name":"Delete Discussion","request":{"method":"DELETE","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/discussions/{{id}}","host":["{{baseUrl}}"],"path":["v2","discussions","{{id}}"]}}}
+  ],
+  "variable": [ {"key":"baseUrl","value":"http://localhost:8080"}, {"key":"accessToken","value":""}, {"key":"ref","value":""}, {"key":"id","value":""} ]
+}
+
+

@@ -1,0 +1,15 @@
+{
+  "info": { "name": "APIs (VSS + CRUD)", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json" },
+  "item": [
+    {"name":"List VSS versions","request":{"method":"GET","url":{"raw":"{{baseUrl}}/v2/apis/vss","host":["{{baseUrl}}"],"path":["v2","apis","vss"]}}},
+    {"name":"Get VSS by name","request":{"method":"GET","url":{"raw":"{{baseUrl}}/v2/apis/vss/{{name}}","host":["{{baseUrl}}"],"path":["v2","apis","vss","{{name}}"]}}},
+    {"name":"Create API","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/apis","host":["{{baseUrl}}"],"path":["v2","apis"]},"body":{"mode":"raw","raw":"{\n  \"model\": \"{{modelId}}\",\n  \"cvi\": {}\n}"}}},
+    {"name":"Get API by ID","request":{"method":"GET","url":{"raw":"{{baseUrl}}/v2/apis/{{id}}","host":["{{baseUrl}}"],"path":["v2","apis","{{id}}"]}}},
+    {"name":"Update API","request":{"method":"PATCH","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/apis/{{id}}","host":["{{baseUrl}}"],"path":["v2","apis","{{id}}"]},"body":{"mode":"raw","raw":"{\n  \"cvi\": {}\n}"}}},
+    {"name":"Delete API","request":{"method":"DELETE","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/apis/{{id}}","host":["{{baseUrl}}"],"path":["v2","apis","{{id}}"]}}},
+    {"name":"Get APIs by modelId","request":{"method":"GET","url":{"raw":"{{baseUrl}}/v2/apis/model_id/{{modelId}}","host":["{{baseUrl}}"],"path":["v2","apis","model_id","{{modelId}}"]}}}
+  ],
+  "variable": [ {"key":"baseUrl","value":"http://localhost:8080"}, {"key":"accessToken","value":""}, {"key":"modelId","value":""}, {"key":"id","value":""}, {"key":"name","value":"v3.1"} ]
+}
+
+

@@ -1,0 +1,10 @@
+{
+  "info": { "name": "Proxies (GenAI & Homologation)", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json" },
+  "item": [
+    {"name":"GenAI Proxy (example)","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/genai/chat/completions","host":["{{baseUrl}}"],"path":["v2","genai","chat","completions"]},"body":{"mode":"raw","raw":"{\n  \"messages\": [{\"role\": \"user\", \"content\": \"Hello\"}]\n}"}}},
+    {"name":"Homologation Proxy (example)","request":{"method":"GET","url":{"raw":"{{baseUrl}}/v2/homologation/health","host":["{{baseUrl}}"],"path":["v2","homologation","health"]}}}
+  ],
+  "variable": [ {"key":"baseUrl","value":"http://localhost:8080"}, {"key":"accessToken","value":""} ]
+}
+
+

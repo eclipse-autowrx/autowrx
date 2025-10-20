@@ -1,0 +1,67 @@
+[
+  {
+    "name": "v5.1",
+    "published_at": "2025-07-29T10:52:08Z",
+    "browser_download_url": "https://github.com/COVESA/vehicle_signal_specification/releases/download/v5.1/vss.json"
+  },
+  {
+    "name": "v5.1rc1",
+    "published_at": "2025-07-16T11:17:35Z",
+    "browser_download_url": "https://github.com/COVESA/vehicle_signal_specification/releases/download/v5.1rc1/vss.json"
+  },
+  {
+    "name": "v5.1rc0",
+    "published_at": "2025-06-29T07:05:55Z",
+    "browser_download_url": "https://github.com/COVESA/vehicle_signal_specification/releases/download/v5.1rc0/vss.json"
+  },
+  {
+    "name": "v5.0",
+    "published_at": "2024-10-09T08:27:11Z",
+    "browser_download_url": "https://github.com/COVESA/vehicle_signal_specification/releases/download/v5.0/vss.json"
+  },
+  {
+    "name": "v5.0rc0",
+    "published_at": "2024-09-19T12:00:57Z",
+    "browser_download_url": "https://github.com/COVESA/vehicle_signal_specification/releases/download/v5.0rc0/vss.json"
+  },
+  {
+    "name": "v4.2",
+    "published_at": "2024-06-03T12:10:06Z",
+    "browser_download_url": "https://github.com/COVESA/vehicle_signal_specification/releases/download/v4.2/vss_rel_4.2.json"
+  },
+  {
+    "name": "v4.2rc0",
+    "published_at": "2024-05-17T14:20:06Z",
+    "browser_download_url": "https://github.com/COVESA/vehicle_signal_specification/releases/download/v4.2rc0/vss_rel_4.2.json"
+  },
+  {
+    "name": "v4.1",
+    "published_at": "2023-12-22T14:49:26Z",
+    "browser_download_url": "https://github.com/COVESA/vehicle_signal_specification/releases/download/v4.1/vss_rel_4.1.json"
+  },
+  {
+    "name": "v4.1rc0",
+    "published_at": "2023-12-04T09:57:34Z",
+    "browser_download_url": "https://github.com/COVESA/vehicle_signal_specification/releases/download/v4.1rc0/vss_rel_4.1.json"
+  },
+  {
+    "name": "v4.0",
+    "published_at": "2023-05-22T08:15:43Z",
+    "browser_download_url": "https://github.com/COVESA/vehicle_signal_specification/releases/download/v4.0/vss_rel_4.0.json"
+  },
+  {
+    "name": "v3.1.1",
+    "published_at": "2023-03-01T15:24:28Z",
+    "browser_download_url": "https://github.com/COVESA/vehicle_signal_specification/releases/download/v3.1.1/vss_rel_3.1.1.json"
+  },
+  {
+    "name": "v3.1",
+    "published_at": "2023-02-24T13:13:40Z",
+    "browser_download_url": "https://github.com/COVESA/vehicle_signal_specification/releases/download/v3.1/vss_rel_3.1.json"
+  },
+  {
+    "name": "v3.0",
+    "published_at": "2022-08-09T07:57:40Z",
+    "browser_download_url": "https://github.com/COVESA/vehicle_signal_specification/releases/download/v3.0/vss_rel_3.0.json"
+  }
+]

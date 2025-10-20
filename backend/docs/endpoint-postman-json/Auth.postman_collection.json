@@ -1,0 +1,96 @@
+{
+  "info": {
+    "name": "Auth",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authenticate",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/v2/auth/authenticate", "host": ["{{baseUrl}}"], "path": ["v2","auth","authenticate"] }
+      }
+    },
+    {
+      "name": "Authorize (internal)",
+      "request": {
+        "method": "POST",
+        "url": { "raw": "{{baseUrl}}/v2/auth/authorize", "host": ["{{baseUrl}}"], "path": ["v2","auth","authorize"] },
+        "body": { "mode": "raw", "raw": "{\n  \"permissions\": \"READ_MODEL:{{modelId}}\"\n}" }
+      }
+    },
+    {
+      "name": "Register",
+      "request": {
+        "method": "POST",
+        "url": { "raw": "{{baseUrl}}/v2/auth/register", "host": ["{{baseUrl}}"], "path": ["v2","auth","register"] },
+        "body": { "mode": "raw", "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"test@example.com\",\n  \"password\": \"password1\"\n}" }
+      }
+    },
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "url": { "raw": "{{baseUrl}}/v2/auth/login", "host": ["{{baseUrl}}"], "path": ["v2","auth","login"] },
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password1\"\n}" }
+      }
+    },
+    {
+      "name": "Refresh Tokens",
+      "request": {
+        "method": "POST",
+        "url": { "raw": "{{baseUrl}}/v2/auth/refresh-tokens", "host": ["{{baseUrl}}"], "path": ["v2","auth","refresh-tokens"] }
+      }
+    },
+    {
+      "name": "Logout",
+      "request": {
+        "method": "POST",
+        "url": { "raw": "{{baseUrl}}/v2/auth/logout", "host": ["{{baseUrl}}"], "path": ["v2","auth","logout"] }
+      }
+    },
+    {
+      "name": "Forgot Password",
+      "request": {
+        "method": "POST",
+        "url": { "raw": "{{baseUrl}}/v2/auth/forgot-password", "host": ["{{baseUrl}}"], "path": ["v2","auth","forgot-password"] },
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"test@example.com\"\n}" }
+      }
+    },
+    {
+      "name": "Reset Password",
+      "request": {
+        "method": "POST",
+        "url": { "raw": "{{baseUrl}}/v2/auth/reset-password?token={{resetToken}}", "host": ["{{baseUrl}}"], "path": ["v2","auth","reset-password"], "query": [{"key":"token","value":"{{resetToken}}"}] },
+        "body": { "mode": "raw", "raw": "{\n  \"password\": \"password1\"\n}" }
+      }
+    },
+    {
+      "name": "Send Verification Email",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Authorization", "value": "Bearer {{accessToken}}" } ],
+        "url": { "raw": "{{baseUrl}}/v2/auth/send-verification-email", "host": ["{{baseUrl}}"], "path": ["v2","auth","send-verification-email"] }
+      }
+    },
+    {
+      "name": "Verify Email",
+      "request": {
+        "method": "POST",
+        "url": { "raw": "{{baseUrl}}/v2/auth/verify-email?token={{verifyToken}}", "host": ["{{baseUrl}}"], "path": ["v2","auth","verify-email"], "query": [{"key":"token","value":"{{verifyToken}}"}] }
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "accessToken", "value": "" },
+    { "key": "modelId", "value": "" },
+    { "key": "resetToken", "value": "" },
+    { "key": "verifyToken", "value": "" }
+  ]
+}
+
+

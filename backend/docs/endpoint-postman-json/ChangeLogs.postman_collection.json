@@ -1,0 +1,9 @@
+{
+  "info": { "name": "Change Logs", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json" },
+  "item": [
+    {"name":"List Change Logs","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/change-logs","host":["{{baseUrl}}"],"path":["v2","change-logs"]}}}
+  ],
+  "variable": [ {"key":"baseUrl","value":"http://localhost:8080"}, {"key":"accessToken","value":""} ]
+}
+
+

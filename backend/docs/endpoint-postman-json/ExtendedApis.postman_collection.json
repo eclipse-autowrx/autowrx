@@ -1,0 +1,14 @@
+{
+  "info": { "name": "Extended APIs", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json" },
+  "item": [
+    {"name":"List","request":{"method":"GET","url":{"raw":"{{baseUrl}}/v2/extendedApis","host":["{{baseUrl}}"],"path":["v2","extendedApis"]}}},
+    {"name":"Create","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/extendedApis","host":["{{baseUrl}}"],"path":["v2","extendedApis"]},"body":{"mode":"raw","raw":"{\n  \"apiName\": \"Speed\",\n  \"model\": \"{{modelId}}\"\n}"}}},
+    {"name":"Get","request":{"method":"GET","url":{"raw":"{{baseUrl}}/v2/extendedApis/{{id}}","host":["{{baseUrl}}"],"path":["v2","extendedApis","{{id}}"]}}},
+    {"name":"Update","request":{"method":"PATCH","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/extendedApis/{{id}}","host":["{{baseUrl}}"],"path":["v2","extendedApis","{{id}}"]},"body":{"mode":"raw","raw":"{\n  \"datatype\": \"number\"\n}"}}},
+    {"name":"Delete","request":{"method":"DELETE","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/extendedApis/{{id}}","host":["{{baseUrl}}"],"path":["v2","extendedApis","{{id}}"]}}},
+    {"name":"By API & Model","request":{"method":"GET","url":{"raw":"{{baseUrl}}/v2/extendedApis/by-api-and-model?apiName={{apiName}}&modelId={{modelId}}","host":["{{baseUrl}}"],"path":["v2","extendedApis","by-api-and-model"],"query":[{"key":"apiName","value":"{{apiName}}"},{"key":"modelId","value":"{{modelId}}"}]}}}
+  ],
+  "variable": [ {"key":"baseUrl","value":"http://localhost:8080"}, {"key":"accessToken","value":""}, {"key":"modelId","value":""}, {"key":"id","value":""}, {"key":"apiName","value":"Speed"} ]
+}
+
+

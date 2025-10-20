@@ -1,0 +1,15 @@
+{
+  "info": { "name": "Users", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json" },
+  "item": [
+    {"name":"List Users","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/users","host":["{{baseUrl}}"],"path":["v2","users"]}}},
+    {"name":"Create User","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/users","host":["{{baseUrl}}"],"path":["v2","users"]},"body":{"mode":"raw","raw":"{\n  \"name\": \"User\",\n  \"email\": \"user@example.com\",\n  \"password\": \"password1\"\n}"}}},
+    {"name":"Get Self","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/users/self","host":["{{baseUrl}}"],"path":["v2","users","self"]}}},
+    {"name":"Update Self","request":{"method":"PATCH","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/users/self","host":["{{baseUrl}}"],"path":["v2","users","self"]},"body":{"mode":"raw","raw":"{\n  \"name\": \"Updated Name\"\n}"}}},
+    {"name":"Get User by ID","request":{"method":"GET","url":{"raw":"{{baseUrl}}/v2/users/{{userId}}","host":["{{baseUrl}}"],"path":["v2","users","{{userId}}"]}}},
+    {"name":"Update User by ID","request":{"method":"PATCH","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/users/{{userId}}","host":["{{baseUrl}}"],"path":["v2","users","{{userId}}"]},"body":{"mode":"raw","raw":"{\n  \"name\": \"Another Name\"\n}"}}},
+    {"name":"Delete User","request":{"method":"DELETE","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/users/{{userId}}","host":["{{baseUrl}}"],"path":["v2","users","{{userId}}"]}}}
+  ],
+  "variable": [ {"key":"baseUrl","value":"http://localhost:8080"}, {"key":"accessToken","value":""}, {"key":"userId","value":""} ]
+}
+
+

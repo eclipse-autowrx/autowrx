@@ -1,0 +1,45 @@
+# Copyright (c) 2025 Eclipse Foundation.
+# 
+# This program and the accompanying materials are made available under the
+# terms of the MIT License which is available at
+# https://opensource.org/licenses/MIT.
+#
+# SPDX-License-Identifier: MIT
+
+name: Retag Release Image as Latest
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_tag:
+        description: 'The existing release tag to retag as latest'
+        required: true
+        default: 'v1.0.0'
+
+jobs:
+  retag-as-latest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull the existing release image
+        run: |
+          docker pull ghcr.io/${{ github.repository_owner }}/playground-be:${{ github.event.inputs.source_tag }}
+
+      - name: Tag image as latest
+        run: |
+          docker tag ghcr.io/${{ github.repository_owner }}/playground-be:${{ github.event.inputs.source_tag }} ghcr.io/${{ github.repository_owner }}/playground-be:latest
+
+      - name: Push the latest tag
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/playground-be:latest
+
+      - name: Verify pushed latest image
+        run: |
+          docker pull ghcr.io/${{ github.repository_owner }}/playground-be:latest

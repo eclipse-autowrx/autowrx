@@ -1,0 +1,15 @@
+{
+  "info": { "name": "Permissions & Roles", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json" },
+  "item": [
+    {"name":"Self Permissions","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/permissions/self","host":["{{baseUrl}}"],"path":["v2","permissions","self"]}}},
+    {"name":"List Permissions","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/permissions","host":["{{baseUrl}}"],"path":["v2","permissions"]}}},
+    {"name":"Has Permission","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/permissions/has-permission?permission={{perm}}","host":["{{baseUrl}}"],"path":["v2","permissions","has-permission"],"query":[{"key":"permission","value":"{{perm}}"}]}}},
+    {"name":"List Roles","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/permissions/roles","host":["{{baseUrl}}"],"path":["v2","permissions","roles"]}}},
+    {"name":"Users by Roles","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/permissions/users-by-roles?role={{role}}","host":["{{baseUrl}}"],"path":["v2","permissions","users-by-roles"],"query":[{"key":"role","value":"{{role}}"}]}}},
+    {"name":"Assign Role","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/permissions","host":["{{baseUrl}}"],"path":["v2","permissions"]},"body":{"mode":"raw","raw":"{\n  \"userId\": \"{{userId}}\",\n  \"role\": \"{{role}}\"\n}"}}},
+    {"name":"Remove Role","request":{"method":"DELETE","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/permissions","host":["{{baseUrl}}"],"path":["v2","permissions"]},"body":{"mode":"raw","raw":"{\n  \"userId\": \"{{userId}}\",\n  \"role\": \"{{role}}\"\n}"}}}
+  ],
+  "variable": [ {"key":"baseUrl","value":"http://localhost:8080"}, {"key":"accessToken","value":""}, {"key":"perm","value":"READ_MODEL"}, {"key":"role","value":"admin"}, {"key":"userId","value":""} ]
+}
+
+

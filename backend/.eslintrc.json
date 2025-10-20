@@ -1,0 +1,39 @@
+{
+  "env": {
+    "node": true,
+    "jest": true,
+    "commonjs": true
+  },
+  "extends": [
+    "airbnb-base",
+    "plugin:jest/recommended",
+    "plugin:security/recommended-legacy",
+    "plugin:prettier/recommended"
+  ],
+  "plugins": [
+    "jest",
+    "security",
+    "prettier"
+  ],
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "script"
+  },
+  "rules": {
+    // "no-console": "off",
+    "func-names": "warn",
+    "no-underscore-dangle": "warn",
+    "consistent-return": "warn",
+    "jest/expect-expect": "warn",
+    "security/detect-object-injection": "warn",
+    "camelcase": "warn",
+    "import/no-unresolved": [
+      "error",
+      {
+        "ignore": [
+          "^firebase-admin/.+"
+        ]
+      }
+    ]
+  }
+}

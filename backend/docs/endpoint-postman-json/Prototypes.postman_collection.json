@@ -1,0 +1,14 @@
+{
+  "info": { "name": "Prototypes", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json" },
+  "item": [
+    {"name":"List Prototypes","request":{"method":"GET","url":{"raw":"{{baseUrl}}/v2/prototypes","host":["{{baseUrl}}"],"path":["v2","prototypes"]}}},
+    {"name":"Create Prototype","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/prototypes","host":["{{baseUrl}}"],"path":["v2","prototypes"]},"body":{"mode":"raw","raw":"{\n  \"name\": \"Proto A\",\n  \"model_id\": \"{{modelId}}\"\n}"}}},
+    {"name":"Get Prototype","request":{"method":"GET","url":{"raw":"{{baseUrl}}/v2/prototypes/{{id}}","host":["{{baseUrl}}"],"path":["v2","prototypes","{{id}}"]}}},
+    {"name":"Update Prototype","request":{"method":"PATCH","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/prototypes/{{id}}","host":["{{baseUrl}}"],"path":["v2","prototypes","{{id}}"]},"body":{"mode":"raw","raw":"{\n  \"name\": \"Proto A Updated\"\n}"}}},
+    {"name":"Delete Prototype","request":{"method":"DELETE","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/prototypes/{{id}}","host":["{{baseUrl}}"],"path":["v2","prototypes","{{id}}"]}}},
+    {"name":"Execute Code","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/prototypes/{{id}}/execute-code","host":["{{baseUrl}}"],"path":["v2","prototypes","{{id}}","execute-code"]},"body":{"mode":"raw","raw":"{\n  \"code\": \"print(1)\"\n}"}}}
+  ],
+  "variable": [ {"key":"baseUrl","value":"http://localhost:8080"}, {"key":"accessToken","value":""}, {"key":"modelId","value":""}, {"key":"id","value":""} ]
+}
+
+

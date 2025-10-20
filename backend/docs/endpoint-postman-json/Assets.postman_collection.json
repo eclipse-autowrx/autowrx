@@ -1,0 +1,14 @@
+{
+  "info": { "name": "Assets", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json" },
+  "item": [
+    {"name":"List My Assets","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/assets","host":["{{baseUrl}}"],"path":["v2","assets"]}}},
+    {"name":"Create Asset","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/assets","host":["{{baseUrl}}"],"path":["v2","assets"]},"body":{"mode":"raw","raw":"{\n  \"name\": \"Asset A\",\n  \"type\": \"file\",\n  \"data\": {}\n}"}}},
+    {"name":"Get Asset","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/assets/{{id}}","host":["{{baseUrl}}"],"path":["v2","assets","{{id}}"]}}},
+    {"name":"Update Asset","request":{"method":"PATCH","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/assets/{{id}}","host":["{{baseUrl}}"],"path":["v2","assets","{{id}}"]},"body":{"mode":"raw","raw":"{\n  \"name\": \"Asset A Updated\"\n}"}}},
+    {"name":"Delete Asset","request":{"method":"DELETE","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/assets/{{id}}","host":["{{baseUrl}}"],"path":["v2","assets","{{id}}"]}}},
+    {"name":"Generate Token","request":{"method":"POST","header":[{"key":"Authorization","value":"Bearer {{accessToken}}"}],"url":{"raw":"{{baseUrl}}/v2/assets/{{id}}/generate-token","host":["{{baseUrl}}"],"path":["v2","assets","{{id}}","generate-token"]}}}
+  ],
+  "variable": [ {"key":"baseUrl","value":"http://localhost:8080"}, {"key":"accessToken","value":""}, {"key":"id","value":""} ]
+}
+
+

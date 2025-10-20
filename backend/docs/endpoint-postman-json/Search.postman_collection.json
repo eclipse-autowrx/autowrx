@@ -1,0 +1,11 @@
+{
+  "info": { "name": "Search", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json" },
+  "item": [
+    {"name":"Search","request":{"method":"GET","url":{"raw":"{{baseUrl}}/v2/search?q={{q}}","host":["{{baseUrl}}"],"path":["v2","search"],"query":[{"key":"q","value":"{{q}}"}]}}},
+    {"name":"Search by Email","request":{"method":"GET","url":{"raw":"{{baseUrl}}/v2/search/email/{{email}}","host":["{{baseUrl}}"],"path":["v2","search","email","{{email}}"]}}},
+    {"name":"Prototypes by Signal","request":{"method":"GET","url":{"raw":"{{baseUrl}}/v2/search/prototypes/by-signal/{{signal}}","host":["{{baseUrl}}"],"path":["v2","search","prototypes","by-signal","{{signal}}"]}}}
+  ],
+  "variable": [ {"key":"baseUrl","value":"http://localhost:8080"}, {"key":"q","value":""}, {"key":"email","value":""}, {"key":"signal","value":""} ]
+}
+
+

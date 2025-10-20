@@ -1,0 +1,56 @@
+# Dependencies and package managers
+node_modules/
+vendor/
+venv/
+.env/
+data/python-packages/
+service/src/app/
+
+# Build outputs
+dist/
+build/
+out/
+target/
+*.min.js
+*.min.css
+
+# Third party code
+third_party/
+external/
+libs/
+
+# Generated files
+*_generated.*
+*.gen.*
+*_pb2.py
+*.pb.go
+
+# Documentation
+*.md
+LICENSE
+NOTICE
+
+# Config files
+.gitignore
+.licenseignore
+package-lock.json
+yarn.lock
+go.sum
+
+# Binary and media files
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+*.pdf
+*.zip
+*.tar.gz
+
+# Service-specific exclusions (for epam-service-connector)
+service/LICENSE
+service/service.tar.gz
+
+# Third party JavaScript libraries
+public/js/highlight.pack.js

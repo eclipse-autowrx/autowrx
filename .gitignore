@@ -1,0 +1,84 @@
+### Node / Monorepo
+node_modules/
+**/node_modules/
+
+### Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+report.[0-9]*.json
+
+### Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+### Build outputs
+dist/
+build/
+out/
+
+### Caches
+.cache/
+.vite/
+node_modules/.vite
+node_modules/.cache/
+.eslintcache
+.stylelintcache
+
+### TypeScript
+*.tsbuildinfo
+
+### Coverage
+coverage/
+.nyc_output/
+
+### Environment files
+.env
+.env.*
+*.env
+*.env.local
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
+# Allow checked-in examples
+!.env.example
+!.env.sample
+!backend/.env.example
+!frontend/.env.example
+
+### Package managers (do not ignore lockfiles)
+.pnpm-store/
+.pnp.*
+.npm/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+### Editors / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+### Test tools (optional; ignored artifacts)
+cypress/screenshots/
+cypress/videos/
+
+### Storybook
+storybook-static/
+
+### Misc
+tmp/
+temp/
+.turbo/
+
