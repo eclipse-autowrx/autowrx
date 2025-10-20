@@ -19,7 +19,7 @@ import type {
 } from '@/types/inventory.type'
 import { DaInput } from '@/components/atoms/DaInput'
 import { DaTextarea } from '@/components/atoms/DaTextarea'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { useEffect, useMemo, useState } from 'react'
 import Ajv from 'ajv'
 import clsx from 'clsx'
@@ -272,9 +272,9 @@ const ControlButtons = ({
       {/* Action Buttons */}
       <div className="flex justify-end space-x-3 pt-4 border-t mt-6">
         <Link to="/inventory/schema">
-          <DaButton variant="outline-nocolor">Cancel</DaButton>
+          <Button variant="outline-nocolor">Cancel</Button>
         </Link>
-        <DaButton
+        <Button
           type="submit"
           disabled={loading}
           className={clsx(
@@ -291,7 +291,7 @@ const ControlButtons = ({
           ) : (
             'Create Schema'
           )}
-        </DaButton>
+        </Button>
       </div>
     </div>
   )

@@ -14,7 +14,7 @@ import {
   fetchFeaturesService,
   removeRoleFromUserService,
 } from '@/services/permission.service'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { UsersWithRoles } from '@/types/permission.type'
 import { User } from '@/types/user.type'
 import DaLoading from '@/components/atoms/DaLoading'
@@ -138,14 +138,14 @@ const PageManageFeatures = () => {
                 <DaText variant="regular-bold">
                   {activeTab} ({filteredUsers.length})
                 </DaText>
-                <DaButton
+                <Button
                   size="sm"
                   onClick={() => {
                     setOpen(!open)
                   }}
                 >
                   <TbUserPlus className="mr-1 h-4 w-4" /> Add User
-                </DaButton>
+                </Button>
               </div>
               {filteredUsers.length > 0 ? (
                 <div className="-mx-2 mt-4 flex h-[90%] flex-col gap-2 overflow-y-auto px-2">
@@ -155,13 +155,13 @@ const PageManageFeatures = () => {
                       className="flex items-center rounded-lg border p-4"
                     >
                       <DaUserListItem user={user} key={user.id} />
-                      <DaButton
+                      <Button
                         onClick={() => handleRemoveUser(user.id)}
                         size="sm"
                         variant="destructive"
                       >
                         <TbMinus />
-                      </DaButton>
+                      </Button>
                     </div>
                   ))}
                 </div>

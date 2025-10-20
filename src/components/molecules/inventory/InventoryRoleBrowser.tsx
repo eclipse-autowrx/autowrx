@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import DaText from '@/components/atoms/DaText'
 import { Link } from 'react-router-dom'
 import { roles } from './data'
@@ -20,14 +20,14 @@ const InventoryRoleBrowser = () => {
           Role Browser
         </DaText>
         <Link className="ml-auto" to="/inventory/instance">
-          <DaButton variant="outline-nocolor" size="sm">
+          <Button variant="outline-nocolor" size="sm">
             <TbListTree className="mr-1" /> Instances
-          </DaButton>
+          </Button>
         </Link>
         <Link to="/inventory/schema">
-          <DaButton variant="outline-nocolor" size="sm">
+          <Button variant="outline-nocolor" size="sm">
             <TbListTree className="mr-1" /> Schemas
-          </DaButton>
+          </Button>
         </Link>
       </div>
       <div className="grid grid-cols-2 mt-4 grid-rows-2 gap-6">

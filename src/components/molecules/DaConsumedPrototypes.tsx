@@ -12,7 +12,7 @@ import DaLoader from '../atoms/DaLoader'
 import { DaImage } from '../atoms/DaImage'
 import { CSSProperties, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import { TbChevronDown } from 'react-icons/tb'
 import clsx from 'clsx'
 
@@ -80,7 +80,7 @@ const DaRelatedPrototypes = ({ signal }: DaRelatedPrototypesProps) => {
             ))}
           </div>
           {prototypes.length > 3 && (
-            <DaButton
+            <Button
               onClick={() => setExpanded((prev) => !prev)}
               variant="text"
               size="sm"
@@ -90,7 +90,7 @@ const DaRelatedPrototypes = ({ signal }: DaRelatedPrototypesProps) => {
               <TbChevronDown
                 className={clsx('ml-1', expanded && 'rotate-180')}
               />
-            </DaButton>
+            </Button>
           )}
         </>
       ) : (

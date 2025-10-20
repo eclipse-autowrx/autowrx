@@ -8,7 +8,7 @@
 
 // InventoryInstanceList.tsx
 import { DaAvatar } from '@/components/atoms/DaAvatar'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { DaInput } from '@/components/atoms/DaInput'
 import DaText from '@/components/atoms/DaText'
 import DaTooltip from '@/components/atoms/DaTooltip'
@@ -116,9 +116,9 @@ const InventoryInstanceList = ({}: InventoryInstanceListProps) => {
 
             <div className="flex gap-2 mt-2">
               <Link to="/inventory/instance/new">
-                <DaButton className="" size="sm">
+                <Button className="" size="sm">
                   <TbPlus className="h-4 w-4 mr-1" /> Add Inventory Instance
-                </DaButton>
+                </Button>
               </Link>
             </div>
             {/* Use totalResults from API */}
@@ -359,13 +359,13 @@ const Filter = ({ querySearch, querySchema }: FilterProps) => {
           </DaText>
           {/* Show clear button only if a schema filter is active */}
           {modeConfig.selected && (
-            <DaButton
+            <Button
               onClick={() => modeConfig.clear()}
               variant="plain"
               size="sm"
             >
               Clear filter
-            </DaButton>
+            </Button>
           )}
         </div>
         <div className="mt-3" />

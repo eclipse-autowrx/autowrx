@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { DaText } from '@/components/atoms/DaText'
 import { TbLoader } from 'react-icons/tb'
 
@@ -27,20 +27,20 @@ const FormAlert = ({
     <form className="flex flex-col space-y-8 w-[500px] min-w-[400px] px-2 md:px-6 py-4 bg-da-white">
       {children}
       <div className="ml-auto space-x-2">
-        <DaButton
+        <Button
           disabled={loading}
           onClick={onCancel}
           type="button"
           variant="plain"
         >
           Cancel
-        </DaButton>
-        <DaButton disabled={loading} onClick={onConfirm}>
+        </Button>
+        <Button disabled={loading} onClick={onConfirm}>
           {loading && (
             <TbLoader className="animate-spin da-label-regular mr-2" />
           )}
           Confirm
-        </DaButton>
+        </Button>
       </div>
     </form>
   )

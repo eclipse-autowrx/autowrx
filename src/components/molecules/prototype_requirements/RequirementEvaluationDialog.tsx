@@ -10,7 +10,7 @@ import React, { useEffect, useState } from 'react'
 import CustomDialog from '../flow/CustomDialog'
 import { useRequirementStore } from './hook/useRequirementStore'
 import { markdownAIEvaluate } from './mockup_requirements'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import RiskAssessmentMarkdown from '../flow/RiskAssessmentMarkdown'
 
 interface RequirementEvaluationDialogProps {
@@ -64,14 +64,14 @@ const RequirementEvaluationDialog: React.FC<
         </div>
 
         <div className="flex justify-end mt-auto">
-          <DaButton
+          <Button
             onClick={handleApplySuggestions}
             size="sm"
-            variant="solid"
+            variant="default"
             disabled={applied}
           >
             {applied ? 'Suggestions Applied' : 'Apply Suggestions'}
-          </DaButton>
+          </Button>
         </div>
       </div>
     </CustomDialog>

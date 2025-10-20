@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { DaInput } from '@/components/atoms/DaInput'
 import { DaText } from '@/components/atoms/DaText'
 import DaStarsRating from '@/components/atoms/DaStarsRating'
@@ -196,7 +196,7 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
       </div>
 
       <div className="px-4">
-        <DaButton
+        <Button
           disabled={loading}
           type="submit"
           variant="gradient"
@@ -204,7 +204,7 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
         >
           {loading && <TbLoader className="animate-spin text-lg mr-2" />}
           Submit
-        </DaButton>
+        </Button>
       </div>
     </form>
   )

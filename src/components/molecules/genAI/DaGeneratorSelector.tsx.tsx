@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { useEffect, useRef, useState } from 'react'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { TbSelector, TbStarFilled, TbCheck } from 'react-icons/tb'
 import { AddOn } from '@/types/addon.type'
 import { DaText } from '@/components/atoms/DaText'
@@ -88,7 +88,7 @@ const DaGeneratorSelector = ({
       ref={dropdownRef}
       className="relative flex flex-col w-full text-da-gray-medium"
     >
-      <DaButton
+      <Button
         variant="outline-nocolor"
         onClick={() => setIsExpandGenerator(!isExpandGenerator)}
         disabled={isLoading}
@@ -112,7 +112,7 @@ const DaGeneratorSelector = ({
           </div>
           <TbSelector className="h-4 w-4" />
         </div>
-      </DaButton>
+      </Button>
       {isExpandGenerator && (
         <div className="absolute left-0 top-14 z-10 flex min-h-8 w-full flex-col space-y-1 rounded-md border border-da-gray-light bg-da-white p-1 text-sm">
           <div className="scroll-gray-small flex max-h-[150px] flex-col overflow-y-auto px-1">

@@ -13,7 +13,7 @@ import {
   TbRowInsertTop,
   TbChevronCompactRight,
 } from 'react-icons/tb'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import { debounce } from 'lodash'
 
 interface DaTableEditorProps {
@@ -258,14 +258,14 @@ const DaTableEditor = ({
                         columnName
                       )}
 
-                      { isEditing && <DaButton
+                      { isEditing && <Button
                         className="journey-edit-btn-delete-column m-1 text-da-gray-dark! p-0! w-6! h-6! rounded absolute top-0 -right-4 bg-da-white hover:bg-da-white hover:text-red-500! z-10"
                         variant="outline"
                         onClick={() => deleteColumn(columnIndex)}
                         size="sm"
                       >
                         <TbX className="w-4 h-4" />
-                      </DaButton>
+                      </Button>
                       }
                     </div>
                   </th>
@@ -300,7 +300,7 @@ const DaTableEditor = ({
                       row.rowName || ''
                     )}
                     { isEditing && 
-                    <DaButton
+                    <Button
                       data-id="journey-edit-delete-row-btn"
                       className="journey-edit-content-cell-btn-delete-row m-1 text-da-gray-dark! p-0! w-6! h-6! rounded absolute top-0 right-0 bg-da-white hover:bg-da-white hover:text-red-500!"
                       size="sm"
@@ -308,7 +308,7 @@ const DaTableEditor = ({
                       onClick={() => deleteRow(rowIndex)}
                     >
                       <TbX className="size-4" />
-                    </DaButton> }
+                    </Button> }
                   </td>
                   {columnNames.map((columnName, columnIndex) => (
                     <td className="border px-4 py-2" key={columnIndex}>
@@ -337,7 +337,7 @@ const DaTableEditor = ({
           </table>
         </div>
 
-        <DaButton
+        <Button
           variant="dash"
           dataId="journey-edit-add-row-btn"
           className={`absolute -bottom-10 left-0 w-full h-8! py-0.5 z-10 ${
@@ -347,9 +347,9 @@ const DaTableEditor = ({
           onClick={addRow}
         >
           <TbRowInsertTop className="size-4" />
-        </DaButton>
+        </Button>
 
-        <DaButton
+        <Button
           variant="dash"
           dataId="journey-edit-add-column-btn"
           className={`absolute top-0 -right-10 h-full! w-8 px-0! z-10 ${
@@ -359,7 +359,7 @@ const DaTableEditor = ({
           onClick={addColumn}
         >
           <TbColumnInsertLeft />
-        </DaButton>
+        </Button>
       </div>
     </div>
   )

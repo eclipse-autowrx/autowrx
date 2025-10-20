@@ -8,7 +8,7 @@
 
 import { useState, useRef } from 'react'
 import { DaText } from '@/components/atoms/DaText'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { HiPlus } from 'react-icons/hi'
 import DaPopup from '@/components/atoms/DaPopup'
 import FormCreateModel from '@/components/molecules/forms/FormCreateModel'
@@ -233,14 +233,14 @@ const PageModelList = () => {
                         accept=".zip"
                         onFileChange={handleImportModelZip}
                       >
-                        <DaButton
+                        <Button
                           variant="outline-nocolor"
                           size="sm"
                           className="mr-2"
                         >
                           <TbPackageExport className="mr-1 text-lg" /> Import
                           Model
-                        </DaButton>
+                        </Button>
                       </DaImportFile>
                     ) : (
                       <DaText
@@ -253,10 +253,10 @@ const PageModelList = () => {
                     )}
                     <DaPopup
                       trigger={
-                        <DaButton variant="solid" size="sm" data-id='btn-open-form-create'>
+                        <Button variant="default" size="sm" data-id='btn-open-form-create'>
                           <HiPlus className="mr-1 text-lg" />
                           Create New Model
-                        </DaButton>
+                        </Button>
                       }
                     >
                       <FormCreateModel />

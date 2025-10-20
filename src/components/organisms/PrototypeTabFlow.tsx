@@ -19,7 +19,7 @@ import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import { updatePrototypeService } from '@/services/prototype.service'
 import DaTooltip from '../atoms/DaTooltip'
 import { FlowStep } from '@/types/flow.type'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import { cn } from '@/lib/utils'
 import { useSystemUI } from '@/hooks/useSystemUI'
 import DaCheckbox from '../atoms/DaCheckbox'
@@ -180,14 +180,14 @@ const PrototypeTabFlow = () => {
           {isAuthorized && (
             <>
               {!isEditing ? (
-                <DaButton
+                <Button
                   onClick={() => setIsEditing(true)}
                   className="justify-start!"
                   variant="editor"
                   size="sm"
                 >
                   <TbEdit className="w-4 h-4 mr-1" /> Edit
-                </DaButton>
+                </Button>
               ) : isSaving ? (
                 <div className="flex items-center text-da-primary-500">
                   <TbLoader className="w-4 h-4 mr-1 animate-spin" />
@@ -195,7 +195,7 @@ const PrototypeTabFlow = () => {
                 </div>
               ) : (
                 <div className="flex space-x-2 mr-2">
-                  <DaButton
+                  <Button
                     variant="outline-nocolor"
                     onClick={() => {
                       setFlowData(originalFlowData)
@@ -206,19 +206,19 @@ const PrototypeTabFlow = () => {
                     size="sm"
                   >
                     Cancel
-                  </DaButton>
-                  <DaButton
+                  </Button>
+                  <Button
                     onClick={() => handleSave(flowString)}
                     className="w-16 text-white px-4 py-2 rounded"
                     size="sm"
                   >
                     Save
-                  </DaButton>
+                  </Button>
                 </div>
               )}
             </>
           )}
-          <DaButton
+          <Button
             onClick={() =>
               setShowPrototypeFlowFullScreen(!showPrototypeFlowFullScreen)
             }
@@ -230,7 +230,7 @@ const PrototypeTabFlow = () => {
             ) : (
               <TbArrowsMaximize className="size-4" />
             )}
-          </DaButton>
+          </Button>
         </div>
 
         {isEditing ? (

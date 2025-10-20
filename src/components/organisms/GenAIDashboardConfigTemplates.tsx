@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react'
 import DaText from '../atoms/DaText'
 import DaDashboardTemplate from '../molecules/DaDashboardTemplate'
 import dashboard_templates from '@/data/dashboard_templates'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import { TbChevronLeft, TbRestore } from 'react-icons/tb'
 import DaDashboardEditor from '../molecules/dashboard/DaDashboardEditor'
 import CodeEditor from '../molecules/CodeEditor'
@@ -94,7 +94,7 @@ const GenAIDashboardConfigTemplates = ({
         <>
           {/* Title & buttons */}
           <div className="mb-4 flex items-center gap-4">
-            <DaButton
+            <Button
               disabled={!isConfigValid}
               onClick={resetViewMode}
               className="w-fit gap-1"
@@ -102,16 +102,16 @@ const GenAIDashboardConfigTemplates = ({
               variant="outline-nocolor"
             >
               <TbChevronLeft className="h-4 w-4" /> Go back
-            </DaButton>
+            </Button>
 
-            <DaButton
+            <Button
               onClick={resetDashboard}
               className="w-fit gap-1"
               size="sm"
               variant="outline-nocolor"
             >
               <TbRestore className="h-4 w-4" /> Reset
-            </DaButton>
+            </Button>
 
             <DaText
               variant="regular-bold"

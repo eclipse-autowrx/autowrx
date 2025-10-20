@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { loginService } from '@/services/auth.service'
 import useAuthStore from '@/stores/authStore'
 import { isAxiosError } from 'axios'
@@ -40,7 +40,7 @@ const PageLogin = () => {
     return (
       <div>
         Logged in
-        {/* <DaButton onClick={logOut}>Log out</DaButton> */}
+        {/* <Button onClick={logOut}>Log out</Button> */}
       </div>
     )
   }
@@ -68,7 +68,7 @@ const PageLogin = () => {
           className="border"
         />
         <br />
-        <DaButton className="w-40 mt-5">Login</DaButton>
+        <Button className="w-40 mt-5">Login</Button>
       </form>
     </div>
   )

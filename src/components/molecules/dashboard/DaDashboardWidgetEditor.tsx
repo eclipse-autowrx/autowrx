@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useRef, useState, useEffect } from 'react'
-import { DaButton } from '../../atoms/DaButton'
+import { Button } from '../../atoms/button'
 import {
   TbEdit,
   TbX,
@@ -197,7 +197,7 @@ const DaDashboardWidgetEditor = ({
           {usedAPIs && usedAPIs.length > 0 && (
             <div ref={dropdownRef} className="flex flex-col relative">
               <div className="flex w-full justify-end">
-                <DaButton
+                <Button
                   size="sm"
                   variant="outline-nocolor"
                   onClick={() => {
@@ -206,7 +206,7 @@ const DaDashboardWidgetEditor = ({
                 >
                   <TbSelector className="mr-2 flex justify-end w-fit" /> Used
                   signals
-                </DaButton>
+                </Button>
               </div>
               {isExpanded && (
                 <div className="absolute flex flex-col top-9 right-0 bg-da-white z-10 rounded border border-gray-200 shadow-sm cursor-pointer">
@@ -296,17 +296,17 @@ const DaDashboardWidgetEditor = ({
         </div>
 
         <div className="flex w-full space-x-2 justify-end pt-4">
-          <DaButton
+          <Button
             size="sm"
             variant="outline-nocolor"
             className="min-w-16!"
             onClick={() => codeEditorPopup[1](false)}
           >
             Cancel
-          </DaButton>
-          <DaButton
+          </Button>
+          <Button
             size="sm"
-            variant="solid"
+            variant="default"
             className="min-w-16!"
             onClick={() => {
               let newOption = {} as any
@@ -340,7 +340,7 @@ const DaDashboardWidgetEditor = ({
             }}
           >
             Save
-          </DaButton>
+          </Button>
         </div>
       </div>
     </DaPopup>

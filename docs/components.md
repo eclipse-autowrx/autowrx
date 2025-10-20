@@ -12,15 +12,15 @@ Basic building blocks that can't be broken down further. These are the smallest 
 
 #### UI Elements
 
-##### DaButton (`src/components/atoms/DaButton.tsx`)
-**Purpose**: Primary button component with multiple variants
+##### Button (`src/components/atoms/button.tsx`)
+**Purpose**: Shadcn UI button component with multiple variants
 **Props**:
 ```typescript
-interface DaButtonProps {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost'
-  size?: 'sm' | 'md' | 'lg'
+interface ButtonProps {
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link' | 'gradient' | 'plain' | 'editor' | 'text' | 'dash' | 'outline-nocolor'
+  size?: 'default' | 'sm' | 'lg' | 'icon'
   disabled?: boolean
-  loading?: boolean
+  asChild?: boolean
   children: React.ReactNode
   onClick?: () => void
 }
@@ -28,9 +28,9 @@ interface DaButtonProps {
 
 **Usage**:
 ```typescript
-<DaButton variant="primary" size="md" onClick={handleClick}>
+<Button variant="default" size="default" onClick={handleClick}>
   Click Me
-</DaButton>
+</Button>
 ```
 
 ##### DaInput (`src/components/atoms/DaInput.tsx`)
@@ -664,18 +664,18 @@ const App = () => {
 ```typescript
 // Example: Testing a button component
 import { render, screen, fireEvent } from '@testing-library/react'
-import { DaButton } from './DaButton'
+import { Button } from './button'
 
-describe('DaButton', () => {
+describe('Button', () => {
   it('renders with correct text', () => {
-    render(<DaButton>Click me</DaButton>)
+    render(<Button>Click me</Button>)
     expect(screen.getByText('Click me')).toBeInTheDocument()
   })
-  
+
   it('calls onClick when clicked', () => {
     const handleClick = jest.fn()
-    render(<DaButton onClick={handleClick}>Click me</DaButton>)
-    
+    render(<Button onClick={handleClick}>Click me</Button>)
+
     fireEvent.click(screen.getByText('Click me'))
     expect(handleClick).toHaveBeenCalledTimes(1)
   })

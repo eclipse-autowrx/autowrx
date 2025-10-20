@@ -14,7 +14,7 @@ import { shallow } from 'zustand/shallow'
 import { createNewWidgetByWebStudio } from '@/services/webStudio.service'
 import BUILT_IN_WIDGETS from '@/data/builtinWidgets'
 import { TbShoppingCart, TbLayoutGrid, TbExternalLink } from 'react-icons/tb'
-import { DaButton } from '../../atoms/DaButton'
+import { Button } from '../../atoms/button'
 import { isContinuousRectangle, parseWidgetConfig } from '@/lib/utils'
 import { toast } from 'react-toastify'
 import { BsStars } from 'react-icons/bs'
@@ -272,7 +272,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
             </DaTabItem>
           </div>
           {activeTab !== 'genAI' && (
-            <DaButton
+            <Button
               variant="plain"
               className="h-8"
               onClick={() => {
@@ -283,7 +283,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
             >
               <TbExternalLink className="mr-2" />
               {projectCreating ? '...' : 'Create widget with Studio'}
-            </DaButton>
+            </Button>
           )}
         </div>
         {(activeTab == 'market' || activeTab == 'builtin') && (
@@ -307,7 +307,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
         )}
 
         <div className="flex w-full justify-end items-center mt-4">
-          <DaButton
+          <Button
             variant="plain"
             className="px-4 py-2 text-base! mr-2 h-8"
             onClick={() => {
@@ -315,10 +315,10 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
             }}
           >
             Cancel
-          </DaButton>
+          </Button>
           {pickedCells && pickedCells.length > 0 && !isWidgetDiscrete && (
-            <DaButton
-              variant="solid"
+            <Button
+              variant="default"
               dataId="btn-add-widget-in-widget-library"
               disabled={(isWidgetGenAI || !activeWidget) && !widgetUrl}
               className="px-4 py-2 text-base! h-8"
@@ -336,7 +336,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
                   ? 'Creating...'
                   : 'Add widget'
                 : 'Add selected widget'}
-            </DaButton>
+            </Button>
           )}
         </div>
       </div>

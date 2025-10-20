@@ -13,7 +13,7 @@ import { listPopularPrototypes } from '@/services/prototype.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import DaText from '../atoms/DaText'
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import DaPopup from '../atoms/DaPopup'
 import useAuthStore from '@/stores/authStore'
 import { DaPrototypeItem } from '../molecules/DaPrototypeItem'
@@ -77,7 +77,7 @@ const HomePrototypePopular = ({
         </DaText>
         {popularPrototypes && popularPrototypes.length > 4 && (
           <div className="flex justify-center">
-            <DaButton
+            <Button
               size="sm"
               variant="plain"
               onClick={() => setShowMore(!showMore)}
@@ -94,7 +94,7 @@ const HomePrototypePopular = ({
                   <TbChevronDown className="ml-1" />
                 </>
               )}
-            </DaButton>
+            </Button>
           </div>
         )}
       </div>
@@ -145,8 +145,8 @@ const HomePrototypePopular = ({
             </span>
           </DaText>
           <div className="flex justify-end mt-6">
-            <DaButton
-              variant="solid"
+            <Button
+              variant="default"
               size="sm"
               onClick={() => {
                 setOpenRemindDialog(false)
@@ -155,7 +155,7 @@ const HomePrototypePopular = ({
               className="w-20"
             >
               Sign In
-            </DaButton>
+            </Button>
           </div>
         </div>
       </DaPopup>

@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { DaAvatar } from '@/components/atoms/DaAvatar'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import DaText from '@/components/atoms/DaText'
 import { InventoryInstanceDetail as InventoryInstanceDetailType } from '@/types/inventory.type'
 import dayjs from 'dayjs'
@@ -90,21 +90,21 @@ const InventoryInstanceDetail = () => {
 
         <div className="flex gap-2 items-end ml-auto">
           <Link to={`/inventory/instance/${instanceId}/edit`}>
-            <DaButton size="sm" variant="plain" className="text-da-gray-dark!">
+            <Button size="sm" variant="plain" className="text-da-gray-dark!">
               <TbEdit className="w-4 h-4 mr-1" />
               Edit
-            </DaButton>
+            </Button>
           </Link>
           <DaPopup
             state={[showDeleteConfirm, setShowDeleteConfirm]}
             trigger={
-              <DaButton
+              <Button
                 size="sm"
                 className="text-da-destructive!"
                 variant="destructive"
               >
                 <TbTrash size={18} className="mr-1" /> Delete
-              </DaButton>
+              </Button>
             }
           >
             <div className="w-[500px] flex flex-col gap-2 max-w-[90vw]">
@@ -119,18 +119,18 @@ const InventoryInstanceDetail = () => {
               </DaText>
 
               <div className="mt-2 flex justify-end items-center gap-2">
-                <DaButton
+                <Button
                   onClick={() => setShowDeleteConfirm(false)}
                   size="sm"
                   variant="outline-nocolor"
                   disabled={loading}
                 >
                   Cancel
-                </DaButton>
-                <DaButton disabled={loading} onClick={handleDelete} size="sm">
+                </Button>
+                <Button disabled={loading} onClick={handleDelete} size="sm">
                   {loading && <TbLoader className="mr-1 animate-spin" />}
                   Delete
-                </DaButton>
+                </Button>
               </div>
             </div>
           </DaPopup>
@@ -271,7 +271,7 @@ const Detail = ({
           </div>
 
           <div className="w-full">
-            <DaButton
+            <Button
               onClick={() => setShowDetail((prev) => !prev)}
               size="sm"
               variant="text"
@@ -283,7 +283,7 @@ const Detail = ({
                 <TbEye className="w-4 h-4 mr-1" />
               )}{' '}
               {showDetail ? 'Hide' : 'Show'} Detail Schema
-            </DaButton>
+            </Button>
             {showDetail && (
               <div className="border mt-1 rounded-md p-4 w-full">
                 <pre>

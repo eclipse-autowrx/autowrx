@@ -9,7 +9,7 @@
 import { User } from '@/types/user.type'
 import { TbLogout, TbUser } from 'react-icons/tb'
 import { BsBox } from "react-icons/bs";
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import useAuthStore from '@/stores/authStore'
 import DaMenu from '../atoms/DaMenu'
 import { DaText } from '../atoms/DaText'
@@ -34,7 +34,7 @@ const DaUserMenu = ({ user }: DaUserDropdownProps) => {
     <div className="flex items-center justify-center ml-2">
       <DaMenu
         trigger={
-          <DaButton variant="plain" className="h-10 w-10 p-2!">
+          <Button variant="plain" className="h-10 w-10 p-2!">
             <picture className="cursor-pointer h-full w-full">
               <source
                 srcSet={user.image_file}
@@ -47,7 +47,7 @@ const DaUserMenu = ({ user }: DaUserDropdownProps) => {
                 className="h-full w-full object-cover rounded-full"
               />
             </picture>
-          </DaButton>
+          </Button>
         }
       >
         <Link

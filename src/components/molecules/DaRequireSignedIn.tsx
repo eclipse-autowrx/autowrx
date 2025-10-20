@@ -9,7 +9,7 @@
 import { ReactNode, useState } from 'react'
 import useAuthStore from '@/stores/authStore'
 import DaPopup from '../atoms/DaPopup'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import { DaText } from '../atoms/DaText'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import config from '@/configs/config'
@@ -49,8 +49,8 @@ const DaRequireSignedIn = ({ children, message }: DaRequireSignedInProps) => {
                 {message || 'You must first sign in to explore this feature'}
               </DaText>
               <div className="flex justify-end mt-6">
-                <DaButton
-                  variant="solid"
+                <Button
+                  variant="default"
                   size="sm"
                   onClick={() => {
                     setOpenRemindDialog(false)
@@ -59,7 +59,7 @@ const DaRequireSignedIn = ({ children, message }: DaRequireSignedInProps) => {
                   className="w-20"
                 >
                   Sign In
-                </DaButton>
+                </Button>
               </div>
             </div>
           </DaPopup>

@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useEffect, useState } from 'react'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { DaInput } from '@/components/atoms/DaInput'
 import publishToGithub from '@/lib/publicToGithub'
 import DaText from '@/components/atoms/DaText'
@@ -83,21 +83,21 @@ const DaVelocitasProjectCreator: React.FC<DaVelocitasProjectCreatorProps> = ({
         )}
         <div className="grow"></div>
         <div className="flex space-x-2">
-          <DaButton
+          <Button
             onClick={onClose}
             size="sm"
             variant="outline-nocolor"
             className="ml-2"
           >
             Cancel
-          </DaButton>
-          <DaButton
+          </Button>
+          <Button
             size="sm"
             onClick={handleCreateRepo}
             disabled={isCreatingRepo || !repoName}
           >
             {isCreatingRepo ? 'Creating...' : 'Create Repository'}
-          </DaButton>
+          </Button>
         </div>
       </div>
     </div>

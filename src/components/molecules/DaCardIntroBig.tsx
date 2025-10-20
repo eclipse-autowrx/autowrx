@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { DaText } from '../atoms/DaText'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import { TbArrowRight } from 'react-icons/tb'
 
 interface CardIntroProps {
@@ -35,14 +35,14 @@ const DaCardIntroBig = ({
           {content}
         </DaText>
       </div>
-      {/* <DaButton
+      {/* <Button
         variant="outline-nocolor"
         className="flex w-fit mt-auto!"
         onClick={onClick}
       >
         {buttonText}
         <TbArrowRight className="ml-2 w-4 h-4" />
-      </DaButton> */}
+      </Button> */}
     </div>
   )
 }

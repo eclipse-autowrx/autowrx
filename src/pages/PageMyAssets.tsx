@@ -11,7 +11,7 @@ import { useEffect, useState } from "react"
 import { useAssets } from '@/hooks/useAssets'
 import { TbTrash, TbPencil, TbShare } from "react-icons/tb"
 import DaPopup from '../components/atoms/DaPopup'
-import { DaButton } from "@/components/atoms/DaButton"
+import { Button } from "@/components/atoms/button"
 import { DaInput } from "@/components/atoms/DaInput"
 import { DaSelect, DaSelectItem } from "@/components/atoms/DaSelect"
 import { useToast } from "@/components/molecules/toaster/use-toast"
@@ -275,13 +275,13 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
         </div>
 
         <div className="flex justify-end space-x-2 mt-6">
-            <DaButton className="w-32" variant="outline" onClick={() => {
+            <Button className="w-32" variant="outline" onClick={() => {
                 if (onCancel) onCancel()
             }}>
                 Cancel
-            </DaButton>
+            </Button>
 
-            <DaButton className="w-32" variant="solid" onClick={async () => {
+            <Button className="w-32" variant="default" onClick={async () => {
                 try {
                     if (!name || !type) {
                         toast({
@@ -329,7 +329,7 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
 
             }}>
                 Save
-            </DaButton>
+            </Button>
         </div>
     </div>
 }
@@ -369,7 +369,7 @@ const PageMyAssets = () => {
                     My Assets
                 </DaText>
                 <div className="grow"></div>
-                <DaButton variant="outline"
+                <Button variant="outline"
                     onClick={() => {
                         setActiveAsset({
                             name: '',
@@ -380,7 +380,7 @@ const PageMyAssets = () => {
                     }}>
                     <IoAddCircleOutline size={24} className="mr-2" />
                     Create New Asset
-                </DaButton>
+                </Button>
             </div>
 
 

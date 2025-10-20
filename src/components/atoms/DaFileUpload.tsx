@@ -10,7 +10,7 @@ import { useEffect, useRef, useState } from 'react'
 import DaText from './DaText'
 import { TbLoader, TbUpload, TbX } from 'react-icons/tb'
 import clsx from 'clsx'
-import { DaButton } from './DaButton'
+import { Button } from './button'
 import { uploadFileService } from '@/services/upload.service'
 import { toast } from 'react-toastify'
 import { createPortal } from 'react-dom'
@@ -196,7 +196,7 @@ const DaFileUpload = ({
       ) : (
         <>
           {file && (
-            <DaButton
+            <Button
               onClick={() => {
                 clearFile()
                 onFileUpload?.('')
@@ -206,7 +206,7 @@ const DaFileUpload = ({
               variant="outline-nocolor"
             >
               <TbX className="w-4 h-4" />
-            </DaButton>
+            </Button>
           )}
 
           {/* Image Preview */}

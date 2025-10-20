@@ -250,10 +250,10 @@ const inputVariants = {
 
 ### Atomic Components
 
-#### DaButton Component
+#### Button Component
 ```typescript
-// src/components/atoms/DaButton.tsx
-interface DaButtonProps {
+// src/components/atoms/Button.tsx
+interface ButtonProps {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger'
   size?: 'sm' | 'md' | 'lg'
   disabled?: boolean
@@ -263,7 +263,7 @@ interface DaButtonProps {
   className?: string
 }
 
-const DaButton: React.FC<DaButtonProps> = ({
+const Button: React.FC<ButtonProps> = ({
   variant = 'primary',
   size = 'md',
   disabled = false,

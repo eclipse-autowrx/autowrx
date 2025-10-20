@@ -9,7 +9,7 @@
 import Form from '@rjsf/fluent-ui'
 import validator from '@rjsf/validator-ajv8' // Use the AJV8 validator
 import { RJSFSchema } from '@rjsf/utils'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { TbLoader } from 'react-icons/tb'
 import { DaInput } from '@/components/atoms/DaInput'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -353,10 +353,10 @@ const ControlButtons = ({
       )}
       {/* Custom Submit Button */}
       <div className="mt-6 flex justify-end gap-3">
-        <DaButton variant="outline-nocolor" onClick={onCancel}>
+        <Button variant="outline-nocolor" onClick={onCancel}>
           Cancel
-        </DaButton>
-        <DaButton onClick={onSubmit} disabled={loading}>
+        </Button>
+        <Button onClick={onSubmit} disabled={loading}>
           {loading ? (
             <>
               <TbLoader className="mr-1 animate-spin" /> Submitting...
@@ -366,7 +366,7 @@ const ControlButtons = ({
           ) : (
             'Create Instance'
           )}
-        </DaButton>
+        </Button>
       </div>
     </div>
   )

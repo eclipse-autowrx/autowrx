@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { TbExternalLink } from 'react-icons/tb'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import DaRequireSignedIn from '@/components/molecules/DaRequireSignedIn'
 import DisabledLink from '@/components/molecules/DaDisableLink'
 
@@ -26,7 +26,7 @@ const home = [
         description:
           'Get an overview of the cloud-based prototyping environment for SDV functions.',
         children: (
-          <DaButton size="sm" data-id="btn-launch-graphic">
+          <Button size="sm" data-id="btn-launch-graphic">
             <a
               href="https://docs.digital.auto/basics/overview/"
               target="_blank"
@@ -35,7 +35,7 @@ const home = [
               <TbExternalLink className="size-4 mr-1" />
               Graphic
             </a>
-          </DaButton>
+          </Button>
         ),
       },
       {
@@ -44,7 +44,7 @@ const home = [
           'Learn about creating efficient SDV applications, using Python and Vehicle API',
         children: (
           <div className="flex space-x-2 items-center mt-4">
-            <DaButton size="sm" data-id="btn-launch-documentation">
+            <Button size="sm" data-id="btn-launch-documentation">
               <a
                 href="https://docs.digital.auto/basics/play/"
                 target="_blank"
@@ -53,8 +53,8 @@ const home = [
                 <TbExternalLink className="size-4 mr-1" />
                 Documentation
               </a>
-            </DaButton>
-            <DaButton variant="outline-nocolor" size="sm" data-id="btn-launch-video">
+            </Button>
+            <Button variant="outline-nocolor" size="sm" data-id="btn-launch-video">
               <a
                 href="https://www.youtube.com/@sdvpg"
                 target="_blank"
@@ -63,7 +63,7 @@ const home = [
                 <TbExternalLink className="size-4 mr-1" />
                 Video
               </a>
-            </DaButton>
+            </Button>
           </div>
         ),
       },
@@ -73,11 +73,11 @@ const home = [
           'Create a model to start building new connected vehicle app prototypes.',
         children: (
           <DaRequireSignedIn message="You must first sign in to explore vehicle models and prototypes">
-            <DaButton size="sm" className="mt-4">
+            <Button size="sm" className="mt-4">
               <DisabledLink to="/model" dataId="btn-launch-vehicle-models" className="flex items-center">
                 Vehicle Models
               </DisabledLink>
-            </DaButton>
+            </Button>
           </DaRequireSignedIn>
         ),
       },

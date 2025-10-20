@@ -14,7 +14,7 @@ import { shallow } from 'zustand/shallow'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import DaStageComponent from './DaStageComponent'
 import { IoMdArrowRoundBack } from 'react-icons/io'
 import config from '@/configs/config'
@@ -285,7 +285,7 @@ const DaEditSystemStaging = ({
       {/* {!onTargetMode && (
         <div className="flex mt-2">
           <div className="grow"></div>
-          <DaButton
+          <Button
             className="w-20 ml-2"
             variant="outline"
             onClick={() => {
@@ -295,8 +295,8 @@ const DaEditSystemStaging = ({
             }}
           >
             Cancel
-          </DaButton>
-          <DaButton
+          </Button>
+          <Button
             className="w-20 ml-2"
             onClick={() => {
               if (onFinish) {
@@ -305,13 +305,13 @@ const DaEditSystemStaging = ({
             }}
           >
             Save
-          </DaButton>
+          </Button>
         </div>
       )}
 
       {onTargetMode && (
         <div className="flex mt-2">
-          <DaButton
+          <Button
             className="w-20 ml-2"
             variant="outline"
             onClick={() => {
@@ -321,7 +321,7 @@ const DaEditSystemStaging = ({
             }}
           >
             Go back
-          </DaButton>
+          </Button>
           <div className="grow"></div>
         </div>
       )} */}

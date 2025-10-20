@@ -10,7 +10,7 @@ import { User } from '@/types/user.type'
 import { DaAvatar } from '../atoms/DaAvatar'
 import { TbPencil, TbTrash, TbUser, TbUserFilled } from 'react-icons/tb'
 import { DaText } from '../atoms/DaText'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import dayjs from 'dayjs'
 import DaPopup from '../atoms/DaPopup'
 import FormCreateUser from './forms/FormCreateUser'
@@ -89,9 +89,9 @@ const DaUser = ({ user }: { user: User }) => {
           <DaPopup state={[open, setOpen]} trigger={<span></span>}>
             <FormCreateUser updateData={user} onClose={() => setOpen(false)} />
           </DaPopup>
-          <DaButton onClick={() => setOpen(true)} variant="plain" size="sm">
+          <Button onClick={() => setOpen(true)} variant="plain" size="sm">
             <TbPencil className="h-5 w-5" />
-          </DaButton>
+          </Button>
 
           <DaPopup state={[openDelete, setOpenDelete]} trigger={<span></span>}>
             <FormAlert
@@ -104,13 +104,13 @@ const DaUser = ({ user }: { user: User }) => {
               </DaText>
             </FormAlert>
           </DaPopup>
-          <DaButton
+          <Button
             onClick={() => setOpenDelete(true)}
             variant="destructive"
             size="sm"
           >
             <TbTrash className="h-5 w-5" />
-          </DaButton>
+          </Button>
         </div>
       </div>
     </div>

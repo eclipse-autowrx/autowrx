@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { DaText } from '@/components/atoms/DaText'
 import { FormEvent, useEffect, useState } from 'react'
 import { TbLoader, TbCircleCheckFilled } from 'react-icons/tb'
@@ -200,7 +200,7 @@ const FormImportPrototype = () => {
         onFileChange={handleImportPrototypeZip}
         className="flex w-full"
       >
-        <DaButton
+        <Button
           disabled={isLoading || (!localModel && !data.modelName)}
           type="submit"
           variant="gradient"
@@ -208,7 +208,7 @@ const FormImportPrototype = () => {
         >
           {isLoading && <TbLoader className="animate-spin text-lg mr-2" />}
           Select file and import
-        </DaButton>
+        </Button>
       </DaImportFile>
     </div>
   )

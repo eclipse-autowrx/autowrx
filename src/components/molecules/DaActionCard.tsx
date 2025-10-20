@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { DaText } from '../atoms/DaText'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import { TbArrowRight } from 'react-icons/tb'
 import { cn } from '@/lib/utils'
 import { FaCar } from 'react-icons/fa'

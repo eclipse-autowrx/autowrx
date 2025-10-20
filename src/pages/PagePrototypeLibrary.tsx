@@ -12,7 +12,7 @@ import PrototypeLibraryList from '@/components/organisms/PrototypeLibraryList'
 import PrototypeLibraryPortfolio from '@/components/organisms/PrototypeLibraryPortfolio'
 import { useParams } from 'react-router-dom'
 import { TbChartScatter, TbListDetails } from 'react-icons/tb'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import DaLoader from '@/components/atoms/DaLoader'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
@@ -183,7 +183,7 @@ const PagePrototypeLibrary = () => {
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                 />
-                <DaButton
+                <Button
                   variant="outline-nocolor"
                   size="sm"
                   className={`hidden! lg:flex! items-center`}
@@ -200,7 +200,7 @@ const PagePrototypeLibrary = () => {
                       List View
                     </>
                   )}
-                </DaButton>
+                </Button>
                 <DaFilter
                   categories={{ 'Sort By': ['Newest', 'Oldest', 'Name A-Z'] }}
                   onChange={handleFilterChange}
@@ -215,7 +215,7 @@ const PagePrototypeLibrary = () => {
                     isAuthorized && 'opacity-100 pointer-events-auto',
                   )}
                 >
-                  <DaButton
+                  <Button
                     variant="outline-nocolor"
                     size="sm"
                     className="flex"
@@ -223,14 +223,14 @@ const PagePrototypeLibrary = () => {
                   >
                     <TbFileImport className="w-5 h-5 mr-2" />
                     Import Prototype
-                  </DaButton>
+                  </Button>
                   <DaPopup
                     state={[open, setOpen]}
                     trigger={
-                      <DaButton dataId='btn-create-new-prototype' variant="solid" size="sm" className="flex ml-2">
+                      <Button dataId='btn-create-new-prototype' variant="default" size="sm" className="flex ml-2">
                         <TbPlus className="w-5 h-5 mr-2" />
                         Create New Prototype
-                      </DaButton>
+                      </Button>
                     }
                   >
                     <FormCreatePrototype onClose={() => setOpen(false)} />
@@ -308,8 +308,8 @@ const PagePrototypeLibrary = () => {
           {importError && (
             <div className="text-red-500 text-sm">{importError}</div>
           )}
-          <DaButton
-            variant="solid"
+          <Button
+            variant="default"
             size="sm"
             disabled={
               !selectedFile ||
@@ -327,7 +327,7 @@ const PagePrototypeLibrary = () => {
             ) : (
               'Import'
             )}
-          </DaButton>
+          </Button>
         </div>
       </CustomDialog>
     </div>

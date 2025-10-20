@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { useEffect, useRef, useState } from 'react'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { TbCode } from 'react-icons/tb'
 import LoadingLineAnimation from './DaGenAI_LoadingLineAnimation.tsx'
 import DaGenAI_ResponseDisplay from './DaGenAI_ResponseDisplay.tsx'
@@ -72,7 +72,7 @@ const DaGenAI_Python = ({
         </div>
 
         <div className="mt-auto flex w-full select-none flex-col">
-          <DaButton
+          <Button
             variant="outline-nocolor"
             className="h-8! w-full"
             onClick={() => {
@@ -81,7 +81,7 @@ const DaGenAI_Python = ({
             disabled={!(genCode && genCode.length > 0) || !isFinished}
           >
             <TbCode className="mr-1.5 h-4 w-4" /> Add new generated code
-          </DaButton>
+          </Button>
         </div>
       </div>
     </div>

@@ -16,7 +16,7 @@ import { useSystemUI } from '@/hooks/useSystemUI'
 import { ASILBadge } from './ASILBadge'
 import RiskAssessmentMarkdown from './RiskAssessmentMarkdown'
 import { defaultRiskAssessmentPlaceholder } from './FlowItemEditor'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { ASILLevel } from '@/types/flow.type'
 import { FlowItemData } from '@/types/flow.type'
 import usePermissionHook from '@/hooks/usePermissionHook'
@@ -142,7 +142,7 @@ const FlowItem = ({ stringData, onEdit }: FlowItemProps) => {
           </div>
           <div className="flex items-center space-x-1">
             {isAuthorized && (
-              <DaButton
+              <Button
                 size="sm"
                 variant="plain"
                 className="flex ml-1 h-6! p-2! text-xs! text-da-primary-500!"
@@ -159,7 +159,7 @@ const FlowItem = ({ stringData, onEdit }: FlowItemProps) => {
                 }}
               >
                 <TbEdit className="size-3.5 mr-1" /> Edit
-              </DaButton>
+              </Button>
             )}
 
             <button

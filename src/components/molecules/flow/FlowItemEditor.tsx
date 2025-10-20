@@ -9,7 +9,7 @@
 import React, { useState } from 'react'
 import CustomDialog from './CustomDialog'
 import { DialogClose } from '@/components/atoms/dialog'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { DaInput } from '@/components/atoms/DaInput'
 import ASILSelect from './ASILSelect'
 import { TbPlus, TbTrash, TbChevronRight } from 'react-icons/tb'
@@ -248,7 +248,7 @@ const FlowItemEditor = ({
                 </div>
               ))}
             <div className="flex justify-between items-center">
-              <DaButton
+              <Button
                 type="button"
                 size="sm"
                 variant="dash"
@@ -257,7 +257,7 @@ const FlowItemEditor = ({
               >
                 <TbPlus className="size-4 mr-1" />
                 Add Custom Attribute
-              </DaButton>
+              </Button>
             </div>
           </div>
           {/* Right Column: Risk Assessment Section */}
@@ -273,14 +273,14 @@ const FlowItemEditor = ({
         <div className="flex justify-end items-center gap-1 mt-4">
           <div className="grow" />
           <DialogClose asChild>
-            <DaButton variant="outline-nocolor" className="min-w-20" size="sm">
+            <Button variant="outline-nocolor" className="min-w-20" size="sm">
               Cancel
-            </DaButton>
+            </Button>
           </DialogClose>
           <DialogClose asChild>
-            <DaButton size="sm" className="min-w-20" onClick={handleSubmit}>
+            <Button size="sm" className="min-w-20" onClick={handleSubmit}>
               {isSaveMode ? 'Save' : 'Confirm Change'}
-            </DaButton>
+            </Button>
           </DialogClose>
         </div>
       </div>

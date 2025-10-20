@@ -11,7 +11,7 @@ import React, { useEffect, useState } from 'react'
 import { TbPlus, TbTrash, TbChevronCompactRight } from 'react-icons/tb'
 import DaTooltip from '@/components/atoms/DaTooltip'
 import { FlowStep, SignalFlow } from '@/types/flow.type'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { cn } from '@/lib/utils'
 import FlowItemEditor from './FlowItemEditor'
 import FlowDirectionSelector from './FlowDirectionSelector'
@@ -219,14 +219,14 @@ const DaFlowEditor = ({ initialData, onUpdate }: DaFlowEditorProps) => {
               ))}
               <tr>
                 <td colSpan={FLOW_CELLS.length} className="border-x p-2">
-                  <DaButton
+                  <Button
                     onClick={() => addFlowToStep(stepIndex)}
                     size="sm"
                     variant="dash"
                     className="w-full"
                   >
                     <TbPlus className="size-4 mr-2" /> Add Flow
-                  </DaButton>
+                  </Button>
                 </td>
               </tr>
             </React.Fragment>

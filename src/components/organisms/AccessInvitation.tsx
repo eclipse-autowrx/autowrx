@@ -10,7 +10,7 @@ import { useRef, useState } from 'react'
 import DaPopup from '../atoms/DaPopup'
 import DaText from '../atoms/DaText'
 import DaMultiUsersInput from '../molecules/DaMultiUsersInput'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import { InvitedUser } from '@/types/user.type'
 import DaCollaboratorSearchPicker from '../molecules/DaCollaboratorSearchPicker'
 import { isAxiosError } from 'axios'
@@ -125,13 +125,13 @@ const AccessInvitation = ({
               onAccessLevelIdChange={setAccessLevelId}
               className="min-w-0 flex-1"
             />
-            <DaButton
+            <Button
               onClick={() => mutateInviting()}
               className="shrink-0"
               disabled={isPending || selectedUsers.size === 0}
             >
               Invite {isPending && <DaLoader className="ml-2 text-white" />}
-            </DaButton>
+            </Button>
           </div>
         </div>
 

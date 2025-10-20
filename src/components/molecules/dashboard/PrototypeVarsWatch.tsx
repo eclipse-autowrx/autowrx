@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { FC, useState, useEffect } from 'react'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { DaInput } from '@/components/atoms/DaInput'
 import { TbRefresh, TbEye, TbEyeOff, TbPlus, TbTrash, TbEdit, TbX, TbDeviceFloppy } from 'react-icons/tb'
 import { Prototype } from '@/types/model.type'
@@ -67,14 +67,14 @@ const VarItem = ({ variable, onEnter, requestDeleteVar }: VarItemProps) => {
           />
         </div>
         <div className="ml-1">
-          <DaButton
+          <Button
             variant="plain"
             size="sm"
             onClick={() => requestDeleteVar(variable.id)}
             className="p-1! text-white!"
           >
             <TbTrash size={18} />
-          </DaButton>
+          </Button>
         </div>
       </div>
     </div>
@@ -234,7 +234,7 @@ const PrototypeVarsWatch: FC<PrototypeVarsWatchProps> = ({ requestWriteVarValue 
     <div className="h-full flex flex-col p-2">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-da-white">Variables Watch</h3>
-        <DaButton
+        <Button
           variant="outline"
           size="sm"
           onClick={() => setIsAdding(true)}
@@ -242,7 +242,7 @@ const PrototypeVarsWatch: FC<PrototypeVarsWatchProps> = ({ requestWriteVarValue 
         >
           <TbPlus size={16} className="mr-1" />
           Add Variable
-        </DaButton>
+        </Button>
       </div>
 
       {/* Add/Edit Variable Form */}
@@ -262,7 +262,7 @@ const PrototypeVarsWatch: FC<PrototypeVarsWatchProps> = ({ requestWriteVarValue 
               className="text-da-black text-xs! w-20"
               style={{ minWidth: 80 }}
             />
-            <DaButton
+            <Button
               variant="plain"
               onClick={() => {
                 if (editingId) {
@@ -276,8 +276,8 @@ const PrototypeVarsWatch: FC<PrototypeVarsWatchProps> = ({ requestWriteVarValue 
             >
               <TbDeviceFloppy size={18} className="mr-1" />
               Save
-            </DaButton>
-            <DaButton
+            </Button>
+            <Button
               variant="plain"
               onClick={() => {
                 setIsAdding(false)
@@ -289,7 +289,7 @@ const PrototypeVarsWatch: FC<PrototypeVarsWatchProps> = ({ requestWriteVarValue 
             >
               {/* Use an X icon for cancel, or fallback to text if not available */}
               <TbX size={18} />
-            </DaButton>
+            </Button>
           </div>
         </div>
       )}

@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { lazy, Suspense, useEffect, useRef, useState, useMemo } from 'react'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { BsStars } from 'react-icons/bs'
 import { AddOn } from '@/types/addon.type'
 import { DaTextarea } from '@/components/atoms/DaTextarea'
@@ -389,8 +389,8 @@ const DaGenAI_Base = ({
           )
         )}
 
-        <DaButton
-          variant="solid"
+        <Button
+          variant="default"
           disabled={
             !prompt ||
             loading ||
@@ -404,7 +404,7 @@ const DaGenAI_Base = ({
             className={`mb-0.5 mr-1 inline-block size-4 ${loading ? 'animate-pulse' : ''}`}
           />
           {!loading && <div>{buttonText}</div>}
-        </DaButton>
+        </Button>
       </div>
     </div>
   )

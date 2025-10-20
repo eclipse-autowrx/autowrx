@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { DaInput } from '@/components/atoms/DaInput'
 import { DaText } from '@/components/atoms/DaText'
 import { sendResetPasswordEmailService } from '@/services/auth.service'
@@ -92,7 +92,7 @@ const FormForgotPassword = ({ setAuthType }: FormForgotPasswordProps) => {
             </DaText>
           )}
           {/* Action */}
-          <DaButton
+          <Button
             disabled={loading}
             type="submit"
             variant="gradient"
@@ -100,19 +100,19 @@ const FormForgotPassword = ({ setAuthType }: FormForgotPasswordProps) => {
           >
             {loading && <TbLoader className="animate-spin text-lg mr-2" />}
             Send Reset Email
-          </DaButton>
+          </Button>
 
           {/* More */}
           <div className="mt-4 flex items-center">
             <DaText className="text-da-gray-dark">Remember password?</DaText>
-            <DaButton
+            <Button
               type="button"
               onClick={() => setAuthType('sign-in')}
               variant="text"
               className="text-da-primary-500"
             >
               Sign In
-            </DaButton>
+            </Button>
           </div>
         </>
       )}

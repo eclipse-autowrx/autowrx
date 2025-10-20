@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useState, useEffect } from 'react'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import {
   TbLoader2,
   TbEdit,
@@ -203,7 +203,7 @@ const RiskAssessmentEditor = ({
         <div className="flex items-center gap-2 mb-1">
           {/* Toggle edit mode (only in Risk Assessment) */}
           {!isEvaluating && activeTab === 'riskAssessment' && (
-            <DaButton
+            <Button
               size="sm"
               variant="plain"
               onClick={() => setIsEditingMarkdown((prev) => !prev)}
@@ -211,10 +211,10 @@ const RiskAssessmentEditor = ({
             >
               <TbEdit className="size-3.5 mr-1.5 text-da-primary-500" />
               {isEditingMarkdown ? 'Preview' : 'Edit Assessment'}
-            </DaButton>
+            </Button>
           )}
           {isEvaluating ? (
-            <DaButton
+            <Button
               size="sm"
               variant="plain"
               disabled
@@ -226,10 +226,10 @@ const RiskAssessmentEditor = ({
                 : 'Evaluating for'}
               &nbsp;
               <span className="w-[30px]">{evaluationTime.toFixed(1)}</span>s
-            </DaButton>
+            </Button>
           ) : activeTab === 'riskAssessment' && isRiskAssessmentEvaluated ? (
             <div className="flex gap-2">
-              <DaButton
+              <Button
                 size="sm"
                 variant="plain"
                 onClick={handleReject}
@@ -237,8 +237,8 @@ const RiskAssessmentEditor = ({
               >
                 <TbX className="size-3.5 mr-1.5 text-red-500" />
                 Reject
-              </DaButton>
-              <DaButton
+              </Button>
+              <Button
                 size="sm"
                 variant="plain"
                 onClick={handleApprove}
@@ -246,10 +246,10 @@ const RiskAssessmentEditor = ({
               >
                 <TbCheck className="size-3.5 mr-1.5 text-green-500" />
                 Approve
-              </DaButton>
+              </Button>
             </div>
           ) : activeTab === 'feedback' && isFeedbackEvaluated ? (
-            <DaButton
+            <Button
               size="sm"
               variant="plain"
               onClick={generateContent}
@@ -257,9 +257,9 @@ const RiskAssessmentEditor = ({
             >
               <TbTextScan2 className="size-3.5 mr-1.5 text-da-primary-500" />
               Evaluate with AI
-            </DaButton>
+            </Button>
           ) : (
-            <DaButton
+            <Button
               size="sm"
               variant="plain"
               onClick={generateContent}
@@ -269,7 +269,7 @@ const RiskAssessmentEditor = ({
               {activeTab === 'riskAssessment'
                 ? 'Generate with AI'
                 : 'Evaluate with AI'}
-            </DaButton>
+            </Button>
           )}
         </div>
       </div>

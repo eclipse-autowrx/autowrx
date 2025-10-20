@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import { executeAction, executeActionSequence, Action } from '@/services/automation.service'
 
 const DaTestAutomation: React.FC = () => {
@@ -110,7 +110,7 @@ const DaTestAutomation: React.FC = () => {
                         Select Test Type:
                     </label>
                     <div className="flex gap-2 flex-wrap">
-                        <DaButton
+                        <Button
                             size="sm"
                             onClick={() => {
                                 if (!isRunning) {
@@ -125,8 +125,8 @@ const DaTestAutomation: React.FC = () => {
                             disabled={isRunning}
                         >
                             Single Action Test
-                        </DaButton>
-                        <DaButton
+                        </Button>
+                        <Button
                             size="sm"
                             onClick={() => {
                                 if (!isRunning) {
@@ -141,19 +141,19 @@ const DaTestAutomation: React.FC = () => {
                             disabled={isRunning}
                         >
                             Action Sequence Test
-                        </DaButton>
+                        </Button>
                     </div>
                 </div>
 
                 {/* Control Buttons */}
                 {isRunning && (
                     <div className="flex gap-2 mb-2">
-                        <DaButton
+                        <Button
                             onClick={() => setIsRunning(false)}
                             className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm"
                         >
                             Stop
-                        </DaButton>
+                        </Button>
                     </div>
                 )}
             </div>

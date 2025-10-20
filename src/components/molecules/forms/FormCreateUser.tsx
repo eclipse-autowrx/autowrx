@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { DaInput } from '@/components/atoms/DaInput'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import { DaText } from '@/components/atoms/DaText'
@@ -165,7 +165,7 @@ const FormCreateUser = ({ onClose, updateData }: FormCreateUserProps) => {
 
       {/* Action */}
       <div className="ml-auto space-x-2">
-        <DaButton
+        <Button
           onClick={onClose}
           disabled={loading}
           type="button"
@@ -173,13 +173,13 @@ const FormCreateUser = ({ onClose, updateData }: FormCreateUserProps) => {
           variant="plain"
         >
           Cancel
-        </DaButton>
-        <DaButton disabled={loading} type="submit" className="mt-8 w-fit">
+        </Button>
+        <Button disabled={loading} type="submit" className="mt-8 w-fit">
           {loading && (
             <TbLoader className="da-label-regular mr-2 animate-spin" />
           )}
           {isCreate ? 'Create User' : 'Update User'}
-        </DaButton>
+        </Button>
       </div>
     </form>
   )

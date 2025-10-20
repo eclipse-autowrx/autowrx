@@ -8,7 +8,7 @@
 
 import { Link } from 'react-router-dom'
 import useListInventorySchemas from '@/hooks/useListInventorySchemas'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { TbCirclePlus, TbEdit, TbEye, TbLoader, TbTrash } from 'react-icons/tb'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { useState } from 'react'
@@ -60,9 +60,9 @@ function InventorySchemaList() {
       <div className="flex justify-between items-center mb-4">
         <h1 className="font-bold da-txt-medium text-da-gray-dark">Schemas</h1>
         <Link to="/inventory/schema/new">
-          <DaButton size="sm">
+          <Button size="sm">
             <TbCirclePlus className="mr-1" /> Create New Schema
-          </DaButton>
+          </Button>
         </Link>
       </div>
 
@@ -136,10 +136,10 @@ function SchemaItem({
           className="text-gray-600 hover:text-gray-900"
           title="View Details"
         >
-          <DaButton size="sm" variant="plain">
+          <Button size="sm" variant="plain">
             <TbEye className="mr-1" size={16} />
             View
-          </DaButton>
+          </Button>
         </Link>
 
         {currentUserId === schema.created_by?.id && (
@@ -149,22 +149,22 @@ function SchemaItem({
               className="text-indigo-600 hover:text-indigo-900"
               title="Edit Schema"
             >
-              <DaButton size="sm" variant="plain">
+              <Button size="sm" variant="plain">
                 <TbEdit className="mr-1" size={16} />
                 Edit
-              </DaButton>
+              </Button>
             </Link>
 
             <DaPopup
               state={[showDeleteConfirm, setShowDeleteConfirm]}
               trigger={
-                <DaButton
+                <Button
                   size="sm"
                   className="text-da-destructive!"
                   variant="destructive"
                 >
                   <TbTrash size={18} className="mr-1" /> Delete
-                </DaButton>
+                </Button>
               }
             >
               <div className="w-[500px] flex flex-col gap-2 max-w-[90vw]">
@@ -179,22 +179,22 @@ function SchemaItem({
                 </DaText>
 
                 <div className="mt-2 flex justify-end items-center gap-2">
-                  <DaButton
+                  <Button
                     onClick={() => setShowDeleteConfirm(false)}
                     size="sm"
                     variant="outline-nocolor"
                     disabled={loading}
                   >
                     Cancel
-                  </DaButton>
-                  <DaButton
+                  </Button>
+                  <Button
                     disabled={loading}
                     onClick={() => onDelete(schema.id)}
                     size="sm"
                   >
                     {loading && <TbLoader className="mr-1 animate-spin" />}
                     Delete
-                  </DaButton>
+                  </Button>
                 </div>
               </div>
             </DaPopup>

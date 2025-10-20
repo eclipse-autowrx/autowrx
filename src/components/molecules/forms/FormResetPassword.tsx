@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { DaInput } from '@/components/atoms/DaInput'
 import { DaText } from '@/components/atoms/DaText'
 import { resetPasswordService } from '@/services/auth.service'
@@ -116,7 +116,7 @@ const FormResetPassword = () => {
             </DaText>
           )}
           {/* Action */}
-          <DaButton
+          <Button
             disabled={loading}
             type="submit"
             variant="gradient"
@@ -124,7 +124,7 @@ const FormResetPassword = () => {
           >
             {loading && <TbLoader className="animate-spin text-lg mr-2" />}
             Reset Password
-          </DaButton>
+          </Button>
 
           {/* More */}
           <div className="mt-4 flex items-center">

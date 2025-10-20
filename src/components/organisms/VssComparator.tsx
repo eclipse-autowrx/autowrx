@@ -15,7 +15,7 @@ import DaText from '../atoms/DaText'
 import useListVSSVersions from '@/hooks/useListVSSVersions'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import ApiDetail from './ApiDetail'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import { TbArrowRight, TbPlayerPlayFilled } from 'react-icons/tb'
 import clsx from 'clsx'
 import Diff from 'diff-match-patch'
@@ -472,7 +472,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
           <div ref={leftElement} className="h-full w-[720px] overflow-auto">
             <div className="mt-4 pl-2 bg-green-50">
               <div className="flex py-1 items-center gap-1">
-                <DaButton
+                <Button
                   onClick={() =>
                     setCollapsed((prev) => ({
                       ...prev,
@@ -485,7 +485,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
                   <TbPlayerPlayFilled
                     className={clsx(!collapsed.new && 'rotate-90')}
                   />
-                </DaButton>
+                </Button>
                 <DaText className="flex-1" variant="regular-bold">
                   New Signals ({newAPIs.length}):
                 </DaText>
@@ -503,7 +503,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
 
             <div className="mt-4 pl-2 bg-red-50">
               <div className="flex py-1 items-center gap-1">
-                <DaButton
+                <Button
                   onClick={() =>
                     setCollapsed((prev) => ({
                       ...prev,
@@ -516,7 +516,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
                   <TbPlayerPlayFilled
                     className={clsx(!collapsed.deleted && 'rotate-90')}
                   />
-                </DaButton>
+                </Button>
                 <DaText className="flex-1" variant="regular-bold">
                   Deleted Signals ({deletedAPIs.length}):
                 </DaText>
@@ -535,7 +535,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
 
             <div className="mt-4 pl-2 bg-orange-50">
               <div className="flex py-1 items-center gap-1">
-                <DaButton
+                <Button
                   onClick={() =>
                     setCollapsed((prev) => ({
                       ...prev,
@@ -548,7 +548,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
                   <TbPlayerPlayFilled
                     className={clsx(!collapsed.modified && 'rotate-90')}
                   />
-                </DaButton>
+                </Button>
                 <DaText className="flex-1" variant="regular-bold">
                   Changed Signals ({modifiedAPIs.length}):
                 </DaText>

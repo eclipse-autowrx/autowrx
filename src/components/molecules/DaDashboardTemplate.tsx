@@ -11,7 +11,7 @@ import clsx from 'clsx'
 import { DaImage } from '../atoms/DaImage'
 import DaText from '../atoms/DaText'
 import { TbEdit } from 'react-icons/tb'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 
 type DaDashboardTemplateProps = {
   selected?: boolean
@@ -50,14 +50,14 @@ const DaDashboardTemplate = ({
         {template.name}
       </DaText>
 
-      {/* <DaButton
+      {/* <Button
         onClick={onEditClick}
         className="absolute right-[6px] top-[6px] hidden! h-9! w-9! rounded-full! group-hover:block!"
         size="sm"
         variant="secondary"
       >
         <TbEdit className="h-5 w-5" />
-      </DaButton> */}
+      </Button> */}
     </div>
   )
 }

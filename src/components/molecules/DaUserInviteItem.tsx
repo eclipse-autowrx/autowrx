@@ -12,7 +12,7 @@ import DaText from '../atoms/DaText'
 import { TbChevronDown, TbCircle, TbCircleCheckFilled } from 'react-icons/tb'
 import clsx from 'clsx'
 import DaMenu from '../atoms/DaMenu'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
 type DaUserInviteItemProps = {
@@ -67,14 +67,14 @@ const DaUserInviteItem = ({
               </DaText>
             }
           >
-            <DaButton
+            <Button
               onClick={() => onRemoveAccess && onRemoveAccess(user)}
               variant="destructive"
               size="sm"
               className="w-[100px]"
             >
               <p className="w-full text-left">Remove</p>
-            </DaButton>
+            </Button>
           </DaMenu>
         </div>
       ) : (

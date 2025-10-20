@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { DaText } from '@/components/atoms/DaText'
 import { DaInput } from '@/components/atoms/DaInput'
 import { DaTag } from '@/components/atoms/DaTag'
@@ -27,44 +27,44 @@ const PageHome = () => {
     <div className="grid place-items-center bg-white">
       <div className="px-2 max-w-[1024px] space-y-4">
         <div className="mt-4 flex space-x-4 p-4 border rounded-lg">
-          <DaButton onClick={() => {}}>Default</DaButton>
-          <DaButton variant="outline">Outline</DaButton>
-          <DaButton variant="gradient">Gradient</DaButton>
-          <DaButton variant="outline-nocolor">Outline-nocolor</DaButton>
-          <DaButton variant="plain">Plain</DaButton>
-          <DaButton variant="secondary">Secondary</DaButton>
+          <Button onClick={() => {}}>Default</Button>
+          <Button variant="outline">Outline</Button>
+          <Button variant="gradient">Gradient</Button>
+          <Button variant="outline-nocolor">Outline-nocolor</Button>
+          <Button variant="plain">Plain</Button>
+          <Button variant="secondary">Secondary</Button>
         </div>
 
         <div className="mt-4 flex space-x-4 p-4 border rounded-lg">
-          <DaButton size="sm">Default</DaButton>
-          <DaButton size="sm" variant="outline">
+          <Button size="sm">Default</Button>
+          <Button size="sm" variant="outline">
             Outline
-          </DaButton>
-          <DaButton size="sm" variant="gradient">
+          </Button>
+          <Button size="sm" variant="gradient">
             Gradient
-          </DaButton>
-          <DaButton size="sm" variant="outline-nocolor">
+          </Button>
+          <Button size="sm" variant="outline-nocolor">
             Outline-nocolor
-          </DaButton>
-          <DaButton size="sm" variant="secondary">
+          </Button>
+          <Button size="sm" variant="secondary">
             Secondary
-          </DaButton>
+          </Button>
         </div>
 
         <div className="mt-4 flex space-x-4 p-4 border rounded-lg">
-          <DaButton size="lg">Default</DaButton>
-          <DaButton size="lg" variant="outline">
+          <Button size="lg">Default</Button>
+          <Button size="lg" variant="outline">
             Outline
-          </DaButton>
-          <DaButton size="lg" variant="gradient">
+          </Button>
+          <Button size="lg" variant="gradient">
             Gradient
-          </DaButton>
-          <DaButton size="lg" variant="outline-nocolor">
+          </Button>
+          <Button size="lg" variant="outline-nocolor">
             Outline-nocolor
-          </DaButton>
-          <DaButton size="lg" variant="secondary">
+          </Button>
+          <Button size="lg" variant="secondary">
             Secondary
-          </DaButton>
+          </Button>
         </div>
 
         <div className="mt-4 flex flex-col p-4 border rounded-lg">

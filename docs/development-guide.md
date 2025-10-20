@@ -194,7 +194,7 @@ import React, { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
 // 2. Internal components and hooks
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/Button'
 import { useUserData } from '@/hooks/useUserData'
 
 // 3. Types and utilities
@@ -208,7 +208,7 @@ import './Component.css'
 #### File Naming
 ```
 // ✅ Good: PascalCase for components
-DaButton.tsx
+Button.tsx
 PageHome.tsx
 FormCreateModel.tsx
 
@@ -309,31 +309,31 @@ afterAll(() => server.close())
 
 #### Component Test Example
 ```typescript
-// src/components/atoms/DaButton.test.tsx
+// src/components/atoms/Button.test.tsx
 import { render, screen, fireEvent } from '@testing-library/react'
-import { DaButton } from './DaButton'
+import { Button } from './Button'
 
-describe('DaButton', () => {
+describe('Button', () => {
   it('renders with correct text', () => {
-    render(<DaButton>Click me</DaButton>)
+    render(<Button>Click me</Button>)
     expect(screen.getByRole('button', { name: /click me/i })).toBeInTheDocument()
   })
 
   it('calls onClick when clicked', () => {
     const handleClick = jest.fn()
-    render(<DaButton onClick={handleClick}>Click me</DaButton>)
+    render(<Button onClick={handleClick}>Click me</Button>)
     
     fireEvent.click(screen.getByRole('button'))
     expect(handleClick).toHaveBeenCalledTimes(1)
   })
 
   it('is disabled when disabled prop is true', () => {
-    render(<DaButton disabled>Click me</DaButton>)
+    render(<Button disabled>Click me</Button>)
     expect(screen.getByRole('button')).toBeDisabled()
   })
 
   it('shows loading state', () => {
-    render(<DaButton loading>Click me</DaButton>)
+    render(<Button loading>Click me</Button>)
     expect(screen.getByRole('button')).toHaveAttribute('aria-busy', 'true')
   })
 })

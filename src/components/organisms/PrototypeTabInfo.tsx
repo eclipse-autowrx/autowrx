@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { DaText } from '../atoms/DaText'
 import { DaImage } from '../atoms/DaImage'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import { DaSelect, DaSelectItem } from '../atoms/DaSelect'
 import { Prototype } from '@/types/model.type'
 import { DaTableProperty } from '../molecules/DaTableProperty'
@@ -208,21 +208,21 @@ const PrototypeTabInfo: React.FC<PrototypeTabJourneyProps> = ({
                   Editing Prototype
                 </DaText>
                 <div className="flex space-x-2 mr-2">
-                  <DaButton
+                  <Button
                     variant="outline-nocolor"
                     onClick={handleCancel}
                     className="w-16 text-da-white px-4 py-2 rounded"
                     size="sm"
                   >
                     Cancel
-                  </DaButton>
-                  <DaButton
+                  </Button>
+                  <Button
                     onClick={handleSave}
                     className="w-16 text-white px-4 py-2 rounded"
                     size="sm"
                   >
                     Save
-                  </DaButton>
+                  </Button>
                 </div>
               </>
             ) : (
@@ -237,7 +237,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabJourneyProps> = ({
                       <DaTooltip
                         content={`${prototype?.editors_choice ? 'Unmark' : 'Mark'} as Editor Choice`}
                       >
-                        <DaButton
+                        <Button
                           onClick={updateEditorChoice}
                           className="justify-start!"
                           variant="editor"
@@ -248,20 +248,20 @@ const PrototypeTabInfo: React.FC<PrototypeTabJourneyProps> = ({
                           ) : (
                             <TbStar className="w-4 h-4" />
                           )}
-                        </DaButton>
+                        </Button>
                       </DaTooltip>
                     )}
-                    <DaButton
+                    <Button
                       onClick={() => setIsEditing(true)}
                       className="justify-start!"
                       variant="editor"
                       size="sm"
                     >
                       <TbEdit className="w-4 h-4 mr-1" /> Edit
-                    </DaButton>
+                    </Button>
                     <DaMenu
                       trigger={
-                        <DaButton
+                        <Button
                           variant="editor"
                           size="sm"
                           className={cn(
@@ -284,11 +284,11 @@ const PrototypeTabInfo: React.FC<PrototypeTabJourneyProps> = ({
                               Deleting...
                             </div>
                           )}
-                        </DaButton>
+                        </Button>
                       }
                     >
                       <div className="flex flex-col px-1">
-                        <DaButton
+                        <Button
                           variant="plain"
                           size="sm"
                           className="justify-start!"
@@ -296,8 +296,8 @@ const PrototypeTabInfo: React.FC<PrototypeTabJourneyProps> = ({
                         >
                           <TbDownload className="w-4 h-4 mr-2" />
                           Export Prototype{' '}
-                        </DaButton>
-                        <DaButton
+                        </Button>
+                        <Button
                           variant="destructive"
                           size="sm"
                           className="justify-start!"
@@ -305,7 +305,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabJourneyProps> = ({
                         >
                           <TbTrashX className="w-4 h-4 mr-2" />
                           Delete Prototype
-                        </DaButton>
+                        </Button>
                       </div>
                     </DaMenu>
                     <DaConfirmPopup
@@ -337,7 +337,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabJourneyProps> = ({
                   onFileChange={handlePrototypeImageChange}
                   accept=".png, .jpg, .jpeg, .gif, .webp"
                 >
-                  <DaButton
+                  <Button
                     variant="outline-nocolor"
                     className="absolute bottom-2 right-2"
                     size="sm"
@@ -352,7 +352,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabJourneyProps> = ({
                         <TbPhotoEdit className="w-4 h-4 mr-1" /> Update Image
                       </>
                     )}
-                  </DaButton>
+                  </Button>
                 </DaImportFile>
               )}
             </div>

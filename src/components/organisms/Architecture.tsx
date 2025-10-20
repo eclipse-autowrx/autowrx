@@ -15,7 +15,7 @@ import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import { updateModelService } from '@/services/model.service'
 import { updatePrototypeService } from '@/services/prototype.service'
 import { DaCopy } from '@/components/atoms/DaCopy'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { DaText } from '@/components/atoms/DaText'
 import { DaInput } from '../atoms/DaInput'
 import DaLoading from '../atoms/DaLoading'
@@ -349,9 +349,9 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
           </DaText>
 
           {isAuthorized && (
-            <DaButton onClick={createNewNode} size="sm" variant="solid">
+            <Button onClick={createNewNode} size="sm" variant="default">
               <TbPlus className="w-4 h-4 mr-1" /> New Node
-            </DaButton>
+            </Button>
           )}
         </div>
         {skeleton && skeleton.nodes && skeleton.nodes.length > 0 ? (
@@ -387,13 +387,13 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
                         label="Are you sure you want to delete this node?"
                         onConfirm={() => handleDeleteNode(node.id)}
                       >
-                        <DaButton
+                        <Button
                           variant="destructive"
                           size="sm"
                           className="text-destructive cursor-pointer"
                         >
                           Delete
-                        </DaButton>
+                        </Button>
                       </DaConfirmPopup>
                     )}
 
@@ -401,13 +401,13 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
                       textToCopy={`${window.location.pathname}?id=${node.id}`}
                       showIcon={false}
                     >
-                      <DaButton
+                      <Button
                         variant="plain"
                         size="sm"
                         className="hover:bg-da-primary-100"
                       >
                         Copy link
-                      </DaButton>
+                      </Button>
                     </DaCopy>
                   </div>
                 </div>
@@ -427,7 +427,7 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
         >
           <div className="flex w-full p-3 bg-white items-center justify-between">
             <div className="flex items-center">
-              <DaButton
+              <Button
                 variant="editor"
                 size="sm"
                 onClick={() => setIsExpand((prev) => !prev)}
@@ -438,7 +438,7 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
                 ) : (
                   <TbLayoutSidebarLeftExpand className="size-5" />
                 )}
-              </DaButton>
+              </Button>
 
               {isEditMode ? (
                 <DaInput
@@ -455,7 +455,7 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
             </div>
             <div className="flex">
               {!isEditMode ? (
-                <DaButton
+                <Button
                   variant="editor"
                   size="sm"
                   className="justify-start!"
@@ -467,19 +467,19 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
                 >
                   <TbEdit className="size-4 mr-1" />
                   Edit
-                </DaButton>
+                </Button>
               ) : (
                 <div className="flex items-center space-x-2 mr-2">
-                  <DaButton
+                  <Button
                     variant="outline-nocolor"
                     size="sm"
                     className="w-16"
                     onClick={() => setIsEditMode(false)}
                   >
                     Cancel
-                  </DaButton>
-                  <DaButton
-                    variant="solid"
+                  </Button>
+                  <Button
+                    variant="default"
                     size="sm"
                     className="w-16"
                     onClick={() => {
@@ -487,10 +487,10 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
                     }}
                   >
                     Save
-                  </DaButton>
+                  </Button>
                 </div>
               )}
-              <DaButton
+              <Button
                 onClick={() => setFullscreen((prev) => !prev)}
                 size="sm"
                 variant="editor"
@@ -500,7 +500,7 @@ const Architecture = ({ displayMode }: ArchitectureProps) => {
                 ) : (
                   <TbArrowsMaximize className="size-4" />
                 )}
-              </DaButton>
+              </Button>
             </div>
           </div>
 

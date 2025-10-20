@@ -12,7 +12,7 @@ import { DaInput } from '../atoms/DaInput'
 import { useListUsers } from '@/hooks/useListUsers'
 import { User } from '@/types/user.type'
 import { DaText } from '../atoms/DaText'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import { DaAvatar } from '../atoms/DaAvatar'
 import debounce from 'lodash/debounce'
 
@@ -118,7 +118,7 @@ const DaSelectUserPopup = ({
               Select user
             </DaText>
             <div className="grow"></div>
-            <DaButton
+            <Button
               variant="outline-nocolor"
               size="sm"
               className="text-da-primary-500"
@@ -127,7 +127,7 @@ const DaSelectUserPopup = ({
               }}
             >
               Close
-            </DaButton>
+            </Button>
           </div>
           <div className="mt-2 px-2">
             <DaInput

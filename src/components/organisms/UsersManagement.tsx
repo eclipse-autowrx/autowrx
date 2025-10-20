@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { DaText } from '../atoms/DaText'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import { DaInput } from '../atoms/DaInput'
 import { TbPlus, TbSearch, TbX } from 'react-icons/tb'
 import { useListUsers } from '@/hooks/useListUsers'
@@ -89,9 +89,9 @@ const UsersManagement = () => {
           <DaPopup state={[open, setOpen]} trigger={<span></span>}>
             <FormCreateUser onClose={() => setOpen(false)} />
           </DaPopup>
-          <DaButton variant="solid" onClick={() => setOpen(true)}>
+          <Button variant="default" onClick={() => setOpen(true)}>
             <TbPlus className="mr-2" /> Create new user
-          </DaButton>
+          </Button>
           <DaInput
             value={search}
             onChange={handleSearch}
@@ -100,7 +100,7 @@ const UsersManagement = () => {
             iconBefore={true}
             Icon={TbSearch}
           />
-          <DaButton
+          <Button
             disabled={!search}
             onClick={clearSearch}
             variant="plain"
@@ -108,7 +108,7 @@ const UsersManagement = () => {
             className="-ml-2"
           >
             Clear <TbX className="ml-2" />
-          </DaButton>
+          </Button>
         </div>
         {search && (
           <p className="mt-4 da-label-sub-title text-da-black">
@@ -136,7 +136,7 @@ const UsersManagement = () => {
 
       {hasNextPage && (
         <div className="w-full flex mt-6 pb-8">
-          <DaButton
+          <Button
             onClick={() => fetchNextPage()}
             disabled={isFetching}
             variant="outline-nocolor"
@@ -144,7 +144,7 @@ const UsersManagement = () => {
           >
             {isFetching && <DaLoader className="mr-2" />}
             Load more
-          </DaButton>
+          </Button>
         </div>
       )}
       {!hasNextPage && users.length !== 0 && (

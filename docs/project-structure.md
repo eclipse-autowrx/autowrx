@@ -44,7 +44,7 @@ Following the **Atomic Design** methodology:
 #### Atoms (`src/components/atoms/`)
 Basic building blocks that can't be broken down further:
 
-- **UI Elements**: `DaButton.tsx`, `DaInput.tsx`, `DaSelect.tsx`
+- **UI Elements**: `Button.tsx`, `DaInput.tsx`, `DaSelect.tsx`
 - **Display**: `DaText.tsx`, `DaImage.tsx`, `DaAvatar.tsx`
 - **Navigation**: `DaBreadcrumb.tsx`, `DaMenu.tsx`
 - **Feedback**: `DaLoading.tsx`, `DaSkeleton.tsx`
@@ -161,7 +161,7 @@ TypeScript type definitions:
 ## File Naming Conventions
 
 ### Components
-- **PascalCase**: `DaButton.tsx`, `PageHome.tsx`
+- **PascalCase**: `Button.tsx`, `PageHome.tsx`
 - **Prefixes**:
   - `Da` for design system components
   - `Page` for page components
@@ -190,12 +190,12 @@ The project uses absolute imports with the `@` alias pointing to `src/`:
 
 ```typescript
 // ✅ Good
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/Button'
 import { useListModels } from '@/hooks/useListModels'
 import { Model } from '@/types/model.type'
 
 // ❌ Avoid
-import { DaButton } from '../../../components/atoms/DaButton'
+import { Button } from '../../../components/atoms/Button'
 ```
 
 ### Import Order
@@ -208,7 +208,7 @@ import { DaButton } from '../../../components/atoms/DaButton'
 import React from 'react'
 import { useQuery } from '@tanstack/react-query'
 
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/Button'
 import { useListModels } from '@/hooks/useListModels'
 import { Model } from '@/types/model.type'
 

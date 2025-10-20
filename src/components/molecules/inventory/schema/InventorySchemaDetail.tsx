@@ -10,7 +10,7 @@ import React, { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { deleteSchemaService } from '@/services/inventory.service'
 import useGetInventorySchema from '@/hooks/useGetInventorySchema'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { TbEdit, TbLoader, TbPlus, TbTrash } from 'react-icons/tb'
 import DaText from '@/components/atoms/DaText'
@@ -84,28 +84,28 @@ const InventorySchemaDetail: React.FC = () => {
           {self?.id === schema.created_by?.id && (
             <div className="flex shrink-0 space-x-2">
               <Link to={`/inventory/instance/new?schemaId=${schema.id}`}>
-                <DaButton size="sm">
+                <Button size="sm">
                   <TbPlus size={18} className="mr-1" /> New Instance
-                </DaButton>
+                </Button>
               </Link>
               <Link
                 to={`/inventory/schema/${schema.id}/edit`} // Adjust route as needed
               >
-                <DaButton variant="plain" size="sm">
+                <Button variant="plain" size="sm">
                   <TbEdit size={18} className="mr-1" /> Edit
-                </DaButton>
+                </Button>
               </Link>
               {/* Add check here if only owner can delete */}
               <DaPopup
                 state={[showDeleteConfirm, setShowDeleteConfirm]}
                 trigger={
-                  <DaButton
+                  <Button
                     size="sm"
                     className="text-da-destructive! ml-2"
                     variant="destructive"
                   >
                     <TbTrash size={18} className="mr-1" /> Delete
-                  </DaButton>
+                  </Button>
                 }
               >
                 <div className="w-[500px] flex flex-col gap-2 max-w-[90vw]">
@@ -120,22 +120,22 @@ const InventorySchemaDetail: React.FC = () => {
                   </DaText>
 
                   <div className="mt-2 flex justify-end items-center gap-2">
-                    <DaButton
+                    <Button
                       onClick={() => setShowDeleteConfirm(false)}
                       size="sm"
                       variant="outline-nocolor"
                       disabled={loading}
                     >
                       Cancel
-                    </DaButton>
-                    <DaButton
+                    </Button>
+                    <Button
                       disabled={loading}
                       onClick={handleDelete}
                       size="sm"
                     >
                       {loading && <TbLoader className="mr-1 animate-spin" />}
                       Delete
-                    </DaButton>
+                    </Button>
                   </div>
                 </div>
               </DaPopup>

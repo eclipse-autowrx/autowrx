@@ -8,7 +8,7 @@
 
 import React, { useState, ReactElement } from 'react'
 import DaPopup from '../atoms/DaPopup'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import { DaText } from '../atoms/DaText'
 import { DaInput } from '../atoms/DaInput'
 
@@ -68,21 +68,21 @@ const DaConfirmPopup = ({
           </div>
         )}
         <div className="flex justify-end w-full space-x-2">
-          <DaButton
+          <Button
             variant="outline-nocolor"
             size="sm"
             onClick={() => setIsOpen(false)}
           >
             Cancel
-          </DaButton>
-          <DaButton
-            variant="solid"
+          </Button>
+          <Button
+            variant="default"
             size="sm"
             onClick={handleConfirm}
             disabled={Boolean(confirmText && inputValue !== confirmText)}
           >
             Confirm
-          </DaButton>
+          </Button>
         </div>
       </div>
     </DaPopup>

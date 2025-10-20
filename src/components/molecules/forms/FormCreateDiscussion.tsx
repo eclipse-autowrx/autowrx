@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { DaText } from '@/components/atoms/DaText'
 import { DaTextarea } from '@/components/atoms/DaTextarea'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
@@ -150,7 +150,7 @@ const FormCreateDiscussion = ({
       {/* Action */}
       <div className="flex mt-3 ml-auto gap-2">
         {(replyingId || updatingData) && (
-          <DaButton
+          <Button
             onClick={onCancel}
             disabled={loading}
             variant="plain"
@@ -159,9 +159,9 @@ const FormCreateDiscussion = ({
             size="sm"
           >
             Cancel
-          </DaButton>
+          </Button>
         )}
-        <DaButton
+        <Button
           disabled={loading}
           type="submit"
           className="w-fit px-4!"
@@ -169,7 +169,7 @@ const FormCreateDiscussion = ({
         >
           {loading && <TbLoader className="animate-spin text-lg mr-2" />}
           Submit
-        </DaButton>
+        </Button>
       </div>
     </form>
   )

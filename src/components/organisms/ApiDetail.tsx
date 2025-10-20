@@ -11,7 +11,7 @@ import { DaTableProperty } from '../molecules/DaTableProperty'
 import { DaText } from '../atoms/DaText'
 import { DaCopy } from '../atoms/DaCopy'
 import { cn, getApiTypeClasses } from '@/lib/utils'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import { updateModelService } from '@/services/model.service'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { CustomApi } from '@/types/model.type'
@@ -244,14 +244,14 @@ const ApiDetail = ({
             isAuthorized && (
               <DaMenu
                 trigger={
-                  <DaButton variant="solid" size="sm">
+                  <Button variant="default" size="sm">
                     <div className="da-label-small-bold">Signal Action</div>
                     <TbChevronDown className="ml-1 h-4 w-4" />
-                  </DaButton>
+                  </Button>
                 }
               >
                 <div className="da-menu-dropdown flex flex-col">
-                  <DaButton
+                  <Button
                     variant="destructive"
                     size="sm"
                     className="flex w-full justify-start!"
@@ -259,7 +259,7 @@ const ApiDetail = ({
                   >
                     <TbEdit className="mr-2 h-5 w-5" />
                     <div className="da-label-small-bold">Edit Signal</div>
-                  </DaButton>
+                  </Button>
                   {data ? (
                     <Link
                       to={data.link}
@@ -270,7 +270,7 @@ const ApiDetail = ({
                       View COVESA Issue
                     </Link>
                   ) : (
-                    <DaButton
+                    <Button
                       variant="plain"
                       size="sm"
                       onClick={() => {
@@ -282,9 +282,9 @@ const ApiDetail = ({
                       <span className="da-label-small-bold">
                         Propose this Signal to COVESA
                       </span>
-                    </DaButton>
+                    </Button>
                   )}
-                  <DaButton
+                  <Button
                     variant="destructive"
                     size="sm"
                     className="flex w-full justify-start!"
@@ -292,7 +292,7 @@ const ApiDetail = ({
                   >
                     <TbTrash className="mr-2 h-5 w-5" />
                     <div className="da-label-small-bold">Delete Signal</div>
-                  </DaButton>
+                  </Button>
                 </div>
               </DaMenu>
             )}

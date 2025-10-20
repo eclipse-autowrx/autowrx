@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { useState, useEffect, useRef } from 'react'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import { cn } from '@/lib/utils'
 import DaCheckbox from './DaCheckbox'
 import { TbSortDescending } from 'react-icons/tb'
@@ -85,14 +85,14 @@ const DaFilter = ({
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <DaButton
+      <Button
         className={cn('text-da-primary-500 mr-2 shadow-sm!', className)}
         variant="outline-nocolor"
-        size="md"
+        size="default"
         onClick={toggleDropdownVisibility}
       >
         <TbSortDescending className="size-5 mr-1.5" /> {label || 'Filter'}
-      </DaButton>
+      </Button>
       {isDropdownVisible && (
         <ul className="absolute right-0 z-10 bg-white border rounded-md shadow-lg mt-2 max-w-fit p-1 select-none min-w-[140px]">
           {Object.entries(categories).map(([category, options], index) => (

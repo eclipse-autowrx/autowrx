@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { useState, useEffect } from 'react'
-import { DaButton } from '../../atoms/DaButton'
+import { Button } from '../../atoms/button'
 import {
   TbEdit,
   TbTrash,
@@ -266,30 +266,30 @@ const DaDashboardEditor = ({
         <div className="absolute right-1 top-1 hidden w-fit rounded bg-da-white group-hover:block">
           <div className="flex items-center">
             <DaTooltip className="py-1" content="Delete widget">
-              <DaButton
+              <Button
                 variant="destructive"
                 className="px-0!"
                 onClick={() => handleDeleteWidget(index)}
               >
                 <TbTrash className="mx-2 h-5 w-5"></TbTrash>
-              </DaButton>
+              </Button>
             </DaTooltip>
             {/* TODO: need to change bewebstudio to somethigng smarter*/}
             {widgetConfig.options?.url &&
               widgetConfig.options.url.includes('bewebstudio') && (
                 <DaTooltip className="py-1" content="Open widget in Studio">
-                  <DaButton
+                  <Button
                     variant="plain"
                     className="px-0! hover:text-da-primary-500"
                     onClick={() => handleOpenWidget(index)}
                   >
                     <TbExternalLink className="mx-2 h-5 w-5" />
-                  </DaButton>
+                  </Button>
                 </DaTooltip>
               )}
 
             <DaTooltip className="py-1" content="Edit widget">
-              <DaButton
+              <Button
                 variant="plain"
                 className="px-0! hover:text-da-primary-500"
                 onClick={() => {
@@ -299,7 +299,7 @@ const DaDashboardEditor = ({
                 }}
               >
                 <TbEdit className="mx-2 h-5 w-5" />
-              </DaButton>
+              </Button>
             </DaTooltip>
           </div>
         </div>
@@ -378,7 +378,7 @@ const DaDashboardEditor = ({
               )}
             >
               <DaTooltip content="Add widget from marketplace or built-in">
-                <DaButton
+                <Button
                   size="sm"
                   variant="outline-nocolor"
                   onClick={() => handleAddWidget()}
@@ -387,11 +387,11 @@ const DaDashboardEditor = ({
                 >
                   <TbCategoryPlus className="mr-1 h-4 w-4" />
                   Add widget
-                </DaButton>
+                </Button>
               </DaTooltip>
 
               <DaTooltip content="Add widget from URL">
-                <DaButton
+                <Button
                   size="sm"
                   variant="outline-nocolor"
                   className="hover:text-da-gray-dark"
@@ -412,11 +412,11 @@ const DaDashboardEditor = ({
                   }}
                 >
                   <TbLinkPlus className="h-4 w-4" />
-                </DaButton>
+                </Button>
               </DaTooltip>
 
               <DaTooltip content="Cancel place widget">
-                <DaButton
+                <Button
                   variant="destructive"
                   size="sm"
                   className="absolute right-1 top-1 mr-0"
@@ -424,7 +424,7 @@ const DaDashboardEditor = ({
                   onClick={() => setSelectedCells([])}
                 >
                   <TbX className="h-5 w-5" />
-                </DaButton>
+                </Button>
               </DaTooltip>
             </div>
           )

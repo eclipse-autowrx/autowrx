@@ -12,7 +12,7 @@ import { User } from '@/types/user.type'
 import DaPopup from '../atoms/DaPopup'
 import { useState } from 'react'
 import FormCreateUser from './forms/FormCreateUser'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import { TbPencil, TbTrash } from 'react-icons/tb'
 import FormAlert from './forms/FormAlert'
 import { deleteUserService } from '@/services/user.service'
@@ -54,9 +54,9 @@ const DaManageUserAction = ({
         <DaPopup state={[open, setOpen]} trigger={<span></span>}>
           <FormCreateUser updateData={user} onClose={() => setOpen(false)} />
         </DaPopup>
-        <DaButton onClick={() => setOpen(true)} variant="plain" size="sm">
+        <Button onClick={() => setOpen(true)} variant="plain" size="sm">
           <TbPencil className="w-5 h-5" />
-        </DaButton>
+        </Button>
 
         <DaPopup state={[openDelete, setOpenDelete]} trigger={<span></span>}>
           <FormAlert
@@ -67,13 +67,13 @@ const DaManageUserAction = ({
             <DaText>Are you sure you want to delete user '{user.name}'</DaText>
           </FormAlert>
         </DaPopup>
-        <DaButton
+        <Button
           onClick={() => setOpenDelete(true)}
           variant="destructive"
           size="sm"
         >
           <TbTrash className="w-5 h-5" />
-        </DaButton>
+        </Button>
       </div>
     </div>
   )

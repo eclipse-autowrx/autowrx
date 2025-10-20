@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import DaPopup from '@/components/atoms/DaPopup'
 import { DaText } from '@/components/atoms/DaText'
 import FormResetPassword from '@/components/molecules/forms/FormResetPassword'
@@ -32,14 +32,14 @@ const PageResetPassword = () => {
               You need to logout to perform this action. Please click the button
               below to logout.
             </DaText>
-            <DaButton
+            <Button
               onClick={handleLogout}
               className="block w-full gap-2 mt-6"
               variant="gradient"
             >
               <TbLogout className="text-lg" />
               Logout
-            </DaButton>
+            </Button>
           </div>
         </DaPopup>
       ) : (

@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import DaMenu from '@/components/atoms/DaMenu'
 import DaPopup from '@/components/atoms/DaPopup'
 import DaText from '@/components/atoms/DaText'
@@ -337,7 +337,7 @@ const InventoryItemRelationships = ({
             <TbList className="h-4 w-4" /> List View
           </button> */}
         </div>
-        <DaButton
+        <Button
           size="sm"
           variant="plain"
           className="ml-2"
@@ -348,7 +348,7 @@ const InventoryItemRelationships = ({
           ) : (
             <TbArrowsMaximize className="w-4 h-4" />
           )}
-        </DaButton>
+        </Button>
       </div>
 
       {/* Tree */}
@@ -382,7 +382,7 @@ const InventoryItemRelationships = ({
               <DaText className="text-da-gray-darkest!" variant="regular-bold">
                 Parents
               </DaText>
-              <DaButton
+              <Button
                 onClick={() => {
                   setShowSearchItem(true)
                   setSearchType('parent')
@@ -393,24 +393,24 @@ const InventoryItemRelationships = ({
               >
                 <TbPlus className="w-4 h-4 mr-1" />
                 Add Parent
-              </DaButton>
+              </Button>
               <DaMenu
                 trigger={
-                  <DaButton variant="plain" size="sm">
+                  <Button variant="plain" size="sm">
                     <TbDots className="w-4 h-4" />
-                  </DaButton>
+                  </Button>
                 }
               >
                 <div className="flex flex-col px-0.5 -my-0.5">
-                  <DaButton
+                  <Button
                     size="sm"
                     variant="plain"
                     className="text-left justify-start! w-[144px]"
                   >
                     <TbEye className="w-4 h-4 mr-2" />
                     View In List
-                  </DaButton>
-                  <DaButton
+                  </Button>
+                  <Button
                     disabled
                     size="sm"
                     variant="plain"
@@ -418,7 +418,7 @@ const InventoryItemRelationships = ({
                   >
                     <TbEdit className="w-4 h-4 mr-2" />
                     Edit Multiple
-                  </DaButton>
+                  </Button>
                 </div>
               </DaMenu>
             </div>
@@ -433,7 +433,7 @@ const InventoryItemRelationships = ({
               <DaText className="text-da-gray-darkest!" variant="regular-bold">
                 Children (2)
               </DaText>
-              <DaButton
+              <Button
                 onClick={() => {
                   setShowSearchItem(true)
                   setSearchType('child')
@@ -444,24 +444,24 @@ const InventoryItemRelationships = ({
               >
                 <TbPlus className="w-4 h-4 mr-1" />
                 Add Child
-              </DaButton>
+              </Button>
               <DaMenu
                 trigger={
-                  <DaButton variant="plain" size="sm">
+                  <Button variant="plain" size="sm">
                     <TbDots className="w-4 h-4" />
-                  </DaButton>
+                  </Button>
                 }
               >
                 <div className="flex flex-col px-0.5 -my-0.5">
-                  <DaButton
+                  <Button
                     size="sm"
                     variant="plain"
                     className="text-left justify-start! w-[144px]"
                   >
                     <TbEye className="w-4 h-4 mr-2" />
                     View In List
-                  </DaButton>
-                  <DaButton
+                  </Button>
+                  <Button
                     size="sm"
                     variant="plain"
                     disabled
@@ -469,7 +469,7 @@ const InventoryItemRelationships = ({
                   >
                     <TbEdit className="w-4 h-4 mr-2" />
                     Edit Multiple
-                  </DaButton>
+                  </Button>
                 </div>
               </DaMenu>
             </div>
@@ -481,20 +481,20 @@ const InventoryItemRelationships = ({
                 >
                   hello World.
                 </DaText>
-                <DaButton
+                <Button
                   className="opacity-0 group-hover:opacity-100 transition"
                   variant="outline-nocolor"
                   size="sm"
                 >
                   <TbExternalLink className="w-4 h-4 mr-1" /> View
-                </DaButton>
-                <DaButton
+                </Button>
+                <Button
                   className="opacity-0 group-hover:opacity-100 transition"
                   variant="outline-nocolor"
                   size="sm"
                 >
                   <TbEdit className="w-4 h-4 mr-1" /> Edit
-                </DaButton>
+                </Button>
               </div>
               <div className="group flex gap-2 -mx-4 px-4 h-[44px] items-center hover:bg-da-gray-light/20">
                 <DaText
@@ -503,20 +503,20 @@ const InventoryItemRelationships = ({
                 >
                   hello World.
                 </DaText>
-                <DaButton
+                <Button
                   className="opacity-0 group-hover:opacity-100 transition"
                   variant="outline-nocolor"
                   size="sm"
                 >
                   <TbExternalLink className="w-4 h-4 mr-1" /> View
-                </DaButton>
-                <DaButton
+                </Button>
+                <Button
                   className="opacity-0 group-hover:opacity-100 transition"
                   variant="outline-nocolor"
                   size="sm"
                 >
                   <TbEdit className="w-4 h-4 mr-1" /> Edit
-                </DaButton>
+                </Button>
               </div>
             </div>
           </div>
@@ -540,14 +540,14 @@ const InventoryItemRelationships = ({
           </div>
 
           <div className="flex gap-2 justify-end border-t -mx-8 px-8 py-4">
-            <DaButton
+            <Button
               onClick={() => setShowSearchItem(false)}
               variant="outline-nocolor"
               className="text-sm!"
             >
               Cancel
-            </DaButton>
-            <DaButton className="text-sm!">Attach</DaButton>
+            </Button>
+            <Button className="text-sm!">Attach</Button>
           </div>
         </div>
       </DaPopup>
@@ -567,19 +567,19 @@ const InventoryNode = ({ data, selected }: NodeProps<TypeInventoryNode>) => {
   return (
     <>
       {/* {selected && (
-        <DaButton
+        <Button
           onClick={() => data.onCreateNodeClick?.('parent')}
           size="sm"
           variant="outline"
           className="absolute hover:bg-white bg-white/70 border-da-gray-light! right-[calc(100%+12px)] rounded-full! top-1/2 -translate-y-1/2 text-xs! font-light!"
         >
           <TbPlus className="mr-0.5" /> Parent
-        </DaButton>
+        </Button>
       )} */}
       <Handle type="source" position={Position.Top} className="opacity-0" />
       {selected && (
         <div className="flex gap-1 justify-center w-full absolute bottom-[calc(100%+4px)]">
-          <DaButton
+          <Button
             size="sm"
             variant="outline-nocolor"
             className="p-1! h-5! text-xs!"
@@ -590,14 +590,14 @@ const InventoryNode = ({ data, selected }: NodeProps<TypeInventoryNode>) => {
             }
           >
             <TbExternalLink className="w-3 h-3" />
-          </DaButton>
-          <DaButton
+          </Button>
+          <Button
             size="sm"
             variant="outline-nocolor"
             className="p-1! h-5! text-xs!"
           >
             <TbEdit className="w-3 h-3" />
-          </DaButton>
+          </Button>
         </div>
       )}
       <div
@@ -618,7 +618,7 @@ const InventoryNode = ({ data, selected }: NodeProps<TypeInventoryNode>) => {
       </div>
       <Handle type="target" position={Position.Bottom} className="opacity-0" />
       {/* {selected && (
-        <DaButton
+        <Button
           onClick={() => {
             data.onCreateNodeClick?.('child')
           }}
@@ -627,7 +627,7 @@ const InventoryNode = ({ data, selected }: NodeProps<TypeInventoryNode>) => {
           className="absolute hover:bg-white bg-white/70 border-da-gray-light! left-[calc(100%+12px)] rounded-full! top-1/2 -translate-y-1/2 text-xs! font-light!"
         >
           <TbPlus className="mr-0.5" /> Child
-        </DaButton>
+        </Button>
       )} */}
     </>
   )
@@ -677,7 +677,7 @@ const ContextMenu = ({
       className="absolute text-sm bg-white p-1 border shadow z-10 h-fit rounded-md w-[200px]"
       {...props}
     >
-      <DaButton
+      <Button
         onClick={wrapper(deleteNode)}
         variant="plain"
         size="sm"
@@ -685,7 +685,7 @@ const ContextMenu = ({
       >
         <TbTrash className="h-4 w-4 mr-2" />
         Delete Node
-      </DaButton>
+      </Button>
     </div>
   )
 }

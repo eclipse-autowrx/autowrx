@@ -17,7 +17,7 @@ export default FormInventoryItem
 // import DaText from '@/components/atoms/DaText'
 // import { Fragment, useEffect, useMemo, useState } from 'react'
 // import FieldsSystemInterface from './FieldsSystemInterface'
-// import { DaButton } from '@/components/atoms/DaButton'
+// import { Button } from '@/components/atoms/button'
 // import { TbPlus, TbReload } from 'react-icons/tb'
 // import { CreateInventoryItem } from '@/types/inventory.type'
 // import DaFileUpload from '@/components/atoms/DaFileUpload'
@@ -166,14 +166,14 @@ export default FormInventoryItem
 //               <DaText variant="regular-bold" className="text-da-gray-darkest!">
 //                 Inventory Type
 //               </DaText>
-//               <DaButton
+//               <Button
 //                 type="button"
 //                 variant="text"
 //                 className="px-0! text-sm! text-da-primary-500!"
 //                 onClick={() => window.open('/inventory/type', '_blank')}
 //               >
 //                 <TbPlus className="mr-1" /> Add Type
-//               </DaButton>
+//               </Button>
 //             </div>
 //             <div className="pb-6 px-4 pt-4">
 //               <div className="flex justify-between items-center">
@@ -296,14 +296,14 @@ export default FormInventoryItem
 //             )}
 //           </div>
 //           <div className="border-t justify-between flex items-center py-3 px-4">
-//             <DaButton
+//             <Button
 //               type="button"
 //               variant="outline-nocolor"
 //               className="text-sm!"
 //             >
 //               Cancel
-//             </DaButton>
-//             <DaButton className="text-sm! px-4!">Create Item</DaButton>
+//             </Button>
+//             <Button className="text-sm! px-4!">Create Item</Button>
 //           </div>
 //         </div>
 //       </div>

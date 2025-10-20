@@ -308,69 +308,6 @@
   font-weight: 600;
 }
 
-/*********** For Button Component ********************/
-.da-btn-dash {
-  @apply p-2 text-da-primary-500 hover:bg-da-primary-100 border border-dashed border-da-primary-500 rounded-sm;
-}
-
-.da-btn {
-  @apply select-none cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
-}
-
-.da-btn-solid {
-  @apply bg-da-primary-500 text-da-white shadow-sm hover:bg-da-primary-500/90;
-}
-
-.da-btn-outline {
-  @apply border text-da-primary-500 border-da-primary-500 shadow-xs hover:bg-da-primary-500/10;
-}
-
-.da-btn-outline-nocolor {
-  @apply border bg-white text-da-gray-medium border-da-gray-light hover:bg-da-gray-light shadow-sm;
-}
-
-.da-btn-plain {
-  @apply text-da-gray-medium hover:bg-da-primary-100 hover:text-da-primary-500;
-}
-
-.da-btn-editor {
-  @apply text-da-primary-500 hover:bg-da-primary-100;
-}
-
-.da-btn-text {
-  @apply text-da-primary-500 hover:underline;
-}
-
-.da-btn-link {
-  @apply text-da-gray-medium hover:underline;
-}
-
-.da-btn-gradient {
-  @apply bg-linear-to-r from-da-gradient-from to-da-gradient-to text-da-white shadow-xs hover:opacity-90;
-}
-
-.da-btn-secondary {
-  @apply bg-da-gray-medium text-da-white shadow-xs hover:bg-da-gray-medium/80;
-}
-
-.da-btn-destructive {
-  @apply text-da-gray-medium hover:text-da-destructive hover:bg-da-destructive/10;
-}
-
-.da-btn-sm {
-  @apply h-8 rounded-md px-2 py-1;
-  font-size: 14px;
-}
-
-.da-btn-md {
-  @apply h-10 rounded-md px-4 py-1;
-  font-size: 16px;
-}
-
-.da-btn-lg {
-  @apply h-12 rounded-md px-4 py-1;
-  font-size: 18px;
-}
 
 /*********** For Block Component ********************/
 .da-block-bare {

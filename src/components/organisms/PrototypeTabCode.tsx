@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { FC, useEffect, useState, lazy, Suspense } from 'react'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
 import { shallow } from 'zustand/shallow'
@@ -118,10 +118,10 @@ const PrototypeTabCode: FC = ({}) => {
               <DaPopup
                 state={[isOpenGenAI, setIsOpenGenAI]}
                 trigger={
-                  <DaButton size="sm">
+                  <Button size="sm">
                     <BsStars className="mr-1" />
                     SDV ProtoPilot
-                  </DaButton>
+                  </Button>
                 }
                 onClose={() => setIsOpenGenAI(false)}
                 closeBtnClassName="top-6 right-6"
@@ -146,10 +146,10 @@ const PrototypeTabCode: FC = ({}) => {
               <DaPopup
                 state={[isOpenVelocitasDialog, setIsOpenVelocitasDialog]}
                 trigger={
-                  <DaButton size="sm" className="ml-2" variant="plain">
+                  <Button size="sm" className="ml-2" variant="plain">
                     <TbBrandGithub className="mr-1 size-4" />
                     Create Velocitas Project
-                  </DaButton>
+                  </Button>
                 }
                 onClose={() => setIsOpenVelocitasDialog(false)}
                 closeBtnClassName="top-6 right-6"
@@ -162,7 +162,7 @@ const PrototypeTabCode: FC = ({}) => {
               </DaPopup>
 
               {config?.enableDeployToEPAM !== false && (
-                <DaButton
+                <Button
                   size="sm"
                   className="ml-2"
                   variant="plain"
@@ -193,7 +193,7 @@ const PrototypeTabCode: FC = ({}) => {
                 >
                   <GrDeploy className="mr-1" size={16} />
                   Deploy as EPAM service
-                </DaButton>
+                </Button>
               )}
             </div>
           )}

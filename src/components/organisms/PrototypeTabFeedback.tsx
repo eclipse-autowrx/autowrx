@@ -12,7 +12,7 @@ import { DaText } from '@/components/atoms/DaText'
 import DaStarsRating from '@/components/atoms/DaStarsRating'
 import { Prototype } from '@/types/model.type'
 import DaPopup from '../atoms/DaPopup'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import useListPrototypeFeedback from '@/hooks/useListPrototypeFeedback'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import { TbChartDots, TbTrash } from 'react-icons/tb'
@@ -88,15 +88,15 @@ const PrototypeTabFeedback = () => {
             </div>
             <div className="flex">
               <Link to={`/model/${model_id}/library/portfolio`}>
-                <DaButton size="sm" variant="outline-nocolor" className="mr-2">
+                <Button size="sm" variant="outline-nocolor" className="mr-2">
                   <TbChartDots className="w-4 h-4 mr-1" />
                   View Portfolio
-                </DaButton>
+                </Button>
               </Link>
               <DaPopup
                 state={[isOpenPopup, setIsOpenPopup]}
                 trigger={
-                  <DaButton
+                  <Button
                     size="sm"
                     onClick={() =>
                       document
@@ -105,7 +105,7 @@ const PrototypeTabFeedback = () => {
                     }
                   >
                     + Add Feedback
-                  </DaButton>
+                  </Button>
                 }
               >
                 <FeedbackForm
@@ -146,14 +146,14 @@ const PrototypeTabFeedback = () => {
                           onConfirm={() => handleDeleteFeedback(feedback.id)}
                           label="Are you sure you want to delete this feedback?"
                         >
-                          <DaButton
+                          <Button
                             variant="destructive"
                             size="sm"
                             className="ml-auto"
                           >
                             <TbTrash className="w-4 h-4 mr-1" /> Delete Your
                             Feedback
-                          </DaButton>
+                          </Button>
                         </DaConfirmPopup>
                       )}
                     </div>

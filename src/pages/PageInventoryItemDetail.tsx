@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { DaAvatar } from '@/components/atoms/DaAvatar'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import DaFileUpload from '@/components/atoms/DaFileUpload'
 import DaMenu from '@/components/atoms/DaMenu'
 import DaText from '@/components/atoms/DaText'
@@ -146,35 +146,35 @@ const PageInventoryItemDetail = () => {
           </div>
         </div>
 
-        <DaButton
+        <Button
           size="sm"
           variant="outline-nocolor"
           className="ml-auto text-da-gray-dark! w-[80px]"
         >
           <TbEdit className="w-4 h-4 mr-1" />
           Edit
-        </DaButton>
+        </Button>
         <DaMenu
           trigger={
-            <DaButton
+            <Button
               size="sm"
               variant="outline-nocolor"
               className="text-da-gray-dark! w-[80px]"
             >
               <TbChevronDown className="w-4 h-4 mr-1" />
               More
-            </DaButton>
+            </Button>
           }
         >
           <div className="flex flex-col px-0.5 -my-0.5">
-            <DaButton
+            <Button
               size="sm"
               variant="plain"
               className="text-left justify-start! w-[240px]"
             >
               <TbCopy className="w-4 h-4 mr-2" />
               Duplicate Item
-            </DaButton>
+            </Button>
           </div>
         </DaMenu>
       </div>
@@ -209,10 +209,10 @@ const PageInventoryItemDetail = () => {
               <DaText className="text-da-gray-darkest!" variant="regular-bold">
                 Diagrams
               </DaText>
-              <DaButton variant="text" className="ml-auto" size="sm">
+              <Button variant="text" className="ml-auto" size="sm">
                 <TbPlus className="w-4 h-4 mr-1" />
                 Add Diagram
-              </DaButton>
+              </Button>
             </div>
             <div className="px-4 py-2">
               <DaText variant="small" className="block! py-3">
@@ -319,10 +319,10 @@ const PageInventoryItemDetail = () => {
               <DaText className="text-da-gray-darkest!" variant="regular-bold">
                 Viewers
               </DaText>
-              <DaButton variant="text" className="ml-auto" size="sm">
+              <Button variant="text" className="ml-auto" size="sm">
                 <TbPlus className="w-4 h-4 mr-1" />
                 Add Viewer
-              </DaButton>
+              </Button>
             </div>
             <div className="px-4 py-2">
               <DaText variant="small" className="block! py-3">
@@ -335,10 +335,10 @@ const PageInventoryItemDetail = () => {
               <DaText className="text-da-gray-darkest!" variant="regular-bold">
                 Contributors (1)
               </DaText>
-              <DaButton variant="text" className="ml-auto" size="sm">
+              <Button variant="text" className="ml-auto" size="sm">
                 <TbPlus className="w-4 h-4 mr-1" />
                 Add Contributor
-              </DaButton>
+              </Button>
             </div>
 
             <div className="px-4 py-2">
@@ -350,20 +350,20 @@ const PageInventoryItemDetail = () => {
                   className="gap-4 text0sm"
                 />
 
-                <DaButton
+                <Button
                   className="opacity-0 group-hover:opacity-100 ml-auto transition"
                   variant="outline-nocolor"
                   size="sm"
                 >
                   <TbEdit className="w-4 h-4 mr-1" /> Edit
-                </DaButton>
-                <DaButton
+                </Button>
+                <Button
                   className="opacity-0 group-hover:opacity-100 transition"
                   variant="destructive"
                   size="sm"
                 >
                   <TbTrash className="w-4 h-4 mr-1" /> Delete
-                </DaButton>
+                </Button>
               </div>
             </div>
           </div>
@@ -548,7 +548,7 @@ const General = ({ data: item }: { data: InventoryItem }) => {
           </div>
 
           <div className="w-full">
-            <DaButton
+            <Button
               onClick={() => setShowDetail((prev) => !prev)}
               size="sm"
               variant="text"
@@ -560,7 +560,7 @@ const General = ({ data: item }: { data: InventoryItem }) => {
                 <TbEye className="w-4 h-4 mr-1" />
               )}{' '}
               {showDetail ? 'Hide' : 'Show'} Detail Schema
-            </DaButton>
+            </Button>
             {showDetail && (
               <div className="border mt-1 rounded-md p-4 w-full">
                 <pre>{JSON.stringify(item.typeData || {}, null, 4)}</pre>

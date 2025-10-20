@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { useState, useEffect } from 'react'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { createNewWidgetByProtoPilot } from '@/services/webStudio.service'
 import DaGenAI_ResponseDisplay from './DaGenAI_ResponseDisplay'
 import LoadingLineAnimation from './DaGenAI_LoadingLineAnimation'
@@ -81,7 +81,7 @@ const DaGenAI_Widget = ({ outerSetiWidgetUrl }: DaGenAIWidgetProps) => {
       <div className="flex h-full overflow-y-auto w-1/2 flex-col pl-2">
         <div className="mb-1 flex select-none items-center justify-between">
           <DaSectionTitle number={3} title="Preview Widget" />
-          <DaButton
+          <Button
             variant="plain"
             size="sm"
             onClick={() => {
@@ -90,7 +90,7 @@ const DaGenAI_Widget = ({ outerSetiWidgetUrl }: DaGenAIWidgetProps) => {
             className="bg-transparent shadow-none!"
           >
             {isPreviewWidget ? 'View code' : 'Preview widget'}
-          </DaButton>
+          </Button>
         </div>
 
         <div className="flex w-full h-full border rounded-lg overflow-y-auto">

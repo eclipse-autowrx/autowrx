@@ -13,7 +13,7 @@ import { listRecentPrototypes } from '@/services/prototype.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import DaText from '../atoms/DaText'
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import { DaPrototypeItem } from '../molecules/DaPrototypeItem'
 import DaSkeletonGrid from '../molecules/DaSkeletonGrid'
 
@@ -51,7 +51,7 @@ const HomePrototypeRecent = ({ title }: HomePrototypeRecentProps) => {
           </DaText>
           {recentPrototypes && recentPrototypes.length > 4 && (
             <div className="flex justify-center">
-              <DaButton
+              <Button
                 size="sm"
                 variant="plain"
                 onClick={() => setShowMore(!showMore)}
@@ -68,7 +68,7 @@ const HomePrototypeRecent = ({ title }: HomePrototypeRecentProps) => {
                     <TbChevronDown className="ml-1" />
                   </>
                 )}
-              </DaButton>
+              </Button>
             </div>
           )}
         </div>

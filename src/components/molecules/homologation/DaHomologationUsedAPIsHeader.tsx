@@ -12,7 +12,7 @@ import { TbHelp, TbSquare, TbSquareCheck, TbX } from 'react-icons/tb'
 import { Tooltip } from '@mui/material'
 import { VehicleAPI } from '@/types/api.type'
 import { supportedCertivityApis } from '@/services/certivity.service'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import useCurrentModel from '@/hooks/useCurrentModel'
 
 type HomologationUsedAPIsHeaderProps = {
@@ -58,7 +58,7 @@ const HomologationUsedAPIsHeader = ({
       </h1>
 
       {/* Select all button */}
-      <DaButton
+      <Button
         variant="plain"
         size="sm"
         className={clsx(
@@ -77,10 +77,10 @@ const HomologationUsedAPIsHeader = ({
         ) : (
           <TbSquare className="ml-1 mt-0.5" />
         )}
-      </DaButton>
+      </Button>
 
       {/* Clear selections button */}
-      <DaButton
+      <Button
         variant="plain"
         size="sm"
         onClick={() => setSelectedAPIs(new Set([]))}
@@ -93,7 +93,7 @@ const HomologationUsedAPIsHeader = ({
           Clear {selectedAPIs.size !== 0 ? selectedAPIs.size : ''} selection
           {selectedAPIs.size > 1 && 's'} <TbX className="mt-0.5 text-sm ml-1" />
         </span>
-      </DaButton>
+      </Button>
 
       {/* Help tooltip (show help about not supported APIs) */}
       <Tooltip

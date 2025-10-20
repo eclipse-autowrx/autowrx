@@ -8,7 +8,7 @@
 
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { Discussion } from '@/types/discussion.type'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import { TbDots, TbPencil, TbTrash } from 'react-icons/tb'
 import DaMenu from '../atoms/DaMenu'
 import DaPopup from '../atoms/DaPopup'
@@ -76,13 +76,13 @@ const DaDiscussionItemOptions = ({
       {self && self.id === data.created_by.id && (
         <DaMenu
           trigger={
-            <DaButton variant="plain" size="sm">
+            <Button variant="plain" size="sm">
               <TbDots />
-            </DaButton>
+            </Button>
           }
         >
           <div className="flex flex-col">
-            <DaButton
+            <Button
               onClick={props.triggerEdit}
               variant="plain"
               className="da-menu-item "
@@ -90,14 +90,14 @@ const DaDiscussionItemOptions = ({
               <div className="flex w-full items-center">
                 <TbPencil className="mr-2" /> Edit
               </div>
-            </DaButton>
-            <DaButton
+            </Button>
+            <Button
               onClick={() => setOpenDelete(true)}
               variant="destructive"
               className="text-sm! h-fit! px-2! mx-1!"
             >
               <TbTrash className="mr-2" /> Delete
-            </DaButton>
+            </Button>
           </div>
         </DaMenu>
       )}

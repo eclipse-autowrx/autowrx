@@ -8,7 +8,7 @@
 
 import { useState, useEffect } from 'react'
 import { TbX } from 'react-icons/tb'
-import { DaButton } from './DaButton'
+import { Button } from './button'
 import { DaText } from './DaText'
 import DaErrorDisplay from '../molecules/DaErrorDisplay'
 import { cn } from '@/lib/utils'

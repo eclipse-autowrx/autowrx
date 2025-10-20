@@ -10,7 +10,7 @@
 import React, { useState, useEffect } from 'react'
 import CustomDialog from '../flow/CustomDialog'
 import { useRequirementStore } from './hook/useRequirementStore'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { DaInput } from '@/components/atoms/DaInput'
 import { Requirement } from '@/types/model.type'
 import useAuthStore from '@/stores/authStore'
@@ -181,16 +181,16 @@ const RequirementCreateDialog: React.FC<Props> = ({
 
         {/* Buttons */}
         <div className="flex h-full items-end justify-end space-x-2 ">
-          <DaButton
+          <Button
             variant="outline"
             size="sm"
             onClick={() => onOpenChange(false)}
           >
             Cancel
-          </DaButton>
-          <DaButton variant="solid" size="sm" onClick={handleCreate}>
+          </Button>
+          <Button variant="default" size="sm" onClick={handleCreate}>
             Create
-          </DaButton>
+          </Button>
         </div>
       </div>
     </CustomDialog>

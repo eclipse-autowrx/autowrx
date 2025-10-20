@@ -12,7 +12,7 @@ import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
 import DaDashboardEditor from '../molecules/dashboard/DaDashboardEditor'
 import CodeEditor from '../molecules/CodeEditor'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb'
 import { BsStars } from 'react-icons/bs'
 import DaPopup from '../atoms/DaPopup'
@@ -115,7 +115,7 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
       {/* <div className="flex flex-col w-full items-center px-2 py-1 text-xs text-da-gray-medium rounded">
         {isAuthorized && (
           <div className="flex w-full">
-            <DaButton
+            <Button
               variant="outline-nocolor"
               size="sm"
               className="flex bg-white pl-3 mr-2"
@@ -127,15 +127,15 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
               ) : (
                 <TbChevronRight className="ml-1" />
               )}
-            </DaButton>
+            </Button>
 
             <DaPopup
               state={[isOpenGenAI, setIsOpenGenAI]}
               trigger={
-                <DaButton variant="outline-nocolor" size="sm">
+                <Button variant="outline-nocolor" size="sm">
                   <BsStars className="w-4 h-auto text-da-primary-500 mr-1" />
                   Dashboard ProtoPilot
-                </DaButton>
+                </Button>
               }
             >
               <div className="flex flex-col w-[1000px] h-[500px]">

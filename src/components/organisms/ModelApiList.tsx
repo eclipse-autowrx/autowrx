@@ -15,7 +15,7 @@ import { debounce } from '@/lib/utils'
 import useModelStore from '@/stores/modelStore'
 import { VehicleApi } from '@/types/model.type'
 import { shallow } from 'zustand/shallow'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import { TbPlus, TbSearch } from 'react-icons/tb'
 import DaPopup from '../atoms/DaPopup'
 import FormCreateWishlistApi from '../molecules/forms/FormCreateWishlistApi'
@@ -168,9 +168,9 @@ const ModelApiList = ({
           <DaPopup
             state={[isOpenPopup, setIsOpenPopup]}
             trigger={
-              <DaButton variant="plain" size="sm">
+              <Button variant="plain" size="sm">
                 <TbPlus className="mr-1 h-4 w-4" /> Add Wishlist Signal
-              </DaButton>
+              </Button>
             }
           >
             {model_id && model && (

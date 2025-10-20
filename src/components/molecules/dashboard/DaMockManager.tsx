@@ -9,7 +9,7 @@
 import { FC, useEffect, useState } from 'react'
 import useRuntimeStore from '@/stores/runtimeStore'
 import { shallow } from 'zustand/shallow'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { DaInput } from '@/components/atoms/DaInput'
 import { MdDeleteOutline } from "react-icons/md";
 
@@ -32,18 +32,18 @@ const DaMockManager: FC<iDaMockManager> = ({mockSignals, sendMockSignalsToRt, lo
 
         <div className='flex items-center mb-4 px-2'>
             <div className='mr-4 da-label-regular'>Mock Signal</div>
-            <DaButton size="sm" variant="text" onClick={() => {
+            <Button size="sm" variant="text" onClick={() => {
                 setEditSignal({signal: 'Signal name', value: '0'})
-            }}><div className="text-da-secondary-300">Add Signal</div></DaButton>
+            }}><div className="text-da-secondary-300">Add Signal</div></Button>
             <div className='grow'></div>
-            <DaButton size="sm" variant="solid" onClick={() => {
+            <Button size="sm" variant="default" onClick={() => {
                 if(!sendMockSignalsToRt) return
                 sendMockSignalsToRt(signals)
-            }}>Send to Runtime</DaButton>
-            <DaButton className='ml-2' size="sm" variant="solid" onClick={() => {
+            }}>Send to Runtime</Button>
+            <Button className='ml-2' size="sm" variant="default" onClick={() => {
                 if(!loadMockSignalsFromRt) return
                 loadMockSignalsFromRt()
-            }}>Load from Runtime</DaButton>
+            }}>Load from Runtime</Button>
         </div>
 
         { editSignal && <div className='flex mb-2'>
@@ -67,17 +67,17 @@ const DaMockManager: FC<iDaMockManager> = ({mockSignals, sendMockSignalsToRt, lo
                 className="flex w-20 ml-2"
                 inputClassName="text-sm text-da-gray-dark text-right"
             />
-            <DaButton className='ml-2' disabled={!editSignal.signal || !editSignal.value}
+            <Button className='ml-2' disabled={!editSignal.signal || !editSignal.value}
                 onClick={() => {
                     let tmpSignals = JSON.parse(JSON.stringify(signals))
                     tmpSignals.push(JSON.parse(JSON.stringify(editSignal)))
                     setSignals(tmpSignals)
                     setEditSignal(null)
-                }}>Add</DaButton>
-            <DaButton className='ml-2'
+                }}>Add</Button>
+            <Button className='ml-2'
                 onClick={() => {
                     setEditSignal(null)
-                }}>Cancel</DaButton>
+                }}>Cancel</Button>
         </div>
         }
 

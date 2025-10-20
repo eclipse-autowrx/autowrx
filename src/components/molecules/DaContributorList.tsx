@@ -8,7 +8,7 @@
 
 import { useMemo, useState } from 'react'
 import { TbUserPlus } from 'react-icons/tb'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import { cn } from '@/lib/utils'
 import { InvitedUser, User } from '@/types/user.type'
 import {
@@ -171,14 +171,14 @@ const DaContributorList = ({ className }: ContributorListProps) => {
             Member ({model.members?.length ?? 0})
           </DaTabItem>
         </div>
-        <DaButton
+        <Button
           size="sm"
           className="flex items-center text-da-primary-500"
           variant="outline-nocolor"
           onClick={() => setOpen(true)}
         >
           <TbUserPlus className="mr-2" /> Add user
-        </DaButton>
+        </Button>
       </div>
       <div className="flex h-full flex-col overflow-y-auto pr-2">
         {activeTab === 'contributors' ? (

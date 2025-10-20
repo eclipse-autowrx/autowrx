@@ -8,7 +8,7 @@
 
 import { Link, useMatch } from 'react-router-dom'
 import { DaImage } from '../atoms/DaImage'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import DaMenu from '../atoms/DaMenu'
 import DaNavUser from '../molecules/DaNavUser'
 import { HiMenu } from 'react-icons/hi'
@@ -112,19 +112,19 @@ const NavigationBar = ({}) => {
       {user && (
         <>
           <DaGlobalSearch>
-            <DaButton
+            <Button
               variant="outline-nocolor"
               className="w-[140px] flex items-center justify-start! border-gray-300! shadow-lg"
             >
               <TbZoom className="size-5 mr-2" />
               Search
-            </DaButton>
+            </Button>
           </DaGlobalSearch>{' '}
           {isAtInventoryPage && lastAccessedModel && (
             <Link to={`/model/${lastAccessedModel.id}`} className="ml-4">
-              <DaButton variant="outline-nocolor">
+              <Button variant="outline-nocolor">
                 <FaCar size={20} className="mr-2" /> {lastAccessedModel.name}
-              </DaButton>
+              </Button>
             </Link>
           )}
           <DaTooltip content="Inventory">
@@ -161,23 +161,23 @@ const NavigationBar = ({}) => {
           )}
           {/* {model ? (
             <Link to={`/model/${model.id}`}>
-              <DaButton variant="plain">
+              <Button variant="plain">
                 <div className="flex items-center">
                   <FaCar style={{ transform: 'scale(1.4)' }} className="mr-3" />
                   <div className="truncate max-w-[180px]">
                     {model.name || 'Select Model'}
                   </div>
                 </div>
-              </DaButton>
+              </Button>
             </Link>
           ) : (
             <Link to="/model">
-              <DaButton variant="plain">
+              <Button variant="plain">
                 <div className="flex items-center">
                   <FaCar style={{ transform: 'scale(1.5)' }} className="mr-3" />
                   Select Model
                 </div>
-              </DaButton>
+              </Button>
             </Link>
           )} */}
         </>

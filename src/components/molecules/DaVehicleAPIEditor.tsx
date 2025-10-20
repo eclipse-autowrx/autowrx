@@ -14,7 +14,7 @@ import { useEffect, useState } from 'react'
 import { VehicleApi } from '@/types/model.type'
 import { DaTextarea } from '../atoms/DaTextarea'
 import DaCheckbox from '../atoms/DaCheckbox'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import _ from 'lodash'
 import { TbLoader, TbPlus } from 'react-icons/tb'
 import { isAxiosError } from 'axios'
@@ -374,7 +374,7 @@ const DaVehicleAPIEditor = ({
         </div>
       </div>
 
-      <DaButton
+      <Button
         variant="dash"
         onClick={handleAddProperty}
         className="w-full mt-2 mb-2"
@@ -382,7 +382,7 @@ const DaVehicleAPIEditor = ({
       >
         <TbPlus className="size-4 mr-1" />
         Add Property
-      </DaButton>
+      </Button>
 
       {error && (
         <DaText variant="small" className="text-red-500 block mt-2">
@@ -391,7 +391,7 @@ const DaVehicleAPIEditor = ({
       )}
 
       <div className="flex ml-auto gap-2 mb-2">
-        <DaButton
+        <Button
           onClick={onCancel}
           size="sm"
           variant="outline-nocolor"
@@ -399,8 +399,8 @@ const DaVehicleAPIEditor = ({
           disabled={loading}
         >
           Cancel
-        </DaButton>
-        <DaButton
+        </Button>
+        <Button
           disabled={
             loading ||
             (_.isEqual(data, apiDetails) &&
@@ -415,7 +415,7 @@ const DaVehicleAPIEditor = ({
         >
           {loading && <TbLoader className="animate-spin w-4 h-4 mr-1" />}
           Update
-        </DaButton>
+        </Button>
       </div>
     </div>
   )

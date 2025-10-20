@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { DaInput } from '@/components/atoms/DaInput'
 import { DaText } from '@/components/atoms/DaText'
 import { FormEvent, useState, useEffect } from 'react'
@@ -128,7 +128,7 @@ const SubmitIssueForm = ({
       </div>
 
       <div className="px-4">
-        <DaButton
+        <Button
           disabled={loading}
           type="button"
           variant="gradient"
@@ -137,7 +137,7 @@ const SubmitIssueForm = ({
         >
           {loading && <TbLoader className="animate-spin text-lg mr-2" />}
           Submit
-        </DaButton>
+        </Button>
       </div>
     </form>
   )

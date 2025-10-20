@@ -10,7 +10,7 @@ import React, { useEffect, useState } from 'react'
 import { CustomRequirement } from '@/types/model.type'
 import DaRequirementItem from './DaRequirementItems'
 import * as lodash from 'lodash'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { cn } from '@/lib/utils'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
@@ -137,7 +137,7 @@ const DaCustomRequirements = ({
               : '',
           )}
         >
-          <DaButton
+          <Button
             size="sm"
             variant="dash"
             onClick={addCustomRequirement}
@@ -145,24 +145,24 @@ const DaCustomRequirements = ({
           >
             <TbPlus className="size-4 mr-1" />
             Add Requirement
-          </DaButton>
+          </Button>
           <div className="space-x-2">
-            {/* <DaButton
+            {/* <Button
               size="sm"
               variant="outline-nocolor"
               onClick={handleDiscardChanges}
               disabled={!hasChanges}
             >
               Cancel
-            </DaButton> */}
-            {/* <DaButton
+            </Button> */}
+            {/* <Button
               size="sm"
-              variant="solid"
+              variant="default"
               onClick={handleSaveRequirements}
               disabled={!hasChanges}
             >
               Save Requirements
-            </DaButton> */}
+            </Button> */}
           </div>
         </div>
       )}

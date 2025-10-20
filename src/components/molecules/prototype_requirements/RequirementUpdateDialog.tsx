@@ -9,7 +9,7 @@
 // src/molecules/prototype_requirements/RequirementUpdateDialog.tsx
 import React, { useState, useEffect } from 'react'
 import CustomDialog from '../flow/CustomDialog'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { DaInput } from '@/components/atoms/DaInput'
 import { DaTextarea } from '@/components/atoms/DaTextarea'
 import { Requirement } from '@/types/model.type'
@@ -186,16 +186,16 @@ const RequirementUpdateDialog: React.FC<Props> = ({
 
         {/* Actions */}
         <div className="flex h-full items-end justify-end space-x-2">
-          <DaButton
+          <Button
             variant="outline"
             size="sm"
             onClick={() => onOpenChange(false)}
           >
             Cancel
-          </DaButton>
-          <DaButton variant="solid" size="sm" onClick={handleSave}>
+          </Button>
+          <Button variant="default" size="sm" onClick={handleSave}>
             Save
-          </DaButton>
+          </Button>
         </div>
       </div>
     </CustomDialog>

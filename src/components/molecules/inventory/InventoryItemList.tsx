@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { DaAvatar } from '@/components/atoms/DaAvatar'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { DaInput } from '@/components/atoms/DaInput'
 import DaText from '@/components/atoms/DaText'
 import DaTooltip from '@/components/atoms/DaTooltip'
@@ -312,25 +312,25 @@ const InventoryItemList = ({ mode = 'view' }: InventoryItemListProps) => {
         {mode === 'view' && (
           <div className="flex gap-2 mt-2">
             {/* <Link to="/inventory/new"> */}
-            <DaButton className="" size="sm">
+            <Button className="" size="sm">
               <TbPlus className="h-4 w-4 mr-1" /> Add Inventory Item
-            </DaButton>
+            </Button>
             {/* </Link> */}
 
-            <DaButton
+            <Button
               className=" text-da-gray-dark!"
               size="sm"
               variant="outline-nocolor"
             >
               <TbFileImport className="h-4 w-4 mr-1" /> Import
-            </DaButton>
-            <DaButton
+            </Button>
+            <Button
               className=" text-da-gray-dark!"
               size="sm"
               variant="outline-nocolor"
             >
               <TbFileExport className="h-4 w-4 mr-1" /> Export
-            </DaButton>
+            </Button>
           </div>
         )}
         <p className="text-xs text-da-gray-dark mt-4 mb-1">
@@ -495,9 +495,9 @@ const Filter = ({ mode }: FilterProps) => {
           <div className="h-full flex flex-1 flex-col justify-between pt-3 pb-4 px-5">
             <p className="text-da-gray-darkest font-bold">{roleData.name}</p>
             <Link to="/inventory" className="w-full">
-              <DaButton variant="outline-nocolor" size="sm" className="w-full">
+              <Button variant="outline-nocolor" size="sm" className="w-full">
                 <TbChevronLeft className="mr-2" size={16} /> Select Role
-              </DaButton>
+              </Button>
             </Link>
           </div>
         </div>

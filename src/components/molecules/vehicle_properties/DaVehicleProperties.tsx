@@ -9,7 +9,7 @@
 import React, { useEffect, useState } from 'react'
 import DaText from '@/components/atoms/DaText'
 import { DaTableProperty } from '../DaTableProperty'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb'
 import { cn } from '@/lib/utils'
 import { Property } from '@/types/property.type'
@@ -70,22 +70,22 @@ const DaVehicleProperties = ({
           Vehicle Properties
         </DaText>
         <div>
-          <DaButton
+          <Button
             className="text-da-primary-500 mr-2"
             variant="outline-nocolor"
             size="sm"
             onClick={() => setIsOpenUpdateForm(true)}
           >
             Update property
-          </DaButton>
-          <DaButton
+          </Button>
+          <Button
             variant="outline-nocolor"
             size="sm"
             onClick={toggleVisibility}
           >
             <div className="pr-1 w-12">{isVisible ? 'Hide' : 'Show'}</div>
             {isVisible ? <TbChevronRight /> : <TbChevronDown />}
-          </DaButton>
+          </Button>
         </div>
       </div>
       {isVisible && (

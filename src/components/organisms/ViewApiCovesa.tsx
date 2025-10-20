@@ -32,7 +32,7 @@ import { isAxiosError } from 'axios'
 import { toast } from 'react-toastify'
 import DaPopup from '@/components/atoms/DaPopup'
 import DaFileUpload from '@/components/atoms/DaFileUpload'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 
@@ -217,7 +217,7 @@ const ViewApiCovesa = () => {
                   onFileUpload={(url) => setUrl(url)}
                   accept=".json"
                 />
-                <DaButton
+                <Button
                   size="sm"
                   className="w-full mt-4"
                   onClick={handleReplaceAPI}
@@ -225,7 +225,7 @@ const ViewApiCovesa = () => {
                 >
                   {loading && <TbLoader className="animate-spin w-4 h-4 mr-2" />}
                   Replace Vehicle API
-                </DaButton>
+                </Button>
               </div>
             </DaPopup>
           )}

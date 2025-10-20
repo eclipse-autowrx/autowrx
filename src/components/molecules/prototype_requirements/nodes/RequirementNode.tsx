@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
 } from '@/components/atoms/dropdown-menu'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import useCurrentModel from '@/hooks/useCurrentModel'
@@ -134,22 +134,22 @@ function RequirementNode({
           <div className="flex items-center space-x-1">
             {isAuthorized && (
               <>
-                <DaButton
+                <Button
                   size="sm"
                   variant="editor"
                   className="flex ml-1 h-6! p-2! text-xs!"
                   onClick={handleEdit}
                 >
                   <TbEdit className="size-3.5 mr-1" /> Edit
-                </DaButton>
-                <DaButton
+                </Button>
+                <Button
                   size="sm"
                   variant="destructive"
                   className="flex ml-1 h-6! p-2! text-xs!"
                   onClick={handleDelete}
                 >
                   <TbTrash className="size-3.5 mr-1" /> Delete
-                </DaButton>
+                </Button>
               </>
             )}
 

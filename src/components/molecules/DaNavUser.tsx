@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { useState, useEffect } from 'react'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import DaPopup from '../atoms/DaPopup'
 import FormSignIn from './forms/FormSignIn'
 import FormRegister from './forms/FormRegister'
@@ -35,14 +35,14 @@ const DaNavUser = () => {
       {user ? (
         <DaUserMenu user={user} />
       ) : (
-        <DaButton
+        <Button
           variant="outline-nocolor"
           onClick={() => {
             setOpenLoginDialog(true) // Open the login dialog
           }}
         >
           Sign In
-        </DaButton>
+        </Button>
       )}
 
       <DaPopup

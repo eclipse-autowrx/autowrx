@@ -8,7 +8,7 @@
 
 import { FC, useState } from 'react'
 import { TbStarFilled } from 'react-icons/tb'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 
 interface Review {
   id: string
@@ -88,9 +88,9 @@ const DaWidgetReview: React.FC<WidgetReviewProps> = ({ reviews }) => {
         </div>
       ))}
       {visibleReviewsCount < reviews.length && (
-        <DaButton variant="plain" onClick={handleSeeMore}>
+        <Button variant="plain" onClick={handleSeeMore}>
           See all reviews
-        </DaButton>
+        </Button>
       )}
     </div>
   )

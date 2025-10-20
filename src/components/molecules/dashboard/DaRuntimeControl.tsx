@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { FC, useEffect, useRef, useState } from 'react'
 import { FaAnglesLeft, FaAnglesRight } from 'react-icons/fa6'
 import DaRuntimeConnector from '../DaRuntimeConnector'
@@ -279,7 +279,7 @@ const DaRuntimeControl: FC = ({ }) => {
               setTmpCustomKitServer(e.target.value)
             }}
           />
-          <DaButton
+          <Button
             className="ml-2 w-20"
             onClick={() => {
               setCustomKitServer(tmpCustomKitServer)
@@ -287,15 +287,15 @@ const DaRuntimeControl: FC = ({ }) => {
             }}
           >
             Set
-          </DaButton>
-          <DaButton
+          </Button>
+          <Button
             className="ml-2 w-20"
             onClick={() => {
               setIsShowEditKitServer(false)
             }}
           >
             Cancel
-          </DaButton>
+          </Button>
         </div>
       </>}
       <div className={`px-1 flex ${!isExpand && 'hidden'}`}>
@@ -336,7 +336,7 @@ const DaRuntimeControl: FC = ({ }) => {
         </>}
 
         <div className="pl-2">
-          <DaButton
+          <Button
             variant="plain"
             size="sm"
             onClick={() => {
@@ -350,7 +350,7 @@ const DaRuntimeControl: FC = ({ }) => {
             {/* <div className="text-da-white hover:underline hover:text-da-gray-darkest font-semibold text-yellow-300">
               Config RT
             </div> */}
-          </DaButton>
+          </Button>
         </div>
         <div className="grow" />
 
@@ -454,7 +454,7 @@ const DaRuntimeControl: FC = ({ }) => {
         )}
         <div className="grow"></div>
         {/* {isExpand && (
-          <DaButton
+          <Button
             size="sm"
             variant="outline"
             className="ml-4 mt-1 text-white! hover:text-da-gray-medium! border-da-white! hover:border-da-gray-medium!"
@@ -470,16 +470,16 @@ const DaRuntimeControl: FC = ({ }) => {
           >
             Deploy
             <BiSend className="ml-1" size={20} />
-          </DaButton>
+          </Button>
         )} */}
-        {/* { isExpand && <DaButton size='sm' variant="outline" className='mt-1 ml-2 text-white! hover:text-da-gray-medium! border-da-white! hover:border-da-gray-medium!'
+        {/* { isExpand && <Button size='sm' variant="outline" className='mt-1 ml-2 text-white! hover:text-da-gray-medium! border-da-white! hover:border-da-gray-medium!'
           onClick={() => { setShowStaging(true) }}>
           Staging
-        </DaButton>
+        </Button>
         } */}
 
         {isExpand && (
-          <DaButton
+          <Button
             size="sm"
             variant="plain"
             dataId='btn-clear-log'
@@ -489,7 +489,7 @@ const DaRuntimeControl: FC = ({ }) => {
             }}
           >
             Clear log
-          </DaButton>
+          </Button>
         )}
       </div>
 
@@ -551,7 +551,7 @@ const DaRuntimeControl: FC = ({ }) => {
                           }
                         >
                           <div className="flex flex-col">
-                            <DaButton
+                            <Button
                               onClick={() => {
                                 if (runTimeRef.current) {
                                   runTimeRef.current?.listPythonLibs()
@@ -566,9 +566,9 @@ const DaRuntimeControl: FC = ({ }) => {
                               <div className="flex w-full items-center">
                                 List All Python Libraries
                               </div>
-                            </DaButton>
+                            </Button>
 
-                            <DaButton
+                            <Button
                               onClick={() => {
                                 setRequestContent('libname')
                                 setRequestMode('pip-install')
@@ -579,9 +579,9 @@ const DaRuntimeControl: FC = ({ }) => {
                               <div className="flex w-full items-center">
                                 Install New Python Library: pip install libname
                               </div>
-                            </DaButton>
+                            </Button>
 
-                            <DaButton
+                            <Button
                               onClick={async () => {
                                 if(!model) return
                                 const vssJson = await getComputedAPIs(model.id)
@@ -598,9 +598,9 @@ const DaRuntimeControl: FC = ({ }) => {
                               <div className="flex w-full items-center">
                                 Rebuild Vehicle Model base on current Vehicle API
                               </div>
-                            </DaButton>
+                            </Button>
 
-                            <DaButton
+                            <Button
                               onClick={() => {
                                 if (runTimeRef.current) {
                                   runTimeRef.current?.revertToDefaultVehicleModel()
@@ -615,7 +615,7 @@ const DaRuntimeControl: FC = ({ }) => {
                               <div className="flex w-full items-center">
                                 Revert to default Vehicle Model
                               </div>
-                            </DaButton>
+                            </Button>
                           </div>
                         </DaMenu>
                       </div>
@@ -702,7 +702,7 @@ const DaRuntimeControl: FC = ({ }) => {
       </div>
 
       <div className="flex">
-        <DaButton
+        <Button
           variant="plain"
           data-id="btn-expand-runtime-control"
           onClick={() => {
@@ -715,7 +715,7 @@ const DaRuntimeControl: FC = ({ }) => {
           ) : (
             <FaAnglesLeft className="w-4 h-4 text-da-white group-hover:text-da-gray-dark" />
           )}
-        </DaButton>
+        </Button>
 
         <div
           className="ml-4 w-10 h-full flex items-center justify-center cursor-pointer hover:bg-slate-400"

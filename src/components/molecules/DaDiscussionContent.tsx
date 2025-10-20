@@ -11,7 +11,7 @@ import { DaAvatar } from '../atoms/DaAvatar'
 import { Discussion } from '@/types/discussion.type'
 import dayjs from 'dayjs'
 import DaDiscussionItemOptions from './DaDiscussionItemOptions'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import { TbArrowBack, TbChevronDown, TbChevronUp } from 'react-icons/tb'
 import FormCreateDiscussion from './forms/FormCreateDiscussion'
 import useDiscussionIdentifier from '@/stores/useDiscussionIdentifer'
@@ -92,7 +92,7 @@ const DaDiscussionContent = ({
               Reply ({data.replies.length})
             </div>
             {collapsed && (
-              <DaButton
+              <Button
                 variant="plain"
                 size="sm"
                 className="flex items-center px-2 py-1 da-label-small rounded"
@@ -102,10 +102,10 @@ const DaDiscussionContent = ({
               >
                 Expand
                 <TbChevronDown size={18} className="ml-0.5" />
-              </DaButton>
+              </Button>
             )}
             {!collapsed && (
-              <DaButton
+              <Button
                 variant="plain"
                 size="sm"
                 className="flex items-center px-2 py-1 da-label-small rounded"
@@ -115,13 +115,13 @@ const DaDiscussionContent = ({
               >
                 Collapse
                 <TbChevronUp size={18} className="ml-0.5" />
-              </DaButton>
+              </Button>
             )}
           </div>
         )}
 
         {!data.parent && (
-          <DaButton
+          <Button
             variant="plain"
             size="sm"
             className="flex items-center px-2 mb-1 da-label-small rounded"
@@ -129,7 +129,7 @@ const DaDiscussionContent = ({
           >
             <TbArrowBack size={18} className="mr-1" />
             Reply
-          </DaButton>
+          </Button>
         )}
       </div>
     </div>

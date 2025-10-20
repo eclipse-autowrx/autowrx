@@ -8,7 +8,7 @@
 
 import DaText from '@/components/atoms/DaText'
 import { useState } from 'react'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import DaEditSystemStaging from './DaEditSystemStaging'
 
 import {
@@ -402,7 +402,7 @@ const DaStaging = ({ isWizard }: DaStagingProps) => {
                 {/* <DaText variant="small" className="mt-1">
                   {system.version}
                 </DaText> */}
-                {/* <DaButton
+                {/* <Button
                   className="my-2 w-[100px]"
                   onClick={() => {
                     // setMode(MODE_EDIT_DEFINE)
@@ -410,7 +410,7 @@ const DaStaging = ({ isWizard }: DaStagingProps) => {
                   size="sm"
                 >
                   Edit
-                </DaButton> */}
+                </Button> */}
               </div>
 
               {targets &&
@@ -455,7 +455,7 @@ const DaStaging = ({ isWizard }: DaStagingProps) => {
                       <DaText variant="small" className="mt-1">
                         {target.version}
                       </DaText>
-                      <DaButton
+                      <Button
                         variant="outline-nocolor"
                         className="my-1 w-[100px]"
                         onClick={() => {
@@ -465,7 +465,7 @@ const DaStaging = ({ isWizard }: DaStagingProps) => {
                         size="sm"
                       >
                         Update
-                      </DaButton>
+                      </Button>
                     </div>
                   </div>
                 ))}

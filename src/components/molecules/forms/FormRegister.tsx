@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { DaInput } from '@/components/atoms/DaInput'
 import { DaText } from '@/components/atoms/DaText'
 import { registerService } from '@/services/auth.service'
@@ -142,7 +142,7 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
       )}
 
       {/* Action */}
-      <DaButton
+      <Button
         disabled={loading}
         type="submit"
         variant="gradient"
@@ -150,20 +150,20 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
       >
         {loading && <TbLoader className="animate-spin text-lg mr-2" />}
         Register
-      </DaButton>
+      </Button>
       {/* More */}
       <div className="mt-4 flex items-center">
         <DaText className="text-da-gray-medium">
           Already have an account?
         </DaText>
-        <DaButton
+        <Button
           type="button"
           onClick={() => setAuthType('sign-in')}
           variant="text"
           className="text-da-primary-500"
         >
           Sign in
-        </DaButton>
+        </Button>
       </div>
     </form>
   )

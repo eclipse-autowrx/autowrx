@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { DaInput } from '@/components/atoms/DaInput'
 import DaText from '@/components/atoms/DaText'
 import DaTooltip from '@/components/atoms/DaTooltip'
@@ -195,7 +195,7 @@ const ReferenceFields = ({
           inputClassName="text-sm   flex-1 text-da-gray-darkest"
         />
         <DaTooltip content="Check reference">
-          <DaButton
+          <Button
             onClick={() => checkReference(link)}
             type="button"
             variant="outline-nocolor"
@@ -208,7 +208,7 @@ const ReferenceFields = ({
               <TbCheck className="w-4 h-4 mr-1" />
             )}{' '}
             Check
-          </DaButton>
+          </Button>
         </DaTooltip>
       </div>
 
@@ -226,14 +226,14 @@ const ReferenceFields = ({
                 </DaText>
               </DaTooltip>
             </div>
-            <DaButton
+            <Button
               type="button"
               onClick={() => setReferenceData(null)}
               variant="plain"
               className="p-3!"
             >
               <TbX className="w-5 h-5" />
-            </DaButton>
+            </Button>
           </div>
 
           <div className="px-3 pb-3 pt-4">

@@ -20,7 +20,7 @@ import {
   TbEdit,
   TbTrash,
 } from 'react-icons/tb'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 const MODE_RUN = 'run'
 const MODE_EDIT = 'edit'
 import { useSystemUI } from '@/hooks/useSystemUI'
@@ -182,7 +182,7 @@ const DaDashboard = () => {
         {isAuthorized && (
           <div className="ml-2 flex w-full h-fit items-center px-1 justify-end">
             {mode == MODE_RUN && (
-              <DaButton
+              <Button
                 variant="editor"
                 size="sm"
                 dataId="dashboard-edit-button"
@@ -190,13 +190,13 @@ const DaDashboard = () => {
               >
                 <TbEdit className="size-4 mr-1" />
                 Edit
-              </DaButton>
+              </Button>
             )}
 
             {mode == MODE_EDIT && (
               <div className="flex flex-col w-full h-full">
                 <div className="flex w-full h-fit justify-between">
-                  <DaButton
+                  <Button
                     size="sm"
                     variant="destructive"
                     className="w-fit flex text-red-500!"
@@ -205,9 +205,9 @@ const DaDashboard = () => {
                   >
                     <TbTrash className="size-4 mr-1" />
                     Delete all widgets
-                  </DaButton>
+                  </Button>
                   <div className="flex w-fit ml-auto items-center space-x-2 mr-2">
-                    <DaButton
+                    <Button
                       size="sm"
                       onClick={handleCancel}
                       variant="outline-nocolor"
@@ -215,23 +215,23 @@ const DaDashboard = () => {
                       className="w-16"
                     >
                       Cancel
-                    </DaButton>
-                    <DaButton
+                    </Button>
+                    <Button
                       size="sm"
                       onClick={handleSave}
                       dataId="dashboard-save-button"
-                      variant="solid"
+                      variant="default"
                       className="w-16"
                     >
                       Save
-                    </DaButton>
+                    </Button>
                   </div>
                 </div>
               </div>
             )}
           </div>
         )}
-        <DaButton
+        <Button
           variant="editor"
           size="sm"
           dataId="dashboard-fullscreen-button"
@@ -246,7 +246,7 @@ const DaDashboard = () => {
           ) : (
             <TbArrowsMaximize className="size-4" />
           )}
-        </DaButton>
+        </Button>
       </div>
 
       <div

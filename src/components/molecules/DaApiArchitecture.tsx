@@ -8,7 +8,7 @@
 
 import { ImageAreaEdit, ImageAreaPreview } from '@digital-auto/image-area-lib'
 import axios, { AxiosError } from 'axios'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import { useEffect, useState } from 'react'
 import { TbArrowLeft, TbEdit } from 'react-icons/tb'
 import { CircularProgress } from '@mui/material'
@@ -336,26 +336,26 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
             className={`flex w-full justify-end py-2 ${isAuthorized ? 'visible' : 'hidden'}`}
           >
             {!isEditMode ? (
-              <DaButton
+              <Button
                 variant="editor"
                 size="sm"
                 onClick={() => setIsEditMode(true)}
               >
                 <TbEdit className="size-4 mr-1" />
                 Edit
-              </DaButton>
+              </Button>
             ) : (
               <div className="flex items-center space-x-2 mr-2">
-                <DaButton
+                <Button
                   variant="outline-nocolor"
                   size="sm"
                   className="w-16"
                   onClick={() => setIsEditMode(false)}
                 >
                   Cancel
-                </DaButton>
-                <DaButton
-                  variant="solid"
+                </Button>
+                <Button
+                  variant="default"
                   size="sm"
                   className="w-16"
                   onClick={() => {
@@ -363,7 +363,7 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
                   }}
                 >
                   Save
-                </DaButton>
+                </Button>
               </div>
             )}
           </div>

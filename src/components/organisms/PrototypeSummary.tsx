@@ -11,7 +11,7 @@ import { DaImage } from '../atoms/DaImage'
 import { DaTag } from '../atoms/DaTag'
 import { DaTableProperty } from '../molecules/DaTableProperty'
 import { DaAvatar } from '../atoms/DaAvatar'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import {
   TbArrowRight,
   TbArrowUpRight,
@@ -46,10 +46,10 @@ const PrototypeSummary = ({ prototype }: PrototypeSummaryProps) => {
           <Link
             to={`/model/${prototype.model_id}/library/prototype/${prototype.id}/view`}
           >
-            <DaButton variant="solid" size="sm">
+            <Button variant="default" size="sm">
               Open
               <TbArrowRight className="ml-2 h-5 w-5" />
-            </DaButton>
+            </Button>
           </Link>
         </div>
         <DaUserProfile

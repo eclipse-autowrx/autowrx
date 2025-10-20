@@ -12,7 +12,7 @@ import { useAssets } from '@/hooks/useAssets'
 import { IoClose } from "react-icons/io5";
 import { TbTrash, TbShare } from "react-icons/tb"
 import { DaInput } from "../atoms/DaInput";
-import { DaButton } from "../atoms/DaButton";
+import { Button } from "../atoms/button";
 import ShareAssetPanel from "../molecules/ShareAssetPanel";
 import DaPopup from "../atoms/DaPopup";
 
@@ -69,7 +69,7 @@ const RuntimeAssetManager = ({ onClose, onCancel }: iPropRuntimeAssetManager) =>
                         className="flex w-[280px] mx-2"
                         inputClassName="text-sm"
                     />
-                    <DaButton disabled={newRtName.trim().length <= 0} className="" onClick={async () => {
+                    <Button disabled={newRtName.trim().length <= 0} className="" onClick={async () => {
                         try {
                             await createAsset.mutateAsync({
                                 name: newRtName,
@@ -82,7 +82,7 @@ const RuntimeAssetManager = ({ onClose, onCancel }: iPropRuntimeAssetManager) =>
 
                         }
 
-                    }}>Add</DaButton>
+                    }}>Add</Button>
                 </div>
             </div>
 

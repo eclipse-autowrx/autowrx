@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { DaInput } from '@/components/atoms/DaInput'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import { DaText } from '@/components/atoms/DaText'
@@ -215,7 +215,7 @@ const FormCreateModel = () => {
         </DaText>
       )}
       {/* Action */}
-      <DaButton
+      <Button
         disabled={loading || uploading}
         type="submit"
         variant="gradient"
@@ -224,7 +224,7 @@ const FormCreateModel = () => {
       >
         {loading && <TbLoader className="mr-2 animate-spin text-lg" />}
         Create Model
-      </DaButton>
+      </Button>
     </form>
   )
 }

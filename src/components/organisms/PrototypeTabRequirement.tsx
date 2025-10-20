@@ -19,7 +19,7 @@ import {
 } from 'react-icons/tb'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import { updatePrototypeService } from '@/services/prototype.service'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '../atoms/button'
 import { cn } from '@/lib/utils'
 import { useSystemUI } from '@/hooks/useSystemUI'
 import DaText from '../atoms/DaText'
@@ -1346,7 +1346,7 @@ const PrototypeTabRequirement = () => {
           <div className="grow" />
           {isAuthorized && (
             <div className="flex items-center space-x-1">
-              <DaButton
+              <Button
                 size="sm"
                 variant="editor"
                 onClick={() => scanRequirements()}
@@ -1355,16 +1355,16 @@ const PrototypeTabRequirement = () => {
               >
                 <TbTextScan2 className="size-4 mr-1" />{' '}
                 {isScanning ? 'Is scanning' : 'Run new scan'}
-              </DaButton>
-              <DaButton
+              </Button>
+              <Button
                 size="sm"
                 variant="editor"
                 onClick={() => setShowCreateRequirementDialog(true)}
                 dataId="btn-new-requirement"
               >
                 <TbPlus className="size-4 mr-1" /> New Requirement
-              </DaButton>
-              <DaButton
+              </Button>
+              <Button
                 onClick={() => setIsEditing(!isEditing)}
                 className="justify-start!"
                 variant="editor"
@@ -1377,10 +1377,10 @@ const PrototypeTabRequirement = () => {
                   <TbTable className="w-4 h-4 mr-1" />
                 )}
                 {isEditing ? 'Explorer View' : 'Table View'}
-              </DaButton>
+              </Button>
             </div>
           )}
-          <DaButton
+          <Button
             onClick={() =>
               setShowPrototypeRequirementFullScreen(
                 !showPrototypeRequirementFullScreen,
@@ -1395,7 +1395,7 @@ const PrototypeTabRequirement = () => {
             ) : (
               <TbArrowsMaximize className="size-4" />
             )}
-          </DaButton>
+          </Button>
         </div>
 
         <div className="fixed bottom-2 right-2 z-1000 bg-white/95 rounded-2xl shadow-lg px-1 py-1 flex space-x-4 items-center">

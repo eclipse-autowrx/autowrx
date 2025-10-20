@@ -9,7 +9,7 @@
 import { useState } from 'react'
 import { DaText } from '@/components/atoms/DaText'
 import DaImportFile from '@/components/atoms/DaImportFile'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { DaImage } from '@/components/atoms/DaImage'
 import { DaInput } from '@/components/atoms/DaInput'
 import DaLoading from '@/components/atoms/DaLoading'
@@ -70,14 +70,14 @@ const DaVisibilityControl: React.FC<VisibilityControlProps> = ({
           {visibility}
         </DaText>
       </DaText>
-      <DaButton
+      <Button
         onClick={toggleVisibility}
         variant="outline-nocolor"
         size="sm"
         className="text-da-primary-500"
       >
         Change to {visibility === 'public' ? 'private' : 'public'}
-      </DaButton>
+      </Button>
     </div>
   )
 }
@@ -109,40 +109,40 @@ const DaStateControl: React.FC<{
       </DaText>
       <DaMenu
         trigger={
-          <DaButton
+          <Button
             variant="outline-nocolor"
             size="sm"
             className="text-da-primary-500"
           >
             Change state
-          </DaButton>
+          </Button>
         }
       >
         <div className="flex flex-col px-1">
-          <DaButton
+          <Button
             onClick={handleUpdate('draft')}
             className="justify-start!"
             variant="plain"
             size="sm"
           >
             Draft
-          </DaButton>
-          <DaButton
+          </Button>
+          <Button
             onClick={handleUpdate('released')}
             className="justify-start!"
             variant="plain"
             size="sm"
           >
             <span className="text-da-accent-500">Released</span>
-          </DaButton>
-          <DaButton
+          </Button>
+          <Button
             onClick={handleUpdate('blocked')}
             className="justify-start!"
             variant="destructive"
             size="sm"
           >
             <span className="text-destructive">Blocked</span>
-          </DaButton>
+          </Button>
         </div>
       </DaMenu>
     </div>
@@ -254,7 +254,7 @@ const PageModelDetail = () => {
         {isAuthorized && (
           <div className="flex">
             {!isEditingName ? (
-              <DaButton
+              <Button
                 variant="editor"
                 size="sm"
                 className="justify-start!"
@@ -265,30 +265,30 @@ const PageModelDetail = () => {
               >
                 <TbEdit className="w-4 h-4 mr-1" />
                 Edit
-              </DaButton>
+              </Button>
             ) : (
               <div className="flex items-center space-x-2 mr-2">
-                <DaButton
+                <Button
                   variant="outline-nocolor"
                   size="sm"
                   className="w-16"
                   onClick={() => setIsEditingName(false)}
                 >
                   Cancel
-                </DaButton>
-                <DaButton
-                  variant="solid"
+                </Button>
+                <Button
+                  variant="default"
                   size="sm"
                   className="w-16"
                   onClick={handleNameSave}
                 >
                   Save
-                </DaButton>
+                </Button>
               </div>
             )}
             <DaMenu
               trigger={
-                <DaButton
+                <Button
                   variant="editor"
                   size="sm"
                   className={cn(
@@ -319,11 +319,11 @@ const PageModelDetail = () => {
                       Downloading Signal Data...
                     </div>
                   )}
-                </DaButton>
+                </Button>
               }
             >
               <div className="flex flex-col px-1">
-                <DaButton
+                <Button
                   variant="plain"
                   size="sm"
                   className="justify-start!"
@@ -340,8 +340,8 @@ const PageModelDetail = () => {
                 >
                   <TbFileExport className="w-4 h-4 mr-2" />
                   Export Model
-                </DaButton>
-                <DaButton
+                </Button>
+                <Button
                   variant="plain"
                   size="sm"
                   className="justify-start!"
@@ -364,8 +364,8 @@ const PageModelDetail = () => {
                 >
                   <TbDownload className="w-4 h-4 mr-2" />
                   Download Vehicle API JSON file
-                </DaButton>
-                <DaButton
+                </Button>
+                <Button
                   variant="destructive"
                   size="sm"
                   className="justify-start!"
@@ -373,7 +373,7 @@ const PageModelDetail = () => {
                 >
                   <TbTrashX className="w-4 h-4 mr-2" />
                   Delete Model
-                </DaButton>
+                </Button>
               </div>
             </DaMenu>
             <DaConfirmPopup
@@ -403,7 +403,7 @@ const PageModelDetail = () => {
                   onFileChange={handleAvatarChange}
                   accept=".png, .jpg, .jpeg"
                 >
-                  <DaButton
+                  <Button
                     variant="outline-nocolor"
                     className="absolute bottom-2 right-2"
                     size="sm"
@@ -419,7 +419,7 @@ const PageModelDetail = () => {
                         Update Image
                       </div>
                     )}
-                  </DaButton>
+                  </Button>
                 </DaImportFile>
               )}
             </div>

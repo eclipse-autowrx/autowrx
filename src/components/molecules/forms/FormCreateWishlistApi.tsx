@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { DaInput } from '@/components/atoms/DaInput'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import { DaText } from '@/components/atoms/DaText'
@@ -442,7 +442,7 @@ const FormCreateWishlistApi = ({
 
       {/* Action Buttons */}
       <div className="ml-auto mt-auto flex space-x-2">
-        <DaButton
+        <Button
           onClick={onClose}
           disabled={loading}
           type="button"
@@ -451,8 +451,8 @@ const FormCreateWishlistApi = ({
           variant="outline-nocolor"
         >
           Cancel
-        </DaButton>
-        <DaButton
+        </Button>
+        <Button
           disabled={isButtonDisabled}
           type="submit"
           size="sm"
@@ -460,7 +460,7 @@ const FormCreateWishlistApi = ({
         >
           {loading && <TbLoader className="mr-1 h-4 w-4 animate-spin" />}
           Create
-        </DaButton>
+        </Button>
       </div>
     </form>
   )

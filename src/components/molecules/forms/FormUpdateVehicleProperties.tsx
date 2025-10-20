@@ -8,7 +8,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import DaCustomPropertyItem from '../vehicle_properties/DaCustomPropertyItem'
 import { CustomPropertyType } from '@/types/property.type'
 import DaText from '@/components/atoms/DaText'
@@ -149,7 +149,7 @@ const FormUpdateVehicleProperties = ({
         )}
       </div>
 
-      <DaButton
+      <Button
         variant="dash"
         onClick={addCustomProperty}
         className="w-full mt-2"
@@ -157,27 +157,27 @@ const FormUpdateVehicleProperties = ({
       >
         <TbPlus className="size-4 mr-1" />
         Add Property
-      </DaButton>
+      </Button>
 
       <div className="flex mt-6 w-full items-center justify-between">
         <div className="flex w-full justify-end items-center space-x-2">
-          <DaButton
+          <Button
             variant="outline-nocolor"
             onClick={handleCancelChanges}
             disabled={!hasChanges} // Disable if there are no changes to discard
             size="sm"
           >
             Cancel
-          </DaButton>
-          <DaButton
-            variant="solid"
+          </Button>
+          <Button
+            variant="default"
             onClick={handleSaveProperties}
             disabled={!hasChanges} // Disable the save button when no changes are detected
             className="w-20"
             size="sm"
           >
             Save
-          </DaButton>
+          </Button>
         </div>
       </div>
     </div>
