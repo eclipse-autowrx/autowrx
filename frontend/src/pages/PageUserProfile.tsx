@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useEffect, useState } from 'react'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { DaInput } from '@/components/atoms/DaInput'
 import { DaText } from '@/components/atoms/DaText'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
@@ -109,26 +109,26 @@ const PageUserProfile = () => {
                     )}
                     {isEditing ? (
                       <div>
-                        <DaButton
-                          variant="outline-nocolor"
+                        <Button
+                          variant="outline"
                           size="sm"
                           className="mr-2"
                           onClick={() => setIsEditing(false)}
                         >
                           Cancel
-                        </DaButton>
-                        <DaButton size="sm" onClick={handleUpdateUser}>
+                        </Button>
+                        <Button size="sm" onClick={handleUpdateUser}>
                           Save
-                        </DaButton>
+                        </Button>
                       </div>
                     ) : (
-                      <DaButton
+                      <Button
                         size="sm"
-                        variant="outline-nocolor"
+                        variant="outline"
                         onClick={() => setIsEditing(true)}
                       >
                         Change name
-                      </DaButton>
+                      </Button>
                     )}
                   </div>
 
@@ -162,13 +162,13 @@ const PageUserProfile = () => {
                     <DaPopup
                       state={[isOpenPopup, setIsOpenPopup]}
                       trigger={
-                        <DaButton
+                        <Button
                           size="sm"
-                          variant="outline-nocolor"
+                          variant="outline"
                           className=""
                         >
                           Change password
-                        </DaButton>
+                        </Button>
                       }
                     >
                       <div className="p-4">

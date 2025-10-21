@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { getWithExpiry, setWithExpiry } from '@/lib/storage.ts'
 import { useEffect } from 'react'
 import { TbExclamationCircle } from 'react-icons/tb'
@@ -42,13 +42,13 @@ const ErrorFallback = ({ error }: ErrorFallbackProps) => {
             {error?.message}
           </p>
         )}
-        <DaButton
+        <Button
           size="sm"
           className="mt-3"
           onClick={() => (window.location.href = window.location.href)}
         >
           Reload page
-        </DaButton>
+        </Button>
       </div>
     </div>
   )

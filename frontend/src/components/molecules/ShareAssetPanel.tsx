@@ -9,7 +9,7 @@
 import DaText from "@/components/atoms/DaText"
 import { useEffect, useState } from "react"
 import { useAssets } from '@/hooks/useAssets'
-import { DaButton } from "@/components/atoms/DaButton"
+import { Button } from "@/components/atoms/button"
 import AccessInvitation from "@/components/organisms/AccessInvitation.tsx"
 import { InvitedUser } from "@/types/user.type"
 import UserList from "@/components/molecules/UserList"
@@ -71,14 +71,14 @@ const ShareAssetPanel = ({ asset, onDone, onCancel }: iPropShareAssetPanel) => {
         
         <div className="mt-2 w-full min-h-[200px] overflow-auto">
             <DaText className="my-2 flex items-center justity-between">
-                <DaButton
+                <Button
                     size="sm"
                     className="flex items-center text-primary"
-                    variant="outline-nocolor"
+                    variant="outline"
                     onClick={() => setShowInviteDialog(true)}
                 >
                     <TbUserPlus className="mr-2" /> Add user
-                </DaButton>
+                </Button>
             </DaText>
             <div className="min-h-[200px] max-h-[400px] overflow-auto">
                 { (invitedUsers && invitedUsers.length) && <UserList users={invitedUsers as User[]} 

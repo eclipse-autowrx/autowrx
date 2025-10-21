@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { DaInput } from '@/components/atoms/DaInput'
 import { DaText } from '@/components/atoms/DaText'
 import { isAxiosError } from 'axios'
@@ -112,15 +112,14 @@ const FormUpdatePassword = ({}) => {
             </DaText>
           )}
           {/* Action */}
-          <DaButton
+          <Button
             disabled={loading}
             type="submit"
-            variant="solid"
             className="w-full mt-6"
           >
             {loading && <TbLoader className="animate-spin text-lg mr-2" />}
             Change Password
-          </DaButton>
+          </Button>
         </>
       )}
     </form>

@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { useNavigate } from 'react-router-dom'
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import DaText from '@/components/atoms/DaText'
 import { useEffect } from 'react'
 
@@ -41,20 +41,20 @@ const PageNotFound = () => {
         </div>
         
         <div className="space-y-4">
-          <DaButton 
+          <Button
             onClick={handleGoHome}
             className="w-full"
           >
             Go Back Home
-          </DaButton>
-          
-          <DaButton
-            variant="outline-nocolor"
+          </Button>
+
+          <Button
+            variant="outline"
             onClick={() => window.history.back()}
             className="w-full"
           >
             Go Back
-          </DaButton>
+          </Button>
         </div>
       </div>
     </div>

@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { DaInput } from '@/components/atoms/DaInput'
 import { DaText } from '@/components/atoms/DaText'
 import { loginService } from '@/services/auth.service'
@@ -97,13 +97,13 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
             iconSize={18}
           />
           <div className="flex items-center justify-end mt-1">
-            <DaButton
+            <Button
               type="button"
               variant="link"
               onClick={() => setAuthType('forgot')}
             >
               Forget Password
-            </DaButton>
+            </Button>
           </div>
 
           {error && (
@@ -112,28 +112,27 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
             </DaText>
           )}
 
-          <DaButton
+          <Button
             disabled={loading || ssoLoading}
             type="submit"
-            variant="gradient"
             className="w-full mt-2"
           >
             {loading && <TbLoader className="animate-spin text-lg mr-2" />}
             Sign in
-          </DaButton>
+          </Button>
           {!config.strictAuth && (
             <div className="mt-4 flex w-full justify-center items-center">
               <DaText className="text-muted-foreground">
                 Don't have an account?
               </DaText>
-              <DaButton
+              <Button
                 type="button"
                 onClick={() => setAuthType('register')}
-                variant="text"
+                variant="ghost"
                 className="text-primary text-sm! px-1.5!"
               >
                 Register
-              </DaButton>
+              </Button>
             </div>
           )}
         </div>
@@ -165,14 +164,14 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
           }}
         >
           {/* <SSOHandler setSSOLoading={setSSOLoading}>
-            <DaButton
-              variant="outline-nocolor"
+            <Button
+              variant="outline"
               className="w-full"
               disabled={loading || ssoLoading}
             >
               {ssoLoading && <TbLoader className="animate-spin text-lg mr-2" />}
               BOSCH SSO
-            </DaButton>
+            </Button>
           </SSOHandler> */}
         </div>
       )}

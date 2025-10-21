@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { getWithExpiry, setWithExpiry } from '@/lib/storage'
 import { cn } from '@/lib/utils'
 import { useEffect } from 'react'
@@ -28,13 +28,13 @@ const DaErrorDisplay = ({ error, className }: DaErrorDisplay) => {
           {error}
         </p>
 
-        <DaButton
+        <Button
           size="sm"
           className="mt-3"
           onClick={() => (window.location.href = window.location.href)}
         >
           Reload page
-        </DaButton>
+        </Button>
       </div>
     </div>
   )
