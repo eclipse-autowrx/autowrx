@@ -132,7 +132,7 @@ const deleteFeedbackById = async (feedbackId, userId) => {
   if (String(feedback.created_by) !== userId) {
     throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
   }
-  await feedback.remove();
+  await feedback.deleteOne();
 };
 
 module.exports = {

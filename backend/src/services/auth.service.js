@@ -79,7 +79,7 @@ const logout = async (refreshToken) => {
   if (!refreshTokenDoc) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Not found');
   }
-  await refreshTokenDoc.remove();
+  await refreshTokenDoc.deleteOne();
 };
 
 /**
@@ -97,7 +97,7 @@ const refreshAuth = async (refreshToken) => {
     if (!user) {
       throw new Error();
     }
-    await refreshTokenDoc.remove();
+    await refreshTokenDoc.deleteOne();
     return tokenService.generateAuthTokens(user);
   } catch (error) {
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate');
@@ -116,8 +116,8 @@ const resetPassword = async (resetPasswordToken, newPassword) => {
   if (!user) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Password reset failed');
   }
-  await userService.updateUserById(user.id, { password: newPassword });
-  await Token.deleteMany({ user: user.id, type: tokenTypes.RESET_PASSWORD });
+  await userService.updateUserById(user._id, { password: newPassword });
+  await Token.deleteMany({ user: user._id, type: tokenTypes.RESET_PASSWORD });
   return user;
 };
 
@@ -133,8 +133,8 @@ const verifyEmail = async (verifyEmailToken) => {
     if (!user) {
       throw new Error();
     }
-    await Token.deleteMany({ user: user.id, type: tokenTypes.VERIFY_EMAIL });
-    await userService.updateUserById(user.id, { isEmailVerified: true });
+    await Token.deleteMany({ user: user._id, type: tokenTypes.VERIFY_EMAIL });
+    await userService.updateUserById(user._id, { isEmailVerified: true });
   } catch (error) {
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Email verification failed');
   }

@@ -64,7 +64,7 @@ const deleteIssueById = async (issueId) => {
   if (!issue) {
     throw new Error('Issue not found');
   }
-  await issue.remove();
+  await issue.deleteOne();
   return issue;
 };
 

@@ -80,7 +80,7 @@ const deleteDiscussionById = async (discussionId, userId) => {
   if (String(discussion.created_by) !== userId) {
     throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
   }
-  return Promise.all([discussion.remove(), Discussion.deleteMany({ parent: discussionId })]);
+  return Promise.all([discussion.deleteOne(), Discussion.deleteMany({ parent: discussionId })]);
 };
 
 module.exports = {

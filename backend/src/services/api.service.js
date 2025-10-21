@@ -89,7 +89,7 @@ const deleteApi = async (apiId, userId) => {
     throw new ApiError(httpStatus.FORBIDDEN, "You don't have permission to delete this api");
   }
 
-  await api.remove();
+  await api.deleteOne();
 };
 
 const listVSSVersions = async () => {

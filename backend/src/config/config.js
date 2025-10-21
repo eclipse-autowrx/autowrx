@@ -17,6 +17,7 @@ const envVarsSchema = Joi.object()
     NODE_ENV: Joi.string().valid('production', 'development', 'test').required(),
     PORT: Joi.number().default(8080),
     MONGODB_URL: Joi.string().required().description('Mongo DB url'),
+    CORS_ORIGINS: Joi.string().default('localhost:\\d+,127\\.0\\.0\\.1:\\d+').description('Allowed CORS origins (comma-separated regex patterns)'),
     // JWT
     JWT_SECRET: Joi.string().description('JWT secret key'),
     JWT_ACCESS_EXPIRATION_MINUTES: Joi.number().default(30).description('minutes after which access tokens expire'),
@@ -93,9 +94,9 @@ const config = {
     cookie: {
       name: envVars.JWT_COOKIE_NAME,
       options: {
-        secure: true,
+        secure: envVars.NODE_ENV === 'production',
         httpOnly: true,
-        sameSite: 'None',
+        sameSite: envVars.NODE_ENV === 'production' ? 'None' : 'Lax',
         ...(envVars.NODE_ENV === 'production' && { domain: envVars.JWT_COOKIE_DOMAIN }),
       },
     },
@@ -113,6 +114,26 @@ const config = {
   },
   client: {
     baseUrl: envVars.CLIENT_BASE_URL,
+  },
+  cors: {
+    origins: (origin, callback) => {
+      // Allow requests from localhost and 127.0.0.1 with any port
+      const allowedOrigins = [
+        /^http:\/\/localhost:\d+$/,
+        /^https:\/\/localhost:\d+$/,
+        /^http:\/\/127\.0\.0\.1:\d+$/,
+        /^https:\/\/127\.0\.0\.1:\d+$/
+      ];
+      
+      // Check if origin matches any of the allowed patterns
+      const isAllowed = allowedOrigins.some(pattern => pattern.test(origin));
+      
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
   },
   constraints: {
     model: {

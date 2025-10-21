@@ -1,0 +1,72 @@
+# Copyright (c) 2025 Eclipse Foundation.
+# 
+# This program and the accompanying materials are made available under the
+# terms of the MIT License which is available at
+# https://opensource.org/licenses/MIT.
+#
+# SPDX-License-Identifier: MIT
+
+name: Release Docker Image
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set TAG variable
+        id: vars
+        run: |
+          GIT_TAG=${GITHUB_REF#refs/tags/}
+          TAG="${GIT_TAG}"
+          echo "TAG=$TAG" >> $GITHUB_ENV
+          echo "::set-output name=TAG::$TAG"
+
+      - name: Build and push autowrx-app Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/autowrx-app:${{ env.TAG }}
+
+      # Call the quevee gh action to create the manifest file for SDV maturity assessment.
+      - name: Collect quality artifacts
+        uses: eclipse-dash/quevee@v1
+        id: quevee
+        with:
+          release_url: ${{ steps.create_release.outputs.url }}
+          artifacts_readme: README.md
+          artifacts_requirements: https://github.com/orgs/eclipse-autowrx/projects/1
+          artifacts_testing: https://github.com/eclipse-autowrx/ui-automation-test
+          artifacts_documentation: docs/development-guuide.md
+          artifacts_coding_guidelines: docs/development-guuide.md
+          artifacts_release_process: https://www.eclipse.org/projects/dev_process/#6_4_Releases
+          
+      - name: Upload quality manifest to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ${{ steps.quevee.outputs.manifest_file }}
+          tag: ${{ github.ref }}

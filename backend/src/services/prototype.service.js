@@ -190,7 +190,7 @@ const deletePrototypeById = async (id, actionOwner) => {
 
   prototype.action_owner = actionOwner;
 
-  await prototype.remove();
+  await prototype.deleteOne();
 };
 
 /**
@@ -292,7 +292,7 @@ const deleteMany = async (filter, actionOwner) => {
   await Promise.all(
     prototypes.map(async (prototype) => {
       prototype.action_owner = actionOwner;
-      await prototype.remove();
+      await prototype.deleteOne();
     })
   );
 };

@@ -88,7 +88,7 @@ const deleteExtendedApiById = async (extendedApiId, actionOwner) => {
   }
 
   extendedApi.action_owner = actionOwner;
-  await extendedApi.remove();
+  await extendedApi.deleteOne();
   return extendedApi;
 };
 

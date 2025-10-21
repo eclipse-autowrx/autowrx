@@ -1,0 +1,556 @@
+/* Local fonts loaded via /css/fonts.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+.da-pl-8 {
+  padding-left: 32px;
+}
+
+.da-pl-16 {
+  padding-left: 64px;
+}
+
+.da-pl-24 {
+  padding-left: 96px;
+}
+
+.da-pl-32 {
+  padding-left: 128px;
+}
+
+.col-span-2 {
+  grid-column: span 2 / span 2;
+}
+
+.col-span-3 {
+  grid-column: span 3 / span 3;
+}
+
+.col-span-4 {
+  grid-column: span 4 / span 4;
+}
+
+.col-span-5 {
+  grid-column: span 5 / span 5;
+}
+
+.row-span-2 {
+  grid-row: span 2 / span 2;
+}
+
+.row-span-3 {
+  grid-row: span 3 / span 3;
+}
+
+/* Scrollbar hiding utilities */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+.row-span-4 {
+  grid-row: span 4 / span 4;
+}
+
+.row-span-5 {
+  grid-row: span 5 / span 5;
+}
+
+/*********** Font size and weight ********************/
+.da-txt-tiny {
+  font-size: 12px;
+}
+
+.da-txt-small {
+  font-size: 14px;
+}
+
+.da-txt-regular {
+  font-size: 16px;
+}
+
+.da-txt-medium {
+  font-size: 18px;
+}
+
+.da-txt-large {
+  font-size: 20px;
+}
+
+.da-txt-huge {
+  font-size: 24px;
+}
+
+/*********** For Text Component ********************/
+
+.da-label-regular {
+  @apply da-txt-regular font-normal;
+}
+
+.da-label-regular-medium {
+  @apply da-txt-regular font-medium;
+}
+
+.da-label-regular-bold {
+  @apply da-txt-regular font-semibold;
+}
+
+.da-label-tiny {
+  @apply da-txt-tiny;
+}
+
+.da-label-small {
+  @apply da-txt-small font-normal;
+}
+
+.da-label-small-bold {
+  @apply da-txt-small font-semibold;
+}
+
+.da-label-small-medium {
+  @apply da-txt-small font-medium;
+}
+
+.da-label-sub-title {
+  @apply da-txt-medium font-semibold;
+}
+
+.da-label-title {
+  @apply da-txt-large font-semibold;
+}
+
+.da-label-huge {
+  @apply da-txt-huge font-normal;
+}
+
+.da-label-huge-bold {
+  @apply da-txt-huge font-semibold;
+}
+
+/*********** For Button Component ********************/
+.da-btn-dash {
+  @apply p-2 text-da-primary-500 hover:bg-da-primary-100 border border-dashed border-da-primary-500 rounded;
+}
+
+.da-btn {
+  @apply select-none cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
+}
+
+.da-btn-solid {
+  @apply bg-da-primary-500 text-da-white shadow hover:bg-da-primary-500/90;
+}
+
+.da-btn-outline {
+  @apply border text-da-primary-500 border-da-primary-500 shadow-sm hover:bg-da-primary-500/10;
+}
+
+.da-btn-outline-nocolor {
+  @apply border bg-white text-da-gray-medium border-da-gray-light hover:bg-da-gray-light shadow;
+}
+
+.da-btn-plain {
+  @apply text-da-gray-medium hover:bg-da-primary-100 hover:text-da-primary-500;
+}
+
+.da-btn-editor {
+  @apply text-da-primary-500 hover:bg-da-primary-100;
+}
+
+.da-btn-text {
+  @apply text-da-primary-500 hover:underline;
+}
+
+.da-btn-link {
+  @apply text-da-gray-medium hover:underline;
+}
+
+.da-btn-gradient {
+  @apply bg-gradient-to-r from-da-gradient-from to-da-gradient-to text-da-white shadow-sm hover:opacity-90;
+}
+
+.da-btn-secondary {
+  @apply bg-da-gray-medium text-da-white shadow-sm hover:bg-da-gray-medium/80;
+}
+
+.da-btn-destructive {
+  @apply text-da-gray-medium hover:text-da-destructive hover:bg-da-destructive/10;
+}
+
+.da-btn-sm {
+  @apply h-8 rounded-md px-2 py-1 da-txt-small;
+}
+
+.da-btn-md {
+  @apply h-10 rounded-md px-4 py-1 da-txt-regular;
+}
+
+.da-btn-lg {
+  @apply h-12 rounded-md px-4 py-1 da-txt-medium;
+}
+
+/*********** For Block Component ********************/
+.da-block-bare {
+  @apply px-4 py-2 flex items-center justify-center;
+}
+
+.da-block-default {
+  @apply text-white bg-da-primary-500;
+}
+
+.da-block-outline {
+  @apply text-da-primary-500 border border-da-primary-500;
+}
+
+/*********** NAV BAR ********************/
+.da-nav-bar {
+  height: 56px;
+  max-height: 56px;
+  @apply px-2 md:px-4 py-2 flex items-center w-full;
+}
+
+.da-nav-bar-logo {
+  height: 30px;
+}
+
+/*********** Popup ********************/
+.da-popup-placeholder {
+  display: contents;
+}
+
+.da-popup-inner {
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  border: none;
+  padding: 20px;
+  outline: none !important;
+  border-radius: 10px;
+  max-height: 100vh;
+  overflow: auto;
+}
+
+/*********** For Scrollbar *********/
+*::-webkit-scrollbar-track {
+  border-radius: 4px;
+  /* background-color: #f5f5f5; */
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  /* background-color: #f5f5f5; */
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.scroll::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+}
+
+.scroll-gray::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(0, 0, 0, 0);
+  background-clip: padding-box;
+  /* background-color: #aaaaaa; */
+}
+
+.scroll-gray-small::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(0, 0, 0, 0);
+  background-clip: padding-box;
+  background-color: #aaaaaa;
+}
+
+/*********** Textarea Component ****************/
+.da-textarea {
+  @apply flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-da-primary-500 disabled:opacity-50;
+}
+
+/*********** Menu Component ********************/
+
+.da-menu-item {
+  @apply da-btn-plain da-btn-sm mx-1 cursor-pointer da-label-small-medium;
+}
+
+.da-menu-dropdown {
+  @apply !rounded-lg !px-1;
+}
+
+/******** Font and Colors for instances ********/
+body {
+  font-family: 'Manrope', sans-serif;
+  /* font-family: "Geist Variable"; */
+  /* font-family: "Roboto", sans-serif; */
+  /* font-family: Inter, sans-serif; */
+}
+
+:root {
+  --da-primary-100: 196 28% 92%;
+  --da-primary-300: 198 28% 61%;
+  --da-primary-500: 198 100% 22%;
+
+  --da-secondary-100: 67 54% 92%;
+  --da-secondary-300: 67 54% 68%;
+  --da-secondary-500: 67 54% 48%;
+
+  --da-accent-100: 67 54% 92%;
+  --da-accent-300: 67 54% 68%;
+  --da-accent-500: 67 54% 48%;
+
+  --da-white: 0 0% 100%;
+  --da-black: 0 0% 0%;
+
+  /* Card background */
+  --da-gray-light: 214 32% 91%;
+  /* Text */
+  --da-gray-medium: 215 16% 47%;
+  /* Title */
+  --da-gray-dark: 215 13.8% 34.1%;
+  /* Background */
+  --da-gray-darkest: 217 33% 17%;
+
+  --da-destructive: 0 84% 60%;
+
+  --da-gradient-from: 198 100% 22%;
+  --da-gradient-to: 67 54% 48%;
+}
+
+/*********** Other ********************/
+.autofill {
+  display: grid;
+  --grid-min-width: 180px;
+  grid-template-columns: repeat(auto-fill, minmax(var(--grid-min-width), 1fr));
+}
+
+/* Fix radix-ui select trigger cause overflow problems */
+select[aria-hidden='true'][tabindex='-1'] {
+  display: none;
+}
+
+/* src/LoadingBar.css */
+.loading-bar-container {
+  width: 100%;
+  height: 20px;
+  background-color: #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.loading-bar {
+  height: 100%;
+  background-color: #76c7c0;
+  transition: width 0.3s ease-in-out;
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0); /* Or translateY(0) for vertical */
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%); /* Or translateY(-100%) for vertical, or any value */
+    opacity: 0;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%); /* Or translateY(-100%) for vertical */
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.learning-appear {
+  animation: slideIn 0.5s ease-out forwards; /* Adjust duration and easing as needed */
+}
+
+.learning-disappear {
+  animation: slideOut 0.5s ease-out forwards; /* Adjust duration and easing as needed */
+}
+
+/* React Flow Node Animations */
+@keyframes nodeAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.75) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes nodeBounce {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes nodeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.animate-node-appear {
+  animation: nodeAppear 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-node-bounce {
+  animation: nodeBounce 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+.animate-node-slide-in {
+  animation: nodeSlideIn 0.5s ease-out forwards;
+}
+
+.bg-gradient-purple {
+  /* background: linear-gradient(135deg, #5e3b98 0%, #c39bd3 100%); */
+  /* border: 2px solid #5e3b98; */
+  /* box-shadow: 0 0 8px rgba(94, 59, 152, 0.5) !important; */
+  /* background: linear-gradient(135deg, #6b46c1, #9f7aea); purple gradient */
+  /* background-color: #6a5acd; */
+  background-image: linear-gradient(20deg, #6a5acd 0%, #c54b8c 37%, #b284be 100%);
+  /* box-shadow: 0 4px 14px #6a5acd; */
+}
+/*
+* Created with https://www.css-gradient.com
+* Gradient link: https://www.css-gradient.com/?c1=632bdb&c2=5f0f84&gt=l&gd=dtl
+*/
+
+.purple-gradient-button {
+/* background: #370796; */
+  /* background: linear-gradient(135deg, #370796, #C1A1EA); */
+  /* background: #632BDB; */
+  background: linear-gradient(135deg, #632BDB, #754f86);
+  box-shadow: 0 4px 15px rgba(123, 47, 247, 0.4);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* .purple-gradient-button:hover {
+  background: linear-gradient(135deg, #9a4dff, #ff1ab8);
+  box-shadow: 0 6px 20px rgba(154, 77, 255, 0.6);
+} */
+
+/* Custom tippy.js theme for gradient background */
+.tippy-box[data-theme~='gradient-tooltip'] {
+  background-color: #6a5acd;
+  background-image: linear-gradient(319deg, #6a5acd 0%, #c54b8c 37%, #b284be 100%);
+  color: #fff;
+  box-shadow: 0 0 8px rgba(94, 59, 152, 0.5) !important;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  font-size: 0.8rem;
+  padding: 2px;
+}
+.tippy-box[data-theme~='gradient-tooltip'] .tippy-arrow {
+  color: #c54b8c;
+  /* Middle color from the purple gradient #5e3b98 -> #c39bd3 */
+  /* fallback for arrow, can be improved for gradient */
+}
+
+@keyframes tooltip-attention {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.tippy-box[data-theme~='gradient-tooltip'] {
+  animation: tooltip-attention 1.5s ease-in-out infinite;
+}

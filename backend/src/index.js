@@ -17,6 +17,9 @@ const { setupScheduledCheck, assignAdmins, convertLogsCap } = require('./scripts
 let server;
 mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
   logger.info('Connected to MongoDB ');
+  logger.info(`🚀 Backend running in ${config.env.toUpperCase()} mode`);
+  logger.info(`📊 CORS Origins: ${config.cors.origins ? 'Custom function' : 'Default'}`);
+  logger.info(`🍪 Cookie Config: secure=${config.jwt.cookie.options.secure}, sameSite=${config.jwt.cookie.options.sameSite}, httpOnly=${config.jwt.cookie.options.httpOnly}`);
 
   convertLogsCap();
   initializeRoles().then(() => assignAdmins());

@@ -369,7 +369,7 @@ const deleteModelById = async (id, actionOwner) => {
   }
 
   model.action_owner = actionOwner;
-  await model.remove();
+  await model.deleteOne();
   await prototypeService.deleteMany({ model_id: id }, actionOwner);
 };
 
