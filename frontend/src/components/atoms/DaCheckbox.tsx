@@ -32,7 +32,7 @@ const DaCheckbox = ({
         onChange={onChange}
         className="h-4 w-4 relative peer shrink-0
         appearance-none border-2 rounded-sm bg-white
-        checked:bg-da-primary-500 checked:border-0  cursor-pointer"
+        checked:bg-primary checked:border-0  cursor-pointer"
       />
       <svg
         className="absolute w-4 h-4 hidden peer-checked:block"

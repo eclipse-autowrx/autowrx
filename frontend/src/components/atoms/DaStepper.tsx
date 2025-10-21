@@ -53,7 +53,7 @@ const DaStepper = ({
           )}
 
           {index < totalSteps - 1 && (
-            <TbChevronRight className="da-label-sub-title" />
+            <TbChevronRight className="text-lg font-semibold" />
           )}
         </Fragment>
       ))}

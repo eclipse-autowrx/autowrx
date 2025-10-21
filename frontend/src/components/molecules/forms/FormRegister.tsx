@@ -86,10 +86,10 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
   return (
     <form
       onSubmit={register}
-      className="w-[30vw] lg:w-[25vw] min-w-[400px] max-w-[500px] h-fit max-h-[80vh] p-4 bg-da-white"
+      className="w-[30vw] lg:w-[25vw] min-w-[400px] max-w-[500px] h-fit max-h-[80vh] p-4 bg-white"
     >
       {/* Title */}
-      <DaText variant="title" className="text-da-primary-500">
+      <DaText variant="title" className="text-primary">
         Register
       </DaText>
 
@@ -123,12 +123,12 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
       />
 
       {policy_url && (
-        <div className="my-2 da-label-small">
+        <div className="my-2 text-sm">
           By click on Register button below, I agree to
           <a
             href={policy_url}
             target="_blank"
-            className="ml-2 cursor-pointer hover:text-da-primary-500"
+            className="ml-2 cursor-pointer hover:text-primary"
           >
             <u>Privacy Policy</u>
           </a>
@@ -137,7 +137,7 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
 
       {/* Error */}
       {error && (
-        <DaText variant="small" className="mt-3 block text-da-accent-500">
+        <DaText variant="small" className="mt-3 block text-destructive">
           {error}
         </DaText>
       )}
@@ -154,14 +154,14 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
       </DaButton>
       {/* More */}
       <div className="mt-4 flex items-center">
-        <DaText className="text-da-gray-medium">
+        <DaText className="text-muted-foreground">
           Already have an account?
         </DaText>
         <DaButton
           type="button"
           onClick={() => setAuthType('sign-in')}
           variant="text"
-          className="text-da-primary-500"
+          className="text-primary"
         >
           Sign in
         </DaButton>

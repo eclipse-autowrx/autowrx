@@ -17,7 +17,7 @@ const DaLoader = ({ className }: DaLoaderProps) => {
   return (
     <TbLoader
       className={clsx(
-        'da-label-huge text-da-primary-500 animate-spin',
+        'text-2xl text-primary animate-spin',
         className,
       )}
     />

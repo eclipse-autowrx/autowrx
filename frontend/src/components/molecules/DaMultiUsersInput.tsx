@@ -46,7 +46,7 @@ const DaMultiUsersInput = ({
   return (
     <div
       className={clsx(
-        'flex max-h-[160px] min-h-10 w-full gap-2 overflow-y-auto rounded-md border border-da-black/30 px-2 pt-[6px] outline-[3px] outline-da-primary-100 focus-within:outline',
+        'flex max-h-[160px] min-h-10 w-full gap-2 overflow-y-auto rounded-md border border-input px-2 pt-[6px] outline-[3px] outline-primary/20 focus-within:outline',
         className,
       )}
     >
@@ -56,9 +56,9 @@ const DaMultiUsersInput = ({
             {selectedUsers.map((user) => (
               <div
                 key={user.id}
-                className="flex cursor-default items-center rounded border border-da-gray-medium/50 px-1 py-0.5"
+                className="flex cursor-default items-center rounded border border-muted-foreground/50 px-1 py-0.5"
               >
-                <DaText variant="small" className="text-da-gray-dark">
+                <DaText variant="small" className="text-foreground">
                   {user.name}
                 </DaText>
                 <button
@@ -77,7 +77,7 @@ const DaMultiUsersInput = ({
           value={inputString}
           onChange={(e) => onInputStringChange(e.target.value)}
           autoFocus
-          className="block w-full bg-transparent text-da-gray-dark outline-none"
+          className="block w-full bg-transparent text-foreground outline-none"
           placeholder="Email of users"
         />
 
@@ -97,7 +97,7 @@ const DaMultiUsersInput = ({
               value={accessLevel.value}
               key={index}
             >
-              <DaText className="da-label-small text-da-gray-dark">
+              <DaText className="text-sm text-foreground">
                 {accessLevel.label}
               </DaText>
             </DaSelectItem>

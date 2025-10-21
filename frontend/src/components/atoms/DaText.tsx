@@ -26,11 +26,24 @@ interface DaTextProps {
     | 'huge-bold'
 }
 
+const variantClasses = {
+  'regular': 'text-base font-normal',
+  'regular-medium': 'text-base font-medium',
+  'regular-bold': 'text-base font-semibold',
+  'small': 'text-sm font-normal',
+  'small-bold': 'text-sm font-semibold',
+  'small-medium': 'text-sm font-medium',
+  'sub-title': 'text-lg font-semibold',
+  'title': 'text-xl font-semibold',
+  'huge': 'text-2xl font-normal',
+  'huge-bold': 'text-2xl font-semibold',
+}
+
 const DaText = React.forwardRef<HTMLLabelElement, DaTextProps>(
   ({ className, variant = 'regular', ...props }, ref) => {
     return (
       <label
-        className={cn(` da-label-${variant}`, className)}
+        className={cn(variantClasses[variant], className)}
         ref={ref}
         style={{ cursor: 'inherit' }}
         {...props}

@@ -28,7 +28,7 @@ const DaInputWithLabel = ({
 }: DaInputWithLabel) => (
   <div className={cn('flex w-full items-center mb-4', className)}>
     <DaText
-      className="flex min-w-[150px] text-da-gray-dark"
+      className="flex min-w-[150px] text-foreground"
       variant="small-bold"
     >
       {label}

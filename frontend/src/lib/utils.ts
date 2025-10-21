@@ -40,7 +40,7 @@ export const getApiTypeClasses = (type: string) => {
     case 'Basic Service':
       return { bgClass: 'bg-emerald-500', textClass: 'text-emerald-500' }
     default:
-      return { bgClass: 'bg-da-gray-medium', textClass: 'text-da-gray-medium' }
+      return { bgClass: 'bg-muted-foreground', textClass: 'text-muted-foreground' }
   }
 }
 

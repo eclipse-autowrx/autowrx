@@ -74,7 +74,7 @@ const DaSelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={clsx(
-      'focus:bg-accent relative flex w-full cursor-pointer select-none rounded bg-white py-1.5 pl-2 pr-8 text-da-gray-medium outline-none hover:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+      'focus:bg-accent relative flex w-full cursor-pointer select-none rounded bg-white py-1.5 pl-2 pr-8 text-muted-foreground outline-none hover:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       helperText ? 'flex' : 'items-center',
       className,
     )}
@@ -88,7 +88,7 @@ const DaSelectItem = React.forwardRef<
 
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
     {helperText && (
-      <DaText className={cn('da-label-small pl-4', helperClassName)}>
+      <DaText className={cn('text-sm pl-4', helperClassName)}>
         {helperText}
       </DaText>
     )}
@@ -107,7 +107,7 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={clsx(
-      'flex h-10 w-full items-center justify-between whitespace-nowrap rounded-md border border-da-gray-light bg-transparent px-2 py-2 shadow-sm focus:border-da-primary-500 disabled:opacity-50 [&>span]:line-clamp-1',
+      'flex h-10 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-2 py-2 shadow-sm focus:border-primary disabled:opacity-50 [&>span]:line-clamp-1',
       className,
     )}
     {...props}

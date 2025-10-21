@@ -85,15 +85,15 @@ const DaLoading = ({
           />
           <defs>
             <linearGradient id="gradient" x1="100%" y1="100%">
-              <stop stopColor="hsl(var(--da-primary-500))" offset="0%" />
-              <stop stopColor="hsl(var(--da-secondary-500))" offset="100%" />
+              <stop stopColor="oklch(var(--primary))" offset="0%" />
+              <stop stopColor="oklch(var(--secondary))" offset="100%" />
             </linearGradient>
           </defs>
         </svg>
       )}
 
       {!hasTimedOut && (
-        <DaText variant="sub-title" className="text-da-gray-medium mt-4">
+        <DaText variant="sub-title" className="text-muted-foreground mt-4">
           {text}
         </DaText>
       )}

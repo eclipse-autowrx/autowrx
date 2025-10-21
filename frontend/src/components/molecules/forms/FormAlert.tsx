@@ -24,7 +24,7 @@ const FormAlert = ({
   children,
 }: FormAlertProps) => {
   return (
-    <form className="flex flex-col space-y-8 w-[500px] min-w-[400px] px-2 md:px-6 py-4 bg-da-white">
+    <form className="flex flex-col space-y-8 w-[500px] min-w-[400px] px-2 md:px-6 py-4 bg-white">
       {children}
       <div className="ml-auto space-x-2">
         <DaButton
@@ -37,7 +37,7 @@ const FormAlert = ({
         </DaButton>
         <DaButton disabled={loading} onClick={onConfirm}>
           {loading && (
-            <TbLoader className="animate-spin da-label-regular mr-2" />
+            <TbLoader className="animate-spin text-base mr-2" />
           )}
           Confirm
         </DaButton>

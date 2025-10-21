@@ -57,7 +57,7 @@ const DaStep = ({
     <div
       onClick={handleClick}
       className={clsx(
-        'da-label-regular-bold flex items-center gap-2 truncate px-2',
+        'text-base font-semibold flex items-center gap-2 truncate px-2',
         disabled ? 'cursor-default opacity-30' : 'cursor-pointer',
         className,
       )}
@@ -65,11 +65,11 @@ const DaStep = ({
       {index !== undefined && (
         <div
           className={clsx(
-            'da-label-small flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full',
+            'text-sm flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full',
             {
-              'border border-da-gray-medium bg-transparent':
+              'border border-muted-foreground bg-transparent':
                 state === 'inactive',
-              'bg-da-primary-500 text-white':
+              'bg-primary text-white':
                 state === 'active' || state === 'completed',
             },
           )}
@@ -84,8 +84,8 @@ const DaStep = ({
 
       <div
         className={clsx('min-w-0 truncate', {
-          'text-da-gray-dark': state === 'active' || state === 'completed',
-          'text-da-gray-medium': state === 'inactive',
+          'text-foreground': state === 'active' || state === 'completed',
+          'text-muted-foreground': state === 'inactive',
         })}
       >
         {children}

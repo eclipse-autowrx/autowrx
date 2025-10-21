@@ -29,7 +29,7 @@ const UserListItem = ({ user, onRemoveUser }: UserListItemProps) => {
     }
   
     return (
-      <div className="my-1 flex cursor-pointer items-center justify-between rounded-lg border border-da-gray-light bg-da-gray-light/25 p-2">
+      <div className="my-1 flex cursor-pointer items-center justify-between rounded-lg border border-input bg-muted/25 p-2">
         <div className="flex items-center">
           <DaAvatar
             src={user.image_file}
@@ -37,10 +37,10 @@ const UserListItem = ({ user, onRemoveUser }: UserListItemProps) => {
             className="mr-4 h-10 w-10 rounded-full"
           />
           <div className="flex flex-col">
-            <DaText variant="regular" className="font-bold text-da-gray-dark">
+            <DaText variant="regular" className="font-bold text-foreground">
               {user.name ?? 'Loading...'}
             </DaText>
-            <DaText variant="small" className="text-da-gray-medium">
+            <DaText variant="small" className="text-muted-foreground">
               {maskEmail(user?.email ?? '')}
             </DaText>
           </div>

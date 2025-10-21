@@ -51,7 +51,7 @@ const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
             variant="regular-medium"
             className={cn(
               'mb-1',
-              focused ? `text-da-primary-500` : `text-da-gray-medium`,
+              focused ? `text-primary` : `text-muted-foreground`,
               labelClassName,
             )}
           >
@@ -60,10 +60,10 @@ const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
         )}
         <div
           className={cn(
-            `h-10 py-1 flex items-center rounded-md border bg-da-white 
-          da-txt-regular shadow-sm transition-colors text-da-gray-gray`,
-            !focused && 'border-da-gray-light',
-            focused && 'border-da-primary-500 text-da-primary-500',
+            `h-10 py-1 flex items-center rounded-md border bg-background
+          text-base shadow-sm transition-colors text-foreground`,
+            !focused && 'border-input',
+            focused && 'border-primary text-primary',
             wrapperClassName,
           )}
         >
@@ -82,7 +82,7 @@ const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
             data-id={dataId}
             className={cn(
               `grow flex px-2 py-1 h-8 w-full
-                placeholder:text-da-gray-300
+                placeholder:text-muted-foreground/60
                 focus-visible:ring-0 focus-visible:outline-none
                 disabled:cursor-not-allowed`,
               inputClassName,

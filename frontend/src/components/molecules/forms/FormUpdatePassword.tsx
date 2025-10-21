@@ -66,10 +66,10 @@ const FormUpdatePassword = ({}) => {
   return (
     <form
       onSubmit={resetPassword}
-      className="w-[30vw] lg:w-[25vw] max-h-[80vh] bg-da-white"
+      className="w-[30vw] lg:w-[25vw] max-h-[80vh] bg-white"
     >
       {/* Title */}
-      <DaText variant="title" className="text-da-primary-500">
+      <DaText variant="title" className="text-primary">
         Change Password
       </DaText>
 

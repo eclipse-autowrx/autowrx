@@ -73,7 +73,7 @@ const ShareAssetPanel = ({ asset, onDone, onCancel }: iPropShareAssetPanel) => {
             <DaText className="my-2 flex items-center justity-between">
                 <DaButton
                     size="sm"
-                    className="flex items-center text-da-primary-500"
+                    className="flex items-center text-primary"
                     variant="outline-nocolor"
                     onClick={() => setShowInviteDialog(true)}
                 >

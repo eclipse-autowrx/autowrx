@@ -171,7 +171,7 @@ const PythonGenAIEditor = ({dataStr, onDataChange}: iPropGenAIPython) => {
                     className="flex grow"
                     textareaClassName="!text-[14px] !leading-tight"
                 />
-                <div className=" text-sm mt-1 text-da-gray-dark">* Notice: This token will be sent in the Authorization header.</div>
+                <div className=" text-sm mt-1 text-foreground">* Notice: This token will be sent in the Authorization header.</div>
             </div>
         </div>
 
@@ -252,7 +252,7 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
                         key={tIndex}
                         value={type.value}
                     >
-                        <DaText className="da-label-small text-da-gray-dark">
+                        <DaText className="text-sm text-foreground">
                             {type.value}
                         </DaText>
                     </DaSelectItem>)}
@@ -364,7 +364,7 @@ const PageMyAssets = () => {
             <div className="flex w-full">
                 <DaText
                     variant="huge-bold"
-                    className="text-da-gray-dark font-semibold"
+                    className="text-foreground font-semibold"
                 >
                     My Assets
                 </DaText>
@@ -410,7 +410,7 @@ const PageMyAssets = () => {
 
             {!isLoading && <>
 
-                <div className="flex w-full mt-2 border-b border-da-gray-medium">
+                <div className="flex w-full mt-2 border-b border-muted-foreground">
                     {(() => {
                         const assetCounts: { [key: string]: number } = {};
                         if (assets) {
@@ -429,8 +429,8 @@ const PageMyAssets = () => {
                                 className={`
                                     px-4 py-2 cursor-pointer text-lg font-semibold
                                     ${activeTab === type.value
-                                    ? 'border-b-2 border-da-primary-500 text-da-primary-500'
-                                    : 'text-da-gray-dark hover:text-da-primary-400'
+                                    ? 'border-b-2 border-primary text-primary'
+                                    : 'text-foreground hover:text-primary/80'
                                 }
                                 `}
                                 onClick={() => setActiveTab(type.value)}
@@ -442,8 +442,8 @@ const PageMyAssets = () => {
                 </div>
 
                 <div className="mt-2 w-full px-4">
-                    <div className="flex w-full items-center text-da-gray-medium font-semibold text-sm 
-                                        py-1 border-b border-da-gray-medium">
+                    <div className="flex w-full items-center text-muted-foreground font-semibold text-sm
+                                        py-1 border-b border-muted-foreground">
                         <div className="grow">Name</div>
                         <div className="w-[220px] min-w-[220px]">Type</div>
                         <div className="w-[220px] min-w-[220px]">Actions</div>
@@ -458,17 +458,17 @@ const PageMyAssets = () => {
 
                     {
                         filteredAssets && filteredAssets.length > 0 && filteredAssets.map((asset: any, aIndex: number) => <div key={aIndex}
-                            className="flex w-full items-center text-da-gray-dark font-normal text-md 
-                                        py-4 border-b border-da-gray-light">
+                            className="flex w-full items-center text-foreground font-normal text-md
+                                        py-4 border-b border-input">
                             <div className="grow">{asset.name}</div>
-                            <div className="w-[220px] min-w-[220px] text-xs font-medium text-da-gray-medium font-mono">{asset.type}</div>
+                            <div className="w-[220px] min-w-[220px] text-xs font-medium text-muted-foreground font-mono">{asset.type}</div>
                             <div className="w-[220px] min-w-[220px] flex space-x-4">
-                                <TbPencil className="text-da-gray-medium cursor-pointer hover:opacity-60" size={22}
+                                <TbPencil className="text-muted-foreground cursor-pointer hover:opacity-60" size={22}
                                     onClick={() => {
                                         setActiveAsset(JSON.parse(JSON.stringify(asset)))
                                         editDialogState[1](true)
                                     }} />
-                                <TbShare className="text-da-gray-medium cursor-pointer hover:opacity-60" size={22}
+                                <TbShare className="text-muted-foreground cursor-pointer hover:opacity-60" size={22}
                                     onClick={() => {
                                         setActiveAsset(JSON.parse(JSON.stringify(asset)))
                                         shareDialogState[1](true)

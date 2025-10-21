@@ -149,7 +149,7 @@ const DaFileUpload = ({
     <div
       onClick={handleUploadClick}
       className={clsx(
-        'relative border border-da-gray-medium rounded-md h-fit overflow-hidden group',
+        'relative border border-muted-foreground rounded-md h-fit overflow-hidden group',
         !file && 'border-dashed hover:border-black cursor-pointer',
         !isImage && 'p-2',
         className,
@@ -163,7 +163,7 @@ const DaFileUpload = ({
           ref={dragAreaRef}
           onClick={(e) => e.stopPropagation()}
           className={clsx(
-            'z-[9999] bg-gradient-to-r from-da-gradient-from to-da-gradient-to transition flex fixed top-0 left-0 right-0 bottom-0',
+            'z-[9999] bg-gradient-to-r from-primary to-accent transition flex fixed top-0 left-0 right-0 bottom-0',
             dragging ? 'opacity-90' : 'opacity-0 pointer-events-none',
           )}
         >

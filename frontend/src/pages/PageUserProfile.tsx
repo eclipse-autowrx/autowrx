@@ -62,7 +62,7 @@ const PageUserProfile = () => {
             <div className="flex flex-col w-full">
               <DaText
                 variant="huge-bold"
-                className="text-da-gray-dark font-semibold"
+                className="text-foreground font-semibold"
               >
                 Profile
               </DaText>
@@ -101,7 +101,7 @@ const PageUserProfile = () => {
                       <div className="truncate max-w-[350px]">
                         <DaText
                           variant="title"
-                          className="text-da-gray-dark truncate "
+                          className="text-foreground truncate "
                         >
                           {user?.name}
                         </DaText>
@@ -138,15 +138,15 @@ const PageUserProfile = () => {
                 </div>
               </div>
               {/* <div className="flex flex-col mt-8">
-                <DaText variant="regular-bold" className="text-da-gray-dark">
+                <DaText variant="regular-bold" className="text-foreground">
                   UID
                 </DaText>
-                <DaText variant="small" className="text-da-gray-medium">
+                <DaText variant="small" className="text-muted-foreground">
                   {user?.id}
                 </DaText>
               </div> */}
               <div className="flex flex-col w-full mt-6">
-                <DaText variant="regular-bold" className="text-da-gray-dark">
+                <DaText variant="regular-bold" className="text-foreground">
                   Password
                 </DaText>
                 <div className="flex w-full items-start justify-between">

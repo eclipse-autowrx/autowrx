@@ -109,7 +109,7 @@ const AccessInvitation = ({
     <DaPopup state={[open, onClose]} trigger={<></>}>
       <div className="flex h-[500px] max-h-[calc(100vw-160px)] min-h-[400px] w-[560px] max-w-[calc(100vw-80px)] flex-col rounded">
         <div className="mb-4">
-          <DaText variant="sub-title" className="text-da-primary-500">
+          <DaText variant="sub-title" className="text-primary">
             {label}
           </DaText>
 

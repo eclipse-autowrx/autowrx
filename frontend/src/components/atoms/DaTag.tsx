@@ -13,15 +13,15 @@ import { cn } from '@/lib/utils'
 
 const badgeVariants = cva(
   ` inline-flex items-center justify-center rounded-md border px-2.5 py-0.5 transition-colors
-    da-txt-small
+    text-sm
     focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 pointer-events-none select-none`,
   {
     variants: {
       variant: {
         default:
-          'text-da-gray-medium border-da-gray-medium  hover:bg-da-gray-medium/10',
+          'text-muted-foreground border-muted-foreground  hover:bg-muted-foreground/10',
         secondary:
-          'border-transparent bg-da-gray-medium/10 text-da-gray-medium ',
+          'border-transparent bg-muted-foreground/10 text-muted-foreground ',
       },
     },
     defaultVariants: {

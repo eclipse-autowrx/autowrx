@@ -74,7 +74,7 @@ const RootLayout = () => {
       <Suspense>
         <NavigationBar />
         {/* {!pathsWithoutBreadcrumb.has(location.pathname) && (
-          <div className="flex items-center justify-between bg-da-primary-500 da-secondary-nav-bar px-4">
+          <div className="flex items-center justify-between bg-primary da-secondary-nav-bar px-4">
             <DaBreadcrumbBar />
           </div>
         )} */}
@@ -85,7 +85,7 @@ const RootLayout = () => {
       </div>
 
       {config && config.instance !== 'digitalauto' && (
-        <div className="flex w-full sticky bottom-0 right-0 z-10 bg-da-gray-darkest px-4 py-0.5 text-end text-xs text-da-white da-footer-bar">
+        <div className="flex w-full sticky bottom-0 right-0 z-10 bg-slate-900 px-4 py-0.5 text-end text-xs text-white da-footer-bar">
           {config.showPrivacyPolicy && (
             <Link
               to="/privacy-policy"

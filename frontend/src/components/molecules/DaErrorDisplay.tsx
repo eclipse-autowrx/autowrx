@@ -21,10 +21,10 @@ const DaErrorDisplay = ({ error, className }: DaErrorDisplay) => {
   return (
     <div className={cn('flex w-full h-full', className)}>
       <div className="m-auto flex h-full flex-col items-center justify-center">
-        <TbExclamationCircle className="text-3xl text-da-primary-500" />
-        <p className="da-label-title mt-3">Oops! Something went wrong.</p>
+        <TbExclamationCircle className="text-3xl text-primary" />
+        <p className="text-xl font-semibold mt-3">Oops! Something went wrong.</p>
 
-        <p className="mt-1 da-label-small max-w-[min(800px,calc(100vw-80px))] max-h-[min(600px,calc(100vh-200px))] overflow-y-auto">
+        <p className="mt-1 text-sm max-w-[min(800px,calc(100vw-80px))] max-h-[min(600px,calc(100vh-200px))] overflow-y-auto">
           {error}
         </p>
 

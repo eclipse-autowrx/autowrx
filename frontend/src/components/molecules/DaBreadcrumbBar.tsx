@@ -45,7 +45,7 @@ const DaBreadcrumbBar = () => {
       <DaBreadcrumbItem>
         <Link
           to={path}
-          className={cn('text-da-white hover:opacity-75', isLast && 'border-b')}
+          className={cn('text-white hover:opacity-75', isLast && 'border-b')}
         >
           {name}
         </Link>
@@ -196,7 +196,7 @@ const DaBreadcrumbBar = () => {
 
   return (
     <div className="flex h-[52px] w-full justify-between">
-      <DaBreadcrumb className="da-label-regular-bold flex text-da-white">
+      <DaBreadcrumb className="text-base font-semibold flex text-white">
         <DaBreadcrumbList>{breadcrumbs}</DaBreadcrumbList>
       </DaBreadcrumb>
     </div>

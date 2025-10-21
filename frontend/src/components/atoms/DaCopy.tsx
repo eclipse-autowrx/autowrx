@@ -40,7 +40,7 @@ const DaCopy = ({
           title: ``,
           description: (
             <div className="flex flex-col space-y-2">
-              <DaText variant="small-bold" className="text-da-primary-500">
+              <DaText variant="small-bold" className="text-primary">
                 {textToCopy}
               </DaText>
               <DaText variant="small-medium" className="">
@@ -73,13 +73,13 @@ const DaCopy = ({
           {label && (
             <DaText
               variant="small"
-              className="ml-1 text-da-primary-500 cursor-pointer"
+              className="ml-1 text-primary cursor-pointer"
             >
               {label}
             </DaText>
           )}
           {showIcon && (
-            <TbCopy className="text-da-gray-medium hover:text-da-primary-500 ml-1" />
+            <TbCopy className="text-muted-foreground hover:text-primary ml-1" />
           )}
         </div>
       </div>

@@ -100,7 +100,7 @@ const DaTooltip: React.FC<DaTooltipProps> = ({
 
   const translateY = `translate-y-${(space / 5) * -1}`
 
-  const finalClassName = `bg-da-gray-darkest text-da-white da-label-small text-center rounded px-2 py-1 absolute z-50 transition-opacity duration-200 ease-in-out transition-transform ${className} ${
+  const finalClassName = `bg-foreground text-background text-sm text-center rounded px-2 py-1 absolute z-50 transition-opacity duration-200 ease-in-out transition-transform ${className} ${
     showTooltip ? 'opacity-100 translate-y-0' : `opacity-0 ${translateY}`
   }`
 

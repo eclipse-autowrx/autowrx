@@ -60,9 +60,9 @@ const DaPaginationLink = ({
   <a
     aria-current={isActive ? 'page' : undefined}
     className={cn(
-      'flex items-center hover:bg-da-gray-light hover:text-da-gray-dark rounded-md px-2 py-1',
+      'flex items-center hover:bg-muted hover:text-foreground rounded-md px-2 py-1',
       isActive
-        ? 'bg-da-gray-light text-da-gray-dark da-label-regular-bold'
+        ? 'bg-muted text-foreground text-base font-semibold'
         : '',
       disabled ? 'select-none pointer-events-none opacity-50' : '',
       className,

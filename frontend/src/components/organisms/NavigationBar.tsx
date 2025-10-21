@@ -69,7 +69,7 @@ const NavigationBar = ({}) => {
 
       {/* {config && config.learning && config.learning.url && (
         <div className="mr-6 cursor-pointer flex items-center">
-          <span className="mr-1 da-txt-regular font-normal">Learning</span>{' '}
+          <span className="mr-1 text-base font-normal">Learning</span>{' '}
           <Switch
             onChange={(v) => {
               if (v) {
@@ -90,7 +90,7 @@ const NavigationBar = ({}) => {
 
       {/* {config && config.enableSupport && (
         <Link to="https://forms.office.com/e/P5gv3U3dzA">
-          <div className="h-full flex text-gray-500 font-medium da-txt-medium items-center text-skye-600 mr-4 hover:underline">
+          <div className="h-full flex text-gray-500 font-medium text-base items-center text-skye-600 mr-4 hover:underline">
             <IoIosHelpBuoy className="mr-1" size={22} />
             Support
           </div>
@@ -111,7 +111,7 @@ const NavigationBar = ({}) => {
           {isAuthorized && (
             <DaMenu
               trigger={
-                <div className="cursor-pointer flex !h-10 items-center da-btn-sm text-da-gray-medium da-btn-plain ml-2">
+                <div className="cursor-pointer flex !h-10 items-center da-btn-sm text-muted-foreground da-btn-plain ml-2">
                   <HiMenu size={22} />
                 </div>
               }
@@ -119,13 +119,13 @@ const NavigationBar = ({}) => {
               {/* Separate condition checking with component since MUI component does not accept Fragment as children */}
               <Link
                 to="/manage-users"
-                className="flex items-center px-4 py-2 gap-2 da-menu-item da-label-regular"
+                className="flex items-center px-4 py-2 gap-2 da-menu-item text-base"
               >
                 <TbUsers className="text-base" /> Manage Users
               </Link>
               <Link
                 to="/manage-features"
-                className="flex items-center px-4 py-2 gap-2 da-menu-item da-label-regular"
+                className="flex items-center px-4 py-2 gap-2 da-menu-item text-base"
               >
                 <TbStack2 className="text-base" /> Manage Features
               </Link>
