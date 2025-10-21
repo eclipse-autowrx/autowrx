@@ -8,7 +8,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { Button } from '@/components/atoms/button'
-import { DaInput } from '@/components/atoms/DaInput'
+import { Input } from '@/components/atoms/input'
 import { DaText } from '@/components/atoms/DaText'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { DaAvatar } from '@/components/atoms/DaAvatar'
@@ -91,7 +91,7 @@ const PageUserProfile = () => {
                 <div className="flex flex-col w-full ml-6 xl:ml-12">
                   <div className="flex w-full items-center justify-between">
                     {isEditing ? (
-                      <DaInput
+                      <Input
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         className="h-8 w-full max-w-[350px]"

@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { Button } from '@/components/atoms/button'
-import { DaInput } from '@/components/atoms/DaInput'
+import { Input } from '@/components/atoms/input'
 import { DaText } from '@/components/atoms/DaText'
 import { sendResetPasswordEmailService } from '@/services/auth.service'
 import { isAxiosError } from 'axios'
@@ -75,7 +75,7 @@ const FormForgotPassword = ({ setAuthType }: FormForgotPasswordProps) => {
           </DaText>
 
           {/* Content */}
-          <DaInput
+          <Input
             name="email"
             placeholder="Email"
             label="Email"

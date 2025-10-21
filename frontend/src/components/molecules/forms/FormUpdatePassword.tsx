@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { Button } from '@/components/atoms/button'
-import { DaInput } from '@/components/atoms/DaInput'
+import { Input } from '@/components/atoms/input'
 import { DaText } from '@/components/atoms/DaText'
 import { isAxiosError } from 'axios'
 import { useState } from 'react'
@@ -83,7 +83,7 @@ const FormUpdatePassword = ({}) => {
       ) : (
         <>
           {/* Content */}
-          <DaInput
+          <Input
             name="password"
             placeholder="Password"
             label="Password"
@@ -94,7 +94,7 @@ const FormUpdatePassword = ({}) => {
             iconSize={18}
           />
 
-          <DaInput
+          <Input
             name="confirmPassword"
             placeholder="Confirm password"
             label="Confirm password"

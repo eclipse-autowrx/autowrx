@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { Button } from '@/components/atoms/button'
-import { DaInput } from '@/components/atoms/DaInput'
+import { Input } from '@/components/atoms/input'
 import { DaText } from '@/components/atoms/DaText'
 import { loginService } from '@/services/auth.service'
 import { addLog } from '@/services/log.service'
@@ -77,7 +77,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
           </DaText>
           <div className="mt-6"></div>
 
-          <DaInput
+          <Input
             name="email"
             placeholder="Email"
             label="Email"
@@ -86,7 +86,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
             iconBefore
             iconSize={18}
           />
-          <DaInput
+          <Input
             name="password"
             placeholder="Password"
             label="Password"

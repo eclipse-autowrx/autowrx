@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { Button } from '@/components/atoms/button'
-import { DaInput } from '@/components/atoms/DaInput'
+import { Input } from '@/components/atoms/input'
 import { DaText } from '@/components/atoms/DaText'
 import { registerService } from '@/services/auth.service'
 import { isAxiosError } from 'axios'
@@ -95,26 +95,26 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
 
       <div className="mt-6"></div>
       {/* Content */}
-      <DaInput
+      <Input
         name="fullName"
         placeholder="Name"
         label="Name"
         className="mt-4"
       />
-      <DaInput
+      <Input
         name="email"
         placeholder="Email"
         label="Email"
         className="mt-4"
       />
-      <DaInput
+      <Input
         name="password"
         placeholder="Password"
         label="Password"
         type="password"
         className="mt-4"
       />
-      <DaInput
+      <Input
         name="confirmPassword"
         placeholder="Confirm Password"
         label="Confirm Password"

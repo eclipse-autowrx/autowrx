@@ -12,7 +12,7 @@ import { useAssets } from '@/hooks/useAssets.ts'
 import { TbTrash, TbPencil, TbShare } from "react-icons/tb"
 import DaPopup from '../components/atoms/DaPopup'
 import { Button } from "@/components/atoms/button"
-import { DaInput } from "@/components/atoms/DaInput"
+import { Input } from "@/components/atoms/input"
 import { DaSelect, DaSelectItem } from "@/components/atoms/DaSelect"
 import { useToast } from "@/components/molecules/toaster/use-toast"
 import { IoAddCircleOutline } from "react-icons/io5";
@@ -138,15 +138,15 @@ const PythonGenAIEditor = ({dataStr, onDataChange}: iPropGenAIPython) => {
 
         <div className="flex items-center space-x-2 mt-4">
             <DaText variant="small"  className="w-20">Method *:</DaText>
-            <div className="grow"> 
-                <DaInput
+            <div className="grow">
+                <Input
                     value={method}
                     onChange={(e) => onMethodChange(e.target.value)}
                     className="flex grow"
                     inputClassName="text-[14px]"
                 />
             </div>
-            
+
         </div>
 
         <div className="flex items-center space-x-2 mt-4">
@@ -230,7 +230,7 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
         <div className="w-full min-h-[200px]">
             <div className="flex items-center space-x-2 mt-4">
                 <DaText variant="small"  className="w-20">Name *</DaText>
-                <DaInput
+                <Input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className="flex grow"
