@@ -17,7 +17,7 @@ import { DaSelect, DaSelectItem } from "@/components/atoms/DaSelect"
 import { useToast } from "@/components/molecules/toaster/use-toast"
 import { IoAddCircleOutline } from "react-icons/io5";
 import ShareAssetPanel from "@/components/molecules/ShareAssetPanel"
-import { DaTextarea } from "@/components/atoms/DaTextarea"
+import { Textarea } from "@/components/atoms/textarea"
 
 interface iPropEditAssetDialog {
     asset: any,
@@ -151,8 +151,8 @@ const PythonGenAIEditor = ({dataStr, onDataChange}: iPropGenAIPython) => {
 
         <div className="flex items-center space-x-2 mt-4">
             <DaText variant="small"  className="w-20">URL *:</DaText>
-            <div className="grow"> 
-                <DaTextarea
+            <div className="grow">
+                <Textarea
                     value={url}
                     onChange={(e) => onUrlChange(e.target.value)}
                     className="flex grow"
@@ -164,8 +164,8 @@ const PythonGenAIEditor = ({dataStr, onDataChange}: iPropGenAIPython) => {
 
         <div className="flex items-center space-x-2 mt-4">
             <DaText variant="small"  className="w-20">Access Token *</DaText>
-            <div className="grow"> 
-                <DaTextarea
+            <div className="grow">
+                <Textarea
                     value={accessToken}
                     onChange={(e) => onAccessTokenChange(e.target.value)}
                     className="flex grow"
@@ -177,8 +177,8 @@ const PythonGenAIEditor = ({dataStr, onDataChange}: iPropGenAIPython) => {
 
         <div className="flex items-center space-x-2 mt-4">
             <DaText variant="small"  className="w-20">Request field *</DaText>
-            <div className="grow"> 
-                <DaTextarea
+            <div className="grow">
+                <Textarea
                     value={requestField}
                     onChange={(e) => onRequestFieldChange(e.target.value)}
                     className="flex grow"
@@ -189,8 +189,8 @@ const PythonGenAIEditor = ({dataStr, onDataChange}: iPropGenAIPython) => {
 
         <div className="flex items-center space-x-2 mt-4">
             <DaText variant="small"  className="w-20">Response field *</DaText>
-            <div className="grow"> 
-                <DaTextarea
+            <div className="grow">
+                <Textarea
                     value={responseField}
                     onChange={(e) => onResponseFieldChange(e.target.value)}
                     className="flex grow"
@@ -263,7 +263,7 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
 
             {/* <div className="flex items-center space-x-2 mt-4">
                 <DaText className="w-20">Option</DaText>
-                <DaTextarea
+                <Textarea
                     value={dataStr}
                     onChange={(e: any) => setDataStr(e.target.value)}
                     className="grow"

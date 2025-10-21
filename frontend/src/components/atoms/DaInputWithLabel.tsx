@@ -7,8 +7,8 @@
 // SPDX-License-Identifier: MIT
 
 import DaText from './DaText'
-import { DaInput } from './DaInput'
-import { DaTextarea } from './DaTextarea'
+import { Input } from './input'
+import { Textarea } from './textarea'
 import { cn } from '@/lib/utils'
 
 interface DaInputWithLabel {
@@ -34,14 +34,14 @@ const DaInputWithLabel = ({
       {label}
     </DaText>
     {isTextarea ? (
-      <DaTextarea
+      <Textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="flex w-full"
         textareaClassName="text-sm!"
       />
     ) : (
-      <DaInput
+      <Input
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="flex w-full"
