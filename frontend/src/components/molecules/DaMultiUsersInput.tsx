@@ -46,7 +46,7 @@ const DaMultiUsersInput = ({
   return (
     <div
       className={clsx(
-        'flex max-h-[160px] min-h-10 w-full gap-2 overflow-y-auto rounded-md border border-input px-2 pt-[6px] outline-[3px] outline-primary/20 focus-within:outline',
+        'flex max-h-[160px] min-h-10 w-full gap-2 overflow-y-auto rounded-md border border-input px-2 pt-[6px] outline-[3px] outline-primary/20 focus-within:outline-solid',
         className,
       )}
     >
@@ -77,7 +77,7 @@ const DaMultiUsersInput = ({
           value={inputString}
           onChange={(e) => onInputStringChange(e.target.value)}
           autoFocus
-          className="block w-full bg-transparent text-foreground outline-none"
+          className="block w-full bg-transparent text-foreground outline-hidden"
           placeholder="Email of users"
         />
 
@@ -87,7 +87,7 @@ const DaMultiUsersInput = ({
       {accessLevels && selectedUsers.length > 0 && (
         <DaSelect
           wrapperClassName="ml-auto sticky self-start -top-[5px] -mt-[5px] -mb-1 -mr-1"
-          className="h-7 border-none !shadow-none"
+          className="h-7 border-none shadow-none!"
           value={accessLevelId}
           onValueChange={(value) => onAccessLevelIdChange(value)}
         >

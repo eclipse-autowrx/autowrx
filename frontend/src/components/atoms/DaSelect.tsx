@@ -47,7 +47,7 @@ const DaSelect = React.forwardRef<
       onValueChange={onValueChange}
     >
       <div data-id={dataId} className={cn('flex flex-col', wrapperClassName)}>
-        <DaText className="!font-medium">{label}</DaText>
+        <DaText className="font-medium!">{label}</DaText>
         {label && <div className="pb-1"></div>}
         <SelectTrigger
           ref={ref}
@@ -74,7 +74,7 @@ const DaSelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={clsx(
-      'focus:bg-accent relative flex w-full cursor-pointer select-none rounded bg-white py-1.5 pl-2 pr-8 text-muted-foreground outline-none hover:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+      'focus:bg-accent relative flex w-full cursor-pointer select-none rounded bg-white py-1.5 pl-2 pr-8 text-muted-foreground outline-hidden hover:bg-gray-100 data-disabled:pointer-events-none data-disabled:opacity-50',
       helperText ? 'flex' : 'items-center',
       className,
     )}
@@ -107,7 +107,7 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={clsx(
-      'flex h-10 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-2 py-2 shadow-sm focus:border-primary disabled:opacity-50 [&>span]:line-clamp-1',
+      'flex h-10 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-2 py-2 shadow-xs focus:border-primary disabled:opacity-50 [&>span]:line-clamp-1',
       className,
     )}
     {...props}
@@ -128,7 +128,7 @@ const SelectContent = React.forwardRef<
     <SelectPrimitive.Content
       ref={ref}
       className={clsx(
-        'bg-popover relative z-[1500] max-h-96 min-w-[8rem] overflow-hidden rounded-md border shadow-sm data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1 data-[state=open]:animate-in data-[state=closed]:animate-out',
+        'bg-popover relative z-1500 max-h-96 min-w-32 overflow-hidden rounded-md border shadow-xs data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1 data-[state=open]:animate-in data-[state=closed]:animate-out',
         className,
       )}
       position="popper"
@@ -136,7 +136,7 @@ const SelectContent = React.forwardRef<
     >
       <SelectPrimitive.Viewport
         className={clsx(
-          'h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)] bg-white p-1',
+          'h-(--radix-select-trigger-height) w-full min-w-(--radix-select-trigger-width) bg-white p-1',
         )}
       >
         {children}

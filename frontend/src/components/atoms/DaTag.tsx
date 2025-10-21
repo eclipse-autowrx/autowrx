@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils'
 const badgeVariants = cva(
   ` inline-flex items-center justify-center rounded-md border px-2.5 py-0.5 transition-colors
     text-sm
-    focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 pointer-events-none select-none`,
+    focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 pointer-events-none select-none`,
   {
     variants: {
       variant: {

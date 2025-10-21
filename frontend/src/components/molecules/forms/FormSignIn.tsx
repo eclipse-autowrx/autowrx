@@ -130,7 +130,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
                 type="button"
                 onClick={() => setAuthType('register')}
                 variant="text"
-                className="text-primary !text-sm !px-1.5"
+                className="text-primary text-sm! px-1.5!"
               >
                 Register
               </DaButton>

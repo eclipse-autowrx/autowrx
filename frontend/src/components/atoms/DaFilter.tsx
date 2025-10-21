@@ -86,7 +86,7 @@ const DaFilter = ({
   return (
     <div className="relative" ref={dropdownRef}>
       <DaButton
-        className={cn('text-primary mr-2 !shadow-sm', className)}
+        className={cn('text-primary mr-2 shadow-xs!', className)}
         variant="outline-nocolor"
         size="md"
         onClick={toggleDropdownVisibility}
@@ -99,7 +99,7 @@ const DaFilter = ({
             <li key={category}>
               {index > 0 && <hr className="my-2 border-t" />}
               {showCategory && (
-                <div className="ml-2 text-sm font-bold text-muted-foreground !mt-2 mb-1">
+                <div className="ml-2 text-sm font-bold text-muted-foreground mt-2! mb-1">
                   {category}
                 </div>
               )}

@@ -61,7 +61,7 @@ const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
         <div
           className={cn(
             `h-10 py-1 flex items-center rounded-md border bg-background
-          text-base shadow-sm transition-colors text-foreground`,
+          text-base shadow-xs transition-colors text-foreground`,
             !focused && 'border-input',
             focused && 'border-primary text-primary',
             wrapperClassName,
@@ -83,7 +83,7 @@ const DaInput = React.forwardRef<HTMLInputElement, InputProps>(
             className={cn(
               `grow flex px-2 py-1 h-8 w-full
                 placeholder:text-muted-foreground/60
-                focus-visible:ring-0 focus-visible:outline-none
+                focus-visible:ring-0 focus-visible:outline-hidden
                 disabled:cursor-not-allowed`,
               inputClassName,
             )}

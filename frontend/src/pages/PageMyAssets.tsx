@@ -156,7 +156,7 @@ const PythonGenAIEditor = ({dataStr, onDataChange}: iPropGenAIPython) => {
                     value={url}
                     onChange={(e) => onUrlChange(e.target.value)}
                     className="flex grow"
-                    textareaClassName="!text-[14px] !leading-tight"
+                    textareaClassName="text-[14px]! leading-tight!"
                 />
             </div>
         </div>
@@ -169,7 +169,7 @@ const PythonGenAIEditor = ({dataStr, onDataChange}: iPropGenAIPython) => {
                     value={accessToken}
                     onChange={(e) => onAccessTokenChange(e.target.value)}
                     className="flex grow"
-                    textareaClassName="!text-[14px] !leading-tight"
+                    textareaClassName="text-[14px]! leading-tight!"
                 />
                 <div className=" text-sm mt-1 text-foreground">* Notice: This token will be sent in the Authorization header.</div>
             </div>
@@ -182,7 +182,7 @@ const PythonGenAIEditor = ({dataStr, onDataChange}: iPropGenAIPython) => {
                     value={requestField}
                     onChange={(e) => onRequestFieldChange(e.target.value)}
                     className="flex grow"
-                    textareaClassName="!text-[14px] !leading-tight"
+                    textareaClassName="text-[14px]! leading-tight!"
                 />
             </div>
         </div>
@@ -194,7 +194,7 @@ const PythonGenAIEditor = ({dataStr, onDataChange}: iPropGenAIPython) => {
                     value={responseField}
                     onChange={(e) => onResponseFieldChange(e.target.value)}
                     className="flex grow"
-                    textareaClassName="!text-[14px] !leading-tight"
+                    textareaClassName="text-[14px]! leading-tight!"
                 />
             </div>
         </div>
@@ -242,7 +242,7 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
                 <DaText variant="small" className="w-20">Type *</DaText>
                 <DaSelect
                     wrapperClassName="grow"
-                    className="h-10 border border-gray-200 !shadow-none text-[14px]"
+                    className="h-10 border border-gray-200 shadow-none! text-[14px]"
                     defaultValue="CLOUD_RUNTIME"
                     value={type}
                     onValueChange={(value) => setType(value)}
@@ -267,7 +267,7 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
                     value={dataStr}
                     onChange={(e: any) => setDataStr(e.target.value)}
                     className="grow"
-                    textareaClassName="!text-sm h-40"
+                    textareaClassName="text-sm! h-40"
                 />
             </div> */}
 
@@ -275,7 +275,7 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
         </div>
 
         <div className="flex justify-end space-x-2 mt-6">
-            <DaButton className="w-32" variant="outline" onClick={() => {
+            <DaButton className="w-32" variant="outline-nocolor" onClick={() => {
                 if (onCancel) onCancel()
             }}>
                 Cancel
@@ -369,7 +369,7 @@ const PageMyAssets = () => {
                     My Assets
                 </DaText>
                 <div className="grow"></div>
-                <DaButton variant="outline"
+                <DaButton variant="outline-nocolor"
                     onClick={() => {
                         setActiveAsset({
                             name: '',

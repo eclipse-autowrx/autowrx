@@ -48,8 +48,8 @@ const PageNotFound = () => {
             Go Back Home
           </DaButton>
           
-          <DaButton 
-            variant="outline"
+          <DaButton
+            variant="outline-nocolor"
             onClick={() => window.history.back()}
             className="w-full"
           >

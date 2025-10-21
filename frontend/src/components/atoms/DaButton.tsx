@@ -15,7 +15,7 @@ interface DaButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   dataId?: string,
   variant?:
     | 'solid'
-    | 'outline'
+    | 'outline-solid'
     | 'outline-nocolor'
     | 'text'
     | 'plain'

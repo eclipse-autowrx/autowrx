@@ -22,7 +22,7 @@ const DaTextarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         {/* Put textarea before label to enable peer-focus */}
         <textarea
           className={clsx(
-            'flex min-h-[60px] w-full rounded-lg border border-input bg-transparent px-3 py-2 text-base shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary disabled:opacity-50 peer',
+            'flex min-h-[60px] w-full rounded-lg border border-input bg-transparent px-3 py-2 text-base shadow-xs focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-primary disabled:opacity-50 peer',
             textareaClassName,
             label && 'mt-1',
           )}

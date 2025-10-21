@@ -65,7 +65,7 @@ const DaStep = ({
       {index !== undefined && (
         <div
           className={clsx(
-            'text-sm flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full',
+            'text-sm flex h-6 w-6 shrink-0 items-center justify-center rounded-full',
             {
               'border border-muted-foreground bg-transparent':
                 state === 'inactive',

@@ -102,7 +102,7 @@ const NavigationBar = ({}) => {
           {/* <DaGlobalSearch>
             <DaButton
               variant="outline-nocolor"
-              className="w-[140px] flex items-center !justify-start !border-gray-300 shadow-lg"
+              className="w-[140px] flex items-center justify-start! border-gray-300! shadow-lg"
             >
               <TbZoom className="size-5 mr-2" />
               Search
@@ -111,7 +111,7 @@ const NavigationBar = ({}) => {
           {isAuthorized && (
             <DaMenu
               trigger={
-                <div className="cursor-pointer flex !h-10 items-center da-btn-sm text-muted-foreground da-btn-plain ml-2">
+                <div className="cursor-pointer flex h-10! items-center da-btn-sm text-muted-foreground da-btn-plain ml-2">
                   <HiMenu size={22} />
                 </div>
               }
