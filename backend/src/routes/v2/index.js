@@ -22,6 +22,7 @@ const searchRoute = require('./search.route');
 const homologationRoute = require('./homologation.route');
 const assetRoute = require('./asset.route');
 const changeLogRoute = require('./changeLog.route');
+const fileRoute = require('./file.route');
 
 const router = express.Router();
 
@@ -85,6 +86,10 @@ const defaultRoutes = [
   {
     path: '/change-logs',
     route: changeLogRoute,
+  },
+  {
+    path: '/file',
+    route: fileRoute,
   },
 ];
 

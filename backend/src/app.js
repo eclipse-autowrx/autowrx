@@ -68,6 +68,13 @@ passport.use('jwt', jwtStrategy);
 app.use('/v2', routesV2);
 app.use('/static', express.static(path.join(__dirname, '../static')));
 app.use('/imgs', express.static(path.join(__dirname, '../static/imgs')));
+// Serve uploaded files with date-based directory structure
+app.use('/d', express.static(path.join(__dirname, '../static/uploads'), {
+  setHeaders: (res, path) => {
+    // Set appropriate headers for file downloads
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 year cache
+  }
+}));
 
 // Setup proxy to other services
 setupProxy(app);

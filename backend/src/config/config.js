@@ -67,6 +67,8 @@ const envVarsSchema = Joi.object()
     ADMIN_PASSWORD: Joi.string().description('Admin password'),
     // Change Logs max size
     LOGS_MAX_SIZE: Joi.number().default(100).description('Max size of change logs in megabytes'),
+    // File upload settings
+    MAX_IMAGE_DIMENSION: Joi.number().default(1024).description('Maximum image dimension in pixels'),
   })
   .unknown();
 
@@ -117,6 +119,11 @@ const config = {
   },
   cors: {
     origins: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) {
+        return callback(null, true);
+      }
+      
       // Allow requests from localhost and 127.0.0.1 with any port
       const allowedOrigins = [
         /^http:\/\/localhost:\d+$/,
@@ -131,6 +138,7 @@ const config = {
       if (isAllowed) {
         callback(null, true);
       } else {
+        console.log(`CORS blocked origin: ${origin}`);
         callback(new Error('Not allowed by CORS'));
       }
     },
@@ -189,6 +197,9 @@ const config = {
   adminEmails: envVars.ADMIN_EMAILS?.split(',') || [],
   adminPassword: envVars.ADMIN_PASSWORD,
   logsMaxSize: envVars.LOGS_MAX_SIZE,
+  fileUpload: {
+    maxImageDimension: envVars.MAX_IMAGE_DIMENSION,
+  },
 };
 
 if (config.env === 'development') {

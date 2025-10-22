@@ -20,4 +20,5 @@ module.exports.extendedApiValidation = require('./extendedApi.validation');
 module.exports.issueValidation = require('./issue.validation');
 module.exports.searchValidation = require('./search.validation');
 module.exports.assetValidation = require('./asset.validation');
+module.exports.fileValidation = require('./file.validation');
 // Inventory validations removed

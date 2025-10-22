@@ -1,0 +1,135 @@
+{
+  "info": { 
+    "name": "Files", 
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json" 
+  },
+  "item": [
+    {
+      "name": "Upload File",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "url": { 
+          "raw": "{{baseUrl}}/v2/file/upload/store-be", 
+          "host": ["{{baseUrl}}"], 
+          "path": ["v2","file","upload","store-be"] 
+        },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": []
+            }
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "Success Response",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": { 
+              "raw": "{{baseUrl}}/v2/file/upload/store-be", 
+              "host": ["{{baseUrl}}"], 
+              "path": ["v2","file","upload","store-be"] 
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"url\": \"/d/2024-01-15/file-1234567890-123456789.jpg\"\n}"
+        },
+        {
+          "name": "Error Response - No File",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": { 
+              "raw": "{{baseUrl}}/v2/file/upload/store-be", 
+              "host": ["{{baseUrl}}"], 
+              "path": ["v2","file","upload","store-be"] 
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": []
+            }
+          },
+          "status": "Bad Request",
+          "code": 400,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"code\": 400,\n  \"message\": \"No file uploaded\"\n}"
+        },
+        {
+          "name": "Error Response - Unauthorized",
+          "originalRequest": {
+            "method": "POST",
+            "header": [],
+            "url": { 
+              "raw": "{{baseUrl}}/v2/file/upload/store-be", 
+              "host": ["{{baseUrl}}"], 
+              "path": ["v2","file","upload","store-be"] 
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          },
+          "status": "Unauthorized",
+          "code": 401,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"code\": 401,\n  \"message\": \"Please authenticate\"\n}"
+        }
+      ]
+    }
+  ],
+  "variable": [ 
+    { "key": "baseUrl", "value": "http://localhost:8080" }, 
+    { "key": "accessToken", "value": "" } 
+  ]
+}

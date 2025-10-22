@@ -18,4 +18,5 @@ module.exports.issueController = require('./issue.controller');
 module.exports.searchController = require('./search.controller');
 module.exports.assetController = require('./asset.controller');
 module.exports.changeLogController = require('./changeLog.controller');
+module.exports.fileController = require('./file.controller');
 // Inventory controllers removed
