@@ -54,9 +54,6 @@ jobs:
           echo "EMAIL_FROM=support@yourapp.com" >> .env
           echo "UPLOAD_PATH=./data/upload" >> .env
           echo "MONGODB_URL=mongodb://127.0.0.1:27017/test-db" >> .env
-          echo "UPLOAD_PORT=4000" >> .env
-          echo "UPLOAD_DOMAIN=http://localhost" >> .env
-          echo "UPLOAD_PATH=./upload-data" >> .env
           echo "TAG=dev-${SHORT_SHA}-${GIT_TAG}" >> .env
 
       - name: Log in to GitHub Container Registry

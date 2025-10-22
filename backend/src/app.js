@@ -36,7 +36,43 @@ if (config.env !== 'test') {
 app.use(cookies());
 
 // set security HTTP headers
-app.use(helmet());
+if (config.env === 'development') {
+  // More permissive CSP for development
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'", "http://localhost:3210", "https://localhost:3210"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "http://localhost:3210", "https://localhost:3210"],
+        scriptSrcElem: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "http://localhost:3210", "https://localhost:3210"],
+        styleSrc: ["'self'", "'unsafe-inline'", "http://localhost:3210", "https://localhost:3210", "https:"],
+        imgSrc: ["'self'", "data:", "http://localhost:3210", "https://localhost:3210", "https:"],
+        connectSrc: ["'self'", "ws:", "wss:", "http://localhost:3210", "https://localhost:3210"],
+        fontSrc: ["'self'", "https:", "data:", "http://localhost:3210", "https://localhost:3210"],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'", "http://localhost:3210", "https://localhost:3210"],
+        frameSrc: ["'self'"],
+        upgradeInsecureRequests: null, // Disable upgrade to HTTPS in development
+      },
+    },
+  }));
+} else {
+  // Production CSP - more restrictive but allows the frontend assets
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https:"],
+        imgSrc: ["'self'", "data:", "https:"],
+        connectSrc: ["'self'"],
+        fontSrc: ["'self'", "https:", "data:"],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'"],
+        frameSrc: ["'self'"],
+      },
+    },
+  }));
+}
 
 // parse json request body
 app.use(express.json({ limit: '50mb', strict: false }));
@@ -68,7 +104,7 @@ passport.use('jwt', jwtStrategy);
 
 app.use('/v2', routesV2);
 app.use('/static', express.static(path.join(__dirname, '../static')));
-app.use('/imgs', express.static(path.join(__dirname, '../static/imgs')));
+app.use('/images', express.static(path.join(__dirname, '../static/images')));
 // Serve uploaded files with date-based directory structure
 app.use('/d', express.static(path.join(__dirname, '../static/uploads'), {
   setHeaders: (res, path) => {
@@ -82,24 +118,49 @@ setupProxy(app);
 
 // Development proxy to frontend
 if (config.env === 'development') {
-  app.use('/', createProxyMiddleware({
+  // Only proxy the root route to frontend, let Vite handle all assets
+  app.get('/', createProxyMiddleware({
     target: 'http://localhost:3210',
     changeOrigin: true,
-    ws: true, // Enable WebSocket proxying
+    ws: true,
     onError: (err, req, res) => {
       console.log('Frontend proxy error:', err.message);
       res.status(503).send('Frontend service unavailable');
-    },
-    // Only proxy non-API routes
-    filter: (pathname, req) => {
-      // Don't proxy API routes, static files, or uploads
-      return !pathname.startsWith('/v2') && 
-             !pathname.startsWith('/static') && 
-             !pathname.startsWith('/imgs') && 
-             !pathname.startsWith('/d') &&
-             !pathname.startsWith('/api');
     }
   }));
+  
+  // For all other non-API routes, redirect to frontend
+  app.get('*', (req, res, next) => {
+    // Skip if it's an API route or backend static file
+    if (req.path.startsWith('/v2') || 
+        req.path.startsWith('/static') || 
+        req.path.startsWith('/images') || 
+        req.path.startsWith('/d') ||
+        req.path.startsWith('/api')) {
+      return next();
+    }
+    
+    // Redirect to frontend for all other routes
+    res.redirect(`http://localhost:3210${req.path}`);
+  });
+} else {
+  // Serve frontend-dist directory as the root route
+  app.use('/', express.static(path.join(__dirname, '../static/frontend-dist')));
+
+  // For all other non-API routes, serve the frontend's index.html
+  app.get('*', (req, res, next) => {
+    // Skip if it's an API route or backend static file
+    if (req.path.startsWith('/v2') ||
+        req.path.startsWith('/static') ||
+        req.path.startsWith('/images') ||
+        req.path.startsWith('/d') ||
+        req.path.startsWith('/api')) {
+      return next();
+    }
+
+    // Serve the index.html for all other routes to enable client-side routing
+    res.sendFile(path.join(__dirname, '../static/frontend-dist/index.html'));
+  });
 }
 
 const server = require('http').createServer(app);

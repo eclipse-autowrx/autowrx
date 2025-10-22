@@ -38,9 +38,6 @@ const envVarsSchema = Joi.object()
     CLIENT_BASE_URL: Joi.string().description('Client base url').default('http://localhost:3000'),
     GITHUB_CLIENT_ID: Joi.string().description('Github client id'),
     GITHUB_CLIENT_SECRET: Joi.string().description('Github client secret'),
-    // Upload service
-    UPLOAD_PORT: Joi.number().required().description('Upload port'),
-    UPLOAD_DOMAIN: Joi.string().required().description('Upload domain'),
     // Log service URL
     LOG_URL: Joi.string().description('Log base url'),
     // Cache service URL
@@ -154,10 +151,6 @@ const config = {
     clientSecret: process.env.GITHUB_CLIENT_SECRET,
   },
   services: {
-    upload: {
-      port: envVars.UPLOAD_PORT,
-      domain: envVars.UPLOAD_DOMAIN,
-    },
     log: {
       port: envVars.LOG_PORT || 9600,
     },
