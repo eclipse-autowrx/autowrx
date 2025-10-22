@@ -23,6 +23,7 @@ const ApiError = require('./utils/ApiError');
 const { setupProxy } = require('./config/proxyHandler');
 const { init: initSocketIO } = require('./config/socket');
 const path = require('path');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
 
@@ -78,6 +79,29 @@ app.use('/d', express.static(path.join(__dirname, '../static/uploads'), {
 
 // Setup proxy to other services
 setupProxy(app);
+
+// Development proxy to frontend
+if (config.env === 'development') {
+  app.use('/', createProxyMiddleware({
+    target: 'http://localhost:3210',
+    changeOrigin: true,
+    ws: true, // Enable WebSocket proxying
+    onError: (err, req, res) => {
+      console.log('Frontend proxy error:', err.message);
+      res.status(503).send('Frontend service unavailable');
+    },
+    // Only proxy non-API routes
+    filter: (pathname, req) => {
+      // Don't proxy API routes, static files, or uploads
+      return !pathname.startsWith('/v2') && 
+             !pathname.startsWith('/static') && 
+             !pathname.startsWith('/imgs') && 
+             !pathname.startsWith('/d') &&
+             !pathname.startsWith('/api');
+    }
+  }));
+}
+
 const server = require('http').createServer(app);
 initSocketIO(server);
 
