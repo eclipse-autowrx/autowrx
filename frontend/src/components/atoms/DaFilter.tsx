@@ -7,11 +7,10 @@
 // SPDX-License-Identifier: MIT
 
 import { useState, useEffect, useRef } from 'react'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import { cn } from '@/lib/utils'
-import DaCheckbox from './DaCheckbox'
+import { Checkbox } from '@/components/atoms/checkbox'
 import { TbSortDescending } from 'react-icons/tb'
-import { DaText } from './DaText'
 
 interface DaFilterProps {
   categories: { [key: string]: string[] }
@@ -85,14 +84,13 @@ const DaFilter = ({
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <DaButton
-        className={cn('text-primary mr-2 shadow-xs!', className)}
-        variant="outline-nocolor"
-        size="md"
+      <Button
+        className={cn('text-primary mr-2 shadow-xs', className)}
+        variant="outline"
         onClick={toggleDropdownVisibility}
       >
         <TbSortDescending className="size-5 mr-1.5" /> {label || 'Filter'}
-      </DaButton>
+      </Button>
       {isDropdownVisible && (
         <ul className="absolute right-0 z-10 bg-white border rounded-md shadow-lg mt-2 max-w-fit p-1 select-none min-w-[140px]">
           {Object.entries(categories).map(([category, options], index) => (
@@ -104,12 +102,16 @@ const DaFilter = ({
                 </div>
               )}
               {options.map((option) => (
-                <DaCheckbox
+                <label
                   key={option}
-                  checked={selectedOptions.includes(option)}
-                  onChange={() => handleOptionChange(option)}
-                  label={option}
-                />
+                  className="flex items-center relative p-2 cursor-pointer"
+                >
+                  <Checkbox
+                    checked={selectedOptions.includes(option)}
+                    onCheckedChange={() => handleOptionChange(option)}
+                  />
+                  <span className="ml-2 cursor-pointer">{option}</span>
+                </label>
               ))}
             </li>
           ))}

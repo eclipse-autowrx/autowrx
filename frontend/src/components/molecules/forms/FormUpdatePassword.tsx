@@ -8,7 +8,6 @@
 
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
-import { DaText } from '@/components/atoms/DaText'
 import { isAxiosError } from 'axios'
 import { useState } from 'react'
 import { TbCircleCheckFilled, TbLoader, TbLock } from 'react-icons/tb'
@@ -69,15 +68,15 @@ const FormUpdatePassword = ({}) => {
       className="w-[30vw] lg:w-[25vw] max-h-[80vh] bg-white"
     >
       {/* Title */}
-      <DaText variant="title" className="text-primary">
+      <h2 className="text-xl font-semibold text-primary">
         Change Password
-      </DaText>
+      </h2>
 
       {changed ? (
         <>
-          <DaText className="block mt-4">
+          <span className="block mt-4">
             Reset password success! Please login with your new password.
-          </DaText>
+          </span>
           <TbCircleCheckFilled className="text-6xl text-green-500 mx-auto my-4" />
         </>
       ) : (
@@ -107,9 +106,9 @@ const FormUpdatePassword = ({}) => {
 
           {/* Error */}
           {error && (
-            <DaText variant="small" className="mt-2 block text-red-500">
+            <span className="text-sm mt-2 block text-red-500">
               {error}
-            </DaText>
+            </span>
           )}
           {/* Action */}
           <Button

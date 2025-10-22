@@ -8,11 +8,10 @@
 
 import { InvitedUser } from '@/types/user.type.ts'
 import { DaAvatar } from '../atoms/DaAvatar'
-import DaText from '../atoms/DaText'
 import { TbChevronDown, TbCircle, TbCircleCheckFilled } from 'react-icons/tb'
 import clsx from 'clsx'
 import DaMenu from '../atoms/DaMenu'
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
 type DaUserInviteItemProps = {
@@ -49,32 +48,32 @@ const DaUserInviteItem = ({
       <DaAvatar src={user.image_file} />
 
       <div className="flex-1 overflow-x-hidden">
-        <DaText className="block text-foreground">
+        <span className="block text-foreground">
           {user.name} {self?.id === user.id && '(You)'}
-        </DaText>
-        <DaText className="block truncate text-muted-foreground" variant="small">
+        </span>
+        <span className="block truncate text-muted-foreground" >
           {user.email}
-        </DaText>
+        </span>
       </div>
 
       {!isInviting ? (
         <div className={clsx(forbidRemove && 'pointer-events-none')}>
           <DaMenu
             trigger={
-              <DaText className="text-sm flex cursor-pointer! items-center text-muted-foreground">
+              <span className="text-sm flex cursor-pointer! items-center text-muted-foreground">
                 {accessLevel}{' '}
                 {!forbidRemove && <TbChevronDown className="ml-1" />}
-              </DaText>
+              </span>
             }
           >
-            <DaButton
+            <Button
               onClick={() => onRemoveAccess && onRemoveAccess(user)}
               variant="destructive"
               size="sm"
               className="w-[100px]"
             >
               <p className="w-full text-left">Remove</p>
-            </DaButton>
+            </Button>
           </DaMenu>
         </div>
       ) : (

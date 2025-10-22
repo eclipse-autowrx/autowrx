@@ -7,7 +7,6 @@
 // SPDX-License-Identifier: MIT
 
 import { Button } from '@/components/atoms/button'
-import { DaText } from '@/components/atoms/DaText'
 import { TbLoader } from 'react-icons/tb'
 
 interface FormAlertProps {

@@ -9,10 +9,9 @@
 import { User } from '@/types/user.type.ts'
 import { TbLogout, TbUser } from 'react-icons/tb'
 import { BsBox } from "react-icons/bs";
-import { DaButton } from '../atoms/DaButton'
+import { Button } from '@/components/atoms/button'
 import useAuthStore from '@/stores/authStore'
 import DaMenu from '../atoms/DaMenu'
-import { DaText } from '../atoms/DaText'
 import { Link } from 'react-router-dom'
 
 interface DaUserDropdownProps {
@@ -34,7 +33,7 @@ const DaUserMenu = ({ user }: DaUserDropdownProps) => {
     <div className="flex items-center justify-center ml-2">
       <DaMenu
         trigger={
-          <DaButton variant="plain" className="h-10 w-10 p-2!">
+          <Button variant="ghost" className="h-10 w-10 p-2">
             <img
               src={user.image_file || '/imgs/profile.png'}
               alt="User profile"
@@ -43,32 +42,32 @@ const DaUserMenu = ({ user }: DaUserDropdownProps) => {
                 e.currentTarget.src = '/imgs/profile.png';
               }}
             />
-          </DaButton>
+          </Button>
         }
       >
         <Link
           to="/profile"
           className="flex px-4 py-2 da-menu-item items-center"
         >
-          <DaText variant="small-medium" className="flex items-center gap-2 ">
+          <span className="text-sm font-medium flex items-center gap-2 ">
             <TbUser /> User Profile
-          </DaText>
+          </span>
         </Link>
         <Link
           to="/my-assets"
           className="flex px-4 py-2 da-menu-item items-center"
         >
-          <DaText variant="small-medium" className="flex items-center gap-2 ">
+          <span className="text-sm font-medium flex items-center gap-2 ">
             <BsBox /> My Assets
-          </DaText>
+          </span>
         </Link>
         <div
           onClick={handleLogout}
           className="px-4 py-2 da-menu-item flex items-center gap-2"
         >
-          <DaText variant="small-medium" className="flex items-center gap-2">
+          <span className="text-sm font-medium flex items-center gap-2">
             <TbLogout /> Logout
-          </DaText>
+          </span>
         </div>
       </DaMenu>
     </div>

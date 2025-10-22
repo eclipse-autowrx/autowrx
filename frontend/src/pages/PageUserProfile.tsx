@@ -9,14 +9,13 @@
 import React, { useEffect, useState } from 'react'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
-import { DaText } from '@/components/atoms/DaText'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { DaAvatar } from '@/components/atoms/DaAvatar'
 import DaImportFile from '@/components/atoms/DaImportFile'
 import { TbCircleFilled, TbPhotoEdit } from 'react-icons/tb'
 import { uploadFileService } from '@/services/upload.service.ts'
 import { partialUpdateUserService } from '@/services/user.service'
-import DaPopup from '@/components/atoms/DaPopup'
+import { Dialog, DialogContent, DialogTrigger } from '@/components/atoms/dialog'
 
 const PageUserProfile = () => {
   const [isEditing, setIsEditing] = useState(false)
@@ -60,15 +59,12 @@ const PageUserProfile = () => {
         <div className="flex flex-col w-full max-w-[70vw] xl:max-w-[50vw] 2xl:max-w-[40vw]">
           <div className="flex flex-col items-center container mt-6 w-full">
             <div className="flex flex-col w-full">
-              <DaText
-                variant="huge-bold"
-                className="text-foreground font-semibold"
-              >
+              <h1 className="text-2xl font-semibold text-foreground">
                 Profile
-              </DaText>
-              <DaText variant="small" className="mt-1">
+              </h1>
+              <p className="text-sm mt-1">
                 You can edit your profile information and manage kits here.
-              </DaText>
+              </p>
             </div>
             <div className="flex flex-col w-full mt-8">
               <div className="flex items-center">
@@ -99,12 +95,9 @@ const PageUserProfile = () => {
                       />
                     ) : (
                       <div className="truncate max-w-[350px]">
-                        <DaText
-                          variant="title"
-                          className="text-foreground truncate "
-                        >
+                        <h2 className="text-xl font-semibold text-foreground truncate">
                           {user?.name}
-                        </DaText>
+                        </h2>
                       </div>
                     )}
                     {isEditing ? (
@@ -132,23 +125,23 @@ const PageUserProfile = () => {
                     )}
                   </div>
 
-                  <DaText variant="regular" className="mx-1 mt-1">
+                  <p className="text-base mx-1 mt-1">
                     {user?.email}
-                  </DaText>
+                  </p>
                 </div>
               </div>
               {/* <div className="flex flex-col mt-8">
-                <DaText variant="regular-bold" className="text-foreground">
+                <div className="text-base font-semibold text-foreground">
                   UID
-                </DaText>
-                <DaText variant="small" className="text-muted-foreground">
+                </div>
+                <div className="text-sm text-muted-foreground">
                   {user?.id}
-                </DaText>
+                </div>
               </div> */}
               <div className="flex flex-col w-full mt-6">
-                <DaText variant="regular-bold" className="text-foreground">
+                <div className="text-base font-semibold text-foreground">
                   Password
-                </DaText>
+                </div>
                 <div className="flex w-full items-start justify-between">
                   <div className="flex space-x-1 mt-2">
                     {[...Array(8)].map((_, index) => (
@@ -159,9 +152,8 @@ const PageUserProfile = () => {
                     ))}
                   </div>
                   <div className="">
-                    <DaPopup
-                      state={[isOpenPopup, setIsOpenPopup]}
-                      trigger={
+                    <Dialog open={isOpenPopup} onOpenChange={setIsOpenPopup}>
+                      <DialogTrigger asChild>
                         <Button
                           size="sm"
                           variant="outline"
@@ -169,12 +161,13 @@ const PageUserProfile = () => {
                         >
                           Change password
                         </Button>
-                      }
-                    >
-                      <div className="p-4">
-                        <DaText variant="regular">Password change functionality is not available.</DaText>
-                      </div>
-                    </DaPopup>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <div className="p-4">
+                          <p className="text-base">Password change functionality is not available.</p>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </div>
               </div>

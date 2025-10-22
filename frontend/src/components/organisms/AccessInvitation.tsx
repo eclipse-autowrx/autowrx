@@ -7,10 +7,9 @@
 // SPDX-License-Identifier: MIT
 
 import { useRef, useState } from 'react'
-import DaPopup from '@/components/atoms/DaPopup.tsx'
-import DaText from '@/components/atoms/DaText.tsx'
+import { Dialog, DialogContent } from '@/components/atoms/dialog'
 import DaMultiUsersInput from '@/components/molecules/DaMultiUsersInput.tsx'
-import { DaButton } from '@/components/atoms/DaButton.tsx'
+import { Button } from '@/components/atoms/button'
 import { InvitedUser } from '@/types/user.type.ts'
 import DaCollaboratorSearchPicker from '@/components/molecules/DaCollaboratorSearchPicker.tsx'
 import { isAxiosError } from 'axios'
@@ -106,12 +105,12 @@ const AccessInvitation = ({
   })
 
   return (
-    <DaPopup state={[open, onClose]} trigger={<></>}>
-      <div className="flex h-[500px] max-h-[calc(100vw-160px)] min-h-[400px] w-[560px] max-w-[calc(100vw-80px)] flex-col rounded">
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="flex h-[500px] max-h-[calc(100vw-160px)] min-h-[400px] w-[560px] max-w-[calc(100vw-80px)] flex-col rounded">
         <div className="mb-4">
-          <DaText variant="sub-title" className="text-primary">
+          <h3 className="text-lg font-semibold text-primary">
             {label}
-          </DaText>
+          </h3>
 
           <div className="mt-2 flex gap-4">
             <DaMultiUsersInput
@@ -125,13 +124,13 @@ const AccessInvitation = ({
               onAccessLevelIdChange={setAccessLevelId}
               className="min-w-0 flex-1"
             />
-            <DaButton
+            <Button
               onClick={() => mutateInviting()}
               className="shrink-0"
               disabled={isPending || selectedUsers.size === 0}
             >
               Invite {isPending && <DaLoader className="ml-2 text-white" />}
-            </DaButton>
+            </Button>
           </div>
         </div>
 
@@ -144,8 +143,8 @@ const AccessInvitation = ({
             onRemoveAccess={(user) => mutateRemovingUserAccess(user)}
           />
         </div>
-      </div>
-    </DaPopup>
+      </DialogContent>
+    </Dialog>
   )
 }
 

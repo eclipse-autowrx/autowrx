@@ -7,8 +7,8 @@
 // SPDX-License-Identifier: MIT
 
 import { useState, useEffect } from 'react'
-import { DaButton } from '../atoms/DaButton'
-import DaPopup from '../atoms/DaPopup'
+import { Button } from '@/components/atoms/button'
+import { Dialog, DialogContent } from '@/components/atoms/dialog'
 import FormSignIn from './forms/FormSignIn.tsx'
 import FormRegister from './forms/FormRegister.tsx'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
@@ -35,21 +35,18 @@ const DaNavUser = () => {
       {user ? (
         <DaUserMenu user={user} />
       ) : (
-        <DaButton
-          variant="outline-nocolor"
+        <Button
+          variant="outline"
           onClick={() => {
             setOpenLoginDialog(true) // Open the login dialog
           }}
         >
           Sign In
-        </DaButton>
+        </Button>
       )}
 
-      <DaPopup
-        state={[openLoginDialog, handleSetOpenLoginDialog]}
-        trigger={<span></span>}
-      >
-        <div className="h-full w-full overflow-auto">
+      <Dialog open={openLoginDialog} onOpenChange={handleSetOpenLoginDialog}>
+        <DialogContent className="h-full w-full overflow-auto max-w-md">
           {authType === 'sign-in' && <FormSignIn setAuthType={setAuthType} />}
           {authType === 'register' && (
             <FormRegister setAuthType={setAuthType} />
@@ -57,8 +54,8 @@ const DaNavUser = () => {
           {authType === 'forgot' && (
             <FormForgotPassword setAuthType={setAuthType} />
           )}
-        </div>
-      </DaPopup>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

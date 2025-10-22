@@ -1,6 +1,5 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
-import DaText from './DaText'
 
 export interface TextareaProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -33,16 +32,15 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <div className={cn('flex flex-col', className)}>
         {label && (
-          <DaText
-            variant="regular-medium"
+          <label
             className={cn(
-              'mb-1',
+              'text-base font-medium mb-1',
               focused ? 'text-primary' : 'text-muted-foreground',
               labelClassName,
             )}
           >
             {label}
-          </DaText>
+          </label>
         )}
         <textarea
           data-slot="textarea"

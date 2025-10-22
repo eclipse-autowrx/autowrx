@@ -8,7 +8,6 @@
 
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
-import { DaText } from '@/components/atoms/DaText'
 import { loginService } from '@/services/auth.service'
 import { addLog } from '@/services/log.service'
 import { isAxiosError } from 'axios'
@@ -61,20 +60,20 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
     >
       {config.disableEmailLogin ? (
         <div className="flex flex-col h-full mb-16">
-          <DaText variant="title" className="text-primary">
+          <h2 className="text-xl font-semibold text-primary">
             Sign in with SSO
-          </DaText>
-          <DaText variant="regular" className="mt-2 text-muted-foreground">
+          </h2>
+          <p className="text-base mt-2 text-muted-foreground">
             Your organization uses single sign-on (SSO) with{' '}
             <span className="font-bold">{window.location.hostname}</span>.
             Please sign in using your SSO credentials.
-          </DaText>
+          </p>
         </div>
       ) : (
         <div className="flex flex-col">
-          <DaText variant="title" className="text-primary">
+          <h2 className="text-xl font-semibold text-primary">
             Sign In
-          </DaText>
+          </h2>
           <div className="mt-6"></div>
 
           <Input
@@ -107,9 +106,9 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
           </div>
 
           {error && (
-            <DaText variant="small" className="mt-2 text-destructive">
+            <span className="text-sm mt-2 text-destructive">
               {error}
-            </DaText>
+            </span>
           )}
 
           <Button
@@ -122,9 +121,9 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
           </Button>
           {!config.strictAuth && (
             <div className="mt-4 flex w-full justify-center items-center">
-              <DaText className="text-muted-foreground">
+              <span className="text-muted-foreground">
                 Don't have an account?
-              </DaText>
+              </span>
               <Button
                 type="button"
                 onClick={() => setAuthType('register')}
@@ -144,13 +143,12 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
             <span className="w-full border-t"></span>
           </div>
           <div className="relative flex justify-center text-xs uppercase py-6">
-            <DaText
-              variant="small"
+            <span
               className="bg-white px-2 text-muted-foreground"
             >
               {' '}
               Or continue with{' '}
-            </DaText>
+            </span>
           </div>
         </div>
       )}

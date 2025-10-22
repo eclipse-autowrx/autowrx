@@ -1,7 +1,6 @@
 import * as React from 'react'
 import { IconType } from 'react-icons'
 import { cn } from '@/lib/utils'
-import DaText from './DaText'
 
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -60,16 +59,15 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className={cn('flex flex-col', className)}>
         {label && (
-          <DaText
-            variant="regular-medium"
+          <label
             className={cn(
-              'mb-1',
+              'text-base font-medium mb-1',
               focused ? 'text-primary' : 'text-muted-foreground',
               labelClassName,
             )}
           >
             {label}
-          </DaText>
+          </label>
         )}
         <div
           className={cn(
@@ -131,12 +129,9 @@ const InputWithLabel = ({
   inputClassName,
 }: InputWithLabelProps) => (
   <div className={cn('flex w-full items-center mb-4', className)}>
-    <DaText
-      className="flex min-w-[150px] text-foreground"
-      variant="small-bold"
-    >
+    <label className="text-sm font-semibold flex min-w-[150px] text-foreground">
       {label}
-    </DaText>
+    </label>
     <Input
       value={value}
       onChange={(e) => onChange(e.target.value)}

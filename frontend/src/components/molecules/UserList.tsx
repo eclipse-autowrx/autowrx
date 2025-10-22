@@ -10,7 +10,6 @@
 import { User } from "@/types/user.type"
 import { TbMinus } from 'react-icons/tb'
 import { DaAvatar } from "../atoms/DaAvatar"
-import DaText from "../atoms/DaText"
 import { maskEmail } from '@/lib/utils'
 
 interface UserListProps {
@@ -37,12 +36,12 @@ const UserListItem = ({ user, onRemoveUser }: UserListItemProps) => {
             className="mr-4 h-10 w-10 rounded-full"
           />
           <div className="flex flex-col">
-            <DaText variant="regular" className="font-bold text-foreground">
+            <p className="text-base font-bold text-foreground">
               {user.name ?? 'Loading...'}
-            </DaText>
-            <DaText variant="small" className="text-muted-foreground">
+            </p>
+            <span className="text-sm text-muted-foreground">
               {maskEmail(user?.email ?? '')}
-            </DaText>
+            </span>
           </div>
         </div>
         <div

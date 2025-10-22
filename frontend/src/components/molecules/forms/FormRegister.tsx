@@ -8,7 +8,6 @@
 
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
-import { DaText } from '@/components/atoms/DaText'
 import { registerService } from '@/services/auth.service'
 import { isAxiosError } from 'axios'
 import { useState } from 'react'
@@ -89,9 +88,9 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
       className="w-[30vw] lg:w-[25vw] min-w-[400px] max-w-[500px] h-fit max-h-[80vh] p-4 bg-white"
     >
       {/* Title */}
-      <DaText variant="title" className="text-primary">
+      <h2 className="text-xl font-semibold text-primary">
         Register
-      </DaText>
+      </h2>
 
       <div className="mt-6"></div>
       {/* Content */}
@@ -137,9 +136,9 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
 
       {/* Error */}
       {error && (
-        <DaText variant="small" className="mt-3 block text-destructive">
+        <span className="text-sm mt-3 block text-destructive">
           {error}
-        </DaText>
+        </span>
       )}
 
       {/* Action */}
@@ -153,9 +152,9 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
       </Button>
       {/* More */}
       <div className="mt-4 flex items-center">
-        <DaText className="text-muted-foreground">
+        <span className="text-muted-foreground">
           Already have an account?
-        </DaText>
+        </span>
         <Button
           type="button"
           onClick={() => setAuthType('sign-in')}

@@ -8,7 +8,6 @@
 
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
-import { DaText } from '@/components/atoms/DaText'
 import { sendResetPasswordEmailService } from '@/services/auth.service'
 import { isAxiosError } from 'axios'
 import { useState } from 'react'
@@ -55,24 +54,24 @@ const FormForgotPassword = ({ setAuthType }: FormForgotPasswordProps) => {
       className="w-[30vw] lg:w-[25vw] min-w-[400px] max-w-[500px] h-fit max-h-[80vh] p-4 bg-white"
     >
       {/* Title */}
-      <DaText variant="title" className="text-primary">
+      <h2 className="text-xl font-semibold text-primary">
         Forgot Password
-      </DaText>
+      </h2>
 
       {sent ? (
         <>
-          <DaText className="block mt-4">
+          <span className="block mt-4">
             Reset password email sent! Please check your email and follow the
             instructions.
-          </DaText>
+          </span>
           <TbCircleCheckFilled className="text-8xl text-green-500 mx-auto mt-10" />
         </>
       ) : (
         <>
-          <DaText className="block mt-4">
+          <span className="block mt-4">
             Enter the email associated with your account. We will send you an
             email to reset your password.
-          </DaText>
+          </span>
 
           {/* Content */}
           <Input
@@ -87,9 +86,9 @@ const FormForgotPassword = ({ setAuthType }: FormForgotPasswordProps) => {
 
           {/* Error */}
           {error && (
-            <DaText variant="small" className="mt-2 block text-destructive">
+            <span className="text-sm mt-2 block text-destructive">
               {error}
-            </DaText>
+            </span>
           )}
           {/* Action */}
           <Button
@@ -103,7 +102,7 @@ const FormForgotPassword = ({ setAuthType }: FormForgotPasswordProps) => {
 
           {/* More */}
           <div className="mt-4 flex items-center">
-            <DaText className="text-foreground">Remember password?</DaText>
+            <span className="text-foreground">Remember password?</span>
             <Button
               type="button"
               onClick={() => setAuthType('sign-in')}

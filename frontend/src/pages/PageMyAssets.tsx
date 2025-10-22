@@ -6,11 +6,10 @@
 //
 // SPDX-License-Identifier: MIT
 
-import DaText from "@/components/atoms/DaText"
 import { useEffect, useState } from "react"
 import { useAssets } from '@/hooks/useAssets.ts'
 import { TbTrash, TbPencil, TbShare } from "react-icons/tb"
-import DaPopup from '../components/atoms/DaPopup'
+import { Dialog, DialogContent } from '@/components/atoms/dialog'
 import { Button } from "@/components/atoms/button"
 import { Input } from "@/components/atoms/input"
 import { DaSelect, DaSelectItem } from "@/components/atoms/DaSelect"
@@ -137,7 +136,7 @@ const PythonGenAIEditor = ({dataStr, onDataChange}: iPropGenAIPython) => {
     return <div>
 
         <div className="flex items-center space-x-2 mt-4">
-            <DaText variant="small"  className="w-20">Method *:</DaText>
+            <label className="text-sm w-20">Method *:</label>
             <div className="grow">
                 <Input
                     value={method}
@@ -150,7 +149,7 @@ const PythonGenAIEditor = ({dataStr, onDataChange}: iPropGenAIPython) => {
         </div>
 
         <div className="flex items-center space-x-2 mt-4">
-            <DaText variant="small"  className="w-20">URL *:</DaText>
+            <label className="text-sm w-20">URL *:</label>
             <div className="grow">
                 <Textarea
                     value={url}
@@ -163,7 +162,7 @@ const PythonGenAIEditor = ({dataStr, onDataChange}: iPropGenAIPython) => {
         
 
         <div className="flex items-center space-x-2 mt-4">
-            <DaText variant="small"  className="w-20">Access Token *</DaText>
+            <label className="text-sm w-20">Access Token *</label>
             <div className="grow">
                 <Textarea
                     value={accessToken}
@@ -176,7 +175,7 @@ const PythonGenAIEditor = ({dataStr, onDataChange}: iPropGenAIPython) => {
         </div>
 
         <div className="flex items-center space-x-2 mt-4">
-            <DaText variant="small"  className="w-20">Request field *</DaText>
+            <label className="text-sm w-20">Request field *</label>
             <div className="grow">
                 <Textarea
                     value={requestField}
@@ -188,7 +187,7 @@ const PythonGenAIEditor = ({dataStr, onDataChange}: iPropGenAIPython) => {
         </div>
 
         <div className="flex items-center space-x-2 mt-4">
-            <DaText variant="small"  className="w-20">Response field *</DaText>
+            <label className="text-sm w-20">Response field *</label>
             <div className="grow">
                 <Textarea
                     value={responseField}
@@ -226,10 +225,10 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
     }, [asset])
 
     return <div className="flex flex-col w-[540px] px-4">
-        <DaText variant="title">Edit Asset</DaText>
+        <h2 className="text-xl font-semibold">Edit Asset</h2>
         <div className="w-full min-h-[200px]">
             <div className="flex items-center space-x-2 mt-4">
-                <DaText variant="small"  className="w-20">Name *</DaText>
+                <label className="text-sm w-20">Name *</label>
                 <Input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -239,7 +238,7 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
             </div>
 
             <div className="flex items-center space-x-2 mt-4">
-                <DaText variant="small" className="w-20">Type *</DaText>
+                <label className="text-sm w-20">Type *</label>
                 <DaSelect
                     wrapperClassName="grow"
                     className="h-10 border border-gray-200 shadow-none! text-[14px]"
@@ -252,9 +251,9 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
                         key={tIndex}
                         value={type.value}
                     >
-                        <DaText className="text-sm text-foreground">
+                        <span className="text-sm text-foreground">
                             {type.value}
-                        </DaText>
+                        </span>
                     </DaSelectItem>)}
                 </DaSelect>
             </div>
@@ -287,9 +286,9 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
                         toast({
                             title: `Invalid info`,
                             description: (
-                                <DaText variant="small" className="flex items-center text-red-500">
+                                <span className="text-sm flex items-center text-red-500">
                                     Missing "name", please enter name and try again!
-                                </DaText>
+                                </span>
                             ),
                             duration: 3000,
                         })
@@ -319,9 +318,9 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
                     toast({
                         title: `Save error`,
                         description: (
-                            <DaText variant="small" className="flex items-center text-red-500">
+                            <span className="text-sm flex items-center text-red-500">
                                 Error on save asset
-                            </DaText>
+                            </span>
                         ),
                         duration: 3000,
                     })
@@ -362,12 +361,9 @@ const PageMyAssets = () => {
     return <div className="flex w-full min-h-[90vh] bg-slate-200 pt-2 pb-4">
         <div className="flex flex-col container py-4 justify-start items-start bg-white rounded-xl">
             <div className="flex w-full">
-                <DaText
-                    variant="huge-bold"
-                    className="text-foreground font-semibold"
-                >
+                <h1 className="text-2xl font-semibold text-foreground">
                     My Assets
-                </DaText>
+                </h1>
                 <div className="grow"></div>
                 <Button variant="outline"
                     onClick={() => {
@@ -385,26 +381,30 @@ const PageMyAssets = () => {
 
 
 
-            <DaPopup state={editDialogState} trigger={<span></span>}>
-                <EditAssetDialog asset={activeAsset}
-                    onCancel={() => {
-                        editDialogState[1](false)
-                    }}
-                    onDone={() => {
-                        editDialogState[1](false)
-                    }} />
-            </DaPopup>
+            <Dialog open={editDialogState[0]} onOpenChange={editDialogState[1]}>
+                <DialogContent>
+                    <EditAssetDialog asset={activeAsset}
+                        onCancel={() => {
+                            editDialogState[1](false)
+                        }}
+                        onDone={() => {
+                            editDialogState[1](false)
+                        }} />
+                </DialogContent>
+            </Dialog>
 
-            <DaPopup state={shareDialogState} trigger={<span></span>}>
-                <ShareAssetPanel asset={activeAsset}
-                    onCancel={() => {
-                        shareDialogState[1](false)
-                    }}
-                    onDone={() => {
-                        shareDialogState[1](false)
-                    }}
-                />
-            </DaPopup>
+            <Dialog open={shareDialogState[0]} onOpenChange={shareDialogState[1]}>
+                <DialogContent>
+                    <ShareAssetPanel asset={activeAsset}
+                        onCancel={() => {
+                            shareDialogState[1](false)
+                        }}
+                        onDone={() => {
+                            shareDialogState[1](false)
+                        }}
+                    />
+                </DialogContent>
+            </Dialog>
 
             {isLoading && <div className="w-full flex py-4 justify-center items-center">Loading...</div>}
 

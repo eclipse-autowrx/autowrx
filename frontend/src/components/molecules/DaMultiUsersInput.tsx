@@ -7,7 +7,6 @@
 // SPDX-License-Identifier: MIT
 
 import clsx from 'clsx'
-import DaText from '../atoms/DaText'
 import { TbX } from 'react-icons/tb'
 import { InvitedUser } from '@/types/user.type'
 import { DaSelect, DaSelectItem } from '../atoms/DaSelect'
@@ -58,9 +57,9 @@ const DaMultiUsersInput = ({
                 key={user.id}
                 className="flex cursor-default items-center rounded border border-muted-foreground/50 px-1 py-0.5"
               >
-                <DaText variant="small" className="text-foreground">
+                <span className="text-sm text-foreground">
                   {user.name}
-                </DaText>
+                </span>
                 <button
                   className="-m-0.5 ml-1 p-0.5"
                   onClick={() => onRemoveUser(user)}
@@ -97,9 +96,9 @@ const DaMultiUsersInput = ({
               value={accessLevel.value}
               key={index}
             >
-              <DaText className="text-sm text-foreground">
+              <span className="text-sm text-foreground">
                 {accessLevel.label}
-              </DaText>
+              </span>
             </DaSelectItem>
           ))}
         </DaSelect>

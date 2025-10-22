@@ -8,7 +8,6 @@
 
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/atoms/button'
-import DaText from '@/components/atoms/DaText'
 import { useEffect } from 'react'
 
 const PageNotFound = () => {
@@ -28,16 +27,12 @@ const PageNotFound = () => {
       <div className="max-w-md w-full text-center">
         <div className="mb-8">
           <h1 className="text-9xl font-bold text-gray-300">404</h1>
-          <div>
-            <DaText variant="title" className="mt-4 text-gray-600">
-                Page Not Found
-            </DaText>
-          </div>
-          <div>
-            <DaText variant="regular" className="mt-2 text-gray-500">
-                The page you're looking for doesn't exist or has been moved.
-            </DaText>
-          </div>
+          <h2 className="text-xl font-semibold mt-4 text-gray-600">
+            Page Not Found
+          </h2>
+          <p className="text-base mt-2 text-gray-500">
+            The page you're looking for doesn't exist or has been moved.
+          </p>
         </div>
         
         <div className="space-y-4">

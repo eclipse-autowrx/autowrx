@@ -8,8 +8,6 @@
 
 import { useState, useEffect } from 'react'
 import { TbX } from 'react-icons/tb'
-import { DaButton } from './DaButton'
-import { DaText } from './DaText'
 import DaErrorDisplay from '../molecules/DaErrorDisplay'
 import { cn } from '@/lib/utils'
 
@@ -93,9 +91,9 @@ const DaLoading = ({
       )}
 
       {!hasTimedOut && (
-        <DaText variant="sub-title" className="text-muted-foreground mt-4">
+        <p className="text-lg font-semibold text-muted-foreground mt-4">
           {text}
-        </DaText>
+        </p>
       )}
 
       {hasTimedOut && showRetry && (

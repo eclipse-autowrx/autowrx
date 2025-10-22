@@ -8,7 +8,6 @@
 
 import { Link, useMatch } from 'react-router-dom'
 import { DaImage } from '../atoms/DaImage'
-import { DaButton } from '../atoms/DaButton'
 import DaMenu from '../atoms/DaMenu'
 import DaNavUser from '../molecules/DaNavUser'
 import { HiMenu } from 'react-icons/hi'
@@ -26,7 +25,6 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 // import useCurrentModel from '@/hooks/useCurrentModel'
 import { IoIosHelpBuoy } from 'react-icons/io'
 import config from '@/configs/config'
-import DaTooltip from '../atoms/DaTooltip'
 // import LearningIntegration from './LearningIntegration'
 
 import Switch from 'react-switch'

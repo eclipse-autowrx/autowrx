@@ -10,7 +10,6 @@ import { TbCopy } from 'react-icons/tb'
 import { useToast } from '../molecules/toaster/use-toast'
 import { Suspense, lazy } from 'react'
 import { cn } from '@/lib/utils'
-import DaText from './DaText'
 
 interface DaCopyProps {
   textToCopy: string
@@ -40,12 +39,12 @@ const DaCopy = ({
           title: ``,
           description: (
             <div className="flex flex-col space-y-2">
-              <DaText variant="small-bold" className="text-primary">
+              <span className="text-sm font-semibold text-primary">
                 {textToCopy}
-              </DaText>
-              <DaText variant="small-medium" className="">
+              </span>
+              <span className="text-sm font-medium ">
                 Copied to clipboard
-              </DaText>
+              </span>
             </div>
           ),
           duration: 2000,
@@ -71,12 +70,12 @@ const DaCopy = ({
         {children}
         <div className="flex items-center">
           {label && (
-            <DaText
-              variant="small"
+            <span
+              
               className="ml-1 text-primary cursor-pointer"
             >
               {label}
-            </DaText>
+            </span>
           )}
           {showIcon && (
             <TbCopy className="text-muted-foreground hover:text-primary ml-1" />
