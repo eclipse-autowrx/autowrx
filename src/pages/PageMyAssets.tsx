@@ -9,7 +9,7 @@
 import DaText from "@/components/atoms/DaText"
 import { useEffect, useState } from "react"
 import { useAssets } from '@/hooks/useAssets'
-import { TbTrash, TbPencil, TbShare } from "react-icons/tb"
+import { TbTrash, TbPencil, TbShare, TbDeviceDesktopCog } from "react-icons/tb"
 import DaPopup from '../components/atoms/DaPopup'
 import { DaButton } from "@/components/atoms/DaButton"
 import { DaInput } from "@/components/atoms/DaInput"
@@ -18,6 +18,7 @@ import { useToast } from "@/components/molecules/toaster/use-toast"
 import { IoAddCircleOutline } from "react-icons/io5";
 import ShareAssetPanel from "@/components/molecules/ShareAssetPanel"
 import { DaTextarea } from "@/components/atoms/DaTextarea"
+import FormHardwareKitManager from "@/components/organisms/FormHardwareKitManager";
 
 interface iPropEditAssetDialog {
     asset: any,
@@ -341,6 +342,7 @@ const PageMyAssets = () => {
     const [activeAsset, setActiveAsset] = useState<any>()
     const editDialogState = useState<boolean>(false)
     const shareDialogState = useState<boolean>(false)
+    const kitManagerDialogState = useState<boolean>(false)
 
     const [activeTab, setActiveTab] = useState(ASSET_TYPES[0].value);
     const [filteredAssets, setFilteredAssets] = useState([])
@@ -393,6 +395,14 @@ const PageMyAssets = () => {
                     onDone={() => {
                         editDialogState[1](false)
                     }} />
+            </DaPopup>
+
+            <DaPopup state={kitManagerDialogState} trigger={<span></span>}>
+                <FormHardwareKitManager kitId={activeAsset?.id} kitName={activeAsset?.name}
+                    onCancel={() => {
+                        kitManagerDialogState[1](false)
+                    }}
+                />
             </DaPopup>
 
             <DaPopup state={shareDialogState} trigger={<span></span>}>
@@ -459,10 +469,16 @@ const PageMyAssets = () => {
                     {
                         filteredAssets && filteredAssets.length > 0 && filteredAssets.map((asset: any, aIndex: number) => <div key={aIndex}
                             className="flex w-full items-center text-da-gray-dark font-normal text-md 
-                                        py-4 border-b border-da-gray-light">
+                                        py-4 border-b border-da_gray-light">
                             <div className="grow">{asset.name}</div>
                             <div className="w-[220px] min-w-[220px] text-xs font-medium text-da-gray-medium font-mono">{asset.type}</div>
                             <div className="w-[220px] min-w-[220px] flex space-x-4">
+                                {asset.type === 'HARDWARE_KIT' && <TbDeviceDesktopCog className="text-da-gray-medium cursor-pointer hover:opacity-60" size={22}
+                                    onClick={() => {
+                                        setActiveAsset(JSON.parse(JSON.stringify(asset)))
+                                        kitManagerDialogState[1](true)
+                                    }} />
+                                }
                                 <TbPencil className="text-da-gray-medium cursor-pointer hover:opacity-60" size={22}
                                     onClick={() => {
                                         setActiveAsset(JSON.parse(JSON.stringify(asset)))
