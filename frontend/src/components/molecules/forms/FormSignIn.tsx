@@ -8,12 +8,12 @@
 
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
+import { Label } from '@/components/atoms/label'
 import { loginService } from '@/services/auth.service'
 import { addLog } from '@/services/log.service'
 import { isAxiosError } from 'axios'
 import { useState } from 'react'
 import { TbLoader } from 'react-icons/tb'
-import { TbAt, TbLock } from 'react-icons/tb'
 // import SSOHandler from '../SSOHandler'
 import config from '@/configs/config'
 
@@ -76,25 +76,26 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
           </h2>
           <div className="mt-6"></div>
 
-          <Input
-            name="email"
-            placeholder="Email"
-            label="Email"
-            className="mt-4"
-            Icon={TbAt}
-            iconBefore
-            iconSize={18}
-          />
-          <Input
-            name="password"
-            placeholder="Password"
-            label="Password"
-            type="password"
-            className="mt-4"
-            Icon={TbLock}
-            iconBefore
-            iconSize={18}
-          />
+          <div className="mt-4">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="Email"
+              className="mt-1"
+            />
+          </div>
+          <div className="mt-4">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              placeholder="Password"
+              className="mt-1"
+            />
+          </div>
           <div className="flex items-center justify-end mt-1">
             <Button
               type="button"

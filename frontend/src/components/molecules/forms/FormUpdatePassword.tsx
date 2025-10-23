@@ -8,9 +8,10 @@
 
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
+import { Label } from '@/components/atoms/label'
 import { isAxiosError } from 'axios'
 import { useState } from 'react'
-import { TbCircleCheckFilled, TbLoader, TbLock } from 'react-icons/tb'
+import { TbCircleCheckFilled, TbLoader } from 'react-icons/tb'
 import { partialUpdateUserService } from '@/services/user.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
@@ -82,27 +83,27 @@ const FormUpdatePassword = ({}) => {
       ) : (
         <>
           {/* Content */}
-          <Input
-            name="password"
-            placeholder="Password"
-            label="Password"
-            className="mt-4"
-            Icon={TbLock}
-            iconBefore
-            type="password"
-            iconSize={18}
-          />
+          <div className="mt-4">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              placeholder="Password"
+              className="mt-1"
+            />
+          </div>
 
-          <Input
-            name="confirmPassword"
-            placeholder="Confirm password"
-            label="Confirm password"
-            className="mt-4"
-            Icon={TbLock}
-            iconBefore
-            type="password"
-            iconSize={18}
-          />
+          <div className="mt-4">
+            <Label htmlFor="confirmPassword">Confirm password</Label>
+            <Input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              placeholder="Confirm password"
+              className="mt-1"
+            />
+          </div>
 
           {/* Error */}
           {error && (

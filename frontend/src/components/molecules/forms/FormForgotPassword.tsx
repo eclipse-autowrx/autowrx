@@ -8,11 +8,11 @@
 
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
+import { Label } from '@/components/atoms/label'
 import { sendResetPasswordEmailService } from '@/services/auth.service'
 import { isAxiosError } from 'axios'
 import { useState } from 'react'
 import { TbCircleCheckFilled, TbLoader } from 'react-icons/tb'
-import { TbAt } from 'react-icons/tb'
 
 interface FormForgotPasswordProps {
   setAuthType: (type: 'sign-in' | 'register' | 'forgot') => void
@@ -74,15 +74,16 @@ const FormForgotPassword = ({ setAuthType }: FormForgotPasswordProps) => {
           </span>
 
           {/* Content */}
-          <Input
-            name="email"
-            placeholder="Email"
-            label="Email"
-            className="mt-4"
-            Icon={TbAt}
-            iconBefore
-            iconSize={18}
-          />
+          <div className="mt-4">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="Email"
+              className="mt-1"
+            />
+          </div>
 
           {/* Error */}
           {error && (

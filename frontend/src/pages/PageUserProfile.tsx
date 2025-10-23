@@ -93,8 +93,7 @@ const PageUserProfile = () => {
                       <Input
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="h-8 w-full max-w-[350px]"
-                        inputClassName="h-6"
+                        className="h-6 w-full max-w-[350px]"
                       />
                     ) : (
                       <div className="truncate max-w-[350px]">

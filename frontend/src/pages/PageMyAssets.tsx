@@ -141,8 +141,7 @@ const PythonGenAIEditor = ({dataStr, onDataChange}: iPropGenAIPython) => {
                 <Input
                     value={method}
                     onChange={(e) => onMethodChange(e.target.value)}
-                    className="flex grow"
-                    inputClassName="text-[14px]"
+                    className="flex grow text-[14px]"
                 />
             </div>
 
@@ -154,8 +153,7 @@ const PythonGenAIEditor = ({dataStr, onDataChange}: iPropGenAIPython) => {
                 <Textarea
                     value={url}
                     onChange={(e) => onUrlChange(e.target.value)}
-                    className="flex grow"
-                    textareaClassName="text-[14px]! leading-tight!"
+                    className="flex grow text-[14px]! leading-tight!"
                 />
             </div>
         </div>
@@ -167,8 +165,7 @@ const PythonGenAIEditor = ({dataStr, onDataChange}: iPropGenAIPython) => {
                 <Textarea
                     value={accessToken}
                     onChange={(e) => onAccessTokenChange(e.target.value)}
-                    className="flex grow"
-                    textareaClassName="text-[14px]! leading-tight!"
+                    className="flex grow text-[14px]! leading-tight!"
                 />
                 <div className=" text-sm mt-1 text-foreground">* Notice: This token will be sent in the Authorization header.</div>
             </div>
@@ -180,8 +177,7 @@ const PythonGenAIEditor = ({dataStr, onDataChange}: iPropGenAIPython) => {
                 <Textarea
                     value={requestField}
                     onChange={(e) => onRequestFieldChange(e.target.value)}
-                    className="flex grow"
-                    textareaClassName="text-[14px]! leading-tight!"
+                    className="flex grow text-[14px]! leading-tight!"
                 />
             </div>
         </div>
@@ -192,8 +188,7 @@ const PythonGenAIEditor = ({dataStr, onDataChange}: iPropGenAIPython) => {
                 <Textarea
                     value={responseField}
                     onChange={(e) => onResponseFieldChange(e.target.value)}
-                    className="flex grow"
-                    textareaClassName="text-[14px]! leading-tight!"
+                    className="flex grow text-[14px]! leading-tight!"
                 />
             </div>
         </div>
@@ -232,8 +227,7 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
                 <Input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="flex grow"
-                    inputClassName="text-[14px]"
+                    className="flex grow text-[14px]"
                 />
             </div>
 
@@ -275,8 +269,7 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
                 <Textarea
                     value={dataStr}
                     onChange={(e: any) => setDataStr(e.target.value)}
-                    className="grow"
-                    textareaClassName="text-sm! h-40"
+                    className="grow text-sm! h-40"
                 />
             </div> */}
 

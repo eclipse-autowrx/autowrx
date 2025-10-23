@@ -8,6 +8,7 @@
 
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
+import { Label } from '@/components/atoms/label'
 import { registerService } from '@/services/auth.service'
 import { isAxiosError } from 'axios'
 import { useState } from 'react'
@@ -94,32 +95,45 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
 
       <div className="mt-6"></div>
       {/* Content */}
-      <Input
-        name="fullName"
-        placeholder="Name"
-        label="Name"
-        className="mt-4"
-      />
-      <Input
-        name="email"
-        placeholder="Email"
-        label="Email"
-        className="mt-4"
-      />
-      <Input
-        name="password"
-        placeholder="Password"
-        label="Password"
-        type="password"
-        className="mt-4"
-      />
-      <Input
-        name="confirmPassword"
-        placeholder="Confirm Password"
-        label="Confirm Password"
-        type="password"
-        className="mt-4"
-      />
+      <div className="mt-4">
+        <Label htmlFor="fullName">Name</Label>
+        <Input
+          id="fullName"
+          name="fullName"
+          placeholder="Name"
+          className="mt-1"
+        />
+      </div>
+      <div className="mt-4">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          placeholder="Email"
+          className="mt-1"
+        />
+      </div>
+      <div className="mt-4">
+        <Label htmlFor="password">Password</Label>
+        <Input
+          id="password"
+          name="password"
+          type="password"
+          placeholder="Password"
+          className="mt-1"
+        />
+      </div>
+      <div className="mt-4">
+        <Label htmlFor="confirmPassword">Confirm Password</Label>
+        <Input
+          id="confirmPassword"
+          name="confirmPassword"
+          type="password"
+          placeholder="Confirm Password"
+          className="mt-1"
+        />
+      </div>
 
       {policy_url && (
         <div className="my-2 text-sm">
