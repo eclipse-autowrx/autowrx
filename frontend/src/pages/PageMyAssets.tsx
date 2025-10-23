@@ -12,7 +12,7 @@ import { TbTrash, TbPencil, TbShare } from "react-icons/tb"
 import { Dialog, DialogContent } from '@/components/atoms/dialog'
 import { Button } from "@/components/atoms/button"
 import { Input } from "@/components/atoms/input"
-import { DaSelect, DaSelectItem } from "@/components/atoms/DaSelect"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/atoms/select"
 import { useToast } from "@/components/molecules/toaster/use-toast"
 import { IoAddCircleOutline } from "react-icons/io5";
 import ShareAssetPanel from "@/components/molecules/ShareAssetPanel"
@@ -239,23 +239,33 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
 
             <div className="flex items-center space-x-2 mt-4">
                 <label className="text-sm w-20">Type *</label>
-                <DaSelect
-                    wrapperClassName="grow"
-                    className="h-10 border border-gray-200 shadow-none! text-[14px]"
-                    defaultValue="CLOUD_RUNTIME"
-                    value={type}
-                    onValueChange={(value) => setType(value)}
-                >
-                    {ASSET_BARE_TYPES && ASSET_BARE_TYPES.map((type: any, tIndex: number) => <DaSelectItem
-                        helperText={type.helperText}
-                        key={tIndex}
-                        value={type.value}
+                <div className="grow">
+                    <Select
+                        defaultValue="CLOUD_RUNTIME"
+                        value={type}
+                        onValueChange={(value: string) => setType(value)}
                     >
-                        <span className="text-sm text-foreground">
-                            {type.value}
-                        </span>
-                    </DaSelectItem>)}
-                </DaSelect>
+                        <SelectTrigger className="h-10 border border-gray-200 shadow-none! text-[14px]">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {ASSET_BARE_TYPES && ASSET_BARE_TYPES.map((type: any, tIndex: number) => (
+                                <SelectItem key={tIndex} value={type.value}>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm text-foreground">
+                                            {type.value}
+                                        </span>
+                                        {type.helperText && (
+                                            <span className="text-sm text-muted-foreground">
+                                                {type.helperText}
+                                            </span>
+                                        )}
+                                    </div>
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
 
             { type == 'GENAI-PYTHON' && <PythonGenAIEditor dataStr={dataStr} onDataChange={setDataStr}/> }

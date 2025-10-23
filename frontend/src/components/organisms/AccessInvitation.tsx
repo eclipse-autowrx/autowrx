@@ -15,7 +15,7 @@ import DaCollaboratorSearchPicker from '@/components/molecules/DaCollaboratorSea
 import { isAxiosError } from 'axios'
 import { toast } from 'react-toastify'
 import { useMutation } from '@tanstack/react-query'
-import DaLoader from '@/components/atoms/DaLoader.tsx'
+import { Spinner } from '@/components/atoms/spinner'
 
 export type AccessLevel = {
   value: string
@@ -129,7 +129,7 @@ const AccessInvitation = ({
               className="shrink-0"
               disabled={isPending || selectedUsers.size === 0}
             >
-              Invite {isPending && <DaLoader className="ml-2 text-white" />}
+              Invite {isPending && <Spinner className="ml-2 text-white" size={16} />}
             </Button>
           </div>
         </div>

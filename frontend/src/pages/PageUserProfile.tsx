@@ -10,7 +10,7 @@ import React, { useEffect, useState } from 'react'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
-import { DaAvatar } from '@/components/atoms/DaAvatar'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/atoms/avatar'
 import DaImportFile from '@/components/atoms/DaImportFile'
 import { TbCircleFilled, TbPhotoEdit } from 'react-icons/tb'
 import { uploadFileService } from '@/services/upload.service.ts'
@@ -69,12 +69,15 @@ const PageUserProfile = () => {
             <div className="flex flex-col w-full mt-8">
               <div className="flex items-center">
                 <div className="flex relative">
-                  <DaAvatar
-                    className="w-24 h-24 border"
-                    src={
-                      user?.image_file ? user.image_file : 'imgs/profile.png'
-                    }
-                  />
+                  <Avatar className="w-24 h-24 border">
+                    <AvatarImage
+                      src={user?.image_file ? user.image_file : 'imgs/profile.png'}
+                      alt={user?.name || 'Profile'}
+                    />
+                    <AvatarFallback>
+                      <img src="/imgs/profile.png" alt="profile" className="h-full w-full rounded-full object-cover" />
+                    </AvatarFallback>
+                  </Avatar>
                   <DaImportFile
                     onFileChange={handleAvatarChange}
                     accept=".png, .jpg, .jpeg"

@@ -1,27 +1,26 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
 //
 // SPDX-License-Identifier: MIT
 
-import clsx from 'clsx'
-import { TbLoader } from 'react-icons/tb'
+import { Loader2 } from "lucide-react"
+import { cn } from "@/lib/utils"
 
-interface DaLoaderProps {
+interface SpinnerProps {
   className?: string
+  size?: number
 }
 
-const DaLoader = ({ className }: DaLoaderProps) => {
+function Spinner({ className, size }: SpinnerProps) {
   return (
-    <TbLoader
-      className={clsx(
-        'text-2xl text-primary animate-spin',
-        className,
-      )}
+    <Loader2
+      className={cn("animate-spin text-primary", className)}
+      size={size}
     />
   )
 }
 
-export default DaLoader
+export { Spinner }

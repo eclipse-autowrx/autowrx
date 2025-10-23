@@ -10,7 +10,7 @@ import { InvitedUser } from '@/types/user.type.ts'
 import { useEffect, useMemo, useState } from 'react'
 import DaUserInviteItem from './DaUserInviteItem.tsx'
 import { debounce } from 'lodash'
-import DaLoader from '../atoms/DaLoader'
+import { Spinner } from '@/components/atoms/spinner'
 import useSearchUserByEmail from '@/hooks/useSearchUserByEmail.ts'
 import clsx from 'clsx'
 
@@ -129,7 +129,7 @@ const DaCollaboratorSearchPicker = ({
               </span>
             )}
 
-            {isLoading && <DaLoader className="m-auto" />}
+            {isLoading && <Spinner className="m-auto text-2xl" />}
           </div>
         </>
       )}

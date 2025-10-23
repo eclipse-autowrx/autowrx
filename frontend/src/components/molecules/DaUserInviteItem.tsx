@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { InvitedUser } from '@/types/user.type.ts'
-import { DaAvatar } from '../atoms/DaAvatar'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/atoms/avatar'
 import { TbChevronDown, TbCircle, TbCircleCheckFilled } from 'react-icons/tb'
 import clsx from 'clsx'
 import DaMenu from '../atoms/DaMenu'
@@ -45,7 +45,12 @@ const DaUserInviteItem = ({
         !isInviting ? 'cursor-default' : 'cursor-pointer',
       )}
     >
-      <DaAvatar src={user.image_file} />
+      <Avatar className="h-10 w-10">
+        <AvatarImage src={user.image_file} alt={user.name} />
+        <AvatarFallback>
+          <img src="/imgs/profile.png" alt="profile" className="h-full w-full rounded-full object-cover" />
+        </AvatarFallback>
+      </Avatar>
 
       <div className="flex-1 overflow-x-hidden">
         <span className="block text-foreground">

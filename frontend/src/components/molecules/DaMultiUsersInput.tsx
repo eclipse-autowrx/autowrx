@@ -9,7 +9,7 @@
 import clsx from 'clsx'
 import { TbX } from 'react-icons/tb'
 import { InvitedUser } from '@/types/user.type'
-import { DaSelect, DaSelectItem } from '../atoms/DaSelect'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/atoms/select'
 import { AccessLevel } from '../organisms/AccessInvitation'
 import { useEffect } from 'react'
 
@@ -84,24 +84,29 @@ const DaMultiUsersInput = ({
       </div>
 
       {accessLevels && selectedUsers.length > 0 && (
-        <DaSelect
-          wrapperClassName="ml-auto sticky self-start -top-[5px] -mt-[5px] -mb-1 -mr-1"
-          className="h-7 border-none shadow-none!"
-          value={accessLevelId}
-          onValueChange={(value) => onAccessLevelIdChange(value)}
-        >
-          {accessLevels.map((accessLevel, index) => (
-            <DaSelectItem
-              helperText={accessLevel.helperText}
-              value={accessLevel.value}
-              key={index}
-            >
-              <span className="text-sm text-foreground">
-                {accessLevel.label}
-              </span>
-            </DaSelectItem>
-          ))}
-        </DaSelect>
+        <div className="ml-auto sticky self-start -top-[5px] -mt-[5px] -mb-1 -mr-1">
+          <Select value={accessLevelId} onValueChange={(value) => onAccessLevelIdChange(value)}>
+            <SelectTrigger className="h-7 border-none shadow-none!">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {accessLevels.map((accessLevel, index) => (
+                <SelectItem value={accessLevel.value} key={index}>
+                  <div className="flex flex-col">
+                    <span className="text-sm text-foreground">
+                      {accessLevel.label}
+                    </span>
+                    {accessLevel.helperText && (
+                      <span className="text-sm text-muted-foreground">
+                        {accessLevel.helperText}
+                      </span>
+                    )}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       )}
     </div>
   )
