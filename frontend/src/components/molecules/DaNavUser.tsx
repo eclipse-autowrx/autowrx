@@ -8,7 +8,7 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/atoms/button'
-import { Dialog, DialogContent } from '@/components/atoms/dialog'
+import DaDialog from '@/components/molecules/DaDialog'
 import FormSignIn from './forms/FormSignIn.tsx'
 import FormRegister from './forms/FormRegister.tsx'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
@@ -45,17 +45,19 @@ const DaNavUser = () => {
         </Button>
       )}
 
-      <Dialog open={openLoginDialog} onOpenChange={handleSetOpenLoginDialog}>
-        <DialogContent className="h-full w-full overflow-auto max-w-md">
-          {authType === 'sign-in' && <FormSignIn setAuthType={setAuthType} />}
-          {authType === 'register' && (
-            <FormRegister setAuthType={setAuthType} />
-          )}
-          {authType === 'forgot' && (
-            <FormForgotPassword setAuthType={setAuthType} />
-          )}
-        </DialogContent>
-      </Dialog>
+      <DaDialog
+        open={openLoginDialog}
+        onOpenChange={handleSetOpenLoginDialog}
+        className="h-full w-full overflow-auto max-w-md"
+      >
+        {authType === 'sign-in' && <FormSignIn setAuthType={setAuthType} />}
+        {authType === 'register' && (
+          <FormRegister setAuthType={setAuthType} />
+        )}
+        {authType === 'forgot' && (
+          <FormForgotPassword setAuthType={setAuthType} />
+        )}
+      </DaDialog>
     </div>
   )
 }

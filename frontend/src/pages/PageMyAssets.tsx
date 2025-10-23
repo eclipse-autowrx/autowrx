@@ -9,7 +9,7 @@
 import { useEffect, useState } from "react"
 import { useAssets } from '@/hooks/useAssets.ts'
 import { TbTrash, TbPencil, TbShare } from "react-icons/tb"
-import { Dialog, DialogContent } from '@/components/atoms/dialog'
+import DaDialog from '@/components/molecules/DaDialog'
 import { Button } from "@/components/atoms/button"
 import { Input } from "@/components/atoms/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/atoms/select"
@@ -391,30 +391,29 @@ const PageMyAssets = () => {
 
 
 
-            <Dialog open={editDialogState[0]} onOpenChange={editDialogState[1]}>
-                <DialogContent>
-                    <EditAssetDialog asset={activeAsset}
-                        onCancel={() => {
-                            editDialogState[1](false)
-                        }}
-                        onDone={() => {
-                            editDialogState[1](false)
-                        }} />
-                </DialogContent>
-            </Dialog>
+            <DaDialog open={editDialogState[0]} onOpenChange={editDialogState[1]}>
+                <EditAssetDialog
+                    asset={activeAsset}
+                    onCancel={() => {
+                        editDialogState[1](false)
+                    }}
+                    onDone={() => {
+                        editDialogState[1](false)
+                    }}
+                />
+            </DaDialog>
 
-            <Dialog open={shareDialogState[0]} onOpenChange={shareDialogState[1]}>
-                <DialogContent>
-                    <ShareAssetPanel asset={activeAsset}
-                        onCancel={() => {
-                            shareDialogState[1](false)
-                        }}
-                        onDone={() => {
-                            shareDialogState[1](false)
-                        }}
-                    />
-                </DialogContent>
-            </Dialog>
+            <DaDialog open={shareDialogState[0]} onOpenChange={shareDialogState[1]}>
+                <ShareAssetPanel
+                    asset={activeAsset}
+                    onCancel={() => {
+                        shareDialogState[1](false)
+                    }}
+                    onDone={() => {
+                        shareDialogState[1](false)
+                    }}
+                />
+            </DaDialog>
 
             {isLoading && <div className="w-full flex py-4 justify-center items-center">Loading...</div>}
 

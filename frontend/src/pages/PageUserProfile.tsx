@@ -15,7 +15,7 @@ import DaImportFile from '@/components/atoms/DaImportFile'
 import { TbCircleFilled, TbPhotoEdit } from 'react-icons/tb'
 import { uploadFileService } from '@/services/upload.service.ts'
 import { partialUpdateUserService } from '@/services/user.service'
-import { Dialog, DialogContent, DialogTrigger } from '@/components/atoms/dialog'
+import DaDialog from '@/components/molecules/DaDialog'
 
 const PageUserProfile = () => {
   const [isEditing, setIsEditing] = useState(false)
@@ -155,22 +155,21 @@ const PageUserProfile = () => {
                     ))}
                   </div>
                   <div className="">
-                    <Dialog open={isOpenPopup} onOpenChange={setIsOpenPopup}>
-                      <DialogTrigger asChild>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className=""
-                        >
+                    <DaDialog
+                      open={isOpenPopup}
+                      onOpenChange={setIsOpenPopup}
+                      trigger={
+                        <Button size="sm" variant="outline">
                           Change password
                         </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <div className="p-4">
-                          <p className="text-base">Password change functionality is not available.</p>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                      }
+                    >
+                      <div className="p-4">
+                        <p className="text-base">
+                          Password change functionality is not available.
+                        </p>
+                      </div>
+                    </DaDialog>
                   </div>
                 </div>
               </div>
