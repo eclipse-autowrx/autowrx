@@ -7,7 +7,6 @@
 // SPDX-License-Identifier: MIT
 
 import { Link, useMatch } from 'react-router-dom'
-import { DaImage } from '../atoms/DaImage'
 import DaMenu from '../atoms/DaMenu'
 import DaNavUser from '../molecules/DaNavUser'
 import { HiMenu } from 'react-icons/hi'
@@ -47,7 +46,7 @@ const NavigationBar = ({}) => {
   return (
     <header className="da-nav-bar">
       <Link to="/">
-        <DaImage src="/imgs/logo-wide.png" className="da-nav-bar-logo" />
+        <img src="/imgs/logo-wide.png" alt="Logo" className="da-nav-bar-logo" />
       </Link>
       
       {config && config.enableBranding && (
