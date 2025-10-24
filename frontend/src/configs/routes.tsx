@@ -13,6 +13,7 @@ import { RouteConfig } from '@/types/common.type.ts'
 import PageUserProfile from '@/pages/PageUserProfile.tsx'
 import PageMyAssets from '@/pages/PageMyAssets.tsx'
 import PageNotFound from '@/pages/PageNotFound.tsx'
+import SiteConfigManagement from '@/pages/SiteConfigManagement.tsx'
 // import PageAuthSuccess from '@/pages/PageAuthSuccess.ts'
 // import { retry } from '@/lib/retry.ts'
 
@@ -130,6 +131,19 @@ const routesConfig: RouteConfig[] = [
                 element: (
                   <SuspenseProvider>
                     <PageMyAssets />
+                  </SuspenseProvider>
+                ),
+              },
+            ],
+          },
+          {
+            path: '/site-config',
+            children: [
+              {
+                index: true,
+                element: (
+                  <SuspenseProvider>
+                    <SiteConfigManagement />
                   </SuspenseProvider>
                 ),
               },

@@ -6,7 +6,6 @@
 //
 // SPDX-License-Identifier: MIT
 
-import axios from 'axios'
 import { serverAxios } from './base'
 import config from '@/configs/config'
 
@@ -16,7 +15,7 @@ export const uploadFileService = async (file: any) => {
   const formData = new FormData()
   formData.append('file', file)
   return (
-    await axios.post<{ url: string }>(
+    await serverAxios.post<{ url: string }>(
       `${UPLOAD_FILE_URL}/upload/store-be`,
       formData,
     )
