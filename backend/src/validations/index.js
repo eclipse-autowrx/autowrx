@@ -17,8 +17,8 @@ module.exports.discussionValidation = require('./discussion.validation');
 module.exports.feedbackValidation = require('./feedback.validation');
 module.exports.permissionValidation = require('./permission.validation');
 module.exports.extendedApiValidation = require('./extendedApi.validation');
-module.exports.issueValidation = require('./issue.validation');
 module.exports.searchValidation = require('./search.validation');
 module.exports.assetValidation = require('./asset.validation');
 module.exports.fileValidation = require('./file.validation');
+module.exports.siteConfigValidation = require('./siteConfig.validation');
 // Inventory validations removed

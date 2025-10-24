@@ -7,14 +7,14 @@
 // SPDX-License-Identifier: MIT
 
 const express = require('express');
-const auth = require('../../middlewares/auth');
-const validate = require('../../middlewares/validate');
-const userValidation = require('../../validations/user.validation');
-const userController = require('../../controllers/user.controller');
+const auth = require('../../../middlewares/auth');
+const validate = require('../../../middlewares/validate');
+const userValidation = require('../../../validations/user.validation');
+const userController = require('../../../controllers/user.controller');
 
-const { checkPermission } = require('../../middlewares/permission');
-const { PERMISSIONS } = require('../../config/roles');
-const config = require('../../config/config');
+const { checkPermission } = require('../../../middlewares/permission');
+const { PERMISSIONS } = require('../../../config/roles');
+const config = require('../../../config/config');
 
 const router = express.Router();
 

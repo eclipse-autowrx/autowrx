@@ -7,11 +7,11 @@
 // SPDX-License-Identifier: MIT
 
 const express = require('express');
-const auth = require('../../middlewares/auth');
-const validate = require('../../middlewares/validate');
-const extendedApiValidation = require('../../validations/extendedApi.validation');
-const extendedApiController = require('../../controllers/extendedApi.controller');
-const config = require('../../config/config');
+const auth = require('../../../middlewares/auth');
+const validate = require('../../../middlewares/validate');
+const extendedApiValidation = require('../../../validations/extendedApi.validation');
+const extendedApiController = require('../../../controllers/extendedApi.controller');
+const config = require('../../../config/config');
 
 const router = express.Router();
 

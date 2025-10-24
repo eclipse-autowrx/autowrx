@@ -15,6 +15,6 @@ module.exports.Discussion = require('./discussion.model');
 module.exports.UserRole = require('./userRole.model');
 module.exports.Role = require('./role.model');
 module.exports.ExtendedApi = require('./extendedApi.model');
-module.exports.Issue = require('./issue.model');
 module.exports.Asset = require('./asset.model');
+module.exports.SiteConfig = require('./siteConfig.model');
 // Inventory models removed

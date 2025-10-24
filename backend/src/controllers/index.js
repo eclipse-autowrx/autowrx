@@ -14,9 +14,9 @@ module.exports.prototypeController = require('./prototype.controller');
 module.exports.apiController = require('./api.controller');
 module.exports.discussionController = require('./discussion.controller');
 module.exports.feedbackController = require('./feedback.controller');
-module.exports.issueController = require('./issue.controller');
 module.exports.searchController = require('./search.controller');
 module.exports.assetController = require('./asset.controller');
 module.exports.changeLogController = require('./changeLog.controller');
 module.exports.fileController = require('./file.controller');
+module.exports.siteConfigController = require('./siteConfig.controller');
 // Inventory controllers removed

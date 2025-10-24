@@ -31,13 +31,6 @@ This document describes the server middlewares, their purpose, configuration, in
   - Calls `permissionService.hasPermission(userId, permission, id, type)`.
   - On false: throws 403; otherwise continues.
 
-### genaiPermission (Feature permission)
-
-- Location: `src/middlewares/genaiPermission.js`
-- Usage: `genaiPermission`
-- Behavior:
-  - Ensures requester has `GENERATIVE_AI` permission (reads `req.body.user` or `req.user.id`).
-  - On missing permission: throws 403.
 
 ### rateLimiter.authLimiter (Login throttling)
 

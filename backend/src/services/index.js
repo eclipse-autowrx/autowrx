@@ -19,10 +19,10 @@ module.exports.discussionService = require('./discussion.service');
 module.exports.feedbackService = require('./feedback.service');
 module.exports.extendedApiService = require('./extendedApi.service');
 module.exports.listenerService = require('./listener.service');
-module.exports.issueService = require('./issue.service');
 module.exports.searchService = require('./search.service');
 module.exports.assetService = require('./asset.service');
 module.exports.fileService = require('./file.service');
 module.exports.logService = require('./log.service');
 module.exports.changeLogService = require('./changeLog.service');
+module.exports.siteConfigService = require('./siteConfig.service');
 // Inventory services removed

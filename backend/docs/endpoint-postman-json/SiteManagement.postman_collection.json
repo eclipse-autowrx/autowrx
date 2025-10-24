@@ -1,0 +1,177 @@
+{
+  "info": {
+    "name": "Site Management",
+    "description": "Site configuration management with key-value pairs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get All Public Configs",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v2/site-config/public",
+          "host": ["{{baseUrl}}"],
+          "path": ["v2", "site-config", "public"]
+        }
+      }
+    },
+    {
+      "name": "Get Single Public Config",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/v2/site-config/public/site-logo",
+          "host": ["{{baseUrl}}"],
+          "path": ["v2", "site-config", "public", "site-logo"]
+        }
+      }
+    },
+    {
+      "name": "Create Site Config (Admin)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"key\": \"site-logo\",\n  \"value\": \"https://example.com/logo.png\",\n  \"secret\": false,\n  \"description\": \"Main site logo URL\",\n  \"category\": \"branding\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/v2/site-config",
+          "host": ["{{baseUrl}}"],
+          "path": ["v2", "site-config"]
+        }
+      }
+    },
+    {
+      "name": "Get All Site Configs (Admin)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/v2/site-config/all",
+          "host": ["{{baseUrl}}"],
+          "path": ["v2", "site-config", "all"]
+        }
+      }
+    },
+    {
+      "name": "Get Multiple Configs by Keys",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"keys\": [\"site-logo\", \"site-name\", \"theme-color\"]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/v2/site-config/by-keys",
+          "host": ["{{baseUrl}}"],
+          "path": ["v2", "site-config", "by-keys"]
+        }
+      }
+    },
+    {
+      "name": "Bulk Upsert Configs (Admin)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"configs\": [\n    {\n      \"key\": \"site-logo\",\n      \"value\": \"https://example.com/logo.png\",\n      \"secret\": false,\n      \"description\": \"Main site logo\",\n      \"category\": \"branding\"\n    },\n    {\n      \"key\": \"llm-api-key\",\n      \"value\": \"sk-1234567890abcdef\",\n      \"secret\": true,\n      \"description\": \"OpenAI API key\",\n      \"category\": \"api\"\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/v2/site-config/bulk-upsert",
+          "host": ["{{baseUrl}}"],
+          "path": ["v2", "site-config", "bulk-upsert"]
+        }
+      }
+    },
+    {
+      "name": "Update Site Config by Key (Admin)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"value\": \"https://new-example.com/logo.png\",\n  \"description\": \"Updated site logo URL\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/v2/site-config/key/site-logo",
+          "host": ["{{baseUrl}}"],
+          "path": ["v2", "site-config", "key", "site-logo"]
+        }
+      }
+    },
+    {
+      "name": "Delete Site Config by Key (Admin)",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/v2/site-config/key/site-logo",
+          "host": ["{{baseUrl}}"],
+          "path": ["v2", "site-config", "key", "site-logo"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    }
+  ]
+}

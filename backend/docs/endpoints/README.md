@@ -8,13 +8,10 @@
 - Assets: `assets.md`
 - Discussions: `discussions.md`
 - Extended APIs: `extended-apis.md`
-- Issues: `issues.md`
 - Search: `search.md`
 - Permissions/Roles: `permissions.md`
 - Change Logs: `change-logs.md`
 // Inventory removed
 - Proxies
-  - GenAI: `genai.md`
-  - Homologation: `homologation.md`
 
 All routes are mounted under the base path `/v2`.

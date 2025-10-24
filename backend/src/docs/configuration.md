@@ -10,7 +10,6 @@
 | `config.logsMaxSize`          | Maximum size of change logs in megabytes. Auto truncate if exceeds. | `100`       |
 | `config.adminEmails`          | Array of administrator email addresses                              | `[]`        |
 | `config.adminPassword`        | Password for admin accounts created at startup                      | `undefined` |
-| `config.githubIssueSubmitUrl` | URL for GitHub issue submission                                     | Fixed value |
 
 ## Database Configuration
 
@@ -42,8 +41,6 @@
 | `config.services.log.url`           | Logging service URL                       | `undefined` |
 | `config.services.cache.url`         | Cache service URL                         | `undefined` |
 | `config.services.auth.url`          | Authentication service URL                | `undefined` |
-| `config.services.genAI.url`         | Generative AI service URL                 | `undefined` |
-| `config.services.homologation.url`  | Homologation service URL                  | `undefined` |
 | `config.services.email.url`         | Custom email service URL                  | `undefined` |
 | `config.services.email.apiKey`      | API key for default email service (Brevo) | `undefined` |
 | `config.services.email.endpointUrl` | Endpoint URL for default email service    | `undefined` |

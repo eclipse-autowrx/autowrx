@@ -49,7 +49,6 @@
     "prettier"
   ],
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "^3.700.0",
     "ajv": "^8.17.1",
     "axios": "^1.7.0",
     "bcryptjs": "^2.4.3",
@@ -62,7 +61,6 @@
     "cross-env": "^7.0.0",
     "dayjs": "^1.11.11",
     "dotenv": "^16.0.0",
-    "eventsource-parser": "^1.1.2",
     "express": "^4.21.1",
     "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^7.0.0",

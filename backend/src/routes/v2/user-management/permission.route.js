@@ -9,12 +9,12 @@
 const express = require('express');
 
 const router = express.Router();
-const permissionController = require('../../controllers/permission.controller');
-const validate = require('../../middlewares/validate');
-const { permissionValidation } = require('../../validations');
-const auth = require('../../middlewares/auth');
-const { PERMISSIONS } = require('../../config/roles');
-const { checkPermission } = require('../../middlewares/permission');
+const permissionController = require('../../../controllers/permission.controller');
+const validate = require('../../../middlewares/validate');
+const { permissionValidation } = require('../../../validations');
+const auth = require('../../../middlewares/auth');
+const { PERMISSIONS } = require('../../../config/roles');
+const { checkPermission } = require('../../../middlewares/permission');
 
 router.get('/self', auth(), validate(permissionValidation.getSelfUsers), permissionController.getSelfRoles);
 router.get('/', auth(), validate(permissionValidation.getPermissions), permissionController.getPermissions);

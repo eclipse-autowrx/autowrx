@@ -6,11 +6,11 @@
 //
 // SPDX-License-Identifier: MIT
 
-const config = require('../../config/config');
-const { PERMISSIONS } = require('../../config/roles');
-const { changeLogController } = require('../../controllers');
-const auth = require('../../middlewares/auth');
-const { checkPermission } = require('../../middlewares/permission');
+const config = require('../../../config/config');
+const { PERMISSIONS } = require('../../../config/roles');
+const { changeLogController } = require('../../../controllers');
+const auth = require('../../../middlewares/auth');
+const { checkPermission } = require('../../../middlewares/permission');
 const router = require('express').Router();
 
 router.route('/').get(
