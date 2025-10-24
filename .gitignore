@@ -87,3 +87,9 @@ temp/
 ### Test artifacts
 **/cookies*.txt
 
+
+# Docker stack deployment files
+.env.stack
+.env.stack.local
+.env.stack.secrets
+!.env.stack.example

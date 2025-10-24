@@ -1,0 +1,60 @@
+# Copyright (c) 2025 Eclipse Foundation.
+#
+# This program and the accompanying materials are made available under the
+# terms of the MIT License which is available at
+# https://opensource.org/licenses/MIT.
+#
+# SPDX-License-Identifier: MIT
+
+# AutoWRX v3 Stack
+# Usage:
+#   docker compose -f docker-compose.stack.yml --env-file .env.stack up -d
+
+services:
+  # AutoWRX - Backend serves both API and frontend static files
+  autowrx:
+    platform: linux/amd64
+    container_name: ${ENV:-prod}-autowrx
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    image: ghcr.io/${GITHUB_REPOSITORY:-eclipse-autowrx/autowrx}/autowrx:${IMAGE_TAG:-latest}
+    ports:
+      - "${FRONTEND_PORT:-8090}:8080"
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${PORT:-8080}
+      MONGODB_URL: ${MONGODB_URL:-mongodb://autowrx-db:27017/autowrx}
+      JWT_SECRET: ${JWT_SECRET}
+      STRICT_AUTH: ${STRICT_AUTH:-true}
+      JWT_COOKIE_NAME: ${JWT_COOKIE_NAME:-token}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      ADMIN_EMAILS: ${ADMIN_EMAILS}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+    volumes:
+      - '${UPLOAD_PATH_HOST:-./data/upload}:/opt/data/upload'
+    depends_on:
+      - autowrx-db
+    networks:
+      - autowrx-network
+    restart: always
+
+  # MongoDB - Database
+  autowrx-db:
+    platform: linux/amd64
+    container_name: ${ENV:-prod}-autowrx-db
+    image: mongo:4.4.6-bionic
+    volumes:
+      - autowrx-dbdata:/data/db
+    networks:
+      - autowrx-network
+    restart: always
+
+volumes:
+  autowrx-dbdata:
+    name: ${ENV:-prod}-autowrx-dbdata
+
+networks:
+  autowrx-network:
+    name: ${ENV:-prod}-autowrx-network
+    driver: bridge

@@ -1,0 +1,37 @@
+name: Notify Staging Update
+
+on:
+  workflow_run:
+    workflows: ["Build and Push Images"]
+    types:
+      - completed
+    branches:
+      - main
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Deployment notification
+        run: |
+          echo "=========================================="
+          echo "✓ Images pushed to GitHub Container Registry"
+          echo "=========================================="
+          echo ""
+          echo "Image:"
+          echo "  - ghcr.io/${{ github.repository }}/autowrx:main"
+          echo "  - ghcr.io/${{ github.repository }}/autowrx:sha-${GITHUB_SHA:0:7}"
+          echo ""
+          echo "Deployment:"
+          echo "  Staging server will automatically deploy within 5 minutes"
+          echo "  Using server-side polling (no webhook required)"
+          echo ""
+          echo "Monitoring:"
+          echo "  ssh deploy@staging 'tail -f /var/log/autowrx-deploy.log'"
+          echo "  ssh deploy@staging 'sudo journalctl -u autowrx-update.service -f'"
+          echo ""
+          echo "Manual trigger:"
+          echo "  ssh deploy@staging '/opt/deploy/scripts/auto-update.sh'"
+          echo ""
