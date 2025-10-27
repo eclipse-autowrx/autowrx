@@ -305,7 +305,7 @@ select[aria-hidden='true'][tabindex='-1'] {
   --popover-foreground: oklch(0.145 0 0);
   --primary: oklch(0.35 0.08 230);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.75 0.15 95);
+  --secondary: oklch(0.7626 0.1532 115.73);
   --secondary-foreground: oklch(0.145 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
@@ -339,7 +339,7 @@ select[aria-hidden='true'][tabindex='-1'] {
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.55 0.12 230);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.75 0.15 95);
+  --secondary: oklch(0.7626 0.1532 115.73);
   --secondary-foreground: oklch(0.145 0 0);
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
