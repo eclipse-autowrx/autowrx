@@ -48,7 +48,7 @@ const DaNavUser = () => {
       <DaDialog
         open={openLoginDialog}
         onOpenChange={handleSetOpenLoginDialog}
-        className="h-full w-full overflow-auto max-w-md"
+        className="h-fit w-full overflow-auto max-w-md"
       >
         {authType === 'sign-in' && <FormSignIn setAuthType={setAuthType} />}
         {authType === 'register' && <FormRegister setAuthType={setAuthType} />}

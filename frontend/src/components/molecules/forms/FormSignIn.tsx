@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -54,10 +54,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
   }
 
   return (
-    <form
-      onSubmit={signIn}
-      className="flex flex-col w-[30vw] lg:w-[25vw] min-w-[400px] max-w-[500px] h-fit max-h-[80vh] p-4 bg-white"
-    >
+    <form onSubmit={signIn} className="flex flex-col p-4 bg-white">
       {config.disableEmailLogin ? (
         <div className="flex flex-col h-full mb-16">
           <h2 className="text-xl font-semibold text-primary">
@@ -71,9 +68,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
         </div>
       ) : (
         <div className="flex flex-col">
-          <h2 className="text-xl font-semibold text-primary">
-            Sign In
-          </h2>
+          <h2 className="text-xl font-semibold text-primary">Sign In</h2>
           <div className="mt-6"></div>
 
           <div className="mt-4">
@@ -107,9 +102,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
           </div>
 
           {error && (
-            <span className="text-sm mt-2 text-destructive">
-              {error}
-            </span>
+            <span className="text-sm mt-2 text-destructive">{error}</span>
           )}
 
           <Button
@@ -128,7 +121,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
               <Button
                 type="button"
                 onClick={() => setAuthType('register')}
-                variant="ghost"
+                variant="link"
                 className="text-primary text-sm! px-1.5!"
               >
                 Register
@@ -144,9 +137,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
             <span className="w-full border-t"></span>
           </div>
           <div className="relative flex justify-center text-xs uppercase py-6">
-            <span
-              className="bg-white px-2 text-muted-foreground"
-            >
+            <span className="bg-white px-2 text-muted-foreground">
               {' '}
               Or continue with{' '}
             </span>
