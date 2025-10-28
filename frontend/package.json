@@ -55,7 +55,7 @@
     "jszip": "^3.10.1",
     "konva": "9.2.3",
     "lodash": "^4.17.21",
-    "lucide-react": "^0.546.0",
+    "lucide-react": "^0.548.0",
     "microsoft-cognitiveservices-speech-sdk": "^1.41.0",
     "non.geist": "^1.0.3",
     "react": "^18.2.0",

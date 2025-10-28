@@ -162,7 +162,7 @@ const DaFileUpload = ({
           ref={dragAreaRef}
           onClick={(e) => e.stopPropagation()}
           className={clsx(
-            'z-9999 bg-linear-to-r from-primary to-accent transition flex fixed top-0 left-0 right-0 bottom-0',
+            'z-9999 bg-linear-to-r from-primary to-secondary transition flex fixed top-0 left-0 right-0 bottom-0',
             dragging ? 'opacity-90' : 'opacity-0 pointer-events-none',
           )}
         >

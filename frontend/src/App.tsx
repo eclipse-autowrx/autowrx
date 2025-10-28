@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -13,19 +13,20 @@ import 'non.geist/mono'
 import useSelfProfileQuery from '@/hooks/useSelfProfile.ts'
 import { useEffect } from 'react'
 import { addLog } from '@/services/log.service.ts'
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom'
 import { useToast } from '@/components/molecules/toaster/use-toast.ts'
+import { TooltipProvider } from '@/components/atoms/tooltip'
 
 function App() {
   const routes = useRoutes(routesConfig)
-  const navigate = useNavigate();
+  const navigate = useNavigate()
   useEffect(() => {
-    (window as any).reactNavigate = navigate;
-  }, [navigate]);
+    ;(window as any).reactNavigate = navigate
+  }, [navigate])
 
   const { toast } = useToast()
   useEffect(() => {
-    (window as any).reactToast = toast;
+    ;(window as any).reactToast = toast
   }, [toast])
 
   const { data: currentUser } = useSelfProfileQuery()
@@ -57,7 +58,11 @@ function App() {
     }
   }, [currentUser])
 
-  return routes || <div>Loading...</div>
+  return (
+    <TooltipProvider delayDuration={200}>
+      {routes || <div>Loading...</div>}
+    </TooltipProvider>
+  )
 }
 
 export default App

@@ -6,14 +6,6 @@
 //
 // SPDX-License-Identifier: MIT
 
-/**
- * Component Showcase Page
- *
- * This page demonstrates all available atom components from @/components/atoms
- * Similar to https://ui.shadcn.com/ homepage showcase
- * Use this to test styling, themes, colors, and fonts across all components
- */
-
 import { useState } from 'react'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
@@ -29,7 +21,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from '@/components/atoms/select'
 import {
   Table,
@@ -42,7 +34,6 @@ import {
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from '@/components/atoms/tooltip'
 import {
@@ -60,6 +51,7 @@ import {
   ContextMenuTrigger,
 } from '@/components/atoms/context-menu'
 import DaDialog from '@/components/molecules/DaDialog'
+import DaTooltip from '@/components/molecules/DaTooltip'
 
 const PageTest = () => {
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -90,7 +82,8 @@ const PageTest = () => {
             <h3 className="text-2xl font-semibold">Heading 3</h3>
             <h4 className="text-xl font-medium">Heading 4</h4>
             <p className="text-base text-foreground">
-              Regular paragraph text with <strong>bold</strong> and <em>italic</em>
+              Regular paragraph text with <strong>bold</strong> and{' '}
+              <em>italic</em>
             </p>
             <p className="text-sm text-muted-foreground">Small muted text</p>
           </div>
@@ -108,9 +101,19 @@ const PageTest = () => {
             <Button variant="outline">Outline</Button>
             <Button variant="ghost">Ghost</Button>
             <Button variant="link">Link</Button>
-            <Button variant="default" size="sm">Small</Button>
-            <Button variant="default" size="lg">Large</Button>
+            <Button variant="default" size="sm">
+              Small
+            </Button>
+            <Button variant="default" size="lg">
+              Large
+            </Button>
             <Button disabled>Disabled</Button>
+            <Button className="bg-brand-primary text-white hover:bg-brand-primary/90">
+              Brand Primary
+            </Button>
+            <Button className="bg-brand-secondary text-foreground hover:bg-brand-secondary/90">
+              Brand Secondary
+            </Button>
           </div>
         </section>
 
@@ -126,7 +129,11 @@ const PageTest = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" placeholder="Enter password" />
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter password"
+              />
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="message">Message</Label>
@@ -253,16 +260,28 @@ const PageTest = () => {
           </h2>
           <div className="flex flex-wrap gap-4">
             {/* Tooltip */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline">Hover me (Tooltip)</Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>This is a tooltip</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline">Hover me (Tooltip)</Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>This is a tooltip</p>
+              </TooltipContent>
+            </Tooltip>
+
+            {/* DaTooltip Wrapper */}
+            <DaTooltip tooltipMessage="This is a simple DaTooltip wrapper!">
+              <Button variant="outline">Hover me (DaTooltip)</Button>
+            </DaTooltip>
+
+            {/* DaTooltip with custom side */}
+            <DaTooltip
+              tooltipMessage="This tooltip appears on the right"
+              side="right"
+              tooltipDelay={500}
+            >
+              <Button variant="outline">Right Tooltip</Button>
+            </DaTooltip>
 
             {/* Dropdown Menu */}
             <DropdownMenu>
@@ -302,7 +321,10 @@ const PageTest = () => {
               <div className="space-y-4">
                 <p>This is the dialog content. You can put any content here.</p>
                 <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setDialogOpen(false)}
+                  >
                     Cancel
                   </Button>
                   <Button onClick={() => setDialogOpen(false)}>Confirm</Button>
@@ -318,53 +340,39 @@ const PageTest = () => {
             Color Palette
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <div className="h-20 rounded-md bg-background border flex items-center justify-center">
-                <span className="text-sm">background</span>
-              </div>
-              <p className="text-sm text-center">Background</p>
+            <div className="h-24 rounded-lg bg-background border flex items-center justify-center">
+              <span className="text-sm font-medium">background</span>
             </div>
-            <div className="space-y-2">
-              <div className="h-20 rounded-md bg-foreground flex items-center justify-center">
-                <span className="text-sm text-background">foreground</span>
-              </div>
-              <p className="text-sm text-center">Foreground</p>
+            <div className="h-24 rounded-lg bg-foreground flex items-center justify-center">
+              <span className="text-sm font-medium text-background">
+                foreground
+              </span>
             </div>
-            <div className="space-y-2">
-              <div className="h-20 rounded-md bg-primary flex items-center justify-center">
-                <span className="text-sm text-primary-foreground">primary</span>
-              </div>
-              <p className="text-sm text-center">Primary</p>
+            <div className="h-24 rounded-lg bg-primary flex items-center justify-center">
+              <span className="text-sm font-medium text-primary-foreground">
+                primary
+              </span>
             </div>
-            <div className="space-y-2">
-              <div className="h-20 rounded-md bg-secondary flex items-center justify-center">
-                <span className="text-sm text-secondary-foreground">secondary</span>
-              </div>
-              <p className="text-sm text-center">Secondary</p>
+            <div className="h-24 rounded-lg bg-destructive flex items-center justify-center">
+              <span className="text-sm font-medium text-white">
+                destructive
+              </span>
             </div>
-            <div className="space-y-2">
-              <div className="h-20 rounded-md bg-destructive flex items-center justify-center">
-                <span className="text-sm text-white">destructive</span>
-              </div>
-              <p className="text-sm text-center">Destructive</p>
+            <div className="h-24 rounded-lg bg-muted flex items-center justify-center">
+              <span className="text-sm font-medium">muted</span>
             </div>
-            <div className="space-y-2">
-              <div className="h-20 rounded-md bg-muted flex items-center justify-center">
-                <span className="text-sm">muted</span>
-              </div>
-              <p className="text-sm text-center">Muted</p>
+            <div className="h-24 rounded-lg border border-input flex items-center justify-center">
+              <span className="text-sm font-medium">border</span>
             </div>
-            <div className="space-y-2">
-              <div className="h-20 rounded-md bg-accent flex items-center justify-center">
-                <span className="text-sm">accent</span>
-              </div>
-              <p className="text-sm text-center">Accent</p>
+            <div className="h-24 rounded-lg bg-brand-primary flex items-center justify-center">
+              <span className="text-sm font-medium text-white">
+                brand-primary
+              </span>
             </div>
-            <div className="space-y-2">
-              <div className="h-20 rounded-md border border-input flex items-center justify-center">
-                <span className="text-sm">border</span>
-              </div>
-              <p className="text-sm text-center">Border</p>
+            <div className="h-24 rounded-lg bg-brand-secondary flex items-center justify-center">
+              <span className="text-sm font-medium text-foreground">
+                brand-secondary
+              </span>
             </div>
           </div>
         </section>

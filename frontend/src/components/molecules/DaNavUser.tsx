@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -31,7 +31,7 @@ const DaNavUser = () => {
   const { data: user } = useSelfProfileQuery()
 
   return (
-    <div>
+    <div className="flex w-full">
       {user ? (
         <DaUserMenu user={user} />
       ) : (
@@ -51,9 +51,7 @@ const DaNavUser = () => {
         className="h-full w-full overflow-auto max-w-md"
       >
         {authType === 'sign-in' && <FormSignIn setAuthType={setAuthType} />}
-        {authType === 'register' && (
-          <FormRegister setAuthType={setAuthType} />
-        )}
+        {authType === 'register' && <FormRegister setAuthType={setAuthType} />}
         {authType === 'forgot' && (
           <FormForgotPassword setAuthType={setAuthType} />
         )}
