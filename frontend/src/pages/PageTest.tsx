@@ -108,11 +108,11 @@ const PageTest = () => {
               Large
             </Button>
             <Button disabled>Disabled</Button>
-            <Button className="bg-brand-primary text-white hover:bg-brand-primary/90">
-              Brand Primary
+            <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+              Primary (Brand)
             </Button>
-            <Button className="bg-brand-secondary text-foreground hover:bg-brand-secondary/90">
-              Brand Secondary
+            <Button className="bg-secondary text-secondary-foreground hover:bg-secondary/90">
+              Secondary (Brand)
             </Button>
           </div>
         </section>
@@ -364,14 +364,9 @@ const PageTest = () => {
             <div className="h-24 rounded-lg border border-input flex items-center justify-center">
               <span className="text-sm font-medium">border</span>
             </div>
-            <div className="h-24 rounded-lg bg-brand-primary flex items-center justify-center">
-              <span className="text-sm font-medium text-white">
-                brand-primary
-              </span>
-            </div>
-            <div className="h-24 rounded-lg bg-brand-secondary flex items-center justify-center">
-              <span className="text-sm font-medium text-foreground">
-                brand-secondary
+            <div className="h-24 rounded-lg bg-secondary flex items-center justify-center">
+              <span className="text-sm font-medium text-secondary-foreground">
+                secondary
               </span>
             </div>
           </div>
