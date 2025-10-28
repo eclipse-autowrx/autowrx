@@ -15,7 +15,7 @@ dotenv.config({ path: path.join(__dirname, '../../.env') });
 const envVarsSchema = Joi.object()
   .keys({
     NODE_ENV: Joi.string().valid('production', 'development', 'test').required(),
-    PORT: Joi.number().default(8080),
+    PORT: Joi.number().default(3200),
     MONGODB_URL: Joi.string().required().description('Mongo DB url'),
     CORS_ORIGINS: Joi.string().default('localhost:\\d+,127\\.0\\.0\\.1:\\d+').description('Allowed CORS origins (comma-separated regex patterns)'),
     // JWT
@@ -38,17 +38,12 @@ const envVarsSchema = Joi.object()
     CLIENT_BASE_URL: Joi.string().description('Client base url').default('http://localhost:3000'),
     GITHUB_CLIENT_ID: Joi.string().description('Github client id'),
     GITHUB_CLIENT_SECRET: Joi.string().description('Github client secret'),
-    // Upload service
-    UPLOAD_PORT: Joi.number().required().description('Upload port'),
-    UPLOAD_DOMAIN: Joi.string().required().description('Upload domain'),
     // Log service URL
     LOG_URL: Joi.string().description('Log base url'),
     // Cache service URL
     CACHE_URL: Joi.string().description('Cache base url'),
     // Auth service
     AUTH_URL: Joi.string().description('Auth service url'),
-    // GenAI service
-    GENAI_URL: Joi.string().description('GenAI service url'),
     // Email URL
     EMAIL_URL: Joi.string().description('URL to your custom email service'),
     EMAIL_API_KEY: Joi.string().description('API key for default email service (Brevo)'),
@@ -59,14 +54,14 @@ const envVarsSchema = Joi.object()
     // OpenAI,
     OPENAI_API_KEY: Joi.string().description('OpenAI API key'),
     OPENAI_ENDPOINT_URL: Joi.string().description('OpenAI endpoint url'),
-    // Homologation
-    HOMOLOGATION_URL: Joi.string().description('Homologation service url'),
     STRICT_AUTH: Joi.boolean().description('Strict auth'),
     // Admin emails
     ADMIN_EMAILS: Joi.string().description('Admin emails'),
     ADMIN_PASSWORD: Joi.string().description('Admin password'),
     // Change Logs max size
     LOGS_MAX_SIZE: Joi.number().default(100).description('Max size of change logs in megabytes'),
+    // File upload settings
+    MAX_IMAGE_DIMENSION: Joi.number().default(1024).description('Maximum image dimension in pixels'),
   })
   .unknown();
 
@@ -117,6 +112,11 @@ const config = {
   },
   cors: {
     origins: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) {
+        return callback(null, true);
+      }
+      
       // Allow requests from localhost and 127.0.0.1 with any port
       const allowedOrigins = [
         /^http:\/\/localhost:\d+$/,
@@ -131,6 +131,7 @@ const config = {
       if (isAllowed) {
         callback(null, true);
       } else {
+        console.log(`CORS blocked origin: ${origin}`);
         callback(new Error('Not allowed by CORS'));
       }
     },
@@ -146,10 +147,6 @@ const config = {
     clientSecret: process.env.GITHUB_CLIENT_SECRET,
   },
   services: {
-    upload: {
-      port: envVars.UPLOAD_PORT,
-      domain: envVars.UPLOAD_DOMAIN,
-    },
     log: {
       port: envVars.LOG_PORT || 9600,
     },
@@ -159,9 +156,6 @@ const config = {
     auth: {
       url: envVars.AUTH_URL,
     },
-    genAI: {
-      url: envVars.GENAI_URL,
-    },
     email: {
       url: envVars.EMAIL_URL, // This is the URL for your custom email service
       apiKey: envVars.EMAIL_API_KEY,
@@ -169,9 +163,6 @@ const config = {
     },
     log: {
       url: envVars.LOG_URL,
-    },
-    homologation: {
-      url: envVars.HOMOLOGATION_URL,
     },
   },
   openai: {
@@ -182,13 +173,15 @@ const config = {
     publicKey: envVars.AWS_PUBLIC_KEY,
     secretKey: envVars.AWS_SECRET_KEY,
   },
-  githubIssueSubmitUrl: 'https://api.github.com/repos/digital-auto/vehicle_signal_specification/issues',
   sso: {
     msGraphMeEndpoint: 'https://graph.microsoft.com/v1.0/me',
   },
   adminEmails: envVars.ADMIN_EMAILS?.split(',') || [],
   adminPassword: envVars.ADMIN_PASSWORD,
   logsMaxSize: envVars.LOGS_MAX_SIZE,
+  fileUpload: {
+    maxImageDimension: envVars.MAX_IMAGE_DIMENSION,
+  },
 };
 
 if (config.env === 'development') {

@@ -6,11 +6,24 @@
 //
 // SPDX-License-Identifier: MIT
 
+import { useQuery } from '@tanstack/react-query'
+import { useParams } from 'react-router-dom'
 import { Prototype } from '@/types/model.type'
+import { serverAxios } from '@/services/base'
 
-// Temporary stub hook - TODO: Implement proper prototype hook
-const useCurrentPrototype = (): { data: Prototype | null } => {
-  return { data: null }
+const fetchPrototypeById = async (prototypeId: string): Promise<Prototype> => {
+  const response = await serverAxios.get(`/prototype/${prototypeId}`)
+  return response.data
+}
+
+const useCurrentPrototype = () => {
+  const { prototypeId } = useParams<{ prototypeId: string }>()
+
+  return useQuery<Prototype>({
+    queryKey: ['prototype', prototypeId],
+    queryFn: () => fetchPrototypeById(prototypeId!),
+    enabled: !!prototypeId,
+  })
 }
 
 export default useCurrentPrototype

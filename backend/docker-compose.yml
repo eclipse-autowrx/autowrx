@@ -65,16 +65,6 @@ services:
     restart: always
     command: npm run prod
 
-  homologation:
-    platform: linux/amd64
-    container_name: ${ENV:-dev}-homologation-node
-    image: boschvn/homologation-node:latest
-    networks:
-      - node-network
-    environment:
-      - HOMOLOGATION_AUTH_CLIENT_ID=${HOMOLOGATION_AUTH_CLIENT_ID}
-      - HOMOLOGATION_AUTH_CLIENT_SECRET=${HOMOLOGATION_AUTH_CLIENT_SECRET}
-
   inventory-be:
     platform: linux/amd64
     container_name: ${ENV:-dev}-inventory-be

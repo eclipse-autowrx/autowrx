@@ -12,13 +12,8 @@ const httpStatus = require('http-status');
 const logger = require('./logger');
 
 const setupProxy = (app) => {
-  app.use(
-    '/v2/file',
-    createProxyMiddleware({
-      target: `http://upload:${config.services.upload.port}`,
-      changeOrigin: true,
-    })
-  );
+  // File upload is now handled directly by the backend
+  // No proxy needed for /v2/file
 };
 
 /**

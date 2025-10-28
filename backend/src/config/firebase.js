@@ -51,7 +51,6 @@ if (privateKey) {
     feedback: db.collection('feedback'),
     discussion: db.collection('discussion'),
     activity_log: db.collection('activity_log'),
-    issue: db.collection('issue'),
     survey: db.collection('survey'),
     feature: db.collection('feature'),
     api: db.collection('api'),

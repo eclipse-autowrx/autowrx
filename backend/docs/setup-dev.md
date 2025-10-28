@@ -32,8 +32,6 @@ Optional services (leave empty if not used):
 
 ```bash
 AUTH_URL=
-GENAI_URL=
-HOMOLOGATION_URL=
 EMAIL_URL=
 ```
 

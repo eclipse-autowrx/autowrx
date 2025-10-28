@@ -6,11 +6,24 @@
 //
 // SPDX-License-Identifier: MIT
 
+import { useQuery } from '@tanstack/react-query'
+import { useParams } from 'react-router-dom'
 import { Model } from '@/types/model.type'
+import { serverAxios } from '@/services/base'
 
-// Temporary stub hook - TODO: Implement proper model hook
-const useCurrentModel = (): { data: Model | null } => {
-  return { data: null }
+const fetchModelById = async (modelId: string): Promise<Model> => {
+  const response = await serverAxios.get(`/model/${modelId}`)
+  return response.data
+}
+
+const useCurrentModel = () => {
+  const { modelId } = useParams<{ modelId: string }>()
+
+  return useQuery<Model>({
+    queryKey: ['model', modelId],
+    queryFn: () => fetchModelById(modelId!),
+    enabled: !!modelId,
+  })
 }
 
 export default useCurrentModel

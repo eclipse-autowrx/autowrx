@@ -29,21 +29,6 @@ if [ -z "$KONG_PROXY_PORT" ]; then
   exit 1
 fi
 
-if [ -z "$UPLOAD_PATH" ]; then
-  echo "UPLOAD_PATH is not set"
-  exit 1
-fi
-
-if [ -z "$UPLOAD_PORT" ]; then
-  echo "UPLOAD_PORT is not set"
-  exit 1
-fi
-
-if [ -z "$UPLOAD_DOMAIN" ]; then
-  echo "UPLOAD_DOMAIN is not set"
-  exit 1
-fi
-
 if [ ! -d "$UPLOAD_PATH" ]; then
   echo "Creating directory $UPLOAD_PATH"
   sudo mkdir -p "$UPLOAD_PATH"

@@ -32,16 +32,6 @@ services:
   kong:
     restart: no
 
-  genai:
-    platform: linux/amd64
-    container_name: ${ENV:-dev}-genai
-    image: boschvn/genai:latest
-    networks:
-      - node-network
-    env_file:
-      - .env
-    restart: no
-
   cache:
     platform: linux/amd64
     container_name: ${ENV:-dev}-cache
@@ -49,17 +39,6 @@ services:
     networks:
       - node-network
     restart: no
-
-  homologation:
-    platform: linux/amd64
-    container_name: ${ENV:-dev}-homologation-node
-    image: boschvn/homologation-node:latest
-    networks:
-      - node-network
-    restart: no
-    environment:
-      - HOMOLOGATION_AUTH_CLIENT_ID=${HOMOLOGATION_AUTH_CLIENT_ID}
-      - HOMOLOGATION_AUTH_CLIENT_SECRET=${HOMOLOGATION_AUTH_CLIENT_SECRET}
 
   inventory-be:
     command: yarn dev -L

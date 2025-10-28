@@ -23,8 +23,6 @@ const PERMISSIONS = {
   READ_MODEL: 'readModel',
   WRITE_MODEL: 'writeModel',
 
-  // genai,
-  GENERATIVE_AI: 'generativeAI',
 
   // read assets,
   READ_ASSET: 'readAsset',
@@ -45,7 +43,6 @@ const PERMISSIONS_DESCRIPTION = {
   [PERMISSIONS.ADMIN]: 'Manage users',
   [PERMISSIONS.READ_MODEL]: 'Read model',
   [PERMISSIONS.WRITE_MODEL]: 'Write model',
-  [PERMISSIONS.GENERATIVE_AI]: 'Generative AI',
   [PERMISSIONS.DEPLOY_HARDWARE]: 'Deploy hardware',
   [PERMISSIONS.LEARNING_MODE]: 'Learning Mode',
   [PERMISSIONS.AI_AGENT]: 'AI Agent',
@@ -57,11 +54,6 @@ const ROLES = {
     permissions: [PERMISSIONS.UNLIMITED_MODEL],
     ref: 'promoted_user',
     name: 'Unlimited model',
-  },
-  generative_ai_role: {
-    permissions: [PERMISSIONS.GENERATIVE_AI],
-    ref: 'generative_ai_role',
-    name: 'Generative AI',
   },
   model_contributor: {
     permissions: [PERMISSIONS.READ_MODEL, PERMISSIONS.WRITE_MODEL],
@@ -81,7 +73,6 @@ const ROLES = {
       PERMISSIONS.WRITE_MODEL,
       PERMISSIONS.ADMIN,
       PERMISSIONS.UNLIMITED_MODEL,
-      PERMISSIONS.GENERATIVE_AI,
       PERMISSIONS.READ_ASSET,
       PERMISSIONS.WRITE_ASSET,
       PERMISSIONS.DEPLOY_HARDWARE,

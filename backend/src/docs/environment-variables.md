@@ -32,13 +32,6 @@
 | Variable              | Description                                                                      | Default                 |
 | --------------------- | -------------------------------------------------------------------------------- | ----------------------- |
 | `CLIENT_BASE_URL`     | Client application URL. Used to redirect after GitHub login                      | `http://localhost:3000` |
-| `UPLOAD_PORT`         | File upload service port                                                         | -                       |
-| `UPLOAD_PATH`         | File system upload path                                                          | -                       |
-| `UPLOAD_DOMAIN`       | File upload endpoint                                                             | -                       |
-| `EMAIL_URL`           | Custom email service URL. If this leaves empty, the system uses Brevo by default | -                       |
-| `EMAIL_API_KEY`       | Email service API key                                                            | -                       |
-| `OPENAI_API_KEY`      | OpenAI API key                                                                   | -                       |
-| `OPENAI_ENDPOINT_URL` | OpenAI API endpoint                                                              | -                       |
 
 ## Infrastructure
 

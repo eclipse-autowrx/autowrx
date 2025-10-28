@@ -16,6 +16,7 @@ import {
   TbStack2,
   TbBuildingWarehouse,
   TbCar,
+  TbSettings,
 } from 'react-icons/tb'
 import usePermissionHook from '@/hooks/usePermissionHook.ts'
 import { PERMISSIONS } from '@/const/permission.ts'
@@ -31,6 +32,7 @@ import { useState, useEffect, useRef, Fragment } from 'react'
 
 // import useLastAccessedModel from '@/hooks/useLastAccessedModel'
 import { FaCar } from 'react-icons/fa'
+import { useSiteConfig } from '@/utils/siteConfig'
 
 const NavigationBar = ({}) => {
 
@@ -40,6 +42,13 @@ const NavigationBar = ({}) => {
     [PERMISSIONS.MANAGE_USERS]
   )
   const [learningMode, setIsLearningMode] = useState(false)
+  const siteTitle = useSiteConfig('SITE_TITLE', 'AutoWRX')
+
+  useEffect(() => {
+    if (siteTitle) {
+      document.title = siteTitle
+    }
+  }, [siteTitle])
 
   // const { lastAccessedModel } = useLastAccessedModel()
 
@@ -125,6 +134,12 @@ const NavigationBar = ({}) => {
                 className="flex items-center px-4 py-2 gap-2 da-menu-item text-base"
               >
                 <TbStack2 className="text-base" /> Manage Features
+              </Link>
+              <Link
+                to="/site-config"
+                className="flex items-center px-4 py-2 gap-2 da-menu-item da-label-regular"
+              >
+                <TbSettings className="text-base" /> Site Config
               </Link>
             </DaMenu>
           )}

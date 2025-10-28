@@ -12,6 +12,7 @@
   "scripts": {
     "start": "pm2 start ecosystem.config.json --no-daemon",
     "dev": "cross-env NODE_ENV=development nodemon --ignore 'data/*' src/index.js",
+    "prod:test": "cross-env NODE_ENV=production node src/index.js",
     "test": "jest -i --colors --verbose --detectOpenHandles",
     "test:watch": "jest -i --watchAll",
     "coverage": "jest -i --coverage",
@@ -48,7 +49,6 @@
     "prettier"
   ],
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "^3.700.0",
     "ajv": "^8.17.1",
     "axios": "^1.7.0",
     "bcryptjs": "^2.4.3",
@@ -61,7 +61,6 @@
     "cross-env": "^7.0.0",
     "dayjs": "^1.11.11",
     "dotenv": "^16.0.0",
-    "eventsource-parser": "^1.1.2",
     "express": "^4.21.1",
     "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^7.0.0",
@@ -80,6 +79,8 @@
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "pm2": "^5.1.0",
+    "multer": "^1.4.5-lts.1",
+    "sharp": "^0.33.0",
     "socket.io": "^4.8.1",
     "swagger-jsdoc": "^6.0.8",
     "swagger-ui-express": "^5.0.1",
