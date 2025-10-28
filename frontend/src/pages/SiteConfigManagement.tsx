@@ -11,13 +11,12 @@ import { Config, CreateConfigRequest, UpdateConfigRequest } from '../services/co
 import { configManagementService } from '../services/configManagement.service';
 import ConfigForm from '../components/molecules/ConfigForm';
 import ConfigList from '../components/molecules/ConfigList';
-import { DaText } from '../components/atoms/DaText';
-import { DaButton } from '../components/atoms/DaButton';
+import { Button } from '../components/atoms/button';
 import DaTabItem from '../components/atoms/DaTabItem';
 import { useToast } from '@/components/molecules/toaster/use-toast';
-import DaPopup from '../components/atoms/DaPopup';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/atoms/dialog';
 import CodeEditor from '@/components/molecules/CodeEditor';
-import DaLoader from '../components/atoms/DaLoader';
+import { Spinner } from '../components/atoms/spinner';
 import useSelfProfileQuery from '@/hooks/useSelfProfile';
 
 // Predefined site configurations with default values
@@ -280,12 +279,12 @@ const SiteConfigManagement: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8 flex flex-col">
-          <DaText variant="huge-bold" className="text-da-gray-dark">
+          <h1 className="text-4xl font-bold text-foreground">
             Site Management
-          </DaText>
-          <DaText variant="regular" className="mt-2 text-da-gray-medium">
+          </h1>
+          <p className="mt-2 text-base text-muted-foreground">
             Manage site configurations and settings
-          </DaText>
+          </p>
         </div>
 
         
@@ -293,7 +292,7 @@ const SiteConfigManagement: React.FC = () => {
 
         {/* Tabs */}
         <div className="mb-6">
-          <div className="border-b border-da-gray-light">
+          <div className="border-b border-border">
             <nav className="-mb-px flex space-x-8">
               <DaTabItem
                 active={activeTab === 'public'}
@@ -321,31 +320,30 @@ const SiteConfigManagement: React.FC = () => {
         </div>
 
         {/* Content */}
-        <div className="bg-da-white rounded-lg shadow">
+        <div className="bg-background rounded-lg shadow">
           {activeTab !== 'style' ? (
-            <div className="px-6 py-4 border-b border-da-gray-light">
+            <div className="px-6 py-4 border-b border-border">
               <div className="flex items-center justify-between">
                 <div className="flex flex-col">
-                  <DaText variant="sub-title" className="text-da-gray-dark">
+                  <h2 className="text-lg font-semibold text-foreground">
                     {activeTab === 'public' ? 'Configurations' : 'Secret Configurations'}
-                  </DaText>
+                  </h2>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <DaButton
+                  <Button
                     onClick={handleFactoryReset}
                     variant="destructive"
-                    size="md"
                     disabled={isLoading}
                   >
                     Factory Reset
-                  </DaButton>
+                  </Button>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="px-6 py-3 border-b border-da-gray-light flex items-center justify-between">
-              <DaText variant="sub-title" className="text-da-gray-dark">Site Style (global.css)</DaText>
-              <DaButton
+            <div className="px-6 py-3 border-b border-border flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-foreground">Site Style (global.css)</h2>
+              <Button
                 onClick={async () => {
                   try {
                     setSavingStyle(true);
@@ -357,12 +355,10 @@ const SiteConfigManagement: React.FC = () => {
                     setSavingStyle(false);
                   }
                 }}
-                variant="solid"
-                size="md"
                 disabled={savingStyle}
               >
                 {savingStyle ? 'Saving...' : 'Save'}
-              </DaButton>
+              </Button>
             </div>
           )}
 
@@ -380,7 +376,7 @@ const SiteConfigManagement: React.FC = () => {
               </div>
             ) : isLoading ? (
               <div className="flex justify-center items-center py-8">
-                <DaLoader />
+                <Spinner />
               </div>
             ) : (
               <ConfigList
@@ -394,26 +390,22 @@ const SiteConfigManagement: React.FC = () => {
         </div>
 
         {/* Form Modal */}
-        <DaPopup
-          trigger={<div />}
-          state={[isFormOpen, setIsFormOpen]}
-          onClose={handleCancelForm}
-        >
-          <div className="w-[600px]">
-            <div className="flex items-center justify-between mb-4">
-              <DaText variant="sub-title" className="text-da-gray-dark">
+        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <DialogContent className="max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>
                 {editingConfig ? 'Edit Configuration' : 'Create Configuration'}
-              </DaText>
-            </div>
-            
+              </DialogTitle>
+            </DialogHeader>
+
             <ConfigForm
               config={editingConfig}
               onSave={handleSaveConfig}
               onCancel={handleCancelForm}
               isLoading={isLoading}
             />
-          </div>
-        </DaPopup>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

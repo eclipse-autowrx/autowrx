@@ -32,7 +32,7 @@ const DaBreadcrumbBar = () => {
   // const { data: model } = useCurrentModel()
   // const { data: prototype } = useCurrentPrototype()
   // const location = useLocation()
-  // const [breadcrumbs, setBreadcrumbs] = useState<JSX.Element[]>([])
+  const [breadcrumbs, setBreadcrumbs] = useState<JSX.Element[]>([])
 
   const generateBreadcrumbItem = (
     path: string,

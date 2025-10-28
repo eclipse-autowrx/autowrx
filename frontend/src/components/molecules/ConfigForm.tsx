@@ -12,12 +12,12 @@ import ColorPicker from '../atoms/ColorPicker';
 import ImageUrlInput from '../atoms/ImageUrlInput';
 import DatePicker from '../atoms/DatePicker';
 import JsonEditor from '../atoms/JsonEditor';
-import { DaText } from '../atoms/DaText';
-import { DaButton } from '../atoms/DaButton';
-import { DaInput } from '../atoms/DaInput';
-import { DaTextarea } from '../atoms/DaTextarea';
-import { DaSelect } from '../atoms/DaSelect';
-import DaCheckbox from '../atoms/DaCheckbox';
+import { Button } from '../atoms/button';
+import { Input } from '../atoms/input';
+import { Textarea } from '../atoms/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../atoms/select';
+import { Checkbox } from '../atoms/checkbox';
+import { Label } from '../atoms/label';
 
 interface ConfigFormProps {
   config?: Config;
@@ -71,10 +71,10 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
     }
   };
 
-  const handleValueTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newType = e.target.value as typeof valueType;
+  const handleValueTypeChange = (value: string) => {
+    const newType = value as typeof valueType;
     setValueType(newType);
-    
+
     // Reset value when type changes
     setFormData(prev => ({ ...prev, value: '' }));
   };
@@ -126,15 +126,13 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
       case 'boolean':
         return (
           <div className="flex items-center space-x-4">
-            <label className="flex items-center">
-              <input
-                type="checkbox"
+            <div className="flex items-center space-x-2">
+              <Checkbox
                 checked={formData.value === true || formData.value === 'true'}
-                onChange={(e) => handleValueChange(e.target.checked)}
-                className="mr-2"
+                onCheckedChange={(checked) => handleValueChange(checked)}
               />
-              <span className="text-sm font-medium text-gray-700">True</span>
-            </label>
+              <Label className="text-sm font-medium">True</Label>
+            </div>
           </div>
         );
       case 'object':
@@ -169,23 +167,21 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
         );
       case 'number':
         return (
-          <input
+          <Input
             type="number"
             name="value"
             value={formData.value}
             onChange={(e) => handleValueChange(e.target.value)}
             step="any"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         );
       default: // string
         return (
-          <textarea
+          <Textarea
             name="value"
             value={formData.value}
             onChange={(e) => handleValueChange(e.target.value)}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         );
     }
@@ -193,83 +189,90 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <DaInput
-        label="Key *"
-        name="key"
-        value={formData.key}
-        onChange={handleInputChange}
-        disabled={!!config} // Can't change key when editing
-        required
-      />
+      <div className="flex flex-col">
+        <Label className="mb-1">Key *</Label>
+        <Input
+          name="key"
+          value={formData.key}
+          onChange={handleInputChange}
+          disabled={!!config} // Can't change key when editing
+          required
+        />
+      </div>
 
       {/* Scope and target_id are hidden for site scope - they're automatically set */}
       <input type="hidden" name="scope" value="site" />
       <input type="hidden" name="target_id" value="" />
 
-      <DaSelect
-        label="Value Type"
-        value={valueType}
-        onValueChange={(value) => handleValueTypeChange({ target: { value } } as any)}
-      >
-        <option value="string">String</option>
-        <option value="number">Number</option>
-        <option value="boolean">Boolean</option>
-        <option value="object">Object (JSON)</option>
-        <option value="array">Array (JSON)</option>
-        <option value="date">Date</option>
-        <option value="color">Color</option>
-        <option value="image_url">Image URL</option>
-      </DaSelect>
+      <div className="flex flex-col">
+        <Label className="mb-1">Value Type</Label>
+        <Select value={valueType} onValueChange={handleValueTypeChange}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="string">String</SelectItem>
+            <SelectItem value="number">Number</SelectItem>
+            <SelectItem value="boolean">Boolean</SelectItem>
+            <SelectItem value="object">Object (JSON)</SelectItem>
+            <SelectItem value="array">Array (JSON)</SelectItem>
+            <SelectItem value="date">Date</SelectItem>
+            <SelectItem value="color">Color</SelectItem>
+            <SelectItem value="image_url">Image URL</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       <div>
-        <DaText variant="small-bold" className="mb-1 text-da-gray-dark">
-          Value *
-        </DaText>
+        <Label className="mb-1 font-semibold">Value *</Label>
         {renderValueInput()}
         {valueError && (
-          <DaText variant="small" className="mt-1 text-da-destructive">{valueError}</DaText>
+          <p className="mt-1 text-sm text-destructive">{valueError}</p>
         )}
       </div>
 
-      <DaCheckbox
-        checked={formData.secret}
-        onChange={() => handleInputChange({ target: { name: 'secret', type: 'checkbox', checked: !formData.secret } } as any)}
-        label="Secret (admin only)"
-      />
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          checked={formData.secret}
+          onCheckedChange={(checked) => handleInputChange({ target: { name: 'secret', type: 'checkbox', checked: checked as boolean } } as React.ChangeEvent<HTMLInputElement>)}
+        />
+        <Label>Secret (admin only)</Label>
+      </div>
 
-      <DaInput
-        label="Category"
-        name="category"
-        value={formData.category}
-        onChange={handleInputChange}
-        placeholder="e.g., branding, api, system"
-      />
+      <div className="flex flex-col">
+        <Label className="mb-1">Category</Label>
+        <Input
+          name="category"
+          value={formData.category}
+          onChange={handleInputChange}
+          placeholder="e.g., branding, api, system"
+        />
+      </div>
 
-      <DaTextarea
-        label="Description"
-        name="description"
-        value={formData.description}
-        onChange={handleInputChange}
-        rows={2}
-      />
+      <div className="flex flex-col">
+        <Label className="mb-1">Description</Label>
+        <Textarea
+          name="description"
+          value={formData.description}
+          onChange={handleInputChange}
+          rows={2}
+        />
+      </div>
 
       <div className="flex justify-end space-x-3 pt-4">
-        <DaButton
+        <Button
           type="button"
           onClick={onCancel}
-          variant="outline-nocolor"
-          size="md"
+          variant="outline"
         >
           Cancel
-        </DaButton>
-        <DaButton
+        </Button>
+        <Button
           type="submit"
           disabled={isLoading}
-          variant="solid"
-          size="md"
         >
           {isLoading ? 'Saving...' : (config ? 'Update' : 'Create')}
-        </DaButton>
+        </Button>
       </div>
     </form>
   );

@@ -248,12 +248,6 @@ select[aria-hidden='true'][tabindex='-1'] {
   animation: tooltip-attention 1.5s ease-in-out infinite;
 }
 
-/* ============================================
-   SHADCN/UI THEME - SLATE (Tailwind v4)
-   Using OKLCH color space for better perceptual uniformity
-   ============================================ */
-
-/* Map CSS variables to Tailwind utilities using @theme inline */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -269,9 +263,6 @@ select[aria-hidden='true'][tabindex='-1'] {
   --color-ring: var(--ring);
 }
 
-/* shadcn/ui Slate Theme
-   OKLCH format: oklch(lightness chroma hue)
-   Using slate color palette from shadcn/ui */
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);

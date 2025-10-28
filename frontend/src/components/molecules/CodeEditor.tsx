@@ -8,7 +8,7 @@
 
 import Editor from '@monaco-editor/react'
 import clsx from 'clsx'
-import DaLoader from '../atoms/DaLoader'
+import { Spinner } from '../atoms/spinner'
 import { useEffect } from 'react'
 import { useMonaco } from '@monaco-editor/react'
 import { useState } from 'react'
@@ -90,10 +90,10 @@ const CodeEditor = ({
           loading={
             <div
               className={clsx(
-                'flex h-full w-full text-da-gray-dark items-center justify-center select-none',
+                'flex h-full w-full text-foreground items-center justify-center select-none',
               )}
             >
-              <DaLoader />
+              <Spinner />
             </div>
           }
         />
