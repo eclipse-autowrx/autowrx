@@ -10,11 +10,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createPlugin, getPluginById, updatePlugin, uploadInternalZip, type Plugin } from '@/services/plugin.service'
 import { useNavigate, useParams } from 'react-router-dom'
-import { DaText } from '@/components/atoms/DaText'
-import { DaInput } from '@/components/atoms/DaInput'
-import { DaTextarea } from '@/components/atoms/DaTextarea'
-import { DaButton } from '@/components/atoms/DaButton'
-import DaCheckbox from '@/components/atoms/DaCheckbox'
+import { Input } from '@/components/atoms/input'
+import { Textarea } from '@/components/atoms/textarea'
+import { Button } from '@/components/atoms/button'
+import { Label } from '@/components/atoms/label'
+import { Checkbox } from '@/components/atoms/checkbox'
 import JsonEditor from '@/components/atoms/JsonEditor'
 import { toast } from 'react-toastify'
 
@@ -88,77 +88,81 @@ const PluginEdit = ({ mode }: { mode: 'create' | 'edit' }) => {
   return (
     <div className="p-6 !w-[800px] max-w-[calc(100vw-80px)]">
       <div className="mb-4">
-        <DaText variant="sub-title" className="text-da-gray-dark">{isCreate ? 'Create Plugin' : 'Edit Plugin'}</DaText>
+        <h2 className="text-xl font-semibold text-foreground">{isCreate ? 'Create Plugin' : 'Edit Plugin'}</h2>
       </div>
 
       {isFetching && mode === 'edit' ? (
-        <DaText variant="small" className="text-da-gray-medium">Loading...</DaText>
+        <p className="text-sm text-muted-foreground">Loading...</p>
       ) : (
         <div className="space-y-4">
-          <DaInput
+          <Input
             value={form.name || ''}
-            onChange={(e) => onChange('name', (e.target as HTMLInputElement).value)}
+            onChange={(e) => onChange('name', e.target.value)}
             placeholder="Name"
           />
-          <DaInput
+          <Input
             value={form.slug || ''}
-            onChange={(e) => onChange('slug', (e.target as HTMLInputElement).value)}
+            onChange={(e) => onChange('slug', e.target.value)}
             placeholder="Slug"
             className="disabled:opacity-60"
             disabled={!isCreate}
           />
 
-          <DaCheckbox
-            checked={!!form.is_internal}
-            onChange={() => onChange('is_internal', !form.is_internal)}
-            label="Internal plugin"
-          />
+          <div className="flex items-center gap-2">
+            <Checkbox
+              checked={!!form.is_internal}
+              onCheckedChange={(checked) => onChange('is_internal', checked)}
+              id="is-internal"
+            />
+            <Label htmlFor="is-internal" className="cursor-pointer">Internal plugin</Label>
+          </div>
 
-          <DaInput
+          <Input
             value={form.image || ''}
-            onChange={(e) => onChange('image', (e.target as HTMLInputElement).value)}
+            onChange={(e) => onChange('image', e.target.value)}
             placeholder="Image URL"
           />
 
-          <DaTextarea
-            value={form.description || ''}
-            onChange={(e) => onChange('description', (e.target as HTMLTextAreaElement).value)}
-            rows={3}
-            label="Description"
-          />
+          <div className="flex flex-col gap-1">
+            <Label>Description</Label>
+            <Textarea
+              value={form.description || ''}
+              onChange={(e) => onChange('description', e.target.value)}
+              rows={3}
+            />
+          </div>
 
           {!form.is_internal && (
-            <DaInput
+            <Input
               value={form.url || ''}
-              onChange={(e) => onChange('url', (e.target as HTMLInputElement).value)}
+              onChange={(e) => onChange('url', e.target.value)}
               placeholder="External URL (https)"
             />
           )}
 
           {form.is_internal && (
             <div className="space-y-2">
-              <DaInput
+              <Input
                 type="file"
-                onChange={(e) => setZip((e.target as HTMLInputElement).files?.[0] || null)}
-                inputClassName="file:mr-4 file:py-2 file:px-4 file:rounded-md file:border file:border-da-gray-light file:text-da-gray-medium file:bg-white"
+                onChange={(e) => setZip(e.target.files?.[0] || null)}
               />
               <div className="flex gap-2 items-center">
-                <DaButton onClick={() => doUpload.mutate()} disabled={!zip || !form.slug || doUpload.isLoading}>
-                  {doUpload.isLoading ? 'Uploading...' : 'Upload ZIP'}
-                </DaButton>
-                {form.url && <DaText variant="small" className="text-da-gray-medium break-all">{form.url}</DaText>}
+                <Button onClick={() => doUpload.mutate()} disabled={!zip || !form.slug || doUpload.isPending}>
+                  {doUpload.isPending ? 'Uploading...' : 'Upload ZIP'}
+                </Button>
+                {form.url && <p className="text-sm text-muted-foreground break-all">{form.url}</p>}
               </div>
             </div>
           )}
 
           <div>
-            <DaText variant="small-bold" className="mb-1 text-da-gray-dark">Config (JSON)</DaText>
+            <span className="text-sm font-semibold mb-1 block text-foreground">Config (JSON)</span>
             <JsonEditor value={form.config || {}} onChange={(v) => onChange('config', v)} valueType="object" />
           </div>
 
           <div className="flex gap-2">
-            <DaButton onClick={() => save.mutate()} disabled={save.isLoading}>{save.isLoading ? 'Saving...' : 'Save'}</DaButton>
-            <DaButton variant="outline-nocolor" onClick={() => navigate('/plugins')}>Back</DaButton>
+            <Button onClick={() => save.mutate()} disabled={save.isPending}>{save.isPending ? 'Saving...' : 'Save'}</Button>
+            <Button variant="outline" onClick={() => navigate('/plugins')}>Back</Button>
           </div>
         </div>
       )}

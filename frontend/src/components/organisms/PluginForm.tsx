@@ -7,12 +7,11 @@
 // SPDX-License-Identifier: MIT
 
 import { useEffect, useMemo, useState } from 'react'
-import DaPopup from '@/components/atoms/DaPopup'
-import { DaText } from '@/components/atoms/DaText'
-import { DaInput } from '@/components/atoms/DaInput'
-import { DaTextarea } from '@/components/atoms/DaTextarea'
-import { DaButton } from '@/components/atoms/DaButton'
-import DaCheckbox from '@/components/atoms/DaCheckbox'
+import DaDialog from '@/components/molecules/DaDialog'
+import { Input } from '@/components/atoms/input'
+import { Textarea } from '@/components/atoms/textarea'
+import { Button } from '@/components/atoms/button'
+import { Label } from '@/components/atoms/label'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import CodeEditor from '@/components/molecules/CodeEditor'
 import DaImportFile from '@/components/atoms/DaImportFile'
@@ -147,18 +146,15 @@ const PluginForm = ({ open, onClose, mode, pluginId, onSaved }: PluginFormProps)
   }, [form.name, form.url])
 
   return (
-    <DaPopup
-      state={[isOpen, setIsOpen]}
-      trigger={<></>}
+    <DaDialog
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      dialogTitle={isCreate ? 'Create Plugin' : 'Edit Plugin'}
       className="w-[840px] max-w-[calc(100vw-80px)]"
     >
-      <div className="flex flex-col w-full">
-        <DaText variant="sub-title" className="text-da-gray-dark mb-4">
-          {isCreate ? 'Create Plugin' : 'Edit Plugin'}
-        </DaText>
-        {isFetching && mode === 'edit' ? (
-          <DaText variant="small" className="text-da-gray-medium">Loading...</DaText>
-        ) : (
+      {isFetching && mode === 'edit' ? (
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      ) : (
           <div className="space-y-4">
             <div className="flex border-b border-da-gray-light mb-2">
               <DaTabItem small active={activeTab === 'meta'} onClick={() => setActiveTab('meta')}>
@@ -174,19 +170,23 @@ const PluginForm = ({ open, onClose, mode, pluginId, onSaved }: PluginFormProps)
                 {/* Row 1: Left (name + description), Right (image + upload) */}
                 <div className="flex gap-6 items-start">
                   <div className="flex-1 space-y-3">
-                    <DaInput
-                      value={form.name || ''}
-                      onChange={(e) => onChange('name', (e.target as HTMLInputElement).value)}
-                      placeholder="Name *"
-                      label="Name *"
-                      required
-                    />
-                    <DaTextarea
-                      value={form.description || ''}
-                      onChange={(e) => onChange('description', (e.target as HTMLTextAreaElement).value)}
-                      rows={3}
-                      label="Description"
-                    />
+                    <div className="flex flex-col gap-1">
+                      <Label>Name *</Label>
+                      <Input
+                        value={form.name || ''}
+                        onChange={(e) => onChange('name', e.target.value)}
+                        placeholder="Name *"
+                        required
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label>Description</Label>
+                      <Textarea
+                        value={form.description || ''}
+                        onChange={(e) => onChange('description', e.target.value)}
+                        rows={3}
+                      />
+                    </div>
                   </div>
                   <div className="w-44 relative">
                     <div className="w-44 h-44 border border-da-gray-light rounded-md overflow-hidden bg-white flex items-center justify-center">
@@ -212,26 +212,28 @@ const PluginForm = ({ open, onClose, mode, pluginId, onSaved }: PluginFormProps)
                         }
                       }}
                     >
-                      <DaButton variant="outline-nocolor" size="sm" className="absolute right-1 top-1 !h-7 !w-7 !p-0 !rounded-full">
+                      <Button variant="outline" size="icon-sm" className="absolute right-1 top-1 rounded-full">
                         <TbPhotoEdit className="w-4 h-4" />
-                      </DaButton>
+                      </Button>
                     </DaImportFile>
                   </div>
                 </div>
 
                 {/* URL textbox always visible */}
-                <DaTextarea
-                  value={form.url || ''}
-                  onChange={(e) => {
-                    const value = (e.target as HTMLTextAreaElement).value
-                    onChange('url', value)
-                    // Auto mark as external when entering http(s)
-                    if (value?.startsWith('http')) onChange('is_internal', false as any)
-                  }}
-                  rows={2}
-                  label="URL *: (plugin entry point)"
-                  required
-                />
+                <div className="flex flex-col gap-1">
+                  <Label>URL *: (plugin entry point)</Label>
+                  <Textarea
+                    value={form.url || ''}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      onChange('url', value)
+                      // Auto mark as external when entering http(s)
+                      if (value?.startsWith('http')) onChange('is_internal', false as any)
+                    }}
+                    rows={2}
+                    required
+                  />
+                </div>
 
                 {/* Upload button to derive URL via internal ZIP */}
                 <div className="space-y-2 flex items-center gap-2">
@@ -246,9 +248,9 @@ const PluginForm = ({ open, onClose, mode, pluginId, onSaved }: PluginFormProps)
                       } catch (err) {}
                     }}
                   >
-                    <DaButton disabled={!form.name || doUpload.isPending}>
+                    <Button disabled={!form.name || doUpload.isPending}>
                       {doUpload.isPending ? 'Uploading...' : 'Upload ZIP'}
-                    </DaButton>
+                    </Button>
                   </DaImportFile>
                 </div>
               </div>
@@ -257,10 +259,10 @@ const PluginForm = ({ open, onClose, mode, pluginId, onSaved }: PluginFormProps)
             {activeTab === 'config' && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <DaText variant="small-bold" className="text-da-gray-dark">Config (JSON)</DaText>
+                  <span className="text-sm font-semibold text-foreground">Config (JSON)</span>
                   <div className="grow" />
-                  <DaButton
-                    variant="outline-nocolor"
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={() => {
                       try {
@@ -273,9 +275,9 @@ const PluginForm = ({ open, onClose, mode, pluginId, onSaved }: PluginFormProps)
                     }}
                   >
                     Format
-                  </DaButton>
-                  <DaButton
-                    variant="plain"
+                  </Button>
+                  <Button
+                    variant="ghost"
                     size="sm"
                     onClick={() => {
                       try {
@@ -290,7 +292,7 @@ const PluginForm = ({ open, onClose, mode, pluginId, onSaved }: PluginFormProps)
                     }}
                   >
                     Validate
-                  </DaButton>
+                  </Button>
                 </div>
                 <div className="h-[360px] border rounded-md">
                   <CodeEditor
@@ -310,21 +312,20 @@ const PluginForm = ({ open, onClose, mode, pluginId, onSaved }: PluginFormProps)
                   />
                 </div>
                 {jsonError && (
-                  <DaText variant="small" className="text-da-destructive">{jsonError}</DaText>
+                  <p className="text-sm text-destructive">{jsonError}</p>
                 )}
               </div>
             )}
 
             <div className="flex gap-2 justify-end">
-              <DaButton variant="outline-nocolor" onClick={onClose}>Cancel</DaButton>
-              <DaButton onClick={() => save.mutate()} disabled={!canSave || save.isPending}>
+              <Button variant="outline" onClick={onClose}>Cancel</Button>
+              <Button onClick={() => save.mutate()} disabled={!canSave || save.isPending}>
                 {save.isPending ? 'Saving...' : 'Save'}
-              </DaButton>
+              </Button>
             </div>
           </div>
         )}
-      </div>
-    </DaPopup>
+    </DaDialog>
   )
 }
 

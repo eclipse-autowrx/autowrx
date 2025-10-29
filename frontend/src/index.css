@@ -57,8 +57,8 @@
 }
 
 *::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 
 *::-webkit-scrollbar-thumb {
@@ -73,18 +73,7 @@
 
 .scroll::-webkit-scrollbar-thumb,
 body::-webkit-scrollbar-thumb {
-  border-radius: 10px;
-}
-
-.scroll-gray::-webkit-scrollbar-thumb {
-  border: 2px solid rgba(0, 0, 0, 0);
-  background-clip: padding-box;
-}
-
-.scroll-gray-small::-webkit-scrollbar-thumb {
-  border: 2px solid rgba(0, 0, 0, 0);
-  background-clip: padding-box;
-  background-color: #aaaaaa;
+  border-radius: 7px;
 }
 
 /* Grid utilities for layout */
@@ -303,7 +292,16 @@ select[aria-hidden='true'][tabindex='-1'] {
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-muted-foreground;
     font-family: 'Manrope', sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply text-primary;
   }
 }

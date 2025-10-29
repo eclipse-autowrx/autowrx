@@ -1,9 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { listModelTemplates, deleteModelTemplate, type ModelTemplate } from '@/services/modelTemplate.service'
-import { DaButton } from '@/components/atoms/DaButton'
-import { DaText } from '@/components/atoms/DaText'
-import { DaImage } from '@/components/atoms/DaImage'
-import DaPopup from '@/components/atoms/DaPopup'
+import { Button } from '@/components/atoms/button'
+import DaDialog from '@/components/molecules/DaDialog'
 import TemplateForm from '@/components/organisms/TemplateForm'
 import { useState } from 'react'
 import { TbPencil, TbTrash } from 'react-icons/tb'
@@ -29,53 +27,51 @@ export default function TemplateManager() {
     <div className="p-6">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-xl font-semibold">Templates</h1>
-        <DaButton onClick={() => { setEditId(undefined); setOpenForm(true) }}>New Template</DaButton>
+        <Button onClick={() => { setEditId(undefined); setOpenForm(true) }}>New Template</Button>
       </div>
 
       <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
         {data?.results?.map((t: ModelTemplate) => (
           <div
             key={t.id}
-            className="rounded-md border border-da-gray-light bg-da-white p-3 shadow-sm flex flex-col cursor-pointer hover:shadow-medium transition"
+            className="rounded-md border border-input bg-background p-3 shadow-sm flex flex-col cursor-pointer hover:shadow-medium transition"
             onClick={() => { setEditId(t.id); setOpenForm(true) }}
           >
             <div className="relative aspect-square w-full rounded overflow-hidden bg-white">
-              <DaImage src={t.image || '/imgs/plugin.png'} alt={t.name} className="absolute p-6 inset-0 w-full h-full object-contain" />
+              <img src={t.image || '/imgs/plugin.png'} alt={t.name} className="absolute p-6 inset-0 w-full h-full object-contain" />
             </div>
-            <DaText variant="regular-bold" className="text-da-gray-dark mt-3 truncate">{t.name}</DaText>
-            <DaText variant="small" className="text-da-gray-medium mt-1 whitespace-pre-wrap break-words">{t.description || ''}</DaText>
+            <h3 className="text-base font-semibold text-foreground mt-3 truncate">{t.name}</h3>
+            <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap break-words">{t.description || ''}</p>
             <div className="mt-1 flex justify-end gap-1">
-              <DaButton
+              <Button
                 title="Edit"
-                variant="plain"
-                size="sm"
-                className="!h-9 !w-9 !p-0 grid place-items-center"
+                variant="ghost"
+                size="icon"
                 onClick={(e) => { e.stopPropagation(); setEditId(t.id); setOpenForm(true) }}
               >
                 <TbPencil className="text-xl" />
-              </DaButton>
-              <DaButton
+              </Button>
+              <Button
                 title="Delete"
-                variant="plain"
-                size="sm"
-                className="!h-9 !w-9 !p-0 grid place-items-center"
+                variant="ghost"
+                size="icon"
                 onClick={async (e) => { e.stopPropagation(); if (!confirm('Delete this template?')) return; await del.mutateAsync(t.id) }}
               >
                 <TbTrash className="text-xl" />
-              </DaButton>
+              </Button>
             </div>
           </div>
         ))}
         {!data?.results?.length && (
           <div className="col-span-full text-center py-6">
-            <DaText variant="small" className="text-da-gray-medium">No templates yet</DaText>
+            <p className="text-sm text-muted-foreground">No templates yet</p>
           </div>
         )}
       </div>
 
-      <DaPopup state={[openForm, setOpenForm]} onClose={() => setOpenForm(false)} trigger={<></>} className="w-[840px] max-w-[calc(100vw-80px)]">
+      <DaDialog open={openForm} onOpenChange={setOpenForm} className="w-[840px] max-w-[calc(100vw-80px)]">
         <TemplateForm open={openForm} templateId={editId} onClose={() => setOpenForm(false)} />
-      </DaPopup>
+      </DaDialog>
     </div>
   )
 }

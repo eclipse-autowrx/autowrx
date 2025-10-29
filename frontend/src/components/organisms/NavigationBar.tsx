@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -7,7 +7,12 @@
 // SPDX-License-Identifier: MIT
 
 import { Link, useMatch } from 'react-router-dom'
-import DaMenu from '../atoms/DaMenu'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../atoms/dropdown-menu'
 import DaNavUser from '../molecules/DaNavUser'
 import { HiMenu } from 'react-icons/hi'
 import {
@@ -17,6 +22,7 @@ import {
   TbBuildingWarehouse,
   TbCar,
   TbSettings,
+  TbMenu2,
 } from 'react-icons/tb'
 import usePermissionHook from '@/hooks/usePermissionHook.ts'
 import { PERMISSIONS } from '@/const/permission.ts'
@@ -27,20 +33,16 @@ import { IoIosHelpBuoy } from 'react-icons/io'
 import config from '@/configs/config'
 // import LearningIntegration from './LearningIntegration'
 
-import Switch from 'react-switch'
-import { useState, useEffect, useRef, Fragment } from 'react'
+import { useState, useEffect } from 'react'
 
 // import useLastAccessedModel from '@/hooks/useLastAccessedModel'
-import { FaCar } from 'react-icons/fa'
 import { useSiteConfig } from '@/utils/siteConfig'
+import { Button } from '../atoms/button'
 
 const NavigationBar = ({}) => {
-
   const { data: user } = useSelfProfileQuery()
   // const { data: model } = useCurrentModel()
-  const [isAuthorized] = usePermissionHook(
-    [PERMISSIONS.MANAGE_USERS]
-  )
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
   const [learningMode, setIsLearningMode] = useState(false)
   const siteTitle = useSiteConfig('SITE_TITLE', 'AutoWRX')
 
@@ -53,11 +55,11 @@ const NavigationBar = ({}) => {
   // const { lastAccessedModel } = useLastAccessedModel()
 
   return (
-    <header className="da-nav-bar">
-      <Link to="/">
-        <img src="/imgs/logo-wide.png" alt="Logo" className="da-nav-bar-logo" />
+    <header className="flex items-center flex-nowrap w-full py-1 px-3">
+      <Link to="/" className="">
+        <img src="/imgs/logo-wide.png" alt="Logo" className="h-7" />
       </Link>
-      
+
       {config && config.enableBranding && (
         <div className="ml-4 text-sm text-white/90">
           <a
@@ -104,7 +106,7 @@ const NavigationBar = ({}) => {
       )} */}
 
       {user && (
-        <>
+        <div className="flex items-center">
           {/* <DaGlobalSearch>
             <DaButton
               variant="outline-nocolor"
@@ -115,45 +117,55 @@ const NavigationBar = ({}) => {
             </DaButton>
           </DaGlobalSearch>{' '} */}
           {isAuthorized && (
-            <DaMenu
-              trigger={
-                <div className="cursor-pointer flex h-10! items-center da-btn-sm text-muted-foreground da-btn-plain ml-2">
-                  <HiMenu size={22} />
-                </div>
-              }
-            >
-              {/* Separate condition checking with component since MUI component does not accept Fragment as children */}
-              <Link
-                to="/manage-users"
-                className="flex items-center px-4 py-2 gap-2 da-menu-item text-base"
-              >
-                <TbUsers className="text-base" /> Manage Users
-              </Link>
-              <Link
-                to="/manage-features"
-                className="flex items-center px-4 py-2 gap-2 da-menu-item text-base"
-              >
-                <TbStack2 className="text-base" /> Manage Features
-              </Link>
-              <Link
-                to="/admin/site-config"
-                className="flex items-center px-4 py-2 gap-2 da-menu-item da-label-regular"
-              >
-                <TbSettings className="text-base" /> Site Config
-              </Link>
-              <Link
-                to="/admin/plugins"
-                className="flex items-center px-4 py-2 gap-2 da-menu-item da-label-regular"
-              >
-                <TbStack2 className="text-base" /> Plugins
-              </Link>
-              <Link
-                to="/admin/templates"
-                className="flex items-center px-4 py-2 gap-2 da-menu-item da-label-regular"
-              >
-                <TbStack2 className="text-base" /> Templates
-              </Link>
-            </DaMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="size-10">
+                  <TbMenu2 className="size-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56">
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/manage-users"
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <TbUsers className="text-base" /> Manage Users
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/manage-features"
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <TbStack2 className="text-base" /> Manage Features
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/admin/site-config"
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <TbSettings className="text-base" /> Site Config
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/admin/plugins"
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <TbStack2 className="text-base" /> Plugins
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/admin/templates"
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <TbStack2 className="text-base" /> Templates
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
           {/* {model ? (
             <Link to={`/model/${model.id}`}>
@@ -176,11 +188,12 @@ const NavigationBar = ({}) => {
               </DaButton>
             </Link>
           )} */}
-        </>
+          <DaNavUser />
+        </div>
       )}
 
       {/* {learningMode && <LearningIntegration requestClose={() => setIsLearningMode(false)} />} */}
-      <DaNavUser />
+      {!user && <DaNavUser />}
     </header>
   )
 }

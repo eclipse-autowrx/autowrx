@@ -228,9 +228,11 @@ const PageTest = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
+                <TableHead className="text-primary">Name</TableHead>
+                <TableHead className="text-primary">Status</TableHead>
+                <TableHead className="text-primary text-right">
+                  Amount
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

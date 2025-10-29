@@ -10,7 +10,7 @@ import { InvitedUser } from '@/types/user.type.ts'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/atoms/avatar'
 import { TbChevronDown, TbCircle, TbCircleCheckFilled } from 'react-icons/tb'
 import clsx from 'clsx'
-import DaMenu from '../atoms/DaMenu'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../atoms/dropdown-menu'
 import { Button } from '@/components/atoms/button'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
@@ -63,23 +63,26 @@ const DaUserInviteItem = ({
 
       {!isInviting ? (
         <div className={clsx(forbidRemove && 'pointer-events-none')}>
-          <DaMenu
-            trigger={
-              <span className="text-sm flex cursor-pointer! items-center text-muted-foreground">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <span className="text-sm flex cursor-pointer items-center text-muted-foreground">
                 {accessLevel}{' '}
                 {!forbidRemove && <TbChevronDown className="ml-1" />}
               </span>
-            }
-          >
-            <Button
-              onClick={() => onRemoveAccess && onRemoveAccess(user)}
-              variant="destructive"
-              size="sm"
-              className="w-[100px]"
-            >
-              <p className="w-full text-left">Remove</p>
-            </Button>
-          </DaMenu>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Button
+                  onClick={() => onRemoveAccess && onRemoveAccess(user)}
+                  variant="destructive"
+                  size="sm"
+                  className="w-full cursor-pointer"
+                >
+                  Remove
+                </Button>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       ) : (
         <>
