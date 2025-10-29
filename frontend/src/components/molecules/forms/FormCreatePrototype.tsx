@@ -6,9 +6,9 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
-import { DaInput } from '@/components/atoms/DaInput'
-import { DaText } from '@/components/atoms/DaText'
+import { Button } from '@/components/atoms/button'
+import { Input } from '@/components/atoms/input'
+import { Label } from '@/components/atoms/label'
 import { FormEvent, useEffect, useState } from 'react'
 import { TbCircleCheckFilled, TbLoader } from 'react-icons/tb'
 import { createPrototypeService } from '@/services/prototype.service'
@@ -20,12 +20,12 @@ import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { useNavigate, useLocation } from 'react-router-dom'
 import useListModelContribution from '@/hooks/useListModelContribution'
-import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/atoms/select'
 import { Model, ModelLite, ModelCreate } from '@/types/model.type'
-import DaLoader from '@/components/atoms/DaLoader'
+import { Spinner } from '@/components/atoms/spinner'
 import { CVI } from '@/data/CVI'
 import { createModelService } from '@/services/model.service'
-import clsx from 'clsx'
+import { cn } from '@/lib/utils'
 import default_journey from '@/data/default_journey'
 import { SAMPLE_PROJECTS } from '@/data/sampleProjects'
 
@@ -256,10 +256,10 @@ const FormCreatePrototype = ({
       toast({
         title: ``,
         description: (
-          <DaText variant="small" className="flex items-center">
+          <p className="flex items-center text-sm">
             <TbCircleCheckFilled className="mr-2 h-4 w-4 text-green-500" />
             Prototype "{data.prototypeName}" created successfully
-          </DaText>
+          </p>
         ),
         duration: 3000,
       })
@@ -332,90 +332,102 @@ const FormCreatePrototype = ({
   return (
     <form
       onSubmit={createNewPrototype}
-      className="flex max-h-[80vh] w-[40vw] min-w-[400px] flex-col bg-da-white p-4 lg:w-[25vw]"
+      className="flex max-h-[80vh] w-[40vw] min-w-[400px] flex-col bg-background p-4 lg:w-[25vw]"
     >
-      <DaText variant="title" className="text-da-primary-500">
+      <h2 className="text-2xl font-bold text-primary">
         {title ?? 'New Prototype'}
-      </DaText>
+      </h2>
 
       {!currentModel &&
         (contributionModels && !isFetchingModelContribution && localModel ? (
-          <DaSelect
-            defaultValue={localModel.id}
-            label="Model Name *"
-            wrapperClassName="mt-4"
-            onValueChange={(e) => {
-              const selectedModel = contributionModels.results.find(
-                (model) => model.id === e,
-              )
-              selectedModel && setLocalModel(selectedModel)
-            }}
-          >
-            {contributionModels.results.map((model, index) => (
-              <DaSelectItem key={index} value={model.id}>
-                {model.name}
-              </DaSelectItem>
-            ))}
-          </DaSelect>
+          <div className="flex flex-col mt-4">
+            <Label className="mb-2">Model Name *</Label>
+            <Select
+              defaultValue={localModel.id}
+              onValueChange={(e: string) => {
+                const selectedModel = contributionModels.results.find(
+                  (model: ModelLite) => model.id === e,
+                )
+                selectedModel && setLocalModel(selectedModel)
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {contributionModels.results.map((model: ModelLite, index: number) => (
+                  <SelectItem key={index} value={model.id}>
+                    {model.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         ) : isFetchingModelContribution ? (
-          <DaText variant="regular" className="mt-4 flex items-center">
-            <DaLoader className="mr-1 h-4 w-4" />
+          <p className="mt-4 flex items-center text-base text-muted-foreground">
+            <Spinner className="mr-1 h-4 w-4" />
             Loading vehicle model...
-          </DaText>
+          </p>
         ) : (
-          <DaInput
-            name="name"
-            value={data.modelName}
-            onChange={(e) => handleChange('modelName', e.target.value)}
-            placeholder="Model name"
-            label="Model Name *"
-            className="mt-4"
-            inputClassName="bg-white"
-          />
+          <div className="flex flex-col mt-4">
+            <Label className="mb-2">Model Name *</Label>
+            <Input
+              name="name"
+              value={data.modelName}
+              onChange={(e) => handleChange('modelName', e.target.value)}
+              placeholder="Model name"
+              className="bg-background"
+            />
+          </div>
         ))}
 
-      <DaInput
-        name="name"
-        value={data.prototypeName}
-        onChange={(e) => handleChange('prototypeName', e.target.value)}
-        placeholder="Name"
-        label="Prototype Name *"
-        className="mt-4"
-        dataId='prototype-name-input'
-      />
+      <div className="flex flex-col mt-4">
+        <Label className="mb-2">Prototype Name *</Label>
+        <Input
+          name="name"
+          value={data.prototypeName}
+          onChange={(e) => handleChange('prototypeName', e.target.value)}
+          placeholder="Name"
+          data-id='prototype-name-input'
+        />
+      </div>
 
-      <DaSelect
-        defaultValue={SAMPLE_PROJECTS[0].label}
-        label="Project Template *"
-        wrapperClassName="mt-4"
-        dataId="prototype-language-select"
-        onValueChange={(v) => {
-          onTemplateChange(v)
-        }}
-      >
-        {SAMPLE_PROJECTS.map((project) => (
-          <DaSelectItem key={project.label} value={project.label}>
-            {project.label}
-          </DaSelectItem>
-        ))}
-      </DaSelect>
+      <div className="flex flex-col mt-4">
+        <Label className="mb-2">Project Template *</Label>
+        <Select
+          defaultValue={SAMPLE_PROJECTS[0].label}
+          onValueChange={(v: string) => {
+            onTemplateChange(v)
+          }}
+        >
+          <SelectTrigger data-id="prototype-language-select">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {SAMPLE_PROJECTS.map((project) => (
+              <SelectItem key={project.label} value={project.label}>
+                {project.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       {error && (
-        <DaText variant="small" className="mt-4 text-da-accent-500">
+        <p className="mt-4 text-sm text-destructive">
           {error}
-        </DaText>
+        </p>
       )}
 
-      <DaButton
+      <Button
         disabled={disabled}
         type="submit"
-        variant="gradient"
-        dataId='btn-create-prototype'
-        className={clsx('mt-8 w-full', hideCreateButton && '!hidden')}
+        data-id='btn-create-prototype'
+        className={cn('mt-8 w-full', hideCreateButton && 'hidden')}
       >
         {loading && <TbLoader className="mr-2 animate-spin text-lg" />}
         {buttonText ?? 'Create Prototype'}
-      </DaButton>
+      </Button>
     </form>
   )
 }

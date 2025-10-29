@@ -1,0 +1,165 @@
+// Copyright (c) 2025 Eclipse Foundation.
+//
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Prototype } from '@/types/model.type'
+import { listPopularPrototypes } from '@/services/prototype.service'
+import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { TbChevronDown, TbChevronRight } from 'react-icons/tb'
+import { Button } from '../atoms/button'
+import DaDialog from '../molecules/DaDialog'
+import useAuthStore from '@/stores/authStore'
+import { DaPrototypeItem } from '../molecules/DaPrototypeItem'
+import DaSkeletonGrid from '../molecules/DaSkeletonGrid'
+import config from '@/configs/config'
+
+type HomePrototypePopularProps = {
+  requiredLogin?: boolean
+  title?: string
+}
+
+const HomePrototypePopular = ({
+  requiredLogin,
+  title,
+}: HomePrototypePopularProps) => {
+  const { data: user } = useSelfProfileQuery()
+  const [popularPrototypes, setPopularPrototypes] = useState<
+    Prototype[] | undefined
+  >(undefined)
+  const [showMore, setShowMore] = useState(false)
+  const navigate = useNavigate()
+
+  const [openRemindDialog, setOpenRemindDialog] = useState(false)
+  const [selectedPrototype, setSelectedPrototype] = useState<Prototype | null>(
+    null,
+  )
+  const { setOpenLoginDialog } = useAuthStore()
+
+  useEffect(() => {
+    const fetchProposalPrototypes = async () => {
+      const popularPrototypes = await listPopularPrototypes()
+      setPopularPrototypes(popularPrototypes)
+    }
+    fetchProposalPrototypes()
+  }, [user])
+
+  if (requiredLogin && !user) {
+    return null
+  }
+
+  if (popularPrototypes && popularPrototypes.length === 0) {
+    return null
+  }
+
+  const handlePrototypeClick = (prototype: Prototype) => {
+    if (!config.strictAuth || user) {
+      navigate(
+        `/model/${prototype.model_id}/library/prototype/${prototype.id}/view`,
+      )
+    } else {
+      setSelectedPrototype(prototype)
+      setOpenRemindDialog(true)
+    }
+  }
+
+  return (
+    <div className="flex flex-col w-full container">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-primary">
+          {title || 'Popular Prototypes'}
+        </h2>
+        {popularPrototypes && popularPrototypes.length > 4 && (
+          <div className="flex justify-center">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setShowMore(!showMore)}
+              className="flex items-center text-primary"
+            >
+              {showMore ? (
+                <>
+                  Show Less
+                  <TbChevronRight className="ml-1" />
+                </>
+              ) : (
+                <>
+                  Show More
+                  <TbChevronDown className="ml-1" />
+                </>
+              )}
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {popularPrototypes ? (
+        <div className="mt-2 w-full grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {popularPrototypes
+            .slice(0, showMore ? popularPrototypes.length : 4)
+            .map((prototype, pIndex) => (
+              <div
+                key={pIndex}
+                onClick={() => handlePrototypeClick(prototype)}
+                className="cursor-pointer"
+              >
+                <DaPrototypeItem prototype={prototype} />
+              </div>
+            ))}
+        </div>
+      ) : (
+        <div className="mt-2">
+          <DaSkeletonGrid
+            timeout={15}
+            timeoutText="There are no popular prototypes available yet"
+            maxItems={{
+              sm: 1,
+              md: 2,
+              lg: 3,
+              xl: 4,
+            }}
+            containerHeight="min-h-[200px]"
+          />
+        </div>
+      )}
+
+      {/* Popup Dialog */}
+      <DaDialog
+        open={openRemindDialog}
+        onOpenChange={setOpenRemindDialog}
+      >
+        <div className="flex flex-col max-w-xl">
+          <h3 className="text-2xl font-bold text-primary">
+            Sign In Required
+          </h3>
+          <p className="mt-4 text-base text-muted-foreground">
+            You must first sign in to explore SDV idea about
+            <span className="text-primary px-1 font-bold">
+              {selectedPrototype?.name}
+            </span>
+          </p>
+          <div className="flex justify-end mt-6">
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => {
+                setOpenRemindDialog(false)
+                setOpenLoginDialog(true)
+              }}
+              className="w-20"
+            >
+              Sign In
+            </Button>
+          </div>
+        </div>
+      </DaDialog>
+    </div>
+  )
+}
+
+export default HomePrototypePopular

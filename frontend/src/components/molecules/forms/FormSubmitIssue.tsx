@@ -6,18 +6,18 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
-import { DaInput } from '@/components/atoms/DaInput'
-import { DaText } from '@/components/atoms/DaText'
+import { Button } from '@/components/atoms/button'
+import { Input } from '@/components/atoms/input'
+import { Label } from '@/components/atoms/label'
 import { FormEvent, useState, useEffect } from 'react'
 import { TbLoader } from 'react-icons/tb'
 import { createFeedback } from '@/services/feedback.service'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { isAxiosError } from 'axios'
-import { DaTextarea } from '@/components/atoms/DaTextarea'
+import { Textarea } from '@/components/atoms/textarea'
 import axios from 'axios'
 import { GithubUser } from '@/types/github.type'
-import { DaAvatar } from '@/components/atoms/DaAvatar'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/atoms/avatar'
 import { createIssueService } from '@/services/issue.service'
 import { Token } from '@/types/token.type'
 
@@ -93,51 +93,55 @@ const SubmitIssueForm = ({
   return (
     <form
       //   onSubmit={submitIssue}
-      className="flex flex-col w-[40vw] max-h-[80vh] bg-da-white py-4"
+      className="flex flex-col w-[40vw] max-h-[80vh] bg-background py-4"
     >
       <div className="flex flex-col overflow-y-auto px-4">
-        <DaText variant="title" className="text-da-primary-500">
+        <h2 className="text-2xl font-bold text-primary">
           Propose this Signal to COVESA
-        </DaText>
+        </h2>
 
-        <DaInput
-          name="title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Title"
-          label="Title"
-          className="mt-4"
-        />
+        <div className="flex flex-col mt-4">
+          <Label className="mb-2">Title</Label>
+          <Input
+            name="title"
+            value={title}
+            onChange={(e: FormEvent<HTMLInputElement>) => setTitle((e.target as HTMLInputElement).value)}
+            placeholder="Title"
+          />
+        </div>
 
-        <DaTextarea
-          rows={5}
-          name="content"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Write your proposal..."
-          label="Content"
-          className="mt-4"
-        />
+        <div className="flex flex-col mt-4">
+          <Label className="mb-2">Content</Label>
+          <Textarea
+            rows={5}
+            name="content"
+            value={content}
+            onChange={(e: FormEvent<HTMLTextAreaElement>) => setContent((e.target as HTMLTextAreaElement).value)}
+            placeholder="Write your proposal..."
+          />
+        </div>
 
         {user && (
           <div className="flex gap-2 mt-4 items-center">
             Submitting as: {user?.login}{' '}
-            <DaAvatar className="h-8 w-8" src={user?.avatar_url} />
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={user?.avatar_url} />
+              <AvatarFallback>{user?.login?.[0] || 'U'}</AvatarFallback>
+            </Avatar>
           </div>
         )}
       </div>
 
       <div className="px-4">
-        <DaButton
+        <Button
           disabled={loading}
           type="button"
-          variant="gradient"
           className="w-full mt-8"
           onClick={submitIssue}
         >
           {loading && <TbLoader className="animate-spin text-lg mr-2" />}
           Submit
-        </DaButton>
+        </Button>
       </div>
     </form>
   )

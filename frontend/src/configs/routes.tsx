@@ -21,10 +21,11 @@ import PageTestPlugin from '@/pages/PageTestPlugin.tsx'
 import PageModelList from '@/pages/PageModelList.tsx'
 import ModelDetailLayout from '@/layouts/ModelDetailLayout.tsx'
 import PageModelDetail from '@/pages/PageModelDetail.tsx'
+import PageHome from '@/pages/PageHome.tsx'
+import PagePrototypeLibrary from '@/pages/PagePrototypeLibrary.tsx'
+import PagePrototypeDetail from '@/pages/PagePrototypeDetail.tsx'
 // import PageAuthSuccess from '@/pages/PageAuthSuccess.ts'
 // import { retry } from '@/lib/retry.ts'
-
-// const PageHome = lazy(() => retry(() => import('@/pages/PageHome')))
 // const PageAbout = lazy(() => retry(() => import('@/pages/PageAbout')))
 // const PageModelArchitecture = lazy(
 //   () => import('@/pages/PageModelArchitecture'),
@@ -102,7 +103,7 @@ const routesConfig: RouteConfig[] = [
             index: true,
             element: (
               <SuspenseProvider>
-                <PageTest />
+                <PageHome />
               </SuspenseProvider>
             ),
             noBreadcrumbs: true,
@@ -260,7 +261,31 @@ const routesConfig: RouteConfig[] = [
                   </SuspenseProvider>
                 ),
               },
-              // TODO: Uncomment these routes after migrating PageVehicleApi, PagePrototypeLibrary, PageModelArchitecture
+              {
+                path: 'library',
+                element: (
+                  <SuspenseProvider>
+                    <PagePrototypeLibrary />
+                  </SuspenseProvider>
+                ),
+              },
+              {
+                path: 'library/:tab',
+                element: (
+                  <SuspenseProvider>
+                    <PagePrototypeLibrary />
+                  </SuspenseProvider>
+                ),
+              },
+              {
+                path: 'library/:tab/:prototype_id',
+                element: (
+                  <SuspenseProvider>
+                    <PagePrototypeLibrary />
+                  </SuspenseProvider>
+                ),
+              },
+              // TODO: Uncomment these routes after migrating PageVehicleApi, PageModelArchitecture
               // {
               //   path: 'api',
               //   element: (
@@ -311,23 +336,22 @@ const routesConfig: RouteConfig[] = [
               // },
             ],
           },
-          // TODO: Uncomment these routes after migrating PagePrototypeDetail
-          // {
-          //   path: ':model_id/library/prototype/:prototype_id',
-          //   element: (
-          //     <SuspenseProvider>
-          //       <PagePrototypeDetail />
-          //     </SuspenseProvider>
-          //   ),
-          // },
-          // {
-          //   path: ':model_id/library/prototype/:prototype_id/:tab',
-          //   element: (
-          //     <SuspenseProvider>
-          //       <PagePrototypeDetail />
-          //     </SuspenseProvider>
-          //   ),
-          // },
+          {
+            path: ':model_id/library/prototype/:prototype_id',
+            element: (
+              <SuspenseProvider>
+                <PagePrototypeDetail />
+              </SuspenseProvider>
+            ),
+          },
+          {
+            path: ':model_id/library/prototype/:prototype_id/:tab',
+            element: (
+              <SuspenseProvider>
+                <PagePrototypeDetail />
+              </SuspenseProvider>
+            ),
+          },
         ],
       },
       // {

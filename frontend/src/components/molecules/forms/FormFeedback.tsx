@@ -6,9 +6,9 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
-import { DaInput } from '@/components/atoms/DaInput'
-import { DaText } from '@/components/atoms/DaText'
+import { Button } from '@/components/atoms/button'
+import { Input } from '@/components/atoms/input'
+import { Label } from '@/components/atoms/label'
 import DaStarsRating from '@/components/atoms/DaStarsRating'
 import { FormEvent, useState } from 'react'
 import { TbLoader } from 'react-icons/tb'
@@ -16,9 +16,9 @@ import { createFeedback } from '@/services/feedback.service'
 import { FeedbackCreate } from '@/types/model.type'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
-import useListPrototypeFeedback from '@/hooks/useListPrototypeFeedback'
+import { useListPrototypeFeedback } from '@/hooks/useListPrototypeFeedback'
 import { isAxiosError } from 'axios'
-import { DaTextarea } from '@/components/atoms/DaTextarea'
+import { Textarea } from '@/components/atoms/textarea'
 import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
@@ -39,7 +39,7 @@ interface FeedbackFormProps {
 const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
   const { data: prototype } = useCurrentPrototype()
   const { data: model } = useCurrentModel()
-  const { refetch } = useListPrototypeFeedback(prototype?.id || '', 1)
+  const { refetch } = useListPrototypeFeedback(prototype?.id || '')
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
@@ -119,34 +119,36 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
   return (
     <form
       onSubmit={submitFeedback}
-      className="flex flex-col w-[40vw] max-h-[80vh] bg-da-white py-4"
+      className="flex flex-col w-[40vw] max-h-[80vh] bg-background py-4"
     >
       <div className="flex flex-col overflow-y-auto px-4">
-        <DaText variant="title" className="text-da-primary-500">
+        <h2 className="text-2xl font-bold text-primary">
           End User Give Feedback
-        </DaText>
+        </h2>
 
-        <DaInput
-          name="interviewee"
-          value={data.interviewee}
-          onChange={(e) => handleChange('interviewee', e.target.value)}
-          placeholder="Interviewee?"
-          label="Interviewee?"
-          className="mt-4"
-        />
+        <div className="flex flex-col mt-4">
+          <Label className="mb-2">Interviewee?</Label>
+          <Input
+            name="interviewee"
+            value={data.interviewee}
+            onChange={(e: FormEvent<HTMLInputElement>) => handleChange('interviewee', (e.target as HTMLInputElement).value)}
+            placeholder="Interviewee?"
+          />
+        </div>
 
-        <DaInput
-          name="organization"
-          value={data.organization}
-          onChange={(e) => handleChange('organization', e.target.value)}
-          placeholder="From organization"
-          label="From organization"
-          className="mt-4"
-        />
+        <div className="flex flex-col mt-4">
+          <Label className="mb-2">From organization</Label>
+          <Input
+            name="organization"
+            value={data.organization}
+            onChange={(e: FormEvent<HTMLInputElement>) => handleChange('organization', (e.target as HTMLInputElement).value)}
+            placeholder="From organization"
+          />
+        </div>
 
         {/* Star ratings for Needs Addressed, Relevance, and Ease of Use */}
         <div className="mt-4 flex items-center">
-          <DaText variant="regular-medium">Needs addressed?</DaText>
+          <p className="text-base font-medium mr-2">Needs addressed?</p>
           <DaStarsRating
             initialRating={data.needsAddressed}
             onChange={(value) => handleChange('needsAddressed', value)}
@@ -154,7 +156,7 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
         </div>
 
         <div className="mt-4 flex items-center">
-          <DaText variant="regular-medium">Relevance?</DaText>
+          <p className="text-base font-medium mr-2">Relevance?</p>
           <DaStarsRating
             initialRating={data.relevance}
             onChange={(value) => handleChange('relevance', value)}
@@ -162,49 +164,50 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
         </div>
 
         <div className="mt-4 flex items-center">
-          <DaText variant="regular-medium">Ease of use?</DaText>
+          <p className="text-base font-medium mr-2">Ease of use?</p>
           <DaStarsRating
             initialRating={data.easeOfUse}
             onChange={(value) => handleChange('easeOfUse', value)}
           />
         </div>
 
-        <DaInput
-          name="questions"
-          value={data.questions}
-          onChange={(e) => handleChange('questions', e.target.value)}
-          placeholder="Write your questions..."
-          label="Questions"
-          className="mt-4"
-        />
+        <div className="flex flex-col mt-4">
+          <Label className="mb-2">Questions</Label>
+          <Input
+            name="questions"
+            value={data.questions}
+            onChange={(e: FormEvent<HTMLInputElement>) => handleChange('questions', (e.target as HTMLInputElement).value)}
+            placeholder="Write your questions..."
+          />
+        </div>
 
-        <DaTextarea
-          rows={5}
-          name="recommendations"
-          value={data.recommendations}
-          onChange={(e) => handleChange('recommendations', e.target.value)}
-          placeholder="Write your recommendations..."
-          label="Recommendations"
-          className="mt-4 mb-2"
-        />
+        <div className="flex flex-col mt-4 mb-2">
+          <Label className="mb-2">Recommendations</Label>
+          <Textarea
+            rows={5}
+            name="recommendations"
+            value={data.recommendations}
+            onChange={(e: FormEvent<HTMLTextAreaElement>) => handleChange('recommendations', (e.target as HTMLTextAreaElement).value)}
+            placeholder="Write your recommendations..."
+          />
+        </div>
 
         {error && (
-          <DaText variant="small" className="mt-4 text-da-accent-500">
+          <p className="mt-4 text-sm text-destructive">
             {error}
-          </DaText>
+          </p>
         )}
       </div>
 
       <div className="px-4">
-        <DaButton
+        <Button
           disabled={loading}
           type="submit"
-          variant="gradient"
           className="w-full mt-8"
         >
           {loading && <TbLoader className="animate-spin text-lg mr-2" />}
           Submit
-        </DaButton>
+        </Button>
       </div>
     </form>
   )

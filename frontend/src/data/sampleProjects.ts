@@ -1,12 +1,17 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
 //
 // SPDX-License-Identifier: MIT
 
-import { FileSystemItem } from '../components/molecules/project_editor/types';
+export interface FileSystemItem {
+  type: 'file' | 'folder';
+  name: string;
+  content?: string;
+  items?: FileSystemItem[];
+}
 
 export interface SampleProject {
   label: string;

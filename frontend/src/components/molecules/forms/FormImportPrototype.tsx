@@ -6,8 +6,9 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
-import { DaText } from '@/components/atoms/DaText'
+import { Button } from '@/components/atoms/button'
+import { Input } from '@/components/atoms/input'
+import { Label } from '@/components/atoms/label'
 import { FormEvent, useEffect, useState } from 'react'
 import { TbLoader, TbCircleCheckFilled } from 'react-icons/tb'
 import { createPrototypeService } from '@/services/prototype.service'
@@ -15,14 +16,13 @@ import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { useNavigate, useLocation } from 'react-router-dom'
 import useListModelContribution from '@/hooks/useListModelContribution'
-import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/atoms/select'
 import { zipToPrototype } from '@/lib/zipUtils'
 import { Prototype } from '@/types/model.type'
 import { ModelLite } from '@/types/model.type'
 import DaImportFile from '@/components/atoms/DaImportFile'
-import DaLoader from '@/components/atoms/DaLoader'
+import { Spinner } from '@/components/atoms/spinner'
 import { CVI } from '@/data/CVI'
-import { DaInput } from '@/components/atoms/DaInput'
 import { ModelCreate } from '@/types/model.type'
 import { createModelService } from '@/services/model.service'
 import { useToast } from '../toaster/use-toast'
@@ -117,10 +117,10 @@ const FormImportPrototype = () => {
         toast({
           title: ``,
           description: (
-            <DaText variant="small" className=" flex items-center">
+            <p className="flex items-center text-sm">
               <TbCircleCheckFilled className="text-green-500 w-4 h-4 mr-2" />
               Import prototype successfully
-            </DaText>
+            </p>
           ),
           duration: 3000,
         })
@@ -150,49 +150,56 @@ const FormImportPrototype = () => {
   }, [contributionModels, isFetchingModelContribution])
 
   return (
-    <div className="flex flex-col w-[30vw] lg:w-[25vw] max-h-[80vh] p-4 bg-da-white">
-      <DaText variant="title" className="text-da-primary-500">
+    <div className="flex flex-col w-[30vw] lg:w-[25vw] max-h-[80vh] p-4 bg-background">
+      <h2 className="text-2xl font-bold text-primary">
         Import Prototype
-      </DaText>
+      </h2>
 
       {contributionModels && !isFetchingModelContribution && localModel ? (
-        <DaSelect
-          defaultValue={localModel.id}
-          label="Model name *"
-          wrapperClassName="mt-4"
-          onValueChange={(e) => {
-            const selectedModel = contributionModels.results.find(
-              (model) => model.id === e,
-            )
-            selectedModel && setLocalModel(selectedModel)
-          }}
-        >
-          {contributionModels.results.map((model, index) => (
-            <DaSelectItem key={index} value={model.id}>
-              {model.name}
-            </DaSelectItem>
-          ))}
-        </DaSelect>
+        <div className="flex flex-col mt-4">
+          <Label className="mb-2">Model name *</Label>
+          <Select
+            defaultValue={localModel.id}
+            onValueChange={(e: string) => {
+              const selectedModel = contributionModels.results.find(
+                (model: ModelLite) => model.id === e,
+              )
+              selectedModel && setLocalModel(selectedModel)
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {contributionModels.results.map((model: ModelLite, index: number) => (
+                <SelectItem key={index} value={model.id}>
+                  {model.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       ) : isFetchingModelContribution ? (
-        <DaText variant="regular" className="mt-4 flex items-center">
-          <DaLoader className="w-4 h-4 mr-1" />
+        <p className="mt-4 flex items-center text-base text-muted-foreground">
+          <Spinner className="w-4 h-4 mr-1" />
           Loading vehicle model...
-        </DaText>
+        </p>
       ) : (
-        <DaInput
-          name="name"
-          value={data.modelName}
-          onChange={(e) => handleChange('modelName', e.target.value)}
-          placeholder="Model name"
-          label="Model Name *"
-          className="mt-4"
-        />
+        <div className="flex flex-col mt-4">
+          <Label className="mb-2">Model Name *</Label>
+          <Input
+            name="name"
+            value={data.modelName}
+            onChange={(e) => handleChange('modelName', e.target.value)}
+            placeholder="Model name"
+          />
+        </div>
       )}
 
       {error && (
-        <DaText variant="small" className="mt-4 text-da-accent-500">
+        <p className="mt-4 text-sm text-destructive">
           {error}
-        </DaText>
+        </p>
       )}
 
       <DaImportFile
@@ -200,15 +207,14 @@ const FormImportPrototype = () => {
         onFileChange={handleImportPrototypeZip}
         className="flex w-full"
       >
-        <DaButton
+        <Button
           disabled={isLoading || (!localModel && !data.modelName)}
           type="submit"
-          variant="gradient"
           className="w-full mt-8"
         >
           {isLoading && <TbLoader className="animate-spin text-lg mr-2" />}
           Select file and import
-        </DaButton>
+        </Button>
       </DaImportFile>
     </div>
   )

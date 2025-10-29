@@ -6,9 +6,8 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { DaButton } from '@/components/atoms/DaButton'
-import { DaText } from '@/components/atoms/DaText'
-import { DaTextarea } from '@/components/atoms/DaTextarea'
+import { Button } from '@/components/atoms/button'
+import { Textarea } from '@/components/atoms/textarea'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import {
   createDiscussionService,
@@ -132,44 +131,44 @@ const FormCreateDiscussion = ({
   }, [updatingData])
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col bg-da-white">
+    <form onSubmit={handleSubmit} className="flex flex-col bg-background">
       {/* Content */}
-      <DaTextarea
+      <Textarea
         value={data.content}
-        onChange={(e) => handleChange('content', e.target.value)}
+        onChange={(e: FormEvent<HTMLTextAreaElement>) => handleChange('content', (e.target as HTMLTextAreaElement).value)}
         placeholder={replyingId ? 'Replying...' : 'Start a discussion'}
       />
 
       {/* Error */}
       {error && (
-        <DaText variant="small" className="mt-2 text-da-accent-500">
+        <p className="mt-2 text-sm text-destructive">
           {error}
-        </DaText>
+        </p>
       )}
 
       {/* Action */}
       <div className="flex mt-3 ml-auto gap-2">
         {(replyingId || updatingData) && (
-          <DaButton
+          <Button
             onClick={onCancel}
             disabled={loading}
-            variant="plain"
+            variant="ghost"
             type="button"
-            className="w-fit !px-4"
+            className="w-fit px-4"
             size="sm"
           >
             Cancel
-          </DaButton>
+          </Button>
         )}
-        <DaButton
+        <Button
           disabled={loading}
           type="submit"
-          className="w-fit !px-4"
+          className="w-fit px-4"
           size="sm"
         >
           {loading && <TbLoader className="animate-spin text-lg mr-2" />}
           Submit
-        </DaButton>
+        </Button>
       </div>
     </form>
   )

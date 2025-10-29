@@ -1,11 +1,22 @@
 // useListModelContribution hook stub
 import { useQuery } from '@tanstack/react-query'
+import { ModelLite } from '@/types/model.type'
+
+interface ModelContributionResponse {
+  results: ModelLite[]
+  totalPages?: number
+  currentPage?: number
+}
 
 const useListModelContribution = () => {
-  return useQuery({
+  return useQuery<ModelContributionResponse>({
     queryKey: ['model-contributions'],
     queryFn: async () => {
-      return []
+      return {
+        results: [],
+        totalPages: 0,
+        currentPage: 1,
+      }
     },
   })
 }

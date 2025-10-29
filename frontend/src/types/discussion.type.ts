@@ -1,5 +1,5 @@
 // Discussion type definitions
-export type DISCUSSION_REF_TYPE = 'model' | 'prototype' | 'discussion'
+export type DISCUSSION_REF_TYPE = 'model' | 'prototype' | 'discussion' | 'api'
 
 export interface Discussion {
   id: string
