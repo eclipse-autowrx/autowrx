@@ -156,7 +156,7 @@ const PluginForm = ({ open, onClose, mode, pluginId, onSaved }: PluginFormProps)
         <p className="text-sm text-muted-foreground">Loading...</p>
       ) : (
           <div className="space-y-4">
-            <div className="flex border-b border-da-gray-light mb-2">
+            <div className="flex border-b border-border mb-2">
               <DaTabItem small active={activeTab === 'meta'} onClick={() => setActiveTab('meta')}>
                 Meta
               </DaTabItem>
@@ -189,7 +189,7 @@ const PluginForm = ({ open, onClose, mode, pluginId, onSaved }: PluginFormProps)
                     </div>
                   </div>
                   <div className="w-44 relative">
-                    <div className="w-44 h-44 border border-da-gray-light rounded-md overflow-hidden bg-white flex items-center justify-center">
+                    <div className="w-44 h-44 border border-border rounded-md overflow-hidden bg-white flex items-center justify-center">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={form.image || '/imgs/plugin.png'}
