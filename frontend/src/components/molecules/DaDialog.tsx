@@ -133,7 +133,7 @@ const DaDialog = ({
         }}
       >
         {dialogTitle && (
-          <DialogHeader className="text-foreground space-y-1">
+          <DialogHeader className="text-primary space-y-1">
             <DialogTitle>{dialogTitle}</DialogTitle>
             {description && (
               <div className="text-sm text-muted-foreground leading-loose">

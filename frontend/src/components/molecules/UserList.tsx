@@ -37,7 +37,7 @@ const UserListItem = ({ user, onRemoveUser }: UserListItemProps) => {
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
-            <p className="text-base font-bold text-foreground">
+            <p className="text-base font-bold text-primary">
               {user.name ?? 'Loading...'}
             </p>
             <span className="text-sm text-muted-foreground">

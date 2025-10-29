@@ -96,7 +96,7 @@ const DaCollaboratorSearchPicker = ({
         </div>
       ) : (
         <>
-          <span className="text-sm font-semibold mb-2 text-foreground">
+          <span className="text-sm font-semibold mb-2 text-primary">
             Other people
           </span>
 
@@ -136,7 +136,7 @@ const DaCollaboratorSearchPicker = ({
 
       {matchedInvitedUsers.length > 0 && (
         <div className="w-full">
-          <span className="text-sm font-semibold my-2 block text-foreground">
+          <span className="text-sm font-semibold my-2 block text-primary">
             People with access
           </span>
 

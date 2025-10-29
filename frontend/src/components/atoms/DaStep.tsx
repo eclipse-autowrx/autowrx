@@ -84,7 +84,7 @@ const DaStep = ({
 
       <div
         className={clsx('min-w-0 truncate', {
-          'text-foreground': state === 'active' || state === 'completed',
+          'text-primary': state === 'active' || state === 'completed',
           'text-muted-foreground': state === 'inactive',
         })}
       >

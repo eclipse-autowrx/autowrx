@@ -164,7 +164,7 @@ const ConfigList: React.FC<ConfigListProps> = ({
             {/* Left: key and meta (1/3) */}
             <div className="md:col-span-1 min-w-0">
               <div className="flex items-center space-x-2 mb-2">
-                <p className="text-lg font-semibold text-foreground truncate">
+                <p className="text-lg font-semibold text-primary truncate">
                   {config.key}
                 </p>
                 {config.secret && (
