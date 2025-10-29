@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -9,11 +9,11 @@
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
+import { Spinner } from '@/components/atoms/spinner'
 import { registerService } from '@/services/auth.service'
 import { isAxiosError } from 'axios'
 import { useState } from 'react'
-import { TbLoader } from 'react-icons/tb'
-// import { usePolicy } from '@/hooks/useInstanceCfg'
+import { usePolicy } from '@/hooks/useInstanceCfg'
 import { addLog } from '@/services/log.service'
 
 interface FormRegisterProps {
@@ -24,8 +24,7 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
 
-  // const policy_url = usePolicy()
-  const policy_url = 'policy-url'
+  const policy_url = usePolicy()
 
   const validate = (
     name: string,
@@ -63,12 +62,6 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
 
       // Register
       await registerService(name, email, password)
-      // await addLog({
-      //   name: `User registered`,
-      //   description: `User registered with email: ${email}`,
-      //   type: 'user-register@email',
-      //   create_by: email,
-      // })
       setError('')
       // eslint-disable-next-line no-self-assign
       window.location.href = window.location.href
@@ -86,53 +79,28 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
   return (
     <form
       onSubmit={register}
-      className="w-[30vw] lg:w-[25vw] min-w-[400px] max-w-[500px] h-fit max-h-[80vh] p-4 bg-white"
+      className="w-[30vw] lg:w-[25vw] min-w-[400px] max-w-[500px] h-fit max-h-[80vh] p-4 bg-background"
     >
       {/* Title */}
-      <h2 className="text-xl font-semibold text-primary">
-        Register
-      </h2>
+      <h2 className="text-2xl font-bold text-primary">Register</h2>
 
       <div className="mt-6"></div>
       {/* Content */}
-      <div className="mt-4">
-        <Label htmlFor="fullName">Name</Label>
-        <Input
-          id="fullName"
-          name="fullName"
-          placeholder="Name"
-          className="mt-1"
-        />
+      <div className="mt-4 flex flex-col gap-1">
+        <Label>Name</Label>
+        <Input name="fullName" placeholder="Name" />
       </div>
-      <div className="mt-4">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          placeholder="Email"
-          className="mt-1"
-        />
+      <div className="mt-4 flex flex-col gap-1">
+        <Label>Email</Label>
+        <Input name="email" placeholder="Email" />
       </div>
-      <div className="mt-4">
-        <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          placeholder="Password"
-          className="mt-1"
-        />
+      <div className="mt-4 flex flex-col gap-1">
+        <Label>Password</Label>
+        <Input name="password" placeholder="Password" type="password" />
       </div>
-      <div className="mt-4">
-        <Label htmlFor="confirmPassword">Confirm Password</Label>
-        <Input
-          id="confirmPassword"
-          name="confirmPassword"
-          type="password"
-          placeholder="Confirm Password"
-          className="mt-1"
-        />
+      <div className="mt-4 flex flex-col gap-1">
+        <Label>Confirm Password</Label>
+        <Input name="confirmPassword" placeholder="Confirm Password" type="password" />
       </div>
 
       {policy_url && (
@@ -150,29 +118,30 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
 
       {/* Error */}
       {error && (
-        <span className="text-sm mt-3 block text-destructive">
+        <p className="text-sm mt-3 text-destructive">
           {error}
-        </span>
+        </p>
       )}
 
       {/* Action */}
       <Button
         disabled={loading}
         type="submit"
+        variant="default"
         className="w-full mt-6"
       >
-        {loading && <TbLoader className="animate-spin text-lg mr-2" />}
+        {loading && <Spinner className="mr-2" size={16} />}
         Register
       </Button>
       {/* More */}
       <div className="mt-4 flex items-center">
-        <span className="text-muted-foreground">
+        <p className="text-base text-muted-foreground">
           Already have an account?
-        </span>
+        </p>
         <Button
           type="button"
           onClick={() => setAuthType('sign-in')}
-          variant="ghost"
+          variant="link"
           className="text-primary"
         >
           Sign in

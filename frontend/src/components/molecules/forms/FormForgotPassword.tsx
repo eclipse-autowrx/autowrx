@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -9,10 +9,12 @@
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
+import { Spinner } from '@/components/atoms/spinner'
 import { sendResetPasswordEmailService } from '@/services/auth.service'
 import { isAxiosError } from 'axios'
 import { useState } from 'react'
-import { TbCircleCheckFilled, TbLoader } from 'react-icons/tb'
+import { TbCircleCheckFilled } from 'react-icons/tb'
+import { TbAt } from 'react-icons/tb'
 
 interface FormForgotPasswordProps {
   setAuthType: (type: 'sign-in' | 'register' | 'forgot') => void
@@ -51,63 +53,63 @@ const FormForgotPassword = ({ setAuthType }: FormForgotPasswordProps) => {
   return (
     <form
       onSubmit={sendResetEmail}
-      className="w-[30vw] lg:w-[25vw] min-w-[400px] max-w-[500px] h-fit max-h-[80vh] p-4 bg-white"
+      className="w-[30vw] lg:w-[25vw] min-w-[400px] max-w-[500px] h-fit max-h-[80vh] p-4 bg-background"
     >
       {/* Title */}
-      <h2 className="text-xl font-semibold text-primary">
-        Forgot Password
-      </h2>
+      <h2 className="text-2xl font-bold text-primary">Forgot Password</h2>
 
       {sent ? (
         <>
-          <span className="block mt-4">
+          <p className="text-base mt-4">
             Reset password email sent! Please check your email and follow the
             instructions.
-          </span>
+          </p>
           <TbCircleCheckFilled className="text-8xl text-green-500 mx-auto mt-10" />
         </>
       ) : (
         <>
-          <span className="block mt-4">
+          <p className="text-base mt-4">
             Enter the email associated with your account. We will send you an
             email to reset your password.
-          </span>
+          </p>
 
           {/* Content */}
-          <div className="mt-4">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="Email"
-              className="mt-1"
-            />
+          <div className="mt-4 flex flex-col gap-1">
+            <Label>Email</Label>
+            <div className="relative">
+              <TbAt className="absolute left-3 top-1/2 -translate-y-1/2 size-[18px] text-muted-foreground" />
+              <Input
+                name="email"
+                placeholder="Email"
+                className="pl-10"
+              />
+            </div>
           </div>
 
           {/* Error */}
           {error && (
-            <span className="text-sm mt-2 block text-destructive">
+            <p className="text-sm mt-2 text-destructive">
               {error}
-            </span>
+            </p>
           )}
           {/* Action */}
           <Button
             disabled={loading}
             type="submit"
+            variant="default"
             className="w-full mt-6"
           >
-            {loading && <TbLoader className="animate-spin text-lg mr-2" />}
+            {loading && <Spinner className="mr-2" size={16} />}
             Send Reset Email
           </Button>
 
           {/* More */}
           <div className="mt-4 flex items-center">
-            <span className="text-foreground">Remember password?</span>
+            <p className="text-base text-foreground">Remember password?</p>
             <Button
               type="button"
               onClick={() => setAuthType('sign-in')}
-              variant="ghost"
+              variant="link"
               className="text-primary"
             >
               Sign In

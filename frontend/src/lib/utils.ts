@@ -21,3 +21,8 @@ export function maskEmail(email: string): string {
 
   return `${maskedUsername}@${domain}`
 }
+
+// Placeholder for parseCvi - will be implemented when needed
+export const parseCvi = (cvi: any) => {
+  return []
+}

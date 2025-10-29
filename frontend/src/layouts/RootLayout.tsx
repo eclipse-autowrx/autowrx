@@ -73,11 +73,11 @@ const RootLayout = () => {
       </Suspense> */}
       <Suspense>
         <NavigationBar />
-        {/* {!pathsWithoutBreadcrumb.has(location.pathname) && (
-          <div className="flex items-center justify-between bg-primary da-secondary-nav-bar px-4">
+        {!pathsWithoutBreadcrumb.has(location.pathname) && (
+          <div className="flex items-center justify-between bg-primary h-[52px] px-4">
             <DaBreadcrumbBar />
           </div>
-        )} */}
+        )}
       </Suspense>
 
       <div className="h-full overflow-y-auto">

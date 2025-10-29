@@ -10,17 +10,16 @@ import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
 import { Spinner } from '@/components/atoms/spinner'
+import { resetPasswordService } from '@/services/auth.service'
 import { isAxiosError } from 'axios'
 import { useState } from 'react'
 import { TbCircleCheckFilled, TbLock } from 'react-icons/tb'
-import { partialUpdateUserService } from '@/services/user.service'
-import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { Link } from 'react-router-dom'
 
-const FormUpdatePassword = ({}) => {
+const FormResetPassword = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
   const [changed, setChanged] = useState(false)
-  const { data: profile } = useSelfProfileQuery()
 
   const validate = (password: string, confirmPassword: string) => {
     const errors = []
@@ -30,7 +29,6 @@ const FormUpdatePassword = ({}) => {
   }
 
   const resetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
-    if (!profile) return
     e.preventDefault()
     try {
       setLoading(true)
@@ -44,7 +42,13 @@ const FormUpdatePassword = ({}) => {
         return
       }
 
-      await partialUpdateUserService({ password })
+      const token = new URLSearchParams(window.location.search).get('token')
+      if (!token) {
+        setError('Token not found')
+        return
+      }
+
+      await resetPasswordService(password, token)
       setChanged(true)
       setError('')
       await new Promise(() =>
@@ -67,17 +71,17 @@ const FormUpdatePassword = ({}) => {
   return (
     <form
       onSubmit={resetPassword}
-      className="w-[30vw] lg:w-[25vw] max-h-[80vh] bg-background"
+      className="w-[30vw] lg:w-[25vw] min-w-[400px] max-w-[500px] h-fit max-h-[80vh] p-4 bg-background"
     >
       {/* Title */}
-      <h2 className="text-2xl font-bold text-primary">Change Password</h2>
+      <h2 className="text-2xl font-bold text-primary">Reset Password</h2>
 
       {changed ? (
         <>
           <p className="text-base mt-4">
             Reset password success! Please login with your new password.
           </p>
-          <TbCircleCheckFilled className="text-6xl text-green-500 mx-auto my-4" />
+          <TbCircleCheckFilled className="text-8xl text-green-500 mx-auto mt-10" />
         </>
       ) : (
         <>
@@ -110,7 +114,7 @@ const FormUpdatePassword = ({}) => {
 
           {/* Error */}
           {error && (
-            <p className="text-sm mt-2 text-red-500">
+            <p className="text-sm mt-2 text-destructive">
               {error}
             </p>
           )}
@@ -122,12 +126,21 @@ const FormUpdatePassword = ({}) => {
             className="w-full mt-6"
           >
             {loading && <Spinner className="mr-2" size={16} />}
-            Change Password
+            Reset Password
           </Button>
+
+          {/* More */}
+          <div className="mt-4 flex items-center">
+            <Link to="/" className="cursor-pointer">
+              <p className="text-base text-primary cursor-pointer">
+                Go Home
+              </p>
+            </Link>
+          </div>
         </>
       )}
     </form>
   )
 }
 
-export default FormUpdatePassword
+export default FormResetPassword
