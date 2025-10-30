@@ -14,11 +14,9 @@ import DaBreadcrumbBar from '@/components/molecules/DaBreadcrumbBar'
 import { useLocation } from 'react-router-dom'
 import config from '@/configs/config'
 import routesConfig from '@/configs/routes'
-import { RouteConfig, Partner } from '@/types/common.type.ts'
+import { RouteConfig } from '@/types/common.type.ts'
 import { retry } from '@/lib/retry.ts'
 import useGlobalStore from '@/stores/globalStore.ts'
-import { HomePartners } from '@/components/organisms/HomePartners'
-import homeConfig from '../../instance/home'
 
 // const ActiveObjectManagement = lazy(() =>
 //   retry(() => import('@/components/organisms/ActiveObjectManagement')),
@@ -87,10 +85,26 @@ const RootLayout = () => {
       </div>
 
       {config && config.instance !== 'digitalauto' && (
-        <div className="w-full sticky bottom-0 right-0 z-10 bg-background border-t border-border">
-          <HomePartners
-            items={(homeConfig.find((section: any) => section.type === 'partner-list')?.items as Partner[]) || []}
-          />
+        <div className="flex w-full sticky bottom-0 right-0 z-10 bg-slate-900 px-4 py-0.5 text-end text-xs text-white">
+          {config.showPrivacyPolicy && (
+            <Link
+              to="/privacy-policy"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:underline flex h-fit"
+            >
+              Privacy Policy
+            </Link>
+          )}
+          <div className="grow" />
+          <a
+            href="https://www.digital.auto/"
+            target="_blank"
+            rel="noreferrer"
+            className="hover:underline flex h-fit"
+          >
+            Powered by digital.auto
+          </a>
         </div>
       )}
 

@@ -9,6 +9,7 @@
 import { url } from 'inspector'
 
 const config: any = {
+  instance: 'autowrx',
   serverBaseUrl:
     import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3200',
   serverVersion: import.meta.env.VITE_SERVER_VERSION || 'v2',
