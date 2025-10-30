@@ -24,16 +24,16 @@ const HomeHeroSection = ({
   return (
     <>
       <div className="flex col-span-12 relative min-h-[400px] max-h-[400px] w-full justify-between z-10 overflow-hidden">
+        {/* Gradient overlay - lighter primary to darker primary */}
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r z-10 from-primary/30 via-primary/60 to-primary/90"></div>
+
         {image && (
           <img
-            className="w-full object-cover absolute inset-0 z-0"
+            className="w-full object-cover z-0 items-center justify-center"
             src={image}
             alt="home-cover"
           ></img>
         )}
-
-        {/* Gradient overlay from lighter to darker primary */}
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-primary/50 via-primary/70 to-primary/95 z-10"></div>
 
         {(title || description) && (
           <div className="absolute flex h-full items-center justify-end w-full">
