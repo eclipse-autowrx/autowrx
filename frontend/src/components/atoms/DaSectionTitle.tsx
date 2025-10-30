@@ -1,29 +1,28 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
 //
 // SPDX-License-Identifier: MIT
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils'
 
 interface DaSectionTitleProps {
-    number: number; 
-    title: string;
-    className?: string;
+  number: number
+  title: string
+  className?: string
 }
 
-const DaSectionTitle = ({number, title, className}:DaSectionTitleProps) => {
-    return(
-       
-  <div className={cn("flex select-none items-center", className)}>
-    <div className="flex h-5 w-5 items-center justify-center rounded bg-muted p-2 text-xs font-bold">
-      {number}
+const DaSectionTitle = ({ number, title, className }: DaSectionTitleProps) => {
+  return (
+    <div className={cn('flex select-none items-center', className)}>
+      <div className="flex h-5 w-5 items-center justify-center rounded bg-muted p-2 text-xs font-semibold">
+        {number}
+      </div>
+      <div className="ml-1 flex font-medium text-gray-600">{title}</div>
     </div>
-    <div className="ml-1 flex font-medium text-gray-600">{title}</div>
-  </div>
-    )
+  )
 }
 
-export default DaSectionTitle;
+export default DaSectionTitle

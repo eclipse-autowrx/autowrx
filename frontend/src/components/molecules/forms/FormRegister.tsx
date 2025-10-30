@@ -82,7 +82,7 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
       className="w-[30vw] lg:w-[25vw] min-w-[400px] max-w-[500px] h-fit max-h-[80vh] p-4 bg-background"
     >
       {/* Title */}
-      <h2 className="text-2xl font-bold text-primary">Register</h2>
+      <h2 className="text-lg font-semibold text-primary">Register</h2>
 
       <div className="mt-6"></div>
       {/* Content */}
@@ -100,7 +100,11 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
       </div>
       <div className="mt-4 flex flex-col gap-1">
         <Label>Confirm Password</Label>
-        <Input name="confirmPassword" placeholder="Confirm Password" type="password" />
+        <Input
+          name="confirmPassword"
+          placeholder="Confirm Password"
+          type="password"
+        />
       </div>
 
       {policy_url && (
@@ -117,11 +121,7 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
       )}
 
       {/* Error */}
-      {error && (
-        <p className="text-sm mt-3 text-destructive">
-          {error}
-        </p>
-      )}
+      {error && <p className="text-sm mt-3 text-destructive">{error}</p>}
 
       {/* Action */}
       <Button

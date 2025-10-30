@@ -16,7 +16,7 @@ interface DaDiscussionsProps {
 const DaDiscussions = ({ refId, refType, className }: DaDiscussionsProps) => {
   return (
     <div className={`flex flex-col p-6 ${className}`}>
-      <h3 className="text-xl font-bold text-primary mb-4">Discussions</h3>
+      <h3 className="text-xl font-semibold text-primary mb-4">Discussions</h3>
       <p className="text-muted-foreground">
         Discussion system coming soon (ref: {refId}, type: {refType})
       </p>

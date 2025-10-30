@@ -37,9 +37,7 @@ const typeClassMapping = {
 }
 
 const getTypeClass = (type: string | undefined) => {
-  return (
-    typeClassMapping[type as keyof typeof typeClassMapping] || 'bg-muted'
-  )
+  return typeClassMapping[type as keyof typeof typeClassMapping] || 'bg-muted'
 }
 
 const LargeCard = ({ item }: { item: CardProps }) => {
@@ -56,7 +54,7 @@ const LargeCard = ({ item }: { item: CardProps }) => {
         <div className="flex mt-4 items-center">
           <div
             className={cn(
-              'text-white font-medium !text-sm px-3 py-0.5 rounded-full',
+              'flex items-center text-white font-medium text-xs h-5 px-2 rounded-full',
               getTypeClass(item.type),
             )}
           >
@@ -72,7 +70,7 @@ const LargeCard = ({ item }: { item: CardProps }) => {
             )}
           </div>
         </div>
-        <div className="text-lg font-bold mt-4 text-primary">
+        <div className="text-lg font-semibold mt-4 text-foreground">
           {item.title}
         </div>
 
@@ -100,7 +98,7 @@ const SmallCard = ({ item }: { item: CardProps }) => {
             <div className="flex items-center">
               <div
                 className={cn(
-                  'text-white font-medium !text-sm px-3 py-0.5 rounded-full',
+                  'flex items-center text-white font-medium text-xs h-5 px-2 rounded-full',
                   getTypeClass(item.type),
                 )}
               >
@@ -111,15 +109,17 @@ const SmallCard = ({ item }: { item: CardProps }) => {
                 {item.date && (
                   <>
                     <div className="flex mx-2">|</div>
-                    <div className="text-muted-foreground text-sm">{item.date}</div>
+                    <div className="text-muted-foreground text-sm">
+                      {item.date}
+                    </div>
                   </>
                 )}
               </div>
             </div>
-            <div className="mt-4 text-lg font-semibold text-primary">
+            <div className="mt-4 text-lg font-semibold text-foreground">
               {item.title}
             </div>
-            <div className="mt-2 text-xs text-muted-foreground line-clamp-3">
+            <div className="mt-2 text-sm text-muted-foreground line-clamp-3">
               {item.description}
             </div>
           </div>
@@ -132,7 +132,7 @@ const SmallCard = ({ item }: { item: CardProps }) => {
 const HomeNews = ({ title, items }: HomeNewsProps) => {
   return (
     <div className="flex flex-col w-full container">
-      <h2 className="text-2xl font-bold text-primary">
+      <h2 className="text-lg font-semibold text-primary">
         {title || 'Recent Prototypes'}
       </h2>
       {items && items.length > 0 && (

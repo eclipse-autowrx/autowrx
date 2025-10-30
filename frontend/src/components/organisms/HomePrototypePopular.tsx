@@ -71,7 +71,7 @@ const HomePrototypePopular = ({
   return (
     <div className="flex flex-col w-full container">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-primary">
+        <h2 className="text-lg font-semibold text-primary">
           {title || 'Popular Prototypes'}
         </h2>
         {popularPrototypes && popularPrototypes.length > 4 && (
@@ -129,17 +129,14 @@ const HomePrototypePopular = ({
       )}
 
       {/* Popup Dialog */}
-      <DaDialog
-        open={openRemindDialog}
-        onOpenChange={setOpenRemindDialog}
-      >
+      <DaDialog open={openRemindDialog} onOpenChange={setOpenRemindDialog}>
         <div className="flex flex-col max-w-xl">
-          <h3 className="text-2xl font-bold text-primary">
+          <h3 className="text-lg font-semibold text-primary">
             Sign In Required
           </h3>
           <p className="mt-4 text-base text-muted-foreground">
             You must first sign in to explore SDV idea about
-            <span className="text-primary px-1 font-bold">
+            <span className="text-primary px-1 font-semibold">
               {selectedPrototype?.name}
             </span>
           </p>

@@ -13,7 +13,9 @@ const PrototypeTabCode: FC = () => {
   return (
     <div className="flex flex-col items-center justify-center w-full h-full p-6 bg-background">
       <div className="text-center max-w-md">
-        <h2 className="text-2xl font-bold text-primary mb-4">SDV Code Editor</h2>
+        <h2 className="text-lg font-semibold text-primary mb-4">
+          SDV Code Editor
+        </h2>
         <p className="text-muted-foreground mb-4">
           The code editor with Monaco, GenAI integration, and Velocitas project
           creation will be implemented here.

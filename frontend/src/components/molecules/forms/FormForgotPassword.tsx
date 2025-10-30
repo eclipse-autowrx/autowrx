@@ -56,7 +56,7 @@ const FormForgotPassword = ({ setAuthType }: FormForgotPasswordProps) => {
       className="w-[30vw] lg:w-[25vw] min-w-[400px] max-w-[500px] h-fit max-h-[80vh] p-4 bg-background"
     >
       {/* Title */}
-      <h2 className="text-2xl font-bold text-primary">Forgot Password</h2>
+      <h2 className="text-lg font-semibold text-primary">Forgot Password</h2>
 
       {sent ? (
         <>
@@ -78,20 +78,12 @@ const FormForgotPassword = ({ setAuthType }: FormForgotPasswordProps) => {
             <Label>Email</Label>
             <div className="relative">
               <TbAt className="absolute left-3 top-1/2 -translate-y-1/2 size-[18px] text-muted-foreground" />
-              <Input
-                name="email"
-                placeholder="Email"
-                className="pl-10"
-              />
+              <Input name="email" placeholder="Email" className="pl-10" />
             </div>
           </div>
 
           {/* Error */}
-          {error && (
-            <p className="text-sm mt-2 text-destructive">
-              {error}
-            </p>
-          )}
+          {error && <p className="text-sm mt-2 text-destructive">{error}</p>}
           {/* Action */}
           <Button
             disabled={loading}

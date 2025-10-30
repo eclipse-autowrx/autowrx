@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -97,7 +97,7 @@ const DaFilter = ({
             <li key={category}>
               {index > 0 && <hr className="my-2 border-t" />}
               {showCategory && (
-                <div className="ml-2 text-sm font-bold text-muted-foreground mt-2! mb-1">
+                <div className="ml-2 text-sm font-semibold text-muted-foreground mt-2! mb-1">
                   {category}
                 </div>
               )}

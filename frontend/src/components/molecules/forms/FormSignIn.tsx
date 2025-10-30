@@ -54,16 +54,18 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
     >
       {config.disableEmailLogin ? (
         <div className="flex flex-col h-full mb-16">
-          <h2 className="text-2xl font-bold text-primary">Sign in with SSO</h2>
+          <h2 className="text-lg font-semibold text-primary">
+            Sign in with SSO
+          </h2>
           <p className="text-base mt-2 text-muted-foreground">
             Your organization uses single sign-on (SSO) with{' '}
-            <span className="font-bold">{window.location.hostname}</span>.
+            <span className="font-semibold">{window.location.hostname}</span>.
             Please sign in using your SSO credentials.
           </p>
         </div>
       ) : (
         <div className="flex flex-col">
-          <h2 className="text-2xl font-bold text-primary">Sign In</h2>
+          <h2 className="text-lg font-semibold text-primary">Sign In</h2>
           <div className="mt-6"></div>
 
           <div className="mt-4 flex flex-col gap-1">
@@ -77,7 +79,12 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
             <Label>Password</Label>
             <div className="relative">
               <TbLock className="absolute left-3 top-1/2 -translate-y-1/2 size-[18px] text-muted-foreground" />
-              <Input name="password" placeholder="Password" type="password" className="pl-10" />
+              <Input
+                name="password"
+                placeholder="Password"
+                type="password"
+                className="pl-10"
+              />
             </div>
           </div>
           <div className="flex items-center justify-end mt-1">
@@ -90,11 +97,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
             </Button>
           </div>
 
-          {error && (
-            <p className="text-sm mt-2 text-destructive">
-              {error}
-            </p>
-          )}
+          {error && <p className="text-sm mt-2 text-destructive">{error}</p>}
 
           <Button
             disabled={loading || ssoLoading}

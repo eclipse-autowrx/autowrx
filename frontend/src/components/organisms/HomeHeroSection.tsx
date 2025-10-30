@@ -41,7 +41,7 @@ const HomeHeroSection = ({
               <div className="flex flex-col sm:text-xs">
                 {title && (
                   <div
-                    className="text-2xl lg:text-4xl font-bold text-white"
+                    className="text-2xl lg:text-4xl font-semibold text-white"
                     dangerouslySetInnerHTML={{
                       __html: title,
                     }}

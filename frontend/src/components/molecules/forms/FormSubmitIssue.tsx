@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -96,7 +96,7 @@ const SubmitIssueForm = ({
       className="flex flex-col w-[40vw] max-h-[80vh] bg-background py-4"
     >
       <div className="flex flex-col overflow-y-auto px-4">
-        <h2 className="text-2xl font-bold text-primary">
+        <h2 className="text-lg font-semibold text-primary">
           Propose this Signal to COVESA
         </h2>
 
@@ -105,7 +105,9 @@ const SubmitIssueForm = ({
           <Input
             name="title"
             value={title}
-            onChange={(e: FormEvent<HTMLInputElement>) => setTitle((e.target as HTMLInputElement).value)}
+            onChange={(e: FormEvent<HTMLInputElement>) =>
+              setTitle((e.target as HTMLInputElement).value)
+            }
             placeholder="Title"
           />
         </div>
@@ -116,7 +118,9 @@ const SubmitIssueForm = ({
             rows={5}
             name="content"
             value={content}
-            onChange={(e: FormEvent<HTMLTextAreaElement>) => setContent((e.target as HTMLTextAreaElement).value)}
+            onChange={(e: FormEvent<HTMLTextAreaElement>) =>
+              setContent((e.target as HTMLTextAreaElement).value)
+            }
             placeholder="Write your proposal..."
           />
         </div>

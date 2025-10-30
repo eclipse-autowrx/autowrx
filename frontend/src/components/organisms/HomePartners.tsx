@@ -28,10 +28,12 @@ const HomePartners: FC<HomePartnersProps> = ({ items, children }) => {
           'flex flex-col xl:flex-row xl:items-center justify-center w-full min-h-[180px]',
         )}
       >
-        {config && (config.instance === 'digitalauto' || config.instance === 'autowrx') && !children ? (
+        {config &&
+        (config.instance === 'digitalauto' || config.instance === 'autowrx') &&
+        !children ? (
           <>
             <div className="flex flex-col w-fit xl:w-[30%] ml-12 my-6 lg:my-12">
-              <div className="text-xl font-bold mb-2 text-primary">
+              <div className="text-xl font-semibold mb-2 text-foreground">
                 Partnership
               </div>
 
@@ -49,7 +51,12 @@ const HomePartners: FC<HomePartnersProps> = ({ items, children }) => {
                   </p>
                   <div className="flex justify-center space-x-4">
                     {group?.items.map((partner: any, pIndex: number) => (
-                      <a key={pIndex} href={partner.url} target="_blank" rel="noopener noreferrer">
+                      <a
+                        key={pIndex}
+                        href={partner.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         <DaImage
                           src={partner.img}
                           alt={partner.name}
@@ -73,8 +80,16 @@ const HomePartners: FC<HomePartnersProps> = ({ items, children }) => {
               <div
                 className={cn(children && '-ml-4', 'flex w-fit items-center')}
               >
-                <a href="https://www.digital.auto/" target="_blank" rel="noopener noreferrer">
-                  <img src="./imgs/da.png" className="h-[70px]" alt="digital.auto" />
+                <a
+                  href="https://www.digital.auto/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src="./imgs/da.png"
+                    className="h-[70px]"
+                    alt="digital.auto"
+                  />
                 </a>
               </div>
               <div className="text-sm mt-3 max-w-xl text-muted-foreground">

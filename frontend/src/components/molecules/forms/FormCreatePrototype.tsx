@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -20,7 +20,13 @@ import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { useNavigate, useLocation } from 'react-router-dom'
 import useListModelContribution from '@/hooks/useListModelContribution'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/atoms/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/atoms/select'
 import { Model, ModelLite, ModelCreate } from '@/types/model.type'
 import { Spinner } from '@/components/atoms/spinner'
 import { CVI } from '@/data/CVI'
@@ -161,7 +167,7 @@ const FormCreatePrototype = ({
 
   const { data: currentUser } = useSelfProfileQuery()
 
-  const [projectTemplate, setProjectTemplate] = useState<string>("")
+  const [projectTemplate, setProjectTemplate] = useState<string>('')
 
   const handleChange = (name: keyof typeof data, value: string | number) => {
     setData((prev) => ({ ...prev, [name]: value }))
@@ -169,8 +175,8 @@ const FormCreatePrototype = ({
 
   const onTemplateChange = (v: string) => {
     const template = SAMPLE_PROJECTS.find((project) => project.label === v)
-    let code = ""
-    let language = ""
+    let code = ''
+    let language = ''
     if (template) {
       if (typeof template.data === 'string') {
         code = template.data
@@ -334,7 +340,7 @@ const FormCreatePrototype = ({
       onSubmit={createNewPrototype}
       className="flex max-h-[80vh] w-[40vw] min-w-[400px] flex-col bg-background p-4 lg:w-[25vw]"
     >
-      <h2 className="text-2xl font-bold text-primary">
+      <h2 className="text-lg font-semibold text-primary">
         {title ?? 'New Prototype'}
       </h2>
 
@@ -355,11 +361,13 @@ const FormCreatePrototype = ({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {contributionModels.results.map((model: ModelLite, index: number) => (
-                  <SelectItem key={index} value={model.id}>
-                    {model.name}
-                  </SelectItem>
-                ))}
+                {contributionModels.results.map(
+                  (model: ModelLite, index: number) => (
+                    <SelectItem key={index} value={model.id}>
+                      {model.name}
+                    </SelectItem>
+                  ),
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -388,7 +396,7 @@ const FormCreatePrototype = ({
           value={data.prototypeName}
           onChange={(e) => handleChange('prototypeName', e.target.value)}
           placeholder="Name"
-          data-id='prototype-name-input'
+          data-id="prototype-name-input"
         />
       </div>
 
@@ -413,16 +421,12 @@ const FormCreatePrototype = ({
         </Select>
       </div>
 
-      {error && (
-        <p className="mt-4 text-sm text-destructive">
-          {error}
-        </p>
-      )}
+      {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
 
       <Button
         disabled={disabled}
         type="submit"
-        data-id='btn-create-prototype'
+        data-id="btn-create-prototype"
         className={cn('mt-8 w-full', hideCreateButton && 'hidden')}
       >
         {loading && <TbLoader className="mr-2 animate-spin text-lg" />}

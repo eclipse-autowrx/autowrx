@@ -74,7 +74,7 @@ const FormResetPassword = () => {
       className="w-[30vw] lg:w-[25vw] min-w-[400px] max-w-[500px] h-fit max-h-[80vh] p-4 bg-background"
     >
       {/* Title */}
-      <h2 className="text-2xl font-bold text-primary">Reset Password</h2>
+      <h2 className="text-lg font-semibold text-primary">Reset Password</h2>
 
       {changed ? (
         <>
@@ -113,11 +113,7 @@ const FormResetPassword = () => {
           </div>
 
           {/* Error */}
-          {error && (
-            <p className="text-sm mt-2 text-destructive">
-              {error}
-            </p>
-          )}
+          {error && <p className="text-sm mt-2 text-destructive">{error}</p>}
           {/* Action */}
           <Button
             disabled={loading}
@@ -132,9 +128,7 @@ const FormResetPassword = () => {
           {/* More */}
           <div className="mt-4 flex items-center">
             <Link to="/" className="cursor-pointer">
-              <p className="text-base text-primary cursor-pointer">
-                Go Home
-              </p>
+              <p className="text-base text-primary cursor-pointer">Go Home</p>
             </Link>
           </div>
         </>

@@ -10,7 +10,13 @@ import { useEffect, useState } from 'react'
 import PrototypeLibraryList from '@/components/organisms/PrototypeLibraryList'
 import PrototypeLibraryPortfolio from '@/components/organisms/PrototypeLibraryPortfolio'
 import { useParams } from 'react-router-dom'
-import { TbChartScatter, TbListDetails, TbFileImport, TbPlus, TbSearch } from 'react-icons/tb'
+import {
+  TbChartScatter,
+  TbListDetails,
+  TbFileImport,
+  TbPlus,
+  TbSearch,
+} from 'react-icons/tb'
 import { Button } from '@/components/atoms/button'
 import { Spinner } from '@/components/atoms/spinner'
 import usePermissionHook from '@/hooks/usePermissionHook'
@@ -220,14 +226,19 @@ const PagePrototypeLibrary = () => {
                     open={open}
                     onOpenChange={setOpen}
                     trigger={
-                      <Button data-id="btn-create-new-prototype" variant="default" size="sm" className="flex ml-2">
+                      <Button
+                        data-id="btn-create-new-prototype"
+                        variant="default"
+                        size="sm"
+                        className="flex ml-2"
+                      >
                         <TbPlus className="w-5 h-5 mr-2" />
                         Create New Prototype
                       </Button>
                     }
                   >
                     <div className="p-6">
-                      <h3 className="text-2xl font-bold text-primary mb-4">
+                      <h3 className="text-lg font-semibold text-primary mb-4">
                         Create New Prototype
                       </h3>
                       <p className="text-muted-foreground">

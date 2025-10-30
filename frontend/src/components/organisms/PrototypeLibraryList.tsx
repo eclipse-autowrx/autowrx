@@ -139,7 +139,7 @@ const PrototypeLibraryList = ({
           </div>
         ) : (
           <div className="flex w-full h-[70%] items-center justify-center">
-            <h3 className="text-2xl font-bold text-primary">
+            <h3 className="text-lg font-semibold text-primary">
               No prototype found. Please create a new prototype.
             </h3>
           </div>

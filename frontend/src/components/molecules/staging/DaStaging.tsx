@@ -10,7 +10,7 @@
 const DaStaging = () => {
   return (
     <div className="flex flex-col p-6">
-      <h3 className="text-xl font-bold text-primary mb-4">Staging</h3>
+      <h3 className="text-xl font-semibold text-primary mb-4">Staging</h3>
       <p className="text-muted-foreground">
         Staging management system coming soon
       </p>

@@ -23,14 +23,12 @@ const DaCardIntroBig = ({ title, content, children }: CardIntroProps) => {
       )}
     >
       <div className="flex w-full items-center space-x-2">
-        <h3 className="text-xl font-bold text-primary w-full min-h-8">
+        <h3 className="text-lg font-semibold text-primary w-full min-h-8">
           {title}
         </h3>
       </div>
-      <p className="text-sm text-muted-foreground mt-2">
-        {content}
-      </p>
-      <div className="flex-grow"></div>
+      <p className="text-sm text-muted-foreground mt-2">{content}</p>
+      <div className="grow"></div>
       <div className="mt-4 lg:mt-3">{children}</div>
     </div>
   )

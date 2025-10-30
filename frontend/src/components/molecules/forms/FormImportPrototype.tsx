@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -16,7 +16,13 @@ import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { useNavigate, useLocation } from 'react-router-dom'
 import useListModelContribution from '@/hooks/useListModelContribution'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/atoms/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/atoms/select'
 import { zipToPrototype } from '@/lib/zipUtils'
 import { Prototype } from '@/types/model.type'
 import { ModelLite } from '@/types/model.type'
@@ -151,9 +157,7 @@ const FormImportPrototype = () => {
 
   return (
     <div className="flex flex-col w-[30vw] lg:w-[25vw] max-h-[80vh] p-4 bg-background">
-      <h2 className="text-2xl font-bold text-primary">
-        Import Prototype
-      </h2>
+      <h2 className="text-lg font-semibold text-primary">Import Prototype</h2>
 
       {contributionModels && !isFetchingModelContribution && localModel ? (
         <div className="flex flex-col mt-4">
@@ -171,11 +175,13 @@ const FormImportPrototype = () => {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {contributionModels.results.map((model: ModelLite, index: number) => (
-                <SelectItem key={index} value={model.id}>
-                  {model.name}
-                </SelectItem>
-              ))}
+              {contributionModels.results.map(
+                (model: ModelLite, index: number) => (
+                  <SelectItem key={index} value={model.id}>
+                    {model.name}
+                  </SelectItem>
+                ),
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -196,11 +202,7 @@ const FormImportPrototype = () => {
         </div>
       )}
 
-      {error && (
-        <p className="mt-4 text-sm text-destructive">
-          {error}
-        </p>
-      )}
+      {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
 
       <DaImportFile
         accept=".zip"

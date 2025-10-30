@@ -255,7 +255,7 @@ select[aria-hidden='true'][tabindex='-1'] {
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
-  --foreground: oklch(0.208 0.042 265.755);
+  --foreground: oklch(0.4199 0.0374 257.28);
   --primary: oklch(0.35 0.08 230);
   --primary-foreground: oklch(0.984 0.003 247.858);
   --secondary: oklch(0.7626 0.1532 115.73);
@@ -270,7 +270,7 @@ select[aria-hidden='true'][tabindex='-1'] {
 
 .dark {
   --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.929 0.013 255.508);
+  --foreground: oklch(0.4199 0.0374 257.28);
   --primary: oklch(0.45 0.1 230);
   --primary-foreground: oklch(0.984 0.003 247.858);
   --secondary: oklch(0.7626 0.1532 115.73);

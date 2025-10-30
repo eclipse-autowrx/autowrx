@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -122,7 +122,7 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
       className="flex flex-col w-[40vw] max-h-[80vh] bg-background py-4"
     >
       <div className="flex flex-col overflow-y-auto px-4">
-        <h2 className="text-2xl font-bold text-primary">
+        <h2 className="text-lg font-semibold text-primary">
           End User Give Feedback
         </h2>
 
@@ -131,7 +131,9 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
           <Input
             name="interviewee"
             value={data.interviewee}
-            onChange={(e: FormEvent<HTMLInputElement>) => handleChange('interviewee', (e.target as HTMLInputElement).value)}
+            onChange={(e: FormEvent<HTMLInputElement>) =>
+              handleChange('interviewee', (e.target as HTMLInputElement).value)
+            }
             placeholder="Interviewee?"
           />
         </div>
@@ -141,7 +143,9 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
           <Input
             name="organization"
             value={data.organization}
-            onChange={(e: FormEvent<HTMLInputElement>) => handleChange('organization', (e.target as HTMLInputElement).value)}
+            onChange={(e: FormEvent<HTMLInputElement>) =>
+              handleChange('organization', (e.target as HTMLInputElement).value)
+            }
             placeholder="From organization"
           />
         </div>
@@ -176,7 +180,9 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
           <Input
             name="questions"
             value={data.questions}
-            onChange={(e: FormEvent<HTMLInputElement>) => handleChange('questions', (e.target as HTMLInputElement).value)}
+            onChange={(e: FormEvent<HTMLInputElement>) =>
+              handleChange('questions', (e.target as HTMLInputElement).value)
+            }
             placeholder="Write your questions..."
           />
         </div>
@@ -187,24 +193,21 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
             rows={5}
             name="recommendations"
             value={data.recommendations}
-            onChange={(e: FormEvent<HTMLTextAreaElement>) => handleChange('recommendations', (e.target as HTMLTextAreaElement).value)}
+            onChange={(e: FormEvent<HTMLTextAreaElement>) =>
+              handleChange(
+                'recommendations',
+                (e.target as HTMLTextAreaElement).value,
+              )
+            }
             placeholder="Write your recommendations..."
           />
         </div>
 
-        {error && (
-          <p className="mt-4 text-sm text-destructive">
-            {error}
-          </p>
-        )}
+        {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
       </div>
 
       <div className="px-4">
-        <Button
-          disabled={loading}
-          type="submit"
-          className="w-full mt-8"
-        >
+        <Button disabled={loading} type="submit" className="w-full mt-8">
           {loading && <TbLoader className="animate-spin text-lg mr-2" />}
           Submit
         </Button>

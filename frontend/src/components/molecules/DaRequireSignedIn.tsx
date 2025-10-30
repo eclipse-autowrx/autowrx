@@ -36,12 +36,9 @@ const DaRequireSignedIn = ({ children, message }: DaRequireSignedInProps) => {
           <div onClick={handleClick} className="cursor-pointer">
             {children}
           </div>
-          <DaDialog
-            open={openRemindDialog}
-            onOpenChange={setOpenRemindDialog}
-          >
+          <DaDialog open={openRemindDialog} onOpenChange={setOpenRemindDialog}>
             <div className="flex flex-col max-w-xl">
-              <h3 className="text-2xl font-bold text-primary">
+              <h3 className="text-lg font-semibold text-primary">
                 Sign In Required
               </h3>
               <p className="mt-4 text-base text-muted-foreground">

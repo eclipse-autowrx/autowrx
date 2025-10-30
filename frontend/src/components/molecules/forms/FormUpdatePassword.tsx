@@ -70,7 +70,7 @@ const FormUpdatePassword = ({}) => {
       className="w-[30vw] lg:w-[25vw] max-h-[80vh] bg-background"
     >
       {/* Title */}
-      <h2 className="text-2xl font-bold text-primary">Change Password</h2>
+      <h2 className="text-lg font-semibold text-primary">Change Password</h2>
 
       {changed ? (
         <>
@@ -109,11 +109,7 @@ const FormUpdatePassword = ({}) => {
           </div>
 
           {/* Error */}
-          {error && (
-            <p className="text-sm mt-2 text-red-500">
-              {error}
-            </p>
-          )}
+          {error && <p className="text-sm mt-2 text-red-500">{error}</p>}
           {/* Action */}
           <Button
             disabled={loading}

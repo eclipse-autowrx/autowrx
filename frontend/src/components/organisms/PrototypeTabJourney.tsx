@@ -14,7 +14,9 @@ interface PrototypeTabJourneyProps {
   prototype: Prototype
 }
 
-const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({ prototype }) => {
+const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
+  prototype,
+}) => {
   if (!prototype) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -31,7 +33,9 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({ prototype }) 
 
   return (
     <div className="flex flex-col w-full h-full overflow-y-auto p-6 bg-background">
-      <h2 className="text-2xl font-bold text-primary mb-4">Customer Journey</h2>
+      <h2 className="text-lg font-semibold text-primary mb-4">
+        Customer Journey
+      </h2>
 
       {journeyData && Object.keys(journeyData).length > 0 ? (
         <div className="space-y-4">
@@ -54,7 +58,9 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({ prototype }) 
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
-          <p className="text-muted-foreground">No customer journey data available</p>
+          <p className="text-muted-foreground">
+            No customer journey data available
+          </p>
         </div>
       )}
 

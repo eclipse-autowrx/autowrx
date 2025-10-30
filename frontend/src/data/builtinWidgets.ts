@@ -18,7 +18,7 @@ const BUILT_IN_WIDGETS = [
     options: {
       label: 'Vehicle API Value',
       api: 'Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed',
-      valueClassname: 'text-3xl font-bold text-[#005072]',
+      valueClassname: 'text-3xl font-semibold text-[#005072]',
       labelClassname: 'text-xl text-gray-700',
       iconURL: '/builtin-widgets/single-api/single-api.png',
     },

@@ -110,7 +110,8 @@ const PageModelList = () => {
         cvi: importedModel.model.cvi,
         main_api: importedModel.model.main_api || 'Vehicle',
         model_home_image_file:
-          importedModel.model.model_home_image_file || '/ref/E-Car_Full_Vehicle.png',
+          importedModel.model.model_home_image_file ||
+          '/ref/E-Car_Full_Vehicle.png',
         model_files: importedModel.model.model_files || {},
         name: importedModel.model.name || 'New Imported Model',
         extended_apis: importedModel.model.extended_apis || [],
@@ -200,7 +201,7 @@ const PageModelList = () => {
               onClick={() => handleTabClick(tab.value as typeof activeTab)}
             >
               {tab.title}
-              <div className="flex min-w-5 px-1.5 !py-0.5 items-center justify-center text-xs ml-1 bg-gray-200 rounded-md">
+              <div className="flex min-w-5 px-1.5 py-0.5 items-center justify-center text-xs ml-1 bg-gray-200 rounded-md">
                 {tab.count}
               </div>
             </DaTabItem>
@@ -223,11 +224,7 @@ const PageModelList = () => {
                         accept=".zip"
                         onFileChange={handleImportModelZip}
                       >
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="mr-2"
-                        >
+                        <Button variant="outline" size="sm" className="mr-2">
                           <TbPackageExport className="mr-1 text-lg" /> Import
                           Model
                         </Button>
@@ -240,7 +237,11 @@ const PageModelList = () => {
                     )}
                     <DaDialog
                       trigger={
-                        <Button variant="default" size="sm" data-id='btn-open-form-create'>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          data-id="btn-open-form-create"
+                        >
                           <HiPlus className="mr-1 text-lg" />
                           Create New Model
                         </Button>
@@ -271,7 +272,10 @@ const PageModelList = () => {
                       <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3 pb-4 mt-2">
                         {ownedModels.map((model: ModelLite, index: number) => (
                           <Link key={index} to={`/model/${model.id}`}>
-                            <DaModelItem model={model} className='my_model_grid_item'/>
+                            <DaModelItem
+                              model={model}
+                              className="my_model_grid_item"
+                            />
                           </Link>
                         ))}
                       </div>
@@ -312,9 +316,7 @@ const PageModelList = () => {
 
             {/* Public Models */}
             <div ref={publicRef} className="py-6">
-              <h2 className="text-base font-semibold text-primary">
-                Public
-              </h2>
+              <h2 className="text-base font-semibold text-primary">Public</h2>
               <DaSkeletonGrid
                 maxItems={{ sm: 1, md: 2, lg: 3, xl: 3 }}
                 className="mt-2"

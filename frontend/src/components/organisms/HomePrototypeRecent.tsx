@@ -45,7 +45,7 @@ const HomePrototypeRecent = ({ title }: HomePrototypeRecentProps) => {
     user && (
       <div className="flex flex-col w-full container">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-primary">
+          <h2 className="text-lg font-semibold text-primary">
             {title || 'Recent Prototypes'}
           </h2>
           {recentPrototypes && recentPrototypes.length > 4 && (

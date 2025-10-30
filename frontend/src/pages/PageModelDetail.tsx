@@ -110,11 +110,7 @@ const DaStateControl: React.FC<{
       </p>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-primary"
-          >
+          <Button variant="outline" size="sm" className="text-primary">
             Change state
           </Button>
         </DropdownMenuTrigger>
@@ -223,7 +219,7 @@ const PageModelDetail = () => {
                   />
                 </div>
               ) : (
-                <h1 className="text-3xl font-bold text-primary w-full">
+                <h1 className="text-3xl font-semibold text-primary w-full">
                   {model.name}
                 </h1>
               )}
@@ -236,7 +232,7 @@ const PageModelDetail = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                className="!justify-start"
+                className="justify-start"
                 onClick={() => {
                   setNewName(model.name)
                   setIsEditingName(true)
@@ -272,7 +268,7 @@ const PageModelDetail = () => {
                   size="sm"
                   className={cn(
                     'flex w-full space-x-3 pt-1',
-                    isEditingName && '!pointer-events-none opacity-50',
+                    isEditingName && 'pointer-events-none opacity-50',
                   )}
                 >
                   {!isDeleting && !isExporting && !isDownloading && (
@@ -337,9 +333,7 @@ const PageModelDetail = () => {
                   <TbDownload className="w-4 h-4 mr-2" />
                   Download Vehicle API JSON file
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setConfirmPopupOpen(true)}
-                >
+                <DropdownMenuItem onClick={() => setConfirmPopupOpen(true)}>
                   <TbTrashX className="w-4 h-4 mr-2" />
                   Delete Model
                 </DropdownMenuItem>

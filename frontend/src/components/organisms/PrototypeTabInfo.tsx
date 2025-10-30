@@ -39,14 +39,18 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({ prototype }) => {
           </div>
         )}
         <div className="flex-1">
-          <h2 className="text-2xl font-bold text-primary mb-2">
+          <h2 className="text-lg font-semibold text-primary mb-2">
             {prototype.name}
           </h2>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span>
               Complexity:{' '}
               <span className="font-medium text-foreground">
-                {complexityLevels[parseInt(prototype.complexity_level || '3') - 1]}
+                {
+                  complexityLevels[
+                    parseInt(prototype.complexity_level || '3') - 1
+                  ]
+                }
               </span>
             </span>
             <span>
@@ -64,21 +68,31 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({ prototype }) => {
         {prototype.description?.problem && (
           <div>
             <h3 className="text-lg font-semibold text-primary mb-2">Problem</h3>
-            <p className="text-muted-foreground">{prototype.description.problem}</p>
+            <p className="text-muted-foreground">
+              {prototype.description.problem}
+            </p>
           </div>
         )}
 
         {prototype.description?.says_who && (
           <div>
-            <h3 className="text-lg font-semibold text-primary mb-2">Says Who?</h3>
-            <p className="text-muted-foreground">{prototype.description.says_who}</p>
+            <h3 className="text-lg font-semibold text-primary mb-2">
+              Says Who?
+            </h3>
+            <p className="text-muted-foreground">
+              {prototype.description.says_who}
+            </p>
           </div>
         )}
 
         {prototype.description?.solution && (
           <div>
-            <h3 className="text-lg font-semibold text-primary mb-2">Solution</h3>
-            <p className="text-muted-foreground">{prototype.description.solution}</p>
+            <h3 className="text-lg font-semibold text-primary mb-2">
+              Solution
+            </h3>
+            <p className="text-muted-foreground">
+              {prototype.description.solution}
+            </p>
           </div>
         )}
 

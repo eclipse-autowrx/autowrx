@@ -267,7 +267,7 @@ const PrototypeLibraryPortfolio = () => {
           />
         ) : (
           <div className="flex w-full h-full items-center justify-center">
-            <h2 className="text-xl font-bold text-primary">
+            <h2 className="text-xl font-semibold text-primary">
               No feedback found.
             </h2>
           </div>
@@ -275,7 +275,9 @@ const PrototypeLibraryPortfolio = () => {
       ) : (
         <div className="flex flex-col items-center gap-4">
           <Spinner size={32} />
-          <p className="text-base text-muted-foreground">Loading feedbacks...</p>
+          <p className="text-base text-muted-foreground">
+            Loading feedbacks...
+          </p>
         </div>
       )}
     </div>

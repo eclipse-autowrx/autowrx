@@ -44,14 +44,17 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
             alt="Image"
             className="w-full h-full rounded-lg aspect-video object-cover shadow border"
           />
-          <div className="absolute bottom-0 w-full h-[30px] p-[1px] blur-xl bg-black/80 transition-opacity duration-200 ease-in-out opacity-0 group-hover:opacity-100"></div>
-          <div className="absolute bottom-0 w-full h-[50px] p-[1px] transition-opacity duration-200 ease-in-out opacity-0 group-hover:opacity-100">
+          <div className="absolute bottom-0 w-full h-[30px] blur-xl bg-black/80 transition-opacity duration-200 ease-in-out opacity-0 group-hover:opacity-100"></div>
+          <div className="absolute bottom-0 w-full h-[50px] transition-opacity duration-200 ease-in-out opacity-0 group-hover:opacity-100">
             <div className="flex h-full w-full px-3 items-center justify-between text-white rounded-b-lg ">
               {prototype?.created_by && (
                 <div className="flex gap-2 items-center">
                   <Avatar className="h-7 w-7 bg-black/20 backdrop-blur">
                     <AvatarImage src={prototype.created_by?.image_file} />
-                    <AvatarFallback>{prototype.created_by?.name?.charAt(0)?.toUpperCase() || 'U'}</AvatarFallback>
+                    <AvatarFallback>
+                      {prototype.created_by?.name?.charAt(0)?.toUpperCase() ||
+                        'U'}
+                    </AvatarFallback>
                   </Avatar>
 
                   <div className="line-clamp-1 text-xs mt-1">
@@ -90,7 +93,7 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
           </div>
         </div>
         <div className="flex items-center w-full space-y-0">
-          <p className="text-base font-bold line-clamp-1 text-primary prototype-grid-item-name">
+          <p className="text-base font-semibold line-clamp-1 text-foreground prototype-grid-item-name">
             {prototype?.name ?? ''}
           </p>
           <div className="grow"></div>

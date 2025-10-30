@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -116,7 +116,7 @@ const DaSkeletonGrid = ({
       <div
         className={`flex flex-col w-full ${containerHeight} items-center justify-center ${timeoutContainerClassName}`}
       >
-        <p className="text-base font-bold">{timeoutText}</p>
+        <p className="text-base font-semibold">{timeoutText}</p>
       </div>
     )
   }
@@ -162,7 +162,7 @@ const DaSkeletonGrid = ({
       <div
         className={`flex flex-col w-full ${containerHeight} items-center justify-center ${emptyContainerClassName}`}
       >
-        <p className="text-base font-bold">{emptyText}</p>
+        <p className="text-base font-semibold">{emptyText}</p>
       </div>
     )
   }

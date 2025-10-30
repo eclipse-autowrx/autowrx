@@ -8,7 +8,13 @@
 
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/atoms/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/atoms/select'
 import { Spinner } from '@/components/atoms/spinner'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { isAxiosError } from 'axios'
@@ -274,7 +280,9 @@ const FormCreateWishlistApi = ({
       onSubmit={handleSubmit}
       className="relative flex h-[540px] w-[30vw] min-w-[700px] max-w-[500px] flex-col bg-background p-4 text-sm lg:w-[25vw] overflow-y-auto"
     >
-      <h2 className="text-2xl font-bold text-primary">New Wishlist Signal</h2>
+      <h2 className="text-lg font-semibold text-primary">
+        New Wishlist Signal
+      </h2>
 
       {/* Name Input */}
       <div className="mt-6">
@@ -372,11 +380,7 @@ const FormCreateWishlistApi = ({
 
       {/* Error */}
       <div className="mt-2 min-h-5">
-        {error && (
-          <p className="text-sm mt-4 text-red-500">
-            {error}
-          </p>
-        )}
+        {error && <p className="text-sm mt-4 text-red-500">{error}</p>}
       </div>
 
       {/* Action Buttons */}

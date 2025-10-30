@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -144,13 +144,12 @@ const FormCreateModel = () => {
 
   return (
     <form
-      onSubmit={createNewModel} data-id="form-create-model"
+      onSubmit={createNewModel}
+      data-id="form-create-model"
       className="flex min-h-[300px] w-[400px] min-w-[400px] overflow-y-auto flex-col bg-background p-4"
     >
       {/* Title */}
-      <h2 className="text-2xl font-bold text-primary">
-        Create New Model
-      </h2>
+      <h2 className="text-lg font-semibold text-primary">Create New Model</h2>
 
       {/* Content */}
       <div className="mt-4 flex flex-col gap-1">
@@ -171,11 +170,11 @@ const FormCreateModel = () => {
         {!data.api_data_url && (
           <>
             <p className="text-sm">select VSS version</p>
-            <Select
-              onValueChange={handleVSSChange}
-              defaultValue="v4.1"
-            >
-              <SelectTrigger className="mt-1 w-full" data-id="form-create-model-select-api">
+            <Select onValueChange={handleVSSChange} defaultValue="v4.1">
+              <SelectTrigger
+                className="mt-1 w-full"
+                data-id="form-create-model-select-api"
+              >
                 <SelectValue placeholder="Select VSS version" />
               </SelectTrigger>
               <SelectContent>
@@ -217,11 +216,7 @@ const FormCreateModel = () => {
       <div className="grow"></div>
 
       {/* Error */}
-      {error && (
-        <p className="text-sm mt-2 text-destructive">
-          {error}
-        </p>
-      )}
+      {error && <p className="text-sm mt-2 text-destructive">{error}</p>}
       {/* Action */}
       <Button
         disabled={loading || uploading}

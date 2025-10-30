@@ -116,7 +116,7 @@ const FormCreateUser = ({ onClose, updateData }: FormCreateUserProps) => {
       className="flex max-h-[80vh] w-[30vw] flex-col bg-background p-4 lg:w-[25vw]"
     >
       {/* Title */}
-      <h2 className="text-2xl font-bold text-primary">
+      <h2 className="text-lg font-semibold text-primary">
         {isCreate ? 'Create New User' : 'Update User'}
       </h2>
 
@@ -157,11 +157,7 @@ const FormCreateUser = ({ onClose, updateData }: FormCreateUserProps) => {
       <div className="grow"></div>
 
       {/* Error */}
-      {error && (
-        <p className="text-sm mt-2 text-destructive">
-          {error}
-        </p>
-      )}
+      {error && <p className="text-sm mt-2 text-destructive">{error}</p>}
 
       {/* Action */}
       <div className="ml-auto space-x-2">
@@ -174,7 +170,12 @@ const FormCreateUser = ({ onClose, updateData }: FormCreateUserProps) => {
         >
           Cancel
         </Button>
-        <Button disabled={loading} type="submit" className="mt-8 w-fit" variant="default">
+        <Button
+          disabled={loading}
+          type="submit"
+          className="mt-8 w-fit"
+          variant="default"
+        >
           {loading && <Spinner className="mr-2" size={16} />}
           {isCreate ? 'Create User' : 'Update User'}
         </Button>

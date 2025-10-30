@@ -78,7 +78,7 @@ const home = [
           'Create a model to start building new connected vehicle app prototypes.',
         children: (
           <DaRequireSignedIn message="You must first sign in to explore vehicle models and prototypes">
-            <Button size="sm" className="mt-4" asChild>
+            <Button size="sm" className="mt-4 w-32" asChild>
               <DisabledLink
                 to="/model"
                 dataId="btn-launch-vehicle-models"

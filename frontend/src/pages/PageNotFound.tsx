@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -26,7 +26,7 @@ const PageNotFound = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full text-center">
         <div className="mb-8">
-          <h1 className="text-9xl font-bold text-gray-300">404</h1>
+          <h1 className="text-9xl font-semibold text-gray-300">404</h1>
           <h2 className="text-xl font-semibold mt-4 text-gray-600">
             Page Not Found
           </h2>
@@ -34,12 +34,9 @@ const PageNotFound = () => {
             The page you're looking for doesn't exist or has been moved.
           </p>
         </div>
-        
+
         <div className="space-y-4">
-          <Button
-            onClick={handleGoHome}
-            className="w-full"
-          >
+          <Button onClick={handleGoHome} className="w-full">
             Go Back Home
           </Button>
 

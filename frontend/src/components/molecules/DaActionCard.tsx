@@ -31,16 +31,10 @@ const DaActionCard = ({
       )}
       onClick={onClick}
     >
-      {icon && (
-        <div className="p-2 rounded-full bg-primary/10">{icon}</div>
-      )}
+      {icon && <div className="p-2 rounded-full bg-primary/10">{icon}</div>}
       <div className="flex flex-col">
-        <p className="text-base font-bold text-primary">
-          {title}
-        </p>
-        <p className="text-sm text-muted-foreground">
-          {content}
-        </p>
+        <p className="text-base font-semibold text-primary">{title}</p>
+        <p className="text-sm text-muted-foreground">{content}</p>
       </div>
     </div>
   )

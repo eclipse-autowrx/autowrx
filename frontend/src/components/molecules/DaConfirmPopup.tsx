@@ -58,8 +58,9 @@ const DaConfirmPopup = ({
         {confirmText && (
           <div className="flex flex-col gap-2">
             <p className="text-sm">
-              You must type <strong className="font-bold">{confirmText}</strong>{' '}
-              to proceed.
+              You must type{' '}
+              <strong className="font-semibold">{confirmText}</strong> to
+              proceed.
             </p>
             <Input
               value={inputValue}
@@ -70,11 +71,7 @@ const DaConfirmPopup = ({
           </div>
         )}
         <div className="flex justify-end w-full space-x-2 mt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleClose}
-          >
+          <Button variant="outline" size="sm" onClick={handleClose}>
             Cancel
           </Button>
           <Button

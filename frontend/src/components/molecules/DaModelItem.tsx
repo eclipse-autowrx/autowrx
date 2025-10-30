@@ -63,7 +63,7 @@ const DaModelItem = ({ model, className }: DaModelItemProps) => {
           </div>
         </div>
         <div className="flex items-center w-full px-1 pt-0.5">
-          <h3 className="text-base font-bold line-clamp-1 text-foreground">
+          <h3 className="text-base font-semibold line-clamp-1 text-foreground">
             {model?.name ?? ''}
           </h3>
           <div className="grow"></div>
