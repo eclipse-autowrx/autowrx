@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -54,7 +54,12 @@ const home = [
                 Documentation
               </a>
             </Button>
-            <Button variant="outline" size="sm" data-id="btn-launch-video" asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              data-id="btn-launch-video"
+              asChild
+            >
               <a
                 href="https://www.youtube.com/@sdvpg"
                 target="_blank"
@@ -74,7 +79,11 @@ const home = [
         children: (
           <DaRequireSignedIn message="You must first sign in to explore vehicle models and prototypes">
             <Button size="sm" className="mt-4" asChild>
-              <DisabledLink to="/model" dataId="btn-launch-vehicle-models" className="flex items-center">
+              <DisabledLink
+                to="/model"
+                dataId="btn-launch-vehicle-models"
+                className="flex items-center"
+              >
                 Vehicle Models
               </DisabledLink>
             </Button>
@@ -94,7 +103,7 @@ const home = [
         description:
           'Explore the future of our digital.auto community with Prof. Dirk Slama with digital.auto playground.',
         imageURL:
-          '/ref/playground-introduction.png',
+          'https://bewebstudio.digitalauto.tech/data/projects/scqSwlCPJDj9/playground-introduction.png',
         redirectURL: 'https://youtu.be/K3pindMCq1c',
       },
       {
@@ -106,7 +115,7 @@ const home = [
           'Comprehensive SDV Guide covering Software-Defined Vehicle fundamentals through advanced topics. ',
 
         imageURL:
-          '/ref/image.avif',
+          'https://bewebstudio.digitalauto.tech/data/projects/nTcRsgxcDWgr/image.avif',
         redirectURL: 'https://www.sdv.guide/',
       },
       {
@@ -116,7 +125,7 @@ const home = [
         description:
           'We are pleased to announce the release of Version 2. The previous version remains accessible at https://digitalauto.netlify.app until Jan 17th 2025',
         imageURL:
-          '/ref/annoucement.jpg',
+          'https://bewebstudio.digitalauto.tech/data/projects/rUQXyRLKlgaL/annoucement.jpg',
         redirectURL: 'https://docs.digital.auto/releases/version2/',
       },
       {
@@ -126,7 +135,7 @@ const home = [
         description:
           'Join us in developing playground.digital.auto on Eclipse Autowrx - an open platform where developers learn and experiment with software-defined vehicles.',
         imageURL:
-          '/ref/autowrx.jpg',
+          'https://bewebstudio.digitalauto.tech/data/projects/xT9wA8QU7xEN/new_images/autowrx.jpg',
         redirectURL: 'https://gitlab.eclipse.org/eclipse/autowrx/autowrx',
       },
     ],
@@ -147,12 +156,12 @@ const home = [
         items: [
           {
             name: 'Bosch',
-            img: '/ref/bosch-logo.png',
+            img: '/imgs/partners/bosch.png',
             url: 'https://www.bosch.com/',
           },
           {
             name: 'Dassault Systems',
-            img: '/ref/partners/3ds-logo.svg',
+            img: '/imgs/partners/3ds-logo.svg',
             url: 'https://www.3ds.com/',
           },
         ],
@@ -162,12 +171,12 @@ const home = [
         items: [
           {
             name: 'COVESA',
-            img: '/ref/covesa.png',
+            img: '/imgs/partners/covesa.png',
             url: 'https://www.covesa.global',
           },
           {
             name: 'Eclipse Foundation',
-            img: '/ref/partners/eclipse-logo.svg',
+            img: '/imgs/partners/eclipse-logo.svg',
             url: 'https://www.eclipse.org',
           },
         ],
@@ -177,7 +186,7 @@ const home = [
         items: [
           {
             name: 'Ferdinand-Steinbeis-Institut',
-            img: '/ref/university.png',
+            img: '/imgs/partners/university.png',
             url: 'https://ferdinand-steinbeis-institut.de',
           },
         ],
