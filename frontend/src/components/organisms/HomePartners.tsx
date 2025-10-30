@@ -28,7 +28,7 @@ const HomePartners: FC<HomePartnersProps> = ({ items, children }) => {
           'flex flex-col xl:flex-row xl:items-center justify-center w-full min-h-[180px]',
         )}
       >
-        {config && config.instance === 'digitalauto' && !children ? (
+        {config && (config.instance === 'digitalauto' || config.instance === 'autowrx') && !children ? (
           <>
             <div className="flex flex-col w-fit xl:w-[30%] ml-12 my-6 lg:my-12">
               <div className="text-xl font-bold mb-2 text-primary">
