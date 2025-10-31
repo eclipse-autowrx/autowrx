@@ -146,7 +146,7 @@ const FormCreateModel = () => {
     <form
       onSubmit={createNewModel}
       data-id="form-create-model"
-      className="flex overflow-y-auto flex-col bg-background"
+      className="flex min-h-[300px] w-[400px] min-w-[400px] overflow-y-auto flex-col bg-background p-4"
     >
       {/* Title */}
       <h2 className="text-lg font-semibold text-primary">Create New Model</h2>
