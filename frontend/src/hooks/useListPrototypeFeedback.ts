@@ -7,5 +7,6 @@ export const useListPrototypeFeedback = (prototypeId: string) => {
     queryFn: async () => {
       return []
     },
+    enabled: !!prototypeId, // Only run query when prototypeId is truthy
   })
 }

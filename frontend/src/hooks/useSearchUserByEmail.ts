@@ -13,6 +13,7 @@ const useSearchUserByEmail = (email?: string) => {
   return useQuery({
     queryKey: ['searchUserByEmail', email],
     queryFn: async () => await searchUserByEmailService(email || ''),
+    enabled: !!email, // Only run query when email is truthy
     retry: 0,
   })
 }

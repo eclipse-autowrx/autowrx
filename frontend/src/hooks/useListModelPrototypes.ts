@@ -13,6 +13,7 @@ const useListModelPrototypes = (model_id: string) => {
   return useQuery({
     queryKey: ['listModelPrototypes', model_id],
     queryFn: () => listModelPrototypes(model_id),
+    enabled: !!model_id, // Only run query when model_id is truthy
   })
 }
 
