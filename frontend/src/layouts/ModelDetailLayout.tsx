@@ -65,14 +65,14 @@ const ModelDetailLayout = () => {
       count: null, // No count for Overview
       dataId: 'tab-model-overview',
     },
-    {
-      title: `Architecture`,
-      content: 'Provide the big picture of the vehicle model',
-      path: 'architecture',
-      subs: ['/model/:model_id/architecture'],
-      count: numberOfNodes,
-      dataId: 'tab-model-architecture',
-    },
+    // {
+    //   title: `Architecture`,
+    //   content: 'Provide the big picture of the vehicle model',
+    //   path: 'architecture',
+    //   subs: ['/model/:model_id/architecture'],
+    //   count: numberOfNodes,
+    //   dataId: 'tab-model-architecture',
+    // },
     {
       title: `Vehicle API`,
       content:
@@ -117,7 +117,7 @@ const ModelDetailLayout = () => {
             >
               {intro.title}
               {intro.count !== null && (
-                <div className="flex min-w-5 px-1.5 !py-0.5 items-center justify-center text-xs ml-1 bg-gray-200 rounded-md">
+                <div className="flex min-w-5 px-1.5 py-0.5 items-center justify-center text-xs ml-1 bg-gray-200 rounded-md">
                   {intro.count}
                 </div>
               )}
@@ -137,7 +137,9 @@ const ModelDetailLayout = () => {
           <div className="flex w-full h-full bg-background rounded-lg items-center justify-center">
             <div className="flex flex-col items-center gap-4">
               <Spinner size={32} />
-              <p className="text-base text-muted-foreground">Loading Model...</p>
+              <p className="text-base text-muted-foreground">
+                Loading Model...
+              </p>
             </div>
           </div>
         ) : (

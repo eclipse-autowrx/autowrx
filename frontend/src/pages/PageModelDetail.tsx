@@ -96,7 +96,7 @@ const DaStateControl: React.FC<{
 
   return (
     <div className="flex justify-between items-center border p-2 mt-3 rounded-lg">
-      <p className="text-base font-medium text-muted-foreground">
+      <p className="text-sm font-medium text-muted-foreground">
         State:{' '}
         <span
           className={cn(
@@ -219,7 +219,7 @@ const PageModelDetail = () => {
                   />
                 </div>
               ) : (
-                <h1 className="text-3xl font-semibold text-primary w-full">
+                <h1 className="text2xl font-semibold text-primary w-full">
                   {model.name}
                 </h1>
               )}

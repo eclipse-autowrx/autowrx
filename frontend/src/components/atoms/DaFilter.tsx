@@ -85,11 +85,11 @@ const DaFilter = ({
   return (
     <div className="relative" ref={dropdownRef}>
       <Button
-        className={cn('text-primary mr-2 shadow-xs', className)}
+        className={cn('mr-2 shadow-xs', className)}
         variant="outline"
         onClick={toggleDropdownVisibility}
       >
-        <TbSortDescending className="size-5 mr-1.5" /> {label || 'Filter'}
+        <TbSortDescending className="size-4" /> {label || 'Filter'}
       </Button>
       {isDropdownVisible && (
         <ul className="absolute right-0 z-10 bg-white border rounded-md shadow-lg mt-2 max-w-fit p-1 select-none min-w-[140px]">
@@ -97,7 +97,7 @@ const DaFilter = ({
             <li key={category}>
               {index > 0 && <hr className="my-2 border-t" />}
               {showCategory && (
-                <div className="ml-2 text-sm font-semibold text-muted-foreground mt-2! mb-1">
+                <div className="ml-2 text-xs font-semibold text-muted-foreground mt-2! mb-1">
                   {category}
                 </div>
               )}
@@ -110,7 +110,7 @@ const DaFilter = ({
                     checked={selectedOptions.includes(option)}
                     onCheckedChange={() => handleOptionChange(option)}
                   />
-                  <span className="ml-2 cursor-pointer">{option}</span>
+                  <span className="text-sm ml-2 cursor-pointer">{option}</span>
                 </label>
               ))}
             </li>

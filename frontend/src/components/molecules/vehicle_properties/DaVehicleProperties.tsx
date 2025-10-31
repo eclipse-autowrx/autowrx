@@ -65,7 +65,7 @@ const DaVehicleProperties = ({
   return (
     <div className={cn('border rounded-md p-2', className)}>
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium text-primary">
+        <h3 className="text-base font-medium text-muted-foreground">
           Vehicle Properties
         </h3>
         <div>
@@ -77,11 +77,7 @@ const DaVehicleProperties = ({
           >
             Update property
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={toggleVisibility}
-          >
+          <Button variant="outline" size="sm" onClick={toggleVisibility}>
             <div className="pr-1 w-12">{isVisible ? 'Hide' : 'Show'}</div>
             {isVisible ? <TbChevronRight /> : <TbChevronDown />}
           </Button>
@@ -89,9 +85,7 @@ const DaVehicleProperties = ({
       </div>
       {isVisible && (
         <div className="flex flex-col mt-4 border-t pt-2">
-          <p className="text-sm font-semibold mr-2">
-            Category: {category}
-          </p>
+          <p className="text-sm font-semibold mr-2">Category: {category}</p>
 
           {vehicleProperties.length > 0 ? (
             <div className="space-y-1 mt-2">
@@ -103,7 +97,9 @@ const DaVehicleProperties = ({
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No properties available.</p>
+            <p className="text-sm text-muted-foreground">
+              No properties available.
+            </p>
           )}
         </div>
       )}

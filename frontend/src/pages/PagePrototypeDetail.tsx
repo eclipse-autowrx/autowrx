@@ -133,7 +133,9 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           style={{ right: showRt ? '3.5rem' : '0' }}
           className="absolute left-0 bottom-0 top-0 grow h-full z-0"
         >
-          {isDefaultTab && <PrototypeOverview mode="overview" prototype={prototype} />}
+          {isDefaultTab && (
+            <PrototypeOverview mode="overview" prototype={prototype} />
+          )}
           {tab == 'code' && <PrototypeTabCode />}
           {tab == 'dashboard' && <PrototypeTabDashboard />}
           {tab == 'feedback' && <PrototypeTabFeedback />}
@@ -145,9 +147,6 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
     <div className="flex flex-col items-center justify-center w-full h-full gap-4">
       <Spinner size={32} />
       <p className="text-base text-muted-foreground">Loading prototype...</p>
-      <p className="text-sm text-muted-foreground">
-        (Timeout after 20s: Failed to load prototype or access denied)
-      </p>
     </div>
   )
 }

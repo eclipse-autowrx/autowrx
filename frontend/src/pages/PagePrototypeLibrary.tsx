@@ -172,7 +172,7 @@ const PagePrototypeLibrary = () => {
               <div className="xl:grow"></div>
               <div className="flex w-full items-center justify-end space-x-2">
                 <div className="relative w-full xl:max-w-[200px]">
-                  <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
+                  <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                   <Input
                     type="text"
                     placeholder="Search prototypes"
@@ -189,7 +189,7 @@ const PagePrototypeLibrary = () => {
                 >
                   {activeTab === 'list' ? (
                     <>
-                      <TbChartScatter className="w-5 h-5 mr-2" />
+                      <TbChartScatter className="w-5 h-5 mr-1" />
                       Portfolio View
                     </>
                   ) : (
@@ -202,7 +202,7 @@ const PagePrototypeLibrary = () => {
                 <DaFilter
                   categories={{ 'Sort By': ['Newest', 'Oldest', 'Name A-Z'] }}
                   onChange={handleFilterChange}
-                  className="w-fit mr-0 !h-8 !shadow !px-2 !text-sm"
+                  className="w-fit mr-0 h-8 shadow px-2 text-sm"
                   singleSelect={true}
                   defaultValue={selectedFilters}
                   label="Sort By"
@@ -219,7 +219,7 @@ const PagePrototypeLibrary = () => {
                     className="flex"
                     onClick={() => setIsOpenImportDialog(true)}
                   >
-                    <TbFileImport className="w-5 h-5 mr-2" />
+                    <TbFileImport className="w-5 h-5 mr-1" />
                     Import Prototype
                   </Button>
                   <DaDialog
@@ -232,7 +232,7 @@ const PagePrototypeLibrary = () => {
                         size="sm"
                         className="flex ml-2"
                       >
-                        <TbPlus className="w-5 h-5 mr-2" />
+                        <TbPlus className="w-5 h-5 mr-1" />
                         Create New Prototype
                       </Button>
                     }

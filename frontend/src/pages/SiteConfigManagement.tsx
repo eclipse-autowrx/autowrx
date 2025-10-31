@@ -155,7 +155,6 @@ const SiteConfigManagement: React.FC = () => {
         title: 'Load configurations failed',
         description:
           err instanceof Error ? err.message : 'Failed to load configurations',
-        variant: 'destructive',
       })
       // Ensure we always have valid arrays even on error
       setPublicConfigs([])
@@ -174,7 +173,6 @@ const SiteConfigManagement: React.FC = () => {
         title: 'Load site style failed',
         description:
           err instanceof Error ? err.message : 'Failed to load site style',
-        variant: 'destructive',
       })
     }
   }
@@ -220,7 +218,6 @@ const SiteConfigManagement: React.FC = () => {
         title: 'Delete configuration failed',
         description:
           err instanceof Error ? err.message : 'Failed to delete configuration',
-        variant: 'destructive',
       })
     }
   }
@@ -257,7 +254,6 @@ const SiteConfigManagement: React.FC = () => {
         title: 'Save configuration failed',
         description:
           err instanceof Error ? err.message : 'Failed to save configuration',
-        variant: 'destructive',
       })
     }
   }
@@ -310,7 +306,6 @@ const SiteConfigManagement: React.FC = () => {
           err instanceof Error
             ? err.message
             : 'Failed to factory reset configurations',
-        variant: 'destructive',
       })
     } finally {
       setIsLoading(false)
@@ -407,7 +402,6 @@ const SiteConfigManagement: React.FC = () => {
                         err instanceof Error
                           ? err.message
                           : 'Failed to save site style',
-                      variant: 'destructive',
                     })
                   } finally {
                     setSavingStyle(false)
