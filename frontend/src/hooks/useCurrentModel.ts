@@ -17,12 +17,12 @@ const fetchModelById = async (modelId: string): Promise<Model> => {
 }
 
 const useCurrentModel = () => {
-  const { modelId } = useParams<{ modelId: string }>()
+  const { model_id } = useParams<{ model_id: string }>()
 
   return useQuery<Model>({
-    queryKey: ['model', modelId],
-    queryFn: () => fetchModelById(modelId!),
-    enabled: !!modelId,
+    queryKey: ['model', model_id],
+    queryFn: () => fetchModelById(model_id!),
+    enabled: !!model_id,
   })
 }
 

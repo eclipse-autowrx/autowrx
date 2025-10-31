@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import useModelStore from '@/stores/modelStore'
 import { Model } from '@/types/model.type'
@@ -16,11 +16,15 @@ import { Spinner } from '@/components/atoms/spinner'
 import useListModelPrototypes from '@/hooks/useListModelPrototypes'
 import { shallow } from 'zustand/shallow'
 import useLastAccessedModel from '@/hooks/useLastAccessedModel'
+import useCurrentModel from '@/hooks/useCurrentModel'
 
 const ModelDetailLayout = () => {
-  const [model] = useModelStore((state) => [state.model as Model])
+  const { data: fetchedModel, isLoading: isModelLoading } = useCurrentModel()
+  const [model, setActiveModel] = useModelStore((state) => [
+    state.model as Model,
+    state.setActiveModel,
+  ])
   const location = useLocation()
-  const [isLoading, setIsLoading] = useState(true)
   const { data: fetchedPrototypes } = useListModelPrototypes(
     model ? model.id : '',
   )
@@ -31,17 +35,21 @@ const ModelDetailLayout = () => {
 
   const { setLastAccessedModel } = useLastAccessedModel()
 
+  // Update store when model is fetched
+  useEffect(() => {
+    if (fetchedModel && fetchedModel.id) {
+      setActiveModel(fetchedModel)
+    }
+  }, [fetchedModel, setActiveModel])
+
   useEffect(() => {
     if (model) {
       setLastAccessedModel(model.id)
     }
   }, [model])
 
-  useEffect(() => {
-    // Simulate loading state for demonstration
-    const timeout = setTimeout(() => setIsLoading(false), 500) // Adjust the time if needed
-    return () => clearTimeout(timeout)
-  }, [location.pathname])
+  // Use actual model loading state
+  const isLoading = isModelLoading || !model
 
   const skeleton = JSON.parse(model?.skeleton || '{}')
   const numberOfNodes = skeleton?.nodes?.length || 0
