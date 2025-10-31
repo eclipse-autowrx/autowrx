@@ -278,7 +278,7 @@ const FormCreateWishlistApi = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="relative flex h-[540px] w-[30vw] min-w-[700px] max-w-[500px] flex-col bg-background p-4 text-sm lg:w-[25vw] overflow-y-auto"
+      className="relative flex flex-col bg-background text-sm overflow-y-auto"
     >
       <h2 className="text-lg font-semibold text-primary">
         New Wishlist Signal

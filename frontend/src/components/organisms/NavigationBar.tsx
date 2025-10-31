@@ -23,6 +23,8 @@ import {
   TbCar,
   TbSettings,
   TbMenu2,
+  TbPalette,
+  TbApps,
 } from 'react-icons/tb'
 import usePermissionHook from '@/hooks/usePermissionHook.ts'
 import { PERMISSIONS } from '@/const/permission.ts'
@@ -123,7 +125,10 @@ const NavigationBar = ({}) => {
                   <TbMenu2 className="size-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56">
+              <DropdownMenuContent
+                align="end"
+                className="w-42 text-sm font-medium"
+              >
                 <DropdownMenuItem asChild>
                   <Link
                     to="/manage-users"
@@ -153,7 +158,7 @@ const NavigationBar = ({}) => {
                     to="/admin/plugins"
                     className="flex items-center gap-2 cursor-pointer"
                   >
-                    <TbStack2 className="text-base" /> Plugins
+                    <TbApps className="text-base" /> Plugins
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
@@ -161,7 +166,7 @@ const NavigationBar = ({}) => {
                     to="/admin/templates"
                     className="flex items-center gap-2 cursor-pointer"
                   >
-                    <TbStack2 className="text-base" /> Templates
+                    <TbPalette className="text-base" /> Templates
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>

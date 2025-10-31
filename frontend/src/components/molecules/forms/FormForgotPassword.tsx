@@ -51,10 +51,7 @@ const FormForgotPassword = ({ setAuthType }: FormForgotPasswordProps) => {
   }
 
   return (
-    <form
-      onSubmit={sendResetEmail}
-      className="w-[30vw] lg:w-[25vw] min-w-[400px] max-w-[500px] h-fit max-h-[80vh] p-4 bg-background"
-    >
+    <form onSubmit={sendResetEmail} className="flex flex-col bg-background">
       {/* Title */}
       <h2 className="text-lg font-semibold text-primary">Forgot Password</h2>
 
@@ -74,7 +71,7 @@ const FormForgotPassword = ({ setAuthType }: FormForgotPasswordProps) => {
           </p>
 
           {/* Content */}
-          <div className="mt-4 flex flex-col gap-1">
+          <div className="mt-4 flex flex-col gap-1.5">
             <Label>Email</Label>
             <div className="relative">
               <TbAt className="absolute left-3 top-1/2 -translate-y-1/2 size-[18px] text-muted-foreground" />
@@ -97,7 +94,7 @@ const FormForgotPassword = ({ setAuthType }: FormForgotPasswordProps) => {
 
           {/* More */}
           <div className="mt-4 flex items-center">
-            <p className="text-base text-foreground">Remember password?</p>
+            <p className="text-sm text-foreground">Remember password?</p>
             <Button
               type="button"
               onClick={() => setAuthType('sign-in')}

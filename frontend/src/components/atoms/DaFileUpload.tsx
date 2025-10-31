@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -247,7 +247,7 @@ const DaFileUpload = ({
               style={{
                 minHeight: MIN_HEIGHT,
               }}
-              className="w-full h-full flex flex-col gap-1 items-center justify-center"
+              className="w-full h-full flex flex-col gap-1.5 items-center justify-center"
             >
               <TbUpload className="mb-1" />
               <p className="text-sm font-semibold">

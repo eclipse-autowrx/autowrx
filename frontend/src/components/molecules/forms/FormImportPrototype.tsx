@@ -156,7 +156,7 @@ const FormImportPrototype = () => {
   }, [contributionModels, isFetchingModelContribution])
 
   return (
-    <div className="flex flex-col w-[30vw] lg:w-[25vw] max-h-[80vh] p-4 bg-background">
+    <div className="flex flex-col bg-background">
       <h2 className="text-lg font-semibold text-primary">Import Prototype</h2>
 
       {contributionModels && !isFetchingModelContribution && localModel ? (

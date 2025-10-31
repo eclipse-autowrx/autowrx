@@ -16,7 +16,7 @@ type HomeFeatureListProps = {
 const HomeFeatureList = ({ items }: HomeFeatureListProps) => {
   return (
     <div className="container flex w-full flex-col justify-center">
-      <div className="grid w-full grid-cols-1 gap-12 lg:grid-cols-3">
+      <div className="grid w-full grid-cols-1 gap-1.52 lg:grid-cols-3">
         {items?.map((card, index) => (
           <div key={index} className="flex w-full items-center justify-center">
             <DaCardIntroBig

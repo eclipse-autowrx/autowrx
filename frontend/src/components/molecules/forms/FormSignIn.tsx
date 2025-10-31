@@ -48,10 +48,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
   }
 
   return (
-    <form
-      onSubmit={signIn}
-      className="flex flex-col w-[30vw] lg:w-[25vw] min-w-[400px] max-w-[500px] h-fit max-h-[80vh] p-4 bg-background"
-    >
+    <form onSubmit={signIn} className="flex flex-col bg-background">
       {config.disableEmailLogin ? (
         <div className="flex flex-col h-full mb-16">
           <h2 className="text-lg font-semibold text-primary">
@@ -68,14 +65,14 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
           <h2 className="text-lg font-semibold text-primary">Sign In</h2>
           <div className="mt-6"></div>
 
-          <div className="mt-4 flex flex-col gap-1">
+          <div className="mt-4 flex flex-col gap-1.5">
             <Label>Email</Label>
             <div className="relative">
               <TbAt className="absolute left-3 top-1/2 -translate-y-1/2 size-[18px] text-muted-foreground" />
               <Input name="email" placeholder="Email" className="pl-10" />
             </div>
           </div>
-          <div className="mt-4 flex flex-col gap-1">
+          <div className="mt-4 flex flex-col gap-1.5">
             <Label>Password</Label>
             <div className="relative">
               <TbLock className="absolute left-3 top-1/2 -translate-y-1/2 size-[18px] text-muted-foreground" />
@@ -105,12 +102,12 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
             variant="default"
             className="w-full mt-2"
           >
-            {loading && <Spinner className="mr-2" size={16} />}
+            {loading && <Spinner className="text-white" />}
             Sign in
           </Button>
           {!config.strictAuth && (
             <div className="mt-4 flex w-full justify-center items-center">
-              <p className="text-base text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Don't have an account?
               </p>
               <Button

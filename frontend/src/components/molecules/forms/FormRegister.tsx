@@ -77,28 +77,25 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
   }
 
   return (
-    <form
-      onSubmit={register}
-      className="w-[30vw] lg:w-[25vw] min-w-[400px] max-w-[500px] h-fit max-h-[80vh] p-4 bg-background"
-    >
+    <form onSubmit={register} className="bg-background">
       {/* Title */}
       <h2 className="text-lg font-semibold text-primary">Register</h2>
 
       <div className="mt-6"></div>
       {/* Content */}
-      <div className="mt-4 flex flex-col gap-1">
+      <div className="mt-4 flex flex-col gap-1.5">
         <Label>Name</Label>
         <Input name="fullName" placeholder="Name" />
       </div>
-      <div className="mt-4 flex flex-col gap-1">
+      <div className="mt-4 flex flex-col gap-1.5">
         <Label>Email</Label>
         <Input name="email" placeholder="Email" />
       </div>
-      <div className="mt-4 flex flex-col gap-1">
+      <div className="mt-4 flex flex-col gap-1.5">
         <Label>Password</Label>
         <Input name="password" placeholder="Password" type="password" />
       </div>
-      <div className="mt-4 flex flex-col gap-1">
+      <div className="mt-4 flex flex-col gap-1.5">
         <Label>Confirm Password</Label>
         <Input
           name="confirmPassword"
@@ -135,7 +132,7 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
       </Button>
       {/* More */}
       <div className="mt-4 flex items-center">
-        <p className="text-base text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Already have an account?
         </p>
         <Button

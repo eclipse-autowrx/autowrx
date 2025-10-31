@@ -93,7 +93,7 @@ const SubmitIssueForm = ({
   return (
     <form
       //   onSubmit={submitIssue}
-      className="flex flex-col w-[40vw] max-h-[80vh] bg-background py-4"
+      className="flex flex-col bg-background"
     >
       <div className="flex flex-col overflow-y-auto px-4">
         <h2 className="text-lg font-semibold text-primary">

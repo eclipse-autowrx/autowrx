@@ -71,7 +71,7 @@ const FormResetPassword = () => {
   return (
     <form
       onSubmit={resetPassword}
-      className="w-[30vw] lg:w-[25vw] min-w-[400px] max-w-[500px] h-fit max-h-[80vh] p-4 bg-background"
+      className="flex flex-col bg-background"
     >
       {/* Title */}
       <h2 className="text-lg font-semibold text-primary">Reset Password</h2>
@@ -86,7 +86,7 @@ const FormResetPassword = () => {
       ) : (
         <>
           {/* Content */}
-          <div className="mt-4 flex flex-col gap-1">
+          <div className="mt-4 flex flex-col gap-1.5">
             <Label>Password</Label>
             <div className="relative">
               <TbLock className="absolute left-3 top-1/2 -translate-y-1/2 size-[18px] text-muted-foreground" />
@@ -99,7 +99,7 @@ const FormResetPassword = () => {
             </div>
           </div>
 
-          <div className="mt-4 flex flex-col gap-1">
+          <div className="mt-4 flex flex-col gap-1.5">
             <Label>Confirm password</Label>
             <div className="relative">
               <TbLock className="absolute left-3 top-1/2 -translate-y-1/2 size-[18px] text-muted-foreground" />
