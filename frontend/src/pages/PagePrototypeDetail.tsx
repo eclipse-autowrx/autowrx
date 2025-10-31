@@ -22,6 +22,7 @@ import {
 import { saveRecentPrototype } from '@/services/prototype.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import useCurrentModel from '@/hooks/useCurrentModel'
+import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import DaDialog from '@/components/molecules/DaDialog'
 import { TbMessage } from 'react-icons/tb'
 import DaDiscussions from '@/components/molecules/DaDiscussions'
@@ -40,10 +41,22 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
   const { model_id, prototype_id, tab } = useParams()
   const { data: user } = useSelfProfileQuery()
   const { data: model } = useCurrentModel()
-  const prototype = useModelStore((state) => state.prototype as Prototype)
+  const { data: fetchedPrototype, isLoading: isPrototypeLoading } =
+    useCurrentPrototype()
+  const [prototype, setActivePrototype] = useModelStore((state) => [
+    state.prototype as Prototype,
+    state.setActivePrototype,
+  ])
   const [isDefaultTab, setIsDefaultTab] = useState(false)
   const [openStagingDialog, setOpenStagingDialog] = useState(false)
   const [showRt, setShowRt] = useState(false)
+
+  // Populate store when prototype is fetched
+  useEffect(() => {
+    if (fetchedPrototype) {
+      setActivePrototype(fetchedPrototype)
+    }
+  }, [fetchedPrototype, setActivePrototype])
 
   useEffect(() => {
     if (!tab || tab === 'journey' || tab === 'view') {
