@@ -62,6 +62,7 @@ router.post('/bulk-upsert',
 // Global CSS admin endpoints
 router.get('/global-css', siteConfigController.getGlobalCss);
 router.put('/global-css', siteConfigController.updateGlobalCss);
+router.post('/global-css/restore-default', siteConfigController.restoreDefaultGlobalCss);
 
 // Individual config operations by ID
 router

@@ -160,11 +160,11 @@ const ConfigList: React.FC<ConfigListProps> = ({
           key={config.id || config.key}
           className="bg-background rounded-lg p-2"
         >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
             {/* Left: key and meta (1/3) */}
-            <div className="md:col-span-1 min-w-0">
-              <div className="flex items-center space-x-2 mb-2">
-                <p className="text-lg font-semibold text-primary truncate">
+            <div className="md:col-span-1 min-w-0 flex items-center ">
+              <div className="flex space-x-2 ">
+                <p className="text-sm font-mono font-semibold text-primary truncate">
                   {config.key}
                 </p>
                 {config.secret && (

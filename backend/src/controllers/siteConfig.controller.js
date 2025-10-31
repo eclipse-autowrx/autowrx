@@ -25,7 +25,7 @@ const createSiteConfig = catchAsync(async (req, res) => {
 });
 
 const getSiteConfigs = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['secret', 'category', 'key']);
+  const filter = pick(req.query, ['secret', 'category', 'key', 'scope']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
   const result = await siteConfigService.querySiteConfigs(filter, options);
   res.send(result);
@@ -173,5 +173,22 @@ module.exports = {
     const cssPath = path.join(__dirname, '..', '..', 'static', 'global.css');
     await fsp.writeFile(cssPath, content, 'utf8');
     res.status(httpStatus.OK).send({ success: true });
+  }),
+  restoreDefaultGlobalCss: catchAsync(async (req, res) => {
+    const orgCssPath = path.join(__dirname, '..', '..', 'static', 'global_org.css');
+    const cssPath = path.join(__dirname, '..', '..', 'static', 'global.css');
+
+    // Check if original CSS file exists
+    const orgExists = fs.existsSync(orgCssPath);
+    if (!orgExists) {
+      throw new ApiError(httpStatus.NOT_FOUND, 'global_org.css not found');
+    }
+
+    // Copy global_org.css to global.css
+    await fsp.copyFile(orgCssPath, cssPath);
+
+    // Read and return the content
+    const content = await fsp.readFile(cssPath, 'utf8');
+    res.status(httpStatus.OK).send({ content });
   }),
 };

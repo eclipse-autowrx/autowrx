@@ -6,18 +6,41 @@
 //
 // SPDX-License-Identifier: MIT
 
+import { useState, useEffect } from 'react'
 import { HomePartners } from '@/components/organisms/HomePartners'
-import { home as defaultHome } from '../../instance/default'
-import home from '../../instance/home'
 import HomeHeroSection from '@/components/organisms/HomeHeroSection'
 import HomeFeatureList from '@/components/organisms/HomeFeatureList'
 import HomeButtonList from '@/components/organisms/HomeButtonList'
 import HomePrototypeRecent from '@/components/organisms/HomePrototypeRecent'
 import HomePrototypePopular from '@/components/organisms/HomePrototypePopular'
 import HomeNews from '@/components/organisms/HomeNews'
+import { configManagementService } from '@/services/configManagement.service'
+import { Spinner } from '@/components/atoms/spinner'
 
 const PageHome = () => {
-  const homeElements = home || defaultHome
+  const [homeElements, setHomeElements] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const loadHomeConfig = async () => {
+      try {
+        setIsLoading(true)
+        // Use public endpoint - no authentication required
+        const res = await configManagementService.getPublicConfig('CFG_HOME_CONTENT', 'site')
+
+        // Backend returns { key: string, value: any }
+        if (res.value && Array.isArray(res.value)) {
+          setHomeElements(res.value)
+        }
+      } catch (err) {
+        console.error('Failed to load home config:', err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadHomeConfig()
+  }, [])
 
   const getComponent = (elementType: string) => {
     switch (elementType) {
@@ -38,6 +61,14 @@ const PageHome = () => {
       default:
         return null
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <Spinner />
+      </div>
+    )
   }
 
   return (

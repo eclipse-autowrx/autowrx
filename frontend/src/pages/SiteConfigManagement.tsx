@@ -7,29 +7,13 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useState, useEffect } from 'react'
-import {
-  Config,
-  CreateConfigRequest,
-  UpdateConfigRequest,
-} from '../services/configManagement.service'
-import { configManagementService } from '../services/configManagement.service'
-import ConfigForm from '../components/molecules/ConfigForm'
-import ConfigList from '../components/molecules/ConfigList'
-import { Button } from '../components/atoms/button'
-import DaTabItem from '../components/atoms/DaTabItem'
-import { useToast } from '@/components/molecules/toaster/use-toast'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '../components/atoms/dialog'
-import CodeEditor from '@/components/molecules/CodeEditor'
-import { Spinner } from '../components/atoms/spinner'
-import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { useSearchParams } from 'react-router-dom'
+import PublicConfigSection from '@/components/organisms/PublicConfigSection'
+import SecretConfigSection from '@/components/organisms/SecretConfigSection'
+import SiteStyleSection from '@/components/organisms/SiteStyleSection'
+import HomeConfigSection from '@/components/organisms/HomeConfigSection'
 
-// Predefined site configurations with default values
-const PREDEFINED_SITE_CONFIGS: CreateConfigRequest[] = [
+export const PREDEFINED_SITE_CONFIGS: any[] = [
   {
     key: 'SITE_LOGO_WIDE',
     scope: 'site',
@@ -89,240 +73,29 @@ const PREDEFINED_SITE_CONFIGS: CreateConfigRequest[] = [
 ]
 
 const SiteConfigManagement: React.FC = () => {
-  const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
-  const [activeTab, setActiveTab] = useState<'public' | 'style' | 'secrets'>(
-    'public',
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  // Get initial section from URL or default to 'public'
+  const getSectionFromUrl = (): 'public' | 'style' | 'secrets' | 'home' => {
+    const section = searchParams.get('section')
+    if (section === 'public' || section === 'style' || section === 'secrets' || section === 'home') {
+      return section
+    }
+    return 'public'
+  }
+
+  const [activeTab, setActiveTab] = useState<'public' | 'style' | 'secrets' | 'home'>(
+    getSectionFromUrl(),
   )
-  const [publicConfigs, setPublicConfigs] = useState<Config[]>([])
-  const [secretConfigs, setSecretConfigs] = useState<Config[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [isFormOpen, setIsFormOpen] = useState(false)
-  const [editingConfig, setEditingConfig] = useState<Config | undefined>()
-  const { toast } = useToast()
-  const [globalCss, setGlobalCss] = useState<string>('')
-  const [savingStyle, setSavingStyle] = useState<boolean>(false)
 
-  const initializePredefinedConfigs = async () => {
-    try {
-      // Get existing configs to check which ones are missing
-      const existingConfigs = await configManagementService.getConfigs({
-        scope: 'site' as const,
-        limit: 100,
-      })
-
-      const existingKeys = new Set(
-        existingConfigs.results.map((config) => config.key),
-      )
-
-      // Find missing predefined configs
-      const missingConfigs = PREDEFINED_SITE_CONFIGS.filter(
-        (config) => !existingKeys.has(config.key),
-      )
-
-      // Create missing configs
-      if (missingConfigs.length > 0) {
-        await configManagementService.bulkUpsertConfigs({
-          configs: missingConfigs,
-        })
-      }
-    } catch (error) {
-      console.warn('Failed to initialize predefined configs:', error)
-    }
-  }
-
-  const loadConfigs = async () => {
-    setIsLoading(true)
-
-    try {
-      // First initialize predefined configs
-      await initializePredefinedConfigs()
-
-      const queryParams = {
-        scope: 'site' as const,
-        limit: 100,
-      }
-
-      const [publicData, secretData] = await Promise.all([
-        configManagementService.getConfigs({ ...queryParams, secret: false }),
-        configManagementService.getConfigs({ ...queryParams, secret: true }),
-      ])
-
-      setPublicConfigs(publicData?.results || [])
-      setSecretConfigs(secretData?.results || [])
-    } catch (err) {
-      console.error('Failed to load configurations:', err)
-      toast({
-        title: 'Load configurations failed',
-        description:
-          err instanceof Error ? err.message : 'Failed to load configurations',
-        variant: 'destructive',
-      })
-      // Ensure we always have valid arrays even on error
-      setPublicConfigs([])
-      setSecretConfigs([])
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const loadGlobalCss = async () => {
-    try {
-      const res = await configManagementService.getGlobalCss()
-      setGlobalCss(res?.content || '')
-    } catch (err) {
-      toast({
-        title: 'Load site style failed',
-        description:
-          err instanceof Error ? err.message : 'Failed to load site style',
-        variant: 'destructive',
-      })
-    }
-  }
-
+  // Update URL when activeTab changes
   useEffect(() => {
-    // Wait until self profile (and token refresh) completes to avoid 401s
-    if (selfLoading) return
-    if (!self) return // user not loaded yet or not authenticated
-    loadConfigs()
-    loadGlobalCss()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selfLoading, !!self])
+    setSearchParams({ section: activeTab }, { replace: true })
+  }, [activeTab, setSearchParams])
 
-  const handleCreateConfig = () => {
-    setEditingConfig(undefined)
-    setIsFormOpen(true)
+  const handleTabChange = (tab: 'public' | 'style' | 'secrets' | 'home') => {
+    setActiveTab(tab)
   }
-
-  const handleEditConfig = (config: Config) => {
-    setEditingConfig(config)
-    setIsFormOpen(true)
-  }
-
-  const handleDeleteConfig = async (config: Config) => {
-    if (
-      !window.confirm(
-        `Are you sure you want to delete the configuration "${config.key}"?`,
-      )
-    ) {
-      return
-    }
-
-    try {
-      if (config.id) {
-        await configManagementService.deleteConfigById(config.id)
-      } else {
-        await configManagementService.deleteConfigByKey(config.key)
-      }
-
-      await loadConfigs()
-    } catch (err) {
-      toast({
-        title: 'Delete configuration failed',
-        description:
-          err instanceof Error ? err.message : 'Failed to delete configuration',
-        variant: 'destructive',
-      })
-    }
-  }
-
-  const handleSaveConfig = async (
-    configData: CreateConfigRequest | UpdateConfigRequest,
-  ) => {
-    try {
-      if (editingConfig) {
-        // Update existing config
-        if (editingConfig.id) {
-          await configManagementService.updateConfigById(
-            editingConfig.id,
-            configData as UpdateConfigRequest,
-          )
-        } else {
-          await configManagementService.updateConfigByKey(
-            editingConfig.key,
-            configData as UpdateConfigRequest,
-          )
-        }
-      } else {
-        // Create new config
-        await configManagementService.createConfig(
-          configData as CreateConfigRequest,
-        )
-      }
-
-      setIsFormOpen(false)
-      setEditingConfig(undefined)
-      await loadConfigs()
-    } catch (err) {
-      toast({
-        title: 'Save configuration failed',
-        description:
-          err instanceof Error ? err.message : 'Failed to save configuration',
-        variant: 'destructive',
-      })
-    }
-  }
-
-  const handleCancelForm = () => {
-    setIsFormOpen(false)
-    setEditingConfig(undefined)
-  }
-
-  const handleFactoryReset = async () => {
-    if (
-      !window.confirm(
-        'Factory reset will delete all site configurations and restore defaults. Continue?',
-      )
-    ) {
-      return
-    }
-    try {
-      setIsLoading(true)
-      // Fetch all existing site configs (increase limit to reduce paging risk)
-      const all = await configManagementService.getConfigs({
-        scope: 'site',
-        limit: 1000,
-      })
-
-      // Delete each config
-      for (const cfg of all.results || []) {
-        try {
-          if (cfg.id) {
-            await configManagementService.deleteConfigById(cfg.id)
-          } else {
-            await configManagementService.deleteConfigByKey(cfg.key)
-          }
-        } catch (e) {
-          // Continue deleting others even if one fails
-          console.warn('Failed to delete config', cfg.key, e)
-        }
-      }
-
-      // Re-seed defaults
-      await configManagementService.bulkUpsertConfigs({
-        configs: PREDEFINED_SITE_CONFIGS,
-      })
-
-      await loadConfigs()
-    } catch (err) {
-      toast({
-        title: 'Factory reset failed',
-        description:
-          err instanceof Error
-            ? err.message
-            : 'Failed to factory reset configurations',
-        variant: 'destructive',
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const currentConfigs =
-    activeTab === 'public'
-      ? publicConfigs || []
-      : activeTab === 'secrets'
-        ? secretConfigs || []
-        : []
 
   return (
     <div className="min-h-screen bg-background">
@@ -337,133 +110,72 @@ const SiteConfigManagement: React.FC = () => {
           </p>
         </div>
 
-        {/* Tabs */}
-        <div className="mb-6">
-          <div className="border-b border-border">
-            <nav className="-mb-px flex space-x-8">
-              <DaTabItem
-                active={activeTab === 'public'}
-                onClick={() => setActiveTab('public')}
-                small={false}
-              >
-                Config ({publicConfigs?.length || 0})
-              </DaTabItem>
-              <DaTabItem
-                active={activeTab === 'style'}
-                onClick={() => setActiveTab('style')}
-                small={false}
-              >
-                Site Style
-              </DaTabItem>
-              <DaTabItem
-                active={activeTab === 'secrets'}
-                onClick={() => setActiveTab('secrets')}
-                small={false}
-              >
-                Secrets ({secretConfigs?.length || 0})
-              </DaTabItem>
-            </nav>
+        {/* Sidebar + Content Layout */}
+        <div className="flex gap-6">
+          {/* Left Sidebar */}
+          <div className="w-64 shrink-0">
+            <div className="bg-background rounded-lg shadow border border-border overflow-hidden">
+              <div className="px-4 py-3 border-b border-border">
+                <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">
+                  Configuration Sections
+                </h2>
+              </div>
+              <nav className="p-2">
+                <button
+                  onClick={() => handleTabChange('public')}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'public'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
+                >
+                  Public Config
+                </button>
+                <button
+                  onClick={() => handleTabChange('home')}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'home'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
+                >
+                  Home Config
+                </button>
+                <button
+                  onClick={() => handleTabChange('style')}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'style'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
+                >
+                  Site Style (CSS)
+                </button>
+                <button
+                  onClick={() => handleTabChange('secrets')}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'secrets'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
+                >
+                  Secret Config
+                </button>
+              </nav>
+            </div>
+          </div>
+
+          {/* Right Content Panel */}
+          <div className="flex-1 min-w-0">
+            <div className="bg-background rounded-lg shadow border border-border">
+              {/* Conditionally render only the active section */}
+              {activeTab === 'public' && <PublicConfigSection />}
+              {activeTab === 'secrets' && <SecretConfigSection />}
+              {activeTab === 'style' && <SiteStyleSection />}
+              {activeTab === 'home' && <HomeConfigSection />}
+            </div>
           </div>
         </div>
-
-        {/* Content */}
-        <div className="bg-background rounded-lg shadow">
-          {activeTab !== 'style' ? (
-            <div className="px-6 py-4 border-b border-border">
-              <div className="flex items-center justify-between">
-                <div className="flex flex-col">
-                  <h2 className="text-lg font-semibold text-foreground">
-                    {activeTab === 'public'
-                      ? 'Configurations'
-                      : 'Secret Configurations'}
-                  </h2>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    onClick={handleFactoryReset}
-                    variant="destructive"
-                    disabled={isLoading}
-                  >
-                    Factory Reset
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="px-6 py-3 border-b border-border flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-foreground">
-                Site Style (global.css)
-              </h2>
-              <Button
-                onClick={async () => {
-                  try {
-                    setSavingStyle(true)
-                    await configManagementService.updateGlobalCss(globalCss)
-                    toast({ title: 'Saved', description: 'Site style updated' })
-                  } catch (err) {
-                    toast({
-                      title: 'Save failed',
-                      description:
-                        err instanceof Error
-                          ? err.message
-                          : 'Failed to save site style',
-                      variant: 'destructive',
-                    })
-                  } finally {
-                    setSavingStyle(false)
-                  }
-                }}
-                disabled={savingStyle}
-              >
-                {savingStyle ? 'Saving...' : 'Save'}
-              </Button>
-            </div>
-          )}
-
-          <div className="p-6">
-            {activeTab === 'style' ? (
-              <div className="h-[70vh] flex flex-col">
-                <CodeEditor
-                  code={globalCss}
-                  setCode={setGlobalCss}
-                  editable={true}
-                  language="css"
-                  onBlur={() => {}}
-                  fontSize={14}
-                />
-              </div>
-            ) : isLoading ? (
-              <div className="flex justify-center items-center py-8">
-                <Spinner />
-              </div>
-            ) : (
-              <ConfigList
-                configs={currentConfigs}
-                onEdit={handleEditConfig}
-                onDelete={handleDeleteConfig}
-                isLoading={isLoading}
-              />
-            )}
-          </div>
-        </div>
-
-        {/* Form Modal */}
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogContent className="max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>
-                {editingConfig ? 'Edit Configuration' : 'Create Configuration'}
-              </DialogTitle>
-            </DialogHeader>
-
-            <ConfigForm
-              config={editingConfig}
-              onSave={handleSaveConfig}
-              onCancel={handleCancelForm}
-              isLoading={isLoading}
-            />
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   )

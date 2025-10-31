@@ -184,6 +184,11 @@ class ConfigManagementService {
     const response = await serverAxios.put(`${this.baseUrl}/global-css`, { content });
     return response.data;
   }
+
+  async restoreDefaultGlobalCss(): Promise<{ content: string }> {
+    const response = await serverAxios.post(`${this.baseUrl}/global-css/restore-default`);
+    return response.data;
+  }
 }
 
 export const configManagementService = new ConfigManagementService();

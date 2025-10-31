@@ -9,6 +9,8 @@
 const { SiteConfig } = require('../models');
 const ApiError = require('../utils/ApiError');
 const httpStatus = require('http-status');
+const fs = require('fs');
+const path = require('path');
 
 /**
  * Get value type from a value
@@ -28,6 +30,50 @@ const getValueType = (value) => {
     if (value.match(/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i)) return 'image_url';
   }
   return 'string';
+};
+
+/**
+ * Mapping of config keys to their default file names
+ * Add more mappings here as needed
+ */
+const DEFAULT_CONFIG_FILES = {
+  'CFG_HOME_CONTENT': 'home_content.json',
+  // Add more default files here as needed
+  // 'CFG_ANOTHER_KEY': 'another_default.json',
+};
+
+/**
+ * Load default value from file system for a given config key
+ * @param {string} key - The config key
+ * @returns {Object|null} - Default value object with value and valueType, or null if not found
+ */
+const loadDefaultConfigValue = (key) => {
+  const defaultFileName = DEFAULT_CONFIG_FILES[key];
+  if (!defaultFileName) {
+    return null;
+  }
+
+  const defaultFilePath = path.join(__dirname, '..', '..', 'default', defaultFileName);
+
+  try {
+    if (!fs.existsSync(defaultFilePath)) {
+      console.warn(`Default file not found for config key "${key}" at path: ${defaultFilePath}`);
+      return null;
+    }
+
+    const fileContent = fs.readFileSync(defaultFilePath, 'utf8');
+    const value = JSON.parse(fileContent);
+    const valueType = getValueType(value);
+
+    return {
+      value,
+      valueType,
+      isDefault: true, // Flag to indicate this is a default value
+    };
+  } catch (error) {
+    console.error(`Error loading default config file for key "${key}":`, error.message);
+    return null;
+  }
 };
 
 /**
@@ -72,10 +118,34 @@ const createSiteConfig = async (siteConfigBody) => {
  * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
  * @param {number} [options.limit] - Maximum number of results per page (default = 10)
  * @param {number} [options.page] - Current page (default = 1)
+ * @param {boolean} [options.useDefaultFallback] - Whether to include default values if not found in DB
  * @returns {Promise<QueryResult>}
  */
 const querySiteConfigs = async (filter, options) => {
-  const siteConfigs = await SiteConfig.paginate(filter, options);
+  const { useDefaultFallback = true, ...paginateOptions } = options;
+  const siteConfigs = await SiteConfig.paginate(filter, paginateOptions);
+
+  // If no results and a specific key is queried and fallback is enabled, check for defaults
+  // Default scope to 'site' if not specified
+  const scope = filter.scope || 'site';
+  if (siteConfigs.results.length === 0 && filter.key && useDefaultFallback && scope === 'site') {
+    const defaultConfig = loadDefaultConfigValue(filter.key);
+    if (defaultConfig) {
+      // Inject the default config into results
+      siteConfigs.results = [{
+        key: filter.key,
+        scope: scope,
+        value: defaultConfig.value,
+        valueType: defaultConfig.valueType,
+        secret: false,
+        category: 'default',
+        isDefault: true,
+      }];
+      siteConfigs.totalResults = 1;
+      siteConfigs.totalPages = 1;
+    }
+  }
+
   return siteConfigs;
 };
 
@@ -93,14 +163,40 @@ const getSiteConfigById = async (id) => {
  * @param {string} key
  * @param {string} scope
  * @param {string} target_id
- * @returns {Promise<SiteConfig>}
+ * @param {boolean} useDefaultFallback - Whether to load default values if not found in DB
+ * @returns {Promise<SiteConfig|Object>}
  */
-const getSiteConfigByKey = async (key, scope = 'site', target_id = null) => {
+const getSiteConfigByKey = async (key, scope = 'site', target_id = null, useDefaultFallback = true) => {
   const query = { key, scope };
   if (target_id) {
     query.target_id = target_id;
   }
-  return SiteConfig.findOne(query);
+
+  const config = await SiteConfig.findOne(query);
+
+  // If config exists in DB, return it
+  if (config) {
+    return config;
+  }
+
+  // If not found and fallback is enabled, try to load default
+  if (useDefaultFallback && scope === 'site') {
+    const defaultConfig = loadDefaultConfigValue(key);
+    if (defaultConfig) {
+      // Return a plain object that mimics the SiteConfig structure
+      return {
+        key,
+        scope,
+        value: defaultConfig.value,
+        valueType: defaultConfig.valueType,
+        secret: false,
+        category: 'default',
+        isDefault: true, // Flag to indicate this is from default file, not DB
+      };
+    }
+  }
+
+  return null;
 };
 
 /**
@@ -108,10 +204,11 @@ const getSiteConfigByKey = async (key, scope = 'site', target_id = null) => {
  * @param {string} key
  * @param {string} scope
  * @param {string} target_id
+ * @param {boolean} useDefaultFallback - Whether to use default fallback
  * @returns {Promise<*>}
  */
-const getSiteConfigValue = async (key, scope = 'site', target_id = null) => {
-  const config = await getSiteConfigByKey(key, scope, target_id);
+const getSiteConfigValue = async (key, scope = 'site', target_id = null, useDefaultFallback = true) => {
+  const config = await getSiteConfigByKey(key, scope, target_id, useDefaultFallback);
   return config ? config.value : null;
 };
 
@@ -235,7 +332,8 @@ const updateSiteConfigById = async (siteConfigId, updateBody) => {
  * @returns {Promise<SiteConfig>}
  */
 const updateSiteConfigByKey = async (key, updateBody) => {
-  const siteConfig = await getSiteConfigByKey(key);
+  // Don't use default fallback for update operations
+  const siteConfig = await getSiteConfigByKey(key, 'site', null, false);
   if (!siteConfig) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Site config not found');
   }
@@ -268,7 +366,8 @@ const deleteSiteConfigById = async (siteConfigId) => {
  * @returns {Promise<SiteConfig>}
  */
 const deleteSiteConfigByKey = async (key) => {
-  const siteConfig = await getSiteConfigByKey(key);
+  // Don't use default fallback for delete operations
+  const siteConfig = await getSiteConfigByKey(key, 'site', null, false);
   if (!siteConfig) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Site config not found');
   }
