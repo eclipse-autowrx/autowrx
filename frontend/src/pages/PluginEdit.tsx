@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -8,7 +8,13 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createPlugin, getPluginById, updatePlugin, uploadInternalZip, type Plugin } from '@/services/plugin.service'
+import {
+  createPlugin,
+  getPluginById,
+  updatePlugin,
+  uploadInternalZip,
+  type Plugin,
+} from '@/services/plugin.service'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Input } from '@/components/atoms/input'
 import { Textarea } from '@/components/atoms/textarea'
@@ -44,7 +50,8 @@ const PluginEdit = ({ mode }: { mode: 'create' | 'edit' }) => {
     if (initial) setForm(initial)
   }, [initial])
 
-  const onChange = (k: keyof Plugin, v: any) => setForm((s) => ({ ...s, [k]: v }))
+  const onChange = (k: keyof Plugin, v: any) =>
+    setForm((s) => ({ ...s, [k]: v }))
 
   const save = useMutation({
     mutationFn: async () => {
@@ -67,7 +74,8 @@ const PluginEdit = ({ mode }: { mode: 'create' | 'edit' }) => {
       if (mode === 'create') navigate(`/plugins/${p.id}`)
       else qc.invalidateQueries({ queryKey: ['plugin', id] })
     },
-    onError: (e: any) => toast.error(e?.response?.data?.message || e.message || 'Save failed'),
+    onError: (e: any) =>
+      toast.error(e?.response?.data?.message || e.message || 'Save failed'),
   })
 
   const doUpload = useMutation({
@@ -80,7 +88,8 @@ const PluginEdit = ({ mode }: { mode: 'create' | 'edit' }) => {
       onChange('url', url as any)
       toast.success('Uploaded and extracted')
     },
-    onError: (e: any) => toast.error(e?.response?.data?.message || e.message || 'Upload failed'),
+    onError: (e: any) =>
+      toast.error(e?.response?.data?.message || e.message || 'Upload failed'),
   })
 
   const isCreate = useMemo(() => mode === 'create', [mode])
@@ -88,7 +97,9 @@ const PluginEdit = ({ mode }: { mode: 'create' | 'edit' }) => {
   return (
     <div className="p-6 !w-[800px] max-w-[calc(100vw-80px)]">
       <div className="mb-4">
-        <h2 className="text-xl font-semibold text-foreground">{isCreate ? 'Create Plugin' : 'Edit Plugin'}</h2>
+        <h2 className="text-xl font-semibold text-foreground">
+          {isCreate ? 'Create Plugin' : 'Edit Plugin'}
+        </h2>
       </div>
 
       {isFetching && mode === 'edit' ? (
@@ -114,7 +125,9 @@ const PluginEdit = ({ mode }: { mode: 'create' | 'edit' }) => {
               onCheckedChange={(checked) => onChange('is_internal', checked)}
               id="is-internal"
             />
-            <Label htmlFor="is-internal" className="cursor-pointer">Internal plugin</Label>
+            <Label htmlFor="is-internal" className="cursor-pointer">
+              Internal plugin
+            </Label>
           </div>
 
           <Input
@@ -123,7 +136,7 @@ const PluginEdit = ({ mode }: { mode: 'create' | 'edit' }) => {
             placeholder="Image URL"
           />
 
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1.5">
             <Label>Description</Label>
             <Textarea
               value={form.description || ''}
@@ -147,22 +160,39 @@ const PluginEdit = ({ mode }: { mode: 'create' | 'edit' }) => {
                 onChange={(e) => setZip(e.target.files?.[0] || null)}
               />
               <div className="flex gap-2 items-center">
-                <Button onClick={() => doUpload.mutate()} disabled={!zip || !form.slug || doUpload.isPending}>
+                <Button
+                  onClick={() => doUpload.mutate()}
+                  disabled={!zip || !form.slug || doUpload.isPending}
+                >
                   {doUpload.isPending ? 'Uploading...' : 'Upload ZIP'}
                 </Button>
-                {form.url && <p className="text-sm text-muted-foreground break-all">{form.url}</p>}
+                {form.url && (
+                  <p className="text-sm text-muted-foreground break-all">
+                    {form.url}
+                  </p>
+                )}
               </div>
             </div>
           )}
 
           <div>
-            <span className="text-sm font-semibold mb-1 block text-foreground">Config (JSON)</span>
-            <JsonEditor value={form.config || {}} onChange={(v) => onChange('config', v)} valueType="object" />
+            <span className="text-sm font-semibold mb-1 block text-foreground">
+              Config (JSON)
+            </span>
+            <JsonEditor
+              value={form.config || {}}
+              onChange={(v) => onChange('config', v)}
+              valueType="object"
+            />
           </div>
 
           <div className="flex gap-2">
-            <Button onClick={() => save.mutate()} disabled={save.isPending}>{save.isPending ? 'Saving...' : 'Save'}</Button>
-            <Button variant="outline" onClick={() => navigate('/plugins')}>Back</Button>
+            <Button onClick={() => save.mutate()} disabled={save.isPending}>
+              {save.isPending ? 'Saving...' : 'Save'}
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/plugins')}>
+              Back
+            </Button>
           </div>
         </div>
       )}
@@ -171,5 +201,3 @@ const PluginEdit = ({ mode }: { mode: 'create' | 'edit' }) => {
 }
 
 export default PluginEdit
-
-

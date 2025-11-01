@@ -49,7 +49,7 @@ const DaUserMenu = ({ user }: DaUserDropdownProps) => {
             />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuContent align="end" className="w-42 font-medium">
           <DropdownMenuItem asChild>
             <Link
               to="/profile"

@@ -23,7 +23,7 @@ const FormAlert = ({
   children,
 }: FormAlertProps) => {
   return (
-    <form className="flex flex-col space-y-8 w-[500px] min-w-[400px] px-2 md:px-6 py-4 bg-background">
+    <form className="flex flex-col space-y-8 bg-background">
       {children}
       <div className="ml-auto space-x-2">
         <Button

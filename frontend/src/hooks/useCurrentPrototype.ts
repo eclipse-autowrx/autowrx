@@ -9,20 +9,21 @@
 import { useQuery } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 import { Prototype } from '@/types/model.type'
-import { serverAxios } from '@/services/base'
-
-const fetchPrototypeById = async (prototypeId: string): Promise<Prototype> => {
-  const response = await serverAxios.get(`/prototype/${prototypeId}`)
-  return response.data
-}
+import { getPrototype } from '@/services/prototype.service'
 
 const useCurrentPrototype = () => {
-  const { prototypeId } = useParams<{ prototypeId: string }>()
+  const { prototype_id } = useParams<{ prototype_id: string }>()
 
   return useQuery<Prototype>({
-    queryKey: ['prototype', prototypeId],
-    queryFn: () => fetchPrototypeById(prototypeId!),
-    enabled: !!prototypeId,
+    queryKey: ['prototype', prototype_id],
+    queryFn: async () => {
+      const prototype = await getPrototype(prototype_id!)
+      if (!prototype) {
+        throw new Error('Prototype not found')
+      }
+      return prototype
+    },
+    enabled: !!prototype_id,
   })
 }
 

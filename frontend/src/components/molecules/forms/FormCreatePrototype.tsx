@@ -338,7 +338,7 @@ const FormCreatePrototype = ({
   return (
     <form
       onSubmit={createNewPrototype}
-      className="flex max-h-[80vh] w-[40vw] min-w-[400px] flex-col bg-background p-4 lg:w-[25vw]"
+      className="flex flex-col bg-background"
     >
       <h2 className="text-lg font-semibold text-primary">
         {title ?? 'New Prototype'}

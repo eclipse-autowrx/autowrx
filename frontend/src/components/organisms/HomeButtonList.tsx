@@ -45,7 +45,7 @@ const HomeButtonList = ({ items, requiredLogin }: HomeButtonListProps) => {
   return (
     meetConditions && (
       <div className="container pb-6 flex w-full flex-col justify-center">
-        <div className="grid w-full grid-cols-2 grid-rows-2 xl:grid-cols-4 xl:grid-rows-1 gap-12">
+        <div className="grid w-full grid-cols-2 grid-rows-2 xl:grid-cols-4 xl:grid-rows-1 gap-1.52">
           {items?.map((button, index) => {
             if (button.type === 'new-model')
               return (
@@ -73,39 +73,35 @@ const HomeButtonList = ({ items, requiredLogin }: HomeButtonListProps) => {
                 <DaActionCard
                   key={index}
                   title={button.title || 'New prototype'}
-                  content={
-                    button.description || 'Quickly develop vehicle app'
-                  }
+                  content={button.description || 'Quickly develop vehicle app'}
                   icon={
-                    button.icon || (
-                      <TbCode className="h-7 w-7 text-primary" />
-                    )
+                    button.icon || <TbCode className="h-7 w-7 text-primary" />
                   }
                   className="w-full opacity-50 cursor-not-allowed"
                 />
               )
-              // TODO: Uncomment when FormCreatePrototype is migrated
-              // return (
-              //   <DaDialog
-              //     key={index}
-              //     trigger={
-              //       <DaActionCard
-              //         title={button.title || 'New prototype'}
-              //         content={
-              //           button.description || 'Quickly develop vehicle app'
-              //         }
-              //         icon={
-              //           button.icon || (
-              //             <TbCode className="h-7 w-7 text-primary" />
-              //           )
-              //         }
-              //         className="w-full"
-              //       />
-              //     }
-              //   >
-              //     <FormCreatePrototype />
-              //   </DaDialog>
-              // )
+            // TODO: Uncomment when FormCreatePrototype is migrated
+            // return (
+            //   <DaDialog
+            //     key={index}
+            //     trigger={
+            //       <DaActionCard
+            //         title={button.title || 'New prototype'}
+            //         content={
+            //           button.description || 'Quickly develop vehicle app'
+            //         }
+            //         icon={
+            //           button.icon || (
+            //             <TbCode className="h-7 w-7 text-primary" />
+            //           )
+            //         }
+            //         className="w-full"
+            //       />
+            //     }
+            //   >
+            //     <FormCreatePrototype />
+            //   </DaDialog>
+            // )
 
             if (button.type === 'import-prototype')
               return (
@@ -113,30 +109,28 @@ const HomeButtonList = ({ items, requiredLogin }: HomeButtonListProps) => {
                   key={index}
                   title="Import Prototype"
                   content="Import existing prototype"
-                  icon={
-                    <TbPackageImport className="h-7 w-7 text-primary" />
-                  }
+                  icon={<TbPackageImport className="h-7 w-7 text-primary" />}
                   className="w-full opacity-50 cursor-not-allowed"
                 />
               )
-              // TODO: Uncomment when FormImportPrototype is migrated
-              // return (
-              //   <DaDialog
-              //     key={index}
-              //     trigger={
-              //       <DaActionCard
-              //         title="Import Prototype"
-              //         content="Import existing prototype"
-              //         icon={
-              //           <TbPackageImport className="h-7 w-7 text-primary" />
-              //         }
-              //         className="w-full"
-              //       />
-              //     }
-              //   >
-              //     <FormImportPrototype />
-              //   </DaDialog>
-              // )
+            // TODO: Uncomment when FormImportPrototype is migrated
+            // return (
+            //   <DaDialog
+            //     key={index}
+            //     trigger={
+            //       <DaActionCard
+            //         title="Import Prototype"
+            //         content="Import existing prototype"
+            //         icon={
+            //           <TbPackageImport className="h-7 w-7 text-primary" />
+            //         }
+            //         className="w-full"
+            //       />
+            //     }
+            //   >
+            //     <FormImportPrototype />
+            //   </DaDialog>
+            // )
 
             return (
               <DaActionCard

@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import useModelStore from '@/stores/modelStore'
 import { Model } from '@/types/model.type'
@@ -16,11 +16,15 @@ import { Spinner } from '@/components/atoms/spinner'
 import useListModelPrototypes from '@/hooks/useListModelPrototypes'
 import { shallow } from 'zustand/shallow'
 import useLastAccessedModel from '@/hooks/useLastAccessedModel'
+import useCurrentModel from '@/hooks/useCurrentModel'
 
 const ModelDetailLayout = () => {
-  const [model] = useModelStore((state) => [state.model as Model])
+  const { data: fetchedModel, isLoading: isModelLoading } = useCurrentModel()
+  const [model, setActiveModel] = useModelStore((state) => [
+    state.model as Model,
+    state.setActiveModel,
+  ])
   const location = useLocation()
-  const [isLoading, setIsLoading] = useState(true)
   const { data: fetchedPrototypes } = useListModelPrototypes(
     model ? model.id : '',
   )
@@ -31,17 +35,21 @@ const ModelDetailLayout = () => {
 
   const { setLastAccessedModel } = useLastAccessedModel()
 
+  // Update store when model is fetched
+  useEffect(() => {
+    if (fetchedModel && fetchedModel.id) {
+      setActiveModel(fetchedModel)
+    }
+  }, [fetchedModel, setActiveModel])
+
   useEffect(() => {
     if (model) {
       setLastAccessedModel(model.id)
     }
   }, [model])
 
-  useEffect(() => {
-    // Simulate loading state for demonstration
-    const timeout = setTimeout(() => setIsLoading(false), 500) // Adjust the time if needed
-    return () => clearTimeout(timeout)
-  }, [location.pathname])
+  // Use actual model loading state
+  const isLoading = isModelLoading || !model
 
   const skeleton = JSON.parse(model?.skeleton || '{}')
   const numberOfNodes = skeleton?.nodes?.length || 0
@@ -57,14 +65,14 @@ const ModelDetailLayout = () => {
       count: null, // No count for Overview
       dataId: 'tab-model-overview',
     },
-    {
-      title: `Architecture`,
-      content: 'Provide the big picture of the vehicle model',
-      path: 'architecture',
-      subs: ['/model/:model_id/architecture'],
-      count: numberOfNodes,
-      dataId: 'tab-model-architecture',
-    },
+    // {
+    //   title: `Architecture`,
+    //   content: 'Provide the big picture of the vehicle model',
+    //   path: 'architecture',
+    //   subs: ['/model/:model_id/architecture'],
+    //   count: numberOfNodes,
+    //   dataId: 'tab-model-architecture',
+    // },
     {
       title: `Vehicle API`,
       content:
@@ -109,7 +117,7 @@ const ModelDetailLayout = () => {
             >
               {intro.title}
               {intro.count !== null && (
-                <div className="flex min-w-5 px-1.5 !py-0.5 items-center justify-center text-xs ml-1 bg-gray-200 rounded-md">
+                <div className="flex min-w-5 px-1.5 py-0.5 items-center justify-center text-xs ml-1 bg-gray-200 rounded-md">
                   {intro.count}
                 </div>
               )}
@@ -129,7 +137,9 @@ const ModelDetailLayout = () => {
           <div className="flex w-full h-full bg-background rounded-lg items-center justify-center">
             <div className="flex flex-col items-center gap-4">
               <Spinner size={32} />
-              <p className="text-base text-muted-foreground">Loading Model...</p>
+              <p className="text-base text-muted-foreground">
+                Loading Model...
+              </p>
             </div>
           </div>
         ) : (

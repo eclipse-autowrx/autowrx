@@ -219,7 +219,7 @@ const PageModelDetail = () => {
                   />
                 </div>
               ) : (
-                <h1 className="text-3xl font-semibold text-primary w-full">
+                <h1 className="text2xl font-semibold text-primary w-full">
                   {model.name}
                 </h1>
               )}
@@ -242,7 +242,7 @@ const PageModelDetail = () => {
                 Edit
               </Button>
             ) : (
-              <div className="flex items-center space-x-2 mr-2">
+              <div className="flex items-center space-x-2 mr-1">
                 <Button
                   variant="outline"
                   size="sm"
@@ -267,15 +267,14 @@ const PageModelDetail = () => {
                   variant="ghost"
                   size="sm"
                   className={cn(
-                    'flex w-full space-x-3 pt-1',
+                    'flex w-fit space-x-3',
                     isEditingName && 'pointer-events-none opacity-50',
                   )}
                 >
                   {!isDeleting && !isExporting && !isDownloading && (
-                    <>
-                      <TbDotsVertical className="size-4" />
-                    </>
+                    <TbDotsVertical className="size-4" />
                   )}
+
                   {isDeleting && (
                     <div className="flex items-center">
                       <TbLoader className="w-4 h-4 mr-1 animate-spin" />
@@ -296,7 +295,7 @@ const PageModelDetail = () => {
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent align="end">
                 <DropdownMenuItem
                   onClick={async () => {
                     if (!model) return
@@ -309,7 +308,7 @@ const PageModelDetail = () => {
                     setIsExporting(false)
                   }}
                 >
-                  <TbFileExport className="w-4 h-4 mr-2" />
+                  <TbFileExport className="w-4 h-4 mr-1" />
                   Export Model
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -330,11 +329,11 @@ const PageModelDetail = () => {
                     }
                   }}
                 >
-                  <TbDownload className="w-4 h-4 mr-2" />
+                  <TbDownload className="w-4 h-4 mr-1" />
                   Download Vehicle API JSON file
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setConfirmPopupOpen(true)}>
-                  <TbTrashX className="w-4 h-4 mr-2" />
+                  <TbTrashX className="w-4 h-4 mr-1" />
                   Delete Model
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -373,12 +372,12 @@ const PageModelDetail = () => {
                   >
                     {isUploading ? (
                       <div className="flex items-center">
-                        <TbLoader className="w-4 h-4 mr-2 animate-spin" />
+                        <TbLoader className="w-4 h-4 mr-1 animate-spin" />
                         Updating
                       </div>
                     ) : (
                       <div className="flex items-center">
-                        <TbPhotoEdit className="w-4 h-4 mr-2" />
+                        <TbPhotoEdit className="w-4 h-4 mr-1" />
                         Update Image
                       </div>
                     )}

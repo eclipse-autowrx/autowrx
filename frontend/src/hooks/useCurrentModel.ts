@@ -9,20 +9,15 @@
 import { useQuery } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 import { Model } from '@/types/model.type'
-import { serverAxios } from '@/services/base'
-
-const fetchModelById = async (modelId: string): Promise<Model> => {
-  const response = await serverAxios.get(`/model/${modelId}`)
-  return response.data
-}
+import { getModel } from '@/services/model.service'
 
 const useCurrentModel = () => {
-  const { modelId } = useParams<{ modelId: string }>()
+  const { model_id } = useParams<{ model_id: string }>()
 
   return useQuery<Model>({
-    queryKey: ['model', modelId],
-    queryFn: () => fetchModelById(modelId!),
-    enabled: !!modelId,
+    queryKey: ['model', model_id],
+    queryFn: () => getModel(model_id!),
+    enabled: !!model_id,
   })
 }
 

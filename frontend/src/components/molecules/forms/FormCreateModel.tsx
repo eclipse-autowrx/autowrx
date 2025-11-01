@@ -152,7 +152,7 @@ const FormCreateModel = () => {
       <h2 className="text-lg font-semibold text-primary">Create New Model</h2>
 
       {/* Content */}
-      <div className="mt-4 flex flex-col gap-1">
+      <div className="mt-4 flex flex-col gap-1.5">
         <Label>Model Name *</Label>
         <Input
           name="name"

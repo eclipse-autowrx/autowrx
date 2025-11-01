@@ -1,31 +1,34 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useMemo, useState } from 'react';
-import { Config, configManagementService } from '../../services/configManagement.service';
-import { Button } from '../atoms/button';
-import { Badge } from '../atoms/badge';
-import { Spinner } from '../atoms/spinner';
-import { useToast } from '@/components/molecules/toaster/use-toast';
-import { uploadFileService } from '@/services/upload.service';
-import { Input } from '../atoms/input';
-import { Textarea } from '../atoms/textarea';
-import { Checkbox } from '../atoms/checkbox';
-import DaImportFile from '../atoms/DaImportFile';
-import DatePicker from '../atoms/DatePicker';
-import { Label } from '../atoms/label';
+import React, { useMemo, useState } from 'react'
+import {
+  Config,
+  configManagementService,
+} from '../../services/configManagement.service'
+import { Button } from '../atoms/button'
+import { Badge } from '../atoms/badge'
+import { Spinner } from '../atoms/spinner'
+import { useToast } from '@/components/molecules/toaster/use-toast'
+import { uploadFileService } from '@/services/upload.service'
+import { Input } from '../atoms/input'
+import { Textarea } from '../atoms/textarea'
+import { Checkbox } from '../atoms/checkbox'
+import DaImportFile from '../atoms/DaImportFile'
+import DatePicker from '../atoms/DatePicker'
+import { Label } from '../atoms/label'
 
 interface ConfigListProps {
-  configs: Config[];
-  onEdit: (config: Config) => void; // kept for compatibility, unused for inline edit
-  onDelete: (config: Config) => void; // kept for compatibility, delete hidden per request
-  isLoading?: boolean;
-  onUpdated?: () => void; // optional callback to refresh parent list
+  configs: Config[]
+  onEdit: (config: Config) => void // kept for compatibility, unused for inline edit
+  onDelete: (config: Config) => void // kept for compatibility, delete hidden per request
+  isLoading?: boolean
+  onUpdated?: () => void // optional callback to refresh parent list
 }
 
 const ConfigList: React.FC<ConfigListProps> = ({
@@ -35,122 +38,135 @@ const ConfigList: React.FC<ConfigListProps> = ({
   isLoading = false,
   onUpdated,
 }) => {
-  const { toast } = useToast();
-  const [editingKey, setEditingKey] = useState<string | null>(null);
-  const [editValue, setEditValue] = useState<any>(null);
-  const [savingKey, setSavingKey] = useState<string | null>(null);
-  const [localValues, setLocalValues] = useState<Record<string, any>>({});
-  const [uploadingKey, setUploadingKey] = useState<string | null>(null);
+  const { toast } = useToast()
+  const [editingKey, setEditingKey] = useState<string | null>(null)
+  const [editValue, setEditValue] = useState<any>(null)
+  const [savingKey, setSavingKey] = useState<string | null>(null)
+  const [localValues, setLocalValues] = useState<Record<string, any>>({})
+  const [uploadingKey, setUploadingKey] = useState<string | null>(null)
 
   const formatValue = (value: any, valueType: string): string => {
-    if (value === null || value === undefined) return 'N/A';
+    if (value === null || value === undefined) return 'N/A'
 
     switch (valueType) {
       case 'object':
       case 'array':
-        return JSON.stringify(value, null, 2);
+        return JSON.stringify(value, null, 2)
       case 'boolean':
-        return value ? 'True' : 'False';
+        return value ? 'True' : 'False'
       case 'date':
-        return new Date(value).toLocaleString();
+        return new Date(value).toLocaleString()
       case 'color':
-        return value;
+        return value
       case 'image_url':
-        return value;
+        return value
       default:
-        return String(value);
+        return String(value)
     }
-  };
+  }
   const startEdit = (config: Config) => {
-    setEditingKey(config.key);
-    setEditValue(localValues[config.key] ?? config.value);
-  };
+    setEditingKey(config.key)
+    setEditValue(localValues[config.key] ?? config.value)
+  }
 
   const cancelEdit = () => {
-    setEditingKey(null);
-    setEditValue(null);
-  };
+    setEditingKey(null)
+    setEditValue(null)
+  }
 
   const parseEditedValue = (value: any, valueType: Config['valueType']) => {
     if (valueType === 'number') {
-      const num = typeof value === 'number' ? value : parseFloat(String(value));
+      const num = typeof value === 'number' ? value : parseFloat(String(value))
       if (Number.isNaN(num)) {
-        throw new Error('Please enter a valid number');
+        throw new Error('Please enter a valid number')
       }
-      return num;
+      return num
     }
     if (valueType === 'boolean') {
-      return Boolean(value);
+      return Boolean(value)
     }
     if (valueType === 'date') {
-      const iso = new Date(value).toISOString();
+      const iso = new Date(value).toISOString()
       if (iso === 'Invalid Date') {
-        throw new Error('Please enter a valid date');
+        throw new Error('Please enter a valid date')
       }
-      return iso;
+      return iso
     }
     if (valueType === 'object' || valueType === 'array') {
-      const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+      const parsed = typeof value === 'string' ? JSON.parse(value) : value
       if (valueType === 'array' && !Array.isArray(parsed)) {
-        throw new Error('Value must be a JSON array');
+        throw new Error('Value must be a JSON array')
       }
-      if (valueType === 'object' && (parsed === null || Array.isArray(parsed) || typeof parsed !== 'object')) {
-        throw new Error('Value must be a JSON object');
+      if (
+        valueType === 'object' &&
+        (parsed === null || Array.isArray(parsed) || typeof parsed !== 'object')
+      ) {
+        throw new Error('Value must be a JSON object')
       }
-      return parsed;
+      return parsed
     }
     // string, color, image_url and default cases as string
-    return value;
-  };
+    return value
+  }
 
   const saveEdit = async (config: Config, overrideValue?: any) => {
     try {
-      setSavingKey(config.key);
-      const candidate = overrideValue !== undefined ? overrideValue : editValue;
-      const newValue = parseEditedValue(candidate, config.valueType);
+      setSavingKey(config.key)
+      const candidate = overrideValue !== undefined ? overrideValue : editValue
+      const newValue = parseEditedValue(candidate, config.valueType)
       if (config.id) {
-        await configManagementService.updateConfigById(config.id, { value: newValue });
+        await configManagementService.updateConfigById(config.id, {
+          value: newValue,
+        })
       } else {
-        await configManagementService.updateConfigByKey(config.key, { value: newValue });
+        await configManagementService.updateConfigByKey(config.key, {
+          value: newValue,
+        })
       }
-      setLocalValues((prev) => ({ ...prev, [config.key]: newValue }));
-      toast({ title: 'Configuration updated', description: config.key });
-      cancelEdit();
-      if (onUpdated) onUpdated();
+      setLocalValues((prev) => ({ ...prev, [config.key]: newValue }))
+      toast({ title: 'Configuration updated', description: config.key })
+      cancelEdit()
+      if (onUpdated) onUpdated()
     } catch (err: any) {
       toast({
         title: 'Update failed',
         description: err?.message || 'Could not update configuration',
         variant: 'destructive',
-      });
+      })
     } finally {
-      setSavingKey(null);
+      setSavingKey(null)
     }
-  };
+  }
 
   const getValueTypeVariant = (valueType: string): 'default' | 'secondary' => {
     // Use secondary for special types, default for common ones
-    return ['object', 'array', 'color', 'image_url'].includes(valueType) ? 'secondary' : 'default';
-  };
+    return ['object', 'array', 'color', 'image_url'].includes(valueType)
+      ? 'secondary'
+      : 'default'
+  }
 
   // Delete is hidden per request; keeping handler for compatibility (unused)
-  const handleDelete = (_config: Config) => { };
+  const handleDelete = (_config: Config) => {}
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-8">
         <Spinner />
       </div>
-    );
+    )
   }
 
   if (configs.length === 0) {
     return (
       <div className="text-center py-8 flex flex-col">
-        <p className="text-lg font-semibold text-muted-foreground">No configurations found</p>
-        <p className="text-sm text-muted-foreground mt-1">Create your first configuration to get started</p>
+        <p className="text-lg font-semibold text-muted-foreground">
+          No configurations found
+        </p>
+        <p className="text-sm text-muted-foreground mt-1">
+          Create your first configuration to get started
+        </p>
       </div>
-    );
+    )
   }
 
   return (
@@ -168,7 +184,10 @@ const ConfigList: React.FC<ConfigListProps> = ({
                   {config.key}
                 </p>
                 {config.secret && (
-                  <Badge variant="secondary" className="bg-red-100 text-red-800">
+                  <Badge
+                    variant="secondary"
+                    className="bg-red-100 text-red-800"
+                  >
                     Secret
                   </Badge>
                 )}
@@ -183,7 +202,11 @@ const ConfigList: React.FC<ConfigListProps> = ({
               <div
                 className="bg-muted rounded-md p-3 mb-2 cursor-pointer hover:ring-1 hover:ring-border"
                 onClick={() => {
-                  if (config.valueType !== 'image_url' && editingKey !== config.key) startEdit(config);
+                  if (
+                    config.valueType !== 'image_url' &&
+                    editingKey !== config.key
+                  )
+                    startEdit(config)
                 }}
               >
                 {editingKey === config.key ? (
@@ -199,8 +222,8 @@ const ConfigList: React.FC<ConfigListProps> = ({
                         <div className="flex items-center gap-2">
                           <Button
                             onClick={(e) => {
-                              e.stopPropagation();
-                              saveEdit(config);
+                              e.stopPropagation()
+                              saveEdit(config)
                             }}
                             size="sm"
                             disabled={savingKey === config.key}
@@ -209,8 +232,8 @@ const ConfigList: React.FC<ConfigListProps> = ({
                           </Button>
                           <Button
                             onClick={(e) => {
-                              e.stopPropagation();
-                              cancelEdit();
+                              e.stopPropagation()
+                              cancelEdit()
                             }}
                             variant="outline"
                             size="sm"
@@ -219,7 +242,7 @@ const ConfigList: React.FC<ConfigListProps> = ({
                             Cancel
                           </Button>
                         </div>
-                        <div className="flex flex-col items-center gap-1">
+                        <div className="flex flex-col items-center gap-1.5">
                           <div className="w-full border border-border rounded-md p-1 bg-white flex items-center justify-center overflow-hidden">
                             {editValue ? (
                               <img
@@ -227,12 +250,14 @@ const ConfigList: React.FC<ConfigListProps> = ({
                                 alt="Preview"
                                 className="w-full max-w-[200px] h-fit max-h-[160px]  object-contain"
                                 onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.style.display = 'none';
+                                  const target = e.target as HTMLImageElement
+                                  target.style.display = 'none'
                                 }}
                               />
                             ) : (
-                              <p className="text-sm text-muted-foreground">No image URL</p>
+                              <p className="text-sm text-muted-foreground">
+                                No image URL
+                              </p>
                             )}
                           </div>
                           <div onClick={(e) => e.stopPropagation()}>
@@ -240,14 +265,19 @@ const ConfigList: React.FC<ConfigListProps> = ({
                               accept="image/*"
                               onFileChange={async (file) => {
                                 try {
-                                  setUploadingKey(config.key);
-                                  const { url } = await uploadFileService(file);
-                                  setEditValue(url);
-                                  await saveEdit(config, url);
+                                  setUploadingKey(config.key)
+                                  const { url } = await uploadFileService(file)
+                                  setEditValue(url)
+                                  await saveEdit(config, url)
                                 } catch (err: any) {
-                                  toast({ title: 'Upload failed', description: err?.message || 'Could not upload image', variant: 'destructive' });
+                                  toast({
+                                    title: 'Upload failed',
+                                    description:
+                                      err?.message || 'Could not upload image',
+                                    variant: 'destructive',
+                                  })
                                 } finally {
-                                  setUploadingKey(null);
+                                  setUploadingKey(null)
                                 }
                               }}
                             >
@@ -256,7 +286,9 @@ const ConfigList: React.FC<ConfigListProps> = ({
                                 size="sm"
                                 disabled={uploadingKey === config.key}
                               >
-                                {uploadingKey === config.key ? 'Uploading...' : 'Upload Image'}
+                                {uploadingKey === config.key
+                                  ? 'Uploading...'
+                                  : 'Upload Image'}
                               </Button>
                             </DaImportFile>
                           </div>
@@ -287,7 +319,8 @@ const ConfigList: React.FC<ConfigListProps> = ({
                         className="w-full"
                       />
                     )}
-                    {(config.valueType === 'string' || config.valueType === 'color') && (
+                    {(config.valueType === 'string' ||
+                      config.valueType === 'color') && (
                       <Input
                         type="text"
                         className="w-full text-sm"
@@ -295,11 +328,16 @@ const ConfigList: React.FC<ConfigListProps> = ({
                         onChange={(e) => setEditValue(e.target.value)}
                       />
                     )}
-                    {(config.valueType === 'object' || config.valueType === 'array') && (
+                    {(config.valueType === 'object' ||
+                      config.valueType === 'array') && (
                       <Textarea
                         className="w-full font-mono text-sm bg-white"
                         rows={3}
-                        value={typeof editValue === 'string' ? editValue : JSON.stringify(editValue, null, 2)}
+                        value={
+                          typeof editValue === 'string'
+                            ? editValue
+                            : JSON.stringify(editValue, null, 2)
+                        }
                         onChange={(e) => setEditValue(e.target.value)}
                       />
                     )}
@@ -308,8 +346,8 @@ const ConfigList: React.FC<ConfigListProps> = ({
                       <div className="flex items-center gap-2">
                         <Button
                           onClick={(e) => {
-                            e.stopPropagation();
-                            saveEdit(config);
+                            e.stopPropagation()
+                            saveEdit(config)
                           }}
                           size="sm"
                           disabled={savingKey === config.key}
@@ -318,8 +356,8 @@ const ConfigList: React.FC<ConfigListProps> = ({
                         </Button>
                         <Button
                           onClick={(e) => {
-                            e.stopPropagation();
-                            cancelEdit();
+                            e.stopPropagation()
+                            cancelEdit()
                           }}
                           variant="outline"
                           size="sm"
@@ -336,37 +374,49 @@ const ConfigList: React.FC<ConfigListProps> = ({
                       <div className="flex items-center space-x-2">
                         <div
                           className="w-8 h-8 border border-border rounded-md"
-                          style={{ backgroundColor: (localValues[config.key] ?? config.value) as any }}
+                          style={{
+                            backgroundColor: (localValues[config.key] ??
+                              config.value) as any,
+                          }}
                         />
-                        <p className="text-sm font-mono">{(localValues[config.key] ?? config.value) as any}</p>
+                        <p className="text-sm font-mono">
+                          {(localValues[config.key] ?? config.value) as any}
+                        </p>
                       </div>
                     ) : config.valueType === 'image_url' ? (
                       <div className="space-y-3">
                         <div
                           className="cursor-text"
                           onClick={(e) => {
-                            e.stopPropagation();
-                            startEdit(config);
+                            e.stopPropagation()
+                            startEdit(config)
                           }}
                         >
                           <p className="text-sm font-mono break-all">
-                            {(localValues[config.key] ?? config.value) as any || 'Click to enter image URL'}
+                            {((localValues[config.key] ??
+                              config.value) as any) ||
+                              'Click to enter image URL'}
                           </p>
                         </div>
                         <div className="flex flex-col items-center gap-0">
                           <div className="w-full border border-border rounded-md p-1 bg-white flex items-center justify-center overflow-hidden">
                             {(localValues[config.key] ?? config.value) ? (
                               <img
-                                src={(localValues[config.key] ?? config.value) as any}
+                                src={
+                                  (localValues[config.key] ??
+                                    config.value) as any
+                                }
                                 alt="Preview"
                                 className="w-full max-w-[200px] h-fit max-h-[160px] object-contain"
                                 onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.style.display = 'none';
+                                  const target = e.target as HTMLImageElement
+                                  target.style.display = 'none'
                                 }}
                               />
                             ) : (
-                              <p className="text-sm text-muted-foreground">No image URL</p>
+                              <p className="text-sm text-muted-foreground">
+                                No image URL
+                              </p>
                             )}
                           </div>
                           <div onClick={(e) => e.stopPropagation()}>
@@ -374,14 +424,22 @@ const ConfigList: React.FC<ConfigListProps> = ({
                               accept="image/*"
                               onFileChange={async (file) => {
                                 try {
-                                  setUploadingKey(config.key);
-                                  const { url } = await uploadFileService(file);
-                                  setLocalValues((prev) => ({ ...prev, [config.key]: url }));
-                                  await saveEdit(config, url);
+                                  setUploadingKey(config.key)
+                                  const { url } = await uploadFileService(file)
+                                  setLocalValues((prev) => ({
+                                    ...prev,
+                                    [config.key]: url,
+                                  }))
+                                  await saveEdit(config, url)
                                 } catch (err: any) {
-                                  toast({ title: 'Upload failed', description: err?.message || 'Could not upload image', variant: 'destructive' });
+                                  toast({
+                                    title: 'Upload failed',
+                                    description:
+                                      err?.message || 'Could not upload image',
+                                    variant: 'destructive',
+                                  })
                                 } finally {
-                                  setUploadingKey(null);
+                                  setUploadingKey(null)
                                 }
                               }}
                             >
@@ -390,7 +448,9 @@ const ConfigList: React.FC<ConfigListProps> = ({
                                 size="sm"
                                 disabled={uploadingKey === config.key}
                               >
-                                {uploadingKey === config.key ? 'Uploading...' : 'Upload Image'}
+                                {uploadingKey === config.key
+                                  ? 'Uploading...'
+                                  : 'Upload Image'}
                               </Button>
                             </DaImportFile>
                           </div>
@@ -398,7 +458,10 @@ const ConfigList: React.FC<ConfigListProps> = ({
                       </div>
                     ) : (
                       <p className="text-sm text-foreground whitespace-pre-wrap break-words font-mono">
-                        {formatValue(localValues[config.key] ?? config.value, config.valueType)}
+                        {formatValue(
+                          localValues[config.key] ?? config.value,
+                          config.valueType,
+                        )}
                       </p>
                     )}
                   </div>
@@ -409,7 +472,7 @@ const ConfigList: React.FC<ConfigListProps> = ({
         </div>
       ))}
     </div>
-  );
-};
+  )
+}
 
-export default ConfigList;
+export default ConfigList

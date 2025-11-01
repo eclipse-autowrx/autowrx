@@ -31,12 +31,13 @@ const DaNavUser = () => {
   const { data: user } = useSelfProfileQuery()
 
   return (
-    <div className="flex w-full">
+    <div className="flex w-full justify-end">
       {user ? (
         <DaUserMenu user={user} />
       ) : (
         <Button
           variant="outline"
+          size="sm"
           onClick={() => {
             setOpenLoginDialog(true) // Open the login dialog
           }}

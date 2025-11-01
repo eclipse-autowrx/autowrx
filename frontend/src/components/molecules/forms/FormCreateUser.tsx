@@ -113,7 +113,7 @@ const FormCreateUser = ({ onClose, updateData }: FormCreateUserProps) => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex max-h-[80vh] w-[30vw] flex-col bg-background p-4 lg:w-[25vw]"
+      className="flex flex-col bg-background"
     >
       {/* Title */}
       <h2 className="text-lg font-semibold text-primary">
@@ -121,7 +121,7 @@ const FormCreateUser = ({ onClose, updateData }: FormCreateUserProps) => {
       </h2>
 
       {/* Content */}
-      <div className="mt-4 flex flex-col gap-1">
+      <div className="mt-4 flex flex-col gap-1.5">
         <Label>Name *</Label>
         <Input
           value={data.name}
@@ -132,7 +132,7 @@ const FormCreateUser = ({ onClose, updateData }: FormCreateUserProps) => {
       </div>
 
       {isCreate && (
-        <div className="mt-4 flex flex-col gap-1">
+        <div className="mt-4 flex flex-col gap-1.5">
           <Label>Email *</Label>
           <Input
             value={data.email}
@@ -143,7 +143,7 @@ const FormCreateUser = ({ onClose, updateData }: FormCreateUserProps) => {
         </div>
       )}
       {!config.strictAuth && (
-        <div className="mt-4 flex flex-col gap-1">
+        <div className="mt-4 flex flex-col gap-1.5">
           <Label>{isCreate ? 'Password *' : 'Password'}</Label>
           <Input
             value={data.password}

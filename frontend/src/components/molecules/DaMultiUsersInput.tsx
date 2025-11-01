@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -9,7 +9,13 @@
 import clsx from 'clsx'
 import { TbX } from 'react-icons/tb'
 import { InvitedUser } from '@/types/user.type'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/atoms/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/atoms/select'
 import { AccessLevel } from '../organisms/AccessInvitation'
 import { useEffect } from 'react'
 
@@ -51,15 +57,13 @@ const DaMultiUsersInput = ({
     >
       <div className="flex flex-1 flex-col">
         {selectedUsers.length > 0 && (
-          <div className="mb-[6px] flex flex-wrap gap-1">
+          <div className="mb-[6px] flex flex-wrap gap-1.5">
             {selectedUsers.map((user) => (
               <div
                 key={user.id}
                 className="flex cursor-default items-center rounded border border-muted-foreground/50 px-1 py-0.5"
               >
-                <span className="text-sm text-foreground">
-                  {user.name}
-                </span>
+                <span className="text-sm text-foreground">{user.name}</span>
                 <button
                   className="-m-0.5 ml-1 p-0.5"
                   onClick={() => onRemoveUser(user)}
@@ -85,7 +89,10 @@ const DaMultiUsersInput = ({
 
       {accessLevels && selectedUsers.length > 0 && (
         <div className="ml-auto sticky self-start -top-[5px] -mt-[5px] -mb-1 -mr-1">
-          <Select value={accessLevelId} onValueChange={(value) => onAccessLevelIdChange(value)}>
+          <Select
+            value={accessLevelId}
+            onValueChange={(value) => onAccessLevelIdChange(value)}
+          >
             <SelectTrigger className="h-7 border-none shadow-none!">
               <SelectValue />
             </SelectTrigger>

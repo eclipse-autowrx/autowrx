@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -7,7 +7,13 @@
 // SPDX-License-Identifier: MIT
 
 import { useState } from 'react'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/atoms/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/atoms/select'
 import { Input } from '@/components/atoms/input'
 import { CustomPropertyType } from '@/types/property.type'
 import { PropertyType } from '@/types/property.type'
@@ -64,7 +70,7 @@ const DaCustomPropertyItem = ({
   const [showTrashButton, setShowTrashButton] = useState(false)
   return (
     <div
-      className="grid grid-cols-12 space-x-2 items-center mt-1"
+      className="grid grid-cols-12 space-x-2 gap-2 items-center mt-1"
       onMouseEnter={() => setShowTrashButton(true)}
       onMouseLeave={() => setShowTrashButton(false)}
     >
@@ -147,7 +153,7 @@ const DaCustomPropertyItem = ({
             showTrashButton ? 'opacity-100' : 'opacity-100',
           )}
         >
-          <TbTrash className="size-6" />
+          <TbTrash className="size-4" />
         </div>
       </div>
     </div>

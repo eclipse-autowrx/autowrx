@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -7,7 +7,11 @@
 // SPDX-License-Identifier: MIT
 
 import { useQuery } from '@tanstack/react-query'
-import { listPlugins, deletePlugin, type Plugin } from '@/services/plugin.service'
+import {
+  listPlugins,
+  deletePlugin,
+  type Plugin,
+} from '@/services/plugin.service'
 import { Button } from '@/components/atoms/button'
 import PluginForm from '@/components/organisms/PluginForm'
 import { useState } from 'react'
@@ -27,7 +31,15 @@ const PluginList = () => {
     <div className="p-6">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-semibold text-foreground">Plugins</h2>
-        <Button className="px-3" onClick={() => { setEditId(undefined); setOpenForm(true) }}>New</Button>
+        <Button
+          className="px-3"
+          onClick={() => {
+            setEditId(undefined)
+            setOpenForm(true)
+          }}
+        >
+          New
+        </Button>
       </div>
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading...</p>
@@ -37,19 +49,34 @@ const PluginList = () => {
             <div
               key={p.id}
               className="rounded-md border border-input bg-background p-3 shadow-sm flex flex-col cursor-pointer hover:shadow-medium transition"
-              onClick={() => { setEditId(p.id); setOpenForm(true) }}
+              onClick={() => {
+                setEditId(p.id)
+                setOpenForm(true)
+              }}
             >
               <div className="relative aspect-square w-full rounded overflow-hidden bg-white">
-                <img src={p.image || '/imgs/plugin.png'} alt={p.name} className="absolute p-6 inset-0 w-full h-full object-contain" />
+                <img
+                  src={p.image || '/imgs/plugin.png'}
+                  alt={p.name}
+                  className="absolute p-6 inset-0 w-full h-full object-contain"
+                />
               </div>
-              <h3 className="text-base font-semibold text-foreground mt-3 truncate">{p.name}</h3>
-              <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap break-words">{p.description || ''}</p>
-              <div className="mt-1 flex justify-end gap-1">
+              <h3 className="text-base font-semibold text-foreground mt-3 truncate">
+                {p.name}
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap break-words">
+                {p.description || ''}
+              </p>
+              <div className="mt-1 flex justify-end gap-1.5">
                 <Button
                   title="Edit"
                   variant="ghost"
                   size="icon"
-                  onClick={(e) => { e.stopPropagation(); setEditId(p.id); setOpenForm(true) }}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setEditId(p.id)
+                    setOpenForm(true)
+                  }}
                 >
                   <TbPencil className="text-xl" />
                 </Button>
@@ -58,7 +85,7 @@ const PluginList = () => {
                   variant="ghost"
                   size="icon"
                   onClick={async (e) => {
-                    e.stopPropagation();
+                    e.stopPropagation()
                     if (!confirm('Delete this plugin?')) return
                     try {
                       await deletePlugin(p.id)
@@ -78,11 +105,14 @@ const PluginList = () => {
           )}
         </div>
       )}
-      <PluginForm open={openForm} onClose={() => setOpenForm(false)} mode={editId ? 'edit' : 'create'} pluginId={editId} />
+      <PluginForm
+        open={openForm}
+        onClose={() => setOpenForm(false)}
+        mode={editId ? 'edit' : 'create'}
+        pluginId={editId}
+      />
     </div>
   )
 }
 
 export default PluginList
-
-

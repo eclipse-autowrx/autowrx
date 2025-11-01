@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -56,7 +56,7 @@ const PageUserProfile = () => {
   return (
     <div className="flex w-full h-full bg-slate-200 p-2">
       <div className="flex w-full h-full justify-center bg-white rounded-xl ">
-        <div className="flex flex-col w-full max-w-[70vw] xl:max-w-[50vw] 2xl:max-w-[40vw]">
+        <div className="flex flex-col w-full max-w-[70vw] xl:max-w-[60vw] 2xl:max-w-[50vw]">
           <div className="flex flex-col items-center container mt-6 w-full">
             <div className="flex flex-col w-full">
               <h1 className="text-2xl font-semibold text-foreground">
@@ -69,13 +69,19 @@ const PageUserProfile = () => {
             <div className="flex flex-col w-full mt-8">
               <div className="flex items-center">
                 <div className="flex relative">
-                  <Avatar className="w-24 h-24 border">
+                  <Avatar className="w-24 h-24 border aspect-auto">
                     <AvatarImage
-                      src={user?.image_file ? user.image_file : 'imgs/profile.png'}
+                      src={
+                        user?.image_file ? user.image_file : 'imgs/profile.png'
+                      }
                       alt={user?.name || 'Profile'}
                     />
                     <AvatarFallback>
-                      <img src="/imgs/profile.png" alt="profile" className="h-full w-full rounded-full object-cover" />
+                      <img
+                        src="/imgs/profile.png"
+                        alt="profile"
+                        className="h-full w-full rounded-full object-cover"
+                      />
                     </AvatarFallback>
                   </Avatar>
                   <DaImportFile
@@ -93,21 +99,21 @@ const PageUserProfile = () => {
                       <Input
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="h-6 w-full max-w-[350px]"
+                        className="h-8 w-full max-w-[350px]"
                       />
                     ) : (
-                      <div className="truncate max-w-[350px]">
+                      <div className="truncate max-w-[450px]">
                         <h2 className="text-xl font-semibold text-foreground truncate">
                           {user?.name}
                         </h2>
                       </div>
                     )}
                     {isEditing ? (
-                      <div>
+                      <div className="flex gap-2 ml-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="mr-2"
+                          className=""
                           onClick={() => setIsEditing(false)}
                         >
                           Cancel
@@ -127,9 +133,7 @@ const PageUserProfile = () => {
                     )}
                   </div>
 
-                  <p className="text-base mx-1 mt-1">
-                    {user?.email}
-                  </p>
+                  <p className="text-base mx-1 mt-1">{user?.email}</p>
                 </div>
               </div>
               {/* <div className="flex flex-col mt-8">

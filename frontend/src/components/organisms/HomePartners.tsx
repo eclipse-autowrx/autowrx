@@ -43,7 +43,7 @@ const HomePartners: FC<HomePartnersProps> = ({ items, children }) => {
               </div>
             </div>
 
-            <div className="flex gap-16 2xl:gap-24 mx-12 pb-6 xl:pb-0">
+            <div className="flex gap-1.56 2xl:gap-24 mx-12 pb-6 xl:pb-0">
               {items?.map((group: any, gIndex: number) => (
                 <div key={gIndex} className="flex flex-col w-fit">
                   <p className="text-sm font-medium xl:flex hidden mt-2 justify-center text-muted-foreground">
@@ -70,7 +70,7 @@ const HomePartners: FC<HomePartnersProps> = ({ items, children }) => {
             </div>
           </>
         ) : (
-          <div className="flex gap-8 lg:gap-16 max-w-[1400px] px-8 md:flex-row flex-col">
+          <div className="flex gap-8 lg:gap-1.56 max-w-[1400px] px-8 md:flex-row flex-col">
             <div
               className={cn(
                 'flex flex-1 min-w-0 flex-col font-medium',

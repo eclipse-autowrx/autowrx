@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -7,7 +7,13 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useState, useEffect } from 'react'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/atoms/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/atoms/select'
 import { Button } from '@/components/atoms/button'
 import DaCustomPropertyItem from '../vehicle_properties/DaCustomPropertyItem'
 import { CustomPropertyType } from '@/types/property.type'
@@ -111,13 +117,10 @@ const FormUpdateVehicleProperties = ({
   const vehicleTypes = vehicleClasses.map((vehicleClass) => vehicleClass.name)
 
   return (
-    <div className="flex flex-col mt-4">
-      <p className="text-base font-semibold">Category</p>
-      <Select
-        value={vehicleCategory}
-        onValueChange={setVehicleCategory}
-      >
-        <SelectTrigger className="bg-background rounded-lg mt-1 text-sm">
+    <div className="flex flex-col mt-2">
+      <p className="text-sm font-semibold">Category</p>
+      <Select value={vehicleCategory} onValueChange={setVehicleCategory}>
+        <SelectTrigger className="bg-background rounded-lg mt-2 text-sm">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -129,11 +132,9 @@ const FormUpdateVehicleProperties = ({
         </SelectContent>
       </Select>
 
-      <p className="text-base font-semibold mt-6">
-        Custom Properties
-      </p>
+      <p className="text-sm font-semibold mt-6">Custom Properties</p>
 
-      <div className="flex flex-col space-y-2 max-h-[40vh] overflow-auto">
+      <div className="flex flex-col space-y-2 max-h-[40vh] overflow-auto p-1">
         {customProperties && customProperties.length > 0 ? (
           customProperties.map((property, index) => (
             <DaCustomPropertyItem
@@ -155,7 +156,7 @@ const FormUpdateVehicleProperties = ({
       <Button
         variant="outline"
         onClick={addCustomProperty}
-        className="w-full mt-2"
+        className="w-full mt-2 m-1"
         size="sm"
       >
         <TbPlus className="size-4 mr-1" />

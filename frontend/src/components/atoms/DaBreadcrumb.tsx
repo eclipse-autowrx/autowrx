@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -26,7 +26,7 @@ const DaBreadcrumbList = React.forwardRef<
   <ol
     ref={ref}
     className={cn(
-      'flex flex-wrap items-center gap-1.5 wrap-break-word text-sm text-muted-foreground sm:gap-2.5',
+      'flex flex-wrap items-center gap-1.5.5 wrap-break-word text-sm text-muted-foreground sm:gap-2.5',
       className,
     )}
     {...props}
@@ -40,7 +40,7 @@ const DaBreadcrumbItem = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <li
     ref={ref}
-    className={cn('inline-flex items-center gap-1.5', className)}
+    className={cn('inline-flex items-center gap-1.5.5', className)}
     {...props}
   />
 ))
