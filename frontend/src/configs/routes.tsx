@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -25,12 +25,12 @@ import PageHome from '@/pages/PageHome.tsx'
 import PagePrototypeLibrary from '@/pages/PagePrototypeLibrary.tsx'
 import PagePrototypeDetail from '@/pages/PagePrototypeDetail.tsx'
 // import PageAuthSuccess from '@/pages/PageAuthSuccess.ts'
-// import { retry } from '@/lib/retry.ts'
+import { retry } from '@/lib/retry.ts'
 // const PageAbout = lazy(() => retry(() => import('@/pages/PageAbout')))
+const PageVehicleApi = lazy(() => retry(() => import('@/pages/PageVehicleApi')))
 // const PageModelArchitecture = lazy(
 //   () => import('@/pages/PageModelArchitecture'),
 // )
-// const PageVehicleApi = lazy(() => retry(() => import('@/pages/PageVehicleApi')))
 // const PagePrototypeDetail = lazy(() =>
 //   retry(() => import('@/pages/PagePrototypeDetail')),
 // )
@@ -67,8 +67,6 @@ import PagePrototypeDetail from '@/pages/PagePrototypeDetail.tsx'
 // const PageProjectEditor = lazy(() =>
 //   retry(() => import('@/pages/test-ui/PageProjectEditor')),
 // )
-
-
 
 // const PageManageFeatures = lazy(() =>
 //   retry(() => import('@/pages/PageManageFeatures')),
@@ -285,23 +283,22 @@ const routesConfig: RouteConfig[] = [
                   </SuspenseProvider>
                 ),
               },
-              // TODO: Uncomment these routes after migrating PageVehicleApi, PageModelArchitecture
-              // {
-              //   path: 'api',
-              //   element: (
-              //     <SuspenseProvider>
-              //       <PageVehicleApi />
-              //     </SuspenseProvider>
-              //   ),
-              // },
-              // {
-              //   path: 'api/:api',
-              //   element: (
-              //     <SuspenseProvider>
-              //       <PageVehicleApi />
-              //     </SuspenseProvider>
-              //   ),
-              // },
+              {
+                path: 'api',
+                element: (
+                  <SuspenseProvider>
+                    <PageVehicleApi />
+                  </SuspenseProvider>
+                ),
+              },
+              {
+                path: 'api/:api',
+                element: (
+                  <SuspenseProvider>
+                    <PageVehicleApi />
+                  </SuspenseProvider>
+                ),
+              },
               // {
               //   path: 'library',
               //   element: (

@@ -77,7 +77,12 @@ const DaVehicleProperties = ({
           >
             Update property
           </Button>
-          <Button variant="outline" size="sm" onClick={toggleVisibility}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-primary"
+            onClick={toggleVisibility}
+          >
             <div className="pr-1 w-12">{isVisible ? 'Hide' : 'Show'}</div>
             {isVisible ? <TbChevronRight /> : <TbChevronDown />}
           </Button>
