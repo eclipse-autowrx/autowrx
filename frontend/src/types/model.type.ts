@@ -68,6 +68,8 @@ export type Model = {
   members?: User[]
   state?: 'draft' | 'released' | 'blocked'
   extend?: any
+  model_template_id?: string | null
+  custom_template?: any
 }
 
 export type Prototype = {

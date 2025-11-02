@@ -38,6 +38,8 @@ const createModel = {
       })
     ),
     state: Joi.string().max(255).default('draft'),
+    model_template_id: Joi.string().custom(objectId).allow(null),
+    custom_template: Joi.any(),
   }),
 };
 
@@ -87,6 +89,8 @@ const updateModel = {
         })
       ),
       state: Joi.string().max(255),
+      model_template_id: Joi.string().custom(objectId).allow(null),
+      custom_template: Joi.any(),
     })
     .min(1),
   params: Joi.object().keys({

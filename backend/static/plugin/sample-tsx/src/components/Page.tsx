@@ -27,7 +27,7 @@ export default function Page({ data, config }: PageProps) {
   }, []); // Empty dependency array means this effect runs once on mount and cleans up on unmount.
   
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-slate-500 text-white">
+    <div className="min-h-screen w-full flex items-center justify-center bg-slate-500 text-black">
       <div className="text-center space-y-4">
         <div className="text-2xl font-bold">Local Count: {localCount}</div>
         <div className="text-lg">Current Time: {currentTime}</div>

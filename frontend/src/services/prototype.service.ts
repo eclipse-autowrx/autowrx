@@ -107,12 +107,12 @@ export const saveRecentPrototype = async (
   type: string,
   page: string,
 ) => {
-  return cacheAxios.post('/save-to-db', {
-    userId,
-    referenceId,
-    type,
-    page,
-  })
+  // return cacheAxios.post('/save-to-db', {
+  //   userId,
+  //   referenceId,
+  //   type,
+  //   page,
+  // })
 }
 
 export const countCodeExecution = async (prototypeId: string) => {

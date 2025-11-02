@@ -18,6 +18,7 @@
     "@digital-auto/image-area-lib": "1.0.2",
     "@digital-auto/velocitas-project-generator": "^1.0.1",
     "@fluentui/react": "^8.122.15",
+    "@hello-pangea/dnd": "^18.0.1",
     "@monaco-editor/react": "^4.6.0",
     "@radix-ui/react-aspect-ratio": "^1.1.7",
     "@radix-ui/react-avatar": "^1.1.10",

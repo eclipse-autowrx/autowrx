@@ -47,7 +47,7 @@
         clearInterval(intervalId);
       };
     }, []);
-    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "min-h-screen w-full flex items-center justify-center bg-slate-500 text-white", children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "text-center space-y-4", children: [
+    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "min-h-screen w-full flex items-center justify-center bg-slate-500 text-black", children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "text-center space-y-4", children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "text-2xl font-bold", children: [
         "Local Count: ",
         localCount

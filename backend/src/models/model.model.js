@@ -92,6 +92,15 @@ const modelSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
     },
+    model_template_id: {
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: 'ModelTemplate',
+      default: null,
+    },
+    custom_template: {
+      type: mongoose.SchemaTypes.Mixed,
+      default: null,
+    },
   },
   {
     timestamps: true,

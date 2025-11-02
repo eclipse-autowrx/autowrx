@@ -18,6 +18,8 @@ import {
   TbListCheck,
   TbMessagePlus,
   TbRoute,
+  TbDotsVertical,
+  TbPlus,
 } from 'react-icons/tb'
 import { saveRecentPrototype } from '@/services/prototype.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
@@ -32,6 +34,21 @@ import PrototypeTabDashboard from '@/components/organisms/PrototypeTabDashboard'
 import PrototypeTabFeedback from '@/components/organisms/PrototypeTabFeedback'
 import DaRuntimeControl from '@/components/molecules/dashboard/DaRuntimeControl'
 import PrototypeOverview from '@/components/organisms/PrototypeOverview'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/atoms/dropdown-menu'
+import { Button } from '@/components/atoms/button'
+import AddonSelect from '@/components/molecules/AddonSelect'
+import { Plugin } from '@/services/plugin.service'
+import { updateModelService } from '@/services/model.service'
+import { toast } from 'react-toastify'
+import { Dialog, DialogContent } from '@/components/atoms/dialog'
+import CustomPrototypeTabs from '@/components/molecules/CustomPrototypeTabs'
+import PagePrototypePlugin from '@/pages/PagePrototypePlugin'
+import CustomTabEditor from '@/components/organisms/CustomTabEditor'
 
 interface ViewPrototypeProps {
   display?: 'tree' | 'list'
@@ -50,6 +67,9 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
   const [isDefaultTab, setIsDefaultTab] = useState(false)
   const [openStagingDialog, setOpenStagingDialog] = useState(false)
   const [showRt, setShowRt] = useState(false)
+  const [isModelOwner, setIsModelOwner] = useState(false)
+  const [openAddonDialog, setOpenAddonDialog] = useState(false)
+  const [openManageAddonsDialog, setOpenManageAddonsDialog] = useState(false)
 
   // Populate store when prototype is fetched
   useEffect(() => {
@@ -72,6 +92,92 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
       saveRecentPrototype(user.id, prototype.id, 'prototype', tab)
     }
   }, [prototype, tab, user])
+
+  useEffect(() => {
+    setIsModelOwner(
+      !!(user && model?.created_by && user.id === model.created_by.id)
+    )
+  }, [user, model])
+
+  const handleAddonSelect = async (plugin: Plugin, label: string) => {
+    if (!model_id || !model) {
+      toast.error('Model not found')
+      return
+    }
+
+    try {
+      // Get current custom_template or create new one
+      const currentTemplate = model.custom_template || {
+        model_tabs: [],
+        prototype_tabs: [],
+      }
+
+      // Add the plugin to prototype_tabs if not already exists
+      const pluginExists = currentTemplate.prototype_tabs?.some(
+        (tab: any) => tab.plugin === plugin.slug
+      )
+
+      if (pluginExists) {
+        toast.info('This addon is already added to prototype tabs')
+        setOpenAddonDialog(false)
+        return
+      }
+
+      // Create new tab entry with custom label (store slug, not id)
+      const newTab = {
+        label: label,
+        plugin: plugin.slug,
+      }
+
+      const updatedTemplate = {
+        ...currentTemplate,
+        prototype_tabs: [...(currentTemplate.prototype_tabs || []), newTab],
+      }
+
+      // Save to model
+      await updateModelService(model_id, {
+        custom_template: updatedTemplate,
+      })
+
+      toast.success(`Added ${label} to prototype tabs`)
+      setOpenAddonDialog(false)
+
+      // Optionally refresh the model data
+      window.location.reload()
+    } catch (error) {
+      console.error('Failed to add addon:', error)
+      toast.error('Failed to add addon. Please try again.')
+    }
+  }
+
+  const handleSaveCustomTabs = async (updatedTabs: Array<{ label: string; plugin: string }>) => {
+    if (!model_id || !model) {
+      toast.error('Model not found')
+      return
+    }
+
+    try {
+      const currentTemplate = model.custom_template || {
+        model_tabs: [],
+        prototype_tabs: [],
+      }
+
+      const updatedTemplate = {
+        ...currentTemplate,
+        prototype_tabs: updatedTabs,
+      }
+
+      await updateModelService(model_id, {
+        custom_template: updatedTemplate,
+      })
+
+      toast.success('Custom tabs updated successfully')
+      window.location.reload()
+    } catch (error) {
+      console.error('Failed to update custom tabs:', error)
+      toast.error('Failed to update custom tabs. Please try again.')
+    }
+  }
 
   return prototype ? (
     <div className="flex flex-col w-full h-full relative">
@@ -107,7 +213,21 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
             <TbMessagePlus className="w-5 h-5 mr-2" />
             Feedback
           </DaTabItem>
+          <CustomPrototypeTabs
+            customTabs={model?.custom_template?.prototype_tabs}
+          />
         </div>
+        {isModelOwner && (
+          <div className="flex w-fit h-full items-center">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setOpenAddonDialog(true)}
+            >
+              <TbPlus className="w-5 h-5" />
+            </Button>
+          </div>
+        )}
         <div className="grow"></div>
         {
           <DaDialog
@@ -139,6 +259,26 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
             />
           </DaDialog>
         }
+        {isModelOwner && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-[52px] w-12 rounded-none hover:bg-accent"
+              >
+                <TbDotsVertical className="w-5 h-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onSelect={() => setOpenManageAddonsDialog(true)}
+              >
+                Manage Addons
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
       <div className="flex flex-col h-full overflow-y-auto relative">
@@ -152,9 +292,30 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           {tab == 'code' && <PrototypeTabCode />}
           {tab == 'dashboard' && <PrototypeTabDashboard />}
           {tab == 'feedback' && <PrototypeTabFeedback />}
+          {tab == 'plug' && <PagePrototypePlugin />}
         </div>
         {showRt && <DaRuntimeControl />}
       </div>
+
+      {/* Addon Select Dialog */}
+      <Dialog open={openAddonDialog} onOpenChange={setOpenAddonDialog}>
+        <DialogContent className="max-w-2xl p-0">
+          <AddonSelect
+            onSelect={handleAddonSelect}
+            onCancel={() => setOpenAddonDialog(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Custom Tab Editor Dialog */}
+      <CustomTabEditor
+        open={openManageAddonsDialog}
+        onOpenChange={setOpenManageAddonsDialog}
+        tabs={model?.custom_template?.prototype_tabs || []}
+        onSave={handleSaveCustomTabs}
+        title="Manage Prototype Tabs"
+        description="Edit labels, reorder, and remove custom prototype tabs"
+      />
     </div>
   ) : (
     <div className="flex flex-col items-center justify-center w-full h-full gap-4">

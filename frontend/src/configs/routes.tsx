@@ -24,6 +24,8 @@ import PageModelDetail from '@/pages/PageModelDetail.tsx'
 import PageHome from '@/pages/PageHome.tsx'
 import PagePrototypeLibrary from '@/pages/PagePrototypeLibrary.tsx'
 import PagePrototypeDetail from '@/pages/PagePrototypeDetail.tsx'
+import PagePrototypePlugin from '@/pages/PagePrototypePlugin.tsx'
+import PageModelPlugin from '@/pages/PageModelPlugin.tsx'
 // import PageAuthSuccess from '@/pages/PageAuthSuccess.ts'
 import { retry } from '@/lib/retry.ts'
 // const PageAbout = lazy(() => retry(() => import('@/pages/PageAbout')))
@@ -296,6 +298,14 @@ const routesConfig: RouteConfig[] = [
                 element: (
                   <SuspenseProvider>
                     <PageVehicleApi />
+                  </SuspenseProvider>
+                ),
+              },
+              {
+                path: 'plugin',
+                element: (
+                  <SuspenseProvider>
+                    <PageModelPlugin />
                   </SuspenseProvider>
                 ),
               },
