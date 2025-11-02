@@ -23,6 +23,6 @@ export function unmount(el) {
 
 // Also register to global namespace for backwards compatibility
 globalThis.DAPlugins = globalThis.DAPlugins || {}
-globalThis.DAPlugins['sample-esm'] = { components, mount, unmount }
+globalThis.DAPlugins['page-plugin'] = { components, mount, unmount }
 
 

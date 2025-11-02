@@ -21,7 +21,7 @@ const createModel = {
     main_api: Joi.string().required().max(255),
     model_home_image_file: Joi.string()
       .allow('')
-      .default('/imgs/default-model-image.png'),
+      .default('/images/default-model-image.png'),
     detail_image_file: Joi.string().allow(''),
     model_files: Joi.object(),
     name: Joi.string().required().max(255),

@@ -9,7 +9,7 @@
 import { FC, useEffect, useState } from 'react'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { Spinner } from '@/components/atoms/spinner'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import {
@@ -56,6 +56,8 @@ interface ViewPrototypeProps {
 
 const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
   const { model_id, prototype_id, tab } = useParams()
+  const [searchParams] = useSearchParams()
+  const pluginId = searchParams.get('plugid')
   const { data: user } = useSelfProfileQuery()
   const { data: model } = useCurrentModel()
   const { data: fetchedPrototype, isLoading: isPrototypeLoading } =
@@ -292,7 +294,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           {tab == 'code' && <PrototypeTabCode />}
           {tab == 'dashboard' && <PrototypeTabDashboard />}
           {tab == 'feedback' && <PrototypeTabFeedback />}
-          {tab == 'plug' && <PagePrototypePlugin />}
+          {tab == 'plug' && <PagePrototypePlugin key={pluginId || 'no-plugin'} />}
         </div>
         {showRt && <DaRuntimeControl />}
       </div>

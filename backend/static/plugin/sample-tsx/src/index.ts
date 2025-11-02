@@ -19,7 +19,7 @@ export function unmount(el: HTMLElement) {
 // Optional global registration
 if (typeof window !== 'undefined') {
   ;(window as any).DAPlugins = (window as any).DAPlugins || {}
-  ;(window as any).DAPlugins['sample-tsx'] = { components, mount, unmount }
+  ;(window as any).DAPlugins['page-plugin'] = { components, mount, unmount }
 }
 
 

@@ -74,7 +74,7 @@
   if (typeof window !== "undefined") {
     ;
     window.DAPlugins = window.DAPlugins || {};
-    window.DAPlugins["sample-tsx"] = { components, mount, unmount };
+    window.DAPlugins["page-plugin"] = { components, mount, unmount };
   }
 })();
 //# sourceMappingURL=index.js.map

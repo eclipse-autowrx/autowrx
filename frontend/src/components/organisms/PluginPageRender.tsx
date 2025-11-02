@@ -6,9 +6,9 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Spinner } from '@/components/atoms/spinner'
-import { listPlugins, Plugin } from '@/services/plugin.service'
+import { getPluginById, getPluginBySlug } from '@/services/plugin.service'
 
 interface PluginPageRenderProps {
   plugin_id: string
@@ -17,213 +17,194 @@ interface PluginPageRenderProps {
 
 const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data }) => {
   const containerRef = useRef<HTMLDivElement | null>(null)
-  const [loaded, setLoaded] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [plugin, setPlugin] = useState<Plugin | null>(null)
-  const pluginReadyRef = useRef<Promise<void> | null>(null)
+  const [PluginComponent, setPluginComponent] = useState<React.ComponentType<any> | null>(null)
+  const [loadedPluginName, setLoadedPluginName] = useState<string | null>(null)
 
-  // First, fetch plugin data by slug
+  // Log when component mounts/remounts
+  useEffect(() => {
+    return () => {}
+  }, [])
+
   useEffect(() => {
     let cancelled = false
-    const log = (...args: any[]) => console.log(`[plugin-render:${plugin_id}]`, ...args)
+    const log = (..._args: any[]) => {}
 
-    const fetchPlugin = async () => {
+    const loadPlugin = async () => {
       try {
-        log('Fetching plugin by slug:', plugin_id)
-        const response = await listPlugins({ page: 1, limit: 100 })
-        const foundPlugin = response.results.find((p) => p.slug === plugin_id)
+        setLoading(true)
+        setError(null)
+        setPluginComponent(null)
+        setLoadedPluginName(null)
 
-        if (!foundPlugin) {
+        log('Starting plugin load')
+
+        // Step 1: Fetch plugin metadata
+        log('Fetching plugin metadata')
+        let pluginMeta: any | null = null
+        try {
+          pluginMeta = await getPluginBySlug(plugin_id)
+          log('Fetched by slug')
+        } catch (e) {
+          log('Fetch by slug failed, attempting by id')
+          try {
+            pluginMeta = await getPluginById(plugin_id)
+            log('Fetched by id')
+          } catch (e2) {
+            log('Fetch by id failed')
+          }
+        }
+        if (cancelled) return
+
+        if (!pluginMeta) {
           throw new Error(`Plugin with slug "${plugin_id}" not found`)
         }
 
-        if (!foundPlugin.url) {
+        if (!pluginMeta.url) {
           throw new Error(`Plugin "${plugin_id}" has no URL configured`)
         }
 
-        log('Plugin found:', foundPlugin)
-        log('Plugin URL:', foundPlugin.url)
+        
 
-        if (!cancelled) {
-          setPlugin(foundPlugin)
+        const PLUGIN_URL = pluginMeta.url
+        const GLOBAL_KEY = 'page-plugin'
+        const registerTimeoutMs = 5000
+        log('Plugin URL:', PLUGIN_URL)
+
+        // Step 2: Ensure global dependencies (React, ReactDOM)
+        log('Ensuring global dependencies')
+        if (!(window as any).React) {
+          const ReactMod = await import('react')
+          ;(window as any).React = (ReactMod as any).default || ReactMod
+          log('React attached to window')
         }
-      } catch (e: any) {
-        log('Failed to fetch plugin:', e)
-        if (!cancelled) {
-          setError(e?.message || 'Failed to fetch plugin')
+        if (!(window as any).ReactDOM) {
+          const ReactDOMClient = await import('react-dom/client')
+          ;(window as any).ReactDOM = ReactDOMClient
+          log('ReactDOM attached to window')
         }
-      }
-    }
+        if (!(window as any).require) {
+          const ReactMod = await import('react')
+          const ReactDOMMod = await import('react-dom/client')
+          const JSXRuntime = await import('react/jsx-runtime')
 
-    fetchPlugin()
-
-    return () => {
-      cancelled = true
-    }
-  }, [plugin_id])
-
-  // Then, load the plugin script
-  useEffect(() => {
-    if (!plugin || !plugin.url) return
-
-    let cancelled = false
-    const log = (...args: any[]) => console.log(`[plugin-render:${plugin_id}]`, ...args)
-
-    const ensureGlobals = async () => {
-      log('ensureGlobals: start')
-      // Ensure React and ReactDOM are available BEFORE loading plugin
-      if (!(window as any).React) {
-        const ReactMod = await import('react')
-        ;(window as any).React = (ReactMod as any).default || ReactMod
-        log('ensureGlobals: React attached to window')
-      } else {
-        log('ensureGlobals: React already present')
-      }
-      if (!(window as any).ReactDOM) {
-        const ReactDOMClient = await import('react-dom/client')
-        ;(window as any).ReactDOM = ReactDOMClient
-        log('ensureGlobals: ReactDOM attached to window')
-      } else {
-        log('ensureGlobals: ReactDOM already present')
-      }
-      // For IIFE plugins that use require(), expose modules
-      if (!(window as any).require) {
-        const ReactMod = await import('react')
-        const ReactDOMMod = await import('react-dom/client')
-        const JSXRuntime = await import('react/jsx-runtime')
-
-        const requireShim = function(id: string) {
-          log('require() called for:', id)
-          if (id === 'react') return ReactMod
-          if (id === 'react-dom/client') return ReactDOMMod
-          if (id === 'react/jsx-runtime') return JSXRuntime
-          throw new Error(`Module ${id} not found`)
-        }
-
-        ;(window as any).require = requireShim
-        ;(globalThis as any).require = requireShim
-        log('ensureGlobals: require() shim added to window and globalThis')
-      }
-    }
-
-    const waitFor = (predicate: () => any, label: string, maxMs = 6000, interval = 50) => {
-      const start = Date.now()
-      return new Promise<void>((resolve, reject) => {
-        const check = () => {
-          if (cancelled) return reject(new Error('cancelled'))
-          try {
-            if (predicate()) {
-              log(`ready: ${label} in ${Date.now() - start}ms`)
-              return resolve()
-            }
-          } catch {}
-          if (Date.now() - start > maxMs) {
-            log(`timeout: ${label}`)
-            return reject(new Error(`timeout: ${label}`))
+          const requireShim = function(id: string) {
+            if (id === 'react') return ReactMod
+            if (id === 'react-dom/client') return ReactDOMMod
+            if (id === 'react/jsx-runtime') return JSXRuntime
+            throw new Error(`Module ${id} not found`)
           }
-          setTimeout(check, interval)
+
+          ;(window as any).require = requireShim
+          ;(globalThis as any).require = requireShim
+          log('require() shim added')
         }
-        check()
-      })
-    }
+        if (cancelled) return
 
-    const loadAndMount = async () => {
-      try {
-        await ensureGlobals()
-        const PLUGIN_URL = plugin.url!
-        log('Loading plugin from URL:', PLUGIN_URL)
-
-        // Get list of plugins before loading
-        const pluginsBefore = Object.keys((window as any).DAPlugins || {})
-        log('DAPlugins before loading:', pluginsBefore)
-
-        let script: HTMLScriptElement | null = document.querySelector(`script[data-aw-plugin="${PLUGIN_URL}"]`)
-        if (!script) {
-          log('injecting script', PLUGIN_URL)
-          script = document.createElement('script')
-          script.src = PLUGIN_URL
+        // Step 3: Load plugin script and wait for global registration under a fixed key
+        async function injectAndWait(asModule: boolean): Promise<any> {
+          const bustUrl = `${PLUGIN_URL}${PLUGIN_URL.includes('?') ? '&' : '?'}_=${Date.now()}`
+          const script = document.createElement('script')
+          script.src = bustUrl
           script.async = true
           script.defer = true
           script.crossOrigin = 'anonymous'
-          script.dataset.awPlugin = PLUGIN_URL
+          if (asModule) script.type = 'module'
           await new Promise<void>((resolve, reject) => {
-            script!.onload = () => { log('script loaded'); resolve() }
-            script!.onerror = () => { log('script error'); reject(new Error('Failed to load plugin script')) }
-            document.body.appendChild(script!)
+            script.onload = () => resolve()
+            script.onerror = () => reject(new Error('Failed to load plugin script'))
+            document.body.appendChild(script)
           })
-        } else {
-          log('script already present, reusing')
-        }
-
-        // Wait for a new plugin to be registered (any new key in DAPlugins)
-        let detectedPluginName: string | null = null
-        await waitFor(() => {
-          const pluginsAfter = Object.keys((window as any).DAPlugins || {})
-          const newPlugins = pluginsAfter.filter(p => !pluginsBefore.includes(p))
-          if (newPlugins.length > 0) {
-            detectedPluginName = newPlugins[0]
-            return true
+          const maxAttempts = Math.ceil(registerTimeoutMs / 100)
+          let attempts = 0
+          while (attempts < maxAttempts) {
+            const obj = (window as any).DAPlugins?.[GLOBAL_KEY]
+            if (obj) return obj
+            await new Promise((r) => setTimeout(r, 100))
+            attempts++
           }
-          return false
-        }, 'New plugin registration detected')
-
-        log('Detected plugin registered as:', detectedPluginName)
-
-        if (!detectedPluginName) {
-          throw new Error('Plugin did not register itself in window.DAPlugins')
+          throw new Error(`Plugin did not register at window.DAPlugins['${GLOBAL_KEY}'] in ${registerTimeoutMs}ms`)
         }
 
-        // Store the detected name for later use
-        ;(window as any).__lastLoadedPlugin = detectedPluginName
-        pluginReadyRef.current = Promise.resolve()
-        await waitFor(() => !!containerRef.current, 'containerRef')
+        let pluginObj: any = null
+        try {
+          pluginObj = await injectAndWait(false)
+        } catch (e1) {
+          log('Classic script load failed or not registered in time, retrying as module')
+          pluginObj = await injectAndWait(true)
+        }
+
+        let component: React.ComponentType<any> | null = pluginObj?.components?.Page || null
+        if (!component && pluginObj?.mount) {
+          const mountFn = pluginObj.mount
+          const unmountFn = pluginObj.unmount
+          const Wrapper: React.FC<any> = (props) => {
+            const ref = React.useRef<HTMLDivElement | null>(null)
+            React.useEffect(() => {
+              if (ref.current) {
+                try {
+                  mountFn(ref.current, props)
+                } catch (e) {
+                  console.error(`[plugin-render:${plugin_id}] mount error`, e)
+                }
+              }
+              return () => {
+                try {
+                  unmountFn?.(ref.current)
+                } catch (e) {
+                  console.error(`[plugin-render:${plugin_id}] unmount error`, e)
+                }
+              }
+            }, [props])
+            return <div ref={ref} className="w-full h-full" />
+          }
+          component = Wrapper
+          log('Using mount/unmount wrapper from global plugin')
+        }
+        if (!component) {
+          throw new Error(`window.DAPlugins['${GLOBAL_KEY}'] has no components.Page or mount() function`)
+        }
+
         if (cancelled) return
-        log('plugin ready for lazy consumption')
-        setLoaded(true)
+
+        setLoadedPluginName(GLOBAL_KEY)
+        setPluginComponent(() => component)
+        setLoading(false)
+        log('Plugin ready to render for plugin_id:', plugin_id)
+
       } catch (e: any) {
-        if (e?.message === 'cancelled') {
-          log('loadAndMount aborted (React strict mode double-invoke)')
-          return
+        log('Error loading plugin:', e)
+        if (!cancelled) {
+          setError(e?.message || 'Failed to load plugin')
+          setLoading(false)
         }
-        log('loadAndMount error', e)
-        setError(e?.message || 'Plugin load error')
       }
     }
 
-    loadAndMount()
+    loadPlugin()
 
+    // Cleanup function
     return () => {
       cancelled = true
+      log('Cleanup - unmounting global page-plugin if possible')
       try {
-        const pluginName = (window as any).__lastLoadedPlugin
-        if (pluginName) {
-          // @ts-ignore
-          window?.DAPlugins?.[pluginName]?.unmount?.(containerRef.current)
-        }
+        const el = containerRef.current
+        // Prefer plugin-provided unmount if it exists
+        // @ts-ignore
+        ;(window as any)?.DAPlugins?.['page-plugin']?.unmount?.(el)
       } catch {}
+      setPluginComponent(null)
+      setLoadedPluginName(null)
     }
-  }, [plugin_id, plugin])
+  }, [plugin_id])
 
-  // Typing for the remote component
-  type RemotePageProps = { data?: any; config?: any }
+  // Only render the plugin component if it matches the current plugin_id
+  const shouldRenderPlugin = !loading && !error && PluginComponent && loadedPluginName
 
-  const RemotePage = useMemo(() =>
-    React.lazy(async (): Promise<{ default: React.ComponentType<RemotePageProps> }> => {
-      // wait until ensure/load completes
-      if (pluginReadyRef.current) {
-        try { await pluginReadyRef.current } catch {}
-      }
-      // Use the detected plugin name from loading
-      const pluginRegistrationName = (window as any).__lastLoadedPlugin
-      if (!pluginRegistrationName) {
-        throw new Error('No plugin was detected')
-      }
-      // @ts-ignore
-      const comp = (window as any).DAPlugins?.[pluginRegistrationName]?.components?.Page
-      if (!comp) throw new Error('Remote Page component missing')
-      return { default: comp as React.ComponentType<RemotePageProps> }
-    }),
-  [plugin_id, plugin])
+  // Log what we're about to render
+  useEffect(() => {
+  }, [shouldRenderPlugin, loadedPluginName, plugin_id])
 
   return (
     <div className="w-full h-full" ref={containerRef}>
@@ -232,21 +213,24 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data }) 
           <p className="text-base text-destructive">{error}</p>
         </div>
       )}
-      {!error && !loaded && (
+
+      {loading && !error && (
         <div className="flex flex-col items-center justify-center w-full h-full gap-4">
           <Spinner size={32} />
           <p className="text-sm text-muted-foreground">Loading plugin...</p>
         </div>
       )}
-      {!error && loaded && (
-        <Suspense fallback={
-          <div className="flex flex-col items-center justify-center w-full h-full gap-4">
-            <Spinner size={32} />
-            <p className="text-sm text-muted-foreground">Initializing plugin...</p>
-          </div>
-        }>
-          <RemotePage data={data} config={{ plugin_id }} />
-        </Suspense>
+
+      {shouldRenderPlugin && (
+        <div key={`plugin-${plugin_id}-${loadedPluginName}`} className="w-full h-full">
+          <PluginComponent data={data} config={{ plugin_id: loadedPluginName }} />
+        </div>
+      )}
+
+      {!loading && !error && !PluginComponent && (
+        <div className="flex flex-col items-center justify-center w-full h-full gap-4">
+          <p className="text-base text-destructive">Plugin component not found</p>
+        </div>
       )}
     </div>
   )

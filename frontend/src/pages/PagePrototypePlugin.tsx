@@ -7,13 +7,17 @@
 // SPDX-License-Identifier: MIT
 
 import { FC } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import PluginPageRender from '@/components/organisms/PluginPageRender'
+import useCurrentModel from '@/hooks/useCurrentModel'
+import useCurrentPrototype from '@/hooks/useCurrentPrototype'
+import { Spinner } from '@/components/atoms/spinner'
 
 interface PagePrototypePluginProps {}
 
 const PagePrototypePlugin: FC<PagePrototypePluginProps> = () => {
-  const { model_id, prototype_id } = useParams()
+  const { data: model, isLoading: isModelLoading } = useCurrentModel()
+  const { data: prototype, isLoading: isPrototypeLoading } = useCurrentPrototype()
   const [searchParams] = useSearchParams()
   const pluginId = searchParams.get('plugid')
 
@@ -27,13 +31,23 @@ const PagePrototypePlugin: FC<PagePrototypePluginProps> = () => {
     )
   }
 
+  if (isModelLoading || isPrototypeLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center w-full h-full gap-4">
+        <Spinner size={32} />
+        <p className="text-base text-muted-foreground">Loading data...</p>
+      </div>
+    )
+  }
+
   return (
     <div className="w-full h-full">
       <PluginPageRender
+        key={pluginId}
         plugin_id={pluginId}
         data={{
-          model_id,
-          prototype_id,
+          model: model || null,
+          prototype: prototype || null,
         }}
       />
     </div>

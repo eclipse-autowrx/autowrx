@@ -35,6 +35,9 @@ export const listPlugins = (params?: any): Promise<Paged<Plugin>> =>
 export const getPluginById = (id: string): Promise<Plugin> =>
   serverAxios.get(`/system/plugin/id/${id}`).then((r) => r.data)
 
+export const getPluginBySlug = (slug: string): Promise<Plugin> =>
+  serverAxios.get(`/system/plugin/slug/${slug}`).then((r) => r.data)
+
 export const createPlugin = (data: Partial<Plugin>): Promise<Plugin> =>
   serverAxios.post('/system/plugin', data).then((r) => r.data)
 

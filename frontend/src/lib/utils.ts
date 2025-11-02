@@ -30,9 +30,28 @@ export function maskEmail(email: string): string {
   return `${maskedUsername}@${domain}`
 }
 
-// Placeholder for parseCvi - will be implemented when needed
 export const parseCvi = (cvi: any) => {
-  return []
+  const traverse = (node: any, prefix: string = 'Vehicle'): any[] => {
+    let result: any[] = []
+
+    // include current node with full path name
+    result.push({ ...node, name: prefix })
+
+    if (node && node.children) {
+      for (const [key, child] of Object.entries(node.children)) {
+        const newPrefix = `${prefix}.${key}`
+        result = result.concat(traverse(child, newPrefix))
+      }
+    }
+
+    return result
+  }
+
+  if (!cvi || typeof cvi !== 'object') return []
+  const mainApi = Object.keys(cvi).at(0) || 'Vehicle'
+  const root = (cvi as any)[mainApi]
+  if (!root) return []
+  return traverse(root, mainApi)
 }
 
 export const getCSSVariable = (variableName: string): string => {

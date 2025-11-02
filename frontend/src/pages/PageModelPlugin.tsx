@@ -7,13 +7,15 @@
 // SPDX-License-Identifier: MIT
 
 import { FC } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import PluginPageRender from '@/components/organisms/PluginPageRender'
+import useCurrentModel from '@/hooks/useCurrentModel'
+import { Spinner } from '@/components/atoms/spinner'
 
 interface PageModelPluginProps {}
 
 const PageModelPlugin: FC<PageModelPluginProps> = () => {
-  const { model_id } = useParams()
+  const { data: model, isLoading: isModelLoading } = useCurrentModel()
   const [searchParams] = useSearchParams()
   const pluginId = searchParams.get('plugid')
 
@@ -27,12 +29,23 @@ const PageModelPlugin: FC<PageModelPluginProps> = () => {
     )
   }
 
+  if (isModelLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center w-full h-full gap-4">
+        <Spinner size={32} />
+        <p className="text-base text-muted-foreground">Loading model data...</p>
+      </div>
+    )
+  }
+
   return (
     <div className="w-full h-full">
       <PluginPageRender
+        key={pluginId}
         plugin_id={pluginId}
         data={{
-          model_id,
+          model: model || null,
+          prototype: null,
         }}
       />
     </div>

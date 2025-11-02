@@ -29,7 +29,8 @@ import PageModelPlugin from '@/pages/PageModelPlugin.tsx'
 // import PageAuthSuccess from '@/pages/PageAuthSuccess.ts'
 import { retry } from '@/lib/retry.ts'
 // const PageAbout = lazy(() => retry(() => import('@/pages/PageAbout')))
-const PageVehicleApi = lazy(() => retry(() => import('@/pages/PageVehicleApi')))
+import PageVehicleApi from '@/pages/PageVehicleApi.tsx'
+// const PageVehicleApi = lazy(() => retry(() => import('@/pages/PageVehicleApi')))
 // const PageModelArchitecture = lazy(
 //   () => import('@/pages/PageModelArchitecture'),
 // )
