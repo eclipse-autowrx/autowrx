@@ -1,0 +1,92 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="../tailwind.min.css">
+    <script defer src="https://bestudio.digitalauto.tech/project/BzR91b49OHqj/syncer.js"></script>
+    <style>
+        #image-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: white;
+            /* Ensure background is white */
+        }
+
+        #api-image {
+            max-width: 100%;
+            max-height: 100%;
+            background-color: white;
+            /* Ensure background is white */
+        }
+    </style>
+</head>
+
+<body class="bg-white flex items-center justify-center h-screen">
+    <div id="image-container" class="flex flex-col p-4 items-center space-y-6">
+        <img id="api-image" src="" alt="API Image" onerror="this.style.display='none'" /> <!-- Hide image on error -->
+    </div>
+
+    <script>
+        let ASSOCIATED_API = "";
+        let interval = null;
+        let defaultImgUrl = "";
+
+        function onWidgetLoaded(options) {
+            if (options.api) {
+                ASSOCIATED_API = options.api;
+            }
+
+            if (options.defaultImgUrl) {
+                defaultImgUrl = options.defaultImgUrl;
+            }
+
+            const valueMaps = options.valueMaps || [];
+            const displayExactMatch = options.displayExactMatch || false;
+
+            interval = setInterval(() => {
+                if (ASSOCIATED_API) {
+                    let apiValueObject = getApiValue(ASSOCIATED_API);
+                    let apiValue = apiValueObject?.value || 0;
+                    updateImage(apiValue, valueMaps, displayExactMatch);
+                }
+            }, options.dataUpdateInterval || 1000); // Default to 1 second if not provided
+        }
+
+        function updateImage(value, valueMaps, displayExactMatch) {
+            let imageUrl = defaultImgUrl;
+            let foundExactMatch = false;
+
+            if (displayExactMatch) {
+                for (let map of valueMaps) {
+                    if (value === map.value) {
+                        imageUrl = map.imgUrl;
+                        foundExactMatch = true;
+                        break; // Exit loop once exact match is found
+                    }
+                }
+                // If displayExactMatch is true and no exact match was found, use the default image
+                if (!foundExactMatch) {
+                    imageUrl = defaultImgUrl;
+                }
+            } else {
+                for (let map of valueMaps) {
+                    if (value >= map.value) {
+                        imageUrl = map.imgUrl;
+                    }
+                }
+            }
+
+            const imageElement = document.getElementById("api-image");
+            imageElement.style.display = 'block'; // Reset display in case it was hidden due to an error
+            imageElement.src = imageUrl;
+        }
+
+        function onWidgetUnloaded(options) {
+            if (interval) clearInterval(interval);
+        }
+    </script>
+</body>
+
+</html>

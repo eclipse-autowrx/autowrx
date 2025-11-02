@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Widget</title>
+  <link rel="icon" href="./favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="../tailwind.min.css">
+  <script defer src="../syncer.js"></script>
+  <style>
+    @font-face {
+      font-family: 'Manrope';
+      src: url('../Manrope-VariableFont.ttf') format('truetype');
+      font-weight: 100 900;
+      font-display: swap;
+    }
+
+    body {
+      font-family: 'Manrope', sans-serif;
+    }
+
+    .font-medium {
+      font-weight: 500;
+    }
+  </style>
+</head>
+
+<body class="bg-slate-800 text-white flex flex-col h-screen w-screen">
+  <div class="font-bold text-sm bg-slate-900 px-2 py-1 flex items-center hover:underline">
+    Terminal
+    <div class="grow"></div>
+    <button id='btn-clear' className="text-sm">Clear
+    </button>
+  </div>
+  <div class="grow overflow-y-auto text-white text-xs font-mono px-2 py-1">
+    <p id="container" class="whitespace-pre-line">
+    <p>
+    <div id="bottom"></div>
+  </div>
+  <script>
+    let btnClear = null;
+    let container = null;
+    let bottom = null;
+    let logs = ""
+    const appendLog = (log) => {
+      if (!log) return;
+      logs += log + (log.endsWith('\r\n') ? '' : '\r\n')
+      if (container) {
+        container.innerText = logs
+        bottom.scrollIntoView()
+      }
+    }
+    const clearLog = () => {
+      logs = ""
+      if (container) {
+        container.innerText = logs
+        bottom.scrollIntoView()
+      }
+    }
+    /*
+      window.onload = () => {
+        console.log("On window loaded")
+        btnClear = document.getElementById('btn-clear')
+        container = document.getElementById('container')
+        bottom = document.getElementById('bottom')
+        if(btnClear) {
+          btnClear.onclick = clearLog
+        }
+      }
+      */
+
+    const onWidgetLoaded = (options) => {
+      //appendLog("On widget loaded")
+      btnClear = document.getElementById('btn-clear')
+      container = document.getElementById('container')
+      bottom = document.getElementById('bottom')
+      if (btnClear) {
+        btnClear.onclick = clearLog
+      }
+    }
+  </script>
+  <script src="index.js"></script>
+</body>
+
+</html>

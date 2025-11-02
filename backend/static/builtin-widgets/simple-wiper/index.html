@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../tailwind.min.css">
+    <script defer src="https://bestudio.digitalauto.tech/project/BzR91b49OHqj/syncer.js"></script>
+    <style>
+        #simulator-container {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body class="h-screen grid place-items-center bg-slate-100 select-none">
+    <div id="simulator-container" class="w-full h-full">
+        <iframe id="wiper" src="https://playground-plugins.netlify.app/simulator/wiper-iframe/" frameborder="0"
+            style="width:100%;height:100%"></iframe>
+    </div>
+
+    <script>
+        let interval = null;
+
+        function onWidgetLoaded(options) {
+            const API_NAME = options.api || "Vehicle.Body.Windshield.Front.Wiping.Mode";
+
+            //console.log("API_NAME: ", API_NAME);
+
+            interval = setInterval(() => {
+                let apiValueObject = getApiValue(API_NAME);
+                let apiValue = apiValueObject?.value || "OFF";
+
+                //console.log("API_VALUE: ", apiValue);
+
+                const wiperIframe = document.getElementById("wiper");
+
+                if (apiValue === "MEDIUM") {
+                    wiperIframe.contentWindow.postMessage("LO", "*");
+                } else if (apiValue === "OFF") {
+                    wiperIframe.contentWindow.postMessage("OFF", "*");
+                }
+            }, options.dataUpdateInterval || 1000); // Default to 1 second if not provided
+        }
+
+        function onWidgetUnloaded(options) {
+            if (interval) clearInterval(interval);
+        }
+    </script>
+</body>
+
+</html>

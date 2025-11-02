@@ -1,0 +1,70 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../tailwind.min.css">
+    <link rel="stylesheet" href="../font-awesome.min.css">
+    <script>
+        let interval = null;
+
+        function onWidgetLoaded(options) {
+            console.log("On my widget loaded");
+
+            let speedValue = document.getElementById("speedValue");
+            let fan_icon = document.querySelector('.fan_icon');
+            let API_NAME = options.api;
+
+            interval = setInterval(() => {
+                if (speedValue && API_NAME) {
+                    let apiValueObject = getApiValue(API_NAME);
+                    let apiValue = apiValueObject?.value || 0;
+                    speedValue.innerText = apiValue;
+                    let duration = (-0.02 * apiValue) + 2.02;
+                    if (!apiValue || apiValue === 0) {
+                        fan_icon.style.animationDuration = "0s";
+                    } else {
+                        fan_icon.style.animationDuration = `${duration}s`;
+                    }
+                }
+            }, 500);
+        }
+
+        function onWidgetUnloaded(options) {
+            console.log("On my widget unloaded");
+            if (interval) clearInterval(interval);
+        }
+    </script>
+    <script defer src="https://bestudio.digitalauto.tech/project/BzR91b49OHqj/syncer.js"></script>
+    <style>
+        .fan_icon {
+            animation: spin 0s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+
+</head>
+
+<body class="h-screen grid place-items-center bg-slate-100 select-none">
+    <div
+        class="w-[154px] h-[185px] p-6 bg-slate-300 rounded-lg text-left text-slate-700 flex flex-col justify-around items-center">
+        <div class="fan_icon" id="fan">
+            <i class="fa-solid fa-fan text-[90px]"></i>
+        </div>
+        <div class="font-mono text-[40px] font-bold">
+            <div><span id="speedValue">0</span>%</div>
+        </div>
+    </div>
+</body>
+
+</html>

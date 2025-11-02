@@ -38,12 +38,12 @@ const ModelApiList = ({
   const { model_id, api } = useParams()
   const location = useLocation()
   const navigate = useNavigate()
-  const [activeModelApis] = useModelStore(
-    (state) => [state.activeModelApis],
+  const [activeModelApis, modelFromStore] = useModelStore(
+    (state) => [state.activeModelApis, state.model],
     shallow,
   )
   const [searchTerm, setSearchTerm] = useState('')
-  const [filteredApiList, setFilteredApiList] = useState<VehicleApi[]>([])
+  const [filteredApiList, setFilteredApiList] = useState<VehicleApi[] | undefined>(undefined)
   const [selectedFilters, setSelectedFilters] = useState<string[]>([
     'default',
     'wishlist',
@@ -55,9 +55,17 @@ const ModelApiList = ({
   const [selectedApi, setSelectedApi] = useState<VehicleApi>()
   const [isOpenPopup, setIsOpenPopup] = useState(false)
   const { data: model } = useCurrentModel()
+  // Use model from store if available (for readOnly mode), otherwise use query result
+  const currentModel = model || modelFromStore
   const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model_id])
 
   useEffect(() => {
+    const querys = new URLSearchParams(location.search) // set search term from query params
+    const searchQuery = querys.get('search')
+    if (searchQuery) {
+      setSearchTerm(searchQuery)
+    }
+
     if (readOnly) return
 
     let foundApi
@@ -67,12 +75,6 @@ const ModelApiList = ({
 
     if (!foundApi && activeModelApis && activeModelApis.length > 0) {
       foundApi = activeModelApis && activeModelApis[0] // set "Vehicle" as active if no api found in params
-    }
-
-    const querys = new URLSearchParams(location.search) // set search term from query params
-    const searchQuery = querys.get('search')
-    if (searchQuery) {
-      setSearchTerm(searchQuery)
     }
 
     if (foundApi && (!selectedApi || selectedApi.name !== foundApi.name)) {
@@ -169,10 +171,10 @@ const ModelApiList = ({
               <TbPlus className="mr-1 h-4 w-4" /> Add Wishlist Signal
             </Button>
             <DialogContent>
-              {model_id && model && (
+              {(model_id || currentModel?.id) && currentModel && (
                 <FormCreateWishlistApi
-                  modelId={model_id}
-                  existingCustomApis={model.custom_apis as VehicleApi[]}
+                  modelId={model_id || currentModel.id}
+                  existingCustomApis={currentModel.custom_apis as VehicleApi[]}
                   onClose={() => {
                     setIsOpenPopup(false)
                   }}

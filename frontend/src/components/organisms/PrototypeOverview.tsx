@@ -7,16 +7,16 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useState } from 'react'
-import PrototypeTabJourney from '@/components/organisms/PrototypeTabJourney'
+// import PrototypeTabJourney from '@/components/organisms/PrototypeTabJourney'
 import PrototypeTabInfo from '@/components/organisms/PrototypeTabInfo'
 
 type Mode = 'overview' | 'customerJourney' | 'requirement'
 
-const modeLabels: Record<Mode, string> = {
-  overview: 'Overview',
-  customerJourney: 'Customer Journey',
-  requirement: 'Requirements',
-}
+// const modeLabels: Record<Mode, string> = {
+//   overview: 'Overview',
+//   customerJourney: 'Customer Journey',
+//   requirement: 'Requirements',
+// }
 
 interface PrototypeOverviewProps {
   mode?: Mode
@@ -39,41 +39,41 @@ const PrototypeOverview: React.FC<PrototypeOverviewProps> = ({
     }
   }, [externalMode])
 
-  const handleChange = (_: React.SyntheticEvent | null, newValue: Mode) => {
-    if (onModeChange) {
-      onModeChange(newValue)
-    } else {
-      setInternalMode(newValue)
-    }
-  }
+  // const handleChange = (_: React.SyntheticEvent | null, newValue: Mode) => {
+  //   if (onModeChange) {
+  //     onModeChange(newValue)
+  //   } else {
+  //     setInternalMode(newValue)
+  //   }
+  // }
 
-  const renderContent = (prototype: any) => {
-    switch (internalMode) {
-      case 'overview':
-        return <PrototypeTabInfo prototype={prototype} />
-      case 'customerJourney':
-        return <PrototypeTabJourney prototype={prototype} />
-      case 'requirement':
-        return (
-          <div className="flex items-center justify-center h-full p-6">
-            <div className="text-center">
-              <h3 className="text-xl font-semibold text-primary mb-2">
-                Requirements
-              </h3>
-              <p className="text-muted-foreground">
-                Requirements management coming soon
-              </p>
-            </div>
-          </div>
-        )
-      default:
-        return null
-    }
-  }
+  // const renderContent = (prototype: any) => {
+  //   switch (internalMode) {
+  //     case 'overview':
+  //       return <PrototypeTabInfo prototype={prototype} />
+  //     case 'customerJourney':
+  //       return <PrototypeTabJourney prototype={prototype} />
+  //     case 'requirement':
+  //       return (
+  //         <div className="flex items-center justify-center h-full p-6">
+  //           <div className="text-center">
+  //             <h3 className="text-xl font-semibold text-primary mb-2">
+  //               Requirements
+  //             </h3>
+  //             <p className="text-muted-foreground">
+  //               Requirements management coming soon
+  //             </p>
+  //           </div>
+  //         </div>
+  //       )
+  //     default:
+  //       return null
+  //   }
+  // }
 
   return (
     <div className="w-full h-full overflow-y-auto">
-      <div
+      {/* <div
         className="flex border-b border-border mb-2"
         aria-label="Prototype Overview Tabs"
       >
@@ -96,9 +96,9 @@ const PrototypeOverview: React.FC<PrototypeOverviewProps> = ({
             </button>
           ),
         )}
-      </div>
+      </div> */}
       <div className="px-2 py-0 sm:px-2 w-full h-full">
-        {renderContent(prototype)}
+        <PrototypeTabInfo prototype={prototype} />
       </div>
     </div>
   )

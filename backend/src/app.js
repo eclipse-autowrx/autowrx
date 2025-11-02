@@ -104,6 +104,7 @@ passport.use('jwt', jwtStrategy);
 
 app.use('/v2', routesV2);
 app.use('/static', express.static(path.join(__dirname, '../static')));
+app.use('/builtin-widgets', express.static(path.join(__dirname, '../static/builtin-widgets')));
 app.use('/images', express.static(path.join(__dirname, '../static/images')));
 app.use('/static/plugin', express.static(path.join(__dirname, '../static/plugin')));
 app.use('/plugin', express.static(path.join(__dirname, '../static/plugin')));
@@ -139,6 +140,7 @@ if (config.env === 'development') {
         req.path.startsWith('/plugin') ||
         req.path.startsWith('/images') || 
         req.path.startsWith('/d') ||
+        req.path.startsWith('/builtin-widgets') ||
         req.path.startsWith('/api')) {
       return next();
     }
@@ -158,6 +160,7 @@ if (config.env === 'development') {
         req.path.startsWith('/plugin') ||
         req.path.startsWith('/images') ||
         req.path.startsWith('/d') ||
+        req.path.startsWith('/builtin-widgets') ||
         req.path.startsWith('/api')) {
       return next();
     }

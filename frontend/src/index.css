@@ -83,6 +83,39 @@ body::-webkit-scrollbar-thumb {
   grid-template-columns: repeat(auto-fill, minmax(var(--grid-min-width), 1fr));
 }
 
+/* Grid span utilities for dashboard widgets */
+.col-span-2 {
+  grid-column: span 2 / span 2;
+}
+
+.col-span-3 {
+  grid-column: span 3 / span 3;
+}
+
+.col-span-4 {
+  grid-column: span 4 / span 4;
+}
+
+.col-span-5 {
+  grid-column: span 5 / span 5;
+}
+
+.row-span-2 {
+  grid-row: span 2 / span 2;
+}
+
+.row-span-3 {
+  grid-row: span 3 / span 3;
+}
+
+.row-span-4 {
+  grid-row: span 4 / span 4;
+}
+
+.row-span-5 {
+  grid-row: span 5 / span 5;
+}
+
 /* Fix radix-ui select trigger overflow */
 select[aria-hidden='true'][tabindex='-1'] {
   display: none;

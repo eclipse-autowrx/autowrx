@@ -15,23 +15,17 @@ import { updateModelService } from '@/services/model.service'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { CustomApi } from '@/types/model.type'
 import DaConfirmPopup from '../molecules/DaConfirmPopup'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import DaApiArchitecture from '../molecules/DaApiArchitecture'
 import DaDiscussions from '../molecules/DaDiscussions'
-import { Dialog, DialogContent } from '@/components/atoms/dialog'
-import FormSubmitIssue from '../molecules/forms/FormSubmitIssue'
-import { FaGithub } from 'react-icons/fa6'
-import useGithubAuth from '@/hooks/useGithubAuth'
 import {
   TbChevronDown,
   TbEdit,
-  TbExternalLink,
   TbLoader,
   TbTrash,
 } from 'react-icons/tb'
-import useCurrentExtendedApiIssue from '@/hooks/useCurrentExtendedApiIssue'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,7 +38,6 @@ import useModelStore from '@/stores/modelStore'
 import { customAPIs } from '@/data/customAPI'
 import DaVehicleAPIEditor from '../molecules/DaVehicleAPIEditor'
 import { CustomPropertyType } from '@/types/property.type'
-import { Spinner } from '@/components/atoms/spinner'
 
 interface ApiDetailProps {
   apiDetails: any
@@ -70,10 +63,6 @@ const ApiDetail = ({
   const discussionsRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model?.id])
-  const [popupSubmitIssueOpen, setPopupSubmitIssueOpen] = useState(false)
-
-  const { onTriggerAuth, loading, user, access, error } = useGithubAuth()
-  const { data, refetch: refetchCurrIssue } = useCurrentExtendedApiIssue()
   const [isEditing, setIsEditing] = useState(false)
   const refreshModel = useModelStore((state) => state.refreshModel)
 
@@ -255,30 +244,6 @@ const ApiDetail = ({
                     <TbEdit className="mr-2 h-5 w-5" />
                     <div className="text-sm font-medium">Edit Signal</div>
                   </DropdownMenuItem>
-                  {data ? (
-                    <DropdownMenuItem asChild>
-                      <Link
-                        to={data.link}
-                        className="text-sm font-medium flex items-center gap-2"
-                        target="_blank"
-                      >
-                        <TbExternalLink className="h-5 w-5" />
-                        View COVESA Issue
-                      </Link>
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setPopupSubmitIssueOpen(true)
-                        onTriggerAuth()
-                      }}
-                    >
-                      <FaGithub className="mr-2 h-5 w-5" />
-                      <span className="text-sm font-medium">
-                        Propose this Signal to COVESA
-                      </span>
-                    </DropdownMenuItem>
-                  )}
                   <DropdownMenuItem onClick={() => setConfirmPopupOpen(true)}>
                     <TbTrash className="mr-2 h-5 w-5" />
                     <div className="text-sm font-medium">Delete Signal</div>
@@ -294,34 +259,6 @@ const ApiDetail = ({
           >
             <></>
           </DaConfirmPopup>
-          <Dialog open={popupSubmitIssueOpen} onOpenChange={setPopupSubmitIssueOpen}>
-            <DialogContent>
-              {loading && (
-                <div className="flex flex-col items-center gap-4 p-4">
-                  <Spinner />
-                  <p className="text-sm font-medium">Please wait while we are authenticating with Github...</p>
-                </div>
-              )}
-
-              {!loading && error && (
-                <div className="flex flex-col items-center gap-4 p-4">
-                  <p className="text-sm font-medium text-red-500">{error}</p>
-                </div>
-              )}
-
-              {!loading && !error && access && (
-                <FormSubmitIssue
-                  user={user}
-                  api={apiDetails}
-                  refetch={refetchCurrIssue}
-                  onClose={async () => {
-                    setPopupSubmitIssueOpen(false)
-                  }}
-                  access={access}
-                />
-              )}
-            </DialogContent>
-          </Dialog>
           <div
             className={cn(
               'hidden h-8 items-center rounded-md px-2 xl:flex',

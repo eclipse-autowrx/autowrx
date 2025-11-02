@@ -332,7 +332,7 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
           <div
             className={`flex w-full justify-end py-2 ${isAuthorized ? 'visible' : 'hidden'}`}
           >
-            {!isEditMode ? (
+            {/* {!isEditMode ? (
               <Button
                 variant="outline"
                 size="sm"
@@ -362,30 +362,33 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
                   Save
                 </Button>
               </div>
-            )}
+            )} */}
           </div>
         )}
       </div>
+
       {!isFetching &&
         activeSkeleton &&
         activeSkeleton.nodes &&
         activeSkeleton.nodes.length > 0 && (
           <div className="flex w-full h-auto">
-            {isEditMode ? (
-              <ImageAreaEdit
+            {isEditMode ? (<>
+              {/* <ImageAreaEdit
                 shapes={activeSkeleton?.nodes[0]?.shapes}
                 bgImage={activeSkeleton?.nodes[0]?.bgImage}
                 onSave={onSaveRequested}
                 handleUploadImage={handleUploadImage}
                 onUpdate={setPendingSkeletonUpdate}
-              />
-            ) : (
-              <ImageAreaPreview
+              /> */}
+              </>
+            ) : <>
+              <img src={activeSkeleton?.nodes[0]?.bgImage} alt="API Architecture" />
+              {/* <ImageAreaPreview
                 shapes={activeSkeleton?.nodes[0]?.shapes}
                 bgImage={activeSkeleton?.nodes[0]?.bgImage}
                 navigate={handleNavigate}
-              />
-            )}
+              /> */}
+            </>}
           </div>
         )}
     </div>

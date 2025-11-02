@@ -684,7 +684,7 @@ const PageVehicleApi = () => {
 
   return (
     <div className="w-full h-full">
-      {
+      {/* {
         <div className="flex items-center justify-start py-1 pl-4 bg-primary text-white">
           <div className="text-sm font-medium mr-2">
             API:{' '}
@@ -741,7 +741,7 @@ const PageVehicleApi = () => {
             ) : null
           })()}
         </div>
-      }
+      } */}
       {(activeTab == 'COVESA' || !activeTab) && <ViewApiCovesa />}
       {activeTab == 'USP' && <ViewApiUSP />}
       {activeTab == 'V2C' && <ViewApiV2C />}

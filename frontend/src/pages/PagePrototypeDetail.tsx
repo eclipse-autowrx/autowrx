@@ -33,7 +33,6 @@ import PrototypeTabCode from '@/components/organisms/PrototypeTabCode'
 import PrototypeTabDashboard from '@/components/organisms/PrototypeTabDashboard'
 import PrototypeTabFeedback from '@/components/organisms/PrototypeTabFeedback'
 import DaRuntimeControl from '@/components/molecules/dashboard/DaRuntimeControl'
-import PrototypeOverview from '@/components/organisms/PrototypeOverview'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,6 +48,7 @@ import { Dialog, DialogContent } from '@/components/atoms/dialog'
 import CustomPrototypeTabs from '@/components/molecules/CustomPrototypeTabs'
 import PagePrototypePlugin from '@/pages/PagePrototypePlugin'
 import CustomTabEditor from '@/components/organisms/CustomTabEditor'
+import PrototypeTabInfo from '../components/organisms/PrototypeTabInfo'
 
 interface ViewPrototypeProps {
   display?: 'tree' | 'list'
@@ -190,7 +190,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
             to={`/model/${model_id}/library/prototype/${prototype_id}/view`}
           >
             <TbRoute className="w-5 h-5 mr-2" />
-            Journey
+            Overview
           </DaTabItem>
           <DaTabItem
             active={tab === 'code'}
@@ -208,13 +208,13 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
             <TbGauge className="w-5 h-5 mr-2" />
             Dashboard
           </DaTabItem>
-          <DaTabItem
+          {/* <DaTabItem
             active={tab === 'feedback'}
             to={`/model/${model_id}/library/prototype/${prototype_id}/feedback`}
           >
             <TbMessagePlus className="w-5 h-5 mr-2" />
             Feedback
-          </DaTabItem>
+          </DaTabItem> */}
           <CustomPrototypeTabs
             customTabs={model?.custom_template?.prototype_tabs}
           />
@@ -231,7 +231,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           </div>
         )}
         <div className="grow"></div>
-        {
+        {/* {
           <DaDialog
             open={openStagingDialog}
             onOpenChange={setOpenStagingDialog}
@@ -260,7 +260,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
               className="max-h-[80vh] xl:max-h-[60vh]"
             />
           </DaDialog>
-        }
+        } */}
         {isModelOwner && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -289,7 +289,8 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           className="absolute left-0 bottom-0 top-0 grow h-full z-0"
         >
           {isDefaultTab && (
-            <PrototypeOverview mode="overview" prototype={prototype} />
+            // <PrototypeOverview mode="overview" prototype={prototype} />
+            <PrototypeTabInfo prototype={prototype} />
           )}
           {tab == 'code' && <PrototypeTabCode />}
           {tab == 'dashboard' && <PrototypeTabDashboard />}

@@ -6,24 +6,261 @@
 //
 // SPDX-License-Identifier: MIT
 
-// Stub - full code editor to be implemented later
-import { FC } from 'react'
+import { FC, useEffect, useState, lazy, Suspense } from 'react'
+import { Button } from '@/components/atoms/button'
+import useModelStore from '@/stores/modelStore'
+import { Prototype } from '@/types/model.type'
+import { shallow } from 'zustand/shallow'
+import { BsStars } from 'react-icons/bs'
+import DaDialog from '@/components/molecules/DaDialog'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import useCurrentModel from '@/hooks/useCurrentModel'
+import { PERMISSIONS } from '@/data/permission'
+import { updatePrototypeService } from '@/services/prototype.service'
+import { TbBrandGithub } from 'react-icons/tb'
+import { GrDeploy } from 'react-icons/gr'
+import { toast } from 'react-toastify'
+import config from '@/configs/config'
+import CodeEditor from '@/components/molecules/CodeEditor'
+import { Spinner } from '@/components/atoms/spinner'
+import { retry } from '@/lib/retry'
+
+// Helper function to determine editor type
+const getEditorType = (content: string): 'project' | 'code' => {
+  if (!content || content.trim() === '') return 'code'
+  
+  // Try to parse as JSON first
+  try {
+    const parsed = JSON.parse(content)
+    if (Array.isArray(parsed)) {
+      return 'project'
+    }
+  } catch {
+    // Not valid JSON, treat as code
+  }
+  
+  return 'code'
+}
+
+// Lazy load components that may not exist yet - using dynamic imports with error handling
+// These will gracefully fail if the modules don't exist
+const ProjectEditor = lazy(() =>
+  retry(() => import('../molecules/project_editor/ProjectEditor'))
+)
+
+const PrototypeTabCodeApiPanel = lazy(() =>
+  retry(() => import('./PrototypeTabCodeApiPanel'))
+)
+
+const DaGenAI_Python = lazy(() =>
+  Promise.resolve({
+    default: ({ onCodeChanged }: { onCodeChanged: (code: string) => void }) => (
+      <div className="p-4 text-muted-foreground">GenAI not available</div>
+    )
+  }).catch(() => ({
+    default: ({ onCodeChanged }: { onCodeChanged: (code: string) => void }) => (
+      <div className="p-4 text-muted-foreground">GenAI not available</div>
+    )
+  }))
+) as any
+
+const DaVelocitasProjectCreator = lazy(() =>
+  Promise.resolve({
+    default: ({ code, onClose, vssPayload }: { code: string; onClose: () => void; vssPayload: any }) => (
+      <div className="p-4 text-muted-foreground">Velocitas Project Creator not available</div>
+    )
+  }).catch(() => ({
+    default: ({ code, onClose, vssPayload }: { code: string; onClose: () => void; vssPayload: any }) => (
+      <div className="p-4 text-muted-foreground">Velocitas Project Creator not available</div>
+    )
+  }))
+) as any
 
 const PrototypeTabCode: FC = () => {
+  const [prototype, setActivePrototype, activeModelApis] = useModelStore(
+    (state) => [
+      state.prototype as Prototype,
+      state.setActivePrototype,
+      state.activeModelApis,
+    ],
+    shallow,
+  )
+  const [savedCode, setSavedCode] = useState<string | undefined>(undefined)
+  const [code, setCode] = useState<string | undefined>(undefined)
+  const [ticker, setTicker] = useState(0)
+  const [activeTab, setActiveTab] = useState('api')
+  const [isOpenGenAI, setIsOpenGenAI] = useState(false)
+  const { data: model } = useCurrentModel()
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
+  const [isOpenVelocitasDialog, setIsOpenVelocitasDialog] = useState(false)
+  
+  // Editor type state
+  const [editorType, setEditorType] = useState<'project' | 'code'>('code')
+
+  useEffect(() => {
+    let timer = setInterval(() => {
+      setTicker((oldTicker) => oldTicker + 1)
+    }, 3000)
+    return () => {
+      if (timer) clearInterval(timer)
+    }
+  }, [])
+
+  useEffect(() => {
+    saveCodeToDb()
+  }, [ticker])
+
+  useEffect(() => {
+    if (!prototype) {
+      setSavedCode(undefined)
+      setCode(undefined)
+      setEditorType('code')
+      return
+    }
+    
+    const prototypeCode = prototype.code || ''
+    setCode(prototypeCode)
+    setSavedCode(prototypeCode)
+  
+    const newEditorType = getEditorType(prototypeCode)
+    setEditorType(newEditorType)
+  }, [prototype])
+
+  const saveCodeToDb = async () => {
+    if (code === savedCode) return
+
+    let newPrototype = JSON.parse(JSON.stringify(prototype))
+    newPrototype.code = code || ''
+    setActivePrototype(newPrototype)
+
+    if (!prototype || !prototype.id) return
+    try {
+      await updatePrototypeService(prototype.id, {
+        code: code || '',
+      })
+    } catch (err) {
+      console.error('Error saving code:', err)
+    }
+  }
+
+  if (!prototype) {
+    return <div></div>
+  }
+
   return (
-    <div className="flex flex-col items-center justify-center w-full h-full p-6 bg-background">
-      <div className="text-center max-w-md">
-        <h2 className="text-lg font-semibold text-primary mb-4">
-          SDV Code Editor
-        </h2>
-        <p className="text-muted-foreground mb-4">
-          The code editor with Monaco, GenAI integration, and Velocitas project
-          creation will be implemented here.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          💡 Coming soon: Code editing, syntax highlighting, AI assistance, and
-          deployment features
-        </p>
+    <div className="flex h-[calc(100%-0px)] w-full p-2 gap-2 bg-gray-100">
+      <div className="flex h-full flex-3 min-w-0 flex-col border-r bg-white rounded-md">
+        <div className="flex min-h-12 w-full items-center justify-between">
+          {isAuthorized && (
+            <div className="flex mx-2 space-x-4">
+              <DaDialog
+                open={isOpenGenAI}
+                onOpenChange={setIsOpenGenAI}
+                trigger={
+                  <Button size="sm">
+                    <BsStars className="mr-1" />
+                    SDV ProtoPilot
+                  </Button>
+                }
+                dialogTitle="SDV ProtoPilot"
+                className="flex flex-col h-[80vh] xl:h-[600px] max-h-[90vh] w-[1200px] max-w-[80vw]"
+                contentContainerClassName="h-full"
+              >
+                <div className="rounded-lg text-sm flex h-full w-full flex-col bg-white">
+                  <Suspense fallback={<div className="flex items-center justify-center h-full"><Spinner /></div>}>
+                    <DaGenAI_Python
+                      onCodeChanged={(code: string) => {
+                        setCode(code)
+                        setIsOpenGenAI(false)
+                      }}
+                    />
+                  </Suspense>
+                </div>
+              </DaDialog>
+              
+              <DaDialog
+                open={isOpenVelocitasDialog}
+                onOpenChange={setIsOpenVelocitasDialog}
+                trigger={
+                  <Button size="sm" variant="outline" className="ml-2">
+                    <TbBrandGithub className="mr-1 size-4" />
+                    Create Velocitas Project
+                  </Button>
+                }
+                dialogTitle="Create Velocitas Project"
+              >
+                <Suspense fallback={<div className="flex items-center justify-center h-full"><Spinner /></div>}>
+                  <DaVelocitasProjectCreator
+                    code={prototype?.code || ''}
+                    onClose={() => setIsOpenVelocitasDialog(false)}
+                    vssPayload={{}}
+                  />
+                </Suspense>
+              </DaDialog>
+
+              {config?.enableDeployToEPAM !== false && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="ml-2"
+                  onClick={async () => {
+                    if (code) {
+                      try {
+                        // Note: deployToEPAM function may need to be imported if available
+                        toast.info('Deploy to EPAM feature coming soon')
+                        // let res = await deployToEPAM(prototype.id, code || '')
+                        // if (res?.statusCode == 400) {
+                        //   toast.error(`Deploy to EPAM fail! ${res?.body}`)
+                        // }
+                      } catch (err) {
+                        console.log('Err on deploy to EPAM')
+                        console.log(err)
+                        toast.error('Error deploying to EPAM')
+                      }
+                    }
+                  }}
+                >
+                  <GrDeploy className="mr-1" size={16} />
+                  Deploy as EPAM service
+                </Button>
+              )}
+            </div>
+          )}
+
+          <div className="grow"></div>
+
+          <div className="mr-2 text-sm">
+            Language: <b>{(prototype.language || 'python').toUpperCase()}</b>
+          </div>
+        </div>
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><Spinner /></div>}>
+          {editorType === 'project' ? (
+            <ProjectEditor
+              data={code || ''}
+              onChange={(data: string) => {
+                setCode(data)
+                setTimeout(() => {
+                  setTicker(ticker + 1)
+                }, 100)
+              }}
+            />
+          ) : (
+            <CodeEditor
+              code={code || ''}
+              setCode={setCode}
+              editable={isAuthorized}
+              language={prototype.language || 'python'}
+              onBlur={saveCodeToDb}
+            />
+          )}
+        </Suspense>
+      </div>
+      <div className="flex h-full flex-2 min-w-[360px] flex-col bg-white rounded-md">
+        {activeTab == 'api' && (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><Spinner /></div>}>
+            <PrototypeTabCodeApiPanel code={code || ''} />
+          </Suspense>
+        )}
       </div>
     </div>
   )

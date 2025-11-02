@@ -35,6 +35,7 @@ import { Skeleton } from '@/components/atoms/skeleton'
 import { cn } from '@/lib/utils'
 import CustomDialog from '@/components/molecules/flow/CustomDialog'
 import DaFileUpload from '@/components/atoms/DaFileUpload'
+import FormCreatePrototype from '@/components/molecules/forms/FormCreatePrototype'
 
 const PagePrototypeLibrary = () => {
   const [activeTab, setActiveTab] = useState<'list' | 'portfolio'>('list')
@@ -237,13 +238,8 @@ const PagePrototypeLibrary = () => {
                       </Button>
                     }
                   >
-                    <div className="p-6">
-                      <h3 className="text-lg font-semibold text-primary mb-4">
-                        Create New Prototype
-                      </h3>
-                      <p className="text-muted-foreground">
-                        Form coming soon - use Import Prototype for now
-                      </p>
+                    <div className="p-0">
+                      <FormCreatePrototype onClose={() => setOpen(false)} />
                     </div>
                   </DaDialog>
                 </div>

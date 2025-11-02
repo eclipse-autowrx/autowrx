@@ -1,0 +1,159 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="../tailwind.min.css">
+    <script defer src="../syncer.js"></script>
+    <script src="../chart.min.js"></script>
+    <style>
+        #chart-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        #api-chart {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body class="bg-white flex items-center justify-center h-screen">
+    <div id="chart-container" class="flex flex-col p-4 items-center space-y-6">
+        <canvas id="api-chart"></canvas>
+    </div>
+
+    <script>
+        let ASSOCIATED_APIS = [];
+        let interval = null;
+        let chart = null;
+        let counter = 0;
+
+        // Define some colors for different signals
+        const CHART_COLORS = [
+            '#005072', // Primary blue
+            '#FF6384', // Red
+            '#36A2EB', // Blue
+            '#FFCE56', // Yellow
+            '#4BC0C0', // Teal
+            '#9966FF', // Purple
+            '#FF9F40'  // Orange
+        ];
+
+        function onWidgetLoaded(options) {
+            // Accept either a single API or an array of APIs
+            if (options.apis && Array.isArray(options.apis)) {
+                ASSOCIATED_APIS = options.apis.filter(api => api && api.trim() !== '');
+            } else if (options.api) {
+                ASSOCIATED_APIS = [options.api];
+            }
+
+            const dataUpdateInterval = options.dataUpdateInterval || 1000;
+            const maxDataPoints = options.maxDataPoints || 60;
+
+            const ctx = document.getElementById('api-chart').getContext('2d');
+
+            // Create datasets for each API
+            const datasets = ASSOCIATED_APIS.map((api, index) => ({
+                label: api,
+                data: [],
+                borderColor: options.colors && options.colors[index]
+                    ? options.colors[index]
+                    : CHART_COLORS[index % CHART_COLORS.length],
+                borderWidth: 2,
+                fill: false,
+                tension: 0.1,
+                pointBackgroundColor: options.colors && options.colors[index]
+                    ? options.colors[index]
+                    : CHART_COLORS[index % CHART_COLORS.length],
+            }));
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 0
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            title: {
+                                display: true,
+                                text: 'Time (s)'
+                            },
+                            ticks: {
+                                stepSize: 1,
+                                callback: function (value) {
+                                    return value;
+                                }
+                            },
+                            min: 0
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Value'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+
+            interval = setInterval(() => {
+                if (ASSOCIATED_APIS.length > 0) {
+                    let hasNewData = false;
+
+                    // Update datasets for each API
+                    ASSOCIATED_APIS.forEach((api, index) => {
+                        let apiValueObject = getApiValue(api);
+                        let apiValue = apiValueObject?.value || 0;
+
+                        if (index === 0) {
+                            // Only add new labels for the first dataset
+                            chart.data.labels.push(counter);
+                            hasNewData = true;
+                        }
+
+                        chart.data.datasets[index].data.push(apiValue);
+                    });
+
+                    if (hasNewData) {
+                        counter++;
+
+                        // Remove old data points if exceeding maxDataPoints
+                        if (chart.data.labels.length > maxDataPoints) {
+                            chart.data.labels.shift();
+                            chart.data.datasets.forEach(dataset => {
+                                dataset.data.shift();
+                            });
+                        }
+
+                        chart.options.scales.x.min = Math.max(0, counter - maxDataPoints);
+                        chart.options.scales.x.max = counter;
+
+                        chart.update();
+                    }
+                }
+            }, dataUpdateInterval);
+        }
+
+        function onWidgetUnloaded(options) {
+            if (interval) clearInterval(interval);
+        }
+    </script>
+</body>
+
+</html>

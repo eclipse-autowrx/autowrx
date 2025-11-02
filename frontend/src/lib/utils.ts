@@ -77,3 +77,153 @@ export const getApiTypeClasses = (type: string) => {
       return { bgClass: 'bg-gray-500', textClass: 'text-gray-500' }
   }
 }
+
+// Dashboard utils : Checking if the selected cells are continuous rectangle
+export const isContinuousRectangle = (pickedCells: number[]): boolean => {
+  const numCols = 5
+  if (pickedCells.length <= 1) return true // Single cell is always valid
+  // Convert cell number to grid position
+  const toGridPosition = (cell: number): [number, number] => {
+    let row = Math.floor((cell - 1) / numCols)
+    let col = (cell - 1) % numCols
+    return [row, col]
+  }
+  // Create a matrix to represent the grid
+  let grid = Array(2)
+    .fill(null)
+    .map(() => Array(5).fill(false))
+  // Mark the selected cells in the grid
+  pickedCells.forEach((cell) => {
+    const [row, col] = toGridPosition(cell)
+    grid[row][col] = true
+  })
+  // Find the bounding box of the selected cells
+  let minRow = 2,
+    maxRow = -1,
+    minCol = 5,
+    maxCol = -1
+  grid.forEach((row, rowIndex) => {
+    row.forEach((cell, colIndex) => {
+      if (cell) {
+        minRow = Math.min(minRow, rowIndex)
+        maxRow = Math.max(maxRow, rowIndex)
+        minCol = Math.min(minCol, colIndex)
+        maxCol = Math.max(maxCol, colIndex)
+      }
+    })
+  })
+  // Check all cells within the bounding box are selected
+  for (let row = minRow; row <= maxRow; row++) {
+    for (let col = minCol; col <= maxCol; col++) {
+      if (!grid[row][col]) {
+        return false // Found a cell in the bounding box that is not selected
+      }
+    }
+  }
+  return true // All cells within the bounding box are selected
+}
+
+// Dashboard utils : Calculate the rowSpan and colSpan of widget box to merge the cells
+export const calculateSpans = (boxes: any) => {
+  let minCol = Math.min(...boxes.map((box: any) => ((box - 1) % 5) + 1))
+  let maxCol = Math.max(...boxes.map((box: any) => ((box - 1) % 5) + 1))
+  let minRow = Math.ceil(Math.min(...boxes) / 5)
+  let maxRow = Math.ceil(Math.max(...boxes) / 5)
+
+  let colSpan = maxCol - minCol + 1
+  let rowSpan = maxRow - minRow + 1
+
+  return { rowSpan, colSpan }
+}
+
+export const doesOverlap = (
+  widgetConfigs: any[],
+  updatedWidgetConfig: any,
+  index: number,
+): boolean => {
+  const otherWidgets = widgetConfigs.filter((_, idx) => idx !== index)
+  const updatedBoxes = new Set(updatedWidgetConfig.boxes)
+  for (const widget of otherWidgets) {
+    if (widget.boxes.some((box: number) => updatedBoxes.has(box))) {
+      return true
+    }
+  }
+  return false
+}
+
+// Handle case when prototype's widget config is an object instead of an array
+export const parseWidgetConfig = (configStr: any) => {
+  if (!configStr) return []
+
+  try {
+    const parsedConfig =
+      typeof configStr === 'string' ? JSON.parse(configStr) : configStr
+    return Array.isArray(parsedConfig)
+      ? parsedConfig
+      : parsedConfig.widgets || []
+  } catch (e) {
+    console.error('Error normalizing widget config:', e)
+    return []
+  }
+}
+
+export const isBinaryFile = (fileName: string): boolean => {
+  const binaryExtensions = [
+    // Images
+    '.png',
+    '.jpg',
+    '.jpeg',
+    '.gif',
+    '.bmp',
+    '.ico',
+    '.webp',
+    '.svg',
+    // Archives
+    '.zip',
+    '.gz',
+    '.tar',
+    '.rar',
+    '.7z',
+    // Documents
+    '.pdf',
+    '.doc',
+    '.docx',
+    '.xls',
+    '.xlsx',
+    '.ppt',
+    '.pptx',
+    // Other
+    '.exe',
+    '.dll',
+    '.so',
+    '.class',
+    '.pyc',
+    '.woff',
+    '.woff2',
+    '.ttf',
+    '.otf',
+    '.eot',
+  ]
+  const extension = (fileName.match(/\.[^.]+$/) || [''])[0].toLowerCase()
+  return binaryExtensions.includes(extension)
+}
+
+export const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
+  let binary = ''
+  const bytes = new Uint8Array(buffer)
+  const len = bytes.byteLength
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i])
+  }
+  return window.btoa(binary)
+}
+
+export const base64ToArrayBuffer = (base64: string): ArrayBuffer => {
+  const binary_string = window.atob(base64)
+  const len = binary_string.length
+  const bytes = new Uint8Array(len)
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binary_string.charCodeAt(i)
+  }
+  return bytes.buffer
+}

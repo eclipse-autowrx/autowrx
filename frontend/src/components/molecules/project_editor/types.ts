@@ -6,18 +6,18 @@
 //
 // SPDX-License-Identifier: MIT
 
-export interface IssueCreate {
-  extendedApi: string
-  title: string
-  githubAccessToken: string
-  content?: string
-  model: string
+export interface File {
+  type: 'file'
+  name: string
+  content: string
+  isBase64?: boolean
 }
 
-export interface Issue {
-  id: string
-  extendedApi: string
-  createdAt: string
-  link: string
-  updatedAt: string
+export interface Folder {
+  type: 'folder'
+  name: string
+  items: FileSystemItem[]
 }
+
+export type FileSystemItem = File | Folder
+

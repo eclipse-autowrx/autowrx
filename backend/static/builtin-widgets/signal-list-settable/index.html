@@ -1,0 +1,332 @@
+<html>
+
+<head>
+  <link rel="stylesheet" href="../tailwind.min.css">
+  <script defer src="../syncer.js"></script>
+  <style>
+    @font-face {
+      font-family: 'Manrope';
+      src: url('../Manrope-VariableFont.ttf') format('truetype');
+      font-weight: 100 900;
+      font-display: swap;
+    }
+
+    body {
+      font-family: 'Manrope', sans-serif;
+    }
+
+    .text-big {
+      font-size: 13px !important;
+    }
+
+    .text-content {
+      font-size: 12px !important;
+    }
+
+    .rtl {
+      direction: rtl;
+      text-overflow: ellipsis;
+    }
+  </style>
+</head>
+
+<body class="flex flex-col bg-white h-full w-full overflow-auto text-gray-800">
+
+  <table id="api-table" class="table-auto w-full">
+    <tbody>
+      <!-- Dynamic content will be inserted here -->
+    </tbody>
+  </table>
+
+  <script>
+    let VSS_JSON_URL = "./vss.json"
+    let VSS_TREE = {}
+    let VSS_LIST = []
+    let VSS_MAP = new Map()
+
+    function isNumber(value) {
+      const numberPattern = /^-?\d+(\.\d+)?$/;
+      return numberPattern.test(value);
+    }
+
+    function isFloat(value) {
+      return Number.isFinite(value) && value !== Math.floor(value);
+    }
+
+    const convertTree2List = (vssTree) => {
+      // console.log("vssTree", vssTree)
+      const traverse = (
+        node,
+        prefix = 'Vehicle',
+      ) => {
+        let result = []
+        if (node.type != "branch") {
+          VSS_MAP.set(prefix, { ...node, name: prefix })
+          result.push({ ...node, name: prefix })
+        }
+
+        if (node.children) {
+          for (const [key, child] of Object.entries(node.children)) {
+            const newPrefix = `${prefix}.${key}`
+            node.children[key].name = newPrefix
+            result = result.concat(traverse(child, newPrefix))
+          }
+        }
+
+        return result
+      }
+      const keys = Object.keys(vssTree);
+      if (keys.length > 0) {
+        return traverse(vssTree[keys[0]], keys[0])
+      }
+      return []
+
+    }
+
+    const loadVssJson = async () => {
+      if (VSS_JSON_URL) {
+        try {
+          let response = await fetch(VSS_JSON_URL)
+          VSS_TREE = await response.json()
+        } catch (err) {
+          console.log("Err when load json file")
+          console.log(err)
+        }
+      }
+    }
+
+    let interval = null;
+    function getAllows(allows) {
+      if (!allows) return ''
+      return `<p class='text-content text-slate-400 font-semibold'>Allows values: ${allows.join(', ')}</p>`
+    }
+    function createTableCell(signal, content, col) {
+      const cell = document.createElement('td');
+      switch (col) {
+        case 0:
+          cell.className = `px-1 py-2 w-[70vw] max-w-[70vw] overflow-x-hidden font-semibold text-big`;
+          if (signal) {
+            cell.innerHTML = `<div class='w-full'>
+                <div class='w-full flex justify-start'>
+                  <div class='font-semibold text-slate-600 overflow-x-hidden whitespace-nowrap rtl'>${content}</div>
+                </div>
+                <p class='w-full text-content text-slate-600 font-normal whitespace-pre-wrap leading-tight'> [${signal.type.toUpperCase()}] [${signal.datatype}] ${signal.unit ? ("[" + signal.unit + "]") : ''} ${signal.description}</p>
+                </div>`
+          } else {
+            cell.innerHTML = `<div class='w-full flex justify-start'>
+                <div class='font-semibold text-slate-600 overflow-x-hidden whitespace-nowrap rtl'>${content}</div>
+              </div>`
+          }
+
+          break;
+        case 1:
+          cell.className = `ml-1 px-1 py-1 text-center w-[12vw] min-w-[12vw] rounded whitespace-nowrap text-content font-semibold`;
+          cell.innerText = content;
+          break;
+        case 2:
+          cell.className = `px-1 py-1 w-[14vw] min-w-[14vw] items-center justify-center`;
+          if (signal && signal.datatype == 'boolean') {
+            const container = document.createElement('div');
+            container.className = 'flex space-x-1'
+
+            const btn_on = document.createElement('button');
+            btn_on.className = `text-big rounded w-[6vw] py-0.5 flex justify-center bg-green-400 text-white hover:opacity-60`
+            btn_on.innerText = "ON"
+            container.appendChild(btn_on)
+            const btn_off = document.createElement('button');
+            btn_off.className = `text-big rounded w-[6vw] py-0.5 flex justify-center bg-red-400 text-white hover:opacity-60`
+            btn_off.innerText = "OFF"
+            container.appendChild(btn_off)
+
+            btn_on.addEventListener("click", (e) => {
+              setApiValue(content, true)
+            })
+
+            btn_off.addEventListener("click", (e) => {
+              setApiValue(content, false)
+            })
+
+            cell.appendChild(container)
+          } else if (signal && signal.datatype == 'string' && signal.allowed) {
+            const container = document.createElement('div');
+            container.className = 'flex space-x-1 w-full'
+            const tag_select = document.createElement('select');
+            tag_select.className = "px-1 py-1 rounded border border-slate-200 w-full text-content font-semibold"
+            signal.allowed.forEach(v => {
+              let opt = document.createElement('option');
+              opt.value = v;
+              opt.innerHTML = v;
+              tag_select.appendChild(opt);
+            })
+            tag_select.addEventListener("change", function () {
+              console.log(`tag_select VALUE ${tag_select.value}`)
+              setApiValue(content, tag_select.value)
+            });
+            cell.appendChild(tag_select)
+          } else {
+            const input = document.createElement('input');
+            input.className = `rounded w-full border border-slate-400 bg-white px-1 py-1 text-right`
+            try {
+              input.addEventListener("keydown", (e) => {
+                if (e.keyCode == 13) {
+                  let value = e.target.value
+                  let sendValue = 0
+                  if (value.length > 0) {
+                    if ((signal && signal.datatype == 'string') || !isNumber(value.trim())) {
+                      setApiValue(content, value.trim())
+                    } else {
+                      setApiValue(content, Number(value.trim()))
+                    }
+                    //setApiValue(content, sendValue)
+                    e.target.value = ""
+                  }
+                }
+              })
+            } catch (ex) {
+            }
+
+            cell.appendChild(input)
+          }
+
+          break;
+        case 3:
+          // create range note
+          cell.className = `px-4 py-2 font-semibold whitespace-nowrap`;
+          cell.innerText = "";
+          if (signal) {
+            cell.innerText = `[${signal.datatype}] ${signal.type}`;
+          }
+          break;
+        default:
+          cell.className = `ml-1 px-4 py-2`
+          break;
+      }
+
+      return cell;
+    }
+
+    // Listen for VSS tree data from parent dashboard
+    window.addEventListener('message', function (event) {
+      try {
+        const data = JSON.parse(event.data)
+        if (data.cmd === 'vss-tree' && data.vssTree) {
+          VSS_TREE = data.vssTree
+          VSS_LIST = convertTree2List(VSS_TREE)
+          console.log('Received VSS tree from dashboard:', VSS_TREE)
+
+          // If table is already rendered, update it with VSS metadata
+          const apiTableBody = document.querySelector('#api-table tbody');
+          if (apiTableBody && apiTableBody.rows.length > 1) {
+            // Update existing rows with VSS metadata
+            updateTableWithVssMetadata(apiTableBody)
+          }
+        }
+      } catch (err) {
+        // Ignore non-JSON messages
+      }
+    })
+
+    function updateTableWithVssMetadata(apiTableBody) {
+      // Skip header row (index 0), update data rows
+      for (let i = 1; i < apiTableBody.rows.length; i++) {
+        const row = apiTableBody.rows[i];
+        // Get signal name from data attribute (reliable source)
+        const signalName = row.dataset.signalName
+
+        if (!signalName) continue;
+
+        const signal = VSS_MAP.get(signalName)
+
+        if (signal) {
+          // Update column 0: Signal name and metadata display
+          const newCell0 = createTableCell(signal, signalName, 0)
+          row.replaceChild(newCell0, row.cells[0])
+
+          // Update column 2: Set controls (boolean buttons, dropdown, or input)
+          const newCell2 = createTableCell(signal, signalName, 2)
+          row.replaceChild(newCell2, row.cells[2])
+        }
+      }
+    }
+
+    async function onWidgetLoaded(options) {
+      //console.log(">>>>>>> onWidgetLoaded")
+      const apiTableBody = document.querySelector('#api-table tbody');
+
+      // VSS tree is now received via postMessage from dashboard
+      // Fallback to old method if vss_json is explicitly provided
+      VSS_JSON_URL = options.vss_json
+
+      if (VSS_JSON_URL) {
+        await loadVssJson()
+      } else {
+        // Wait a bit for the VSS tree to arrive via postMessage
+        await new Promise(r => setTimeout(r, 300))
+
+        // Fallback to window.VSS_TREE if available (legacy support)
+        if (!VSS_TREE || Object.keys(VSS_TREE).length === 0) {
+          if (window.VSS_TREE) {
+            VSS_TREE = window.VSS_TREE
+          }
+        }
+      }
+      //console.log(VSS_TREE)
+      VSS_LIST = convertTree2List(VSS_TREE)
+
+      if (options.apis && Array.isArray(options.apis)) {
+        const rowHead = document.createElement('tr');
+        rowHead.className = "bg-slate-200 text-big"
+        const td0 = document.createElement('td');
+        td0.innerText = "Signal"
+        td0.className = "px-4 py-1 font-bold text-center"
+        const td1 = document.createElement('td');
+        td1.innerText = "Value"
+        td1.className = "px-4 py-1 font-bold text-center"
+        const td2 = document.createElement('td');
+        td2.innerText = "Set"
+        td2.className = "px-4 py-1 font-bold text-center"
+        // const td3 = document.createElement('td');
+        // td3.innerText = "Remark"
+        // td3.className = "px-4 py-1 font-bold text-lg text-center"
+        rowHead.appendChild(td0)
+        rowHead.appendChild(td1)
+        rowHead.appendChild(td2)
+        // rowHead.appendChild(td3)
+        apiTableBody.appendChild(rowHead)
+
+        options.apis.forEach((api, index) => {
+          const row = document.createElement('tr');
+          row.className = index % 2 === 1 ? 'bg-gray-50' : 'bg-gray-100';
+          row.dataset.signalName = api; // Store signal name for later reference
+          let signal = VSS_MAP.get(api)
+          console.log(`signal ${api}`, signal)
+          row.appendChild(createTableCell(signal, api, 0));
+          row.appendChild(createTableCell(signal, '0', 1));
+          row.appendChild(createTableCell(signal, api, 2));
+          // row.appendChild(createTableCell(signal, api, 3));
+          apiTableBody.appendChild(row);
+        });
+
+        interval = setInterval(() => {
+          options.apis.forEach((api, index) => {
+            //if(index==0) return
+            let apiValueObject = getApiValue(api);
+            let apiValue = apiValueObject?.value == undefined ? 'NaN' : apiValueObject?.value;
+            if (isFloat(apiValue)) {
+              apiValue = Number(apiValue.toFixed(3))
+            }
+            apiTableBody.rows[index + 1].cells[1].innerText = apiValue;
+            apiTableBody.rows[index + 1].cells[1].title = apiValue;
+          });
+        }, 100);
+      }
+    }
+
+    function onWidgetUnloaded(options) {
+      if (interval) clearInterval(interval);
+    }
+
+  </script>
+</body>
+
+</html>

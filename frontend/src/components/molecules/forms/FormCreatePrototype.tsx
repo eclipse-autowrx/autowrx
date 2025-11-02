@@ -408,7 +408,7 @@ const FormCreatePrototype = ({
             onTemplateChange(v)
           }}
         >
-          <SelectTrigger data-id="prototype-language-select">
+          <SelectTrigger data-id="prototype-language-select" className="w-full">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
