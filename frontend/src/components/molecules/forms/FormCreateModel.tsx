@@ -29,6 +29,8 @@ import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import useListVSSVersions from '@/hooks/useListVSSVersions'
 import DaFileUpload from '@/components/atoms/DaFileUpload'
+import { useQuery } from '@tanstack/react-query'
+import { listModelTemplates } from '@/services/modelTemplate.service'
 
 type ModelData = {
   cvi: string
@@ -51,11 +53,18 @@ const FormCreateModel = () => {
 
   const [error, setError] = useState<string>('')
   const [data, setData] = useState(initialState)
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
   const { refetch: refetchModelLite } = useListModelLite()
   const { data: versions } = useListVSSVersions()
   const { toast } = useToast()
 
   const { data: currentUser } = useSelfProfileQuery()
+  
+  // Fetch templates
+  const { data: templatesData } = useQuery({
+    queryKey: ['model-templates'],
+    queryFn: () => listModelTemplates({ limit: 100, page: 1 }),
+  })
 
   const navigate = useNavigate()
 
@@ -79,6 +88,7 @@ const FormCreateModel = () => {
         main_api: data.mainApi,
         name: data.name,
         api_version: data.api_version,
+        model_template_id: selectedTemplateId || null,
       }
       if (data.api_data_url) {
         body.api_data_url = data.api_data_url
@@ -106,6 +116,7 @@ const FormCreateModel = () => {
       })
       navigate(`/model/${modelId}`)
       setData(initialState)
+      setSelectedTemplateId(null)
     } catch (error) {
       if (isAxiosError(error)) {
         setError(error.response?.data?.message || 'Something went wrong')
@@ -146,7 +157,7 @@ const FormCreateModel = () => {
     <form
       onSubmit={createNewModel}
       data-id="form-create-model"
-      className="flex min-h-[300px] w-[400px] min-w-[400px] overflow-y-auto flex-col bg-background p-4"
+      className="flex min-h-[300px] w-full min-w-[400px] overflow-y-auto flex-col bg-background p-0"
     >
       {/* Title */}
       <h2 className="text-lg font-semibold text-primary">Create New Model</h2>
@@ -214,6 +225,84 @@ const FormCreateModel = () => {
       </div>
 
       <div className="grow"></div>
+
+      {/* Template Selection - Moved to bottom */}
+      <div className="mt-6 flex flex-col gap-1.5">
+        <Label>Start from Template (Optional)</Label>
+        <div className="mt-1 space-y-2 max-h-48 overflow-y-auto">
+          {/* Start from scratch option */}
+          <div
+            onClick={() => setSelectedTemplateId(null)}
+            className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+              selectedTemplateId === null
+                ? 'border-primary bg-primary/5'
+                : 'border-input hover:border-primary/50'
+            }`}
+          >
+            <div className="w-16 h-16 rounded border border-input bg-background flex items-center justify-center flex-shrink-0">
+              <span className="text-xs text-muted-foreground text-center px-2">
+                Start from scratch
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium">Start from scratch</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Create a new model without a template
+              </p>
+            </div>
+            <input
+              type="radio"
+              name="template"
+              value="scratch"
+              checked={selectedTemplateId === null}
+              onChange={() => setSelectedTemplateId(null)}
+              className="w-4 h-4 text-primary"
+            />
+          </div>
+
+          {/* Template options */}
+          {templatesData?.results?.map((template) => (
+            <div
+              key={template.id}
+              onClick={() => setSelectedTemplateId(template.id)}
+              className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                selectedTemplateId === template.id
+                  ? 'border-primary bg-primary/5'
+                  : 'border-input hover:border-primary/50'
+              }`}
+            >
+              <div className="w-16 h-16 rounded border border-input bg-background flex items-center justify-center flex-shrink-0 overflow-hidden">
+                <img
+                  src={template.image || '/imgs/plugin.png'}
+                  alt={template.name}
+                  className="w-full h-full object-contain p-2"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{template.name}</p>
+                {template.description && (
+                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                    {template.description}
+                  </p>
+                )}
+              </div>
+              <input
+                type="radio"
+                name="template"
+                value={template.id}
+                checked={selectedTemplateId === template.id}
+                onChange={() => setSelectedTemplateId(template.id)}
+                className="w-4 h-4 text-primary flex-shrink-0"
+              />
+            </div>
+          ))}
+          {templatesData?.results?.length === 0 && (
+            <p className="text-xs text-muted-foreground text-center py-4">
+              No templates available
+            </p>
+          )}
+        </div>
+      </div>
 
       {/* Error */}
       {error && <p className="text-sm mt-2 text-destructive">{error}</p>}

@@ -13,6 +13,7 @@ const pick = require('../utils/pick');
 const ApiError = require('../utils/ApiError');
 const { PERMISSIONS } = require('../config/roles');
 const logger = require('../config/logger');
+const ModelTemplate = require('../models/modelTemplate.model');
 
 const createModel = catchAsync(async (req, res) => {
   let { cvi, custom_apis, extended_apis, api_data_url, ...reqBody } = req.body;
@@ -202,6 +203,21 @@ const getModel = catchAsync(async (req, res) => {
   }
 
   const finalResult = model.toJSON();
+
+  // If model has model_template_id, populate custom_template from template
+  // Only if model.custom_template is null/undefined (owner hasn't customized it yet)
+  if (model.model_template_id && !model.custom_template) {
+    try {
+      const template = await ModelTemplate.findById(model.model_template_id);
+      if (template && template.config) {
+        // Use template's config as custom_template only if model doesn't have one
+        finalResult.custom_template = template.config;
+      }
+    } catch (error) {
+      logger.warn(`Error fetching template for model ${req.params.id}: ${error.message}`);
+      // Continue without template if there's an error
+    }
+  }
 
   if (hasWritePermission) {
     const contributors = await permissionService.listAuthorizedUser({

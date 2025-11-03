@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   createModelTemplate,
@@ -22,14 +22,29 @@ type Props = {
   templateId?: string
   onClose: () => void
   open?: boolean
+  initialData?: {
+    name?: string
+    description?: string
+    image?: string
+    visibility?: string
+    config?: any // Full custom_template object
+    model_tabs?: Array<{ label: string; plugin: string }>
+    prototype_tabs?: Array<{ label: string; plugin: string }>
+  }
 }
 
-export default function TemplateForm({ templateId, onClose, open }: Props) {
+export default function TemplateForm({ templateId, onClose, open, initialData }: Props) {
   const qc = useQueryClient()
   const isCreate = useMemo(() => !templateId, [templateId])
   const [activeTab, setActiveTab] = useState<'meta' | 'model' | 'prototype'>(
     'meta',
   )
+  const prevOpenRef = useRef(open)
+
+  // Debug: Log when initialData changes
+  // useEffect(() => {
+  //   console.log('[TemplateForm] initialData received:', initialData)
+  // }, [initialData])
 
   const { data: initial, isFetching } = useQuery({
     queryKey: ['model-template', templateId],
@@ -60,6 +75,7 @@ export default function TemplateForm({ templateId, onClose, open }: Props) {
 
   useEffect(() => {
     if (initial) {
+      console.log('[TemplateForm] initial found:', initial)
       setForm(initial)
       const cfg: any = initial.config || {}
       setModelTabs(
@@ -79,6 +95,7 @@ export default function TemplateForm({ templateId, onClose, open }: Props) {
           : [],
       )
     } else {
+      console.log('[TemplateForm] initial not found')
       setForm({
         name: '',
         description: '',
@@ -91,21 +108,76 @@ export default function TemplateForm({ templateId, onClose, open }: Props) {
     }
   }, [initial])
 
-  // Reset when opening create mode
+  // Reset when opening create mode (only when dialog transitions from closed to open)
   useEffect(() => {
-    if (open && isCreate) {
-      setForm({
-        name: '',
-        description: '',
-        image: '',
-        visibility: 'public',
-        config: {},
-      })
-      setModelTabs([])
-      setPrototypeTabs([])
+    const wasOpen = prevOpenRef.current
+    prevOpenRef.current = open
+    
+    if (open && !wasOpen && isCreate) {
+      console.log('[TemplateForm] Dialog opened in create mode. initialData:', initialData)
       setActiveTab('meta')
+      // If no initialData, reset to empty form
+      if (!initialData) {
+        console.log('[TemplateForm] initialData not found, resetting form')
+        setForm({
+          name: '',
+          description: '',
+          image: '',
+          visibility: 'public',
+          config: {},
+        })
+        setModelTabs([])
+        setPrototypeTabs([])
+      }
     }
-  }, [open, isCreate])
+  }, [open, isCreate, initialData])
+
+  // Handle initialData when dialog is open and in create mode
+  useEffect(() => {
+    if (open && isCreate && initialData) {
+      console.log('[TemplateForm] Processing initialData:', initialData)
+      // Get the full config from initialData.config (custom_template)
+      console.log('[TemplateForm] initialData.config:', initialData.config)
+      console.log('[TemplateForm] initialData.config.model_tabs:', initialData.config?.model_tabs)
+      console.log('[TemplateForm] initialData.config.prototype_tabs:', initialData.config?.prototype_tabs)
+      const fullConfig = initialData.config || {}
+      console.log('[TemplateForm] fullConfig:', fullConfig)
+      
+      // Extract tabs directly from config (custom_template) - this is the source of truth
+      const modelTabsFromConfig = Array.isArray(fullConfig.model_tabs) 
+        ? fullConfig.model_tabs 
+        : []
+      const prototypeTabsFromConfig = Array.isArray(fullConfig.prototype_tabs) 
+        ? fullConfig.prototype_tabs 
+        : []
+      
+      console.log('[TemplateForm] Extracted tabs:', {
+        modelTabsFromConfig,
+        prototypeTabsFromConfig,
+      })
+      
+      // Pre-populate with initial data, preserving entire config structure
+      setForm({
+        name: initialData.name || '',
+        description: initialData.description || '',
+        image: initialData.image || '',
+        visibility: (initialData.visibility as 'public' | 'private' | 'default') || 'public',
+        config: fullConfig, // Preserve entire custom_template structure
+      })
+      setModelTabs(
+        modelTabsFromConfig.map((x: any) => ({
+          label: x.label || '',
+          plugin: x.plugin || '',
+        }))
+      )
+      setPrototypeTabs(
+        prototypeTabsFromConfig.map((x: any) => ({
+          label: x.label || '',
+          plugin: x.plugin || '',
+        }))
+      )
+    }
+  }, [open, isCreate, initialData])
 
   const onChange = (k: keyof ModelTemplate, v: any) =>
     setForm((s) => ({ ...s, [k]: v }))

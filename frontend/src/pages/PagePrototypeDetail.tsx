@@ -49,6 +49,7 @@ import CustomPrototypeTabs from '@/components/molecules/CustomPrototypeTabs'
 import PagePrototypePlugin from '@/pages/PagePrototypePlugin'
 import CustomTabEditor from '@/components/organisms/CustomTabEditor'
 import PrototypeTabInfo from '../components/organisms/PrototypeTabInfo'
+import TemplateForm from '@/components/organisms/TemplateForm'
 
 interface ViewPrototypeProps {
   display?: 'tree' | 'list'
@@ -72,6 +73,16 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
   const [isModelOwner, setIsModelOwner] = useState(false)
   const [openAddonDialog, setOpenAddonDialog] = useState(false)
   const [openManageAddonsDialog, setOpenManageAddonsDialog] = useState(false)
+  const [openTemplateForm, setOpenTemplateForm] = useState(false)
+  const [templateInitialData, setTemplateInitialData] = useState<{
+    name?: string
+    description?: string
+    image?: string
+    visibility?: string
+    config?: any
+    model_tabs?: Array<{ label: string; plugin: string }>
+    prototype_tabs?: Array<{ label: string; plugin: string }>
+  } | undefined>(undefined)
 
   // Populate store when prototype is fetched
   useEffect(() => {
@@ -278,6 +289,31 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
               >
                 Manage Addons
               </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => {
+                  // Capture current model.custom_template data at the moment of click
+                  if (model) {
+                    const initialData = {
+                      name: model.name || '',
+                      description: '',
+                      image: model.model_home_image_file || '',
+                      visibility: model.visibility || 'public',
+                      config: model.custom_template || {},
+                      model_tabs: model.custom_template?.model_tabs || [],
+                      prototype_tabs: model.custom_template?.prototype_tabs || [],
+                    }
+                    console.log('[PagePrototypeDetail] Setting templateInitialData:', {
+                      model,
+                      custom_template: model.custom_template,
+                      initialData,
+                    })
+                    setTemplateInitialData(initialData)
+                  }
+                  setOpenTemplateForm(true)
+                }}
+              >
+                Save Solution as Template
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )}
@@ -319,6 +355,23 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
         title="Manage Prototype Tabs"
         description="Edit labels, reorder, and remove custom prototype tabs"
       />
+
+      {/* Template Form Dialog */}
+      <DaDialog
+        open={openTemplateForm}
+        onOpenChange={setOpenTemplateForm}
+        className="w-[840px] max-w-[calc(100vw-80px)]"
+      >
+        <TemplateForm
+          open={openTemplateForm}
+          templateId={undefined}
+          onClose={() => {
+            setOpenTemplateForm(false)
+            setTemplateInitialData(undefined)
+          }}
+          initialData={templateInitialData}
+        />
+      </DaDialog>
     </div>
   ) : (
     <div className="flex flex-col items-center justify-center w-full h-full gap-4">

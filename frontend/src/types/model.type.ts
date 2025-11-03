@@ -165,6 +165,7 @@ export type ModelCreate = {
   visibility?: 'public' | 'private'
   extended_apis?: any[]
   api_data_url?: string
+  model_template_id?: string | null
 }
 
 export type VehicleApi = {

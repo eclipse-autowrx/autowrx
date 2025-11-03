@@ -9,13 +9,14 @@
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
-import { Spinner } from '@/components/atoms/spinner'
 import config from '@/configs/config'
 import { useListUsers } from '@/hooks/useListUsers'
 import { createUserService, updateUserService } from '@/services/user.service'
 import { User, UserCreate, UserUpdate } from '@/types/user.type'
 import { isAxiosError } from 'axios'
 import { useEffect, useState } from 'react'
+import { TbLoader } from 'react-icons/tb'
+import { useToast } from '../toaster/use-toast'
 
 interface FormCreateUserProps {
   onClose: () => void
@@ -34,15 +35,16 @@ const FormCreateUser = ({ onClose, updateData }: FormCreateUserProps) => {
   const { refetch } = useListUsers({
     includeFullDetails: true,
   })
+  const { toast } = useToast()
 
   const isCreate = !updateData
 
   const [data, setData] = useState(initialData)
 
   useEffect(() => {
-    if (updateData?.email && updateData?.name) {
+    if (updateData?.name) {
       setData({
-        email: updateData.email,
+        email: updateData.email || '',
         name: updateData.name,
         password: '',
       })
@@ -55,12 +57,28 @@ const FormCreateUser = ({ onClose, updateData }: FormCreateUserProps) => {
       setError('')
       setData(initialData)
       onClose()
+      toast({
+        title: 'Success',
+        description: 'User created successfully.',
+      })
     } catch (error) {
       if (isAxiosError(error)) {
-        setError(error.response?.data?.message ?? 'Something went wrong')
+        const errorMessage =
+          error.response?.data?.message ?? 'Something went wrong'
+        setError(errorMessage)
+        toast({
+          title: 'Error',
+          description: errorMessage,
+          variant: 'destructive',
+        })
         return
       }
       setError('Something went wrong')
+      toast({
+        title: 'Error',
+        description: 'Something went wrong',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -70,12 +88,28 @@ const FormCreateUser = ({ onClose, updateData }: FormCreateUserProps) => {
       setError('')
       setData(initialData)
       onClose()
+      toast({
+        title: 'Success',
+        description: 'User updated successfully.',
+      })
     } catch (error) {
       if (isAxiosError(error)) {
-        setError(error.response?.data?.message ?? 'Something went wrong')
+        const errorMessage =
+          error.response?.data?.message ?? 'Something went wrong'
+        setError(errorMessage)
+        toast({
+          title: 'Error',
+          description: errorMessage,
+          variant: 'destructive',
+        })
         return
       }
       setError('Something went wrong')
+      toast({
+        title: 'Error',
+        description: 'Something went wrong',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -113,70 +147,76 @@ const FormCreateUser = ({ onClose, updateData }: FormCreateUserProps) => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col bg-background"
+      className="flex max-h-[80vh] w-full flex-col bg-background p-4"
     >
       {/* Title */}
-      <h2 className="text-lg font-semibold text-primary">
+      <h2 className="text-xl font-semibold text-primary">
         {isCreate ? 'Create New User' : 'Update User'}
       </h2>
 
       {/* Content */}
-      <div className="mt-4 flex flex-col gap-1.5">
-        <Label>Name *</Label>
-        <Input
-          value={data.name}
-          onChange={handleChange('name')}
-          name="name"
-          placeholder="Name"
-        />
+      <div className="mt-4 space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="name">Name *</Label>
+          <Input
+            id="name"
+            value={data.name}
+            onChange={handleChange('name')}
+            name="name"
+            placeholder="Name"
+            required
+          />
+        </div>
+
+        {isCreate && (
+          <div className="space-y-2">
+            <Label htmlFor="email">Email *</Label>
+            <Input
+              id="email"
+              value={data.email}
+              onChange={handleChange('email')}
+              name="email"
+              type="email"
+              placeholder="Email"
+              required
+            />
+          </div>
+        )}
+        {!config.strictAuth && (
+          <div className="space-y-2">
+            <Label htmlFor="password">
+              {isCreate ? 'Password *' : 'Password'}
+            </Label>
+            <Input
+              id="password"
+              value={data.password}
+              onChange={handleChange('password')}
+              name="password"
+              type="password"
+              placeholder="Password"
+              required={isCreate}
+            />
+          </div>
+        )}
       </div>
 
-      {isCreate && (
-        <div className="mt-4 flex flex-col gap-1.5">
-          <Label>Email *</Label>
-          <Input
-            value={data.email}
-            onChange={handleChange('email')}
-            name="email"
-            placeholder="Email"
-          />
-        </div>
-      )}
-      {!config.strictAuth && (
-        <div className="mt-4 flex flex-col gap-1.5">
-          <Label>{isCreate ? 'Password *' : 'Password'}</Label>
-          <Input
-            value={data.password}
-            onChange={handleChange('password')}
-            name="password"
-            type="password"
-            placeholder="Password"
-          />
-        </div>
-      )}
-      <div className="grow"></div>
-
       {/* Error */}
-      {error && <p className="text-sm mt-2 text-destructive">{error}</p>}
+      {error && (
+        <p className="mt-4 text-sm text-destructive">{error}</p>
+      )}
 
       {/* Action */}
-      <div className="ml-auto space-x-2">
+      <div className="ml-auto space-x-2 mt-8 flex justify-end">
         <Button
           onClick={onClose}
           disabled={loading}
           type="button"
-          className="mt-8 w-fit"
-          variant="ghost"
+          variant="outline"
         >
           Cancel
         </Button>
-        <Button
-          disabled={loading}
-          type="submit"
-          className="mt-8 w-fit"
-          variant="default"
-        >
-          {loading && <Spinner className="mr-2" size={16} />}
+        <Button disabled={loading} type="submit">
+          {loading && <TbLoader className="mr-2 animate-spin" />}
           {isCreate ? 'Create User' : 'Update User'}
         </Button>
       </div>
