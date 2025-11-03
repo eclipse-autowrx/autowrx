@@ -34,21 +34,21 @@ This project serves as the backend for the playground, offering endpoints for:
 
 ### Running the Application
 
-- **Development Mode**:
+- **Development Mode** (from project root):
 
   ```bash
-  docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+  docker compose -f docker-compose.dev.yml up
   ```
 
-  Access backend at http://localhost:9800
+  Access backend at http://localhost:8080
 
-- **Production Mode**:
+- **Production Mode** (from project root):
 
   ```bash
-  docker compose -f docker-compose.yml -f docker-compose.prod.yml up
+  docker compose -f docker-compose.prod.yml up -d
   ```
 
-  Access backend at http://localhost:9800
+  Access backend at http://localhost:3200 (or configured FRONTEND_PORT)
 
   For more detail guideline on setting up a complete instance, please refer to: [Instance Setup Guideline](http://github.com/eclipse-autowrx/instance-setup)
 
@@ -71,10 +71,8 @@ backend-core/
 │   ├── validations/        # Request validation schemas
 │   ├── app.js              # Express app setup
 │   └── index.js            # Application entry point
-├── docker-compose.yml      # Docker Compose base configuration
-├── docker-compose.dev.yml  # Docker Compose configuration for dev environment
-├── docker-compose.dev.yml  # Docker Compose configuration for prod environment
-├── Dockerfile              # Docker build instructions
+├── Dockerfile              # Docker build instructions (production)
+├── Dockerfile.dev         # Docker build instructions (development)
 ```
 
 ## API Endpoints

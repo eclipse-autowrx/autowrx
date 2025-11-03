@@ -1,12 +1,21 @@
-# Stage 1: Build Frontend
+# Stage 1: Build Frontend using build-frontend.sh script
 FROM node:20-alpine AS frontend-builder
-WORKDIR /app/frontend
-COPY frontend/package.json frontend/yarn.lock ./
-RUN yarn install --frozen-lockfile
-COPY frontend/ ./
-RUN yarn build
+WORKDIR /app
 
-# Stage 2: Build Backend with Frontend
+# Install bash (needed for build script)
+RUN apk add --no-cache bash
+
+# Copy frontend source code
+COPY frontend/ ./frontend/
+
+# Copy build script
+COPY build-frontend.sh ./
+
+# Install frontend dependencies and build
+# The script will install dependencies and build into backend/static/frontend-dist/
+RUN chmod +x build-frontend.sh && ./build-frontend.sh
+
+# Stage 2: Build Backend (only backend code, no frontend source)
 FROM node:20-alpine
 
 RUN mkdir -p /usr/src/playground-be && chown -R node:node /usr/src/playground-be
@@ -20,11 +29,13 @@ RUN yarn install --frozen-lockfile --production
 COPY --chown=node:node backend/ .
 
 # Copy frontend build into backend static folder
-COPY --from=frontend-builder --chown=node:node /app/frontend/dist ./static
+COPY --from=frontend-builder --chown=node:node /app/backend/static/frontend-dist ./static/frontend-dist
 
 USER node
 
-EXPOSE 8080
+EXPOSE 3200
 
-CMD ["yarn", "start"]
+ENV PORT=3200
+
+CMD ["yarn", "prod:test"]
 

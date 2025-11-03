@@ -21,9 +21,8 @@
     "lint:fix": "eslint . --fix",
     "prettier": "prettier --check **/*.js",
     "prettier:fix": "prettier --write **/*.js",
-    "docker:prod": "docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d",
-    "docker:dev": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up",
-    "docker:test": "docker compose -f docker-compose.yml -f docker-compose.test.yml up",
+    "docker:prod": "cd .. && docker compose -f docker-compose.prod.yml up -d",
+    "docker:dev": "cd .. && docker compose -f docker-compose.dev.yml up",
     "prepare": "husky install"
   },
   "keywords": [

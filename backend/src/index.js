@@ -14,6 +14,9 @@ const initializeRoles = require('./scripts/initializeRoles');
 const { init } = require('./config/socket');
 const { setupScheduledCheck, assignAdmins, convertLogsCap } = require('./scripts');
 
+// console.log('>>>>>>>>>>>>> mongo_url', config.mongoose.url);
+// console.log('>>>>>>>>>>>>> config', config);
+
 let server;
 mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
   logger.info('Connected to MongoDB ');

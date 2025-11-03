@@ -1,4 +1,4 @@
-name: Test Build (Manual)
+name: Test Build
 
 on:
   workflow_dispatch:
@@ -12,6 +12,10 @@ on:
         required: false
         type: boolean
         default: true
+  push:
+    tags:
+      - 'v*'
+      - '**'
 
 env:
   REGISTRY: ghcr.io
@@ -47,14 +51,32 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/autowrx
           tags: |
             type=ref,event=branch
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix=test-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Determine if should push
+        id: should_push
+        run: |
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref_type }}" == "tag" ]]; then
+            echo "push=true" >> $GITHUB_OUTPUT
+            echo "Triggered by tag push, will push image"
+          elif [[ "${{ github.event.inputs.push_image }}" == "true" ]] || [[ "${{ github.event.inputs.push_image }}" == true ]]; then
+            echo "push=true" >> $GITHUB_OUTPUT
+            echo "Manual trigger with push_image=true"
+          else
+            echo "push=false" >> $GITHUB_OUTPUT
+            echo "Manual trigger with push_image=false, will not push"
+          fi
 
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./backend/Dockerfile
-          push: ${{ github.event.inputs.push_image == 'true' || github.event.inputs.push_image == true }}
+          push: ${{ steps.should_push.outputs.push == 'true' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -66,14 +88,33 @@ jobs:
           echo "✓ Build completed successfully"
           echo "=========================================="
           echo ""
-          echo "Branch: ${{ github.event.inputs.branch || github.ref_name }}"
-          echo "Pushed to registry: ${{ github.event.inputs.push_image }}"
+          echo "Trigger: ${{ github.event_name }}"
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            echo "Ref: ${{ github.ref }}"
+            echo "Ref type: ${{ github.ref_type }}"
+            if [[ "${{ github.ref_type }}" == "tag" ]]; then
+              echo "Tag: ${{ github.ref_name }}"
+            fi
+          else
+            echo "Branch: ${{ github.event.inputs.branch || github.ref_name }}"
+            echo "Push image: ${{ github.event.inputs.push_image }}"
+          fi
+          echo ""
+          echo "Pushed to registry: ${{ steps.should_push.outputs.push }}"
           echo "Image tags:"
           echo "${{ steps.meta.outputs.tags }}"
           echo ""
-          if [[ "${{ github.event.inputs.push_image }}" == "true" ]]; then
-            echo "You can now test this image by updating .env.stack:"
-            echo "IMAGE_TAG=test-${GITHUB_SHA:0:7}"
+          if [[ "${{ steps.should_push.outputs.push }}" == "true" ]]; then
+            if [[ "${{ github.ref_type }}" == "tag" ]]; then
+              echo "Tagged image is available:"
+              echo "  ghcr.io/${{ env.IMAGE_PREFIX }}/autowrx:${{ github.ref_name }}"
+              echo ""
+              echo "You can now use this image in production by updating .env.stack:"
+              echo "IMAGE_TAG=${{ github.ref_name }}"
+            else
+              echo "You can now test this image by updating .env.stack:"
+              echo "IMAGE_TAG=test-${GITHUB_SHA:0:7}"
+            fi
           else
             echo "Image was built but not pushed (test only)"
           fi

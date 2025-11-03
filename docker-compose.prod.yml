@@ -6,9 +6,9 @@
 #
 # SPDX-License-Identifier: MIT
 
-# AutoWRX v3 Stack
+# AutoWRX Production Deployment
 # Usage:
-#   docker compose -f docker-compose.stack.yml --env-file .env.stack up -d
+#   docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
 
 services:
   # AutoWRX - Backend serves both API and frontend static files
@@ -20,11 +20,13 @@ services:
       dockerfile: ./backend/Dockerfile
     image: ghcr.io/${GITHUB_REPOSITORY:-eclipse-autowrx/autowrx}/autowrx:${IMAGE_TAG:-latest}
     ports:
-      - "${FRONTEND_PORT:-8090}:8080"
+      - "${FRONTEND_PORT:-3200}:3200"
     environment:
       NODE_ENV: ${NODE_ENV:-production}
-      PORT: ${PORT:-8080}
-      MONGODB_URL: ${MONGODB_URL:-mongodb://autowrx-db:27017/autowrx}
+      PORT: ${PORT:-3200}
+      # Always use port 27017 for internal Docker network communication
+      # MONGODB_PORT (27010) is only for external host access
+      MONGODB_URL: mongodb://autowrx-db:27017/${MONGODB_DATABASE:-autowrx}
       JWT_SECRET: ${JWT_SECRET}
       STRICT_AUTH: ${STRICT_AUTH:-true}
       JWT_COOKIE_NAME: ${JWT_COOKIE_NAME:-token}
@@ -34,7 +36,8 @@ services:
     volumes:
       - '${UPLOAD_PATH_HOST:-./data/upload}:/opt/data/upload'
     depends_on:
-      - autowrx-db
+      autowrx-db:
+        condition: service_healthy
     networks:
       - autowrx-network
     restart: always
@@ -44,11 +47,19 @@ services:
     platform: linux/amd64
     container_name: ${ENV:-prod}-autowrx-db
     image: mongo:4.4.6-bionic
+    ports:
+      - "${MONGODB_PORT:-27010}:27017"
     volumes:
       - autowrx-dbdata:/data/db
     networks:
       - autowrx-network
     restart: always
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')", "--quiet"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
 
 volumes:
   autowrx-dbdata:
@@ -58,3 +69,4 @@ networks:
   autowrx-network:
     name: ${ENV:-prod}-autowrx-network
     driver: bridge
+

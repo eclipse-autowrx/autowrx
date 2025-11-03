@@ -21,7 +21,6 @@ This application enables developers to:
 
 - Node.js (v18 or higher)
 - Yarn
-- Docker & Docker Compose
 
 ---
 
@@ -34,23 +33,9 @@ yarn install
 yarn dev
 ```
 
-Access the application at: [http://localhost:3000](http://localhost:3000)
+Access the application at: [http://localhost:3210](http://localhost:3210)
 
-### Docker Development
-
-```bash
-docker-compose -f docker-compose.dev.yml up --build
-```
-
-Access the application at: [http://localhost:3000](http://localhost:3000)
-
-### Docker Preview (Production Build)
-
-```bash
-docker-compose -f docker-compose.preview.yml up --build
-```
-
-Access the application at: [http://localhost:4173](http://localhost:4173)
+**Note:** The frontend is now built and served by the backend Docker container. See the root `docker-compose.dev.yml` and `docker-compose.prod.yml` for deployment options.
 
 ---
 
@@ -58,10 +43,6 @@ Access the application at: [http://localhost:4173](http://localhost:4173)
 
 - `src/` – React components, views, and utilities  
 - `vite.config.js` – Vite configuration with aliasing and plugins  
-- `Dockerfile.dev` – Development container setup  
-- `Dockerfile` – Production container setup  
-- `docker-compose.dev.yml` – Dev container configuration  
-- `docker-compose.preview.yml` – Preview container configuration  
 
 ---
 
@@ -90,17 +71,6 @@ yarn build
 ```
 
 The visualizer will open automatically after the build completes.
-
----
-
-## Cleanup
-
-To stop and remove containers:
-
-```bash
-docker-compose -f docker-compose.dev.yml down
-docker-compose -f docker-compose.preview.yml down
-```
 
 ---
 
