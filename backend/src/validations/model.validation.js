@@ -21,14 +21,14 @@ const createModel = {
     main_api: Joi.string().required().max(255),
     model_home_image_file: Joi.string()
       .allow('')
-      .default('/images/default-model-image.png'),
+      .default('/imgs/default-model-image.png'),
     detail_image_file: Joi.string().allow(''),
     model_files: Joi.object(),
     name: Joi.string().required().max(255),
     visibility: Joi.string()
       .valid(...Object.values(visibilityTypes))
       .default('private'),
-    vehicle_category: Joi.string().default('Passenger cars').max(255),
+    vehicle_category: Joi.string().default('EV').max(255),
     property: Joi.string().custom(jsonString),
     skeleton: Joi.string().custom(jsonString),
     tags: Joi.array().items(

@@ -34,7 +34,8 @@ services:
       ADMIN_EMAILS: ${ADMIN_EMAILS}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
     volumes:
-      - '${UPLOAD_PATH_HOST:-./data/upload}:/opt/data/upload'
+      - '${UPLOAD_PATH_HOST:-./data/upload}:/usr/src/playground-be/static/uploads'
+      - '${PLUGIN_PATH_HOST:-./data/plugin}:/usr/src/playground-be/static/plugin'
     depends_on:
       autowrx-db:
         condition: service_healthy

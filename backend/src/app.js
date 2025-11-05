@@ -150,23 +150,46 @@ if (config.env === 'development') {
   });
 } else {
   // Serve frontend-dist directory as the root route
-  app.use('/', express.static(path.join(__dirname, '../static/frontend-dist')));
+  // Explicitly set Content-Type headers to ensure correct MIME types in Docker/production
+  app.use('/', express.static(path.join(__dirname, '../static/frontend-dist'), {
+    setHeaders: (res, filePath) => {
+      // Explicitly set Content-Type to prevent JSON responses for CSS/JS files
+      // This is necessary because Express static may not always set correct MIME types
+      // in certain Docker/production environments
+      if (filePath.endsWith('.css')) {
+        res.setHeader('Content-Type', 'text/css; charset=utf-8');
+      } else if (filePath.endsWith('.js')) {
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      }
+    }
+  }));
 
   // For all other non-API routes, serve the frontend's index.html
   app.get('*', (req, res, next) => {
     // Skip if it's an API route or backend static file
+    // Also skip /assets/ requests - if static middleware couldn't serve them, return 404
     if (req.path.startsWith('/v2') ||
         req.path.startsWith('/static') ||
         req.path.startsWith('/plugin') ||
         req.path.startsWith('/images') ||
         req.path.startsWith('/d') ||
         req.path.startsWith('/builtin-widgets') ||
-        req.path.startsWith('/api')) {
+        req.path.startsWith('/api') ||
+        req.path.startsWith('/assets/')) {
+      // If it's an assets request that reached here, the file doesn't exist
+      if (req.path.startsWith('/assets/')) {
+        return res.status(404).type('text/plain').send('File not found');
+      }
       return next();
     }
 
     // Serve the index.html for all other routes to enable client-side routing
-    res.sendFile(path.join(__dirname, '../static/frontend-dist/index.html'));
+    const indexPath = path.join(__dirname, '../static/frontend-dist/index.html');
+    res.sendFile(indexPath, (err) => {
+      if (err) {
+        next(err);
+      }
+    });
   });
 }
 

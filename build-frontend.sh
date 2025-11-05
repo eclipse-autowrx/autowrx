@@ -24,8 +24,8 @@ if [ $? -ne 0 ]; then
 fi
 
 # Build the project with custom dist directory
-echo "🔨 Building project with dist directory: @frontend-dist/"
-yarn build -- --outDir ../backend/static/frontend-dist/
+echo "🔨 Building project with dist directory: ../backend/static/frontend-dist/"
+yarn build
 
 if [ $? -ne 0 ]; then
     echo "❌ Error: npm run build failed"

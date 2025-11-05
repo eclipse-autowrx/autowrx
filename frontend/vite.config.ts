@@ -18,6 +18,12 @@ export default defineConfig({
       open: true,
     }),
   ],
+  build: {
+    // Output directory - relative to vite.config.ts location (frontend/)
+    // For Docker builds, this should be ../backend/static/frontend-dist
+    // For local development, you can change this to 'dist' if needed
+    outDir: process.env.VITE_BUILD_OUT_DIR ? path.resolve(__dirname, process.env.VITE_BUILD_OUT_DIR) : path.resolve(__dirname, '../backend/static/frontend-dist'),
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

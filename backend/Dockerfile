@@ -5,6 +5,10 @@ WORKDIR /app
 # Install bash (needed for build script)
 RUN apk add --no-cache bash
 
+# Create backend/static directory structure for build output
+# This ensures backend/static exists before building frontend
+RUN mkdir -p backend/static
+
 # Copy frontend source code
 COPY frontend/ ./frontend/
 
@@ -12,7 +16,7 @@ COPY frontend/ ./frontend/
 COPY build-frontend.sh ./
 
 # Install frontend dependencies and build
-# The script will install dependencies and build into backend/static/frontend-dist/
+# The script will build into backend/static/frontend-dist/
 RUN chmod +x build-frontend.sh && ./build-frontend.sh
 
 # Stage 2: Build Backend (only backend code, no frontend source)
