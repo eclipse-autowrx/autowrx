@@ -11,13 +11,7 @@ import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { Spinner } from '@/components/atoms/spinner'
-import DaTabItem from '@/components/atoms/DaTabItem'
 import {
-  TbCode,
-  TbGauge,
-  TbListCheck,
-  TbMessagePlus,
-  TbRoute,
   TbDotsVertical,
   TbPlus,
 } from 'react-icons/tb'
@@ -26,9 +20,6 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import DaDialog from '@/components/molecules/DaDialog'
-import { TbMessage } from 'react-icons/tb'
-import DaDiscussions from '@/components/molecules/DaDiscussions'
-import DaStaging from '@/components/molecules/staging/DaStaging'
 import PrototypeTabCode from '@/components/organisms/PrototypeTabCode'
 import PrototypeTabDashboard from '@/components/organisms/PrototypeTabDashboard'
 import PrototypeTabFeedback from '@/components/organisms/PrototypeTabFeedback'
@@ -45,11 +36,12 @@ import { Plugin } from '@/services/plugin.service'
 import { updateModelService } from '@/services/model.service'
 import { toast } from 'react-toastify'
 import { Dialog, DialogContent } from '@/components/atoms/dialog'
-import CustomPrototypeTabs from '@/components/molecules/CustomPrototypeTabs'
 import PagePrototypePlugin from '@/pages/PagePrototypePlugin'
-import CustomTabEditor from '@/components/organisms/CustomTabEditor'
+import CustomTabEditor, { TabConfig } from '@/components/organisms/CustomTabEditor'
 import PrototypeTabInfo from '../components/organisms/PrototypeTabInfo'
 import TemplateForm from '@/components/organisms/TemplateForm'
+import PrototypeTabJourney from '@/components/organisms/PrototypeTabJourney'
+import PrototypeTabs, { getTabConfig } from '@/components/molecules/PrototypeTabs'
 
 interface ViewPrototypeProps {
   display?: 'tree' | 'list'
@@ -92,7 +84,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
   }, [fetchedPrototype, setActivePrototype])
 
   useEffect(() => {
-    if (!tab || tab === 'journey' || tab === 'view') {
+    if (!tab || tab === 'view') {
       setIsDefaultTab(true)
     } else {
       setIsDefaultTab(false)
@@ -119,15 +111,12 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
     }
 
     try {
-      // Get current custom_template or create new one
-      const currentTemplate = model.custom_template || {
-        model_tabs: [],
-        prototype_tabs: [],
-      }
+      // Get current tabs with migration
+      const currentTabs = getTabConfig(model.custom_template?.prototype_tabs)
 
-      // Add the plugin to prototype_tabs if not already exists
-      const pluginExists = currentTemplate.prototype_tabs?.some(
-        (tab: any) => tab.plugin === plugin.slug
+      // Check if plugin already exists
+      const pluginExists = currentTabs.some(
+        (tab: TabConfig) => tab.type === 'custom' && tab.plugin === plugin.slug
       )
 
       if (pluginExists) {
@@ -136,20 +125,21 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
         return
       }
 
-      // Create new tab entry with custom label (store slug, not id)
-      const newTab = {
+      // Create new custom tab entry
+      const newTab: TabConfig = {
+        type: 'custom',
         label: label,
         plugin: plugin.slug,
       }
 
-      const updatedTemplate = {
-        ...currentTemplate,
-        prototype_tabs: [...(currentTemplate.prototype_tabs || []), newTab],
-      }
+      const updatedTabs = [...currentTabs, newTab]
 
       // Save to model
       await updateModelService(model_id, {
-        custom_template: updatedTemplate,
+        custom_template: {
+          ...model.custom_template,
+          prototype_tabs: updatedTabs,
+        },
       })
 
       toast.success(`Added ${label} to prototype tabs`)
@@ -163,32 +153,25 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
     }
   }
 
-  const handleSaveCustomTabs = async (updatedTabs: Array<{ label: string; plugin: string }>) => {
+  const handleSaveCustomTabs = async (updatedTabs: TabConfig[]) => {
     if (!model_id || !model) {
       toast.error('Model not found')
       return
     }
 
     try {
-      const currentTemplate = model.custom_template || {
-        model_tabs: [],
-        prototype_tabs: [],
-      }
-
-      const updatedTemplate = {
-        ...currentTemplate,
-        prototype_tabs: updatedTabs,
-      }
-
       await updateModelService(model_id, {
-        custom_template: updatedTemplate,
+        custom_template: {
+          ...model.custom_template,
+          prototype_tabs: updatedTabs,
+        },
       })
 
-      toast.success('Custom tabs updated successfully')
+      toast.success('Prototype tabs updated successfully')
       window.location.reload()
     } catch (error) {
-      console.error('Failed to update custom tabs:', error)
-      toast.error('Failed to update custom tabs. Please try again.')
+      console.error('Failed to update prototype tabs:', error)
+      toast.error('Failed to update prototype tabs. Please try again.')
     }
   }
 
@@ -196,39 +179,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
     <div className="flex flex-col w-full h-full relative">
       <div className="flex min-h-[52px] border-b border-border bg-background">
         <div className="flex w-fit">
-          <DaTabItem
-            active={isDefaultTab}
-            to={`/model/${model_id}/library/prototype/${prototype_id}/view`}
-          >
-            <TbRoute className="w-5 h-5 mr-2" />
-            Overview
-          </DaTabItem>
-          <DaTabItem
-            active={tab === 'code'}
-            to={`/model/${model_id}/library/prototype/${prototype_id}/code`}
-            dataId="tab-code"
-          >
-            <TbCode className="w-5 h-5 mr-2" />
-            SDV Code
-          </DaTabItem>
-          <DaTabItem
-            active={tab === 'dashboard'}
-            to={`/model/${model_id}/library/prototype/${prototype_id}/dashboard`}
-            dataId="tab-dashboard"
-          >
-            <TbGauge className="w-5 h-5 mr-2" />
-            Dashboard
-          </DaTabItem>
-          {/* <DaTabItem
-            active={tab === 'feedback'}
-            to={`/model/${model_id}/library/prototype/${prototype_id}/feedback`}
-          >
-            <TbMessagePlus className="w-5 h-5 mr-2" />
-            Feedback
-          </DaTabItem> */}
-          <CustomPrototypeTabs
-            customTabs={model?.custom_template?.prototype_tabs}
-          />
+          <PrototypeTabs tabs={model?.custom_template?.prototype_tabs} />
         </div>
         {isModelOwner && (
           <div className="flex w-fit h-full items-center">
@@ -287,7 +238,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
               <DropdownMenuItem
                 onSelect={() => setOpenManageAddonsDialog(true)}
               >
-                Manage Addons
+                Manage Prototype Tabs
               </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={() => {
@@ -325,9 +276,9 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           className="absolute left-0 bottom-0 top-0 grow h-full z-0"
         >
           {isDefaultTab && (
-            // <PrototypeOverview mode="overview" prototype={prototype} />
             <PrototypeTabInfo prototype={prototype} />
           )}
+          {tab == 'journey' && <PrototypeTabJourney prototype={prototype} />}
           {tab == 'code' && <PrototypeTabCode />}
           {tab == 'dashboard' && <PrototypeTabDashboard />}
           {tab == 'feedback' && <PrototypeTabFeedback />}
@@ -350,10 +301,10 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
       <CustomTabEditor
         open={openManageAddonsDialog}
         onOpenChange={setOpenManageAddonsDialog}
-        tabs={model?.custom_template?.prototype_tabs || []}
+        tabs={getTabConfig(model?.custom_template?.prototype_tabs)}
         onSave={handleSaveCustomTabs}
         title="Manage Prototype Tabs"
-        description="Edit labels, reorder, and remove custom prototype tabs"
+        description="Reorder tabs, edit labels, hide/show tabs, and remove custom tabs"
       />
 
       {/* Template Form Dialog */}

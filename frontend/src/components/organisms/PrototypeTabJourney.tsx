@@ -6,9 +6,22 @@
 //
 // SPDX-License-Identifier: MIT
 
-// Simplified version - full customer journey editor to be added later
-import React from 'react'
+import React, { useState } from 'react'
 import { Prototype } from '@/types/model.type'
+import { updatePrototypeService } from '@/services/prototype.service'
+import {
+  TbEdit,
+  TbLoader,
+} from 'react-icons/tb'
+import DaTableEditor from '../molecules/DaCustomerJourneyTable'
+import useCurrentModel from '@/hooks/useCurrentModel'
+import useListModelPrototypes from '@/hooks/useListModelPrototypes'
+import useCurrentPrototype from '@/hooks/useCurrentPrototype'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
+import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { addLog } from '@/services/log.service'
+import { Button } from '@/components/atoms/button'
 
 interface PrototypeTabJourneyProps {
   prototype: Prototype
@@ -17,6 +30,20 @@ interface PrototypeTabJourneyProps {
 const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
   prototype,
 }) => {
+  const [isEditing, setIsEditing] = useState(false)
+  const [localPrototype, setLocalPrototype] = useState(prototype)
+  const { data: model } = useCurrentModel()
+  const { refetch: refetchModelPrototypes } = useListModelPrototypes(
+    model?.id || '',
+  )
+  const { refetch: refetchCurrentPrototype } = useCurrentPrototype()
+  const [isAuthorized] = usePermissionHook(
+    [PERMISSIONS.READ_MODEL, model?.id],
+  )
+  const [isSaving, setIsSaving] = useState(false)
+
+  const { data: currentUser } = useSelfProfileQuery()
+
   if (!prototype) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -25,49 +52,117 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
     )
   }
 
-  const journeyData = prototype.customer_journey
-    ? typeof prototype.customer_journey === 'string'
-      ? JSON.parse(prototype.customer_journey)
-      : prototype.customer_journey
-    : null
+  const handleSave = async () => {
+    if (!localPrototype) return
+    setIsEditing(false)
+    setIsSaving(true)
+    const updateData = {
+      customer_journey: localPrototype.customer_journey,
+    }
+    try {
+      await updatePrototypeService(prototype.id, updateData)
+      await refetchModelPrototypes()
+      addLog({
+        name: `User ${currentUser?.email} updated prototype ${localPrototype.name}`,
+        description: `User ${currentUser?.email} updated Prototype ${localPrototype.name} with id ${localPrototype?.id} of model ${localPrototype.model_id}`,
+        type: 'update-prototype',
+        create_by: currentUser?.id!,
+        parent_id: localPrototype.model_id,
+        ref_id: localPrototype.id,
+        ref_type: 'prototype',
+      })
+      await refetchCurrentPrototype()
+    } catch (error) {
+      console.error('Error updating prototype:', error)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleCancel = () => {
+    setLocalPrototype(prototype)
+    setIsEditing(false)
+  }
+
+  const handleChange = (field: keyof Prototype, value: any) => {
+    setLocalPrototype((prevPrototype) => {
+      if (!prevPrototype) return prevPrototype
+      return {
+        ...prevPrototype,
+        [field]: value,
+      }
+    })
+  }
 
   return (
-    <div className="flex flex-col w-full h-full overflow-y-auto p-6 bg-background">
-      <h2 className="text-lg font-semibold text-primary mb-4">
-        Customer Journey
-      </h2>
-
-      {journeyData && Object.keys(journeyData).length > 0 ? (
-        <div className="space-y-4">
-          {Object.entries(journeyData).map(([key, value]: [string, any]) => (
-            <div key={key} className="border rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-primary mb-2 capitalize">
-                {key.replace(/_/g, ' ')}
-              </h3>
-              <div className="text-muted-foreground">
-                {typeof value === 'object' ? (
-                  <pre className="whitespace-pre-wrap">
-                    {JSON.stringify(value, null, 2)}
-                  </pre>
-                ) : (
-                  <p>{String(value)}</p>
+    <div className="flex flex-col h-full w-full">
+      <div className="flex flex-col h-full w-full bg-background overflow-y-auto">
+        <div className="flex flex-col h-full w-full pt-6 bg-background px-2">
+          <div className="flex mr-4 mb-3 justify-between items-center">
+            {isEditing ? (
+              <>
+                <h2 className="text-lg font-semibold text-primary">
+                  Editing Prototype
+                </h2>
+                <div className="flex space-x-2 mr-2">
+                  <Button
+                    data-id='prototype-cancel-button'
+                    variant="outline"
+                    onClick={handleCancel}
+                    size="sm"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    data-id="prototype-save-button"
+                    onClick={handleSave}
+                    size="sm"
+                  >
+                    Save
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center w-full">
+                <h2 className="text-lg font-semibold text-primary">
+                  {localPrototype.name}
+                </h2>
+                <div className="grow" />
+                {isAuthorized && (
+                  <>
+                    <Button
+                      onClick={() => setIsEditing(true)}
+                      variant="outline"
+                      size="sm"
+                      data-id='prototype-edit-button'
+                    >
+                      {isSaving ? (
+                        <>
+                          <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <TbEdit className="w-4 h-4 mr-1" /> Edit
+                        </>
+                      )}
+                    </Button>
+                  </>
                 )}
               </div>
-            </div>
-          ))}
+            )}
+          </div>
+          <div className="flex flex-col w-full items-center justify-center py-8 space-y-8">
+            <h3 className="text-lg font-semibold text-primary">
+              Customer Journey
+            </h3>
+            <DaTableEditor
+              defaultValue={localPrototype.customer_journey}
+              onChange={(value) => handleChange('customer_journey', value)}
+              isEditing={isEditing}
+            />
+          </div>
         </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
-          <p className="text-muted-foreground">
-            No customer journey data available
-          </p>
-        </div>
-      )}
-
-      <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-        <p className="text-sm text-muted-foreground">
-          💡 Full customer journey editor coming soon
-        </p>
       </div>
     </div>
   )
