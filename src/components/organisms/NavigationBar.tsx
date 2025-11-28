@@ -29,12 +29,14 @@ import config from '@/configs/config'
 import DaTooltip from '../atoms/DaTooltip'
 import ChatBox from '../molecules/ChatBox'
 import LearningIntegration from './LearningIntegration'
+import DaPopup from '../atoms/DaPopup'
+import { DaText } from '../atoms/DaText'
 
 import Switch from 'react-switch'
 import { useState, useEffect, useRef, Fragment } from 'react'
 
 import useLastAccessedModel from '@/hooks/useLastAccessedModel'
-import { FaCar } from 'react-icons/fa'
+import { FaCar, FaGithub } from 'react-icons/fa'
 import DaTestAutomation from '../molecules/DaTestAutomation'
 
 const NavigationBar = ({}) => {
@@ -46,6 +48,7 @@ const NavigationBar = ({}) => {
     ['aiAgent']
   )
   const [learningMode, setIsLearningMode] = useState(false)
+  const [showSupportPopup, setShowSupportPopup] = useState(false)
 
   const { lastAccessedModel } = useLastAccessedModel()
   const isAtInventoryPage = useMatch('/inventory/*')
@@ -100,11 +103,50 @@ const NavigationBar = ({}) => {
         </div>
       )}
 
-      {config && config.enableSupport && (
-        <Link to="https://forms.office.com/e/P5gv3U3dzA">
-          <div className="h-full flex text-gray-500 font-medium da-txt-medium items-center text-skye-600 mr-4 hover:underline">
-            <IoIosHelpBuoy className="mr-1" size={22} />
-            Support
+      {config && config.enableSupport && config.supportUrl && (
+        <DaPopup
+          state={[showSupportPopup, setShowSupportPopup]}
+          trigger={
+            <div className="h-full flex text-gray-500 font-medium da-txt-medium 
+              items-center text-skye-600 mr-1 hover:underline cursor-pointer">
+              <IoIosHelpBuoy className="" size={22} />
+              Support
+            </div>
+          }
+        >
+          <div className="flex flex-col max-w-[500px]">
+            <DaText className="mb-4 p-4 text-center">
+              We will navigate you to support system, please declare your issue there.
+            </DaText>
+            <div className="flex justify-end w-full space-x-2">
+              <DaButton
+                variant="outline-nocolor"
+                size="sm"
+                onClick={() => setShowSupportPopup(false)}
+                className="w-24"
+              >
+                Cancel
+              </DaButton>
+              <DaButton
+                variant="solid"
+                className="w-24"
+                size="sm"
+                onClick={() => {
+                  window.open(config.supportUrl, '_blank', 'noopener,noreferrer')
+                  setShowSupportPopup(false)
+                }}
+              >
+                OK
+              </DaButton>
+            </div>
+          </div>
+        </DaPopup>
+      )}
+
+      { config && config.githubOpenSourceUrl && (
+        <Link to={config.githubOpenSourceUrl} target="_blank" rel="noopener noreferrer">
+          <div className="ml-2 mr-2 flex items-center justify-center w-10 h-10 rounded-lg hover:bg-slate-200">
+            <FaGithub className="text-gray-600" size={22} />
           </div>
         </Link>
       )}
@@ -116,10 +158,11 @@ const NavigationBar = ({}) => {
               variant="outline-nocolor"
               className="w-[140px] flex items-center !justify-start !border-gray-300 shadow-lg"
             >
-              <TbZoom className="size-5 mr-2" />
+              <TbZoom className="size-5 mx-1" />
               Search
             </DaButton>
-          </DaGlobalSearch>{' '}
+          </DaGlobalSearch>
+          
           {isAtInventoryPage && lastAccessedModel && (
             <Link to={`/model/${lastAccessedModel.id}`} className="ml-4">
               <DaButton variant="outline-nocolor">
@@ -127,19 +170,19 @@ const NavigationBar = ({}) => {
               </DaButton>
             </Link>
           )}
-          <DaTooltip content="Inventory">
+          {/* <DaTooltip content="Inventory">
             <Link
               to="/inventory"
               className="cursor-pointer flex !h-10 items-center da-btn-sm text-da-gray-medium da-btn-plain ml-3"
             >
               <TbBuildingWarehouse size={22} />
             </Link>
-          </DaTooltip>
+          </DaTooltip> */}
           {allowUseAgent && <ChatBox />}
           {isAuthorized && (
             <DaMenu
               trigger={
-                <div className="cursor-pointer flex !h-10 items-center da-btn-sm text-da-gray-medium da-btn-plain ml-2">
+                <div className="cursor-pointer flex !h-10 items-center da-btn-sm text-da-gray-medium da-btn-plain">
                   <HiMenu size={22} />
                 </div>
               }
@@ -182,6 +225,7 @@ const NavigationBar = ({}) => {
           )} */}
         </>
       )}
+
 
       {learningMode && <LearningIntegration requestClose={() => setIsLearningMode(false)} />}
       <DaNavUser />

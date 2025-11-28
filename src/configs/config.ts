@@ -48,8 +48,10 @@ const config: any = {
     // url: 'https://uspsimulation-qa.uaes.com/kit',
     url: 'https://kit.digitalauto.tech',
   },
+  githubOpenSourceUrl: import.meta.env.VITE_GITHUB_OPEN_SOURCE_URL || 'https://github.com/eclipse-autowrx/autowrx',
   strictAuth: false,
   enableSupport: true,
+  supportUrl: import.meta.env.VITE_SUPPORT_URL || 'https://github.com/eclipse-autowrx/autowrx/issues',
   learning: {
     url: import.meta.env.VITE_LEARNING_URL || 'https://learning-dev.digital.auto',
   },
