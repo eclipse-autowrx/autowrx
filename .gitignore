@@ -58,6 +58,7 @@ frontend/.env.*
 !.env.sample
 !backend/.env.example
 !frontend/.env.example
+!instance-setup/.env.prod.sample
 
 ### Package managers (do not ignore lockfiles)
 .pnpm-store/
@@ -75,6 +76,8 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+.claude/
 
 ### Test tools (optional; ignored artifacts)
 cypress/screenshots/

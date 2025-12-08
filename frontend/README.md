@@ -35,7 +35,7 @@ yarn dev
 
 Access the application at: [http://localhost:3210](http://localhost:3210)
 
-**Note:** The frontend is now built and served by the backend Docker container. See the root `docker-compose.dev.yml` and `docker-compose.prod.yml` for deployment options.
+**Note:** For production deployment, the frontend is built and served by the backend Docker container. See the [Instance Setup Guide](../instance-setup/) for deployment instructions.
 
 ---
 

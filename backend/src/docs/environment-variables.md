@@ -9,7 +9,6 @@
 | `PORT`         | Application port                                                | `8080`                                        |
 | `MONGODB_URL`  | MongoDB connection URL                                          | `mongodb://playground-db:27017/playground-be` |
 | `CORS_ORIGINS` | Allowed CORS origins (comma-separated regex patterns). See [CORS Configuration Guide](../../../CORS_CONFIGURATION.md) for details | `localhost:\\d+,127\\.0\\.0\\.1:\\d+`         |
-| `STRICT_AUTH`  | Enable strict authentication. This enforces auth on every route | `false`                                       |
 
 ### CORS_ORIGINS Examples
 
