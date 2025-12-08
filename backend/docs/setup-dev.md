@@ -24,7 +24,6 @@ NODE_ENV=development
 PORT=8080
 MONGODB_URL=mongodb://localhost:27017/autowrx
 JWT_SECRET=dev_secret_change_me
-STRICT_AUTH=false
 JWT_COOKIE_NAME=token
 ```
 
@@ -71,6 +70,6 @@ ADMIN_PASSWORD=password1
 
 - 401 on protected endpoints: ensure you pass `Authorization: Bearer <accessToken>`.
 - Cookie not set on login/refresh: use a client that preserves HTTP-only cookies and same-site None over http.
-- If `STRICT_AUTH=true`, registration is disabled; create users directly in DB or via admin flow.
+- Registration is controlled by the `SELF_REGISTRATION` auth config in Site Configuration; if disabled, create users directly in DB or via admin flow.
 
 

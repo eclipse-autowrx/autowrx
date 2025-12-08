@@ -34,23 +34,9 @@ This project serves as the backend for the playground, offering endpoints for:
 
 ### Running the Application
 
-- **Development Mode** (from project root):
+- **Development Mode**: See the [Development Guide](../development-guide.md) in the project root for local development setup (recommended: run services directly, not in Docker).
 
-  ```bash
-  docker compose -f docker-compose.dev.yml up
-  ```
-
-  Access backend at http://localhost:8080
-
-- **Production Mode** (from project root):
-
-  ```bash
-  docker compose -f docker-compose.prod.yml up -d
-  ```
-
-  Access backend at http://localhost:3200 (or configured FRONTEND_PORT)
-
-  For more detail guideline on setting up a complete instance, please refer to: [Instance Setup Guideline](http://github.com/eclipse-autowrx/instance-setup)
+- **Production Mode**: See the [Instance Setup Guide](../instance-setup/) in the `instance-setup/` directory for production deployment using Docker Compose.
 
 ###
 
@@ -112,7 +98,6 @@ The API is available under the `/v2` prefix. Key endpoints include:
 | `JWT_COOKIE_NAME`                       | Name of the cookie storing the refresh token                                              | No       | `token`                               | `refresh-token`                               |
 | `JWT_COOKIE_DOMAIN`                     | Domain for the JWT cookie (used in production)                                            | No       | `''`                                  | `yourdomain.com`                              |
 | `AUTH_URL`                              | URL for the authentication service                                                        | No       | None                                  | `auth_service_url`                            |
-| `STRICT_AUTH`                           | Enable strict authentication mode (true/false)                                            | No       | None                                  | `true`                                        |
 | `CACHE_URL`                             | URL for the cache service                                                                 | No       | None                                  | `your_cache_url`                              |
 | `LOG_URL`                               | URL for the logging service                                                               | No       | None                                  | `your_log_url`                                |
 | `CLIENT_BASE_URL`                       | Base URL for the client application                                                       | No       | `http://localhost:3000`               | `your_client_base_url`                        |

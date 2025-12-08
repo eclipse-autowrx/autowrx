@@ -49,7 +49,7 @@ In short: **access token = short‑lived bearer in response body; refresh token 
 - File: `src/routes/v2/auth.route.js`
 - Authenticate: `POST /v2/auth/authenticate` — requires bearer; returns `{ user }` from middleware.
 - Authorize (internal): `POST /v2/auth/authorize` — internal permission checks, not public.
-- Register (if `STRICT_AUTH=false`): `POST /v2/auth/register` — creates user, sets refresh cookie, returns `{ user, tokens }` (without refresh token body).
+- Register (if `SELF_REGISTRATION` enabled): `POST /v2/auth/register` — creates user, sets refresh cookie, returns `{ user, tokens }` (without refresh token body).
 - Login: `POST /v2/auth/login` — validates credentials, sets refresh cookie, returns `{ user, tokens }` (without refresh token body).
 - Logout: `POST /v2/auth/logout` — revokes refresh token and clears refresh cookie.
 - Refresh: `POST /v2/auth/refresh-tokens` — rotates refresh token, sets new cookie, returns new access token.
@@ -79,8 +79,8 @@ In short: **access token = short‑lived bearer in response body; refresh token 
 - Important env vars:
   - `JWT_SECRET`, `JWT_ACCESS_EXPIRATION_MINUTES`, `JWT_REFRESH_EXPIRATION_DAYS`
   - `JWT_COOKIE_NAME`, `JWT_COOKIE_DOMAIN`
-  - `STRICT_AUTH` — when true, registration is disabled and public reads should require auth.
   - `AUTH_URL` — optional external auth service used by `auth` middleware.
+- Authentication settings (self-registration, public viewing, etc.) are configured via Site Configuration in the database, not environment variables.
 
 ### Request Lifecycle (Typical)
 

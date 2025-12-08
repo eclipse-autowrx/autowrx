@@ -69,7 +69,6 @@ The following list breaks down the platform's features into `Core` and `[Plugin]
     . main.tsx
     . index.html
 . .env
-. docker-compose.dev.yml
 . docker-compose.yml
 . Dockerfile
 . Dockerfile.dev

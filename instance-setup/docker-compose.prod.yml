@@ -28,7 +28,6 @@ services:
       # MONGODB_PORT (27010) is only for external host access
       MONGODB_URL: mongodb://autowrx-db:27017/${MONGODB_DATABASE:-autowrx}
       JWT_SECRET: ${JWT_SECRET}
-      STRICT_AUTH: ${STRICT_AUTH:-true}
       JWT_COOKIE_NAME: ${JWT_COOKIE_NAME:-token}
       CORS_ORIGINS: ${CORS_ORIGINS}
       ADMIN_EMAILS: ${ADMIN_EMAILS}
