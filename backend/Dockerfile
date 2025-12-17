@@ -1,9 +1,12 @@
 # Stage 1: Build Frontend using build-frontend.sh script
-FROM node:20-alpine AS frontend-builder
+# Use BUILDPLATFORM for frontend builder since it produces architecture-agnostic static files
+FROM --platform=$BUILDPLATFORM node:20-alpine AS frontend-builder
 WORKDIR /app
 
 # Install bash (needed for build script)
-RUN apk add --no-cache bash
+# Use --no-scripts to avoid QEMU emulation issues with post-install scripts
+# The bash binary will still work even without post-install scripts
+RUN apk add --no-cache --no-scripts bash
 
 # Create backend/static directory structure for build output
 # This ensures backend/static exists before building frontend
