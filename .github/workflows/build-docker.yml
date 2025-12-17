@@ -3,13 +3,15 @@ name: Build Docker Image
 on:
   workflow_dispatch:
     inputs:
-      branch:
-        description: 'Branch to build'
-        required: false
-        default: ''
       custom_tag:
         description: 'Custom tag for the image (e.g., v1.2.3, release-2024-01-15)'
         required: false
+        type: string
+        default: ''
+      branch:
+        description: 'Branch to build (leave empty for current branch)'
+        required: false
+        type: string
         default: ''
       push_image:
         description: 'Push image to registry'
