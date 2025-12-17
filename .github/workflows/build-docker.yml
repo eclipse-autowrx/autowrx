@@ -7,6 +7,10 @@ on:
         description: 'Branch to build'
         required: false
         default: ''
+      custom_tag:
+        description: 'Custom tag for the image (e.g., v1.2.3, release-2024-01-15)'
+        required: false
+        default: ''
       push_image:
         description: 'Push image to registry'
         required: false
@@ -56,6 +60,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix=test-
             type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ github.event.inputs.custom_tag }},enable=${{ github.event.inputs.custom_tag != '' }}
 
       - name: Determine if should push
         id: should_push
@@ -76,6 +81,7 @@ jobs:
         with:
           context: .
           file: ./backend/Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: ${{ steps.should_push.outputs.push == 'true' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -97,6 +103,9 @@ jobs:
             fi
           else
             echo "Branch: ${{ github.event.inputs.branch || github.ref_name }}"
+            if [[ -n "${{ github.event.inputs.custom_tag }}" ]]; then
+              echo "Custom tag: ${{ github.event.inputs.custom_tag }}"
+            fi
             echo "Push image: ${{ github.event.inputs.push_image }}"
           fi
           echo ""
@@ -105,7 +114,13 @@ jobs:
           echo "${{ steps.meta.outputs.tags }}"
           echo ""
           if [[ "${{ steps.should_push.outputs.push }}" == "true" ]]; then
-            if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            if [[ -n "${{ github.event.inputs.custom_tag }}" ]]; then
+              echo "Custom tagged image is available:"
+              echo "  ghcr.io/${{ env.IMAGE_PREFIX }}/autowrx:${{ github.event.inputs.custom_tag }}"
+              echo ""
+              echo "You can now use this image in production by updating .env.stack:"
+              echo "IMAGE_TAG=${{ github.event.inputs.custom_tag }}"
+            elif [[ "${{ github.ref_type }}" == "tag" ]]; then
               echo "Tagged image is available:"
               echo "  ghcr.io/${{ env.IMAGE_PREFIX }}/autowrx:${{ github.ref_name }}"
               echo ""
