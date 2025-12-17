@@ -143,3 +143,116 @@ jobs:
           else
             echo "Image was built but not pushed (test only)"
           fi
+
+  release-instance-setup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: github.event_name == 'push' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract tag name
+        id: tag
+        run: |
+          RELEASE_TAG=${GITHUB_REF#refs/tags/}
+          echo "tag=$RELEASE_TAG" >> $GITHUB_OUTPUT
+          echo "RELEASE_TAG=$RELEASE_TAG" >> $GITHUB_ENV
+          echo "Release tag: $RELEASE_TAG"
+
+      - name: Verify instance-setup directory exists
+        run: |
+          if [ ! -d "instance-setup" ]; then
+            echo "Error: instance-setup directory not found"
+            exit 1
+          fi
+          ls -la instance-setup/
+
+      - name: Create instance-setup tarball
+        run: |
+          cd instance-setup
+          tar -czf ../instance-setup-${{ env.RELEASE_TAG }}.tar.gz .
+          cd ..
+          echo "Created: instance-setup-${{ env.RELEASE_TAG }}.tar.gz"
+          ls -lh instance-setup-${{ env.RELEASE_TAG }}.tar.gz
+
+      - name: Create individual file copies for easy access
+        run: |
+          mkdir -p release-files
+          cp instance-setup/docker-compose.prod.yml release-files/docker-compose.prod.yml
+          cp instance-setup/.env.prod.sample release-files/.env.prod.sample
+          cp instance-setup/up.sh release-files/up.sh
+          cp instance-setup/down.sh release-files/down.sh
+          cp instance-setup/instance-setup-guide.md release-files/instance-setup-guide.md
+          echo "Created individual file copies"
+
+      - name: Create GitHub Release with assets
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: Release ${{ env.RELEASE_TAG }}
+          body: |
+            ## Instance Setup Files
+            
+            Download the complete instance-setup directory or individual files:
+            
+            ### Complete Package
+            - **instance-setup-${{ env.RELEASE_TAG }}.tar.gz** - Complete instance-setup directory
+            
+            ### Individual Files
+            - **docker-compose.prod.yml** - Docker Compose configuration
+            - **.env.prod.sample** - Environment variables template
+            - **up.sh** - Start script
+            - **down.sh** - Stop script
+            - **instance-setup-guide.md** - Setup guide
+            
+            ### Quick Start
+            
+            ```bash
+            # Download and extract the complete package
+            wget https://github.com/${{ github.repository }}/releases/download/${{ env.RELEASE_TAG }}/instance-setup-${{ env.RELEASE_TAG }}.tar.gz
+            tar -xzf instance-setup-${{ env.RELEASE_TAG }}.tar.gz
+            cd instance-setup
+            cp .env.prod.sample .env.prod
+            # Edit .env.prod with your configuration
+            ./up.sh
+            ```
+            
+            Or download individual files:
+            
+            ```bash
+            # Download docker-compose.prod.yml
+            wget https://github.com/${{ github.repository }}/releases/download/${{ env.RELEASE_TAG }}/docker-compose.prod.yml
+            ```
+          files: |
+            instance-setup-${{ env.RELEASE_TAG }}.tar.gz
+            release-files/docker-compose.prod.yml
+            release-files/.env.prod.sample
+            release-files/up.sh
+            release-files/down.sh
+            release-files/instance-setup-guide.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Display download URLs
+        run: |
+          echo "=========================================="
+          echo "✓ Instance setup files released successfully"
+          echo "=========================================="
+          echo ""
+          echo "Release tag: ${{ env.RELEASE_TAG }}"
+          echo ""
+          echo "Download URLs:"
+          echo "  Complete package:"
+          echo "    https://github.com/${{ github.repository }}/releases/download/${{ env.RELEASE_TAG }}/instance-setup-${{ env.RELEASE_TAG }}.tar.gz"
+          echo ""
+          echo "  Individual files:"
+          echo "    https://github.com/${{ github.repository }}/releases/download/${{ env.RELEASE_TAG }}/docker-compose.prod.yml"
+          echo "    https://github.com/${{ github.repository }}/releases/download/${{ env.RELEASE_TAG }}/.env.prod.sample"
+          echo "    https://github.com/${{ github.repository }}/releases/download/${{ env.RELEASE_TAG }}/up.sh"
+          echo "    https://github.com/${{ github.repository }}/releases/download/${{ env.RELEASE_TAG }}/down.sh"
+          echo "    https://github.com/${{ github.repository }}/releases/download/${{ env.RELEASE_TAG }}/instance-setup-guide.md"

@@ -17,6 +17,26 @@ git clone <repository-url>
 cd autowrx/instance-setup
 ```
 
+### (Alternative) Download from GitHub Release (wget)
+
+If you don’t want to clone the repo, you can download the instance setup files directly from a GitHub Release.
+
+```bash
+# Option A: download a single file from the latest release (docker-compose)
+wget https://github.com/eclipse-autowrx/autowrx/releases/latest/download/docker-compose.prod.yml
+
+# Option B: download the full instance-setup package from the latest release (recommended)
+# NOTE: Replace TAG below if you want to pin to a specific version (e.g., TAG=v3.0.0)
+TAG=latest
+wget https://github.com/eclipse-autowrx/autowrx/releases/download/${TAG}/instance-setup-${TAG}.tar.gz
+tar -xzf instance-setup-${TAG}.tar.gz
+
+# After extracting (tarball contains the instance-setup directory contents)
+cp .env.prod.sample .env.prod
+# Edit .env.prod with your configuration, then:
+./up.sh
+```
+
 ### 2. Configure Environment
 
 Copy the example environment file and edit it:
