@@ -74,6 +74,7 @@ const FileTree: React.FC<FileTreeProps> = ({
   const [newItemName, setNewItemName] = useState('')
   const [clipboard, setClipboard] = useState<{
     item: FileSystemItem
+    path: string
     operation: 'copy' | 'cut'
   } | null>(null)
   const [showRootMenu, setShowRootMenu] = useState(false)
@@ -622,13 +623,13 @@ const FileTree: React.FC<FileTreeProps> = ({
     setNewItemName('')
   }
 
-  const handleCopy = (item: FileSystemItem) => {
-    setClipboard({ item, operation: 'copy' })
+  const handleCopy = (item: FileSystemItem, itemPath: string) => {
+    setClipboard({ item, path: itemPath, operation: 'copy' })
     setOpenDropdown(null)
   }
 
-  const handleCut = (item: FileSystemItem) => {
-    setClipboard({ item, operation: 'cut' })
+  const handleCut = (item: FileSystemItem, itemPath: string) => {
+    setClipboard({ item, path: itemPath, operation: 'cut' })
     setOpenDropdown(null)
   }
 
@@ -636,8 +637,13 @@ const FileTree: React.FC<FileTreeProps> = ({
     if (clipboard) {
       const newItem = { ...clipboard.item }
       if (clipboard.operation === 'cut') {
-        // Remove from original location
-        onDeleteItem(clipboard.item)
+        // Remove from original location by passing the path information
+        // Attach the original path to help the delete function identify the exact item
+        const itemWithPath = {
+          ...clipboard.item,
+          __originalPath: clipboard.path, // Store path for deletion
+        } as any
+        onDeleteItem(itemWithPath)
       }
       // Add to target folder
       onAddItem(targetFolder, newItem)
@@ -1027,7 +1033,7 @@ const FileTree: React.FC<FileTreeProps> = ({
               className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
               onClick={() => {
                 if (openDropdown) {
-                  handleCopy(openDropdown.item)
+                  handleCopy(openDropdown.item, openDropdown.path)
                 }
               }}
             >
@@ -1039,7 +1045,7 @@ const FileTree: React.FC<FileTreeProps> = ({
               className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
               onClick={() => {
                 if (openDropdown) {
-                  handleCut(openDropdown.item)
+                  handleCut(openDropdown.item, openDropdown.path)
                 }
               }}
             >
@@ -1078,18 +1084,23 @@ const FileTree: React.FC<FileTreeProps> = ({
               </button>
             )}
 
-            <button
-              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
-              onClick={() => {
-                if (openDropdown && openDropdown.item.type === 'folder') {
-                  onUploadFile(openDropdown.item as Folder)
-                }
-              }}
-            >
-              <VscCloudUpload className="mr-2" size={14} />
-              Upload File
-            </button>
-            <div className="border-t border-gray-200 my-1"></div>
+            {openDropdown?.item.type === 'folder' && (
+              <button
+                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
+                onClick={() => {
+                  if (openDropdown && openDropdown.item.type === 'folder') {
+                    onUploadFile(openDropdown.item as Folder)
+                  }
+                }}
+              >
+                <VscCloudUpload className="mr-2" size={14} />
+                Upload File
+              </button>
+            )}
+
+            {openDropdown?.item.type === 'folder' && (
+              <div className="border-t border-gray-200 my-1"></div>
+            )}
 
             <button
               className="w-full px-3 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center"
