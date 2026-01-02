@@ -281,10 +281,6 @@ const PrototypeTabCode: FC = () => {
                 setSavedCode(data)
               }}
               onSave={async (data: string) => {
-                console.log('ProjectEditor onSave called with data:', data)
-                console.trace('Stack trace:')
-                // Pass the new data directly to saveCodeToDb
-                // Don't wait for React state updates - use the data parameter
                 await saveCodeToDb(data)
               }}
             />
