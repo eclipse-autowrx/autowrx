@@ -11,6 +11,7 @@ export interface File {
   name: string
   content: string
   isBase64?: boolean
+  path?: string // Full path of the file for unique identification
 }
 
 export interface Folder {
@@ -20,4 +21,3 @@ export interface Folder {
 }
 
 export type FileSystemItem = File | Folder
-

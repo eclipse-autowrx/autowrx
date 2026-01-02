@@ -35,6 +35,11 @@ interface FileTreeProps {
   onDeleteItem: (item: FileSystemItem) => void
   onRenameItem: (item: FileSystemItem, newName: string) => void
   onAddItem: (parent: Folder, item: FileSystemItem) => void
+  onMoveItem?: (
+    item: FileSystemItem,
+    sourcePath: string,
+    targetFolder: Folder,
+  ) => void
   onUploadFile: (target: Folder) => void
   onDropFiles: (files: FileList, target: Folder) => void
   allCollapsed: boolean
@@ -47,6 +52,7 @@ const FileTree: React.FC<FileTreeProps> = ({
   onDeleteItem,
   onRenameItem,
   onAddItem,
+  onMoveItem,
   onUploadFile,
   onDropFiles,
   allCollapsed,
@@ -84,6 +90,18 @@ const FileTree: React.FC<FileTreeProps> = ({
   } | null>(null)
   const [dragOver, setDragOver] = useState<string | null>(null)
   const [isDraggingOver, setIsDraggingOver] = useState(false)
+  const [draggedItem, setDraggedItem] = useState<{
+    item: FileSystemItem
+    sourcePath: string
+  } | null>(null)
+  const [hoverFolderTimeout, setHoverFolderTimeout] =
+    useState<NodeJS.Timeout | null>(null)
+  const [conflictDialog, setConflictDialog] = useState<{
+    sourceItem: FileSystemItem
+    sourcePath: string
+    targetFolder: Folder
+    existingName: string
+  } | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const rootMenuRef = useRef<HTMLDivElement>(null)
 
@@ -96,6 +114,41 @@ const FileTree: React.FC<FileTreeProps> = ({
       // Then sort alphabetically by name (case-insensitive)
       return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
     })
+  }
+
+  const findUniqueItemName = (
+    baseName: string,
+    targetFolder: Folder,
+  ): string => {
+    // Check if the base name already exists
+    const existingNames = new Set(
+      targetFolder.items.map((item) => item.name.toLowerCase()),
+    )
+
+    if (!existingNames.has(baseName.toLowerCase())) {
+      return baseName
+    }
+
+    // Parse the base name and extension
+    const lastDotIndex = baseName.lastIndexOf('.')
+    let nameWithoutExt = baseName
+    let ext = ''
+
+    if (lastDotIndex > 0) {
+      nameWithoutExt = baseName.substring(0, lastDotIndex)
+      ext = baseName.substring(lastDotIndex)
+    }
+
+    // Find the next available number
+    let counter = 1
+    let newName = `${nameWithoutExt}-${counter}${ext}`
+
+    while (existingNames.has(newName.toLowerCase())) {
+      counter++
+      newName = `${nameWithoutExt}-${counter}${ext}`
+    }
+
+    return newName
   }
 
   useEffect(() => {
@@ -659,7 +712,8 @@ const FileTree: React.FC<FileTreeProps> = ({
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    setIsDraggingOver(true)
+    // Don't show the root dragging effect, let folders handle the visual feedback
+    // setIsDraggingOver(true)
   }
 
   const handleDragLeave = (e: React.DragEvent) => {
@@ -669,6 +723,12 @@ const FileTree: React.FC<FileTreeProps> = ({
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
       setIsDraggingOver(false)
       setDragOver(null)
+
+      // Clear timeout when leaving entirely
+      if (hoverFolderTimeout) {
+        clearTimeout(hoverFolderTimeout)
+        setHoverFolderTimeout(null)
+      }
     }
   }
 
@@ -677,12 +737,31 @@ const FileTree: React.FC<FileTreeProps> = ({
     e.stopPropagation()
     setDragOver(folderName)
     setIsDraggingOver(true)
+
+    // Auto-expand folder after 2 seconds of hovering
+    if (hoverFolderTimeout) {
+      clearTimeout(hoverFolderTimeout)
+    }
+
+    const timeout = setTimeout(() => {
+      setExpandedFolders((prev) =>
+        prev.includes(folderName) ? prev : [...prev, folderName],
+      )
+    }, 2000)
+
+    setHoverFolderTimeout(timeout)
   }
 
   const handleFolderDragLeave = (e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
     setDragOver(null)
+
+    // Clear the timeout if leaving the folder
+    if (hoverFolderTimeout) {
+      clearTimeout(hoverFolderTimeout)
+      setHoverFolderTimeout(null)
+    }
   }
 
   const handleDrop = (e: React.DragEvent, targetFolder?: Folder) => {
@@ -702,7 +781,142 @@ const FileTree: React.FC<FileTreeProps> = ({
 
       // Process files with the same validation logic as regular upload
       processDroppedFiles(files, target)
+    } else if (draggedItem) {
+      // Handle item reordering within the file tree
+      const target = targetFolder || {
+        type: 'folder' as const,
+        name: 'root',
+        items: [],
+      }
+      handleItemDrop(draggedItem, target)
     }
+    setDraggedItem(null)
+  }
+
+  const handleItemDragStart = (item: FileSystemItem, sourcePath: string) => {
+    setDraggedItem({ item, sourcePath })
+  }
+
+  const handleItemDrop = (
+    draggedData: { item: FileSystemItem; sourcePath: string },
+    target: Folder,
+  ) => {
+    // Prevent dropping onto itself
+    const itemName = draggedData.item.name
+    if (
+      target.name === itemName ||
+      (target.name === 'root' && draggedData.sourcePath === itemName)
+    ) {
+      console.log('handleItemDrop: Cannot drop item onto itself', {
+        itemName,
+        targetName: target.name,
+      })
+      return
+    }
+
+    // Check if an item with the same name already exists in the target folder
+    const existingItem = target.items.find(
+      (item) => item.name.toLowerCase() === itemName.toLowerCase(),
+    )
+
+    if (existingItem) {
+      // Show conflict dialog
+      console.log('handleItemDrop: Conflict detected, showing dialog', {
+        sourcePath: draggedData.sourcePath,
+        targetName: target.name,
+      })
+      setConflictDialog({
+        sourceItem: draggedData.item,
+        sourcePath: draggedData.sourcePath,
+        targetFolder: target,
+        existingName: existingItem.name,
+      })
+    } else {
+      // No conflict, proceed with the move
+      console.log(
+        'handleItemDrop: Moving item from',
+        draggedData.sourcePath,
+        'to',
+        target.name,
+      )
+      performItemMove(draggedData.item, draggedData.sourcePath, target)
+    }
+  }
+
+  const performItemMove = (
+    item: FileSystemItem,
+    sourcePath: string,
+    target: Folder,
+  ) => {
+    // Use the dedicated move handler if available (atomic operation)
+    if (onMoveItem) {
+      onMoveItem(item, sourcePath, target)
+    } else {
+      // Fallback: Delete from source location first, then add to target
+      const itemWithPath = {
+        ...item,
+        __originalPath: sourcePath,
+      } as any
+      onDeleteItem(itemWithPath)
+
+      // Then add to target folder
+      onAddItem(target, item)
+    }
+  }
+
+  const handleConflictReplace = () => {
+    if (!conflictDialog) return
+
+    // Delete the existing item
+    const existingItem = conflictDialog.targetFolder.items.find(
+      (item) => item.name === conflictDialog.existingName,
+    )
+    if (existingItem) {
+      // Build the path for the existing item to delete
+      const existingItemPath = `${conflictDialog.targetFolder.name}/${existingItem.name}`
+      const itemWithPath = {
+        ...existingItem,
+        __originalPath: existingItemPath,
+      } as any
+      onDeleteItem(itemWithPath)
+    }
+
+    // Perform the move
+    performItemMove(
+      conflictDialog.sourceItem,
+      conflictDialog.sourcePath,
+      conflictDialog.targetFolder,
+    )
+
+    setConflictDialog(null)
+  }
+
+  const handleConflictKeepBoth = () => {
+    if (!conflictDialog) return
+
+    // Find a unique name for the item
+    const uniqueName = findUniqueItemName(
+      conflictDialog.sourceItem.name,
+      conflictDialog.targetFolder,
+    )
+
+    // Create a new item with the unique name
+    const renamedItem = {
+      ...conflictDialog.sourceItem,
+      name: uniqueName,
+    }
+
+    // Delete the ORIGINAL item from source location (with original name and path)
+    const originalItemWithPath = {
+      ...conflictDialog.sourceItem,
+      __originalPath: conflictDialog.sourcePath,
+    } as any
+    onDeleteItem(originalItemWithPath)
+
+    // Add to target with the new unique name
+    onAddItem(conflictDialog.targetFolder, renamedItem)
+
+    setConflictDialog(null)
   }
 
   const processDroppedFiles = (files: FileList, target: Folder) => {
@@ -717,7 +931,10 @@ const FileTree: React.FC<FileTreeProps> = ({
   ) => {
     const itemPath = parentPath ? `${parentPath}/${item.name}` : item.name
     const isExpanded = expandedFolders.includes(item.name)
-    const isActive = activeFile && (activeFile as any).__path === itemPath
+    const isActive =
+      activeFile &&
+      (activeFile.path || (activeFile as any).__path || activeFile.name) ===
+        itemPath
 
     if (item.type === 'file') {
       return (
@@ -728,10 +945,18 @@ const FileTree: React.FC<FileTreeProps> = ({
               className={`
                 flex items-center px-2 py-1 text-sm cursor-pointer hover:bg-gray-100 group
                 ${isActive ? 'bg-blue-100 text-blue-900' : 'text-gray-700'}
+                ${draggedItem?.sourcePath === itemPath ? 'opacity-50' : ''}
               `}
               style={{ paddingLeft: `${depth * 16 + 8}px` }}
-              onClick={() => onFileSelect({ ...item, __path: itemPath } as any)}
+              onClick={() => onFileSelect({ ...item, path: itemPath })}
               onContextMenu={(e) => handleContextMenu(e, item, itemPath)}
+              draggable
+              onDragStart={() => handleItemDragStart(item, itemPath)}
+              onDragOver={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+              }}
+              onDrop={(e) => handleDrop(e, undefined)}
             >
               {getFileIcon(item.name)}
               <span className="truncate">{item.name}</span>
@@ -790,6 +1015,7 @@ const FileTree: React.FC<FileTreeProps> = ({
                 flex items-center px-2 py-1 text-sm cursor-pointer hover:bg-gray-100 group
                 ${isActive ? 'bg-blue-100 text-blue-900' : 'text-gray-700'}
                 ${dragOver === item.name ? 'bg-green-50 border-l-4 border-green-400' : ''}
+                ${draggedItem?.sourcePath === itemPath ? 'opacity-50' : ''}
               `}
               style={{ paddingLeft: `${depth * 16 + 8}px` }}
               onClick={() => toggleFolder(item.name)}
@@ -797,6 +1023,8 @@ const FileTree: React.FC<FileTreeProps> = ({
               onDragOver={(e) => handleFolderDragOver(e, item.name)}
               onDragLeave={handleFolderDragLeave}
               onDrop={(e) => handleDrop(e, item as Folder)}
+              draggable
+              onDragStart={() => handleItemDragStart(item, itemPath)}
             >
               <button
                 className="mr-1 p-0.5 hover:bg-gray-200 rounded transition-colors"
@@ -928,7 +1156,7 @@ const FileTree: React.FC<FileTreeProps> = ({
 
       {/* File tree items */}
       <div
-        className={`py-2 min-h-[200px] ${isDraggingOver ? 'bg-blue-50 border-2 border-dashed border-blue-300' : ''}`}
+        className="py-2 min-h-[200px]"
         onContextMenu={handleRootContextMenu}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -1106,7 +1334,12 @@ const FileTree: React.FC<FileTreeProps> = ({
               className="w-full px-3 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center"
               onClick={() => {
                 if (openDropdown) {
-                  onDeleteItem(openDropdown.item)
+                  // Pass path information to ensure exact item deletion
+                  const itemWithPath = {
+                    ...openDropdown.item,
+                    __originalPath: openDropdown.path,
+                  } as any
+                  onDeleteItem(itemWithPath)
                 }
                 setOpenDropdown(null)
               }}
@@ -1180,6 +1413,44 @@ const FileTree: React.FC<FileTreeProps> = ({
                 Paste
               </button>
             )}
+          </div>,
+          document.body,
+        )}
+
+      {/* Conflict dialog */}
+      {conflictDialog &&
+        createPortal(
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
+              <h2 className="text-lg font-semibold mb-2">File Name Conflict</h2>
+              <p className="text-gray-600 mb-4">
+                An item named{' '}
+                <span className="font-semibold">
+                  "{conflictDialog.existingName}"
+                </span>{' '}
+                already exists in this location. What would you like to do?
+              </p>
+              <div className="space-y-3">
+                <button
+                  onClick={handleConflictReplace}
+                  className="w-full px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors"
+                >
+                  Replace Existing
+                </button>
+                <button
+                  onClick={handleConflictKeepBoth}
+                  className="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
+                >
+                  Keep Both (Rename)
+                </button>
+                <button
+                  onClick={() => setConflictDialog(null)}
+                  className="w-full px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           </div>,
           document.body,
         )}

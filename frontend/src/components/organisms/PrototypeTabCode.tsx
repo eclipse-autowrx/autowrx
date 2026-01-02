@@ -128,17 +128,24 @@ const PrototypeTabCode: FC = () => {
     setEditorType(newEditorType)
   }, [prototype])
 
-  const saveCodeToDb = async () => {
-    if (code === savedCode) return
+  const saveCodeToDb = async (codeToSave?: string) => {
+    // Use the passed code parameter if available, otherwise use current code state
+    const dataToSave = codeToSave !== undefined ? codeToSave : code
+
+    if (!dataToSave || dataToSave === savedCode) return
+
+    // Update local state with the new code
+    setCode(dataToSave)
+    setSavedCode(dataToSave)
 
     let newPrototype = JSON.parse(JSON.stringify(prototype))
-    newPrototype.code = code || ''
+    newPrototype.code = dataToSave || ''
     setActivePrototype(newPrototype)
 
     if (!prototype || !prototype.id) return
     try {
       await updatePrototypeService(prototype.id, {
-        code: code || '',
+        code: dataToSave || '',
       })
     } catch (err) {
       console.error('Error saving code:', err)
@@ -271,9 +278,14 @@ const PrototypeTabCode: FC = () => {
               data={code || ''}
               onChange={(data: string) => {
                 setCode(data)
-                setTimeout(() => {
-                  setTicker(ticker + 1)
-                }, 100)
+                setSavedCode(data)
+              }}
+              onSave={async (data: string) => {
+                console.log('ProjectEditor onSave called with data:', data)
+                console.trace('Stack trace:')
+                // Pass the new data directly to saveCodeToDb
+                // Don't wait for React state updates - use the data parameter
+                await saveCodeToDb(data)
               }}
             />
           ) : (

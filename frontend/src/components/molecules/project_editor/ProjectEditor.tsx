@@ -31,9 +31,14 @@ import {
 interface ProjectEditorProps {
   data: string
   onChange: (data: string) => void
+  onSave?: (data: string) => Promise<void>
 }
 
-const ProjectEditor: React.FC<ProjectEditorProps> = ({ data, onChange }) => {
+const ProjectEditor: React.FC<ProjectEditorProps> = ({
+  data,
+  onChange,
+  onSave,
+}) => {
   const [fsData, setFsData] = useState<FileSystemItem[]>(() => {
     try {
       if (!data || data.trim() === '') {
@@ -60,105 +65,361 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({ data, onChange }) => {
     type: 'file' | 'folder'
   } | null>(null)
   const [newRootItemName, setNewRootItemName] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const resizeRef = useRef<HTMLDivElement>(null)
   const startXRef = useRef(0)
   const startWidthRef = useRef(0)
   const collapsedWidth = 48 // Width when collapsed
 
+  // Refs to track current state values for use in callbacks without stale closure
+  const fsDataRef = useRef<FileSystemItem[]>(fsData)
+  const pendingChangesRef = useRef<Map<string, string>>(pendingChanges)
+  const unsavedFilesRef = useRef<Set<string>>(unsavedFiles)
+
+  // Update refs whenever state changes
+  useEffect(() => {
+    fsDataRef.current = fsData
+  }, [fsData])
+
+  useEffect(() => {
+    pendingChangesRef.current = pendingChanges
+  }, [pendingChanges])
+
+  useEffect(() => {
+    unsavedFilesRef.current = unsavedFiles
+  }, [unsavedFiles])
+
   // Handle file content changes
   const handleContentChange = useCallback(
     (file: File, content: string) => {
-      // Mark file as unsaved
-      setUnsavedFiles((prev) => new Set(prev).add(file.name))
+      const filePath = file.path || file.name
 
-      // Store the pending change
-      setPendingChanges((prev) => new Map(prev).set(file.name, content))
+      // Mark file as unsaved using path
+      setUnsavedFiles((prev) => new Set(prev).add(filePath))
 
-      // Update the open files to show the new content
+      // Store the pending change using path
+      setPendingChanges((prev) => new Map(prev).set(filePath, content))
+
+      // Update the open files to show the new content (match by path)
       setOpenFiles((prev) =>
-        prev.map((f) => (f.name === file.name ? { ...f, content } : f)),
+        prev.map((f) => {
+          const fPath = f.path || f.name
+          return fPath === filePath ? { ...f, content } : f
+        }),
       )
 
       // Update active file if it's the one being edited
-      if (activeFile?.name === file.name) {
-        setActiveFile({ ...activeFile, content })
+      if (activeFile) {
+        const activePath = activeFile.path || activeFile.name
+        if (activePath === filePath) {
+          setActiveFile({ ...activeFile, content })
+        }
       }
+
+      // Update fsData so onChange effect detects the change and triggers onChange callback
+      setFsData((prevFsData) => {
+        const updateFileInData = (
+          items: FileSystemItem[],
+          currentPath: string = '',
+        ): FileSystemItem[] => {
+          return items.map((item) => {
+            if (item.type === 'file') {
+              const itemPath = currentPath
+                ? `${currentPath}/${item.name}`
+                : item.name
+              if (itemPath === filePath) {
+                return { ...item, content }
+              }
+            } else if (item.type === 'folder') {
+              const folderPath = currentPath
+                ? `${currentPath}/${item.name}`
+                : item.name
+              return {
+                ...item,
+                items: updateFileInData(item.items, folderPath),
+              }
+            }
+            return item
+          })
+        }
+        return updateFileInData(prevFsData)
+      })
     },
     [activeFile],
   )
 
-  // Save a specific file
+  // Save a specific file and return the updated fsData
   const saveFile = useCallback(
-    (file?: File) => {
+    async (
+      file?: File,
+      currentFsData?: FileSystemItem[],
+    ): Promise<FileSystemItem[]> => {
       const fileToSave = file || activeFile
-      if (!fileToSave || !pendingChanges.has(fileToSave.name)) return
+      if (!fileToSave) return currentFsData || []
 
-      const newContent = pendingChanges.get(fileToSave.name)!
+      const filePath = fileToSave.path || fileToSave.name
+      if (!pendingChanges.has(filePath)) return currentFsData || []
 
-      // Update the file system data
-      const updateFileInData = (items: FileSystemItem[]): FileSystemItem[] => {
+      const newContent = pendingChanges.get(filePath)!
+
+      // Update the file system data using path-based matching
+      const updateFileInData = (
+        items: FileSystemItem[],
+        currentPath: string = '',
+      ): FileSystemItem[] => {
         return items.map((item) => {
-          if (item.type === 'file' && item.name === fileToSave.name) {
-            return { ...item, content: newContent }
+          if (item.type === 'file') {
+            const itemPath = currentPath
+              ? `${currentPath}/${item.name}`
+              : item.name
+            if (itemPath === filePath) {
+              return { ...item, content: newContent }
+            }
           } else if (item.type === 'folder') {
-            return { ...item, items: updateFileInData(item.items) }
+            const folderPath = currentPath
+              ? `${currentPath}/${item.name}`
+              : item.name
+            return { ...item, items: updateFileInData(item.items, folderPath) }
           }
           return item
         })
       }
 
-      setFsData((prev) => updateFileInData(prev))
+      // Create updated data
+      const updatedData = updateFileInData(currentFsData || [])
+      setFsData(updatedData)
 
-      // Remove from unsaved files and pending changes
+      // Remove from unsaved files and pending changes using path
       setUnsavedFiles((prev) => {
         const next = new Set(prev)
-        next.delete(fileToSave.name)
+        next.delete(filePath)
         return next
       })
 
       setPendingChanges((prev) => {
         const next = new Map(prev)
-        next.delete(fileToSave.name)
+        next.delete(filePath)
         return next
       })
+
+      return updatedData
     },
     [activeFile, pendingChanges],
   )
 
   // Save all files
-  const saveAllFiles = useCallback(() => {
-    unsavedFiles.forEach((fileName) => {
-      const file = openFiles.find((f) => f.name === fileName)
-      if (file) {
-        saveFile(file)
+  const saveAllFiles = useCallback(async () => {
+    setIsSaving(true)
+    setSaveError(null)
+    try {
+      // Get the latest fsData from ref (most current available)
+      let baseFsData = fsDataRef.current
+      const latestPendingChanges = pendingChangesRef.current
+
+      // Helper function to apply pending changes to file system data
+      const applyPendingChanges = (
+        items: FileSystemItem[],
+        basePath: string = '',
+      ): FileSystemItem[] => {
+        return items.map((item) => {
+          if (item.type === 'file') {
+            const itemPath = basePath ? `${basePath}/${item.name}` : item.name
+            // If this file has pending changes, apply them
+            if (latestPendingChanges.has(itemPath)) {
+              return {
+                ...item,
+                content: latestPendingChanges.get(itemPath)!,
+              }
+            }
+          } else if (item.type === 'folder') {
+            const folderPath = basePath ? `${basePath}/${item.name}` : item.name
+            return {
+              ...item,
+              items: applyPendingChanges(item.items, folderPath),
+            }
+          }
+          return item
+        })
       }
-    })
-  }, [unsavedFiles, openFiles, saveFile])
+
+      // Create a complete copy of fsData with all pending changes applied
+      const updatedFsData = applyPendingChanges(baseFsData)
+
+      // Build the data to save (with all pending changes applied)
+      const dataToSave = JSON.stringify(updatedFsData)
+
+      // Clear pending changes and unsaved files AFTER building the data
+      setPendingChanges(new Map())
+      setUnsavedFiles(new Set())
+
+      // Update the state with the fully updated data
+      setFsData(updatedFsData)
+
+      // Then call the parent's async onSave callback with the complete updated data
+      // This data includes all pending changes that were in the editor
+      if (onSave) {
+        console.log('saveAllFiles: Calling onSave with data:', dataToSave)
+        await onSave(dataToSave)
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to save files'
+      setSaveError(errorMessage)
+      console.error('Error saving files:', error)
+    } finally {
+      setIsSaving(false)
+    }
+  }, [onSave])
 
   // Add keyboard shortcuts for save operations
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKeyDown = async (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault()
         if (e.shiftKey) {
           // Ctrl/Cmd + Shift + S: Save All
-          saveAllFiles()
+          await saveAllFiles()
         } else {
           // Ctrl/Cmd + S: Save current file
-          if (activeFile && unsavedFiles.has(activeFile.name)) {
-            saveFile(activeFile)
+          if (
+            activeFile &&
+            unsavedFilesRef.current.has(activeFile.path || activeFile.name)
+          ) {
+            setIsSaving(true)
+            setSaveError(null)
+            try {
+              // Get latest values from refs
+              const filePath = activeFile.path || activeFile.name
+              let latestFsData = fsDataRef.current
+              const latestPendingChanges = pendingChangesRef.current
+
+              // Check if this file has pending changes
+              if (latestPendingChanges.has(filePath)) {
+                const newContent = latestPendingChanges.get(filePath)!
+
+                // Update file system data with the pending change
+                const updateFileInData = (
+                  items: FileSystemItem[],
+                  currentPath: string = '',
+                ): FileSystemItem[] => {
+                  return items.map((item) => {
+                    if (item.type === 'file') {
+                      const itemPath = currentPath
+                        ? `${currentPath}/${item.name}`
+                        : item.name
+                      if (itemPath === filePath) {
+                        return { ...item, content: newContent }
+                      }
+                    } else if (item.type === 'folder') {
+                      const folderPath = currentPath
+                        ? `${currentPath}/${item.name}`
+                        : item.name
+                      return {
+                        ...item,
+                        items: updateFileInData(item.items, folderPath),
+                      }
+                    }
+                    return item
+                  })
+                }
+
+                // Process the root folder correctly - latestFsData is an array with root as first element
+                latestFsData = latestFsData.map((rootItem) => {
+                  if (rootItem.type === 'folder') {
+                    return {
+                      ...rootItem,
+                      items: updateFileInData(rootItem.items, ''),
+                    }
+                  }
+                  return rootItem
+                })
+
+                // Clear pending changes for this file
+                setPendingChanges((prev) => {
+                  const next = new Map(prev)
+                  next.delete(filePath)
+                  return next
+                })
+
+                setUnsavedFiles((prev) => {
+                  const next = new Set(prev)
+                  next.delete(filePath)
+                  return next
+                })
+
+                // Update state with the latest data
+                setFsData(latestFsData)
+              }
+
+              // Build the data to save with all updates applied
+              const dataToSave = JSON.stringify(latestFsData)
+              console.log('Ctrl+S: Saving current file with data:', dataToSave)
+
+              if (onSave) {
+                await onSave(dataToSave)
+              }
+            } catch (error) {
+              const errorMessage =
+                error instanceof Error ? error.message : 'Failed to save file'
+              setSaveError(errorMessage)
+              console.error('Error saving file:', error)
+            } finally {
+              setIsSaving(false)
+            }
           }
         }
       }
     }
 
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [activeFile, unsavedFiles, saveFile, saveAllFiles])
+    document.addEventListener(
+      'keydown',
+      handleKeyDown as unknown as EventListener,
+    )
+    return () =>
+      document.removeEventListener(
+        'keydown',
+        handleKeyDown as unknown as EventListener,
+      )
+  }, [activeFile, saveAllFiles, onSave])
 
+  // Store previous fsData to detect structural changes
+  const prevFsDataRef = useRef<string>('')
+
+  // Notify parent of data changes and handle structural changes
   useEffect(() => {
-    onChange(JSON.stringify(fsData))
-  }, [fsData, onChange])
+    const currentData = JSON.stringify(fsData)
+    const prevData = prevFsDataRef.current
+
+    // Only call onChange if data actually changed
+    if (currentData !== prevData) {
+      onChange(currentData)
+
+      // Any change to fsData structure (including moves, adds, deletes) should trigger save
+      // We simply check if the JSON content has changed, which covers all structural changes
+      let shouldTriggerSave = false
+
+      if (prevData) {
+        // If there's previous data and current data is different, it's a change
+        // This includes: file moves, renames, adds, deletes, content changes
+        shouldTriggerSave = true
+      } else {
+        // First time, check if there are items
+        shouldTriggerSave = ((fsData[0] as Folder)?.items?.length || 0) > 0
+      }
+
+      // Trigger immediate save for any structural/content changes
+      if (shouldTriggerSave && onSave && !isSaving) {
+        onSave(currentData).catch((error) => {
+          setSaveError(
+            error instanceof Error ? error.message : 'Failed to save',
+          )
+        })
+      }
+    }
+
+    prevFsDataRef.current = currentData
+  }, [fsData, onChange, onSave, isSaving])
 
   // Sync data prop changes
   useEffect(() => {
@@ -241,17 +502,25 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({ data, onChange }) => {
   }, [isResizing, handleMouseMove, handleMouseUp])
 
   const handleFileSelect = (file: File) => {
-    if (!openFiles.find((f) => f.name === file.name)) {
+    const filePath = file.path || file.name
+    // Check if file with this path is already open (not just by name)
+    if (!openFiles.find((f) => (f.path || f.name) === filePath)) {
       setOpenFiles([...openFiles, file])
     }
     setActiveFile(file)
   }
 
   const handleCloseFile = (file: File) => {
-    const newOpenFiles = openFiles.filter((f) => f.name !== file.name)
+    const filePath = file.path || file.name
+    const newOpenFiles = openFiles.filter(
+      (f) => (f.path || f.name) !== filePath,
+    )
     setOpenFiles(newOpenFiles)
-    if (activeFile?.name === file.name) {
-      setActiveFile(newOpenFiles[0] || null)
+    if (activeFile) {
+      const activePath = activeFile.path || activeFile.name
+      if (activePath === filePath) {
+        setActiveFile(newOpenFiles[0] || null)
+      }
     }
   }
 
@@ -262,65 +531,115 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({ data, onChange }) => {
       return
     }
 
-    // Check if this is a cut operation with path information
-    const originalPath = (item as any).__originalPath
+    // Check if this is a deletion with path information (set by context menu or cut operations)
+    const deletePath = (item as any).__originalPath
 
-    // Helper function to collect all file names in a folder (recursive)
-    const collectFileNames = (items: FileSystemItem[]): string[] => {
-      const fileNames: string[] = []
+    // Helper function to collect all file paths in a folder (recursive)
+    const collectFilePaths = (
+      items: FileSystemItem[],
+      basePath: string = '',
+    ): string[] => {
+      const filePaths: string[] = []
       items.forEach((item) => {
+        const currentPath = basePath ? `${basePath}/${item.name}` : item.name
         if (item.type === 'file') {
-          fileNames.push(item.name)
+          filePaths.push(currentPath)
         } else if (item.type === 'folder') {
-          fileNames.push(...collectFileNames(item.items))
+          filePaths.push(...collectFilePaths(item.items, currentPath))
         }
       })
-      return fileNames
+      return filePaths
     }
 
-    // Get all file names that will be deleted
-    const filesToDelete: string[] = []
-    if (item.type === 'file') {
-      filesToDelete.push(item.name)
-    } else if (item.type === 'folder') {
-      filesToDelete.push(...collectFileNames(item.items))
+    // Get all file paths that will be deleted
+    const filePathsToDelete: string[] = []
+    if (deletePath) {
+      // If we have the exact path, use it directly
+      filePathsToDelete.push(deletePath)
+      // Also collect files inside if it's a folder
+      if (item.type === 'folder') {
+        filePathsToDelete.push(...collectFilePaths(item.items, deletePath))
+      }
+    } else {
+      // Fallback: no path provided (shouldn't happen with proper integration)
+      if (item.type === 'file') {
+        filePathsToDelete.push(item.name)
+      } else if (item.type === 'folder') {
+        filePathsToDelete.push(...collectFilePaths(item.items))
+      }
     }
 
-    // Remove deleted files from open files list
-    const newOpenFiles = openFiles.filter(
-      (openFile) => !filesToDelete.includes(openFile.name),
-    )
+    // Remove deleted files from open files list (match by path)
+    const newOpenFiles = openFiles.filter((openFile) => {
+      const openFilePath = openFile.path || openFile.name
+      return !filePathsToDelete.includes(openFilePath)
+    })
     setOpenFiles(newOpenFiles)
 
     // If active file is being deleted, switch to another open file or null
-    if (activeFile && filesToDelete.includes(activeFile.name)) {
-      setActiveFile(newOpenFiles[0] || null)
+    if (activeFile) {
+      const activeFilePath = activeFile.path || activeFile.name
+      if (filePathsToDelete.includes(activeFilePath)) {
+        setActiveFile(newOpenFiles[0] || null)
+      }
     }
 
-    // Delete from file system
+    // Delete from file system - use path-based matching for exact deletion
     const deleteItem = (
       items: FileSystemItem[],
-      path: string = '',
+      basePath: string = '',
     ): FileSystemItem[] => {
       return items
         .filter((i) => {
-          const currentPath = path ? `${path}/${i.name}` : i.name
-          // If originalPath is provided, match by path; otherwise match by name only
-          if (originalPath) {
-            return currentPath !== originalPath
-          }
-          return i.name !== item.name
+          const currentPath = basePath ? `${basePath}/${i.name}` : i.name
+          // Only delete if the path matches exactly
+          return !filePathsToDelete.includes(currentPath)
         })
         .map((i) => {
-          const currentPath = path ? `${path}/${i.name}` : i.name
+          const currentPath = basePath ? `${basePath}/${i.name}` : i.name
           if (i.type === 'folder') {
             return { ...i, items: deleteItem(i.items, currentPath) }
           }
           return i
         })
     }
-    const newFileSystem = deleteItem(fsData)
+
+    // Process the root folder correctly - fsData is an array with root as first element
+    const newFileSystem = fsData.map((rootItem) => {
+      if (rootItem.type === 'folder') {
+        return {
+          ...rootItem,
+          items: deleteItem(rootItem.items, ''),
+        }
+      }
+      return rootItem
+    })
+
+    // Update fsData and remove deleted files from pending changes
     setFsData(newFileSystem)
+
+    // Clean up pending changes for deleted files
+    setPendingChanges((prev) => {
+      const next = new Map(prev)
+      filePathsToDelete.forEach((path) => {
+        next.delete(path)
+      })
+      return next
+    })
+
+    // Clean up unsaved files for deleted files
+    setUnsavedFiles((prev) => {
+      const next = new Set(prev)
+      filePathsToDelete.forEach((path) => {
+        next.delete(path)
+      })
+      return next
+    })
+
+    console.log(
+      'handleDeleteItem: Deletion complete. New fsData items:',
+      newFileSystem.length,
+    )
   }
 
   const handleRenameItem = (item: FileSystemItem, newName: string) => {
@@ -337,6 +656,111 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({ data, onChange }) => {
     }
     const newFileSystem = renameItem(fsData)
     setFsData(newFileSystem)
+  }
+
+  const handleMoveItem = (
+    item: FileSystemItem,
+    sourcePath: string,
+    targetFolder: Folder,
+  ) => {
+    // Atomic move: delete from source and add to target in a single operation
+    setFsData((prevFsData) => {
+      // Step 1: Delete from source path
+      const deleteFromSource = (
+        items: FileSystemItem[],
+        basePath: string = '',
+      ): FileSystemItem[] => {
+        return items
+          .filter((i) => {
+            const currentPath = basePath ? `${basePath}/${i.name}` : i.name
+            return currentPath !== sourcePath
+          })
+          .map((i) => {
+            const currentPath = basePath ? `${basePath}/${i.name}` : i.name
+            if (i.type === 'folder') {
+              return { ...i, items: deleteFromSource(i.items, currentPath) }
+            }
+            return i
+          })
+      }
+
+      // Step 2: Add to target location
+      const addToTarget = (
+        items: FileSystemItem[],
+        basePath: string = '',
+      ): FileSystemItem[] => {
+        return items.map((i) => {
+          const currentPath = basePath ? `${basePath}/${i.name}` : i.name
+          // Found the target folder
+          if (
+            currentPath === targetFolder.name ||
+            i.name === targetFolder.name
+          ) {
+            if (i.type === 'folder') {
+              return {
+                ...i,
+                items: [...i.items, item],
+              }
+            }
+          }
+          // Recursively search in subfolders
+          if (i.type === 'folder') {
+            return { ...i, items: addToTarget(i.items, currentPath) }
+          }
+          return i
+        })
+      }
+
+      // For root folder target
+      if (targetFolder.name === 'root') {
+        const afterDelete = prevFsData.map((rootItem) => {
+          if (rootItem.type === 'folder' && rootItem.name === 'root') {
+            return {
+              ...rootItem,
+              items: deleteFromSource(rootItem.items, ''),
+            }
+          }
+          return rootItem
+        })
+
+        return afterDelete.map((rootItem) => {
+          if (rootItem.type === 'folder' && rootItem.name === 'root') {
+            return {
+              ...rootItem,
+              items: [...rootItem.items, item],
+            }
+          }
+          return rootItem
+        })
+      }
+
+      // For non-root target folder
+      const afterDelete = prevFsData.map((rootItem) => {
+        if (rootItem.type === 'folder') {
+          return {
+            ...rootItem,
+            items: deleteFromSource(rootItem.items, ''),
+          }
+        }
+        return rootItem
+      })
+
+      return addToTarget(afterDelete)
+    })
+
+    // Clean up any pending changes for the moved file
+    setPendingChanges((prev) => {
+      const next = new Map(prev)
+      // Only keep pending changes for files that still exist
+      next.delete(sourcePath)
+      return next
+    })
+
+    setUnsavedFiles((prev) => {
+      const next = new Set(prev)
+      next.delete(sourcePath)
+      return next
+    })
   }
 
   const handleAddItemToRoot = (type: 'file' | 'folder') => {
@@ -750,6 +1174,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({ data, onChange }) => {
                 onDeleteItem={handleDeleteItem}
                 onRenameItem={handleRenameItem}
                 onAddItem={handleAddItem}
+                onMoveItem={handleMoveItem}
                 onUploadFile={handleUploadFile}
                 onDropFiles={handleDropFiles}
                 allCollapsed={allCollapsed}
@@ -802,7 +1227,10 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({ data, onChange }) => {
 
             if (firstFile) {
               setActiveFile(firstFile)
-              if (!openFiles.find((f) => f.name === firstFile.name)) {
+              const firstFilePath = (firstFile as any).path || firstFile.name
+              if (
+                !openFiles.find((f) => (f.path || f.name) === firstFilePath)
+              ) {
                 setOpenFiles((prev) => [...prev, firstFile])
               }
             }
