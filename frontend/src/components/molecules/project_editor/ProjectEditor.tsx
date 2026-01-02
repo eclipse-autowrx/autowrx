@@ -644,7 +644,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({ data, onChange }) => {
               >
                 <VscChevronLeft size={16} />
               </button>
-              <span className="grow pl-1 font-semibold text-sm tracking-wide text-gray-700">
+              <span className="grow pl-1 font-semibold text-sm tracking-wide text-gray-700 overflow-hidden text-ellipsis">
                 {projectName.toUpperCase()}
               </span>
               <div className="flex items-center space-x-1">
