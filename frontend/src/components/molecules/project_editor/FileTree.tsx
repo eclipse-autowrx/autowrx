@@ -1298,7 +1298,11 @@ const FileTree: React.FC<FileTreeProps> = ({
 
       {/* File tree items */}
       <div
-        className="py-2 min-h-[200px]"
+        className={`py-2 min-h-[200px] ${
+          isDraggingOver && (dragOver === 'root' || !dragOver)
+            ? 'bg-blue-50 border-2 border-dashed border-blue-300'
+            : ''
+        }`}
         onContextMenu={handleRootContextMenu}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
