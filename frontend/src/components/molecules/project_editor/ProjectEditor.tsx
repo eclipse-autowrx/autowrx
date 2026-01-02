@@ -61,6 +61,8 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({ data, onChange }) => {
   } | null>(null)
   const [newRootItemName, setNewRootItemName] = useState('')
   const resizeRef = useRef<HTMLDivElement>(null)
+  const startXRef = useRef(0)
+  const startWidthRef = useRef(0)
   const collapsedWidth = 48 // Width when collapsed
 
   // Handle file content changes
@@ -182,9 +184,15 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({ data, onChange }) => {
     (e: React.MouseEvent) => {
       if (isCollapsed) return // Don't allow resizing when collapsed
       e.preventDefault()
+      startXRef.current = e.clientX
+      startWidthRef.current = leftPanelWidth
+      // Disable transitions during resize for instant feedback
+      if (resizeRef.current?.parentElement) {
+        resizeRef.current.parentElement.style.transition = 'none'
+      }
       setIsResizing(true)
     },
-    [isCollapsed],
+    [isCollapsed, leftPanelWidth],
   )
 
   const handleMouseMove = useCallback(
@@ -193,7 +201,11 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({ data, onChange }) => {
 
       const minWidth = 200
       const maxWidth = 600
-      const newWidth = Math.min(Math.max(e.clientX, minWidth), maxWidth)
+      const deltaX = e.clientX - startXRef.current
+      const newWidth = Math.min(
+        Math.max(startWidthRef.current + deltaX, minWidth),
+        maxWidth,
+      )
       setLeftPanelWidth(newWidth)
     },
     [isResizing, isCollapsed],
@@ -201,6 +213,10 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({ data, onChange }) => {
 
   const handleMouseUp = useCallback(() => {
     setIsResizing(false)
+    // Re-enable transitions after resize
+    if (resizeRef.current?.parentElement) {
+      resizeRef.current.parentElement.style.transition = ''
+    }
   }, [])
 
   useEffect(() => {
