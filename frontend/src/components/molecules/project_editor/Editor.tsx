@@ -22,6 +22,9 @@ interface EditorComponentProps {
   onSave: (file?: File) => void
   onSaveAll: () => void
   fontFamily?: string
+  onCreateFile?: () => void
+  onCreateFolder?: () => void
+  onSelectFirstFile?: () => void
 }
 
 const EditorComponent: React.FC<EditorComponentProps> = ({
@@ -34,6 +37,9 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
   onSave,
   onSaveAll,
   fontFamily,
+  onCreateFile,
+  onCreateFolder,
+  onSelectFirstFile,
 }) => {
   const tabsContainerRef = useRef<HTMLDivElement>(null)
   const activeTabRef = useRef<HTMLDivElement>(null)
@@ -358,7 +364,13 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
   }
 
   if (!file) {
-    return <Introduction />
+    return (
+      <Introduction
+        onCreateFile={onCreateFile}
+        onCreateFolder={onCreateFolder}
+        onSelectFirstFile={onSelectFirstFile}
+      />
+    )
   }
 
   return (
@@ -488,4 +500,3 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
 }
 
 export default EditorComponent
-

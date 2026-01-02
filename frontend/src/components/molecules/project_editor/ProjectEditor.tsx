@@ -770,6 +770,27 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({ data, onChange }) => {
           unsavedFiles={unsavedFiles}
           onSave={saveFile}
           onSaveAll={saveAllFiles}
+          onCreateFile={() => handleAddItemToRoot('file')}
+          onCreateFolder={() => handleAddItemToRoot('folder')}
+          onSelectFirstFile={() => {
+            const firstFile = fsData.flatMap((item) => {
+              const getFilesRecursive = (item: FileSystemItem): File[] => {
+                if (item.type === 'file') return [item as File]
+                if (item.type === 'folder') {
+                  return item.items.flatMap(getFilesRecursive)
+                }
+                return []
+              }
+              return getFilesRecursive(item)
+            })[0]
+
+            if (firstFile) {
+              setActiveFile(firstFile)
+              if (!openFiles.find((f) => f.name === firstFile.name)) {
+                setOpenFiles((prev) => [...prev, firstFile])
+              }
+            }
+          }}
         />
       </div>
     </div>
