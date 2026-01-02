@@ -8,7 +8,13 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { FileSystemItem, File, Folder } from './types'
+import {
+  FileSystemItem,
+  File,
+  Folder,
+  getItemPath,
+  getParentPath,
+} from './types'
 import {
   VscFile,
   VscFolder,
@@ -89,6 +95,7 @@ const FileTree: React.FC<FileTreeProps> = ({
     left: number
   } | null>(null)
   const [dragOver, setDragOver] = useState<string | null>(null)
+  const [visualDragOver, setVisualDragOver] = useState<string | null>(null)
   const [isDraggingOver, setIsDraggingOver] = useState(false)
   const [draggedItem, setDraggedItem] = useState<{
     item: FileSystemItem
@@ -96,6 +103,14 @@ const FileTree: React.FC<FileTreeProps> = ({
   } | null>(null)
   const [hoverFolderTimeout, setHoverFolderTimeout] =
     useState<NodeJS.Timeout | null>(null)
+  const [dragPosition, setDragPosition] = useState<{
+    x: number
+    y: number
+  } | null>(null)
+  const [potentialDropTarget, setPotentialDropTarget] = useState<{
+    folder: Folder
+    path: string
+  } | null>(null)
   const [conflictDialog, setConflictDialog] = useState<{
     sourceItem: FileSystemItem
     sourcePath: string
@@ -149,6 +164,92 @@ const FileTree: React.FC<FileTreeProps> = ({
     }
 
     return newName
+  }
+
+  // Find folder by path in the items tree
+  const findFolderByPath = (targetPath: string): Folder | null => {
+    if (targetPath === 'root' || targetPath === '') {
+      return { type: 'folder', name: 'root', items: items }
+    }
+
+    const findInItems = (
+      items: FileSystemItem[],
+      currentPath: string = '',
+    ): Folder | null => {
+      for (const item of items) {
+        const itemPath = currentPath ? `${currentPath}/${item.name}` : item.name
+
+        if (item.type === 'folder' && itemPath === targetPath) {
+          return item
+        }
+
+        if (item.type === 'folder') {
+          const found = findInItems(item.items, itemPath)
+          if (found) return found
+        }
+      }
+      return null
+    }
+
+    return findInItems(items)
+  }
+
+  // Find the target folder based on mouse position and DOM hierarchy
+  const findDropTargetFromPosition = (
+    e: React.DragEvent,
+  ): { folder: Folder; path: string; visualPath: string } | null => {
+    // Find all folder elements
+    const folderElements = document.querySelectorAll('[data-folder-path]')
+    let closestFolder: {
+      element: Element
+      folderPath: string
+      distance: number
+    } | null = null
+
+    for (const element of folderElements) {
+      const elementRect = element.getBoundingClientRect()
+
+      // Check if the mouse is over this folder's area (including its children)
+      if (
+        e.clientX >= elementRect.left &&
+        e.clientX <= elementRect.right &&
+        e.clientY >= elementRect.top &&
+        e.clientY <= elementRect.bottom + 40 // Allow drop zone below the folder
+      ) {
+        const folderPath = element.getAttribute('data-folder-path')
+        if (folderPath) {
+          // Calculate distance from the folder's top-left corner
+          const distance = Math.sqrt(
+            Math.pow(e.clientX - elementRect.left, 2) +
+              Math.pow(e.clientY - elementRect.top, 2),
+          )
+
+          // Keep track of the closest folder (smallest distance)
+          if (!closestFolder || distance < closestFolder.distance) {
+            closestFolder = { element, folderPath, distance }
+          }
+        }
+      }
+    }
+
+    if (closestFolder) {
+      // Find the folder object for the target
+      const folder = findFolderByPath(closestFolder.folderPath)
+      if (folder) {
+        return {
+          folder,
+          path: closestFolder.folderPath,
+          visualPath: closestFolder.folderPath, // Visual feedback on the folder being hovered
+        }
+      }
+    }
+
+    // Default to root if no specific folder found
+    return {
+      folder: { type: 'folder', name: 'root', items: items },
+      path: 'root',
+      visualPath: 'root',
+    }
   }
 
   useEffect(() => {
@@ -589,11 +690,11 @@ const FileTree: React.FC<FileTreeProps> = ({
     }
   }
 
-  const toggleFolder = (folderName: string) => {
+  const toggleFolder = (folderPath: string) => {
     setExpandedFolders((prev) =>
-      prev.includes(folderName)
-        ? prev.filter((name) => name !== folderName)
-        : [...prev, folderName],
+      prev.includes(folderPath)
+        ? prev.filter((path) => path !== folderPath)
+        : [...prev, folderPath],
     )
   }
 
@@ -712,8 +813,17 @@ const FileTree: React.FC<FileTreeProps> = ({
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    // Don't show the root dragging effect, let folders handle the visual feedback
-    // setIsDraggingOver(true)
+
+    setIsDraggingOver(true)
+    setDragPosition({ x: e.clientX, y: e.clientY })
+
+    // Find potential drop target based on mouse position
+    const target = findDropTargetFromPosition(e)
+    if (target) {
+      setPotentialDropTarget(target)
+      setDragOver(target.path) // Actual drop target
+      setVisualDragOver(target.visualPath) // Visual feedback path
+    }
   }
 
   const handleDragLeave = (e: React.DragEvent) => {
@@ -723,6 +833,9 @@ const FileTree: React.FC<FileTreeProps> = ({
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
       setIsDraggingOver(false)
       setDragOver(null)
+      setVisualDragOver(null)
+      setPotentialDropTarget(null)
+      setDragPosition(null)
 
       // Clear timeout when leaving entirely
       if (hoverFolderTimeout) {
@@ -732,10 +845,11 @@ const FileTree: React.FC<FileTreeProps> = ({
     }
   }
 
-  const handleFolderDragOver = (e: React.DragEvent, folderName: string) => {
+  const handleFolderDragOver = (e: React.DragEvent, folderPath: string) => {
     e.preventDefault()
     e.stopPropagation()
-    setDragOver(folderName)
+    setDragOver(folderPath)
+    setVisualDragOver(folderPath)
     setIsDraggingOver(true)
 
     // Auto-expand folder after 2 seconds of hovering
@@ -744,8 +858,9 @@ const FileTree: React.FC<FileTreeProps> = ({
     }
 
     const timeout = setTimeout(() => {
+      // Use full path for expansion state
       setExpandedFolders((prev) =>
-        prev.includes(folderName) ? prev : [...prev, folderName],
+        prev.includes(folderPath) ? prev : [...prev, folderPath],
       )
     }, 2000)
 
@@ -755,12 +870,18 @@ const FileTree: React.FC<FileTreeProps> = ({
   const handleFolderDragLeave = (e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    setDragOver(null)
 
-    // Clear the timeout if leaving the folder
-    if (hoverFolderTimeout) {
-      clearTimeout(hoverFolderTimeout)
-      setHoverFolderTimeout(null)
+    // Only clear if we're leaving the folder completely (not going to a child element)
+    const target = e.currentTarget as HTMLElement
+    if (!target.contains(e.relatedTarget as Node)) {
+      setDragOver(null)
+      setVisualDragOver(null)
+
+      // Clear the timeout if leaving the folder
+      if (hoverFolderTimeout) {
+        clearTimeout(hoverFolderTimeout)
+        setHoverFolderTimeout(null)
+      }
     }
   }
 
@@ -769,27 +890,28 @@ const FileTree: React.FC<FileTreeProps> = ({
     e.stopPropagation()
     setIsDraggingOver(false)
     setDragOver(null)
+    setVisualDragOver(null)
+    setDragPosition(null)
+
+    // Determine the target folder - must include actual items array
+    const rootFolder: Folder = {
+      type: 'folder',
+      name: 'root',
+      items,
+      path: 'root',
+    }
+    const target = potentialDropTarget?.folder || targetFolder || rootFolder
 
     const files = e.dataTransfer.files
     if (files && files.length > 0) {
-      // Determine target folder
-      const target = targetFolder || {
-        type: 'folder' as const,
-        name: 'root',
-        items: [],
-      }
-
       // Process files with the same validation logic as regular upload
       processDroppedFiles(files, target)
     } else if (draggedItem) {
       // Handle item reordering within the file tree
-      const target = targetFolder || {
-        type: 'folder' as const,
-        name: 'root',
-        items: [],
-      }
       handleItemDrop(draggedItem, target)
     }
+
+    setPotentialDropTarget(null)
     setDraggedItem(null)
   }
 
@@ -801,34 +923,44 @@ const FileTree: React.FC<FileTreeProps> = ({
     draggedData: { item: FileSystemItem; sourcePath: string },
     target: Folder,
   ) => {
+    const targetPath = target.path || target.name
+
     // Prevent dropping onto itself
-    const itemName = draggedData.item.name
-    if (
-      target.name === itemName ||
-      (target.name === 'root' && draggedData.sourcePath === itemName)
-    ) {
+    if (draggedData.sourcePath === targetPath) {
       console.log('handleItemDrop: Cannot drop item onto itself', {
-        itemName,
-        targetName: target.name,
+        sourcePath: draggedData.sourcePath,
+        targetPath,
+      })
+      return
+    }
+
+    // Prevent dropping into its own children (for folders)
+    if (
+      draggedData.item.type === 'folder' &&
+      targetPath.startsWith(draggedData.sourcePath + '/')
+    ) {
+      console.log('handleItemDrop: Cannot drop folder into its own children', {
+        sourcePath: draggedData.sourcePath,
+        targetPath,
       })
       return
     }
 
     // Check if an item with the same name already exists in the target folder
     const existingItem = target.items.find(
-      (item) => item.name.toLowerCase() === itemName.toLowerCase(),
+      (item) => item.name.toLowerCase() === draggedData.item.name.toLowerCase(),
     )
 
     if (existingItem) {
       // Show conflict dialog
       console.log('handleItemDrop: Conflict detected, showing dialog', {
         sourcePath: draggedData.sourcePath,
-        targetName: target.name,
+        targetPath,
       })
       setConflictDialog({
         sourceItem: draggedData.item,
         sourcePath: draggedData.sourcePath,
-        targetFolder: target,
+        targetFolder: { ...target, path: targetPath },
         existingName: existingItem.name,
       })
     } else {
@@ -837,9 +969,12 @@ const FileTree: React.FC<FileTreeProps> = ({
         'handleItemDrop: Moving item from',
         draggedData.sourcePath,
         'to',
-        target.name,
+        targetPath,
       )
-      performItemMove(draggedData.item, draggedData.sourcePath, target)
+      performItemMove(draggedData.item, draggedData.sourcePath, {
+        ...target,
+        path: targetPath,
+      })
     }
   }
 
@@ -930,7 +1065,7 @@ const FileTree: React.FC<FileTreeProps> = ({
     parentPath: string = '',
   ) => {
     const itemPath = parentPath ? `${parentPath}/${item.name}` : item.name
-    const isExpanded = expandedFolders.includes(item.name)
+    const isExpanded = expandedFolders.includes(itemPath)
     const isActive =
       activeFile &&
       (activeFile.path || (activeFile as any).__path || activeFile.name) ===
@@ -1008,19 +1143,22 @@ const FileTree: React.FC<FileTreeProps> = ({
 
     if (item.type === 'folder') {
       return (
-        <div key={item.name}>
+        <div
+          key={item.name}
+          className={`${visualDragOver === itemPath ? 'bg-green-50 border-l-2 border-green-400' : ''}`}
+        >
           {!(renamingItem && renamingItem.path === itemPath) && (
             <div
+              data-folder-path={itemPath} // Add path attribute for drag detection
               className={`
                 flex items-center px-2 py-1 text-sm cursor-pointer hover:bg-gray-100 group
                 ${isActive ? 'bg-blue-100 text-blue-900' : 'text-gray-700'}
-                ${dragOver === item.name ? 'bg-green-50 border-l-4 border-green-400' : ''}
                 ${draggedItem?.sourcePath === itemPath ? 'opacity-50' : ''}
               `}
               style={{ paddingLeft: `${depth * 16 + 8}px` }}
-              onClick={() => toggleFolder(item.name)}
+              onClick={() => toggleFolder(itemPath)}
               onContextMenu={(e) => handleContextMenu(e, item, itemPath)}
-              onDragOver={(e) => handleFolderDragOver(e, item.name)}
+              onDragOver={(e) => handleFolderDragOver(e, itemPath)} // Use path instead of name
               onDragLeave={handleFolderDragLeave}
               onDrop={(e) => handleDrop(e, item as Folder)}
               draggable
@@ -1030,7 +1168,7 @@ const FileTree: React.FC<FileTreeProps> = ({
                 className="mr-1 p-0.5 hover:bg-gray-200 rounded transition-colors"
                 onClick={(e) => {
                   e.stopPropagation()
-                  toggleFolder(item.name)
+                  toggleFolder(itemPath)
                 }}
               >
                 {isExpanded ? (

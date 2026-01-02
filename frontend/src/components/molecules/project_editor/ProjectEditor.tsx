@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { FileSystemItem, File, Folder } from './types'
+import { FileSystemItem, File, Folder, getItemPath } from './types'
 import FileTree from './FileTree'
 import EditorComponent from './Editor'
 import JSZip from 'jszip'
@@ -502,12 +502,15 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
   }, [isResizing, handleMouseMove, handleMouseUp])
 
   const handleFileSelect = (file: File) => {
-    const filePath = file.path || file.name
+    // Ensure the file has a proper path
+    const filePath = getItemPath(file) || file.path || file.name
+    const fileWithPath = { ...file, path: filePath }
+
     // Check if file with this path is already open (not just by name)
-    if (!openFiles.find((f) => (f.path || f.name) === filePath)) {
-      setOpenFiles([...openFiles, file])
+    if (!openFiles.find((f) => getItemPath(f, f.path) === filePath)) {
+      setOpenFiles([...openFiles, fileWithPath])
     }
-    setActiveFile(file)
+    setActiveFile(fileWithPath)
   }
 
   const handleCloseFile = (file: File) => {
@@ -663,6 +666,14 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     sourcePath: string,
     targetFolder: Folder,
   ) => {
+    const targetPath = targetFolder.path || targetFolder.name
+
+    // Prevent moving item into itself or its children
+    if (sourcePath === targetPath || targetPath.startsWith(sourcePath + '/')) {
+      console.log('Cannot move item into itself or its children')
+      return
+    }
+
     // Atomic move: delete from source and add to target in a single operation
     setFsData((prevFsData) => {
       // Step 1: Delete from source path
@@ -684,22 +695,24 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
           })
       }
 
-      // Step 2: Add to target location
+      // Step 2: Add to target location with proper path-based matching
       const addToTarget = (
         items: FileSystemItem[],
         basePath: string = '',
       ): FileSystemItem[] => {
         return items.map((i) => {
           const currentPath = basePath ? `${basePath}/${i.name}` : i.name
-          // Found the target folder
-          if (
-            currentPath === targetFolder.name ||
-            i.name === targetFolder.name
-          ) {
+          // Found the target folder using path-based matching
+          if (currentPath === targetPath) {
             if (i.type === 'folder') {
+              // Set the proper path for the moved item
+              const movedItem = {
+                ...item,
+                path: `${currentPath}/${item.name}`,
+              }
               return {
                 ...i,
-                items: [...i.items, item],
+                items: [...i.items, movedItem],
               }
             }
           }
@@ -712,9 +725,10 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
       }
 
       // For root folder target
-      if (targetFolder.name === 'root') {
-        const afterDelete = prevFsData.map((rootItem) => {
-          if (rootItem.type === 'folder' && rootItem.name === 'root') {
+      if (targetPath === 'root' || targetPath === '') {
+        // The root folder is always the first item in prevFsData (regardless of its name)
+        const afterDelete = prevFsData.map((rootItem, index) => {
+          if (index === 0 && rootItem.type === 'folder') {
             return {
               ...rootItem,
               items: deleteFromSource(rootItem.items, ''),
@@ -723,15 +737,22 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
           return rootItem
         })
 
-        return afterDelete.map((rootItem) => {
-          if (rootItem.type === 'folder' && rootItem.name === 'root') {
+        const result = afterDelete.map((rootItem, index) => {
+          if (index === 0 && rootItem.type === 'folder') {
+            // Set proper path for root level items
+            const movedItem = {
+              ...item,
+              path: item.name,
+            }
             return {
               ...rootItem,
-              items: [...rootItem.items, item],
+              items: [...rootItem.items, movedItem],
             }
           }
           return rootItem
         })
+
+        return result
       }
 
       // For non-root target folder
@@ -745,7 +766,18 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
         return rootItem
       })
 
-      return addToTarget(afterDelete)
+      // Now add the item to the target folder
+      const result = afterDelete.map((rootItem) => {
+        if (rootItem.type === 'folder' && rootItem.items) {
+          return {
+            ...rootItem,
+            items: addToTarget(rootItem.items, ''),
+          }
+        }
+        return rootItem
+      })
+
+      return result
     })
 
     // Clean up any pending changes for the moved file
@@ -844,13 +876,22 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
   }
 
   const handleAddItem = (parent: Folder, item: FileSystemItem) => {
-    const addItem = (items: FileSystemItem[]): FileSystemItem[] => {
+    const addItem = (
+      items: FileSystemItem[],
+      currentPath: string = '',
+    ): FileSystemItem[] => {
       return items.map((i) => {
+        const itemPath = currentPath ? `${currentPath}/${i.name}` : i.name
         if (i.name === parent.name && i.type === 'folder') {
-          return { ...i, items: [...i.items, item] }
+          // Add path to the new item
+          const itemWithPath = {
+            ...item,
+            path: itemPath ? `${itemPath}/${item.name}` : item.name,
+          }
+          return { ...i, items: [...i.items, itemWithPath] }
         }
         if (i.type === 'folder') {
-          return { ...i, items: addItem(i.items) }
+          return { ...i, items: addItem(i.items, itemPath) }
         }
         return i
       })
