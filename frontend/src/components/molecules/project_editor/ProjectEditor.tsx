@@ -645,19 +645,41 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     )
   }
 
-  const handleRenameItem = (item: FileSystemItem, newName: string) => {
-    const renameItem = (items: FileSystemItem[]): FileSystemItem[] => {
+  const handleRenameItem = (
+    item: FileSystemItem,
+    itemPath: string,
+    newName: string,
+  ) => {
+    const renameItem = (
+      items: FileSystemItem[],
+      currentPath: string = '',
+    ): FileSystemItem[] => {
       return items.map((i) => {
-        if (i.name === item.name) {
+        const fullPath = currentPath ? `${currentPath}/${i.name}` : i.name
+
+        // Only rename if this is the exact item at the specified path
+        if (fullPath === itemPath) {
           return { ...i, name: newName }
         }
+
+        // Recursively search in folders
         if (i.type === 'folder') {
-          return { ...i, items: renameItem(i.items) }
+          return { ...i, items: renameItem(i.items, fullPath) }
         }
         return i
       })
     }
-    const newFileSystem = renameItem(fsData)
+
+    // Process root folder - fsData is array where index 0 is root
+    const newFileSystem = fsData.map((rootItem) => {
+      if (rootItem.type === 'folder') {
+        return {
+          ...rootItem,
+          items: renameItem(rootItem.items, ''),
+        }
+      }
+      return rootItem
+    })
     setFsData(newFileSystem)
   }
 

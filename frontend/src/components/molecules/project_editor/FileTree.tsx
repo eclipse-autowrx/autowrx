@@ -39,7 +39,11 @@ interface FileTreeProps {
   items: FileSystemItem[]
   onFileSelect: (file: File) => void
   onDeleteItem: (item: FileSystemItem) => void
-  onRenameItem: (item: FileSystemItem, newName: string) => void
+  onRenameItem: (
+    item: FileSystemItem,
+    itemPath: string,
+    newName: string,
+  ) => void
   onAddItem: (parent: Folder, item: FileSystemItem) => void
   onMoveItem?: (
     item: FileSystemItem,
@@ -744,7 +748,7 @@ const FileTree: React.FC<FileTreeProps> = ({
   const handleRenameSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (renamingItem && newName.trim() && newName !== renamingItem.item.name) {
-      onRenameItem(renamingItem.item, newName.trim())
+      onRenameItem(renamingItem.item, renamingItem.path, newName.trim())
     }
     setRenamingItem(null)
     setNewName('')
