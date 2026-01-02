@@ -53,13 +53,19 @@ const FileTree: React.FC<FileTreeProps> = ({
   activeFile,
 }) => {
   const [expandedFolders, setExpandedFolders] = useState<string[]>([])
-  const [openDropdown, setOpenDropdown] = useState<FileSystemItem | null>(null)
+  const [openDropdown, setOpenDropdown] = useState<{
+    item: FileSystemItem
+    path: string
+  } | null>(null)
   const [dropdownPosition, setDropdownPosition] = useState<{
     top: number
     right?: number
     left?: number
   } | null>(null)
-  const [renamingItem, setRenamingItem] = useState<FileSystemItem | null>(null)
+  const [renamingItem, setRenamingItem] = useState<{
+    item: FileSystemItem
+    path: string
+  } | null>(null)
   const [newName, setNewName] = useState('')
   const [creatingItem, setCreatingItem] = useState<{
     parentPath: string
@@ -537,13 +543,17 @@ const FileTree: React.FC<FileTreeProps> = ({
     )
   }
 
-  const handleContextMenu = (e: React.MouseEvent, item: FileSystemItem) => {
+  const handleContextMenu = (
+    e: React.MouseEvent,
+    item: FileSystemItem,
+    itemPath: string,
+  ) => {
     e.preventDefault()
     e.stopPropagation()
 
     const rect = e.currentTarget.getBoundingClientRect()
     setDropdownPosition({ top: rect.bottom, left: rect.left })
-    setOpenDropdown(item)
+    setOpenDropdown({ item, path: itemPath })
   }
 
   const handleRootContextMenu = (e: React.MouseEvent) => {
@@ -570,16 +580,16 @@ const FileTree: React.FC<FileTreeProps> = ({
     setShowRootMenu(false)
   }
 
-  const handleRename = (item: FileSystemItem) => {
-    setRenamingItem(item)
+  const handleRename = (item: FileSystemItem, itemPath: string) => {
+    setRenamingItem({ item, path: itemPath })
     setNewName(item.name)
     setOpenDropdown(null)
   }
 
   const handleRenameSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (renamingItem && newName.trim() && newName !== renamingItem.name) {
-      onRenameItem(renamingItem, newName.trim())
+    if (renamingItem && newName.trim() && newName !== renamingItem.item.name) {
+      onRenameItem(renamingItem.item, newName.trim())
     }
     setRenamingItem(null)
     setNewName('')
@@ -694,40 +704,47 @@ const FileTree: React.FC<FileTreeProps> = ({
     onDropFiles(files, target)
   }
 
-  const renderItem = (item: FileSystemItem, depth: number = 0) => {
+  const renderItem = (
+    item: FileSystemItem,
+    depth: number = 0,
+    parentPath: string = '',
+  ) => {
+    const itemPath = parentPath ? `${parentPath}/${item.name}` : item.name
     const isExpanded = expandedFolders.includes(item.name)
     const isActive = activeFile?.name === item.name
 
     if (item.type === 'file') {
       return (
         <>
-          <div
-            key={item.name}
-            className={`
-              flex items-center px-2 py-1 text-sm cursor-pointer hover:bg-gray-100 group
-              ${isActive ? 'bg-blue-100 text-blue-900' : 'text-gray-700'}
-            `}
-            style={{ paddingLeft: `${depth * 16 + 8}px` }}
-            onClick={() => onFileSelect(item)}
-            onContextMenu={(e) => handleContextMenu(e, item)}
-          >
-            {getFileIcon(item.name)}
-            <span className="truncate">{item.name}</span>
-
-            {/* Context menu button */}
-            <button
-              className="ml-auto opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded transition-opacity"
-              onClick={(e) => {
-                e.stopPropagation()
-                handleContextMenu(e, item)
-              }}
+          {!(renamingItem && renamingItem.path === itemPath) && (
+            <div
+              key={item.name}
+              className={`
+                flex items-center px-2 py-1 text-sm cursor-pointer hover:bg-gray-100 group
+                ${isActive ? 'bg-blue-100 text-blue-900' : 'text-gray-700'}
+              `}
+              style={{ paddingLeft: `${depth * 16 + 8}px` }}
+              onClick={() => onFileSelect(item)}
+              onContextMenu={(e) => handleContextMenu(e, item, itemPath)}
             >
-              <VscKebabVertical size={14} />
-            </button>
-          </div>
+              {getFileIcon(item.name)}
+              <span className="truncate">{item.name}</span>
+
+              {/* Context menu button */}
+              <button
+                className="ml-auto opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded transition-opacity"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleContextMenu(e, item, itemPath)
+                }}
+              >
+                <VscKebabVertical size={14} />
+              </button>
+            </div>
+          )}
 
           {/* Inline rename input for files */}
-          {renamingItem && renamingItem.name === item.name && (
+          {renamingItem && renamingItem.path === itemPath && (
             <div
               className="flex items-center py-[1px] px-2 text-gray-700 text-[13px]"
               style={{ paddingLeft: `${depth * 16 + 8}px` }}
@@ -736,7 +753,7 @@ const FileTree: React.FC<FileTreeProps> = ({
                 onSubmit={handleRenameSubmit}
                 className="w-full flex items-center"
               >
-                {getFileIcon(renamingItem.name)}
+                {getFileIcon(renamingItem.item.name)}
                 <input
                   type="text"
                   value={newName}
@@ -761,45 +778,47 @@ const FileTree: React.FC<FileTreeProps> = ({
     if (item.type === 'folder') {
       return (
         <div key={item.name}>
-          <div
-            className={`
-              flex items-center px-2 py-1 text-sm cursor-pointer hover:bg-gray-100 group
-              ${isActive ? 'bg-blue-100 text-blue-900' : 'text-gray-700'}
-              ${dragOver === item.name ? 'bg-green-50 border-l-4 border-green-400' : ''}
-            `}
-            style={{ paddingLeft: `${depth * 16 + 8}px` }}
-            onClick={() => toggleFolder(item.name)}
-            onContextMenu={(e) => handleContextMenu(e, item)}
-            onDragOver={(e) => handleFolderDragOver(e, item.name)}
-            onDragLeave={handleFolderDragLeave}
-            onDrop={(e) => handleDrop(e, item as Folder)}
-          >
-            <button
-              className="mr-1 p-0.5 hover:bg-gray-200 rounded transition-colors"
-              onClick={(e) => {
-                e.stopPropagation()
-                toggleFolder(item.name)
-              }}
+          {!(renamingItem && renamingItem.path === itemPath) && (
+            <div
+              className={`
+                flex items-center px-2 py-1 text-sm cursor-pointer hover:bg-gray-100 group
+                ${isActive ? 'bg-blue-100 text-blue-900' : 'text-gray-700'}
+                ${dragOver === item.name ? 'bg-green-50 border-l-4 border-green-400' : ''}
+              `}
+              style={{ paddingLeft: `${depth * 16 + 8}px` }}
+              onClick={() => toggleFolder(item.name)}
+              onContextMenu={(e) => handleContextMenu(e, item, itemPath)}
+              onDragOver={(e) => handleFolderDragOver(e, item.name)}
+              onDragLeave={handleFolderDragLeave}
+              onDrop={(e) => handleDrop(e, item as Folder)}
             >
-              {isExpanded ? (
-                <VscChevronDown size={14} />
-              ) : (
-                <VscChevronRight size={14} />
-              )}
-            </button>
-            <span className="truncate">{item.name}</span>
+              <button
+                className="mr-1 p-0.5 hover:bg-gray-200 rounded transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  toggleFolder(item.name)
+                }}
+              >
+                {isExpanded ? (
+                  <VscChevronDown size={14} />
+                ) : (
+                  <VscChevronRight size={14} />
+                )}
+              </button>
+              <span className="truncate">{item.name}</span>
 
-            {/* Context menu button */}
-            <button
-              className="ml-auto opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded transition-opacity"
-              onClick={(e) => {
-                e.stopPropagation()
-                handleContextMenu(e, item)
-              }}
-            >
-              <VscKebabVertical size={14} />
-            </button>
-          </div>
+              {/* Context menu button */}
+              <button
+                className="ml-auto opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded transition-opacity"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleContextMenu(e, item, itemPath)
+                }}
+              >
+                <VscKebabVertical size={14} />
+              </button>
+            </div>
+          )}
 
           {/* Inline creation input */}
           {creatingItem && creatingItem.parentPath === item.name && (
@@ -841,7 +860,7 @@ const FileTree: React.FC<FileTreeProps> = ({
           )}
 
           {/* Inline rename input */}
-          {renamingItem && renamingItem.name === item.name && (
+          {renamingItem && renamingItem.path === itemPath && (
             <div
               className="flex items-center py-[1px] px-2 text-gray-700 text-[13px]"
               style={{ paddingLeft: `${depth * 16 + 8}px` }}
@@ -875,7 +894,7 @@ const FileTree: React.FC<FileTreeProps> = ({
           {isExpanded && (
             <div>
               {sortItems(item.items).map((childItem) =>
-                renderItem(childItem, depth + 1),
+                renderItem(childItem, depth + 1, itemPath),
               )}
             </div>
           )}
@@ -969,7 +988,7 @@ const FileTree: React.FC<FileTreeProps> = ({
               className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
               onClick={() => {
                 if (openDropdown) {
-                  handleRename(openDropdown)
+                  handleRename(openDropdown.item, openDropdown.path)
                 }
               }}
             >
@@ -977,13 +996,13 @@ const FileTree: React.FC<FileTreeProps> = ({
               Rename
             </button>
 
-            {openDropdown?.type === 'folder' && (
+            {openDropdown?.item.type === 'folder' && (
               <>
                 <button
                   className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
                   onClick={() => {
-                    if (openDropdown && openDropdown.type === 'folder') {
-                      handleCreateItem(openDropdown as Folder, 'file')
+                    if (openDropdown && openDropdown.item.type === 'folder') {
+                      handleCreateItem(openDropdown.item as Folder, 'file')
                     }
                   }}
                 >
@@ -993,8 +1012,8 @@ const FileTree: React.FC<FileTreeProps> = ({
                 <button
                   className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
                   onClick={() => {
-                    if (openDropdown && openDropdown.type === 'folder') {
-                      handleCreateItem(openDropdown as Folder, 'folder')
+                    if (openDropdown && openDropdown.item.type === 'folder') {
+                      handleCreateItem(openDropdown.item as Folder, 'folder')
                     }
                   }}
                 >
@@ -1008,7 +1027,7 @@ const FileTree: React.FC<FileTreeProps> = ({
               className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
               onClick={() => {
                 if (openDropdown) {
-                  handleCopy(openDropdown)
+                  handleCopy(openDropdown.item)
                 }
               }}
             >
@@ -1020,7 +1039,7 @@ const FileTree: React.FC<FileTreeProps> = ({
               className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
               onClick={() => {
                 if (openDropdown) {
-                  handleCut(openDropdown)
+                  handleCut(openDropdown.item)
                 }
               }}
             >
@@ -1028,29 +1047,29 @@ const FileTree: React.FC<FileTreeProps> = ({
               Cut
             </button>
 
-            {clipboard && openDropdown?.type === 'folder' && (
+            {clipboard && openDropdown?.item.type === 'folder' && (
               <button
                 className={`w-full px-3 py-2 text-left text-sm flex items-center ${
                   openDropdown &&
-                  openDropdown.type === 'folder' &&
-                  canPaste(openDropdown as Folder)
+                  openDropdown.item.type === 'folder' &&
+                  canPaste(openDropdown.item as Folder)
                     ? 'hover:bg-gray-100'
                     : 'text-gray-400 cursor-not-allowed'
                 }`}
                 onClick={() => {
                   if (
                     openDropdown &&
-                    openDropdown.type === 'folder' &&
-                    canPaste(openDropdown as Folder)
+                    openDropdown.item.type === 'folder' &&
+                    canPaste(openDropdown.item as Folder)
                   ) {
-                    handlePaste(openDropdown as Folder)
+                    handlePaste(openDropdown.item as Folder)
                   }
                 }}
                 disabled={
                   !(
                     openDropdown &&
-                    openDropdown.type === 'folder' &&
-                    canPaste(openDropdown as Folder)
+                    openDropdown.item.type === 'folder' &&
+                    canPaste(openDropdown.item as Folder)
                   )
                 }
               >
@@ -1062,8 +1081,8 @@ const FileTree: React.FC<FileTreeProps> = ({
             <button
               className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
               onClick={() => {
-                if (openDropdown && openDropdown.type === 'folder') {
-                  onUploadFile(openDropdown as Folder)
+                if (openDropdown && openDropdown.item.type === 'folder') {
+                  onUploadFile(openDropdown.item as Folder)
                 }
               }}
             >
@@ -1076,7 +1095,7 @@ const FileTree: React.FC<FileTreeProps> = ({
               className="w-full px-3 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center"
               onClick={() => {
                 if (openDropdown) {
-                  onDeleteItem(openDropdown)
+                  onDeleteItem(openDropdown.item)
                 }
                 setOpenDropdown(null)
               }}
