@@ -40,7 +40,9 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({ data, onChange }) => {
         return [{ type: 'folder', name: 'root', items: [] }]
       }
       const parsed = JSON.parse(data)
-      return Array.isArray(parsed) ? parsed : [{ type: 'folder', name: 'root', items: [] }]
+      return Array.isArray(parsed)
+        ? parsed
+        : [{ type: 'folder', name: 'root', items: [] }]
     } catch {
       return [{ type: 'folder', name: 'root', items: [] }]
     }
@@ -244,6 +246,9 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({ data, onChange }) => {
       return
     }
 
+    // Check if this is a cut operation with path information
+    const originalPath = (item as any).__originalPath
+
     // Helper function to collect all file names in a folder (recursive)
     const collectFileNames = (items: FileSystemItem[]): string[] => {
       const fileNames: string[] = []
@@ -277,12 +282,23 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({ data, onChange }) => {
     }
 
     // Delete from file system
-    const deleteItem = (items: FileSystemItem[]): FileSystemItem[] => {
+    const deleteItem = (
+      items: FileSystemItem[],
+      path: string = '',
+    ): FileSystemItem[] => {
       return items
-        .filter((i) => i.name !== item.name)
+        .filter((i) => {
+          const currentPath = path ? `${path}/${i.name}` : i.name
+          // If originalPath is provided, match by path; otherwise match by name only
+          if (originalPath) {
+            return currentPath !== originalPath
+          }
+          return i.name !== item.name
+        })
         .map((i) => {
+          const currentPath = path ? `${path}/${i.name}` : i.name
           if (i.type === 'folder') {
-            return { ...i, items: deleteItem(i.items) }
+            return { ...i, items: deleteItem(i.items, currentPath) }
           }
           return i
         })
@@ -369,7 +385,11 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({ data, onChange }) => {
         return
       }
       const parsed = JSON.parse(data)
-      setFsData(Array.isArray(parsed) ? parsed : [{ type: 'folder', name: 'root', items: [] }])
+      setFsData(
+        Array.isArray(parsed)
+          ? parsed
+          : [{ type: 'folder', name: 'root', items: [] }],
+      )
     } catch {
       setFsData([{ type: 'folder', name: 'root', items: [] }])
     }

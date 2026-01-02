@@ -717,7 +717,7 @@ const FileTree: React.FC<FileTreeProps> = ({
   ) => {
     const itemPath = parentPath ? `${parentPath}/${item.name}` : item.name
     const isExpanded = expandedFolders.includes(item.name)
-    const isActive = activeFile?.name === item.name
+    const isActive = activeFile && (activeFile as any).__path === itemPath
 
     if (item.type === 'file') {
       return (
@@ -730,7 +730,7 @@ const FileTree: React.FC<FileTreeProps> = ({
                 ${isActive ? 'bg-blue-100 text-blue-900' : 'text-gray-700'}
               `}
               style={{ paddingLeft: `${depth * 16 + 8}px` }}
-              onClick={() => onFileSelect(item)}
+              onClick={() => onFileSelect({ ...item, __path: itemPath } as any)}
               onContextMenu={(e) => handleContextMenu(e, item, itemPath)}
             >
               {getFileIcon(item.name)}
