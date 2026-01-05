@@ -36,7 +36,7 @@ import { PERMISSIONS } from '@/data/permission'
 import { Spinner } from '@/components/atoms/spinner'
 
 const ViewApiCovesa = () => {
-  const { model_id } = useParams()
+  const { model_id, api: apiParam } = useParams<{ model_id: string; api?: string }>()
   const navigate = useNavigate()
   const [selectedApi, setSelectedApi] = useState<VehicleApi | null>(null)
   const [activeTab, setActiveTab] = useState<
@@ -58,10 +58,19 @@ const ViewApiCovesa = () => {
   const [showUpload, setShowUpload] = useState(false)
 
   useEffect(() => {
+    // Set selected API from route param or default to first API
+    if (apiParam && activeModelApis) {
+      const foundApi = activeModelApis.find((api) => api.name === apiParam)
+      if (foundApi) {
+        setSelectedApi(foundApi)
+        return
+      }
+    }
+    // If no route param or not found, use previous selection or first API
     setSelectedApi(
-      (prev) => activeModelApis?.find((api) => api.name === prev?.name) || null,
+      (prev) => activeModelApis?.find((api) => api.name === prev?.name) || activeModelApis?.[0] || null,
     )
-  }, [activeModelApis])
+  }, [activeModelApis, apiParam])
 
   const handleReplaceAPI = async () => {
     try {
@@ -87,7 +96,7 @@ const ViewApiCovesa = () => {
   const handleApiClick = (apiDetails: VehicleApi) => {
     // console.log('apiDetails', apiDetails)
     setSelectedApi(apiDetails)
-    navigate(`/model/${model_id}/api/${apiDetails.name}`)
+    navigate(`/model/${model_id}/api/covesa/${apiDetails.name}`)
   }
 
   const isLoading = activeModelApis?.length === 0

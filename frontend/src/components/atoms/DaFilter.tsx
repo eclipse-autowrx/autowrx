@@ -43,7 +43,7 @@ const DaFilter = ({
     } else {
       setSelectedOptions(defaultValue?.length ? defaultValue : allOptions)
     }
-  }, [defaultValue])
+  }, [defaultValue, categories, singleSelect])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -82,6 +82,21 @@ const DaFilter = ({
     setIsDropdownVisible(!isDropdownVisible)
   }
 
+  const handleSelectAll = () => {
+    const allOptions = Object.values(categories).flat()
+    setSelectedOptions(allOptions)
+    onChange(allOptions)
+  }
+
+  const handleClearAll = () => {
+    setSelectedOptions([])
+    onChange([])
+  }
+
+  const allOptions = Object.values(categories).flat()
+  const allSelected = allOptions.length > 0 && selectedOptions.length === allOptions.length
+  const noneSelected = selectedOptions.length === 0
+
   return (
     <div className="relative" ref={dropdownRef}>
       <Button
@@ -99,6 +114,33 @@ const DaFilter = ({
               {showCategory && (
                 <div className="ml-2 text-xs font-semibold text-muted-foreground mt-2! mb-1">
                   {category}
+                </div>
+              )}
+              {/* Select All / Clear All buttons - only show in multi-select mode */}
+              {!singleSelect && (
+                <div className="flex justify-between items-center px-2 py-1.5 mb-1 border-b border-border/50">
+                  <button
+                    type="button"
+                    onClick={handleSelectAll}
+                    disabled={allSelected}
+                    className={cn(
+                      'text-xs text-muted-foreground hover:text-foreground transition-colors',
+                      allSelected && 'opacity-50 cursor-not-allowed'
+                    )}
+                  >
+                    Select All
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleClearAll}
+                    disabled={noneSelected}
+                    className={cn(
+                      'text-xs text-muted-foreground hover:text-foreground transition-colors',
+                      noneSelected && 'opacity-50 cursor-not-allowed'
+                    )}
+                  >
+                    Clear All
+                  </button>
                 </div>
               )}
               {options.map((option) => (

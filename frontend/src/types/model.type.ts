@@ -70,6 +70,7 @@ export type Model = {
   extend?: any
   model_template_id?: string | null
   custom_template?: any
+  plugin_api_instances?: string[]
 }
 
 export type Prototype = {

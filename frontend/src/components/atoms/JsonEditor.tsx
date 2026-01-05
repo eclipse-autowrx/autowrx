@@ -94,8 +94,8 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, valueType, cla
   };
 
   return (
-    <div className={className}>
-      <div className="flex items-center justify-between mb-2">
+    <div className={`flex flex-col h-full ${className}`}>
+      <div className="flex items-center justify-between mb-3 shrink-0 pt-1">
         <label className="block text-sm font-medium text-gray-700">
           JSON {valueType === 'array' ? 'Array' : 'Object'}
         </label>
@@ -120,19 +120,18 @@ const JsonEditor: React.FC<JsonEditorProps> = ({ value, onChange, valueType, cla
       <textarea
         value={jsonString}
         onChange={(e) => handleJsonChange(e.target.value)}
-        rows={8}
-        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm ${
+        className={`flex-1 w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm resize-none bg-white min-h-[6rem] ${
           error ? 'border-red-300' : isValid ? 'border-gray-300' : 'border-yellow-300'
         }`}
         placeholder={valueType === 'array' ? '["item1", "item2"]' : '{"key": "value"}'}
       />
       
       {error && (
-        <div className="mt-1 text-sm text-red-600">{error}</div>
+        <div className="mt-1 text-sm text-red-600 shrink-0">{error}</div>
       )}
       
       {!error && !isValid && (
-        <div className="mt-1 text-sm text-yellow-600">
+        <div className="mt-1 text-sm text-yellow-600 shrink-0">
           JSON is valid but may not match the expected type
         </div>
       )}

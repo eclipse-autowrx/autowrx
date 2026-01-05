@@ -13,6 +13,7 @@ const fileRoute = require('./file.route');
 const siteManagementRoute = require('./site-management.route');
 const pluginRoute = require('./plugin.route');
 const modelTemplateRoute = require('./modelTemplate.route');
+const pluginApiRoute = require('./plugin-api.route');
 
 const router = express.Router();
 
@@ -23,9 +24,11 @@ router.use('/file', fileRoute);
 router.use('/site-config', siteManagementRoute);
 router.use('/plugin', pluginRoute);
 router.use('/model-template', modelTemplateRoute);
+router.use('/plugin-api', pluginApiRoute);
 // Backward/compat path to match docs and frontend
 router.use('/system/plugin', pluginRoute);
 router.use('/system/model-template', modelTemplateRoute);
 router.use('/system/site-management', siteManagementRoute);
+router.use('/system/plugin-api', pluginApiRoute);
 
 module.exports = router;

@@ -12,13 +12,14 @@ const prototypeService = require('./prototype.service');
 const apiService = require('./api.service');
 const permissionService = require('./permission.service');
 const fileService = require('./file.service');
-const { Model, Role } = require('../models');
+const { Model, Role, PluginAPI, PluginApiInstance } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { PERMISSIONS } = require('../config/roles');
 const mongoose = require('mongoose');
 const logger = require('../config/logger');
 const _ = require('lodash');
 const config = require('../config/config');
+const pluginApiInstanceService = require('./pluginApiInstance.service');
 
 /**
  *
@@ -308,10 +309,8 @@ const queryModels = async (filter, options, advanced, userId) => {
  * @returns {Promise<Model>}
  */
 const getModelById = async (id, userId, includeCreatorFullDetails) => {
-  const model = await Model.findById(id).populate(
-    'created_by',
-    includeCreatorFullDetails ? 'id name image_file email' : 'id name image_file'
-  );
+  const model = await Model.findById(id)
+    .populate('created_by', includeCreatorFullDetails ? 'id name image_file email' : 'id name image_file');
   if (!model) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Model not found');
   }
@@ -347,6 +346,31 @@ const updateModelById = async (id, updateBody, actionOwner) => {
       updateBody.extend = parsedExtend;
     } catch (error) {
       logger.warn(`Failed while parsing extend field: ${error}`);
+    }
+  }
+
+  // Validate plugin_api_instances if provided
+  if (updateBody.plugin_api_instances !== undefined) {
+    // Verify all instances exist
+    const instances = await PluginApiInstance.find({
+      _id: { $in: updateBody.plugin_api_instances },
+    }).lean();
+
+    if (instances.length !== updateBody.plugin_api_instances.length) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'One or more PluginApiInstance references are invalid');
+    }
+
+    // Check access permissions for user-scoped instances
+    const userScopedInstances = instances.filter((inst) => inst.scope === 'user');
+    const inaccessibleInstances = userScopedInstances.filter(
+      (inst) => inst.owner.toString() !== actionOwner.toString()
+    );
+
+    if (inaccessibleInstances.length > 0) {
+      throw new ApiError(
+        httpStatus.FORBIDDEN,
+        'You do not have access to one or more user-scoped PluginApiInstances'
+      );
     }
   }
 
@@ -557,6 +581,56 @@ const processApiDataUrl = async (apiDataUrl) => {
   }
 };
 
+/**
+ * Add PluginApiInstance to model
+ * @param {string} modelId
+ * @param {string} instanceId
+ * @param {string} userId
+ * @returns {Promise<Model>}
+ */
+const addPluginApiInstance = async (modelId, instanceId, userId) => {
+  const model = await getModelById(modelId, userId);
+  
+  // Verify instance exists and user has access
+  const instance = await pluginApiInstanceService.getInstanceById(instanceId, userId);
+  
+  if (!model.plugin_api_instances) {
+    model.plugin_api_instances = [];
+  }
+  
+  if (model.plugin_api_instances.some((id) => id.toString() === instanceId)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'PluginApiInstance already linked to this model');
+  }
+  
+  model.plugin_api_instances.push(instanceId);
+  await model.save();
+  return model;
+};
+
+/**
+ * Remove PluginApiInstance from model
+ * @param {string} modelId
+ * @param {string} instanceId
+ * @param {string} userId
+ * @returns {Promise<Model>}
+ */
+const removePluginApiInstance = async (modelId, instanceId, userId) => {
+  const model = await getModelById(modelId, userId);
+  
+  if (!model.plugin_api_instances) {
+    model.plugin_api_instances = [];
+  }
+  
+  const index = model.plugin_api_instances.findIndex((id) => id.toString() === instanceId);
+  if (index === -1) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'PluginApiInstance not linked to this model');
+  }
+  
+  model.plugin_api_instances.splice(index, 1);
+  await model.save();
+  return model;
+};
+
 module.exports.createModel = createModel;
 module.exports.getModels = getModels;
 module.exports.queryModels = queryModels;
@@ -568,3 +642,5 @@ module.exports.deleteAuthorizedUser = deleteAuthorizedUser;
 module.exports.getAccessibleModels = getAccessibleModels;
 module.exports.processApiDataUrl = processApiDataUrl;
 module.exports.getModelStats = getModelStats;
+module.exports.addPluginApiInstance = addPluginApiInstance;
+module.exports.removePluginApiInstance = removePluginApiInstance;

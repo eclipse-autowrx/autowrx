@@ -101,6 +101,11 @@ const modelSchema = new mongoose.Schema(
       type: mongoose.SchemaTypes.Mixed,
       default: null,
     },
+    plugin_api_instances: {
+      type: [mongoose.SchemaTypes.ObjectId],
+      ref: 'PluginApiInstance',
+      default: [],
+    },
   },
   {
     timestamps: true,

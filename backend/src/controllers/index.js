@@ -21,4 +21,6 @@ module.exports.fileController = require('./file.controller');
 module.exports.siteConfigController = require('./siteConfig.controller');
 module.exports.pluginController = require('./plugin.controller');
 module.exports.modelTemplateController = require('./modelTemplate.controller');
+module.exports.pluginApiController = require('./pluginApi.controller');
+module.exports.pluginApiInstanceController = require('./pluginApiInstance.controller');
 // Inventory controllers removed

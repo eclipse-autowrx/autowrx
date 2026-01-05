@@ -55,4 +55,10 @@ A concise overview of all collections used by the backend and their roles.
 ### instancerelations (inventory)
 - Links between inventory `instances` under a `relation`, with optional `metadata`.
 
+### plugina pis
+- Schema definitions for API sets (Tree, List, Graph types). Admin-defined templates that specify the structure and validation rules for API sets. Each schema defines attributes, relationships (for graph type), and tree configuration (for tree type).
+
+### pluginapiinstances
+- API set instances with scope-based access. Actual data instances following PluginAPI schemas. Can be system-scoped (shared, created by admin) or user-scoped (private, created by user). Stores complete API sets in a single document with items array containing all API nodes/endpoints.
+
 

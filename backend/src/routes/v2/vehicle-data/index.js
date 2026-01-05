@@ -11,6 +11,7 @@ const prototypeRoute = require('./prototype.route');
 const modelRoute = require('./model.route');
 const apiRoute = require('./api.route');
 const extendedApiRoute = require('./extendedApi.route');
+const pluginApiInstanceRoute = require('./plugin-api-instance.route');
 
 const router = express.Router();
 
@@ -19,5 +20,6 @@ router.use('/prototypes', prototypeRoute);
 router.use('/models', modelRoute);
 router.use('/apis', apiRoute);
 router.use('/extendedApis', extendedApiRoute);
+router.use('/plugin-api-instances', pluginApiInstanceRoute);
 
 module.exports = router;
