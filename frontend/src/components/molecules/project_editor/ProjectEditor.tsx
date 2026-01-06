@@ -537,112 +537,113 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     // Check if this is a deletion with path information (set by context menu or cut operations)
     const deletePath = (item as any).__originalPath
 
-    // Helper function to collect all file paths in a folder (recursive)
-    const collectFilePaths = (
-      items: FileSystemItem[],
-      basePath: string = '',
-    ): string[] => {
-      const filePaths: string[] = []
-      items.forEach((item) => {
-        const currentPath = basePath ? `${basePath}/${item.name}` : item.name
-        if (item.type === 'file') {
-          filePaths.push(currentPath)
-        } else if (item.type === 'folder') {
-          filePaths.push(...collectFilePaths(item.items, currentPath))
-        }
-      })
-      return filePaths
-    }
-
-    // Get all file paths that will be deleted
-    const filePathsToDelete: string[] = []
-    if (deletePath) {
-      // If we have the exact path, use it directly
-      filePathsToDelete.push(deletePath)
-      // Also collect files inside if it's a folder
-      if (item.type === 'folder') {
-        filePathsToDelete.push(...collectFilePaths(item.items, deletePath))
-      }
-    } else {
-      // Fallback: no path provided (shouldn't happen with proper integration)
-      if (item.type === 'file') {
-        filePathsToDelete.push(item.name)
-      } else if (item.type === 'folder') {
-        filePathsToDelete.push(...collectFilePaths(item.items))
-      }
-    }
-
-    // Remove deleted files from open files list (match by path)
-    const newOpenFiles = openFiles.filter((openFile) => {
-      const openFilePath = openFile.path || openFile.name
-      return !filePathsToDelete.includes(openFilePath)
-    })
-    setOpenFiles(newOpenFiles)
-
-    // If active file is being deleted, switch to another open file or null
-    if (activeFile) {
-      const activeFilePath = activeFile.path || activeFile.name
-      if (filePathsToDelete.includes(activeFilePath)) {
-        setActiveFile(newOpenFiles[0] || null)
-      }
-    }
-
-    // Delete from file system - use path-based matching for exact deletion
-    const deleteItem = (
-      items: FileSystemItem[],
-      basePath: string = '',
-    ): FileSystemItem[] => {
-      return items
-        .filter((i) => {
-          const currentPath = basePath ? `${basePath}/${i.name}` : i.name
-          // Only delete if the path matches exactly
-          return !filePathsToDelete.includes(currentPath)
-        })
-        .map((i) => {
-          const currentPath = basePath ? `${basePath}/${i.name}` : i.name
-          if (i.type === 'folder') {
-            return { ...i, items: deleteItem(i.items, currentPath) }
+    setFsData((prevFsData) => {
+      // Helper function to collect all file paths in a folder (recursive)
+      const collectFilePaths = (
+        items: FileSystemItem[],
+        basePath: string = '',
+      ): string[] => {
+        const filePaths: string[] = []
+        items.forEach((item) => {
+          const currentPath = basePath ? `${basePath}/${item.name}` : item.name
+          if (item.type === 'file') {
+            filePaths.push(currentPath)
+          } else if (item.type === 'folder') {
+            filePaths.push(...collectFilePaths(item.items, currentPath))
           }
-          return i
         })
-    }
+        return filePaths
+      }
 
-    // Process the root folder correctly - fsData is an array with root as first element
-    const newFileSystem = fsData.map((rootItem) => {
-      if (rootItem.type === 'folder') {
-        return {
-          ...rootItem,
-          items: deleteItem(rootItem.items, ''),
+      // Get all file paths that will be deleted
+      const filePathsToDelete: string[] = []
+      if (deletePath) {
+        // If we have the exact path, use it directly
+        filePathsToDelete.push(deletePath)
+        // Also collect files inside if it's a folder
+        if (item.type === 'folder') {
+          filePathsToDelete.push(...collectFilePaths(item.items, deletePath))
+        }
+      } else {
+        // Fallback: no path provided (shouldn't happen with proper integration)
+        if (item.type === 'file') {
+          filePathsToDelete.push(item.name)
+        } else if (item.type === 'folder') {
+          filePathsToDelete.push(...collectFilePaths(item.items))
         }
       }
-      return rootItem
-    })
 
-    // Update fsData and remove deleted files from pending changes
-    setFsData(newFileSystem)
-
-    // Clean up pending changes for deleted files
-    setPendingChanges((prev) => {
-      const next = new Map(prev)
-      filePathsToDelete.forEach((path) => {
-        next.delete(path)
+      // Remove deleted files from open files list (match by path)
+      const newOpenFiles = openFiles.filter((openFile) => {
+        const openFilePath = openFile.path || openFile.name
+        return !filePathsToDelete.includes(openFilePath)
       })
-      return next
-    })
+      setOpenFiles(newOpenFiles)
 
-    // Clean up unsaved files for deleted files
-    setUnsavedFiles((prev) => {
-      const next = new Set(prev)
-      filePathsToDelete.forEach((path) => {
-        next.delete(path)
+      // If active file is being deleted, switch to another open file or null
+      if (activeFile) {
+        const activeFilePath = activeFile.path || activeFile.name
+        if (filePathsToDelete.includes(activeFilePath)) {
+          setActiveFile(newOpenFiles[0] || null)
+        }
+      }
+
+      // Delete from file system - use path-based matching for exact deletion
+      const deleteItem = (
+        items: FileSystemItem[],
+        basePath: string = '',
+      ): FileSystemItem[] => {
+        return items
+          .filter((i) => {
+            const currentPath = basePath ? `${basePath}/${i.name}` : i.name
+            // Only delete if the path matches exactly
+            return !filePathsToDelete.includes(currentPath)
+          })
+          .map((i) => {
+            const currentPath = basePath ? `${basePath}/${i.name}` : i.name
+            if (i.type === 'folder') {
+              return { ...i, items: deleteItem(i.items, currentPath) }
+            }
+            return i
+          })
+      }
+
+      // Process the root folder correctly - fsData is an array with root as first element
+      const newFileSystem = prevFsData.map((rootItem) => {
+        if (rootItem.type === 'folder') {
+          return {
+            ...rootItem,
+            items: deleteItem(rootItem.items, ''),
+          }
+        }
+        return rootItem
       })
-      return next
-    })
 
-    console.log(
-      'handleDeleteItem: Deletion complete. New fsData items:',
-      newFileSystem.length,
-    )
+      // Clean up pending changes for deleted files
+      setPendingChanges((prev) => {
+        const next = new Map(prev)
+        filePathsToDelete.forEach((path) => {
+          next.delete(path)
+        })
+        return next
+      })
+
+      // Clean up unsaved files for deleted files
+      setUnsavedFiles((prev) => {
+        const next = new Set(prev)
+        filePathsToDelete.forEach((path) => {
+          next.delete(path)
+        })
+        return next
+      })
+
+      console.log(
+        'handleDeleteItem: Deletion complete. New fsData items:',
+        newFileSystem.length,
+      )
+
+      return newFileSystem
+    })
   }
 
   const handleRenameItem = (
@@ -898,31 +899,54 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
   }
 
   const handleAddItem = (parent: Folder, item: FileSystemItem) => {
-    const addItem = (
-      items: FileSystemItem[],
-      currentPath: string = '',
-    ): FileSystemItem[] => {
-      return items.map((i) => {
-        const itemPath = currentPath ? `${currentPath}/${i.name}` : i.name
-        if (
-          (i.name === parent.name || (!i.path && parent.path === 'root')) &&
-          i.type === 'folder'
-        ) {
-          // Add path to the new item
-          const itemWithPath = {
-            ...item,
-            path: itemPath ? `${itemPath}/${item.name}` : item.name,
+    setFsData((prevFsData) => {
+      const addItem = (
+        items: FileSystemItem[],
+        currentPath: string = '',
+      ): FileSystemItem[] => {
+        return items.map((i) => {
+          const itemPath = currentPath ? `${currentPath}/${i.name}` : i.name
+          if (
+            (i.name === parent.name || (!i.path && parent.path === 'root')) &&
+            i.type === 'folder'
+          ) {
+            // Check for duplicates to prevent race condition re-additions
+            const existingItem = i.items.find((existing) => {
+              const existingPath = itemPath
+                ? `${itemPath}/${existing.name}`
+                : existing.name
+              const newItemPath = itemPath
+                ? `${itemPath}/${item.name}`
+                : item.name
+              return existingPath === newItemPath
+            })
+
+            if (existingItem) {
+              console.log(
+                'handleAddItem: Item already exists, skipping addition',
+                {
+                  itemName: item.name,
+                  targetPath: itemPath,
+                },
+              )
+              return i // Don't add duplicate
+            }
+
+            // Add path to the new item
+            const itemWithPath = {
+              ...item,
+              path: itemPath ? `${itemPath}/${item.name}` : item.name,
+            }
+            return { ...i, items: [...i.items, itemWithPath] }
           }
-          return { ...i, items: [...i.items, itemWithPath] }
-        }
-        if (i.type === 'folder') {
-          return { ...i, items: addItem(i.items, itemPath) }
-        }
-        return i
-      })
-    }
-    const newFileSystem = addItem(fsData)
-    setFsData(newFileSystem)
+          if (i.type === 'folder') {
+            return { ...i, items: addItem(i.items, itemPath) }
+          }
+          return i
+        })
+      }
+      return addItem(prevFsData)
+    })
   }
 
   const handleExport = () => {

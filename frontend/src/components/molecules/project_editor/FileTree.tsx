@@ -804,16 +804,26 @@ const FileTree: React.FC<FileTreeProps> = ({
     if (clipboard) {
       const newItem = { ...clipboard.item }
       if (clipboard.operation === 'cut') {
-        // Remove from original location by passing the path information
-        // Attach the original path to help the delete function identify the exact item
-        const itemWithPath = {
-          ...clipboard.item,
-          __originalPath: clipboard.path, // Store path for deletion
-        } as any
-        onDeleteItem(itemWithPath)
+        // For cut operation, use moveItem if available to ensure atomicity
+        if (onMoveItem) {
+          onMoveItem(clipboard.item, clipboard.path, targetFolder)
+        } else {
+          // Fallback: Remove from original location by passing the path information
+          // Attach the original path to help the delete function identify the exact item
+          const itemWithPath = {
+            ...clipboard.item,
+            __originalPath: clipboard.path, // Store path for deletion
+          } as any
+          onDeleteItem(itemWithPath)
+          // Add to target folder - delay to ensure deletion completes first
+          setTimeout(() => {
+            onAddItem(targetFolder, newItem)
+          }, 0)
+        }
+      } else {
+        // For copy operation, just add to target folder
+        onAddItem(targetFolder, newItem)
       }
-      // Add to target folder
-      onAddItem(targetFolder, newItem)
       setClipboard(null)
     }
     setOpenDropdown(null)
@@ -1001,14 +1011,17 @@ const FileTree: React.FC<FileTreeProps> = ({
       onMoveItem(item, sourcePath, target)
     } else {
       // Fallback: Delete from source location first, then add to target
+      // Use setTimeout to ensure deletion completes before addition
       const itemWithPath = {
         ...item,
         __originalPath: sourcePath,
       } as any
       onDeleteItem(itemWithPath)
 
-      // Then add to target folder
-      onAddItem(target, item)
+      // Then add to target folder - delay to prevent race condition
+      setTimeout(() => {
+        onAddItem(target, item)
+      }, 0)
     }
   }
 
@@ -1054,15 +1067,25 @@ const FileTree: React.FC<FileTreeProps> = ({
       name: uniqueName,
     }
 
-    // Delete the ORIGINAL item from source location (with original name and path)
-    const originalItemWithPath = {
-      ...conflictDialog.sourceItem,
-      __originalPath: conflictDialog.sourcePath,
-    } as any
-    onDeleteItem(originalItemWithPath)
-
-    // Add to target with the new unique name
-    onAddItem(conflictDialog.targetFolder, renamedItem)
+    // Use moveItem if available for atomic operation
+    if (onMoveItem) {
+      onMoveItem(
+        renamedItem,
+        conflictDialog.sourcePath,
+        conflictDialog.targetFolder,
+      )
+    } else {
+      // Delete the ORIGINAL item from source location (with original name and path)
+      const originalItemWithPath = {
+        ...conflictDialog.sourceItem,
+        __originalPath: conflictDialog.sourcePath,
+      } as any
+      onDeleteItem(originalItemWithPath)
+      // Add renamed item - delay to ensure deletion completes first
+      setTimeout(() => {
+        onAddItem(conflictDialog.targetFolder, renamedItem)
+      }, 0)
+    }
 
     setConflictDialog(null)
   }
