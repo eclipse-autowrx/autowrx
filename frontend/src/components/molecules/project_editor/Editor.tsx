@@ -19,9 +19,12 @@ interface EditorComponentProps {
   onCloseFile: (file: File) => void
   onContentChange: (file: File, content: string) => void
   unsavedFiles: Set<string>
-  onSave: (file?: File) => void
-  onSaveAll: () => void
+  onSave: (file?: File, currentFsData?: any) => Promise<any>
+  onSaveAll: () => Promise<void>
   fontFamily?: string
+  onCreateFile?: () => void
+  onCreateFolder?: () => void
+  onSelectFirstFile?: () => void
 }
 
 const EditorComponent: React.FC<EditorComponentProps> = ({
@@ -34,6 +37,9 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
   onSave,
   onSaveAll,
   fontFamily,
+  onCreateFile,
+  onCreateFolder,
+  onSelectFirstFile,
 }) => {
   const tabsContainerRef = useRef<HTMLDivElement>(null)
   const activeTabRef = useRef<HTMLDivElement>(null)
@@ -70,7 +76,10 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
     const checkTabOverflow = () => {
       if (tabsContainerRef.current && openFiles.length > 10) {
         // If we have more than 10 tabs, close the leftmost one that's not active
-        const leftmostFile = openFiles.find((f) => f.name !== file?.name)
+        const activeFilePath = file?.path || file?.name
+        const leftmostFile = openFiles.find(
+          (f) => (f.path || f.name) !== activeFilePath,
+        )
         if (leftmostFile) {
           // Add a slight delay to make the auto-close visible
           setTimeout(() => {
@@ -81,7 +90,7 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
     }
 
     checkTabOverflow()
-  }, [openFiles.length, file?.name, onCloseFile])
+  }, [openFiles.length, file?.name, file?.path, onCloseFile])
 
   const handleClose = (e: React.MouseEvent, fileToClose: File) => {
     e.stopPropagation()
@@ -358,7 +367,13 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
   }
 
   if (!file) {
-    return <Introduction />
+    return (
+      <Introduction
+        onCreateFile={onCreateFile}
+        onCreateFolder={onCreateFolder}
+        onSelectFirstFile={onSelectFirstFile}
+      />
+    )
   }
 
   return (
@@ -370,33 +385,41 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
           className="flex-1 flex overflow-x-auto scrollbar-hide"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          {openFiles.map((openFile) => (
-            <div
-              key={openFile.name}
-              ref={openFile.name === file.name ? activeTabRef : null}
-              onClick={() => onSelectFile(openFile)}
-              className={`
-                flex items-center px-3 py-2 text-sm cursor-pointer border-r border-gray-200 min-w-0
-                ${
-                  openFile.name === file.name
-                    ? 'bg-white text-gray-900 border-b-2 border-b-blue-500'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }
-              `}
-            >
-              <span className="truncate max-w-32">{openFile.name}</span>
-              {unsavedFiles.has(openFile.name) && (
-                <span className="ml-2 w-2 h-2 bg-yellow-500 rounded-full flex-shrink-0"></span>
-              )}
-              <button
-                onClick={(e) => handleClose(e, openFile)}
-                className="ml-2 p-0.5 hover:bg-gray-300 rounded opacity-60 hover:opacity-100 transition-opacity"
-                title="Close tab"
+          {openFiles.map((openFile) => {
+            const openFilePath = openFile.path || openFile.name
+            const activeFilePath = file?.path || file?.name
+            const isActive = openFilePath === activeFilePath
+            const isUnsaved = unsavedFiles.has(openFilePath)
+
+            return (
+              <div
+                key={openFilePath}
+                ref={isActive ? activeTabRef : null}
+                onClick={() => onSelectFile(openFile)}
+                className={`
+                  flex items-center px-3 py-2 text-sm cursor-pointer border-r border-gray-200 min-w-0
+                  ${
+                    isActive
+                      ? 'bg-white text-gray-900 border-b-2 border-b-blue-500'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }
+                `}
+                title={openFilePath}
               >
-                ×
-              </button>
-            </div>
-          ))}
+                <span className="truncate max-w-32">{openFile.name}</span>
+                {isUnsaved && (
+                  <span className="ml-2 w-2 h-2 bg-yellow-500 rounded-full flex-shrink-0"></span>
+                )}
+                <button
+                  onClick={(e) => handleClose(e, openFile)}
+                  className="ml-2 p-0.5 hover:bg-gray-300 rounded opacity-60 hover:opacity-100 transition-opacity"
+                  title="Close tab"
+                >
+                  ×
+                </button>
+              </div>
+            )
+          })}
         </div>
 
         {/* Language indicator */}
@@ -488,4 +511,3 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
 }
 
 export default EditorComponent
-
