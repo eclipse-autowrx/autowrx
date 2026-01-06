@@ -11,19 +11,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/a
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { useQuery } from '@tanstack/react-query'
-import { listPluginApiInstances, type PluginApiInstance } from '@/services/pluginApiInstance.service'
+import { listCustomApiSets, type CustomApiSet } from '@/services/customApiSet.service'
 import { Spinner } from '@/components/atoms/spinner'
 import { DaImage } from '@/components/atoms/DaImage'
 import { cn } from '@/lib/utils'
 
-interface PluginApiInstancePickerProps {
+interface CustomApiSetPickerProps {
   open: boolean
   onClose: () => void
-  onSelect: (instanceId: string) => void
-  excludeIds?: string[] // Instance IDs to exclude (already added)
+  onSelect: (setId: string) => void
+  excludeIds?: string[] // Set IDs to exclude (already added)
 }
 
-const PluginApiInstancePicker: React.FC<PluginApiInstancePickerProps> = ({
+const CustomApiSetPicker: React.FC<CustomApiSetPickerProps> = ({
   open,
   onClose,
   onSelect,
@@ -31,11 +31,11 @@ const PluginApiInstancePicker: React.FC<PluginApiInstancePickerProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
 
-  // Fetch system-scoped instances only
+  // Fetch system-scoped sets only
   const { data, isLoading } = useQuery({
-    queryKey: ['plugin-api-instances', 'system', searchQuery],
+    queryKey: ['custom-api-sets', 'system', searchQuery],
     queryFn: () =>
-      listPluginApiInstances({
+      listCustomApiSets({
         scope: 'system',
         name: searchQuery || undefined,
         limit: 100,
@@ -43,11 +43,11 @@ const PluginApiInstancePicker: React.FC<PluginApiInstancePickerProps> = ({
     enabled: open,
   })
 
-  const instances = data?.results || []
-  const availableInstances = instances.filter((instance) => !excludeIds.includes(instance.id))
+  const sets = data?.results || []
+  const availableSets = sets.filter((set) => !excludeIds.includes(set.id))
 
-  const handleSelect = (instanceId: string) => {
-    onSelect(instanceId)
+  const handleSelect = (setId: string) => {
+    onSelect(setId)
     onClose()
     setSearchQuery('')
   }
@@ -56,7 +56,7 @@ const PluginApiInstancePicker: React.FC<PluginApiInstancePickerProps> = ({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Select API Instance</DialogTitle>
+          <DialogTitle>Select API Set</DialogTitle>
         </DialogHeader>
 
         <div className="flex flex-col flex-1 min-h-0">
@@ -74,41 +74,41 @@ const PluginApiInstancePicker: React.FC<PluginApiInstancePickerProps> = ({
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Spinner className="mr-2" />
-                <span className="text-sm text-muted-foreground">Loading instances...</span>
+                <span className="text-sm text-muted-foreground">Loading sets...</span>
               </div>
-            ) : availableInstances.length === 0 ? (
+            ) : availableSets.length === 0 ? (
               <div className="text-center py-8 text-sm text-muted-foreground">
-                {searchQuery ? 'No instances match your search.' : 'No available instances.'}
+                {searchQuery ? 'No sets match your search.' : 'No available sets.'}
               </div>
             ) : (
               <div className="space-y-2">
-                {availableInstances.map((instance) => (
+                {availableSets.map((set) => (
                   <div
-                    key={instance.id}
-                    onClick={() => handleSelect(instance.id)}
+                    key={set.id}
+                    onClick={() => handleSelect(set.id)}
                     className={cn(
                       'p-3 border rounded-lg cursor-pointer transition-colors hover:bg-muted/50',
                     )}
                   >
                     <div className="flex items-center gap-3">
-                      {instance.avatar && (
+                      {set.avatar && (
                         <div className="w-12 h-9 flex-shrink-0 border rounded overflow-hidden bg-muted">
                           <DaImage
-                            src={instance.avatar}
+                            src={set.avatar}
                             className="w-full h-full object-contain"
-                            alt={instance.name}
+                            alt={set.name}
                           />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm">{instance.name}</div>
-                        {instance.description && (
+                        <div className="font-medium text-sm">{set.name}</div>
+                        {set.description && (
                           <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                            {instance.description}
+                            {set.description}
                           </div>
                         )}
                         <div className="text-xs text-muted-foreground mt-1">
-                          {instance.data?.items?.length || 0} APIs
+                          {set.data?.items?.length || 0} APIs
                         </div>
                       </div>
                     </div>
@@ -123,5 +123,5 @@ const PluginApiInstancePicker: React.FC<PluginApiInstancePickerProps> = ({
   )
 }
 
-export default PluginApiInstancePicker
+export default CustomApiSetPicker
 

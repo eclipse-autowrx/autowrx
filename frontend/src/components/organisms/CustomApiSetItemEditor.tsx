@@ -15,15 +15,15 @@ import { cn } from '@/lib/utils'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  getPluginApiInstanceById,
-  addInstanceItem,
-  updateInstanceItem,
-  removeInstanceItem,
-  updatePluginApiInstance,
-  type PluginApiInstance,
-  type PluginApiInstanceItem,
-} from '@/services/pluginApiInstance.service'
-import { getPluginAPIById, type PluginAPI } from '@/services/pluginApi.service'
+  getCustomApiSetById,
+  addSetItem,
+  updateSetItem,
+  removeSetItem,
+  updateCustomApiSet,
+  type CustomApiSet,
+  type CustomApiSetItem,
+} from '@/services/customApiSet.service'
+import { getCustomApiSchemaById, type CustomApiSchema } from '@/services/customApiSchema.service'
 import { Spinner } from '@/components/atoms/spinner'
 import DaImportFile from '@/components/atoms/DaImportFile'
 import DynamicSchemaForm from '@/components/molecules/DynamicSchemaForm'
@@ -32,13 +32,13 @@ import CustomAPIList from '@/components/organisms/CustomAPIList'
 import CustomAPIView from '@/components/organisms/CustomAPIView'
 import CustomAPIEdit from '@/components/organisms/CustomAPIEdit'
 
-interface PluginApiInstanceItemEditorProps {
+interface CustomApiSetItemEditorProps {
   open: boolean
   onClose: () => void
   instanceId: string
 }
 
-const PluginApiInstanceItemEditor: React.FC<PluginApiInstanceItemEditorProps> = ({
+const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
   open,
   onClose,
   instanceId,
@@ -49,30 +49,30 @@ const PluginApiInstanceItemEditor: React.FC<PluginApiInstanceItemEditorProps> = 
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
   const [isNewItem, setIsNewItem] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
-  const [formData, setFormData] = useState<Partial<PluginApiInstanceItem>>({})
+  const [formData, setFormData] = useState<Partial<CustomApiSetItem>>({})
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
 
-  const { data: instance, isLoading: isLoadingInstance } = useQuery({
-    queryKey: ['plugin-api-instance', instanceId],
-    queryFn: () => getPluginApiInstanceById(instanceId),
+  const { data: set, isLoading: isLoadingSet } = useQuery({
+    queryKey: ['custom-api-set', instanceId],
+    queryFn: () => getCustomApiSetById(instanceId),
     enabled: open && !!instanceId,
   })
 
-  // Extract plugin_api ID - handle both populated object and string ID
-  const pluginApiId = instance?.plugin_api 
-    ? (typeof instance.plugin_api === 'string' 
-        ? instance.plugin_api 
-        : (instance.plugin_api as any).id || (instance.plugin_api as any)._id || instance.plugin_api)
+  // Extract custom_api_schema ID - handle both populated object and string ID
+  const customApiSchemaId = set?.custom_api_schema 
+    ? (typeof set.custom_api_schema === 'string' 
+        ? set.custom_api_schema 
+        : (set.custom_api_schema as any).id || (set.custom_api_schema as any)._id || set.custom_api_schema)
     : null
 
-  const { data: pluginAPI, isLoading: isLoadingSchema } = useQuery({
-    queryKey: ['plugin-api', pluginApiId],
-    queryFn: () => getPluginAPIById(pluginApiId!),
-    enabled: !!pluginApiId && open,
+  const { data: customApiSchema, isLoading: isLoadingSchema } = useQuery({
+    queryKey: ['custom-api-schema', customApiSchemaId],
+    queryFn: () => getCustomApiSchemaById(customApiSchemaId!),
+    enabled: !!customApiSchemaId && open,
   })
 
-  const items = instance?.data?.items || []
+  const items = set?.data?.items || []
   const selectedItem = selectedItemId ? items.find((item) => item.id === selectedItemId) : null
 
   // Initialize form when selecting an item
@@ -82,14 +82,14 @@ const PluginApiInstanceItemEditor: React.FC<PluginApiInstanceItemEditorProps> = 
       setIsEditMode(false) // Start in view mode when selecting existing item
     } else if (isNewItem) {
       // Initialize new item with basic required fields
-      const newItem: Partial<PluginApiInstanceItem> = {
+      const newItem: Partial<CustomApiSetItem> = {
         id: '',
         relationships: [],
       }
       setFormData(newItem)
       setIsEditMode(true) // Start in edit mode for new items
     }
-  }, [selectedItem, isNewItem, pluginAPI])
+  }, [selectedItem, isNewItem, customApiSchema])
 
   // Reset edit mode when item changes
   useEffect(() => {
@@ -110,14 +110,14 @@ const PluginApiInstanceItemEditor: React.FC<PluginApiInstanceItemEditorProps> = 
     setIsEditMode(true) // Start in edit mode for new items
     
     // Initialize with empty data
-    const newItem: Partial<PluginApiInstanceItem> = {
+    const newItem: Partial<CustomApiSetItem> = {
       id: '',
       relationships: [],
     }
     
     // Try to generate ID from schema format if available
-    if (pluginAPI?.schema) {
-      const idFormat = extractIdFormat(pluginAPI.schema)
+    if (customApiSchema?.schema) {
+      const idFormat = extractIdFormat(customApiSchema.schema)
       if (idFormat) {
         // Generate ID from template (will be empty initially but will update as fields are filled)
         const generatedId = generateIdFromTemplate(idFormat, newItem)
@@ -146,8 +146,8 @@ const PluginApiInstanceItemEditor: React.FC<PluginApiInstanceItemEditorProps> = 
     const newFormData = { ...formData, [field]: value }
     
     // Auto-generate ID if id_format is defined in schema and ID is empty or being edited
-    if (pluginAPI?.schema && (!formData.id || field !== 'id' || isNewItem)) {
-      const idFormat = extractIdFormat(pluginAPI.schema)
+    if (customApiSchema?.schema && (!formData.id || field !== 'id' || isNewItem)) {
+      const idFormat = extractIdFormat(customApiSchema.schema)
       if (idFormat) {
         const generatedId = generateIdFromTemplate(idFormat, newFormData)
         if (generatedId) {
@@ -197,20 +197,20 @@ const PluginApiInstanceItemEditor: React.FC<PluginApiInstanceItemEditorProps> = 
     try {
       setIsSaving(true)
       if (isNewItem) {
-        await addInstanceItem(instanceId, formData as PluginApiInstanceItem)
+        await addSetItem(instanceId, formData as CustomApiSetItem)
         toast({
           title: 'Added',
           description: 'Item added successfully',
         })
       } else if (selectedItemId) {
-        await updateInstanceItem(instanceId, selectedItemId, formData)
+        await updateSetItem(instanceId, selectedItemId, formData)
         toast({
           title: 'Updated',
           description: 'Item updated successfully',
         })
       }
-      queryClient.invalidateQueries({ queryKey: ['plugin-api-instance', instanceId] })
-      queryClient.invalidateQueries({ queryKey: ['plugin-api-instances'] })
+      queryClient.invalidateQueries({ queryKey: ['custom-api-set', instanceId] })
+      queryClient.invalidateQueries({ queryKey: ['custom-api-sets'] })
       setIsNewItem(false)
       setSelectedItemId(formData.id as string)
     } catch (error: any) {
@@ -229,13 +229,13 @@ const PluginApiInstanceItemEditor: React.FC<PluginApiInstanceItemEditorProps> = 
 
     try {
       setIsDeleting(itemId)
-      await removeInstanceItem(instanceId, itemId)
+      await removeSetItem(instanceId, itemId)
       toast({
         title: 'Deleted',
         description: 'Item deleted successfully',
       })
-      queryClient.invalidateQueries({ queryKey: ['plugin-api-instance', instanceId] })
-      queryClient.invalidateQueries({ queryKey: ['plugin-api-instances'] })
+      queryClient.invalidateQueries({ queryKey: ['custom-api-set', instanceId] })
+      queryClient.invalidateQueries({ queryKey: ['custom-api-sets'] })
       if (selectedItemId === itemId) {
         setSelectedItemId(null)
         setIsNewItem(false)
@@ -266,7 +266,7 @@ const PluginApiInstanceItemEditor: React.FC<PluginApiInstanceItemEditorProps> = 
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `api-instance-items-${instanceId}.json`
+    link.download = `api-set-items-${instanceId}.json`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -298,22 +298,22 @@ const PluginApiInstanceItemEditor: React.FC<PluginApiInstanceItemEditorProps> = 
       
       // Auto-generate IDs for items that don't have them, using schema id_format
       const itemsWithIds = parsed.map((item, index) => {
-        const generatedId = generateItemId(item, index, existingIds, pluginAPI?.schema)
+        const generatedId = generateItemId(item, index, existingIds, customApiSchema?.schema)
         existingIds.add(generatedId) // Add to set to ensure uniqueness within import batch
         return { ...item, id: generatedId }
       })
 
       // Add each item
       for (const item of itemsWithIds) {
-        await addInstanceItem(instanceId, item)
+        await addSetItem(instanceId, item)
       }
 
       toast({
         title: 'Imported',
         description: `Imported ${itemsWithIds.length} item(s) successfully`,
       })
-      queryClient.invalidateQueries({ queryKey: ['plugin-api-instance', instanceId] })
-      queryClient.invalidateQueries({ queryKey: ['plugin-api-instances'] })
+      queryClient.invalidateQueries({ queryKey: ['custom-api-set', instanceId] })
+      queryClient.invalidateQueries({ queryKey: ['custom-api-sets'] })
     } catch (error: any) {
       console.error('Import error:', error)
       toast({
@@ -326,11 +326,11 @@ const PluginApiInstanceItemEditor: React.FC<PluginApiInstanceItemEditorProps> = 
 
   // Extract method enum from schema for filter options
   const getMethodOptions = (): string[] => {
-    if (!pluginAPI?.schema) return []
+    if (!customApiSchema?.schema) return []
     try {
-      const schemaObj = typeof pluginAPI.schema === 'string' 
-        ? JSON.parse(pluginAPI.schema) 
-        : pluginAPI.schema
+      const schemaObj = typeof customApiSchema.schema === 'string' 
+        ? JSON.parse(customApiSchema.schema) 
+        : customApiSchema.schema
       
       // Handle array schema
       const itemSchema = schemaObj.type === 'array' ? schemaObj.items : schemaObj
@@ -346,7 +346,7 @@ const PluginApiInstanceItemEditor: React.FC<PluginApiInstanceItemEditorProps> = 
     }
   }
 
-  const [jsonItems, setJsonItems] = useState<PluginApiInstanceItem[]>([])
+  const [jsonItems, setJsonItems] = useState<CustomApiSetItem[]>([])
 
   useEffect(() => {
     if (items) {
@@ -354,7 +354,7 @@ const PluginApiInstanceItemEditor: React.FC<PluginApiInstanceItemEditorProps> = 
     }
   }, [items, activeTab])
 
-  const handleJsonChange = (newItems: PluginApiInstanceItem[]) => {
+  const handleJsonChange = (newItems: CustomApiSetItem[]) => {
     setJsonItems(newItems)
   }
 
@@ -374,18 +374,18 @@ const PluginApiInstanceItemEditor: React.FC<PluginApiInstanceItemEditorProps> = 
     
     // Auto-generate IDs for items that don't have them, using schema id_format
     const itemsWithIds = jsonItems.map((item, index) => {
-      const generatedId = generateItemId(item, index, existingIds, pluginAPI?.schema)
+      const generatedId = generateItemId(item, index, existingIds, customApiSchema?.schema)
       existingIds.add(generatedId)
       return { ...item, id: generatedId }
     })
 
     try {
       setIsSaving(true)
-      // Update the entire items array via instance update
-      await updatePluginApiInstance(instanceId, {
+      // Update the entire items array via set update
+      await updateCustomApiSet(instanceId, {
         data: {
           items: itemsWithIds,
-          metadata: instance?.data?.metadata || {},
+          metadata: set?.data?.metadata || {},
         },
       })
       
@@ -393,8 +393,8 @@ const PluginApiInstanceItemEditor: React.FC<PluginApiInstanceItemEditorProps> = 
         title: 'Updated',
         description: `Updated ${itemsWithIds.length} item(s)`,
       })
-      queryClient.invalidateQueries({ queryKey: ['plugin-api-instance', instanceId] })
-      queryClient.invalidateQueries({ queryKey: ['plugin-api-instances'] })
+      queryClient.invalidateQueries({ queryKey: ['custom-api-set', instanceId] })
+      queryClient.invalidateQueries({ queryKey: ['custom-api-sets'] })
     } catch (error: any) {
       toast({
         title: 'Update failed',
@@ -406,7 +406,7 @@ const PluginApiInstanceItemEditor: React.FC<PluginApiInstanceItemEditorProps> = 
     }
   }
 
-  if (isLoadingInstance || isLoadingSchema) {
+  if (isLoadingSet || isLoadingSchema) {
     return (
       <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className="w-[90vw] h-[90vh] max-w-none max-h-none">
@@ -418,7 +418,7 @@ const PluginApiInstanceItemEditor: React.FC<PluginApiInstanceItemEditorProps> = 
     )
   }
 
-  if (!instance || !pluginAPI) {
+  if (!set || !customApiSchema) {
     return null
   }
 
@@ -427,7 +427,7 @@ const PluginApiInstanceItemEditor: React.FC<PluginApiInstanceItemEditorProps> = 
       <DialogContent className="w-[90vw] h-[90vh] max-w-none max-h-none flex flex-col">
         <DialogHeader className="shrink-0">
           <DialogTitle>
-            Edit Child APIs - {instance.name}
+            Edit Child APIs - {set.name}
           </DialogTitle>
         </DialogHeader>
 
@@ -492,9 +492,9 @@ const PluginApiInstanceItemEditor: React.FC<PluginApiInstanceItemEditorProps> = 
                   onSelectItem={handleSelectItem}
                   onDeleteItem={handleDeleteItem}
                   onCreateNew={handleNewItem}
-                  schema={pluginAPI}
+                  schema={customApiSchema}
                   mode="edit"
-                  isLoading={isLoadingInstance || isLoadingSchema}
+                  isLoading={isLoadingSet || isLoadingSchema}
                   deletingItemId={isDeleting}
                   filterOptions={{
                     typeField: 'method',
@@ -505,11 +505,11 @@ const PluginApiInstanceItemEditor: React.FC<PluginApiInstanceItemEditorProps> = 
 
               {/* Right: Form */}
               <div className="w-1/2 pl-4 flex flex-col min-h-0">
-                {(selectedItem || isNewItem) && pluginAPI?.schema ? (
+                {(selectedItem || isNewItem) && customApiSchema?.schema ? (
                   isEditMode ? (
                     <CustomAPIEdit
                       item={formData}
-                      schema={pluginAPI.schema}
+                      schema={customApiSchema.schema}
                       itemId={isNewItem ? 'New API' : selectedItem?.id || 'No ID'}
                       onChange={setFormData}
                       onSave={handleSaveItem}
@@ -520,7 +520,7 @@ const PluginApiInstanceItemEditor: React.FC<PluginApiInstanceItemEditorProps> = 
                   ) : (
                     <CustomAPIView
                       item={formData}
-                      schema={pluginAPI.schema}
+                      schema={customApiSchema.schema}
                       itemId={selectedItem?.id || 'No ID'}
                       onEdit={handleEditClick}
                       excludeFields={['id', 'path', 'parent_id', 'relationships']}
@@ -528,7 +528,7 @@ const PluginApiInstanceItemEditor: React.FC<PluginApiInstanceItemEditorProps> = 
                   )
                 ) : (
                   <div className="text-center py-12 text-sm text-muted-foreground">
-                    {!pluginAPI?.schema
+                    {!customApiSchema?.schema
                       ? 'No schema defined for this API. Fields can be added via JSON mode.'
                       : 'Select an item from the list or click "New API" to create one.'}
                   </div>
@@ -558,5 +558,5 @@ const PluginApiInstanceItemEditor: React.FC<PluginApiInstanceItemEditorProps> = 
   )
 }
 
-export default PluginApiInstanceItemEditor
+export default CustomApiSetItemEditor
 

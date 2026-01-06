@@ -12,16 +12,16 @@ import { useParams } from 'react-router-dom'
 import { TbApi, TbPlus } from 'react-icons/tb'
 import { Button } from '@/components/atoms/button'
 import { useQuery } from '@tanstack/react-query'
-import { getPluginApiInstanceById } from '@/services/pluginApiInstance.service'
+import { getCustomApiSetById } from '@/services/customApiSet.service'
 
 interface ModelApiTabsProps {
-  pluginApiInstanceIds?: string[]
+  customApiSetIds?: string[]
   onAddInstance?: () => void
   isModelOwner?: boolean
 }
 
 const ModelApiTabs: FC<ModelApiTabsProps> = ({
-  pluginApiInstanceIds = [],
+  customApiSetIds = [],
   onAddInstance,
   isModelOwner = false,
 }) => {
@@ -30,7 +30,7 @@ const ModelApiTabs: FC<ModelApiTabsProps> = ({
   // Normalize IDs to strings (handle MongoDB ObjectIds that might be objects)
   // Use useMemo to ensure stable reference and prevent unnecessary re-renders
   const normalizedIds = useMemo(() => {
-    return pluginApiInstanceIds
+    return customApiSetIds
       .map((id) => {
         if (typeof id === 'string') return id
         if (id && typeof id === 'object' && 'toString' in id) return id.toString()
@@ -39,21 +39,21 @@ const ModelApiTabs: FC<ModelApiTabsProps> = ({
       .filter((id): id is string => {
         return !!id && typeof id === 'string' && id !== '[object Object]' && id !== 'undefined' && id !== 'null'
       })
-  }, [pluginApiInstanceIds])
+  }, [customApiSetIds])
 
-  // Fetch instance data for tabs
-  const instanceQueries = useQuery({
-    queryKey: ['plugin-api-instances', normalizedIds.join(',')], // Use string for query key
+  // Fetch set data for tabs
+  const setQueries = useQuery({
+    queryKey: ['custom-api-sets', normalizedIds.join(',')], // Use string for query key
     queryFn: async () => {
-      const instances = await Promise.all(
-        normalizedIds.map((id) => getPluginApiInstanceById(id))
+      const sets = await Promise.all(
+        normalizedIds.map((id) => getCustomApiSetById(id))
       )
-      return instances
+      return sets
     },
     enabled: normalizedIds.length > 0,
   })
 
-  const instances = instanceQueries.data || []
+  const sets = setQueries.data || []
 
   // Determine active tab
   const isCovesaActive = !instance_id || instance_id === 'covesa'
@@ -70,23 +70,23 @@ const ModelApiTabs: FC<ModelApiTabsProps> = ({
         COVESA API
       </DaTabItem>
 
-      {/* Dynamic instance tabs */}
-      {instances.map((instance) => {
-        // Ensure instance.id is a string for comparison and navigation
-        const instanceIdString = typeof instance.id === 'string' 
-          ? instance.id 
-          : (instance.id && typeof instance.id === 'object' && 'toString' in instance.id)
-          ? instance.id.toString()
-          : String(instance.id)
+      {/* Dynamic set tabs */}
+      {sets.map((set) => {
+        // Ensure set.id is a string for comparison and navigation
+        const setIdString = typeof set.id === 'string' 
+          ? set.id 
+          : (set.id && typeof set.id === 'object' && 'toString' in set.id)
+          ? set.id.toString()
+          : String(set.id)
         
-        const isActive = instance_id === instanceIdString
+        const isActive = instance_id === setIdString
         return (
           <DaTabItem
-            key={`instance-${instanceIdString}`}
+            key={`set-${setIdString}`}
             active={isActive}
-            to={`/model/${model_id}/api/${instanceIdString}`}
+            to={`/model/${model_id}/api/${setIdString}`}
           >
-            {instance.name}
+            {set.name}
           </DaTabItem>
         )
       })}

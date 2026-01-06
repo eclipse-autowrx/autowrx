@@ -12,14 +12,14 @@ const prototypeService = require('./prototype.service');
 const apiService = require('./api.service');
 const permissionService = require('./permission.service');
 const fileService = require('./file.service');
-const { Model, Role, PluginAPI, PluginApiInstance } = require('../models');
+const { Model, Role, CustomApiSchema, CustomApiSet } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { PERMISSIONS } = require('../config/roles');
 const mongoose = require('mongoose');
 const logger = require('../config/logger');
 const _ = require('lodash');
 const config = require('../config/config');
-const pluginApiInstanceService = require('./pluginApiInstance.service');
+const customApiSetService = require('./customApiSet.service');
 
 /**
  *
@@ -349,27 +349,27 @@ const updateModelById = async (id, updateBody, actionOwner) => {
     }
   }
 
-  // Validate plugin_api_instances if provided
-  if (updateBody.plugin_api_instances !== undefined) {
-    // Verify all instances exist
-    const instances = await PluginApiInstance.find({
-      _id: { $in: updateBody.plugin_api_instances },
+  // Validate custom_api_sets if provided
+  if (updateBody.custom_api_sets !== undefined) {
+    // Verify all sets exist
+    const sets = await CustomApiSet.find({
+      _id: { $in: updateBody.custom_api_sets },
     }).lean();
 
-    if (instances.length !== updateBody.plugin_api_instances.length) {
-      throw new ApiError(httpStatus.BAD_REQUEST, 'One or more PluginApiInstance references are invalid');
+    if (sets.length !== updateBody.custom_api_sets.length) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'One or more CustomApiSet references are invalid');
     }
 
-    // Check access permissions for user-scoped instances
-    const userScopedInstances = instances.filter((inst) => inst.scope === 'user');
-    const inaccessibleInstances = userScopedInstances.filter(
-      (inst) => inst.owner.toString() !== actionOwner.toString()
+    // Check access permissions for user-scoped sets
+    const userScopedSets = sets.filter((set) => set.scope === 'user');
+    const inaccessibleSets = userScopedSets.filter(
+      (set) => set.owner.toString() !== actionOwner.toString()
     );
 
-    if (inaccessibleInstances.length > 0) {
+    if (inaccessibleSets.length > 0) {
       throw new ApiError(
         httpStatus.FORBIDDEN,
-        'You do not have access to one or more user-scoped PluginApiInstances'
+        'You do not have access to one or more user-scoped CustomApiSets'
       );
     }
   }
@@ -582,51 +582,51 @@ const processApiDataUrl = async (apiDataUrl) => {
 };
 
 /**
- * Add PluginApiInstance to model
+ * Add CustomApiSet to model
  * @param {string} modelId
- * @param {string} instanceId
+ * @param {string} setId
  * @param {string} userId
  * @returns {Promise<Model>}
  */
-const addPluginApiInstance = async (modelId, instanceId, userId) => {
+const addCustomApiSet = async (modelId, setId, userId) => {
   const model = await getModelById(modelId, userId);
   
-  // Verify instance exists and user has access
-  const instance = await pluginApiInstanceService.getInstanceById(instanceId, userId);
+  // Verify set exists and user has access
+  const set = await customApiSetService.getSetById(setId, userId);
   
-  if (!model.plugin_api_instances) {
-    model.plugin_api_instances = [];
+  if (!model.custom_api_sets) {
+    model.custom_api_sets = [];
   }
   
-  if (model.plugin_api_instances.some((id) => id.toString() === instanceId)) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'PluginApiInstance already linked to this model');
+  if (model.custom_api_sets.some((id) => id.toString() === setId)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'CustomApiSet already linked to this model');
   }
   
-  model.plugin_api_instances.push(instanceId);
+  model.custom_api_sets.push(setId);
   await model.save();
   return model;
 };
 
 /**
- * Remove PluginApiInstance from model
+ * Remove CustomApiSet from model
  * @param {string} modelId
- * @param {string} instanceId
+ * @param {string} setId
  * @param {string} userId
  * @returns {Promise<Model>}
  */
-const removePluginApiInstance = async (modelId, instanceId, userId) => {
+const removeCustomApiSet = async (modelId, setId, userId) => {
   const model = await getModelById(modelId, userId);
   
-  if (!model.plugin_api_instances) {
-    model.plugin_api_instances = [];
+  if (!model.custom_api_sets) {
+    model.custom_api_sets = [];
   }
   
-  const index = model.plugin_api_instances.findIndex((id) => id.toString() === instanceId);
+  const index = model.custom_api_sets.findIndex((id) => id.toString() === setId);
   if (index === -1) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'PluginApiInstance not linked to this model');
+    throw new ApiError(httpStatus.BAD_REQUEST, 'CustomApiSet not linked to this model');
   }
   
-  model.plugin_api_instances.splice(index, 1);
+  model.custom_api_sets.splice(index, 1);
   await model.save();
   return model;
 };
@@ -642,5 +642,5 @@ module.exports.deleteAuthorizedUser = deleteAuthorizedUser;
 module.exports.getAccessibleModels = getAccessibleModels;
 module.exports.processApiDataUrl = processApiDataUrl;
 module.exports.getModelStats = getModelStats;
-module.exports.addPluginApiInstance = addPluginApiInstance;
-module.exports.removePluginApiInstance = removePluginApiInstance;
+module.exports.addCustomApiSet = addCustomApiSet;
+module.exports.removeCustomApiSet = removeCustomApiSet;

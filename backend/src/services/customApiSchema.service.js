@@ -7,34 +7,34 @@
 // SPDX-License-Identifier: MIT
 
 const httpStatus = require('http-status');
-const { PluginAPI } = require('../models');
+const { CustomApiSchema } = require('../models');
 const ApiError = require('../utils/ApiError');
 const logger = require('../config/logger');
 
 /**
- * Create a PluginAPI schema
- * @param {Object} pluginApiBody
+ * Create a CustomApiSchema schema
+ * @param {Object} customApiSchemaBody
  * @param {string} userId
- * @returns {Promise<PluginAPI>}
+ * @returns {Promise<CustomApiSchema>}
  */
-const createPluginAPI = async (pluginApiBody, userId) => {
+const createCustomApiSchema = async (customApiSchemaBody, userId) => {
   // Check if code already exists
-  if (await PluginAPI.findOne({ code: pluginApiBody.code.toLowerCase() })) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'PluginAPI code already exists');
+  if (await CustomApiSchema.findOne({ code: customApiSchemaBody.code.toLowerCase() })) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'CustomApiSchema code already exists');
   }
 
-  const pluginAPI = await PluginAPI.create({
-    ...pluginApiBody,
-    code: pluginApiBody.code.toLowerCase(),
+  const customApiSchema = await CustomApiSchema.create({
+    ...customApiSchemaBody,
+    code: customApiSchemaBody.code.toLowerCase(),
     created_by: userId,
     updated_by: userId,
   });
 
-  return pluginAPI;
+  return customApiSchema;
 };
 
 /**
- * Query PluginAPIs
+ * Query CustomApiSchemas
  * @param {Object} filter - Mongo filter
  * @param {Object} options - Query options
  * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
@@ -42,78 +42,78 @@ const createPluginAPI = async (pluginApiBody, userId) => {
  * @param {number} [options.page] - Current page (default = 1)
  * @returns {Promise<QueryResult>}
  */
-const queryPluginAPIs = async (filter, options) => {
-  const pluginAPIs = await PluginAPI.paginate(filter, options);
-  return pluginAPIs;
+const queryCustomApiSchemas = async (filter, options) => {
+  const customApiSchemas = await CustomApiSchema.paginate(filter, options);
+  return customApiSchemas;
 };
 
 /**
- * Get PluginAPI by id
+ * Get CustomApiSchema by id
  * @param {string} id
- * @returns {Promise<PluginAPI>}
+ * @returns {Promise<CustomApiSchema>}
  */
-const getPluginAPIById = async (id) => {
-  const pluginAPI = await PluginAPI.findById(id);
-  if (!pluginAPI) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'PluginAPI not found');
+const getCustomApiSchemaById = async (id) => {
+  const customApiSchema = await CustomApiSchema.findById(id);
+  if (!customApiSchema) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'CustomApiSchema not found');
   }
-  return pluginAPI;
+  return customApiSchema;
 };
 
 /**
- * Get PluginAPI by code
+ * Get CustomApiSchema by code
  * @param {string} code
- * @returns {Promise<PluginAPI>}
+ * @returns {Promise<CustomApiSchema>}
  */
-const getPluginAPIByCode = async (code) => {
-  const pluginAPI = await PluginAPI.findOne({ code: code.toLowerCase(), is_active: true });
-  if (!pluginAPI) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'PluginAPI not found');
+const getCustomApiSchemaByCode = async (code) => {
+  const customApiSchema = await CustomApiSchema.findOne({ code: code.toLowerCase(), is_active: true });
+  if (!customApiSchema) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'CustomApiSchema not found');
   }
-  return pluginAPI;
+  return customApiSchema;
 };
 
 /**
- * Update PluginAPI by id
+ * Update CustomApiSchema by id
  * @param {string} id
  * @param {Object} updateBody
  * @param {string} userId
- * @returns {Promise<PluginAPI>}
+ * @returns {Promise<CustomApiSchema>}
  */
-const updatePluginAPIById = async (id, updateBody, userId) => {
-  const pluginAPI = await getPluginAPIById(id);
+const updateCustomApiSchemaById = async (id, updateBody, userId) => {
+  const customApiSchema = await getCustomApiSchemaById(id);
 
   // Check if code is being changed and if new code already exists
-  if (updateBody.code && updateBody.code.toLowerCase() !== pluginAPI.code) {
-    if (await PluginAPI.findOne({ code: updateBody.code.toLowerCase() })) {
-      throw new ApiError(httpStatus.BAD_REQUEST, 'PluginAPI code already exists');
+  if (updateBody.code && updateBody.code.toLowerCase() !== customApiSchema.code) {
+    if (await CustomApiSchema.findOne({ code: updateBody.code.toLowerCase() })) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'CustomApiSchema code already exists');
     }
     updateBody.code = updateBody.code.toLowerCase();
   }
 
-  Object.assign(pluginAPI, updateBody);
-  pluginAPI.updated_by = userId;
-  await pluginAPI.save();
-  return pluginAPI;
+  Object.assign(customApiSchema, updateBody);
+  customApiSchema.updated_by = userId;
+  await customApiSchema.save();
+  return customApiSchema;
 };
 
 /**
- * Delete PluginAPI by id
+ * Delete CustomApiSchema by id
  * @param {string} id
  * @returns {Promise<void>}
  */
-const deletePluginAPIById = async (id) => {
-  const pluginAPI = await getPluginAPIById(id);
-  await pluginAPI.deleteOne();
+const deleteCustomApiSchemaById = async (id) => {
+  const customApiSchema = await getCustomApiSchemaById(id);
+  await customApiSchema.deleteOne();
 };
 
 /**
- * Validate API data against PluginAPI schema
- * @param {Object} pluginAPI - PluginAPI schema
+ * Validate API data against CustomApiSchema schema
+ * @param {Object} customApiSchema - CustomApiSchema schema
  * @param {Object} data - Data to validate
  * @returns {Promise<{valid: boolean, errors: string[]}>}
  */
-const validateApiData = async (pluginAPI, data) => {
+const validateApiData = async (customApiSchema, data) => {
   const errors = [];
 
   if (!data.items || !Array.isArray(data.items)) {
@@ -130,7 +130,7 @@ const validateApiData = async (pluginAPI, data) => {
   });
 
   // Validate tree structure if type is tree
-  if (pluginAPI.type === 'tree') {
+  if (customApiSchema.type === 'tree') {
     const pathMap = new Map();
     data.items.forEach((item) => {
       if (item.path) {
@@ -146,7 +146,7 @@ const validateApiData = async (pluginAPI, data) => {
   }
 
   // Validate graph relationships if type is graph
-  if (pluginAPI.type === 'graph') {
+  if (customApiSchema.type === 'graph') {
     const itemIdMap = new Map();
     data.items.forEach((item) => {
       itemIdMap.set(item.id, item);
@@ -170,12 +170,12 @@ const validateApiData = async (pluginAPI, data) => {
 };
 
 module.exports = {
-  createPluginAPI,
-  queryPluginAPIs,
-  getPluginAPIById,
-  getPluginAPIByCode,
-  updatePluginAPIById,
-  deletePluginAPIById,
+  createCustomApiSchema,
+  queryCustomApiSchemas,
+  getCustomApiSchemaById,
+  getCustomApiSchemaByCode,
+  updateCustomApiSchemaById,
+  deleteCustomApiSchemaById,
   validateApiData,
 };
 

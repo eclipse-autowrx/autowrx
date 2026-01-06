@@ -35,7 +35,7 @@ const relationshipSchema = mongoose.Schema(
   }
 );
 
-const pluginApiSchema = mongoose.Schema(
+const customApiSchemaSchema = mongoose.Schema(
   {
     code: {
       type: String,
@@ -124,16 +124,16 @@ const pluginApiSchema = mongoose.Schema(
   }
 );
 
-pluginApiSchema.plugin(toJSON);
-pluginApiSchema.plugin(paginate);
+customApiSchemaSchema.plugin(toJSON);
+customApiSchemaSchema.plugin(paginate);
 
 // Index for faster lookups
-pluginApiSchema.index({ code: 1, is_active: 1 });
+customApiSchemaSchema.index({ code: 1, is_active: 1 });
 
 /**
- * @typedef PluginAPI
+ * @typedef CustomApiSchema
  */
-const PluginAPI = mongoose.model('PluginAPI', pluginApiSchema);
+const CustomApiSchema = mongoose.model('CustomApiSchema', customApiSchemaSchema);
 
-module.exports = PluginAPI;
+module.exports = CustomApiSchema;
 

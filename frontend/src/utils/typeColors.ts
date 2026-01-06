@@ -38,7 +38,7 @@ export interface TypeMetadata {
 }
 
 /**
- * Extract typeMetadata from PluginAPI schema or PluginAPI object
+ * Extract typeMetadata from CustomApiSchema schema or CustomApiSchema object
  */
 export const extractTypeMetadata = (schema: string | object | null | undefined): TypeMetadata[] | null => {
   if (!schema) return null
@@ -46,9 +46,9 @@ export const extractTypeMetadata = (schema: string | object | null | undefined):
   try {
     let schemaObj: any
     
-    // Handle PluginAPI object (has schema property)
+    // Handle CustomApiSchema object (has schema property)
     if (typeof schema === 'object' && schema !== null && 'schema' in schema) {
-      // It's a PluginAPI object, extract the schema string
+      // It's a CustomApiSchema object, extract the schema string
       const schemaString = (schema as any).schema
       if (schemaString) {
         schemaObj = typeof schemaString === 'string' ? JSON.parse(schemaString) : schemaString
@@ -87,7 +87,7 @@ export const extractTypeMetadata = (schema: string | object | null | undefined):
 /**
  * Get color for a specific type
  * @param type - The type string (e.g., 'GET', 'POST', 'BRANCH')
- * @param schema - The PluginAPI schema (optional, for custom typeMetadata)
+ * @param schema - The CustomApiSchema schema (optional, for custom typeMetadata)
  * @returns Hex color string
  */
 export const getTypeColor = (type: string, schema?: string | object | null): string => {

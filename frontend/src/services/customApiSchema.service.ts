@@ -8,14 +8,14 @@
 
 import { serverAxios } from '@/services/base'
 
-export interface PluginApiRelationship {
+export interface CustomApiSchemaRelationship {
   name: string
   type: 'one-to-one' | 'one-to-many' | 'many-to-many'
   target_api: string
   description?: string
 }
 
-export interface PluginAPI {
+export interface CustomApiSchema {
   id: string
   code: string
   name: string
@@ -23,12 +23,13 @@ export interface PluginAPI {
   type: 'tree' | 'list' | 'graph'
   schema: string // JSON Schema as string
   id_format?: string | null
-  relationships?: PluginApiRelationship[]
+  relationships?: CustomApiSchemaRelationship[]
   tree_config?: any
   list_view_config?: {
     title?: string | null
     description?: string | null
     type?: string | null
+    style?: 'compact' | 'badge' | 'badge-image' | null
   } | null
   schema_definition?: any
   version: string
@@ -47,7 +48,7 @@ export interface Paged<T> {
   totalResults: number
 }
 
-export interface ListPluginApiParams {
+export interface ListCustomApiSchemaParams {
   name?: string
   code?: string
   type?: 'tree' | 'list' | 'graph'
@@ -57,18 +58,18 @@ export interface ListPluginApiParams {
   page?: number
 }
 
-export const listPluginAPIs = (params?: ListPluginApiParams): Promise<Paged<PluginAPI>> =>
-  serverAxios.get('/system/plugin-api', { params }).then((r) => r.data)
+export const listCustomApiSchemas = (params?: ListCustomApiSchemaParams): Promise<Paged<CustomApiSchema>> =>
+  serverAxios.get('/system/custom-api-schema', { params }).then((r) => r.data)
 
-export const getPluginAPIById = (id: string): Promise<PluginAPI> =>
-  serverAxios.get(`/system/plugin-api/${id}`).then((r) => r.data)
+export const getCustomApiSchemaById = (id: string): Promise<CustomApiSchema> =>
+  serverAxios.get(`/system/custom-api-schema/${id}`).then((r) => r.data)
 
-export const createPluginAPI = (data: Partial<PluginAPI>): Promise<PluginAPI> =>
-  serverAxios.post('/system/plugin-api', data).then((r) => r.data)
+export const createCustomApiSchema = (data: Partial<CustomApiSchema>): Promise<CustomApiSchema> =>
+  serverAxios.post('/system/custom-api-schema', data).then((r) => r.data)
 
-export const updatePluginAPI = (id: string, data: Partial<PluginAPI>): Promise<PluginAPI> =>
-  serverAxios.patch(`/system/plugin-api/${id}`, data).then((r) => r.data)
+export const updateCustomApiSchema = (id: string, data: Partial<CustomApiSchema>): Promise<CustomApiSchema> =>
+  serverAxios.patch(`/system/custom-api-schema/${id}`, data).then((r) => r.data)
 
-export const deletePluginAPI = (id: string): Promise<void> =>
-  serverAxios.delete(`/system/plugin-api/${id}`).then(() => {})
+export const deleteCustomApiSchema = (id: string): Promise<void> =>
+  serverAxios.delete(`/system/custom-api-schema/${id}`).then(() => {})
 

@@ -1,5 +1,5 @@
 /**
- * Extract list_view_config from JSON schema or PluginAPI object
+ * Extract list_view_config from JSON schema or CustomApiSchema object
  * Priority: schema JSON string > top-level list_view_config
  */
 export const extractListViewConfig = (schema: string | object | any): {
@@ -9,7 +9,7 @@ export const extractListViewConfig = (schema: string | object | any): {
   style?: 'compact' | 'badge' | 'badge-image' | null
 } | null => {
   try {
-    // If it's a PluginAPI object, FIRST check the schema string inside it (higher priority)
+    // If it's a CustomApiSchema object, FIRST check the schema string inside it (higher priority)
     // This is where users typically edit list_view_config in the JSON editor
     if (schema && typeof schema === 'object' && 'schema' in schema && typeof schema.schema === 'string') {
       try {
@@ -27,7 +27,7 @@ export const extractListViewConfig = (schema: string | object | any): {
       }
     }
     
-    // Then check if it's a PluginAPI object with list_view_config at top level (fallback)
+    // Then check if it's a CustomApiSchema object with list_view_config at top level (fallback)
     if (schema && typeof schema === 'object' && 'list_view_config' in schema) {
       return schema.list_view_config || null
     }
@@ -57,7 +57,7 @@ export const extractListViewConfig = (schema: string | object | any): {
 }
 
 /**
- * Extract list_view_style from JSON schema or PluginAPI object
+ * Extract list_view_style from JSON schema or CustomApiSchema object
  * Returns 'compact' (default), 'badge', or 'badge-image'
  * Priority: schema JSON string > top-level list_view_config
  */
@@ -95,7 +95,7 @@ export const extractListViewStyle = (schema: string | object | any): 'compact' |
       }
     }
     
-    // Then check if it's a PluginAPI object with list_view_config at top level (fallback)
+    // Then check if it's a CustomApiSchema object with list_view_config at top level (fallback)
     if (schema && typeof schema === 'object' && 'list_view_config' in schema) {
       const config = schema.list_view_config
       if (config && typeof config === 'object' && 'style' in config) {

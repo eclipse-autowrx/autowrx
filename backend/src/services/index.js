@@ -28,6 +28,6 @@ module.exports.siteConfigService = require('./siteConfig.service');
 module.exports.ssoService = require('./sso.service');
 module.exports.pluginService = require('./plugin.service');
 module.exports.modelTemplateService = require('./modelTemplate.service');
-module.exports.pluginApiService = require('./pluginApi.service');
-module.exports.pluginApiInstanceService = require('./pluginApiInstance.service');
+module.exports.customApiSchemaService = require('./customApiSchema.service');
+module.exports.customApiSetService = require('./customApiSet.service');
 // Inventory services removed

@@ -28,7 +28,7 @@ interface CustomAPIListProps {
   onSelectItem: (itemId: string) => void
   onDeleteItem?: (itemId: string) => void
   onCreateNew?: () => void
-  schema?: string | object | null // JSON Schema or PluginAPI object
+  schema?: string | object | null // JSON Schema or CustomApiSchema object
   listViewConfig?: {
     title?: string | null
     description?: string | null
@@ -43,7 +43,7 @@ interface CustomAPIListProps {
     typeField?: string // Field name to filter by (e.g., 'method')
     typeOptions?: string[] // Available filter options (e.g., ['GET', 'POST', 'PUT'])
   }
-  // Footer image (e.g., PluginApiInstance avatar)
+  // Footer image (e.g., CustomApiSet avatar)
   footerImage?: string | null
   // Provider URL - opens when clicking on the image
   providerUrl?: string | null

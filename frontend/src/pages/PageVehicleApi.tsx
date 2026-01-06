@@ -12,9 +12,9 @@ import useModelStore from '@/stores/modelStore'
 import { ViewApiUSP } from '@/components/organisms/ViewApiUSP'
 import ViewApiV2C from '@/components/organisms/ViewApiV2C'
 import ViewApiCovesa from '@/components/organisms/ViewApiCovesa'
-import ViewPluginApiInstance from '@/components/organisms/ViewPluginApiInstance'
+import ViewCustomApiSet from '@/components/organisms/ViewCustomApiSet'
 import ModelApiTabs from '@/components/molecules/ModelApiTabs'
-import PluginApiInstancePicker from '@/components/organisms/PluginApiInstancePicker'
+import CustomApiSetPicker from '@/components/organisms/CustomApiSetPicker'
 import { updateModelService } from '@/services/model.service'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import usePermissionHook from '@/hooks/usePermissionHook'
@@ -653,40 +653,40 @@ const PageVehicleApi = () => {
   // Otherwise, show plugin instance tab
   const isCovesaTab = !instance_id || instance_id === 'covesa'
 
-  // Get plugin_api_instances from model and normalize to strings
-  const pluginApiInstanceIds = (model?.plugin_api_instances || []).map((id: any) => {
+  // Get custom_api_sets from model and normalize to strings
+  const customApiSetIds = (model?.custom_api_sets || []).map((id: any) => {
     if (typeof id === 'string') return id
     if (id && typeof id === 'object' && 'toString' in id) return id.toString()
     return String(id)
   }).filter((id: any): id is string => !!id && typeof id === 'string')
   
-  // Filter out 'covesa' from instance IDs if it somehow got added
-  const validInstanceIds = pluginApiInstanceIds.filter(id => id !== 'covesa')
+  // Filter out 'covesa' from set IDs if it somehow got added
+  const validSetIds = customApiSetIds.filter(id => id !== 'covesa')
 
   const handleAddInstance = async (instanceId: string) => {
     if (!model) return
 
     try {
-      // Add instance to model.plugin_api_instances
-      const currentInstances = validInstanceIds || []
-      if (currentInstances.includes(instanceId)) {
+      // Add set to model.custom_api_sets
+      const currentSets = validSetIds || []
+      if (currentSets.includes(instanceId)) {
         toast({
           title: 'Already added',
-          description: 'This instance is already added to the model',
+          description: 'This API set is already added to the model',
           variant: 'destructive',
         })
         return
       }
 
       // Ensure all IDs are strings before saving
-      const updatedInstances = [...currentInstances, instanceId].map((id) => {
+      const updatedSets = [...currentSets, instanceId].map((id) => {
         if (typeof id === 'string') return id
         if (id && typeof id === 'object' && 'toString' in id) return id.toString()
         return String(id)
       }).filter((id): id is string => !!id && typeof id === 'string')
       
       await updateModelService(model.id, {
-        plugin_api_instances: updatedInstances,
+        custom_api_sets: updatedSets,
       })
 
       // Refresh model data
@@ -698,7 +698,7 @@ const PageVehicleApi = () => {
 
       toast({
         title: 'Added',
-        description: 'API instance added successfully',
+        description: 'API set added successfully',
       })
     } catch (error: any) {
       toast({
@@ -715,7 +715,7 @@ const PageVehicleApi = () => {
       <div className="flex min-h-[52px] border-b border-muted-foreground/50 bg-background shrink-0">
         <div className="flex w-fit">
           <ModelApiTabs
-            pluginApiInstanceIds={validInstanceIds}
+            customApiSetIds={validSetIds}
             onAddInstance={() => setIsPickerOpen(true)}
             isModelOwner={hasWritePermission}
           />
@@ -728,7 +728,7 @@ const PageVehicleApi = () => {
         {isCovesaTab ? (
           <ViewApiCovesa />
         ) : instance_id ? (
-          <ViewPluginApiInstance instanceId={instance_id} />
+          <ViewCustomApiSet instanceId={instance_id} />
         ) : (
           <ViewApiCovesa />
         )}
@@ -736,11 +736,11 @@ const PageVehicleApi = () => {
 
       {/* Instance Picker Dialog */}
       {hasWritePermission && (
-        <PluginApiInstancePicker
+        <CustomApiSetPicker
           open={isPickerOpen}
           onClose={() => setIsPickerOpen(false)}
           onSelect={handleAddInstance}
-          excludeIds={validInstanceIds}
+          excludeIds={validSetIds}
         />
       )}
     </div>

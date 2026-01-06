@@ -9,13 +9,13 @@
 import React, { useState } from 'react'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import {
-  listPluginApiInstances,
-  deletePluginApiInstance,
-  createPluginApiInstance,
-  updatePluginApiInstance,
-  type PluginApiInstance,
-} from '@/services/pluginApiInstance.service'
-import { listPluginAPIs, createPluginAPI } from '@/services/pluginApi.service'
+  listCustomApiSets,
+  deleteCustomApiSet,
+  createCustomApiSet,
+  updateCustomApiSet,
+  type CustomApiSet,
+} from '@/services/customApiSet.service'
+import { listCustomApiSchemas, createCustomApiSchema } from '@/services/customApiSchema.service'
 import { Button } from '@/components/atoms/button'
 import { TbPencil, TbTrash, TbPlus, TbDotsVertical, TbDownload, TbUpload } from 'react-icons/tb'
 import { Spinner } from '@/components/atoms/spinner'
@@ -26,8 +26,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/atoms/dropdown-menu'
 import { useToast } from '@/components/molecules/toaster/use-toast'
-import PluginApiInstanceForm from '@/components/organisms/PluginApiInstanceForm'
-import PluginApiInstanceItemEditor from '@/components/organisms/PluginApiInstanceItemEditor'
+import CustomApiSetForm from '@/components/organisms/CustomApiSetForm'
+import CustomApiSetItemEditor from '@/components/organisms/CustomApiSetItemEditor'
 import {
   Table,
   TableBody,
@@ -36,19 +36,19 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/atoms/table'
-import { exportPluginApiInstance, importPluginApiInstanceFromZIP } from '@/lib/pluginApiUtils'
+import { exportCustomApiSet, importCustomApiSetFromZIP } from '@/lib/customApiUtils'
 import DaDialog from '@/components/molecules/DaDialog'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
 import DaImportFile from '@/components/atoms/DaImportFile'
 import { uploadFileService } from '@/services/upload.service'
 
-const VehicleApiInstanceSection: React.FC = () => {
+const CustomApiSetSection: React.FC = () => {
   const { toast } = useToast()
   const queryClient = useQueryClient()
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
-  const [editingInstance, setEditingInstance] = useState<PluginApiInstance | null>(null)
+  const [editingSet, setEditingSet] = useState<CustomApiSet | null>(null)
   const [editingItemsInstanceId, setEditingItemsInstanceId] = useState<string | null>(null)
   const [isImportOpen, setIsImportOpen] = useState(false)
   const [importFile, setImportFile] = useState<File | null>(null)
@@ -58,25 +58,25 @@ const VehicleApiInstanceSection: React.FC = () => {
   const [isImporting, setIsImporting] = useState(false)
 
   const { data, isLoading } = useQuery({
-    queryKey: ['plugin-api-instances'],
-    queryFn: () => listPluginApiInstances({ limit: 100, page: 1, scope: 'system' }),
+    queryKey: ['custom-api-sets'],
+    queryFn: () => listCustomApiSets({ limit: 100, page: 1, scope: 'system' }),
   })
 
-  const handleDelete = async (instance: PluginApiInstance) => {
-    if (!window.confirm(`Delete "${instance.name}"?`)) return
+  const handleDelete = async (set: CustomApiSet) => {
+    if (!window.confirm(`Delete "${set.name}"?`)) return
 
     try {
-      setIsDeleting(instance.id)
-      await deletePluginApiInstance(instance.id)
+      setIsDeleting(set.id)
+      await deleteCustomApiSet(set.id)
       toast({
         title: 'Deleted',
-        description: `PluginApiInstance "${instance.name}" deleted successfully`,
+        description: `CustomApiSet "${set.name}" deleted successfully`,
       })
-      queryClient.invalidateQueries({ queryKey: ['plugin-api-instances'] })
+      queryClient.invalidateQueries({ queryKey: ['custom-api-sets'] })
     } catch (err) {
       toast({
         title: 'Delete failed',
-        description: err instanceof Error ? err.message : 'Failed to delete PluginApiInstance',
+        description: err instanceof Error ? err.message : 'Failed to delete CustomApiSet',
         variant: 'destructive',
       })
     } finally {
@@ -84,17 +84,17 @@ const VehicleApiInstanceSection: React.FC = () => {
     }
   }
 
-  const handleExport = async (instance: PluginApiInstance) => {
+  const handleExport = async (set: CustomApiSet) => {
     try {
-      await exportPluginApiInstance(instance)
+      await exportCustomApiSet(set)
       toast({
         title: 'Exported',
-        description: `API Instance "${instance.name}" exported successfully`,
+        description: `API Set "${set.name}" exported successfully`,
       })
     } catch (error: any) {
       toast({
         title: 'Export failed',
-        description: error?.message || 'Failed to export API Instance',
+        description: error?.message || 'Failed to export API Set',
         variant: 'destructive',
       })
     }
@@ -112,10 +112,10 @@ const VehicleApiInstanceSection: React.FC = () => {
   const handleImportFileChange = async (file: File) => {
     try {
       setImportFile(file)
-      const importedData = await importPluginApiInstanceFromZIP(file)
-      const instanceName = importedData.instance.name || ''
+      const importedData = await importCustomApiSetFromZIP(file)
+      const setName = importedData.set.name || ''
       const schemaName = importedData.schema.name || ''
-      setImportInstanceName(instanceName)
+      setImportInstanceName(setName)
       setImportSchemaName(schemaName)
       // Auto-generate schema code from schema name
       setImportSchemaCode(generateCodeFromName(schemaName))
@@ -144,7 +144,7 @@ const VehicleApiInstanceSection: React.FC = () => {
     if (!importFile || !importInstanceName.trim() || !importSchemaName.trim() || !importSchemaCode.trim()) {
       toast({
         title: 'Import failed',
-        description: 'Please provide instance name, schema name, and schema code',
+        description: 'Please provide set name, schema name, and schema code',
         variant: 'destructive',
       })
       return
@@ -152,13 +152,13 @@ const VehicleApiInstanceSection: React.FC = () => {
 
     try {
       setIsImporting(true)
-      const importedData = await importPluginApiInstanceFromZIP(importFile)
+      const importedData = await importCustomApiSetFromZIP(importFile)
       
       // Normalize schema code
       const normalizedSchemaCode = importSchemaCode.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '')
       
       // Check if schema already exists by code (since we don't export IDs)
-      const existingSchemas = await listPluginAPIs({ code: normalizedSchemaCode, limit: 1 })
+      const existingSchemas = await listCustomApiSchemas({ code: normalizedSchemaCode, limit: 1 })
       let schemaId: string
       
       if (existingSchemas.results.length > 0) {
@@ -202,7 +202,7 @@ const VehicleApiInstanceSection: React.FC = () => {
         })
       } else {
         // Schema doesn't exist, create new one with the provided name and code
-        const newSchema = await createPluginAPI({
+        const newSchema = await createCustomApiSchema({
           ...importedData.schema,
           name: importSchemaName.trim(),
           code: normalizedSchemaCode,
@@ -237,28 +237,28 @@ const VehicleApiInstanceSection: React.FC = () => {
           console.warn('Failed to upload avatar:', error)
           toast({
             title: 'Avatar upload failed',
-            description: 'The instance was imported but the avatar image could not be uploaded. You can update it manually.',
+            description: 'The set was imported but the avatar image could not be uploaded. You can update it manually.',
             variant: 'destructive',
           })
         }
       }
 
-      // Create instance
-      await createPluginApiInstance({
-        ...importedData.instance,
+      // Create set
+      await createCustomApiSet({
+        ...importedData.set,
         name: importInstanceName.trim(),
-        plugin_api: schemaId,
-        plugin_api_code: normalizedSchemaCode,
+        custom_api_schema: schemaId,
+        custom_api_schema_code: normalizedSchemaCode,
         scope: 'system',
         avatar: avatarUrl,
       })
 
       toast({
         title: 'Imported',
-        description: `API Instance "${importInstanceName}" imported successfully`,
+        description: `API Set "${importInstanceName}" imported successfully`,
       })
-      queryClient.invalidateQueries({ queryKey: ['plugin-api-instances'] })
-      queryClient.invalidateQueries({ queryKey: ['plugin-apis'] })
+      queryClient.invalidateQueries({ queryKey: ['custom-api-sets'] })
+      queryClient.invalidateQueries({ queryKey: ['custom-api-schemas'] })
       setIsImportOpen(false)
       setImportFile(null)
       setImportInstanceName('')
@@ -267,7 +267,7 @@ const VehicleApiInstanceSection: React.FC = () => {
     } catch (error: any) {
       toast({
         title: 'Import failed',
-        description: error?.response?.data?.message || error?.message || 'Failed to import API Instance',
+        description: error?.response?.data?.message || error?.message || 'Failed to import API Set',
         variant: 'destructive',
       })
     } finally {
@@ -281,7 +281,7 @@ const VehicleApiInstanceSection: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex flex-col">
             <h2 className="text-lg font-semibold text-foreground">
-              Vehicle API Instances
+              Vehicle API Sets
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
               Manage API set instances (actual data)
@@ -293,11 +293,11 @@ const VehicleApiInstanceSection: React.FC = () => {
               Import
             </Button>
             <Button size="sm" onClick={() => {
-              setEditingInstance(null)
+              setEditingSet(null)
               setIsFormOpen(true)
             }}>
               <TbPlus className="mr-2 h-4 w-4" />
-              New API Instance
+              New API Set
             </Button>
           </div>
         </div>
@@ -320,14 +320,14 @@ const VehicleApiInstanceSection: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.results.map((instance: PluginApiInstance) => (
-                <TableRow key={instance.id}>
+              {data.results.map((set: CustomApiSet) => (
+                <TableRow key={set.id}>
                   <TableCell>
                     <div className="w-16 aspect-[4/3] rounded-md overflow-hidden flex items-center justify-center">
-                      {instance.avatar ? (
+                      {set.avatar ? (
                         <img
-                          src={instance.avatar}
-                          alt={instance.name}
+                          src={set.avatar}
+                          alt={set.name}
                           className="w-full h-full object-contain p-1"
                           onError={(e) => {
                             (e.currentTarget as HTMLImageElement).src = '/imgs/plugin.png'
@@ -345,28 +345,28 @@ const VehicleApiInstanceSection: React.FC = () => {
                       <div 
                         className="cursor-pointer hover:text-primary transition-colors"
                         onClick={() => {
-                          setEditingInstance(instance)
+                          setEditingSet(set)
                           setIsFormOpen(true)
                         }}
                       >
-                        {instance.name}
+                        {set.name}
                       </div>
-                      {instance.description && (
+                      {set.description && (
                         <div className="text-xs text-muted-foreground mt-1">
-                          {instance.description}
+                          {set.description}
                         </div>
                       )}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span className="font-mono text-sm">{instance.plugin_api_code}</span>
+                    <span className="font-mono text-sm">{set.custom_api_schema_code}</span>
                   </TableCell>
                   <TableCell>
                     <span 
                       className="cursor-pointer hover:text-primary transition-colors"
-                      onClick={() => setEditingItemsInstanceId(instance.id)}
+                      onClick={() => setEditingItemsInstanceId(set.id)}
                     >
-                      {instance.data?.items?.length || 0}
+                      {set.data?.items?.length || 0}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
@@ -376,7 +376,7 @@ const VehicleApiInstanceSection: React.FC = () => {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8"
-                          disabled={isDeleting === instance.id}
+                          disabled={isDeleting === set.id}
                         >
                           <TbDotsVertical className="h-4 w-4" />
                         </Button>
@@ -384,34 +384,34 @@ const VehicleApiInstanceSection: React.FC = () => {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
                           onClick={() => {
-                            setEditingInstance(instance)
+                            setEditingSet(set)
                             setIsFormOpen(true)
                           }}
-                          disabled={isDeleting === instance.id}
+                          disabled={isDeleting === set.id}
                         >
                           <TbPencil className="h-4 w-4 mr-2" />
                           Edit Metadata
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => setEditingItemsInstanceId(instance.id)}
-                          disabled={isDeleting === instance.id}
+                          onClick={() => setEditingItemsInstanceId(set.id)}
+                          disabled={isDeleting === set.id}
                         >
                           <TbPencil className="h-4 w-4 mr-2" />
                           Edit Child APIs
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => handleExport(instance)}
-                          disabled={isDeleting === instance.id}
+                          onClick={() => handleExport(set)}
+                          disabled={isDeleting === set.id}
                         >
                           <TbDownload className="h-4 w-4 mr-2" />
                           Export
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => handleDelete(instance)}
-                          disabled={isDeleting === instance.id}
+                          onClick={() => handleDelete(set)}
+                          disabled={isDeleting === set.id}
                           className="text-destructive focus:text-destructive"
                         >
-                          {isDeleting === instance.id ? (
+                          {isDeleting === set.id ? (
                             <Spinner className="h-4 w-4 mr-2" />
                           ) : (
                             <TbTrash className="h-4 w-4 mr-2" />
@@ -427,53 +427,53 @@ const VehicleApiInstanceSection: React.FC = () => {
           </Table>
         ) : (
           <div className="text-center py-12">
-            <p className="text-sm text-muted-foreground">No API instances yet</p>
+            <p className="text-sm text-muted-foreground">No API sets yet</p>
             <Button className="mt-4" variant="outline" onClick={() => {
-              setEditingInstance(null)
+              setEditingSet(null)
               setIsFormOpen(true)
             }}>
               <TbPlus className="mr-2 h-4 w-4" />
-              Create First API Instance
+              Create First API Set
             </Button>
           </div>
         )}
       </div>
 
-      <PluginApiInstanceForm
+      <CustomApiSetForm
         open={isFormOpen}
         onClose={() => {
           setIsFormOpen(false)
-          setEditingInstance(null)
+          setEditingSet(null)
         }}
-        initialData={editingInstance || undefined}
+        initialData={editingSet || undefined}
         onSave={async (formData) => {
           try {
-            if (editingInstance) {
+            if (editingSet) {
               // Filter out fields that shouldn't be updated
-              const { plugin_api, plugin_api_code, scope, ...updateData } = formData
-              await updatePluginApiInstance(editingInstance.id, updateData)
+              const { custom_api_schema, custom_api_schema_code, scope, ...updateData } = formData
+              await updateCustomApiSet(editingSet.id, updateData)
               toast({
                 title: 'Updated',
-                description: 'API Instance updated successfully',
+                description: 'API Set updated successfully',
               })
             } else {
-              // Ensure scope is set to 'system' for admin-created instances
-              await createPluginApiInstance({
+              // Ensure scope is set to 'system' for admin-created sets
+              await createCustomApiSet({
                 ...formData,
                 scope: 'system',
               })
               toast({
                 title: 'Created',
-                description: 'API Instance created successfully',
+                description: 'API Set created successfully',
               })
             }
-            queryClient.invalidateQueries({ queryKey: ['plugin-api-instances'] })
+            queryClient.invalidateQueries({ queryKey: ['custom-api-sets'] })
             setIsFormOpen(false)
-            setEditingInstance(null)
+            setEditingSet(null)
           } catch (error: any) {
             toast({
-              title: editingInstance ? 'Update failed' : 'Create failed',
-              description: error?.response?.data?.message || error?.message || `Failed to ${editingInstance ? 'update' : 'create'} API Instance`,
+              title: editingSet ? 'Update failed' : 'Create failed',
+              description: error?.response?.data?.message || error?.message || `Failed to ${editingSet ? 'update' : 'create'} API Set`,
               variant: 'destructive',
             })
             throw error
@@ -482,7 +482,7 @@ const VehicleApiInstanceSection: React.FC = () => {
       />
 
       {editingItemsInstanceId && (
-        <PluginApiInstanceItemEditor
+        <CustomApiSetItemEditor
           open={!!editingItemsInstanceId}
           onClose={() => setEditingItemsInstanceId(null)}
           instanceId={editingItemsInstanceId}
@@ -494,7 +494,7 @@ const VehicleApiInstanceSection: React.FC = () => {
         open={isImportOpen}
         onOpenChange={setIsImportOpen}
         trigger={<span></span>}
-        dialogTitle="Import API Instance"
+        dialogTitle="Import API Set"
         className="w-[500px] max-w-[90vw]"
       >
         <div className="space-y-4">
@@ -515,12 +515,12 @@ const VehicleApiInstanceSection: React.FC = () => {
           {importFile && (
             <>
               <div>
-                <Label htmlFor="import-instance-name">Instance Name *</Label>
+                <Label htmlFor="import-instance-name">Set Name *</Label>
                 <Input
                   id="import-instance-name"
                   value={importInstanceName}
                   onChange={(e) => setImportInstanceName(e.target.value)}
-                  placeholder="Enter API Instance name"
+                  placeholder="Enter API Set name"
                   className="mt-2"
                 />
               </div>
@@ -583,5 +583,5 @@ const VehicleApiInstanceSection: React.FC = () => {
   )
 }
 
-export default VehicleApiInstanceSection
+export default CustomApiSetSection
 

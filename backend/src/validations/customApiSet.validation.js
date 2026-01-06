@@ -19,12 +19,12 @@ const itemSchema = Joi.object().keys({
   path: Joi.string().trim().allow(''),
   parent_id: Joi.string().allow(null, ''),
   relationships: Joi.array().items(itemRelationshipSchema).default([]),
-}).unknown(true); // Allow dynamic fields based on PluginAPI attributes
+}).unknown(true); // Allow dynamic fields based on CustomApiSchema attributes
 
-const createPluginApiInstance = {
+const createCustomApiSet = {
   body: Joi.object().keys({
-    plugin_api: Joi.string().custom(objectId).required(),
-    plugin_api_code: Joi.string().trim().lowercase().required(),
+    custom_api_schema: Joi.string().custom(objectId).required(),
+    custom_api_schema_code: Joi.string().trim().lowercase().required(),
     scope: Joi.string().valid('system', 'user').required(),
     name: Joi.string().required().trim().max(255),
     description: Joi.string().trim().allow(''),
@@ -39,7 +39,7 @@ const createPluginApiInstance = {
   }),
 };
 
-const updatePluginApiInstance = {
+const updateCustomApiSet = {
   params: Joi.object().keys({
     id: Joi.string().custom(objectId).required(),
   }),
@@ -57,21 +57,21 @@ const updatePluginApiInstance = {
     .min(1),
 };
 
-const getPluginApiInstance = {
+const getCustomApiSet = {
   params: Joi.object().keys({
     id: Joi.string().custom(objectId).required(),
   }),
 };
 
-const deletePluginApiInstance = {
+const deleteCustomApiSet = {
   params: Joi.object().keys({
     id: Joi.string().custom(objectId).required(),
   }),
 };
 
-const listPluginApiInstances = {
+const listCustomApiSets = {
   query: Joi.object().keys({
-    plugin_api_code: Joi.string().trim().lowercase(),
+    custom_api_schema_code: Joi.string().trim().lowercase(),
     scope: Joi.string().valid('system', 'user'),
     owner: Joi.string().custom(objectId),
     name: Joi.string().trim(),
@@ -81,7 +81,7 @@ const listPluginApiInstances = {
   }),
 };
 
-const addInstanceItem = {
+const addSetItem = {
   params: Joi.object().keys({
     id: Joi.string().custom(objectId).required(),
   }),
@@ -92,7 +92,7 @@ const addInstanceItem = {
     .required(),
 };
 
-const updateInstanceItem = {
+const updateSetItem = {
   params: Joi.object().keys({
     id: Joi.string().custom(objectId).required(),
     itemId: Joi.string().required(),
@@ -104,7 +104,7 @@ const updateInstanceItem = {
     .required(),
 };
 
-const removeInstanceItem = {
+const removeSetItem = {
   params: Joi.object().keys({
     id: Joi.string().custom(objectId).required(),
     itemId: Joi.string().required(),
@@ -112,13 +112,13 @@ const removeInstanceItem = {
 };
 
 module.exports = {
-  createPluginApiInstance,
-  updatePluginApiInstance,
-  getPluginApiInstance,
-  deletePluginApiInstance,
-  listPluginApiInstances,
-  addInstanceItem,
-  updateInstanceItem,
-  removeInstanceItem,
+  createCustomApiSet,
+  updateCustomApiSet,
+  getCustomApiSet,
+  deleteCustomApiSet,
+  listCustomApiSets,
+  addSetItem,
+  updateSetItem,
+  removeSetItem,
 };
 

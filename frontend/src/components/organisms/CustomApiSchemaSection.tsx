@@ -9,18 +9,18 @@
 import React, { useState } from 'react'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import {
-  listPluginAPIs,
-  deletePluginAPI,
-  createPluginAPI,
-  updatePluginAPI,
-  type PluginAPI,
-} from '@/services/pluginApi.service'
+  listCustomApiSchemas,
+  deleteCustomApiSchema,
+  createCustomApiSchema,
+  updateCustomApiSchema,
+  type CustomApiSchema,
+} from '@/services/customApiSchema.service'
 import { Button } from '@/components/atoms/button'
 import { TbPencil, TbTrash, TbPlus, TbDownload, TbUpload, TbDotsVertical } from 'react-icons/tb'
 import { Spinner } from '@/components/atoms/spinner'
 import { useToast } from '@/components/molecules/toaster/use-toast'
-import PluginApiForm from '@/components/organisms/PluginApiForm'
-import { exportPluginAPI, importPluginAPIFromJSON } from '@/lib/pluginApiUtils'
+import CustomApiSchemaForm from '@/components/organisms/CustomApiSchemaForm'
+import { exportCustomApiSchema, importCustomApiSchemaFromJSON } from '@/lib/customApiUtils'
 import DaDialog from '@/components/molecules/DaDialog'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
@@ -32,11 +32,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/atoms/dropdown-menu'
 
-const VehicleApiSection: React.FC = () => {
+const CustomApiSchemaSection: React.FC = () => {
   const { toast } = useToast()
   const queryClient = useQueryClient()
   const [isFormOpen, setIsFormOpen] = useState(false)
-  const [editingApi, setEditingApi] = useState<PluginAPI | undefined>()
+  const [editingApi, setEditingApi] = useState<CustomApiSchema | undefined>()
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const [isImportOpen, setIsImportOpen] = useState(false)
   const [importFile, setImportFile] = useState<File | null>(null)
@@ -45,8 +45,8 @@ const VehicleApiSection: React.FC = () => {
   const [isImporting, setIsImporting] = useState(false)
 
   const { data, isLoading } = useQuery({
-    queryKey: ['plugin-apis'],
-    queryFn: () => listPluginAPIs({ limit: 100, page: 1 }),
+    queryKey: ['custom-api-schemas'],
+    queryFn: () => listCustomApiSchemas({ limit: 100, page: 1 }),
   })
 
   const handleCreate = () => {
@@ -54,26 +54,26 @@ const VehicleApiSection: React.FC = () => {
     setIsFormOpen(true)
   }
 
-  const handleEdit = (api: PluginAPI) => {
+  const handleEdit = (api: CustomApiSchema) => {
     setEditingApi(api)
     setIsFormOpen(true)
   }
 
-  const handleDelete = async (api: PluginAPI) => {
+  const handleDelete = async (api: CustomApiSchema) => {
     if (!window.confirm(`Delete "${api.name}"?`)) return
 
     try {
       setIsDeleting(api.id)
-      await deletePluginAPI(api.id)
+      await deleteCustomApiSchema(api.id)
       toast({
         title: 'Deleted',
-        description: `PluginAPI "${api.name}" deleted successfully`,
+        description: `CustomApiSchema "${api.name}" deleted successfully`,
       })
-      queryClient.invalidateQueries({ queryKey: ['plugin-apis'] })
+      queryClient.invalidateQueries({ queryKey: ['custom-api-schemas'] })
     } catch (err) {
       toast({
         title: 'Delete failed',
-        description: err instanceof Error ? err.message : 'Failed to delete PluginAPI',
+        description: err instanceof Error ? err.message : 'Failed to delete CustomApiSchema',
         variant: 'destructive',
       })
     } finally {
@@ -87,11 +87,11 @@ const VehicleApiSection: React.FC = () => {
   }
 
   const saveMutation = useMutation({
-    mutationFn: async (data: Partial<PluginAPI>) => {
+    mutationFn: async (data: Partial<CustomApiSchema>) => {
       if (editingApi) {
-        return await updatePluginAPI(editingApi.id, data)
+        return await updateCustomApiSchema(editingApi.id, data)
       } else {
-        return await createPluginAPI(data)
+        return await createCustomApiSchema(data)
       }
     },
     onSuccess: () => {
@@ -99,7 +99,7 @@ const VehicleApiSection: React.FC = () => {
         title: editingApi ? 'Updated' : 'Created',
         description: `API Definition ${editingApi ? 'updated' : 'created'} successfully`,
       })
-      queryClient.invalidateQueries({ queryKey: ['plugin-apis'] })
+      queryClient.invalidateQueries({ queryKey: ['custom-api-schemas'] })
       handleFormClose()
     },
     onError: (error: any) => {
@@ -111,13 +111,13 @@ const VehicleApiSection: React.FC = () => {
     },
   })
 
-  const handleFormSave = async (data: Partial<PluginAPI>) => {
+  const handleFormSave = async (data: Partial<CustomApiSchema>) => {
     await saveMutation.mutateAsync(data)
   }
 
-  const handleExport = async (api: PluginAPI) => {
+  const handleExport = async (api: CustomApiSchema) => {
     try {
-      await exportPluginAPI(api)
+      await exportCustomApiSchema(api)
       toast({
         title: 'Exported',
         description: `API Schema "${api.name}" exported successfully`,
@@ -143,7 +143,7 @@ const VehicleApiSection: React.FC = () => {
   const handleImportFileChange = async (file: File) => {
     try {
       setImportFile(file)
-      const importedData = await importPluginAPIFromJSON(file)
+      const importedData = await importCustomApiSchemaFromJSON(file)
       const name = importedData.name || ''
       setImportName(name)
       // Auto-generate code from name
@@ -180,10 +180,10 @@ const VehicleApiSection: React.FC = () => {
 
     try {
       setIsImporting(true)
-      const importedData = await importPluginAPIFromJSON(importFile)
+      const importedData = await importCustomApiSchemaFromJSON(importFile)
       
       // Check if code already exists
-      const existing = await listPluginAPIs({ code: importCode, limit: 1 })
+      const existing = await listCustomApiSchemas({ code: importCode, limit: 1 })
       if (existing.results.length > 0) {
         toast({
           title: 'Import failed',
@@ -195,7 +195,7 @@ const VehicleApiSection: React.FC = () => {
       }
 
       // Create with new name and code
-      await createPluginAPI({
+      await createCustomApiSchema({
         ...importedData,
         name: importName.trim(),
         code: importCode.trim().toLowerCase(),
@@ -205,7 +205,7 @@ const VehicleApiSection: React.FC = () => {
         title: 'Imported',
         description: `API Schema "${importName}" imported successfully`,
       })
-      queryClient.invalidateQueries({ queryKey: ['plugin-apis'] })
+      queryClient.invalidateQueries({ queryKey: ['custom-api-schemas'] })
       setIsImportOpen(false)
       setImportFile(null)
       setImportName('')
@@ -253,7 +253,7 @@ const VehicleApiSection: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-2">
-            {data?.results?.map((api: PluginAPI) => (
+            {data?.results?.map((api: CustomApiSchema) => (
               <div
                 key={api.id}
                 className="rounded-lg border border-border bg-background p-3 shadow-sm hover:shadow-md transition-shadow"
@@ -353,7 +353,7 @@ const VehicleApiSection: React.FC = () => {
         )}
       </div>
 
-      <PluginApiForm
+      <CustomApiSchemaForm
         open={isFormOpen}
         onClose={handleFormClose}
         onSave={handleFormSave}
@@ -443,5 +443,5 @@ const VehicleApiSection: React.FC = () => {
   )
 }
 
-export default VehicleApiSection
+export default CustomApiSchemaSection
 

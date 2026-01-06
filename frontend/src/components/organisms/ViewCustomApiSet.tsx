@@ -9,64 +9,64 @@
 import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { getPluginApiInstanceById, type PluginApiInstanceItem } from '@/services/pluginApiInstance.service'
-import { getPluginAPIById } from '@/services/pluginApi.service'
+import { getCustomApiSetById, type CustomApiSetItem } from '@/services/customApiSet.service'
+import { getCustomApiSchemaById } from '@/services/customApiSchema.service'
 import CustomAPIList from '@/components/organisms/CustomAPIList'
 import CustomAPIView from '@/components/organisms/CustomAPIView'
 import { Spinner } from '@/components/atoms/spinner'
 
-interface ViewPluginApiInstanceProps {
+interface ViewCustomApiSetProps {
   instanceId: string
 }
 
-const ViewPluginApiInstance: React.FC<ViewPluginApiInstanceProps> = ({ instanceId }) => {
+const ViewCustomApiSet: React.FC<ViewCustomApiSetProps> = ({ instanceId }) => {
   const [searchParams, setSearchParams] = useSearchParams()
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
 
   // Normalize instanceId to string (should be string from route params, but safeguard)
-  const normalizedInstanceId = typeof instanceId === 'string' 
+  const normalizedSetId = typeof instanceId === 'string' 
     ? instanceId 
     : (instanceId && typeof instanceId === 'object' && 'toString' in instanceId)
     ? (instanceId as any).toString()
     : String(instanceId)
 
-  // Fetch instance data
-  const { data: instance, isLoading: isLoadingInstance } = useQuery({
-    queryKey: ['plugin-api-instance', normalizedInstanceId],
-    queryFn: () => getPluginApiInstanceById(normalizedInstanceId),
-    enabled: !!normalizedInstanceId && normalizedInstanceId !== '[object Object]',
+  // Fetch set data
+  const { data: set, isLoading: isLoadingSet } = useQuery({
+    queryKey: ['custom-api-set', normalizedSetId],
+    queryFn: () => getCustomApiSetById(normalizedSetId),
+    enabled: !!normalizedSetId && normalizedSetId !== '[object Object]',
   })
 
-  // Extract plugin_api ID
-  const pluginApiId = instance?.plugin_api
-    ? typeof instance.plugin_api === 'string'
-      ? instance.plugin_api
-      : (instance.plugin_api as any).id || (instance.plugin_api as any)._id || instance.plugin_api
+  // Extract custom_api_schema ID
+  const customApiSchemaId = set?.custom_api_schema
+    ? typeof set.custom_api_schema === 'string'
+      ? set.custom_api_schema
+      : (set.custom_api_schema as any).id || (set.custom_api_schema as any)._id || set.custom_api_schema
     : null
 
-  // Fetch PluginAPI schema
-  const { data: pluginAPI, isLoading: isLoadingSchema } = useQuery({
-    queryKey: ['plugin-api', pluginApiId],
-    queryFn: () => getPluginAPIById(pluginApiId!),
-    enabled: !!pluginApiId,
+  // Fetch CustomApiSchema schema
+  const { data: customApiSchema, isLoading: isLoadingSchema } = useQuery({
+    queryKey: ['custom-api-schema', customApiSchemaId],
+    queryFn: () => getCustomApiSchemaById(customApiSchemaId!),
+    enabled: !!customApiSchemaId,
   })
 
-  const items = instance?.data?.items || []
+  const items = set?.data?.items || []
   const selectedItem = selectedItemId ? items.find((item) => item.id === selectedItemId) : null
 
-  // Debug: Log instance avatar
+  // Debug: Log set avatar
   useEffect(() => {
-    if (instance) {
-      console.log('ViewPluginApiInstance - Full instance object:', JSON.stringify(instance, null, 2))
-      console.log('ViewPluginApiInstance - instance.avatar:', instance.avatar)
-      console.log('ViewPluginApiInstance - typeof instance.avatar:', typeof instance.avatar)
-      console.log('ViewPluginApiInstance - instance.avatar truthy?', !!instance.avatar)
-      console.log('ViewPluginApiInstance - All instance keys:', Object.keys(instance))
+    if (set) {
+      console.log('ViewCustomApiSet - Full set object:', JSON.stringify(set, null, 2))
+      console.log('ViewCustomApiSet - set.avatar:', set.avatar)
+      console.log('ViewCustomApiSet - typeof set.avatar:', typeof set.avatar)
+      console.log('ViewCustomApiSet - set.avatar truthy?', !!set.avatar)
+      console.log('ViewCustomApiSet - All set keys:', Object.keys(set))
       // Check if avatar exists with different casing or name
-      console.log('ViewPluginApiInstance - instance keys containing "avatar" or "image":', 
-        Object.keys(instance).filter(k => k.toLowerCase().includes('avatar') || k.toLowerCase().includes('image')))
+      console.log('ViewCustomApiSet - set keys containing "avatar" or "image":', 
+        Object.keys(set).filter(k => k.toLowerCase().includes('avatar') || k.toLowerCase().includes('image')))
     }
-  }, [instance])
+  }, [set])
 
   // Handle URL query parameter for active API
   useEffect(() => {
@@ -104,11 +104,11 @@ const ViewPluginApiInstance: React.FC<ViewPluginApiInstanceProps> = ({ instanceI
 
   // Extract method options for filter
   const getMethodOptions = (): string[] => {
-    if (!pluginAPI?.schema) return []
+    if (!customApiSchema?.schema) return []
     try {
-      const schemaObj = typeof pluginAPI.schema === 'string' 
-        ? JSON.parse(pluginAPI.schema) 
-        : pluginAPI.schema
+      const schemaObj = typeof customApiSchema.schema === 'string' 
+        ? JSON.parse(customApiSchema.schema) 
+        : customApiSchema.schema
       
       const itemSchema = schemaObj.type === 'array' ? schemaObj.items : schemaObj
       const methodProperty = itemSchema?.properties?.method
@@ -123,20 +123,20 @@ const ViewPluginApiInstance: React.FC<ViewPluginApiInstanceProps> = ({ instanceI
     }
   }
 
-  if (isLoadingInstance || isLoadingSchema) {
+  if (isLoadingSet || isLoadingSchema) {
     return (
       <div className="flex items-center justify-center h-full">
         <Spinner className="mr-2" />
-        <span className="text-sm font-medium text-muted-foreground">Loading API instance...</span>
+        <span className="text-sm font-medium text-muted-foreground">Loading API set...</span>
       </div>
     )
   }
 
-  if (!instance || !pluginAPI) {
+  if (!set || !customApiSchema) {
     return (
       <div className="flex items-center justify-center h-full">
         <span className="text-sm font-medium text-muted-foreground">
-          Instance or schema not found.
+          Set or schema not found.
         </span>
       </div>
     )
@@ -150,14 +150,14 @@ const ViewPluginApiInstance: React.FC<ViewPluginApiInstanceProps> = ({ instanceI
           items={items}
           selectedItemId={selectedItemId}
           onSelectItem={handleSelectItem}
-          schema={pluginAPI}
+          schema={customApiSchema}
           mode="view"
           filterOptions={{
             typeField: 'method',
             typeOptions: getMethodOptions(),
           }}
-          footerImage={instance?.avatar}
-          providerUrl={instance?.provider_url}
+          footerImage={set?.avatar}
+          providerUrl={set?.provider_url}
         />
       </div>
 
@@ -166,7 +166,7 @@ const ViewPluginApiInstance: React.FC<ViewPluginApiInstanceProps> = ({ instanceI
         {selectedItem ? (
           <CustomAPIView
             item={selectedItem}
-            schema={pluginAPI.schema}
+            schema={customApiSchema.schema}
             itemId={selectedItem.id}
             excludeFields={['id', 'path', 'parent_id', 'relationships']}
           />
@@ -180,5 +180,5 @@ const ViewPluginApiInstance: React.FC<ViewPluginApiInstanceProps> = ({ instanceI
   )
 }
 
-export default ViewPluginApiInstance
+export default ViewCustomApiSet
 

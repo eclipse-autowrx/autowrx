@@ -22,7 +22,15 @@ import {
 } from '@/components/atoms/select'
 import { TbPlus, TbTrash, TbPencil, TbDownload, TbUpload } from 'react-icons/tb'
 import { useToast } from '@/components/molecules/toaster/use-toast'
-import type { PluginApiAttribute } from '@/services/pluginApi.service'
+
+// Legacy type - kept for backward compatibility with AttributeDefinition component
+// Note: This component may be deprecated in favor of JSON Schema-based approach
+export interface PluginApiAttribute {
+  name: string
+  data_type: 'string' | 'number' | 'boolean' | 'object' | 'array' | 'mixed'
+  required: boolean
+  description?: string
+}
 
 interface AttributeDefinitionProps {
   value: PluginApiAttribute[]

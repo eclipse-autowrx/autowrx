@@ -9,50 +9,50 @@
 import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
 import axios from 'axios'
-import { PluginAPI } from '@/services/pluginApi.service'
-import { PluginApiInstance, getPluginApiInstanceById } from '@/services/pluginApiInstance.service'
-import { getPluginAPIById } from '@/services/pluginApi.service'
+import { CustomApiSchema } from '@/services/customApiSchema.service'
+import { CustomApiSet, getCustomApiSetById } from '@/services/customApiSet.service'
+import { getCustomApiSchemaById } from '@/services/customApiSchema.service'
 
 const removeSpecialCharacters = (str: string) => {
   return str.replace(/[^a-zA-Z0-9 ]/g, '')
 }
 
 /**
- * Export PluginAPI as JSON file
+ * Export CustomApiSchema as JSON file
  */
-export const exportPluginAPI = async (api: PluginAPI) => {
+export const exportCustomApiSchema = async (schema: CustomApiSchema) => {
   try {
     const exportData = {
-      name: api.name,
-      code: api.code,
-      description: api.description,
-      type: api.type,
-      schema: api.schema,
-      id_format: api.id_format,
-      relationships: api.relationships,
-      tree_config: api.tree_config,
-      list_view_config: api.list_view_config,
-      version: api.version,
-      is_active: api.is_active,
+      name: schema.name,
+      code: schema.code,
+      description: schema.description,
+      type: schema.type,
+      schema: schema.schema,
+      id_format: schema.id_format,
+      relationships: schema.relationships,
+      tree_config: schema.tree_config,
+      list_view_config: schema.list_view_config,
+      version: schema.version,
+      is_active: schema.is_active,
     }
 
     const jsonString = JSON.stringify(exportData, null, 2)
     const blob = new Blob([jsonString], { type: 'application/json' })
-    const filename = `plugin_api_${removeSpecialCharacters(api.name || api.code)}.json`
+    const filename = `custom_api_schema_${removeSpecialCharacters(schema.name || schema.code)}.json`
     saveAs(blob, filename)
   } catch (error) {
-    console.error('Error exporting PluginAPI:', error)
+    console.error('Error exporting CustomApiSchema:', error)
     throw error
   }
 }
 
 /**
- * Export PluginApiInstance as ZIP file (includes schema + instance data)
+ * Export CustomApiSet as ZIP file (includes schema + set data)
  */
-export const exportPluginApiInstance = async (instance: PluginApiInstance) => {
+export const exportCustomApiSet = async (set: CustomApiSet) => {
   try {
     // Fetch the schema
-    const schema = await getPluginAPIById(instance.plugin_api)
+    const schema = await getCustomApiSchemaById(set.custom_api_schema)
     
     const zip = new JSZip()
     
@@ -72,27 +72,27 @@ export const exportPluginApiInstance = async (instance: PluginApiInstance) => {
     }
     zip.file('schema.json', JSON.stringify(schemaData, null, 2))
     
-    // Add instance data file
-    const instanceData = {
-      name: instance.name,
-      description: instance.description,
-      plugin_api_code: instance.plugin_api_code,
-      data: instance.data,
-      avatar: instance.avatar,
-      provider_url: instance.provider_url,
+    // Add set data file
+    const setData = {
+      name: set.name,
+      description: set.description,
+      custom_api_schema_code: set.custom_api_schema_code,
+      data: set.data,
+      avatar: set.avatar,
+      provider_url: set.provider_url,
     }
-    zip.file('instance.json', JSON.stringify(instanceData, null, 2))
+    zip.file('set.json', JSON.stringify(setData, null, 2))
     
     // Add avatar image if exists
-    if (instance.avatar) {
+    if (set.avatar) {
       try {
         // Download image as arraybuffer (same pattern as getImgFile in zipUtils)
-        const imageResponse = await axios.get(instance.avatar, { responseType: 'arraybuffer' })
+        const imageResponse = await axios.get(set.avatar, { responseType: 'arraybuffer' })
         
         // Detect image format from URL or Content-Type header
         let imageExtension = 'png' // default
         const contentType = imageResponse.headers['content-type']
-        const avatarUrl = instance.avatar.toLowerCase()
+        const avatarUrl = set.avatar.toLowerCase()
         
         if (contentType) {
           if (contentType.includes('svg')) {
@@ -128,25 +128,25 @@ export const exportPluginApiInstance = async (instance: PluginApiInstance) => {
     
     // Generate ZIP file
     const content = await zip.generateAsync({ type: 'blob' })
-    const filename = `plugin_api_instance_${removeSpecialCharacters(instance.name)}.zip`
+    const filename = `custom_api_set_${removeSpecialCharacters(set.name)}.zip`
     saveAs(content, filename)
   } catch (error) {
-    console.error('Error exporting PluginApiInstance:', error)
+    console.error('Error exporting CustomApiSet:', error)
     throw error
   }
 }
 
 /**
- * Import PluginAPI from JSON file
+ * Import CustomApiSchema from JSON file
  */
-export const importPluginAPIFromJSON = async (file: File): Promise<Partial<PluginAPI>> => {
+export const importCustomApiSchemaFromJSON = async (file: File): Promise<Partial<CustomApiSchema>> => {
   try {
     const text = await file.text()
     const data = JSON.parse(text)
     
     // Validate required fields
     if (!data.name || !data.code || !data.type || !data.schema) {
-      throw new Error('Invalid PluginAPI file. Missing required fields: name, code, type, or schema')
+      throw new Error('Invalid CustomApiSchema file. Missing required fields: name, code, type, or schema')
     }
     
     return {
@@ -163,20 +163,20 @@ export const importPluginAPIFromJSON = async (file: File): Promise<Partial<Plugi
       is_active: data.is_active !== undefined ? data.is_active : true,
     }
   } catch (error) {
-    console.error('Error importing PluginAPI:', error)
+    console.error('Error importing CustomApiSchema:', error)
     throw error
   }
 }
 
 /**
- * Import PluginApiInstance from ZIP file
- * Returns { schema: Partial<PluginAPI>, instance: Partial<PluginApiInstance>, avatarBlob?: Blob, avatarExtension?: string }
+ * Import CustomApiSet from ZIP file
+ * Returns { schema: Partial<CustomApiSchema>, set: Partial<CustomApiSet>, avatarBlob?: Blob, avatarExtension?: string }
  */
-export const importPluginApiInstanceFromZIP = async (
+export const importCustomApiSetFromZIP = async (
   file: File
 ): Promise<{
-  schema: Partial<PluginAPI>
-  instance: Partial<PluginApiInstance>
+  schema: Partial<CustomApiSchema>
+  set: Partial<CustomApiSet>
   avatarBlob?: Blob
   avatarExtension?: string
 }> => {
@@ -200,16 +200,16 @@ export const importPluginApiInstanceFromZIP = async (
       throw new Error('Invalid schema.json. Missing required fields: name, code, type, or schema')
     }
     
-    // Read instance.json
-    const instanceStr = await zipFile.file('instance.json')?.async('string')
-    if (!instanceStr) {
-      throw new Error('ZIP file missing instance.json')
+    // Read set.json (was instance.json)
+    const setStr = await zipFile.file('set.json')?.async('string') || await zipFile.file('instance.json')?.async('string')
+    if (!setStr) {
+      throw new Error('ZIP file missing set.json or instance.json')
     }
-    const instanceData = JSON.parse(instanceStr)
+    const setData = JSON.parse(setStr)
     
-    // Validate instance
-    if (!instanceData.name || !instanceData.data) {
-      throw new Error('Invalid instance.json. Missing required fields: name or data')
+    // Validate set
+    if (!setData.name || !setData.data) {
+      throw new Error('Invalid set.json. Missing required fields: name or data')
     }
     
     // Read avatar if exists (check multiple formats)
@@ -239,20 +239,19 @@ export const importPluginApiInstanceFromZIP = async (
         version: schemaData.version || '1.0.0',
         is_active: schemaData.is_active !== undefined ? schemaData.is_active : true,
       },
-      instance: {
-        name: instanceData.name,
-        description: instanceData.description,
-        plugin_api_code: instanceData.plugin_api_code,
-        data: instanceData.data,
-        avatar: instanceData.avatar, // URL will be set after upload
-        provider_url: instanceData.provider_url,
+      set: {
+        name: setData.name,
+        description: setData.description,
+        custom_api_schema_code: setData.custom_api_schema_code || setData.plugin_api_code, // Backward compatibility
+        data: setData.data,
+        avatar: setData.avatar, // URL will be set after upload
+        provider_url: setData.provider_url,
       },
       avatarBlob,
       avatarExtension,
     }
   } catch (error) {
-    console.error('Error importing PluginApiInstance:', error)
+    console.error('Error importing CustomApiSet:', error)
     throw error
   }
 }
-

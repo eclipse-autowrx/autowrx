@@ -9,8 +9,8 @@
 import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import PrototypePluginSection from '@/components/organisms/PrototypePluginSection'
-import VehicleApiSection from '@/components/organisms/VehicleApiSection'
-import VehicleApiInstanceSection from '@/components/organisms/VehicleApiInstanceSection'
+import CustomApiSchemaSection from '@/components/organisms/CustomApiSchemaSection'
+import CustomApiSetSection from '@/components/organisms/CustomApiSetSection'
 
 const PluginManagement: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -100,8 +100,8 @@ const PluginManagement: React.FC = () => {
             <div className="bg-background rounded-lg shadow border border-border">
               {/* Conditionally render only the active section */}
               {activeTab === 'prototype' && <PrototypePluginSection />}
-              {activeTab === 'vehicle-api-schema' && <VehicleApiSection />}
-              {activeTab === 'vehicle-api' && <VehicleApiInstanceSection />}
+              {activeTab === 'custom-api-schema' && <CustomApiSchemaSection />}
+              {activeTab === 'custom-api-set' && <CustomApiSetSection />}
             </div>
           </div>
         </div>

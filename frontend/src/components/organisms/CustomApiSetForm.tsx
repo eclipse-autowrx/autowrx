@@ -20,22 +20,22 @@ import {
   SelectValue,
 } from '@/components/atoms/select'
 import { useQuery } from '@tanstack/react-query'
-import { listPluginAPIs, getPluginAPIById, type PluginAPI } from '@/services/pluginApi.service'
+import { listCustomApiSchemas, getCustomApiSchemaById, type CustomApiSchema } from '@/services/customApiSchema.service'
 import { Spinner } from '@/components/atoms/spinner'
-import type { PluginApiInstance } from '@/services/pluginApiInstance.service'
+import type { CustomApiSet } from '@/services/customApiSet.service'
 import DaImportFile from '@/components/atoms/DaImportFile'
 import { uploadFileService } from '@/services/upload.service'
 import { TbPhotoEdit } from 'react-icons/tb'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 
-interface PluginApiInstanceFormProps {
+interface CustomApiSetFormProps {
   open: boolean
   onClose: () => void
-  onSave: (data: Partial<PluginApiInstance>) => Promise<void>
-  initialData?: PluginApiInstance
+  onSave: (data: Partial<CustomApiSet>) => Promise<void>
+  initialData?: CustomApiSet
 }
 
-const PluginApiInstanceForm: React.FC<PluginApiInstanceFormProps> = ({
+const CustomApiSetForm: React.FC<CustomApiSetFormProps> = ({
   open,
   onClose,
   onSave,
@@ -44,11 +44,11 @@ const PluginApiInstanceForm: React.FC<PluginApiInstanceFormProps> = ({
   const { toast } = useToast()
   const isEditMode = !!initialData
   const [step, setStep] = useState<1 | 2>(isEditMode ? 2 : 1)
-  const [selectedPluginAPI, setSelectedPluginAPI] = useState<PluginAPI | null>(null)
-  const [formData, setFormData] = useState<Partial<PluginApiInstance>>({
+  const [selectedCustomApiSchema, setSelectedCustomApiSchema] = useState<CustomApiSchema | null>(null)
+  const [formData, setFormData] = useState<Partial<CustomApiSet>>({
     name: '',
     description: '',
-    scope: 'system', // Force system scope for admin-created instances
+    scope: 'system', // Force system scope for admin-created sets
     avatar: '',
     provider_url: '',
     data: {
@@ -59,24 +59,24 @@ const PluginApiInstanceForm: React.FC<PluginApiInstanceFormProps> = ({
   const [isSaving, setIsSaving] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const { data: pluginAPIs, isLoading: isLoadingAPIs } = useQuery({
-    queryKey: ['plugin-apis'],
-    queryFn: () => listPluginAPIs({ limit: 100, page: 1, is_active: true }),
+  const { data: customApiSchemas, isLoading: isLoadingSchemas } = useQuery({
+    queryKey: ['custom-api-schemas'],
+    queryFn: () => listCustomApiSchemas({ limit: 100, page: 1, is_active: true }),
     enabled: open && step === 1,
   })
 
-  // Extract plugin_api ID - handle both populated object and string ID
-  const pluginApiId = initialData?.plugin_api 
-    ? (typeof initialData.plugin_api === 'string' 
-        ? initialData.plugin_api 
-        : (initialData.plugin_api as any).id || (initialData.plugin_api as any)._id || initialData.plugin_api)
+  // Extract custom_api_schema ID - handle both populated object and string ID
+  const customApiSchemaId = initialData?.custom_api_schema 
+    ? (typeof initialData.custom_api_schema === 'string' 
+        ? initialData.custom_api_schema 
+        : (initialData.custom_api_schema as any).id || (initialData.custom_api_schema as any)._id || initialData.custom_api_schema)
     : null
 
-  // Load PluginAPI data when editing
-  const { data: pluginAPIData } = useQuery({
-    queryKey: ['plugin-api', pluginApiId],
-    queryFn: () => getPluginAPIById(pluginApiId!),
-    enabled: !!pluginApiId && open,
+  // Load CustomApiSchema data when editing
+  const { data: customApiSchemaData } = useQuery({
+    queryKey: ['custom-api-schema', customApiSchemaId],
+    queryFn: () => getCustomApiSchemaById(customApiSchemaId!),
+    enabled: !!customApiSchemaId && open,
   })
 
   // Initialize form data when editing
@@ -88,8 +88,8 @@ const PluginApiInstanceForm: React.FC<PluginApiInstanceFormProps> = ({
         scope: 'system', // Force system scope for admin-created instances
         avatar: initialData.avatar || '',
         provider_url: initialData.provider_url || '',
-        plugin_api: initialData.plugin_api,
-        plugin_api_code: initialData.plugin_api_code,
+        custom_api_schema: initialData.custom_api_schema,
+        custom_api_schema_code: initialData.custom_api_schema_code,
         data: initialData.data || { items: [], metadata: {} },
       })
       setStep(2) // Skip step 1 when editing
@@ -107,32 +107,32 @@ const PluginApiInstanceForm: React.FC<PluginApiInstanceFormProps> = ({
         },
       })
       setStep(1)
-      setSelectedPluginAPI(null)
+      setSelectedCustomApiSchema(null)
     }
   }, [initialData, open])
 
-  // Set selected PluginAPI when editing
+  // Set selected CustomApiSchema when editing
   useEffect(() => {
-    if (pluginAPIData && open) {
-      setSelectedPluginAPI(pluginAPIData)
+    if (customApiSchemaData && open) {
+      setSelectedCustomApiSchema(customApiSchemaData)
     }
-  }, [pluginAPIData, open])
+  }, [customApiSchemaData, open])
 
   const handleStep1Next = () => {
-    if (!selectedPluginAPI) {
-      setErrors({ plugin_api: 'Please select a PluginAPI schema' })
+    if (!selectedCustomApiSchema) {
+      setErrors({ custom_api_schema: 'Please select a CustomApiSchema schema' })
       return
     }
     setErrors({})
     setFormData((prev) => ({
       ...prev,
-      plugin_api: selectedPluginAPI.id,
-      plugin_api_code: selectedPluginAPI.code,
+      custom_api_schema: selectedCustomApiSchema.id,
+      custom_api_schema_code: selectedCustomApiSchema.code,
     }))
     setStep(2)
   }
 
-  const handleChange = (field: keyof PluginApiInstance, value: any) => {
+  const handleChange = (field: keyof CustomApiSet, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
     if (errors[field]) {
       setErrors((prev) => {
@@ -150,8 +150,8 @@ const PluginApiInstanceForm: React.FC<PluginApiInstanceFormProps> = ({
       newErrors.name = 'Name is required'
     }
 
-    if (!formData.plugin_api) {
-      newErrors.plugin_api = 'PluginAPI is required'
+    if (!formData.custom_api_schema) {
+      newErrors.custom_api_schema = 'CustomApiSchema is required'
     }
 
     // Scope is always 'system' for admin-created instances, no validation needed
@@ -179,7 +179,7 @@ const PluginApiInstanceForm: React.FC<PluginApiInstanceFormProps> = ({
   const handleClose = () => {
     if (!isEditMode) {
       setStep(1)
-      setSelectedPluginAPI(null)
+      setSelectedCustomApiSchema(null)
     }
     setFormData({
       name: '',
@@ -208,7 +208,7 @@ const PluginApiInstanceForm: React.FC<PluginApiInstanceFormProps> = ({
           {step === 1 && (
             <div className="space-y-4">
               <div>
-                <h3 className="text-lg font-semibold mb-2">Step 1: Select PluginAPI Schema</h3>
+                <h3 className="text-lg font-semibold mb-2">Step 1: Select CustomApiSchema Schema</h3>
                 <p className="text-sm text-muted-foreground mb-4">
                   Choose the API schema this instance will be based on
                 </p>
@@ -220,15 +220,15 @@ const PluginApiInstanceForm: React.FC<PluginApiInstanceFormProps> = ({
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {pluginAPIs?.results?.map((api: PluginAPI) => (
+                  {customApiSchemas?.results?.map((schema: CustomApiSchema) => (
                     <div
                       key={api.id}
                       onClick={() => {
-                        setSelectedPluginAPI(api)
+                        setSelectedCustomApiSchema(schema)
                         setErrors({})
                       }}
                       className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                        selectedPluginAPI?.id === api.id
+                        selectedCustomApiSchema?.id === schema.id
                           ? 'border-primary bg-primary/5'
                           : 'border-border hover:bg-muted/50'
                       }`}
@@ -261,16 +261,16 @@ const PluginApiInstanceForm: React.FC<PluginApiInstanceFormProps> = ({
                       </div>
                     </div>
                   ))}
-                  {!pluginAPIs?.results?.length && (
+                  {!customApiSchemas?.results?.length && (
                     <div className="text-center py-8 text-sm text-muted-foreground">
-                      No active PluginAPI schemas available. Please create one first.
+                      No active CustomApiSchema schemas available. Please create one first.
                     </div>
                   )}
                 </div>
               )}
 
-              {errors.plugin_api && (
-                <p className="text-sm text-destructive">{errors.plugin_api}</p>
+              {errors.custom_api_schema && (
+                <p className="text-sm text-destructive">{errors.custom_api_schema}</p>
               )}
             </div>
           )}
@@ -280,7 +280,7 @@ const PluginApiInstanceForm: React.FC<PluginApiInstanceFormProps> = ({
               <div>
                 <h3 className="text-lg font-semibold mb-2">{isEditMode ? 'Instance Details' : 'Step 2: Instance Details'}</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Based on: <span className="font-semibold">{selectedPluginAPI?.name || pluginAPIData?.name || initialData?.plugin_api_code}</span> ({selectedPluginAPI?.code || pluginAPIData?.code || initialData?.plugin_api_code})
+                  Based on: <span className="font-semibold">{selectedCustomApiSchema?.name || customApiSchemaData?.name || initialData?.custom_api_schema_code}</span> ({selectedCustomApiSchema?.code || customApiSchemaData?.code || initialData?.custom_api_schema_code})
                 </p>
               </div>
 
@@ -396,7 +396,7 @@ const PluginApiInstanceForm: React.FC<PluginApiInstanceFormProps> = ({
             Cancel
           </Button>
           {step === 1 ? (
-            <Button onClick={handleStep1Next} disabled={!selectedPluginAPI || isLoadingAPIs}>
+            <Button onClick={handleStep1Next} disabled={!selectedCustomApiSchema || isLoadingSchemas}>
               Next
             </Button>
           ) : (
@@ -410,5 +410,5 @@ const PluginApiInstanceForm: React.FC<PluginApiInstanceFormProps> = ({
   )
 }
 
-export default PluginApiInstanceForm
+export default CustomApiSetForm
 

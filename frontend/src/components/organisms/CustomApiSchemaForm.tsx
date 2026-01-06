@@ -23,7 +23,7 @@ import JsonEditor from '@/components/atoms/JsonEditor'
 import { cn } from '@/lib/utils'
 import { getTypeColor } from '@/utils/typeColors'
 import { TbPhoto } from 'react-icons/tb'
-import type { PluginAPI } from '@/services/pluginApi.service'
+import type { CustomApiSchema } from '@/services/customApiSchema.service'
 
 // Skeleton data for preview
 const SKELETON_ITEMS = [
@@ -241,20 +241,20 @@ const ListViewStyleConfigurator: React.FC<ListViewStyleConfiguratorProps> = ({
   )
 }
 
-interface PluginApiFormProps {
+interface CustomApiSchemaFormProps {
   open: boolean
   onClose: () => void
-  onSave: (data: Partial<PluginAPI>) => Promise<void>
-  initialData?: PluginAPI
+  onSave: (data: Partial<CustomApiSchema>) => Promise<void>
+  initialData?: CustomApiSchema
 }
 
-const PluginApiForm: React.FC<PluginApiFormProps> = ({
+const CustomApiSchemaForm: React.FC<CustomApiSchemaFormProps> = ({
   open,
   onClose,
   onSave,
   initialData,
 }) => {
-  const [formData, setFormData] = useState<Partial<PluginAPI>>({
+  const [formData, setFormData] = useState<Partial<CustomApiSchema>>({
     name: '',
     description: '',
     type: 'list',
@@ -323,8 +323,8 @@ const PluginApiForm: React.FC<PluginApiFormProps> = ({
       .replace(/^_+|_+$/g, '') // Remove leading/trailing underscores
   }
 
-  const handleChange = (field: keyof PluginAPI, value: any) => {
-    const updates: Partial<PluginAPI> = { [field]: value }
+  const handleChange = (field: keyof CustomApiSchema, value: any) => {
+    const updates: Partial<CustomApiSchema> = { [field]: value }
     
     // Auto-generate code from name
     if (field === 'name' && !initialData) {
@@ -465,7 +465,7 @@ const PluginApiForm: React.FC<PluginApiFormProps> = ({
               </Label>
               <Select
                 value={formData.type}
-                onValueChange={(value: PluginAPI['type']) =>
+                onValueChange={(value: CustomApiSchema['type']) =>
                   handleChange('type', value)
                 }
               >
@@ -590,5 +590,5 @@ const PluginApiForm: React.FC<PluginApiFormProps> = ({
   )
 }
 
-export default PluginApiForm
+export default CustomApiSchemaForm
 

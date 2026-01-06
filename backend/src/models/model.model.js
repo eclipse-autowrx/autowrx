@@ -101,9 +101,9 @@ const modelSchema = new mongoose.Schema(
       type: mongoose.SchemaTypes.Mixed,
       default: null,
     },
-    plugin_api_instances: {
+    custom_api_sets: {
       type: [mongoose.SchemaTypes.ObjectId],
-      ref: 'PluginApiInstance',
+      ref: 'CustomApiSet',
       default: [],
     },
   },

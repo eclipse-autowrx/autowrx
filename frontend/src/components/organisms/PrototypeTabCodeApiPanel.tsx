@@ -19,8 +19,8 @@ import useCurrentModel from '@/hooks/useCurrentModel'
 import { UspSeviceList, ServiceDetail } from '@/components/organisms/ViewApiUSP'
 import { V2CApiList, ApiDetail, DEFAULT_V2C } from '@/components/organisms/ViewApiV2C'
 import { useQuery } from '@tanstack/react-query'
-import { getPluginApiInstanceById } from '@/services/pluginApiInstance.service'
-import { getPluginAPIById } from '@/services/pluginApi.service'
+import { getCustomApiSetById } from '@/services/customApiSet.service'
+import { getCustomApiSchemaById } from '@/services/customApiSchema.service'
 import CustomAPIList from '@/components/organisms/CustomAPIList'
 import CustomAPIView from '@/components/organisms/CustomAPIView'
 import { Spinner } from '@/components/atoms/spinner'
@@ -162,57 +162,57 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   >('used-signals')
   const { data: model } = useCurrentModel()
   
-  // Get PluginApiInstance IDs from model
-  const pluginApiInstanceIds = useMemo(() => {
-    return (model?.plugin_api_instances || []).map((id: any) => {
+  // Get CustomApiSet IDs from model
+  const customApiSetIds = useMemo(() => {
+    return (model?.custom_api_sets || []).map((id: any) => {
       if (typeof id === 'string') return id
       if (id && typeof id === 'object' && 'toString' in id) return id.toString()
       return String(id)
     }).filter((id: any): id is string => 
       !!id && typeof id === 'string' && id !== '[object Object]' && id !== 'undefined' && id !== 'null'
     )
-  }, [model?.plugin_api_instances])
+  }, [model?.custom_api_sets])
   
-  // Determine if current tab is a PluginApiInstance tab
-  const isPluginInstanceTab = tab.startsWith('plugin-instance-')
-  const activePluginInstanceId = isPluginInstanceTab ? tab.replace('plugin-instance-', '') : null
+  // Determine if current tab is a CustomApiSet tab
+  const isCustomApiSetTab = tab.startsWith('custom-api-set-')
+  const activeCustomApiSetId = isCustomApiSetTab ? tab.replace('custom-api-set-', '') : null
   
-  // Fetch active PluginApiInstance data
-  const { data: activePluginInstance, isLoading: isLoadingInstance } = useQuery({
-    queryKey: ['plugin-api-instance', activePluginInstanceId],
-    queryFn: () => getPluginApiInstanceById(activePluginInstanceId!),
-    enabled: !!activePluginInstanceId,
+  // Fetch active CustomApiSet data
+  const { data: activeCustomApiSet, isLoading: isLoadingSet } = useQuery({
+    queryKey: ['custom-api-set', activeCustomApiSetId],
+    queryFn: () => getCustomApiSetById(activeCustomApiSetId!),
+    enabled: !!activeCustomApiSetId,
   })
   
-  // Extract plugin_api ID from instance
-  const pluginApiId = activePluginInstance?.plugin_api
-    ? typeof activePluginInstance.plugin_api === 'string'
-      ? activePluginInstance.plugin_api
-      : (activePluginInstance.plugin_api as any).id || (activePluginInstance.plugin_api as any)._id || activePluginInstance.plugin_api
+  // Extract custom_api_schema ID from set
+  const customApiSchemaId = activeCustomApiSet?.custom_api_schema
+    ? typeof activeCustomApiSet.custom_api_schema === 'string'
+      ? activeCustomApiSet.custom_api_schema
+      : (activeCustomApiSet.custom_api_schema as any).id || (activeCustomApiSet.custom_api_schema as any)._id || activeCustomApiSet.custom_api_schema
     : null
   
-  // Fetch PluginAPI schema
-  const { data: activePluginAPI, isLoading: isLoadingSchema } = useQuery({
-    queryKey: ['plugin-api', pluginApiId],
-    queryFn: () => getPluginAPIById(pluginApiId!),
-    enabled: !!pluginApiId,
+  // Fetch CustomApiSchema schema
+  const { data: activeCustomApiSchema, isLoading: isLoadingSchema } = useQuery({
+    queryKey: ['custom-api-schema', customApiSchemaId],
+    queryFn: () => getCustomApiSchemaById(customApiSchemaId!),
+    enabled: !!customApiSchemaId,
   })
+
+  // State for selected API item in CustomApiSet view
+  const [selectedCustomApiItemId, setSelectedCustomApiItemId] = useState<string | null>(null)
   
-  // State for selected API item in PluginApiInstance view
-  const [selectedPluginApiItemId, setSelectedPluginApiItemId] = useState<string | null>(null)
-  
-  const pluginApiItems = activePluginInstance?.data?.items || []
-  const selectedPluginApiItem = selectedPluginApiItemId 
-    ? pluginApiItems.find((item: any) => item.id === selectedPluginApiItemId) 
+  const customApiItems = activeCustomApiSet?.data?.items || []
+  const selectedCustomApiItem = selectedCustomApiItemId 
+    ? customApiItems.find((item: any) => item.id === selectedCustomApiItemId) 
     : null
   
   // Extract method options for filter
   const getMethodOptions = (): string[] => {
-    if (!activePluginAPI?.schema) return []
+    if (!activeCustomApiSchema?.schema) return []
     try {
-      const schemaObj = typeof activePluginAPI.schema === 'string' 
-        ? JSON.parse(activePluginAPI.schema) 
-        : activePluginAPI.schema
+      const schemaObj = typeof activeCustomApiSchema.schema === 'string' 
+        ? JSON.parse(activeCustomApiSchema.schema) 
+        : activeCustomApiSchema.schema
       
       const itemSchema = schemaObj.type === 'array' ? schemaObj.items : schemaObj
       const methodProperty = itemSchema?.properties?.method
@@ -233,7 +233,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
       state.activeModelV2CApis,
     ])
   
-  // Check if USP or V2C are available (for backward compatibility, but we'll prioritize PluginApiInstances)
+  // Check if USP or V2C are available (for backward compatibility, but we'll prioritize CustomApiSets)
   const hasUSP = activeModelUspSevices && activeModelUspSevices.length > 0
   const hasV2C = activeModelV2CApis && activeModelV2CApis.length > 0
 
@@ -249,7 +249,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   )
 
   const [useApis, setUseApis] = useState<any[]>([])
-  const [usedPluginApiItems, setUsedPluginApiItems] = useState<Map<string, any[]>>(new Map()) // Map of instanceId -> used items
+  const [usedCustomApiItems, setUsedCustomApiItems] = useState<Map<string, any[]>>(new Map()) // Map of setId -> used items
   const [activeApi, setActiveApi] = useState<any>()
   const [popupApi, setPopupApi] = useState<boolean>(false)
   const [activeService, setActiveService] = useState<any>(null)
@@ -269,29 +269,29 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
     setUseApis(useList)
   }, [code, activeModelApis])
 
-  // Fetch all PluginApiInstances for "Used APIs" tab
-  const pluginInstanceQueries = useQuery({
-    queryKey: ['plugin-api-instances', pluginApiInstanceIds.join(',')],
+  // Fetch all CustomApiSets for "Used APIs" tab
+  const customApiSetQueries = useQuery({
+    queryKey: ['custom-api-sets', customApiSetIds.join(',')],
     queryFn: async () => {
-      const instances = await Promise.all(
-        pluginApiInstanceIds.map((id) => getPluginApiInstanceById(id))
+      const sets = await Promise.all(
+        customApiSetIds.map((id) => getCustomApiSetById(id))
       )
-      return instances
+      return sets
     },
-    enabled: pluginApiInstanceIds.length > 0,
+    enabled: customApiSetIds.length > 0,
   })
 
-  // Check for used PluginApiInstance APIs in code
+  // Check for used CustomApiSet APIs in code
   useEffect(() => {
-    if (!code || !pluginInstanceQueries.data || pluginInstanceQueries.data.length === 0) {
-      setUsedPluginApiItems(new Map())
+    if (!code || !customApiSetQueries.data || customApiSetQueries.data.length === 0) {
+      setUsedCustomApiItems(new Map())
       return
     }
 
     const usedItemsMap = new Map<string, any[]>()
     
-    pluginInstanceQueries.data.forEach((instance) => {
-      const items = instance?.data?.items || []
+    customApiSetQueries.data.forEach((set) => {
+      const items = set?.data?.items || []
       const usedItems: any[] = []
       
       items.forEach((item: any) => {
@@ -304,12 +304,12 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
       })
       
       if (usedItems.length > 0) {
-        usedItemsMap.set(instance.id, usedItems)
+        usedItemsMap.set(set.id, usedItems)
       }
     })
     
-    setUsedPluginApiItems(usedItemsMap)
-  }, [code, pluginInstanceQueries.data])
+    setUsedCustomApiItems(usedItemsMap)
+  }, [code, customApiSetQueries.data])
 
   const onApiClicked = (api: any) => {
     if (!api) return
@@ -384,18 +384,18 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
                 V2C
               </DaTabItem>
             )}
-            {/* PluginApiInstance tabs */}
-            {pluginApiInstanceIds.map((instanceId) => {
-              const tabId = `plugin-instance-${instanceId}`
+            {/* CustomApiSet tabs */}
+            {customApiSetIds.map((setId) => {
+              const tabId = `custom-api-set-${setId}`
               return (
-                <PluginApiInstanceTab
-                  key={instanceId}
-                  instanceId={instanceId}
+                <CustomApiSetTab
+                  key={setId}
+                  setId={setId}
                   active={tab === tabId}
                   onClick={(e) => {
                     e.preventDefault()
                     setTab(tabId)
-                    setSelectedPluginApiItemId(null) // Reset selection when switching tabs
+                    setSelectedCustomApiItemId(null) // Reset selection when switching tabs
                   }}
                 />
               )
@@ -421,22 +421,22 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
                   />
                 ))}
               
-              {/* PluginApiInstance sections */}
-              {Array.from(usedPluginApiItems.entries()).map(([instanceId, items]) => {
-                const instance = pluginInstanceQueries.data?.find((inst) => inst.id === instanceId)
-                const instanceName = instance?.name || instanceId
+              {/* CustomApiSet sections */}
+              {Array.from(usedCustomApiItems.entries()).map(([setId, items]) => {
+                const set = customApiSetQueries.data?.find((s) => s.id === setId)
+                const setName = set?.name || setId
                 
                 return (
-                  <React.Fragment key={instanceId}>
+                  <React.Fragment key={setId}>
                     <div className='mt-4'></div>
-                    <span className="text-sm font-semibold">{instanceName}:</span>
+                    <span className="text-sm font-semibold">{setName}:</span>
                     {items.map((item: any, index: number) => (
                       <div
-                        key={`${instanceId}-${item.id}-${index}`}
+                        key={`${setId}-${item.id}-${index}`}
                         className="flex items-center py-1 px-2 hover:bg-muted rounded cursor-pointer"
                         onClick={() => {
-                          setTab(`plugin-instance-${instanceId}`)
-                          setSelectedPluginApiItemId(item.id)
+                          setTab(`custom-api-set-${setId}`)
+                          setSelectedCustomApiItemId(item.id)
                         }}
                       >
                         <span className="text-sm">{item.id || item.path || 'Unknown API'}</span>
@@ -492,18 +492,18 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
         </div>
       )}
 
-      {/* PluginApiInstance tab - 50/50 layout */}
-      {isPluginInstanceTab && (
+      {/* CustomApiSet tab - 50/50 layout */}
+      {isCustomApiSetTab && (
         <div className="w-full flex flex-col h-full min-h-0">
-          {isLoadingInstance || isLoadingSchema ? (
+          {isLoadingSet || isLoadingSchema ? (
             <div className="flex items-center justify-center h-full">
               <Spinner className="mr-2" />
-              <span className="text-sm font-medium text-muted-foreground">Loading API instance...</span>
+              <span className="text-sm font-medium text-muted-foreground">Loading API set...</span>
             </div>
-          ) : !activePluginInstance || !activePluginAPI ? (
+          ) : !activeCustomApiSet || !activeCustomApiSchema ? (
             <div className="flex items-center justify-center h-full">
               <span className="text-sm font-medium text-muted-foreground">
-                Instance or schema not found.
+                Set or schema not found.
               </span>
             </div>
           ) : (
@@ -511,27 +511,27 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
               {/* Top 50%: API List */}
               <div className="w-full h-1/2 flex flex-col min-h-0 border-b border-border">
                 <CustomAPIList
-                  items={pluginApiItems}
-                  selectedItemId={selectedPluginApiItemId}
-                  onSelectItem={setSelectedPluginApiItemId}
-                  schema={activePluginAPI}
+                  items={customApiItems}
+                  selectedItemId={selectedCustomApiItemId}
+                  onSelectItem={setSelectedCustomApiItemId}
+                  schema={activeCustomApiSchema}
                   mode="view"
                   filterOptions={{
                     typeField: 'method',
                     typeOptions: getMethodOptions(),
                   }}
-                  footerImage={activePluginInstance?.avatar}
-                  providerUrl={activePluginInstance?.provider_url}
+                  footerImage={activeCustomApiSet?.avatar}
+                  providerUrl={activeCustomApiSet?.provider_url}
                 />
               </div>
               
               {/* Bottom 50%: API Detail View */}
               <div className="w-full h-1/2 flex flex-col min-h-0">
-                {selectedPluginApiItem ? (
+                {selectedCustomApiItem ? (
                   <CustomAPIView
-                    item={selectedPluginApiItem}
-                    schema={activePluginAPI.schema}
-                    itemId={selectedPluginApiItem.id}
+                    item={selectedCustomApiItem}
+                    schema={activeCustomApiSchema.schema}
+                    itemId={selectedCustomApiItem.id}
                     excludeFields={['id', 'path', 'parent_id', 'relationships']}
                   />
                 ) : (
@@ -548,18 +548,19 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   )
 }
 
-// Helper component for PluginApiInstance tab
-interface PluginApiInstanceTabProps {
-  instanceId: string
+// Helper component for CustomApiSet tab
+interface CustomApiSetTabProps {
+  setId: string
   active: boolean
   onClick: (e: React.MouseEvent) => void
 }
 
-const PluginApiInstanceTab: FC<PluginApiInstanceTabProps> = ({ instanceId, active, onClick }) => {
-  const { data: instance } = useQuery({
-    queryKey: ['plugin-api-instance', instanceId],
-    queryFn: () => getPluginApiInstanceById(instanceId),
-    enabled: !!instanceId,
+const CustomApiSetTab: FC<CustomApiSetTabProps> = ({ setId, active, onClick }) => {
+  const { data: set } = useQuery({
+    queryKey: ['custom-api-set-tab-name', setId],
+    queryFn: () => getCustomApiSetById(setId),
+    enabled: !!setId,
+    staleTime: Infinity, // Set names don't change often
   })
   
   return (
@@ -568,7 +569,7 @@ const PluginApiInstanceTab: FC<PluginApiInstanceTabProps> = ({ instanceId, activ
       to="#"
       onClick={onClick}
     >
-      {instance?.name || 'Loading...'}
+      {set?.name || 'Loading...'}
     </DaTabItem>
   )
 }

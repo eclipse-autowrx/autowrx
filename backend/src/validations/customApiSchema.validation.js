@@ -22,7 +22,7 @@ const listViewConfigSchema = Joi.object().keys({
   type: Joi.string().trim().allow('', null),
 }).allow(null);
 
-const createPluginAPI = {
+const createCustomApiSchema = {
   body: Joi.object().keys({
     code: Joi.string().required().trim().lowercase().max(100),
     name: Joi.string().required().trim().max(255),
@@ -39,9 +39,9 @@ const createPluginAPI = {
   }),
 };
 
-const updatePluginAPI = {
+const updateCustomApiSchema = {
   params: Joi.object().keys({
-    pluginApiId: Joi.string().custom(objectId).required(),
+    customApiSchemaId: Joi.string().custom(objectId).required(),
   }),
   body: Joi.object()
     .keys({
@@ -61,19 +61,19 @@ const updatePluginAPI = {
     .min(1),
 };
 
-const getPluginAPI = {
+const getCustomApiSchema = {
   params: Joi.object().keys({
-    pluginApiId: Joi.string().custom(objectId).required(),
+    customApiSchemaId: Joi.string().custom(objectId).required(),
   }),
 };
 
-const deletePluginAPI = {
+const deleteCustomApiSchema = {
   params: Joi.object().keys({
-    pluginApiId: Joi.string().custom(objectId).required(),
+    customApiSchemaId: Joi.string().custom(objectId).required(),
   }),
 };
 
-const listPluginAPIs = {
+const listCustomApiSchemas = {
   query: Joi.object().keys({
     code: Joi.string().trim().lowercase(),
     type: Joi.string().valid('tree', 'list', 'graph'),
@@ -85,10 +85,10 @@ const listPluginAPIs = {
 };
 
 module.exports = {
-  createPluginAPI,
-  updatePluginAPI,
-  getPluginAPI,
-  deletePluginAPI,
-  listPluginAPIs,
+  createCustomApiSchema,
+  updateCustomApiSchema,
+  getCustomApiSchema,
+  deleteCustomApiSchema,
+  listCustomApiSchemas,
 };
 

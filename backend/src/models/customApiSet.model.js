@@ -9,14 +9,14 @@
 const mongoose = require('mongoose');
 const { toJSON, paginate } = require('./plugins');
 
-const pluginApiInstanceSchema = mongoose.Schema(
+const customApiSetSchema = mongoose.Schema(
   {
-    plugin_api: {
+    custom_api_schema: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'PluginAPI',
+      ref: 'CustomApiSchema',
       required: true,
     },
-    plugin_api_code: {
+    custom_api_schema_code: {
       type: String,
       required: true,
       trim: true,
@@ -83,7 +83,7 @@ const pluginApiInstanceSchema = mongoose.Schema(
               },
             },
           ],
-          // Dynamic fields based on PluginAPI.attributes will be stored here
+          // Dynamic fields based on CustomApiSchema.attributes will be stored here
         },
       ],
       metadata: {
@@ -104,22 +104,22 @@ const pluginApiInstanceSchema = mongoose.Schema(
   },
   {
     timestamps: true,
-    strict: false, // Allow dynamic fields in items (name, value, etc. based on PluginAPI attributes)
+    strict: false, // Allow dynamic fields in items (name, value, etc. based on CustomApiSchema attributes)
   }
 );
 
-pluginApiInstanceSchema.plugin(toJSON);
-pluginApiInstanceSchema.plugin(paginate);
+customApiSetSchema.plugin(toJSON);
+customApiSetSchema.plugin(paginate);
 
 // Compound indexes for efficient queries
-pluginApiInstanceSchema.index({ plugin_api_code: 1, scope: 1 });
-pluginApiInstanceSchema.index({ owner: 1, scope: 1 });
-pluginApiInstanceSchema.index({ plugin_api: 1 });
+customApiSetSchema.index({ custom_api_schema_code: 1, scope: 1 });
+customApiSetSchema.index({ owner: 1, scope: 1 });
+customApiSetSchema.index({ custom_api_schema: 1 });
 
 /**
- * @typedef PluginApiInstance
+ * @typedef CustomApiSet
  */
-const PluginApiInstance = mongoose.model('PluginApiInstance', pluginApiInstanceSchema);
+const CustomApiSet = mongoose.model('CustomApiSet', customApiSetSchema);
 
-module.exports = PluginApiInstance;
+module.exports = CustomApiSet;
 
