@@ -904,7 +904,10 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     ): FileSystemItem[] => {
       return items.map((i) => {
         const itemPath = currentPath ? `${currentPath}/${i.name}` : i.name
-        if (i.name === parent.name && i.type === 'folder') {
+        if (
+          (i.name === parent.name || (!i.path && parent.path === 'root')) &&
+          i.type === 'folder'
+        ) {
           // Add path to the new item
           const itemWithPath = {
             ...item,
