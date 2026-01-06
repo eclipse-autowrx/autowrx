@@ -754,8 +754,12 @@ const FileTree: React.FC<FileTreeProps> = ({
     setNewName('')
   }
 
-  const handleCreateItem = (parent: Folder, type: 'file' | 'folder') => {
-    setCreatingItem({ parentPath: parent.name, type })
+  const handleCreateItem = (
+    parent: Folder,
+    parentPath: string,
+    type: 'file' | 'folder',
+  ) => {
+    setCreatingItem({ parentPath: parentPath, type })
     setNewItemName('')
     setOpenDropdown(null)
   }
@@ -768,14 +772,19 @@ const FileTree: React.FC<FileTreeProps> = ({
           ? { type: 'file', name: newItemName.trim(), content: '' }
           : { type: 'folder', name: newItemName.trim(), items: [] }
 
-      onAddItem(
-        creatingItem.parentPath === 'root'
-          ? { type: 'folder', name: 'root', items: items }
-          : (items.find(
-              (item) => item.name === creatingItem.parentPath,
-            ) as Folder),
-        newItem,
-      )
+      // Find the parent folder using path-based matching
+      let parentFolder: Folder
+      if (
+        creatingItem.parentPath === 'root' ||
+        creatingItem.parentPath === ''
+      ) {
+        parentFolder = { type: 'folder', name: 'root', items: items }
+      } else {
+        const found = findFolderByPath(creatingItem.parentPath)
+        parentFolder = found || { type: 'folder', name: 'root', items: items }
+      }
+
+      onAddItem(parentFolder, newItem)
     }
     setCreatingItem(null)
     setNewItemName('')
@@ -1164,7 +1173,9 @@ const FileTree: React.FC<FileTreeProps> = ({
               onContextMenu={(e) => handleContextMenu(e, item, itemPath)}
               onDragOver={(e) => handleFolderDragOver(e, itemPath)} // Use path instead of name
               onDragLeave={handleFolderDragLeave}
-              onDrop={(e) => handleDrop(e, item as Folder)}
+              onDrop={(e) =>
+                handleDrop(e, { ...item, path: itemPath } as Folder)
+              }
               draggable
               onDragStart={() => handleItemDragStart(item, itemPath)}
             >
@@ -1197,7 +1208,7 @@ const FileTree: React.FC<FileTreeProps> = ({
           )}
 
           {/* Inline creation input */}
-          {creatingItem && creatingItem.parentPath === item.name && (
+          {creatingItem && creatingItem.parentPath === itemPath && (
             <div
               className="flex items-center py-[1px] px-2 text-gray-700 text-[13px]"
               style={{ paddingLeft: `${(depth + 1) * 16 + 8}px` }}
@@ -1382,7 +1393,11 @@ const FileTree: React.FC<FileTreeProps> = ({
                   className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
                   onClick={() => {
                     if (openDropdown && openDropdown.item.type === 'folder') {
-                      handleCreateItem(openDropdown.item as Folder, 'file')
+                      handleCreateItem(
+                        openDropdown.item as Folder,
+                        openDropdown.path,
+                        'file',
+                      )
                     }
                   }}
                 >
@@ -1393,7 +1408,11 @@ const FileTree: React.FC<FileTreeProps> = ({
                   className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
                   onClick={() => {
                     if (openDropdown && openDropdown.item.type === 'folder') {
-                      handleCreateItem(openDropdown.item as Folder, 'folder')
+                      handleCreateItem(
+                        openDropdown.item as Folder,
+                        openDropdown.path,
+                        'folder',
+                      )
                     }
                   }}
                 >
