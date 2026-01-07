@@ -25,11 +25,12 @@ export interface CustomApiSchema {
   id_format?: string | null
   relationships?: CustomApiSchemaRelationship[]
   tree_config?: any
-  list_view_config?: {
+  display_mapping?: {
     title?: string | null
     description?: string | null
     type?: string | null
     style?: 'compact' | 'badge' | 'badge-image' | null
+    image?: string | null
   } | null
   schema_definition?: any
   version: string

@@ -15,7 +15,7 @@ import {
   updateCustomApiSet,
   type CustomApiSet,
 } from '@/services/customApiSet.service'
-import { listCustomApiSchemas, createCustomApiSchema } from '@/services/customApiSchema.service'
+import { listCustomApiSchemas, getCustomApiSchemaById, createCustomApiSchema, updateCustomApiSchema, type CustomApiSchema } from '@/services/customApiSchema.service'
 import { Button } from '@/components/atoms/button'
 import { TbPencil, TbTrash, TbPlus, TbDotsVertical, TbDownload, TbUpload } from 'react-icons/tb'
 import { Spinner } from '@/components/atoms/spinner'
@@ -28,6 +28,7 @@ import {
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import CustomApiSetForm from '@/components/organisms/CustomApiSetForm'
 import CustomApiSetItemEditor from '@/components/organisms/CustomApiSetItemEditor'
+import CustomApiSchemaForm from '@/components/organisms/CustomApiSchemaForm'
 import {
   Table,
   TableBody,
@@ -50,6 +51,8 @@ const CustomApiSetSection: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingSet, setEditingSet] = useState<CustomApiSet | null>(null)
   const [editingItemsInstanceId, setEditingItemsInstanceId] = useState<string | null>(null)
+  const [isSchemaFormOpen, setIsSchemaFormOpen] = useState(false)
+  const [editingSchema, setEditingSchema] = useState<CustomApiSchema | undefined>()
   const [isImportOpen, setIsImportOpen] = useState(false)
   const [importFile, setImportFile] = useState<File | null>(null)
   const [importInstanceName, setImportInstanceName] = useState('')
@@ -234,7 +237,6 @@ const CustomApiSetSection: React.FC = () => {
           const uploadResult = await uploadFileService(avatarFile)
           avatarUrl = uploadResult.url
         } catch (error) {
-          console.warn('Failed to upload avatar:', error)
           toast({
             title: 'Avatar upload failed',
             description: 'The set was imported but the avatar image could not be uploaded. You can update it manually.',
@@ -359,11 +361,37 @@ const CustomApiSetSection: React.FC = () => {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span className="font-mono text-sm">{set.custom_api_schema_code}</span>
+                    <span 
+                      className="font-mono text-sm cursor-pointer hover:text-primary hover:underline transition-colors"
+                      onClick={async () => {
+                        try {
+                          // Find schema by code
+                          const schemas = await listCustomApiSchemas({ code: set.custom_api_schema_code, limit: 1 })
+                          if (schemas.results && schemas.results.length > 0) {
+                            setEditingSchema(schemas.results[0])
+                            setIsSchemaFormOpen(true)
+                          } else {
+                            toast({
+                              title: 'Schema not found',
+                              description: `Schema with code "${set.custom_api_schema_code}" not found`,
+                              variant: 'destructive',
+                            })
+                          }
+                        } catch (error: any) {
+                          toast({
+                            title: 'Error',
+                            description: error?.message || 'Failed to load schema',
+                            variant: 'destructive',
+                          })
+                        }
+                      }}
+                    >
+                      {set.custom_api_schema_code}
+                    </span>
                   </TableCell>
                   <TableCell>
                     <span 
-                      className="cursor-pointer hover:text-primary transition-colors"
+                      className="cursor-pointer hover:text-primary hover:underline transition-colors"
                       onClick={() => setEditingItemsInstanceId(set.id)}
                     >
                       {set.data?.items?.length || 0}
@@ -579,6 +607,44 @@ const CustomApiSetSection: React.FC = () => {
           </div>
         </div>
       </DaDialog>
+
+      {/* Schema Editor Dialog */}
+      <CustomApiSchemaForm
+        open={isSchemaFormOpen}
+        onClose={() => {
+          setIsSchemaFormOpen(false)
+          setEditingSchema(undefined)
+        }}
+        initialData={editingSchema}
+        onSave={async (formData) => {
+          try {
+            if (editingSchema) {
+              await updateCustomApiSchema(editingSchema.id, formData)
+              toast({
+                title: 'Updated',
+                description: 'API Schema updated successfully',
+              })
+            } else {
+              await createCustomApiSchema(formData)
+              toast({
+                title: 'Created',
+                description: 'API Schema created successfully',
+              })
+            }
+            queryClient.invalidateQueries({ queryKey: ['custom-api-schemas'] })
+            queryClient.invalidateQueries({ queryKey: ['custom-api-sets'] })
+            setIsSchemaFormOpen(false)
+            setEditingSchema(undefined)
+          } catch (error: any) {
+            toast({
+              title: editingSchema ? 'Update failed' : 'Create failed',
+              description: error?.response?.data?.message || error?.message || `Failed to ${editingSchema ? 'update' : 'create'} API Schema`,
+              variant: 'destructive',
+            })
+            throw error
+          }
+        }}
+      />
     </>
   )
 }

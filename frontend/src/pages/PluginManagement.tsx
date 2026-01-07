@@ -100,8 +100,8 @@ const PluginManagement: React.FC = () => {
             <div className="bg-background rounded-lg shadow border border-border">
               {/* Conditionally render only the active section */}
               {activeTab === 'prototype' && <PrototypePluginSection />}
-              {activeTab === 'custom-api-schema' && <CustomApiSchemaSection />}
-              {activeTab === 'custom-api-set' && <CustomApiSetSection />}
+              {activeTab === 'vehicle-api-schema' && <CustomApiSchemaSection />}
+              {activeTab === 'vehicle-api' && <CustomApiSetSection />}
             </div>
           </div>
         </div>

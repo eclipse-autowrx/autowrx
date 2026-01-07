@@ -31,10 +31,11 @@ const ViewCustomApiSet: React.FC<ViewCustomApiSetProps> = ({ instanceId }) => {
     : String(instanceId)
 
   // Fetch set data
-  const { data: set, isLoading: isLoadingSet } = useQuery({
+  const { data: set, isLoading: isLoadingSet, refetch: refetchSet } = useQuery({
     queryKey: ['custom-api-set', normalizedSetId],
     queryFn: () => getCustomApiSetById(normalizedSetId),
     enabled: !!normalizedSetId && normalizedSetId !== '[object Object]',
+    staleTime: 0, // Always refetch when switching tabs
   })
 
   // Extract custom_api_schema ID
@@ -45,32 +46,41 @@ const ViewCustomApiSet: React.FC<ViewCustomApiSetProps> = ({ instanceId }) => {
     : null
 
   // Fetch CustomApiSchema schema
-  const { data: customApiSchema, isLoading: isLoadingSchema } = useQuery({
+  const { data: customApiSchema, isLoading: isLoadingSchema, refetch: refetchSchema } = useQuery({
     queryKey: ['custom-api-schema', customApiSchemaId],
     queryFn: () => getCustomApiSchemaById(customApiSchemaId!),
     enabled: !!customApiSchemaId,
+    staleTime: 0, // Always refetch when switching tabs
   })
 
   const items = set?.data?.items || []
   const selectedItem = selectedItemId ? items.find((item) => item.id === selectedItemId) : null
 
-  // Debug: Log set avatar
+  // Reset selection when switching to a different set (instanceId changes)
   useEffect(() => {
-    if (set) {
-      console.log('ViewCustomApiSet - Full set object:', JSON.stringify(set, null, 2))
-      console.log('ViewCustomApiSet - set.avatar:', set.avatar)
-      console.log('ViewCustomApiSet - typeof set.avatar:', typeof set.avatar)
-      console.log('ViewCustomApiSet - set.avatar truthy?', !!set.avatar)
-      console.log('ViewCustomApiSet - All set keys:', Object.keys(set))
-      // Check if avatar exists with different casing or name
-      console.log('ViewCustomApiSet - set keys containing "avatar" or "image":', 
-        Object.keys(set).filter(k => k.toLowerCase().includes('avatar') || k.toLowerCase().includes('image')))
+    setSelectedItemId(null)
+  }, [normalizedSetId])
+
+  // Refetch data when instanceId changes (tab switching)
+  useEffect(() => {
+    if (normalizedSetId && normalizedSetId !== '[object Object]') {
+      refetchSet()
     }
-  }, [set])
+  }, [normalizedSetId, refetchSet])
+
+  // Refetch schema when customApiSchemaId changes
+  useEffect(() => {
+    if (customApiSchemaId) {
+      refetchSchema()
+    }
+  }, [customApiSchemaId, refetchSchema])
 
   // Handle URL query parameter for active API
   useEffect(() => {
-    if (!items.length) return
+    // Wait for items to be loaded
+    if (!set || isLoadingSet || !items.length) {
+      return
+    }
 
     const apiParam = searchParams.get('api')
     
@@ -81,20 +91,23 @@ const ViewCustomApiSet: React.FC<ViewCustomApiSetProps> = ({ instanceId }) => {
         setSelectedItemId(apiParam)
       } else if (!itemExists) {
         // API param doesn't match any item, select first and update URL
-        const firstItemId = items[0].id
-        setSelectedItemId(firstItemId)
-        setSearchParams({ api: firstItemId }, { replace: true })
+        const firstItemId = items[0]?.id
+        if (firstItemId) {
+          setSelectedItemId(firstItemId)
+          setSearchParams({ api: firstItemId }, { replace: true })
+        }
       }
     } else {
       // If no API param and no selection, select first item
       if (!selectedItemId && items.length > 0) {
-        const firstItemId = items[0].id
-        setSelectedItemId(firstItemId)
-        setSearchParams({ api: firstItemId }, { replace: true })
+        const firstItemId = items[0]?.id
+        if (firstItemId) {
+          setSelectedItemId(firstItemId)
+          setSearchParams({ api: firstItemId }, { replace: true })
+        }
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items.length, searchParams]) // Re-run when items load or URL changes
+  }, [items, set, isLoadingSet, searchParams, selectedItemId, setSearchParams])
 
   // Update URL when item is selected
   const handleSelectItem = (itemId: string) => {
@@ -143,7 +156,7 @@ const ViewCustomApiSet: React.FC<ViewCustomApiSetProps> = ({ instanceId }) => {
   }
 
   return (
-    <div className="flex flex-1 min-h-0 gap-4 h-full">
+    <div className="flex flex-1 min-h-0 h-full">
       {/* Left: API List */}
       <div className="w-1/2 border-r border-border pr-0 flex flex-col min-h-0">
         <CustomAPIList
@@ -162,7 +175,7 @@ const ViewCustomApiSet: React.FC<ViewCustomApiSetProps> = ({ instanceId }) => {
       </div>
 
       {/* Right: API Detail View */}
-      <div className="w-1/2 pl-0 flex flex-col min-h-0">
+      <div className="w-1/2 flex flex-col min-h-0">
         {selectedItem ? (
           <CustomAPIView
             item={selectedItem}

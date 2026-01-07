@@ -18,12 +18,14 @@ interface ModelApiTabsProps {
   customApiSetIds?: string[]
   onAddInstance?: () => void
   isModelOwner?: boolean
+  covesaApiCount?: number // Count of COVESA APIs
 }
 
 const ModelApiTabs: FC<ModelApiTabsProps> = ({
   customApiSetIds = [],
   onAddInstance,
   isModelOwner = false,
+  covesaApiCount = 0,
 }) => {
   const { model_id, instance_id } = useParams<{ model_id: string; instance_id?: string }>()
 
@@ -68,6 +70,11 @@ const ModelApiTabs: FC<ModelApiTabsProps> = ({
       >
         <TbApi className="w-5 h-5 mr-2" />
         COVESA API
+        {covesaApiCount > 0 && (
+          <div className="flex min-w-5 px-1.5 py-0.5 items-center justify-center text-xs ml-1 bg-gray-200 rounded-md">
+            {covesaApiCount}
+          </div>
+        )}
       </DaTabItem>
 
       {/* Dynamic set tabs */}
@@ -80,6 +87,7 @@ const ModelApiTabs: FC<ModelApiTabsProps> = ({
           : String(set.id)
         
         const isActive = instance_id === setIdString
+        const itemCount = set.data?.items?.length || 0
         return (
           <DaTabItem
             key={`set-${setIdString}`}
@@ -87,6 +95,11 @@ const ModelApiTabs: FC<ModelApiTabsProps> = ({
             to={`/model/${model_id}/api/${setIdString}`}
           >
             {set.name}
+            {itemCount > 0 && (
+              <div className="flex min-w-5 px-1.5 py-0.5 items-center justify-center text-xs ml-1 bg-gray-200 rounded-md">
+                {itemCount}
+              </div>
+            )}
           </DaTabItem>
         )
       })}

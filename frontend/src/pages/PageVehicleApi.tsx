@@ -646,7 +646,10 @@ const PageVehicleApi = () => {
 
   const { data: model, refetch: refetchModel } = useCurrentModel()
   const [hasWritePermission] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model_id])
-  const [refreshModel] = useModelStore((state) => [state.refreshModel])
+  const [refreshModel, activeModelApis] = useModelStore((state) => [state.refreshModel, state.activeModelApis])
+  
+  // Get COVESA API count
+  const covesaApiCount = activeModelApis?.length || 0
 
   // Determine active tab based on route
   // If instance_id is 'covesa' or not present (and api param exists for COVESA), show COVESA tab
@@ -718,6 +721,7 @@ const PageVehicleApi = () => {
             customApiSetIds={validSetIds}
             onAddInstance={() => setIsPickerOpen(true)}
             isModelOwner={hasWritePermission}
+            covesaApiCount={covesaApiCount}
           />
         </div>
         <div className="grow"></div>
@@ -728,7 +732,7 @@ const PageVehicleApi = () => {
         {isCovesaTab ? (
           <ViewApiCovesa />
         ) : instance_id ? (
-          <ViewCustomApiSet instanceId={instance_id} />
+          <ViewCustomApiSet key={instance_id} instanceId={instance_id} />
         ) : (
           <ViewApiCovesa />
         )}

@@ -96,15 +96,6 @@ const DynamicSchemaForm: React.FC<DynamicSchemaFormProps> = ({
   const properties = schemaObj?.properties || {}
   const required = schemaObj?.required || []
   
-  // Debug logging
-  React.useEffect(() => {
-    if (schema) {
-      console.log('DynamicSchemaForm - Schema:', schema)
-      console.log('DynamicSchemaForm - Parsed schema:', schemaObj)
-      console.log('DynamicSchemaForm - Properties:', properties)
-      console.log('DynamicSchemaForm - Data:', data)
-    }
-  }, [schema, schemaObj, properties, data])
 
   const handleFieldChange = (fieldName: string, value: any) => {
     const newData = { ...data, [fieldName]: value }
@@ -522,7 +513,7 @@ const DynamicSchemaForm: React.FC<DynamicSchemaFormProps> = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {Object.entries(properties).map(([fieldName, fieldSchema]: [string, any]) =>
         renderField(fieldName, fieldSchema, depth)
       )}

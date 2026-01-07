@@ -31,7 +31,7 @@ export const exportCustomApiSchema = async (schema: CustomApiSchema) => {
       id_format: schema.id_format,
       relationships: schema.relationships,
       tree_config: schema.tree_config,
-      list_view_config: schema.list_view_config,
+      display_mapping: schema.display_mapping,
       version: schema.version,
       is_active: schema.is_active,
     }
@@ -66,7 +66,7 @@ export const exportCustomApiSet = async (set: CustomApiSet) => {
       id_format: schema.id_format,
       relationships: schema.relationships,
       tree_config: schema.tree_config,
-      list_view_config: schema.list_view_config,
+      display_mapping: schema.display_mapping,
       version: schema.version,
       is_active: schema.is_active,
     }
@@ -121,7 +121,6 @@ export const exportCustomApiSet = async (set: CustomApiSet) => {
         
         zip.file(`avatar.${imageExtension}`, imageResponse.data, { binary: true })
       } catch (error) {
-        console.warn('Could not download avatar image:', error)
         // Continue without avatar if download fails
       }
     }
@@ -158,7 +157,7 @@ export const importCustomApiSchemaFromJSON = async (file: File): Promise<Partial
       id_format: data.id_format,
       relationships: data.relationships,
       tree_config: data.tree_config,
-      list_view_config: data.list_view_config,
+      display_mapping: data.display_mapping,
       version: data.version || '1.0.0',
       is_active: data.is_active !== undefined ? data.is_active : true,
     }
@@ -235,7 +234,7 @@ export const importCustomApiSetFromZIP = async (
         id_format: schemaData.id_format,
         relationships: schemaData.relationships,
         tree_config: schemaData.tree_config,
-        list_view_config: schemaData.list_view_config,
+        display_mapping: schemaData.display_mapping,
         version: schemaData.version || '1.0.0',
         is_active: schemaData.is_active !== undefined ? schemaData.is_active : true,
       },

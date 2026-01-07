@@ -13,9 +13,70 @@ import DaFilter from '@/components/atoms/DaFilter'
 import { cn } from '@/lib/utils'
 import { TbPlus, TbTrash, TbSearch } from 'react-icons/tb'
 import { Spinner } from '@/components/atoms/spinner'
-import { getListViewDisplayValues, extractListViewConfig, extractListViewStyle } from '@/utils/listViewTemplate'
+import { getDisplayValues, extractDisplayMapping, extractDisplayStyle } from '@/utils/displayMapping'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/atoms/tooltip'
 import { getTypeColor } from '@/utils/typeColors'
+
+/**
+ * Extract image field name from schema
+ * Supports:
+ * - display_mapping.image mapping (e.g., "image": "Image" means field "Image" is the image field)
+ * - Schema property 'image_field' or 'image_mapping' that maps other fields (e.g., 'icon', 'avatar') to image
+ * - Direct 'image' field
+ * - Common image field names
+ */
+const extractImageField = (schema: string | object | null): string | null => {
+  try {
+    if (!schema) return null
+    
+    const schemaObj = typeof schema === 'string' ? JSON.parse(schema) : schema
+    
+    // Check if schema is an array with items
+    const itemSchema = schemaObj.type === 'array' ? schemaObj.items : schemaObj
+    
+    // FIRST: Check display_mapping.image mapping (highest priority)
+    // This is where users configure which field should be used as image
+    if (itemSchema?.display_mapping?.image) {
+      const imageFieldName = itemSchema.display_mapping.image
+      // Verify that this field actually exists in properties
+      if (itemSchema?.properties?.[imageFieldName]) {
+        return imageFieldName
+      }
+    }
+    
+    // SECOND: Check for image_field or image_mapping in schema
+    if (itemSchema?.image_field) {
+      return itemSchema.image_field
+    }
+    if (itemSchema?.image_mapping) {
+      return itemSchema.image_mapping
+    }
+    
+    // THIRD: Check if 'image' field exists in properties (case-insensitive)
+    const properties = itemSchema?.properties || {}
+    const imageFieldLower = Object.keys(properties).find(
+      key => key.toLowerCase() === 'image'
+    )
+    if (imageFieldLower) {
+      return imageFieldLower
+    }
+    
+    // FOURTH: Check for common image field names (case-insensitive)
+    const commonImageFields = ['image', 'icon', 'avatar', 'img', 'picture', 'photo']
+    for (const commonField of commonImageFields) {
+      const foundField = Object.keys(properties).find(
+        key => key.toLowerCase() === commonField.toLowerCase()
+      )
+      if (foundField) {
+        return foundField
+      }
+    }
+    
+    return null
+  } catch {
+    return null
+  }
+}
 
 export interface CustomAPIListItem {
   id: string
@@ -29,7 +90,7 @@ interface CustomAPIListProps {
   onDeleteItem?: (itemId: string) => void
   onCreateNew?: () => void
   schema?: string | object | null // JSON Schema or CustomApiSchema object
-  listViewConfig?: {
+  displayMapping?: {
     title?: string | null
     description?: string | null
     type?: string | null
@@ -56,7 +117,7 @@ const CustomAPIList: React.FC<CustomAPIListProps> = ({
   onDeleteItem,
   onCreateNew,
   schema,
-  listViewConfig: providedListViewConfig,
+  displayMapping: providedDisplayMapping,
   mode = 'edit',
   isLoading = false,
   deletingItemId = null,
@@ -67,41 +128,37 @@ const CustomAPIList: React.FC<CustomAPIListProps> = ({
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedFilters, setSelectedFilters] = useState<string[]>([])
 
-  // Extract list view config from schema if not provided
-  const listViewConfig = useMemo(() => {
-    if (providedListViewConfig) {
-      return providedListViewConfig
+  // Extract display mapping from schema if not provided
+  const displayMapping = useMemo(() => {
+    if (providedDisplayMapping) {
+      return providedDisplayMapping
     }
     if (schema) {
-      return extractListViewConfig(schema)
+      return extractDisplayMapping(schema)
     }
     return null
-  }, [providedListViewConfig, schema])
+  }, [providedDisplayMapping, schema])
 
-  // Extract list view style (default: 'compact')
-  const listViewStyle = useMemo(() => {
+  // Extract display style (default: 'compact')
+  const displayStyle = useMemo(() => {
     if (schema) {
-      const style = extractListViewStyle(schema)
-      // Also check listViewConfig.style if available (for direct prop passing)
-      if (listViewConfig?.style) {
-        return listViewConfig.style === 'badge-image' ? 'badge-image' : listViewConfig.style === 'badge' ? 'badge' : 'compact'
+      const style = extractDisplayStyle(schema)
+      // Also check displayMapping.style if available (for direct prop passing)
+      if (displayMapping?.style) {
+        return displayMapping.style === 'badge-image' ? 'badge-image' : displayMapping.style === 'badge' ? 'badge' : 'compact'
       }
       return style
     }
-    // Check provided listViewConfig for style
-    if (providedListViewConfig?.style) {
-      return providedListViewConfig.style === 'badge-image' ? 'badge-image' : providedListViewConfig.style === 'badge' ? 'badge' : 'compact'
+    // Check provided displayMapping for style
+    if (providedDisplayMapping?.style) {
+      return providedDisplayMapping.style === 'badge-image' ? 'badge-image' : providedDisplayMapping.style === 'badge' ? 'badge' : 'compact'
     }
     return 'compact' // Default style
-  }, [schema, listViewConfig, providedListViewConfig])
+  }, [schema, displayMapping, providedDisplayMapping])
 
-  // Debug: Log footerImage when it changes (moved after listViewStyle definition)
-  React.useEffect(() => {
-    console.log('CustomAPIList footerImage:', footerImage)
-    console.log('CustomAPIList footerImage type:', typeof footerImage)
-    console.log('CustomAPIList footerImage truthy?', !!footerImage)
-    console.log('CustomAPIList listViewStyle:', listViewStyle)
-  }, [footerImage, listViewStyle])
+  // Extract image field name from schema
+  const imageField = useMemo(() => extractImageField(schema), [schema])
+
 
   // Initialize filters with all options selected by default
   React.useEffect(() => {
@@ -125,7 +182,7 @@ const CustomAPIList: React.FC<CustomAPIListProps> = ({
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter((item) => {
-        const displayValues = getListViewDisplayValues(item, listViewConfig)
+        const displayValues = getDisplayValues(item, displayMapping)
         return (
           displayValues.title.toLowerCase().includes(query) ||
           displayValues.description.toLowerCase().includes(query) ||
@@ -144,7 +201,7 @@ const CustomAPIList: React.FC<CustomAPIListProps> = ({
     }
 
     return filtered
-  }, [items, searchQuery, selectedFilters, listViewConfig, filterOptions])
+  }, [items, searchQuery, selectedFilters, displayMapping, filterOptions])
 
   // Build filter categories for DaFilter
   const filterCategories = useMemo(() => {
@@ -207,21 +264,41 @@ const CustomAPIList: React.FC<CustomAPIListProps> = ({
             </div>
           ) : filteredItems.length === 0 ? (
             <div className="flex w-full h-full items-center justify-center mb-24">
-              <div className="text-sm font-medium flex justify-center mt-6">
-                {searchQuery || selectedFilters.length < (filterOptions?.typeOptions?.length || 0)
-                  ? 'No signal found'
-                  : 'No items yet.'}
+              <div className="flex flex-col items-center gap-4">
+                <div className="text-sm font-medium text-center">
+                  {searchQuery || (filterOptions?.typeOptions && selectedFilters.length < filterOptions.typeOptions.length)
+                    ? 'No signal found'
+                    : 'No items yet.'}
+                </div>
+                {mode === 'edit' && onCreateNew && !searchQuery && (!filterOptions?.typeOptions || selectedFilters.length === filterOptions.typeOptions.length) && (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={onCreateNew}
+                    className="flex items-center gap-2"
+                  >
+                    <TbPlus className="h-4 w-4" />
+                    Add
+                  </Button>
+                )}
               </div>
             </div>
           ) : (
             filteredItems.map((item) => {
-              const displayValues = getListViewDisplayValues(item, listViewConfig)
+              const displayValues = getDisplayValues(item, displayMapping)
               const isSelected = selectedItemId === item.id
-              const typeColor = displayValues.type ? getTypeColor(displayValues.type, schema) : undefined
+              const typeColor = displayValues.type ? getTypeColor(displayValues.type, schema, items, displayMapping) : undefined
 
-              // Render based on list view style
-              if (listViewStyle === 'badge-image') {
+              // Render based on display style
+              if (displayStyle === 'badge-image') {
                 // Badge-image style: type badge on left, title/description in middle, image on right
+                // Get image URL from item (prefer item's own image, fallback to footerImage)
+                const itemImageUrl = imageField && item[imageField] 
+                  ? (typeof item[imageField] === 'string' && item[imageField].trim() ? item[imageField].trim() : null)
+                  : null
+                const imageUrl = itemImageUrl || footerImage
+                const imageClickUrl = itemImageUrl ? null : (providerUrl || null) // Only use providerUrl if showing footerImage
+                
                 return (
                   <TooltipProvider key={item.id}>
                     <Tooltip delayDuration={300}>
@@ -262,23 +339,22 @@ const CustomAPIList: React.FC<CustomAPIListProps> = ({
                           <div 
                             className={cn(
                               "h-8 w-16 shrink-0 flex items-center justify-center overflow-hidden rounded bg-muted/30",
-                              providerUrl && footerImage && footerImage.trim() && "cursor-pointer hover:bg-muted/50 transition-colors"
+                              imageClickUrl && imageUrl && imageUrl.trim() && "cursor-pointer hover:bg-muted/50 transition-colors"
                             )}
                             style={{ aspectRatio: '2/1' }}
                             onClick={(e) => {
-                              if (providerUrl && providerUrl.trim()) {
+                              if (imageClickUrl && imageClickUrl.trim()) {
                                 e.stopPropagation()
-                                window.open(providerUrl, '_blank', 'noopener,noreferrer')
+                                window.open(imageClickUrl, '_blank', 'noopener,noreferrer')
                               }
                             }}
                           >
-                            {footerImage && footerImage.trim() ? (
+                            {imageUrl && imageUrl.trim() ? (
                               <img
-                                src={footerImage}
-                                alt="API Instance Logo"
+                                src={imageUrl}
+                                alt={displayValues.title || 'API Image'}
                                 className="h-full w-full object-contain p-0.5"
                                 onError={(e) => {
-                                  console.error('Failed to load footer image:', footerImage, 'Error:', e)
                                   // Show placeholder on error
                                   const container = e.currentTarget.parentElement
                                   if (container) {
@@ -286,7 +362,7 @@ const CustomAPIList: React.FC<CustomAPIListProps> = ({
                                   }
                                 }}
                                 onLoad={() => {
-                                  console.log('Footer image loaded successfully:', footerImage)
+                                  // Image loaded successfully
                                 }}
                               />
                             ) : (
@@ -322,7 +398,7 @@ const CustomAPIList: React.FC<CustomAPIListProps> = ({
                     </Tooltip>
                   </TooltipProvider>
                 )
-              } else if (listViewStyle === 'badge') {
+              } else if (displayStyle === 'badge') {
                 // Badge style: type badge on left, title/description on right
                 return (
                   <TooltipProvider key={item.id}>
@@ -415,10 +491,10 @@ const CustomAPIList: React.FC<CustomAPIListProps> = ({
                           <div className="flex w-fit justify-end cursor-pointer pl-4 items-center gap-2">
                             {displayValues.type && (
                               <div 
-                                className="uppercase text-sm font-medium cursor-pointer"
-                                style={{ color: typeColor }}
+                                className="px-2 py-0.5 rounded text-xs font-medium text-white shrink-0 cursor-pointer"
+                                style={{ backgroundColor: typeColor || '#6b7280' }}
                               >
-                                {displayValues.type}
+                                {displayValues.type.toUpperCase()}
                               </div>
                             )}
                             {mode === 'edit' && onDeleteItem && (
@@ -456,7 +532,7 @@ const CustomAPIList: React.FC<CustomAPIListProps> = ({
         </div>
         
         {/* Footer Image - only show if not using badge-image style (images shown per item) */}
-        {footerImage && listViewStyle !== 'badge-image' && (
+        {footerImage && displayStyle !== 'badge-image' && (
           <div className="w-full h-[60px] shrink-0 mt-2 overflow-hidden rounded-md">
             <img
               src={footerImage}

@@ -1,53 +1,54 @@
 /**
- * Extract list_view_config from JSON schema or CustomApiSchema object
- * Priority: schema JSON string > top-level list_view_config
+ * Extract display_mapping from JSON schema or CustomApiSchema object
+ * Priority: schema JSON string > top-level display_mapping
  */
-export const extractListViewConfig = (schema: string | object | any): {
+export const extractDisplayMapping = (schema: string | object | any): {
   title?: string | null
   description?: string | null
   type?: string | null
   style?: 'compact' | 'badge' | 'badge-image' | null
+  image?: string | null
 } | null => {
   try {
     // If it's a CustomApiSchema object, FIRST check the schema string inside it (higher priority)
-    // This is where users typically edit list_view_config in the JSON editor
+    // This is where users typically edit display_mapping in the JSON editor
     if (schema && typeof schema === 'object' && 'schema' in schema && typeof schema.schema === 'string') {
       try {
         const parsedSchema = JSON.parse(schema.schema)
-        // Check if schema is an array with items.list_view_config
-        if (parsedSchema.type === 'array' && parsedSchema.items?.list_view_config) {
-          return parsedSchema.items.list_view_config
+        // Check if schema is an array with items.display_mapping
+        if (parsedSchema.type === 'array' && parsedSchema.items?.display_mapping) {
+          return parsedSchema.items.display_mapping
         }
-        // Check if schema has list_view_config at root
-        if (parsedSchema.list_view_config) {
-          return parsedSchema.list_view_config
+        // Check if schema has display_mapping at root
+        if (parsedSchema.display_mapping) {
+          return parsedSchema.display_mapping
         }
       } catch {
         // Ignore parse errors, continue to check other locations
       }
     }
     
-    // Then check if it's a CustomApiSchema object with list_view_config at top level (fallback)
-    if (schema && typeof schema === 'object' && 'list_view_config' in schema) {
-      return schema.list_view_config || null
+    // Then check if it's a CustomApiSchema object with display_mapping at top level (fallback)
+    if (schema && typeof schema === 'object' && 'display_mapping' in schema) {
+      return schema.display_mapping || null
     }
     
     // If it's a string, try to parse it
     const schemaObj = typeof schema === 'string' ? JSON.parse(schema) : schema
     
-    // Check if schema is an array with items.list_view_config
-    if (schemaObj.type === 'array' && schemaObj.items?.list_view_config) {
-      return schemaObj.items.list_view_config
+    // Check if schema is an array with items.display_mapping
+    if (schemaObj.type === 'array' && schemaObj.items?.display_mapping) {
+      return schemaObj.items.display_mapping
     }
     
-    // Check if schema is an object with list_view_config
-    if (schemaObj.type === 'object' && schemaObj.list_view_config) {
-      return schemaObj.list_view_config
+    // Check if schema is an object with display_mapping
+    if (schemaObj.type === 'object' && schemaObj.display_mapping) {
+      return schemaObj.display_mapping
     }
     
     // Check direct property
-    if (schemaObj.list_view_config) {
-      return schemaObj.list_view_config
+    if (schemaObj.display_mapping) {
+      return schemaObj.display_mapping
     }
     
     return null
@@ -57,11 +58,11 @@ export const extractListViewConfig = (schema: string | object | any): {
 }
 
 /**
- * Extract list_view_style from JSON schema or CustomApiSchema object
+ * Extract display style from JSON schema or CustomApiSchema object
  * Returns 'compact' (default), 'badge', or 'badge-image'
- * Priority: schema JSON string > top-level list_view_config
+ * Priority: schema JSON string > top-level display_mapping
  */
-export const extractListViewStyle = (schema: string | object | any): 'compact' | 'badge' | 'badge-image' => {
+export const extractDisplayStyle = (schema: string | object | any): 'compact' | 'badge' | 'badge-image' => {
   try {
     // First check the schema JSON string (where users typically edit it)
     // This is the highest priority since it's what users edit in the JSON editor
@@ -70,13 +71,13 @@ export const extractListViewStyle = (schema: string | object | any): 'compact' |
         const parsedSchema = JSON.parse(schema.schema)
         let config = null
         
-        // Check if schema is an array with items.list_view_config
-        if (parsedSchema.type === 'array' && parsedSchema.items?.list_view_config) {
-          config = parsedSchema.items.list_view_config
+        // Check if schema is an array with items.display_mapping
+        if (parsedSchema.type === 'array' && parsedSchema.items?.display_mapping) {
+          config = parsedSchema.items.display_mapping
         }
-        // Check if schema has list_view_config at root
-        else if (parsedSchema.list_view_config) {
-          config = parsedSchema.list_view_config
+        // Check if schema has display_mapping at root
+        else if (parsedSchema.display_mapping) {
+          config = parsedSchema.display_mapping
         }
         
         if (config && typeof config === 'object' && 'style' in config) {
@@ -95,9 +96,9 @@ export const extractListViewStyle = (schema: string | object | any): 'compact' |
       }
     }
     
-    // Then check if it's a CustomApiSchema object with list_view_config at top level (fallback)
-    if (schema && typeof schema === 'object' && 'list_view_config' in schema) {
-      const config = schema.list_view_config
+    // Then check if it's a CustomApiSchema object with display_mapping at top level (fallback)
+    if (schema && typeof schema === 'object' && 'display_mapping' in schema) {
+      const config = schema.display_mapping
       if (config && typeof config === 'object' && 'style' in config) {
         if (config.style === 'badge-image') {
           return 'badge-image'
@@ -112,14 +113,14 @@ export const extractListViewStyle = (schema: string | object | any): 'compact' |
     }
     
     // Finally check the extracted config (for other cases)
-    const listViewConfig = extractListViewConfig(schema)
-    if (listViewConfig?.style === 'badge-image') {
+    const displayMapping = extractDisplayMapping(schema)
+    if (displayMapping?.style === 'badge-image') {
       return 'badge-image'
     }
-    if (listViewConfig?.style === 'badge') {
+    if (displayMapping?.style === 'badge') {
       return 'badge'
     }
-    if (listViewConfig?.style === 'compact') {
+    if (displayMapping?.style === 'compact') {
       return 'compact'
     }
     
@@ -136,7 +137,7 @@ export const extractListViewStyle = (schema: string | object | any): 'compact' |
  * @param item - Item data object
  * @returns Rendered string value
  */
-export const renderListViewField = (template: string | null | undefined, item: any): string => {
+export const renderDisplayField = (template: string | null | undefined, item: any): string => {
   if (!template || !template.trim()) {
     return ''
   }
@@ -188,12 +189,12 @@ const generateValueFromTemplate = (template: string, item: any): string => {
 /**
  * Get display values for list view item
  * @param item - Item data
- * @param listViewConfig - List view configuration from schema
+ * @param displayMapping - Display mapping configuration from schema
  * @returns Object with title, description, and type
  */
-export const getListViewDisplayValues = (
+export const getDisplayValues = (
   item: any,
-  listViewConfig?: {
+  displayMapping?: {
     title?: string | null
     description?: string | null
     type?: string | null
@@ -210,14 +211,20 @@ export const getListViewDisplayValues = (
     type: item.method || '',
   }
   
-  if (!listViewConfig) {
+  if (!displayMapping) {
     return defaults
   }
   
   return {
-    title: renderListViewField(listViewConfig.title, item) || defaults.title,
-    description: renderListViewField(listViewConfig.description, item) || defaults.description,
-    type: renderListViewField(listViewConfig.type, item) || defaults.type,
+    title: renderDisplayField(displayMapping.title, item) || defaults.title,
+    description: renderDisplayField(displayMapping.description, item) || defaults.description,
+    type: renderDisplayField(displayMapping.type, item) || defaults.type,
   }
 }
+
+// Backward compatibility exports (deprecated, use new names)
+export const extractListViewConfig = extractDisplayMapping
+export const extractListViewStyle = extractDisplayStyle
+export const renderListViewField = renderDisplayField
+export const getListViewDisplayValues = getDisplayValues
 

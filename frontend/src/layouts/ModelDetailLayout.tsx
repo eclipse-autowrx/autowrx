@@ -166,6 +166,12 @@ const ModelDetailLayout = () => {
   const numberOfNodes = skeleton?.nodes?.length || 0
   const numberOfPrototypes = fetchedPrototypes?.length || 0
   const numberOfApis = activeModelApis?.length || 0
+  
+  // Count API sets: 1 for COVESA + number of custom_api_sets
+  const customApiSetCount = (model?.custom_api_sets || []).length
+  const totalApiSetCount = 1 + customApiSetCount // 1 for COVESA
+  // Hide count if 0 or 1
+  const vehicleApiCount = totalApiSetCount > 1 ? totalApiSetCount : null
 
   const cardIntro = [
     {
@@ -190,7 +196,7 @@ const ModelDetailLayout = () => {
         'Browse, explore and enhance the catalogue of Connected Vehicle Interfaces',
       path: 'api',
       subs: ['/model/:model_id/api', '/model/:model_id/api/:api'],
-      count: model?.extend?.vehicle_api?.supports?.length || numberOfApis,
+      count: vehicleApiCount,
       dataId: 'tab-model-api',
     },
     {

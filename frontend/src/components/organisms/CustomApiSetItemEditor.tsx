@@ -9,7 +9,7 @@
 import React, { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/atoms/dialog'
 import { Button } from '@/components/atoms/button'
-import JsonEditor from '@/components/atoms/JsonEditor'
+import CodeEditor from '@/components/molecules/CodeEditor'
 import { TbDownload, TbUpload } from 'react-icons/tb'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/components/molecules/toaster/use-toast'
@@ -164,23 +164,41 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
 
 
   const validateItem = (): boolean => {
-    if (!formData.id?.trim()) {
+    // Auto-generate ID if it's empty and we have id_format
+    let finalFormData = { ...formData }
+    if (!finalFormData.id?.trim() && customApiSchema?.schema) {
+      const idFormat = extractIdFormat(customApiSchema.schema)
+      if (idFormat) {
+        const generatedId = generateIdFromTemplate(idFormat, finalFormData)
+        if (generatedId && generatedId.trim()) {
+          finalFormData.id = generatedId.trim()
+        }
+      }
+    }
+
+    // Validate ID is present
+    if (!finalFormData.id?.trim()) {
       toast({
         title: 'Validation failed',
-        description: 'ID is required',
+        description: 'ID is required. Please fill in required fields to generate ID.',
         variant: 'destructive',
       })
       return false
+    }
+
+    // Update formData with generated ID if it was generated
+    if (finalFormData.id !== formData.id) {
+      setFormData(finalFormData)
     }
 
     // TODO: Validate against JSON schema if schema validation library is added
     // For now, basic validation: ensure id is present
 
     // Check if ID already exists (only for new items)
-    if (isNewItem && items.some((item) => item.id === formData.id)) {
+    if (isNewItem && items.some((item) => item.id === finalFormData.id)) {
       toast({
         title: 'Validation failed',
-        description: `Item with ID '${formData.id}' already exists`,
+        description: `Item with ID '${finalFormData.id}' already exists`,
         variant: 'destructive',
       })
       return false
@@ -190,20 +208,35 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
   }
 
   const handleSaveItem = async () => {
+    // Auto-generate ID if it's empty and we have id_format
+    let finalFormData = { ...formData }
+    if (!finalFormData.id?.trim() && customApiSchema?.schema) {
+      const idFormat = extractIdFormat(customApiSchema.schema)
+      if (idFormat) {
+        const generatedId = generateIdFromTemplate(idFormat, finalFormData)
+        if (generatedId && generatedId.trim()) {
+          finalFormData.id = generatedId.trim()
+          setFormData(finalFormData)
+        }
+      }
+    }
+
     if (!validateItem()) {
       return
     }
 
     try {
       setIsSaving(true)
+      // Use finalFormData which may have auto-generated ID
+      const dataToSave = finalFormData.id !== formData.id ? finalFormData : formData
       if (isNewItem) {
-        await addSetItem(instanceId, formData as CustomApiSetItem)
+        await addSetItem(instanceId, dataToSave as CustomApiSetItem)
         toast({
           title: 'Added',
           description: 'Item added successfully',
         })
       } else if (selectedItemId) {
-        await updateSetItem(instanceId, selectedItemId, formData)
+        await updateSetItem(instanceId, selectedItemId, dataToSave)
         toast({
           title: 'Updated',
           description: 'Item updated successfully',
@@ -212,7 +245,7 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
       queryClient.invalidateQueries({ queryKey: ['custom-api-set', instanceId] })
       queryClient.invalidateQueries({ queryKey: ['custom-api-sets'] })
       setIsNewItem(false)
-      setSelectedItemId(formData.id as string)
+      setSelectedItemId(dataToSave.id as string)
     } catch (error: any) {
       toast({
         title: isNewItem ? 'Add failed' : 'Update failed',
@@ -483,9 +516,9 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
           </div>
 
           {activeTab === 'list' && (
-            <div className="flex flex-1 min-h-0 gap-4">
+            <div className="flex flex-1 min-h-0">
               {/* Left: Item List */}
-              <div className="w-1/2 border-r border-border pr-4 flex flex-col min-h-0">
+              <div className="w-1/2 border-r border-border flex flex-col min-h-0">
                 <CustomAPIList
                   items={items}
                   selectedItemId={selectedItemId}
@@ -500,11 +533,13 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
                     typeField: 'method',
                     typeOptions: getMethodOptions(),
                   }}
+                  footerImage={set?.avatar}
+                  providerUrl={set?.provider_url}
                 />
               </div>
 
               {/* Right: Form */}
-              <div className="w-1/2 pl-4 flex flex-col min-h-0">
+              <div className="w-1/2 flex flex-col min-h-0">
                 {(selectedItem || isNewItem) && customApiSchema?.schema ? (
                   isEditMode ? (
                     <CustomAPIEdit
@@ -515,7 +550,7 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
                       onSave={handleSaveItem}
                       onCancel={isNewItem ? undefined : handleCancelEdit}
                       isSaving={isSaving}
-                      excludeFields={['id', 'path', 'parent_id', 'relationships']}
+                      excludeFields={['id', 'parent_id', 'relationships']}
                     />
                   ) : (
                     <CustomAPIView
@@ -523,7 +558,7 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
                       schema={customApiSchema.schema}
                       itemId={selectedItem?.id || 'No ID'}
                       onEdit={handleEditClick}
-                      excludeFields={['id', 'path', 'parent_id', 'relationships']}
+                      excludeFields={['id', 'parent_id', 'relationships']}
                     />
                   )
                 ) : (
@@ -539,17 +574,64 @@ const CustomApiSetItemEditor: React.FC<CustomApiSetItemEditorProps> = ({
 
           {activeTab === 'json' && (
             <div className="flex flex-col flex-1 min-h-0">
-              <div className="mb-2 shrink-0">
+              <div className="mb-2 shrink-0 flex items-center justify-between">
                 <Button onClick={handleSaveJson} disabled={isSaving}>
                   {isSaving ? 'Saving...' : 'Save Changes'}
                 </Button>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      try {
+                        const formatted = JSON.stringify(jsonItems, null, 2)
+                        setJsonItems(JSON.parse(formatted))
+                      } catch (error) {
+                        // Ignore formatting errors
+                      }
+                    }}
+                  >
+                    Format
+                  </Button>
+                </div>
               </div>
-              <JsonEditor
-                value={jsonItems}
-                onChange={handleJsonChange}
-                valueType="array"
-                className="flex-1 min-h-0"
-              />
+              <div className="flex-1 min-h-0 border border-border rounded-md overflow-hidden">
+                <CodeEditor
+                  code={JSON.stringify(jsonItems, null, 2)}
+                  setCode={(code) => {
+                    try {
+                      const parsed = JSON.parse(code)
+                      if (Array.isArray(parsed)) {
+                        handleJsonChange(parsed)
+                      }
+                    } catch (error) {
+                      // Allow invalid JSON during editing
+                    }
+                  }}
+                  editable={true}
+                  language="json"
+                  onBlur={() => {
+                    // Validate on blur
+                    try {
+                      const parsed = JSON.parse(JSON.stringify(jsonItems))
+                      if (!Array.isArray(parsed)) {
+                        toast({
+                          title: 'Invalid format',
+                          description: 'JSON must be an array',
+                          variant: 'destructive',
+                        })
+                      }
+                    } catch (error) {
+                      toast({
+                        title: 'Invalid JSON',
+                        description: 'Please check your JSON syntax',
+                        variant: 'destructive',
+                      })
+                    }
+                  }}
+                />
+              </div>
             </div>
           )}
         </div>

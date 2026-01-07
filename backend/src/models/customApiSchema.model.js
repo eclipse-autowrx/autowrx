@@ -67,6 +67,12 @@ const customApiSchemaSchema = mongoose.Schema(
       required: true,
       trim: true,
     },
+    // ID format template for generating item IDs (e.g., "{method}:{path}")
+    id_format: {
+      type: String,
+      trim: true,
+      default: null,
+    },
     // For graph type: define relationships between APIs
     relationships: {
       type: [relationshipSchema],
@@ -77,23 +83,11 @@ const customApiSchemaSchema = mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
       default: null,
     },
-    // List view configuration: defines how items are displayed in the list
-    list_view_config: {
-      title: {
-        type: String,
-        trim: true,
-        default: null,
-      },
-      description: {
-        type: String,
-        trim: true,
-        default: null,
-      },
-      type: {
-        type: String,
-        trim: true,
-        default: null,
-      },
+    // Display mapping: defines how fields are mapped for display purposes
+    // Can contain: title, description, type, style, image, etc.
+    display_mapping: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
     },
     // Schema definition (JSON Schema or custom format)
     schema_definition: {

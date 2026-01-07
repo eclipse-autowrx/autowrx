@@ -214,7 +214,7 @@ const CustomApiSetForm: React.FC<CustomApiSetFormProps> = ({
                 </p>
               </div>
 
-              {isLoadingAPIs ? (
+              {isLoadingSchemas ? (
                 <div className="flex justify-center items-center py-8">
                   <Spinner />
                 </div>
@@ -222,7 +222,7 @@ const CustomApiSetForm: React.FC<CustomApiSetFormProps> = ({
                 <div className="space-y-2">
                   {customApiSchemas?.results?.map((schema: CustomApiSchema) => (
                     <div
-                      key={api.id}
+                      key={schema.id}
                       onClick={() => {
                         setSelectedCustomApiSchema(schema)
                         setErrors({})
@@ -235,27 +235,27 @@ const CustomApiSetForm: React.FC<CustomApiSetFormProps> = ({
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="font-semibold text-foreground">{api.name}</h4>
+                          <h4 className="font-semibold text-foreground">{schema.name}</h4>
                           <p className="text-xs text-muted-foreground font-mono mt-1">
-                            {api.code}
+                            {schema.code}
                           </p>
-                          {api.description && (
+                          {schema.description && (
                             <p className="text-sm text-muted-foreground mt-2">
-                              {api.description}
+                              {schema.description}
                             </p>
                           )}
                         </div>
                         <div className="flex items-center gap-2">
                           <span
                             className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                              api.type === 'tree'
+                              schema.type === 'tree'
                                 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                                : api.type === 'list'
+                                : schema.type === 'list'
                                 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                                 : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
                             }`}
                           >
-                            {api.type.toUpperCase()}
+                            {schema.type.toUpperCase()}
                           </span>
                         </div>
                       </div>

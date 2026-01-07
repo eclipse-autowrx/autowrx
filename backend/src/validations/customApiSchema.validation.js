@@ -16,7 +16,7 @@ const relationshipSchema = Joi.object().keys({
   description: Joi.string().trim().allow(''),
 });
 
-const listViewConfigSchema = Joi.object().keys({
+const displayMappingSchema = Joi.object().keys({
   title: Joi.string().trim().allow('', null),
   description: Joi.string().trim().allow('', null),
   type: Joi.string().trim().allow('', null),
@@ -32,7 +32,7 @@ const createCustomApiSchema = {
     id_format: Joi.string().trim().allow('', null),
     relationships: Joi.array().items(relationshipSchema).default([]),
     tree_config: Joi.any().allow(null),
-    list_view_config: listViewConfigSchema,
+    display_mapping: displayMappingSchema,
     schema_definition: Joi.any(),
     version: Joi.string().default('1.0.0'),
     is_active: Joi.boolean().default(true),
@@ -53,7 +53,7 @@ const updateCustomApiSchema = {
       id_format: Joi.string().trim().allow('', null),
       relationships: Joi.array().items(relationshipSchema),
       tree_config: Joi.any().allow(null),
-      list_view_config: listViewConfigSchema,
+      display_mapping: displayMappingSchema,
       schema_definition: Joi.any(),
       version: Joi.string(),
       is_active: Joi.boolean(),

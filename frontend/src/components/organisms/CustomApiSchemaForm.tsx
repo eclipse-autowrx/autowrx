@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/atoms/select'
-import JsonEditor from '@/components/atoms/JsonEditor'
+import CodeEditor from '@/components/molecules/CodeEditor'
 import { cn } from '@/lib/utils'
 import { getTypeColor } from '@/utils/typeColors'
 import { TbPhoto } from 'react-icons/tb'
@@ -43,14 +43,14 @@ const ListViewStyleConfigurator: React.FC<ListViewStyleConfiguratorProps> = ({
 }) => {
   // Extract current style from schema
   const currentStyle: 'compact' | 'badge' | 'badge-image' = 
-    (schema?.type === 'array' && schema?.items?.list_view_config?.style) ||
-    schema?.list_view_config?.style ||
+    (schema?.type === 'array' && schema?.items?.display_mapping?.style) ||
+    schema?.display_mapping?.style ||
     'compact'
 
-  // Extract list view config for display values
-  const listViewConfig = 
-    (schema?.type === 'array' && schema?.items?.list_view_config) ||
-    schema?.list_view_config ||
+  // Extract display mapping for display values
+  const displayMapping = 
+    (schema?.type === 'array' && schema?.items?.display_mapping) ||
+    schema?.display_mapping ||
     { title: '{method}:{path}', description: 'summary', type: 'method' }
 
   const getDisplayValues = (item: any) => {
@@ -65,9 +65,9 @@ const ListViewStyleConfigurator: React.FC<ListViewStyleConfiguratorProps> = ({
       return String(item[templateStr] || '')
     }
     return {
-      title: renderField(listViewConfig.title) || item.id || '',
-      description: renderField(listViewConfig.description) || '',
-      type: renderField(listViewConfig.type) || item.method || '',
+      title: renderField(displayMapping.title) || item.id || '',
+      description: renderField(displayMapping.description) || '',
+      type: renderField(displayMapping.type) || item.method || '',
     }
   }
 
@@ -166,7 +166,8 @@ const ListViewStyleConfigurator: React.FC<ListViewStyleConfiguratorProps> = ({
           Select a list view style to preview how your API items will be displayed:
         </p>
 
-        <div className="space-y-4">
+        {/* Grid layout for all styles */}
+        <div className="grid grid-cols-3 gap-4">
           {/* Compact Style */}
           <div className="space-y-2">
             <div 
@@ -185,7 +186,7 @@ const ListViewStyleConfigurator: React.FC<ListViewStyleConfiguratorProps> = ({
                 Compact
               </Label>
             </div>
-            <div className="ml-6 space-y-1 p-3 border border-border rounded-md bg-muted/30">
+            <div className="space-y-1 p-3 border border-border rounded-md bg-muted/30">
               {SKELETON_ITEMS.map((item) => renderPreviewItem(item, 'compact', currentStyle === 'compact'))}
             </div>
           </div>
@@ -208,7 +209,7 @@ const ListViewStyleConfigurator: React.FC<ListViewStyleConfiguratorProps> = ({
                 Badge
               </Label>
             </div>
-            <div className="ml-6 space-y-1 p-3 border border-border rounded-md bg-muted/30">
+            <div className="space-y-1 p-3 border border-border rounded-md bg-muted/30">
               {SKELETON_ITEMS.map((item) => renderPreviewItem(item, 'badge', currentStyle === 'badge'))}
             </div>
           </div>
@@ -231,7 +232,7 @@ const ListViewStyleConfigurator: React.FC<ListViewStyleConfiguratorProps> = ({
                 Badge with Image
               </Label>
             </div>
-            <div className="ml-6 space-y-1 p-3 border border-border rounded-md bg-muted/30">
+            <div className="space-y-1 p-3 border border-border rounded-md bg-muted/30">
               {SKELETON_ITEMS.map((item) => renderPreviewItem(item, 'badge-image', currentStyle === 'badge-image'))}
             </div>
           </div>
@@ -276,22 +277,47 @@ const CustomApiSchemaForm: React.FC<CustomApiSchemaFormProps> = ({
         type: initialData.type || 'list',
         schema: initialData.schema || '',
         id_format: initialData.id_format || null,
-        list_view_config: initialData.list_view_config || null,
+        display_mapping: initialData.display_mapping || null,
         code: initialData.code || '',
         is_active: initialData.is_active ?? true,
       })
     } else {
       // Pre-populate with sample REST API JSON schema for create mode
       const sampleSchema = JSON.stringify({
-        type: 'object',
-        properties: {
-          id: { type: 'string', description: 'Unique identifier for the API endpoint' },
-          path: { type: 'string', description: 'API endpoint path (e.g., /api/v1/users)' },
-          method: { type: 'string', enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], description: 'HTTP method' },
-          request: { type: 'object', description: 'Request body schema' },
-          response: { type: 'object', description: 'Response body schema' },
+        $schema: 'http://json-schema.org/draft-07/schema#',
+        $id: 'https://example.com/sample-apis.schema.json',
+        title: 'Sample APIs Schema',
+        description: 'Schema for validating API endpoint definitions',
+        type: 'array',
+        items: {
+          type: 'object',
+          id_format: '{method}:{path}',
+          display_mapping: {
+            title: 'path',
+            description: 'summary',
+            type: 'method',
+          },
+          properties: {
+            path: {
+              type: 'string',
+              description: 'API endpoint path (e.g., /api/v1/users)',
+            },
+            method: {
+              type: 'string',
+              enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+              description: 'HTTP method',
+            },
+            summary: {
+              type: 'string',
+              description: 'Brief summary of the API endpoint',
+            },
+            description: {
+              type: 'string',
+              description: 'Detailed description of the API endpoint',
+            },
+          },
+          required: ['path', 'method'],
         },
-        required: ['id', 'path', 'method'],
       }, null, 2)
       
       setFormData({
@@ -300,8 +326,8 @@ const CustomApiSchemaForm: React.FC<CustomApiSchemaFormProps> = ({
         type: 'list',
         schema: sampleSchema,
         id_format: '{method}:{path}',
-        list_view_config: {
-          title: '{method}:{path}',
+        display_mapping: {
+          title: 'path',
           description: 'summary',
           type: 'method',
         },
@@ -434,65 +460,72 @@ const CustomApiSchemaForm: React.FC<CustomApiSchemaFormProps> = ({
         </DialogHeader>
 
         <div className="space-y-4 py-2 flex flex-col flex-1 min-h-0 overflow-y-auto">
+          {/* Two-column layout: Name+Type in first column, Description in second column */}
           <div className="grid grid-cols-2 gap-4">
+            {/* First column: Name and Type side by side */}
             <div className="space-y-1">
-              <Label htmlFor="name">
-                Name <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="name"
-                value={formData.name || ''}
-                onChange={(e) => handleChange('name', e.target.value)}
-                placeholder="e.g., REST API"
-                className={errors.name ? 'border-destructive' : ''}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label htmlFor="name">
+                    Name <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="name"
+                    value={formData.name || ''}
+                    onChange={(e) => handleChange('name', e.target.value)}
+                    placeholder="e.g., REST API"
+                    className={errors.name ? 'border-destructive' : ''}
+                  />
+                  {formData.code && (
+                    <p className="text-xs text-muted-foreground font-mono mt-1">
+                      Code: {formData.code}
+                    </p>
+                  )}
+                  {errors.name && (
+                    <p className="text-sm text-destructive">{errors.name}</p>
+                  )}
+                  {errors.code && (
+                    <p className="text-sm text-destructive">{errors.code}</p>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="type">
+                    Type <span className="text-destructive">*</span>
+                  </Label>
+                  <Select
+                    value={formData.type}
+                    onValueChange={(value: CustomApiSchema['type']) =>
+                      handleChange('type', value)
+                    }
+                  >
+                    <SelectTrigger id="type" className={`w-full ${errors.type ? 'border-destructive' : ''}`}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="tree">Tree</SelectItem>
+                      <SelectItem value="list">List</SelectItem>
+                      <SelectItem value="graph">Graph</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.type && (
+                    <p className="text-sm text-destructive">{errors.type}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Second column: Description */}
+            <div className="space-y-1">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={formData.description || ''}
+                onChange={(e) => handleChange('description', e.target.value)}
+                placeholder="Optional description"
+                rows={3}
               />
-              {formData.code && (
-                <p className="text-xs text-muted-foreground font-mono mt-1">
-                  Code: {formData.code}
-                </p>
-              )}
-              {errors.name && (
-                <p className="text-sm text-destructive">{errors.name}</p>
-              )}
-              {errors.code && (
-                <p className="text-sm text-destructive">{errors.code}</p>
-              )}
             </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="type">
-                Type <span className="text-destructive">*</span>
-              </Label>
-              <Select
-                value={formData.type}
-                onValueChange={(value: CustomApiSchema['type']) =>
-                  handleChange('type', value)
-                }
-              >
-                <SelectTrigger id="type" className={`min-w-[180px] ${errors.type ? 'border-destructive' : ''}`}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tree">Tree</SelectItem>
-                  <SelectItem value="list">List</SelectItem>
-                  <SelectItem value="graph">Graph</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.type && (
-                <p className="text-sm text-destructive">{errors.type}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description || ''}
-              onChange={(e) => handleChange('description', e.target.value)}
-              placeholder="Optional description"
-              rows={2}
-            />
           </div>
 
           <div className="space-y-1 flex flex-col flex-1 min-h-0">
@@ -512,7 +545,7 @@ const CustomApiSchemaForm: React.FC<CustomApiSchemaFormProps> = ({
                     : 'text-muted-foreground',
                 )}
               >
-                JSON Schema
+                Raw JSON
               </button>
               <button
                 type="button"
@@ -530,34 +563,61 @@ const CustomApiSchemaForm: React.FC<CustomApiSchemaFormProps> = ({
 
             {/* Tab Content */}
             {activeTab === 'json' ? (
-              <div className="flex-1 min-h-0">
-                <JsonEditor
-                  value={schemaObject}
-                  onChange={handleSchemaChange}
-                  valueType="object"
-                  className="flex-1 min-h-0"
-                />
+              <div className="flex-1 min-h-0 flex flex-col">
+                <div className="flex-1 min-h-0 border border-border rounded-md overflow-hidden">
+                  <CodeEditor
+                    code={formData.schema || '{}'}
+                    setCode={(code) => {
+                      // Update schema string immediately for real-time editing
+                      handleChange('schema', code)
+                      // Try to parse and update schemaObject if valid
+                      try {
+                        const parsed = JSON.parse(code)
+                        setSchemaObject(parsed)
+                        setSchemaError(null)
+                      } catch (error) {
+                        // Allow invalid JSON during editing, but mark error
+                        setSchemaError('Invalid JSON format')
+                      }
+                    }}
+                    editable={true}
+                    language="json"
+                    onBlur={() => {
+                      // Validate on blur
+                      try {
+                        const parsed = JSON.parse(formData.schema || '{}')
+                        setSchemaObject(parsed)
+                        setSchemaError(null)
+                      } catch (error) {
+                        setSchemaError('Invalid JSON format')
+                      }
+                    }}
+                  />
+                </div>
+                {schemaError && (
+                  <p className="text-sm text-destructive mt-2 shrink-0">{schemaError}</p>
+                )}
               </div>
             ) : (
               <ListViewStyleConfigurator
                 schema={schemaObject}
                 onStyleChange={(style) => {
-                  // Update schema with list_view_config.style
+                  // Update schema with display_mapping.style
                   try {
                     const updatedSchema = JSON.parse(JSON.stringify(schemaObject)) // Deep clone
                     
-                    // Handle array schema (items.list_view_config)
+                    // Handle array schema (items.display_mapping)
                     if (updatedSchema.type === 'array' && updatedSchema.items) {
-                      if (!updatedSchema.items.list_view_config) {
-                        updatedSchema.items.list_view_config = {}
+                      if (!updatedSchema.items.display_mapping) {
+                        updatedSchema.items.display_mapping = {}
                       }
-                      updatedSchema.items.list_view_config.style = style
+                      updatedSchema.items.display_mapping.style = style
                     } else {
-                      // Handle object schema (root list_view_config)
-                      if (!updatedSchema.list_view_config) {
-                        updatedSchema.list_view_config = {}
+                      // Handle object schema (root display_mapping)
+                      if (!updatedSchema.display_mapping) {
+                        updatedSchema.display_mapping = {}
                       }
-                      updatedSchema.list_view_config.style = style
+                      updatedSchema.display_mapping.style = style
                     }
                     
                     handleSchemaChange(updatedSchema)
