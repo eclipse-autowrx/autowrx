@@ -10,7 +10,7 @@ import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
 import { FormEvent, useEffect, useState } from 'react'
-import { TbCircleCheckFilled, TbLoader } from 'react-icons/tb'
+import { TbCircleCheckFilled, TbLoader, TbBrandGithub } from 'react-icons/tb'
 import { createPrototypeService } from '@/services/prototype.service'
 import { useToast } from '../toaster/use-toast'
 import useListModelPrototypes from '@/hooks/useListModelPrototypes'
@@ -34,6 +34,13 @@ import { createModelService } from '@/services/model.service'
 import { cn } from '@/lib/utils'
 import default_journey from '@/data/default_journey'
 import { SAMPLE_PROJECTS } from '@/data/sampleProjects'
+import {
+  downloadGitHubRepo,
+  parseGitHubUrl,
+  getGitHubRepoInfo,
+  extractMainFileFromProject,
+} from '@/services/github.service'
+import { FileSystemItem } from '@/data/sampleProjects'
 
 interface FormCreatePrototypeProps {
   onClose?: () => void
@@ -154,6 +161,13 @@ const FormCreatePrototype = ({
   const [error, setError] = useState<string>('')
   const [data, setData] = useState(initialState)
   const [disabled, setDisabled] = disabledState ?? useState(false)
+  const [githubUrl, setGithubUrl] = useState('')
+  const [githubLoading, setGithubLoading] = useState(false)
+  const [githubError, setGithubError] = useState<string>('')
+  const [importedFiles, setImportedFiles] = useState<FileSystemItem[]>([])
+  const [projectTemplate, setProjectTemplate] = useState<string>(
+    SAMPLE_PROJECTS[1].label,
+  )
 
   const { data: currentModel } = useCurrentModel()
   const { data: contributionModels, isLoading: isFetchingModelContribution } =
@@ -167,31 +181,113 @@ const FormCreatePrototype = ({
 
   const { data: currentUser } = useSelfProfileQuery()
 
-  const [projectTemplate, setProjectTemplate] = useState<string>('')
-
   const handleChange = (name: keyof typeof data, value: string | number) => {
     setData((prev) => ({ ...prev, [name]: value }))
   }
 
   const onTemplateChange = (v: string) => {
-    const template = SAMPLE_PROJECTS.find((project) => project.label === v)
-    let code = ''
-    let language = ''
-    if (template) {
-      if (typeof template.data === 'string') {
-        code = template.data
-        language = template.language
-      } else {
-        code = JSON.stringify(template.data)
-        language = template.language
+    setProjectTemplate(v)
+
+    if (v === 'GitHub Repository') {
+      // Reset GitHub-related state when GitHub option is selected
+      setGithubUrl('')
+      setGithubError('')
+      setImportedFiles([])
+      setData((prev) => ({ ...prev, code: '', language: 'python' }))
+    } else {
+      // Handle existing template options
+      const template = SAMPLE_PROJECTS.find((project) => project.label === v)
+      let code = ''
+      let language = ''
+      if (template) {
+        if (typeof template.data === 'string') {
+          code = template.data
+          language = template.language
+        } else {
+          code = JSON.stringify(template.data)
+          language = template.language
+        }
+        setData((prev) => ({ ...prev, code: code, language: language }))
       }
-      setData((prev) => ({ ...prev, code: code, language: language }))
     }
   }
 
   const getDefaultDashboardCfg = (lang: string) => {
     if (lang == 'rust') return `{"autorun": false, "widgets": [] }`
     return DEFAULT_DASHBOARD_CFG
+  }
+
+  const handleGithubImport = async () => {
+    if (!githubUrl.trim()) {
+      setGithubError('Please enter a GitHub repository URL')
+      return
+    }
+
+    setGithubLoading(true)
+    setGithubError('')
+
+    try {
+      const repoInfo = parseGitHubUrl(githubUrl.trim())
+      if (!repoInfo) {
+        throw new Error('Invalid GitHub URL format')
+      }
+
+      // Get repository information to determine language
+      let repoDetails
+      try {
+        repoDetails = await getGitHubRepoInfo(repoInfo.owner, repoInfo.repo)
+      } catch (error) {
+        // Continue with download even if repo info fails
+        console.warn('Could not fetch repository details:', error)
+      }
+
+      const files = await downloadGitHubRepo(repoInfo)
+      setImportedFiles(files)
+
+      // Determine language and code based on repository
+      let detectedLanguage = 'python' // default
+
+      if (repoDetails?.language) {
+        const langLower = repoDetails.language.toLowerCase()
+        if (langLower === 'python') detectedLanguage = 'python'
+        else if (langLower === 'rust') detectedLanguage = 'rust'
+        else if (langLower.includes('c++') || langLower === 'cpp')
+          detectedLanguage = 'cpp'
+        else if (langLower === 'javascript' || langLower === 'typescript')
+          detectedLanguage = 'javascript'
+      }
+
+      // GitHub clones are always treated as folder structures
+      setData((prev) => ({
+        ...prev,
+        language: detectedLanguage,
+        code: JSON.stringify(files),
+      }))
+
+      // Auto-fill prototype name if not set
+      if (!data.prototypeName && repoInfo) {
+        setData((prev) => ({
+          ...prev,
+          prototypeName: `${repoInfo.repo}-prototype`,
+        }))
+      }
+
+      toast({
+        title: 'Success',
+        description: (
+          <p className="flex items-center text-sm">
+            <TbCircleCheckFilled className="mr-2 h-4 w-4 text-green-500" />
+            Successfully imported from GitHub repository
+          </p>
+        ),
+        duration: 3000,
+      })
+    } catch (error: any) {
+      console.error('GitHub import error:', error)
+      setGithubError(error.message || 'Failed to import from GitHub')
+    } finally {
+      setGithubLoading(false)
+    }
   }
 
   const createNewPrototype = async (e: FormEvent<HTMLFormElement>) => {
@@ -336,10 +432,7 @@ const FormCreatePrototype = ({
   }, [loading, localModel, data.modelName, data.prototypeName])
 
   return (
-    <form
-      onSubmit={createNewPrototype}
-      className="flex flex-col bg-background"
-    >
+    <form onSubmit={createNewPrototype} className="flex flex-col bg-background">
       <h2 className="text-lg font-semibold text-primary">
         {title ?? 'New Prototype'}
       </h2>
@@ -403,7 +496,7 @@ const FormCreatePrototype = ({
       <div className="flex flex-col mt-4">
         <Label className="mb-2">Project Template *</Label>
         <Select
-          defaultValue={SAMPLE_PROJECTS[0].label}
+          defaultValue={SAMPLE_PROJECTS[1].label}
           onValueChange={(v: string) => {
             onTemplateChange(v)
           }}
@@ -414,12 +507,61 @@ const FormCreatePrototype = ({
           <SelectContent>
             {SAMPLE_PROJECTS.map((project) => (
               <SelectItem key={project.label} value={project.label}>
-                {project.label}
+                <div className="flex items-center">
+                  {project.label === 'GitHub Repository' && (
+                    <TbBrandGithub className="mr-2 h-4 w-4" />
+                  )}
+                  {project.label}
+                </div>
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
+
+      {projectTemplate === 'GitHub Repository' && (
+        <div className="flex flex-col mt-4 space-y-3">
+          <div className="flex flex-col">
+            <Label className="mb-2">GitHub Repository URL *</Label>
+            <Input
+              value={githubUrl}
+              onChange={(e) => {
+                setGithubUrl(e.target.value)
+                setGithubError('')
+              }}
+              placeholder="https://github.com/owner/repository"
+              className="bg-background"
+              data-id="github-url-input"
+            />
+            {githubError && (
+              <p className="mt-1 text-sm text-destructive">{githubError}</p>
+            )}
+          </div>
+          <Button
+            type="button"
+            onClick={handleGithubImport}
+            disabled={!githubUrl.trim() || githubLoading}
+            variant="outline"
+            className="w-full"
+            data-id="btn-import-github"
+          >
+            {githubLoading && (
+              <TbLoader className="mr-2 animate-spin text-lg" />
+            )}
+            <TbBrandGithub className="mr-2 h-4 w-4" />
+            {githubLoading ? 'Importing...' : 'Import from GitHub'}
+          </Button>
+          {importedFiles.length > 0 && (
+            <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-md">
+              <p className="text-sm text-green-700 font-medium">
+                ✓ Successfully imported{' '}
+                {importedFiles.length > 1 ? 'multiple files' : '1 file'} from
+                repository
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
 
