@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { FC, useState, useEffect } from 'react'
+import React, { FC, useState, useEffect, useMemo } from 'react'
 import DaDialog from '@/components/molecules/DaDialog'
 import { shallow } from 'zustand/shallow'
 import useModelStore from '@/stores/modelStore'
@@ -18,6 +18,12 @@ import DaTabItem from '@/components/atoms/DaTabItem'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { UspSeviceList, ServiceDetail } from '@/components/organisms/ViewApiUSP'
 import { V2CApiList, ApiDetail, DEFAULT_V2C } from '@/components/organisms/ViewApiV2C'
+import { useQuery } from '@tanstack/react-query'
+import { getCustomApiSetById } from '@/services/customApiSet.service'
+import { getCustomApiSchemaById } from '@/services/customApiSchema.service'
+import CustomAPIList from '@/components/organisms/CustomAPIList'
+import CustomAPIView from '@/components/organisms/CustomAPIView'
+import { Spinner } from '@/components/atoms/spinner'
 
 interface ApiCodeBlockProps {
   content: string
@@ -152,27 +158,84 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   code,
 }) => {
   const [tab, setTab] = useState<
-    'used-signals' | 'all-signals' | 'usp' | 'v2c'
+    'used-signals' | 'all-signals' | 'usp' | 'v2c' | string
   >('used-signals')
   const { data: model } = useCurrentModel()
+  
+  // Get CustomApiSet IDs from model
+  const customApiSetIds = useMemo(() => {
+    return (model?.custom_api_sets || []).map((id: any) => {
+      if (typeof id === 'string') return id
+      if (id && typeof id === 'object' && 'toString' in id) return id.toString()
+      return String(id)
+    }).filter((id: any): id is string => 
+      !!id && typeof id === 'string' && id !== '[object Object]' && id !== 'undefined' && id !== 'null'
+    )
+  }, [model?.custom_api_sets])
+  
+  // Determine if current tab is a CustomApiSet tab
+  const isCustomApiSetTab = tab.startsWith('custom-api-set-')
+  const activeCustomApiSetId = isCustomApiSetTab ? tab.replace('custom-api-set-', '') : null
+  
+  // Fetch active CustomApiSet data
+  const { data: activeCustomApiSet, isLoading: isLoadingSet } = useQuery({
+    queryKey: ['custom-api-set', activeCustomApiSetId],
+    queryFn: () => getCustomApiSetById(activeCustomApiSetId!),
+    enabled: !!activeCustomApiSetId,
+  })
+  
+  // Extract custom_api_schema ID from set
+  const customApiSchemaId = activeCustomApiSet?.custom_api_schema
+    ? typeof activeCustomApiSet.custom_api_schema === 'string'
+      ? activeCustomApiSet.custom_api_schema
+      : (activeCustomApiSet.custom_api_schema as any).id || (activeCustomApiSet.custom_api_schema as any)._id || activeCustomApiSet.custom_api_schema
+    : null
+  
+  // Fetch CustomApiSchema schema
+  const { data: activeCustomApiSchema, isLoading: isLoadingSchema } = useQuery({
+    queryKey: ['custom-api-schema', customApiSchemaId],
+    queryFn: () => getCustomApiSchemaById(customApiSchemaId!),
+    enabled: !!customApiSchemaId,
+  })
 
-  const [availableApis, setAvailableApis] = useState<any>([])
+  // State for selected API item in CustomApiSet view
+  const [selectedCustomApiItemId, setSelectedCustomApiItemId] = useState<string | null>(null)
+  
+  const customApiItems = activeCustomApiSet?.data?.items || []
+  const selectedCustomApiItem = selectedCustomApiItemId 
+    ? customApiItems.find((item: any) => item.id === selectedCustomApiItemId) 
+    : null
+  
+  // Extract method options for filter
+  const getMethodOptions = (): string[] => {
+    if (!activeCustomApiSchema?.schema) return []
+    try {
+      const schemaObj = typeof activeCustomApiSchema.schema === 'string' 
+        ? JSON.parse(activeCustomApiSchema.schema) 
+        : activeCustomApiSchema.schema
+      
+      const itemSchema = schemaObj.type === 'array' ? schemaObj.items : schemaObj
+      const methodProperty = itemSchema?.properties?.method
+      
+      if (methodProperty?.enum) {
+        return methodProperty.enum
+      }
+      
+      return []
+    } catch {
+      return []
+    }
+  }
 
-  const [activeModelUspSevices, activeModelV2CApis, supportApis] =
+  const [activeModelUspSevices, activeModelV2CApis] =
     useModelStore((state) => [
       state.activeModelUspSevices,
       state.activeModelV2CApis,
-      state.supportApis,
     ])
-
-  useEffect(() => {
-    if (!supportApis) {
-      setAvailableApis([])
-      return
-    }
-    let apis = supportApis.map((s: any) => s.code)
-    setAvailableApis(apis || [])
-  }, [supportApis])
+  
+  // Check if USP or V2C are available (for backward compatibility, but we'll prioritize CustomApiSets)
+  const hasUSP = activeModelUspSevices && activeModelUspSevices.length > 0
+  const hasV2C = activeModelV2CApis && activeModelV2CApis.length > 0
 
   useEffect(() => {
     // if (model?.extend?.vehicle_api?.USP) {
@@ -186,7 +249,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   )
 
   const [useApis, setUseApis] = useState<any[]>([])
-  const [usedV2CApis, setUseV2CApis] = useState<any[]>([])
+  const [usedCustomApiItems, setUsedCustomApiItems] = useState<Map<string, any[]>>(new Map()) // Map of setId -> used items
   const [activeApi, setActiveApi] = useState<any>()
   const [popupApi, setPopupApi] = useState<boolean>(false)
   const [activeService, setActiveService] = useState<any>(null)
@@ -206,19 +269,47 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
     setUseApis(useList)
   }, [code, activeModelApis])
 
+  // Fetch all CustomApiSets for "Used APIs" tab
+  const customApiSetQueries = useQuery({
+    queryKey: ['custom-api-sets', customApiSetIds.join(',')],
+    queryFn: async () => {
+      const sets = await Promise.all(
+        customApiSetIds.map((id) => getCustomApiSetById(id))
+      )
+      return sets
+    },
+    enabled: customApiSetIds.length > 0,
+  })
+
+  // Check for used CustomApiSet APIs in code
   useEffect(() => {
-    if (!code || !activeModelV2CApis || activeModelV2CApis.length === 0) {
-      setUseV2CApis([])
+    if (!code || !customApiSetQueries.data || customApiSetQueries.data.length === 0) {
+      setUsedCustomApiItems(new Map())
       return
     }
-    let useV2CList: any[] = []
-    activeModelV2CApis.forEach((item: any) => {
-      if (code.includes(item.path)) {
-        useV2CList.push(item)
+
+    const usedItemsMap = new Map<string, any[]>()
+    
+    customApiSetQueries.data.forEach((set) => {
+      const items = set?.data?.items || []
+      const usedItems: any[] = []
+      
+      items.forEach((item: any) => {
+        // Check if code contains the API ID or path
+        if (item.id && code.includes(item.id)) {
+          usedItems.push(item)
+        } else if (item.path && code.includes(item.path)) {
+          usedItems.push(item)
+        }
+      })
+      
+      if (usedItems.length > 0) {
+        usedItemsMap.set(set.id, usedItems)
       }
     })
-    setUseV2CApis(useV2CList)
-  }, [code, activeModelV2CApis])
+    
+    setUsedCustomApiItems(usedItemsMap)
+  }, [code, customApiSetQueries.data])
 
   const onApiClicked = (api: any) => {
     if (!api) return
@@ -268,34 +359,47 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
             >
               COVESA Signals
             </DaTabItem>
-            {availableApis && (
-              <>
-                {availableApis.includes('USP') && (
-                  <DaTabItem
-                    active={tab === 'usp'}
-                    to="#"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      setTab('usp')
-                    }}
-                  >
-                    USP 2.0
-                  </DaTabItem>
-                )}
-                {availableApis.includes('V2C') && (
-                  <DaTabItem
-                    active={tab === 'v2c'}
-                    to="#"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      setTab('v2c')
-                    }}
-                  >
-                    V2C
-                  </DaTabItem>
-                )}
-              </>
+            {/* USP and V2C tabs (for backward compatibility) */}
+            {hasUSP && (
+              <DaTabItem
+                active={tab === 'usp'}
+                to="#"
+                onClick={(e) => {
+                  e.preventDefault()
+                  setTab('usp')
+                }}
+              >
+                USP 2.0
+              </DaTabItem>
             )}
+            {hasV2C && (
+              <DaTabItem
+                active={tab === 'v2c'}
+                to="#"
+                onClick={(e) => {
+                  e.preventDefault()
+                  setTab('v2c')
+                }}
+              >
+                V2C
+              </DaTabItem>
+            )}
+            {/* CustomApiSet tabs */}
+            {customApiSetIds.map((setId) => {
+              const tabId = `custom-api-set-${setId}`
+              return (
+                <CustomApiSetTab
+                  key={setId}
+                  setId={setId}
+                  active={tab === tabId}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    setTab(tabId)
+                    setSelectedCustomApiItemId(null) // Reset selection when switching tabs
+                  }}
+                />
+              )
+            })}
           </div>
         </>
       </div>
@@ -304,6 +408,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
         <>
           <div className="flex flex-col w-full h-full px-4 overflow-y-auto">
             <div className="flex flex-col w-full min-w-fit mt-2">
+              {/* COVESA APIs */}
               <span className="text-sm font-semibold">COVESA:</span>
               {useApis &&
                 useApis.map((item: any, index: any) => (
@@ -315,17 +420,31 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
                     }}
                   />
                 ))}
-              {/* Render list of used V2C APIs here if exists. */}
-              <div className='mt-4'></div>
-              <span className="text-sm font-semibold">V2C:</span>
-              {usedV2CApis && usedV2CApis.length>0 && (
-                <V2CApiList
-                  hideSearch={true}
-                  apis={usedV2CApis}
-                  activeApi={null}
-                  onApiSelected={() => {}}
-                />
-              )}
+              
+              {/* CustomApiSet sections */}
+              {Array.from(usedCustomApiItems.entries()).map(([setId, items]) => {
+                const set = customApiSetQueries.data?.find((s) => s.id === setId)
+                const setName = set?.name || setId
+                
+                return (
+                  <React.Fragment key={setId}>
+                    <div className='mt-4'></div>
+                    <span className="text-sm font-semibold">{setName}:</span>
+                    {items.map((item: any, index: number) => (
+                      <div
+                        key={`${setId}-${item.id}-${index}`}
+                        className="flex items-center py-1 px-2 hover:bg-muted rounded cursor-pointer"
+                        onClick={() => {
+                          setTab(`custom-api-set-${setId}`)
+                          setSelectedCustomApiItemId(item.id)
+                        }}
+                      >
+                        <span className="text-sm">{item.id || item.path || 'Unknown API'}</span>
+                      </div>
+                    ))}
+                  </React.Fragment>
+                )
+              })}
             </div>
           </div>
         </>
@@ -372,7 +491,86 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
           </div>
         </div>
       )}
+
+      {/* CustomApiSet tab - 50/50 layout */}
+      {isCustomApiSetTab && (
+        <div className="w-full flex flex-col h-full min-h-0">
+          {isLoadingSet || isLoadingSchema ? (
+            <div className="flex items-center justify-center h-full">
+              <Spinner className="mr-2" />
+              <span className="text-sm font-medium text-muted-foreground">Loading API set...</span>
+            </div>
+          ) : !activeCustomApiSet || !activeCustomApiSchema ? (
+            <div className="flex items-center justify-center h-full">
+              <span className="text-sm font-medium text-muted-foreground">
+                Set or schema not found.
+              </span>
+            </div>
+          ) : (
+            <>
+              {/* Top 50%: API List */}
+              <div className="w-full h-1/2 flex flex-col min-h-0 border-b border-border">
+                <CustomAPIList
+                  items={customApiItems}
+                  selectedItemId={selectedCustomApiItemId}
+                  onSelectItem={setSelectedCustomApiItemId}
+                  schema={activeCustomApiSchema}
+                  mode="view"
+                  filterOptions={{
+                    typeField: 'method',
+                    typeOptions: getMethodOptions(),
+                  }}
+                  footerImage={activeCustomApiSet?.avatar}
+                  providerUrl={activeCustomApiSet?.provider_url}
+                />
+              </div>
+              
+              {/* Bottom 50%: API Detail View */}
+              <div className="w-full h-1/2 flex flex-col min-h-0">
+                {selectedCustomApiItem ? (
+                  <CustomAPIView
+                    item={selectedCustomApiItem}
+                    schema={activeCustomApiSchema.schema}
+                    itemId={selectedCustomApiItem.id}
+                    excludeFields={['id', 'path', 'parent_id', 'relationships']}
+                  />
+                ) : (
+                  <div className="text-center py-12 text-sm text-muted-foreground">
+                    Select an API from the list to view details.
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
+  )
+}
+
+// Helper component for CustomApiSet tab
+interface CustomApiSetTabProps {
+  setId: string
+  active: boolean
+  onClick: (e: React.MouseEvent) => void
+}
+
+const CustomApiSetTab: FC<CustomApiSetTabProps> = ({ setId, active, onClick }) => {
+  const { data: set } = useQuery({
+    queryKey: ['custom-api-set-tab-name', setId],
+    queryFn: () => getCustomApiSetById(setId),
+    enabled: !!setId,
+    staleTime: Infinity, // Set names don't change often
+  })
+  
+  return (
+    <DaTabItem
+      active={active}
+      to="#"
+      onClick={onClick}
+    >
+      {set?.name || 'Loading...'}
+    </DaTabItem>
   )
 }
 

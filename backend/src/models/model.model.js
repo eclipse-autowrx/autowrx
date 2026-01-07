@@ -101,6 +101,11 @@ const modelSchema = new mongoose.Schema(
       type: mongoose.SchemaTypes.Mixed,
       default: null,
     },
+    custom_api_sets: {
+      type: [mongoose.SchemaTypes.ObjectId],
+      ref: 'CustomApiSet',
+      default: [],
+    },
   },
   {
     timestamps: true,

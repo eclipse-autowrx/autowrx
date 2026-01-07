@@ -1,0 +1,351 @@
+{
+  "info": {
+    "name": "Plugin APIs",
+    "description": "Collection for PluginAPI and PluginApiInstance endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "PluginAPI",
+      "item": [
+        {
+          "name": "List PluginAPIs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v2/system/plugin-api",
+              "host": ["{{baseUrl}}"],
+              "path": ["v2", "system", "plugin-api"]
+            }
+          }
+        },
+        {
+          "name": "Get PluginAPI",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v2/system/plugin-api/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["v2", "system", "plugin-api", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create PluginAPI",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"rest_api\",\n  \"name\": \"REST API\",\n  \"type\": \"list\",\n  \"attributes\": [\n    {\n      \"name\": \"name\",\n      \"data_type\": \"string\",\n      \"required\": true\n    },\n    {\n      \"name\": \"path\",\n      \"data_type\": \"string\",\n      \"required\": true\n    },\n    {\n      \"name\": \"method\",\n      \"data_type\": \"string\",\n      \"required\": true\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v2/system/plugin-api",
+              "host": ["{{baseUrl}}"],
+              "path": ["v2", "system", "plugin-api"]
+            }
+          }
+        },
+        {
+          "name": "Update PluginAPI",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated description\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v2/system/plugin-api/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["v2", "system", "plugin-api", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete PluginAPI",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v2/system/plugin-api/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["v2", "system", "plugin-api", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "PluginApiInstance",
+      "item": [
+        {
+          "name": "List Instances",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v2/vehicle-data/plugin-api-instances",
+              "host": ["{{baseUrl}}"],
+              "path": ["v2", "vehicle-data", "plugin-api-instances"]
+            }
+          }
+        },
+        {
+          "name": "Get Instance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v2/vehicle-data/plugin-api-instances/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["v2", "vehicle-data", "plugin-api-instances", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Instance",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plugin_api\": \"<plugin_api_id>\",\n  \"plugin_api_code\": \"rest_api\",\n  \"scope\": \"user\",\n  \"name\": \"My API Set\",\n  \"data\": {\n    \"items\": [\n      {\n        \"id\": \"api1\",\n        \"path\": \"/api/users\",\n        \"name\": \"Get Users\",\n        \"method\": \"GET\"\n      }\n    ],\n    \"metadata\": {}\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v2/vehicle-data/plugin-api-instances",
+              "host": ["{{baseUrl}}"],
+              "path": ["v2", "vehicle-data", "plugin-api-instances"]
+            }
+          }
+        },
+        {
+          "name": "Update Instance",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v2/vehicle-data/plugin-api-instances/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["v2", "vehicle-data", "plugin-api-instances", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"item\": {\n    \"id\": \"api2\",\n    \"path\": \"/api/users/:id\",\n    \"name\": \"Get User\",\n    \"method\": \"GET\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v2/vehicle-data/plugin-api-instances/:id/items",
+              "host": ["{{baseUrl}}"],
+              "path": ["v2", "vehicle-data", "plugin-api-instances", ":id", "items"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Item",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"item\": {\n    \"name\": \"Updated API Name\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v2/vehicle-data/plugin-api-instances/:id/items/:itemId",
+              "host": ["{{baseUrl}}"],
+              "path": ["v2", "vehicle-data", "plugin-api-instances", ":id", "items", ":itemId"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "key": "itemId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Item",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v2/vehicle-data/plugin-api-instances/:id/items/:itemId",
+              "host": ["{{baseUrl}}"],
+              "path": ["v2", "vehicle-data", "plugin-api-instances", ":id", "items", ":itemId"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "key": "itemId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Instance",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v2/vehicle-data/plugin-api-instances/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["v2", "vehicle-data", "plugin-api-instances", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    }
+  ]
+}
+

@@ -40,6 +40,7 @@ const createModel = {
     state: Joi.string().max(255).default('draft'),
     model_template_id: Joi.string().custom(objectId).allow(null),
     custom_template: Joi.any(),
+    custom_api_sets: Joi.array().items(Joi.string().custom(objectId)),
   }),
 };
 
@@ -91,6 +92,7 @@ const updateModel = {
       state: Joi.string().max(255),
       model_template_id: Joi.string().custom(objectId).allow(null),
       custom_template: Joi.any(),
+      custom_api_sets: Joi.array().items(Joi.string().custom(objectId)),
     })
     .min(1),
   params: Joi.object().keys({

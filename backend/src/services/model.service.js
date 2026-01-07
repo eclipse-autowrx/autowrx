@@ -12,13 +12,14 @@ const prototypeService = require('./prototype.service');
 const apiService = require('./api.service');
 const permissionService = require('./permission.service');
 const fileService = require('./file.service');
-const { Model, Role } = require('../models');
+const { Model, Role, CustomApiSchema, CustomApiSet } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { PERMISSIONS } = require('../config/roles');
 const mongoose = require('mongoose');
 const logger = require('../config/logger');
 const _ = require('lodash');
 const config = require('../config/config');
+const customApiSetService = require('./customApiSet.service');
 
 /**
  *
@@ -308,10 +309,8 @@ const queryModels = async (filter, options, advanced, userId) => {
  * @returns {Promise<Model>}
  */
 const getModelById = async (id, userId, includeCreatorFullDetails) => {
-  const model = await Model.findById(id).populate(
-    'created_by',
-    includeCreatorFullDetails ? 'id name image_file email' : 'id name image_file'
-  );
+  const model = await Model.findById(id)
+    .populate('created_by', includeCreatorFullDetails ? 'id name image_file email' : 'id name image_file');
   if (!model) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Model not found');
   }
@@ -347,6 +346,31 @@ const updateModelById = async (id, updateBody, actionOwner) => {
       updateBody.extend = parsedExtend;
     } catch (error) {
       logger.warn(`Failed while parsing extend field: ${error}`);
+    }
+  }
+
+  // Validate custom_api_sets if provided
+  if (updateBody.custom_api_sets !== undefined) {
+    // Verify all sets exist
+    const sets = await CustomApiSet.find({
+      _id: { $in: updateBody.custom_api_sets },
+    }).lean();
+
+    if (sets.length !== updateBody.custom_api_sets.length) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'One or more CustomApiSet references are invalid');
+    }
+
+    // Check access permissions for user-scoped sets
+    const userScopedSets = sets.filter((set) => set.scope === 'user');
+    const inaccessibleSets = userScopedSets.filter(
+      (set) => set.owner.toString() !== actionOwner.toString()
+    );
+
+    if (inaccessibleSets.length > 0) {
+      throw new ApiError(
+        httpStatus.FORBIDDEN,
+        'You do not have access to one or more user-scoped CustomApiSets'
+      );
     }
   }
 
@@ -557,6 +581,56 @@ const processApiDataUrl = async (apiDataUrl) => {
   }
 };
 
+/**
+ * Add CustomApiSet to model
+ * @param {string} modelId
+ * @param {string} setId
+ * @param {string} userId
+ * @returns {Promise<Model>}
+ */
+const addCustomApiSet = async (modelId, setId, userId) => {
+  const model = await getModelById(modelId, userId);
+  
+  // Verify set exists and user has access
+  const set = await customApiSetService.getSetById(setId, userId);
+  
+  if (!model.custom_api_sets) {
+    model.custom_api_sets = [];
+  }
+  
+  if (model.custom_api_sets.some((id) => id.toString() === setId)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'CustomApiSet already linked to this model');
+  }
+  
+  model.custom_api_sets.push(setId);
+  await model.save();
+  return model;
+};
+
+/**
+ * Remove CustomApiSet from model
+ * @param {string} modelId
+ * @param {string} setId
+ * @param {string} userId
+ * @returns {Promise<Model>}
+ */
+const removeCustomApiSet = async (modelId, setId, userId) => {
+  const model = await getModelById(modelId, userId);
+  
+  if (!model.custom_api_sets) {
+    model.custom_api_sets = [];
+  }
+  
+  const index = model.custom_api_sets.findIndex((id) => id.toString() === setId);
+  if (index === -1) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'CustomApiSet not linked to this model');
+  }
+  
+  model.custom_api_sets.splice(index, 1);
+  await model.save();
+  return model;
+};
+
 module.exports.createModel = createModel;
 module.exports.getModels = getModels;
 module.exports.queryModels = queryModels;
@@ -568,3 +642,5 @@ module.exports.deleteAuthorizedUser = deleteAuthorizedUser;
 module.exports.getAccessibleModels = getAccessibleModels;
 module.exports.processApiDataUrl = processApiDataUrl;
 module.exports.getModelStats = getModelStats;
+module.exports.addCustomApiSet = addCustomApiSet;
+module.exports.removeCustomApiSet = removeCustomApiSet;

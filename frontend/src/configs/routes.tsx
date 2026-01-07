@@ -16,6 +16,7 @@ import PageNotFound from '@/pages/PageNotFound.tsx'
 import PageTest from '@/pages/PageTest.tsx'
 import SiteConfigManagement from '@/pages/SiteConfigManagement.tsx'
 import PluginList from '@/pages/PluginList.tsx'
+import PluginManagement from '@/pages/PluginManagement.tsx'
 import TemplateManager from '@/pages/TemplateManager.tsx'
 import PageTestPlugin from '@/pages/PageTestPlugin.tsx'
 import PageModelList from '@/pages/PageModelList.tsx'
@@ -186,7 +187,7 @@ const routesConfig: RouteConfig[] = [
                     index: true,
                     element: (
                       <SuspenseProvider>
-                        <PluginList />
+                        <PluginManagement />
                       </SuspenseProvider>
                     ),
                   },
@@ -336,7 +337,15 @@ const routesConfig: RouteConfig[] = [
                 ),
               },
               {
-                path: 'api/:api',
+                path: 'api/covesa/:api',
+                element: (
+                  <SuspenseProvider>
+                    <PageVehicleApi />
+                  </SuspenseProvider>
+                ),
+              },
+              {
+                path: 'api/:instance_id',
                 element: (
                   <SuspenseProvider>
                     <PageVehicleApi />

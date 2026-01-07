@@ -19,4 +19,6 @@ module.exports.Asset = require('./asset.model');
 module.exports.SiteConfig = require('./siteConfig.model');
 module.exports.Plugin = require('./plugin.model');
 module.exports.ModelTemplate = require('./modelTemplate.model');
+module.exports.CustomApiSchema = require('./customApiSchema.model');
+module.exports.CustomApiSet = require('./customApiSet.model');
 // Inventory models removed

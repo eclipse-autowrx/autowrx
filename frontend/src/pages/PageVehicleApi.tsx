@@ -7,11 +7,20 @@
 // SPDX-License-Identifier: MIT
 
 import { useEffect, useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import useModelStore from '@/stores/modelStore'
 import { ViewApiUSP } from '@/components/organisms/ViewApiUSP'
 import ViewApiV2C from '@/components/organisms/ViewApiV2C'
 import ViewApiCovesa from '@/components/organisms/ViewApiCovesa'
+import ViewCustomApiSet from '@/components/organisms/ViewCustomApiSet'
+import ModelApiTabs from '@/components/molecules/ModelApiTabs'
+import CustomApiSetPicker from '@/components/organisms/CustomApiSetPicker'
 import { updateModelService } from '@/services/model.service'
+import useCurrentModel from '@/hooks/useCurrentModel'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
+import { useQueryClient } from '@tanstack/react-query'
+import { useToast } from '@/components/molecules/toaster/use-toast'
 
 // Default V2C API list from JSON files (Swagger-compatible structure)
 const DEFAULT_V2C = [
@@ -629,122 +638,115 @@ const DEFAULT_USP_TREE = {
 }
 
 const PageVehicleApi = () => {
-  const DEFAULT_API = 'COVESA'
-  const [activeTab, setActiveTab] = useState<String>(DEFAULT_API)
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const { model_id, instance_id, api } = useParams<{ model_id: string; instance_id?: string; api?: string }>()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+  const [isPickerOpen, setIsPickerOpen] = useState(false)
 
-  const [supportApis, model, refreshModel] = useModelStore((state) => [
-    state.supportApis,
-    state.model,
-    state.refreshModel,
-  ])
+  const { data: model, refetch: refetchModel } = useCurrentModel()
+  const [hasWritePermission] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model_id])
+  const [refreshModel, activeModelApis] = useModelStore((state) => [state.refreshModel, state.activeModelApis])
+  
+  // Get COVESA API count
+  const covesaApiCount = activeModelApis?.length || 0
 
-  useEffect(() => {
-    if (supportApis && supportApis.length > 0) {
-      setActiveTab(supportApis[0]?.code || DEFAULT_API)
-    }
-  }, [supportApis])
+  // Determine active tab based on route
+  // If instance_id is 'covesa' or not present (and api param exists for COVESA), show COVESA tab
+  // Otherwise, show plugin instance tab
+  const isCovesaTab = !instance_id || instance_id === 'covesa'
 
-  const handleAddApi = async (apiCode: string) => {
+  // Get custom_api_sets from model and normalize to strings
+  const customApiSetIds = (model?.custom_api_sets || []).map((id: any) => {
+    if (typeof id === 'string') return id
+    if (id && typeof id === 'object' && 'toString' in id) return id.toString()
+    return String(id)
+  }).filter((id: any): id is string => !!id && typeof id === 'string')
+  
+  // Filter out 'covesa' from set IDs if it somehow got added
+  const validSetIds = customApiSetIds.filter(id => id !== 'covesa')
+
+  const handleAddInstance = async (instanceId: string) => {
     if (!model) return
-    const currentSupports = model.extend?.vehicle_api?.supports || [
-      {
-        label: 'COVESA',
-        code: 'COVESA',
-      },
-    ]
-    const apiData =
-      apiCode === 'USP'
-        ? { label: 'USP 2.0', code: 'USP' }
-        : { label: apiCode, code: apiCode }
-    const newSupports = [...currentSupports, apiData]
-    const updatedVehicleApi = {
-      ...model.extend?.vehicle_api,
-      supports: newSupports,
-    }
-    if (apiCode === 'USP') {
-      updatedVehicleApi.USP = DEFAULT_USP
-      updatedVehicleApi.USP_Tree = DEFAULT_USP_TREE
-    }
-    if (apiCode === 'V2C') {
-      updatedVehicleApi.V2C = DEFAULT_V2C
-    }
 
-    const updatedExtend = {
-      ...model.extend,
-      vehicle_api: updatedVehicleApi,
-    }
     try {
-      await updateModelService(model.id, { extend: updatedExtend })
-      await refreshModel()
-    } catch (error) {
-      console.error('Failed to add API:', error)
+      // Add set to model.custom_api_sets
+      const currentSets = validSetIds || []
+      if (currentSets.includes(instanceId)) {
+        toast({
+          title: 'Already added',
+          description: 'This API set is already added to the model',
+          variant: 'destructive',
+        })
+        return
+      }
+
+      // Ensure all IDs are strings before saving
+      const updatedSets = [...currentSets, instanceId].map((id) => {
+        if (typeof id === 'string') return id
+        if (id && typeof id === 'object' && 'toString' in id) return id.toString()
+        return String(id)
+      }).filter((id): id is string => !!id && typeof id === 'string')
+      
+      await updateModelService(model.id, {
+        custom_api_sets: updatedSets,
+      })
+
+      // Refresh model data
+      await Promise.all([refetchModel(), refreshModel()])
+      queryClient.invalidateQueries({ queryKey: ['model', model_id] })
+
+      // Navigate to the new tab
+      navigate(`/model/${model_id}/api/${instanceId}`)
+
+      toast({
+        title: 'Added',
+        description: 'API set added successfully',
+      })
+    } catch (error: any) {
+      toast({
+        title: 'Add failed',
+        description: error?.response?.data?.message || error?.message || 'Failed to add instance',
+        variant: 'destructive',
+      })
     }
   }
 
   return (
-    <div className="w-full h-full">
-      {/* {
-        <div className="flex items-center justify-start py-1 pl-4 bg-primary text-white">
-          <div className="text-sm font-medium mr-2">
-            API:{' '}
-          </div>
-
-          <select
-            className="min-w-[120px] text-xs px-2 py-0.5 text-white bg-transparent outline-none cursor-pointer rounded border border-white"
-            onChange={(e: any) => setActiveTab(e.target.value)}
-          >
-            {supportApis && supportApis.length > 0 ? (
-              supportApis.map((api: any) => (
-                <option
-                  key={api.code}
-                  value={api.code}
-                  className="text-muted-foreground"
-                >
-                  {api.label}
-                </option>
-              ))
-            ) : (
-              <option value={DEFAULT_API}>{DEFAULT_API}</option>
-            )}
-          </select>
-
-          {(() => {
-            const availableApis = ['USP', 'V2C'].filter(
-              (code) => !supportApis.some((s) => s.code === code),
-            )
-            return availableApis.length > 0 ? (
-              <div className="relative ml-2">
-                <button
-                  className="min-w-[120px] text-xs px-2 py-0.5 text-white bg-transparent outline-none cursor-pointer rounded border border-white"
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                >
-                  Add API
-                </button>
-                {isDropdownOpen && (
-                  <div className="absolute mt-1 bg-white border border-gray-300 rounded shadow-lg z-10 min-w-[120px]">
-                    {availableApis.map((apiCode) => (
-                      <div
-                        key={apiCode}
-                        className="px-2 py-1 text-black hover:bg-gray-100 cursor-pointer"
-                        onClick={() => {
-                          handleAddApi(apiCode)
-                          setIsDropdownOpen(false)
-                        }}
-                      >
-                        Add {apiCode}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : null
-          })()}
+    <div className="w-full h-full flex flex-col">
+      {/* Tab Bar */}
+      <div className="flex min-h-[52px] border-b border-muted-foreground/50 bg-background shrink-0">
+        <div className="flex w-fit">
+          <ModelApiTabs
+            customApiSetIds={validSetIds}
+            onAddInstance={() => setIsPickerOpen(true)}
+            isModelOwner={hasWritePermission}
+            covesaApiCount={covesaApiCount}
+          />
         </div>
-      } */}
-      {(activeTab == 'COVESA' || !activeTab) && <ViewApiCovesa />}
-      {activeTab == 'USP' && <ViewApiUSP />}
-      {activeTab == 'V2C' && <ViewApiV2C />}
+        <div className="grow"></div>
+      </div>
+
+      {/* Content Area */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        {isCovesaTab ? (
+          <ViewApiCovesa />
+        ) : instance_id ? (
+          <ViewCustomApiSet key={instance_id} instanceId={instance_id} />
+        ) : (
+          <ViewApiCovesa />
+        )}
+      </div>
+
+      {/* Instance Picker Dialog */}
+      {hasWritePermission && (
+        <CustomApiSetPicker
+          open={isPickerOpen}
+          onClose={() => setIsPickerOpen(false)}
+          onSelect={handleAddInstance}
+          excludeIds={validSetIds}
+        />
+      )}
     </div>
   )
 }
