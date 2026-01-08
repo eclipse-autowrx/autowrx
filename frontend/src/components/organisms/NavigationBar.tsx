@@ -33,13 +33,38 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 // import useCurrentModel from '@/hooks/useCurrentModel'
 import { IoIosHelpBuoy } from 'react-icons/io'
 import config from '@/configs/config'
-// import LearningIntegration from './LearningIntegration'
+import LearningIntegration from './LearningIntegration'
 
 import { useState, useEffect } from 'react'
 
 // import useLastAccessedModel from '@/hooks/useLastAccessedModel'
 import { useSiteConfig } from '@/utils/siteConfig'
 import { Button } from '../atoms/button'
+
+const SimpleSwitch = ({
+  checked,
+  onChange,
+}: {
+  checked: boolean
+  onChange: (checked: boolean) => void
+}) => (
+  <button
+    type="button"
+    className={`${
+      checked ? 'bg-blue-600' : 'bg-gray-200'
+    } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+    role="switch"
+    aria-checked={checked}
+    onClick={() => onChange(!checked)}
+  >
+    <span
+      aria-hidden="true"
+      className={`${
+        checked ? 'translate-x-5' : 'translate-x-0'
+      } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+    />
+  </button>
+)
 
 const NavigationBar = ({}) => {
   const { data: user } = useSelfProfileQuery()
@@ -48,6 +73,7 @@ const NavigationBar = ({}) => {
   const [learningMode, setIsLearningMode] = useState(false)
   const siteTitle = useSiteConfig('SITE_TITLE', 'AutoWRX')
   const logoUrl = useSiteConfig('SITE_LOGO_WIDE', '/imgs/logo-wide.png')
+  const enableLearningMode = useSiteConfig('ENABLE_LEARNING_MODE', false)
 
   useEffect(() => {
     if (siteTitle) {
@@ -78,26 +104,21 @@ const NavigationBar = ({}) => {
 
       <div className="flex-1 min-w-0"></div>
 
-      {/* {config && config.learning && config.learning.url && (
+      {enableLearningMode && (
         <div className="mr-6 cursor-pointer flex items-center">
-          <span className="mr-1 text-base font-normal">Learning</span>{' '}
-          <Switch
+          <span className="mr-2 text-sm font-medium">Learning</span>
+          <SimpleSwitch
+            checked={learningMode}
             onChange={(v) => {
-              if (v) {
-                if (!user) {
-                  alert('Please Sign in to use learning mode')
-                  return
-                }
+              if (v && !user) {
+                alert('Please Sign in to use learning mode')
+                return
               }
               setIsLearningMode(v)
             }}
-            checked={learningMode}
-            width={40}
-            borderRadius={30}
-            height={20}
           />
         </div>
-      )} */}
+      )}
 
       {/* {config && config.enableSupport && (
         <Link to="https://forms.office.com/e/P5gv3U3dzA">
@@ -198,7 +219,7 @@ const NavigationBar = ({}) => {
         </div>
       )}
 
-      {/* {learningMode && <LearningIntegration requestClose={() => setIsLearningMode(false)} />} */}
+      {learningMode && <LearningIntegration requestClose={() => setIsLearningMode(false)} />}
       {!user && <div className="shrink-0"><DaNavUser /></div>}
     </header>
   )
