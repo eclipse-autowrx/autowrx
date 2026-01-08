@@ -79,7 +79,7 @@ const DaRuntimeControl: FC = () => {
   const [tmpCustomKitServer, setTmpCustomKitServer] = useState<string>(
     localStorage.getItem('customKitServer') || '',
   )
-  const [isShowEditKitServer, setIsShowEditKitServer] = useState<boolean>(false)
+  const [showConfigDialog, setShowConfigDialog] = useState<boolean>(false)
   const [useRuntime, setUseRuntime] = useState<boolean>(true)
   const [mockSignals, setMockSignals] = useState<any[]>([])
   const [curRuntimeInfo, setCurRuntimeInfo] = useState<any>(null)
@@ -316,47 +316,50 @@ const DaRuntimeControl: FC = () => {
         />
       </DaDialog>
 
-      {/* Custom Kit Server Editor */}
-      {isExpand && isShowEditKitServer && (
-        <>
-          <div
-            className="mb-1 text-sm px-2"
-            style={{ color: 'hsl(0, 0%, 100%)' }}
-          >
+      {/* Runtime Server Config Dialog */}
+      <DaDialog
+        open={showConfigDialog}
+        onOpenChange={setShowConfigDialog}
+        trigger={<span></span>}
+        className="w-[600px] max-w-[90vw]"
+        showCloseButton={false}
+      >
+        <div className="p-4">
+          <h3 className="text-lg font-semibold mb-4">
+            Configure Runtime Server
+          </h3>
+          <div className="mb-4 text-sm text-gray-600">
             Runtime server URL: leave empty to use default server
           </div>
-          <div className="flex mb-2 px-2">
-            <Input
-              className="grow"
-              value={tmpCustomKitServer}
-              onChange={(e) => {
-                setTmpCustomKitServer(e.target.value)
-              }}
-              placeholder="Custom server URL"
-            />
+          <Input
+            className="w-full mb-4 text-primary"
+            value={tmpCustomKitServer}
+            onChange={(e) => {
+              setTmpCustomKitServer(e.target.value)
+            }}
+            placeholder="Custom server URL"
+          />
+          <div className="flex justify-end gap-2">
             <Button
-              className="ml-2 w-20"
-              size="sm"
-              onClick={() => {
-                setCustomKitServer(tmpCustomKitServer)
-                setIsShowEditKitServer(false)
-              }}
-            >
-              Set
-            </Button>
-            <Button
-              className="ml-2 w-20"
-              size="sm"
               variant="outline"
               onClick={() => {
-                setIsShowEditKitServer(false)
+                setTmpCustomKitServer(customKitServer)
+                setShowConfigDialog(false)
               }}
             >
               Cancel
             </Button>
+            <Button
+              onClick={() => {
+                setCustomKitServer(tmpCustomKitServer)
+                setShowConfigDialog(false)
+              }}
+            >
+              Save
+            </Button>
           </div>
-        </>
-      )}
+        </div>
+      </DaDialog>
 
       {/* Runtime Controls Header */}
       <div className={cn('px-1 flex items-center', !isExpand && 'hidden')}>
@@ -419,14 +422,28 @@ const DaRuntimeControl: FC = () => {
           </Button>
         </div>
         <div className="grow" />
-        <SlOptionsVertical
-          size={36}
-          className="cursor-pointer hover:bg-slate-500 p-2 rounded"
-          style={{ color: 'hsl(0, 0%, 100%)' }}
-          onClick={() => {
-            setIsShowEditKitServer((v) => !v)
-          }}
-        />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div
+              className="cursor-pointer hover:bg-slate-500 p-2 rounded"
+              style={{ color: 'hsl(0, 0%, 100%)' }}
+            >
+              <SlOptionsVertical size={20} />
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() => {
+                setTmpCustomKitServer(customKitServer)
+                setShowConfigDialog(true)
+              }}
+            >
+              <div className="flex w-full items-center">
+                Config Runtime Server
+              </div>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Play/Stop Controls */}
