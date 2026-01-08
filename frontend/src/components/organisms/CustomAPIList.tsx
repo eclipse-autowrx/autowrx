@@ -157,7 +157,7 @@ const CustomAPIList: React.FC<CustomAPIListProps> = ({
   }, [schema, displayMapping, providedDisplayMapping])
 
   // Extract image field name from schema
-  const imageField = useMemo(() => extractImageField(schema), [schema])
+  const imageField = useMemo(() => extractImageField(schema || null), [schema])
 
 
   // Initialize filters with all options selected by default
@@ -204,13 +204,15 @@ const CustomAPIList: React.FC<CustomAPIListProps> = ({
   }, [items, searchQuery, selectedFilters, displayMapping, filterOptions])
 
   // Build filter categories for DaFilter
-  const filterCategories = useMemo(() => {
-    if (!filterOptions?.typeOptions || filterOptions.typeOptions.length === 0) {
+  const filterCategories = useMemo<{ [key: string]: string[] }>(() => {
+    const options = filterOptions?.typeOptions
+    if (!options || options.length === 0) {
       return {}
     }
-    return {
-      Type: filterOptions.typeOptions,
+    const categories: { [key: string]: string[] } = {
+      Type: options,
     }
+    return categories
   }, [filterOptions])
 
   const handleFilterChange = (selectedOptions: string[]) => {

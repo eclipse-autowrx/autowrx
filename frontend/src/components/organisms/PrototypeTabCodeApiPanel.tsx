@@ -511,6 +511,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
               {/* Top 50%: API List */}
               <div className="w-full h-1/2 flex flex-col min-h-0 border-b border-border">
                 <CustomAPIList
+                  key={activeCustomApiSetId}
                   items={customApiItems}
                   selectedItemId={selectedCustomApiItemId}
                   onSelectItem={setSelectedCustomApiItemId}

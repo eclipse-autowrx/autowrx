@@ -143,43 +143,6 @@ const DynamicSchemaForm: React.FC<DynamicSchemaFormProps> = ({
     const description = fieldSchema.description || ''
     const fullFieldName = fieldPrefix ? `${fieldPrefix}.${fieldName}` : fieldName
 
-    // View mode
-    if (mode === 'view') {
-      const hasValue = fieldValue !== null && fieldValue !== undefined
-      return (
-        <div key={fieldName} className={cn("space-y-1", currentDepth > 0 && "ml-4 border-l-2 border-border pl-4")}>
-          <Label className="text-sm font-semibold">
-            {capitalizeLabel(fieldName)} {isRequired && <span className="text-destructive">*</span>}
-          </Label>
-          <div className="relative group">
-            <div className="text-sm text-foreground py-2 px-3 bg-muted rounded-md break-words overflow-x-auto max-h-[200px] overflow-y-auto">
-              {!hasValue
-                ? <span className="text-muted-foreground italic">Not set</span>
-                : typeof fieldValue === 'object' 
-                  ? <pre className="text-xs whitespace-pre-wrap break-words overflow-x-auto">{JSON.stringify(fieldValue, null, 2)}</pre>
-                  : <div className="break-words overflow-wrap-anywhere">{String(fieldValue)}</div>
-              }
-            </div>
-            {hasValue && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => copyToClipboard(fieldValue, fieldName)}
-                title="Copy to clipboard"
-              >
-                <TbCopy className="h-3.5 w-3.5" />
-              </Button>
-            )}
-          </div>
-          {description && (
-            <p className="text-xs text-muted-foreground">{description}</p>
-          )}
-        </div>
-      )
-    }
-
     // Handle nested objects recursively
     if (fieldType === 'object' && fieldSchema.properties) {
       if (mode === 'view') {
@@ -356,6 +319,43 @@ const DynamicSchemaForm: React.FC<DynamicSchemaFormProps> = ({
               </div>
             )}
           </div>
+        </div>
+      )
+    }
+
+    // View mode (generic fallback for primitives and unhandled types)
+    if (mode === 'view') {
+      const hasValue = fieldValue !== null && fieldValue !== undefined
+      return (
+        <div key={fieldName} className={cn("space-y-1", currentDepth > 0 && "ml-4 border-l-2 border-border pl-4")}>
+          <Label className="text-sm font-semibold">
+            {capitalizeLabel(fieldName)} {isRequired && <span className="text-destructive">*</span>}
+          </Label>
+          <div className="relative group">
+            <div className="text-sm text-foreground py-2 px-3 bg-muted rounded-md break-words overflow-x-auto max-h-[200px] overflow-y-auto">
+              {!hasValue
+                ? <span className="text-muted-foreground italic">Not set</span>
+                : typeof fieldValue === 'object' 
+                  ? <pre className="text-xs whitespace-pre-wrap break-words overflow-x-auto">{JSON.stringify(fieldValue, null, 2)}</pre>
+                  : <div className="break-words overflow-wrap-anywhere">{String(fieldValue)}</div>
+              }
+            </div>
+            {hasValue && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => copyToClipboard(fieldValue, fieldName)}
+                title="Copy to clipboard"
+              >
+                <TbCopy className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
+          {description && (
+            <p className="text-xs text-muted-foreground">{description}</p>
+          )}
         </div>
       )
     }

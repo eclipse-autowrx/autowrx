@@ -33,7 +33,7 @@ const ModelApiTabs: FC<ModelApiTabsProps> = ({
   // Use useMemo to ensure stable reference and prevent unnecessary re-renders
   const normalizedIds = useMemo(() => {
     return customApiSetIds
-      .map((id) => {
+      .map((id: any) => {
         if (typeof id === 'string') return id
         if (id && typeof id === 'object' && 'toString' in id) return id.toString()
         return String(id)
@@ -80,11 +80,12 @@ const ModelApiTabs: FC<ModelApiTabsProps> = ({
       {/* Dynamic set tabs */}
       {sets.map((set) => {
         // Ensure set.id is a string for comparison and navigation
-        const setIdString = typeof set.id === 'string' 
-          ? set.id 
-          : (set.id && typeof set.id === 'object' && 'toString' in set.id)
-          ? set.id.toString()
-          : String(set.id)
+        const setId: any = set.id
+        const setIdString = typeof setId === 'string' 
+          ? setId 
+          : (setId && typeof setId === 'object' && 'toString' in setId)
+          ? setId.toString()
+          : String(setId)
         
         const isActive = instance_id === setIdString
         const itemCount = set.data?.items?.length || 0

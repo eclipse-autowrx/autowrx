@@ -682,9 +682,10 @@ const PageVehicleApi = () => {
       }
 
       // Ensure all IDs are strings before saving
-      const updatedSets = [...currentSets, instanceId].map((id) => {
+      const updatedSets = [...currentSets, instanceId].map((id: any) => {
         if (typeof id === 'string') return id
-        if (id && typeof id === 'object' && 'toString' in id) return id.toString()
+        // Check if id has toString method (handling potential object types)
+        if (id && typeof id === 'object' && 'toString' in id && typeof id.toString === 'function') return id.toString()
         return String(id)
       }).filter((id): id is string => !!id && typeof id === 'string')
       
