@@ -60,8 +60,11 @@ const DaRuntimeControl: FC = () => {
   )
   const { data: model } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
-  const runtimeServerUrl = useSiteConfig('RUNTIME_SERVER_URL', DEFAULT_KIT_SERVER)
-  
+  const runtimeServerUrl = useSiteConfig(
+    'RUNTIME_SERVER_URL',
+    DEFAULT_KIT_SERVER,
+  )
+
   const [isExpand, setIsExpand] = useState(false)
   const [isRunning, setIsRunning] = useState(false)
   const [activeRtId, setActiveRtId] = useState<string | undefined>('')
@@ -110,7 +113,9 @@ const DaRuntimeControl: FC = () => {
     }
     if (curRuntimeInfo && curRuntimeInfo.lsOfApiSubscriber) {
       let lsOfListener = []
-      for (let [key, value] of Object.entries(curRuntimeInfo.lsOfApiSubscriber)) {
+      for (let [key, value] of Object.entries(
+        curRuntimeInfo.lsOfApiSubscriber,
+      )) {
         lsOfListener.push(value)
       }
       setListenerOnRt(lsOfListener)
@@ -297,7 +302,7 @@ const DaRuntimeControl: FC = () => {
         className="w-[800px] max-w-[90vw]"
         showCloseButton={false}
       >
-        <RuntimeAssetManager 
+        <RuntimeAssetManager
           onClose={() => {
             setShowRtDialog(false)
             setUseRuntime(false)
@@ -307,20 +312,22 @@ const DaRuntimeControl: FC = () => {
           }}
           onCancel={() => {
             setShowRtDialog(false)
-          }} 
+          }}
         />
       </DaDialog>
 
       {/* Custom Kit Server Editor */}
       {isExpand && isShowEditKitServer && (
         <>
-          <div className="mb-1 text-sm px-2" style={{ color: 'hsl(0, 0%, 100%)' }}>
+          <div
+            className="mb-1 text-sm px-2"
+            style={{ color: 'hsl(0, 0%, 100%)' }}
+          >
             Runtime server URL: leave empty to use default server
           </div>
           <div className="flex mb-2 px-2">
             <Input
               className="grow"
-              style={{ color: 'hsl(0, 0%, 0%)' }}
               value={tmpCustomKitServer}
               onChange={(e) => {
                 setTmpCustomKitServer(e.target.value)
@@ -355,7 +362,10 @@ const DaRuntimeControl: FC = () => {
       <div className={cn('px-1 flex items-center', !isExpand && 'hidden')}>
         {useRuntime && (
           <>
-            <label className="w-fit mr-2 text-sm font-light flex items-center" style={{ color: 'hsl(0, 0%, 100%)' }}>
+            <label
+              className="w-fit mr-2 text-sm font-light flex items-center"
+              style={{ color: 'hsl(0, 0%, 100%)' }}
+            >
               Runtime:
             </label>
             {customKitServer && customKitServer.trim().length > 0 ? (
@@ -399,7 +409,7 @@ const DaRuntimeControl: FC = () => {
           <Button
             variant="ghost"
             size="sm"
-            className="text-yellow-400! hover:text-yellow-300!"
+            className="text-yellow-400! hover:text-yellow-300! hover:bg-slate-700"
             data-id="btn-add-runtime"
             onClick={() => {
               setShowRtDialog(true)
@@ -516,7 +526,10 @@ const DaRuntimeControl: FC = () => {
           <>
             {activeTab === 'output' && (
               <div className="h-full flex flex-col">
-                <div className="shrink flex items-center" style={{ backgroundColor: 'hsl(217, 13%, 32%)' }}>
+                <div
+                  className="shrink flex items-center"
+                  style={{ backgroundColor: 'hsl(217, 13%, 32%)' }}
+                >
                   {requestMode && (
                     <div className="flex items-center">
                       <Input
@@ -529,8 +542,8 @@ const DaRuntimeControl: FC = () => {
                       />
                       <div
                         className={`ml-2 mr-2 px-2 py-1 rounded text-xs ${
-                          requestContent.trim() 
-                            ? 'text-yellow-400 font-semibold cursor-pointer hover:underline' 
+                          requestContent.trim()
+                            ? 'text-yellow-400 font-semibold cursor-pointer hover:underline'
                             : 'text-gray-400 font-thin'
                         }`}
                         onClick={() => {
@@ -567,7 +580,7 @@ const DaRuntimeControl: FC = () => {
                     <div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <div 
+                          <div
                             className="text-sm cursor-pointer px-2 py-0.5 hover:underline"
                             style={{ color: 'hsl(0, 0%, 100%)' }}
                           >
@@ -676,20 +689,27 @@ const DaRuntimeControl: FC = () => {
                   {listenerOnRt.map((listener: any, idx: number) => (
                     <div className="py-0.5 flex italic items-center" key={idx}>
                       <GoDotFill size={10} className="mr-1" />
-                      <div className="grow">Number of listened APIs: {listener.apis?.length || 0}</div>
-                      <div className="text-xs">{getTimeSpanAsString(listener.from)}</div>
+                      <div className="grow">
+                        Number of listened APIs: {listener.apis?.length || 0}
+                      </div>
+                      <div className="text-xs">
+                        {getTimeSpanAsString(listener.from)}
+                      </div>
                     </div>
                   ))}
                 </div>
 
                 <div className="mt-4 mb-1 font-semibold">
-                  Number of Prototype running on this runtime: {runningAppsOnRt.length}
+                  Number of Prototype running on this runtime:{' '}
+                  {runningAppsOnRt.length}
                 </div>
                 {runningAppsOnRt.map((app: any, idx: number) => (
                   <div className="py-0.5 flex italic items-center" key={idx}>
                     <GoDotFill size={10} className="mr-1" />
                     <div className="grow">{app.appName}</div>
-                    <div className="text-xs">{getTimeSpanAsString(app.from)}</div>
+                    <div className="text-xs">
+                      {getTimeSpanAsString(app.from)}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -727,7 +747,7 @@ const DaRuntimeControl: FC = () => {
           onClick={() => {
             setIsExpand((v) => !v)
           }}
-          className="group"
+          className="group hover:bg-slate-700"
           size="sm"
         >
           {isExpand ? (
@@ -773,7 +793,8 @@ const DaRuntimeControl: FC = () => {
               )}
               style={{
                 color: 'hsl(0, 0%, 100%)',
-                borderBottomColor: activeTab === 'output' ? 'hsl(0, 0%, 100%)' : 'transparent',
+                borderBottomColor:
+                  activeTab === 'output' ? 'hsl(0, 0%, 100%)' : 'transparent',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = 'hsl(215, 16%, 47%)'
@@ -796,7 +817,8 @@ const DaRuntimeControl: FC = () => {
                 )}
                 style={{
                   color: 'hsl(0, 0%, 100%)',
-                  borderBottomColor: activeTab === 'vars' ? 'hsl(0, 0%, 100%)' : 'transparent',
+                  borderBottomColor:
+                    activeTab === 'vars' ? 'hsl(0, 0%, 100%)' : 'transparent',
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = 'hsl(215, 16%, 47%)'
@@ -819,7 +841,8 @@ const DaRuntimeControl: FC = () => {
               )}
               style={{
                 color: 'hsl(0, 0%, 100%)',
-                borderBottomColor: activeTab === 'apis' ? 'hsl(0, 0%, 100%)' : 'transparent',
+                borderBottomColor:
+                  activeTab === 'apis' ? 'hsl(0, 0%, 100%)' : 'transparent',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = 'hsl(215, 16%, 47%)'
@@ -866,7 +889,8 @@ const DaRuntimeControl: FC = () => {
                 )}
                 style={{
                   color: 'hsl(0, 0%, 100%)',
-                  borderBottomColor: activeTab === 'mock' ? 'hsl(0, 0%, 100%)' : 'transparent',
+                  borderBottomColor:
+                    activeTab === 'mock' ? 'hsl(0, 0%, 100%)' : 'transparent',
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = 'hsl(215, 16%, 47%)'
