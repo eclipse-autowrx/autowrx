@@ -72,6 +72,20 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     secret: false,
     valueType: 'string',
   },
+  {
+    key: 'ENABLE_LEARNING_MODE',
+    scope: 'site',
+    value: false,
+    secret: false,
+    valueType: 'boolean',
+  },
+  {
+    key: 'LEARNING_MODE_URL',
+    scope: 'site',
+    value: 'https://digital.auto',
+    secret: false,
+    valueType: 'string',
+  },
 ]
 
 export const PREDEFINED_AUTH_CONFIGS: any[] = [
