@@ -4,17 +4,8 @@
     "jest": true,
     "commonjs": true
   },
-  "extends": [
-    "airbnb-base",
-    "plugin:jest/recommended",
-    "plugin:security/recommended-legacy",
-    "plugin:prettier/recommended"
-  ],
-  "plugins": [
-    "jest",
-    "security",
-    "prettier"
-  ],
+  "extends": ["airbnb-base", "plugin:jest/recommended", "plugin:security/recommended-legacy", "plugin:prettier/recommended"],
+  "plugins": ["jest", "security", "prettier"],
   "parserOptions": {
     "ecmaVersion": 2020,
     "sourceType": "script"
@@ -30,9 +21,13 @@
     "import/no-unresolved": [
       "error",
       {
-        "ignore": [
-          "^firebase-admin/.+"
-        ]
+        "ignore": ["^firebase-admin/.+"]
+      }
+    ],
+    "prettier/prettier": [
+      "error",
+      {
+        "endOfLine": "auto"
       }
     ]
   }
