@@ -27,17 +27,21 @@ import {
   VscCloudDownload,
   VscCloudUpload,
 } from 'react-icons/vsc'
+import GitHubAuth from '@/components/molecules/github/GitHubAuth'
+import GitOperations from '@/components/molecules/github/GitOperations'
 
 interface ProjectEditorProps {
   data: string
   onChange: (data: string) => void
   onSave?: (data: string) => Promise<void>
+  prototypeId?: string
 }
 
 const ProjectEditor: React.FC<ProjectEditorProps> = ({
   data,
   onChange,
   onSave,
+  prototypeId,
 }) => {
   const [fsData, setFsData] = useState<FileSystemItem[]>(() => {
     try {
@@ -67,6 +71,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
   const [newRootItemName, setNewRootItemName] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [githubAuthenticated, setGithubAuthenticated] = useState(false)
   const resizeRef = useRef<HTMLDivElement>(null)
   const startXRef = useRef(0)
   const startWidthRef = useRef(0)
@@ -1222,7 +1227,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                 </button>
               </div>
             </div>
-            <div className="overflow-y-auto overflow-x-visible">
+            <div className="overflow-y-auto overflow-x-visible flex-1">
               {/* Inline creation input at root level */}
               {creatingAtRoot && (
                 <div className="flex items-center py-[1px] px-2 text-gray-700 text-[13px] border-b border-gray-100">
@@ -1270,6 +1275,29 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                 allCollapsed={allCollapsed}
                 activeFile={activeFile}
               />
+            </div>
+            
+            {/* GitHub Integration Section */}
+            <div className="border-t border-gray-200 bg-gray-50">
+              <div className="p-2">
+                <GitHubAuth onAuthChange={setGithubAuthenticated} />
+              </div>
+              {githubAuthenticated && prototypeId && (
+                <div className="px-2 pb-2 border-t border-gray-200 pt-2">
+                  <GitOperations
+                    prototypeId={prototypeId}
+                    projectData={JSON.stringify(fsData)}
+                    onPull={(pulledData) => {
+                      try {
+                        const parsed = JSON.parse(pulledData)
+                        setFsData(Array.isArray(parsed) ? parsed : [{ type: 'folder', name: 'root', items: [] }])
+                      } catch (error) {
+                        console.error('Failed to parse pulled data:', error)
+                      }
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </>
         )}

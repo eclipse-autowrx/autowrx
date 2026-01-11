@@ -21,4 +21,6 @@ module.exports.Plugin = require('./plugin.model');
 module.exports.ModelTemplate = require('./modelTemplate.model');
 module.exports.CustomApiSchema = require('./customApiSchema.model');
 module.exports.CustomApiSet = require('./customApiSet.model');
+module.exports.GitCredential = require('./gitCredential.model');
+module.exports.GitRepository = require('./gitRepository.model');
 // Inventory models removed

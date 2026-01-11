@@ -11,6 +11,7 @@ import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
 import { FormEvent, useEffect, useState } from 'react'
 import { TbCircleCheckFilled, TbLoader } from 'react-icons/tb'
+import { VscGithub } from 'react-icons/vsc'
 import { createPrototypeService } from '@/services/prototype.service'
 import { useToast } from '../toaster/use-toast'
 import useListModelPrototypes from '@/hooks/useListModelPrototypes'
@@ -34,6 +35,13 @@ import { createModelService } from '@/services/model.service'
 import { cn } from '@/lib/utils'
 import default_journey from '@/data/default_journey'
 import { SAMPLE_PROJECTS } from '@/data/sampleProjects'
+import { 
+  getGithubAuthStatus, 
+  listGithubRepositories,
+  getGithubFileContents
+} from '@/services/github.service'
+import { GithubRepo } from '@/types/git.type'
+import Cookies from 'js-cookie'
 
 interface FormCreatePrototypeProps {
   onClose?: () => void
@@ -57,6 +65,7 @@ const initialState = {
   code: SAMPLE_PROJECTS[0].data || '',
   cvi: JSON.stringify(CVI),
   mainApi: 'Vehicle',
+  githubRepo: '',
 }
 
 const DEFAULT_DASHBOARD_CFG = `{
@@ -167,6 +176,11 @@ const FormCreatePrototype = ({
 
   const { data: currentUser } = useSelfProfileQuery()
 
+  
+  // GitHub integration state
+  const [githubAuthenticated, setGithubAuthenticated] = useState(false)
+  const [githubRepos, setGithubRepos] = useState<GithubRepo[]>([])
+  const [loadingRepos, setLoadingRepos] = useState(false)
   const [projectTemplate, setProjectTemplate] = useState<string>('')
 
   const handleChange = (name: keyof typeof data, value: string | number) => {
@@ -192,6 +206,84 @@ const FormCreatePrototype = ({
   const getDefaultDashboardCfg = (lang: string) => {
     if (lang == 'rust') return `{"autorun": false, "widgets": [] }`
     return DEFAULT_DASHBOARD_CFG
+  }
+
+  // Check GitHub authentication status and load repositories
+  useEffect(() => {
+    const checkGitHubAuth = async () => {
+      try {
+        // Check cookie first
+        const cachedAuth = Cookies.get('github_auth')
+        if (cachedAuth) {
+          const auth = JSON.parse(cachedAuth)
+          if (auth.authenticated) {
+            setGithubAuthenticated(true)
+            // Load repositories
+            setLoadingRepos(true)
+            try {
+              const repos = await listGithubRepositories({ per_page: 100, sort: 'updated' })
+              setGithubRepos(repos)
+            } catch (error) {
+              console.error('Failed to load GitHub repositories:', error)
+            } finally {
+              setLoadingRepos(false)
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to check GitHub auth:', error)
+      }
+    }
+    
+    checkGitHubAuth()
+  }, [])
+
+  // Load project from GitHub repo when selected
+  const handleGithubRepoChange = async (repoId: string) => {
+    handleChange('githubRepo', repoId)
+    
+    if (!repoId) return
+    
+    const repo = githubRepos.find(r => r.id.toString() === repoId)
+    if (!repo) return
+    
+    try {
+      setLoading(true)
+      const [owner, repoName] = repo.full_name.split('/')
+      
+      // Try to load project.json from the repo
+      try {
+        const fileContent = await getGithubFileContents(owner, repoName, 'project.json', repo.default_branch)
+        if (fileContent.content && fileContent.encoding === 'base64') {
+          const decodedContent = atob(fileContent.content)
+          const projectData = JSON.parse(decodedContent)
+          
+          // Update the code with the project data
+          setData((prev) => ({ 
+            ...prev, 
+            code: JSON.stringify(projectData),
+            language: 'json' // or detect from repo
+          }))
+          
+          toast({
+            title: 'Success',
+            description: `Loaded project from ${repo.name}`,
+          })
+        }
+      } catch (error) {
+        // File might not exist yet, that's okay
+        console.log('No project.json found in repository, using default template')
+      }
+    } catch (error) {
+      console.error('Failed to load project from GitHub:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to load project from GitHub repository',
+        variant: 'destructive',
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   const createNewPrototype = async (e: FormEvent<HTMLFormElement>) => {
@@ -420,6 +512,42 @@ const FormCreatePrototype = ({
           </SelectContent>
         </Select>
       </div>
+
+      {/* GitHub Repository Selector */}
+      {githubAuthenticated && githubRepos.length > 0 && (
+        <div className="flex flex-col mt-4">
+          <Label className="mb-2 flex items-center">
+            <VscGithub className="mr-2" />
+            Start from GitHub Repository (Optional)
+          </Label>
+          <Select
+            value={data.githubRepo}
+            onValueChange={handleGithubRepoChange}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Choose a repository or use template above..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">None (Use template above)</SelectItem>
+              {githubRepos.map((repo) => (
+                <SelectItem key={repo.id} value={repo.id.toString()}>
+                  {repo.full_name} {repo.private && '(Private)'}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground mt-1">
+            Load an existing project from your GitHub repositories
+          </p>
+        </div>
+      )}
+
+      {loadingRepos && (
+        <div className="mt-4 flex items-center text-sm text-muted-foreground">
+          <Spinner className="mr-2 h-4 w-4" />
+          Loading GitHub repositories...
+        </div>
+      )}
 
       {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
 

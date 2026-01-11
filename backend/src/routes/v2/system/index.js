@@ -14,6 +14,7 @@ const siteManagementRoute = require('./site-management.route');
 const pluginRoute = require('./plugin.route');
 const modelTemplateRoute = require('./modelTemplate.route');
 const customApiSchemaRoute = require('./custom-api-schema.route');
+const gitRoute = require('./git.route');
 
 const router = express.Router();
 
@@ -25,6 +26,7 @@ router.use('/site-config', siteManagementRoute);
 router.use('/plugin', pluginRoute);
 router.use('/model-template', modelTemplateRoute);
 router.use('/custom-api-schema', customApiSchemaRoute);
+router.use('/', gitRoute);
 // Backward/compat path to match docs and frontend
 router.use('/system/plugin', pluginRoute);
 router.use('/system/model-template', modelTemplateRoute);
