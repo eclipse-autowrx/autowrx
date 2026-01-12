@@ -25,8 +25,10 @@ import {
   listGithubRepositories,
   createGithubRepository,
   commitGithubFile,
+  commitMultipleGithubFiles,
   getGithubCommits,
   getGithubBranches,
+  createGithubBranch,
 } from '@/services/github.service'
 import { GitRepository, GithubRepo, GithubCommit, GithubBranch } from '@/types/git.type'
 import {
@@ -35,9 +37,12 @@ import {
   VscCloudUpload,
   VscRepo,
   VscHistory,
-  VscGitBranch,
+  VscListTree,
+  VscGithubProject,
+  VscSourceControl,
 } from 'react-icons/vsc'
 import { TbLoader, TbCircleCheckFilled } from 'react-icons/tb'
+import { parseAndExtractFiles } from '@/lib/fileTreeUtils'
 import {
   Select,
   SelectContent,
@@ -62,6 +67,8 @@ const GitOperations: React.FC<GitOperationsProps> = ({
   const [showRepoDialog, setShowRepoDialog] = useState(false)
   const [showCommitDialog, setShowCommitDialog] = useState(false)
   const [showHistoryDialog, setShowHistoryDialog] = useState(false)
+  const [showBranchDialog, setShowBranchDialog] = useState(false)
+  const [showNewBranchDialog, setShowNewBranchDialog] = useState(false)
   const [repositories, setRepositories] = useState<GithubRepo[]>([])
   const [commits, setCommits] = useState<GithubCommit[]>([])
   const [branches, setBranches] = useState<GithubBranch[]>([])
@@ -70,6 +77,10 @@ const GitOperations: React.FC<GitOperationsProps> = ({
   const [newRepoDesc, setNewRepoDesc] = useState('')
   const [commitMessage, setCommitMessage] = useState('')
   const [currentBranch, setCurrentBranch] = useState('main')
+  const [newBranchName, setNewBranchName] = useState('')
+  const [branchesLoading, setBranchesLoading] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
+  const [lastSavedData, setLastSavedData] = useState<string>(projectData)
   const [processing, setProcessing] = useState(false)
   const { toast } = useToast()
 
@@ -77,17 +88,37 @@ const GitOperations: React.FC<GitOperationsProps> = ({
     loadLinkedRepo()
   }, [prototypeId])
 
+  useEffect(() => {
+    // Track if project data has changed (dirty state)
+    setIsDirty(projectData !== lastSavedData)
+  }, [projectData, lastSavedData])
+
   const loadLinkedRepo = async () => {
     try {
       setLoading(true)
       const repo = await getLinkedRepository(prototypeId)
       setLinkedRepo(repo)
       setCurrentBranch(repo.github_default_branch)
+      // Load branches for the linked repository
+      await loadBranchesForRepo(repo)
     } catch (error) {
       // No linked repo found
       setLinkedRepo(null)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadBranchesForRepo = async (repo: GitRepository) => {
+    try {
+      setBranchesLoading(true)
+      const [owner, repoName] = repo.github_repo_full_name.split('/')
+      const branchesData = await getGithubBranches(owner, repoName)
+      setBranches(branchesData)
+    } catch (error) {
+      console.error('Failed to load branches:', error)
+    } finally {
+      setBranchesLoading(false)
     }
   }
 
@@ -109,7 +140,7 @@ const GitOperations: React.FC<GitOperationsProps> = ({
 
   const loadCommits = async () => {
     if (!linkedRepo) return
-    
+
     try {
       setProcessing(true)
       const [owner, repo] = linkedRepo.github_repo_full_name.split('/')
@@ -131,7 +162,7 @@ const GitOperations: React.FC<GitOperationsProps> = ({
 
   const loadBranches = async () => {
     if (!linkedRepo) return
-    
+
     try {
       const [owner, repo] = linkedRepo.github_repo_full_name.split('/')
       const branchesData = await getGithubBranches(owner, repo)
@@ -192,6 +223,8 @@ const GitOperations: React.FC<GitOperationsProps> = ({
 
       setLinkedRepo(linked)
       setCurrentBranch(linked.github_default_branch)
+      // Load branches for newly linked repository
+      await loadBranchesForRepo(linked)
       setShowRepoDialog(false)
 
       toast({
@@ -202,6 +235,66 @@ const GitOperations: React.FC<GitOperationsProps> = ({
       toast({
         title: 'Error',
         description: error?.response?.data?.message || 'Failed to link repository',
+        variant: 'destructive',
+      })
+    } finally {
+      setProcessing(false)
+    }
+  }
+
+  const handleCreateBranch = async () => {
+    if (!newBranchName.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please enter a branch name',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    // Validate branch name (no spaces, special chars except - and _)
+    if (!/^[a-zA-Z0-9._/-]+$/.test(newBranchName)) {
+      toast({
+        title: 'Error',
+        description: 'Branch name can only contain letters, numbers, dots, hyphens, underscores, and slashes',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    if (!linkedRepo) {
+      toast({
+        title: 'Error',
+        description: 'No repository linked',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    try {
+      setProcessing(true)
+      const [owner, repo] = linkedRepo.github_repo_full_name.split('/')
+
+      // Create new branch using backend API
+      await createGithubBranch(owner, repo, {
+        branchName: newBranchName,
+        baseBranch: currentBranch,
+      })
+
+      // Reload branches
+      await loadBranchesForRepo(linkedRepo)
+      setCurrentBranch(newBranchName)
+      setNewBranchName('')
+      setShowNewBranchDialog(false)
+
+      toast({
+        title: 'Success',
+        description: `Branch "${newBranchName}" created successfully`,
+      })
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to create branch',
         variant: 'destructive',
       })
     } finally {
@@ -223,12 +316,23 @@ const GitOperations: React.FC<GitOperationsProps> = ({
       setProcessing(true)
       const [owner, repo] = linkedRepo.github_repo_full_name.split('/')
 
-      // Commit the project data as project.json
-      await commitGithubFile(owner, repo, {
-        path: 'project.json',
-        content: projectData,
-        message: commitMessage,
+      // Parse project data to extract all files
+      const filesToCommit = parseAndExtractFiles(projectData)
+
+      if (!filesToCommit || filesToCommit.length === 0) {
+        toast({
+          title: 'Error',
+          description: 'No files found in project to commit',
+          variant: 'destructive',
+        })
+        return
+      }
+
+      // Commit all files atomically in a single commit
+      const result = await commitMultipleGithubFiles(owner, repo, {
         branch: currentBranch,
+        message: commitMessage,
+        files: filesToCommit,
       })
 
       toast({
@@ -236,11 +340,13 @@ const GitOperations: React.FC<GitOperationsProps> = ({
         description: (
           <p className="flex items-center text-sm">
             <TbCircleCheckFilled className="mr-2 h-4 w-4 text-green-500" />
-            Changes committed successfully
+            {result.filesCount} file{result.filesCount !== 1 ? 's' : ''} committed successfully
           </p>
         ),
       })
 
+      // Mark data as saved after successful commit
+      setLastSavedData(projectData)
       setShowCommitDialog(false)
       setCommitMessage('')
     } catch (error: any) {
@@ -271,23 +377,37 @@ const GitOperations: React.FC<GitOperationsProps> = ({
     <div className="flex items-center space-x-1 px-2">
       {linkedRepo ? (
         <>
-          <div className="flex items-center space-x-2 text-xs text-gray-600 px-2">
-            <VscRepo className="text-blue-600" />
-            <a
-              href={linkedRepo.github_repo_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:underline"
-              title={linkedRepo.github_repo_full_name}
+          <div className='grow'>
+            <div className="flex items-center space-x-2 text-xs text-gray-600 grow">
+              <a
+                href={linkedRepo.github_repo_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline"
+                title={linkedRepo.github_repo_full_name}
+              >
+                {linkedRepo.github_repo_name}
+              </a>
+            </div>
+
+            <button
+              onClick={() => setShowBranchDialog(true)}
+              title="Switch Branch"
+              className=" text-xs flex items-center gap-1 hover:underline"
             >
-              {linkedRepo.github_repo_name}
-            </a>
+              <VscSourceControl />
+              <span className="font-medium">{currentBranch}</span>
+            </button>
           </div>
 
           <button
             onClick={handlePush}
-            title="Commit & Push"
-            className="p-1.5 hover:bg-gray-200 rounded text-gray-600 hover:text-gray-900 transition-colors"
+            title={isDirty ? 'Commit & Push' : 'No changes to commit'}
+            disabled={!isDirty}
+            className={`p-1.5 rounded transition-colors ${isDirty
+                ? 'hover:bg-gray-200 text-gray-600 hover:text-gray-900 cursor-pointer'
+                : 'text-gray-300 cursor-not-allowed'
+              }`}
           >
             <VscCloudUpload size={16} />
           </button>
@@ -296,7 +416,6 @@ const GitOperations: React.FC<GitOperationsProps> = ({
             onClick={() => {
               setShowHistoryDialog(true)
               loadCommits()
-              loadBranches()
             }}
             title="View History"
             className="p-1.5 hover:bg-gray-200 rounded text-gray-600 hover:text-gray-900 transition-colors"
@@ -312,7 +431,7 @@ const GitOperations: React.FC<GitOperationsProps> = ({
             setShowRepoDialog(true)
             loadRepositories()
           }}
-          className="flex items-center space-x-1"
+          className="flex items-center space-x-1 w-full"
         >
           <VscRepo />
           <span>Link Repository</span>
@@ -333,7 +452,7 @@ const GitOperations: React.FC<GitOperationsProps> = ({
             <div>
               <Label className="mb-2">Select Existing Repository</Label>
               <Select value={selectedRepo} onValueChange={setSelectedRepo}>
-                <SelectTrigger>
+                <SelectTrigger className='w-full'>
                   <SelectValue placeholder="Choose a repository..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -392,7 +511,7 @@ const GitOperations: React.FC<GitOperationsProps> = ({
               <div>
                 <Label className="mb-2">Branch</Label>
                 <Select value={currentBranch} onValueChange={setCurrentBranch}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -482,6 +601,109 @@ const GitOperations: React.FC<GitOperationsProps> = ({
             ) : (
               <p className="text-center text-gray-500 py-8">No commits found</p>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Branch Selection Dialog */}
+      <Dialog open={showBranchDialog} onOpenChange={setShowBranchDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Select Branch</DialogTitle>
+            <DialogDescription>
+              Choose a branch to work with in {linkedRepo?.github_repo_name}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-4">
+            {branchesLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <TbLoader className="animate-spin text-2xl" />
+              </div>
+            ) : branches.length > 0 ? (
+              <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                {branches.map((branch) => (
+                  <button
+                    key={branch.name}
+                    onClick={() => {
+                      setCurrentBranch(branch.name)
+                      setShowBranchDialog(false)
+                      toast({
+                        title: 'Branch Changed',
+                        description: `Switched to ${branch.name}`,
+                      })
+                    }}
+                    className={`w-full text-left px-4 py-2 rounded border transition-colors ${currentBranch === branch.name
+                      ? 'bg-blue-50 border-blue-500 text-blue-900'
+                      : 'border-gray-200 hover:bg-gray-50'
+                      }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-sm">{branch.name}</span>
+                      {currentBranch === branch.name && (
+                        <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded">
+                          Current
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-gray-500 py-8">No branches found</p>
+            )}
+          </div>
+
+          <div className="flex justify-end space-x-2 mt-6">
+            <Button variant="outline" onClick={() => setShowNewBranchDialog(true)}>
+              Create Branch
+            </Button>
+            <Button variant="outline" onClick={() => setShowBranchDialog(false)}>
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Branch Dialog */}
+      <Dialog open={showNewBranchDialog} onOpenChange={setShowNewBranchDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create New Branch</DialogTitle>
+            <DialogDescription>
+              Create a new branch from {currentBranch}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-4">
+            <div>
+              <Label className="mb-2">Branch Name *</Label>
+              <Input
+                placeholder="feature/my-feature"
+                value={newBranchName}
+                onChange={(e) => setNewBranchName(e.target.value)}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Use lowercase letters, numbers, dots, hyphens, underscores, and slashes
+              </p>
+            </div>
+
+            <div>
+              <Label className="text-sm text-gray-600">Based on: {currentBranch}</Label>
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-2 mt-6">
+            <Button variant="outline" onClick={() => setShowNewBranchDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateBranch}
+              disabled={processing || !newBranchName.trim()}
+            >
+              {processing && <TbLoader className="mr-2 animate-spin" />}
+              Create Branch
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

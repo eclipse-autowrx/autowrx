@@ -69,6 +69,13 @@ router.put(
   gitController.commitFile
 );
 
+router.post(
+  '/git/repos/:owner/:repo/commit',
+  auth(),
+  validate(gitValidation.commitMultipleFiles),
+  gitController.commitMultipleFiles
+);
+
 // History routes
 router.get(
   '/git/repos/:owner/:repo/commits',
@@ -82,6 +89,13 @@ router.get(
   auth(),
   validate(gitValidation.getBranches),
   gitController.getBranches
+);
+
+router.post(
+  '/git/repos/:owner/:repo/branches',
+  auth(),
+  validate(gitValidation.createBranch),
+  gitController.createBranch
 );
 
 module.exports = router;

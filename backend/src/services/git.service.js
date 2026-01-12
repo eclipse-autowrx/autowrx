@@ -8,9 +8,39 @@
 
 const httpStatus = require('http-status');
 const axios = require('axios');
+const { HttpProxyAgent } = require('http-proxy-agent');
+const { HttpsProxyAgent } = require('https-proxy-agent');
 const GitCredential = require('../models/gitCredential.model');
 const GitRepository = require('../models/gitRepository.model');
 const ApiError = require('../utils/ApiError');
+const logger = require('../config/logger');
+
+// Get proxy configuration from environment
+const PROXY_URL = process.env.PROXY_URL || process.env.HTTP_PROXY || process.env.HTTPS_PROXY;
+
+/**
+ * Get proxy agents for external HTTP requests
+ * @returns {Object} Object with httpAgent and httpsAgent properties
+ */
+const getProxyAgents = () => {
+  if (!PROXY_URL) {
+    return {};
+  }
+
+  try {
+    const agentOptions = {
+      rejectUnauthorized: false,
+    };
+
+    return {
+      httpAgent: new HttpProxyAgent(PROXY_URL, agentOptions),
+      httpsAgent: new HttpsProxyAgent(PROXY_URL, agentOptions),
+    };
+  } catch (error) {
+    logger.warn(`Failed to create proxy agents: ${error.message}`);
+    return {};
+  }
+};
 
 /**
  * Save or update GitHub credentials
@@ -78,6 +108,8 @@ const exchangeGithubCode = async (code) => {
   }
 
   try {
+    const { httpAgent, httpsAgent } = getProxyAgents();
+
     const response = await axios.post(
       'https://github.com/login/oauth/access_token',
       {
@@ -87,6 +119,9 @@ const exchangeGithubCode = async (code) => {
       },
       {
         headers: { Accept: 'application/json' },
+        httpAgent,
+        httpsAgent,
+        proxy: false,
       }
     );
 
@@ -125,12 +160,17 @@ const getGithubUser = async (accessToken) => {
       token_prefix: accessToken?.substring(0, 10) + '***',
     });
 
+    const { httpAgent, httpsAgent } = getProxyAgents();
+
     const response = await axios.get('https://api.github.com/user', {
       headers: {
         Authorization: `token ${accessToken}`,
         Accept: 'application/vnd.github.v3+json',
         'User-Agent': 'AutoWRX-GitHub-Integration',
       },
+      httpAgent,
+      httpsAgent,
+      proxy: false,
     });
     return response.data;
   } catch (error) {
@@ -168,6 +208,8 @@ const listGithubRepositories = async (userId, options = {}) => {
   const { page = 1, per_page = 30, sort = 'updated', direction = 'desc' } = options;
 
   try {
+    const { httpAgent, httpsAgent } = getProxyAgents();
+
     const response = await axios.get('https://api.github.com/user/repos', {
       headers: {
         Authorization: `token ${credentials.github_access_token}`,
@@ -180,6 +222,9 @@ const listGithubRepositories = async (userId, options = {}) => {
         direction,
         affiliation: 'owner,collaborator',
       },
+      httpAgent,
+      httpsAgent,
+      proxy: false,
     });
 
     return response.data;
@@ -199,6 +244,8 @@ const createGithubRepository = async (userId, repoData) => {
   const { name, description = '', private: isPrivate = false, auto_init = true } = repoData;
 
   try {
+    const { httpAgent, httpsAgent } = getProxyAgents();
+
     const response = await axios.post(
       'https://api.github.com/user/repos',
       {
@@ -212,6 +259,9 @@ const createGithubRepository = async (userId, repoData) => {
           Authorization: `token ${credentials.github_access_token}`,
           Accept: 'application/vnd.github.v3+json',
         },
+        httpAgent,
+        httpsAgent,
+        proxy: false,
       }
     );
 
@@ -282,6 +332,8 @@ const getFileContents = async (userId, owner, repo, path, ref = 'main') => {
   const credentials = await getGitCredentials(userId);
 
   try {
+    const { httpAgent, httpsAgent } = getProxyAgents();
+
     const response = await axios.get(
       `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
       {
@@ -290,6 +342,9 @@ const getFileContents = async (userId, owner, repo, path, ref = 'main') => {
           Accept: 'application/vnd.github.v3+json',
         },
         params: { ref },
+        httpAgent,
+        httpsAgent,
+        proxy: false,
       }
     );
 
@@ -329,6 +384,8 @@ const createOrUpdateFile = async (userId, owner, repo, path, fileData) => {
   }
 
   try {
+    const { httpAgent, httpsAgent } = getProxyAgents();
+
     const response = await axios.put(
       `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
       body,
@@ -337,6 +394,9 @@ const createOrUpdateFile = async (userId, owner, repo, path, fileData) => {
           Authorization: `token ${credentials.github_access_token}`,
           Accept: 'application/vnd.github.v3+json',
         },
+        httpAgent,
+        httpsAgent,
+        proxy: false,
       }
     );
 
@@ -362,6 +422,8 @@ const getCommits = async (userId, owner, repo, options = {}) => {
   const { sha = 'main', per_page = 30, page = 1 } = options;
 
   try {
+    const { httpAgent, httpsAgent } = getProxyAgents();
+
     const response = await axios.get(
       `https://api.github.com/repos/${owner}/${repo}/commits`,
       {
@@ -370,6 +432,9 @@ const getCommits = async (userId, owner, repo, options = {}) => {
           Accept: 'application/vnd.github.v3+json',
         },
         params: { sha, per_page, page },
+        httpAgent,
+        httpsAgent,
+        proxy: false,
       }
     );
 
@@ -390,6 +455,8 @@ const getBranches = async (userId, owner, repo) => {
   const credentials = await getGitCredentials(userId);
 
   try {
+    const { httpAgent, httpsAgent } = getProxyAgents();
+
     const response = await axios.get(
       `https://api.github.com/repos/${owner}/${repo}/branches`,
       {
@@ -397,12 +464,167 @@ const getBranches = async (userId, owner, repo) => {
           Authorization: `token ${credentials.github_access_token}`,
           Accept: 'application/vnd.github.v3+json',
         },
+        httpAgent,
+        httpsAgent,
+        proxy: false,
       }
     );
 
     return response.data;
   } catch (error) {
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to fetch branches');
+  }
+};
+
+/**
+ * Commit multiple files atomically in a single commit
+ * @param {string} userId - User ID
+ * @param {string} owner - Repository owner
+ * @param {string} repo - Repository name
+ * @param {string} branch - Branch name
+ * @param {Array} files - Array of files to commit {path, content}
+ * @param {string} message - Commit message
+ * @returns {Promise<Object>} Commit result with commitSha
+ */
+const commitMultipleFiles = async (userId, owner, repo, branch, files, message) => {
+  const credentials = await getGitCredentials(userId);
+  const token = credentials.github_access_token;
+  const { httpAgent, httpsAgent } = getProxyAgents();
+
+  const headers = {
+    Authorization: `token ${token}`,
+    Accept: 'application/vnd.github.v3+json',
+  };
+
+  const axiosConfig = {
+    headers,
+    httpAgent,
+    httpsAgent,
+    proxy: false,
+  };
+
+  try {
+    // 1. Get HEAD commit (latest commit of the branch)
+    const headRef = await axios.get(
+      `https://api.github.com/repos/${owner}/${repo}/git/refs/heads/${branch}`,
+      axiosConfig
+    );
+    const latestCommitSha = headRef.data.object.sha;
+
+    // 2. Get commit details to get the tree SHA
+    const commitData = await axios.get(
+      `https://api.github.com/repos/${owner}/${repo}/git/commits/${latestCommitSha}`,
+      axiosConfig
+    );
+    const baseTreeSha = commitData.data.tree.sha;
+
+    // 3. Build new tree with all files
+    const tree = files.map((f) => ({
+      path: f.path,
+      mode: '100644', // Regular file mode
+      type: 'blob',
+      content: f.content,
+    }));
+
+    const newTreeResponse = await axios.post(
+      `https://api.github.com/repos/${owner}/${repo}/git/trees`,
+      {
+        base_tree: baseTreeSha,
+        tree,
+      },
+      axiosConfig
+    );
+
+    // 4. Create new commit
+    const newCommitResponse = await axios.post(
+      `https://api.github.com/repos/${owner}/${repo}/git/commits`,
+      {
+        message,
+        tree: newTreeResponse.data.sha,
+        parents: [latestCommitSha],
+      },
+      axiosConfig
+    );
+
+    // 5. Update branch to point to new commit
+    await axios.patch(
+      `https://api.github.com/repos/${owner}/${repo}/git/refs/heads/${branch}`,
+      {
+        sha: newCommitResponse.data.sha,
+        force: false,
+      },
+      axiosConfig
+    );
+
+    return {
+      success: true,
+      commitSha: newCommitResponse.data.sha,
+      filesCount: files.length,
+    };
+  } catch (error) {
+    console.error('Failed to commit multiple files:', error.response?.data || error.message);
+    if (error.response?.status === 409) {
+      throw new ApiError(httpStatus.CONFLICT, 'Branch reference conflict. Please pull latest changes first.');
+    }
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to commit files to GitHub');
+  }
+};
+
+/**
+ * Create a new branch
+ * @param {string} userId - User ID
+ * @param {string} owner - Repository owner
+ * @param {string} repo - Repository name
+ * @param {string} branchName - New branch name
+ * @param {string} baseBranch - Base branch to create from (default: 'main')
+ * @returns {Object} Branch creation result
+ */
+const createBranch = async (userId, owner, repo, branchName, baseBranch = 'main') => {
+  try {
+    const credentials = await getGitCredentials(userId);
+    const token = credentials.github_access_token;
+    const { httpAgent, httpsAgent } = getProxyAgents();
+
+    const headers = {
+      Authorization: `token ${token}`,
+      Accept: 'application/vnd.github.v3+json',
+    };
+
+    const axiosConfig = {
+      headers,
+      httpAgent,
+      httpsAgent,
+      proxy: false,
+    };
+
+    // Get the commit SHA of the base branch
+    const baseRefResponse = await axios.get(
+      `https://api.github.com/repos/${owner}/${repo}/git/refs/heads/${baseBranch}`,
+      axiosConfig
+    );
+
+    const baseSha = baseRefResponse.data.object.sha;
+
+    // Create the new branch
+    const createRefResponse = await axios.post(
+      `https://api.github.com/repos/${owner}/${repo}/git/refs`,
+      {
+        ref: `refs/heads/${branchName}`,
+        sha: baseSha,
+      },
+      axiosConfig
+    );
+
+    return {
+      success: true,
+      branchName: createRefResponse.data.ref.replace('refs/heads/', ''),
+    };
+  } catch (error) {
+    console.error('Failed to create branch:', error.response?.data || error.message);
+    if (error.response?.status === 422) {
+      throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Branch already exists');
+    }
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to create branch');
   }
 };
 
@@ -418,6 +640,8 @@ module.exports = {
   getLinkedRepository,
   getFileContents,
   createOrUpdateFile,
+  commitMultipleFiles,
+  createBranch,
   getCommits,
   getBranches,
 };

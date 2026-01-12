@@ -1276,14 +1276,14 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                 activeFile={activeFile}
               />
             </div>
-            
+
             {/* GitHub Integration Section */}
             <div className="border-t border-gray-200 bg-gray-50">
               <div className="p-2">
                 <GitHubAuth onAuthChange={setGithubAuthenticated} />
               </div>
               {githubAuthenticated && prototypeId && (
-                <div className="px-2 pb-2 border-t border-gray-200 pt-2">
+                <div className="px-2 pb-2">
                   <GitOperations
                     prototypeId={prototypeId}
                     projectData={JSON.stringify(fsData)}
@@ -1305,9 +1305,8 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
         {!isCollapsed && (
           <div
             ref={resizeRef}
-            className={`absolute top-0 right-0 w-1 h-full cursor-col-resize bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors ${
-              isResizing ? 'bg-blue-500 bg-opacity-50' : ''
-            }`}
+            className={`absolute top-0 right-0 w-1 h-full cursor-col-resize bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors ${isResizing ? 'bg-blue-500 bg-opacity-50' : ''
+              }`}
             onMouseDown={handleMouseDown}
             title="Drag to resize"
           >

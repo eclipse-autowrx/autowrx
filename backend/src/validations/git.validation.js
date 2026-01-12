@@ -63,6 +63,26 @@ const commitFile = {
   }),
 };
 
+const commitMultipleFiles = {
+  params: Joi.object().keys({
+    owner: Joi.string().required(),
+    repo: Joi.string().required(),
+  }),
+  body: Joi.object().keys({
+    branch: Joi.string().default('main'),
+    message: Joi.string().required().min(1),
+    files: Joi.array()
+      .items(
+        Joi.object().keys({
+          path: Joi.string().required(),
+          content: Joi.string().required(),
+        })
+      )
+      .required()
+      .min(1),
+  }),
+};
+
 const getCommits = {
   params: Joi.object().keys({
     owner: Joi.string().required(),
@@ -97,14 +117,27 @@ const listRepos = {
   }),
 };
 
+const createBranch = {
+  params: Joi.object().keys({
+    owner: Joi.string().required(),
+    repo: Joi.string().required(),
+  }),
+  body: Joi.object().keys({
+    branchName: Joi.string().pattern(/^[a-zA-Z0-9._/-]+$/).required(),
+    baseBranch: Joi.string().default('main'),
+  }),
+};
+
 module.exports = {
   githubOAuthCallback,
   createRepository,
   linkRepository,
   getFileContents,
   commitFile,
+  commitMultipleFiles,
   getCommits,
   getBranches,
+  createBranch,
   getLinkedRepo,
   listRepos,
 };

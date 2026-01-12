@@ -78,6 +78,24 @@ export const commitGithubFile = async (owner: string, repo: string, data: Commit
   return (await serverAxios.put<any>(`/git/repos/${owner}/${repo}/contents`, data)).data
 }
 
+export const commitMultipleGithubFiles = async (
+  owner: string,
+  repo: string,
+  data: {
+    branch: string
+    message: string
+    files: Array<{ path: string; content: string }>
+  }
+) => {
+  return (
+    await serverAxios.post<{
+      success: boolean
+      commitSha: string
+      filesCount: number
+    }>(`/git/repos/${owner}/${repo}/commit`, data)
+  ).data
+}
+
 export const getGithubCommits = async (
   owner: string,
   repo: string,
@@ -92,5 +110,21 @@ export const getGithubCommits = async (
 
 export const getGithubBranches = async (owner: string, repo: string) => {
   return (await serverAxios.get<GithubBranch[]>(`/git/repos/${owner}/${repo}/branches`)).data
+}
+
+export const createGithubBranch = async (
+  owner: string,
+  repo: string,
+  data: {
+    branchName: string
+    baseBranch?: string
+  }
+) => {
+  return (
+    await serverAxios.post<{
+      success: boolean
+      branchName: string
+    }>(`/git/repos/${owner}/${repo}/branches`, data)
+  ).data
 }
 

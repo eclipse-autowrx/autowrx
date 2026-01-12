@@ -173,6 +173,31 @@ const commitFile = catchAsync(async (req, res) => {
 });
 
 /**
+ * Commit multiple files atomically to repository
+ */
+const commitMultipleFiles = catchAsync(async (req, res) => {
+  const userId = req.user.id;
+  const { owner, repo } = req.params;
+  const { branch, files, message } = req.body;
+
+  if (!files || !Array.isArray(files) || files.length === 0) {
+    return res.status(httpStatus.BAD_REQUEST).send({
+      message: 'Files array is required and must contain at least one file',
+    });
+  }
+
+  if (!message || typeof message !== 'string' || message.trim() === '') {
+    return res.status(httpStatus.BAD_REQUEST).send({
+      message: 'Commit message is required',
+    });
+  }
+
+  const result = await gitService.commitMultipleFiles(userId, owner, repo, branch || 'main', files, message);
+
+  res.status(httpStatus.OK).send(result);
+});
+
+/**
  * Get commits for repository
  */
 const getCommits = catchAsync(async (req, res) => {
@@ -196,6 +221,19 @@ const getBranches = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(branches);
 });
 
+/**
+ * Create a new branch
+ */
+const createBranch = catchAsync(async (req, res) => {
+  const userId = req.user.id;
+  const { owner, repo } = req.params;
+  const { branchName, baseBranch = 'main' } = req.body;
+
+  const result = await gitService.createBranch(userId, owner, repo, branchName, baseBranch);
+
+  res.status(httpStatus.CREATED).send(result);
+});
+
 module.exports = {
   githubOAuthCallback,
   getAuthStatus,
@@ -206,6 +244,8 @@ module.exports = {
   getLinkedRepository,
   getFileContents,
   commitFile,
+  commitMultipleFiles,
+  createBranch,
   getCommits,
   getBranches,
 };
