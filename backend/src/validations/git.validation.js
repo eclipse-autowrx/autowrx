@@ -12,6 +12,7 @@ const { objectId } = require('./custom.validation');
 const githubOAuthCallback = {
   body: Joi.object().keys({
     code: Joi.string().required(),
+    userId: Joi.string().custom(objectId),
   }),
 };
 

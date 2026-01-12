@@ -1151,7 +1151,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
   return (
     <div className="flex h-screen bg-white text-gray-800 font-sans overflow-hidden">
       <div
-        className="bg-gray-50 border-r border-gray-200 relative transition-all duration-200 ease-in-out"
+        className="flex flex-col bg-gray-50 border-r border-gray-200 relative transition-all duration-200 ease-in-out"
         style={{ width: isCollapsed ? collapsedWidth : leftPanelWidth }}
       >
         {isCollapsed ? (

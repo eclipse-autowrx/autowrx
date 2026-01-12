@@ -94,8 +94,20 @@ const exchangeGithubCode = async (code) => {
       throw new ApiError(httpStatus.BAD_REQUEST, response.data.error_description || 'GitHub OAuth failed');
     }
 
+    // Debug logging
+    console.log('GitHub token exchange response:', {
+      has_access_token: !!response.data.access_token,
+      token_type: response.data.token_type,
+      scope: response.data.scope,
+    });
+
+    if (!response.data.access_token) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'No access token received from GitHub');
+    }
+
     return response.data;
   } catch (error) {
+    console.error('GitHub code exchange error:', error.response?.data || error.message);
     if (error instanceof ApiError) throw error;
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to exchange GitHub code');
   }
@@ -108,14 +120,39 @@ const exchangeGithubCode = async (code) => {
  */
 const getGithubUser = async (accessToken) => {
   try {
+    console.log('Fetching GitHub user with token:', {
+      token_length: accessToken?.length,
+      token_prefix: accessToken?.substring(0, 10) + '***',
+    });
+
     const response = await axios.get('https://api.github.com/user', {
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `token ${accessToken}`,
         Accept: 'application/vnd.github.v3+json',
+        'User-Agent': 'AutoWRX-GitHub-Integration',
       },
     });
     return response.data;
   } catch (error) {
+    // Check if response is HTML (proxy error)
+    if (error.response?.data && typeof error.response.data === 'string' && error.response.data.includes('<HTML>')) {
+      console.error('GitHub user fetch - Proxy/Network error:', {
+        status: error.response?.status,
+        proxy_detected: true,
+        hint: 'Request may be blocked by corporate proxy or firewall',
+      });
+      throw new ApiError(
+        httpStatus.INTERNAL_SERVER_ERROR,
+        'Cannot reach GitHub API - please check network/proxy settings'
+      );
+    }
+
+    console.error('GitHub user fetch error:', {
+      status: error.response?.status,
+      message: error.response?.data?.message,
+      documentation_url: error.response?.data?.documentation_url,
+      full_error: error.response?.data,
+    });
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Invalid GitHub access token');
   }
 };
@@ -133,7 +170,7 @@ const listGithubRepositories = async (userId, options = {}) => {
   try {
     const response = await axios.get('https://api.github.com/user/repos', {
       headers: {
-        Authorization: `Bearer ${credentials.github_access_token}`,
+        Authorization: `token ${credentials.github_access_token}`,
         Accept: 'application/vnd.github.v3+json',
       },
       params: {
@@ -172,7 +209,7 @@ const createGithubRepository = async (userId, repoData) => {
       },
       {
         headers: {
-          Authorization: `Bearer ${credentials.github_access_token}`,
+          Authorization: `token ${credentials.github_access_token}`,
           Accept: 'application/vnd.github.v3+json',
         },
       }
@@ -196,7 +233,7 @@ const createGithubRepository = async (userId, repoData) => {
  */
 const linkRepositoryToPrototype = async (userId, prototypeId, repoInfo) => {
   const existing = await GitRepository.findOne({ user_id: userId, prototype_id: prototypeId });
-  
+
   const repoData = {
     user_id: userId,
     prototype_id: prototypeId,
@@ -249,7 +286,7 @@ const getFileContents = async (userId, owner, repo, path, ref = 'main') => {
       `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
       {
         headers: {
-          Authorization: `Bearer ${credentials.github_access_token}`,
+          Authorization: `token ${credentials.github_access_token}`,
           Accept: 'application/vnd.github.v3+json',
         },
         params: { ref },
@@ -297,7 +334,7 @@ const createOrUpdateFile = async (userId, owner, repo, path, fileData) => {
       body,
       {
         headers: {
-          Authorization: `Bearer ${credentials.github_access_token}`,
+          Authorization: `token ${credentials.github_access_token}`,
           Accept: 'application/vnd.github.v3+json',
         },
       }
@@ -329,7 +366,7 @@ const getCommits = async (userId, owner, repo, options = {}) => {
       `https://api.github.com/repos/${owner}/${repo}/commits`,
       {
         headers: {
-          Authorization: `Bearer ${credentials.github_access_token}`,
+          Authorization: `token ${credentials.github_access_token}`,
           Accept: 'application/vnd.github.v3+json',
         },
         params: { sha, per_page, page },
@@ -357,7 +394,7 @@ const getBranches = async (userId, owner, repo) => {
       `https://api.github.com/repos/${owner}/${repo}/branches`,
       {
         headers: {
-          Authorization: `Bearer ${credentials.github_access_token}`,
+          Authorization: `token ${credentials.github_access_token}`,
           Accept: 'application/vnd.github.v3+json',
         },
       }

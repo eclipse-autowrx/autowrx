@@ -7,69 +7,73 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { githubOAuthCallback } from '@/services/github.service'
-import { useToast } from '@/components/molecules/toaster/use-toast'
 import { TbLoader } from 'react-icons/tb'
 
 const GitHubCallback: React.FC = () => {
   const [searchParams] = useSearchParams()
-  const navigate = useNavigate()
-  const { toast } = useToast()
 
   useEffect(() => {
     const handleCallback = async () => {
       const code = searchParams.get('code')
       const state = searchParams.get('state')
-      const savedState = sessionStorage.getItem('github_oauth_state')
-
-      if (!code) {
-        toast({
-          title: 'Authentication Failed',
-          description: 'No authorization code received from GitHub',
-          variant: 'destructive',
-        })
-        navigate('/')
-        return
-      }
-
-      if (state !== savedState) {
-        toast({
-          title: 'Authentication Failed',
-          description: 'Invalid state parameter. Possible CSRF attack.',
-          variant: 'destructive',
-        })
-        navigate('/')
-        return
-      }
+      const userId = searchParams.get('userId')
 
       try {
-        await githubOAuthCallback(code)
-        
-        sessionStorage.removeItem('github_oauth_state')
-        
-        toast({
-          title: 'Success',
-          description: 'GitHub account connected successfully',
-        })
+        if (!code) {
+          throw new Error('No authorization code received from GitHub')
+        }
 
-        // Redirect back to previous page or home
-        const returnPath = sessionStorage.getItem('github_return_path') || '/'
-        sessionStorage.removeItem('github_return_path')
-        navigate(returnPath)
+        if (!state) {
+          throw new Error('Invalid state parameter. Possible CSRF attack.')
+        }
+
+        // Exchange code for token and save credentials
+        const result = await githubOAuthCallback(code, userId || undefined)
+
+        console.log('GitHub OAuth callback successful:', result)
+        
+        // Send success message to parent window
+        if (window.opener) {
+          window.opener.postMessage({
+            type: 'GITHUB_AUTH_SUCCESS',
+            username: result.user.username,
+            avatar_url: result.user.avatar_url,
+            email: result.user.email,
+          }, window.location.origin)
+          
+          // Close the popup
+          setTimeout(() => {
+            // window.close()
+          }, 1000)
+        } else {
+          // Fallback: redirect to home if opened directly
+          window.location.href = '/'
+        }
       } catch (error) {
-        console.error('GitHub OAuth error:', error)
-        toast({
-          title: 'Authentication Failed',
-          description: 'Failed to connect GitHub account. Please try again.',
-          variant: 'destructive',
-        })
-        navigate('/')
+        const errorMessage = error instanceof Error ? error.message : 'Authentication failed'
+        
+        // Send error message to parent window
+        if (window.opener) {
+          window.opener.postMessage({
+            type: 'GITHUB_AUTH_ERROR',
+            error: errorMessage,
+          }, window.location.origin)
+          
+          // Close the popup
+          setTimeout(() => {
+            // window.close()
+          }, 2000)
+        } else {
+          // Fallback: redirect to home if opened directly
+          window.location.href = '/'
+        }
       }
     }
 
     handleCallback()
-  }, [searchParams, navigate, toast])
+  }, [searchParams])
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">

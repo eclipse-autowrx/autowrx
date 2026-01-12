@@ -14,18 +14,36 @@ const { gitService } = require('../services');
  * Handle GitHub OAuth callback
  */
 const githubOAuthCallback = catchAsync(async (req, res) => {
-  const { code } = req.body;
-  const userId = req.user.id;
+  const { code, userId } = req.body;
+
+  console.log('GitHub OAuth callback received with code:', {
+    code,
+    userId,
+  });
+
+  // Get userId from either authenticated user or request body (popup flow)
+  const targetUserId = req.user?.id || userId;
+
+  if (!targetUserId) {
+    return res.status(httpStatus.UNAUTHORIZED).send({
+      message: 'User not authenticated. Please provide userId.',
+    });
+  }
 
   // Exchange code for access token
   const tokenData = await gitService.exchangeGithubCode(code);
-  
+
+  console.log('Token data received:', {
+    has_access_token: !!tokenData.access_token,
+    token_type: tokenData.token_type,
+  });
+
   // Get GitHub user info
   const githubUser = await gitService.getGithubUser(tokenData.access_token);
-  
+
   // Save credentials
   await gitService.saveGitCredentials(
-    userId,
+    targetUserId,
     githubUser,
     tokenData.access_token,
     tokenData.refresh_token
@@ -46,7 +64,7 @@ const githubOAuthCallback = catchAsync(async (req, res) => {
  */
 const getAuthStatus = catchAsync(async (req, res) => {
   const userId = req.user.id;
-  
+
   try {
     const credentials = await gitService.getGitCredentials(userId);
     res.status(httpStatus.OK).send({
@@ -68,7 +86,7 @@ const getAuthStatus = catchAsync(async (req, res) => {
 const disconnectGithub = catchAsync(async (req, res) => {
   const userId = req.user.id;
   await gitService.deleteGitCredentials(userId);
-  
+
   res.status(httpStatus.OK).send({
     message: 'GitHub account disconnected successfully',
   });
@@ -80,7 +98,7 @@ const disconnectGithub = catchAsync(async (req, res) => {
 const listRepositories = catchAsync(async (req, res) => {
   const userId = req.user.id;
   const repositories = await gitService.listGithubRepositories(userId, req.query);
-  
+
   res.status(httpStatus.OK).send(repositories);
 });
 
@@ -90,7 +108,7 @@ const listRepositories = catchAsync(async (req, res) => {
 const createRepository = catchAsync(async (req, res) => {
   const userId = req.user.id;
   const repository = await gitService.createGithubRepository(userId, req.body);
-  
+
   res.status(httpStatus.CREATED).send(repository);
 });
 
@@ -100,7 +118,7 @@ const createRepository = catchAsync(async (req, res) => {
 const linkRepository = catchAsync(async (req, res) => {
   const userId = req.user.id;
   const { prototype_id, repo_id, repo_name, repo_full_name, repo_url, clone_url, default_branch, is_private } = req.body;
-  
+
   const repoInfo = {
     id: repo_id,
     name: repo_name,
@@ -110,9 +128,9 @@ const linkRepository = catchAsync(async (req, res) => {
     default_branch: default_branch || 'main',
     private: is_private || false,
   };
-  
+
   const linkedRepo = await gitService.linkRepositoryToPrototype(userId, prototype_id, repoInfo);
-  
+
   res.status(httpStatus.OK).send(linkedRepo);
 });
 
@@ -122,9 +140,9 @@ const linkRepository = catchAsync(async (req, res) => {
 const getLinkedRepository = catchAsync(async (req, res) => {
   const userId = req.user.id;
   const { prototypeId } = req.params;
-  
+
   const repository = await gitService.getLinkedRepository(userId, prototypeId);
-  
+
   res.status(httpStatus.OK).send(repository);
 });
 
@@ -135,9 +153,9 @@ const getFileContents = catchAsync(async (req, res) => {
   const userId = req.user.id;
   const { owner, repo } = req.params;
   const { path, ref } = req.query;
-  
+
   const contents = await gitService.getFileContents(userId, owner, repo, path, ref);
-  
+
   res.status(httpStatus.OK).send(contents);
 });
 
@@ -148,9 +166,9 @@ const commitFile = catchAsync(async (req, res) => {
   const userId = req.user.id;
   const { owner, repo } = req.params;
   const fileData = req.body;
-  
+
   const result = await gitService.createOrUpdateFile(userId, owner, repo, fileData.path, fileData);
-  
+
   res.status(httpStatus.OK).send(result);
 });
 
@@ -160,9 +178,9 @@ const commitFile = catchAsync(async (req, res) => {
 const getCommits = catchAsync(async (req, res) => {
   const userId = req.user.id;
   const { owner, repo } = req.params;
-  
+
   const commits = await gitService.getCommits(userId, owner, repo, req.query);
-  
+
   res.status(httpStatus.OK).send(commits);
 });
 
@@ -172,9 +190,9 @@ const getCommits = catchAsync(async (req, res) => {
 const getBranches = catchAsync(async (req, res) => {
   const userId = req.user.id;
   const { owner, repo } = req.params;
-  
+
   const branches = await gitService.getBranches(userId, owner, repo);
-  
+
   res.status(httpStatus.OK).send(branches);
 });
 

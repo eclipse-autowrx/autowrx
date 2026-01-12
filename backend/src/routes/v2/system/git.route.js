@@ -7,17 +7,16 @@
 // SPDX-License-Identifier: MIT
 
 const express = require('express');
-const auth = require('../../middlewares/auth');
-const validate = require('../../middlewares/validate');
-const gitValidation = require('../../validations/git.validation');
-const gitController = require('../../controllers/git.controller');
+const auth = require('../../../middlewares/auth');
+const validate = require('../../../middlewares/validate');
+const gitValidation = require('../../../validations/git.validation');
+const gitController = require('../../../controllers/git.controller');
 
 const router = express.Router();
 
 // GitHub OAuth routes
 router.post(
   '/git/github/callback',
-  auth(),
   validate(gitValidation.githubOAuthCallback),
   gitController.githubOAuthCallback
 );
