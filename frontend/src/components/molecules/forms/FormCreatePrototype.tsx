@@ -38,8 +38,8 @@ import { SAMPLE_PROJECTS } from '@/data/sampleProjects'
 import {
   getGithubAuthStatus,
   listGithubRepositories,
-  getGithubFileContents,
   linkRepositoryToPrototype,
+  scanGithubRepository,
 } from '@/services/github.service'
 import { GithubRepo } from '@/types/git.type'
 import Cookies from 'js-cookie'
@@ -184,6 +184,8 @@ const FormCreatePrototype = ({
   const [loadingRepos, setLoadingRepos] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState<string>(SAMPLE_PROJECTS[0].label)
   const [selectedGithubRepo, setSelectedGithubRepo] = useState<GithubRepo | null>(null)
+  const [repoSearchQuery, setRepoSearchQuery] = useState<string>('')
+  const [showRepoDropdown, setShowRepoDropdown] = useState(false)
 
   const handleChange = (name: keyof typeof data, value: string | number) => {
     setData((prev) => ({ ...prev, [name]: value }))
@@ -207,7 +209,7 @@ const FormCreatePrototype = ({
         setData((prev) => ({ ...prev, code: code, language: language }))
       }
     } else {
-      // Reset data when selecting GitHub repo template
+      // Don't set language yet for GitHub repo template - will be detected from repo
       setData((prev) => ({ ...prev, code: '', language: '' }))
     }
   }
@@ -215,6 +217,48 @@ const FormCreatePrototype = ({
   const getDefaultDashboardCfg = (lang: string) => {
     if (lang == 'rust') return `{"autorun": false, "widgets": [] }`
     return DEFAULT_DASHBOARD_CFG
+  }
+
+  // Convert flat files object to file tree structure
+  const convertFilesToFileTree = (files: Record<string, string>, repoName: string = 'project') => {
+    interface FileTreeNode {
+      type: 'file' | 'folder'
+      name: string
+      content?: string
+      items?: FileTreeNode[]
+    }
+
+    const rootItems: FileTreeNode[] = []
+
+    Object.entries(files).forEach(([path, content]) => {
+      const parts = path.split('/')
+      let currentLevel = rootItems
+
+      parts.forEach((part, index) => {
+        const isFile = index === parts.length - 1
+        let existing = currentLevel.find(item => item.name === part)
+
+        if (!existing) {
+          existing = {
+            type: isFile ? 'file' : 'folder',
+            name: part,
+            ...(isFile ? { content } : { items: [] }),
+          }
+          currentLevel.push(existing)
+        }
+
+        if (!isFile && existing.items) {
+          currentLevel = existing.items
+        }
+      })
+    })
+
+    // Wrap in a root folder named after the repository
+    return [{
+      type: 'folder' as const,
+      name: repoName,
+      items: rootItems
+    }]
   }
 
   // Check GitHub authentication status and load repositories
@@ -245,10 +289,32 @@ const FormCreatePrototype = ({
     }
 
     checkGitHubAuth()
+
+    // Listen for GitHub auth messages from popup
+    const handleAuthMessage = async (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return
+
+      if (event.data.type === 'GITHUB_AUTH_SUCCESS') {
+        setGithubAuthenticated(true)
+        // Load repositories after successful auth
+        setLoadingRepos(true)
+        try {
+          const repos = await listGithubRepositories({ per_page: 100, sort: 'updated' })
+          setGithubRepos(repos)
+        } catch (error) {
+          console.error('Failed to load GitHub repositories:', error)
+        } finally {
+          setLoadingRepos(false)
+        }
+      }
+    }
+
+    window.addEventListener('message', handleAuthMessage)
+    return () => window.removeEventListener('message', handleAuthMessage)
   }, [])
 
-  // Load project from GitHub repo when selected
-  const handleGithubRepoChange = async (repoId: string) => {
+  // Select GitHub repo when chosen
+  const handleGithubRepoChange = (repoId: string) => {
     handleChange('githubRepo', repoId)
 
     if (!repoId) {
@@ -261,51 +327,68 @@ const FormCreatePrototype = ({
 
     // Store the selected repo for later linking
     setSelectedGithubRepo(repo)
-
-    try {
-      setLoading(true)
-      const [owner, repoName] = repo.full_name.split('/')
-
-      // Try to load project.json from the repo
-      try {
-        const fileContent = await getGithubFileContents(owner, repoName, 'project.json', repo.default_branch)
-        if (fileContent.content && fileContent.encoding === 'base64') {
-          const decodedContent = atob(fileContent.content)
-          const projectData = JSON.parse(decodedContent)
-
-          // Update the code with the project data
-          setData((prev) => ({
-            ...prev,
-            code: JSON.stringify(projectData),
-            language: 'json' // or detect from repo
-          }))
-
-          toast({
-            title: 'Success',
-            description: `Loaded project from ${repo.name}`,
-          })
-        }
-      } catch (error) {
-        // File might not exist yet, that's okay
-        console.log('No project.json found in repository, using default template')
-      }
-    } catch (error) {
-      console.error('Failed to load project from GitHub:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to load project from GitHub repository',
-        variant: 'destructive',
-      })
-    } finally {
-      setLoading(false)
-    }
+    // Clear search query when repo is selected
+    setRepoSearchQuery('')
   }
+
+  // Filter repositories based on search query
+  const filteredRepos = githubRepos.filter(repo =>
+    repo.name.toLowerCase().includes(repoSearchQuery.toLowerCase()) ||
+    repo.full_name.toLowerCase().includes(repoSearchQuery.toLowerCase())
+  )
 
   const createNewPrototype = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault() // Prevent the form from submitting
 
     try {
       setLoading(true)
+
+      // Load repo data if GitHub template is selected
+      let repoCode = data.code
+      let detectedLanguage = data.language
+
+      if (selectedTemplate === 'github-repo' && selectedGithubRepo) {
+        try {
+          const [owner, repoName] = selectedGithubRepo.full_name.split('/')
+          const scanResult = await scanGithubRepository(owner, repoName, selectedGithubRepo.default_branch)
+
+          // Parse the scan result
+          const repoData = typeof scanResult === 'string' ? JSON.parse(scanResult) : scanResult
+
+          console.log('Repository scan result:', repoData)
+          console.log('Files from repo:', repoData.files)
+
+          // Detect language from repository
+          if (repoData.language) {
+            detectedLanguage = repoData.language.toLowerCase()
+          }
+
+          // Convert flat files structure to file tree structure
+          const fileTree = convertFilesToFileTree(repoData.files || {}, repoData.name || 'project')
+
+          console.log('Converted file tree:', fileTree)
+          console.log('File tree JSON:', JSON.stringify(fileTree, null, 2))
+
+          // Store as JSON array (expected format for project editor)
+          repoCode = JSON.stringify(fileTree, null, 2)
+
+          toast({
+            title: 'Success',
+            description: `Loaded ${repoData.file_count || 0} files from ${selectedGithubRepo.name}`,
+          })
+        } catch (error) {
+          console.error('Failed to scan repository:', error)
+          toast({
+            title: 'Warning',
+            description: 'Failed to load repository data. Prototype will be created without repository code.',
+            variant: 'destructive',
+          })
+          // Set default language if detection failed
+          if (!detectedLanguage) {
+            detectedLanguage = 'python'
+          }
+        }
+      }
 
       // Initialize variables to hold the model ID and response from prototype creation
       let modelId: string
@@ -331,10 +414,10 @@ const FormCreatePrototype = ({
       const body = {
         model_id: modelId,
         name: data.prototypeName,
-        language: data.language,
+        language: detectedLanguage || data.language,
         state: 'development',
         apis: { VSC: [], VSS: [] },
-        code: data.code,
+        code: repoCode,
         complexity_level: 3,
         customer_journey: default_journey,
         description: {
@@ -543,41 +626,159 @@ const FormCreatePrototype = ({
                 {project.label}
               </SelectItem>
             ))}
-            {githubAuthenticated && githubRepos.length > 0 && (
-              <SelectItem value="github-repo">
-                <VscGithub className="inline mr-2" />
-                GitHub Repository
-              </SelectItem>
-            )}
+            <SelectItem value="github-repo">
+              <VscGithub className="inline mr-2" />
+              GitHub Repository
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {/* GitHub Repository Selector - Only show when GitHub repo template is selected */}
+      {/* GitHub Repository Selector - Only show when GitHub repo template is selected and user is authenticated */}
       {selectedTemplate === 'github-repo' && githubAuthenticated && githubRepos.length > 0 && (
         <div className="flex flex-col mt-4">
           <Label className="mb-2 flex items-center">
             <VscGithub className="mr-2" />
             Start from GitHub Repository (Optional)
           </Label>
-          <Select
-            value={data.githubRepo}
-            onValueChange={handleGithubRepoChange}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Choose a repository or use template above..." />
-            </SelectTrigger>
-            <SelectContent>
-              {githubRepos.map((repo) => (
-                <SelectItem key={repo.id} value={repo.id.toString()}>
-                  {repo.full_name} {repo.private && '(Private)'}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground mt-1">
-            Load an existing project from your GitHub repositories
+
+          {/* Repository Autocomplete */}
+          <div className="relative">
+            <Input
+              type="text"
+              placeholder="Search and select a repository..."
+              value={repoSearchQuery}
+              onChange={(e) => {
+                setRepoSearchQuery(e.target.value)
+                setShowRepoDropdown(true)
+              }}
+              onFocus={() => setShowRepoDropdown(true)}
+              onBlur={() => {
+                // Delay to allow click on dropdown items
+                setTimeout(() => setShowRepoDropdown(false), 200)
+              }}
+              className="w-full bg-background"
+            />
+
+            {/* Autocomplete Dropdown */}
+            {showRepoDropdown && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-input rounded-md shadow-lg z-50 max-h-64 overflow-y-auto">
+                {filteredRepos.length > 0 ? (
+                  <div>
+                    {filteredRepos.map((repo) => (
+                      <button
+                        key={repo.id}
+                        type="button"
+                        onClick={() => {
+                          handleGithubRepoChange(repo.id.toString())
+                          setRepoSearchQuery(repo.full_name)
+                          setShowRepoDropdown(false)
+                        }}
+                        className={`w-full text-left px-3 py-2.5 hover:bg-accent border-b border-border last:border-b-0 transition-colors ${selectedGithubRepo?.id === repo.id ? 'bg-accent' : ''
+                          }`}
+                      >
+                        <div className="flex justify-between items-center">
+                          <div className="flex-1">
+                            <div className="font-medium text-sm">{repo.name}</div>
+                            <div className="text-xs text-muted-foreground">{repo.full_name}</div>
+                          </div>
+                          {repo.private && (
+                            <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded ml-2 whitespace-nowrap">
+                              Private
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-3 text-sm text-muted-foreground text-center">
+                    {repoSearchQuery ? 'No repositories found' : 'Start typing to search...'}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Selected repo info */}
+          {selectedGithubRepo && (
+            <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm">
+              <div className="font-medium text-blue-900">Selected: {selectedGithubRepo.name}</div>
+              <div className="text-xs text-blue-700">{selectedGithubRepo.full_name}</div>
+            </div>
+          )}
+
+          <p className="text-xs text-muted-foreground mt-2">
+            {selectedGithubRepo
+              ? 'Repository will be scanned and loaded when prototype is created'
+              : 'Type to search for your repositories'}
           </p>
+        </div>
+      )}      {/* GitHub Auth Prompt - Show when template is selected but user is not authenticated */}
+      {selectedTemplate === 'github-repo' && !githubAuthenticated && (
+        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+          <div className="flex items-start space-x-3">
+            <VscGithub className="text-blue-600 mt-1 shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-blue-900 mb-2">
+                Connect GitHub to use this template
+              </p>
+              <p className="text-xs text-blue-700 mb-3">
+                Authenticate with GitHub to browse and load projects from your repositories
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                variant="default"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  // Open GitHub auth popup
+                  const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID || process.env.VITE_GITHUB_CLIENT_ID
+                  if (!clientId) {
+                    toast({
+                      title: 'Configuration Error',
+                      description: 'GitHub OAuth is not configured',
+                      variant: 'destructive',
+                    })
+                    return
+                  }
+
+                  const scope = 'repo,user:email'
+                  const state = Math.random().toString(36).substring(7)
+                  let redirectUri = `${window.location.origin}/github/callback?state=${encodeURIComponent(state)}`
+                  if (currentUser?.id) {
+                    redirectUri += `&userId=${encodeURIComponent(currentUser.id)}`
+                  }
+
+                  const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${state}`
+
+                  const popupWidth = 500
+                  const popupHeight = 600
+                  const left = window.screenX + (window.outerWidth - popupWidth) / 2
+                  const top = window.screenY + (window.outerHeight - popupHeight) / 2
+
+                  const popup = window.open(
+                    authUrl,
+                    'github-auth',
+                    `width=${popupWidth},height=${popupHeight},left=${left},top=${top},resizable=yes,scrollbars=yes`
+                  )
+
+                  if (!popup) {
+                    toast({
+                      title: 'Error',
+                      description: 'Failed to open popup window. Please check your browser settings.',
+                      variant: 'destructive',
+                    })
+                  }
+                }}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <VscGithub className="mr-2" />
+                Connect GitHub
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -591,7 +792,7 @@ const FormCreatePrototype = ({
       {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
 
       <Button
-        disabled={disabled}
+        disabled={disabled || (selectedTemplate === 'github-repo' && !selectedGithubRepo)}
         type="submit"
         data-id="btn-create-prototype"
         className={cn('mt-8 w-full', hideCreateButton && 'hidden')}

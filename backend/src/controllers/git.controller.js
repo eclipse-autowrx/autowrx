@@ -224,6 +224,19 @@ const createBranch = catchAsync(async (req, res) => {
   res.status(httpStatus.CREATED).send(result);
 });
 
+/**
+ * Scan GitHub repository and return content
+ */
+const scanRepository = catchAsync(async (req, res) => {
+  const userId = req.user.id;
+  const { owner, repo } = req.params;
+  const { ref } = req.query;
+
+  const content = await gitService.scanRepository(userId, owner, repo, ref);
+
+  res.status(httpStatus.OK).send(content);
+});
+
 module.exports = {
   githubOAuthCallback,
   getAuthStatus,
@@ -238,4 +251,5 @@ module.exports = {
   createBranch,
   getCommits,
   getBranches,
+  scanRepository,
 };

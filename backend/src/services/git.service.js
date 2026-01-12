@@ -320,6 +320,105 @@ const getLinkedRepository = async (userId, prototypeId) => {
 };
 
 /**
+ * Scan GitHub repository and collect repository files
+ * @param {string} userId - User ID
+ * @param {string} owner - Repository owner
+ * @param {string} repo - Repository name
+ * @param {string} ref - Branch reference (optional)
+ * @returns {Promise<Object>} Repository scan result with files and metadata
+ */
+const scanRepository = async (userId, owner, repo, ref) => {
+  const credentials = await getGitCredentials(userId);
+  if (!credentials) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'GitHub credentials not found');
+  }
+
+  const { httpAgent, httpsAgent } = getProxyAgents();
+  const headers = {
+    Authorization: `token ${credentials.github_access_token}`,
+    'X-GitHub-Api-Version': '2022-11-28',
+  };
+
+  try {
+    // Get repository information
+    const repoUrl = `https://api.github.com/repos/${owner}/${repo}`;
+    const repoResponse = await axios.get(repoUrl, {
+      headers,
+      httpAgent,
+      httpsAgent,
+      proxy: false,
+    });
+
+    const repoData = repoResponse.data;
+    const branch = ref || repoData.default_branch;
+
+    // Get the repository tree recursively
+    const treeUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
+    const treeResponse = await axios.get(treeUrl, {
+      headers,
+      httpAgent,
+      httpsAgent,
+      proxy: false,
+    });
+
+    const tree = treeResponse.data.tree;
+
+    // Filter for files only (not directories) and limit to reasonable size
+    const files = tree
+      .filter(item => item.type === 'blob' && item.size < 1000000) // Max 1MB per file
+      .slice(0, 100); // Limit to 100 files
+
+    // Fetch file contents in parallel (with rate limiting)
+    const fileContents = {};
+    const batchSize = 10;
+
+    for (let i = 0; i < files.length; i += batchSize) {
+      const batch = files.slice(i, i + batchSize);
+      const batchPromises = batch.map(async (file) => {
+        try {
+          const contentResponse = await axios.get(file.url, {
+            headers,
+            httpAgent,
+            httpsAgent,
+            proxy: false,
+          });
+
+          if (contentResponse.data.encoding === 'base64') {
+            const content = Buffer.from(contentResponse.data.content, 'base64').toString('utf-8');
+            fileContents[file.path] = content;
+          }
+        } catch (error) {
+          console.log(`Failed to fetch ${file.path}:`, error.message);
+        }
+      });
+
+      await Promise.all(batchPromises);
+    }
+
+    // Compile scan result
+    const scanResult = {
+      type: 'github-repository',
+      name: repoData.name,
+      full_name: repoData.full_name,
+      description: repoData.description,
+      language: repoData.language || 'python',
+      default_branch: repoData.default_branch,
+      scanned_branch: branch,
+      files: fileContents,
+      file_count: Object.keys(fileContents).length,
+      total_files: files.length,
+    };
+
+    return scanResult;
+  } catch (error) {
+    if (error.response?.status === 404) {
+      throw new ApiError(httpStatus.NOT_FOUND, 'Repository not found');
+    }
+    throw new ApiError(httpStatus.BAD_REQUEST, `Failed to scan repository: ${error.message}`);
+  }
+};
+
+/**
  * Get file contents from GitHub repository
  * @param {string} userId - User ID
  * @param {string} owner - Repository owner
@@ -638,6 +737,7 @@ module.exports = {
   createGithubRepository,
   linkRepositoryToPrototype,
   getLinkedRepository,
+  scanRepository,
   getFileContents,
   createOrUpdateFile,
   commitMultipleFiles,

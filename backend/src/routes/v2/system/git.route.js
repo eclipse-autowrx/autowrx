@@ -98,4 +98,11 @@ router.post(
   gitController.createBranch
 );
 
+// Scan repository endpoint
+router.get(
+  '/git/repos/:owner/:repo/scan',
+  auth(),
+  gitController.scanRepository
+);
+
 module.exports = router;

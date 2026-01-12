@@ -128,3 +128,15 @@ export const createGithubBranch = async (
   ).data
 }
 
+export const scanGithubRepository = async (
+  owner: string,
+  repo: string,
+  ref?: string
+): Promise<string> => {
+  return (
+    await serverAxios.get<string>(`/git/repos/${owner}/${repo}/scan`, {
+      params: { ref },
+    })
+  ).data
+}
+
