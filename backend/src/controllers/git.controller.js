@@ -16,11 +16,6 @@ const { gitService } = require('../services');
 const githubOAuthCallback = catchAsync(async (req, res) => {
   const { code, userId } = req.body;
 
-  console.log('GitHub OAuth callback received with code:', {
-    code,
-    userId,
-  });
-
   // Get userId from either authenticated user or request body (popup flow)
   const targetUserId = req.user?.id || userId;
 
@@ -32,11 +27,6 @@ const githubOAuthCallback = catchAsync(async (req, res) => {
 
   // Exchange code for access token
   const tokenData = await gitService.exchangeGithubCode(code);
-
-  console.log('Token data received:', {
-    has_access_token: !!tokenData.access_token,
-    token_type: tokenData.token_type,
-  });
 
   // Get GitHub user info
   const githubUser = await gitService.getGithubUser(tokenData.access_token);

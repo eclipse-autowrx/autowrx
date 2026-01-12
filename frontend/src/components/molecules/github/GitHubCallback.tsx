@@ -32,8 +32,6 @@ const GitHubCallback: React.FC = () => {
         // Exchange code for token and save credentials
         const result = await githubOAuthCallback(code, userId || undefined)
 
-        console.log('GitHub OAuth callback successful:', result)
-        
         // Send success message to parent window
         if (window.opener) {
           window.opener.postMessage({
@@ -42,10 +40,10 @@ const GitHubCallback: React.FC = () => {
             avatar_url: result.user.avatar_url,
             email: result.user.email,
           }, window.location.origin)
-          
+
           // Close the popup
           setTimeout(() => {
-            // window.close()
+            window.close()
           }, 1000)
         } else {
           // Fallback: redirect to home if opened directly
@@ -53,17 +51,17 @@ const GitHubCallback: React.FC = () => {
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Authentication failed'
-        
+
         // Send error message to parent window
         if (window.opener) {
           window.opener.postMessage({
             type: 'GITHUB_AUTH_ERROR',
             error: errorMessage,
           }, window.location.origin)
-          
+
           // Close the popup
           setTimeout(() => {
-            // window.close()
+            window.close()
           }, 2000)
         } else {
           // Fallback: redirect to home if opened directly
