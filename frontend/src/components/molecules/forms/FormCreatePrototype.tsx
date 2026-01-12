@@ -35,10 +35,11 @@ import { createModelService } from '@/services/model.service'
 import { cn } from '@/lib/utils'
 import default_journey from '@/data/default_journey'
 import { SAMPLE_PROJECTS } from '@/data/sampleProjects'
-import { 
-  getGithubAuthStatus, 
+import {
+  getGithubAuthStatus,
   listGithubRepositories,
-  getGithubFileContents
+  getGithubFileContents,
+  linkRepositoryToPrototype,
 } from '@/services/github.service'
 import { GithubRepo } from '@/types/git.type'
 import Cookies from 'js-cookie'
@@ -176,30 +177,38 @@ const FormCreatePrototype = ({
 
   const { data: currentUser } = useSelfProfileQuery()
 
-  
+
   // GitHub integration state
   const [githubAuthenticated, setGithubAuthenticated] = useState(false)
   const [githubRepos, setGithubRepos] = useState<GithubRepo[]>([])
   const [loadingRepos, setLoadingRepos] = useState(false)
-  const [projectTemplate, setProjectTemplate] = useState<string>('')
+  const [selectedTemplate, setSelectedTemplate] = useState<string>(SAMPLE_PROJECTS[0].label)
+  const [selectedGithubRepo, setSelectedGithubRepo] = useState<GithubRepo | null>(null)
 
   const handleChange = (name: keyof typeof data, value: string | number) => {
     setData((prev) => ({ ...prev, [name]: value }))
   }
 
   const onTemplateChange = (v: string) => {
-    const template = SAMPLE_PROJECTS.find((project) => project.label === v)
-    let code = ''
-    let language = ''
-    if (template) {
-      if (typeof template.data === 'string') {
-        code = template.data
-        language = template.language
-      } else {
-        code = JSON.stringify(template.data)
-        language = template.language
+    setSelectedTemplate(v)
+    // Only load code from template if not GitHub repo template
+    if (v !== 'github-repo') {
+      const template = SAMPLE_PROJECTS.find((project) => project.label === v)
+      let code = ''
+      let language = ''
+      if (template) {
+        if (typeof template.data === 'string') {
+          code = template.data
+          language = template.language
+        } else {
+          code = JSON.stringify(template.data)
+          language = template.language
+        }
+        setData((prev) => ({ ...prev, code: code, language: language }))
       }
-      setData((prev) => ({ ...prev, code: code, language: language }))
+    } else {
+      // Reset data when selecting GitHub repo template
+      setData((prev) => ({ ...prev, code: '', language: '' }))
     }
   }
 
@@ -234,37 +243,43 @@ const FormCreatePrototype = ({
         console.error('Failed to check GitHub auth:', error)
       }
     }
-    
+
     checkGitHubAuth()
   }, [])
 
   // Load project from GitHub repo when selected
   const handleGithubRepoChange = async (repoId: string) => {
     handleChange('githubRepo', repoId)
-    
-    if (!repoId) return
-    
+
+    if (!repoId) {
+      setSelectedGithubRepo(null)
+      return
+    }
+
     const repo = githubRepos.find(r => r.id.toString() === repoId)
     if (!repo) return
-    
+
+    // Store the selected repo for later linking
+    setSelectedGithubRepo(repo)
+
     try {
       setLoading(true)
       const [owner, repoName] = repo.full_name.split('/')
-      
+
       // Try to load project.json from the repo
       try {
         const fileContent = await getGithubFileContents(owner, repoName, 'project.json', repo.default_branch)
         if (fileContent.content && fileContent.encoding === 'base64') {
           const decodedContent = atob(fileContent.content)
           const projectData = JSON.parse(decodedContent)
-          
+
           // Update the code with the project data
-          setData((prev) => ({ 
-            ...prev, 
+          setData((prev) => ({
+            ...prev,
             code: JSON.stringify(projectData),
             language: 'json' // or detect from repo
           }))
-          
+
           toast({
             title: 'Success',
             description: `Loaded project from ${repo.name}`,
@@ -339,6 +354,25 @@ const FormCreatePrototype = ({
       // Create the prototype using the model ID
 
       response = await createPrototypeService(body)
+
+      // Link GitHub repository if one was selected
+      if (selectedGithubRepo) {
+        try {
+          await linkRepositoryToPrototype({
+            prototype_id: response.id,
+            repo_id: selectedGithubRepo.id.toString(),
+            repo_name: selectedGithubRepo.name,
+            repo_full_name: selectedGithubRepo.full_name,
+            repo_url: selectedGithubRepo.html_url,
+            clone_url: selectedGithubRepo.clone_url,
+            default_branch: selectedGithubRepo.default_branch,
+            is_private: selectedGithubRepo.private,
+          })
+        } catch (error) {
+          console.error('Failed to link repository:', error)
+          // Don't fail the prototype creation if linking fails
+        }
+      }
 
       // Log the prototype creation
       await addLog({
@@ -495,7 +529,7 @@ const FormCreatePrototype = ({
       <div className="flex flex-col mt-4">
         <Label className="mb-2">Project Template *</Label>
         <Select
-          defaultValue={SAMPLE_PROJECTS[0].label}
+          value={selectedTemplate}
           onValueChange={(v: string) => {
             onTemplateChange(v)
           }}
@@ -509,12 +543,18 @@ const FormCreatePrototype = ({
                 {project.label}
               </SelectItem>
             ))}
+            {githubAuthenticated && githubRepos.length > 0 && (
+              <SelectItem value="github-repo">
+                <VscGithub className="inline mr-2" />
+                GitHub Repository
+              </SelectItem>
+            )}
           </SelectContent>
         </Select>
       </div>
 
-      {/* GitHub Repository Selector */}
-      {githubAuthenticated && githubRepos.length > 0 && (
+      {/* GitHub Repository Selector - Only show when GitHub repo template is selected */}
+      {selectedTemplate === 'github-repo' && githubAuthenticated && githubRepos.length > 0 && (
         <div className="flex flex-col mt-4">
           <Label className="mb-2 flex items-center">
             <VscGithub className="mr-2" />
@@ -528,7 +568,6 @@ const FormCreatePrototype = ({
               <SelectValue placeholder="Choose a repository or use template above..." />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">None (Use template above)</SelectItem>
               {githubRepos.map((repo) => (
                 <SelectItem key={repo.id} value={repo.id.toString()}>
                   {repo.full_name} {repo.private && '(Private)'}
