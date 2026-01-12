@@ -18,6 +18,7 @@ import {
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
 import { Textarea } from '@/components/atoms/textarea'
+import { Checkbox } from '@/components/atoms/checkbox'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import {
   getLinkedRepository,
@@ -42,7 +43,7 @@ import {
   VscSourceControl,
 } from 'react-icons/vsc'
 import { TbLoader, TbCircleCheckFilled } from 'react-icons/tb'
-import { parseAndExtractFiles } from '@/lib/fileTreeUtils'
+import { parseAndExtractFiles, parseAndExtractFilesFlat } from '@/lib/fileTreeUtils'
 import {
   Select,
   SelectContent,
@@ -75,6 +76,8 @@ const GitOperations: React.FC<GitOperationsProps> = ({
   const [selectedRepo, setSelectedRepo] = useState<string>('')
   const [newRepoName, setNewRepoName] = useState('')
   const [newRepoDesc, setNewRepoDesc] = useState('')
+  const [newRepoNameError, setNewRepoNameError] = useState('')
+  const [isPrivateRepo, setIsPrivateRepo] = useState(true)
   const [commitMessage, setCommitMessage] = useState('')
   const [currentBranch, setCurrentBranch] = useState('main')
   const [newBranchName, setNewBranchName] = useState('')
@@ -160,6 +163,40 @@ const GitOperations: React.FC<GitOperationsProps> = ({
     }
   }
 
+  /**
+   * Validates GitHub repository name
+   * GitHub rules: alphanumeric, hyphens, underscores, dots; max 255 chars
+   * Cannot start/end with dash, cannot have consecutive dots
+   */
+  const validateRepoName = (name: string): string => {
+    if (!name.trim()) {
+      return 'Repository name is required'
+    }
+
+    if (name.length > 255) {
+      return 'Repository name must be 255 characters or less'
+    }
+
+    if (!/^[a-zA-Z0-9._-]+$/.test(name)) {
+      return 'Repository name can only contain letters, numbers, hyphens, underscores, and dots'
+    }
+
+    if (name.startsWith('-') || name.endsWith('-')) {
+      return 'Repository name cannot start or end with a hyphen'
+    }
+
+    if (name.includes('..')) {
+      return 'Repository name cannot contain consecutive dots'
+    }
+
+    return ''
+  }
+
+  const handleRepoNameChange = (value: string) => {
+    setNewRepoName(value)
+    setNewRepoNameError(validateRepoName(value))
+  }
+
   const loadBranches = async () => {
     if (!linkedRepo) return
 
@@ -182,6 +219,19 @@ const GitOperations: React.FC<GitOperationsProps> = ({
       return
     }
 
+    // Validate new repository name if creating one
+    if (newRepoName) {
+      const error = validateRepoName(newRepoName)
+      if (error) {
+        toast({
+          title: 'Invalid Repository Name',
+          description: error,
+          variant: 'destructive',
+        })
+        return
+      }
+    }
+
     try {
       setProcessing(true)
 
@@ -192,7 +242,7 @@ const GitOperations: React.FC<GitOperationsProps> = ({
         repoToLink = await createGithubRepository({
           name: newRepoName,
           description: newRepoDesc,
-          private: false,
+          private: isPrivateRepo,
           auto_init: true,
         })
 
@@ -200,6 +250,37 @@ const GitOperations: React.FC<GitOperationsProps> = ({
           title: 'Success',
           description: `Repository "${newRepoName}" created successfully`,
         })
+
+        // Parse project data to files and commit as initial content
+        try {
+          const files = parseAndExtractFilesFlat(projectData)
+          if (files && Object.keys(files).length > 0) {
+            await commitMultipleGithubFiles(
+              repoToLink.owner.login,
+              repoToLink.name,
+              {
+                branch: repoToLink.default_branch,
+                message: 'Initial commit from AutoWRX editor',
+                files,
+              }
+            )
+
+            // Update last saved data
+            setLastSavedData(projectData)
+
+            toast({
+              title: 'Success',
+              description: 'Project files pushed to repository',
+            })
+          }
+        } catch (commitError: any) {
+          console.error('Failed to push initial commit:', commitError)
+          toast({
+            title: 'Warning',
+            description: 'Repository created but failed to push initial files',
+            variant: 'destructive',
+          })
+        }
       } else {
         // Use existing repository
         const repo = repositories.find((r) => r.id.toString() === selectedRepo)
@@ -374,7 +455,7 @@ const GitOperations: React.FC<GitOperationsProps> = ({
   }
 
   return (
-    <div className="flex items-center space-x-1 px-2">
+    <div className="flex items-center space-x-1">
       {linkedRepo ? (
         <>
           <div className='grow'>
@@ -405,8 +486,8 @@ const GitOperations: React.FC<GitOperationsProps> = ({
             title={isDirty ? 'Commit & Push' : 'No changes to commit'}
             disabled={!isDirty}
             className={`p-1.5 rounded transition-colors ${isDirty
-                ? 'hover:bg-gray-200 text-gray-600 hover:text-gray-900 cursor-pointer'
-                : 'text-gray-300 cursor-not-allowed'
+              ? 'hover:bg-gray-200 text-gray-600 hover:text-gray-900 cursor-pointer'
+              : 'text-gray-300 cursor-not-allowed'
               }`}
           >
             <VscCloudUpload size={16} />
@@ -472,22 +553,47 @@ const GitOperations: React.FC<GitOperationsProps> = ({
               <Input
                 placeholder="Repository name"
                 value={newRepoName}
-                onChange={(e) => setNewRepoName(e.target.value)}
-                className="mb-2"
+                onChange={(e) => handleRepoNameChange(e.target.value)}
+                className={`mb-2 ${newRepoNameError ? 'border-red-500' : ''}`}
               />
+              {newRepoNameError && (
+                <p className="text-xs text-red-500 mb-2">{newRepoNameError}</p>
+              )}
               <Textarea
                 placeholder="Description (optional)"
                 value={newRepoDesc}
                 onChange={(e) => setNewRepoDesc(e.target.value)}
                 rows={3}
+                className="mb-3"
               />
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="private-repo"
+                  checked={isPrivateRepo}
+                  onCheckedChange={(checked) => setIsPrivateRepo(checked === true)}
+                />
+                <Label
+                  htmlFor="private-repo"
+                  className="text-sm font-normal cursor-pointer"
+                >
+                  Make this repository private
+                </Label>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1 ml-6">
+                {isPrivateRepo
+                  ? 'Only you can see this repository'
+                  : 'Anyone on the internet can see this repository'}
+              </p>
             </div>
 
             <div className="flex justify-end space-x-2 mt-6">
               <Button variant="outline" onClick={() => setShowRepoDialog(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleLinkRepo} disabled={processing}>
+              <Button
+                onClick={handleLinkRepo}
+                disabled={processing || (!!newRepoName && !!newRepoNameError)}
+              >
                 {processing && <TbLoader className="mr-2 animate-spin" />}
                 Link Repository
               </Button>

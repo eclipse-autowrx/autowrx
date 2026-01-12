@@ -83,3 +83,33 @@ export const parseAndExtractFiles = (
     return null
   }
 }
+
+/**
+ * Parses project data JSON string and extracts all files without root folder wrapper
+ * Used for initial commits to preserve the actual file tree structure
+ * @param projectDataStr - The project data as a JSON string
+ * @returns Array of files to be committed or null if parsing fails
+ */
+export const parseAndExtractFilesFlat = (
+  projectDataStr: string
+): FileToCommit[] | null => {
+  try {
+    if (!projectDataStr || projectDataStr.trim() === '') {
+      return []
+    }
+
+    const parsed = JSON.parse(projectDataStr)
+    const items = Array.isArray(parsed) ? parsed : [parsed]
+
+    // If there's a single root folder, unwrap it and extract from its contents
+    if (items.length === 1 && items[0].type === 'folder' && items[0].items) {
+      return extractFilesFromTree(items[0].items)
+    }
+
+    // Otherwise extract from all items
+    return extractFilesFromTree(items)
+  } catch (error) {
+    console.error('Failed to parse project data:', error)
+    return null
+  }
+}
