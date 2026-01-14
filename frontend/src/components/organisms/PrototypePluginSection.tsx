@@ -22,8 +22,8 @@ import { useQueryClient } from '@tanstack/react-query'
 const PrototypePluginSection: React.FC = () => {
   const qc = useQueryClient()
   const { data, isLoading } = useQuery({
-    queryKey: ['plugins'],
-    queryFn: () => listPlugins({ limit: 100, page: 1 }),
+    queryKey: ['plugins', 'prototype_function'],
+    queryFn: () => listPlugins({ limit: 100, page: 1, type: 'prototype_function' }),
   })
   const [openForm, setOpenForm] = useState(false)
   const [editId, setEditId] = useState<string | undefined>(undefined)
@@ -100,7 +100,7 @@ const PrototypePluginSection: React.FC = () => {
                       if (!confirm('Delete this plugin?')) return
                       try {
                         await deletePlugin(p.id)
-                        qc.invalidateQueries({ queryKey: ['plugins'] })
+                        qc.invalidateQueries({ queryKey: ['plugins', 'prototype_function'] })
                       } catch (e) {}
                     }}
                   >
@@ -122,6 +122,7 @@ const PrototypePluginSection: React.FC = () => {
         onClose={() => setOpenForm(false)}
         mode={editId ? 'edit' : 'create'}
         pluginId={editId}
+        defaultType="prototype_function"
       />
     </>
   )

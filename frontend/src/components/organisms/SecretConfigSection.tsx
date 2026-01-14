@@ -15,6 +15,7 @@ import { useToast } from '@/components/molecules/toaster/use-toast'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/atoms/dialog'
 import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { EXCLUDED_FROM_SITE_CONFIG_KEYS } from '@/pages/SiteConfigManagement'
 
 const SecretConfigSection: React.FC = () => {
   const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
@@ -34,7 +35,11 @@ const SecretConfigSection: React.FC = () => {
     try {
       setIsLoading(true)
       const res = await configManagementService.getConfigs({ secret: true })
-      setConfigs(res.results || [])
+      // Filter out keys that should be excluded from site-config page
+      const filteredConfigs = (res.results || []).filter(
+        config => !EXCLUDED_FROM_SITE_CONFIG_KEYS.includes(config.key)
+      )
+      setConfigs(filteredConfigs)
     } catch (err) {
       toast({
         title: 'Load failed',

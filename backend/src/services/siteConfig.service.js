@@ -44,6 +44,213 @@ const DEFAULT_CONFIG_FILES = {
 };
 
 /**
+ * Get inline default values for specific config keys
+ * @param {string} key - The config key
+ * @returns {Object|null} - Default value object with value and valueType, or null if not found
+ */
+const getInlineDefaultValue = (key) => {
+  const inlineDefaults = {
+    'STAGING_FRAME': {
+      value: {
+        stages: [
+          {
+            name: 'SDV Mock',
+            version: 'v1.0',
+            image: 'https://playground-v2.digital.auto/imgs/targets/target_mockup.png',
+          },
+          {
+            name: 'Virtual Vehicle',
+            version: 'v1.0',
+            image: 'https://playground-v2.digital.auto/imgs/targets/target_3d_car.png',
+          },
+          {
+            name: 'Lab HW',
+            version: 'v1.0',
+            image: 'https://playground-v2.digital.auto/imgs/targets/desktopKit.png',
+          },
+          {
+            name: 'Test Fleet',
+            version: 'v1.0',
+            image: 'https://playground-v2.digital.auto/imgs/targets/desktopKit.png',
+          },
+        ],
+      },
+      valueType: 'object',
+    },
+    'STANDARD_STAGE': {
+      value: {
+        isTopMost: true,
+        name: '',
+        id: '1',
+        children: [
+          {
+            id: '2',
+            name: 'Off-Board',
+            children: [
+              {
+                id: '2.1',
+                name: 'Cloud',
+                children: [
+                  {
+                    id: '2.1.1',
+                    name: 'EZ Instance 4711',
+                    children: [
+                      {
+                        id: '2.1.1.1',
+                        name: 'Subscription Manager',
+                        version: '1.2.3',
+                      },
+                      {
+                        id: '2.1.1.2',
+                        name: 'Access Control',
+                        version: '2.0.2',
+                      },
+                      {
+                        id: '2.1.1.3',
+                        name: 'Driver Preferences',
+                        version: '3.2.3',
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            id: '3',
+            name: 'On-Board',
+            children: [
+              {
+                id: '3.1',
+                name: 'Central Compute',
+                children: [
+                  {
+                    id: '3.1.1',
+                    name: 'VCU',
+                    children: [
+                      {
+                        id: '3.1.1.1',
+                        name: 'Linux Instance eL1',
+                        children: [
+                          {
+                            id: '3.1.1.1.1',
+                            name: 'Container 4711',
+                            children: [
+                              {
+                                id: '3.1.1.1.1.1',
+                                name: 'Subscription Event Analyzer',
+                                version: '1.0',
+                              },
+                              {
+                                id: '3.1.1.1.1.2',
+                                name: 'Perfectly Keyless',
+                                version: '1.0.4',
+                              },
+                              {
+                                id: '3.1.1.1.1.3',
+                                name: 'Safe Door Opening',
+                                version: '1.7.4',
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                id: '3.2',
+                name: 'Front Zone',
+                children: [
+                  {
+                    id: '3.2.1',
+                    name: 'Zone Gateway FZ1',
+                    children: [
+                      {
+                        id: '3.2.1.1',
+                        name: 'PoSix Instance PL1',
+                        version: '1.3.4',
+                      },
+                      {
+                        id: '3.2.1.2',
+                        name: 'ECU E7',
+                        version: '7.0.1',
+                        children: [
+                          {
+                            id: '3.2.1.2.1',
+                            name: 'Runtime R8',
+                            version: '8.0.1',
+                            children: [
+                              {
+                                id: '3.2.1.2.1.1',
+                                name: 'ARA:com for wiper fluid Sensor',
+                                version: '0.3.2',
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                id: '3.2.2',
+                name: 'Rear Zone',
+                children: [
+                  {
+                    id: '3.2.2.1',
+                    name: 'Zone Gateway ZR1',
+                    children: [
+                      {
+                        id: '3.2.2.1.1',
+                        name: 'PoSix Instance PL1',
+                        version: '1.3.4',
+                      },
+                    ],
+                  },
+                  {
+                    id: '3.2.2.2',
+                    name: 'ECU E7',
+                    children: [
+                      {
+                        id: '3.2.2.2.1',
+                        name: 'Runtime R8',
+                        version: '8.0.1',
+                        children: [
+                          {
+                            id: '3.2.2.2.1.1',
+                            name: 'ARA:com for Wiper Fluid Sensor',
+                            version: '0.3.2',
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      valueType: 'object',
+    },
+  };
+
+  const defaultData = inlineDefaults[key];
+  if (!defaultData) {
+    return null;
+  }
+
+  return {
+    value: defaultData.value,
+    valueType: defaultData.valueType,
+    isDefault: true,
+  };
+};
+
+/**
  * Load default value from file system for a given config key
  * @param {string} key - The config key
  * @returns {Object|null} - Default value object with value and valueType, or null if not found
@@ -132,10 +339,31 @@ const querySiteConfigs = async (filter, options) => {
   const { useDefaultFallback = true, ...paginateOptions } = options;
   const siteConfigs = await SiteConfig.paginate(filter, paginateOptions);
 
+  // Process results to apply defaults for null values
+  if (useDefaultFallback) {
+    const scope = filter.scope || 'site';
+    siteConfigs.results = siteConfigs.results.map(config => {
+      // If value is null and we have a default, use default value
+      if (config.value === null && scope === 'site') {
+        const inlineDefault = getInlineDefaultValue(config.key);
+        if (inlineDefault) {
+          return {
+            ...config.toObject(),
+            value: inlineDefault.value,
+            valueType: inlineDefault.valueType,
+            isDefault: true,
+          };
+        }
+      }
+      return config;
+    });
+  }
+
   // If no results and a specific key is queried and fallback is enabled, check for defaults
   // Default scope to 'site' if not specified
   const scope = filter.scope || 'site';
   if (siteConfigs.results.length === 0 && filter.key && useDefaultFallback && scope === 'site') {
+    // First try file-based defaults
     const defaultConfig = loadDefaultConfigValue(filter.key);
     if (defaultConfig) {
       // Inject the default config into results
@@ -150,6 +378,22 @@ const querySiteConfigs = async (filter, options) => {
       }];
       siteConfigs.totalResults = 1;
       siteConfigs.totalPages = 1;
+    } else {
+      // Then try inline defaults
+      const inlineDefault = getInlineDefaultValue(filter.key);
+      if (inlineDefault) {
+        siteConfigs.results = [{
+          key: filter.key,
+          scope: scope,
+          value: inlineDefault.value,
+          valueType: inlineDefault.valueType,
+          secret: false,
+          category: 'deploy',
+          isDefault: true,
+        }];
+        siteConfigs.totalResults = 1;
+        siteConfigs.totalPages = 1;
+      }
     }
   }
 
@@ -189,13 +433,26 @@ const getSiteConfigByKey = async (key, scope = 'site', target_id = null, useDefa
 
   const config = await SiteConfig.findOne(query);
 
-  // If config exists in DB, return it
+  // If config exists in DB, check if value is null and use default if available
   if (config) {
+    // If value is null and we have a default, return default value
+    if (config.value === null && useDefaultFallback && scope === 'site') {
+      const inlineDefault = getInlineDefaultValue(key);
+      if (inlineDefault) {
+        return {
+          ...config.toObject(),
+          value: inlineDefault.value,
+          valueType: inlineDefault.valueType,
+          isDefault: true,
+        };
+      }
+    }
     return config;
   }
 
   // If not found and fallback is enabled, try to load default
   if (useDefaultFallback && scope === 'site') {
+    // First try file-based defaults
     const defaultConfig = loadDefaultConfigValue(key);
     if (defaultConfig) {
       // Return a plain object that mimics the SiteConfig structure
@@ -207,6 +464,20 @@ const getSiteConfigByKey = async (key, scope = 'site', target_id = null, useDefa
         secret: false,
         category: 'default',
         isDefault: true, // Flag to indicate this is from default file, not DB
+      };
+    }
+    
+    // Then try inline defaults
+    const inlineDefault = getInlineDefaultValue(key);
+    if (inlineDefault) {
+      return {
+        key,
+        scope,
+        value: inlineDefault.value,
+        valueType: inlineDefault.valueType,
+        secret: false,
+        category: 'deploy',
+        isDefault: true,
       };
     }
   }

@@ -51,7 +51,21 @@ const createPlugin = async (body) => {
  * @param {Object} options
  */
 const queryPlugins = async (filter = {}, options = {}) => {
-  return Plugin.paginate(filter, options);
+  const mongoFilter = { ...filter };
+  
+  // For backward compatibility: if type is 'prototype_function' or not specified,
+  // also include plugins with null/undefined type (legacy plugins)
+  if (filter.type === 'prototype_function' || !filter.type) {
+    // Include both 'prototype_function' and null/undefined types
+    mongoFilter.$or = [
+      { type: 'prototype_function' },
+      { type: null },
+      { type: { $exists: false } },
+    ];
+    delete mongoFilter.type;
+  }
+  
+  return Plugin.paginate(mongoFilter, options);
 };
 
 /** Get plugin by id */

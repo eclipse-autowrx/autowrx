@@ -14,6 +14,7 @@ import { Spinner } from '@/components/atoms/spinner'
 import {
   TbDotsVertical,
   TbPlus,
+  TbListCheck,
 } from 'react-icons/tb'
 import { saveRecentPrototype } from '@/services/prototype.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
@@ -41,7 +42,9 @@ import CustomTabEditor, { TabConfig } from '@/components/organisms/CustomTabEdit
 import PrototypeTabInfo from '../components/organisms/PrototypeTabInfo'
 import TemplateForm from '@/components/organisms/TemplateForm'
 import PrototypeTabJourney from '@/components/organisms/PrototypeTabJourney'
+import PrototypeTabStaging from '@/components/organisms/PrototypeTabStaging'
 import PrototypeTabs, { getTabConfig } from '@/components/molecules/PrototypeTabs'
+import DaTabItem from '@/components/atoms/DaTabItem'
 
 interface ViewPrototypeProps {
   display?: 'tree' | 'list'
@@ -193,36 +196,15 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           </div>
         )}
         <div className="grow"></div>
-        {/* {
-          <DaDialog
-            open={openStagingDialog}
-            onOpenChange={setOpenStagingDialog}
-            trigger={
-              <DaTabItem>
-                <TbListCheck className="w-5 h-5 mr-2" />
-                Staging
-              </DaTabItem>
-            }
-          >
-            <DaStaging />
-          </DaDialog>
-        }
-        {
-          <DaDialog
-            trigger={
-              <DaTabItem>
-                <TbMessage className="w-5 h-5 mr-2" />
-                Discussion
-              </DaTabItem>
-            }
-          >
-            <DaDiscussions
-              refId={prototype?.id ?? ''}
-              refType="prototype"
-              className="max-h-[80vh] xl:max-h-[60vh]"
-            />
-          </DaDialog>
-        } */}
+        {/* Staging tab - right side, before three dots */}
+        <DaTabItem
+          active={tab === 'staging'}
+          to={`/model/${model_id}/library/prototype/${prototype_id}/staging`}
+          dataId="tab-staging"
+        >
+          <TbListCheck className="w-5 h-5 mr-2" />
+          Staging
+        </DaTabItem>
         {isModelOwner && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -282,6 +264,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           {tab == 'code' && <PrototypeTabCode />}
           {tab == 'dashboard' && <PrototypeTabDashboard />}
           {tab == 'feedback' && <PrototypeTabFeedback />}
+          {tab == 'staging' && <PrototypeTabStaging prototype={prototype} />}
           {tab == 'plug' && <PagePrototypePlugin key={pluginId || 'no-plugin'} />}
         </div>
         {showRt && <DaRuntimeControl />}

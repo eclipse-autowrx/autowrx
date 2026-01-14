@@ -17,6 +17,7 @@ export interface Plugin {
   is_internal: boolean
   url?: string
   config?: any
+  type?: 'prototype_function' | 'deploy' | string
   createdAt: string
   updatedAt: string
 }

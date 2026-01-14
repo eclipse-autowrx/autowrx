@@ -11,20 +11,21 @@ import { useSearchParams } from 'react-router-dom'
 import PrototypePluginSection from '@/components/organisms/PrototypePluginSection'
 import CustomApiSchemaSection from '@/components/organisms/CustomApiSchemaSection'
 import CustomApiSetSection from '@/components/organisms/CustomApiSetSection'
+import DeployPluginSection from '@/components/organisms/DeployPluginSection'
 
 const PluginManagement: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
 
   // Get initial section from URL or default to 'prototype'
-  const getSectionFromUrl = (): 'prototype' | 'vehicle-api-schema' | 'vehicle-api' => {
+  const getSectionFromUrl = (): 'prototype' | 'vehicle-api-schema' | 'vehicle-api' | 'deploy' => {
     const section = searchParams.get('section')
-    if (section === 'prototype' || section === 'vehicle-api-schema' || section === 'vehicle-api') {
+    if (section === 'prototype' || section === 'vehicle-api-schema' || section === 'vehicle-api' || section === 'deploy') {
       return section
     }
     return 'prototype'
   }
 
-  const [activeTab, setActiveTab] = useState<'prototype' | 'vehicle-api-schema' | 'vehicle-api'>(
+  const [activeTab, setActiveTab] = useState<'prototype' | 'vehicle-api-schema' | 'vehicle-api' | 'deploy'>(
     getSectionFromUrl(),
   )
 
@@ -33,13 +34,13 @@ const PluginManagement: React.FC = () => {
     setSearchParams({ section: activeTab }, { replace: true })
   }, [activeTab, setSearchParams])
 
-  const handleTabChange = (tab: 'prototype' | 'vehicle-api-schema' | 'vehicle-api') => {
+  const handleTabChange = (tab: 'prototype' | 'vehicle-api-schema' | 'vehicle-api' | 'deploy') => {
     setActiveTab(tab)
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8 flex flex-col">
           <h1 className="text-4xl font-semibold text-foreground">
@@ -72,6 +73,16 @@ const PluginManagement: React.FC = () => {
                   Prototype Plugin
                 </button>
                 <button
+                  onClick={() => handleTabChange('deploy')}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'deploy'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
+                >
+                  Deploy Plugin
+                </button>
+                <button
                   onClick={() => handleTabChange('vehicle-api-schema')}
                   className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
                     activeTab === 'vehicle-api-schema'
@@ -100,6 +111,7 @@ const PluginManagement: React.FC = () => {
             <div className="bg-background rounded-lg shadow border border-border">
               {/* Conditionally render only the active section */}
               {activeTab === 'prototype' && <PrototypePluginSection />}
+              {activeTab === 'deploy' && <DeployPluginSection />}
               {activeTab === 'vehicle-api-schema' && <CustomApiSchemaSection />}
               {activeTab === 'vehicle-api' && <CustomApiSetSection />}
             </div>
