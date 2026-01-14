@@ -40,7 +40,7 @@ const getSiteConfig = catchAsync(async (req, res) => {
 });
 
 const getSiteConfigByKey = catchAsync(async (req, res) => {
-  const siteConfig = await siteConfigService.getSiteConfigByKey(req.params.key);
+  const siteConfig = await siteConfigService.getSiteConfigByKey(req.params.key, 'site', null, true);
   if (!siteConfig) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Site config not found');
   }

@@ -14,6 +14,11 @@ import SiteStyleSection from '@/components/organisms/SiteStyleSection'
 import HomeConfigSection from '@/components/organisms/HomeConfigSection'
 import AuthConfigSection from '@/components/organisms/AuthConfigSection'
 import SSOConfigSection from '@/components/organisms/SSOConfigSection'
+import StagingConfigSection from '@/components/organisms/StagingConfigSection'
+
+// Keys that should be excluded from the site-config page
+// These keys are managed in their own dedicated pages
+export const EXCLUDED_FROM_SITE_CONFIG_KEYS = ['STAGING_FRAME', 'STANDARD_STAGE']
 
 export const PREDEFINED_SITE_CONFIGS: any[] = [
   {
@@ -131,15 +136,15 @@ const SiteConfigManagement: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
 
   // Get initial section from URL or default to 'public'
-  const getSectionFromUrl = (): 'public' | 'style' | 'secrets' | 'home' | 'auth' | 'sso' => {
+  const getSectionFromUrl = (): 'public' | 'style' | 'secrets' | 'home' | 'auth' | 'sso' | 'staging' => {
     const section = searchParams.get('section')
-    if (section === 'public' || section === 'style' || section === 'secrets' || section === 'home' || section === 'auth' || section === 'sso') {
+    if (section === 'public' || section === 'style' || section === 'secrets' || section === 'home' || section === 'auth' || section === 'sso' || section === 'staging') {
       return section
     }
     return 'public'
   }
 
-  const [activeTab, setActiveTab] = useState<'public' | 'style' | 'secrets' | 'home' | 'auth' | 'sso'>(
+  const [activeTab, setActiveTab] = useState<'public' | 'style' | 'secrets' | 'home' | 'auth' | 'sso' | 'staging'>(
     getSectionFromUrl(),
   )
 
@@ -148,7 +153,7 @@ const SiteConfigManagement: React.FC = () => {
     setSearchParams({ section: activeTab }, { replace: true })
   }, [activeTab, setSearchParams])
 
-  const handleTabChange = (tab: 'public' | 'style' | 'secrets' | 'home' | 'auth' | 'sso') => {
+  const handleTabChange = (tab: 'public' | 'style' | 'secrets' | 'home' | 'auth' | 'sso' | 'staging') => {
     setActiveTab(tab)
   }
 
@@ -236,6 +241,16 @@ const SiteConfigManagement: React.FC = () => {
                 >
                   Secret Config
                 </button>
+                <button
+                  onClick={() => handleTabChange('staging')}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'staging'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
+                >
+                  Standard Staging Frame
+                </button>
               </nav>
             </div>
           </div>
@@ -246,6 +261,7 @@ const SiteConfigManagement: React.FC = () => {
               {/* Conditionally render only the active section */}
               {activeTab === 'public' && <PublicConfigSection />}
               {activeTab === 'home' && <HomeConfigSection />}
+              {activeTab === 'staging' && <StagingConfigSection />}
               {activeTab === 'auth' && <AuthConfigSection />}
               {activeTab === 'sso' && <SSOConfigSection />}
               {activeTab === 'style' && <SiteStyleSection />}

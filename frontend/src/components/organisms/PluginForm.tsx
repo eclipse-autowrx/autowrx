@@ -33,6 +33,7 @@ type PluginFormProps = {
   mode: 'create' | 'edit'
   pluginId?: string
   onSaved?: (plugin: Plugin) => void
+  defaultType?: 'prototype_function' | 'deploy'
 }
 
 const PluginForm = ({
@@ -41,6 +42,7 @@ const PluginForm = ({
   mode,
   pluginId,
   onSaved,
+  defaultType,
 }: PluginFormProps) => {
   const qc = useQueryClient()
   const [isOpen, setIsOpen] = useState(open)
@@ -60,11 +62,12 @@ const PluginForm = ({
         description: '',
         url: '',
         config: {},
+        type: defaultType || 'prototype_function',
       })
       setJsonText('{}')
       setActiveTab('meta')
     }
-  }, [open, mode])
+  }, [open, mode, defaultType])
 
   const { data: initial, isFetching } = useQuery({
     queryKey: ['plugin', pluginId],
@@ -82,6 +85,7 @@ const PluginForm = ({
     description: '',
     url: '',
     config: {},
+    type: defaultType || 'prototype_function',
   })
   const [zip, setZip] = useState<File | null>(null)
   const [activeTab, setActiveTab] = useState<'meta' | 'config'>('meta')
@@ -89,11 +93,16 @@ const PluginForm = ({
   const [jsonError, setJsonError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (initial) setForm(initial)
+    if (initial) {
+      setForm({
+        ...initial,
+        type: initial.type || defaultType || 'prototype_function',
+      })
+    }
     if (!isOpen) {
       setZip(null)
     }
-  }, [initial, isOpen])
+  }, [initial, isOpen, defaultType])
 
   useEffect(() => {
     try {
@@ -125,6 +134,7 @@ const PluginForm = ({
         is_internal: !!form.is_internal,
         url: form.url,
         config: parsedConfig,
+        type: form.type || defaultType || 'prototype_function',
       }
       if (mode === 'create') return createPlugin(payload)
       if (!pluginId) throw new Error('Missing id')
@@ -132,6 +142,7 @@ const PluginForm = ({
     },
     onSuccess: (p: Plugin) => {
       toast.success('Saved')
+      // Invalidate all plugin queries to refresh both sections
       qc.invalidateQueries({ queryKey: ['plugins'] })
       qc.invalidateQueries({ queryKey: ['plugin', pluginId] })
       onSaved && onSaved(p)

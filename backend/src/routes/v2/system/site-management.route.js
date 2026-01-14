@@ -46,10 +46,6 @@ router
 // Get all site configs (including secret ones) - admin only
 router.get('/all', siteConfigController.getAllSiteConfigs);
 
-// Scoped admin routes
-router.get('/:scope/:target_id', siteConfigController.getConfigsByScope);
-router.get('/:scope/:target_id/all', siteConfigController.getAllConfigsByScope);
-
 // Get multiple configs by keys
 router.post('/by-keys', 
   validate(siteConfigValidation.getSiteConfigsByKeys),
@@ -67,23 +63,7 @@ router.get('/global-css', siteConfigController.getGlobalCss);
 router.put('/global-css', siteConfigController.updateGlobalCss);
 router.post('/global-css/restore-default', siteConfigController.restoreDefaultGlobalCss);
 
-// Individual config operations by ID
-router
-  .route('/:siteConfigId')
-  .get(
-    validate(siteConfigValidation.getSiteConfig),
-    siteConfigController.getSiteConfig
-  )
-  .patch(
-    validate(siteConfigValidation.updateSiteConfig),
-    siteConfigController.updateSiteConfig
-  )
-  .delete(
-    validate(siteConfigValidation.deleteSiteConfig),
-    siteConfigController.deleteSiteConfig
-  );
-
-// Individual config operations by key
+// Individual config operations by key (MUST come before /:scope/:target_id to avoid route conflict)
 router
   .route('/key/:key')
   .get(
@@ -97,6 +77,26 @@ router
   .delete(
     validate(siteConfigValidation.deleteSiteConfigByKey),
     siteConfigController.deleteSiteConfigByKey
+  );
+
+// Scoped admin routes (MUST come after /key/:key to avoid route conflict)
+router.get('/:scope/:target_id', siteConfigController.getConfigsByScope);
+router.get('/:scope/:target_id/all', siteConfigController.getAllConfigsByScope);
+
+// Individual config operations by ID (MUST come after /key/:key and /:scope/:target_id)
+router
+  .route('/:siteConfigId')
+  .get(
+    validate(siteConfigValidation.getSiteConfig),
+    siteConfigController.getSiteConfig
+  )
+  .patch(
+    validate(siteConfigValidation.updateSiteConfig),
+    siteConfigController.updateSiteConfig
+  )
+  .delete(
+    validate(siteConfigValidation.deleteSiteConfig),
+    siteConfigController.deleteSiteConfig
   );
 
 module.exports = router;

@@ -42,6 +42,12 @@ const pluginSchema = new mongoose.Schema(
     config: {
       type: mongoose.Schema.Types.Mixed,
     },
+    type: {
+      type: String,
+      enum: ['prototype_function', 'deploy'],
+      default: 'prototype_function',
+      index: true,
+    },
     created_by: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
