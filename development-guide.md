@@ -75,7 +75,7 @@ If you have a remote MongoDB instance, you can use it by setting the `MONGODB_UR
 cd backend
 
 # Install dependencies
-npm install
+yarn install
 
 # Create .env file from example
 cp .env.example .env
@@ -92,7 +92,7 @@ cp .env.example .env
 cd ../frontend
 
 # Install dependencies
-npm install
+yarn install
 
 # Create .env file from example
 cp .env.example .env
@@ -109,13 +109,13 @@ You need **two terminal windows**:
 **Terminal 1 - Backend:**
 ```bash
 cd backend
-npm run dev
+yarn run dev
 ```
 
 **Terminal 2 - Frontend:**
 ```bash
 cd frontend
-npm run dev
+yarn run dev
 ```
 
 That's it! The application should now be running.
@@ -355,17 +355,17 @@ Once both services are running, you can access:
 
 ### General Issues
 
-**Issue:** `npm install fails`
+**Issue:** `yarn install fails`
 
 **Solutions:**
-1. Clear npm cache: `npm cache clean --force`
+1. Clear yarn cache: `yarn cache clean --force`
 2. Delete `node_modules` and `package-lock.json`, then reinstall
 3. Ensure you're using Node.js 18+
 
 **Issue:** `Changes not reflecting (hot reload not working)`
 
 **Solutions:**
-1. Check that you're running `npm run dev` (not `npm start`)
+1. Check that you're running `yarn run dev` (not `yarn start`)
 2. Restart the dev server
 3. Clear browser cache
 
