@@ -46,28 +46,40 @@ const createSet = async (setBody, userId) => {
  * Query CustomApiSets
  * @param {Object} filter - Mongo filter
  * @param {Object} options - Query options
- * @param {string} userId - Current user ID for scope filtering
+ * @param {string} userId - Current user ID for scope filtering (undefined for unauthenticated users)
  * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
  * @param {number} [options.limit] - Maximum number of results per page (default = 10)
  * @param {number} [options.page] - Current page (default = 1)
  * @returns {Promise<QueryResult>}
  */
 const querySets = async (filter, options, userId) => {
-  // Filter by scope: user can only see system-scoped or their own user-scoped instances
-  if (filter.scope === 'system') {
-    // Explicitly filter for system scope only
-    filter.scope = 'system';
-  } else if (filter.scope === 'user') {
-    // Filter for user scope, but only show instances owned by the current user
-    filter.owner = userId;
+  // Unauthenticated users can only see system-scoped sets (public sets)
+  if (!userId) {
+    if (filter.scope === 'user') {
+      // Unauthenticated users cannot access user-scoped sets
+      filter.scope = 'nonexistent'; // Force no results
+    } else if (!filter.scope) {
+      // No scope filter: show only system-scoped sets
+      filter.scope = 'system';
+    }
+    // If scope is 'system', keep it as is
   } else {
-    // No scope filter specified: show system-scoped OR user-scoped (owned by current user)
-    filter.$or = [
-      { scope: 'system' },
-      { scope: 'user', owner: userId },
-    ];
-    // Remove scope from filter since we're using $or
-    delete filter.scope;
+    // Authenticated users: filter by scope as before
+    if (filter.scope === 'system') {
+      // Explicitly filter for system scope only
+      filter.scope = 'system';
+    } else if (filter.scope === 'user') {
+      // Filter for user scope, but only show instances owned by the current user
+      filter.owner = userId;
+    } else {
+      // No scope filter specified: show system-scoped OR user-scoped (owned by current user)
+      filter.$or = [
+        { scope: 'system' },
+        { scope: 'user', owner: userId },
+      ];
+      // Remove scope from filter since we're using $or
+      delete filter.scope;
+    }
   }
 
   const sets = await CustomApiSet.paginate(filter, options);
@@ -77,7 +89,7 @@ const querySets = async (filter, options, userId) => {
 /**
  * Get CustomApiSet by id with permission check
  * @param {string} id
- * @param {string} userId
+ * @param {string} userId - Optional user ID (undefined for unauthenticated users)
  * @returns {Promise<CustomApiSet>}
  */
 const getSetById = async (id, userId) => {
@@ -87,8 +99,16 @@ const getSetById = async (id, userId) => {
   }
 
   // Check scope permissions
-  if (set.scope === 'user' && set.owner.toString() !== userId.toString().toString()) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'Access denied to this set');
+  // Unauthenticated users can only access 'system' scope sets (public sets)
+  if (!userId) {
+    if (set.scope !== 'system') {
+      throw new ApiError(httpStatus.FORBIDDEN, 'Access denied to this set');
+    }
+  } else {
+    // Authenticated users: user-scoped sets are only accessible by owner
+    if (set.scope === 'user' && set.owner.toString() !== userId.toString()) {
+      throw new ApiError(httpStatus.FORBIDDEN, 'Access denied to this set');
+    }
   }
 
   return set;

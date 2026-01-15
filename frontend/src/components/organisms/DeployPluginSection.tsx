@@ -35,6 +35,7 @@ import { TbGripVertical, TbPencil, TbTrash, TbPlus, TbCheck, TbX, TbPhotoEdit, T
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { listPlugins, type Plugin } from '@/services/plugin.service'
 import PluginForm from '@/components/organisms/PluginForm'
+import useAuthStore from '@/stores/authStore'
 
 const STAGING_FRAME_KEY = 'STAGING_FRAME'
 
@@ -47,6 +48,7 @@ interface Stage {
 
 const DeployPluginSection: React.FC = () => {
   const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
+  const { setOpenLoginDialog } = useAuthStore()
   const [stagingFrameConfig, setStagingFrameConfig] = useState<Config | null>(null)
   const [stages, setStages] = useState<Stage[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -61,10 +63,11 @@ const DeployPluginSection: React.FC = () => {
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
-  // Fetch deploy plugins
+  // Fetch deploy plugins - wait for user authentication
   const { data: pluginsData, isLoading: pluginsLoading } = useQuery({
     queryKey: ['plugins', 'deploy'],
     queryFn: () => listPlugins({ limit: 100, page: 1, type: 'deploy' }),
+    enabled: !selfLoading && !!self, // Wait for user auth before fetching
   })
 
   useEffect(() => {
@@ -322,6 +325,36 @@ const DeployPluginSection: React.FC = () => {
     }
   }
 
+  // Show loading indicator while user authentication is in progress
+  if (selfLoading) {
+    return (
+      <div className="flex flex-col justify-center items-center py-8 gap-4">
+        <Spinner />
+        <p className="text-sm text-muted-foreground">Loading user information...</p>
+      </div>
+    )
+  }
+
+  // Show authentication required message if user is not authenticated
+  if (!self) {
+    return (
+      <div className="flex flex-col justify-center items-center py-16 gap-4">
+        <h3 className="text-lg font-semibold text-foreground">Authentication Required</h3>
+        <p className="text-sm text-muted-foreground text-center max-w-md">
+          Please sign in to view staging configuration
+        </p>
+        <Button
+          variant="default"
+          size="sm"
+          onClick={() => setOpenLoginDialog(true)}
+          className="mt-2"
+        >
+          Sign In
+        </Button>
+      </div>
+    )
+  }
+
   return (
     <>
       <div className="px-6 py-4 border-b border-border">
@@ -342,8 +375,9 @@ const DeployPluginSection: React.FC = () => {
       </div>
       <div className="p-6">
         {isLoading ? (
-          <div className="flex justify-center items-center py-8">
+          <div className="flex flex-col justify-center items-center py-8 gap-4">
             <Spinner />
+            <p className="text-sm text-muted-foreground">Loading staging configuration...</p>
           </div>
         ) : (
           <DragDropContext onDragEnd={handleDragEnd}>

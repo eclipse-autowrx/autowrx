@@ -330,9 +330,9 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data }) 
 
         // Step 3: Load plugin script and wait for global registration under a fixed key
         async function injectAndWait(asModule: boolean): Promise<any> {
-          const bustUrl = `${PLUGIN_URL}${PLUGIN_URL.includes('?') ? '&' : '?'}_=${Date.now()}`
+          // Use the original URL without cache-busting to allow preloaded cache to be used
           const script = document.createElement('script')
-          script.src = bustUrl
+          script.src = PLUGIN_URL
           script.async = true
           script.defer = true
           script.crossOrigin = 'anonymous'
