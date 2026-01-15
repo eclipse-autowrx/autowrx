@@ -283,6 +283,7 @@ const PrototypeTabCode: FC = () => {
               onSave={async (data: string) => {
                 await saveCodeToDb(data)
               }}
+              prototypeId={prototype.id}
             />
           ) : (
             <CodeEditor

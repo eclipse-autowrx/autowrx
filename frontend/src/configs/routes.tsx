@@ -29,6 +29,7 @@ import PagePrototypePlugin from '@/pages/PagePrototypePlugin.tsx'
 import PageModelPlugin from '@/pages/PageModelPlugin.tsx'
 import PageManageUsers from '@/pages/PageManageUsers.tsx'
 import PageManageFeatures from '@/pages/PageManageFeatures.tsx'
+import GitHubCallback from '@/components/molecules/github/GitHubCallback.tsx'
 // import PageAuthSuccess from '@/pages/PageAuthSuccess.ts'
 import { retry } from '@/lib/retry.ts'
 // const PageAbout = lazy(() => retry(() => import('@/pages/PageAbout')))
@@ -137,6 +138,15 @@ const routesConfig: RouteConfig[] = [
                 ),
               },
             ],
+          },
+          {
+            path: '/github/callback',
+            element: (
+              <SuspenseProvider>
+                <GitHubCallback />
+              </SuspenseProvider>
+            ),
+            noBreadcrumbs: true,
           },
           {
             path: '/manage-users',
