@@ -16,28 +16,35 @@ const { PERMISSIONS } = require('../../../config/roles');
 
 const router = express.Router();
 
-// All endpoints require authentication
-router.use(auth());
-
+// GET endpoints allow optional authentication based on PUBLIC_VIEWING config
+// POST, PATCH, DELETE endpoints require authentication
 router
   .route('/')
-  .post(validate(customApiSetValidation.createCustomApiSet), customApiSetController.createCustomApiSet)
-  .get(validate(customApiSetValidation.listCustomApiSets), customApiSetController.getCustomApiSets);
+  .post(auth(), validate(customApiSetValidation.createCustomApiSet), customApiSetController.createCustomApiSet)
+  .get(
+    auth({ optional: (req) => req.authConfig.PUBLIC_VIEWING }),
+    validate(customApiSetValidation.listCustomApiSets),
+    customApiSetController.getCustomApiSets
+  );
 
 router
   .route('/:id')
-  .get(validate(customApiSetValidation.getCustomApiSet), customApiSetController.getCustomApiSet)
-  .patch(validate(customApiSetValidation.updateCustomApiSet), customApiSetController.updateCustomApiSet)
-  .delete(validate(customApiSetValidation.deleteCustomApiSet), customApiSetController.deleteCustomApiSet);
+  .get(
+    auth({ optional: (req) => req.authConfig.PUBLIC_VIEWING }),
+    validate(customApiSetValidation.getCustomApiSet),
+    customApiSetController.getCustomApiSet
+  )
+  .patch(auth(), validate(customApiSetValidation.updateCustomApiSet), customApiSetController.updateCustomApiSet)
+  .delete(auth(), validate(customApiSetValidation.deleteCustomApiSet), customApiSetController.deleteCustomApiSet);
 
 router
   .route('/:id/items')
-  .post(validate(customApiSetValidation.addSetItem), customApiSetController.addSetItem);
+  .post(auth(), validate(customApiSetValidation.addSetItem), customApiSetController.addSetItem);
 
 router
   .route('/:id/items/:itemId')
-  .patch(validate(customApiSetValidation.updateSetItem), customApiSetController.updateSetItem)
-  .delete(validate(customApiSetValidation.removeSetItem), customApiSetController.removeSetItem);
+  .patch(auth(), validate(customApiSetValidation.updateSetItem), customApiSetController.updateSetItem)
+  .delete(auth(), validate(customApiSetValidation.removeSetItem), customApiSetController.removeSetItem);
 
 module.exports = router;
 

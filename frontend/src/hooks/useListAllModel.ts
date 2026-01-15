@@ -15,8 +15,22 @@ const useListAllModels = () => {
   const { data: self } = useSelfProfileQuery()
 
   return useQuery({
-    queryKey: ['listAllModels', self?.id],
+    // Include user ID in query key so results are cached per user
+    // Use 'anonymous' for unauthenticated users to ensure consistent caching
+    queryKey: ['listAllModels', self?.id || 'anonymous'],
     queryFn: listAllModels,
+    // Always run the query - backend supports unauthenticated access via PUBLIC_VIEWING config
+    // The backend will return appropriate data based on PUBLIC_VIEWING setting
+    enabled: true,
+    // Don't retry on 401 errors for unauthenticated users - this is expected
+    retry: (failureCount, error: any) => {
+      // If it's a 401 and we don't have a user, don't retry (expected for public access)
+      if (error?.response?.status === 401 && !self) {
+        return false
+      }
+      // Otherwise use default retry logic
+      return failureCount <= 1
+    },
   })
 }
 

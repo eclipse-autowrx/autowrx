@@ -32,15 +32,21 @@ const PageModelList = () => {
   const navigate = useNavigate()
   const [isImporting, setIsImporting] = useState(false)
 
-  const { data: user } = useSelfProfileQuery()
+  const { data: user, isLoading: userLoading } = useSelfProfileQuery()
 
   // Single hook that returns all model types
+  // This query should run even for unauthenticated users (backend supports PUBLIC_VIEWING)
   const {
     data,
     isLoading,
     error,
     refetch: refetchAllModels,
   } = useListAllModels()
+
+  // Log errors for debugging
+  if (error) {
+    console.error('[PageModelList] Error loading models:', error)
+  }
 
   // In case `data` isn't ready, destructure safely
   const {

@@ -25,6 +25,8 @@ import {
 import PluginPageRender from '@/components/organisms/PluginPageRender'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { Plugin } from '@/services/plugin.service'
+import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import useAuthStore from '@/stores/authStore'
 
 const STAGING_FRAME_KEY = 'STAGING_FRAME'
 const STANDARD_STAGE_KEY = 'STANDARD_STAGE'
@@ -163,6 +165,8 @@ const PluginDropdownItem: React.FC<PluginDropdownItemProps> = ({ plugin, onClick
 }
 
 const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({ prototype }) => {
+  const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
+  const { setOpenLoginDialog } = useAuthStore()
   const [stagingFrameConfig, setStagingFrameConfig] = useState<Config | null>(null)
   const [standardStageConfig, setStandardStageConfig] = useState<Config | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -174,9 +178,12 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({ prototype }) 
   const { data: model } = useCurrentModel()
 
   useEffect(() => {
+    // Wait for user authentication to complete before loading configs
+    if (selfLoading) return
+    if (!self) return // Will show auth required message
     loadConfigs()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [selfLoading, !!self])
 
   const loadConfigs = async () => {
     try {
@@ -562,10 +569,42 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({ prototype }) 
     )
   }
 
+  // Show loading indicator while user authentication is in progress
+  if (selfLoading) {
+    return (
+      <div className="flex flex-col justify-center items-center py-8 gap-4">
+        <Spinner />
+        <p className="text-sm text-muted-foreground">Loading user information...</p>
+      </div>
+    )
+  }
+
+  // Show authentication required message if user is not authenticated
+  if (!self) {
+    return (
+      <div className="flex flex-col justify-center items-center py-16 gap-4">
+        <h3 className="text-lg font-semibold text-foreground">Authentication Required</h3>
+        <p className="text-sm text-muted-foreground text-center max-w-md">
+          Please sign in to view staging configuration
+        </p>
+        <Button
+          variant="default"
+          size="sm"
+          onClick={() => setOpenLoginDialog(true)}
+          className="mt-2"
+        >
+          Sign In
+        </Button>
+      </div>
+    )
+  }
+
+  // Show loading indicator while configs are loading
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center py-8">
+      <div className="flex flex-col justify-center items-center py-8 gap-4">
         <Spinner />
+        <p className="text-sm text-muted-foreground">Loading staging configuration...</p>
       </div>
     )
   }

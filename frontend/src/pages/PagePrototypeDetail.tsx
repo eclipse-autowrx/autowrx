@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { FC, useEffect, useState } from 'react'
+import { configManagementService } from '@/services/configManagement.service'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
 import { useParams, useSearchParams } from 'react-router-dom'
@@ -45,6 +46,7 @@ import PrototypeTabJourney from '@/components/organisms/PrototypeTabJourney'
 import PrototypeTabStaging from '@/components/organisms/PrototypeTabStaging'
 import PrototypeTabs, { getTabConfig } from '@/components/molecules/PrototypeTabs'
 import DaTabItem from '@/components/atoms/DaTabItem'
+import usePluginPreloader from '@/hooks/usePluginPreloader'
 
 interface ViewPrototypeProps {
   display?: 'tree' | 'list'
@@ -78,6 +80,50 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
     model_tabs?: Array<{ label: string; plugin: string }>
     prototype_tabs?: Array<{ label: string; plugin: string }>
   } | undefined>(undefined)
+  
+  // Load staging config to extract plugins for preloading
+  const [stagingPlugins, setStagingPlugins] = useState<Plugin[]>([])
+  const STAGING_FRAME_KEY = 'STAGING_FRAME'
+  
+  useEffect(() => {
+    // Only load staging config if user is authenticated
+    if (!user) {
+      setStagingPlugins([])
+      return
+    }
+    
+    const loadStagingPlugins = async () => {
+      try {
+        const stagingConfig = await configManagementService.getConfigByKey(STAGING_FRAME_KEY)
+        if (stagingConfig?.value?.stages) {
+          // Extract all plugins from all stages
+          const allPlugins: Plugin[] = []
+          stagingConfig.value.stages.forEach((stage: any) => {
+            if (stage.plugins && Array.isArray(stage.plugins)) {
+              allPlugins.push(...stage.plugins)
+            }
+          })
+          setStagingPlugins(allPlugins)
+        }
+      } catch (error) {
+        // Silently fail - staging config might not exist or user might not have access
+        setStagingPlugins([])
+      }
+    }
+    
+    loadStagingPlugins()
+  }, [user])
+  
+  // Extract prototype tabs for preloading
+  const prototypeTabs = getTabConfig(model?.custom_template?.prototype_tabs)
+  
+  // Preload plugin JavaScript files
+  usePluginPreloader({
+    prototypeTabs,
+    stagingPlugins,
+    enabled: !!user, // Only preload if user is authenticated
+    delay: 2000, // Start preloading 2 seconds after page load
+  })
 
   // Populate store when prototype is fetched
   useEffect(() => {
