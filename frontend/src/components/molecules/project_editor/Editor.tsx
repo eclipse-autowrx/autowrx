@@ -10,7 +10,7 @@ import React, { useRef, useEffect } from 'react'
 import Editor from '@monaco-editor/react'
 import { File } from './types'
 import Introduction from './Introduction'
-import { VscSave, VscSaveAll } from 'react-icons/vsc'
+import { VscSave, VscSaveAll, VscClose } from 'react-icons/vsc'
 
 interface EditorComponentProps {
   file: File | null
@@ -379,13 +379,13 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Tabs */}
-      <div className="flex items-center bg-gray-100 border-b border-gray-200 min-h-0 relative">
+      <div className="flex items-stretch bg-[#f3f3f3] border-b border-gray-300 relative">
         <div
           ref={tabsContainerRef}
-          className="flex overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pr-[180px]"
+          className="flex overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent flex-1"
           style={{ scrollbarWidth: 'thin', msOverflowStyle: 'none' }}
         >
-          {openFiles.map((openFile) => {
+          {openFiles.map((openFile, index) => {
             const openFilePath = openFile.path || openFile.name
             const activeFilePath = file?.path || file?.name
             const isActive = openFilePath === activeFilePath
@@ -397,55 +397,66 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
                 ref={isActive ? activeTabRef : null}
                 onClick={() => onSelectFile(openFile)}
                 className={`
-            flex items-center px-3 py-2 text-sm cursor-pointer border-r border-gray-200 
-            min-w-[120px] max-w-[200px] flex-shrink-0
-            ${isActive
-                    ? 'bg-white text-gray-900 border-b-2 border-b-blue-500'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  group relative flex items-center px-6 py-2.5 text-sm cursor-pointer
+                  max-w-[180px] flex-shrink-0
+                  border-r border-gray-300
+                  transition-colors duration-150
+                  ${isActive
+                    ? 'bg-white text-gray-900 border-t-2 border-t-blue-500 -mt-[1px]'
+                    : 'bg-[#ececec] text-gray-700 hover:bg-[#e5e5e5]'
                   }
-          `}
+                `}
                 title={openFilePath}
               >
-                <span className="truncate flex-1">{openFile.name}</span>
+                {/* Unsaved indicator dot - absolute positioned */}
                 {isUnsaved && (
-                  <span className="ml-2 w-2 h-2 bg-yellow-500 rounded-full flex-shrink-0"></span>
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-orange-500 rounded-full" />
                 )}
+
+                {/* File name */}
+                <span className="truncate flex-1 text-sm font-medium text-center">
+                  {openFile.name}
+                </span>
+
+                {/* Close button - absolute positioned */}
                 <button
                   onClick={(e) => handleClose(e, openFile)}
-                  className="ml-2 p-0.5 hover:bg-gray-300 rounded opacity-60 hover:opacity-100 transition-opacity flex-shrink-0"
+                  className={`
+                    absolute right-1 top-1/2 -translate-y-1/2 w-5 h-5 rounded flex items-center justify-center
+                    transition-all duration-150 z-10
+                    ${isActive
+                      ? 'opacity-0 group-hover:opacity-100 hover:bg-gray-200'
+                      : 'opacity-0 group-hover:opacity-70 hover:opacity-100 hover:bg-gray-300'
+                    }
+                  `}
                   title="Close tab"
+                  aria-label="Close tab"
                 >
-                  ×
+                  <VscClose size={14} className="text-gray-600" />
                 </button>
               </div>
             )
           })}
         </div>
 
-        {/* Language indicator and Save buttons - Fixed on right */}
-        <div className="absolute right-0 top-0 bottom-0 flex items-center bg-gray-100 border-l border-gray-200">
-          {/* Language indicator */}
-          <div className="flex items-center px-3 border-l border-gray-200 bg-gray-50">
-            <span className="text-xs text-gray-500 font-mono">
-              {getLanguageFromFileName(file.name)}
-            </span>
-          </div>
-
-          {/* Save buttons */}
-          <div className="flex items-center px-2 border-l border-gray-200">
+        {/* Save buttons toolbar - Fixed on right */}
+        <div className="flex items-center bg-[#f3f3f3] border-l border-gray-300 px-1">
+          <div className="flex items-center gap-0.5">
             <button
               onClick={() => onSave()}
               disabled={!file || !unsavedFiles.has(file.path || file.name)}
-              className="p-2 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               title="Save (Ctrl+S)"
+              aria-label="Save file"
             >
               <VscSave size={16} />
             </button>
             <button
               onClick={onSaveAll}
               disabled={unsavedFiles.size === 0}
-              className="p-2 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               title="Save All (Ctrl+Shift+S)"
+              aria-label="Save all files"
             >
               <VscSaveAll size={16} />
             </button>

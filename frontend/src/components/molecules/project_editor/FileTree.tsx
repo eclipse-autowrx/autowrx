@@ -34,6 +34,7 @@ import {
   VscClippy,
   VscCloudUpload,
 } from 'react-icons/vsc'
+import { Button } from '@/components/atoms/button'
 
 interface FileTreeProps {
   items: FileSystemItem[]
@@ -85,6 +86,7 @@ const FileTree: React.FC<FileTreeProps> = ({
   } | null>(null)
   const [newName, setNewName] = useState('')
   const [creatingItem, setCreatingItem] = useState<{
+    parentFolder: Folder | null
     parentPath: string
     type: 'file' | 'folder'
   } | null>(null)
@@ -797,7 +799,8 @@ const FileTree: React.FC<FileTreeProps> = ({
   }
 
   const handleRootCreateItem = (type: 'file' | 'folder') => {
-    setCreatingItem({ parentPath: 'root', type })
+    const rootFolder: Folder = { type: 'folder', name: 'root', items: items }
+    setCreatingItem({ parentFolder: rootFolder, parentPath: 'root', type })
     setNewItemName('')
     setShowRootMenu(false)
   }
@@ -859,13 +862,12 @@ const FileTree: React.FC<FileTreeProps> = ({
     parentPath: string,
     type: 'file' | 'folder',
   ) => {
-    setCreatingItem({ parentPath: parentPath, type })
+    setCreatingItem({ parentFolder: parent, parentPath: parentPath, type })
     setNewItemName('')
     setOpenDropdown(null)
   }
 
-  const handleCreateSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const performCreate = () => {
     if (creatingItem && newItemName.trim()) {
       let trimmedName = newItemName.trim()
 
@@ -920,9 +922,11 @@ const FileTree: React.FC<FileTreeProps> = ({
           }
         }
 
-        // Find parent folder and add the nested structure
+        // Use the stored parent folder, or find by path as fallback
         let parentFolder: Folder
-        if (creatingItem.parentPath === 'root' || creatingItem.parentPath === '') {
+        if (creatingItem.parentFolder) {
+          parentFolder = creatingItem.parentFolder
+        } else if (creatingItem.parentPath === 'root' || creatingItem.parentPath === '') {
           parentFolder = { type: 'folder', name: 'root', items: items, path: 'root' }
         } else {
           const found = findFolderByPath(creatingItem.parentPath)
@@ -943,8 +947,11 @@ const FileTree: React.FC<FileTreeProps> = ({
             ? { type: 'file', name: trimmedName, content: '' }
             : { type: 'folder', name: trimmedName, items: [] }
 
+        // Use the stored parent folder, or find by path as fallback
         let parentFolder: Folder
-        if (creatingItem.parentPath === 'root' || creatingItem.parentPath === '') {
+        if (creatingItem.parentFolder) {
+          parentFolder = creatingItem.parentFolder
+        } else if (creatingItem.parentPath === 'root' || creatingItem.parentPath === '') {
           parentFolder = { type: 'folder', name: 'root', items: items, path: 'root' }
         } else {
           const found = findFolderByPath(creatingItem.parentPath)
@@ -958,6 +965,11 @@ const FileTree: React.FC<FileTreeProps> = ({
     setNewItemName('')
   }
 
+  const handleCreateSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    performCreate()
+  }
+
   const handleCopy = (item: FileSystemItem, itemPath: string) => {
     setClipboard({ item, path: itemPath, operation: 'copy' })
     setOpenDropdown(null)
@@ -965,6 +977,28 @@ const FileTree: React.FC<FileTreeProps> = ({
 
   const handleCut = (item: FileSystemItem, itemPath: string) => {
     setClipboard({ item, path: itemPath, operation: 'cut' })
+    setOpenDropdown(null)
+  }
+
+  const handleCopyPath = async (itemPath: string) => {
+    try {
+      await navigator.clipboard.writeText(itemPath)
+      console.log('Path copied to clipboard:', itemPath)
+    } catch (err) {
+      console.error('Failed to copy path:', err)
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea')
+      textArea.value = itemPath
+      document.body.appendChild(textArea)
+      textArea.select()
+      try {
+        document.execCommand('copy')
+        console.log('Path copied to clipboard:', itemPath)
+      } catch (fallbackErr) {
+        console.error('Failed to copy path:', fallbackErr)
+      }
+      document.body.removeChild(textArea)
+    }
     setOpenDropdown(null)
   }
 
@@ -1251,7 +1285,7 @@ const FileTree: React.FC<FileTreeProps> = ({
       ? conflictDialog.existingName
       : `${targetPath}/${conflictDialog.existingName}`
 
-    // Delete the existing item first
+    // Delete the existing item first (skip confirmation dialog)
     const existingItem = conflictDialog.targetFolder.items.find(
       (item) => item.name === conflictDialog.existingName,
     )
@@ -1260,6 +1294,7 @@ const FileTree: React.FC<FileTreeProps> = ({
       const itemWithPath = {
         ...existingItem,
         __originalPath: existingItemPath,
+        __skipConfirm: true, // Skip confirmation dialog for replace operation
       } as any
       onDeleteItem(itemWithPath)
     }
@@ -1482,7 +1517,9 @@ const FileTree: React.FC<FileTreeProps> = ({
                   value={newItemName}
                   onChange={(e) => setNewItemName(e.target.value)}
                   onBlur={() => {
-                    if (!newItemName.trim()) {
+                    if (newItemName.trim()) {
+                      performCreate()
+                    } else {
                       setCreatingItem(null)
                       setNewItemName('')
                     }
@@ -1609,7 +1646,9 @@ const FileTree: React.FC<FileTreeProps> = ({
                 value={newItemName}
                 onChange={(e) => setNewItemName(e.target.value)}
                 onBlur={() => {
-                  if (!newItemName.trim()) {
+                  if (newItemName.trim()) {
+                    performCreate()
+                  } else {
                     setCreatingItem(null)
                     setNewItemName('')
                   }
@@ -1648,6 +1687,18 @@ const FileTree: React.FC<FileTreeProps> = ({
             >
               <VscEdit className="mr-2" size={14} />
               Rename
+            </button>
+
+            <button
+              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
+              onClick={() => {
+                if (openDropdown) {
+                  handleCopyPath(openDropdown.path)
+                }
+              }}
+            >
+              <VscCopy className="mr-2" size={14} />
+              Copy Path
             </button>
 
             {openDropdown?.item.type === 'folder' && (
@@ -1857,25 +1908,25 @@ const FileTree: React.FC<FileTreeProps> = ({
                 </span>{' '}
                 already exists in this location. What would you like to do?
               </p>
-              <div className="space-y-3">
-                <button
-                  onClick={handleConflictReplace}
-                  className="w-full px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors"
-                >
-                  Replace Existing
-                </button>
-                <button
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="default"
                   onClick={handleConflictKeepBoth}
-                  className="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
                 >
                   Keep Both (Rename)
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleConflictReplace}
+                >
+                  Replace Existing
+                </Button>
+                <Button
+                  variant="outline"
                   onClick={() => setConflictDialog(null)}
-                  className="w-full px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md transition-colors"
                 >
                   Cancel
-                </button>
+                </Button>
               </div>
             </div>
           </div>,

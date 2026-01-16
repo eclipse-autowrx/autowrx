@@ -318,7 +318,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   }
 
   return (
-    <div className="flex flex-col w-full h-full p-1">
+    <div className="flex flex-col w-full h-full p-1 min-w-0 overflow-hidden">
       <DaDialog
         open={popupApi}
         onOpenChange={setPopupApi}
@@ -334,9 +334,9 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
         />
       </DaDialog>
 
-      <div className="flex justify-between border-b mx-3 mt-2">
+      <div className="flex justify-between border-b mx-3 mt-2 min-w-0">
         <>
-          <div className="flex">
+          <div className="flex min-w-0 overflow-x-auto flex-1">
             <DaTabItem
               active={tab === 'used-signals'}
               dataId="used-signals-tab"
@@ -346,7 +346,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
                 setTab('used-signals')
               }}
             >
-              Used APIs
+              <span className="max-w-[150px] truncate">Used APIs</span>
             </DaTabItem>
             <DaTabItem
               active={tab === 'all-signals'}
@@ -357,7 +357,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
                 setTab('all-signals')
               }}
             >
-              COVESA Signals
+              <span className="max-w-[150px] truncate">COVESA Signals</span>
             </DaTabItem>
             {/* USP and V2C tabs (for backward compatibility) */}
             {hasUSP && (
@@ -369,7 +369,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
                   setTab('usp')
                 }}
               >
-                USP 2.0
+                <span className="max-w-[150px] truncate">USP 2.0</span>
               </DaTabItem>
             )}
             {hasV2C && (
@@ -381,7 +381,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
                   setTab('v2c')
                 }}
               >
-                V2C
+                <span className="max-w-[150px] truncate">V2C</span>
               </DaTabItem>
             )}
             {/* CustomApiSet tabs */}
@@ -406,10 +406,10 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
 
       {tab === 'used-signals' && (
         <>
-          <div className="flex flex-col w-full h-full px-4 overflow-y-auto">
-            <div className="flex flex-col w-full min-w-fit mt-2">
+          <div className="flex flex-col w-full h-full px-4 overflow-y-auto min-w-0">
+            <div className="flex flex-col w-full min-w-0 mt-2">
               {/* COVESA APIs */}
-              <span className="text-sm font-semibold">COVESA:</span>
+              <span className="text-sm font-semibold truncate">COVESA:</span>
               {useApis &&
                 useApis.map((item: any, index: any) => (
                   <DaApiListItem
@@ -429,17 +429,17 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
                 return (
                   <React.Fragment key={setId}>
                     <div className='mt-4'></div>
-                    <span className="text-sm font-semibold">{setName}:</span>
+                    <span className="text-sm font-semibold truncate">{setName}:</span>
                     {items.map((item: any, index: number) => (
                       <div
                         key={`${setId}-${item.id}-${index}`}
-                        className="flex items-center py-1 px-2 hover:bg-muted rounded cursor-pointer"
+                        className="flex items-center py-1 px-2 hover:bg-muted rounded cursor-pointer min-w-0"
                         onClick={() => {
                           setTab(`custom-api-set-${setId}`)
                           setSelectedCustomApiItemId(item.id)
                         }}
                       >
-                        <span className="text-sm">{item.id || item.path || 'Unknown API'}</span>
+                        <span className="text-sm truncate min-w-0">{item.id || item.path || 'Unknown API'}</span>
                       </div>
                     ))}
                   </React.Fragment>
@@ -451,21 +451,21 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
       )}
 
       {tab === 'all-signals' && (
-        <div className="flex w-full overflow-hidden">
+        <div className="flex w-full overflow-hidden min-w-0">
           <ModelApiList onApiClick={onApiClicked} readOnly={true} />
         </div>
       )}
 
       {tab === 'usp' && (
-        <div className="w-full">
-          <div className="w-full h-[240px] overflow-y-auto">
+        <div className="w-full min-w-0 overflow-hidden">
+          <div className="w-full h-[240px] overflow-y-auto min-w-0">
             <UspSeviceList
               services={activeModelUspSevices || []}
               onServiceSelected={setActiveService}
               activeService={activeService}
             />
           </div>
-          <div className="w-full h-[calc(100vh-460px)] overflow-y-auto">
+          <div className="w-full h-[calc(100vh-460px)] overflow-y-auto min-w-0">
             {activeService && (
               <ServiceDetail
                 service={activeService}
@@ -478,15 +478,15 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
       )}
 
       {tab === 'v2c' && (
-        <div className="w-full">
-          <div className="w-full h-[240px] overflow-y-auto">
+        <div className="w-full min-w-0 overflow-hidden">
+          <div className="w-full h-[240px] overflow-y-auto min-w-0">
             <V2CApiList
               apis={DEFAULT_V2C}
               activeApi={activeV2CApi}
               onApiSelected={setActiveV2CApi}
             />
           </div>
-          <div className="w-full h-[calc(100vh-460px)] overflow-y-auto">
+          <div className="w-full h-[calc(100vh-460px)] overflow-y-auto min-w-0">
             <ApiDetail api={activeV2CApi} />
           </div>
         </div>
@@ -494,7 +494,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
 
       {/* CustomApiSet tab - 50/50 layout */}
       {isCustomApiSetTab && (
-        <div className="w-full flex flex-col h-full min-h-0">
+        <div className="w-full flex flex-col h-full min-h-0 min-w-0 overflow-hidden">
           {isLoadingSet || isLoadingSchema ? (
             <div className="flex items-center justify-center h-full">
               <Spinner className="mr-2" />
@@ -509,7 +509,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
           ) : (
             <>
               {/* Top 50%: API List */}
-              <div className="w-full h-1/2 flex flex-col min-h-0 border-b border-border">
+              <div className="w-full h-1/2 flex flex-col min-h-0 min-w-0 border-b border-border overflow-hidden">
                 <CustomAPIList
                   key={activeCustomApiSetId}
                   items={customApiItems}
@@ -527,7 +527,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
               </div>
               
               {/* Bottom 50%: API Detail View */}
-              <div className="w-full h-1/2 flex flex-col min-h-0">
+              <div className="w-full h-1/2 flex flex-col min-h-0 min-w-0 overflow-hidden">
                 {selectedCustomApiItem ? (
                   <CustomAPIView
                     item={selectedCustomApiItem}
@@ -570,7 +570,7 @@ const CustomApiSetTab: FC<CustomApiSetTabProps> = ({ setId, active, onClick }) =
       to="#"
       onClick={onClick}
     >
-      {set?.name || 'Loading...'}
+      <span className="max-w-[150px] truncate">{set?.name || 'Loading...'}</span>
     </DaTabItem>
   )
 }

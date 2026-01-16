@@ -19,7 +19,7 @@ import { Button } from '@/components/atoms/button'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
 import { shallow } from 'zustand/shallow'
-import { BsStars } from 'react-icons/bs'
+import { BsChevronLeft, BsChevronRight, BsStars } from 'react-icons/bs'
 import DaDialog from '@/components/molecules/DaDialog'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import useCurrentModel from '@/hooks/useCurrentModel'
@@ -93,11 +93,23 @@ const PrototypeTabCode: FC = () => {
   const [editorType, setEditorType] = useState<'project' | 'code'>('code')
 
   // Resize state
-  const [rightPanelWidth, setRightPanelWidth] = useState(600) // Initial width in px
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [rightPanelWidth, setRightPanelWidth] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return Math.floor((window.innerWidth - 16) * 0.4)
+    }
+    return 600
+  })
   const [isResizing, setIsResizing] = useState(false)
+  const [isApiPanelCollapsed, setIsApiPanelCollapsed] = useState(false)
   const resizeRef = useRef<HTMLDivElement>(null)
   const startXRef = useRef(0)
   const startWidthRef = useRef(0)
+  const savedWidthRef = useRef<number>(
+    typeof window !== 'undefined' 
+      ? Math.floor((window.innerWidth - 16) * 0.4)
+      : 600
+  )
 
   useEffect(() => {
     let timer = setInterval(() => {
@@ -127,6 +139,33 @@ const PrototypeTabCode: FC = () => {
     const newEditorType = getEditorType(prototypeCode)
     setEditorType(newEditorType)
   }, [prototype])
+
+  // Recalculate width on window resize to maintain 40% responsiveness
+  useEffect(() => {
+    const handleResize = () => {
+      if (!isApiPanelCollapsed && !isResizing) {
+        const availableWidth = window.innerWidth - 16
+        const newWidth = Math.floor(availableWidth * 0.4)
+        setRightPanelWidth(newWidth)
+        savedWidthRef.current = newWidth
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [isApiPanelCollapsed, isResizing])
+
+  const toggleApiPanel = () => {
+    if (isApiPanelCollapsed) {
+      // Expand: restore saved width
+      setRightPanelWidth(savedWidthRef.current)
+    } else {
+      // Collapse: save current width and set to minimal
+      savedWidthRef.current = rightPanelWidth
+      setRightPanelWidth(40) // Minimal width for button only
+    }
+    setIsApiPanelCollapsed(!isApiPanelCollapsed)
+  }
 
   const saveCodeToDb = async (codeToSave?: string) => {
     // Use the passed code parameter if available, otherwise use current code state
@@ -219,7 +258,7 @@ const PrototypeTabCode: FC = () => {
   }
 
   return (
-    <div className="flex h-[calc(100%-0px)] w-full p-2 bg-gray-100">
+    <div ref={containerRef} className="flex h-[calc(100%-0px)] w-full p-2 bg-gray-100">
       <div
         className="flex h-full flex-1 min-w-0 flex-col border-r bg-white rounded-md"
         style={{ marginRight: '0px' }}
@@ -283,6 +322,7 @@ const PrototypeTabCode: FC = () => {
               onSave={async (data: string) => {
                 await saveCodeToDb(data)
               }}
+              prototypeName={prototype.name}
             />
           ) : (
             <CodeEditor
@@ -295,25 +335,47 @@ const PrototypeTabCode: FC = () => {
           )}
         </Suspense>
       </div>
-      {/* Resize handle */}
-      <div
-        ref={resizeRef}
-        className="w-1 bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors cursor-col-resize flex-shrink-0"
-        onMouseDown={handleMouseDown}
-        title="Drag to resize"
-        style={{ marginLeft: '8px', marginRight: '8px' }}
-      >
-        <div className="w-full h-full flex items-center justify-center">
-          <div
-            className={`w-0.5 h-8 bg-gray-400 transition-opacity ${isResizing ? 'opacity-100' : 'opacity-0 hover:opacity-60'}`}
-          />
+      {/* Resize handle - hide when collapsed */}
+      {!isApiPanelCollapsed && (
+        <div
+          ref={resizeRef}
+          className="w-1 bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors cursor-col-resize flex-shrink-0"
+          onMouseDown={handleMouseDown}
+          title="Drag to resize"
+          style={{ marginLeft: '2px', marginRight: '2px' }}
+        >
+          <div className="w-full h-full flex items-center justify-center">
+            <div
+              className={`w-0.5 h-8 bg-gray-400 transition-opacity ${isResizing ? 'opacity-100' : 'opacity-0 hover:opacity-60'}`}
+            />
+          </div>
         </div>
-      </div>
+      )}
       <div
-        className="flex h-full flex-col bg-white rounded-md flex-shrink-0"
+        className="flex h-full flex-col bg-white rounded-md flex-shrink-0 relative"
         style={{ width: `${rightPanelWidth}px` }}
       >
-        {activeTab == 'api' && (
+        {/* Collapse button header */}
+        <div className={`flex items-center min-h-12 border-b px-2 ${isApiPanelCollapsed ? 'justify-center' : 'justify-between'}`}>
+          {!isApiPanelCollapsed && (
+            <div className="text-sm font-semibold text-gray-700">API Panel</div>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleApiPanel}
+            className={isApiPanelCollapsed ? '' : 'ml-auto'}
+            title={isApiPanelCollapsed ? 'Expand API Panel' : 'Collapse API Panel'}
+          >
+            {isApiPanelCollapsed ? (
+              <BsChevronLeft className="h-4 w-4" />
+            ) : (
+              <BsChevronRight className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+
+        {!isApiPanelCollapsed && activeTab == 'api' && (
           <Suspense
             fallback={
               <div className="flex items-center justify-center h-full">

@@ -265,48 +265,48 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                     >
                       <TbEdit className="w-4 h-4 mr-1" /> Edit
                     </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className={cn(
-                            isEditing && 'pointer-events-none opacity-50',
-                          )}
-                        >
-                          {!isDeleting && !isEditing && !isSaving && (
-                            <TbDotsVertical className="size-4" />
-                          )}
-                          {isSaving && (
-                            <div className="flex items-center">
-                              <TbLoader className="w-4 h-4 mr-1 animate-spin" />
-                              Saving...
-                            </div>
-                          )}
-                          {isDeleting && (
-                            <div className="flex items-center">
-                              <TbLoader className="w-4 h-4 mr-1 animate-spin" />
-                              Deleting...
-                            </div>
-                          )}
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => downloadPrototypeZip(prototype)}
-                        >
-                          <TbDownload className="w-4 h-4 mr-2" />
-                          Export Prototype
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => setConfirmPopupOpen(true)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <TbTrashX className="w-4 h-4 mr-2" />
-                          Delete Prototype
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={cn(
+                        isEditing && 'pointer-events-none opacity-50',
+                      )}
+                      onClick={() => downloadPrototypeZip(prototype)}
+                      disabled={isEditing || isDeleting || isSaving}
+                    >
+                      {isSaving ? (
+                        <>
+                          <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <TbDownload className="w-4 h-4 mr-1" />
+                          Export
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={cn(
+                        isEditing && 'pointer-events-none opacity-50',
+                      )}
+                      onClick={() => setConfirmPopupOpen(true)}
+                      disabled={isEditing || isDeleting || isSaving}
+                    >
+                      {isDeleting ? (
+                        <>
+                          <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                          Deleting...
+                        </>
+                      ) : (
+                        <>
+                          <TbTrashX className="w-4 h-4 mr-1" />
+                          Delete
+                        </>
+                      )}
+                    </Button>
                     <DaConfirmPopup
                       onConfirm={handleDeletePrototype}
                       title="Delete Prototype"
@@ -403,7 +403,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                     <Select
                       value={
                         complexityLevels[
-                          (Number(localPrototype.complexity_level) || 3) - 1
+                        (Number(localPrototype.complexity_level) || 3) - 1
                         ]
                       }
                       onValueChange={(value) =>
@@ -461,7 +461,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                       name: 'Complexity',
                       value:
                         complexityLevels[
-                          (Number(prototype.complexity_level) || 3) - 1
+                        (Number(prototype.complexity_level) || 3) - 1
                         ],
                     },
                     {

@@ -181,7 +181,7 @@ const DaDashboard = () => {
           <div className="ml-2 flex w-full h-fit items-center px-1 justify-end">
             {mode == MODE_RUN && (
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 data-id="dashboard-edit-button"
                 onClick={handleEnterEditMode}
@@ -229,7 +229,7 @@ const DaDashboard = () => {
           </div>
         )}
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           data-id="dashboard-fullscreen-button"
           onClick={() =>
