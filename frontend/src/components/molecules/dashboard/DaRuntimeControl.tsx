@@ -351,8 +351,14 @@ const DaRuntimeControl: FC = () => {
             </Button>
             <Button
               onClick={() => {
-                setCustomKitServer(tmpCustomKitServer)
+                const newServer = tmpCustomKitServer.trim()
+                localStorage.setItem('customKitServer', newServer)
+                setCustomKitServer(newServer)
                 setShowConfigDialog(false)
+                setUseRuntime(false)
+                setTimeout(() => {
+                  setUseRuntime(true)
+                }, 100)
               }}
             >
               Save
