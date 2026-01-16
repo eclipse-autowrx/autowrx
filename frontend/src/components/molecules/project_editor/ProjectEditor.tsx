@@ -27,17 +27,20 @@ import {
   VscCloudDownload,
   VscCloudUpload,
 } from 'react-icons/vsc'
+import { Button } from '@/components/atoms/button'
 
 interface ProjectEditorProps {
   data: string
   onChange: (data: string) => void
   onSave?: (data: string) => Promise<void>
+  prototypeName?: string
 }
 
 const ProjectEditor: React.FC<ProjectEditorProps> = ({
   data,
   onChange,
   onSave,
+  prototypeName,
 }) => {
   const [fsData, setFsData] = useState<FileSystemItem[]>(() => {
     try {
@@ -685,6 +688,121 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
 
     const deletePath = (item as any).__originalPath || item.path || item.name
 
+    // Skip confirmation if __skipConfirm flag is set (e.g., for replace operations)
+    if ((item as any).__skipConfirm) {
+      // Directly perform deletion without confirmation dialog
+      const filePathsToDelete: string[] = []
+      if (deletePath) {
+        filePathsToDelete.push(deletePath)
+        if (item.type === 'folder') {
+          const collectFilePaths = (
+            items: FileSystemItem[],
+            basePath: string = '',
+          ): string[] => {
+            const paths: string[] = []
+            items.forEach((i) => {
+              const currentPath = basePath ? `${basePath}/${i.name}` : i.name
+              if (i.type === 'file') {
+                paths.push(currentPath)
+              } else if (i.type === 'folder') {
+                paths.push(...collectFilePaths(i.items, currentPath))
+              }
+            })
+            return paths
+          }
+          const findFolderItems = (
+            items: FileSystemItem[],
+            targetPath: string,
+            currentPath: string = ''
+          ): FileSystemItem[] => {
+            for (const i of items) {
+              const itemPath = currentPath ? `${currentPath}/${i.name}` : i.name
+              if (itemPath === targetPath && i.type === 'folder') {
+                return i.items
+              }
+              if (i.type === 'folder') {
+                const found = findFolderItems(i.items, targetPath, itemPath)
+                if (found.length >= 0) return found
+              }
+            }
+            return []
+          }
+          const folderItems = findFolderItems(fsData[0]?.type === 'folder' ? fsData[0].items : [], deletePath)
+          filePathsToDelete.push(...collectFilePaths(folderItems, deletePath))
+        }
+      }
+
+      // Remove deleted files from open files list
+      setOpenFiles((prevOpenFiles) => {
+        return prevOpenFiles.filter((openFile) => {
+          const openFilePath = openFile.path || openFile.name
+          return !filePathsToDelete.includes(openFilePath)
+        })
+      })
+
+      // Update active file if it's being deleted
+      setActiveFile((prevActiveFile) => {
+        if (!prevActiveFile) return null
+        const activeFilePath = prevActiveFile.path || prevActiveFile.name
+        if (filePathsToDelete.includes(activeFilePath)) {
+          return null
+        }
+        return prevActiveFile
+      })
+
+      // Update fsData
+      setFsData((prevFsData) => {
+        const deleteItem = (
+          items: FileSystemItem[],
+          basePath: string = '',
+        ): FileSystemItem[] => {
+          return items
+            .filter((i) => {
+              const currentPath = basePath ? `${basePath}/${i.name}` : i.name
+              return !filePathsToDelete.includes(currentPath)
+            })
+            .map((i) => {
+              const currentPath = basePath ? `${basePath}/${i.name}` : i.name
+              if (i.type === 'folder') {
+                return { ...i, items: deleteItem(i.items, currentPath) }
+              }
+              return i
+            })
+        }
+
+        const newFileSystem = prevFsData.map((rootItem) => {
+          if (rootItem.type === 'folder') {
+            return {
+              ...rootItem,
+              items: deleteItem(rootItem.items, ''),
+            }
+          }
+          return rootItem
+        })
+
+        return newFileSystem
+      })
+
+      // Clean up pending changes and unsaved files
+      setPendingChanges((prev) => {
+        const next = new Map(prev)
+        filePathsToDelete.forEach((path) => {
+          next.delete(path)
+        })
+        return next
+      })
+
+      setUnsavedFiles((prev) => {
+        const next = new Set(prev)
+        filePathsToDelete.forEach((path) => {
+          next.delete(path)
+        })
+        return next
+      })
+
+      return
+    }
+
     // Show confirmation dialog
     setDeleteConfirmDialog({
       item,
@@ -699,58 +817,86 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
 
     const { item, itemPath } = deleteConfirmDialog
 
-    setFsData((prevFsData) => {
-      // Helper function to collect all file paths in a folder (recursive)
-      const collectFilePaths = (
-        items: FileSystemItem[],
-        basePath: string = '',
-      ): string[] => {
-        const filePaths: string[] = []
-        items.forEach((item) => {
-          const currentPath = basePath ? `${basePath}/${item.name}` : item.name
-          if (item.type === 'file') {
-            filePaths.push(currentPath)
-          } else if (item.type === 'folder') {
-            filePaths.push(...collectFilePaths(item.items, currentPath))
-          }
-        })
-        return filePaths
-      }
-
-      // Get all file paths that will be deleted
-      const filePathsToDelete: string[] = []
-      if (itemPath) {
-        // If we have the exact path, use it directly
-        filePathsToDelete.push(itemPath)
-        // Also collect files inside if it's a folder
-        if (item.type === 'folder') {
-          filePathsToDelete.push(...collectFilePaths(item.items, itemPath))
-        }
-      } else {
-        // Fallback: no path provided (shouldn't happen with proper integration)
+    // Get all file paths that will be deleted BEFORE state update
+    const collectFilePaths = (
+      items: FileSystemItem[],
+      basePath: string = '',
+    ): string[] => {
+      const filePaths: string[] = []
+      items.forEach((item) => {
+        const currentPath = basePath ? `${basePath}/${item.name}` : item.name
         if (item.type === 'file') {
-          filePathsToDelete.push(item.name)
+          filePaths.push(currentPath)
         } else if (item.type === 'folder') {
-          filePathsToDelete.push(...collectFilePaths(item.items))
+          filePaths.push(...collectFilePaths(item.items, currentPath))
         }
-      }
-
-      // Remove deleted files from open files list (match by path)
-      const newOpenFiles = openFiles.filter((openFile) => {
-        const openFilePath = openFile.path || openFile.name
-        return !filePathsToDelete.includes(openFilePath)
       })
-      setOpenFiles(newOpenFiles)
+      return filePaths
+    }
 
-      // If active file is being deleted, switch to another open file or null
-      if (activeFile) {
-        const activeFilePath = activeFile.path || activeFile.name
-        if (filePathsToDelete.includes(activeFilePath)) {
-          setActiveFile(newOpenFiles[0] || null)
+    const filePathsToDelete: string[] = []
+    if (itemPath) {
+      filePathsToDelete.push(itemPath)
+      if (item.type === 'folder') {
+        // Find the folder in current fsData to get its items
+        const findFolderItems = (
+          items: FileSystemItem[],
+          targetPath: string,
+          currentPath: string = ''
+        ): FileSystemItem[] => {
+          for (const i of items) {
+            const itemPath = currentPath ? `${currentPath}/${i.name}` : i.name
+            if (itemPath === targetPath && i.type === 'folder') {
+              return i.items
+            }
+            if (i.type === 'folder') {
+              const found = findFolderItems(i.items, targetPath, itemPath)
+              if (found.length >= 0) return found
+            }
+          }
+          return []
         }
+        const folderItems = findFolderItems(fsData[0]?.type === 'folder' ? fsData[0].items : [], itemPath)
+        filePathsToDelete.push(...collectFilePaths(folderItems, itemPath))
       }
+    } else {
+      if (item.type === 'file') {
+        filePathsToDelete.push(item.name)
+      } else if (item.type === 'folder') {
+        const folderItems = item.type === 'folder' ? item.items : []
+        filePathsToDelete.push(...collectFilePaths(folderItems))
+      }
+    }
 
-      // Delete from file system - use path-based matching for exact deletion
+    // Remove deleted files from open files list BEFORE state update
+    setOpenFiles((prevOpenFiles) => {
+      return prevOpenFiles.filter((openFile) => {
+        const openFilePath = openFile.path || openFile.name
+        const shouldKeep = !filePathsToDelete.includes(openFilePath)
+        return shouldKeep
+      })
+    })
+
+    // Update active file if it's being deleted
+    setActiveFile((prevActiveFile) => {
+      if (!prevActiveFile) return null
+      const activeFilePath = prevActiveFile.path || prevActiveFile.name
+      if (filePathsToDelete.includes(activeFilePath)) {
+        // Find next available file
+        setOpenFiles((currentOpenFiles) => {
+          return currentOpenFiles.filter((openFile) => {
+            const openFilePath = openFile.path || openFile.name
+            return !filePathsToDelete.includes(openFilePath)
+          })
+        })
+        // Return null or next file - will be set by openFiles update
+        return null
+      }
+      return prevActiveFile
+    })
+
+    // Now update fsData
+    setFsData((prevFsData) => {
       const deleteItem = (
         items: FileSystemItem[],
         basePath: string = '',
@@ -758,7 +904,6 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
         return items
           .filter((i) => {
             const currentPath = basePath ? `${basePath}/${i.name}` : i.name
-            // Only delete if the path matches exactly
             return !filePathsToDelete.includes(currentPath)
           })
           .map((i) => {
@@ -770,7 +915,6 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
           })
       }
 
-      // Process the root folder correctly - fsData is an array with root as first element
       const newFileSystem = prevFsData.map((rootItem) => {
         if (rootItem.type === 'folder') {
           return {
@@ -781,30 +925,24 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
         return rootItem
       })
 
-      // Clean up pending changes for deleted files
-      setPendingChanges((prev) => {
-        const next = new Map(prev)
-        filePathsToDelete.forEach((path) => {
-          next.delete(path)
-        })
-        return next
-      })
-
-      // Clean up unsaved files for deleted files
-      setUnsavedFiles((prev) => {
-        const next = new Set(prev)
-        filePathsToDelete.forEach((path) => {
-          next.delete(path)
-        })
-        return next
-      })
-
-      console.log(
-        'handleDeleteItem: Deletion complete. New fsData items:',
-        newFileSystem.length,
-      )
-
       return newFileSystem
+    })
+
+    // Clean up pending changes and unsaved files
+    setPendingChanges((prev) => {
+      const next = new Map(prev)
+      filePathsToDelete.forEach((path) => {
+        next.delete(path)
+      })
+      return next
+    })
+
+    setUnsavedFiles((prev) => {
+      const next = new Set(prev)
+      filePathsToDelete.forEach((path) => {
+        next.delete(path)
+      })
+      return next
     })
 
     setDeleteConfirmDialog(null)
@@ -1095,8 +1233,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     setNewRootItemName('')
   }
 
-  const handleRootCreateSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const performRootCreate = () => {
     if (creatingAtRoot && newRootItemName.trim()) {
       const root = fsData[0]
       if (root && root.type === 'folder') {
@@ -1300,6 +1437,11 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     }
   }
 
+  const handleRootCreateSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    performRootCreate()
+  }
+
   const handleRefresh = () => {
     try {
       if (!data || data.trim() === '') {
@@ -1389,23 +1531,59 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
   const handleExport = () => {
     const zip = new JSZip()
 
-    const addFilesToZip = (items: FileSystemItem[], path: string) => {
-      items.forEach((item) => {
+    const addFilesToZip = async (items: FileSystemItem[], path: string) => {
+      for (const item of items) {
         if (item.type === 'file') {
-          zip.file(path + item.name, item.content)
+          const isBin = isBinaryFile(item.name) || item.isBase64
+
+          if (isBin && item.isBase64) {
+            // Convert base64 back to binary
+            try {
+              const arrayBuffer = base64ToArrayBuffer(item.content)
+              zip.file(path + item.name, arrayBuffer, { binary: true })
+            } catch (error) {
+              console.error(`Error converting base64 for ${item.name}:`, error)
+              // Fallback to string if conversion fails
+              zip.file(path + item.name, item.content)
+            }
+          } else {
+            // Regular text file
+            zip.file(path + item.name, item.content)
+          }
         } else {
-          addFilesToZip(item.items, path + item.name + '/')
+          await addFilesToZip(item.items, path + item.name + '/')
         }
-      })
+      }
     }
 
-    addFilesToZip(fsData, '')
+    // Skip the root folder wrapper and add its contents directly
+    // If there's a single root folder, add its items directly to the ZIP root
+    const addItemsToZip = async () => {
+      if (fsData.length === 1 && fsData[0].type === 'folder') {
+        // Add the root folder's items directly without the folder name
+        await addFilesToZip(fsData[0].items, '')
+      } else {
+        // If there are multiple root items or files, add them as-is
+        await addFilesToZip(fsData, '')
+      }
+    }
 
-    zip.generateAsync({ type: 'blob' }).then((content) => {
-      const link = document.createElement('a')
-      link.href = URL.createObjectURL(content)
-      link.download = 'project.zip'
-      link.click()
+    addItemsToZip().then(() => {
+      zip.generateAsync({ type: 'blob' }).then((content) => {
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(content)
+
+        // Use prototype name if available, otherwise fallback to 'project'
+        let filename = 'project.zip'
+        if (prototypeName) {
+          // Remove special characters and sanitize the filename
+          const sanitizedName = prototypeName.replace(/[^a-zA-Z0-9 ]/g, '').trim()
+          filename = sanitizedName ? `${sanitizedName}.zip` : 'project.zip'
+        }
+
+        link.download = filename
+        link.click()
+      })
     })
   }
 
@@ -1455,8 +1633,24 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
             const fileName = parts.pop() || ''
             const folderPath = parts.join('/')
             const folder = getOrCreateFolder(folderPath)
-            const content = await zipEntry.async('string')
-            folder.items.push({ type: 'file', name: fileName, content })
+
+            const isBin = isBinaryFile(fileName)
+
+            if (isBin) {
+              // Read binary file as base64
+              const arrayBuffer = await zipEntry.async('arraybuffer')
+              const base64Content = arrayBufferToBase64(arrayBuffer)
+              folder.items.push({
+                type: 'file',
+                name: fileName,
+                content: base64Content,
+                isBase64: true
+              })
+            } else {
+              // Read text file as string
+              const content = await zipEntry.async('string')
+              folder.items.push({ type: 'file', name: fileName, content })
+            }
           }
         })
 
@@ -1683,7 +1877,9 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                       value={newRootItemName}
                       onChange={(e) => setNewRootItemName(e.target.value)}
                       onBlur={() => {
-                        if (!newRootItemName.trim()) {
+                        if (newRootItemName.trim()) {
+                          performRootCreate()
+                        } else {
                           setCreatingAtRoot(null)
                           setNewRootItemName('')
                         }
@@ -1776,25 +1972,25 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
             <p className="text-gray-500 text-sm mb-4">
               Your changes will be lost if you don't save them.
             </p>
-            <div className="flex justify-end space-x-3">
-              <button
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="default"
                 onClick={handleCloseConfirmSave}
-                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
               >
                 Save
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="destructive"
                 onClick={handleCloseConfirmDontSave}
-                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors"
               >
                 Don't Save
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="outline"
                 onClick={handleCloseConfirmCancel}
-                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md transition-colors"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -1814,19 +2010,19 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                 This will delete the folder and all its contents. This action cannot be undone.
               </p>
             )}
-            <div className="flex justify-end space-x-3">
-              <button
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="destructive"
                 onClick={handleDeleteConfirm}
-                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors"
               >
                 Delete
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="outline"
                 onClick={() => setDeleteConfirmDialog(null)}
-                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md transition-colors"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </div>
         </div>
