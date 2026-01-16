@@ -77,6 +77,7 @@ const FileTree: React.FC<FileTreeProps> = ({
     top: number
     right?: number
     left?: number
+    flipUp?: boolean
   } | null>(null)
   const [renamingItem, setRenamingItem] = useState<{
     item: FileSystemItem
@@ -123,6 +124,34 @@ const FileTree: React.FC<FileTreeProps> = ({
   } | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const rootMenuRef = useRef<HTMLDivElement>(null)
+
+  const validateFileName = (name: string): { valid: boolean; error?: string } => {
+    if (!name || name.trim() === '') {
+      return { valid: false, error: 'Name cannot be empty' }
+    }
+
+    // Check for invalid characters
+    const invalidChars = /[:*?"<>|]/
+    if (invalidChars.test(name)) {
+      return {
+        valid: false,
+        error: 'Name cannot contain: : * ? " < > |'
+      }
+    }
+
+    // Check for leading/trailing spaces or dots
+    if (name.trim() !== name) {
+      return { valid: false, error: 'Name cannot start or end with spaces' }
+    }
+
+    // Check for reserved names (Windows)
+    const reservedNames = ['CON', 'PRN', 'AUX', 'NUL', 'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9', 'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9']
+    if (reservedNames.includes(name.toUpperCase())) {
+      return { valid: false, error: 'This is a reserved name and cannot be used' }
+    }
+
+    return { valid: true }
+  }
 
   const sortItems = (items: FileSystemItem[]): FileSystemItem[] => {
     return [...items].sort((a, b) => {
@@ -225,7 +254,7 @@ const FileTree: React.FC<FileTreeProps> = ({
           // Calculate distance from the folder's top-left corner
           const distance = Math.sqrt(
             Math.pow(e.clientX - elementRect.left, 2) +
-              Math.pow(e.clientY - elementRect.top, 2),
+            Math.pow(e.clientY - elementRect.top, 2),
           )
 
           // Keep track of the closest folder (smallest distance)
@@ -283,6 +312,30 @@ const FileTree: React.FC<FileTreeProps> = ({
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [])
+
+  // Auto-expand parent folders when activeFile changes
+  useEffect(() => {
+    if (activeFile) {
+      const filePath = activeFile.path || activeFile.name
+      if (filePath) {
+        // Get all parent folder paths
+        const parentPaths: string[] = []
+        const pathParts = filePath.split('/')
+
+        // Build paths for each parent folder
+        for (let i = 1; i < pathParts.length; i++) {
+          parentPaths.push(pathParts.slice(0, i).join('/'))
+        }
+
+        // Expand all parent folders
+        setExpandedFolders((prev) => {
+          const newExpanded = new Set(prev)
+          parentPaths.forEach((path) => newExpanded.add(path))
+          return Array.from(newExpanded)
+        })
+      }
+    }
+  }, [activeFile])
 
   const getFileIcon = (fileName: string) => {
     const extension = fileName.split('.').pop()?.toLowerCase()
@@ -711,7 +764,19 @@ const FileTree: React.FC<FileTreeProps> = ({
     e.stopPropagation()
 
     const rect = e.currentTarget.getBoundingClientRect()
-    setDropdownPosition({ top: rect.bottom, left: rect.left })
+    const menuHeight = 280 // Approximate menu height
+    const viewportHeight = window.innerHeight
+
+    // Check if menu would go below viewport
+    const wouldOverflow = rect.bottom + menuHeight > viewportHeight
+
+    setDropdownPosition({
+      // If overflow, position menu so its bottom aligns with file's top
+      top: wouldOverflow ? rect.top : rect.bottom,
+      left: rect.left,
+      // Add a flag to know if we should use bottom positioning
+      flipUp: wouldOverflow
+    })
     setOpenDropdown({ item, path: itemPath })
   }
 
@@ -719,7 +784,15 @@ const FileTree: React.FC<FileTreeProps> = ({
     e.preventDefault()
     e.stopPropagation()
 
-    setRootMenuPosition({ top: e.clientY, left: e.clientX })
+    const menuHeight = 160 // Root menu is smaller
+    const viewportHeight = window.innerHeight
+
+    const wouldOverflow = e.clientY + menuHeight > viewportHeight
+
+    setRootMenuPosition({
+      top: wouldOverflow ? e.clientY - menuHeight : e.clientY,
+      left: e.clientX
+    })
     setShowRootMenu(true)
   }
 
@@ -748,7 +821,34 @@ const FileTree: React.FC<FileTreeProps> = ({
   const handleRenameSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (renamingItem && newName.trim() && newName !== renamingItem.item.name) {
-      onRenameItem(renamingItem.item, renamingItem.path, newName.trim())
+      const trimmedName = newName.trim()
+
+      // Validate name
+      const validation = validateFileName(trimmedName)
+      if (!validation.valid) {
+        alert(validation.error)
+        return
+      }
+
+      // Get parent path to find siblings
+      const parentPath = getParentPath(renamingItem.path)
+      const parentFolder = findFolderByPath(parentPath)
+
+      if (parentFolder) {
+        // Check if name already exists in same folder (excluding current item)
+        const nameExists = parentFolder.items.some(
+          (item) =>
+            item.name.toLowerCase() === trimmedName.toLowerCase() &&
+            item.name !== renamingItem.item.name
+        )
+
+        if (nameExists) {
+          alert(`A file or folder named "${trimmedName}" already exists in this location.`)
+          return
+        }
+      }
+
+      onRenameItem(renamingItem.item, renamingItem.path, trimmedName)
     }
     setRenamingItem(null)
     setNewName('')
@@ -767,24 +867,92 @@ const FileTree: React.FC<FileTreeProps> = ({
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (creatingItem && newItemName.trim()) {
-      const newItem: FileSystemItem =
-        creatingItem.type === 'file'
-          ? { type: 'file', name: newItemName.trim(), content: '' }
-          : { type: 'folder', name: newItemName.trim(), items: [] }
+      let trimmedName = newItemName.trim()
 
-      // Find the parent folder using path-based matching
-      let parentFolder: Folder
-      if (
-        creatingItem.parentPath === 'root' ||
-        creatingItem.parentPath === ''
-      ) {
-        parentFolder = { type: 'folder', name: 'root', items: items }
-      } else {
-        const found = findFolderByPath(creatingItem.parentPath)
-        parentFolder = found || { type: 'folder', name: 'root', items: items }
+      // Normalize path: remove leading/trailing slashes and double slashes
+      trimmedName = trimmedName.replace(/^\/+|\/+$/g, '') // Remove leading/trailing slashes
+      trimmedName = trimmedName.replace(/\/+/g, '/') // Replace multiple slashes with single
+
+      if (!trimmedName) {
+        setCreatingItem(null)
+        setNewItemName('')
+        return
       }
 
-      onAddItem(parentFolder, newItem)
+      // Check if name contains path separator
+      if (trimmedName.includes('/')) {
+        // Split into parts and create nested structure
+        const parts = trimmedName.split('/').filter(p => p.trim())
+
+        if (parts.length === 0) {
+          setCreatingItem(null)
+          setNewItemName('')
+          return
+        }
+
+        // Validate each part (except allow / for path separator)
+        for (const part of parts) {
+          const partValidation = validateFileName(part)
+          if (!partValidation.valid) {
+            alert(`Invalid name in path: ${partValidation.error}`)
+            return
+          }
+        }
+
+        // Build nested folder structure
+        let currentItem: FileSystemItem
+
+        if (creatingItem.type === 'file') {
+          // Last part is the file, rest are folders
+          const fileName = parts.pop()!
+          currentItem = { type: 'file', name: fileName, content: '' }
+
+          // Wrap in folders from inside out
+          for (let i = parts.length - 1; i >= 0; i--) {
+            currentItem = { type: 'folder', name: parts[i], items: [currentItem] }
+          }
+        } else {
+          // All parts are folders, create nested empty folders
+          currentItem = { type: 'folder', name: parts[parts.length - 1], items: [] }
+
+          for (let i = parts.length - 2; i >= 0; i--) {
+            currentItem = { type: 'folder', name: parts[i], items: [currentItem] }
+          }
+        }
+
+        // Find parent folder and add the nested structure
+        let parentFolder: Folder
+        if (creatingItem.parentPath === 'root' || creatingItem.parentPath === '') {
+          parentFolder = { type: 'folder', name: 'root', items: items, path: 'root' }
+        } else {
+          const found = findFolderByPath(creatingItem.parentPath)
+          parentFolder = found || { type: 'folder', name: 'root', items: items, path: 'root' }
+        }
+
+        onAddItem(parentFolder, currentItem)
+      } else {
+        // Simple name - validate and create normally
+        const validation = validateFileName(trimmedName)
+        if (!validation.valid) {
+          alert(validation.error)
+          return
+        }
+
+        const newItem: FileSystemItem =
+          creatingItem.type === 'file'
+            ? { type: 'file', name: trimmedName, content: '' }
+            : { type: 'folder', name: trimmedName, items: [] }
+
+        let parentFolder: Folder
+        if (creatingItem.parentPath === 'root' || creatingItem.parentPath === '') {
+          parentFolder = { type: 'folder', name: 'root', items: items, path: 'root' }
+        } else {
+          const found = findFolderByPath(creatingItem.parentPath)
+          parentFolder = found || { type: 'folder', name: 'root', items: items, path: 'root' }
+        }
+
+        onAddItem(parentFolder, newItem)
+      }
     }
     setCreatingItem(null)
     setNewItemName('')
@@ -802,27 +970,65 @@ const FileTree: React.FC<FileTreeProps> = ({
 
   const handlePaste = (targetFolder: Folder) => {
     if (clipboard) {
-      const newItem = { ...clipboard.item }
+      // Get the current folder state (items might be stale from dropdown)
+      const targetPath = (targetFolder as any).path || targetFolder.name
+      const currentFolder = targetPath === 'root'
+        ? { type: 'folder' as const, name: 'root', items: items }
+        : findFolderByPath(targetPath) || targetFolder
+
       if (clipboard.operation === 'cut') {
-        // For cut operation, use moveItem if available to ensure atomicity
         if (onMoveItem) {
-          onMoveItem(clipboard.item, clipboard.path, targetFolder)
+          onMoveItem(clipboard.item, clipboard.path, currentFolder)
         } else {
-          // Fallback: Remove from original location by passing the path information
-          // Attach the original path to help the delete function identify the exact item
           const itemWithPath = {
             ...clipboard.item,
-            __originalPath: clipboard.path, // Store path for deletion
+            __originalPath: clipboard.path,
           } as any
           onDeleteItem(itemWithPath)
-          // Add to target folder - delay to ensure deletion completes first
           setTimeout(() => {
-            onAddItem(targetFolder, newItem)
+            onAddItem(currentFolder, clipboard.item)
           }, 0)
         }
       } else {
-        // For copy operation, just add to target folder
-        onAddItem(targetFolder, newItem)
+        // For copy operation, generate "name copy"
+        const newItem = JSON.parse(JSON.stringify(clipboard.item)) // Deep clone
+
+        const generateCopyName = (baseName: string): string => {
+          const lastDotIndex = baseName.lastIndexOf('.')
+          let nameWithoutExt = baseName
+          let ext = ''
+
+          if (lastDotIndex > 0) {
+            nameWithoutExt = baseName.substring(0, lastDotIndex)
+            ext = baseName.substring(lastDotIndex)
+          }
+
+          // First try "name copy.ext"
+          let copyName = `${nameWithoutExt} copy${ext}`
+
+          if (!currentFolder.items.some(
+            (item) => item.name.toLowerCase() === copyName.toLowerCase()
+          )) {
+            return copyName
+          }
+
+          // Then try "name copy 2.ext", "name copy 3.ext", etc.
+          let counter = 2
+          while (currentFolder.items.some(
+            (item) => item.name.toLowerCase() === copyName.toLowerCase()
+          )) {
+            copyName = `${nameWithoutExt} copy ${counter}${ext}`
+            counter++
+          }
+
+          return copyName
+        }
+
+        newItem.name = generateCopyName(newItem.name)
+
+        // Pass the folder with path for handleAddItem
+        const folderWithPath = { ...currentFolder, path: targetPath }
+        onAddItem(folderWithPath, newItem)
       }
       setClipboard(null)
     }
@@ -969,6 +1175,16 @@ const FileTree: React.FC<FileTreeProps> = ({
       return
     }
 
+    // Check if dropping to the same parent folder (no-op)
+    const sourceParentPath = getParentPath(draggedData.sourcePath)
+    const normalizedTargetPath = targetPath === 'root' ? '' : targetPath
+    const normalizedSourceParent = sourceParentPath === 'root' ? '' : sourceParentPath
+
+    if (normalizedTargetPath === normalizedSourceParent) {
+      console.log('handleItemDrop: Item is already in this folder, ignoring')
+      return
+    }
+
     // Check if an item with the same name already exists in the target folder
     const existingItem = target.items.find(
       (item) => item.name.toLowerCase() === draggedData.item.name.toLowerCase(),
@@ -1028,13 +1244,19 @@ const FileTree: React.FC<FileTreeProps> = ({
   const handleConflictReplace = () => {
     if (!conflictDialog) return
 
-    // Delete the existing item
+    const targetPath = conflictDialog.targetFolder.path || conflictDialog.targetFolder.name
+
+    // Build the correct path for the existing item to delete
+    const existingItemPath = targetPath === 'root'
+      ? conflictDialog.existingName
+      : `${targetPath}/${conflictDialog.existingName}`
+
+    // Delete the existing item first
     const existingItem = conflictDialog.targetFolder.items.find(
       (item) => item.name === conflictDialog.existingName,
     )
+
     if (existingItem) {
-      // Build the path for the existing item to delete
-      const existingItemPath = `${conflictDialog.targetFolder.name}/${existingItem.name}`
       const itemWithPath = {
         ...existingItem,
         __originalPath: existingItemPath,
@@ -1042,12 +1264,14 @@ const FileTree: React.FC<FileTreeProps> = ({
       onDeleteItem(itemWithPath)
     }
 
-    // Perform the move
-    performItemMove(
-      conflictDialog.sourceItem,
-      conflictDialog.sourcePath,
-      conflictDialog.targetFolder,
-    )
+    // Delay the move to ensure deletion completes first
+    setTimeout(() => {
+      performItemMove(
+        conflictDialog.sourceItem,
+        conflictDialog.sourcePath,
+        conflictDialog.targetFolder,
+      )
+    }, 50)
 
     setConflictDialog(null)
   }
@@ -1105,7 +1329,7 @@ const FileTree: React.FC<FileTreeProps> = ({
     const isActive =
       activeFile &&
       (activeFile.path || (activeFile as any).__path || activeFile.name) ===
-        itemPath
+      itemPath
 
     if (item.type === 'file') {
       return (
@@ -1117,6 +1341,7 @@ const FileTree: React.FC<FileTreeProps> = ({
                 flex items-center px-2 py-1 text-sm cursor-pointer hover:bg-gray-100 group
                 ${isActive ? 'bg-blue-100 text-blue-900' : 'text-gray-700'}
                 ${draggedItem?.sourcePath === itemPath ? 'opacity-50' : ''}
+                ${clipboard?.operation === 'cut' && clipboard?.path === itemPath ? 'opacity-50' : ''}
               `}
               style={{ paddingLeft: `${depth * 16 + 8}px` }}
               onClick={() => onFileSelect({ ...item, path: itemPath })}
@@ -1190,6 +1415,7 @@ const FileTree: React.FC<FileTreeProps> = ({
                 flex items-center px-2 py-1 text-sm cursor-pointer hover:bg-gray-100 group
                 ${isActive ? 'bg-blue-100 text-blue-900' : 'text-gray-700'}
                 ${draggedItem?.sourcePath === itemPath ? 'opacity-50' : ''}
+                ${clipboard?.operation === 'cut' && clipboard?.path === itemPath ? 'opacity-50' : ''}
               `}
               style={{ paddingLeft: `${depth * 16 + 8}px` }}
               onClick={() => toggleFolder(itemPath)}
@@ -1316,7 +1542,14 @@ const FileTree: React.FC<FileTreeProps> = ({
   }
 
   return (
-    <div className="relative">
+    <div
+      className="relative h-full"
+      onContextMenu={(e) => {
+        // Prevent browser context menu and show root menu for any uncaught right-clicks
+        e.preventDefault()
+        handleRootContextMenu(e)
+      }}
+    >
       {/* Top upload button */}
       {/* <div className="px-2 py-2 border-b border-gray-200">
         <button
@@ -1332,12 +1565,16 @@ const FileTree: React.FC<FileTreeProps> = ({
 
       {/* File tree items */}
       <div
-        className={`py-2 min-h-[200px] ${
-          isDraggingOver && (dragOver === 'root' || !dragOver)
-            ? 'bg-blue-50 border-2 border-dashed border-blue-300'
-            : ''
-        }`}
-        onContextMenu={handleRootContextMenu}
+        className={`py-2 min-h-[200px] h-full ${isDraggingOver && (dragOver === 'root' || !dragOver)
+          ? 'bg-blue-50 border-2 border-dashed border-blue-300'
+          : ''
+          }`}
+        onContextMenu={(e) => {
+          // Only show root menu if clicking on empty space (not on a file/folder)
+          if (e.target === e.currentTarget) {
+            handleRootContextMenu(e)
+          }
+        }}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={(e) =>
@@ -1394,7 +1631,10 @@ const FileTree: React.FC<FileTreeProps> = ({
             ref={dropdownRef}
             className="fixed z-50 bg-white border border-gray-200 rounded-md shadow-lg py-1 min-w-32"
             style={{
-              top: dropdownPosition.top,
+              ...(dropdownPosition.flipUp
+                ? { bottom: window.innerHeight - dropdownPosition.top }
+                : { top: dropdownPosition.top }
+              ),
               left: dropdownPosition.left,
             }}
           >
@@ -1471,13 +1711,12 @@ const FileTree: React.FC<FileTreeProps> = ({
 
             {clipboard && openDropdown?.item.type === 'folder' && (
               <button
-                className={`w-full px-3 py-2 text-left text-sm flex items-center ${
-                  openDropdown &&
+                className={`w-full px-3 py-2 text-left text-sm flex items-center ${openDropdown &&
                   openDropdown.item.type === 'folder' &&
                   canPaste(openDropdown.item as Folder)
-                    ? 'hover:bg-gray-100'
-                    : 'text-gray-400 cursor-not-allowed'
-                }`}
+                  ? 'hover:bg-gray-100'
+                  : 'text-gray-400 cursor-not-allowed'
+                  }`}
                 onClick={() => {
                   if (
                     openDropdown &&
@@ -1608,7 +1847,7 @@ const FileTree: React.FC<FileTreeProps> = ({
       {/* Conflict dialog */}
       {conflictDialog &&
         createPortal(
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
               <h2 className="text-lg font-semibold mb-2">File Name Conflict</h2>
               <p className="text-gray-600 mb-4">

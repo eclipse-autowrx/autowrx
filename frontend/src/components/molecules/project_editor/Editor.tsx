@@ -72,25 +72,25 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
   }, [file])
 
   // Auto-close leftmost tabs when there are too many open
-  useEffect(() => {
-    const checkTabOverflow = () => {
-      if (tabsContainerRef.current && openFiles.length > 10) {
-        // If we have more than 10 tabs, close the leftmost one that's not active
-        const activeFilePath = file?.path || file?.name
-        const leftmostFile = openFiles.find(
-          (f) => (f.path || f.name) !== activeFilePath,
-        )
-        if (leftmostFile) {
-          // Add a slight delay to make the auto-close visible
-          setTimeout(() => {
-            onCloseFile(leftmostFile)
-          }, 100)
-        }
-      }
-    }
+  // useEffect(() => {
+  //   const checkTabOverflow = () => {
+  //     if (tabsContainerRef.current && openFiles.length > 10) {
+  //       // If we have more than 10 tabs, close the leftmost one that's not active
+  //       const activeFilePath = file?.path || file?.name
+  //       const leftmostFile = openFiles.find(
+  //         (f) => (f.path || f.name) !== activeFilePath,
+  //       )
+  //       if (leftmostFile) {
+  //         // Add a slight delay to make the auto-close visible
+  //         setTimeout(() => {
+  //           onCloseFile(leftmostFile)
+  //         }, 100)
+  //       }
+  //     }
+  //   }
 
-    checkTabOverflow()
-  }, [openFiles.length, file?.name, file?.path, onCloseFile])
+  //   checkTabOverflow()
+  // }, [openFiles.length, file?.name, file?.path, onCloseFile])
 
   const handleClose = (e: React.MouseEvent, fileToClose: File) => {
     e.stopPropagation()
@@ -379,11 +379,11 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Tabs */}
-      <div className="flex items-center bg-gray-100 border-b border-gray-200 min-h-0">
+      <div className="flex items-center bg-gray-100 border-b border-gray-200 min-h-0 relative">
         <div
           ref={tabsContainerRef}
-          className="flex-1 flex overflow-x-auto scrollbar-hide"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          className="flex overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pr-[180px]"
+          style={{ scrollbarWidth: 'thin', msOverflowStyle: 'none' }}
         >
           {openFiles.map((openFile) => {
             const openFilePath = openFile.path || openFile.name
@@ -397,22 +397,22 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
                 ref={isActive ? activeTabRef : null}
                 onClick={() => onSelectFile(openFile)}
                 className={`
-                  flex items-center px-3 py-2 text-sm cursor-pointer border-r border-gray-200 min-w-0
-                  ${
-                    isActive
-                      ? 'bg-white text-gray-900 border-b-2 border-b-blue-500'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            flex items-center px-3 py-2 text-sm cursor-pointer border-r border-gray-200 
+            min-w-[120px] max-w-[200px] flex-shrink-0
+            ${isActive
+                    ? 'bg-white text-gray-900 border-b-2 border-b-blue-500'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }
-                `}
+          `}
                 title={openFilePath}
               >
-                <span className="truncate max-w-32">{openFile.name}</span>
+                <span className="truncate flex-1">{openFile.name}</span>
                 {isUnsaved && (
                   <span className="ml-2 w-2 h-2 bg-yellow-500 rounded-full flex-shrink-0"></span>
                 )}
                 <button
                   onClick={(e) => handleClose(e, openFile)}
-                  className="ml-2 p-0.5 hover:bg-gray-300 rounded opacity-60 hover:opacity-100 transition-opacity"
+                  className="ml-2 p-0.5 hover:bg-gray-300 rounded opacity-60 hover:opacity-100 transition-opacity flex-shrink-0"
                   title="Close tab"
                 >
                   ×
@@ -422,31 +422,34 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
           })}
         </div>
 
-        {/* Language indicator */}
-        <div className="flex items-center px-3 border-l border-gray-200 bg-gray-50">
-          <span className="text-xs text-gray-500 font-mono">
-            {getLanguageFromFileName(file.name)}
-          </span>
-        </div>
+        {/* Language indicator and Save buttons - Fixed on right */}
+        <div className="absolute right-0 top-0 bottom-0 flex items-center bg-gray-100 border-l border-gray-200">
+          {/* Language indicator */}
+          <div className="flex items-center px-3 border-l border-gray-200 bg-gray-50">
+            <span className="text-xs text-gray-500 font-mono">
+              {getLanguageFromFileName(file.name)}
+            </span>
+          </div>
 
-        {/* Save buttons */}
-        <div className="flex items-center px-2 border-l border-gray-200">
-          <button
-            onClick={() => onSave()}
-            disabled={!file || !unsavedFiles.has(file.name)}
-            className="p-2 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Save (Ctrl+S)"
-          >
-            <VscSave size={16} />
-          </button>
-          <button
-            onClick={onSaveAll}
-            disabled={unsavedFiles.size === 0}
-            className="p-2 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Save All (Ctrl+Shift+S)"
-          >
-            <VscSaveAll size={16} />
-          </button>
+          {/* Save buttons */}
+          <div className="flex items-center px-2 border-l border-gray-200">
+            <button
+              onClick={() => onSave()}
+              disabled={!file || !unsavedFiles.has(file.path || file.name)}
+              className="p-2 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Save (Ctrl+S)"
+            >
+              <VscSave size={16} />
+            </button>
+            <button
+              onClick={onSaveAll}
+              disabled={unsavedFiles.size === 0}
+              className="p-2 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Save All (Ctrl+Shift+S)"
+            >
+              <VscSaveAll size={16} />
+            </button>
+          </div>
         </div>
       </div>
 

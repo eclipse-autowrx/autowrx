@@ -93,7 +93,7 @@ const PrototypeTabCode: FC = () => {
   const [editorType, setEditorType] = useState<'project' | 'code'>('code')
 
   // Resize state
-  const [rightPanelWidth, setRightPanelWidth] = useState(360) // Initial width in px
+  const [rightPanelWidth, setRightPanelWidth] = useState(600) // Initial width in px
   const [isResizing, setIsResizing] = useState(false)
   const resizeRef = useRef<HTMLDivElement>(null)
   const startXRef = useRef(0)
