@@ -65,6 +65,15 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     type: 'file' | 'folder'
   } | null>(null)
   const [newRootItemName, setNewRootItemName] = useState('')
+  const [closeConfirmDialog, setCloseConfirmDialog] = useState<{
+    file: File
+    filePath: string
+  } | null>(null)
+  const [deleteConfirmDialog, setDeleteConfirmDialog] = useState<{
+    item: FileSystemItem
+    itemPath: string
+    itemName: string
+  } | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const resizeRef = useRef<HTMLDivElement>(null)
@@ -89,6 +98,32 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
   useEffect(() => {
     unsavedFilesRef.current = unsavedFiles
   }, [unsavedFiles])
+
+  const validateFileName = (name: string): { valid: boolean; error?: string } => {
+    if (!name || name.trim() === '') {
+      return { valid: false, error: 'Name cannot be empty' }
+    }
+
+    const invalidChars = /[:*?"<>|]/
+    if (invalidChars.test(name)) {
+      return {
+        valid: false,
+        error: 'Name cannot contain: : * ? " < > |'
+      }
+    }
+
+    if (name.trim() !== name) {
+      return { valid: false, error: 'Name cannot start or end with spaces' }
+    }
+
+    const reservedNames = ['CON', 'PRN', 'AUX', 'NUL', 'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9', 'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9']
+    if (reservedNames.includes(name.toUpperCase())) {
+      return { valid: false, error: 'This is a reserved name and cannot be used' }
+    }
+
+    return { valid: true }
+  }
+
 
   // Handle file content changes
   const handleContentChange = useCallback(
@@ -156,12 +191,18 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
       currentFsData?: FileSystemItem[],
     ): Promise<FileSystemItem[]> => {
       const fileToSave = file || activeFile
-      if (!fileToSave) return currentFsData || []
+      if (!fileToSave) return currentFsData || fsDataRef.current
 
       const filePath = fileToSave.path || fileToSave.name
-      if (!pendingChanges.has(filePath)) return currentFsData || []
 
-      const newContent = pendingChanges.get(filePath)!
+      // Use refs to get latest values
+      const latestPendingChanges = pendingChangesRef.current
+      if (!latestPendingChanges.has(filePath)) return currentFsData || fsDataRef.current
+
+      const newContent = latestPendingChanges.get(filePath)!
+
+      // Use provided fsData or get latest from ref
+      const baseFsData = currentFsData || fsDataRef.current
 
       // Update the file system data using path-based matching
       const updateFileInData = (
@@ -186,8 +227,14 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
         })
       }
 
-      // Create updated data
-      const updatedData = updateFileInData(currentFsData || [])
+      // Process the root folder correctly
+      const updatedData = baseFsData.map((rootItem) => {
+        if (rootItem.type === 'folder') {
+          return { ...rootItem, items: updateFileInData(rootItem.items, '') }
+        }
+        return rootItem
+      })
+
       setFsData(updatedData)
 
       // Remove from unsaved files and pending changes using path
@@ -203,9 +250,14 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
         return next
       })
 
+      // Persist to database
+      if (onSave) {
+        await onSave(JSON.stringify(updatedData))
+      }
+
       return updatedData
     },
-    [activeFile, pendingChanges],
+    [activeFile, onSave],
   )
 
   // Save all files
@@ -515,10 +567,34 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
 
   const handleCloseFile = (file: File) => {
     const filePath = file.path || file.name
+
+    // Check if file has unsaved changes
+    if (unsavedFiles.has(filePath)) {
+      setCloseConfirmDialog({ file, filePath })
+      return
+    }
+
+    // No unsaved changes, close directly
+    closeFileDirectly(file, filePath)
+  }
+
+  const closeFileDirectly = (file: File, filePath: string) => {
     const newOpenFiles = openFiles.filter(
       (f) => (f.path || f.name) !== filePath,
     )
     setOpenFiles(newOpenFiles)
+
+    setUnsavedFiles((prev) => {
+      const next = new Set(prev)
+      next.delete(filePath)
+      return next
+    })
+    setPendingChanges((prev) => {
+      const next = new Map(prev)
+      next.delete(filePath)
+      return next
+    })
+
     if (activeFile) {
       const activePath = activeFile.path || activeFile.name
       if (activePath === filePath) {
@@ -527,6 +603,79 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     }
   }
 
+  const handleCloseConfirmSave = async () => {
+    if (!closeConfirmDialog) return
+    const { file, filePath } = closeConfirmDialog
+
+    // Get latest data from refs
+    const latestFsData = fsDataRef.current
+    const latestPendingChanges = pendingChangesRef.current
+
+    if (latestPendingChanges.has(filePath)) {
+      const newContent = latestPendingChanges.get(filePath)!
+
+      // Update file content in fsData
+      const updateFileInData = (
+        items: FileSystemItem[],
+        currentPath: string = '',
+      ): FileSystemItem[] => {
+        return items.map((item) => {
+          if (item.type === 'file') {
+            const itemPath = currentPath ? `${currentPath}/${item.name}` : item.name
+            if (itemPath === filePath) {
+              return { ...item, content: newContent }
+            }
+          } else if (item.type === 'folder') {
+            const folderPath = currentPath ? `${currentPath}/${item.name}` : item.name
+            return { ...item, items: updateFileInData(item.items, folderPath) }
+          }
+          return item
+        })
+      }
+
+      const updatedFsData = latestFsData.map((rootItem) => {
+        if (rootItem.type === 'folder') {
+          return { ...rootItem, items: updateFileInData(rootItem.items, '') }
+        }
+        return rootItem
+      })
+
+      // Update state
+      setFsData(updatedFsData)
+
+      // Clear pending changes for this file
+      setPendingChanges((prev) => {
+        const next = new Map(prev)
+        next.delete(filePath)
+        return next
+      })
+      setUnsavedFiles((prev) => {
+        const next = new Set(prev)
+        next.delete(filePath)
+        return next
+      })
+
+      // Persist to database
+      if (onSave) {
+        await onSave(JSON.stringify(updatedFsData))
+      }
+    }
+
+    closeFileDirectly(file, filePath)
+    setCloseConfirmDialog(null)
+  }
+
+  const handleCloseConfirmDontSave = () => {
+    if (!closeConfirmDialog) return
+    const { file, filePath } = closeConfirmDialog
+
+    closeFileDirectly(file, filePath)
+    setCloseConfirmDialog(null)
+  }
+
+  const handleCloseConfirmCancel = () => {
+    setCloseConfirmDialog(null)
+  }
   const handleDeleteItem = (item: FileSystemItem) => {
     // Safety check: ensure item exists and has required properties
     if (!item || !item.type || !item.name) {
@@ -534,8 +683,21 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
       return
     }
 
-    // Check if this is a deletion with path information (set by context menu or cut operations)
-    const deletePath = (item as any).__originalPath
+    const deletePath = (item as any).__originalPath || item.path || item.name
+
+    // Show confirmation dialog
+    setDeleteConfirmDialog({
+      item,
+      itemPath: deletePath,
+      itemName: item.name,
+    })
+  }
+
+
+  const handleDeleteConfirm = () => {
+    if (!deleteConfirmDialog) return
+
+    const { item, itemPath } = deleteConfirmDialog
 
     setFsData((prevFsData) => {
       // Helper function to collect all file paths in a folder (recursive)
@@ -557,12 +719,12 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
 
       // Get all file paths that will be deleted
       const filePathsToDelete: string[] = []
-      if (deletePath) {
+      if (itemPath) {
         // If we have the exact path, use it directly
-        filePathsToDelete.push(deletePath)
+        filePathsToDelete.push(itemPath)
         // Also collect files inside if it's a folder
         if (item.type === 'folder') {
-          filePathsToDelete.push(...collectFilePaths(item.items, deletePath))
+          filePathsToDelete.push(...collectFilePaths(item.items, itemPath))
         }
       } else {
         // Fallback: no path provided (shouldn't happen with proper integration)
@@ -644,13 +806,21 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
 
       return newFileSystem
     })
+
+    setDeleteConfirmDialog(null)
   }
+
 
   const handleRenameItem = (
     item: FileSystemItem,
     itemPath: string,
     newName: string,
   ) => {
+    // Calculate new path
+    const pathParts = itemPath.split('/')
+    pathParts[pathParts.length - 1] = newName
+    const newPath = pathParts.join('/')
+
     const renameItem = (
       items: FileSystemItem[],
       currentPath: string = '',
@@ -660,7 +830,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
 
         // Only rename if this is the exact item at the specified path
         if (fullPath === itemPath) {
-          return { ...i, name: newName }
+          return { ...i, name: newName, path: newPath }
         }
 
         // Recursively search in folders
@@ -682,6 +852,45 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
       return rootItem
     })
     setFsData(newFileSystem)
+
+    // Update open files if the renamed file is open
+    setOpenFiles((prev) =>
+      prev.map((f) => {
+        const filePath = f.path || f.name
+        if (filePath === itemPath) {
+          return { ...f, name: newName, path: newPath }
+        }
+        return f
+      })
+    )
+
+    // Update active file if it's the renamed file
+    if (activeFile) {
+      const activePath = activeFile.path || activeFile.name
+      if (activePath === itemPath) {
+        setActiveFile({ ...activeFile, name: newName, path: newPath })
+      }
+    }
+
+    // Update pending changes and unsaved files with new path
+    if (pendingChanges.has(itemPath)) {
+      const content = pendingChanges.get(itemPath)!
+      setPendingChanges((prev) => {
+        const next = new Map(prev)
+        next.delete(itemPath)
+        next.set(newPath, content)
+        return next
+      })
+    }
+
+    if (unsavedFiles.has(itemPath)) {
+      setUnsavedFiles((prev) => {
+        const next = new Set(prev)
+        next.delete(itemPath)
+        next.add(newPath)
+        return next
+      })
+    }
   }
 
   const handleMoveItem = (
@@ -818,6 +1027,69 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     })
   }
 
+  // Helper function to merge nested item into existing folder structure
+  const mergeItemIntoFolder = (
+    targetFolder: Folder,
+    item: FileSystemItem,
+  ): Folder => {
+    // If item is a file, check for duplicates before adding
+    if (item.type === 'file') {
+      const existingFile = targetFolder.items.find(
+        (i) => i.type === 'file' && i.name.toLowerCase() === item.name.toLowerCase()
+      )
+      if (existingFile) {
+        // File already exists, show error
+        alert(`A file named "${item.name}" already exists in this location.`)
+        return targetFolder
+      }
+      return {
+        ...targetFolder,
+        items: [...targetFolder.items, item],
+      }
+    }
+
+    // If item is a folder, check if folder with same name exists
+    const existingFolder = targetFolder.items.find(
+      (i) => i.type === 'folder' && i.name.toLowerCase() === item.name.toLowerCase()
+    ) as Folder | undefined
+
+    if (existingFolder) {
+      // Folder exists, merge each child item recursively
+      let mergedFolder = { ...existingFolder }
+
+      for (const childItem of item.items) {
+        // Check if child item already exists
+        if (childItem.type === 'file') {
+          const existingChildFile = mergedFolder.items.find(
+            (i) => i.type === 'file' && i.name.toLowerCase() === childItem.name.toLowerCase()
+          )
+          if (existingChildFile) {
+            alert(`A file named "${childItem.name}" already exists in "${existingFolder.name}".`)
+            continue // Skip this file
+          }
+        }
+
+        mergedFolder = mergeItemIntoFolder(mergedFolder, childItem)
+      }
+
+      return {
+        ...targetFolder,
+        items: targetFolder.items.map((i) => {
+          if (i.type === 'folder' && i.name.toLowerCase() === item.name.toLowerCase()) {
+            return mergedFolder
+          }
+          return i
+        }),
+      }
+    } else {
+      // Folder doesn't exist, add it
+      return {
+        ...targetFolder,
+        items: [...targetFolder.items, item],
+      }
+    }
+  }
+
   const handleAddItemToRoot = (type: 'file' | 'folder') => {
     setCreatingAtRoot({ type })
     setNewRootItemName('')
@@ -828,48 +1100,203 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     if (creatingAtRoot && newRootItemName.trim()) {
       const root = fsData[0]
       if (root && root.type === 'folder') {
-        const name = newRootItemName.trim()
+        let name = newRootItemName.trim()
 
-        // Check for duplicates
-        if (root.items.some((item) => item.name === name)) {
-          alert(
-            `${creatingAtRoot.type} with name "${name}" already exists at the root.`,
-          )
+        // Normalize path: remove leading/trailing slashes and double slashes
+        name = name.replace(/^\/+|\/+$/g, '') // Remove leading/trailing slashes
+        name = name.replace(/\/+/g, '/') // Replace multiple slashes with single
+
+        if (!name) {
+          setCreatingAtRoot(null)
+          setNewRootItemName('')
           return
         }
 
-        const newItem: FileSystemItem =
-          creatingAtRoot.type === 'file'
-            ? { type: 'file', name, content: '' }
-            : { type: 'folder', name, items: [] }
+        // Check if name contains path separator
+        if (name.includes('/')) {
+          // Split into parts and create nested structure
+          const parts = name.split('/').filter(p => p.trim())
 
-        setFsData((prevFsData) => {
-          const newFsData = [...prevFsData]
-          const rootItem = newFsData[0]
-          if (rootItem && rootItem.type === 'folder') {
-            const newRoot: Folder = {
-              ...rootItem,
-              items: [...rootItem.items, newItem],
-            }
-            newFsData[0] = newRoot
-            return newFsData
+          if (parts.length === 0) {
+            setCreatingAtRoot(null)
+            setNewRootItemName('')
+            return
           }
-          return prevFsData
-        })
 
-        // Auto-select new file
-        if (creatingAtRoot.type === 'file') {
-          setTimeout(() => {
-            setActiveFile(newItem as File)
-            if (!openFiles.find((f) => f.name === newItem.name)) {
-              setOpenFiles((prev) => [...prev, newItem as File])
+          // Validate each part
+          for (const part of parts) {
+            const partValidation = validateFileName(part)
+            if (!partValidation.valid) {
+              alert(`Invalid name in path: ${partValidation.error}`)
+              return
             }
-          }, 50)
-        }
-      }
+          }
 
-      setCreatingAtRoot(null)
-      setNewRootItemName('')
+          // Build nested folder structure
+          let currentItem: FileSystemItem
+          let actualFile: File | null = null // Keep reference to the actual file
+
+
+          if (creatingAtRoot.type === 'file') {
+            const fileName = parts.pop()!
+            actualFile = { type: 'file', name: fileName, content: '' }
+            currentItem = actualFile
+
+            for (let i = parts.length - 1; i >= 0; i--) {
+              currentItem = { type: 'folder', name: parts[i], items: [currentItem] }
+            }
+          } else {
+            currentItem = { type: 'folder', name: parts[parts.length - 1], items: [] }
+
+            for (let i = parts.length - 2; i >= 0; i--) {
+              currentItem = { type: 'folder', name: parts[i], items: [currentItem] }
+            }
+          }
+
+          setFsData((prevFsData) => {
+            const newFsData = [...prevFsData]
+            const rootItem = newFsData[0]
+            if (rootItem && rootItem.type === 'folder') {
+              // Use merge function to handle existing folders
+              const mergedRoot = mergeItemIntoFolder(rootItem, currentItem)
+              newFsData[0] = mergedRoot
+
+              // If creating a file, find it in the merged structure and select it
+              if (creatingAtRoot.type === 'file' && actualFile) {
+                // Helper function to find file by full path
+                const findFileByPath = (
+                  folder: Folder,
+                  targetPath: string,
+                  currentPath: string = ''
+                ): File | null => {
+                  for (const item of folder.items) {
+                    const itemPath = currentPath ? `${currentPath}/${item.name}` : item.name
+
+                    if (item.type === 'file' && itemPath === targetPath) {
+                      return { ...item, path: itemPath } as File
+                    }
+
+                    if (item.type === 'folder') {
+                      const found = findFileByPath(item, targetPath, itemPath)
+                      if (found) return found
+                    }
+                  }
+                  return null
+                }
+
+                // Calculate the full path of the file
+                const filePath = parts.length > 0
+                  ? `${parts.join('/')}/${actualFile.name}`
+                  : actualFile.name
+
+                // Find the file in merged structure
+                const foundFile = findFileByPath(mergedRoot, filePath)
+
+                if (foundFile) {
+                  // Use setTimeout to ensure state is set first
+                  setTimeout(() => {
+                    setActiveFile(foundFile)
+                    // Check if file is already in openFiles by path
+                    setOpenFiles((prev) => {
+                      const filePath = foundFile.path || foundFile.name
+                      const exists = prev.some((f) => (f.path || f.name) === filePath)
+                      if (!exists) {
+                        return [...prev, foundFile]
+                      }
+                      return prev
+                    })
+                  }, 50)
+                }
+              }
+
+              return newFsData
+            }
+            return prevFsData
+          })
+
+          // Auto-select new file - find it in the merged structure
+          if (creatingAtRoot.type === 'file' && actualFile) {
+            setTimeout(() => {
+              // Helper function to find file in nested structure
+              const findFileInFolder = (
+                folder: Folder,
+                fileName: string,
+                currentPath: string = ''
+              ): File | null => {
+                for (const item of folder.items) {
+                  const itemPath = currentPath ? `${currentPath}/${item.name}` : item.name
+                  if (item.type === 'file' && item.name === fileName) {
+                    return { ...item, path: itemPath } as File
+                  }
+                  if (item.type === 'folder') {
+                    const found = findFileInFolder(item, fileName, itemPath)
+                    if (found) return found
+                  }
+                }
+                return null
+              }
+
+              const root = fsData[0]
+              if (root && root.type === 'folder') {
+                const foundFile = findFileInFolder(root, actualFile.name)
+                if (foundFile) {
+                  setActiveFile(foundFile)
+                  if (!openFiles.find((f) => (f.path || f.name) === (foundFile.path || foundFile.name))) {
+                    setOpenFiles((prev) => [...prev, foundFile])
+                  }
+                }
+              }
+            }, 100) // Increase delay to ensure state is updated
+          }
+        } else {
+          // Simple name - validate normally
+          const validation = validateFileName(name)
+          if (!validation.valid) {
+            alert(validation.error)
+            return
+          }
+
+          // Check for duplicates
+          if (root.items.some((item) => item.name === name)) {
+            alert(
+              `${creatingAtRoot.type} with name "${name}" already exists at the root.`,
+            )
+            return
+          }
+
+          const newItem: FileSystemItem =
+            creatingAtRoot.type === 'file'
+              ? { type: 'file', name, content: '' }
+              : { type: 'folder', name, items: [] }
+
+          setFsData((prevFsData) => {
+            const newFsData = [...prevFsData]
+            const rootItem = newFsData[0]
+            if (rootItem && rootItem.type === 'folder') {
+              const newRoot: Folder = {
+                ...rootItem,
+                items: [...rootItem.items, newItem],
+              }
+              newFsData[0] = newRoot
+              return newFsData
+            }
+            return prevFsData
+          })
+
+          // Auto-select new file
+          if (creatingAtRoot.type === 'file') {
+            setTimeout(() => {
+              setActiveFile(newItem as File)
+              if (!openFiles.find((f) => f.name === newItem.name)) {
+                setOpenFiles((prev) => [...prev, newItem as File])
+              }
+            }, 50)
+          }
+        }
+
+        setCreatingAtRoot(null)
+        setNewRootItemName('')
+      }
     }
   }
 
@@ -900,6 +1327,16 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
 
   const handleAddItem = (parent: Folder, item: FileSystemItem) => {
     setFsData((prevFsData) => {
+      // Case add to root
+      if (parent.name === 'root' || parent.path === 'root' || !parent.path) {
+        const rootItem = prevFsData[0]
+        if (rootItem && rootItem.type === 'folder') {
+          // Use merge function to handle existing folders
+          const mergedRoot = mergeItemIntoFolder(rootItem, item)
+          return [mergedRoot]
+        }
+        return prevFsData
+      }
       const addItem = (
         items: FileSystemItem[],
         currentPath: string = '',
@@ -1165,8 +1602,8 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
           </div>
         ) : (
           // Expanded view - normal layout
-          <>
-            <div className="flex items-center px-1 py-2 border-b border-gray-200 bg-gray-100">
+          <div className="flex flex-col h-full overflow-hidden">
+            <div className="flex items-center px-1 py-2 border-b border-gray-200 bg-gray-100 flex-shrink-0">
               <button
                 onClick={toggleCollapse}
                 title="Collapse Panel"
@@ -1222,7 +1659,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                 </button>
               </div>
             </div>
-            <div className="overflow-y-auto overflow-x-visible">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden">
               {/* Inline creation input at root level */}
               {creatingAtRoot && (
                 <div className="flex items-center py-[1px] px-2 text-gray-700 text-[13px] border-b border-gray-100">
@@ -1271,15 +1708,14 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                 activeFile={activeFile}
               />
             </div>
-          </>
+          </div>
         )}
         {/* Resize Handle - only show when not collapsed */}
         {!isCollapsed && (
           <div
             ref={resizeRef}
-            className={`absolute top-0 right-0 w-1 h-full cursor-col-resize bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors ${
-              isResizing ? 'bg-blue-500 bg-opacity-50' : ''
-            }`}
+            className={`absolute top-0 right-0 w-1 h-full cursor-col-resize bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors ${isResizing ? 'bg-blue-500 bg-opacity-50' : ''
+              }`}
             onMouseDown={handleMouseDown}
             title="Drag to resize"
           >
@@ -1327,6 +1763,74 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
           }}
         />
       </div>
+
+      {/* Close confirmation dialog */}
+      {closeConfirmDialog && (
+        <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
+            <h2 className="text-lg font-semibold mb-2">Unsaved Changes</h2>
+            <p className="text-gray-600 mb-4">
+              Do you want to save the changes you made to{' '}
+              <span className="font-semibold">"{closeConfirmDialog.file.name}"</span>?
+            </p>
+            <p className="text-gray-500 text-sm mb-4">
+              Your changes will be lost if you don't save them.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={handleCloseConfirmSave}
+                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
+              >
+                Save
+              </button>
+              <button
+                onClick={handleCloseConfirmDontSave}
+                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors"
+              >
+                Don't Save
+              </button>
+              <button
+                onClick={handleCloseConfirmCancel}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation dialog */}
+      {deleteConfirmDialog && (
+        <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
+            <h2 className="text-lg font-semibold mb-2">Delete Item</h2>
+            <p className="text-gray-600 mb-4">
+              Are you sure you want to delete{' '}
+              <span className="font-semibold">"{deleteConfirmDialog.itemName}"</span>?
+            </p>
+            {deleteConfirmDialog.item.type === 'folder' && (
+              <p className="text-red-600 text-sm mb-4">
+                This will delete the folder and all its contents. This action cannot be undone.
+              </p>
+            )}
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={handleDeleteConfirm}
+                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors"
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => setDeleteConfirmDialog(null)}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
