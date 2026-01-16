@@ -176,7 +176,7 @@ const PagePrototypeLibrary = () => {
                   <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                   <Input
                     type="text"
-                    placeholder="Search prototypes"
+                    placeholder="Search"
                     className="w-full h-8 pl-10 text-sm shadow"
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
@@ -221,7 +221,7 @@ const PagePrototypeLibrary = () => {
                     onClick={() => setIsOpenImportDialog(true)}
                   >
                     <TbFileImport className="w-5 h-5 mr-1" />
-                    Import Prototype
+                    Import
                   </Button>
                   <DaDialog
                     open={open}
@@ -234,7 +234,7 @@ const PagePrototypeLibrary = () => {
                         className="flex ml-2"
                       >
                         <TbPlus className="w-5 h-5 mr-1" />
-                        Create New Prototype
+                        Create New
                       </Button>
                     }
                   >

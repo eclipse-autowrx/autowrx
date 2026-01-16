@@ -132,7 +132,7 @@ const PrototypeTabJourney: React.FC<PrototypeTabJourneyProps> = ({
                   <>
                     <Button
                       onClick={() => setIsEditing(true)}
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       data-id='prototype-edit-button'
                     >

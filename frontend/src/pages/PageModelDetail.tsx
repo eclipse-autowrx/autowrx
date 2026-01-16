@@ -227,7 +227,7 @@ const PageModelDetail = () => {
           </div>
         </div>
         {isAuthorized && (
-          <div className="flex">
+          <div className="flex items-center gap-2">
             {!isEditingName ? (
               <Button
                 variant="ghost"
@@ -261,42 +261,12 @@ const PageModelDetail = () => {
                 </Button>
               </div>
             )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+            {!isEditingName && (
+              <>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={cn(
-                    'flex w-fit space-x-3',
-                    isEditingName && 'pointer-events-none opacity-50',
-                  )}
-                >
-                  {!isDeleting && !isExporting && !isDownloading && (
-                    <TbDotsVertical className="size-4" />
-                  )}
-
-                  {isDeleting && (
-                    <div className="flex items-center">
-                      <TbLoader className="w-4 h-4 mr-1 animate-spin" />
-                      Deleting Model...
-                    </div>
-                  )}
-                  {isExporting && (
-                    <div className="flex items-center">
-                      <TbLoader className="w-4 h-4 mr-1 animate-spin" />
-                      Exporting Model...
-                    </div>
-                  )}
-                  {isDownloading && (
-                    <div className="flex items-center">
-                      <TbLoader className="w-4 h-4 mr-1 animate-spin" />
-                      Downloading Signal Data...
-                    </div>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
+                  className="justify-start"
                   onClick={async () => {
                     if (!model) return
                     setIsExporting(true)
@@ -307,13 +277,27 @@ const PageModelDetail = () => {
                     }
                     setIsExporting(false)
                   }}
+                  disabled={isExporting || isDeleting || isDownloading}
                 >
-                  <TbFileExport className="w-4 h-4 mr-1" />
-                  Export Model
-                </DropdownMenuItem>
-                <DropdownMenuItem
+                  {isExporting ? (
+                    <>
+                      <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                      Exporting...
+                    </>
+                  ) : (
+                    <>
+                      <TbFileExport className="w-4 h-4 mr-1" />
+                      Export Model
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="justify-start"
                   onClick={async () => {
                     if (!model) return
+                    setIsDownloading(true)
                     try {
                       const data = await getComputedAPIs(model.id)
                       const link = document.createElement('a')
@@ -328,16 +312,41 @@ const PageModelDetail = () => {
                       setIsDownloading(false)
                     }
                   }}
+                  disabled={isExporting || isDeleting || isDownloading}
                 >
-                  <TbDownload className="w-4 h-4 mr-1" />
-                  Download Vehicle API JSON file
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setConfirmPopupOpen(true)}>
-                  <TbTrashX className="w-4 h-4 mr-1" />
-                  Delete Model
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  {isDownloading ? (
+                    <>
+                      <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                      Downloading...
+                    </>
+                  ) : (
+                    <>
+                      <TbDownload className="w-4 h-4 mr-1" />
+                      Download JSON
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="justify-start"
+                  onClick={() => setConfirmPopupOpen(true)}
+                  disabled={isExporting || isDeleting || isDownloading}
+                >
+                  {isDeleting ? (
+                    <>
+                      <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <TbTrashX className="w-4 h-4 mr-1" />
+                      Delete Model
+                    </>
+                  )}
+                </Button>
+              </>
+            )}
             <DaConfirmPopup
               onConfirm={handleDeleteModel}
               title="Delete Model"
