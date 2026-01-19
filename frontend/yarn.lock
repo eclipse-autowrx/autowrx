@@ -212,15 +212,6 @@
     react-lifecycles-compat "^3.0.4"
     warning "^3.0.0"
 
-"@digital-auto/image-area-lib@1.0.2":
-  version "1.0.2"
-  resolved "https://registry.npmjs.org/@digital-auto/image-area-lib/-/image-area-lib-1.0.2.tgz"
-  integrity sha512-MoCotRmOzb7XIAgvz4c3FpQHJVp2xRxPWGH5Suw2JYnerWkHeNN7gjLSY5WzGtOllEuv9xRbwCGkRfj12KwraA==
-  dependencies:
-    its-fine "^1.2.5"
-    react-konva-utils "^1.0.5"
-    styled-components "^6.1.0"
-
 "@digital-auto/velocitas-project-generator@^1.0.1":
   version "1.0.1"
   resolved "https://registry.npmjs.org/@digital-auto/velocitas-project-generator/-/velocitas-project-generator-1.0.1.tgz"
@@ -708,6 +699,14 @@
   version "0.3.4"
   resolved "https://registry.npmjs.org/@kurkle/color/-/color-0.3.4.tgz"
   integrity sha512-M5UknZPHRu3DEDWoipU6sE8PdkZ6Z/S+v4dD+Ke8IaNlpdSQah50lz1KtcFBa2vsdOnwbbnxJwVM4wty6udA5w==
+
+"@mekong89/image-area-lib@1.0.13":
+  version "1.0.13"
+  resolved "https://registry.yarnpkg.com/@mekong89/image-area-lib/-/image-area-lib-1.0.13.tgz#bb0a7d2fbfc65f6895e44f30ae7bdef802f2a6b1"
+  integrity sha512-sc4J4pEZpg1GdxIudohj1+yeqJcH4rCtMjK6jBerG91V/ButucdGoWw3jbvyC1+XkHX4GwBam+uu54frCDCH8g==
+  dependencies:
+    react-konva-utils "^1.0.5"
+    styled-components "^6.1.0"
 
 "@microsoft/load-themed-styles@^1.10.26":
   version "1.10.295"
@@ -3753,7 +3752,7 @@ iterator.prototype@^1.1.4:
     has-symbols "^1.1.0"
     set-function-name "^2.0.2"
 
-its-fine@^1.1.1, its-fine@^1.2.5:
+its-fine@^1.1.1:
   version "1.2.5"
   resolved "https://registry.npmjs.org/its-fine/-/its-fine-1.2.5.tgz"
   integrity sha512-fXtDA0X0t0eBYAGLVM5YsgJGsJ5jEmqZEPrGbzdf5awjv0xE7nqv3TVnvtUF060Tkes15DbDAKW/I48vsb6SyA==

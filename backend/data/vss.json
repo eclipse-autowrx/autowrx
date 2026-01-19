@@ -1,5 +1,10 @@
 [
   {
+    "name": "v6.0",
+    "published_at": "2026-01-16T13:23:07Z",
+    "browser_download_url": "https://github.com/COVESA/vehicle_signal_specification/releases/download/v6.0/vss.json"
+  },
+  {
     "name": "v6.0rc1",
     "published_at": "2025-12-18T15:18:08Z",
     "browser_download_url": "https://github.com/COVESA/vehicle_signal_specification/releases/download/v6.0rc1/vss.json"
