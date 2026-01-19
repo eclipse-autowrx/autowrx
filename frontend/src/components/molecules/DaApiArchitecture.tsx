@@ -52,7 +52,7 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
       if (url.includes('/')) {
         navigate(url)
       } else {
-        navigate(`/model/${model.id}/api/${url}`)
+        navigate(`/model/${model.id}/api/covesa/${url}`)
       }
     }
   }
