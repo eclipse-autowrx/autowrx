@@ -15,10 +15,10 @@
   "dependencies": {
     "@azure/msal-browser": "^3.20.0",
     "@azure/msal-react": "^2.0.22",
-    "@digital-auto/image-area-lib": "1.0.2",
     "@digital-auto/velocitas-project-generator": "^1.0.1",
     "@fluentui/react": "^8.122.15",
     "@hello-pangea/dnd": "^18.0.1",
+    "@mekong89/image-area-lib": "1.0.13",
     "@monaco-editor/react": "^4.6.0",
     "@radix-ui/react-aspect-ratio": "^1.1.7",
     "@radix-ui/react-avatar": "^1.1.10",

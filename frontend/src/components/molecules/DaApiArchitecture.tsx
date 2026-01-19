@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-// import { ImageAreaEdit, ImageAreaPreview } from '@digital-auto/image-area-lib'
+import { ImageAreaEdit, ImageAreaPreview } from '@mekong89/image-area-lib'
 import axios, { AxiosError } from 'axios'
 import { Button } from '@/components/atoms/button'
 import { useEffect, useState } from 'react'
@@ -330,15 +330,15 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
           </div>
         ) : (
           <div
-            className={`flex w-full justify-end py-2 ${isAuthorized ? 'visible' : 'hidden'}`}
+            className={`flex w-full justify-end py-1 mr-8 ${isAuthorized ? 'visible' : 'hidden'}`}
           >
-            {/* {!isEditMode ? (
+            {!isEditMode ? (
               <Button
-                variant="outline"
+                variant="default"
                 size="sm"
                 onClick={() => setIsEditMode(true)}
               >
-                <TbEdit className="size-4 mr-1" />
+                <TbEdit className="size-4 mr-0.5" />
                 Edit
               </Button>
             ) : (
@@ -362,7 +362,7 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
                   Save
                 </Button>
               </div>
-            )} */}
+            )}
           </div>
         )}
       </div>
@@ -373,21 +373,21 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
         activeSkeleton.nodes.length > 0 && (
           <div className="flex w-full h-auto">
             {isEditMode ? (<>
-              {/* <ImageAreaEdit
+              <ImageAreaEdit
                 shapes={activeSkeleton?.nodes[0]?.shapes}
                 bgImage={activeSkeleton?.nodes[0]?.bgImage}
                 onSave={onSaveRequested}
                 handleUploadImage={handleUploadImage}
                 onUpdate={setPendingSkeletonUpdate}
-              /> */}
+              />
               </>
             ) : <>
-              <img src={activeSkeleton?.nodes[0]?.bgImage} alt="API Architecture" />
-              {/* <ImageAreaPreview
+              {/* <img src={activeSkeleton?.nodes[0]?.bgImage} alt="API Architecture" /> */}
+              <ImageAreaPreview
                 shapes={activeSkeleton?.nodes[0]?.shapes}
                 bgImage={activeSkeleton?.nodes[0]?.bgImage}
                 navigate={handleNavigate}
-              /> */}
+              />
             </>}
           </div>
         )}
