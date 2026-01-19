@@ -291,6 +291,7 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
     node.bgImage = data.bgImage
     await saveAPISkeleton(tmpSkele)
     setSkeleton(tmpSkele)
+    setPendingSkeletonUpdate(data)
     setIsEditMode(false)
   }
 
@@ -378,7 +379,6 @@ const DaApiArchitecture = ({ apiName: apiName }: { apiName: string }) => {
                 bgImage={activeSkeleton?.nodes[0]?.bgImage}
                 onSave={onSaveRequested}
                 handleUploadImage={handleUploadImage}
-                onUpdate={setPendingSkeletonUpdate}
               />
               </>
             ) : <>
