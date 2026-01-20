@@ -26,9 +26,6 @@ import useCurrentModel from '@/hooks/useCurrentModel'
 import { PERMISSIONS } from '@/data/permission'
 import { updatePrototypeService } from '@/services/prototype.service'
 
-import { GrDeploy } from 'react-icons/gr'
-import { toast } from 'react-toastify'
-import config from '@/configs/config'
 import CodeEditor from '@/components/molecules/CodeEditor'
 import { Spinner } from '@/components/atoms/spinner'
 import { retry } from '@/lib/retry'
@@ -93,11 +90,32 @@ const PrototypeTabCode: FC = () => {
   const [editorType, setEditorType] = useState<'project' | 'code'>('code')
 
   // Resize state
-  const [rightPanelWidth, setRightPanelWidth] = useState(600) // Initial width in px
+  const [rightPanelWidth, setRightPanelWidth] = useState<number | null>(null) // Will be calculated based on container
   const [isResizing, setIsResizing] = useState(false)
+  const [isApiPanelCollapsed, setIsApiPanelCollapsed] = useState(false)
   const resizeRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const startXRef = useRef(0)
   const startWidthRef = useRef(0)
+
+  // Calculate initial width based on container size with 6:4 ratio (60% editor, 40% API panel)
+  useEffect(() => {
+    const calculateInitialWidth = () => {
+      if (containerRef.current) {
+        const containerWidth = containerRef.current.offsetWidth
+        // 40% of container width for API panel (6:4 ratio)
+        const calculatedWidth = containerWidth * 0.4
+        setRightPanelWidth(calculatedWidth)
+      }
+    }
+
+    // Calculate on mount
+    calculateInitialWidth()
+
+    // Recalculate on window resize
+    window.addEventListener('resize', calculateInitialWidth)
+    return () => window.removeEventListener('resize', calculateInitialWidth)
+  }, [])
 
   useEffect(() => {
     let timer = setInterval(() => {
@@ -156,7 +174,14 @@ const PrototypeTabCode: FC = () => {
     (e: React.MouseEvent) => {
       e.preventDefault()
       startXRef.current = e.clientX
-      startWidthRef.current = rightPanelWidth
+      // Use current width or calculate from container if null
+      if (rightPanelWidth !== null) {
+        startWidthRef.current = rightPanelWidth
+      } else if (containerRef.current) {
+        startWidthRef.current = containerRef.current.offsetWidth * 0.4
+      } else {
+        startWidthRef.current = 0
+      }
       // Disable transitions during resize for instant feedback
       const leftPanel = resizeRef.current?.previousElementSibling as HTMLElement
       const rightPanel = resizeRef.current?.nextElementSibling as HTMLElement
@@ -169,10 +194,12 @@ const PrototypeTabCode: FC = () => {
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
-      if (!isResizing) return
+      if (!isResizing || !containerRef.current) return
 
-      const minWidth = 300
-      const maxWidth = 800
+      const containerWidth = containerRef.current.offsetWidth
+      // Min 20% and max 60% of container width for responsive behavior
+      const minWidth = containerWidth * 0.2
+      const maxWidth = containerWidth * 0.6
       const deltaX = e.clientX - startXRef.current
       // Dragging left (negative deltaX) increases width, dragging right (positive deltaX) decreases width
       const newWidth = Math.min(
@@ -219,10 +246,9 @@ const PrototypeTabCode: FC = () => {
   }
 
   return (
-    <div className="flex h-[calc(100%-0px)] w-full p-2 bg-gray-100">
+    <div ref={containerRef} className="flex h-[calc(100%-0px)] w-full p-2 bg-gray-100">
       <div
         className="flex h-full flex-1 min-w-0 flex-col border-r bg-white rounded-md"
-        style={{ marginRight: '0px' }}
       >
         <div className="flex min-h-12 w-full items-center justify-between">
           {isAuthorized && (
@@ -276,6 +302,7 @@ const PrototypeTabCode: FC = () => {
           {editorType === 'project' ? (
             <ProjectEditor
               data={code || ''}
+              prototypeName={prototype.name}  
               onChange={(data: string) => {
                 setCode(data)
                 setSavedCode(data)
@@ -298,10 +325,9 @@ const PrototypeTabCode: FC = () => {
       {/* Resize handle */}
       <div
         ref={resizeRef}
-        className="w-1 bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors cursor-col-resize flex-shrink-0"
+        className="mx-0.5 w-1 bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors cursor-col-resize shrink-0"
         onMouseDown={handleMouseDown}
         title="Drag to resize"
-        style={{ marginLeft: '8px', marginRight: '8px' }}
       >
         <div className="w-full h-full flex items-center justify-center">
           <div
@@ -310,8 +336,15 @@ const PrototypeTabCode: FC = () => {
         </div>
       </div>
       <div
-        className="flex h-full flex-col bg-white rounded-md flex-shrink-0"
-        style={{ width: `${rightPanelWidth}px` }}
+        className="flex h-full flex-col bg-white rounded-md shrink-0 transition-all duration-200 ease-in-out"
+        style={{
+          width:
+            isApiPanelCollapsed
+              ? '48px'
+              : rightPanelWidth !== null
+                ? `${rightPanelWidth}px`
+                : '40%', // Fallback to 40% if not calculated yet
+        }}
       >
         {activeTab == 'api' && (
           <Suspense
@@ -321,7 +354,10 @@ const PrototypeTabCode: FC = () => {
               </div>
             }
           >
-            <PrototypeTabCodeApiPanel code={code || ''} />
+            <PrototypeTabCodeApiPanel
+              code={code || ''}
+              onCollapsedChange={setIsApiPanelCollapsed}
+            />
           </Suspense>
         )}
       </div>

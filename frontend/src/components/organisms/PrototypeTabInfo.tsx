@@ -20,17 +20,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../atoms/select'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../atoms/dropdown-menu'
 import { DaTableProperty } from '../molecules/DaTableProperty'
 import DaImportFile from '../atoms/DaImportFile'
 import DaConfirmPopup from '../molecules/DaConfirmPopup'
 import {
-  TbDotsVertical,
   TbDownload,
   TbEdit,
   TbLoader,
@@ -247,7 +240,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                     {isAdmin && (
                       <Button
                         onClick={updateEditorChoice}
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         title={`${prototype?.editors_choice ? 'Unmark' : 'Mark'} as Editor Choice`}
                       >
@@ -260,53 +253,54 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                     )}
                     <Button
                       onClick={() => setIsEditing(true)}
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                     >
                       <TbEdit className="w-4 h-4 mr-1" /> Edit
                     </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className={cn(
-                            isEditing && 'pointer-events-none opacity-50',
-                          )}
-                        >
-                          {!isDeleting && !isEditing && !isSaving && (
-                            <TbDotsVertical className="size-4" />
-                          )}
-                          {isSaving && (
-                            <div className="flex items-center">
-                              <TbLoader className="w-4 h-4 mr-1 animate-spin" />
-                              Saving...
-                            </div>
-                          )}
-                          {isDeleting && (
-                            <div className="flex items-center">
-                              <TbLoader className="w-4 h-4 mr-1 animate-spin" />
-                              Deleting...
-                            </div>
-                          )}
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => downloadPrototypeZip(prototype)}
-                        >
-                          <TbDownload className="w-4 h-4 mr-2" />
-                          Export Prototype
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => setConfirmPopupOpen(true)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <TbTrashX className="w-4 h-4 mr-2" />
-                          Delete Prototype
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Button
+                      onClick={() => downloadPrototypeZip(prototype)}
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        isEditing && 'pointer-events-none opacity-50',
+                      )}
+                      disabled={isDeleting || isEditing || isSaving}
+                    >
+                      {isSaving ? (
+                        <div className="flex items-center">
+                          <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                          Saving...
+                        </div>
+                      ) : (
+                        <>
+                          <TbDownload className="w-4 h-4 mr-1" />
+                          Export
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      onClick={() => setConfirmPopupOpen(true)}
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        'text-destructive hover:text-destructive',
+                        isEditing && 'pointer-events-none opacity-50',
+                      )}
+                      disabled={isDeleting || isEditing || isSaving}
+                    >
+                      {isDeleting ? (
+                        <div className="flex items-center">
+                          <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                          Deleting...
+                        </div>
+                      ) : (
+                        <>
+                          <TbTrashX className="w-4 h-4 mr-1" />
+                          Delete
+                        </>
+                      )}
+                    </Button>
                     <DaConfirmPopup
                       onConfirm={handleDeletePrototype}
                       title="Delete Prototype"

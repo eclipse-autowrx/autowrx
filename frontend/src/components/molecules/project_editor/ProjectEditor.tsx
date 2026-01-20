@@ -32,12 +32,14 @@ interface ProjectEditorProps {
   data: string
   onChange: (data: string) => void
   onSave?: (data: string) => Promise<void>
+  prototypeName?: string
 }
 
 const ProjectEditor: React.FC<ProjectEditorProps> = ({
   data,
   onChange,
   onSave,
+  prototypeName,
 }) => {
   const [fsData, setFsData] = useState<FileSystemItem[]>(() => {
     try {
@@ -1399,12 +1401,17 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
       })
     }
 
-    addFilesToZip(fsData, '')
+    const safeBase =
+      (prototypeName || 'project')
+        .trim()
+        .replace(/[\\/:*?"<>|]/g, '')  
+        .replace(/\s+/g, '_')          
+        .slice(0, 80) || 'project'
 
     zip.generateAsync({ type: 'blob' }).then((content) => {
       const link = document.createElement('a')
       link.href = URL.createObjectURL(content)
-      link.download = 'project.zip'
+      link.download = `${safeBase}.zip`  
       link.click()
     })
   }
@@ -1779,7 +1786,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
             <div className="flex justify-end space-x-3">
               <button
                 onClick={handleCloseConfirmSave}
-                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
+                className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-md transition-colors"
               >
                 Save
               </button>

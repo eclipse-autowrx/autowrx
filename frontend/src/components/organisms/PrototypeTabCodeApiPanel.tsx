@@ -24,6 +24,7 @@ import { getCustomApiSchemaById } from '@/services/customApiSchema.service'
 import CustomAPIList from '@/components/organisms/CustomAPIList'
 import CustomAPIView from '@/components/organisms/CustomAPIView'
 import { Spinner } from '@/components/atoms/spinner'
+import { VscChevronLeft, VscChevronRight } from 'react-icons/vsc'
 
 interface ApiCodeBlockProps {
   content: string
@@ -152,15 +153,28 @@ const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
 
 interface PrototypeTabCodeApiPanelProps {
   code: string
+  onCollapsedChange?: (isCollapsed: boolean) => void
 }
 
 const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   code,
+  onCollapsedChange,
 }) => {
   const [tab, setTab] = useState<
     'used-signals' | 'all-signals' | 'usp' | 'v2c' | string
   >('used-signals')
+  const [isCollapsed, setIsCollapsed] = useState(false)
   const { data: model } = useCurrentModel()
+  
+  const toggleCollapse = () => {
+    const newCollapsedState = !isCollapsed
+    setIsCollapsed(newCollapsedState)
+    onCollapsedChange?.(newCollapsedState)
+  }
+  
+  useEffect(() => {
+    onCollapsedChange?.(isCollapsed)
+  }, [isCollapsed, onCollapsedChange])
   
   // Get CustomApiSet IDs from model
   const customApiSetIds = useMemo(() => {
@@ -318,7 +332,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   }
 
   return (
-    <div className="flex flex-col w-full h-full p-1">
+    <div className="flex flex-col w-full h-full p-1 min-h-0">
       <DaDialog
         open={popupApi}
         onOpenChange={setPopupApi}
@@ -334,216 +348,248 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
         />
       </DaDialog>
 
-      <div className="flex justify-between border-b mx-3 mt-2">
+      {isCollapsed ? (
+        // Collapsed view - thin column with just expand button
+        <div className="flex flex-col h-full transition-all duration-200 ease-in-out">
+          <div className="flex items-center justify-center py-2 border-b border-gray-200 bg-gray-100">
+            <button
+              onClick={toggleCollapse}
+              title="Expand Panel"
+              className="p-2 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              <VscChevronLeft size={20} />
+            </button>
+          </div>
+          <div className="flex-1"></div>
+        </div>
+      ) : (
+        // Expanded view - normal layout
         <>
-          <div className="flex">
-            <DaTabItem
-              active={tab === 'used-signals'}
-              dataId="used-signals-tab"
-              to="#"
-              onClick={(e) => {
-                e.preventDefault()
-                setTab('used-signals')
-              }}
-            >
-              Used APIs
-            </DaTabItem>
-            <DaTabItem
-              active={tab === 'all-signals'}
-              dataId="all-signals-tab"
-              to="#"
-              onClick={(e) => {
-                e.preventDefault()
-                setTab('all-signals')
-              }}
-            >
-              COVESA Signals
-            </DaTabItem>
-            {/* USP and V2C tabs (for backward compatibility) */}
-            {hasUSP && (
+          <div className="flex items-center border-b mx-3 mt-2 shrink-0 relative">
+            <div className="flex overflow-x-auto scrollbar-thin flex-1 min-w-0">
               <DaTabItem
-                active={tab === 'usp'}
+                active={tab === 'used-signals'}
+                dataId="used-signals-tab"
                 to="#"
                 onClick={(e) => {
                   e.preventDefault()
-                  setTab('usp')
+                  setTab('used-signals')
                 }}
               >
-                USP 2.0
+                <span className="max-w-[200px] truncate">
+                  Used APIs
+                </span>
               </DaTabItem>
-            )}
-            {hasV2C && (
               <DaTabItem
-                active={tab === 'v2c'}
+                active={tab === 'all-signals'}
+                dataId="all-signals-tab"
                 to="#"
                 onClick={(e) => {
                   e.preventDefault()
-                  setTab('v2c')
+                  setTab('all-signals')
                 }}
               >
-                V2C
+                <span className="max-w-[200px] truncate">
+                  COVESA Signals
+                </span>
               </DaTabItem>
-            )}
-            {/* CustomApiSet tabs */}
-            {customApiSetIds.map((setId) => {
-              const tabId = `custom-api-set-${setId}`
-              return (
-                <CustomApiSetTab
-                  key={setId}
-                  setId={setId}
-                  active={tab === tabId}
+              {/* USP and V2C tabs (for backward compatibility) */}
+              {hasUSP && (
+                <DaTabItem
+                  active={tab === 'usp'}
+                  to="#"
                   onClick={(e) => {
                     e.preventDefault()
-                    setTab(tabId)
-                    setSelectedCustomApiItemId(null) // Reset selection when switching tabs
+                    setTab('usp')
                   }}
-                />
-              )
-            })}
-          </div>
-        </>
-      </div>
-
-      {tab === 'used-signals' && (
-        <>
-          <div className="flex flex-col w-full h-full px-4 overflow-y-auto">
-            <div className="flex flex-col w-full min-w-fit mt-2">
-              {/* COVESA APIs */}
-              <span className="text-sm font-semibold">COVESA:</span>
-              {useApis &&
-                useApis.map((item: any, index: any) => (
-                  <DaApiListItem
-                    key={index}
-                    api={item}
-                    onClick={() => {
-                      onApiClicked(item)
+                >
+                  <span className="max-w-[200px] truncate">
+                    USP 2.0
+                  </span>
+                </DaTabItem>
+              )}
+              {hasV2C && (
+                <DaTabItem
+                  active={tab === 'v2c'}
+                  to="#"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    setTab('v2c')
+                  }}
+                >
+                  <span className="max-w-[200px] truncate">
+                    V2C
+                  </span>
+                </DaTabItem>
+              )}
+              {/* CustomApiSet tabs */}
+              {customApiSetIds.map((setId) => {
+                const tabId = `custom-api-set-${setId}`
+                return (
+                  <CustomApiSetTab
+                    key={setId}
+                    setId={setId}
+                    active={tab === tabId}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      setTab(tabId)
+                      setSelectedCustomApiItemId(null) // Reset selection when switching tabs
                     }}
                   />
-                ))}
-              
-              {/* CustomApiSet sections */}
-              {Array.from(usedCustomApiItems.entries()).map(([setId, items]) => {
-                const set = customApiSetQueries.data?.find((s) => s.id === setId)
-                const setName = set?.name || setId
-                
-                return (
-                  <React.Fragment key={setId}>
-                    <div className='mt-4'></div>
-                    <span className="text-sm font-semibold">{setName}:</span>
-                    {items.map((item: any, index: number) => (
-                      <div
-                        key={`${setId}-${item.id}-${index}`}
-                        className="flex items-center py-1 px-2 hover:bg-muted rounded cursor-pointer"
-                        onClick={() => {
-                          setTab(`custom-api-set-${setId}`)
-                          setSelectedCustomApiItemId(item.id)
-                        }}
-                      >
-                        <span className="text-sm">{item.id || item.path || 'Unknown API'}</span>
-                      </div>
-                    ))}
-                  </React.Fragment>
                 )
               })}
             </div>
+            <button
+              onClick={toggleCollapse}
+              title="Collapse Panel"
+              className="p-1.5 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors ml-2 shrink-0"
+            >
+              <VscChevronRight size={16} />
+            </button>
           </div>
-        </>
-      )}
 
-      {tab === 'all-signals' && (
-        <div className="flex w-full overflow-hidden">
-          <ModelApiList onApiClick={onApiClicked} readOnly={true} />
-        </div>
-      )}
-
-      {tab === 'usp' && (
-        <div className="w-full">
-          <div className="w-full h-[240px] overflow-y-auto">
-            <UspSeviceList
-              services={activeModelUspSevices || []}
-              onServiceSelected={setActiveService}
-              activeService={activeService}
-            />
-          </div>
-          <div className="w-full h-[calc(100vh-460px)] overflow-y-auto">
-            {activeService && (
-              <ServiceDetail
-                service={activeService}
-                hideImage={true}
-                hideTitle={true}
-              />
-            )}
-          </div>
-        </div>
-      )}
-
-      {tab === 'v2c' && (
-        <div className="w-full">
-          <div className="w-full h-[240px] overflow-y-auto">
-            <V2CApiList
-              apis={DEFAULT_V2C}
-              activeApi={activeV2CApi}
-              onApiSelected={setActiveV2CApi}
-            />
-          </div>
-          <div className="w-full h-[calc(100vh-460px)] overflow-y-auto">
-            <ApiDetail api={activeV2CApi} />
-          </div>
-        </div>
-      )}
-
-      {/* CustomApiSet tab - 50/50 layout */}
-      {isCustomApiSetTab && (
-        <div className="w-full flex flex-col h-full min-h-0">
-          {isLoadingSet || isLoadingSchema ? (
-            <div className="flex items-center justify-center h-full">
-              <Spinner className="mr-2" />
-              <span className="text-sm font-medium text-muted-foreground">Loading API set...</span>
-            </div>
-          ) : !activeCustomApiSet || !activeCustomApiSchema ? (
-            <div className="flex items-center justify-center h-full">
-              <span className="text-sm font-medium text-muted-foreground">
-                Set or schema not found.
-              </span>
-            </div>
-          ) : (
+          {tab === 'used-signals' && (
             <>
-              {/* Top 50%: API List */}
-              <div className="w-full h-1/2 flex flex-col min-h-0 border-b border-border">
-                <CustomAPIList
-                  key={activeCustomApiSetId}
-                  items={customApiItems}
-                  selectedItemId={selectedCustomApiItemId}
-                  onSelectItem={setSelectedCustomApiItemId}
-                  schema={activeCustomApiSchema}
-                  mode="view"
-                  filterOptions={{
-                    typeField: 'method',
-                    typeOptions: getMethodOptions(),
-                  }}
-                  footerImage={activeCustomApiSet?.avatar}
-                  providerUrl={activeCustomApiSet?.provider_url}
-                />
-              </div>
-              
-              {/* Bottom 50%: API Detail View */}
-              <div className="w-full h-1/2 flex flex-col min-h-0">
-                {selectedCustomApiItem ? (
-                  <CustomAPIView
-                    item={selectedCustomApiItem}
-                    schema={activeCustomApiSchema.schema}
-                    itemId={selectedCustomApiItem.id}
-                    excludeFields={['id', 'path', 'parent_id', 'relationships']}
-                  />
-                ) : (
-                  <div className="text-center py-12 text-sm text-muted-foreground">
-                    Select an API from the list to view details.
-                  </div>
-                )}
+              <div className="flex flex-col w-full flex-1 min-h-0 px-4 overflow-y-auto">
+                <div className="flex flex-col w-full min-w-fit mt-2">
+                  {/* COVESA APIs */}
+                  <span className="text-sm font-semibold">COVESA:</span>
+                  {useApis &&
+                    useApis.map((item: any, index: any) => (
+                      <DaApiListItem
+                        key={index}
+                        api={item}
+                        onClick={() => {
+                          onApiClicked(item)
+                        }}
+                      />
+                    ))}
+                  
+                  {/* CustomApiSet sections */}
+                  {Array.from(usedCustomApiItems.entries()).map(([setId, items]) => {
+                    const set = customApiSetQueries.data?.find((s) => s.id === setId)
+                    const setName = set?.name || setId
+                    
+                    return (
+                      <React.Fragment key={setId}>
+                        <div className='mt-4'></div>
+                        <span className="text-sm font-semibold">{setName}:</span>
+                        {items.map((item: any, index: number) => (
+                          <div
+                            key={`${setId}-${item.id}-${index}`}
+                            className="flex items-center py-1 px-2 hover:bg-muted rounded cursor-pointer"
+                            onClick={() => {
+                              setTab(`custom-api-set-${setId}`)
+                              setSelectedCustomApiItemId(item.id)
+                            }}
+                          >
+                            <span className="text-sm">{item.id || item.path || 'Unknown API'}</span>
+                          </div>
+                        ))}
+                      </React.Fragment>
+                    )
+                  })}
+                </div>
               </div>
             </>
           )}
-        </div>
+
+          {tab === 'all-signals' && (
+            <div className="flex w-full flex-1 min-h-0 overflow-hidden">
+              <ModelApiList onApiClick={onApiClicked} readOnly={true} />
+            </div>
+          )}
+
+          {tab === 'usp' && (
+            <div className="w-full flex-1 min-h-0 flex flex-col">
+              <div className="w-full h-[240px] shrink-0 overflow-y-auto">
+                <UspSeviceList
+                  services={activeModelUspSevices || []}
+                  onServiceSelected={setActiveService}
+                  activeService={activeService}
+                />
+              </div>
+              <div className="w-full flex-1 min-h-0 overflow-y-auto">
+                {activeService && (
+                  <ServiceDetail
+                    service={activeService}
+                    hideImage={true}
+                    hideTitle={true}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
+          {tab === 'v2c' && (
+            <div className="w-full flex-1 min-h-0 flex flex-col">
+              <div className="w-full h-[240px] shrink-0 overflow-y-auto">
+                <V2CApiList
+                  apis={DEFAULT_V2C}
+                  activeApi={activeV2CApi}
+                  onApiSelected={setActiveV2CApi}
+                />
+              </div>
+              <div className="w-full flex-1 min-h-0 overflow-y-auto">
+                <ApiDetail api={activeV2CApi} />
+              </div>
+            </div>
+          )}
+
+          {/* CustomApiSet tab - 50/50 layout */}
+          {isCustomApiSetTab && (
+            <div className="w-full flex flex-col flex-1 min-h-0">
+              {isLoadingSet || isLoadingSchema ? (
+                <div className="flex items-center justify-center h-full">
+                  <Spinner className="mr-2" />
+                  <span className="text-sm font-medium text-muted-foreground">Loading API set...</span>
+                </div>
+              ) : !activeCustomApiSet || !activeCustomApiSchema ? (
+                <div className="flex items-center justify-center h-full">
+                  <span className="text-sm font-medium text-muted-foreground">
+                    Set or schema not found.
+                  </span>
+                </div>
+              ) : (
+                <>
+                  {/* Top 50%: API List */}
+                  <div className="w-full h-1/2 flex flex-col min-h-0 border-b border-border shrink-0">
+                    <CustomAPIList
+                      key={activeCustomApiSetId}
+                      items={customApiItems}
+                      selectedItemId={selectedCustomApiItemId}
+                      onSelectItem={setSelectedCustomApiItemId}
+                      schema={activeCustomApiSchema}
+                      mode="view"
+                      filterOptions={{
+                        typeField: 'method',
+                        typeOptions: getMethodOptions(),
+                      }}
+                      footerImage={activeCustomApiSet?.avatar}
+                      providerUrl={activeCustomApiSet?.provider_url}
+                    />
+                  </div>
+                  
+                  {/* Bottom 50%: API Detail View */}
+                  <div className="w-full h-1/2 flex flex-col min-h-0 overflow-y-auto">
+                    {selectedCustomApiItem ? (
+                      <CustomAPIView
+                        item={selectedCustomApiItem}
+                        schema={activeCustomApiSchema.schema}
+                        itemId={selectedCustomApiItem.id}
+                        excludeFields={['id', 'path', 'parent_id', 'relationships']}
+                      />
+                    ) : (
+                      <div className="text-center py-12 text-sm text-muted-foreground">
+                        Select an API from the list to view details.
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   )
@@ -570,7 +616,9 @@ const CustomApiSetTab: FC<CustomApiSetTabProps> = ({ setId, active, onClick }) =
       to="#"
       onClick={onClick}
     >
-      {set?.name || 'Loading...'}
+      <span className="max-w-[200px] truncate">
+        {set?.name || 'Loading...'}
+      </span>
     </DaTabItem>
   )
 }

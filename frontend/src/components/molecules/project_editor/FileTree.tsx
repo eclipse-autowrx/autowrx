@@ -1857,22 +1857,22 @@ const FileTree: React.FC<FileTreeProps> = ({
                 </span>{' '}
                 already exists in this location. What would you like to do?
               </p>
-              <div className="space-y-3">
-                <button
-                  onClick={handleConflictReplace}
-                  className="w-full px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors"
-                >
-                  Replace Existing
-                </button>
+              <div className="flex flex-row justify-end gap-3">
                 <button
                   onClick={handleConflictKeepBoth}
-                  className="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
+                  className="px-2 py-2 bg-primary hover:bg-primary/90 text-white rounded-md transition-colors"
                 >
                   Keep Both (Rename)
                 </button>
                 <button
+                  onClick={handleConflictReplace}
+                  className="px-2 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors"
+                >
+                  Replace Existing
+                </button>
+                <button
                   onClick={() => setConflictDialog(null)}
-                  className="w-full px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md transition-colors"
+                  className="px-2 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md transition-colors"
                 >
                   Cancel
                 </button>
