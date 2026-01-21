@@ -40,6 +40,7 @@ import { useState, useEffect } from 'react'
 // import useLastAccessedModel from '@/hooks/useLastAccessedModel'
 import { useSiteConfig } from '@/utils/siteConfig'
 import { Button } from '../atoms/button'
+import { Wrench } from 'lucide-react'
 
 const SimpleSwitch = ({
   checked,
@@ -143,8 +144,9 @@ const NavigationBar = ({}) => {
           {isAuthorized && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-10 px-3">
+                <Button variant="ghost" >
                   {/* <TbMenu2 className="size-5" /> */}
+                  <Wrench />
                   Admin Tools
                 </Button>
               </DropdownMenuTrigger>

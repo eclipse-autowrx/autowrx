@@ -71,7 +71,7 @@ const HomeFeatureList = ({ items }: HomeFeatureListProps) => {
 
   return (
     <div className="container flex w-full flex-col justify-center">
-      <div className="grid w-full grid-cols-1 gap-1.52 lg:grid-cols-3">
+      <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-3">
         {items?.map((card, index) => (
           <div key={index} className="flex w-full items-center justify-center">
             <DaCardIntroBig
@@ -80,7 +80,7 @@ const HomeFeatureList = ({ items }: HomeFeatureListProps) => {
               content={card.description || ''}
             >
               {card.buttons && card.buttons.length > 0 && (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-4">
                   {card.buttons.map((button, btnIndex) => (
                     <Button
                       key={btnIndex}
