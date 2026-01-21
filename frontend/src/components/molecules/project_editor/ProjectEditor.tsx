@@ -32,12 +32,14 @@ interface ProjectEditorProps {
   data: string
   onChange: (data: string) => void
   onSave?: (data: string) => Promise<void>
+  prototypeName?: string
 }
 
 const ProjectEditor: React.FC<ProjectEditorProps> = ({
   data,
   onChange,
   onSave,
+  prototypeName,
 }) => {
   const [fsData, setFsData] = useState<FileSystemItem[]>(() => {
     try {
@@ -1389,22 +1391,80 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
   const handleExport = () => {
     const zip = new JSZip()
 
+    // Get the latest fsData with pending changes applied
+    let dataToExport = fsDataRef.current
+    const latestPendingChanges = pendingChangesRef.current
+
+    // Apply pending changes to the data before exporting
+    const applyPendingChanges = (
+      items: FileSystemItem[],
+      basePath: string = '',
+    ): FileSystemItem[] => {
+      return items.map((item) => {
+        if (item.type === 'file') {
+          const itemPath = basePath ? `${basePath}/${item.name}` : item.name
+          // If this file has pending changes, use the pending content
+          if (latestPendingChanges.has(itemPath)) {
+            return {
+              ...item,
+              content: latestPendingChanges.get(itemPath)!,
+            }
+          }
+          return item
+        } else if (item.type === 'folder') {
+          const folderPath = basePath ? `${basePath}/${item.name}` : item.name
+          return {
+            ...item,
+            items: applyPendingChanges(item.items, folderPath),
+          }
+        }
+        return item
+      })
+    }
+
+    // Apply all pending changes to get the most up-to-date content
+    const exportData = applyPendingChanges(dataToExport)
+
     const addFilesToZip = (items: FileSystemItem[], path: string) => {
       items.forEach((item) => {
         if (item.type === 'file') {
-          zip.file(path + item.name, item.content)
-        } else {
+          // Handle binary files (base64 encoded)
+          if (item.isBase64 && item.content) {
+            try {
+              const arrayBuffer = base64ToArrayBuffer(item.content)
+              zip.file(path + item.name, arrayBuffer, { binary: true })
+            } catch (error) {
+              console.error(`Error converting base64 for ${item.name}:`, error)
+              // Fallback to string content if conversion fails
+              zip.file(path + item.name, item.content)
+            }
+          } else {
+            // Regular text file
+            zip.file(path + item.name, item.content || '')
+          }
+        } else if (item.type === 'folder') {
           addFilesToZip(item.items, path + item.name + '/')
         }
       })
     }
 
-    addFilesToZip(fsData, '')
+    // Get root folder items - fsData is an array where first element is root folder
+    const rootFolder = exportData[0]
+    if (rootFolder && rootFolder.type === 'folder' && rootFolder.items) {
+      addFilesToZip(rootFolder.items, '')
+    }
+
+    const safeBase =
+      (prototypeName || 'project')
+        .trim()
+        .replace(/[\\/:*?"<>|]/g, '')  
+        .replace(/\s+/g, '_')          
+        .slice(0, 80) || 'project'
 
     zip.generateAsync({ type: 'blob' }).then((content) => {
       const link = document.createElement('a')
       link.href = URL.createObjectURL(content)
-      link.download = 'project.zip'
+      link.download = `${safeBase}.zip`  
       link.click()
     })
   }
@@ -1779,7 +1839,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
             <div className="flex justify-end space-x-3">
               <button
                 onClick={handleCloseConfirmSave}
-                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
+                className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-md transition-colors"
               >
                 Save
               </button>

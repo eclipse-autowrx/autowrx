@@ -143,8 +143,9 @@ const NavigationBar = ({}) => {
           {isAuthorized && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="size-10">
-                  <TbMenu2 className="size-5" />
+                <Button variant="ghost" className="h-10 px-3">
+                  {/* <TbMenu2 className="size-5" /> */}
+                  Admin Tools
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent

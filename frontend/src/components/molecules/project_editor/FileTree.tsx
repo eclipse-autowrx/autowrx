@@ -968,6 +968,28 @@ const FileTree: React.FC<FileTreeProps> = ({
     setOpenDropdown(null)
   }
 
+  const handleCopyPath = async (itemPath: string) => {
+    try {
+      await navigator.clipboard.writeText(itemPath)
+      setOpenDropdown(null)
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea')
+      textArea.value = itemPath
+      textArea.style.position = 'fixed'
+      textArea.style.left = '-999999px'
+      document.body.appendChild(textArea)
+      textArea.select()
+      try {
+        document.execCommand('copy')
+        setOpenDropdown(null)
+      } catch (err) {
+        console.error('Failed to copy path:', err)
+      }
+      document.body.removeChild(textArea)
+    }
+  }
+
   const handlePaste = (targetFolder: Folder) => {
     if (clipboard) {
       // Get the current folder state (items might be stale from dropdown)
@@ -1709,6 +1731,20 @@ const FileTree: React.FC<FileTreeProps> = ({
               Cut
             </button>
 
+            <div className="border-t border-gray-200 my-1"></div>
+
+            <button
+              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
+              onClick={() => {
+                if (openDropdown) {
+                  handleCopyPath(openDropdown.path)
+                }
+              }}
+            >
+              <VscCopy className="mr-2" size={14} />
+              Copy Path
+            </button>
+
             {clipboard && openDropdown?.item.type === 'folder' && (
               <button
                 className={`w-full px-3 py-2 text-left text-sm flex items-center ${openDropdown &&
@@ -1857,22 +1893,22 @@ const FileTree: React.FC<FileTreeProps> = ({
                 </span>{' '}
                 already exists in this location. What would you like to do?
               </p>
-              <div className="space-y-3">
-                <button
-                  onClick={handleConflictReplace}
-                  className="w-full px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors"
-                >
-                  Replace Existing
-                </button>
+              <div className="flex flex-row justify-end gap-3">
                 <button
                   onClick={handleConflictKeepBoth}
-                  className="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
+                  className="px-2 py-2 bg-primary hover:bg-primary/90 text-white rounded-md transition-colors"
                 >
                   Keep Both (Rename)
                 </button>
                 <button
+                  onClick={handleConflictReplace}
+                  className="px-2 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors"
+                >
+                  Replace Existing
+                </button>
+                <button
                   onClick={() => setConflictDialog(null)}
-                  className="w-full px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md transition-colors"
+                  className="px-2 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md transition-colors"
                 >
                   Cancel
                 </button>
