@@ -27,6 +27,7 @@ import {
   VscCloudDownload,
   VscCloudUpload,
 } from 'react-icons/vsc'
+import { ArrowRightFromLine, CopyMinus } from 'lucide-react'
 
 interface ProjectEditorProps {
   data: string
@@ -1714,10 +1715,17 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                 title="Expand Panel"
                 className="p-2 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors"
               >
-                <VscChevronRight size={20} />
+                <ArrowRightFromLine size={20} />
               </button>
             </div>
-            <div className="flex-1"></div>
+            <div className="flex-1 flex items-start justify-center pt-32">
+              <div 
+                className="text-2xl font-bold text-gray-700 tracking-wider"
+                style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
+              >
+                File Tree
+              </div>
+            </div>
           </div>
         ) : (
           // Expanded view - normal layout
@@ -1728,7 +1736,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                 title="Collapse Panel"
                 className="p-1.5 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors"
               >
-                <VscChevronLeft size={16} />
+                <CopyMinus size={16} />
               </button>
               <span className="grow pl-1 font-semibold text-sm tracking-wide text-gray-700 overflow-hidden text-ellipsis">
                 {projectName.toUpperCase()}

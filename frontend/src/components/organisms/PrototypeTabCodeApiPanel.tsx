@@ -25,6 +25,7 @@ import CustomAPIList from '@/components/organisms/CustomAPIList'
 import CustomAPIView from '@/components/organisms/CustomAPIView'
 import { Spinner } from '@/components/atoms/spinner'
 import { VscChevronLeft, VscChevronRight } from 'react-icons/vsc'
+import { ArrowLeftFromLine, CopyMinus } from 'lucide-react'
 
 interface ApiCodeBlockProps {
   content: string
@@ -72,9 +73,9 @@ const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
     if (activeApi) {
     }
   }, [activeApi])
-  
+
   const { textClass } = getApiTypeClasses(activeApi?.type || '')
-  
+
   return (
     <div className="flex flex-col">
       {activeApi && (
@@ -165,46 +166,46 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   >('used-signals')
   const [isCollapsed, setIsCollapsed] = useState(false)
   const { data: model } = useCurrentModel()
-  
+
   const toggleCollapse = () => {
     const newCollapsedState = !isCollapsed
     setIsCollapsed(newCollapsedState)
     onCollapsedChange?.(newCollapsedState)
   }
-  
+
   useEffect(() => {
     onCollapsedChange?.(isCollapsed)
   }, [isCollapsed, onCollapsedChange])
-  
+
   // Get CustomApiSet IDs from model
   const customApiSetIds = useMemo(() => {
     return (model?.custom_api_sets || []).map((id: any) => {
       if (typeof id === 'string') return id
       if (id && typeof id === 'object' && 'toString' in id) return id.toString()
       return String(id)
-    }).filter((id: any): id is string => 
+    }).filter((id: any): id is string =>
       !!id && typeof id === 'string' && id !== '[object Object]' && id !== 'undefined' && id !== 'null'
     )
   }, [model?.custom_api_sets])
-  
+
   // Determine if current tab is a CustomApiSet tab
   const isCustomApiSetTab = tab.startsWith('custom-api-set-')
   const activeCustomApiSetId = isCustomApiSetTab ? tab.replace('custom-api-set-', '') : null
-  
+
   // Fetch active CustomApiSet data
   const { data: activeCustomApiSet, isLoading: isLoadingSet } = useQuery({
     queryKey: ['custom-api-set', activeCustomApiSetId],
     queryFn: () => getCustomApiSetById(activeCustomApiSetId!),
     enabled: !!activeCustomApiSetId,
   })
-  
+
   // Extract custom_api_schema ID from set
   const customApiSchemaId = activeCustomApiSet?.custom_api_schema
     ? typeof activeCustomApiSet.custom_api_schema === 'string'
       ? activeCustomApiSet.custom_api_schema
       : (activeCustomApiSet.custom_api_schema as any).id || (activeCustomApiSet.custom_api_schema as any)._id || activeCustomApiSet.custom_api_schema
     : null
-  
+
   // Fetch CustomApiSchema schema
   const { data: activeCustomApiSchema, isLoading: isLoadingSchema } = useQuery({
     queryKey: ['custom-api-schema', customApiSchemaId],
@@ -214,27 +215,27 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
 
   // State for selected API item in CustomApiSet view
   const [selectedCustomApiItemId, setSelectedCustomApiItemId] = useState<string | null>(null)
-  
+
   const customApiItems = activeCustomApiSet?.data?.items || []
-  const selectedCustomApiItem = selectedCustomApiItemId 
-    ? customApiItems.find((item: any) => item.id === selectedCustomApiItemId) 
+  const selectedCustomApiItem = selectedCustomApiItemId
+    ? customApiItems.find((item: any) => item.id === selectedCustomApiItemId)
     : null
-  
+
   // Extract method options for filter
   const getMethodOptions = (): string[] => {
     if (!activeCustomApiSchema?.schema) return []
     try {
-      const schemaObj = typeof activeCustomApiSchema.schema === 'string' 
-        ? JSON.parse(activeCustomApiSchema.schema) 
+      const schemaObj = typeof activeCustomApiSchema.schema === 'string'
+        ? JSON.parse(activeCustomApiSchema.schema)
         : activeCustomApiSchema.schema
-      
+
       const itemSchema = schemaObj.type === 'array' ? schemaObj.items : schemaObj
       const methodProperty = itemSchema?.properties?.method
-      
+
       if (methodProperty?.enum) {
         return methodProperty.enum
       }
-      
+
       return []
     } catch {
       return []
@@ -246,7 +247,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
       state.activeModelUspSevices,
       state.activeModelV2CApis,
     ])
-  
+
   // Check if USP or V2C are available (for backward compatibility, but we'll prioritize CustomApiSets)
   const hasUSP = activeModelUspSevices && activeModelUspSevices.length > 0
   const hasV2C = activeModelV2CApis && activeModelV2CApis.length > 0
@@ -268,7 +269,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   const [popupApi, setPopupApi] = useState<boolean>(false)
   const [activeService, setActiveService] = useState<any>(null)
   const [activeV2CApi, setActiveV2CApi] = useState<any>(null)
-  
+
   useEffect(() => {
     if (!code || !activeModelApis || activeModelApis.length === 0) {
       setUseApis([])
@@ -303,11 +304,11 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
     }
 
     const usedItemsMap = new Map<string, any[]>()
-    
+
     customApiSetQueries.data.forEach((set) => {
       const items = set?.data?.items || []
       const usedItems: any[] = []
-      
+
       items.forEach((item: any) => {
         // Check if code contains the API ID or path
         if (item.id && code.includes(item.id)) {
@@ -316,12 +317,12 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
           usedItems.push(item)
         }
       })
-      
+
       if (usedItems.length > 0) {
         usedItemsMap.set(set.id, usedItems)
       }
     })
-    
+
     setUsedCustomApiItems(usedItemsMap)
   }, [code, customApiSetQueries.data])
 
@@ -351,21 +352,28 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
       {isCollapsed ? (
         // Collapsed view - thin column with just expand button
         <div className="flex flex-col h-full transition-all duration-200 ease-in-out">
-          <div className="flex items-center justify-center py-2 border-b border-gray-200 bg-gray-100">
+          <div className="flex items-center justify-center py-1.5 border-b border-gray-200 bg-gray-100">
             <button
               onClick={toggleCollapse}
               title="Expand Panel"
-              className="p-2 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors"
+              className="p-1.5 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors"
             >
-              <VscChevronLeft size={20} />
+              <ArrowLeftFromLine size={16} />
             </button>
           </div>
-          <div className="flex-1"></div>
+          <div className="flex-1 flex items-start justify-center pt-48">
+            <div 
+              className="text-2xl font-bold text-gray-700 tracking-wider"
+              style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
+            >
+              API Panel
+            </div>
+          </div>
         </div>
       ) : (
         // Expanded view - normal layout
         <>
-          <div className="flex items-center border-b mx-3 mt-2 shrink-0 relative">
+          <div className="flex items-center border-b mt-2 shrink-0 relative select-none">
             <div className="flex overflow-x-auto scrollbar-thin flex-1 min-w-0">
               <DaTabItem
                 active={tab === 'used-signals'}
@@ -442,9 +450,9 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
             <button
               onClick={toggleCollapse}
               title="Collapse Panel"
-              className="p-1.5 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors ml-2 shrink-0"
+              className="p-1.5 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors shrink-0"
             >
-              <VscChevronRight size={16} />
+              <CopyMinus size={16} />
             </button>
           </div>
 
@@ -464,12 +472,12 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
                         }}
                       />
                     ))}
-                  
+
                   {/* CustomApiSet sections */}
                   {Array.from(usedCustomApiItems.entries()).map(([setId, items]) => {
                     const set = customApiSetQueries.data?.find((s) => s.id === setId)
                     const setName = set?.name || setId
-                    
+
                     return (
                       <React.Fragment key={setId}>
                         <div className='mt-4'></div>
@@ -569,7 +577,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
                       providerUrl={activeCustomApiSet?.provider_url}
                     />
                   </div>
-                  
+
                   {/* Bottom 50%: API Detail View */}
                   <div className="w-full h-1/2 flex flex-col min-h-0 overflow-y-auto">
                     {selectedCustomApiItem ? (
@@ -609,7 +617,7 @@ const CustomApiSetTab: FC<CustomApiSetTabProps> = ({ setId, active, onClick }) =
     enabled: !!setId,
     staleTime: Infinity, // Set names don't change often
   })
-  
+
   return (
     <DaTabItem
       active={active}
