@@ -76,6 +76,10 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     itemPath: string
     itemName: string
   } | null>(null)
+  const [importConfirmDialog, setImportConfirmDialog] = useState<boolean>(false)
+  const [errorDialog, setErrorDialog] = useState<{
+    message: string
+  } | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const resizeRef = useRef<HTMLDivElement>(null)
@@ -1041,7 +1045,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
       )
       if (existingFile) {
         // File already exists, show error
-        alert(`A file named "${item.name}" already exists in this location.`)
+        setErrorDialog({ message: `A file named "${item.name}" already exists in this location.` })
         return targetFolder
       }
       return {
@@ -1066,7 +1070,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
             (i) => i.type === 'file' && i.name.toLowerCase() === childItem.name.toLowerCase()
           )
           if (existingChildFile) {
-            alert(`A file named "${childItem.name}" already exists in "${existingFolder.name}".`)
+            setErrorDialog({ message: `A file named "${childItem.name}" already exists in "${existingFolder.name}".` })
             continue // Skip this file
           }
         }
@@ -1129,7 +1133,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
           for (const part of parts) {
             const partValidation = validateFileName(part)
             if (!partValidation.valid) {
-              alert(`Invalid name in path: ${partValidation.error}`)
+              setErrorDialog({ message: `Invalid name in path: ${partValidation.error}` })
               return
             }
           }
@@ -1254,15 +1258,15 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
           // Simple name - validate normally
           const validation = validateFileName(name)
           if (!validation.valid) {
-            alert(validation.error)
+            setErrorDialog({ message: validation.error || 'Invalid name' })
             return
           }
 
           // Check for duplicates
           if (root.items.some((item) => item.name === name)) {
-            alert(
-              `${creatingAtRoot.type} with name "${name}" already exists at the root.`,
-            )
+            setErrorDialog({
+              message: `${creatingAtRoot.type} with name "${name}" already exists at the root.`,
+            })
             return
           }
 
@@ -1623,17 +1627,20 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
   }
 
   const triggerImport = () => {
-    if (
-      window.confirm(
-        'Are you sure you want to import a new project? This will replace the current project and any unsaved changes will be lost.',
-      )
-    ) {
-      const input = document.createElement('input')
-      input.type = 'file'
-      input.accept = '.zip'
-      input.onchange = (e) => handleImport(e as any)
-      input.click()
-    }
+    setImportConfirmDialog(true)
+  }
+
+  const handleImportConfirm = () => {
+    setImportConfirmDialog(false)
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.zip'
+    input.onchange = (e) => handleImport(e as any)
+    input.click()
+  }
+
+  const handleImportCancel = () => {
+    setImportConfirmDialog(false)
   }
 
   const root = fsData[0]
@@ -1886,6 +1893,50 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                 className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md transition-colors"
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import confirmation dialog */}
+      {importConfirmDialog && (
+        <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
+            <h2 className="text-lg font-semibold mb-2">Import Project</h2>
+            <p className="text-gray-600 mb-4">
+              Are you sure you want to import a new project? This will replace the current project and any unsaved changes will be lost.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={handleImportConfirm}
+                className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-md transition-colors"
+              >
+                Import
+              </button>
+              <button
+                onClick={handleImportCancel}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error dialog */}
+      {errorDialog && (
+        <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
+            <h2 className="text-lg font-semibold mb-2 text-red-600">Error</h2>
+            <p className="text-gray-600 mb-4">{errorDialog.message}</p>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setErrorDialog(null)}
+                className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-md transition-colors"
+              >
+                OK
               </button>
             </div>
           </div>

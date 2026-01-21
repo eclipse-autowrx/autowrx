@@ -116,6 +116,9 @@ const FileTree: React.FC<FileTreeProps> = ({
     folder: Folder
     path: string
   } | null>(null)
+  const [errorDialog, setErrorDialog] = useState<{
+    message: string
+  } | null>(null)
   const [conflictDialog, setConflictDialog] = useState<{
     sourceItem: FileSystemItem
     sourcePath: string
@@ -826,7 +829,7 @@ const FileTree: React.FC<FileTreeProps> = ({
       // Validate name
       const validation = validateFileName(trimmedName)
       if (!validation.valid) {
-        alert(validation.error)
+        setErrorDialog({ message: validation.error || 'Invalid name' })
         return
       }
 
@@ -843,7 +846,7 @@ const FileTree: React.FC<FileTreeProps> = ({
         )
 
         if (nameExists) {
-          alert(`A file or folder named "${trimmedName}" already exists in this location.`)
+          setErrorDialog({ message: `A file or folder named "${trimmedName}" already exists in this location.` })
           return
         }
       }
@@ -894,7 +897,7 @@ const FileTree: React.FC<FileTreeProps> = ({
         for (const part of parts) {
           const partValidation = validateFileName(part)
           if (!partValidation.valid) {
-            alert(`Invalid name in path: ${partValidation.error}`)
+            setErrorDialog({ message: `Invalid name in path: ${partValidation.error}` })
             return
           }
         }
@@ -934,7 +937,7 @@ const FileTree: React.FC<FileTreeProps> = ({
         // Simple name - validate and create normally
         const validation = validateFileName(trimmedName)
         if (!validation.valid) {
-          alert(validation.error)
+          setErrorDialog({ message: validation.error || 'Invalid name' })
           return
         }
 
@@ -1911,6 +1914,26 @@ const FileTree: React.FC<FileTreeProps> = ({
                   className="px-2 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md transition-colors"
                 >
                   Cancel
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      {/* Error dialog */}
+      {errorDialog &&
+        createPortal(
+          <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
+              <h2 className="text-lg font-semibold mb-2 text-red-600">Error</h2>
+              <p className="text-gray-600 mb-4">{errorDialog.message}</p>
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setErrorDialog(null)}
+                  className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-md transition-colors"
+                >
+                  OK
                 </button>
               </div>
             </div>
