@@ -103,3 +103,5 @@ temp/
 
 # Binary model files (to avoid line ending issues)
 backend/static/builtin-widgets/3d-car/models/acme_lite.glb
+
+plans/
