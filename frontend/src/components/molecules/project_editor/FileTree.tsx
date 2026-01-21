@@ -968,6 +968,28 @@ const FileTree: React.FC<FileTreeProps> = ({
     setOpenDropdown(null)
   }
 
+  const handleCopyPath = async (itemPath: string) => {
+    try {
+      await navigator.clipboard.writeText(itemPath)
+      setOpenDropdown(null)
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea')
+      textArea.value = itemPath
+      textArea.style.position = 'fixed'
+      textArea.style.left = '-999999px'
+      document.body.appendChild(textArea)
+      textArea.select()
+      try {
+        document.execCommand('copy')
+        setOpenDropdown(null)
+      } catch (err) {
+        console.error('Failed to copy path:', err)
+      }
+      document.body.removeChild(textArea)
+    }
+  }
+
   const handlePaste = (targetFolder: Folder) => {
     if (clipboard) {
       // Get the current folder state (items might be stale from dropdown)
@@ -1707,6 +1729,20 @@ const FileTree: React.FC<FileTreeProps> = ({
             >
               <VscClippy className="mr-2" size={14} />
               Cut
+            </button>
+
+            <div className="border-t border-gray-200 my-1"></div>
+
+            <button
+              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
+              onClick={() => {
+                if (openDropdown) {
+                  handleCopyPath(openDropdown.path)
+                }
+              }}
+            >
+              <VscCopy className="mr-2" size={14} />
+              Copy Path
             </button>
 
             {clipboard && openDropdown?.item.type === 'folder' && (

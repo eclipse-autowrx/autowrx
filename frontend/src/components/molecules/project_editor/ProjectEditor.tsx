@@ -1391,14 +1391,67 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
   const handleExport = () => {
     const zip = new JSZip()
 
+    // Get the latest fsData with pending changes applied
+    let dataToExport = fsDataRef.current
+    const latestPendingChanges = pendingChangesRef.current
+
+    // Apply pending changes to the data before exporting
+    const applyPendingChanges = (
+      items: FileSystemItem[],
+      basePath: string = '',
+    ): FileSystemItem[] => {
+      return items.map((item) => {
+        if (item.type === 'file') {
+          const itemPath = basePath ? `${basePath}/${item.name}` : item.name
+          // If this file has pending changes, use the pending content
+          if (latestPendingChanges.has(itemPath)) {
+            return {
+              ...item,
+              content: latestPendingChanges.get(itemPath)!,
+            }
+          }
+          return item
+        } else if (item.type === 'folder') {
+          const folderPath = basePath ? `${basePath}/${item.name}` : item.name
+          return {
+            ...item,
+            items: applyPendingChanges(item.items, folderPath),
+          }
+        }
+        return item
+      })
+    }
+
+    // Apply all pending changes to get the most up-to-date content
+    const exportData = applyPendingChanges(dataToExport)
+
     const addFilesToZip = (items: FileSystemItem[], path: string) => {
       items.forEach((item) => {
         if (item.type === 'file') {
-          zip.file(path + item.name, item.content)
-        } else {
+          // Handle binary files (base64 encoded)
+          if (item.isBase64 && item.content) {
+            try {
+              const arrayBuffer = base64ToArrayBuffer(item.content)
+              zip.file(path + item.name, arrayBuffer, { binary: true })
+            } catch (error) {
+              console.error(`Error converting base64 for ${item.name}:`, error)
+              // Fallback to string content if conversion fails
+              zip.file(path + item.name, item.content)
+            }
+          } else {
+            // Regular text file
+            zip.file(path + item.name, item.content || '')
+          }
+        } else if (item.type === 'folder') {
           addFilesToZip(item.items, path + item.name + '/')
         }
       })
+    }
+
+    // Get root folder items - fsData is an array where first element is root folder
+    const rootFolder = exportData[0]
+    if (rootFolder && rootFolder.type === 'folder' && rootFolder.items) {
+      addFilesToZip(rootFolder.items, '')
     }
 
     const safeBase =
