@@ -1482,51 +1482,103 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     const reader = new FileReader()
     reader.onload = (event) => {
       const zip = new JSZip()
-      zip.loadAsync(event.target?.result as ArrayBuffer).then((zip) => {
-        const fileSystem: FileSystemItem[] = []
-        const folders: { [key: string]: Folder } = {}
+      zip.loadAsync(event.target?.result as ArrayBuffer)
+        .then((zip) => {
+          const folders: { [key: string]: Folder } = {}
 
-        const getOrCreateFolder = (path: string): Folder => {
-          if (folders[path]) {
-            return folders[path]
+          const getOrCreateFolder = (path: string): Folder => {
+            if (folders[path]) {
+              return folders[path]
+            }
+
+            const parts = path.split('/')
+            const folderName = parts.pop() || ''
+            const parentPath = parts.join('/')
+            const parentFolder = getOrCreateFolder(parentPath)
+
+            const newFolder: Folder = {
+              type: 'folder',
+              name: folderName,
+              items: [],
+            }
+
+            parentFolder.items.push(newFolder)
+            folders[path] = newFolder
+            return newFolder
           }
 
-          const parts = path.split('/')
-          const folderName = parts.pop() || ''
-          const parentPath = parts.join('/')
-          const parentFolder = getOrCreateFolder(parentPath)
+          const root: Folder = { type: 'folder', name: 'root', items: [] }
+          folders[''] = root
 
-          const newFolder: Folder = {
-            type: 'folder',
-            name: folderName,
-            items: [],
-          }
+          const promises = Object.values(zip.files).map(async (zipEntry) => {
+            const path = zipEntry.name
+            const parts = path.split('/').filter((p) => p)
+            if (zipEntry.dir) {
+              getOrCreateFolder(path.slice(0, -1))
+            } else {
+              const fileName = parts.pop() || ''
+              const folderPath = parts.join('/')
+              const folder = getOrCreateFolder(folderPath)
+              
+              // Handle binary files
+              const isBin = isBinaryFile(fileName)
+              if (isBin) {
+                try {
+                  const arrayBuffer = await zipEntry.async('arraybuffer')
+                  if (arrayBuffer.byteLength > 500 * 1024) {
+                    console.warn(
+                      `File ${fileName} is larger than 500kb and will be ignored.`,
+                    )
+                    return
+                  }
+                  const base64Content = arrayBufferToBase64(arrayBuffer)
+                  folder.items.push({
+                    type: 'file',
+                    name: fileName,
+                    content: base64Content,
+                    isBase64: true,
+                  })
+                } catch (error) {
+                  console.error(`Error reading binary file ${fileName}:`, error)
+                }
+              } else {
+                try {
+                  const content = await zipEntry.async('string')
+                  folder.items.push({ type: 'file', name: fileName, content })
+                } catch (error) {
+                  console.error(`Error reading file ${fileName}:`, error)
+                }
+              }
+            }
+          })
 
-          parentFolder.items.push(newFolder)
-          folders[path] = newFolder
-          return newFolder
-        }
-
-        const root: Folder = { type: 'folder', name: 'root', items: [] }
-        folders[''] = root
-
-        const promises = Object.values(zip.files).map(async (zipEntry) => {
-          const path = zipEntry.name
-          const parts = path.split('/').filter((p) => p)
-          if (zipEntry.dir) {
-            getOrCreateFolder(path.slice(0, -1))
-          } else {
-            const fileName = parts.pop() || ''
-            const folderPath = parts.join('/')
-            const folder = getOrCreateFolder(folderPath)
-            const content = await zipEntry.async('string')
-            folder.items.push({ type: 'file', name: fileName, content })
-          }
+          Promise.all(promises)
+            .then(() => {
+              // Fix: Set fsData to [root] instead of root.items
+              setFsData([root])
+              // Clear open files and active file when importing
+              setOpenFiles([])
+              setActiveFile(null)
+              setUnsavedFiles(new Set())
+              setPendingChanges(new Map())
+            })
+            .catch((error) => {
+              console.error('Error processing zip file:', error)
+              setErrorDialog({
+                message: 'Failed to import project. Please check if the file is a valid ZIP archive.',
+              })
+            })
         })
-
-        Promise.all(promises).then(() => {
-          setFsData(root.items)
+        .catch((error) => {
+          console.error('Error loading zip file:', error)
+          setErrorDialog({
+            message: 'Failed to load ZIP file. Please check if the file is a valid ZIP archive.',
+          })
         })
+    }
+    reader.onerror = () => {
+      setErrorDialog({
+        message: 'Failed to read file. Please try again.',
       })
     }
     reader.readAsArrayBuffer(file)
