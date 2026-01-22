@@ -1791,6 +1791,7 @@ const FileTree: React.FC<FileTreeProps> = ({
                 onClick={() => {
                   if (openDropdown && openDropdown.item.type === 'folder') {
                     onUploadFile(openDropdown.item as Folder)
+                    setOpenDropdown(null)
                   }
                 }}
               >

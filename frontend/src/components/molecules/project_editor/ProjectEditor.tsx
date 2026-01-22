@@ -1622,9 +1622,11 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
             return
           }
           const base64Content = arrayBufferToBase64(content)
+          const currentTarget = getCurrentTargetFolder(target)
+          const uniqueFileName = findUniqueFileName(file.name, currentTarget)
           const newItem: File = {
             type: 'file',
-            name: file.name,
+            name: uniqueFileName,
             content: base64Content,
             isBase64: true,
           }
@@ -1652,7 +1654,9 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
           }
         } else {
           const content = event.target?.result as string
-          const newItem: File = { type: 'file', name: file.name, content }
+          const currentTarget = getCurrentTargetFolder(target)
+          const uniqueFileName = findUniqueFileName(file.name, currentTarget)
+          const newItem: File = { type: 'file', name: uniqueFileName, content }
 
           // Handle root folder case
           if (target.name === 'root') {
@@ -1690,6 +1694,70 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
 
   const triggerImport = () => {
     setImportConfirmDialog(true)
+  }
+
+  const findUniqueFileName = (baseName: string, targetFolder: Folder): string => {
+    const existingNames = new Set(
+      targetFolder.items.map((item) => item.name.toLowerCase())
+    )
+
+    if (!existingNames.has(baseName.toLowerCase())) {
+      return baseName
+    }
+
+    // Parse the base name and extension
+    const lastDotIndex = baseName.lastIndexOf('.')
+    let nameWithoutExt = baseName
+    let ext = ''
+
+    if (lastDotIndex > 0) {
+      nameWithoutExt = baseName.substring(0, lastDotIndex)
+      ext = baseName.substring(lastDotIndex)
+    }
+
+    // Find the next available number
+    let counter = 1
+    let newName = `${nameWithoutExt}-${counter}${ext}`
+
+    while (existingNames.has(newName.toLowerCase())) {
+      counter++
+      newName = `${nameWithoutExt}-${counter}${ext}`
+    }
+
+    return newName
+  }
+
+  // Helper function to get current target folder state
+  const getCurrentTargetFolder = (target: Folder): Folder => {
+    if (target.name === 'root') {
+      const rootFolder = fsDataRef.current[0]
+      if (rootFolder && rootFolder.type === 'folder') {
+        return rootFolder
+      }
+      return { type: 'folder', name: 'root', items: [] }
+    }
+
+    // Find folder by path
+    const findFolderByPath = (
+      targetPath: string,
+      items: FileSystemItem[],
+    ): Folder | null => {
+      for (const item of items) {
+        if (item.type === 'folder') {
+          const itemPath = item.path || item.name
+          if (itemPath === targetPath) {
+            return item
+          }
+          const found = findFolderByPath(targetPath, item.items)
+          if (found) return found
+        }
+      }
+      return null
+    }
+
+    const targetPath = target.path || target.name
+    const found = findFolderByPath(targetPath, fsDataRef.current)
+    return found || target
   }
 
   const handleImportConfirm = () => {
