@@ -205,7 +205,7 @@ const FileTree: React.FC<FileTreeProps> = ({
   // Find folder by path in the items tree
   const findFolderByPath = (targetPath: string): Folder | null => {
     if (targetPath === 'root' || targetPath === '') {
-      return { type: 'folder', name: 'root', items: items }
+      return { type: 'folder', name: 'root', items: items, path: 'root' }
     }
 
     const findInItems = (
@@ -216,7 +216,7 @@ const FileTree: React.FC<FileTreeProps> = ({
         const itemPath = currentPath ? `${currentPath}/${item.name}` : item.name
 
         if (item.type === 'folder' && itemPath === targetPath) {
-          return item
+          return { ...item, path: itemPath }
         }
 
         if (item.type === 'folder') {
@@ -1554,9 +1554,14 @@ const FileTree: React.FC<FileTreeProps> = ({
 
           {isExpanded && (
             <div>
-              {sortItems(item.items).map((childItem) =>
-                renderItem(childItem, depth + 1, itemPath),
-              )}
+              {sortItems(item.items).map((childItem) => {
+                const childPath = itemPath ? `${itemPath}/${childItem.name}` : childItem.name
+                return (
+                  <React.Fragment key={childPath}>
+                    {renderItem(childItem, depth + 1, itemPath)}
+                  </React.Fragment>
+                )
+              })}
             </div>
           )}
         </div>
@@ -1606,7 +1611,11 @@ const FileTree: React.FC<FileTreeProps> = ({
           handleDrop(e, { type: 'folder', name: 'root', items: items })
         }
       >
-        {sortItems(items).map((item) => renderItem(item))}
+        {sortItems(items).map((item) => (
+          <React.Fragment key={item.name}>
+            {renderItem(item)}
+          </React.Fragment>
+        ))}
 
         {/* Root level creation input */}
         {creatingItem && creatingItem.parentPath === 'root' && (

@@ -1333,6 +1333,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
   }
 
   const handleAddItem = (parent: Folder, item: FileSystemItem) => {
+    console.log('handleAddItem: Adding item to parent', { parent, item })
     setFsData((prevFsData) => {
       // Case add to root
       if (parent.name === 'root' || parent.path === 'root' || !parent.path) {
@@ -1350,10 +1351,18 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
       ): FileSystemItem[] => {
         return items.map((i) => {
           const itemPath = currentPath ? `${currentPath}/${i.name}` : i.name
-          if (
-            (i.name === parent.name || (!i.path && parent.path === 'root')) &&
-            i.type === 'folder'
-          ) {
+
+          const normalizedItemPath = itemPath.startsWith('root/')
+            ? itemPath.substring(5)  
+            : itemPath
+
+          const isTargetFolder = i.type === 'folder' && (
+            normalizedItemPath === parent.path ||  
+            (parent.path === 'root' && currentPath === '') ||  
+            (!parent.path && normalizedItemPath === parent.name && currentPath === '')  
+          )
+
+          if (isTargetFolder) {
             // Check for duplicates to prevent race condition re-additions
             const existingItem = i.items.find((existing) => {
               const existingPath = itemPath
@@ -1462,14 +1471,14 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     const safeBase =
       (prototypeName || 'project')
         .trim()
-        .replace(/[\\/:*?"<>|]/g, '')  
-        .replace(/\s+/g, '_')          
+        .replace(/[\\/:*?"<>|]/g, '')
+        .replace(/\s+/g, '_')
         .slice(0, 80) || 'project'
 
     zip.generateAsync({ type: 'blob' }).then((content) => {
       const link = document.createElement('a')
       link.href = URL.createObjectURL(content)
-      link.download = `${safeBase}.zip`  
+      link.download = `${safeBase}.zip`
       link.click()
     })
   }
@@ -1520,7 +1529,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
               const fileName = parts.pop() || ''
               const folderPath = parts.join('/')
               const folder = getOrCreateFolder(folderPath)
-              
+
               // Handle binary files
               const isBin = isBinaryFile(fileName)
               if (isBin) {
@@ -1719,7 +1728,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
               </button>
             </div>
             <div className="flex-1 flex items-start justify-center pt-32">
-              <div 
+              <div
                 className="text-2xl font-bold text-gray-700 tracking-wider"
                 style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
               >
