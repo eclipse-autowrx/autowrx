@@ -957,6 +957,17 @@ const FileTree: React.FC<FileTreeProps> = ({
         }
 
         onAddItem(parentFolder, newItem)
+
+        // Expand parent folder so the newly created item is visible
+        const parentPath = creatingItem.parentPath === 'root' || creatingItem.parentPath === '' ? '' : creatingItem.parentPath
+        if (parentPath) {
+          setExpandedFolders((prev) => {
+            if (!prev.includes(parentPath)) {
+              return [...prev, parentPath]
+            }
+            return prev
+          })
+        }
       }
     }
     setCreatingItem(null)
