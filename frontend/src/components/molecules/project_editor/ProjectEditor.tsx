@@ -1713,9 +1713,9 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
               <button
                 onClick={toggleCollapse}
                 title="Expand Panel"
-                className="p-2 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors"
+                className="p-1.5 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors"
               >
-                <ArrowRightFromLine size={20} />
+                <ArrowRightFromLine size={16} />
               </button>
             </div>
             <div className="flex-1 flex items-start justify-center pt-32">

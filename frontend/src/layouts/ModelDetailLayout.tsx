@@ -25,7 +25,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/atoms/dropdown-menu'
 import { Dialog, DialogContent } from '@/components/atoms/dialog'
-import { TbPlus, TbDotsVertical } from 'react-icons/tb'
+import { TbPlus, TbDotsVertical, TbSettings } from 'react-icons/tb'
 import AddonSelect from '@/components/molecules/AddonSelect'
 import CustomModelTabs from '@/components/molecules/CustomModelTabs'
 import CustomTabEditor, { TabConfig } from '@/components/organisms/CustomTabEditor'
@@ -280,6 +280,7 @@ const ModelDetailLayout = () => {
               <DropdownMenuItem
                 onSelect={() => setOpenManageAddonsDialog(true)}
               >
+                <TbSettings className="w-5 h-5" />
                 Manage Addons
               </DropdownMenuItem>
             </DropdownMenuContent>

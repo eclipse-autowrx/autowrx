@@ -9,7 +9,7 @@
 import { FC, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
-import { TbPlayerPlayFilled, TbPlayerStopFilled } from 'react-icons/tb'
+import { TbPlayerPlayFilled, TbPlayerStopFilled, TbSettings } from 'react-icons/tb'
 import { FaAnglesLeft, FaAnglesRight } from 'react-icons/fa6'
 import { SlOptionsVertical } from 'react-icons/sl'
 import { cn } from '@/lib/utils'
@@ -38,6 +38,7 @@ import { GoDotFill } from 'react-icons/go'
 import DaMockManager from './DaMockManager'
 import PrototypeVarsWatch from './PrototypeVarsWatch'
 import DaRemoteCompileRust from '../remote-compiler/DaRemoteCompileRust'
+import { useSystemUI } from '@/hooks/useSystemUI'
 
 const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
 
@@ -64,6 +65,7 @@ const DaRuntimeControl: FC = () => {
     'RUNTIME_SERVER_URL',
     DEFAULT_KIT_SERVER,
   )
+  const { showPrototypeDashboardFullScreen } = useSystemUI()
 
   const [isExpand, setIsExpand] = useState(false)
   const [isRunning, setIsRunning] = useState(false)
@@ -287,7 +289,10 @@ const DaRuntimeControl: FC = () => {
     <div
       data-id="runtime-control-panel"
       className={cn(
-        'absolute bottom-0 right-0 top-0 z-10 flex flex-col px-1 py-1',
+        'bottom-0 right-0 z-10 flex flex-col px-1 py-1',
+        showPrototypeDashboardFullScreen
+          ? 'fixed top-[58px]'
+          : 'absolute top-0',
         isExpand ? 'w-[500px]' : 'w-14',
       )}
       style={{
@@ -444,8 +449,9 @@ const DaRuntimeControl: FC = () => {
                 setShowConfigDialog(true)
               }}
             >
-              <div className="flex w-full items-center">
-                Config Runtime Server
+              <div className="flex w-full items-center justify-between gap-2">
+                <TbSettings className="w-5 h-5" />
+                <span>Config Runtime Server</span>
               </div>
             </DropdownMenuItem>
           </DropdownMenuContent>

@@ -361,7 +361,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
               <ArrowLeftFromLine size={16} />
             </button>
           </div>
-          <div className="flex-1 flex items-start justify-center pt-48">
+          <div className="flex-1 flex items-start justify-center pt-46">
             <div 
               className="text-2xl font-bold text-gray-700 tracking-wider"
               style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
