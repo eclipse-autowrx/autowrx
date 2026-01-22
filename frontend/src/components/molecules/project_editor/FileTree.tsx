@@ -935,6 +935,41 @@ const FileTree: React.FC<FileTreeProps> = ({
         }
 
         onAddItem(parentFolder, currentItem)
+
+        // Expand parent folder and all intermediate folders in the nested path
+        const parentPath = creatingItem.parentPath === 'root' || creatingItem.parentPath === '' ? '' : creatingItem.parentPath
+        const pathsToExpand: string[] = []
+
+        // Always expand the parent folder
+        if (parentPath) {
+          pathsToExpand.push(parentPath)
+        }
+
+        // Build paths for all nested folders and add them to expand list
+        // Note: parts was modified by parts.pop() for files, so we need to reconstruct
+        const allParts = trimmedName.split('/').filter(p => p.trim())
+        let currentPath = parentPath
+
+        if (creatingItem.type === 'file') {
+          // For files, all parts except the last are folders
+          for (let i = 0; i < allParts.length - 1; i++) {
+            currentPath = currentPath ? `${currentPath}/${allParts[i]}` : allParts[i]
+            pathsToExpand.push(currentPath)
+          }
+        } else {
+          // For folders, all parts are folders
+          for (let i = 0; i < allParts.length; i++) {
+            currentPath = currentPath ? `${currentPath}/${allParts[i]}` : allParts[i]
+            pathsToExpand.push(currentPath)
+          }
+        }
+
+        // Expand all folders in the path
+        setExpandedFolders((prev) => {
+          const newExpanded = new Set(prev)
+          pathsToExpand.forEach((path) => newExpanded.add(path))
+          return Array.from(newExpanded)
+        })
       } else {
         // Simple name - validate and create normally
         const validation = validateFileName(trimmedName)
