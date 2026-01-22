@@ -817,6 +817,113 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     setDeleteConfirmDialog(null)
   }
 
+  const deleteItemDirectly = useCallback((item: FileSystemItem, itemPath: string) => {
+    setFsData((prevFsData) => {
+      // Helper function to collect all file paths in a folder (recursive)
+      const collectFilePaths = (
+        items: FileSystemItem[],
+        basePath: string = '',
+      ): string[] => {
+        const filePaths: string[] = []
+        items.forEach((item) => {
+          const currentPath = basePath ? `${basePath}/${item.name}` : item.name
+          if (item.type === 'file') {
+            filePaths.push(currentPath)
+          } else if (item.type === 'folder') {
+            filePaths.push(...collectFilePaths(item.items, currentPath))
+          }
+        })
+        return filePaths
+      }
+
+      // Get all file paths that will be deleted
+      const filePathsToDelete: string[] = []
+      if (itemPath) {
+        filePathsToDelete.push(itemPath)
+        if (item.type === 'folder') {
+          filePathsToDelete.push(...collectFilePaths(item.items, itemPath))
+        }
+      } else {
+        if (item.type === 'file') {
+          filePathsToDelete.push(item.name)
+        } else if (item.type === 'folder') {
+          filePathsToDelete.push(...collectFilePaths(item.items))
+        }
+      }
+
+      // Remove deleted files from open files list
+      setOpenFiles((prev) =>
+        prev.filter((openFile) => {
+          const openFilePath = openFile.path || openFile.name
+          return !filePathsToDelete.includes(openFilePath)
+        })
+      )
+
+      // If active file is being deleted, switch to another open file or null
+      setActiveFile((prev) => {
+        if (!prev) return null
+        const activeFilePath = prev.path || prev.name
+        if (filePathsToDelete.includes(activeFilePath)) {
+          const remainingFiles = openFiles.filter((openFile) => {
+            const openFilePath = openFile.path || openFile.name
+            return !filePathsToDelete.includes(openFilePath)
+          })
+          return remainingFiles[0] || null
+        }
+        return prev
+      })
+
+      // Delete from file system
+      const deleteItem = (
+        items: FileSystemItem[],
+        basePath: string = '',
+      ): FileSystemItem[] => {
+        return items
+          .filter((i) => {
+            const currentPath = basePath ? `${basePath}/${i.name}` : i.name
+            return !filePathsToDelete.includes(currentPath)
+          })
+          .map((i) => {
+            const currentPath = basePath ? `${basePath}/${i.name}` : i.name
+            if (i.type === 'folder') {
+              return { ...i, items: deleteItem(i.items, currentPath) }
+            }
+            return i
+          })
+      }
+
+      // Process the root folder correctly
+      const newFileSystem = prevFsData.map((rootItem) => {
+        if (rootItem.type === 'folder') {
+          return {
+            ...rootItem,
+            items: deleteItem(rootItem.items, ''),
+          }
+        }
+        return rootItem
+      })
+
+      // Clean up pending changes for deleted files
+      setPendingChanges((prev) => {
+        const next = new Map(prev)
+        filePathsToDelete.forEach((path) => {
+          next.delete(path)
+        })
+        return next
+      })
+
+      // Clean up unsaved files for deleted files
+      setUnsavedFiles((prev) => {
+        const next = new Set(prev)
+        filePathsToDelete.forEach((path) => {
+          next.delete(path)
+        })
+        return next
+      })
+
+      return newFileSystem
+    })
+  }, [openFiles])
 
   const handleRenameItem = (
     item: FileSystemItem,
@@ -1353,13 +1460,13 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
           const itemPath = currentPath ? `${currentPath}/${i.name}` : i.name
 
           const normalizedItemPath = itemPath.startsWith('root/')
-            ? itemPath.substring(5)  
+            ? itemPath.substring(5)
             : itemPath
 
           const isTargetFolder = i.type === 'folder' && (
-            normalizedItemPath === parent.path ||  
-            (parent.path === 'root' && currentPath === '') ||  
-            (!parent.path && normalizedItemPath === parent.name && currentPath === '')  
+            normalizedItemPath === parent.path ||
+            (parent.path === 'root' && currentPath === '') ||
+            (!parent.path && normalizedItemPath === parent.name && currentPath === '')
           )
 
           if (isTargetFolder) {
@@ -1903,6 +2010,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                 items={projectItems}
                 onFileSelect={handleFileSelect}
                 onDeleteItem={handleDeleteItem}
+                onDeleteItemDirectly={deleteItemDirectly}
                 onRenameItem={handleRenameItem}
                 onAddItem={handleAddItem}
                 onMoveItem={handleMoveItem}

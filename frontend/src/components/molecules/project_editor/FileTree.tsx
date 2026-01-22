@@ -39,6 +39,7 @@ interface FileTreeProps {
   items: FileSystemItem[]
   onFileSelect: (file: File) => void
   onDeleteItem: (item: FileSystemItem) => void
+  onDeleteItemDirectly?: (item: FileSystemItem, itemPath: string) => void
   onRenameItem: (
     item: FileSystemItem,
     itemPath: string,
@@ -60,6 +61,7 @@ const FileTree: React.FC<FileTreeProps> = ({
   items,
   onFileSelect,
   onDeleteItem,
+  onDeleteItemDirectly,
   onRenameItem,
   onAddItem,
   onMoveItem,
@@ -1282,11 +1284,16 @@ const FileTree: React.FC<FileTreeProps> = ({
     )
 
     if (existingItem) {
-      const itemWithPath = {
-        ...existingItem,
-        __originalPath: existingItemPath,
-      } as any
-      onDeleteItem(itemWithPath)
+      // Use direct delete if available, otherwise fallback to regular delete
+      if (onDeleteItemDirectly) {
+        onDeleteItemDirectly(existingItem, existingItemPath)
+      } else {
+        const itemWithPath = {
+          ...existingItem,
+          __originalPath: existingItemPath,
+        } as any
+        onDeleteItem(itemWithPath)
+      }
     }
 
     // Delay the move to ensure deletion completes first
