@@ -1914,7 +1914,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
         ) : (
           // Expanded view - normal layout
           <div className="flex flex-col h-full overflow-hidden">
-            <div className="flex items-center px-1 py-2 border-b border-gray-200 bg-gray-100 flex-shrink-0">
+            <div className="flex items-center px-1 py-2 border-b border-gray-200 bg-gray-100 shrink-0">
               <button
                 onClick={toggleCollapse}
                 title="Collapse Panel"
@@ -1980,12 +1980,12 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                   >
                     {creatingAtRoot.type === 'folder' ? (
                       <VscNewFolder
-                        className="mr-2 text-gray-500 flex-shrink-0"
+                        className="mr-2 text-gray-500 shrink-0"
                         size={16}
                       />
                     ) : (
                       <VscNewFile
-                        className="mr-2 text-gray-500 flex-shrink-0"
+                        className="mr-2 text-gray-500 shrink-0"
                         size={16}
                       />
                     )}
@@ -1993,10 +1993,16 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                       type="text"
                       value={newRootItemName}
                       onChange={(e) => setNewRootItemName(e.target.value)}
-                      onBlur={() => {
+                      onBlur={(e) => {
                         if (!newRootItemName.trim()) {
                           setCreatingAtRoot(null)
                           setNewRootItemName('')
+                        } else {
+                          const form = e.currentTarget.closest('form')
+                          if (form) {
+                            const submitEvent = new Event('submit', { bubbles: true, cancelable: true })
+                            form.dispatchEvent(submitEvent)
+                          }
                         }
                       }}
                       autoFocus

@@ -1417,10 +1417,16 @@ const FileTree: React.FC<FileTreeProps> = ({
                   type="text"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  onBlur={() => {
+                  onBlur={(e) => {
                     if (!newName.trim() || newName === item.name) {
                       setRenamingItem(null)
                       setNewName('')
+                    } else {
+                      const form = e.currentTarget.closest('form')
+                      if (form) {
+                        const submitEvent = new Event('submit', { bubbles: true, cancelable: true })
+                        form.dispatchEvent(submitEvent)
+                      }
                     }
                   }}
                   autoFocus
@@ -1513,10 +1519,16 @@ const FileTree: React.FC<FileTreeProps> = ({
                   type="text"
                   value={newItemName}
                   onChange={(e) => setNewItemName(e.target.value)}
-                  onBlur={() => {
+                  onBlur={(e) => {
                     if (!newItemName.trim()) {
                       setCreatingItem(null)
                       setNewItemName('')
+                    } else {
+                      const form = e.currentTarget.closest('form')
+                      if (form) {
+                        const submitEvent = new Event('submit', { bubbles: true, cancelable: true })
+                        form.dispatchEvent(submitEvent)
+                      }
                     }
                   }}
                   autoFocus
@@ -1545,10 +1557,16 @@ const FileTree: React.FC<FileTreeProps> = ({
                   type="text"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  onBlur={() => {
+                  onBlur={(e) => {
                     if (!newName.trim() || newName === item.name) {
                       setRenamingItem(null)
                       setNewName('')
+                    } else {
+                      const form = e.currentTarget.closest('form')
+                      if (form) {
+                        const submitEvent = new Event('submit', { bubbles: true, cancelable: true })
+                        form.dispatchEvent(submitEvent)
+                      }
                     }
                   }}
                   autoFocus
@@ -1649,10 +1667,16 @@ const FileTree: React.FC<FileTreeProps> = ({
                 type="text"
                 value={newItemName}
                 onChange={(e) => setNewItemName(e.target.value)}
-                onBlur={() => {
+                onBlur={(e) => {
                   if (!newItemName.trim()) {
                     setCreatingItem(null)
                     setNewItemName('')
+                  } else {
+                    const form = e.currentTarget.closest('form')
+                    if (form) {
+                      const submitEvent = new Event('submit', { bubbles: true, cancelable: true })
+                      form.dispatchEvent(submitEvent)
+                    }
                   }
                 }}
                 autoFocus
