@@ -178,7 +178,7 @@ const DaDashboard = () => {
           </Link>
         )}
         {isAuthorized && (
-          <div className="ml-2 flex w-full h-fit items-center px-1 justify-end">
+          <div className="flex w-full h-fit items-center justify-end mr-2">
             {mode == MODE_RUN && (
               <Button
                 variant="outline"
@@ -186,7 +186,7 @@ const DaDashboard = () => {
                 data-id="dashboard-edit-button"
                 onClick={handleEnterEditMode}
               >
-                <TbEdit className="size-4 mr-1" />
+                <TbEdit className="size-4" />
                 Edit
               </Button>
             )}

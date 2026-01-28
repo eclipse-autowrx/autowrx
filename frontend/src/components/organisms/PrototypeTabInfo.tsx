@@ -213,14 +213,15 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
   return (
     <div className="flex flex-col h-full w-full">
       <div className="flex flex-col h-full w-full bg-background rounded-lg overflow-y-auto">
-        <div className="flex flex-col h-full w-full pt-6 bg-background px-2">
-          <div className="flex mr-4 mb-3 justify-between items-center">
+        <div className="flex flex-col h-full w-full pt-6 bg-background px-6">
+          {/* Header */}
+          <div className="flex mb-3 justify-between items-center">
             {isEditing ? (
               <>
                 <h2 className="text-lg font-semibold text-primary">
                   Editing Prototype
                 </h2>
-                <div className="flex space-x-2 mr-2">
+                <div className="flex space-x-2">
                   <Button variant="outline" onClick={handleCancel} size="sm">
                     Cancel
                   </Button>
@@ -256,7 +257,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                       variant="outline"
                       size="sm"
                     >
-                      <TbEdit className="w-4 h-4 mr-1" /> Edit
+                      <TbEdit className="w-4 h-4" /> Edit
                     </Button>
                     <Button
                       onClick={() => downloadPrototypeZip(prototype)}
@@ -269,12 +270,12 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                     >
                       {isSaving ? (
                         <div className="flex items-center">
-                          <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                          <TbLoader className="w-4 h-4 animate-spin" />
                           Saving...
                         </div>
                       ) : (
                         <>
-                          <TbDownload className="w-4 h-4 mr-1" />
+                          <TbDownload className="w-4 h-4" />
                           Export
                         </>
                       )}
@@ -291,12 +292,12 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                     >
                       {isDeleting ? (
                         <div className="flex items-center">
-                          <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                          <TbLoader className="w-4 h-4 animate-spin" />
                           Deleting...
                         </div>
                       ) : (
                         <>
-                          <TbTrashX className="w-4 h-4 mr-1" />
+                          <TbTrashX className="w-4 h-4" />
                           Delete
                         </>
                       )}
@@ -315,7 +316,9 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
               </div>
             )}
           </div>
-          <div className="flex w-full">
+          {/* Content */}
+          <div className="flex w-full gap-6">
+            {/* Image */}
             <div className="flex-1 h-fit relative">
               <DaImage
                 src={
@@ -351,7 +354,8 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                 </DaImportFile>
               )}
             </div>
-            <div className="flex flex-1 h-full px-4 ml-4">
+            {/* Properties */}
+            <div className="flex flex-1 h-full">
               {isEditing ? (
                 <div className="flex flex-col w-full gap-4">
                   <div className="flex flex-col gap-2">

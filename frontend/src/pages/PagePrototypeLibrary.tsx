@@ -176,7 +176,7 @@ const PagePrototypeLibrary = () => {
                   <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                   <Input
                     type="text"
-                    placeholder="Search prototypes"
+                    placeholder="Search"
                     className="w-full h-8 pl-10 text-sm shadow"
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
@@ -190,12 +190,12 @@ const PagePrototypeLibrary = () => {
                 >
                   {activeTab === 'list' ? (
                     <>
-                      <TbChartScatter className="w-5 h-5 mr-1" />
-                      Portfolio View
+                      <TbChartScatter className="w-5 h-5" />
+                      Portfolio
                     </>
                   ) : (
                     <>
-                      <TbListDetails className="w-5 h-5 mr-2" />
+                      <TbListDetails className="w-5 h-5" />
                       List View
                     </>
                   )}
@@ -206,7 +206,7 @@ const PagePrototypeLibrary = () => {
                   className="w-fit mr-0 h-8 shadow px-2 text-sm"
                   singleSelect={true}
                   defaultValue={selectedFilters}
-                  label="Sort By"
+                  label="Sort"
                 />
                 <div
                   className={cn(
@@ -220,8 +220,8 @@ const PagePrototypeLibrary = () => {
                     className="flex"
                     onClick={() => setIsOpenImportDialog(true)}
                   >
-                    <TbFileImport className="w-5 h-5 mr-1" />
-                    Import Prototype
+                    <TbFileImport className="w-5 h-5" />
+                    Import
                   </Button>
                   <DaDialog
                     open={open}
@@ -233,8 +233,8 @@ const PagePrototypeLibrary = () => {
                         size="sm"
                         className="flex ml-2"
                       >
-                        <TbPlus className="w-5 h-5 mr-1" />
-                        Create New Prototype
+                        <TbPlus className="w-5 h-5" />
+                        Create
                       </Button>
                     }
                   >

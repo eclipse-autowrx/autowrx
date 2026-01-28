@@ -27,6 +27,7 @@ import {
   VscCloudDownload,
   VscCloudUpload,
 } from 'react-icons/vsc'
+import { TbLayoutSidebar, TbLayoutSidebarFilled } from 'react-icons/tb'
 
 interface ProjectEditorProps {
   data: string
@@ -75,6 +76,10 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     item: FileSystemItem
     itemPath: string
     itemName: string
+  } | null>(null)
+  const [importConfirmDialog, setImportConfirmDialog] = useState<boolean>(false)
+  const [errorDialog, setErrorDialog] = useState<{
+    message: string
   } | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -812,6 +817,113 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     setDeleteConfirmDialog(null)
   }
 
+  const deleteItemDirectly = useCallback((item: FileSystemItem, itemPath: string) => {
+    setFsData((prevFsData) => {
+      // Helper function to collect all file paths in a folder (recursive)
+      const collectFilePaths = (
+        items: FileSystemItem[],
+        basePath: string = '',
+      ): string[] => {
+        const filePaths: string[] = []
+        items.forEach((item) => {
+          const currentPath = basePath ? `${basePath}/${item.name}` : item.name
+          if (item.type === 'file') {
+            filePaths.push(currentPath)
+          } else if (item.type === 'folder') {
+            filePaths.push(...collectFilePaths(item.items, currentPath))
+          }
+        })
+        return filePaths
+      }
+
+      // Get all file paths that will be deleted
+      const filePathsToDelete: string[] = []
+      if (itemPath) {
+        filePathsToDelete.push(itemPath)
+        if (item.type === 'folder') {
+          filePathsToDelete.push(...collectFilePaths(item.items, itemPath))
+        }
+      } else {
+        if (item.type === 'file') {
+          filePathsToDelete.push(item.name)
+        } else if (item.type === 'folder') {
+          filePathsToDelete.push(...collectFilePaths(item.items))
+        }
+      }
+
+      // Remove deleted files from open files list
+      setOpenFiles((prev) =>
+        prev.filter((openFile) => {
+          const openFilePath = openFile.path || openFile.name
+          return !filePathsToDelete.includes(openFilePath)
+        })
+      )
+
+      // If active file is being deleted, switch to another open file or null
+      setActiveFile((prev) => {
+        if (!prev) return null
+        const activeFilePath = prev.path || prev.name
+        if (filePathsToDelete.includes(activeFilePath)) {
+          const remainingFiles = openFiles.filter((openFile) => {
+            const openFilePath = openFile.path || openFile.name
+            return !filePathsToDelete.includes(openFilePath)
+          })
+          return remainingFiles[0] || null
+        }
+        return prev
+      })
+
+      // Delete from file system
+      const deleteItem = (
+        items: FileSystemItem[],
+        basePath: string = '',
+      ): FileSystemItem[] => {
+        return items
+          .filter((i) => {
+            const currentPath = basePath ? `${basePath}/${i.name}` : i.name
+            return !filePathsToDelete.includes(currentPath)
+          })
+          .map((i) => {
+            const currentPath = basePath ? `${basePath}/${i.name}` : i.name
+            if (i.type === 'folder') {
+              return { ...i, items: deleteItem(i.items, currentPath) }
+            }
+            return i
+          })
+      }
+
+      // Process the root folder correctly
+      const newFileSystem = prevFsData.map((rootItem) => {
+        if (rootItem.type === 'folder') {
+          return {
+            ...rootItem,
+            items: deleteItem(rootItem.items, ''),
+          }
+        }
+        return rootItem
+      })
+
+      // Clean up pending changes for deleted files
+      setPendingChanges((prev) => {
+        const next = new Map(prev)
+        filePathsToDelete.forEach((path) => {
+          next.delete(path)
+        })
+        return next
+      })
+
+      // Clean up unsaved files for deleted files
+      setUnsavedFiles((prev) => {
+        const next = new Set(prev)
+        filePathsToDelete.forEach((path) => {
+          next.delete(path)
+        })
+        return next
+      })
+
+      return newFileSystem
+    })
+  }, [openFiles])
 
   const handleRenameItem = (
     item: FileSystemItem,
@@ -1041,7 +1153,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
       )
       if (existingFile) {
         // File already exists, show error
-        alert(`A file named "${item.name}" already exists in this location.`)
+        setErrorDialog({ message: `A file named "${item.name}" already exists in this location.` })
         return targetFolder
       }
       return {
@@ -1066,7 +1178,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
             (i) => i.type === 'file' && i.name.toLowerCase() === childItem.name.toLowerCase()
           )
           if (existingChildFile) {
-            alert(`A file named "${childItem.name}" already exists in "${existingFolder.name}".`)
+            setErrorDialog({ message: `A file named "${childItem.name}" already exists in "${existingFolder.name}".` })
             continue // Skip this file
           }
         }
@@ -1129,7 +1241,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
           for (const part of parts) {
             const partValidation = validateFileName(part)
             if (!partValidation.valid) {
-              alert(`Invalid name in path: ${partValidation.error}`)
+              setErrorDialog({ message: `Invalid name in path: ${partValidation.error}` })
               return
             }
           }
@@ -1254,15 +1366,15 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
           // Simple name - validate normally
           const validation = validateFileName(name)
           if (!validation.valid) {
-            alert(validation.error)
+            setErrorDialog({ message: validation.error || 'Invalid name' })
             return
           }
 
           // Check for duplicates
           if (root.items.some((item) => item.name === name)) {
-            alert(
-              `${creatingAtRoot.type} with name "${name}" already exists at the root.`,
-            )
+            setErrorDialog({
+              message: `${creatingAtRoot.type} with name "${name}" already exists at the root.`,
+            })
             return
           }
 
@@ -1328,63 +1440,51 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
   }
 
   const handleAddItem = (parent: Folder, item: FileSystemItem) => {
+    console.log('handleAddItem: Adding item to parent', { parent, item })
+  
     setFsData((prevFsData) => {
-      // Case add to root
-      if (parent.name === 'root' || parent.path === 'root' || !parent.path) {
-        const rootItem = prevFsData[0]
-        if (rootItem && rootItem.type === 'folder') {
-          // Use merge function to handle existing folders
-          const mergedRoot = mergeItemIntoFolder(rootItem, item)
-          return [mergedRoot]
-        }
+      const [root, ...rest] = prevFsData
+      if (!root || root.type !== 'folder') {
         return prevFsData
       }
+  
+      if (parent.name === 'root' || parent.path === 'root' || !parent.path) {
+        const mergedRoot = mergeItemIntoFolder(root, item)
+        return [mergedRoot, ...rest]
+      }
+  
       const addItem = (
         items: FileSystemItem[],
         currentPath: string = '',
       ): FileSystemItem[] => {
         return items.map((i) => {
           const itemPath = currentPath ? `${currentPath}/${i.name}` : i.name
-          if (
-            (i.name === parent.name || (!i.path && parent.path === 'root')) &&
-            i.type === 'folder'
-          ) {
-            // Check for duplicates to prevent race condition re-additions
-            const existingItem = i.items.find((existing) => {
-              const existingPath = itemPath
-                ? `${itemPath}/${existing.name}`
-                : existing.name
-              const newItemPath = itemPath
-                ? `${itemPath}/${item.name}`
-                : item.name
-              return existingPath === newItemPath
-            })
-
-            if (existingItem) {
-              console.log(
-                'handleAddItem: Item already exists, skipping addition',
-                {
-                  itemName: item.name,
-                  targetPath: itemPath,
-                },
-              )
-              return i // Don't add duplicate
-            }
-
-            // Add path to the new item
+  
+          const isTargetFolder =
+            i.type === 'folder' && itemPath === parent.path
+  
+          if (isTargetFolder) {
             const itemWithPath = {
               ...item,
               path: itemPath ? `${itemPath}/${item.name}` : item.name,
             }
             return { ...i, items: [...i.items, itemWithPath] }
           }
+  
           if (i.type === 'folder') {
             return { ...i, items: addItem(i.items, itemPath) }
           }
+  
           return i
         })
       }
-      return addItem(prevFsData)
+  
+      const updatedRoot: Folder = {
+        ...root,
+        items: addItem(root.items, ''),
+      }
+  
+      return [updatedRoot, ...rest]
     })
   }
 
@@ -1457,14 +1557,14 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     const safeBase =
       (prototypeName || 'project')
         .trim()
-        .replace(/[\\/:*?"<>|]/g, '')  
-        .replace(/\s+/g, '_')          
+        .replace(/[\\/:*?"<>|]/g, '')
+        .replace(/\s+/g, '_')
         .slice(0, 80) || 'project'
 
     zip.generateAsync({ type: 'blob' }).then((content) => {
       const link = document.createElement('a')
       link.href = URL.createObjectURL(content)
-      link.download = `${safeBase}.zip`  
+      link.download = `${safeBase}.zip`
       link.click()
     })
   }
@@ -1478,51 +1578,103 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     const reader = new FileReader()
     reader.onload = (event) => {
       const zip = new JSZip()
-      zip.loadAsync(event.target?.result as ArrayBuffer).then((zip) => {
-        const fileSystem: FileSystemItem[] = []
-        const folders: { [key: string]: Folder } = {}
+      zip.loadAsync(event.target?.result as ArrayBuffer)
+        .then((zip) => {
+          const folders: { [key: string]: Folder } = {}
 
-        const getOrCreateFolder = (path: string): Folder => {
-          if (folders[path]) {
-            return folders[path]
+          const getOrCreateFolder = (path: string): Folder => {
+            if (folders[path]) {
+              return folders[path]
+            }
+
+            const parts = path.split('/')
+            const folderName = parts.pop() || ''
+            const parentPath = parts.join('/')
+            const parentFolder = getOrCreateFolder(parentPath)
+
+            const newFolder: Folder = {
+              type: 'folder',
+              name: folderName,
+              items: [],
+            }
+
+            parentFolder.items.push(newFolder)
+            folders[path] = newFolder
+            return newFolder
           }
 
-          const parts = path.split('/')
-          const folderName = parts.pop() || ''
-          const parentPath = parts.join('/')
-          const parentFolder = getOrCreateFolder(parentPath)
+          const root: Folder = { type: 'folder', name: 'root', items: [] }
+          folders[''] = root
 
-          const newFolder: Folder = {
-            type: 'folder',
-            name: folderName,
-            items: [],
-          }
+          const promises = Object.values(zip.files).map(async (zipEntry) => {
+            const path = zipEntry.name
+            const parts = path.split('/').filter((p) => p)
+            if (zipEntry.dir) {
+              getOrCreateFolder(path.slice(0, -1))
+            } else {
+              const fileName = parts.pop() || ''
+              const folderPath = parts.join('/')
+              const folder = getOrCreateFolder(folderPath)
 
-          parentFolder.items.push(newFolder)
-          folders[path] = newFolder
-          return newFolder
-        }
+              // Handle binary files
+              const isBin = isBinaryFile(fileName)
+              if (isBin) {
+                try {
+                  const arrayBuffer = await zipEntry.async('arraybuffer')
+                  if (arrayBuffer.byteLength > 500 * 1024) {
+                    console.warn(
+                      `File ${fileName} is larger than 500kb and will be ignored.`,
+                    )
+                    return
+                  }
+                  const base64Content = arrayBufferToBase64(arrayBuffer)
+                  folder.items.push({
+                    type: 'file',
+                    name: fileName,
+                    content: base64Content,
+                    isBase64: true,
+                  })
+                } catch (error) {
+                  console.error(`Error reading binary file ${fileName}:`, error)
+                }
+              } else {
+                try {
+                  const content = await zipEntry.async('string')
+                  folder.items.push({ type: 'file', name: fileName, content })
+                } catch (error) {
+                  console.error(`Error reading file ${fileName}:`, error)
+                }
+              }
+            }
+          })
 
-        const root: Folder = { type: 'folder', name: 'root', items: [] }
-        folders[''] = root
-
-        const promises = Object.values(zip.files).map(async (zipEntry) => {
-          const path = zipEntry.name
-          const parts = path.split('/').filter((p) => p)
-          if (zipEntry.dir) {
-            getOrCreateFolder(path.slice(0, -1))
-          } else {
-            const fileName = parts.pop() || ''
-            const folderPath = parts.join('/')
-            const folder = getOrCreateFolder(folderPath)
-            const content = await zipEntry.async('string')
-            folder.items.push({ type: 'file', name: fileName, content })
-          }
+          Promise.all(promises)
+            .then(() => {
+              // Fix: Set fsData to [root] instead of root.items
+              setFsData([root])
+              // Clear open files and active file when importing
+              setOpenFiles([])
+              setActiveFile(null)
+              setUnsavedFiles(new Set())
+              setPendingChanges(new Map())
+            })
+            .catch((error) => {
+              console.error('Error processing zip file:', error)
+              setErrorDialog({
+                message: 'Failed to import project. Please check if the file is a valid ZIP archive.',
+              })
+            })
         })
-
-        Promise.all(promises).then(() => {
-          setFsData(root.items)
+        .catch((error) => {
+          console.error('Error loading zip file:', error)
+          setErrorDialog({
+            message: 'Failed to load ZIP file. Please check if the file is a valid ZIP archive.',
+          })
         })
+    }
+    reader.onerror = () => {
+      setErrorDialog({
+        message: 'Failed to read file. Please try again.',
       })
     }
     reader.readAsArrayBuffer(file)
@@ -1556,9 +1708,11 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
             return
           }
           const base64Content = arrayBufferToBase64(content)
+          const currentTarget = getCurrentTargetFolder(target)
+          const uniqueFileName = findUniqueFileName(file.name, currentTarget)
           const newItem: File = {
             type: 'file',
-            name: file.name,
+            name: uniqueFileName,
             content: base64Content,
             isBase64: true,
           }
@@ -1586,7 +1740,9 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
           }
         } else {
           const content = event.target?.result as string
-          const newItem: File = { type: 'file', name: file.name, content }
+          const currentTarget = getCurrentTargetFolder(target)
+          const uniqueFileName = findUniqueFileName(file.name, currentTarget)
+          const newItem: File = { type: 'file', name: uniqueFileName, content }
 
           // Handle root folder case
           if (target.name === 'root') {
@@ -1623,17 +1779,84 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
   }
 
   const triggerImport = () => {
-    if (
-      window.confirm(
-        'Are you sure you want to import a new project? This will replace the current project and any unsaved changes will be lost.',
-      )
-    ) {
-      const input = document.createElement('input')
-      input.type = 'file'
-      input.accept = '.zip'
-      input.onchange = (e) => handleImport(e as any)
-      input.click()
+    setImportConfirmDialog(true)
+  }
+
+  const findUniqueFileName = (baseName: string, targetFolder: Folder): string => {
+    const existingNames = new Set(
+      targetFolder.items.map((item) => item.name.toLowerCase())
+    )
+
+    if (!existingNames.has(baseName.toLowerCase())) {
+      return baseName
     }
+
+    // Parse the base name and extension
+    const lastDotIndex = baseName.lastIndexOf('.')
+    let nameWithoutExt = baseName
+    let ext = ''
+
+    if (lastDotIndex > 0) {
+      nameWithoutExt = baseName.substring(0, lastDotIndex)
+      ext = baseName.substring(lastDotIndex)
+    }
+
+    // Find the next available number
+    let counter = 1
+    let newName = `${nameWithoutExt}-${counter}${ext}`
+
+    while (existingNames.has(newName.toLowerCase())) {
+      counter++
+      newName = `${nameWithoutExt}-${counter}${ext}`
+    }
+
+    return newName
+  }
+
+  // Helper function to get current target folder state
+  const getCurrentTargetFolder = (target: Folder): Folder => {
+    if (target.name === 'root') {
+      const rootFolder = fsDataRef.current[0]
+      if (rootFolder && rootFolder.type === 'folder') {
+        return rootFolder
+      }
+      return { type: 'folder', name: 'root', items: [] }
+    }
+
+    // Find folder by path
+    const findFolderByPath = (
+      targetPath: string,
+      items: FileSystemItem[],
+    ): Folder | null => {
+      for (const item of items) {
+        if (item.type === 'folder') {
+          const itemPath = item.path || item.name
+          if (itemPath === targetPath) {
+            return item
+          }
+          const found = findFolderByPath(targetPath, item.items)
+          if (found) return found
+        }
+      }
+      return null
+    }
+
+    const targetPath = target.path || target.name
+    const found = findFolderByPath(targetPath, fsDataRef.current)
+    return found || target
+  }
+
+  const handleImportConfirm = () => {
+    setImportConfirmDialog(false)
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.zip'
+    input.onchange = (e) => handleImport(e as any)
+    input.click()
+  }
+
+  const handleImportCancel = () => {
+    setImportConfirmDialog(false)
   }
 
   const root = fsData[0]
@@ -1648,28 +1871,34 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
       >
         {isCollapsed ? (
           // Collapsed view - thin column with just expand button
-          <div className="flex flex-col h-full">
+          <button onClick={toggleCollapse} className="flex flex-col w-full h-full hover:bg-gray-100">
             <div className="flex items-center justify-center py-2 border-b border-gray-200 bg-gray-100">
-              <button
-                onClick={toggleCollapse}
+              <div
                 title="Expand Panel"
-                className="p-2 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors"
+                className="p-1.5 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors"
               >
-                <VscChevronRight size={20} />
-              </button>
+                <TbLayoutSidebar size={16} />
+              </div>
             </div>
-            <div className="flex-1"></div>
-          </div>
+            <div className="flex-1 flex items-start justify-center pt-32">
+              <div
+                className="text-xl font-medium text-gray-700 tracking-wider"
+                style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
+              >
+                File Explorer
+              </div>
+            </div>
+          </button>
         ) : (
           // Expanded view - normal layout
           <div className="flex flex-col h-full overflow-hidden">
-            <div className="flex items-center px-1 py-2 border-b border-gray-200 bg-gray-100 flex-shrink-0">
+            <div className="flex items-center px-1 py-2 border-b border-gray-200 bg-gray-100 shrink-0">
               <button
                 onClick={toggleCollapse}
                 title="Collapse Panel"
                 className="p-1.5 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors"
               >
-                <VscChevronLeft size={16} />
+                <TbLayoutSidebarFilled size={16} />
               </button>
               <span className="grow pl-1 font-semibold text-sm tracking-wide text-gray-700 overflow-hidden text-ellipsis">
                 {projectName.toUpperCase()}
@@ -1729,12 +1958,12 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                   >
                     {creatingAtRoot.type === 'folder' ? (
                       <VscNewFolder
-                        className="mr-2 text-gray-500 flex-shrink-0"
+                        className="mr-2 text-gray-500 shrink-0"
                         size={16}
                       />
                     ) : (
                       <VscNewFile
-                        className="mr-2 text-gray-500 flex-shrink-0"
+                        className="mr-2 text-gray-500 shrink-0"
                         size={16}
                       />
                     )}
@@ -1742,10 +1971,16 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                       type="text"
                       value={newRootItemName}
                       onChange={(e) => setNewRootItemName(e.target.value)}
-                      onBlur={() => {
+                      onBlur={(e) => {
                         if (!newRootItemName.trim()) {
                           setCreatingAtRoot(null)
                           setNewRootItemName('')
+                        } else {
+                          const form = e.currentTarget.closest('form')
+                          if (form) {
+                            const submitEvent = new Event('submit', { bubbles: true, cancelable: true })
+                            form.dispatchEvent(submitEvent)
+                          }
                         }
                       }}
                       autoFocus
@@ -1759,6 +1994,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                 items={projectItems}
                 onFileSelect={handleFileSelect}
                 onDeleteItem={handleDeleteItem}
+                onDeleteItemDirectly={deleteItemDirectly}
                 onRenameItem={handleRenameItem}
                 onAddItem={handleAddItem}
                 onMoveItem={handleMoveItem}
@@ -1886,6 +2122,50 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                 className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md transition-colors"
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import confirmation dialog */}
+      {importConfirmDialog && (
+        <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
+            <h2 className="text-lg font-semibold mb-2">Import Project</h2>
+            <p className="text-gray-600 mb-4">
+              Are you sure you want to import a new project? This will replace the current project and any unsaved changes will be lost.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={handleImportConfirm}
+                className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-md transition-colors"
+              >
+                Import
+              </button>
+              <button
+                onClick={handleImportCancel}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error dialog */}
+      {errorDialog && (
+        <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
+            <h2 className="text-lg font-semibold mb-2 text-red-600">Error</h2>
+            <p className="text-gray-600 mb-4">{errorDialog.message}</p>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setErrorDialog(null)}
+                className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-md transition-colors"
+              >
+                OK
               </button>
             </div>
           </div>

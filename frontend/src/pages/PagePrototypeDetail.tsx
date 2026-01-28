@@ -16,7 +16,9 @@ import {
   TbDotsVertical,
   TbPlus,
   TbListCheck,
+  TbSettings,
 } from 'react-icons/tb'
+import { GiSaveArrow } from "react-icons/gi";
 import { saveRecentPrototype } from '@/services/prototype.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import useCurrentModel from '@/hooks/useCurrentModel'
@@ -52,7 +54,7 @@ interface ViewPrototypeProps {
   display?: 'tree' | 'list'
 }
 
-const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
+const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
   const { model_id, prototype_id, tab } = useParams()
   const [searchParams] = useSearchParams()
   const pluginId = searchParams.get('plugid')
@@ -80,18 +82,18 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
     model_tabs?: Array<{ label: string; plugin: string }>
     prototype_tabs?: Array<{ label: string; plugin: string }>
   } | undefined>(undefined)
-  
+
   // Load staging config to extract plugins for preloading
   const [stagingPlugins, setStagingPlugins] = useState<Plugin[]>([])
   const STAGING_FRAME_KEY = 'STAGING_FRAME'
-  
+
   useEffect(() => {
     // Only load staging config if user is authenticated
     if (!user) {
       setStagingPlugins([])
       return
     }
-    
+
     const loadStagingPlugins = async () => {
       try {
         const stagingConfig = await configManagementService.getConfigByKey(STAGING_FRAME_KEY)
@@ -110,13 +112,13 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
         setStagingPlugins([])
       }
     }
-    
+
     loadStagingPlugins()
   }, [user])
-  
+
   // Extract prototype tabs for preloading
   const prototypeTabs = getTabConfig(model?.custom_template?.prototype_tabs)
-  
+
   // Preload plugin JavaScript files
   usePluginPreloader({
     prototypeTabs,
@@ -266,6 +268,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
               <DropdownMenuItem
                 onSelect={() => setOpenManageAddonsDialog(true)}
               >
+                <TbSettings className="w-5 h-5" />
                 Manage Prototype Tabs
               </DropdownMenuItem>
               <DropdownMenuItem
@@ -291,6 +294,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
                   setOpenTemplateForm(true)
                 }}
               >
+                <GiSaveArrow className="w-5 h-5" />
                 Save Solution as Template
               </DropdownMenuItem>
             </DropdownMenuContent>

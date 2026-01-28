@@ -39,6 +39,7 @@ interface FileTreeProps {
   items: FileSystemItem[]
   onFileSelect: (file: File) => void
   onDeleteItem: (item: FileSystemItem) => void
+  onDeleteItemDirectly?: (item: FileSystemItem, itemPath: string) => void
   onRenameItem: (
     item: FileSystemItem,
     itemPath: string,
@@ -60,6 +61,7 @@ const FileTree: React.FC<FileTreeProps> = ({
   items,
   onFileSelect,
   onDeleteItem,
+  onDeleteItemDirectly,
   onRenameItem,
   onAddItem,
   onMoveItem,
@@ -115,6 +117,9 @@ const FileTree: React.FC<FileTreeProps> = ({
   const [potentialDropTarget, setPotentialDropTarget] = useState<{
     folder: Folder
     path: string
+  } | null>(null)
+  const [errorDialog, setErrorDialog] = useState<{
+    message: string
   } | null>(null)
   const [conflictDialog, setConflictDialog] = useState<{
     sourceItem: FileSystemItem
@@ -202,7 +207,7 @@ const FileTree: React.FC<FileTreeProps> = ({
   // Find folder by path in the items tree
   const findFolderByPath = (targetPath: string): Folder | null => {
     if (targetPath === 'root' || targetPath === '') {
-      return { type: 'folder', name: 'root', items: items }
+      return { type: 'folder', name: 'root', items: items, path: 'root' }
     }
 
     const findInItems = (
@@ -213,7 +218,7 @@ const FileTree: React.FC<FileTreeProps> = ({
         const itemPath = currentPath ? `${currentPath}/${item.name}` : item.name
 
         if (item.type === 'folder' && itemPath === targetPath) {
-          return item
+          return { ...item, path: itemPath }
         }
 
         if (item.type === 'folder') {
@@ -345,25 +350,25 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'jsx':
       case 'mjs':
         return (
-          <VscCode className="mr-2 text-yellow-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-yellow-600 shrink-0" size={16} />
         )
       case 'ts':
       case 'tsx':
         return (
-          <VscCode className="mr-2 text-blue-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-600 shrink-0" size={16} />
         )
 
       // Web Technologies
       case 'json':
         return (
-          <VscJson className="mr-2 text-green-600 flex-shrink-0" size={16} />
+          <VscJson className="mr-2 text-green-600 shrink-0" size={16} />
         )
       case 'html':
       case 'htm':
       case 'xhtml':
         return (
           <VscFileCode
-            className="mr-2 text-orange-600 flex-shrink-0"
+            className="mr-2 text-orange-600 shrink-0"
             size={16}
           />
         )
@@ -373,7 +378,7 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'less':
         return (
           <VscSymbolClass
-            className="mr-2 text-blue-600 flex-shrink-0"
+            className="mr-2 text-blue-600 shrink-0"
             size={16}
           />
         )
@@ -381,7 +386,7 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'svg':
         return (
           <VscFileCode
-            className="mr-2 text-orange-400 flex-shrink-0"
+            className="mr-2 text-orange-400 shrink-0"
             size={16}
           />
         )
@@ -391,14 +396,14 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'markdown':
         return (
           <VscFileMedia
-            className="mr-2 text-gray-700 flex-shrink-0"
+            className="mr-2 text-gray-700 shrink-0"
             size={16}
           />
         )
       case 'rst':
         return (
           <VscFileMedia
-            className="mr-2 text-blue-700 flex-shrink-0"
+            className="mr-2 text-blue-700 shrink-0"
             size={16}
           />
         )
@@ -410,30 +415,30 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'pyx':
       case 'pxd':
         return (
-          <VscCode className="mr-2 text-blue-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-500 shrink-0" size={16} />
         )
 
       // Java & JVM
       case 'java':
       case 'class':
         return (
-          <VscCode className="mr-2 text-orange-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-orange-500 shrink-0" size={16} />
         )
       case 'kt':
         return (
-          <VscCode className="mr-2 text-purple-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-purple-500 shrink-0" size={16} />
         )
       case 'scala':
-        return <VscCode className="mr-2 text-red-500 flex-shrink-0" size={16} />
+        return <VscCode className="mr-2 text-red-500 shrink-0" size={16} />
       case 'groovy':
         return (
-          <VscCode className="mr-2 text-blue-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-500 shrink-0" size={16} />
         )
 
       // C/C++ & Related
       case 'c':
         return (
-          <VscCode className="mr-2 text-blue-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-600 shrink-0" size={16} />
         )
       case 'cpp':
       case 'cc':
@@ -444,101 +449,101 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'hh':
       case 'hxx':
         return (
-          <VscCode className="mr-2 text-blue-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-600 shrink-0" size={16} />
         )
       case 'cs':
         return (
-          <VscCode className="mr-2 text-purple-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-purple-600 shrink-0" size={16} />
         )
       case 'd':
-        return <VscCode className="mr-2 text-red-600 flex-shrink-0" size={16} />
+        return <VscCode className="mr-2 text-red-600 shrink-0" size={16} />
       case 'swift':
         return (
-          <VscCode className="mr-2 text-orange-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-orange-600 shrink-0" size={16} />
         )
       case 'objc':
       case 'm':
         return (
-          <VscCode className="mr-2 text-blue-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-500 shrink-0" size={16} />
         )
 
       // Scripting Languages
       case 'php':
       case 'phtml':
         return (
-          <VscCode className="mr-2 text-purple-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-purple-500 shrink-0" size={16} />
         )
       case 'rb':
       case 'erb':
-        return <VscCode className="mr-2 text-red-500 flex-shrink-0" size={16} />
+        return <VscCode className="mr-2 text-red-500 shrink-0" size={16} />
       case 'go':
       case 'mod':
         return (
-          <VscCode className="mr-2 text-cyan-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-cyan-500 shrink-0" size={16} />
         )
       case 'rs':
         return (
-          <VscCode className="mr-2 text-orange-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-orange-600 shrink-0" size={16} />
         )
       case 'pl':
       case 'pm':
         return (
-          <VscCode className="mr-2 text-blue-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-500 shrink-0" size={16} />
         )
       case 'lua':
         return (
-          <VscCode className="mr-2 text-blue-400 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-400 shrink-0" size={16} />
         )
       case 'r':
         return (
-          <VscCode className="mr-2 text-blue-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-600 shrink-0" size={16} />
         )
       case 'jl':
         return (
-          <VscCode className="mr-2 text-purple-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-purple-600 shrink-0" size={16} />
         )
       case 'clj':
       case 'cljs':
         return (
-          <VscCode className="mr-2 text-green-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-green-500 shrink-0" size={16} />
         )
       case 'hs':
       case 'lhs':
         return (
-          <VscCode className="mr-2 text-purple-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-purple-500 shrink-0" size={16} />
         )
       case 'fs':
       case 'fsx':
         return (
-          <VscCode className="mr-2 text-blue-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-500 shrink-0" size={16} />
         )
       case 'ml':
       case 'mli':
         return (
-          <VscCode className="mr-2 text-orange-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-orange-500 shrink-0" size={16} />
         )
       case 'elm':
         return (
-          <VscCode className="mr-2 text-blue-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-600 shrink-0" size={16} />
         )
       case 'ex':
       case 'exs':
         return (
-          <VscCode className="mr-2 text-purple-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-purple-500 shrink-0" size={16} />
         )
       case 'cr':
-        return <VscCode className="mr-2 text-red-500 flex-shrink-0" size={16} />
+        return <VscCode className="mr-2 text-red-500 shrink-0" size={16} />
       case 'nim':
         return (
-          <VscCode className="mr-2 text-yellow-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-yellow-500 shrink-0" size={16} />
         )
       case 'zig':
         return (
-          <VscCode className="mr-2 text-orange-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-orange-500 shrink-0" size={16} />
         )
       case 'v':
         return (
-          <VscCode className="mr-2 text-blue-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-500 shrink-0" size={16} />
         )
 
       // Shell & Scripts
@@ -548,23 +553,23 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'fish':
         return (
           <VscFileCode
-            className="mr-2 text-green-500 flex-shrink-0"
+            className="mr-2 text-green-500 shrink-0"
             size={16}
           />
         )
       case 'bat':
       case 'cmd':
         return (
-          <VscFileCode className="mr-2 text-gray-600 flex-shrink-0" size={16} />
+          <VscFileCode className="mr-2 text-gray-600 shrink-0" size={16} />
         )
       case 'ps1':
       case 'psm1':
         return (
-          <VscFileCode className="mr-2 text-blue-600 flex-shrink-0" size={16} />
+          <VscFileCode className="mr-2 text-blue-600 shrink-0" size={16} />
         )
       case 'vbs':
         return (
-          <VscFileCode className="mr-2 text-blue-500 flex-shrink-0" size={16} />
+          <VscFileCode className="mr-2 text-blue-500 shrink-0" size={16} />
         )
 
       // Database & Query
@@ -572,15 +577,15 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'ddl':
       case 'dml':
         return (
-          <VscCode className="mr-2 text-blue-400 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-400 shrink-0" size={16} />
         )
       case 'mongo':
         return (
-          <VscCode className="mr-2 text-green-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-green-600 shrink-0" size={16} />
         )
       case 'cypher':
         return (
-          <VscCode className="mr-2 text-blue-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-500 shrink-0" size={16} />
         )
 
       // Configuration & Data
@@ -588,31 +593,31 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'yml':
         return (
           <VscFileCode
-            className="mr-2 text-purple-400 flex-shrink-0"
+            className="mr-2 text-purple-400 shrink-0"
             size={16}
           />
         )
       case 'toml':
         return (
-          <VscFileCode className="mr-2 text-blue-500 flex-shrink-0" size={16} />
+          <VscFileCode className="mr-2 text-blue-500 shrink-0" size={16} />
         )
       case 'ini':
       case 'cfg':
       case 'conf':
         return (
-          <VscFileCode className="mr-2 text-gray-500 flex-shrink-0" size={16} />
+          <VscFileCode className="mr-2 text-gray-500 shrink-0" size={16} />
         )
       case 'env':
         return (
           <VscFileCode
-            className="mr-2 text-green-600 flex-shrink-0"
+            className="mr-2 text-green-600 shrink-0"
             size={16}
           />
         )
       case 'properties':
         return (
           <VscFileCode
-            className="mr-2 text-orange-500 flex-shrink-0"
+            className="mr-2 text-orange-500 shrink-0"
             size={16}
           />
         )
@@ -620,7 +625,7 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'tsv':
         return (
           <VscFileCode
-            className="mr-2 text-green-500 flex-shrink-0"
+            className="mr-2 text-green-500 shrink-0"
             size={16}
           />
         )
@@ -629,23 +634,23 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'cmake':
       case 'cmake.in':
         return (
-          <VscFileCode className="mr-2 text-blue-500 flex-shrink-0" size={16} />
+          <VscFileCode className="mr-2 text-blue-500 shrink-0" size={16} />
         )
       case 'makefile':
       case 'mk':
         return (
           <VscFileCode
-            className="mr-2 text-orange-500 flex-shrink-0"
+            className="mr-2 text-orange-500 shrink-0"
             size={16}
           />
         )
       case 'dockerfile':
         return (
-          <VscFileCode className="mr-2 text-blue-600 flex-shrink-0" size={16} />
+          <VscFileCode className="mr-2 text-blue-600 shrink-0" size={16} />
         )
       case 'lock':
         return (
-          <VscJson className="mr-2 text-yellow-500 flex-shrink-0" size={16} />
+          <VscJson className="mr-2 text-yellow-500 shrink-0" size={16} />
         )
 
       // Assembly & Low-level
@@ -653,11 +658,11 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 's':
       case 'S':
         return (
-          <VscCode className="mr-2 text-gray-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-gray-600 shrink-0" size={16} />
         )
       case 'll':
         return (
-          <VscCode className="mr-2 text-blue-500 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-500 shrink-0" size={16} />
         )
 
       // Documentation & Help
@@ -665,14 +670,14 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'ltx':
         return (
           <VscFileMedia
-            className="mr-2 text-blue-700 flex-shrink-0"
+            className="mr-2 text-blue-700 shrink-0"
             size={16}
           />
         )
       case 'bib':
         return (
           <VscFileMedia
-            className="mr-2 text-green-700 flex-shrink-0"
+            className="mr-2 text-green-700 shrink-0"
             size={16}
           />
         )
@@ -680,7 +685,7 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'asciidoc':
         return (
           <VscFileMedia
-            className="mr-2 text-blue-600 flex-shrink-0"
+            className="mr-2 text-blue-600 shrink-0"
             size={16}
           />
         )
@@ -689,7 +694,7 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'log':
         return (
           <VscFileMedia
-            className="mr-2 text-gray-600 flex-shrink-0"
+            className="mr-2 text-gray-600 shrink-0"
             size={16}
           />
         )
@@ -697,7 +702,7 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'patch':
         return (
           <VscFileMedia
-            className="mr-2 text-orange-500 flex-shrink-0"
+            className="mr-2 text-orange-500 shrink-0"
             size={16}
           />
         )
@@ -705,11 +710,11 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'gitattributes':
       case 'gitmodules':
         return (
-          <VscFileMedia className="mr-2 text-red-500 flex-shrink-0" size={16} />
+          <VscFileMedia className="mr-2 text-red-500 shrink-0" size={16} />
         )
       case 'editorconfig':
         return (
-          <VscFileCode className="mr-2 text-blue-500 flex-shrink-0" size={16} />
+          <VscFileCode className="mr-2 text-blue-500 shrink-0" size={16} />
         )
       case 'eslintrc':
       case 'prettierrc':
@@ -717,32 +722,32 @@ const FileTree: React.FC<FileTreeProps> = ({
       case 'tsconfig':
       case 'jsconfig':
         return (
-          <VscJson className="mr-2 text-green-600 flex-shrink-0" size={16} />
+          <VscJson className="mr-2 text-green-600 shrink-0" size={16} />
         )
       case 'webpack.config':
       case 'rollup.config':
       case 'tailwind.config':
       case 'postcss.config':
         return (
-          <VscCode className="mr-2 text-yellow-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-yellow-600 shrink-0" size={16} />
         )
       case 'vite.config':
         return (
-          <VscCode className="mr-2 text-blue-600 flex-shrink-0" size={16} />
+          <VscCode className="mr-2 text-blue-600 shrink-0" size={16} />
         )
       case 'browserslist':
         return (
-          <VscFileCode className="mr-2 text-blue-500 flex-shrink-0" size={16} />
+          <VscFileCode className="mr-2 text-blue-500 shrink-0" size={16} />
         )
       case 'nvmrc':
       case 'node-version':
         return (
-          <VscFile className="mr-2 text-green-500 flex-shrink-0" size={16} />
+          <VscFile className="mr-2 text-green-500 shrink-0" size={16} />
         )
 
       default:
         return (
-          <VscFile className="mr-2 text-gray-500 flex-shrink-0" size={16} />
+          <VscFile className="mr-2 text-gray-500 shrink-0" size={16} />
         )
     }
   }
@@ -826,7 +831,7 @@ const FileTree: React.FC<FileTreeProps> = ({
       // Validate name
       const validation = validateFileName(trimmedName)
       if (!validation.valid) {
-        alert(validation.error)
+        setErrorDialog({ message: validation.error || 'Invalid name' })
         return
       }
 
@@ -843,7 +848,7 @@ const FileTree: React.FC<FileTreeProps> = ({
         )
 
         if (nameExists) {
-          alert(`A file or folder named "${trimmedName}" already exists in this location.`)
+          setErrorDialog({ message: `A file or folder named "${trimmedName}" already exists in this location.` })
           return
         }
       }
@@ -894,7 +899,7 @@ const FileTree: React.FC<FileTreeProps> = ({
         for (const part of parts) {
           const partValidation = validateFileName(part)
           if (!partValidation.valid) {
-            alert(`Invalid name in path: ${partValidation.error}`)
+            setErrorDialog({ message: `Invalid name in path: ${partValidation.error}` })
             return
           }
         }
@@ -930,11 +935,46 @@ const FileTree: React.FC<FileTreeProps> = ({
         }
 
         onAddItem(parentFolder, currentItem)
+
+        // Expand parent folder and all intermediate folders in the nested path
+        const parentPath = creatingItem.parentPath === 'root' || creatingItem.parentPath === '' ? '' : creatingItem.parentPath
+        const pathsToExpand: string[] = []
+
+        // Always expand the parent folder
+        if (parentPath) {
+          pathsToExpand.push(parentPath)
+        }
+
+        // Build paths for all nested folders and add them to expand list
+        // Note: parts was modified by parts.pop() for files, so we need to reconstruct
+        const allParts = trimmedName.split('/').filter(p => p.trim())
+        let currentPath = parentPath
+
+        if (creatingItem.type === 'file') {
+          // For files, all parts except the last are folders
+          for (let i = 0; i < allParts.length - 1; i++) {
+            currentPath = currentPath ? `${currentPath}/${allParts[i]}` : allParts[i]
+            pathsToExpand.push(currentPath)
+          }
+        } else {
+          // For folders, all parts are folders
+          for (let i = 0; i < allParts.length; i++) {
+            currentPath = currentPath ? `${currentPath}/${allParts[i]}` : allParts[i]
+            pathsToExpand.push(currentPath)
+          }
+        }
+
+        // Expand all folders in the path
+        setExpandedFolders((prev) => {
+          const newExpanded = new Set(prev)
+          pathsToExpand.forEach((path) => newExpanded.add(path))
+          return Array.from(newExpanded)
+        })
       } else {
         // Simple name - validate and create normally
         const validation = validateFileName(trimmedName)
         if (!validation.valid) {
-          alert(validation.error)
+          setErrorDialog({ message: validation.error || 'Invalid name' })
           return
         }
 
@@ -952,6 +992,17 @@ const FileTree: React.FC<FileTreeProps> = ({
         }
 
         onAddItem(parentFolder, newItem)
+
+        // Expand parent folder so the newly created item is visible
+        const parentPath = creatingItem.parentPath === 'root' || creatingItem.parentPath === '' ? '' : creatingItem.parentPath
+        if (parentPath) {
+          setExpandedFolders((prev) => {
+            if (!prev.includes(parentPath)) {
+              return [...prev, parentPath]
+            }
+            return prev
+          })
+        }
       }
     }
     setCreatingItem(null)
@@ -1279,11 +1330,16 @@ const FileTree: React.FC<FileTreeProps> = ({
     )
 
     if (existingItem) {
-      const itemWithPath = {
-        ...existingItem,
-        __originalPath: existingItemPath,
-      } as any
-      onDeleteItem(itemWithPath)
+      // Use direct delete if available, otherwise fallback to regular delete
+      if (onDeleteItemDirectly) {
+        onDeleteItemDirectly(existingItem, existingItemPath)
+      } else {
+        const itemWithPath = {
+          ...existingItem,
+          __originalPath: existingItemPath,
+        } as any
+        onDeleteItem(itemWithPath)
+      }
     }
 
     // Delay the move to ensure deletion completes first
@@ -1407,10 +1463,16 @@ const FileTree: React.FC<FileTreeProps> = ({
                   type="text"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  onBlur={() => {
+                  onBlur={(e) => {
                     if (!newName.trim() || newName === item.name) {
                       setRenamingItem(null)
                       setNewName('')
+                    } else {
+                      const form = e.currentTarget.closest('form')
+                      if (form) {
+                        const submitEvent = new Event('submit', { bubbles: true, cancelable: true })
+                        form.dispatchEvent(submitEvent)
+                      }
                     }
                   }}
                   autoFocus
@@ -1490,12 +1552,12 @@ const FileTree: React.FC<FileTreeProps> = ({
               >
                 {creatingItem.type === 'folder' ? (
                   <VscNewFolder
-                    className="mr-2 text-gray-500 flex-shrink-0"
+                    className="mr-2 text-gray-500 shrink-0"
                     size={16}
                   />
                 ) : (
                   <VscNewFile
-                    className="mr-2 text-gray-500 flex-shrink-0"
+                    className="mr-2 text-gray-500 shrink-0"
                     size={16}
                   />
                 )}
@@ -1503,10 +1565,16 @@ const FileTree: React.FC<FileTreeProps> = ({
                   type="text"
                   value={newItemName}
                   onChange={(e) => setNewItemName(e.target.value)}
-                  onBlur={() => {
+                  onBlur={(e) => {
                     if (!newItemName.trim()) {
                       setCreatingItem(null)
                       setNewItemName('')
+                    } else {
+                      const form = e.currentTarget.closest('form')
+                      if (form) {
+                        const submitEvent = new Event('submit', { bubbles: true, cancelable: true })
+                        form.dispatchEvent(submitEvent)
+                      }
                     }
                   }}
                   autoFocus
@@ -1528,17 +1596,23 @@ const FileTree: React.FC<FileTreeProps> = ({
                 className="w-full flex items-center"
               >
                 <VscFolder
-                  className="mr-2 text-blue-600 flex-shrink-0"
+                  className="mr-2 text-blue-600 shrink-0"
                   size={16}
                 />
                 <input
                   type="text"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  onBlur={() => {
+                  onBlur={(e) => {
                     if (!newName.trim() || newName === item.name) {
                       setRenamingItem(null)
                       setNewName('')
+                    } else {
+                      const form = e.currentTarget.closest('form')
+                      if (form) {
+                        const submitEvent = new Event('submit', { bubbles: true, cancelable: true })
+                        form.dispatchEvent(submitEvent)
+                      }
                     }
                   }}
                   autoFocus
@@ -1551,9 +1625,14 @@ const FileTree: React.FC<FileTreeProps> = ({
 
           {isExpanded && (
             <div>
-              {sortItems(item.items).map((childItem) =>
-                renderItem(childItem, depth + 1, itemPath),
-              )}
+              {sortItems(item.items).map((childItem) => {
+                const childPath = itemPath ? `${itemPath}/${childItem.name}` : childItem.name
+                return (
+                  <React.Fragment key={childPath}>
+                    {renderItem(childItem, depth + 1, itemPath)}
+                  </React.Fragment>
+                )
+              })}
             </div>
           )}
         </div>
@@ -1603,7 +1682,11 @@ const FileTree: React.FC<FileTreeProps> = ({
           handleDrop(e, { type: 'folder', name: 'root', items: items })
         }
       >
-        {sortItems(items).map((item) => renderItem(item))}
+        {sortItems(items).map((item) => (
+          <React.Fragment key={item.name}>
+            {renderItem(item)}
+          </React.Fragment>
+        ))}
 
         {/* Root level creation input */}
         {creatingItem && creatingItem.parentPath === 'root' && (
@@ -1617,12 +1700,12 @@ const FileTree: React.FC<FileTreeProps> = ({
             >
               {creatingItem.type === 'folder' ? (
                 <VscNewFolder
-                  className="mr-2 text-gray-500 flex-shrink-0"
+                  className="mr-2 text-gray-500 shrink-0"
                   size={16}
                 />
               ) : (
                 <VscNewFile
-                  className="mr-2 text-gray-500 flex-shrink-0"
+                  className="mr-2 text-gray-500 shrink-0"
                   size={16}
                 />
               )}
@@ -1630,10 +1713,16 @@ const FileTree: React.FC<FileTreeProps> = ({
                 type="text"
                 value={newItemName}
                 onChange={(e) => setNewItemName(e.target.value)}
-                onBlur={() => {
+                onBlur={(e) => {
                   if (!newItemName.trim()) {
                     setCreatingItem(null)
                     setNewItemName('')
+                  } else {
+                    const form = e.currentTarget.closest('form')
+                    if (form) {
+                      const submitEvent = new Event('submit', { bubbles: true, cancelable: true })
+                      form.dispatchEvent(submitEvent)
+                    }
                   }
                 }}
                 autoFocus
@@ -1661,7 +1750,7 @@ const FileTree: React.FC<FileTreeProps> = ({
             }}
           >
             <button
-              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
+              className="w-full px-3 py-0.5 text-left text-[0.75rem] hover:bg-gray-100 flex items-center"
               onClick={() => {
                 if (openDropdown) {
                   handleRename(openDropdown.item, openDropdown.path)
@@ -1675,7 +1764,7 @@ const FileTree: React.FC<FileTreeProps> = ({
             {openDropdown?.item.type === 'folder' && (
               <>
                 <button
-                  className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
+                  className="w-full px-3 py-0.5 text-left text-[0.75rem] hover:bg-gray-100 flex items-center"
                   onClick={() => {
                     if (openDropdown && openDropdown.item.type === 'folder') {
                       handleCreateItem(
@@ -1690,7 +1779,7 @@ const FileTree: React.FC<FileTreeProps> = ({
                   New File
                 </button>
                 <button
-                  className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
+                  className="w-full px-3 py-0.5 text-left text-[0.75rem] hover:bg-gray-100 flex items-center"
                   onClick={() => {
                     if (openDropdown && openDropdown.item.type === 'folder') {
                       handleCreateItem(
@@ -1708,7 +1797,7 @@ const FileTree: React.FC<FileTreeProps> = ({
             )}
 
             <button
-              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
+              className="w-full px-3 py-0.5 text-left text-[0.75rem] hover:bg-gray-100 flex items-center"
               onClick={() => {
                 if (openDropdown) {
                   handleCopy(openDropdown.item, openDropdown.path)
@@ -1720,7 +1809,7 @@ const FileTree: React.FC<FileTreeProps> = ({
             </button>
 
             <button
-              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
+              className="w-full px-3 py-0.5 text-left text-[0.75rem] hover:bg-gray-100 flex items-center"
               onClick={() => {
                 if (openDropdown) {
                   handleCut(openDropdown.item, openDropdown.path)
@@ -1731,10 +1820,8 @@ const FileTree: React.FC<FileTreeProps> = ({
               Cut
             </button>
 
-            <div className="border-t border-gray-200 my-1"></div>
-
             <button
-              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
+              className="w-full px-3 py-0.5 text-left text-[0.75rem] hover:bg-gray-100 flex items-center"
               onClick={() => {
                 if (openDropdown) {
                   handleCopyPath(openDropdown.path)
@@ -1747,7 +1834,7 @@ const FileTree: React.FC<FileTreeProps> = ({
 
             {clipboard && openDropdown?.item.type === 'folder' && (
               <button
-                className={`w-full px-3 py-2 text-left text-sm flex items-center ${openDropdown &&
+                className={`w-full px-3 py-0.5 text-left text-[0.75rem] flex items-center ${openDropdown &&
                   openDropdown.item.type === 'folder' &&
                   canPaste(openDropdown.item as Folder)
                   ? 'hover:bg-gray-100'
@@ -1777,10 +1864,11 @@ const FileTree: React.FC<FileTreeProps> = ({
 
             {openDropdown?.item.type === 'folder' && (
               <button
-                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
+                className="w-full px-3 py-0.5 text-left text-[0.75rem] hover:bg-gray-100 flex items-center"
                 onClick={() => {
                   if (openDropdown && openDropdown.item.type === 'folder') {
                     onUploadFile(openDropdown.item as Folder)
+                    setOpenDropdown(null)
                   }
                 }}
               >
@@ -1794,7 +1882,7 @@ const FileTree: React.FC<FileTreeProps> = ({
             )}
 
             <button
-              className="w-full px-3 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center"
+              className="w-full px-3 py-0.5 text-left text-[0.75rem] hover:bg-red-50 text-red-600 flex items-center"
               onClick={() => {
                 if (openDropdown) {
                   // Pass path information to ensure exact item deletion
@@ -1827,21 +1915,21 @@ const FileTree: React.FC<FileTreeProps> = ({
             }}
           >
             <button
-              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
+              className="w-full px-3 py-0.5 text-left text-[0.75rem] hover:bg-gray-100 flex items-center"
               onClick={() => handleRootCreateItem('file')}
             >
               <VscNewFile className="mr-2" size={14} />
               New File
             </button>
             <button
-              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
+              className="w-full px-3 py-0.5 text-left text-[0.75rem] hover:bg-gray-100 flex items-center"
               onClick={() => handleRootCreateItem('folder')}
             >
               <VscNewFolder className="mr-2" size={14} />
               New Folder
             </button>
             <button
-              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
+              className="w-full px-3 py-0.5 text-left text-[0.75rem] hover:bg-gray-100 flex items-center"
               onClick={() => {
                 // Upload to root folder - create a special root folder object
                 const rootFolder: Folder = {
@@ -1858,7 +1946,7 @@ const FileTree: React.FC<FileTreeProps> = ({
             </button>
             {clipboard && (
               <button
-                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
+                className="w-full px-3 py-0.5 text-left text-[0.75rem] hover:bg-gray-100 flex items-center"
                 onClick={() => {
                   // Paste to root folder
                   const rootFolder: Folder = {
@@ -1911,6 +1999,26 @@ const FileTree: React.FC<FileTreeProps> = ({
                   className="px-2 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md transition-colors"
                 >
                   Cancel
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      {/* Error dialog */}
+      {errorDialog &&
+        createPortal(
+          <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
+              <h2 className="text-lg font-semibold mb-2 text-red-600">Error</h2>
+              <p className="text-gray-600 mb-4">{errorDialog.message}</p>
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setErrorDialog(null)}
+                  className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-md transition-colors"
+                >
+                  OK
                 </button>
               </div>
             </div>
