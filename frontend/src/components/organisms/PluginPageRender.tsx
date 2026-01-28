@@ -31,8 +31,24 @@ interface PluginPageRenderProps {
   data?: any
 }
 
+const GLOBAL_KEY = 'page-plugin'
+const REGISTER_TIMEOUT_MS = 15000
+const POLL_INTERVAL_MS = 100
+const YIELD_AFTER_LOAD_MS = 200
+
+/** Module-level: survives unmount so we know when user comes back to same plugin (refs would be reset). */
+let lastInjectedPluginUrl: string | null = null
+/** Track which plugin_id owns the current registration - prevents reusing wrong plugin when switching tabs. */
+let lastInjectedPluginId: string | null = null
+/** Store plugin registrations per plugin_id since all plugins register under the same 'page-plugin' key */
+const pluginRegistrations = new Map<string, any>()
+/** Map plugin URLs to plugin_ids so we can match registrations even when multiple plugins load simultaneously */
+const urlToPluginId = new Map<string, string>()
+
 const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data }) => {
   const containerRef = useRef<HTMLDivElement | null>(null)
+  const injectedScriptRef = useRef<HTMLScriptElement | null>(null)
+  const loadIdRef = useRef(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [PluginComponent, setPluginComponent] = useState<React.ComponentType<any> | null>(null)
@@ -255,6 +271,8 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data }) 
 
   useEffect(() => {
     let cancelled = false
+    loadIdRef.current += 1
+    const myLoadId = loadIdRef.current
     const log = (..._args: any[]) => {}
 
     const loadPlugin = async () => {
@@ -294,72 +312,313 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data }) 
         
 
         const PLUGIN_URL = pluginMeta.url
-        const GLOBAL_KEY = 'page-plugin'
-        const registerTimeoutMs = 5000
         log('Plugin URL:', PLUGIN_URL)
 
-        // Step 2: Ensure global dependencies (React, ReactDOM)
+        // Step 2: Ensure global dependencies (React, ReactDOM) - MUST be available BEFORE script executes
         log('Ensuring global dependencies')
-        if (!(window as any).React) {
-          const ReactMod = await import('react')
-          ;(window as any).React = (ReactMod as any).default || ReactMod
-          log('React attached to window')
-        }
-        if (!(window as any).ReactDOM) {
-          const ReactDOMClient = await import('react-dom/client')
-          ;(window as any).ReactDOM = ReactDOMClient
-          log('ReactDOM attached to window')
-        }
-        if (!(window as any).require) {
-          const ReactMod = await import('react')
-          const ReactDOMMod = await import('react-dom/client')
-          const JSXRuntime = await import('react/jsx-runtime')
+        
+        // Always ensure React is available (plugins might check for it)
+        const ReactMod = await import('react')
+        ;(window as any).React = (ReactMod as any).default || ReactMod
+        log('React attached to window')
+        
+        // Always ensure ReactDOM is available (plugins need this)
+        const ReactDOMClient = await import('react-dom/client')
+        ;(window as any).ReactDOM = ReactDOMClient
+        ;(window as any).ReactDOMClient = ReactDOMClient // Some plugins might look for this
+        log('ReactDOM attached to window')
+        
+        // Ensure require shim is available and handles all React-related modules
+        const ReactDOMMod = await import('react-dom/client')
+        const JSXRuntime = await import('react/jsx-runtime')
 
-          const requireShim = function(id: string) {
-            if (id === 'react') return ReactMod
-            if (id === 'react-dom/client') return ReactDOMMod
-            if (id === 'react/jsx-runtime') return JSXRuntime
-            throw new Error(`Module ${id} not found`)
+        // Create a synchronous module registry that loaders can query
+        // Some module loaders (like webpack) check module availability synchronously
+        const moduleRegistry: Record<string, any> = {
+          'react': ReactMod,
+          'react-dom': ReactDOMMod,
+          'react-dom/client': ReactDOMMod,
+          'react/jsx-runtime': JSXRuntime,
+          'react/jsx-dev-runtime': JSXRuntime,
+        }
+        
+        // Make module registry available synchronously
+        ;(window as any).__PLUGIN_MODULES__ = moduleRegistry
+        
+        const requireShim = function(id: string) {
+          if (moduleRegistry[id]) {
+            return moduleRegistry[id]
           }
-
-          ;(window as any).require = requireShim
-          ;(globalThis as any).require = requireShim
-          log('require() shim added')
+          throw new Error(`Module ${id} not found`)
         }
+
+        ;(window as any).require = requireShim
+        ;(globalThis as any).require = requireShim
+        
+        // Some loaders might check for webpack-style module cache
+        if (!(window as any).__webpack_require__) {
+          ;(window as any).__webpack_require__ = {
+            cache: moduleRegistry,
+            resolve: (id: string) => {
+              if (moduleRegistry[id]) return id
+              throw new Error(`Cannot resolve module: ${id}`)
+            },
+          }
+        } else {
+          // Merge with existing webpack cache if it exists
+          Object.assign((window as any).__webpack_require__.cache || {}, moduleRegistry)
+        }
+        
+        log('require() shim added with react-dom/client support and module registry')
+        
+        // Small delay to ensure module registry is fully set up before script executes
+        // Some loaders check module availability synchronously during script evaluation
+        await new Promise((r) => setTimeout(r, 50))
         if (cancelled) return
 
-        // Step 3: Load plugin script and wait for global registration under a fixed key
+        // Step 3: Load plugin script and wait for global registration under a fixed key.
+        // Since components now stay mounted (show/hide), we don't need versioning - use base URL for proper caching.
+        // IMPORTANT: All plugins register under the same 'page-plugin' key, so we intercept and store per plugin_id
+        
+        // Check if this plugin is already registered in our map
+        const existingRegistration = pluginRegistrations.get(plugin_id)
+        if (existingRegistration) {
+          // Registration exists for this plugin_id - use it directly (instant, no re-injection needed)
+          log('Reusing cached plugin registration for plugin_id:', plugin_id)
+          const component = existingRegistration?.components?.Page || null
+          if (component || existingRegistration?.mount) {
+            if (cancelled || myLoadId !== loadIdRef.current) return
+            setLoadedPluginName(plugin_id)
+            setPluginComponent(() => component || (() => {
+              const mountFn = existingRegistration.mount
+              const unmountFn = existingRegistration.unmount
+              const Wrapper: React.FC<any> = (props) => {
+                const ref = React.useRef<HTMLDivElement | null>(null)
+                React.useEffect(() => {
+                  if (ref.current) {
+                    try {
+                      mountFn(ref.current, props)
+                    } catch (e) {
+                      console.error(`[plugin-render:${plugin_id}] mount error`, e)
+                    }
+                  }
+                  return () => {
+                    try {
+                      unmountFn?.(ref.current)
+                    } catch (e) {
+                      console.error(`[plugin-render:${plugin_id}] unmount error`, e)
+                    }
+                  }
+                }, [props])
+                return <div ref={ref} className="w-full h-full" />
+              }
+              return Wrapper
+            })())
+            setLoading(false)
+            return // Skip injection, use cached registration
+          }
+        }
+        
+        // Map this URL to plugin_id so we can match registrations even when multiple plugins load simultaneously
+        urlToPluginId.set(PLUGIN_URL, plugin_id)
+        ;(window as any).DAPlugins = (window as any).DAPlugins || {}
+        
+        // Always use base URL (no versioning) - components stay mounted so script only loads once per component
+        // Browser caching will work properly with the same URL
+        const scriptUrl = PLUGIN_URL
+
         async function injectAndWait(asModule: boolean): Promise<any> {
-          // Use the original URL without cache-busting to allow preloaded cache to be used
+          // Clear the global slot so plugin can register fresh
+          ;(window as any).DAPlugins = (window as any).DAPlugins || {}
+          ;(window as any).DAPlugins[GLOBAL_KEY] = undefined
+
+          // Remove any existing script tags with this URL to force fresh execution
+          const existingScripts = Array.from(document.querySelectorAll(`script[src="${scriptUrl}"], script[src="${PLUGIN_URL}"]`))
+          existingScripts.forEach((s) => {
+            const scriptEl = s as HTMLScriptElement
+            log('Removing existing script tag:', scriptEl.src)
+            s.remove()
+          })
+
           const script = document.createElement('script')
-          script.src = PLUGIN_URL
+          script.src = scriptUrl
           script.async = true
-          script.defer = true
+          // For ES modules, defer is automatic and redundant - don't set it
+          // For classic scripts, defer helps with execution order
+          if (!asModule) {
+            script.defer = true
+          }
           script.crossOrigin = 'anonymous'
           if (asModule) script.type = 'module'
-          await new Promise<void>((resolve, reject) => {
-            script.onload = () => resolve()
-            script.onerror = () => reject(new Error('Failed to load plugin script'))
-            document.body.appendChild(script)
-          })
-          const maxAttempts = Math.ceil(registerTimeoutMs / 100)
+
+          if (injectedScriptRef.current) {
+            injectedScriptRef.current.remove()
+            injectedScriptRef.current = null
+          }
+          injectedScriptRef.current = script
+
+          let scriptLoadError: Error | null = null
+          let scriptExecutionError: any = null
+
+          // Capture script execution errors
+          const originalErrorHandler = window.onerror
+          const errorHandler: OnErrorEventHandler = (event, source, lineno, colno, error) => {
+            const sourceStr = typeof source === 'string' ? source : ''
+            const eventStr = typeof event === 'string' ? event : event?.toString() || 'Unknown error'
+            if (sourceStr === scriptUrl || sourceStr.includes(PLUGIN_URL)) {
+              scriptExecutionError = error || new Error(`${eventStr} at ${sourceStr}:${lineno}:${colno}`)
+              log('Script execution error:', scriptExecutionError)
+            }
+            if (originalErrorHandler) {
+              return originalErrorHandler(event, source, lineno, colno, error)
+            }
+            return false
+          }
+          window.onerror = errorHandler
+
+          try {
+            await new Promise<void>((resolve, reject) => {
+              script.onload = () => {
+                log('Script loaded successfully:', scriptUrl)
+                // Check immediately if script registered synchronously (especially for cached scripts)
+                const immediateRegistration = (window as any).DAPlugins?.[GLOBAL_KEY]
+                if (immediateRegistration) {
+                  const mappedPluginId = urlToPluginId.get(PLUGIN_URL)
+                  if (mappedPluginId === plugin_id) {
+                    log('Plugin registered synchronously on script load (cached script)')
+                    pluginRegistrations.set(plugin_id, immediateRegistration)
+                  }
+                }
+                resolve()
+              }
+              script.onerror = (e) => {
+                scriptLoadError = new Error(`Failed to load plugin script: ${scriptUrl}`)
+                log('Script load error:', scriptLoadError)
+                reject(scriptLoadError)
+              }
+              document.body.appendChild(script)
+              log('Script tag appended to DOM:', scriptUrl)
+            })
+          } finally {
+            window.onerror = originalErrorHandler
+          }
+
+          if (scriptLoadError) {
+            throw scriptLoadError
+          }
+
+          lastInjectedPluginUrl = PLUGIN_URL
+          lastInjectedPluginId = plugin_id
+
+          // Yield so the script has a chance to run (especially important for module scripts).
+          // For modules, onload fires when module is loaded, but evaluation happens asynchronously.
+          await new Promise((r) => setTimeout(r, YIELD_AFTER_LOAD_MS))
+          if (cancelled) return null
+
+          if (scriptExecutionError) {
+            throw new Error(`Plugin script execution error: ${scriptExecutionError.message}`)
+          }
+
+          // Check immediately after yield - script might have registered already
+          // Check our plugin-specific registration map first
+          let obj = pluginRegistrations.get(plugin_id)
+          if (obj) {
+            log('Plugin registered immediately after yield (from map)')
+            return obj
+          }
+          
+          // Check global registration - match by URL to plugin_id mapping
+          obj = (window as any).DAPlugins?.[GLOBAL_KEY]
+          if (obj) {
+            const mappedPluginId = urlToPluginId.get(PLUGIN_URL)
+            if (mappedPluginId === plugin_id) {
+              log('Plugin registered immediately after yield (capturing for plugin_id:', plugin_id, ')')
+              pluginRegistrations.set(plugin_id, obj) // Store in map for this plugin_id
+              return obj
+            } else {
+              log('Found registration but URL mapping mismatch. Mapped:', mappedPluginId, 'Expected:', plugin_id)
+            }
+          }
+
+          // For debugging: log what's in DAPlugins
+          log('DAPlugins state:', Object.keys((window as any).DAPlugins || {}))
+          log('Checking for registration for plugin_id:', plugin_id)
+          log('Registered plugin IDs:', Array.from(pluginRegistrations.keys()))
+
+          const maxAttempts = Math.ceil(REGISTER_TIMEOUT_MS / POLL_INTERVAL_MS)
           let attempts = 0
           while (attempts < maxAttempts) {
-            const obj = (window as any).DAPlugins?.[GLOBAL_KEY]
-            if (obj) return obj
-            await new Promise((r) => setTimeout(r, 100))
+            if (cancelled) return null
+            
+            // Check our plugin-specific map first
+            obj = pluginRegistrations.get(plugin_id)
+            if (obj) {
+              log(`Plugin registered after ${attempts * POLL_INTERVAL_MS}ms (from map)`)
+              return obj
+            }
+            
+            // Check global - match by URL to plugin_id mapping
+            obj = (window as any).DAPlugins?.[GLOBAL_KEY]
+            if (obj) {
+              const mappedPluginId = urlToPluginId.get(PLUGIN_URL)
+              if (mappedPluginId === plugin_id) {
+                log(`Plugin registered after ${attempts * POLL_INTERVAL_MS}ms (capturing for plugin_id: ${plugin_id})`)
+                pluginRegistrations.set(plugin_id, obj) // Store in map
+                return obj
+              }
+            }
+            
+            // Log every 10 attempts (1 second) for debugging
+            if (attempts > 0 && attempts % 10 === 0) {
+              log(`Still waiting for registration... ${attempts * POLL_INTERVAL_MS}ms elapsed`)
+              log('Current DAPlugins keys:', Object.keys((window as any).DAPlugins || {}))
+              log('Registered plugin IDs:', Array.from(pluginRegistrations.keys()))
+              log('URL to plugin_id mapping:', Array.from(urlToPluginId.entries()))
+            }
+            await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS))
             attempts++
           }
-          throw new Error(`Plugin did not register at window.DAPlugins['${GLOBAL_KEY}'] in ${registerTimeoutMs}ms`)
+          
+          // Final check before throwing
+          obj = pluginRegistrations.get(plugin_id)
+          if (obj) {
+            log('Plugin registered at final check (from map)')
+            return obj
+          }
+          
+          obj = (window as any).DAPlugins?.[GLOBAL_KEY]
+          if (obj) {
+            const mappedPluginId = urlToPluginId.get(PLUGIN_URL)
+            if (mappedPluginId === plugin_id) {
+              log('Plugin registered at final check (capturing for plugin_id)')
+              pluginRegistrations.set(plugin_id, obj)
+              return obj
+            }
+          }
+          
+          // Enhanced error message with debugging info
+          const errorMsg = `Plugin did not register at window.DAPlugins['${GLOBAL_KEY}'] within ${REGISTER_TIMEOUT_MS}ms. ` +
+            `Script URL: ${scriptUrl}, ` +
+            `Plugin ID: ${plugin_id}, ` +
+            `DAPlugins keys: [${Object.keys((window as any).DAPlugins || {}).join(', ')}], ` +
+            `Registered plugin IDs: [${Array.from(pluginRegistrations.keys()).join(', ')}], ` +
+            `Script execution error: ${scriptExecutionError ? scriptExecutionError.message : 'none'}`
+          log('Registration timeout:', errorMsg)
+          throw new Error(errorMsg)
         }
 
+        // Try module first (most plugins are ESM); fall back to classic.
         let pluginObj: any = null
         try {
-          pluginObj = await injectAndWait(false)
-        } catch (e1) {
-          log('Classic script load failed or not registered in time, retrying as module')
           pluginObj = await injectAndWait(true)
+        } catch (e1) {
+          if (cancelled) return
+          if (injectedScriptRef.current?.parentNode) injectedScriptRef.current.remove()
+          injectedScriptRef.current = null
+          log('Module script load failed or not registered in time, retrying as classic')
+          pluginObj = await injectAndWait(false)
         }
+        if (cancelled || pluginObj == null) return
 
         let component: React.ComponentType<any> | null = pluginObj?.components?.Page || null
         if (!component && pluginObj?.mount) {
@@ -392,16 +651,16 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data }) 
           throw new Error(`window.DAPlugins['${GLOBAL_KEY}'] has no components.Page or mount() function`)
         }
 
-        if (cancelled) return
+        if (cancelled || myLoadId !== loadIdRef.current) return
 
-        setLoadedPluginName(GLOBAL_KEY)
+        setLoadedPluginName(plugin_id)
         setPluginComponent(() => component)
         setLoading(false)
         log('Plugin ready to render for plugin_id:', plugin_id)
 
       } catch (e: any) {
         log('Error loading plugin:', e)
-        if (!cancelled) {
+        if (!cancelled && myLoadId === loadIdRef.current) {
           setError(e?.message || 'Failed to load plugin')
           setLoading(false)
         }
@@ -410,23 +669,33 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data }) 
 
     loadPlugin()
 
-    // Cleanup function
+    // Cleanup function: remove injected script but keep registration in map for reuse
     return () => {
       cancelled = true
-      log('Cleanup - unmounting global page-plugin if possible')
+      log('Cleanup - unmounting plugin (keeping registration in map for cache)')
       try {
         const el = containerRef.current
-        // Prefer plugin-provided unmount if it exists
-        // @ts-ignore
-        ;(window as any)?.DAPlugins?.['page-plugin']?.unmount?.(el)
+        // Unmount using the plugin-specific registration if available
+        const registration = pluginRegistrations.get(plugin_id)
+        if (registration?.unmount) {
+          registration.unmount(el)
+        } else {
+          ;(window as any)?.DAPlugins?.[GLOBAL_KEY]?.unmount?.(el)
+        }
       } catch {}
+      if (injectedScriptRef.current?.parentNode) {
+        injectedScriptRef.current.remove()
+      }
+      injectedScriptRef.current = null
+      // Don't clear pluginRegistrations - keep registrations in map for reuse
       setPluginComponent(null)
       setLoadedPluginName(null)
     }
   }, [plugin_id])
 
-  // Only render the plugin component if it matches the current plugin_id
-  const shouldRenderPlugin = !loading && !error && PluginComponent && loadedPluginName
+  // Only render when we have a component and it was loaded for this exact plugin_id (deep check)
+  const shouldRenderPlugin =
+    !loading && !error && !!PluginComponent && loadedPluginName === plugin_id
 
   // Log what we're about to render
   useEffect(() => {
