@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 const httpStatus = require('http-status');
-const { modelService, apiService, permissionService, extendedApiService } = require('../services');
+const { modelService, apiService, permissionService, extendedApiService, permissionSyncService } = require('../services');
 const catchAsync = require('../utils/catchAsync');
 const pick = require('../utils/pick');
 const ApiError = require('../utils/ApiError');
@@ -77,6 +77,11 @@ const createModel = catchAsync(async (req, res) => {
   } catch (error) {
     logger.warn(`Error in creating model (creating extended_apis): ${error}`);
   }
+
+  // Sync model to Gitea (async, don't wait)
+  permissionSyncService.syncModelToGitea(model._id.toString()).catch((error) => {
+    logger.error(`Failed to sync model to Gitea: ${error.message}`);
+  });
 
   res.status(httpStatus.CREATED).send(model);
 });

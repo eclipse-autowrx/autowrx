@@ -24,11 +24,15 @@ const PageUserProfile = () => {
   const { data: user, refetch } = useSelfProfileQuery()
   const [isOpenPopup, setIsOpenPopup] = useState(false)
   const [name, setName] = useState('')
+  const [githubToken, setGithubToken] = useState('')
+  const [isEditingGithubToken, setIsEditingGithubToken] = useState(false)
   const { authConfigs } = useAuthConfigs()
 
   useEffect(() => {
     if (user) {
       setName(user.name)
+      // Don't set github token from user data (it's private/encrypted)
+      setGithubToken('')
     }
   }, [user])
 
@@ -53,6 +57,17 @@ const PageUserProfile = () => {
       setIsEditing(false)
     } catch (error) {
       console.error('Failed to update user:', error)
+    }
+  }
+
+  const handleUpdateGithubToken = async () => {
+    try {
+      await partialUpdateUserService({ github_token: githubToken || undefined })
+      await refetch()
+      setIsEditingGithubToken(false)
+      setGithubToken('')
+    } catch (error) {
+      console.error('Failed to update GitHub token:', error)
     }
   }
 
@@ -177,6 +192,57 @@ const PageUserProfile = () => {
                   </div>
                 </div>
               )}
+              <div className="flex flex-col w-full mt-6">
+                <div className="text-base font-semibold text-foreground">
+                  GitHub Personal Access Token
+                </div>
+                <div className="flex w-full items-start justify-between mt-2">
+                  <div className="flex-1 mr-4">
+                    {isEditingGithubToken ? (
+                      <div className="flex flex-col gap-2">
+                        <Input
+                          type="password"
+                          placeholder="Enter GitHub PAT (optional)"
+                          value={githubToken}
+                          onChange={(e) => setGithubToken(e.target.value)}
+                          className="max-w-md"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Used for accessing private GitHub repositories in workspaces. Leave empty to remove.
+                        </p>
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={handleUpdateGithubToken}>
+                            Save
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setIsEditingGithubToken(false)
+                              setGithubToken('')
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-sm text-muted-foreground">
+                        {user?.github_token ? '••••••••' : 'Not set'}
+                      </div>
+                    )}
+                  </div>
+                  {!isEditingGithubToken && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setIsEditingGithubToken(true)}
+                    >
+                      {user?.github_token ? 'Update' : 'Add'} Token
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>

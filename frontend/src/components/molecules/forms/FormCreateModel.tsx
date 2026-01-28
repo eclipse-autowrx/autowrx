@@ -233,31 +233,33 @@ const FormCreateModel = () => {
           {/* Start from scratch option */}
           <div
             onClick={() => setSelectedTemplateId(null)}
-            className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+            className={`flex items-center gap-2 p-1.5 border rounded-lg cursor-pointer transition-colors ${
               selectedTemplateId === null
                 ? 'border-primary bg-primary/5'
                 : 'border-input hover:border-primary/50'
             }`}
           >
-            <div className="w-16 h-16 rounded border border-input bg-background flex items-center justify-center flex-shrink-0">
-              <span className="text-xs text-muted-foreground text-center px-2">
-                Start from scratch
-              </span>
+            <div className="w-8 h-8 rounded border border-input bg-background flex items-center justify-center flex-shrink-0 overflow-hidden">
+              <img
+                src="/imgs/plugin.png"
+                alt="Start from scratch"
+                className="w-full h-full object-contain p-1"
+              />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium">Start from scratch</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-xs font-medium">Start from scratch</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
                 Create a new model without a template
               </p>
             </div>
-            <input
-              type="radio"
-              name="template"
-              value="scratch"
-              checked={selectedTemplateId === null}
-              onChange={() => setSelectedTemplateId(null)}
-              className="w-4 h-4 text-primary"
-            />
+              <input
+                type="radio"
+                name="template"
+                value="scratch"
+                checked={selectedTemplateId === null}
+                onChange={() => setSelectedTemplateId(null)}
+                className="w-3 h-3 text-primary flex-shrink-0"
+              />
           </div>
 
           {/* Template options */}
@@ -265,23 +267,23 @@ const FormCreateModel = () => {
             <div
               key={template.id}
               onClick={() => setSelectedTemplateId(template.id)}
-              className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+              className={`flex items-center gap-2 p-1.5 border rounded-lg cursor-pointer transition-colors ${
                 selectedTemplateId === template.id
                   ? 'border-primary bg-primary/5'
                   : 'border-input hover:border-primary/50'
               }`}
             >
-              <div className="w-16 h-16 rounded border border-input bg-background flex items-center justify-center flex-shrink-0 overflow-hidden">
+              <div className="w-8 h-8 rounded border border-input bg-background flex items-center justify-center flex-shrink-0 overflow-hidden">
                 <img
                   src={template.image || '/imgs/plugin.png'}
                   alt={template.name}
-                  className="w-full h-full object-contain p-2"
+                  className="w-full h-full object-contain p-1"
                 />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{template.name}</p>
+                <p className="text-xs font-medium truncate">{template.name}</p>
                 {template.description && (
-                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                  <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">
                     {template.description}
                   </p>
                 )}
@@ -292,7 +294,7 @@ const FormCreateModel = () => {
                 value={template.id}
                 checked={selectedTemplateId === template.id}
                 onChange={() => setSelectedTemplateId(template.id)}
-                className="w-4 h-4 text-primary flex-shrink-0"
+                className="w-3 h-3 text-primary flex-shrink-0"
               />
             </div>
           ))}

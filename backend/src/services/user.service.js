@@ -13,6 +13,7 @@ const image = require('../utils/image');
 const fileService = require('./file.service');
 const logger = require('../config/logger');
 const { isValidObjectId } = require('mongoose');
+const { encrypt } = require('../utils/encryption');
 
 /**
  * Create a user
@@ -123,6 +124,16 @@ const updateUserById = async (userId, updateBody) => {
 
   if (updateBody.password && user.password && (await user.isPasswordMatch(updateBody.password))) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'New password must be different from the current password');
+  }
+
+  // Encrypt GitHub token if provided
+  if (updateBody.github_token !== undefined) {
+    if (updateBody.github_token && updateBody.github_token.trim() !== '') {
+      updateBody.github_token = encrypt(updateBody.github_token);
+    } else {
+      // Empty string means remove token
+      updateBody.github_token = null;
+    }
   }
 
   return User.findOneAndUpdate(

@@ -215,6 +215,18 @@ const prototypeSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    gitea_repo_url: {
+      type: String,
+      trim: true,
+    },
+    coder_workspace_id: {
+      type: String,
+      trim: true,
+    },
+    coder_workspace_name: {
+      type: String,
+      trim: true,
+    },
   },
   {
     timestamps: true,

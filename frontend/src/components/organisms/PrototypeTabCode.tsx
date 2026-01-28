@@ -32,6 +32,7 @@ import config from '@/configs/config'
 import CodeEditor from '@/components/molecules/CodeEditor'
 import { Spinner } from '@/components/atoms/spinner'
 import { retry } from '@/lib/retry'
+import { useParams } from 'react-router-dom'
 
 // Helper function to determine editor type
 const getEditorType = (content: string): 'project' | 'code' => {
@@ -73,6 +74,7 @@ const DaGenAI_Python = lazy(() =>
 ) as any
 
 const PrototypeTabCode: FC = () => {
+  const { prototype_id } = useParams<{ prototype_id: string }>()
   const [prototype, setActivePrototype, activeModelApis] = useModelStore(
     (state) => [
       state.prototype as Prototype,
@@ -98,6 +100,7 @@ const PrototypeTabCode: FC = () => {
   const resizeRef = useRef<HTMLDivElement>(null)
   const startXRef = useRef(0)
   const startWidthRef = useRef(0)
+
 
   useEffect(() => {
     let timer = setInterval(() => {
@@ -266,39 +269,42 @@ const PrototypeTabCode: FC = () => {
             Language: <b>{(prototype.language || 'python').toUpperCase()}</b>
           </div>
         </div>
-        <Suspense
-          fallback={
-            <div className="flex items-center justify-center h-full">
-              <Spinner />
-            </div>
-          }
-        >
+        <div className="flex-1 overflow-hidden">
           {editorType === 'project' ? (
-            <ProjectEditor
-              data={code || ''}
-              onChange={(data: string) => {
-                setCode(data)
-                setSavedCode(data)
-              }}
-              onSave={async (data: string) => {
-                await saveCodeToDb(data)
-              }}
-            />
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center h-full">
+                  <Spinner />
+                </div>
+              }
+            >
+              <ProjectEditor
+                data={code || ''}
+                onChange={(newData) => {
+                  setCode(newData)
+                }}
+                onSave={saveCodeToDb}
+              />
+            </Suspense>
           ) : (
             <CodeEditor
               code={code || ''}
-              setCode={setCode}
+              setCode={(newCode) => {
+                setCode(newCode)
+              }}
               editable={isAuthorized}
               language={prototype.language || 'python'}
-              onBlur={saveCodeToDb}
+              onBlur={() => {
+                saveCodeToDb()
+              }}
             />
           )}
-        </Suspense>
+        </div>
       </div>
       {/* Resize handle */}
       <div
         ref={resizeRef}
-        className="w-1 bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors cursor-col-resize flex-shrink-0"
+        className="w-1 bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors cursor-col-resize shrink-0"
         onMouseDown={handleMouseDown}
         title="Drag to resize"
         style={{ marginLeft: '8px', marginRight: '8px' }}
@@ -310,7 +316,7 @@ const PrototypeTabCode: FC = () => {
         </div>
       </div>
       <div
-        className="flex h-full flex-col bg-white rounded-md flex-shrink-0"
+        className="flex h-full flex-col bg-white rounded-md shrink-0"
         style={{ width: `${rightPanelWidth}px` }}
       >
         {activeTab == 'api' && (
