@@ -311,7 +311,33 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           {tab == 'dashboard' && <PrototypeTabDashboard />}
           {tab == 'feedback' && <PrototypeTabFeedback />}
           {tab == 'staging' && <PrototypeTabStaging prototype={prototype} />}
-          {tab == 'plug' && <PagePrototypePlugin key={pluginId || 'no-plugin'} />}
+          
+          {/* Render ALL plugin components unconditionally - they stay mounted and cached */}
+          {/* Only show the one that matches current tab and pluginId */}
+          {prototypeTabs
+            .filter((tabConfig): tabConfig is TabConfig & { plugin: string } => 
+              tabConfig.type === 'custom' && !!tabConfig.plugin
+            )
+            .map((tabConfig) => {
+              // Show only if we're on the 'plug' tab AND this plugin matches the pluginId
+              const isActive = tab === 'plug' && pluginId === tabConfig.plugin
+              return (
+                <div
+                  key={tabConfig.plugin}
+                  className={isActive ? 'w-full h-full' : 'hidden'}
+                >
+                  <PagePrototypePlugin pluginSlug={tabConfig.plugin} />
+                </div>
+              )
+            })}
+          
+          {/* Fallback: if no plugin tabs configured but plugid in URL, render single instance */}
+          {/* (for backward compatibility or direct navigation) */}
+          {tab === 'plug' && pluginId && 
+            prototypeTabs.filter(t => t.type === 'custom' && t.plugin === pluginId).length === 0 && (
+              <PagePrototypePlugin pluginSlug={pluginId} />
+            )
+          }
         </div>
         {showRt && <DaRuntimeControl />}
       </div>

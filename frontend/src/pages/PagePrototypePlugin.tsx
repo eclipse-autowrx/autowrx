@@ -14,13 +14,16 @@ import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import { Spinner } from '@/components/atoms/spinner'
 import useModelStore from '@/stores/modelStore'
 
-interface PagePrototypePluginProps {}
+interface PagePrototypePluginProps {
+  pluginSlug?: string // If provided, use this instead of reading from URL
+}
 
-const PagePrototypePlugin: FC<PagePrototypePluginProps> = () => {
+const PagePrototypePlugin: FC<PagePrototypePluginProps> = ({ pluginSlug }) => {
   const { data: model, isLoading: isModelLoading } = useCurrentModel()
   const { data: prototype, isLoading: isPrototypeLoading } = useCurrentPrototype()
   const [searchParams] = useSearchParams()
-  const pluginId = searchParams.get('plugid')
+  // Use pluginSlug prop if provided, otherwise fall back to URL param (for backward compatibility)
+  const pluginId = pluginSlug || searchParams.get('plugid')
 
   const [activeModelApis, activeModelV2CApis] = useModelStore((state) => [
     state.activeModelApis,
