@@ -26,6 +26,7 @@ import CustomAPIView from '@/components/organisms/CustomAPIView'
 import { Spinner } from '@/components/atoms/spinner'
 import { VscChevronLeft, VscChevronRight } from 'react-icons/vsc'
 import { ArrowLeftFromLine, CopyMinus } from 'lucide-react'
+import { TbLayoutSidebar, TbLayoutSidebarRight, TbLayoutSidebarRightFilled } from 'react-icons/tb'
 
 interface ApiCodeBlockProps {
   content: string
@@ -351,25 +352,26 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
 
       {isCollapsed ? (
         // Collapsed view - thin column with just expand button
-        <div className="flex flex-col h-full transition-all duration-200 ease-in-out">
+        <button
+          onClick={toggleCollapse}
+          className="flex flex-col h-full transition-all duration-200 ease-in-out hover:bg-gray-100">
           <div className="flex items-center justify-center py-1.5 border-b border-gray-200 bg-gray-100">
-            <button
-              onClick={toggleCollapse}
+            <div
               title="Expand Panel"
               className="p-1.5 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors"
             >
-              <ArrowLeftFromLine size={16} />
-            </button>
+              <TbLayoutSidebarRight size={16} />
+            </div>
           </div>
           <div className="flex-1 flex items-start justify-center pt-46">
-            <div 
-              className="text-2xl font-bold text-gray-700 tracking-wider"
+            <div
+              className="text-xl font-medium text-gray-700 tracking-wider"
               style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
             >
               API Panel
             </div>
           </div>
-        </div>
+        </button>
       ) : (
         // Expanded view - normal layout
         <>
@@ -452,7 +454,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
               title="Collapse Panel"
               className="p-1.5 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors shrink-0"
             >
-              <CopyMinus size={16} />
+              <TbLayoutSidebarRightFilled size={16} />
             </button>
           </div>
 

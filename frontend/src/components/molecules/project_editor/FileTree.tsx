@@ -1750,7 +1750,7 @@ const FileTree: React.FC<FileTreeProps> = ({
             }}
           >
             <button
-              className="w-full px-3 py-0.5 text-left text-sm hover:bg-gray-100 flex items-center"
+              className="w-full px-3 py-0.5 text-left text-[0.75rem] hover:bg-gray-100 flex items-center"
               onClick={() => {
                 if (openDropdown) {
                   handleRename(openDropdown.item, openDropdown.path)
@@ -1764,7 +1764,7 @@ const FileTree: React.FC<FileTreeProps> = ({
             {openDropdown?.item.type === 'folder' && (
               <>
                 <button
-                  className="w-full px-3 py-0.5 text-left text-sm hover:bg-gray-100 flex items-center"
+                  className="w-full px-3 py-0.5 text-left text-[0.75rem] hover:bg-gray-100 flex items-center"
                   onClick={() => {
                     if (openDropdown && openDropdown.item.type === 'folder') {
                       handleCreateItem(
@@ -1779,7 +1779,7 @@ const FileTree: React.FC<FileTreeProps> = ({
                   New File
                 </button>
                 <button
-                  className="w-full px-3 py-0.5 text-left text-sm hover:bg-gray-100 flex items-center"
+                  className="w-full px-3 py-0.5 text-left text-[0.75rem] hover:bg-gray-100 flex items-center"
                   onClick={() => {
                     if (openDropdown && openDropdown.item.type === 'folder') {
                       handleCreateItem(
@@ -1797,7 +1797,7 @@ const FileTree: React.FC<FileTreeProps> = ({
             )}
 
             <button
-              className="w-full px-3 py-0.5 text-left text-sm hover:bg-gray-100 flex items-center"
+              className="w-full px-3 py-0.5 text-left text-[0.75rem] hover:bg-gray-100 flex items-center"
               onClick={() => {
                 if (openDropdown) {
                   handleCopy(openDropdown.item, openDropdown.path)
@@ -1809,7 +1809,7 @@ const FileTree: React.FC<FileTreeProps> = ({
             </button>
 
             <button
-              className="w-full px-3 py-0.5 text-left text-sm hover:bg-gray-100 flex items-center"
+              className="w-full px-3 py-0.5 text-left text-[0.75rem] hover:bg-gray-100 flex items-center"
               onClick={() => {
                 if (openDropdown) {
                   handleCut(openDropdown.item, openDropdown.path)
@@ -1821,7 +1821,7 @@ const FileTree: React.FC<FileTreeProps> = ({
             </button>
 
             <button
-              className="w-full px-3 py-0.5 text-left text-sm hover:bg-gray-100 flex items-center"
+              className="w-full px-3 py-0.5 text-left text-[0.75rem] hover:bg-gray-100 flex items-center"
               onClick={() => {
                 if (openDropdown) {
                   handleCopyPath(openDropdown.path)
@@ -1834,7 +1834,7 @@ const FileTree: React.FC<FileTreeProps> = ({
 
             {clipboard && openDropdown?.item.type === 'folder' && (
               <button
-                className={`w-full px-3 py-0.5 text-left text-sm flex items-center ${openDropdown &&
+                className={`w-full px-3 py-0.5 text-left text-[0.75rem] flex items-center ${openDropdown &&
                   openDropdown.item.type === 'folder' &&
                   canPaste(openDropdown.item as Folder)
                   ? 'hover:bg-gray-100'
@@ -1864,7 +1864,7 @@ const FileTree: React.FC<FileTreeProps> = ({
 
             {openDropdown?.item.type === 'folder' && (
               <button
-                className="w-full px-3 py-0.5 text-left text-sm hover:bg-gray-100 flex items-center"
+                className="w-full px-3 py-0.5 text-left text-[0.75rem] hover:bg-gray-100 flex items-center"
                 onClick={() => {
                   if (openDropdown && openDropdown.item.type === 'folder') {
                     onUploadFile(openDropdown.item as Folder)
@@ -1882,7 +1882,7 @@ const FileTree: React.FC<FileTreeProps> = ({
             )}
 
             <button
-              className="w-full px-3 py-0.5 text-left text-sm hover:bg-red-50 text-red-600 flex items-center"
+              className="w-full px-3 py-0.5 text-left text-[0.75rem] hover:bg-red-50 text-red-600 flex items-center"
               onClick={() => {
                 if (openDropdown) {
                   // Pass path information to ensure exact item deletion
@@ -1915,21 +1915,21 @@ const FileTree: React.FC<FileTreeProps> = ({
             }}
           >
             <button
-              className="w-full px-3 py-0.5 text-left text-sm hover:bg-gray-100 flex items-center"
+              className="w-full px-3 py-0.5 text-left text-[0.75rem] hover:bg-gray-100 flex items-center"
               onClick={() => handleRootCreateItem('file')}
             >
               <VscNewFile className="mr-2" size={14} />
               New File
             </button>
             <button
-              className="w-full px-3 py-0.5 text-left text-sm hover:bg-gray-100 flex items-center"
+              className="w-full px-3 py-0.5 text-left text-[0.75rem] hover:bg-gray-100 flex items-center"
               onClick={() => handleRootCreateItem('folder')}
             >
               <VscNewFolder className="mr-2" size={14} />
               New Folder
             </button>
             <button
-              className="w-full px-3 py-0.5 text-left text-sm hover:bg-gray-100 flex items-center"
+              className="w-full px-3 py-0.5 text-left text-[0.75rem] hover:bg-gray-100 flex items-center"
               onClick={() => {
                 // Upload to root folder - create a special root folder object
                 const rootFolder: Folder = {
@@ -1946,7 +1946,7 @@ const FileTree: React.FC<FileTreeProps> = ({
             </button>
             {clipboard && (
               <button
-                className="w-full px-3 py-0.5 text-left text-sm hover:bg-gray-100 flex items-center"
+                className="w-full px-3 py-0.5 text-left text-[0.75rem] hover:bg-gray-100 flex items-center"
                 onClick={() => {
                   // Paste to root folder
                   const rootFolder: Folder = {

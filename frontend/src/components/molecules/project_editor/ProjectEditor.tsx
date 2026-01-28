@@ -27,7 +27,7 @@ import {
   VscCloudDownload,
   VscCloudUpload,
 } from 'react-icons/vsc'
-import { ArrowRightFromLine, CopyMinus } from 'lucide-react'
+import { TbLayoutSidebar, TbLayoutSidebarFilled } from 'react-icons/tb'
 
 interface ProjectEditorProps {
   data: string
@@ -1441,71 +1441,50 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
 
   const handleAddItem = (parent: Folder, item: FileSystemItem) => {
     console.log('handleAddItem: Adding item to parent', { parent, item })
+  
     setFsData((prevFsData) => {
-      // Case add to root
-      if (parent.name === 'root' || parent.path === 'root' || !parent.path) {
-        const rootItem = prevFsData[0]
-        if (rootItem && rootItem.type === 'folder') {
-          // Use merge function to handle existing folders
-          const mergedRoot = mergeItemIntoFolder(rootItem, item)
-          return [mergedRoot]
-        }
+      const [root, ...rest] = prevFsData
+      if (!root || root.type !== 'folder') {
         return prevFsData
       }
+  
+      if (parent.name === 'root' || parent.path === 'root' || !parent.path) {
+        const mergedRoot = mergeItemIntoFolder(root, item)
+        return [mergedRoot, ...rest]
+      }
+  
       const addItem = (
         items: FileSystemItem[],
         currentPath: string = '',
       ): FileSystemItem[] => {
         return items.map((i) => {
           const itemPath = currentPath ? `${currentPath}/${i.name}` : i.name
-
-          const normalizedItemPath = itemPath.startsWith('root/')
-            ? itemPath.substring(5)
-            : itemPath
-
-          const isTargetFolder = i.type === 'folder' && (
-            normalizedItemPath === parent.path ||
-            (parent.path === 'root' && currentPath === '') ||
-            (!parent.path && normalizedItemPath === parent.name && currentPath === '')
-          )
-
+  
+          const isTargetFolder =
+            i.type === 'folder' && itemPath === parent.path
+  
           if (isTargetFolder) {
-            // Check for duplicates to prevent race condition re-additions
-            const existingItem = i.items.find((existing) => {
-              const existingPath = itemPath
-                ? `${itemPath}/${existing.name}`
-                : existing.name
-              const newItemPath = itemPath
-                ? `${itemPath}/${item.name}`
-                : item.name
-              return existingPath === newItemPath
-            })
-
-            if (existingItem) {
-              console.log(
-                'handleAddItem: Item already exists, skipping addition',
-                {
-                  itemName: item.name,
-                  targetPath: itemPath,
-                },
-              )
-              return i // Don't add duplicate
-            }
-
-            // Add path to the new item
             const itemWithPath = {
               ...item,
               path: itemPath ? `${itemPath}/${item.name}` : item.name,
             }
             return { ...i, items: [...i.items, itemWithPath] }
           }
+  
           if (i.type === 'folder') {
             return { ...i, items: addItem(i.items, itemPath) }
           }
+  
           return i
         })
       }
-      return addItem(prevFsData)
+  
+      const updatedRoot: Folder = {
+        ...root,
+        items: addItem(root.items, ''),
+      }
+  
+      return [updatedRoot, ...rest]
     })
   }
 
@@ -1892,25 +1871,24 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
       >
         {isCollapsed ? (
           // Collapsed view - thin column with just expand button
-          <div className="flex flex-col h-full">
+          <button onClick={toggleCollapse} className="flex flex-col w-full h-full hover:bg-gray-100">
             <div className="flex items-center justify-center py-2 border-b border-gray-200 bg-gray-100">
-              <button
-                onClick={toggleCollapse}
+              <div
                 title="Expand Panel"
                 className="p-1.5 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors"
               >
-                <ArrowRightFromLine size={16} />
-              </button>
+                <TbLayoutSidebar size={16} />
+              </div>
             </div>
             <div className="flex-1 flex items-start justify-center pt-32">
               <div
-                className="text-2xl font-bold text-gray-700 tracking-wider"
+                className="text-xl font-medium text-gray-700 tracking-wider"
                 style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
               >
-                File Tree
+                File Explorer
               </div>
             </div>
-          </div>
+          </button>
         ) : (
           // Expanded view - normal layout
           <div className="flex flex-col h-full overflow-hidden">
@@ -1920,7 +1898,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                 title="Collapse Panel"
                 className="p-1.5 hover:bg-gray-200 rounded text-gray-500 hover:text-gray-700 transition-colors"
               >
-                <CopyMinus size={16} />
+                <TbLayoutSidebarFilled size={16} />
               </button>
               <span className="grow pl-1 font-semibold text-sm tracking-wide text-gray-700 overflow-hidden text-ellipsis">
                 {projectName.toUpperCase()}
