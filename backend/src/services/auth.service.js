@@ -152,7 +152,6 @@ const callMsGraph = async (accessToken, providerId = null) => {
   // For now, we'll use the default endpoint but this allows for future tenant-specific validation
   const msGraphMeEndpoint = config.sso.msGraphMeEndpoint;
 
-  logger.debug(`Fetching user data from: ${msGraphMeEndpoint}${providerId ? ` (Provider: ${providerId})` : ''}`);
 
   // Fetch user data
   const userData = await fetch(msGraphMeEndpoint, {
@@ -208,9 +207,6 @@ const parseIdToken = async (idToken, providerId = null) => {
     const base64Payload = parts[1];
     const payload = JSON.parse(Buffer.from(base64Payload, 'base64').toString());
 
-    logger.debug(`Parsing ID token${providerId ? ` (Provider: ${providerId})` : ''}`);
-    logger.debug(`ID token payload keys: ${Object.keys(payload).join(', ')}`);
-
     // Extract user data from ID token claims
     // Map common OIDC claims to our MSGraph format
     const userData = {
@@ -221,7 +217,6 @@ const parseIdToken = async (idToken, providerId = null) => {
       providerId,
     };
 
-    logger.debug(`Extracted user data: id=${userData.id}, email=${userData.mail}, name=${userData.displayName}`);
 
     // Validate required fields
     if (!userData.mail) {
@@ -232,7 +227,6 @@ const parseIdToken = async (idToken, providerId = null) => {
     if (!userData.displayName) {
       // Fallback to email if name not provided
       userData.displayName = userData.mail.split('@')[0];
-      logger.debug(`Display name not found, using email prefix: ${userData.displayName}`);
     }
 
     return userData;

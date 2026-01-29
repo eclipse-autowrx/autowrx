@@ -211,27 +211,19 @@ const sso = catchAsync(async (req, res) => {
   let graphData;
   try {
     graphData = await authService.parseIdToken(idToken, providerId);
-    logger.info(`Successfully parsed ID token for provider ${providerId}`);
   } catch (error) {
-    logger.error(`Failed to parse ID token: ${error.message}`);
     throw new ApiError(httpStatus.UNAUTHORIZED, `Invalid ID token: ${error.message}`);
   }
-
-  logger.info(`SSO authentication data: email=${graphData.mail}, name=${graphData.displayName}, providerId=${providerId}`);
 
   let user = await userService.getUserByEmail(graphData.mail);
   if (!user) {
     // Check if SSO auto-registration is enabled
-    logger.info(`SSO auto-registration check for ${graphData.mail}: SSO_AUTO_REGISTRATION=${req.authConfig.SSO_AUTO_REGISTRATION}, authConfig=${JSON.stringify(req.authConfig)}`);
-
     if (!req.authConfig.SSO_AUTO_REGISTRATION) {
       throw new ApiError(httpStatus.UNAUTHORIZED, 'User not registered. Contact admin to register your account.');
     }
 
-    logger.info(`Creating new SSO user: ${graphData.mail}`);
     user = await userService.createSSOUser(graphData);
   } else {
-    logger.info(`Updating existing SSO user: ${graphData.mail}`);
     user = await userService.updateSSOUser(user, graphData);
   }
 
