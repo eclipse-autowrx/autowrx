@@ -152,6 +152,7 @@ const callMsGraph = async (accessToken, providerId = null) => {
   // For now, we'll use the default endpoint but this allows for future tenant-specific validation
   const msGraphMeEndpoint = config.sso.msGraphMeEndpoint;
 
+  logger.debug(`Fetching user data from: ${msGraphMeEndpoint}${providerId ? ` (Provider: ${providerId})` : ''}`);
 
   // Fetch user data
   const userData = await fetch(msGraphMeEndpoint, {

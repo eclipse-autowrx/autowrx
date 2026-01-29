@@ -214,7 +214,6 @@ const sso = catchAsync(async (req, res) => {
   } catch (error) {
     throw new ApiError(httpStatus.UNAUTHORIZED, `Invalid ID token: ${error.message}`);
   }
-
   let user = await userService.getUserByEmail(graphData.mail);
   if (!user) {
     // Check if SSO auto-registration is enabled
