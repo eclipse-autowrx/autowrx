@@ -60,9 +60,9 @@ export const resetPasswordService = async (password: string, token: string) => {
   )
 }
 
-export const ssoService = async (msAccessToken: string, providerId: string) => {
+export const ssoService = async (idToken: string, providerId: string) => {
   return serverAxios.post('/auth/sso', {
-    msAccessToken,
     providerId,
+    idToken,
   })
 }

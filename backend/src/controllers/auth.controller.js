@@ -108,7 +108,7 @@ const forgotPassword = catchAsync(async (req, res) => {
     if (hostname === 'auth.digital.auto') {
       domain = hostname;
     }
-  } catch (error) {}
+  } catch (error) { }
 
   if (returnRawToken) {
     res.status(httpStatus.OK).send({ resetPasswordToken });
@@ -192,7 +192,7 @@ const githubCallback = catchAsync(async (req, res) => {
 });
 
 const sso = catchAsync(async (req, res) => {
-  const { msAccessToken, providerId } = req.body;
+  const { providerId, idToken } = req.body;
   const ssoService = require('../services/sso.service');
 
   // Validate that provider exists and is enabled
@@ -202,17 +202,25 @@ const sso = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.BAD_REQUEST, error.message || 'Invalid or disabled SSO provider');
   }
 
-  const graphData = await authService.callMsGraph(msAccessToken, providerId);
-  if (graphData.error) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, 'Invalid MS access token');
+  // Validate ID token is provided
+  if (!idToken) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'ID token is required');
   }
 
+  // Parse ID token to extract user data (no additional scopes needed)
+  let graphData;
+  try {
+    graphData = await authService.parseIdToken(idToken, providerId);
+  } catch (error) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, `Invalid ID token: ${error.message}`);
+  }
   let user = await userService.getUserByEmail(graphData.mail);
   if (!user) {
     // Check if SSO auto-registration is enabled
     if (!req.authConfig.SSO_AUTO_REGISTRATION) {
       throw new ApiError(httpStatus.UNAUTHORIZED, 'User not registered. Contact admin to register your account.');
     }
+
     user = await userService.createSSOUser(graphData);
   } else {
     user = await userService.updateSSOUser(user, graphData);
