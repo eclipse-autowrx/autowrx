@@ -142,6 +142,7 @@ const verifyEmail = async (verifyEmailToken) => {
 
 /**
  * Call Microsoft Graph API to fetch user data
+ * @deprecated This method requires User.Read scope. Use parseIdToken() instead which only needs OpenID scopes.
  * @param {string} accessToken - Microsoft access token
  * @param {string} providerId - SSO provider ID (optional for backward compatibility)
  * @returns {Promise<import('../typedefs/msGraph').MSGraph>}
@@ -150,7 +151,7 @@ const callMsGraph = async (accessToken, providerId = null) => {
   // If providerId provided, fetch provider config for validation
   // For now, we'll use the default endpoint but this allows for future tenant-specific validation
   const msGraphMeEndpoint = config.sso.msGraphMeEndpoint;
-  
+
   logger.debug(`Fetching user data from: ${msGraphMeEndpoint}${providerId ? ` (Provider: ${providerId})` : ''}`);
 
   // Fetch user data
@@ -186,6 +187,59 @@ const callMsGraph = async (accessToken, providerId = null) => {
   return { ...userData, userPhotoUrl, providerId };
 };
 
+/**
+ * Parse ID token to extract user data (alternative to calling Graph API)
+ * @param {string} idToken - MSAL ID token (JWT)
+ * @param {string} providerId - SSO provider ID
+ * @returns {Promise<import('../typedefs/msGraph').MSGraph>}
+ */
+const parseIdToken = async (idToken, providerId = null) => {
+  try {
+    if (!idToken || typeof idToken !== 'string') {
+      throw new Error('ID token is missing or invalid format');
+    }
+
+    // Decode JWT (ID tokens are not encrypted, just signed)
+    const parts = idToken.split('.');
+    if (parts.length !== 3) {
+      throw new Error('ID token is not a valid JWT (expected 3 parts)');
+    }
+
+    const base64Payload = parts[1];
+    const payload = JSON.parse(Buffer.from(base64Payload, 'base64').toString());
+
+    // Extract user data from ID token claims
+    // Map common OIDC claims to our MSGraph format
+    const userData = {
+      id: payload.oid || payload.sub, // oid = Azure AD object ID, sub = subject
+      displayName: payload.name,
+      mail: payload.email || payload.preferred_username, // email or UPN
+      userPhotoUrl: null, // ID token doesn't contain photo
+      providerId,
+    };
+
+
+    // Validate required fields
+    if (!userData.mail) {
+      logger.error(`Email not found in ID token. Available claims: ${JSON.stringify(payload)}`);
+      throw new Error('Email not found in ID token');
+    }
+
+    if (!userData.displayName) {
+      // Fallback to email if name not provided
+      userData.displayName = userData.mail.split('@')[0];
+    }
+
+    return userData;
+  } catch (error) {
+    logger.error(`Error parsing ID token: ${error.message}`);
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError(httpStatus.UNAUTHORIZED, `Invalid ID token: ${error.message}`);
+  }
+};
+
 module.exports = {
   loginUserWithEmailAndPassword,
   logout,
@@ -194,4 +248,5 @@ module.exports = {
   verifyEmail,
   githubCallback,
   callMsGraph,
+  parseIdToken,
 };

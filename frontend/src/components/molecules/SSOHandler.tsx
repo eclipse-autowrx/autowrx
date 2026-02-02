@@ -30,10 +30,10 @@ const SSOHandler = ({ provider, setSSOLoading, children }: SSOHandlerProps) => {
         try {
           setIsInitializing(true)
           const instance = createMSALInstance(provider)
-          
+
           // MUST call and await initialize() before using any MSAL API
           await instance.initialize()
-          
+
           setMsalInstance(instance)
           console.log('MSAL instance initialized successfully')
         } catch (error) {
@@ -47,7 +47,7 @@ const SSOHandler = ({ provider, setSSOLoading, children }: SSOHandlerProps) => {
           setIsInitializing(false)
         }
       }
-      
+
       initializeMsal()
     }
   }, [provider, toast])
@@ -84,15 +84,15 @@ const SSOHandler = ({ provider, setSSOLoading, children }: SSOHandlerProps) => {
         throw new Error('No access token received from Microsoft')
       }
 
-      // Call backend with access token and provider ID
-      const response = await ssoService(loginResponse.accessToken, provider.id)
-      
+      // Call backend with ID token and provider ID (no User.Read scope needed)
+      const response = await ssoService(loginResponse.idToken, provider.id)
+
       if (response.data) {
         toast({
           title: 'Login Successful',
           description: `Welcome back, ${response.data.user?.name || 'User'}!`,
         })
-        
+
         // Reload page to refresh auth state
         setTimeout(() => {
           window.location.href = window.location.href
@@ -109,7 +109,7 @@ const SSOHandler = ({ provider, setSSOLoading, children }: SSOHandlerProps) => {
         })
       } else {
         console.error('SSO login error:', error)
-        
+
         if (error.errorCode === 'popup_window_error') {
           toast({
             title: 'Popup Blocked',
