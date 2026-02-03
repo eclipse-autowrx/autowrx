@@ -12,6 +12,7 @@ import { Input } from '../atoms/input'
 import { Textarea } from '../atoms/textarea'
 import { Label } from '../atoms/label'
 import { Trash2, Plus, MoveUp, MoveDown } from 'lucide-react'
+import DOMPurify from 'dompurify'
 
 export interface NavBarAction {
   label: string
@@ -165,7 +166,11 @@ const NavBarActionsEditor: React.FC<NavBarActionsEditorProps> = ({ value, onChan
               <Label className="text-xs mb-2 block">Preview</Label>
               <div className="flex items-center gap-2 p-2 bg-muted rounded">
                 <div
-                  dangerouslySetInnerHTML={{ __html: action.icon }}
+                  dangerouslySetInnerHTML={{ 
+                    __html: DOMPurify.sanitize(action.icon, { 
+                      USE_PROFILES: { svg: true, svgFilters: true }
+                    }) 
+                  }}
                   className="w-6 h-6 flex items-center justify-center"
                 />
                 <span className="text-sm">{action.label || 'Label'}</span>

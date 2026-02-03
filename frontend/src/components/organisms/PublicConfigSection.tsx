@@ -135,7 +135,7 @@ const PublicConfigSection: React.FC = () => {
         
         // Reload page to show changes immediately
         setTimeout(() => {
-          window.location.href = window.location.href
+          window.location.reload()
         }, 800)
       }
     } catch (err) {
@@ -161,7 +161,7 @@ const PublicConfigSection: React.FC = () => {
       
       // Reload page to show changes immediately
       setTimeout(() => {
-        window.location.href = window.location.href
+        window.location.reload()
       }, 800)
     } catch (err) {
       toast({
@@ -194,7 +194,7 @@ const PublicConfigSection: React.FC = () => {
       
       // Reload page to show changes immediately
       setTimeout(() => {
-        window.location.href = window.location.href
+        window.location.reload()
       }, 800)
     } catch (err) {
       toast({
@@ -233,7 +233,7 @@ const PublicConfigSection: React.FC = () => {
       
       // Reload page to show changes immediately
       setTimeout(() => {
-        window.location.href = window.location.href
+        window.location.reload()
       }, 800)
     } catch (err) {
       toast({

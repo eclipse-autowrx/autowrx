@@ -41,6 +41,7 @@ import { useState, useEffect } from 'react'
 import { useSiteConfig } from '@/utils/siteConfig'
 import { Button } from '../atoms/button'
 import { Wrench } from 'lucide-react'
+import DOMPurify from 'dompurify'
 
 const SimpleSwitch = ({
   checked,
@@ -136,7 +137,11 @@ const NavigationBar = ({}) => {
             >
               {action.icon && (
                 <div
-                  dangerouslySetInnerHTML={{ __html: action.icon }}
+                  dangerouslySetInnerHTML={{ 
+                    __html: DOMPurify.sanitize(action.icon, { 
+                      USE_PROFILES: { svg: true, svgFilters: true }
+                    }) 
+                  }}
                   className="w-5 h-5 flex items-center justify-center"
                 />
               )}
