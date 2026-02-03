@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/a
 import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { PREDEFINED_SITE_CONFIGS } from '@/pages/SiteConfigManagement'
+import NavBarActionsEditor, { NavBarAction } from '@/components/molecules/NavBarActionsEditor'
 
 const PublicConfigSection: React.FC = () => {
   const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
@@ -23,6 +24,9 @@ const PublicConfigSection: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingConfig, setEditingConfig] = useState<Config | undefined>()
+  const [navBarActions, setNavBarActions] = useState<NavBarAction[]>([])
+  const [originalNavBarActions, setOriginalNavBarActions] = useState<NavBarAction[]>([])
+  const [isSavingNavBarActions, setIsSavingNavBarActions] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -45,9 +49,10 @@ const PublicConfigSection: React.FC = () => {
       const existingConfigs = res.results || []
       const existingKeys = new Set(existingConfigs.map(config => config.key))
 
-      // Find missing predefined configs and create them
+      // Find missing predefined configs and create them (excluding NAV_BAR_ACTIONS)
+      // NAV_BAR_ACTIONS should only be created when user explicitly adds actions
       const missingConfigs = PREDEFINED_SITE_CONFIGS.filter(
-        config => !existingKeys.has(config.key)
+        config => !existingKeys.has(config.key) && config.key !== 'NAV_BAR_ACTIONS'
       )
 
       if (missingConfigs.length > 0) {
@@ -62,19 +67,47 @@ const PublicConfigSection: React.FC = () => {
           limit: 100,
         })
 
-        // Filter to only show predefined configs
+        // Filter to only show predefined configs (excluding NAV_BAR_ACTIONS)
         const predefinedKeys = new Set(PREDEFINED_SITE_CONFIGS.map(c => c.key))
         const filteredConfigs = (updatedRes.results || []).filter(
-          config => predefinedKeys.has(config.key)
+          config => predefinedKeys.has(config.key) && config.key !== 'NAV_BAR_ACTIONS'
         )
+
+        // Load nav bar actions separately - only show actual DB data, empty if null/undefined
+        const navBarActionsConfig = (updatedRes.results || []).find(
+          config => config.key === 'NAV_BAR_ACTIONS'
+        )
+        if (navBarActionsConfig && navBarActionsConfig.value !== null && navBarActionsConfig.value !== undefined) {
+          const actions = Array.isArray(navBarActionsConfig.value) ? navBarActionsConfig.value as NavBarAction[] : []
+          setNavBarActions(actions)
+          setOriginalNavBarActions(JSON.parse(JSON.stringify(actions)))
+        } else {
+          // DB is empty/null - show empty state
+          setNavBarActions([])
+          setOriginalNavBarActions([])
+        }
 
         setConfigs(filteredConfigs)
       } else {
-        // Filter to only show predefined configs
+        // Filter to only show predefined configs (excluding NAV_BAR_ACTIONS)
         const predefinedKeys = new Set(PREDEFINED_SITE_CONFIGS.map(c => c.key))
         const filteredConfigs = existingConfigs.filter(
-          config => predefinedKeys.has(config.key)
+          config => predefinedKeys.has(config.key) && config.key !== 'NAV_BAR_ACTIONS'
         )
+
+        // Load nav bar actions separately - only show actual DB data, empty if null/undefined
+        const navBarActionsConfig = existingConfigs.find(
+          config => config.key === 'NAV_BAR_ACTIONS'
+        )
+        if (navBarActionsConfig && navBarActionsConfig.value !== null && navBarActionsConfig.value !== undefined) {
+          const actions = Array.isArray(navBarActionsConfig.value) ? navBarActionsConfig.value as NavBarAction[] : []
+          setNavBarActions(actions)
+          setOriginalNavBarActions(JSON.parse(JSON.stringify(actions)))
+        } else {
+          // DB is empty/null - show empty state
+          setNavBarActions([])
+          setOriginalNavBarActions([])
+        }
 
         setConfigs(filteredConfigs)
       }
@@ -116,7 +149,7 @@ const PublicConfigSection: React.FC = () => {
         
         // Reload page to show changes immediately
         setTimeout(() => {
-          window.location.href = window.location.href
+          window.location.reload()
         }, 800)
       }
     } catch (err) {
@@ -142,7 +175,7 @@ const PublicConfigSection: React.FC = () => {
       
       // Reload page to show changes immediately
       setTimeout(() => {
-        window.location.href = window.location.href
+        window.location.reload()
       }, 800)
     } catch (err) {
       toast({
@@ -157,6 +190,34 @@ const PublicConfigSection: React.FC = () => {
   const handleCancelForm = () => {
     setIsFormOpen(false)
     setEditingConfig(undefined)
+  }
+
+  const handleSaveNavBarActions = async () => {
+    try {
+      setIsSavingNavBarActions(true)
+      
+      // Update the NAV_BAR_ACTIONS config
+      await configManagementService.updateConfigByKey('NAV_BAR_ACTIONS', {
+        value: navBarActions,
+      })
+      
+      toast({ 
+        title: 'Saved', 
+        description: 'Navigation bar actions updated successfully. Reloading page...' 
+      })
+      
+      // Reload page to show changes immediately
+      setTimeout(() => {
+        window.location.reload()
+      }, 800)
+    } catch (err) {
+      toast({
+        title: 'Save failed',
+        description: err instanceof Error ? err.message : 'Failed to save navigation bar actions',
+        variant: 'destructive',
+      })
+      setIsSavingNavBarActions(false)
+    }
   }
 
   const handleFactoryReset = async () => {
@@ -186,7 +247,7 @@ const PublicConfigSection: React.FC = () => {
       
       // Reload page to show changes immediately
       setTimeout(() => {
-        window.location.href = window.location.href
+        window.location.reload()
       }, 800)
     } catch (err) {
       toast({
@@ -196,6 +257,11 @@ const PublicConfigSection: React.FC = () => {
       })
       setIsLoading(false)
     }
+  }
+
+  // Check if navBarActions have changed
+  const hasNavBarActionsChanged = () => {
+    return JSON.stringify(navBarActions) !== JSON.stringify(originalNavBarActions)
   }
 
   return (
@@ -227,12 +293,43 @@ const PublicConfigSection: React.FC = () => {
             <Spinner />
           </div>
         ) : (
-          <ConfigList
-            configs={configs}
-            onEdit={handleEditConfig}
-            onDelete={handleDeleteConfig}
-            isLoading={isLoading}
-          />
+          <>
+            {/* Other Configs List */}
+            <ConfigList
+              configs={configs}
+              onEdit={handleEditConfig}
+              onDelete={handleDeleteConfig}
+              isLoading={isLoading}
+            />
+
+            {/* Navigation Bar Actions Section - Moved to bottom */}
+            <div className="mt-8 border border-border rounded-lg bg-card">
+              <div className="px-6 py-4 border-b border-border">
+                <h3 className="text-lg font-semibold text-foreground">
+                  Navigation Bar Actions
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Configure custom action buttons with icons and links for the navigation bar
+                </p>
+              </div>
+              <div className="p-6">
+                <NavBarActionsEditor
+                  value={navBarActions}
+                  onChange={setNavBarActions}
+                />
+                {hasNavBarActionsChanged() && (
+                  <div className="mt-4 flex justify-end">
+                    <Button
+                      onClick={handleSaveNavBarActions}
+                      disabled={isSavingNavBarActions}
+                    >
+                      {isSavingNavBarActions ? 'Saving...' : 'Save Navigation Bar Actions'}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
         )}
       </div>
 

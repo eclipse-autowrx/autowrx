@@ -41,6 +41,7 @@ import { useState, useEffect } from 'react'
 import { useSiteConfig } from '@/utils/siteConfig'
 import { Button } from '../atoms/button'
 import { Wrench } from 'lucide-react'
+import DOMPurify from 'dompurify'
 
 const SimpleSwitch = ({
   checked,
@@ -75,6 +76,7 @@ const NavigationBar = ({}) => {
   const siteTitle = useSiteConfig('SITE_TITLE', 'AutoWRX')
   const logoUrl = useSiteConfig('SITE_LOGO_WIDE', '/imgs/logo-wide.png')
   const enableLearningMode = useSiteConfig('ENABLE_LEARNING_MODE', false)
+  const navBarActions = useSiteConfig('NAV_BAR_ACTIONS', [])
 
   useEffect(() => {
     if (siteTitle) {
@@ -118,6 +120,34 @@ const NavigationBar = ({}) => {
               setIsLearningMode(v)
             }}
           />
+        </div>
+      )}
+
+      {/* Navigation Bar Actions */}
+      {navBarActions && Array.isArray(navBarActions) && navBarActions.length > 0 && (
+        <div className="mr-2 flex items-center gap-2">
+          {navBarActions.map((action: any, index: number) => (
+            <a
+              key={index}
+              href={action.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium hover:bg-muted transition-colors"
+              title={action.label}
+            >
+              {action.icon && (
+                <div
+                  dangerouslySetInnerHTML={{ 
+                    __html: DOMPurify.sanitize(action.icon, { 
+                      USE_PROFILES: { svg: true, svgFilters: true }
+                    }) 
+                  }}
+                  className="w-6 h-6 flex items-center justify-center"
+                />
+              )}
+              {action.label && <span className="ml-1">{action.label}</span>}
+            </a>
+          ))}
         </div>
       )}
 
