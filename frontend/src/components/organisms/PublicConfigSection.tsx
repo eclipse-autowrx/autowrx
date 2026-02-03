@@ -49,9 +49,10 @@ const PublicConfigSection: React.FC = () => {
       const existingConfigs = res.results || []
       const existingKeys = new Set(existingConfigs.map(config => config.key))
 
-      // Find missing predefined configs and create them
+      // Find missing predefined configs and create them (excluding NAV_BAR_ACTIONS)
+      // NAV_BAR_ACTIONS should only be created when user explicitly adds actions
       const missingConfigs = PREDEFINED_SITE_CONFIGS.filter(
-        config => !existingKeys.has(config.key)
+        config => !existingKeys.has(config.key) && config.key !== 'NAV_BAR_ACTIONS'
       )
 
       if (missingConfigs.length > 0) {
@@ -72,14 +73,18 @@ const PublicConfigSection: React.FC = () => {
           config => predefinedKeys.has(config.key) && config.key !== 'NAV_BAR_ACTIONS'
         )
 
-        // Load nav bar actions separately
+        // Load nav bar actions separately - only show actual DB data, empty if null/undefined
         const navBarActionsConfig = (updatedRes.results || []).find(
           config => config.key === 'NAV_BAR_ACTIONS'
         )
-        if (navBarActionsConfig) {
-          const actions = navBarActionsConfig.value as NavBarAction[] || []
+        if (navBarActionsConfig && navBarActionsConfig.value !== null && navBarActionsConfig.value !== undefined) {
+          const actions = Array.isArray(navBarActionsConfig.value) ? navBarActionsConfig.value as NavBarAction[] : []
           setNavBarActions(actions)
           setOriginalNavBarActions(JSON.parse(JSON.stringify(actions)))
+        } else {
+          // DB is empty/null - show empty state
+          setNavBarActions([])
+          setOriginalNavBarActions([])
         }
 
         setConfigs(filteredConfigs)
@@ -90,14 +95,18 @@ const PublicConfigSection: React.FC = () => {
           config => predefinedKeys.has(config.key) && config.key !== 'NAV_BAR_ACTIONS'
         )
 
-        // Load nav bar actions separately
+        // Load nav bar actions separately - only show actual DB data, empty if null/undefined
         const navBarActionsConfig = existingConfigs.find(
           config => config.key === 'NAV_BAR_ACTIONS'
         )
-        if (navBarActionsConfig) {
-          const actions = navBarActionsConfig.value as NavBarAction[] || []
+        if (navBarActionsConfig && navBarActionsConfig.value !== null && navBarActionsConfig.value !== undefined) {
+          const actions = Array.isArray(navBarActionsConfig.value) ? navBarActionsConfig.value as NavBarAction[] : []
           setNavBarActions(actions)
           setOriginalNavBarActions(JSON.parse(JSON.stringify(actions)))
+        } else {
+          // DB is empty/null - show empty state
+          setNavBarActions([])
+          setOriginalNavBarActions([])
         }
 
         setConfigs(filteredConfigs)

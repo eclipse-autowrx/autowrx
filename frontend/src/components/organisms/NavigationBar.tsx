@@ -132,7 +132,7 @@ const NavigationBar = ({}) => {
               href={action.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium hover:bg-muted transition-colors"
+              className="flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium hover:bg-muted transition-colors"
               title={action.label}
             >
               {action.icon && (
@@ -142,10 +142,10 @@ const NavigationBar = ({}) => {
                       USE_PROFILES: { svg: true, svgFilters: true }
                     }) 
                   }}
-                  className="w-5 h-5 flex items-center justify-center"
+                  className="w-6 h-6 flex items-center justify-center"
                 />
               )}
-              {action.label && <span>{action.label}</span>}
+              {action.label && <span className="ml-1">{action.label}</span>}
             </a>
           ))}
         </div>
