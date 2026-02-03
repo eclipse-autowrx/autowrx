@@ -75,6 +75,7 @@ const NavigationBar = ({}) => {
   const siteTitle = useSiteConfig('SITE_TITLE', 'AutoWRX')
   const logoUrl = useSiteConfig('SITE_LOGO_WIDE', '/imgs/logo-wide.png')
   const enableLearningMode = useSiteConfig('ENABLE_LEARNING_MODE', false)
+  const navBarActions = useSiteConfig('NAV_BAR_ACTIONS', [])
 
   useEffect(() => {
     if (siteTitle) {
@@ -118,6 +119,30 @@ const NavigationBar = ({}) => {
               setIsLearningMode(v)
             }}
           />
+        </div>
+      )}
+
+      {/* Navigation Bar Actions */}
+      {navBarActions && Array.isArray(navBarActions) && navBarActions.length > 0 && (
+        <div className="mr-4 flex items-center gap-2">
+          {navBarActions.map((action: any, index: number) => (
+            <a
+              key={index}
+              href={action.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium hover:bg-muted transition-colors"
+              title={action.label}
+            >
+              {action.icon && (
+                <div
+                  dangerouslySetInnerHTML={{ __html: action.icon }}
+                  className="w-5 h-5 flex items-center justify-center"
+                />
+              )}
+              {action.label && <span>{action.label}</span>}
+            </a>
+          ))}
         </div>
       )}
 
