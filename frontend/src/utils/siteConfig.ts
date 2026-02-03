@@ -220,7 +220,8 @@ export const useSiteConfig = (key: string, fallback?: any, scope: string = 'site
     };
 
     loadConfig();
-  }, [key, scope, target_id, fallback]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, scope, target_id]); // Removed 'fallback' from deps - it's just a default value, not a fetch trigger
 
   return value;
 };
