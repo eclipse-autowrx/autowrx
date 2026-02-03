@@ -25,6 +25,7 @@ const PublicConfigSection: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingConfig, setEditingConfig] = useState<Config | undefined>()
   const [navBarActions, setNavBarActions] = useState<NavBarAction[]>([])
+  const [originalNavBarActions, setOriginalNavBarActions] = useState<NavBarAction[]>([])
   const [isSavingNavBarActions, setIsSavingNavBarActions] = useState(false)
   const { toast } = useToast()
 
@@ -76,7 +77,9 @@ const PublicConfigSection: React.FC = () => {
           config => config.key === 'NAV_BAR_ACTIONS'
         )
         if (navBarActionsConfig) {
-          setNavBarActions(navBarActionsConfig.value as NavBarAction[] || [])
+          const actions = navBarActionsConfig.value as NavBarAction[] || []
+          setNavBarActions(actions)
+          setOriginalNavBarActions(JSON.parse(JSON.stringify(actions)))
         }
 
         setConfigs(filteredConfigs)
@@ -92,7 +95,9 @@ const PublicConfigSection: React.FC = () => {
           config => config.key === 'NAV_BAR_ACTIONS'
         )
         if (navBarActionsConfig) {
-          setNavBarActions(navBarActionsConfig.value as NavBarAction[] || [])
+          const actions = navBarActionsConfig.value as NavBarAction[] || []
+          setNavBarActions(actions)
+          setOriginalNavBarActions(JSON.parse(JSON.stringify(actions)))
         }
 
         setConfigs(filteredConfigs)
@@ -245,6 +250,11 @@ const PublicConfigSection: React.FC = () => {
     }
   }
 
+  // Check if navBarActions have changed
+  const hasNavBarActionsChanged = () => {
+    return JSON.stringify(navBarActions) !== JSON.stringify(originalNavBarActions)
+  }
+
   return (
     <>
       <div className="px-6 py-4 border-b border-border">
@@ -275,22 +285,6 @@ const PublicConfigSection: React.FC = () => {
           </div>
         ) : (
           <>
-            {/* Navigation Bar Actions Section */}
-            <div className="mb-8 border border-border rounded-lg p-6 bg-muted/20">
-              <NavBarActionsEditor
-                value={navBarActions}
-                onChange={setNavBarActions}
-              />
-              <div className="mt-4 flex justify-end">
-                <Button
-                  onClick={handleSaveNavBarActions}
-                  disabled={isSavingNavBarActions}
-                >
-                  {isSavingNavBarActions ? 'Saving...' : 'Save Navigation Bar Actions'}
-                </Button>
-              </div>
-            </div>
-
             {/* Other Configs List */}
             <ConfigList
               configs={configs}
@@ -298,6 +292,34 @@ const PublicConfigSection: React.FC = () => {
               onDelete={handleDeleteConfig}
               isLoading={isLoading}
             />
+
+            {/* Navigation Bar Actions Section - Moved to bottom */}
+            <div className="mt-8 border border-border rounded-lg bg-card">
+              <div className="px-6 py-4 border-b border-border">
+                <h3 className="text-lg font-semibold text-foreground">
+                  Navigation Bar Actions
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Configure custom action buttons with icons and links for the navigation bar
+                </p>
+              </div>
+              <div className="p-6">
+                <NavBarActionsEditor
+                  value={navBarActions}
+                  onChange={setNavBarActions}
+                />
+                {hasNavBarActionsChanged() && (
+                  <div className="mt-4 flex justify-end">
+                    <Button
+                      onClick={handleSaveNavBarActions}
+                      disabled={isSavingNavBarActions}
+                    >
+                      {isSavingNavBarActions ? 'Saving...' : 'Save Navigation Bar Actions'}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
           </>
         )}
       </div>

@@ -157,8 +157,8 @@ const NavBarActionsEditor: React.FC<NavBarActionsEditorProps> = ({ value, onChan
               value={action.icon}
               onChange={(e) => handleUpdateAction(index, 'icon', e.target.value)}
               placeholder='<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">...</svg>'
-              rows={3}
-              className="font-mono text-xs"
+              rows={4}
+              className="font-mono text-xs resize-none"
             />
           </div>
 

@@ -125,7 +125,7 @@ const NavigationBar = ({}) => {
 
       {/* Navigation Bar Actions */}
       {navBarActions && Array.isArray(navBarActions) && navBarActions.length > 0 && (
-        <div className="mr-4 flex items-center gap-2">
+        <div className="mr-2 flex items-center gap-2">
           {navBarActions.map((action: any, index: number) => (
             <a
               key={index}
