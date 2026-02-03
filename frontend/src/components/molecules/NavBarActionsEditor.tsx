@@ -26,6 +26,8 @@ interface NavBarActionsEditorProps {
 }
 
 const NavBarActionsEditor: React.FC<NavBarActionsEditorProps> = ({ value, onChange }) => {
+  // Local state is needed to handle intermediate updates during editing
+  // before propagating changes to the parent component
   const [actions, setActions] = useState<NavBarAction[]>(value || [])
 
   useEffect(() => {
