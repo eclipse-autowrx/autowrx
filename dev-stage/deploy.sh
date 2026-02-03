@@ -6,6 +6,35 @@
 
 set -e
 
+# Show help
+show_help() {
+    echo ""
+    echo "AutoWRX Dev Stage Deploy Script"
+    echo "================================"
+    echo ""
+    echo "Usage: bash deploy.sh [option]"
+    echo ""
+    echo "Options:"
+    echo "  (no argument)     Deploy from 'main' branch"
+    echo "  <branch-name>     Deploy from a specific branch"
+    echo "  pr:<number>       Deploy from a pull request"
+    echo "  help, -h, --help  Show this help message"
+    echo ""
+    echo "Examples:"
+    echo "  bash deploy.sh                    # Deploy main branch"
+    echo "  bash deploy.sh develop            # Deploy 'develop' branch"
+    echo "  bash deploy.sh feature/new-ui     # Deploy feature branch"
+    echo "  bash deploy.sh pr:123             # Deploy pull request #123"
+    echo "  bash deploy.sh help               # Show this help"
+    echo ""
+    exit 0
+}
+
+# Check for help flag
+if [[ "$1" == "help" || "$1" == "-h" || "$1" == "--help" ]]; then
+    show_help
+fi
+
 DEPLOY_DIR="/opt/dev/autowrx"
 PM2_APP_NAME="autowrx-dev-stage"
 BRANCH_OR_PR="${1:-main}"
