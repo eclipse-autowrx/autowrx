@@ -625,18 +625,50 @@ const updateSiteConfigById = async (siteConfigId, updateBody) => {
 };
 
 /**
- * Update site config by key
+ * Update site config by key (upsert - creates if not found)
  * @param {string} key
- * @param {Object} updateBody
+ * @param {Object} updateBody - Must include updated_by, and optionally value, valueType, secret, description, category
  * @returns {Promise<SiteConfig>}
  */
 const updateSiteConfigByKey = async (key, updateBody) => {
   // Don't use default fallback for update operations - get Mongoose document directly
-  const siteConfig = await SiteConfig.findOne({ key, scope: 'site' });
+  let siteConfig = await SiteConfig.findOne({ key, scope: 'site' });
+  
+  // If config doesn't exist, create it (upsert behavior)
   if (!siteConfig) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Site config not found');
+    // Determine valueType from updateBody or infer from value
+    const valueType = updateBody.valueType || (updateBody.value !== undefined ? getValueType(updateBody.value) : 'string');
+    
+    // Create new config with required fields
+    const newConfigBody = {
+      key,
+      scope: 'site',
+      value: updateBody.value !== undefined ? updateBody.value : null,
+      valueType: valueType,
+      secret: updateBody.secret !== undefined ? updateBody.secret : false,
+      description: updateBody.description || '',
+      category: updateBody.category || 'general',
+      created_by: updateBody.updated_by, // Use updated_by as created_by for new configs
+      updated_by: updateBody.updated_by,
+    };
+
+    // Encrypt SSO provider secrets if this is SSO_PROVIDERS config
+    if (key === 'SSO_PROVIDERS' && newConfigBody.value && Array.isArray(newConfigBody.value)) {
+      newConfigBody.value = ssoService.encryptProviderSecrets(newConfigBody.value);
+    }
+
+    siteConfig = await SiteConfig.create(newConfigBody);
+    
+    // Return decrypted version for SSO_PROVIDERS
+    if (siteConfig.key === 'SSO_PROVIDERS' && Array.isArray(siteConfig.value)) {
+      const decryptedValue = ssoService.decryptProviderSecrets(siteConfig.value);
+      return { ...siteConfig.toObject(), value: decryptedValue };
+    }
+    
+    return siteConfig;
   }
 
+  // Config exists - update it
   // Preserve existing valueType unless client explicitly provides a new one
   // If only value is updated, do NOT auto-derive and overwrite valueType
 
