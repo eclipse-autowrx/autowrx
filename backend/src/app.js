@@ -129,15 +129,21 @@ app.use('/d', express.static(path.join(__dirname, '../static/uploads'), {
 
 // Serve VSS JSON files from /vss/ path
 // Handles URLs like /vss/v5.0/vss_rel_5.0.json -> serves backend/data/v5.0.json
+// Also handles /vss/v4.1.1/vss_rel_4.1.1.json, /vss/v5.1RC0/vss_rel_5.1RC0.json, etc.
 // This route must be defined before the catch-all routes to ensure it's matched first
 app.get('/vss/:version/:filename', (req, res, next) => {
-  const version = req.params.version; // e.g., "v5.0"
+  let version = req.params.version; // e.g., "v5.0", "v4.1.1", "v5.1RC0"
   const filename = req.params.filename; // e.g., "vss_rel_5.0.json"
   
-  // Validate version format (should be vX.Y)
-  if (!version.match(/^v\d+\.\d+$/)) {
+  // Accept any version format: vX.Y, vX.Y.Z, vX.YRCZ, etc.
+  // Just ensure it starts with 'v' and contains at least one dot
+  if (!version.match(/^v\d+\./)) {
     return res.status(400).json({ error: 'Invalid VSS version format' });
   }
+  
+  // Normalize version: convert RC to lowercase rc for file lookup
+  // Files are stored as v4.1rc0.json but versions might be v4.1RC0
+  version = version.replace(/RC/gi, 'rc');
   
   const filePath = path.join(__dirname, `../data/${version}.json`);
   
