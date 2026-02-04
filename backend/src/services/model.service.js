@@ -20,6 +20,8 @@ const logger = require('../config/logger');
 const _ = require('lodash');
 const config = require('../config/config');
 const customApiSetService = require('./customApiSet.service');
+const fs = require('fs');
+const path = require('path');
 
 /**
  *
@@ -506,7 +508,14 @@ const traverse = (api, callback, prefix = '') => {
 const processApiDataUrl = async (apiDataUrl) => {
   try {
     // resolve the correct url incase the apiDataUrl is relative. Eg. /api/v2/data/vehicle.json
-    const response = await fetch(fileService.resolveUrl(apiDataUrl));
+    const resolvedUrl = fileService.resolveUrl(apiDataUrl);
+    logger.debug(`Processing API data from URL: ${resolvedUrl}`);
+    const response = await fetch(resolvedUrl);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch API data: HTTP ${response.status} ${response.statusText}`);
+    }
+    
     const data = await response.json();
     const extendedApis = [];
 
@@ -536,15 +545,77 @@ const processApiDataUrl = async (apiDataUrl) => {
       main_api: mainApi,
     };
 
-    // Check if this is COVESA VSS version
-    const versionList = require('../../data/vss.json');
-    for (const version of versionList) {
-      const file = require(`../../data/${version.name}.json`);
-      const isEqual = _.isEqual(file, data);
-      if (isEqual) {
-        result.api_version = version.name;
-        break;
+    // Check if this is a COVESA VSS version (only for standard versions, skip for custom files)
+    // Quick optimization: Only check if we have standard VSS files available
+    // Custom uploaded files don't need version detection - they're already custom
+    try {
+      const vssJsonPath = path.join(__dirname, '../../data/vss.json');
+      if (!fs.existsSync(vssJsonPath)) {
+        // No standard VSS files available, treat as custom
+        logger.debug('vss.json not found, treating uploaded file as custom');
+      } else {
+        const versionList = require('../../data/vss.json');
+        if (!versionList || versionList.length === 0) {
+          // No versions to check, treat as custom
+          logger.debug('No VSS versions available, treating uploaded file as custom');
+        } else {
+          // Quick check: compare data size/structure first to avoid expensive deep comparison
+          const dataKeys = Object.keys(data);
+          const dataSize = JSON.stringify(data).length;
+          
+          // Only check versions that actually exist on disk
+          let matched = false;
+          for (const version of versionList) {
+            const versionFilePath = path.join(__dirname, `../../data/${version.name}.json`);
+            if (!fs.existsSync(versionFilePath)) {
+              logger.debug(`Version file ${version.name}.json not found on disk, skipping`);
+              continue;
+            }
+            
+            try {
+              // Quick size check first (much faster than deep comparison)
+              const versionFileStats = fs.statSync(versionFilePath);
+              const versionFileSize = versionFileStats.size;
+              
+              // If sizes are very different, skip deep comparison (likely custom file)
+              const sizeDiff = Math.abs(dataSize - versionFileSize);
+              const sizeDiffPercent = (sizeDiff / Math.max(dataSize, versionFileSize)) * 100;
+              if (sizeDiffPercent > 5) {
+                // More than 5% size difference, likely custom, skip
+                continue;
+              }
+              
+              // Size is similar, do deep comparison
+              const file = require(`../../data/${version.name}.json`);
+              const fileKeys = Object.keys(file);
+              
+              // Quick key check before expensive deep comparison
+              if (dataKeys.length !== fileKeys.length) {
+                continue;
+              }
+              
+              const isEqual = _.isEqual(file, data);
+              if (isEqual) {
+                result.api_version = version.name;
+                matched = true;
+                logger.debug(`Matched uploaded file to standard VSS version: ${version.name}`);
+                break;
+              }
+            } catch (fileError) {
+              // Skip if file can't be loaded (corrupted, etc.)
+              logger.debug(`Error loading version file ${version.name}.json: ${fileError.message}`);
+              continue;
+            }
+          }
+          
+          if (!matched) {
+            logger.debug('Uploaded file does not match any standard VSS version, treating as custom');
+          }
+        }
       }
+    } catch (vssError) {
+      // If vss.json can't be loaded, treat as custom file (no version detection)
+      logger.debug(`Error loading vss.json: ${vssError.message}, treating uploaded file as custom`);
     }
 
     // If not COVESA VSS version, then add the rest APIs
@@ -573,10 +644,24 @@ const processApiDataUrl = async (apiDataUrl) => {
 
     return result;
   } catch (error) {
-    logger.error(`Error in processing api data: ${error}`);
+    logger.error(`Error in processing api data: ${error.message || error}`);
+    logger.error(error.stack);
+    
+    // Provide more specific error messages
+    let errorMessage = 'Error in processing api data. Please check content of the file again.';
+    if (error.message) {
+      if (error.message.includes('fetch')) {
+        errorMessage = `Failed to fetch API data file: ${error.message}`;
+      } else if (error.message.includes('JSON') || error.message.includes('parse')) {
+        errorMessage = `Invalid JSON format in API data file: ${error.message}`;
+      } else {
+        errorMessage = error.message;
+      }
+    }
+    
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      error?.message || `Error in processing api data. Please check content of the file again.`
+      errorMessage
     );
   }
 };

@@ -72,13 +72,26 @@ const getFileFromURL = async (url, encoding = 'File') => {
   }
 };
 
-const downloadFile = async (url, path) => {
+const downloadFile = async (url, filePath) => {
   try {
-    const arrayBuffer = await (await fetch(url)).arrayBuffer();
-    fs.writeFileSync(path, new Uint8Array(arrayBuffer));
+    if (!url) {
+      throw new Error('URL is required');
+    }
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    const arrayBuffer = await response.arrayBuffer();
+    // Ensure directory exists
+    const dir = require('path').dirname(filePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(filePath, Buffer.from(arrayBuffer));
+    logger.debug(`Downloaded file to ${filePath}`);
   } catch (error) {
-    logger.error(`Failed to download file from ${url}`);
-    logger.error(error);
+    logger.error(`Failed to download file from ${url} to ${filePath}: ${error.message}`);
+    throw error; // Re-throw so caller knows it failed
   }
 };
 
