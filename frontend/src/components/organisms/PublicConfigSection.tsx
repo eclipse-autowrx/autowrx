@@ -55,9 +55,33 @@ const PublicConfigSection: React.FC = () => {
         config => !existingKeys.has(config.key) && config.key !== 'NAV_BAR_ACTIONS'
       )
 
-      if (missingConfigs.length > 0) {
+      // Find existing configs with empty values (empty string, null, or undefined) that should have defaults
+      const configsToUpdate: any[] = []
+      PREDEFINED_SITE_CONFIGS.forEach(predefinedConfig => {
+        if (predefinedConfig.key === 'NAV_BAR_ACTIONS') return
+        
+        const existingConfig = existingConfigs.find(c => c.key === predefinedConfig.key)
+        if (existingConfig) {
+          const isEmpty = existingConfig.value === null || 
+                         existingConfig.value === undefined || 
+                         existingConfig.value === '' ||
+                         (typeof existingConfig.value === 'string' && existingConfig.value.trim() === '')
+          
+          // If existing config is empty but predefined has a non-empty default, update it
+          if (isEmpty && predefinedConfig.value !== null && 
+              predefinedConfig.value !== undefined && 
+              predefinedConfig.value !== '' &&
+              !(typeof predefinedConfig.value === 'string' && predefinedConfig.value.trim() === '')) {
+            configsToUpdate.push(predefinedConfig)
+          }
+        }
+      })
+
+      // Create missing configs and update empty ones
+      const configsToUpsert = [...missingConfigs, ...configsToUpdate]
+      if (configsToUpsert.length > 0) {
         await configManagementService.bulkUpsertConfigs({
-          configs: missingConfigs,
+          configs: configsToUpsert,
         })
 
         // Reload configs after creating missing ones

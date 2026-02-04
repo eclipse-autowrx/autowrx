@@ -58,16 +58,8 @@ const PrototypeTabCodeApiPanel = lazy(() =>
 )
 
 const DaGenAI_Python = lazy(() =>
-  Promise.resolve({
-    default: ({ onCodeChanged }: { onCodeChanged: (code: string) => void }) => (
-      <div className="p-4 text-muted-foreground">GenAI not available</div>
-    ),
-  }).catch(() => ({
-    default: ({ onCodeChanged }: { onCodeChanged: (code: string) => void }) => (
-      <div className="p-4 text-muted-foreground">GenAI not available</div>
-    ),
-  })),
-) as any
+  retry(() => import('../molecules/genAI/DaGenAI_Python')),
+)
 
 const PrototypeTabCode: FC = () => {
   const [prototype, setActivePrototype, activeModelApis] = useModelStore(

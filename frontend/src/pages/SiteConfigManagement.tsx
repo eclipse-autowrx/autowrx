@@ -104,6 +104,24 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     secret: false,
     valueType: 'array',
   },
+  {
+    key: 'GENAI_SDV_APP_ENDPOINT',
+    scope: 'site',
+    value: 'https://workflow.digital.auto/webhook/c0ba14bc-c6a3-4319-ad0a-ad89b1460b36',
+    secret: false,
+    valueType: 'string',
+    description: 'GenAI endpoint URL for SDV App generation. Used by the SDV Copilot built-in generator. Default: https://workflow.digital.auto/webhook/c0ba14bc-c6a3-4319-ad0a-ad89b1460b36',
+    category: 'genai',
+  },
+  {
+    key: 'GENAI_MARKETPLACE_URL',
+    scope: 'site',
+    value: 'https://store-be.digitalauto.tech',
+    secret: false,
+    valueType: 'string',
+    description: 'Marketplace URL for fetching GenAI addons/generators. Used to load marketplace generators in ProtoPilot. Leave empty to hide the Marketplace Generators section.',
+    category: 'genai',
+  },
 ]
 
 export const PREDEFINED_AUTH_CONFIGS: any[] = [
