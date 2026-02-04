@@ -295,7 +295,28 @@ const getApiDetail = catchAsync(async (req, res) => {
 
 const replaceApi = catchAsync(async (req, res) => {
   const modelId = req.params.id;
-  const { extended_apis, api_version, main_api } = await modelService.processApiDataUrl(req.body.api_data_url);
+  const apiDataUrl = req.body.api_data_url;
+  
+  if (!apiDataUrl) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'api_data_url is required');
+  }
+  
+  logger.info(`Replacing API for model ${modelId} with URL: ${apiDataUrl}`);
+  
+  let extended_apis, api_version, main_api;
+  try {
+    const result = await modelService.processApiDataUrl(apiDataUrl);
+    extended_apis = result.extended_apis;
+    api_version = result.api_version;
+    main_api = result.main_api;
+  } catch (error) {
+    logger.error(`Error processing API data URL: ${error.message}`);
+    logger.error(error);
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      `Failed to process API data: ${error.message || 'Invalid API data URL or file format'}`
+    );
+  }
 
   const updateBody = {
     custom_apis: [], // Remove all custom_apis

@@ -23,6 +23,7 @@ const ApiError = require('./utils/ApiError');
 const { setupProxy } = require('./config/proxyHandler');
 const { init: initSocketIO } = require('./config/socket');
 const path = require('path');
+const fs = require('fs');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
@@ -126,6 +127,49 @@ app.use('/d', express.static(path.join(__dirname, '../static/uploads'), {
   }
 }));
 
+// Serve VSS JSON files from /vss/ path
+// Handles URLs like /vss/v5.0/vss_rel_5.0.json -> serves backend/data/v5.0.json
+// Also handles /vss/v4.1.1/vss_rel_4.1.1.json, /vss/v5.1RC0/vss_rel_5.1RC0.json, etc.
+// This route must be defined before the catch-all routes to ensure it's matched first
+app.get('/vss/:version/:filename', (req, res, next) => {
+  let version = req.params.version; // e.g., "v5.0", "v4.1.1", "v5.1RC0"
+  const filename = req.params.filename; // e.g., "vss_rel_5.0.json"
+  
+  // Accept any version format: vX.Y, vX.Y.Z, vX.YRCZ, etc.
+  // Just ensure it starts with 'v' and contains at least one dot
+  if (!version.match(/^v\d+\./)) {
+    return res.status(400).json({ error: 'Invalid VSS version format' });
+  }
+  
+  // Normalize version: convert RC to lowercase rc for file lookup
+  // Files are stored as v4.1rc0.json but versions might be v4.1RC0
+  version = version.replace(/RC/gi, 'rc');
+  
+  const filePath = path.join(__dirname, `../data/${version}.json`);
+  
+  console.log(`[VSS Route] Requested: ${req.path}, Version: ${version}, Filename: ${filename}, File: ${filePath}, Exists: ${fs.existsSync(filePath)}`);
+  
+  // Check if file exists
+  if (!fs.existsSync(filePath)) {
+    console.log(`[VSS Route] File not found: ${filePath}`);
+    return res.status(404).json({ error: `VSS version ${version} not found` });
+  }
+  
+  // Set JSON content type
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=3600'); // 1 hour cache
+  
+  console.log(`[VSS Route] Serving file: ${filePath}`);
+  
+  // Send the file
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error(`[VSS Route] Error sending file:`, err);
+      next(err);
+    }
+  });
+});
+
 // Setup proxy to other services
 setupProxy(app);
 
@@ -151,7 +195,8 @@ if (config.env === 'development') {
         req.path.startsWith('/images') || 
         req.path.startsWith('/d') ||
         req.path.startsWith('/builtin-widgets') ||
-        req.path.startsWith('/api')) {
+        req.path.startsWith('/api') ||
+        req.path.startsWith('/vss')) {
       return next();
     }
     
@@ -193,6 +238,7 @@ if (config.env === 'development') {
         req.path.startsWith('/d') ||
         req.path.startsWith('/builtin-widgets') ||
         req.path.startsWith('/api') ||
+        req.path.startsWith('/vss') ||
         req.path.startsWith('/assets/')) {
       // If it's an assets request that reached here, the file doesn't exist
       if (req.path.startsWith('/assets/')) {

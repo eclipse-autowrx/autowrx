@@ -117,6 +117,14 @@ const VssComparator = ({}: DaVssCompareProps) => {
       return
     }
 
+    // If CURRENT_MODEL is selected, ensure modelsApi is populated
+    if ((activeTargetVer === CURRENT_MODEL || activeCurrentVer === CURRENT_MODEL)) {
+      if (!modelsApi || modelsApi.length === 0) {
+        console.log('Waiting for modelsApi to be populated...', modelsApi?.length)
+        return
+      }
+    }
+
     // console.log("activeTargetVer", activeTargetVer)
     // console.log("activeCurrentVer", activeCurrentVer)
     let targetVersion = null
@@ -137,11 +145,14 @@ const VssComparator = ({}: DaVssCompareProps) => {
       currentVersion = versions.find((v) => v.name == activeCurrentVer)
     }
 
-    // console.log('currentVersion', currentVersion)
-    // console.log('targetVersion', targetVersion)
+    console.log('Running comparison:', {
+      currentVersion: currentVersion?.name,
+      targetVersion: targetVersion?.name,
+      modelsApiLength: modelsApi?.length,
+    })
 
     downloadaAndProcessVssData(currentVersion, targetVersion)
-  }, [activeTargetVer, activeCurrentVer])
+  }, [activeTargetVer, activeCurrentVer, versions, modelsApi])
 
   const downloadaAndProcessVssData = async (
     currentVersion: any,
@@ -569,7 +580,7 @@ const VssComparator = ({}: DaVssCompareProps) => {
             className="h-full w-3 justify-center bg-slate-100 flex cursor-w-resize"
             onMouseDown={startResize}
           >
-            <div className="w-[1px] h-full bg-border" />
+            <div className="w-px h-full bg-border" />
           </div>
 
           <div className="flex-1 min-w-0 border-slate-100 gap-0.5 h-full overflow-y-auto flex">
