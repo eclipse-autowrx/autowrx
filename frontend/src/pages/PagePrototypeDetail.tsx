@@ -27,6 +27,7 @@ import DaDialog from '@/components/molecules/DaDialog'
 import PrototypeTabCode from '@/components/organisms/PrototypeTabCode'
 import PrototypeTabDashboard from '@/components/organisms/PrototypeTabDashboard'
 import PrototypeTabFeedback from '@/components/organisms/PrototypeTabFeedback'
+import PrototypeTabFlow from '@/components/organisms/PrototypeTabFlow'
 import DaRuntimeControl from '@/components/molecules/dashboard/DaRuntimeControl'
 import {
   DropdownMenu,
@@ -311,6 +312,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
             <PrototypeTabInfo prototype={prototype} />
           )}
           {tab == 'journey' && <PrototypeTabJourney prototype={prototype} />}
+          {tab == 'flow' && <PrototypeTabFlow prototype={prototype} />}
           {tab == 'code' && <PrototypeTabCode />}
           {tab == 'dashboard' && <PrototypeTabDashboard />}
           {tab == 'feedback' && <PrototypeTabFeedback />}
