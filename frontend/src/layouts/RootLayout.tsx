@@ -105,9 +105,9 @@ const RootLayout = () => {
               Privacy Policy
             </Link>
           )}
-          <span>
+          {import.meta.env.VITE_APP_VERSION && <span>
             Version {import.meta.env.VITE_APP_VERSION}
-          </span>
+          </span>}
         </div>
       )}
 
