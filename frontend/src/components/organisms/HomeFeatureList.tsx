@@ -16,7 +16,7 @@ type HomeFeatureListProps = {
     title?: string
     description?: string
     url?: string
-    buttons?: { title: string; url: string }[]
+    buttons?: { title: string; url: string; variant?: "default" | "link" | "destructive" | "outline" | "secondary" | "ghost"; left_icon?: string; right_icon?: string }[]
     children?: ReactNode
   }[]
 }
@@ -84,11 +84,33 @@ const HomeFeatureList = ({ items }: HomeFeatureListProps) => {
                   {card.buttons.map((button, btnIndex) => (
                     <Button
                       key={btnIndex}
-                      variant="default"
+                      variant={button.variant || "default"}
                       size="sm"
                       onClick={() => handleButtonClick(button.url)}
                     >
+                      {button.left_icon && <div
+                        className="inline-block size-4 bg-current"
+                        style={{
+                          maskImage: `url(${button.left_icon})`,
+                          maskRepeat: 'no-repeat',
+                          maskSize: 'contain',
+                          WebkitMaskImage: `url(${button.left_icon})`, // Required for Safari support
+                          WebkitMaskRepeat: 'no-repeat',
+                          WebkitMaskSize: 'contain'
+                        }}
+                      />}
                       {button.title}
+                      {button.right_icon && <div
+                        className="inline-block size-4 bg-current"
+                        style={{
+                          maskImage: `url(${button.right_icon})`,
+                          maskRepeat: 'no-repeat',
+                          maskSize: 'contain',
+                          WebkitMaskImage: `url(${button.right_icon})`, // Required for Safari support
+                          WebkitMaskRepeat: 'no-repeat',
+                          WebkitMaskSize: 'contain'
+                        }}
+                      />}
                     </Button>
                   ))}
                 </div>
