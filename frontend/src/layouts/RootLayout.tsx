@@ -86,7 +86,15 @@ const RootLayout = () => {
       </div>
 
       {config && config.instance !== 'digitalauto' && (
-        <div className="flex w-full sticky bottom-0 right-0 z-10 bg-slate-900 px-4 py-0.5 text-end text-xs text-white">
+        <div className="flex w-full justify-center sticky bottom-0 right-0 z-10 bg-gray-100 px-4 py-1 text-xs text-da-white border-t gap-5">
+          <a
+            href="https://www.digital.auto/"
+            target="_blank"
+            rel="noreferrer"
+            className="hover:underline flex h-fit"
+          >
+            Powered by digital.auto
+          </a>
           {config.showPrivacyPolicy && (
             <Link
               to="/privacy-policy"
@@ -97,15 +105,9 @@ const RootLayout = () => {
               Privacy Policy
             </Link>
           )}
-          <div className="grow" />
-          <a
-            href="https://www.digital.auto/"
-            target="_blank"
-            rel="noreferrer"
-            className="hover:underline flex h-fit"
-          >
-            Powered by digital.auto
-          </a>
+          <span>
+            Version {import.meta.env.VITE_APP_VERSION}
+          </span>
         </div>
       )}
 
