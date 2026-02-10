@@ -312,7 +312,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
             <PrototypeTabInfo prototype={prototype} />
           )}
           {tab == 'journey' && <PrototypeTabJourney prototype={prototype} />}
-          {tab == 'flow' && <PrototypeTabFlow prototype={prototype} />}
+          {tab == 'flow' && <PrototypeTabFlow />}
           {tab == 'code' && <PrototypeTabCode />}
           {tab == 'dashboard' && <PrototypeTabDashboard />}
           {tab == 'feedback' && <PrototypeTabFeedback />}

@@ -284,6 +284,20 @@ select[aria-hidden='true'][tabindex='-1'] {
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  /* digital.auto / Flow palette */
+  --color-da-primary-100: hsl(196 28% 92%);
+  --color-da-primary-300: hsl(198 28% 61%);
+  --color-da-primary-500: hsl(198 100% 22%);
+  --color-da-secondary-100: hsl(67 54% 92%);
+  --color-da-secondary-300: hsl(67 54% 68%);
+  --color-da-secondary-500: hsl(67 54% 48%);
+  --color-da-white: hsl(0 0% 100%);
+  --color-da-black: hsl(0 0% 0%);
+  --color-da-gray-light: hsl(214 32% 91%);
+  --color-da-gray-medium: hsl(215 16% 47%);
+  --color-da-gray-dark: hsl(215 13.8% 34.1%);
+  --color-da-gray-darkest: hsl(217 33% 17%);
 }
 
 /* :root {

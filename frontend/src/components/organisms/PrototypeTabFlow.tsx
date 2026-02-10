@@ -1,169 +1,398 @@
 // Copyright (c) 2025 Eclipse Foundation.
-//
+// 
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useState } from 'react'
-import { Prototype } from '@/types/model.type'
-import { updatePrototypeService } from '@/services/prototype.service'
+// PrototypeTabFlow.tsx
+import React, { useEffect, useState } from 'react'
 import {
+  TbArrowsMaximize,
+  TbArrowsMinimize,
   TbEdit,
   TbLoader,
+  TbChevronCompactRight,
 } from 'react-icons/tb'
-import useCurrentModel from '@/hooks/useCurrentModel'
-import useListModelPrototypes from '@/hooks/useListModelPrototypes'
+import { useQueryClient } from '@tanstack/react-query'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
+import { updatePrototypeService } from '@/services/prototype.service'
+import DaTooltip from '../atoms/DaTooltip'
+import { FlowStep } from '@/types/flow.type'
+import { Button } from '@/components/atoms/button'
+import { cn } from '@/lib/utils'
+import { useSystemUI } from '@/hooks/useSystemUI'
+import DaCheckbox from '../atoms/DaCheckbox'
+import FlowItem from '../molecules/flow/FlowItem'
+import DaText from '../atoms/DaText'
+import DaFlowEditor from '../molecules/flow/DaFlowEditor'
+import FlowItemEditor from '../molecules/flow/FlowItemEditor'
+import FlowInterface from '../molecules/flow/FlowInterface'
+import {
+  FLOW_CELLS,
+  setNestedValue,
+  getNestedValue,
+  headerGroups,
+} from '../molecules/flow/flow.utils'
+import { Interface } from '@/types/flow.type'
+import { createEmptyFlow } from '../molecules/flow/flow.utils'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
-import useSelfProfileQuery from '@/hooks/useSelfProfile'
-import { addLog } from '@/services/log.service'
-import { Button } from '@/components/atoms/button'
+import useCurrentModel from '@/hooks/useCurrentModel'
 
-interface PrototypeTabFlowProps {
-  prototype: Prototype
-}
-
-const PrototypeTabFlow: React.FC<PrototypeTabFlowProps> = ({
-  prototype,
-}) => {
-  const [isEditing, setIsEditing] = useState(false)
-  const [localPrototype, setLocalPrototype] = useState(prototype)
+const PrototypeTabFlow = () => {
   const { data: model } = useCurrentModel()
-  const { refetch: refetchModelPrototypes } = useListModelPrototypes(
-    model?.id || '',
-  )
-  const { refetch: refetchCurrentPrototype } = useCurrentPrototype()
-  const [isAuthorized] = usePermissionHook(
-    [PERMISSIONS.READ_MODEL, model?.id],
-  )
+  const queryClient = useQueryClient()
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
+  const { data: prototype } = useCurrentPrototype()
+  const [isEditing, setIsEditing] = useState(false)
+  const [customerJourneySteps, setCustomerJourneySteps] = useState<string[]>([])
+  const [originalFlowData, setOriginalFlowData] = useState<FlowStep[]>([])
+  const [flowData, setFlowData] = useState<FlowStep[]>([])
+  const [flowString, setFlowString] = useState('')
+  const {
+    showPrototypeFlowASIL,
+    setShowPrototypeFlowASIL,
+    showPrototypeFlowFullScreen,
+    setShowPrototypeFlowFullScreen,
+  } = useSystemUI()
   const [isSaving, setIsSaving] = useState(false)
+  const [flowEditorOpen, setFlowEditorOpen] = useState(false)
+  const [currentEditingCell, setCurrentEditingCell] = useState<{
+    stepIndex: number
+    flowIndex: number
+    fieldPath: string[]
+    value: string
+  } | null>(null)
 
-  const { data: currentUser } = useSelfProfileQuery()
-
-  if (!prototype) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-muted-foreground">No prototype available</p>
-      </div>
-    )
+  // Parse customer journey steps (each step starts with "#")
+  const parseCustomerJourneySteps = (journeyText: string | undefined) => {
+    if (!journeyText) return []
+    return journeyText
+      .split('#')
+      .filter((step) => step.trim())
+      .map((step) => step.split('\n')[0].trim())
   }
 
-  const handleSave = async () => {
-    if (!localPrototype) return
-    setIsEditing(false)
-    setIsSaving(true)
-    const updateData = {
-      flow: localPrototype.flow,
+  // Initialize or update flow and journey steps when prototype changes
+  useEffect(() => {
+    if (prototype) {
+      const steps = parseCustomerJourneySteps(prototype.customer_journey)
+      setCustomerJourneySteps(steps)
+      try {
+        if (prototype.flow) {
+          const parsedFlow = JSON.parse(prototype.flow)
+          setFlowData(parsedFlow)
+          setOriginalFlowData(parsedFlow)
+        } else {
+          // Create initial empty flows for each step
+          const initialFlows = steps.map((step) => ({
+            title: step,
+            flows: [createEmptyFlow()],
+          }))
+          setFlowData(initialFlows)
+          setOriginalFlowData(initialFlows)
+        }
+      } catch (error) {
+        console.error('Error parsing flow data:', error)
+      }
     }
-    try {
-      await updatePrototypeService(prototype.id, updateData)
-      await refetchModelPrototypes()
-      addLog({
-        name: `User ${currentUser?.email} updated prototype ${localPrototype.name}`,
-        description: `User ${currentUser?.email} updated Prototype ${localPrototype.name} with id ${localPrototype?.id} of model ${localPrototype.model_id}`,
-        type: 'update-prototype',
-        create_by: currentUser?.id!,
-        parent_id: localPrototype.model_id,
-        ref_id: localPrototype.id,
-        ref_type: 'prototype',
+  }, [prototype])
+
+  // Synchronize flow data with customer journey steps (by index)
+  useEffect(() => {
+    if (flowData.length > 0 && customerJourneySteps.length > 0) {
+      const synchronizedFlows = customerJourneySteps.map((stepTitle, index) => {
+        const existingFlow = flowData[index]
+        if (existingFlow) {
+          return { ...existingFlow, title: stepTitle }
+        }
+        return {
+          title: stepTitle,
+          flows: [createEmptyFlow()],
+        }
       })
-      await refetchCurrentPrototype()
+      setFlowData(synchronizedFlows)
+    }
+  }, [customerJourneySteps])
+
+  const handleSave = async (stringJsonData: string) => {
+    if (!prototype) return
+    try {
+      setIsSaving(true)
+      const parsedData = JSON.parse(stringJsonData)
+      setFlowData(parsedData)
+      await updatePrototypeService(prototype.id, { flow: stringJsonData })
+      queryClient.invalidateQueries({ queryKey: ['prototype', prototype.id] })
     } catch (error) {
-      console.error('Error updating prototype:', error)
+      console.error('Error saving flow data:', error)
     } finally {
       setIsSaving(false)
+      setIsEditing(false)
     }
   }
 
-  const handleCancel = () => {
-    setLocalPrototype(prototype)
-    setIsEditing(false)
+  // Update a nested property within a flow cell using the shared helper.
+  // Update a nested property within a flow cell using the shared helper.
+  const updateFlowCell = (
+    stepIndex: number,
+    flowIndex: number,
+    path: string[],
+    value: any,
+  ) => {
+    const newData = [...flowData]
+    newData[stepIndex].flows[flowIndex] = setNestedValue(
+      newData[stepIndex].flows[flowIndex],
+      path,
+      value,
+    )
+    setFlowData(newData)
+    // Stringify the updated flow data and update the flowString state
+    setFlowString(JSON.stringify(newData))
+    handleSave(JSON.stringify(newData))
   }
 
-  const handleChange = (field: keyof Prototype, value: any) => {
-    setLocalPrototype((prevPrototype) => {
-      if (!prevPrototype) return prevPrototype
-      return {
-        ...prevPrototype,
-        [field]: value,
-      }
-    })
+  // Open the flow editor for a specific cell.
+  const openFlowEditor = (
+    stepIndex: number,
+    flowIndex: number,
+    fieldPath: string[],
+    value: string,
+  ) => {
+    setCurrentEditingCell({ stepIndex, flowIndex, fieldPath, value })
+    setFlowEditorOpen(true)
   }
 
   return (
-    <div className="flex flex-col h-full w-full">
-      <div className="flex flex-col h-full w-full bg-background overflow-y-auto">
-        <div className="flex flex-col h-full w-full pt-6 bg-background px-6">
-          {/* Header */}
-          <div className="flex mb-3 justify-between items-center">
-            {isEditing ? (
-              <>
-                <h2 className="text-lg font-semibold text-primary">
-                  Editing Flow
-                </h2>
-                <div className="flex space-x-2">
-                  <Button
-                    data-id='flow-cancel-button'
-                    variant="outline"
-                    onClick={handleCancel}
-                    size="sm"
+    <div
+      className={cn(
+        'flex w-full h-full flex-col bg-white rounded-md py-4 px-10',
+        showPrototypeFlowFullScreen
+          ? 'fixed inset-0 z-50 overflow-auto bg-white'
+          : '',
+      )}
+    >
+      <div className="w-full">
+        <div className="flex items-center border-b pb-2 mb-4">
+          <DaText variant="title" className="text-da-primary-500">
+            End-to-End Flow: {prototype?.name}
+          </DaText>
+          <div className="grow" />
+          {isAuthorized && (
+            <>
+              {!isEditing ? (
+                <Button
+                  onClick={() => setIsEditing(true)}
+                  variant="outline"
+                  size="sm"
+                  className="mr-2" 
+                >
+                  <TbEdit className="w-4 h-4" /> Edit
+                </Button>
+              ) : isSaving ? (
+                <div className="flex items-center text-da-primary-500">
+                  <TbLoader className="w-4 h-4 mr-1 animate-spin" />
+                  Saving
+                </div>
+              ) : (
+                <div className="flex space-x-2 mr-2">
+                  <Button variant="outline" size="sm"
+                    onClick={() => {
+                      setFlowData(originalFlowData)
+                      setFlowString(JSON.stringify(originalFlowData))
+                      setIsEditing(false)
+                    }}
                   >
                     Cancel
                   </Button>
-                  <Button
-                    data-id="flow-save-button"
-                    onClick={handleSave}
-                    size="sm"
+                  <Button size="sm"
+                    onClick={() => handleSave(flowString)}
                   >
                     Save
                   </Button>
                 </div>
-              </>
+              )}
+            </>
+          )}
+          <Button
+            onClick={() =>
+              setShowPrototypeFlowFullScreen(!showPrototypeFlowFullScreen)
+            }
+            variant="outline"
+            size="sm"
+            title={showPrototypeFlowFullScreen ? 'Exit full screen' : 'Full screen'}
+          >
+            {showPrototypeFlowFullScreen ? (
+              <TbArrowsMinimize className="size-4" />
             ) : (
-              <div className="flex items-center w-full">
-                <h2 className="text-lg font-semibold text-primary">
-                  End-to-End Flow: {localPrototype.name}
-                </h2>
-                <div className="grow" />
-                {isAuthorized && (
-                  <>
-                    <Button
-                      onClick={() => setIsEditing(true)}
-                      variant="outline"
-                      size="sm"
-                      data-id='flow-edit-button'
-                    >
-                      {isSaving ? (
-                        <>
-                          <TbLoader className="w-4 h-4 animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        <>
-                          <TbEdit className="w-4 h-4" /> Edit
-                        </>
-                      )}
-                    </Button>
-                  </>
-                )}
-              </div>
+              <TbArrowsMaximize className="size-4" />
             )}
-          </div>
-          {/* Content - TODO: Thêm component hiển thị flow diagram ở đây */}
-          <div className="flex flex-col w-full items-center justify-center py-8 space-y-8">
-            <h3 className="text-lg font-semibold text-primary">
-              Flow Diagram
-            </h3>
-            {/* TODO: Thêm component render flow từ autowrx2 vào đây */}
-            <div className="text-muted-foreground">
-              Flow content will be displayed here
-            </div>
-          </div>
+          </Button>
         </div>
+
+        {isEditing ? (
+          <DaFlowEditor
+            initialData={flowData}
+            onUpdate={(jsonData) => {
+              setFlowString(jsonData)
+            }}
+          />
+        ) : (
+          <>
+            <table className="w-full table-fixed border-separate border-spacing-0">
+              <colgroup>
+                <col className="w-[17.76%]" />
+                <col className="w-[2.80%] min-w-[40px]" />
+                <col className="w-[17.76%]" />
+                <col className="w-[2.80%] min-w-[40px]" />
+                <col className="w-[17.76%]" />
+                <col className="w-[2.80%] min-w-[40px]" />
+                <col className="w-[17.76%]" />
+                <col className="w-[2.80%] min-w-[40px]" />
+                <col className="w-[17.76%]" />
+              </colgroup>
+
+              <thead className="sticky top-0 z-10 bg-linear-to-tr from-da-secondary-500 to-da-primary-500 text-white">
+                {/* Header Group Row */}
+                <tr className="text-sm uppercase">
+                  {headerGroups.map((group, idx) => (
+                    <th
+                      key={idx}
+                      colSpan={group.cells.length}
+                      className="font-semibold p-2 border border-white text-center"
+                    >
+                      {group.label}
+                    </th>
+                  ))}
+                </tr>
+                {/* Individual Column Headers */}
+                <tr className="text-sm uppercase">
+                  {FLOW_CELLS.map((cell) => (
+                    <th
+                      key={cell.key}
+                      className={`p-2 text-xs border border-white ${cell.tooltip ? 'bg-opacity-20' : ''
+                        }`}
+                    >
+                      {cell.tooltip ? (
+                        <DaTooltip
+                          content={cell.tooltip}
+                          className="normal-case"
+                        >
+                          <div className="cursor-pointer ">{cell.title}</div>
+                        </DaTooltip>
+                      ) : (
+                        cell.title
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {/* Spacer row */}
+                <tr>
+                  {FLOW_CELLS.map((_, index) => (
+                    <td
+                      key={index}
+                      className={`h-3 ${index % 2 === 0 ? 'bg-white' : 'bg-da-primary-100'}`}
+                    ></td>
+                  ))}
+                </tr>
+                {flowData && flowData.length > 0 ? (
+                  flowData.map((step, stepIndex) => (
+                    <React.Fragment key={stepIndex}>
+                      <tr>
+                        <td
+                          colSpan={FLOW_CELLS.length}
+                          className="relative text-xs border font-semibold bg-da-primary-500 text-white h-9 px-8 z-0"
+                        >
+                          <TbChevronCompactRight className="absolute -left-[12px] top-[5.5px] -translate-x-1/4 -translate-y-1/4 size-[47px] bg-transparent text-white fill-current" />
+                          {step.title}
+                          <TbChevronCompactRight className="absolute -right-px top-[5.5px] translate-x-1/2 -translate-y-1/4 size-[47px] bg-transparent text-da-primary-500 fill-current" />
+                        </td>
+                      </tr>
+                      {step.flows.map((flow, flowIndex) => (
+                        <tr key={flowIndex} className="font-medium text-xs">
+                          {FLOW_CELLS.map((cell) => {
+                            const cellValue = getNestedValue(flow, cell.path)
+                            return (
+                              <td
+                                key={cell.key}
+                                className={`border p-2 text-center ${cell.isSignalFlow ? 'bg-da-primary-100' : ''
+                                  }`}
+                              >
+                                {cell.isSignalFlow ? (
+                                  <FlowInterface
+                                    flow={cellValue}
+                                    interfaceType={cell.key as Interface}
+                                  />
+                                ) : (
+                                  <FlowItem
+                                    stringData={cellValue}
+                                    onEdit={(val) =>
+                                      openFlowEditor(
+                                        stepIndex,
+                                        flowIndex,
+                                        cell.path,
+                                        val,
+                                      )
+                                    }
+                                  />
+                                )}
+                              </td>
+                            )
+                          })}
+                        </tr>
+                      ))}
+                    </React.Fragment>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={FLOW_CELLS.length}
+                      className="border p-2 text-center py-4 text-sm"
+                    >
+                      No flow available. Please edit to add flow data.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </>
+        )}
+        {!isEditing && (
+          <DaCheckbox
+            checked={showPrototypeFlowASIL}
+            onChange={() => setShowPrototypeFlowASIL(!showPrototypeFlowASIL)}
+            label={'Show ASIL/QM Levels'}
+            className="text-sm mt-2 w-fit"
+          />
+        )}
       </div>
+
+      {currentEditingCell && (
+        <FlowItemEditor
+          value={currentEditingCell.value}
+          onChange={(updatedValue) => {
+            updateFlowCell(
+              currentEditingCell.stepIndex,
+              currentEditingCell.flowIndex,
+              currentEditingCell.fieldPath,
+              updatedValue,
+            )
+            setFlowEditorOpen(false)
+            setCurrentEditingCell(null)
+          }}
+          open={flowEditorOpen}
+          onOpenChange={(open) => {
+            setFlowEditorOpen(open)
+            if (!open) {
+              setCurrentEditingCell(null)
+            }
+          }}
+          isSaveMode={true}
+        />
+      )}
     </div>
   )
 }
