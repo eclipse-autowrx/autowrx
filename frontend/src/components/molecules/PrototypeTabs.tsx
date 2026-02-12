@@ -25,7 +25,6 @@ interface PrototypeTabsProps {
 // Default builtin tabs
 const DEFAULT_BUILTIN_TABS: TabConfig[] = [
   { type: 'builtin', key: 'overview', label: 'Overview' },
-  { type: 'builtin', key: 'flow', label: 'Flow' },
   { type: 'builtin', key: 'journey', label: 'Customer Journey' },
   { type: 'builtin', key: 'code', label: 'SDV Code' },
   { type: 'builtin', key: 'dashboard', label: 'Dashboard' },
@@ -81,11 +80,6 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs }) => {
             case 'overview':
               route = `/model/${model_id}/library/prototype/${prototype_id}/view`
               icon = <TbRoute className="w-5 h-5 mr-2" />
-              break
-            case 'flow':
-              route = `/model/${model_id}/library/prototype/${prototype_id}/flow`
-              icon = <MdOutlineDoubleArrow className="w-5 h-5 mr-2" />
-              dataId = 'tab-flow'
               break
             case 'journey':
               route = `/model/${model_id}/library/prototype/${prototype_id}/journey`

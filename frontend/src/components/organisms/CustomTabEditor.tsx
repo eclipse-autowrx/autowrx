@@ -18,7 +18,6 @@ import {
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
-import { Checkbox } from '@/components/atoms/checkbox'
 import { 
   TbGripVertical, 
   TbPencil, 
@@ -33,6 +32,7 @@ import {
   TbEye,
   TbEyeOff
 } from 'react-icons/tb'
+import { MdOutlineDoubleArrow } from 'react-icons/md'
 
 export interface CustomTab {
   label: string
@@ -89,6 +89,8 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
         return <TbCode className="w-4 h-4" />
       case 'dashboard':
         return <TbGauge className="w-4 h-4" />
+      case 'flow':
+        return <MdOutlineDoubleArrow className="w-4 h-4" />
       default:
         return <TbPuzzle className="w-4 h-4" />
     }
