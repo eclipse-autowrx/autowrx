@@ -11681,6 +11681,8 @@ This refined prompt ensures that your evaluation is clear, succinct, and strictl
       }
     }, [prototype]);
     (0, import_react12.useEffect)(() => {
+      if (prototype?.flow)
+        return;
       if (flowData.length > 0 && customerJourneySteps.length > 0) {
         const synchronized = customerJourneySteps.map((stepTitle, index2) => {
           const existing = flowData[index2];
@@ -11690,7 +11692,7 @@ This refined prompt ensures that your evaluation is clear, succinct, and strictl
         });
         setFlowData(synchronized);
       }
-    }, [customerJourneySteps]);
+    }, [customerJourneySteps, prototype?.flow]);
     const handleSave = async (stringJsonData) => {
       if (!prototype?.id || !api?.updatePrototype)
         return;

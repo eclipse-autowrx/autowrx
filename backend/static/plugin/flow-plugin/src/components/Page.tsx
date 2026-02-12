@@ -87,7 +87,10 @@ export default function Page({ data, api }: PageProps) {
     }
   }, [prototype])
 
+  // Only sync step titles from customer journey when there is no saved flow (initial state).
+  // When prototype.flow exists, flow is the source of truth and we must not overwrite user-edited titles.
   useEffect(() => {
+    if (prototype?.flow) return
     if (flowData.length > 0 && customerJourneySteps.length > 0) {
       const synchronized = customerJourneySteps.map((stepTitle, index) => {
         const existing = flowData[index]
@@ -96,7 +99,7 @@ export default function Page({ data, api }: PageProps) {
       })
       setFlowData(synchronized)
     }
-  }, [customerJourneySteps])
+  }, [customerJourneySteps, prototype?.flow])
 
   const handleSave = async (stringJsonData: string) => {
     if (!prototype?.id || !api?.updatePrototype) return
