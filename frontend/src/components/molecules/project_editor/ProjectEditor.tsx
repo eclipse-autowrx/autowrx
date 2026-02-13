@@ -36,6 +36,22 @@ interface ProjectEditorProps {
   prototypeName?: string
 }
 
+/** Collect all file paths from root-level fsData (used when syncing from data prop). */
+function collectAllFilePathsFromRoot(rootItems: FileSystemItem[]): Set<string> {
+  const out = new Set<string>()
+  function walk(items: FileSystemItem[], basePath: string) {
+    items.forEach((item) => {
+      const path = basePath ? `${basePath}/${item.name}` : item.name
+      if (item.type === 'file') out.add(path)
+      else if (item.type === 'folder') walk(item.items, path)
+    })
+  }
+  rootItems.forEach((rootItem) => {
+    if (rootItem.type === 'folder') walk(rootItem.items, rootItem.name || '')
+  })
+  return out
+}
+
 const ProjectEditor: React.FC<ProjectEditorProps> = ({
   data,
   onChange,
@@ -444,6 +460,8 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
 
   // Store previous fsData to detect structural changes
   const prevFsDataRef = useRef<string>('')
+  // When we push data to parent via onChange, remember it so we don't reconcile tabs on echo
+  const lastEmittedDataRef = useRef<string | null>(null)
 
   // Notify parent of data changes and handle structural changes
   useEffect(() => {
@@ -452,6 +470,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
 
     // Only call onChange if data actually changed
     if (currentData !== prevData) {
+      lastEmittedDataRef.current = currentData
       onChange(currentData)
 
       // Any change to fsData structure (including moves, adds, deletes) should trigger save
@@ -480,17 +499,37 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     prevFsDataRef.current = currentData
   }, [fsData, onChange, onSave, isSaving])
 
-  // Sync data prop changes
+  // Sync data prop changes from parent (e.g. load from server, another tab saved)
   useEffect(() => {
     try {
       if (!data || data.trim() === '') {
         setFsData([{ type: 'folder', name: 'root', items: [] }])
+        setOpenFiles([])
+        setActiveFile(null)
+        lastEmittedDataRef.current = null
         return
       }
       const parsed = JSON.parse(data)
-      if (Array.isArray(parsed)) {
+      if (!Array.isArray(parsed)) return
+
+      // Data change came from us (rename, edit, etc.) — parent echoed it back; don't close tabs
+      if (data === lastEmittedDataRef.current) {
+        lastEmittedDataRef.current = null
         setFsData(parsed)
+        return
       }
+
+      setFsData(parsed)
+
+      // Reconcile open tabs and active file: only keep paths that still exist in new data
+      const validPaths = collectAllFilePathsFromRoot(parsed)
+      setOpenFiles((prev) => prev.filter((f) => validPaths.has(f.path || f.name)))
+      setActiveFile((prev) => {
+        if (!prev) return null
+        if (validPaths.has(prev.path || prev.name)) return prev
+        const remaining = openFiles.filter((f) => validPaths.has(f.path || f.name))
+        return remaining[0] || null
+      })
     } catch {
       // Invalid JSON, keep current state
     }
@@ -1935,7 +1974,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
             <div className="flex-1 overflow-y-auto overflow-x-hidden">
               {/* Inline creation input at root level */}
               {creatingAtRoot && (
-                <div className="flex items-center py-[1px] px-2 text-gray-700 text-[13px] border-b border-gray-100">
+                <div className="flex items-center py-px px-2 text-gray-700 text-[13px] border-b border-gray-100">
                   <form
                     onSubmit={handleRootCreateSubmit}
                     className="w-full flex items-center"

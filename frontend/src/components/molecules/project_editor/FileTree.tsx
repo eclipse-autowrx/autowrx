@@ -1451,7 +1451,7 @@ const FileTree: React.FC<FileTreeProps> = ({
           {/* Inline rename input for files */}
           {renamingItem && renamingItem.path === itemPath && (
             <div
-              className="flex items-center py-[1px] px-2 text-gray-700 text-[13px]"
+              className="flex items-center py-px px-2 text-gray-700 text-[13px]"
               style={{ paddingLeft: `${depth * 16 + 8}px` }}
             >
               <form
@@ -1543,7 +1543,7 @@ const FileTree: React.FC<FileTreeProps> = ({
           {/* Inline creation input */}
           {creatingItem && creatingItem.parentPath === itemPath && (
             <div
-              className="flex items-center py-[1px] px-2 text-gray-700 text-[13px]"
+              className="flex items-center py-px px-2 text-gray-700 text-[13px]"
               style={{ paddingLeft: `${(depth + 1) * 16 + 8}px` }}
             >
               <form
@@ -1588,7 +1588,7 @@ const FileTree: React.FC<FileTreeProps> = ({
           {/* Inline rename input */}
           {renamingItem && renamingItem.path === itemPath && (
             <div
-              className="flex items-center py-[1px] px-2 text-gray-700 text-[13px]"
+              className="flex items-center py-px px-2 text-gray-700 text-[13px]"
               style={{ paddingLeft: `${depth * 16 + 8}px` }}
             >
               <form
@@ -1691,7 +1691,7 @@ const FileTree: React.FC<FileTreeProps> = ({
         {/* Root level creation input */}
         {creatingItem && creatingItem.parentPath === 'root' && (
           <div
-            className="flex items-center py-[1px] px-2 text-gray-700 text-[13px]"
+            className="flex items-center py-px px-2 text-gray-700 text-[13px]"
             style={{ paddingLeft: '8px' }}
           >
             <form
