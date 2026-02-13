@@ -34,7 +34,6 @@ import { createModelService } from '@/services/model.service'
 import { cn } from '@/lib/utils'
 import default_journey from '@/data/default_journey'
 import { SAMPLE_PROJECTS } from '@/data/sampleProjects'
-import { default_flow } from '@/data/default_flow'
 
 interface FormCreatePrototypeProps {
   onClose?: () => void
@@ -231,7 +230,6 @@ const FormCreatePrototype = ({
         code: data.code,
         complexity_level: 3,
         customer_journey: default_journey,
-        flow: JSON.stringify(default_flow),
         description: {
           problem: '',
           says_who: '',

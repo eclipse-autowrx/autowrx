@@ -33,7 +33,7 @@ import DaFilter from '@/components/atoms/DaFilter'
 import { Input } from '@/components/atoms/input'
 import { Skeleton } from '@/components/atoms/skeleton'
 import { cn } from '@/lib/utils'
-import CustomDialog from '@/components/molecules/flow/CustomDialog'
+import CustomDialog from '@/components/molecules/CustomDialog'
 import DaFileUpload from '@/components/atoms/DaFileUpload'
 import FormCreatePrototype from '@/components/molecules/forms/FormCreatePrototype'
 

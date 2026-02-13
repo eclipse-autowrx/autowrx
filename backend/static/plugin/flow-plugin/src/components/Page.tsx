@@ -35,7 +35,71 @@ type PageProps = {
   api?: PluginAPI
 }
 
-const parseCustomerJourneySteps = (journeyText: string | undefined): string[] => {
+/** Parsed Customer Journey step (same format as DaCustomerJourneyTable: #StepName, Who:, What:, Customer TouchPoints:) */
+export type JourneyStepData = {
+  stepTitle: string
+  who: string
+  what: string
+  customerTouchPoints: string
+}
+
+function getTableColumns(tableString: string | undefined): string[] {
+  if (!tableString || tableString.length < 10) return []
+  const lines = tableString.split('\n')
+  const columnNames: string[] = []
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim()
+    if (line.startsWith('#')) {
+      const columnName = line.slice(1).trim()
+      if (columnName) columnNames.push(columnName)
+    }
+  }
+  return columnNames
+}
+
+function parseTableData(tableString: string | undefined): { rowName: string; [col: string]: string }[] {
+  if (!tableString) return []
+  const lines = tableString.split('\n')
+  const tableData: { rowName: string; [col: string]: string }[] = []
+  let currentColumnName: string | null = null
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim()
+    if (line.startsWith('#')) {
+      currentColumnName = line.slice(1).trim()
+    } else if (line.includes(':')) {
+      const colonIndex = line.indexOf(':')
+      const rowName = line.slice(0, colonIndex).trim()
+      const cellValue = line.slice(colonIndex + 1).trim()
+      const rowIndex = tableData.findIndex((row) => row.rowName === rowName)
+      if (rowIndex === -1) {
+        const newRow: { rowName: string; [col: string]: string } = { rowName }
+        if (currentColumnName) newRow[currentColumnName] = cellValue
+        tableData.push(newRow)
+      } else if (currentColumnName) {
+        tableData[rowIndex][currentColumnName] = cellValue
+      }
+    }
+  }
+  return tableData
+}
+
+/** Parse customer_journey into steps with Who / What / Customer TouchPoints (same format as Customer Journey tab). */
+function parseCustomerJourneyFull(journeyText: string | undefined): JourneyStepData[] {
+  if (!journeyText || journeyText.length < 10) return []
+  const columnNames = getTableColumns(journeyText)
+  const tableData = parseTableData(journeyText)
+  const getCell = (rowName: string, colName: string): string =>
+    (tableData.find((r) => r.rowName === rowName)?.[colName] as string) ?? ''
+  return columnNames.map((stepTitle) => ({
+    stepTitle,
+    who: getCell('Who', stepTitle),
+    what: getCell('What', stepTitle),
+    customerTouchPoints: getCell('Customer TouchPoints', stepTitle),
+  }))
+}
+
+/** Fallback: only step titles (first line after each #). */
+function parseCustomerJourneySteps(journeyText: string | undefined): string[] {
   if (!journeyText) return []
   return journeyText
     .split('#')
@@ -49,7 +113,8 @@ export default function Page({ data, api }: PageProps) {
   const modelId = model?.id
 
   const [isEditing, setIsEditing] = useState(false)
-  const [customerJourneySteps, setCustomerJourneySteps] = useState<string[]>([])
+  /** Parsed Customer Journey steps (Who / What / Customer TouchPoints) for display and initial flow. */
+  const [journeyStepsData, setJourneyStepsData] = useState<JourneyStepData[]>([])
   const [originalFlowData, setOriginalFlowData] = useState<FlowStep[]>([])
   const [flowData, setFlowData] = useState<FlowStep[]>([])
   const [flowString, setFlowString] = useState('')
@@ -66,16 +131,20 @@ export default function Page({ data, api }: PageProps) {
 
   useEffect(() => {
     if (prototype) {
-      const steps = parseCustomerJourneySteps(prototype.customer_journey)
-      setCustomerJourneySteps(steps)
+      const fullSteps = parseCustomerJourneyFull(prototype.customer_journey)
+      setJourneyStepsData(fullSteps)
+      const stepTitles =
+        fullSteps.length > 0
+          ? fullSteps.map((s) => s.stepTitle)
+          : parseCustomerJourneySteps(prototype.customer_journey)
       try {
         if (prototype.flow) {
           const parsedFlow = JSON.parse(prototype.flow)
           setFlowData(parsedFlow)
           setOriginalFlowData(parsedFlow)
         } else {
-          const initialFlows = steps.map((step) => ({
-            title: step,
+          const initialFlows = (stepTitles.length > 0 ? stepTitles : ['Step 1']).map((title) => ({
+            title,
             flows: [createEmptyFlow()],
           }))
           setFlowData(initialFlows)
@@ -87,19 +156,18 @@ export default function Page({ data, api }: PageProps) {
     }
   }, [prototype])
 
-  // Only sync step titles from customer journey when there is no saved flow (initial state).
-  // When prototype.flow exists, flow is the source of truth and we must not overwrite user-edited titles.
+  // Sync step titles from customer journey when there is no saved flow (initial state).
   useEffect(() => {
     if (prototype?.flow) return
-    if (flowData.length > 0 && customerJourneySteps.length > 0) {
-      const synchronized = customerJourneySteps.map((stepTitle, index) => {
+    if (flowData.length > 0 && journeyStepsData.length > 0) {
+      const synchronized = journeyStepsData.map((j, index) => {
         const existing = flowData[index]
-        if (existing) return { ...existing, title: stepTitle }
-        return { title: stepTitle, flows: [createEmptyFlow()] }
+        if (existing) return { ...existing, title: j.stepTitle }
+        return { title: j.stepTitle, flows: [createEmptyFlow()] }
       })
       setFlowData(synchronized)
     }
-  }, [customerJourneySteps, prototype?.flow])
+  }, [journeyStepsData, prototype?.flow])
 
   const handleSave = async (stringJsonData: string) => {
     if (!prototype?.id || !api?.updatePrototype) return
@@ -257,15 +325,26 @@ export default function Page({ data, api }: PageProps) {
                   ))}
                 </tr>
                 {flowData?.length > 0 ? (
-                  flowData.map((step, stepIndex) => (
+                  flowData.map((step, stepIndex) => {
+                    const journeyStep = journeyStepsData[stepIndex]
+                    return (
                     <React.Fragment key={stepIndex}>
                       <tr>
                         <td
                           colSpan={FLOW_CELLS.length}
-                          className="relative text-xs border font-semibold bg-da-primary-500 text-white h-10 px-8 z-0"
+                          className="relative text-xs border font-semibold bg-da-primary-500 text-white px-8 py-3 z-0 align-top"
                         >
                           <TbChevronCompactRight className="absolute -left-[12px] top-1/2 -translate-x-1/4 -translate-y-1/2 size-[47px] bg-transparent text-white fill-current" />
-                          {step.title}
+                          <div className="flex flex-col gap-0.5">
+                            <span>{step.title}</span>
+                            {/* {journeyStep && (journeyStep.who || journeyStep.what || journeyStep.customerTouchPoints) && (
+                              <div className="font-normal text-white/90 text-[11px] mt-1 space-y-0.5">
+                                {journeyStep.who && <div><span className="opacity-80">Who:</span> {journeyStep.who}</div>}
+                                {journeyStep.what && <div><span className="opacity-80">What:</span> {journeyStep.what}</div>}
+                                {journeyStep.customerTouchPoints && <div><span className="opacity-80">Customer TouchPoints:</span> {journeyStep.customerTouchPoints}</div>}
+                              </div>
+                            )} */}
+                          </div>
                           <TbChevronCompactRight className="absolute -right-px top-1/2 translate-x-1/2 -translate-y-1/2 size-[47px] bg-transparent text-da-primary-500 fill-current" />
                         </td>
                       </tr>
@@ -305,7 +384,8 @@ export default function Page({ data, api }: PageProps) {
                         </tr>
                       ))}
                     </React.Fragment>
-                  ))
+                    )
+                  })
                 ) : (
                   <tr>
                     <td
