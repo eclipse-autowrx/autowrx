@@ -47,7 +47,11 @@ function collectAllFilePathsFromRoot(rootItems: FileSystemItem[]): Set<string> {
     })
   }
   rootItems.forEach((rootItem) => {
-    if (rootItem.type === 'folder') walk(rootItem.items, rootItem.name || '')
+    if (rootItem.type === 'folder') {
+      // Use '' for root folder so paths match FileTree (e.g. "utils/bar" not "root/utils/bar")
+      const basePath = rootItem.name === 'root' ? '' : (rootItem.name || '')
+      walk(rootItem.items, basePath)
+    }
   })
   return out
 }
@@ -325,11 +329,13 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
       }
 
       // Apply pending changes at root level (fsData is array of root folders/files)
+      // Use '' for root folder so paths match pendingChanges keys (e.g. "utils/bar" not "root/utils/bar")
       const updatedFsData = baseFsData.map((rootItem) => {
         if (rootItem.type === 'folder') {
+          const basePath = rootItem.name === 'root' ? '' : (rootItem.name || '')
           return {
             ...rootItem,
-            items: applyPendingChanges(rootItem.items, rootItem.name || ''),
+            items: applyPendingChanges(rootItem.items, basePath),
           }
         }
         return rootItem
