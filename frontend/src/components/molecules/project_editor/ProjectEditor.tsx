@@ -292,6 +292,10 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
       let baseFsData = fsDataRef.current
       const latestPendingChanges = pendingChangesRef.current
 
+      // Helper: get pending content by full path or by short name (path can be stored either way)
+      const getPendingContent = (itemPath: string, shortName: string): string | undefined =>
+        latestPendingChanges.get(itemPath) ?? latestPendingChanges.get(shortName)
+
       // Helper function to apply pending changes to file system data
       const applyPendingChanges = (
         items: FileSystemItem[],
@@ -300,14 +304,16 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
         return items.map((item) => {
           if (item.type === 'file') {
             const itemPath = basePath ? `${basePath}/${item.name}` : item.name
-            // If this file has pending changes, apply them
-            if (latestPendingChanges.has(itemPath)) {
+            const pendingContent = getPendingContent(itemPath, item.name)
+            if (pendingContent !== undefined) {
               return {
                 ...item,
-                content: latestPendingChanges.get(itemPath)!,
+                content: pendingContent,
               }
             }
-          } else if (item.type === 'folder') {
+            return item
+          }
+          if (item.type === 'folder') {
             const folderPath = basePath ? `${basePath}/${item.name}` : item.name
             return {
               ...item,
@@ -318,24 +324,27 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
         })
       }
 
-      // Create a complete copy of fsData with all pending changes applied
-      const updatedFsData = applyPendingChanges(baseFsData)
+      // Apply pending changes at root level (fsData is array of root folders/files)
+      const updatedFsData = baseFsData.map((rootItem) => {
+        if (rootItem.type === 'folder') {
+          return {
+            ...rootItem,
+            items: applyPendingChanges(rootItem.items, rootItem.name || ''),
+          }
+        }
+        return rootItem
+      })
 
       // Build the data to save (with all pending changes applied)
       const dataToSave = JSON.stringify(updatedFsData)
 
-      // Clear pending changes and unsaved files AFTER building the data
-      setPendingChanges(new Map())
-      setUnsavedFiles(new Set())
-
-      // Update the state with the fully updated data
-      setFsData(updatedFsData)
-
-      // Then call the parent's async onSave callback with the complete updated data
-      // This data includes all pending changes that were in the editor
+      // Call parent's onSave first; only clear unsaved state after it succeeds
       if (onSave) {
-        console.log('saveAllFiles: Calling onSave with data:', dataToSave)
         await onSave(dataToSave)
+        // Persist succeeded — clear pending/unsaved and update fsData
+        setPendingChanges(new Map())
+        setUnsavedFiles(new Set())
+        setFsData(updatedFsData)
       }
     } catch (error) {
       const errorMessage =
@@ -990,44 +999,73 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     })
     setFsData(newFileSystem)
 
-    // Update open files if the renamed file is open
+    const prefix = itemPath + '/'
+
+    // Update open files: the renamed item itself and any file inside the renamed folder
     setOpenFiles((prev) =>
       prev.map((f) => {
         const filePath = f.path || f.name
         if (filePath === itemPath) {
           return { ...f, name: newName, path: newPath }
         }
+        if (item.type === 'folder' && filePath.startsWith(prefix)) {
+          const suffix = filePath.slice(prefix.length)
+          return { ...f, path: newPath + '/' + suffix }
+        }
         return f
       })
     )
 
-    // Update active file if it's the renamed file
+    // Update active file the same way
     if (activeFile) {
       const activePath = activeFile.path || activeFile.name
       if (activePath === itemPath) {
         setActiveFile({ ...activeFile, name: newName, path: newPath })
+      } else if (item.type === 'folder' && activePath.startsWith(prefix)) {
+        const suffix = activePath.slice(prefix.length)
+        setActiveFile({ ...activeFile, path: newPath + '/' + suffix })
       }
     }
 
-    // Update pending changes and unsaved files with new path
-    if (pendingChanges.has(itemPath)) {
-      const content = pendingChanges.get(itemPath)!
-      setPendingChanges((prev) => {
-        const next = new Map(prev)
+    // Update pending changes: re-key paths for the renamed item and any file inside the folder
+    setPendingChanges((prev) => {
+      const next = new Map(prev)
+      if (next.has(itemPath)) {
+        next.set(newPath, next.get(itemPath)!)
         next.delete(itemPath)
-        next.set(newPath, content)
-        return next
-      })
-    }
+      }
+      if (item.type === 'folder') {
+        const rekey: [string, string][] = []
+        next.forEach((_, key) => {
+          if (key.startsWith(prefix)) rekey.push([key, newPath + '/' + key.slice(prefix.length)])
+        })
+        rekey.forEach(([oldKey, newKey]) => {
+          next.set(newKey, next.get(oldKey)!)
+          next.delete(oldKey)
+        })
+      }
+      return next
+    })
 
-    if (unsavedFiles.has(itemPath)) {
-      setUnsavedFiles((prev) => {
-        const next = new Set(prev)
+    // Update unsaved files the same way
+    setUnsavedFiles((prev) => {
+      const next = new Set(prev)
+      if (next.has(itemPath)) {
         next.delete(itemPath)
         next.add(newPath)
-        return next
-      })
-    }
+      }
+      if (item.type === 'folder') {
+        const toAdd: string[] = []
+        prev.forEach((key) => {
+          if (key.startsWith(prefix)) {
+            next.delete(key)
+            toAdd.push(newPath + '/' + key.slice(prefix.length))
+          }
+        })
+        toAdd.forEach((k) => next.add(k))
+      }
+      return next
+    })
   }
 
   const handleMoveItem = (
@@ -1518,6 +1556,9 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     let dataToExport = fsDataRef.current
     const latestPendingChanges = pendingChangesRef.current
 
+    const getPendingContentExport = (itemPath: string, shortName: string): string | undefined =>
+      latestPendingChanges.get(itemPath) ?? latestPendingChanges.get(shortName)
+
     // Apply pending changes to the data before exporting
     const applyPendingChanges = (
       items: FileSystemItem[],
@@ -1526,11 +1567,11 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
       return items.map((item) => {
         if (item.type === 'file') {
           const itemPath = basePath ? `${basePath}/${item.name}` : item.name
-          // If this file has pending changes, use the pending content
-          if (latestPendingChanges.has(itemPath)) {
+          const pendingContent = getPendingContentExport(itemPath, item.name)
+          if (pendingContent !== undefined) {
             return {
               ...item,
-              content: latestPendingChanges.get(itemPath)!,
+              content: pendingContent,
             }
           }
           return item
