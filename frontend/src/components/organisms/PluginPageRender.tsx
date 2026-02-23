@@ -29,6 +29,7 @@ import type { List } from '@/types/common.type'
 interface PluginPageRenderProps {
   plugin_id: string
   data?: any
+  onSetActiveTab?: (tab: string, pluginSlug?: string) => void
 }
 
 const GLOBAL_KEY = 'page-plugin'
@@ -45,7 +46,7 @@ const pluginRegistrations = new Map<string, any>()
 /** Map plugin URLs to plugin_ids so we can match registrations even when multiple plugins load simultaneously */
 const urlToPluginId = new Map<string, string>()
 
-const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data }) => {
+const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, onSetActiveTab }) => {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const injectedScriptRef = useRef<HTMLScriptElement | null>(null)
   const loadIdRef = useRef(0)
@@ -255,6 +256,9 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data }) 
     replaceAPIs: model_id ? handleReplaceAPIs : undefined,
     setRuntimeApiValues: handleSetRuntimeApiValues,
     getRuntimeApiValues: handleGetRuntimeApiValues,
+
+    // Navigation
+    setActiveTab: onSetActiveTab,
 
     // Wishlist API operations
     createWishlistApi: handleCreateWishlistApi,
