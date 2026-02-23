@@ -15,6 +15,7 @@ import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
+import HexOklchConverter from '@/components/molecules/HexOklchConverter'
 
 const SiteStyleSection: React.FC = () => {
   const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
@@ -134,7 +135,9 @@ const SiteStyleSection: React.FC = () => {
             <Spinner />
           </div>
         ) : (
-          <div className="h-[70vh] flex flex-col">
+          <div className="flex flex-col gap-4">
+            <HexOklchConverter />
+            <div className="h-[70vh] flex flex-col">
             <CodeEditor
               code={globalCss}
               setCode={setGlobalCss}
@@ -143,6 +146,7 @@ const SiteStyleSection: React.FC = () => {
               onBlur={() => {}}
               fontSize={14}
             />
+            </div>
           </div>
         )}
         <SiteConfigEditHistory section="style" />
