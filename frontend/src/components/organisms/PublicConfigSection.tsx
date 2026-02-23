@@ -16,7 +16,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/a
 import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { PREDEFINED_SITE_CONFIGS } from '@/pages/SiteConfigManagement'
+import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 import NavBarActionsEditor, { NavBarAction } from '@/components/molecules/NavBarActionsEditor'
+import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
 
 const PublicConfigSection: React.FC = () => {
   const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
@@ -191,6 +193,13 @@ const PublicConfigSection: React.FC = () => {
       setIsLoading(true)
       if (editingConfig?.id) {
         await configManagementService.updateConfigById(editingConfig.id, config)
+        pushSiteConfigEdit({
+          key: config.key,
+          valueBefore: editingConfig.value,
+          valueAfter: config.value,
+          valueType: config.valueType,
+          section: 'public',
+        })
         toast({ title: 'Updated', description: `Config "${config.key}" updated. Reloading page...` })
       } else {
         await configManagementService.createConfig({ ...config, secret: false })
@@ -224,7 +233,13 @@ const PublicConfigSection: React.FC = () => {
       await configManagementService.updateConfigByKey('NAV_BAR_ACTIONS', {
         value: navBarActions,
       })
-      
+      pushSiteConfigEdit({
+        key: 'NAV_BAR_ACTIONS',
+        valueBefore: originalNavBarActions,
+        valueAfter: navBarActions,
+        valueType: 'array',
+        section: 'public',
+      })
       toast({ 
         title: 'Saved', 
         description: 'Navigation bar actions updated successfully. Reloading page...' 
@@ -324,6 +339,7 @@ const PublicConfigSection: React.FC = () => {
               onEdit={handleEditConfig}
               onDelete={handleDeleteConfig}
               isLoading={isLoading}
+              historySection="public"
             />
 
             {/* Navigation Bar Actions Section - Moved to bottom */}
@@ -352,6 +368,9 @@ const PublicConfigSection: React.FC = () => {
                   </div>
                 )}
               </div>
+            </div>
+            <div className="pb-6">
+              <SiteConfigEditHistory section="public" />
             </div>
           </>
         )}

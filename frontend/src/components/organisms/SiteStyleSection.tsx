@@ -6,13 +6,15 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { configManagementService } from '@/services/configManagement.service'
 import { Button } from '@/components/atoms/button'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import CodeEditor from '@/components/molecules/CodeEditor'
 import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
+import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
 
 const SiteStyleSection: React.FC = () => {
   const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
@@ -20,6 +22,7 @@ const SiteStyleSection: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [savingStyle, setSavingStyle] = useState<boolean>(false)
   const [restoringDefault, setRestoringDefault] = useState<boolean>(false)
+  const lastSavedCssRef = useRef<string>('')
   const { toast } = useToast()
 
   useEffect(() => {
@@ -32,7 +35,9 @@ const SiteStyleSection: React.FC = () => {
     try {
       setIsLoading(true)
       const res = await configManagementService.getGlobalCss()
-      setGlobalCss(res?.content || '')
+      const content = res?.content || ''
+      setGlobalCss(content)
+      lastSavedCssRef.current = content
     } catch (err) {
       toast({
         title: 'Load site style failed',
@@ -48,7 +53,15 @@ const SiteStyleSection: React.FC = () => {
   const handleSave = async () => {
     try {
       setSavingStyle(true)
+      const valueBefore = lastSavedCssRef.current
       await configManagementService.updateGlobalCss(globalCss)
+      pushSiteConfigEdit({
+        key: 'SITE_STYLE_CSS',
+        valueBefore,
+        valueAfter: globalCss,
+        section: 'style',
+      })
+      lastSavedCssRef.current = globalCss
       toast({ title: 'Saved', description: 'Site style updated. Reloading page...' })
       
       // Reload page to apply new CSS immediately
@@ -132,6 +145,7 @@ const SiteStyleSection: React.FC = () => {
             />
           </div>
         )}
+        <SiteConfigEditHistory section="style" />
       </div>
     </>
   )

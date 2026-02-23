@@ -16,6 +16,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/a
 import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { EXCLUDED_FROM_SITE_CONFIG_KEYS } from '@/pages/SiteConfigManagement'
+import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
+import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
 
 const SecretConfigSection: React.FC = () => {
   const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
@@ -85,6 +87,13 @@ const SecretConfigSection: React.FC = () => {
       setIsLoading(true)
       if (editingConfig?.id) {
         await configManagementService.updateConfigById(editingConfig.id, config)
+        pushSiteConfigEdit({
+          key: config.key,
+          valueBefore: editingConfig.value,
+          valueAfter: config.value,
+          valueType: config.valueType,
+          section: 'secrets',
+        })
         toast({ title: 'Updated', description: `Config "${config.key}" updated. Reloading page...` })
       } else {
         await configManagementService.createConfig({ ...config, secret: true })
@@ -182,8 +191,10 @@ const SecretConfigSection: React.FC = () => {
             onEdit={handleEditConfig}
             onDelete={handleDeleteConfig}
             isLoading={isLoading}
+            historySection="secrets"
           />
         )}
+        <SiteConfigEditHistory section="secrets" />
       </div>
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>

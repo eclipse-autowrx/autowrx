@@ -13,6 +13,8 @@ import { useToast } from '@/components/molecules/toaster/use-toast'
 import CodeEditor, { CodeEditorHandle } from '@/components/molecules/CodeEditor'
 import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
+import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
 
 const HomeConfigSection: React.FC = () => {
   const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
@@ -101,6 +103,11 @@ const HomeConfigSection: React.FC = () => {
         existing.results[0].id &&
         !(existing.results[0] as any).isDefault
 
+      const valueBefore =
+        existing.results && existing.results.length > 0
+          ? existing.results[0].value
+          : undefined
+
       if (hasDbConfig) {
         // Update existing config in DB
         const configId = existing.results[0].id!
@@ -119,6 +126,13 @@ const HomeConfigSection: React.FC = () => {
         })
       }
 
+      pushSiteConfigEdit({
+        key: 'CFG_HOME_CONTENT',
+        valueBefore,
+        valueAfter: configValue,
+        valueType: 'array',
+        section: 'home',
+      })
       toast({ title: 'Saved', description: 'Home configuration updated. Reloading page...' })
 
       // Reload page to show changes immediately
@@ -191,6 +205,9 @@ const HomeConfigSection: React.FC = () => {
             />
           </div>
         )}
+      </div>
+      <div className="px-6 pb-6">
+        <SiteConfigEditHistory section="home" />
       </div>
     </>
   )

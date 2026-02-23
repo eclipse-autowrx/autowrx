@@ -15,6 +15,8 @@ import { useToast } from '@/components/molecules/toaster/use-toast'
 import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { PREDEFINED_AUTH_CONFIGS } from '@/pages/SiteConfigManagement'
+import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
+import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
 
 const AuthConfigSection: React.FC = () => {
   const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
@@ -86,7 +88,13 @@ const AuthConfigSection: React.FC = () => {
         await configManagementService.updateConfigById(config.id, {
           value: newValue,
         })
-
+        pushSiteConfigEdit({
+          key: config.key,
+          valueBefore: config.value,
+          valueAfter: newValue,
+          valueType: config.valueType,
+          section: 'auth',
+        })
         toast({
           title: 'Updated',
           description: `${config.key} ${newValue ? 'enabled' : 'disabled'}. Reloading page...`,
@@ -232,6 +240,8 @@ const AuthConfigSection: React.FC = () => {
             No authentication configurations found
           </div>
         )}
+
+        <SiteConfigEditHistory section="auth" />
       </div>
     </>
   )

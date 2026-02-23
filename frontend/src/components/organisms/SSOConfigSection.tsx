@@ -16,6 +16,8 @@ import { Spinner } from '@/components/atoms/spinner'
 import { TbPlus, TbEdit, TbTrash, TbToggleLeft, TbToggleRight } from 'react-icons/tb'
 import { v4 as uuidv4 } from 'uuid'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
+import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
 
 interface SSOProvider {
   id: string
@@ -211,6 +213,11 @@ const SSOConfigSection: React.FC = () => {
       scope: 'site',
     })
 
+    const valueBefore =
+      response.results && response.results.length > 0
+        ? response.results[0].value
+        : undefined
+
     if (response.results && response.results.length > 0) {
       // Update existing config
       await configManagementService.updateConfigById(response.results[0].id!, {
@@ -227,6 +234,14 @@ const SSOConfigSection: React.FC = () => {
         secret: false,
       })
     }
+
+    pushSiteConfigEdit({
+      key: 'SSO_PROVIDERS',
+      valueBefore,
+      valueAfter: updatedProviders,
+      valueType: 'array',
+      section: 'sso',
+    })
   }
 
   // Show loading spinner while authenticating user or loading providers
@@ -341,6 +356,7 @@ const SSOConfigSection: React.FC = () => {
             ))}
           </div>
         )}
+        <SiteConfigEditHistory section="sso" />
       </div>
 
       {/* Form Modal */}
