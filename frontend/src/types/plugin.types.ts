@@ -119,6 +119,27 @@ export interface PluginAPI {
   getRuntimeApiValues?: () => Record<string, any>
 
   // ========================================
+  // Navigation
+  // ========================================
+
+  /**
+   * Navigate to a specific prototype tab
+   * @param tab Built-in tab key ('view', 'journey', 'code', 'dashboard') or 'plug' for custom plugin tabs
+   * @param pluginSlug Required when tab is 'plug' — the plugin slug to activate
+   *
+   * @example
+   * // Navigate to the code tab
+   * api.setActiveTab?.('code')
+   *
+   * // Navigate to a custom plugin tab
+   * api.setActiveTab?.('plug', 'my-plugin-slug')
+   *
+   * // Navigate to dashboard
+   * api.setActiveTab?.('dashboard')
+   */
+  setActiveTab?: (tab: string, pluginSlug?: string) => void
+
+  // ========================================
   // Wishlist API Operations (Custom/Extended APIs)
   // ========================================
 
