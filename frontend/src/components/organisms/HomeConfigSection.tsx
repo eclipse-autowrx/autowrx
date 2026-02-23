@@ -6,11 +6,11 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { configManagementService } from '@/services/configManagement.service'
 import { Button } from '@/components/atoms/button'
 import { useToast } from '@/components/molecules/toaster/use-toast'
-import CodeEditor from '@/components/molecules/CodeEditor'
+import CodeEditor, { CodeEditorHandle } from '@/components/molecules/CodeEditor'
 import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 
@@ -20,6 +20,7 @@ const HomeConfigSection: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [savingHome, setSavingHome] = useState<boolean>(false)
   const { toast } = useToast()
+  const codeEditorRef = useRef<CodeEditorHandle>(null)
 
   useEffect(() => {
     if (selfLoading || !self) return
@@ -149,9 +150,27 @@ const HomeConfigSection: React.FC = () => {
             Configure home page content and layout
           </p>
         </div>
-        <Button onClick={handleSave} disabled={savingHome}>
-          {savingHome ? 'Saving...' : 'Save'}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => codeEditorRef.current?.foldAll()}
+            disabled={isLoading}
+          >
+            Collapse all
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => codeEditorRef.current?.unfoldAll()}
+            disabled={isLoading}
+          >
+            Expand all
+          </Button>
+          <Button size="sm" onClick={handleSave} disabled={savingHome}>
+            {savingHome ? 'Saving...' : 'Save'}
+          </Button>
+        </div>
       </div>
 
       <div className="p-6">
@@ -162,6 +181,7 @@ const HomeConfigSection: React.FC = () => {
         ) : (
           <div className="h-[70vh] flex flex-col">
             <CodeEditor
+              ref={codeEditorRef}
               code={homeConfig}
               setCode={setHomeConfig}
               editable={true}

@@ -248,7 +248,6 @@ const ConfigList: React.FC<ConfigListProps> = ({
                               <img
                                 src={editValue as any}
                                 alt="Preview"
-                                className="w-full max-w-[200px] h-fit max-h-[160px]  object-contain"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement
                                   target.style.display = 'none'
@@ -407,7 +406,6 @@ const ConfigList: React.FC<ConfigListProps> = ({
                                     config.value) as any
                                 }
                                 alt="Preview"
-                                className="w-full max-w-[200px] h-fit max-h-[160px] object-contain"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement
                                   target.style.display = 'none'
