@@ -26,7 +26,7 @@ import HomeNews from '@/components/organisms/HomeNews'
 import HomeFooterSection from '@/components/organisms/HomeFooterSection'
 import { TbGripVertical, TbPencil, TbX, TbCheck } from 'react-icons/tb'
 
-type HomeSubTab = 'raw' | 'preview'
+type HomeSubTab = 'raw' | 'edit' | 'preview'
 
 function getBlockTypeLabel(type: string): string {
   const labels: Record<string, string> = {
@@ -77,7 +77,6 @@ const HomeConfigSection: React.FC = () => {
   const previewContentRef = useRef<HTMLDivElement>(null)
   const [previewScale, setPreviewScale] = useState(1)
   const [previewContentHeight, setPreviewContentHeight] = useState(0)
-  const [previewEditMode, setPreviewEditMode] = useState(false)
   const [previewEditOrder, setPreviewEditOrder] = useState<any[]>([])
 
   const previewElements = useMemo(() => {
@@ -101,11 +100,6 @@ const HomeConfigSection: React.FC = () => {
     observer.observe(el)
     return () => observer.disconnect()
   }, [homeSubTab, previewElements.length])
-
-  // Exit edit mode when leaving preview tab
-  useEffect(() => {
-    if (homeSubTab !== 'preview') setPreviewEditMode(false)
-  }, [homeSubTab])
 
   // Measure preview content height so wrapper can clip to scaled size (avoids overlap/layout shift)
   useEffect(() => {
@@ -168,18 +162,20 @@ const HomeConfigSection: React.FC = () => {
 
   const handlePreviewEditStart = () => {
     setPreviewEditOrder([...previewElements])
-    setPreviewEditMode(true)
-  }
-
-  const handlePreviewEditCancel = () => {
-    setPreviewEditMode(false)
+    setHomeSubTab('edit')
   }
 
   const handlePreviewEditSave = async () => {
     const newCss = JSON.stringify(previewEditOrder, null, 2)
     setHomeConfig(newCss)
-    setPreviewEditMode(false)
+    setHomeSubTab('preview')
     await handleSave(newCss)
+  }
+
+  const handlePreviewDeleteBlock = (index: number) => {
+    const confirmed = window.confirm('Remove this block from the home layout?')
+    if (!confirmed) return
+    setPreviewEditOrder((prev) => prev.filter((_, i) => i !== index))
   }
 
   const handlePreviewDragEnd = (result: DropResult) => {
@@ -305,22 +301,9 @@ const HomeConfigSection: React.FC = () => {
               </Button>
             </>
           )}
-          {homeSubTab === 'preview' && previewElements.length > 0 &&
-            (previewEditMode ? (
-              <Button variant="outline" size="sm" onClick={handlePreviewEditCancel}>
-                <TbX className="w-4 h-4 mr-1" />
-                Cancel
-              </Button>
-            ) : (
-              <Button variant="outline" size="sm" onClick={handlePreviewEditStart}>
-                <TbPencil className="w-4 h-4 mr-1" />
-                Edit order
-              </Button>
-            ))
-          }
           <Button
             size="sm"
-            onClick={() => (homeSubTab === 'preview' && previewEditMode ? handlePreviewEditSave() : handleSave())}
+            onClick={() => (homeSubTab === 'edit' ? handlePreviewEditSave() : handleSave())}
             disabled={savingHome}
           >
             {savingHome ? 'Saving...' : 'Save'}
@@ -328,7 +311,7 @@ const HomeConfigSection: React.FC = () => {
         </div>
       </div>
 
-      {/* Sub-tabs: Raw | Preview */}
+      {/* Sub-tabs: Raw | Edit | Preview */}
       <div className="px-6 pt-2 border-b border-border">
         <div className="flex gap-1 pb-2">
           <button
@@ -341,6 +324,17 @@ const HomeConfigSection: React.FC = () => {
             }`}
           >
             Raw
+          </button>
+          <button
+            type="button"
+            onClick={handlePreviewEditStart}
+            className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${
+              homeSubTab === 'edit'
+                ? 'bg-muted text-foreground border border-b-0 border-border -mb-px'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+            }`}
+          >
+            Edit
           </button>
           <button
             type="button"
@@ -373,6 +367,78 @@ const HomeConfigSection: React.FC = () => {
               fontSize={14}
             />
           </div>
+        ) : homeSubTab === 'edit' ? (
+          <>
+            <div className="min-h-[70vh] rounded-md border border-border bg-background overflow-auto flex justify-center">
+              {previewElements.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-muted-foreground text-sm">
+                  <p>No content to edit.</p>
+                  <p className="mt-1">Switch to Raw and add a valid JSON array of home sections (e.g. hero, feature-list, news).</p>
+                </div>
+              ) : (
+                <div className="w-full max-w-4xl rounded-md border border-border bg-background overflow-auto my-4">
+                  <div className="px-6 pt-4 text-sm text-muted-foreground">
+                    Drag blocks to reorder the home page sections.
+                  </div>
+                  <DragDropContext onDragEnd={handlePreviewDragEnd}>
+                    <Droppable droppableId="home-blocks">
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                          className="space-y-4 p-6"
+                        >
+                          {previewEditOrder.map((element: any, index: number) => {
+                            const Component = getHomeComponent(element?.type)
+                            if (!Component) return null
+                            const blockId = `block-${index}-${element?.type ?? 'unknown'}`
+                            return (
+                              <Draggable key={blockId} draggableId={blockId} index={index}>
+                                {(provided, snapshot) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    className={`rounded-lg border bg-background ${
+                                      snapshot.isDragging ? 'opacity-80 shadow-lg ring-2 ring-primary' : ''
+                                    }`}
+                                  >
+                                    <div className="flex items-start gap-2 p-2 border-b border-border bg-muted/30">
+                                      <div
+                                        {...provided.dragHandleProps}
+                                        className="flex items-center justify-center w-8 h-8 rounded cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
+                                      >
+                                        <TbGripVertical className="w-5 h-5" />
+                                      </div>
+                                      <div className="flex-1 flex items-center justify-between">
+                                        <span className="text-sm font-medium py-1.5">
+                                          {getBlockTypeLabel(element?.type ?? '')}
+                                        </span>
+                                        <button
+                                          type="button"
+                                          onClick={() => handlePreviewDeleteBlock(index)}
+                                          className="cursor-pointer inline-flex items-center text-xs text-destructive hover:text-destructive/80 px-2 py-1 rounded-md"
+                                        >
+                                          Remove
+                                        </button>
+                                      </div>
+                                    </div>
+                                    <div className="p-4">
+                                      <Component {...element} />
+                                    </div>
+                                  </div>
+                                )}
+                              </Draggable>
+                            )
+                          })}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+                  </DragDropContext>
+                </div>
+              )}
+            </div>
+          </>
         ) : (
           <>
             <div
@@ -383,55 +449,6 @@ const HomeConfigSection: React.FC = () => {
               <div className="flex flex-col items-center justify-center py-16 text-muted-foreground text-sm">
                 <p>No content to preview.</p>
                 <p className="mt-1">Switch to Raw and add a valid JSON array of home sections (e.g. hero, feature-list, news).</p>
-              </div>
-            ) : previewEditMode ? (
-              <div className="w-full max-w-4xl rounded-md border border-border bg-background overflow-auto">
-                <DragDropContext onDragEnd={handlePreviewDragEnd}>
-                  <Droppable droppableId="home-blocks">
-                    {(provided) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        className="space-y-4 p-6"
-                      >
-                        {previewEditOrder.map((element: any, index: number) => {
-                          const Component = getHomeComponent(element?.type)
-                          if (!Component) return null
-                          const blockId = `block-${index}-${element?.type ?? 'unknown'}`
-                          return (
-                            <Draggable key={blockId} draggableId={blockId} index={index}>
-                              {(provided, snapshot) => (
-                                <div
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  className={`rounded-lg border bg-background ${
-                                    snapshot.isDragging ? 'opacity-80 shadow-lg ring-2 ring-primary' : ''
-                                  }`}
-                                >
-                                  <div className="flex items-start gap-2 p-2 border-b border-border bg-muted/30">
-                                    <div
-                                      {...provided.dragHandleProps}
-                                      className="flex items-center justify-center w-8 h-8 rounded cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
-                                    >
-                                      <TbGripVertical className="w-5 h-5" />
-                                    </div>
-                                    <span className="text-sm font-medium py-1.5">
-                                      {getBlockTypeLabel(element?.type ?? '')}
-                                    </span>
-                                  </div>
-                                  <div className="p-4">
-                                    <Component {...element} />
-                                  </div>
-                                </div>
-                              )}
-                            </Draggable>
-                          )
-                        })}
-                        {provided.placeholder}
-                      </div>
-                    )}
-                  </Droppable>
-                </DragDropContext>
               </div>
             ) : (
               <div
