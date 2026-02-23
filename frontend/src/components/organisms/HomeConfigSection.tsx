@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { configManagementService } from '@/services/configManagement.service'
 import { Button } from '@/components/atoms/button'
 import { useToast } from '@/components/molecules/toaster/use-toast'
@@ -15,14 +15,86 @@ import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
+import { HomePartners } from '@/components/organisms/HomePartners'
+import HomeHeroSection from '@/components/organisms/HomeHeroSection'
+import HomeFeatureList from '@/components/organisms/HomeFeatureList'
+import HomeButtonList from '@/components/organisms/HomeButtonList'
+import HomePrototypeRecent from '@/components/organisms/HomePrototypeRecent'
+import HomePrototypePopular from '@/components/organisms/HomePrototypePopular'
+import HomeNews from '@/components/organisms/HomeNews'
+import HomeFooterSection from '@/components/organisms/HomeFooterSection'
+
+type HomeSubTab = 'raw' | 'preview'
+
+function getHomeComponent(elementType: string) {
+  switch (elementType) {
+    case 'hero':
+      return HomeHeroSection
+    case 'feature-list':
+      return HomeFeatureList
+    case 'button-list':
+      return HomeButtonList
+    case 'news':
+      return HomeNews
+    case 'recent':
+      return HomePrototypeRecent
+    case 'popular':
+      return HomePrototypePopular
+    case 'partner-list':
+      return HomePartners
+    case 'home-footer':
+      return HomeFooterSection
+    default:
+      return null
+  }
+}
 
 const HomeConfigSection: React.FC = () => {
   const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
   const [homeConfig, setHomeConfig] = useState<string>('')
+  const [homeSubTab, setHomeSubTab] = useState<HomeSubTab>('raw')
   const [isLoading, setIsLoading] = useState(false)
   const [savingHome, setSavingHome] = useState<boolean>(false)
   const { toast } = useToast()
   const codeEditorRef = useRef<CodeEditorHandle>(null)
+  const previewWrapRef = useRef<HTMLDivElement>(null)
+  const previewContentRef = useRef<HTMLDivElement>(null)
+  const [previewScale, setPreviewScale] = useState(1)
+  const [previewContentHeight, setPreviewContentHeight] = useState(0)
+
+  const previewElements = useMemo(() => {
+    try {
+      const parsed = JSON.parse(homeConfig || '[]')
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }, [homeConfig])
+
+  // Scale preview to fit container so layout matches real home page (1280px reference width)
+  const PREVIEW_PAGE_WIDTH = 1280
+  useEffect(() => {
+    if (homeSubTab !== 'preview' || !previewWrapRef.current) return
+    const el = previewWrapRef.current
+    const observer = new ResizeObserver(() => {
+      const w = el.offsetWidth
+      setPreviewScale(w > 0 ? Math.min(1, w / PREVIEW_PAGE_WIDTH) : 1)
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [homeSubTab, previewElements.length])
+
+  // Measure preview content height so wrapper can clip to scaled size (avoids overlap/layout shift)
+  useEffect(() => {
+    if (homeSubTab !== 'preview' || !previewContentRef.current) return
+    const el = previewContentRef.current
+    const observer = new ResizeObserver(() => {
+      setPreviewContentHeight(el.offsetHeight)
+    })
+    observer.observe(el)
+    setPreviewContentHeight(el.offsetHeight)
+    return () => observer.disconnect()
+  }, [homeSubTab, previewElements])
 
   useEffect(() => {
     if (selfLoading || !self) return
@@ -165,25 +237,57 @@ const HomeConfigSection: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => codeEditorRef.current?.foldAll()}
-            disabled={isLoading}
-          >
-            Collapse all
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => codeEditorRef.current?.unfoldAll()}
-            disabled={isLoading}
-          >
-            Expand all
-          </Button>
+          {homeSubTab === 'raw' && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => codeEditorRef.current?.foldAll()}
+                disabled={isLoading}
+              >
+                Collapse all
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => codeEditorRef.current?.unfoldAll()}
+                disabled={isLoading}
+              >
+                Expand all
+              </Button>
+            </>
+          )}
           <Button size="sm" onClick={handleSave} disabled={savingHome}>
             {savingHome ? 'Saving...' : 'Save'}
           </Button>
+        </div>
+      </div>
+
+      {/* Sub-tabs: Raw | Preview */}
+      <div className="px-6 pt-2 border-b border-border">
+        <div className="flex gap-1">
+          <button
+            type="button"
+            onClick={() => setHomeSubTab('raw')}
+            className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${
+              homeSubTab === 'raw'
+                ? 'bg-muted text-foreground border border-b-0 border-border -mb-px'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+            }`}
+          >
+            Raw
+          </button>
+          <button
+            type="button"
+            onClick={() => setHomeSubTab('preview')}
+            className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${
+              homeSubTab === 'preview'
+                ? 'bg-muted text-foreground border border-b-0 border-border -mb-px'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+            }`}
+          >
+            Preview
+          </button>
         </div>
       </div>
 
@@ -192,7 +296,7 @@ const HomeConfigSection: React.FC = () => {
           <div className="flex justify-center items-center py-8">
             <Spinner />
           </div>
-        ) : (
+        ) : homeSubTab === 'raw' ? (
           <div className="h-[70vh] flex flex-col">
             <CodeEditor
               ref={codeEditorRef}
@@ -203,6 +307,47 @@ const HomeConfigSection: React.FC = () => {
               onBlur={() => {}}
               fontSize={14}
             />
+          </div>
+        ) : (
+          <div
+            ref={previewWrapRef}
+            className="min-h-[70vh] rounded-md border border-border bg-background overflow-auto flex justify-center"
+          >
+            {previewElements.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-muted-foreground text-sm">
+                <p>No content to preview.</p>
+                <p className="mt-1">Switch to Raw and add a valid JSON array of home sections (e.g. hero, feature-list, news).</p>
+              </div>
+            ) : (
+              <div
+                style={{
+                  width: PREVIEW_PAGE_WIDTH * previewScale,
+                  height: previewContentHeight > 0 ? previewContentHeight * previewScale : undefined,
+                  minHeight: previewContentHeight > 0 ? undefined : 400,
+                  overflow: 'hidden',
+                }}
+              >
+                <div
+                  style={{
+                    width: PREVIEW_PAGE_WIDTH,
+                    height: previewContentHeight > 0 ? previewContentHeight : undefined,
+                    transform: `scale(${previewScale})`,
+                    transformOrigin: 'top left',
+                  }}
+                >
+                  <div
+                    ref={previewContentRef}
+                    className="space-y-12 p-6 bg-background"
+                  >
+                    {previewElements.map((element: any, index: number) => {
+                      const Component = getHomeComponent(element?.type)
+                      if (!Component) return null
+                      return <Component key={index} {...element} />
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

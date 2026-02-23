@@ -8,7 +8,7 @@ const HomeFooterSection = ({
       <div className="min-h-[180px] flex flex-1 min-w-0 flex-col font-medium items-center text-center justify-center">
         <div className="flex w-fit items-center">
           <a href="https://www.digital.auto/" target="_blank">
-            <img src="./imgs/da.png" className="h-[70px]" />
+            <img src="/imgs/da.png" alt="digital.auto" className="h-[70px]" />
           </a>
         </div>
         <div className="text-sm mt-3 max-w-xl">
