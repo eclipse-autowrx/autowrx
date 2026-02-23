@@ -28,7 +28,7 @@ export interface Runtime {
 interface KitConnectProps {
   kitServerUrl?: string
   hideLabel?: boolean
-  targetPrefix: string
+  targetPrefix: string | string[]
   usedAPIs: string[]
   onActiveRtChanged?: (newActiveKitId: string | undefined) => void
   onLoadedMockSignals?: (signals: []) => void
@@ -37,6 +37,7 @@ interface KitConnectProps {
   onAppRunningStateChanged?: (isRunning: boolean) => void
   onRuntimeInfoReceived?: (payload: any) => void
   onDeployResponse?: (log: string, isDone: boolean) => void
+  onReadFileResponse?: (filePath: string, fileContent: string) => void
   isDeployMode?: boolean
 }
 
@@ -53,6 +54,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       onAppRunningStateChanged,
       onRuntimeInfoReceived,
       onDeployResponse,
+      onReadFileResponse,
       isDeployMode = false,
     },
     ref,
@@ -83,7 +85,9 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         writeVarsValue,
         revertToDefaultVehicleModel,
         builldVehicleModel,
-        getRuntimeInfo
+        getRuntimeInfo,
+        readFile,
+        writeFile,
       }
     })
 
@@ -94,7 +98,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
 
     useEffect(() => {
       if (rawApisPackage) {
-        if (activeRtId && activeRtId==rawApisPackage?.kit_id) {
+        if (activeRtId && activeRtId == rawApisPackage?.kit_id) {
           setActiveApis(rawApisPackage?.result || {})
         }
       }
@@ -135,16 +139,16 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         setAppLog(`Run app\r\n`)
       }
       let cmd = "run_python_app"
-      if(prototype?.language == "python") {
+      if (prototype?.language == "python") {
         cmd = "run_python_app"
-      } else if(prototype?.language == "rust") {
+      } else if (prototype?.language == "rust") {
         cmd = "run_rust_app"
-      } else if(prototype?.language == "cpp") {
+      } else if (prototype?.language == "cpp") {
         cmd = "run_cpp_app"
       }
       let watch_vars = ""
-      if(prototype?.extend?.watch_vars && Array.isArray(prototype?.extend?.watch_vars)){
-        watch_vars = prototype?.extend?.watch_vars.map((v:any) => v.name).join(', ') || ''
+      if (prototype?.extend?.watch_vars && Array.isArray(prototype?.extend?.watch_vars)) {
+        watch_vars = prototype?.extend?.watch_vars.map((v: any) => v.name).join(', ') || ''
       }
       console.log(`watch_vars`, watch_vars)
       socketio?.emit('messageToKit', {
@@ -277,12 +281,28 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       })
     }
 
+    const readFile = (filePath: string) => {
+      socketio?.emit('messageToKit', {
+        cmd: 'read_file',
+        to_kit_id: activeRtId,
+        data: filePath,
+      })
+    }
+
+    const writeFile = (filePath: string, fileContent: string) => {
+      socketio?.emit('messageToKit', {
+        cmd: 'write_file',
+        to_kit_id: activeRtId,
+        data: { path: filePath, content: fileContent },
+      })
+    }
+
     useEffect(() => {
       if (onActiveRtChanged) {
         onActiveRtChanged(activeRtId)
       }
 
-      if(activeRtId) {
+      if (activeRtId) {
         getRuntimeInfo()
       }
 
@@ -359,7 +379,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       socketio?.emit('unregister_client', {})
     }
 
-    const onDisconnect = () => {}
+    const onDisconnect = () => { }
 
     const onGetAllKitData = (data: any) => {
       const getLastPart = (kit_id: string) => {
@@ -370,11 +390,13 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         return kit.is_online
       })
 
-      let sortedKits = kits.filter((rt) =>
-        rt.kit_id
-          .toLowerCase()
-          .startsWith(targetPrefix ? targetPrefix.toLowerCase() : 'runtime-'),
-      )
+      let sortedKits = kits.filter((rt) => {
+        const kitIdLower = rt.kit_id.toLowerCase()
+        if (Array.isArray(targetPrefix)) {
+          return targetPrefix.some(prefix => kitIdLower.startsWith(prefix.toLowerCase()))
+        }
+        return kitIdLower.startsWith(targetPrefix ? targetPrefix.toLowerCase() : 'runtime-')
+      })
 
       sortedKits.sort((a, b) => {
         if (a.is_online !== b.is_online) {
@@ -426,7 +448,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
           if (onNewLog) {
             onNewLog(`Exit code ${payload.code}\r\n`)
           }
-          if(onAppRunningStateChanged){
+          if (onAppRunningStateChanged) {
             onAppRunningStateChanged(false)
           }
         } else {
@@ -456,7 +478,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         }
       }
 
-      if(payload.cmd == 'trace_vars'){
+      if (payload.cmd == 'trace_vars') {
         let data = payload.data
         setTraceVars(data || {})
       }
@@ -483,6 +505,10 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
 
       if (['get-runtime-info', 'report-runtime-state'].includes(payload.cmd) && onNewLog) {
         onRuntimeStateResponse(payload)
+      }
+
+      if (payload.cmd === 'read_file' && onReadFileResponse) {
+        onReadFileResponse(payload.data?.path || '', payload.data?.content || '')
       }
     }
 
@@ -528,16 +554,16 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
           }
         }
       } else {
-        let publicRuntimes = allRuntimes.filter((rt:any) => rt.name.toLowerCase().startsWith('runtime-public-') || rt.name.toLowerCase().startsWith('runtime-shared-'))
-        
+        let publicRuntimes = allRuntimes.filter((rt: any) => rt.name.toLowerCase().startsWith('runtime-public-') || rt.name.toLowerCase().startsWith('runtime-shared-'))
+
         let myRuntimes = []
-        if(Array.isArray(assets)) {
-          let runtimesAssets = assets.filter((a:any) => a.type == 'CLOUD_RUNTIME') || []
-          let myRuntimeNames = runtimesAssets.map((asset:any) => asset.name.toLowerCase())
-          myRuntimes = allRuntimes.filter((rt:any) => {
+        if (Array.isArray(assets)) {
+          let runtimesAssets = assets.filter((a: any) => a.type == 'CLOUD_RUNTIME') || []
+          let myRuntimeNames = runtimesAssets.map((asset: any) => asset.name.toLowerCase())
+          myRuntimes = allRuntimes.filter((rt: any) => {
             let result = false
             myRuntimeNames.forEach((myRtName: string) => {
-              if(rt.name.toLowerCase().startsWith(`${myRtName}`)){
+              if (rt.name.toLowerCase().startsWith(`${myRtName}`)) {
                 result = true
               }
             })
@@ -545,13 +571,13 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
           })
         }
 
-        if(myRuntimes.length>=3) {
+        if (myRuntimes.length >= 3) {
           setRenderRuntimes([...new Set([...myRuntimes])])
         } else {
-          let freeRuntimes = publicRuntimes.sort((a:any, b:any) => {
+          let freeRuntimes = publicRuntimes.sort((a: any, b: any) => {
             return a.noRunner - b.noRunner
           })
-          setRenderRuntimes([...new Set([...myRuntimes, ...freeRuntimes.slice(0, 3-myRuntimes.length)])])
+          setRenderRuntimes([...new Set([...myRuntimes, ...freeRuntimes.slice(0, 3 - myRuntimes.length)])])
         }
 
       }
@@ -560,17 +586,17 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     const onRuntimeStateResponse = (payload: any) => {
       let newRunningState = false
 
-      if(payload.data && payload.data.lsOfRunner && payload.data.lsOfRunner.length > 0){
-        let myRunners = payload.data.lsOfRunner.filter((runner:any) => runner.request_from == socketio?.id)
-        if(myRunners.length > 0){
+      if (payload.data && payload.data.lsOfRunner && payload.data.lsOfRunner.length > 0) {
+        let myRunners = payload.data.lsOfRunner.filter((runner: any) => runner.request_from == socketio?.id)
+        if (myRunners.length > 0) {
           newRunningState = true
         }
       }
 
-      if(onAppRunningStateChanged){
+      if (onAppRunningStateChanged) {
         onAppRunningStateChanged(newRunningState)
       }
-      if(onRuntimeInfoReceived) {
+      if (onRuntimeInfoReceived) {
         onRuntimeInfoReceived(payload.data)
       }
     }

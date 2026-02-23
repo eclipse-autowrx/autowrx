@@ -8,7 +8,8 @@
 
 import { useEffect, useState } from 'react'
 import { useAssets } from '@/hooks/useAssets.ts'
-import { TbTrash, TbPencil, TbShare, TbPlug, TbPlus } from 'react-icons/tb'
+import { TbTrash, TbPencil, TbShare, TbPlus, TbDeviceDesktopCog } from 'react-icons/tb'
+import FormHardwareKitManager from '@/components/organisms/FormHardwareKitManager'
 import DaDialog from '@/components/molecules/DaDialog'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
@@ -85,7 +86,7 @@ const PythonGenAIEditor = ({ dataStr, onDataChange }: iPropGenAIPython) => {
       setMethod(data.method || '')
       setUrl(data.url || '')
       setAccessToken(data.accessToken || '')
-    } catch (e) {}
+    } catch (e) { }
   }, [dataStr])
 
   const onUrlChange = (value: string) => {
@@ -383,6 +384,7 @@ const PageMyAssets = () => {
   const [activeAsset, setActiveAsset] = useState<any>()
   const editDialogState = useState<boolean>(false)
   const shareDialogState = useState<boolean>(false)
+  const kitManagerDialogState = useState<boolean>(false)
 
   const [activeTab, setActiveTab] = useState(ASSET_TYPES[0].value)
   const [filteredAssets, setFilteredAssets] = useState([])
@@ -459,6 +461,20 @@ const PageMyAssets = () => {
               />
             </DaDialog>
 
+            <DaDialog
+              open={kitManagerDialogState[0]}
+              onOpenChange={kitManagerDialogState[1]}
+              className="h-fit overflow-auto max-w-[80dvw]"
+            >
+              <FormHardwareKitManager
+                kitId={activeAsset?.id}
+                kitName={activeAsset?.name}
+                onCancel={() => {
+                  kitManagerDialogState[1](false)
+                }}
+              />
+            </DaDialog>
+
             {isLoading && (
               <div className="w-full flex py-4 justify-center items-center">
                 Loading...
@@ -487,11 +503,10 @@ const PageMyAssets = () => {
                         key={type.value}
                         className={`
                                     px-4 py-2 cursor-pointer text-lg font-semibold
-                                    ${
-                                      activeTab === type.value
-                                        ? 'border-b-2 border-primary text-primary'
-                                        : 'text-foreground hover:text-primary/80'
-                                    }
+                                    ${activeTab === type.value
+                            ? 'border-b-2 border-primary text-primary'
+                            : 'text-foreground hover:text-primary/80'
+                          }
                                 `}
                         onClick={() => setActiveTab(type.value)}
                       >
@@ -534,6 +549,18 @@ const PageMyAssets = () => {
                             {asset.type}
                           </div>
                           <div className="w-[220px] min-w-[220px] flex space-x-4">
+                            {asset.type === 'HARDWARE_KIT' && (
+                              <TbDeviceDesktopCog
+                                className="text-muted-foreground cursor-pointer hover:opacity-60"
+                                size={22}
+                                onClick={() => {
+                                  setActiveAsset(
+                                    JSON.parse(JSON.stringify(asset)),
+                                  )
+                                  kitManagerDialogState[1](true)
+                                }}
+                              />
+                            )}
                             <TbPencil
                               className="text-muted-foreground cursor-pointer hover:opacity-60"
                               size={22}
