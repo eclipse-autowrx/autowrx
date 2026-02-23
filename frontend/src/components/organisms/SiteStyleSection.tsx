@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { configManagementService } from '@/services/configManagement.service'
 import { Button } from '@/components/atoms/button'
 import { useToast } from '@/components/molecules/toaster/use-toast'
@@ -16,6 +16,93 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
 import HexOklchConverter from '@/components/molecules/HexOklchConverter'
+
+function getPreviewScopedCss(css: string): string {
+  const start = css.indexOf(':root')
+  if (start === -1) return ''
+  const open = css.indexOf('{', start)
+  if (open === -1) return ''
+  let depth = 1
+  let i = open + 1
+  while (i < css.length && depth > 0) {
+    if (css[i] === '{') depth++
+    else if (css[i] === '}') depth--
+    i++
+  }
+  const inner = css.slice(open + 1, i - 1).trim()
+  if (!inner) return ''
+  return `.site-style-preview { ${inner} }`
+}
+
+const COLOR_VARS = [
+  { key: 'background', label: 'Background' },
+  { key: 'foreground', label: 'Foreground' },
+  { key: 'primary', label: 'Primary' },
+  { key: 'primary-foreground', label: 'Primary text' },
+  { key: 'secondary', label: 'Secondary' },
+  { key: 'muted', label: 'Muted' },
+  { key: 'muted-foreground', label: 'Muted text' },
+  { key: 'destructive', label: 'Destructive' },
+  { key: 'border', label: 'Border' },
+  { key: 'input', label: 'Input' },
+  { key: 'ring', label: 'Ring' },
+] as const
+
+const SiteStyleColorPreview: React.FC<{ css: string }> = ({ css }) => {
+  const scopedCss = useMemo(() => getPreviewScopedCss(css), [css])
+  if (!scopedCss) return null
+  return (
+    <div className="rounded-lg border border-border bg-muted/20 p-4">
+      <p className="text-sm font-medium text-foreground mb-3">Live color preview</p>
+      <style dangerouslySetInnerHTML={{ __html: scopedCss }} />
+      <div className="site-style-preview space-y-4">
+        <div className="flex flex-wrap gap-3">
+          {COLOR_VARS.map(({ key, label }) => (
+            <div key={key} className="flex flex-col items-center gap-1">
+              <div
+                className="w-10 h-10 rounded-md border border-[var(--border)] shadow-sm"
+                style={{ background: `var(--${key})` }}
+                title={label}
+              />
+              <span className="text-xs text-muted-foreground max-w-18 truncate" title={label}>
+                {label}
+              </span>
+            </div>
+          ))}
+        </div>
+        <div className="rounded-md border border-[var(--border)] p-4" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
+          <p className="text-sm font-medium mb-2">Sample UI</p>
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <button
+              type="button"
+              className="px-3 py-1.5 rounded-md text-sm font-medium"
+              style={{ background: 'var(--primary)', color: 'var(--primary-foreground)' }}
+            >
+              Primary button
+            </button>
+            <button
+              type="button"
+              className="px-3 py-1.5 rounded-md text-sm font-medium border"
+              style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
+            >
+              Outline
+            </button>
+          </div>
+          <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
+            Muted text sample
+          </p>
+          <input
+            type="text"
+            readOnly
+            placeholder="Input style"
+            className="mt-2 w-full max-w-xs rounded-md border px-2 py-1.5 text-sm"
+            style={{ borderColor: 'var(--input)', background: 'var(--background)' }}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const SiteStyleSection: React.FC = () => {
   const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
@@ -137,6 +224,7 @@ const SiteStyleSection: React.FC = () => {
         ) : (
           <div className="flex flex-col gap-4">
             <HexOklchConverter />
+            <SiteStyleColorPreview css={globalCss} />
             <div className="h-[70vh] flex flex-col">
             <CodeEditor
               code={globalCss}
