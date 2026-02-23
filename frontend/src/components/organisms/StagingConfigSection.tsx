@@ -14,7 +14,6 @@ import CodeEditor from '@/components/molecules/CodeEditor'
 import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
-import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
 
 const STANDARD_STAGE_KEY = 'STANDARD_STAGE'
 
@@ -157,7 +156,7 @@ const StagingConfigSection: React.FC = () => {
             Configure standard staging frame structure and component hierarchy
           </p>
         </div>
-        <Button onClick={handleSave} disabled={saving}>
+        <Button size="sm" onClick={handleSave} disabled={saving}>
           {saving ? 'Saving...' : 'Save'}
         </Button>
       </div>
@@ -179,7 +178,6 @@ const StagingConfigSection: React.FC = () => {
             />
           </div>
         )}
-        <SiteConfigEditHistory section="staging" />
       </div>
     </>
   )

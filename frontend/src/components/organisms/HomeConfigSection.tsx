@@ -24,9 +24,9 @@ import HomePrototypeRecent from '@/components/organisms/HomePrototypeRecent'
 import HomePrototypePopular from '@/components/organisms/HomePrototypePopular'
 import HomeNews from '@/components/organisms/HomeNews'
 import HomeFooterSection from '@/components/organisms/HomeFooterSection'
-import { TbGripVertical, TbPencil, TbX, TbCheck } from 'react-icons/tb'
+import { TbGripVertical, TbPencil, TbX, TbCheck, TbTrash } from 'react-icons/tb'
 
-type HomeSubTab = 'raw' | 'edit' | 'preview'
+type HomeSubTab = 'raw' | 'edit' | 'preview' | 'history'
 
 function getBlockTypeLabel(type: string): string {
   const labels: Record<string, string> = {
@@ -311,20 +311,9 @@ const HomeConfigSection: React.FC = () => {
         </div>
       </div>
 
-      {/* Sub-tabs: Raw | Edit | Preview */}
-      <div className="px-6 pt-2 border-b border-border">
+      {/* Sub-tabs row: Edit | Preview | Raw (left) + History (right) */}
+      <div className="px-6 pt-2 border-b border-border flex items-end justify-between">
         <div className="flex gap-1 pb-2">
-          <button
-            type="button"
-            onClick={() => setHomeSubTab('raw')}
-            className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${
-              homeSubTab === 'raw'
-                ? 'bg-muted text-foreground border border-b-0 border-border -mb-px'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-            }`}
-          >
-            Raw
-          </button>
           <button
             type="button"
             onClick={handlePreviewEditStart}
@@ -347,6 +336,30 @@ const HomeConfigSection: React.FC = () => {
           >
             Preview
           </button>
+          <button
+            type="button"
+            onClick={() => setHomeSubTab('raw')}
+            className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${
+              homeSubTab === 'raw'
+                ? 'bg-muted text-foreground border border-b-0 border-border -mb-px'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+            }`}
+          >
+            Raw
+          </button>
+        </div>
+        <div className="pb-2">
+          <button
+            type="button"
+            onClick={() => setHomeSubTab('history')}
+            className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${
+              homeSubTab === 'history'
+                ? 'bg-muted text-foreground border border-b-0 border-border -mb-px'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+            }`}
+          >
+            History
+          </button>
         </div>
       </div>
 
@@ -354,6 +367,10 @@ const HomeConfigSection: React.FC = () => {
         {isLoading ? (
           <div className="flex justify-center items-center py-8">
             <Spinner />
+          </div>
+        ) : homeSubTab === 'history' ? (
+          <div className="px-0">
+            <SiteConfigEditHistory section="home" />
           </div>
         ) : homeSubTab === 'raw' ? (
           <div className="h-[70vh] flex flex-col">
@@ -418,7 +435,7 @@ const HomeConfigSection: React.FC = () => {
                                           onClick={() => handlePreviewDeleteBlock(index)}
                                           className="cursor-pointer inline-flex items-center text-xs text-destructive hover:text-destructive/80 px-2 py-1 rounded-md"
                                         >
-                                          Remove
+                                          <TbTrash className="w-4 h-4" />
                                         </button>
                                       </div>
                                     </div>
@@ -483,9 +500,6 @@ const HomeConfigSection: React.FC = () => {
           </div>
           </>
         )}
-      </div>
-      <div className="px-6 pb-6">
-        <SiteConfigEditHistory section="home" />
       </div>
     </>
   )

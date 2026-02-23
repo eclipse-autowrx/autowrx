@@ -17,7 +17,6 @@ import { TbPlus, TbEdit, TbTrash, TbToggleLeft, TbToggleRight } from 'react-icon
 import { v4 as uuidv4 } from 'uuid'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
-import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
 
 interface SSOProvider {
   id: string
@@ -273,7 +272,7 @@ const SSOConfigSection: React.FC = () => {
             Configure Single Sign-On (SSO) providers for your organization
           </p>
         </div>
-        <Button onClick={handleAddProvider} disabled={isSaving}>
+        <Button size="sm" onClick={handleAddProvider} disabled={isSaving}>
           <TbPlus className="mr-2" size={18} />
           Add Provider
         </Button>
@@ -356,7 +355,6 @@ const SSOConfigSection: React.FC = () => {
             ))}
           </div>
         )}
-        <SiteConfigEditHistory section="sso" />
       </div>
 
       {/* Form Modal */}

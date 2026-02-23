@@ -206,11 +206,12 @@ const SiteStyleSection: React.FC = () => {
           <Button
             onClick={handleRestoreDefault}
             variant="outline"
+            size="sm"
             disabled={restoringDefault || isLoading}
           >
             {restoringDefault ? 'Restoring...' : 'Restore Default'}
           </Button>
-          <Button onClick={handleSave} disabled={savingStyle || isLoading}>
+          <Button size="sm" onClick={handleSave} disabled={savingStyle || isLoading}>
             {savingStyle ? 'Saving...' : 'Save Style'}
           </Button>
         </div>

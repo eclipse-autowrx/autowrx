@@ -260,19 +260,25 @@ const PublicConfigSection: React.FC = () => {
   }
 
   const handleFactoryReset = async () => {
-    if (!window.confirm('Reset all public configs to factory defaults? This will restore predefined configurations.')) return
+    if (!window.confirm('Restore all public configs to default values? This will overwrite your current settings.')) return
 
     try {
       setIsLoading(true)
-      // Delete all configs and reload - the predefined ones will be re-created on load
+      // Only delete public configs (predefined public keys + NAV_BAR_ACTIONS), not other sections
+      const publicKeys = new Set([
+        ...PREDEFINED_SITE_CONFIGS.map((c) => c.key),
+        'NAV_BAR_ACTIONS',
+      ])
+
       const allConfigs = await configManagementService.getConfigs({
         secret: false,
         scope: 'site',
         limit: 100,
       })
 
-      // Delete all existing configs
+      // Delete only public configs
       for (const config of allConfigs.results || []) {
+        if (!publicKeys.has(config.key)) continue
         try {
           if (config.id) {
             await configManagementService.deleteConfigById(config.id)
@@ -282,7 +288,7 @@ const PublicConfigSection: React.FC = () => {
         }
       }
 
-      toast({ title: 'Reset', description: 'Public configs reset to factory defaults. Reloading page...' })
+      toast({ title: 'Restored', description: 'Public configs restored to default values. Reloading page...' })
       
       // Reload page to show changes immediately
       setTimeout(() => {
@@ -317,11 +323,11 @@ const PublicConfigSection: React.FC = () => {
           </div>
           <Button
             onClick={handleFactoryReset}
-            variant="destructive"
+            variant="outline"
             size="sm"
             disabled={isLoading}
           >
-            Factory Reset
+            Restore default
           </Button>
         </div>
       </div>

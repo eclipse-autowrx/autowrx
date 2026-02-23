@@ -95,43 +95,41 @@ const SiteConfigEditHistory: React.FC<SiteConfigEditHistoryProps> = ({
   if (editHistory.length === 0) return null
 
   return (
-    <div className="mt-6 pt-6 border-t border-border">
-      <div className="rounded-lg border border-border overflow-hidden bg-muted/20">
-        <div className="px-4 py-3 border-b border-border">
-          <h3 className="text-sm font-semibold text-foreground">
-            Edit history (5 most recent)
-          </h3>
-        </div>
-        <ul className="p-3 max-h-[360px] overflow-y-auto space-y-3">
-          {editHistory.map((entry, i) => {
-            const valueBefore = entry.valueBefore
-            const valueAfter = entry.valueAfter ?? entry.value
-            return (
-              <li
-                key={`${entry.key}-${entry.timestamp}-${i}`}
-                className="rounded-md border border-border overflow-hidden bg-background"
-              >
-                <div className="px-3 py-1.5 flex items-center justify-between gap-2 border-b border-border bg-muted/50">
-                  <span className="font-mono text-xs font-medium text-primary truncate">
-                    {entry.key}
-                  </span>
-                  <span className="text-xs text-muted-foreground shrink-0">
-                    {formatRelativeTime(entry.timestamp)}
-                  </span>
-                </div>
-                <div className="p-2">
-                  <pre className="w-full text-xs text-foreground overflow-auto max-h-40 rounded bg-muted/30 border border-border p-3">
-                    <DiffView
-                      before={formatValue(valueBefore)}
-                      after={formatValue(valueAfter)}
-                    />
-                  </pre>
-                </div>
-              </li>
-            )
-          })}
-        </ul>
+    <div className="rounded-lg border border-border overflow-hidden bg-muted/20">
+      <div className="px-4 py-3 border-b border-border">
+        <h3 className="text-sm font-semibold text-foreground">
+          Edit history (5 most recent)
+        </h3>
       </div>
+      <ul className="p-3 max-h-[360px] overflow-y-auto space-y-3">
+        {editHistory.map((entry, i) => {
+          const valueBefore = entry.valueBefore
+          const valueAfter = entry.valueAfter ?? entry.value
+          return (
+            <li
+              key={`${entry.key}-${entry.timestamp}-${i}`}
+              className="rounded-md border border-border overflow-hidden bg-background"
+            >
+              <div className="px-3 py-1.5 flex items-center justify-between gap-2 border-b border-border bg-muted/50">
+                <span className="font-mono text-xs font-medium text-primary truncate">
+                  {entry.key}
+                </span>
+                <span className="text-xs text-muted-foreground shrink-0">
+                  {formatRelativeTime(entry.timestamp)}
+                </span>
+              </div>
+              <div className="p-2">
+                <pre className="w-full text-xs text-foreground overflow-auto max-h-40 rounded bg-muted/30 border border-border p-3">
+                  <DiffView
+                    before={formatValue(valueBefore)}
+                    after={formatValue(valueAfter)}
+                  />
+                </pre>
+              </div>
+            </li>
+          )
+        })}
+      </ul>
     </div>
   )
 }
