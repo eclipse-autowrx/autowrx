@@ -8,6 +8,7 @@ Complete reference documentation for all Plugin API methods available to plugins
 - [Model & Prototype Updates](#model--prototype-updates)
 - [Vehicle API Operations (Read)](#vehicle-api-operations-read)
 - [Vehicle API Operations (Write)](#vehicle-api-operations-write)
+- [Navigation](#navigation)
 - [Wishlist API Operations](#wishlist-api-operations)
 - [Type Definitions](#type-definitions)
 - [Error Handling](#error-handling)
@@ -33,6 +34,9 @@ interface PluginAPI {
   // Vehicle APIs - Write (2 methods)
   replaceAPIs?: (api_data_url: string, model_id?: string) => Promise<void>
   setRuntimeApiValues?: (values: Record<string, any>) => void
+
+  // Navigation (1 method)
+  setActiveTab?: (tab: string, pluginSlug?: string) => void
 
   // Wishlist APIs (5 methods)
   createWishlistApi?: (data: ExtendedApiCreate) => Promise<ExtendedApiRet>
@@ -495,6 +499,72 @@ setInterval(() => {
 
 ---
 
+## Navigation
+
+### setActiveTab
+
+Navigate to a specific prototype tab. Useful for sidebar plugins that need to switch the main content area to a different tab.
+
+**Signature**:
+```typescript
+setActiveTab?: (tab: string, pluginSlug?: string) => void
+```
+
+**Parameters**:
+- `tab` - The tab key to navigate to. Built-in tabs: `'view'`, `'journey'`, `'code'`, `'dashboard'`, `'staging'`. Use `'plug'` for custom plugin tabs.
+- `pluginSlug` (optional) - Required when `tab` is `'plug'`. The slug of the plugin tab to activate.
+
+**Example**:
+```typescript
+// Navigate to the Code tab
+api.setActiveTab?.('code')
+
+// Navigate to the Dashboard tab
+api.setActiveTab?.('dashboard')
+
+// Navigate to a custom plugin tab
+api.setActiveTab?.('plug', 'my-analytics-plugin')
+
+// Navigate to Overview
+api.setActiveTab?.('view')
+
+// Example: sidebar plugin with navigation buttons
+const SidebarPlugin = ({ api }) => {
+  return (
+    <div>
+      <h3>Quick Navigation</h3>
+      <button onClick={() => api.setActiveTab?.('code')}>
+        Open Code Editor
+      </button>
+      <button onClick={() => api.setActiveTab?.('dashboard')}>
+        Open Dashboard
+      </button>
+      <button onClick={() => api.setActiveTab?.('plug', 'test-runner')}>
+        Open Test Runner
+      </button>
+    </div>
+  )
+}
+```
+
+**Built-in Tab Keys**:
+| Tab Key | Description |
+|---------|-------------|
+| `view` | Overview / Info tab (default) |
+| `journey` | Customer Journey tab |
+| `code` | SDV Code editor tab |
+| `dashboard` | Dashboard tab |
+| `staging` | Staging tab |
+| `plug` | Custom plugin tab (requires `pluginSlug`) |
+
+**Common Use Cases**:
+- Sidebar plugins that control the main content area
+- Navigation menus within plugins
+- Workflow plugins that guide users through different tabs
+- Plugins that need to switch context after an action
+
+---
+
 ## Wishlist API Operations
 
 Wishlist APIs (also called Extended APIs) are **custom vehicle signals** that extend the standard VSS specification.
@@ -779,6 +849,9 @@ export interface PluginAPI {
   // Vehicle API Operations (Write)
   replaceAPIs?: (api_data_url: string, model_id?: string) => Promise<void>
   setRuntimeApiValues?: (values: Record<string, any>) => void
+
+  // Navigation
+  setActiveTab?: (tab: string, pluginSlug?: string) => void
 
   // Wishlist API Operations
   createWishlistApi?: (data: ExtendedApiCreate) => Promise<ExtendedApiRet>

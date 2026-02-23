@@ -6,17 +6,18 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { FC, useEffect, useState } from 'react'
+import { FC, useCallback, useEffect, useState } from 'react'
 import { configManagementService } from '@/services/configManagement.service'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Spinner } from '@/components/atoms/spinner'
 import {
   TbDotsVertical,
   TbPlus,
   TbListCheck,
   TbSettings,
+  TbLayoutSidebar,
 } from 'react-icons/tb'
 import { GiSaveArrow } from "react-icons/gi";
 import { saveRecentPrototype } from '@/services/prototype.service'
@@ -49,6 +50,7 @@ import PrototypeTabStaging from '@/components/organisms/PrototypeTabStaging'
 import PrototypeTabs, { getTabConfig } from '@/components/molecules/PrototypeTabs'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import usePluginPreloader from '@/hooks/usePluginPreloader'
+import PrototypeSidebar from '@/components/organisms/PrototypeSidebar'
 
 interface ViewPrototypeProps {
   display?: 'tree' | 'list'
@@ -58,6 +60,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
   const { model_id, prototype_id, tab } = useParams()
   const [searchParams] = useSearchParams()
   const pluginId = searchParams.get('plugid')
+  const navigate = useNavigate()
   const { data: user } = useSelfProfileQuery()
   const { data: model } = useCurrentModel()
   const { data: fetchedPrototype, isLoading: isPrototypeLoading } =
@@ -67,6 +70,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
     state.setActivePrototype,
   ])
   const [isDefaultTab, setIsDefaultTab] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [openStagingDialog, setOpenStagingDialog] = useState(false)
   const [showRt, setShowRt] = useState(false)
   const [isModelOwner, setIsModelOwner] = useState(false)
@@ -119,6 +123,9 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
   // Extract prototype tabs for preloading
   const prototypeTabs = getTabConfig(model?.custom_template?.prototype_tabs)
 
+  // Extract sidebar plugin slug
+  const sidebarPlugin: string | undefined = model?.custom_template?.prototype_sidebar_plugin || undefined
+
   // Preload plugin JavaScript files
   usePluginPreloader({
     prototypeTabs,
@@ -154,6 +161,17 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
       !!(user && model?.created_by && user.id === model.created_by.id)
     )
   }, [user, model])
+
+  // Callback for plugins to navigate to a specific prototype tab
+  const handleSetActiveTab = useCallback((targetTab: string, targetPluginSlug?: string) => {
+    if (!model_id || !prototype_id) return
+    const base = `/model/${model_id}/library/prototype/${prototype_id}`
+    if (targetTab === 'plug' && targetPluginSlug) {
+      navigate(`${base}/plug?plugid=${targetPluginSlug}`)
+    } else {
+      navigate(`${base}/${targetTab}`)
+    }
+  }, [model_id, prototype_id, navigate])
 
   const handleAddonSelect = async (plugin: Plugin, label: string) => {
     if (!model_id || !model) {
@@ -204,18 +222,25 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
     }
   }
 
-  const handleSaveCustomTabs = async (updatedTabs: TabConfig[]) => {
+  const handleSaveCustomTabs = async (updatedTabs: TabConfig[], updatedSidebarPlugin?: string | null) => {
     if (!model_id || !model) {
       toast.error('Model not found')
       return
     }
 
     try {
+      const updates: any = {
+        ...model.custom_template,
+        prototype_tabs: updatedTabs,
+      }
+
+      // Update sidebar plugin: null means remove, string means set, undefined means no change
+      if (updatedSidebarPlugin !== undefined) {
+        updates.prototype_sidebar_plugin = updatedSidebarPlugin
+      }
+
       await updateModelService(model_id, {
-        custom_template: {
-          ...model.custom_template,
-          prototype_tabs: updatedTabs,
-        },
+        custom_template: updates,
       })
 
       toast.success('Prototype tabs updated successfully')
@@ -227,123 +252,143 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
   }
 
   return prototype ? (
-    <div className="flex flex-col w-full h-full relative">
-      <div className="flex min-h-[52px] border-b border-border bg-background">
-        <div className="flex w-fit">
-          <PrototypeTabs tabs={model?.custom_template?.prototype_tabs} />
-        </div>
-        {isModelOwner && (
-          <div className="flex w-fit h-full items-center">
+    <div className="flex w-full h-full relative">
+      {/* Left sidebar plugin - full height, outside tab area */}
+      {sidebarPlugin && (
+        <PrototypeSidebar pluginSlug={sidebarPlugin} isCollapsed={sidebarCollapsed} onSetActiveTab={handleSetActiveTab} />
+      )}
+
+      {/* Right side: tab bar + content */}
+      <div className="flex flex-col flex-1 h-full min-w-0">
+        <div className="flex min-h-[52px] border-b border-border bg-background">
+          {sidebarPlugin && (
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setOpenAddonDialog(true)}
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="h-[52px] w-12 rounded-none hover:bg-accent shrink-0"
+              title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
-              <TbPlus className="w-5 h-5" />
+              <TbLayoutSidebar className="w-5 h-5" />
             </Button>
+          )}
+          <div className="flex w-fit">
+            <PrototypeTabs tabs={model?.custom_template?.prototype_tabs} />
           </div>
-        )}
-        <div className="grow"></div>
-        {/* Staging tab - right side, before three dots */}
-        <DaTabItem
-          active={tab === 'staging'}
-          to={`/model/${model_id}/library/prototype/${prototype_id}/staging`}
-          dataId="tab-staging"
-        >
-          <TbListCheck className="w-5 h-5 mr-2" />
-          Staging
-        </DaTabItem>
-        {isModelOwner && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          {isModelOwner && (
+            <div className="flex w-fit h-full items-center">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-[52px] w-12 rounded-none hover:bg-accent"
+                onClick={() => setOpenAddonDialog(true)}
               >
-                <TbDotsVertical className="w-5 h-5" />
+                <TbPlus className="w-5 h-5" />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onSelect={() => setOpenManageAddonsDialog(true)}
-              >
-                <TbSettings className="w-5 h-5" />
-                Manage Prototype Tabs
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => {
-                  // Capture current model.custom_template data at the moment of click
-                  if (model) {
-                    const initialData = {
-                      name: model.name || '',
-                      description: '',
-                      image: model.model_home_image_file || '',
-                      visibility: model.visibility || 'public',
-                      config: model.custom_template || {},
-                      model_tabs: model.custom_template?.model_tabs || [],
-                      prototype_tabs: model.custom_template?.prototype_tabs || [],
-                    }
-                    console.log('[PagePrototypeDetail] Setting templateInitialData:', {
-                      model,
-                      custom_template: model.custom_template,
-                      initialData,
-                    })
-                    setTemplateInitialData(initialData)
-                  }
-                  setOpenTemplateForm(true)
-                }}
-              >
-                <GiSaveArrow className="w-5 h-5" />
-                Save Solution as Template
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </div>
-
-      <div className="flex flex-col h-full overflow-y-auto relative">
-        <div
-          style={{ right: showRt ? '3.5rem' : '0' }}
-          className="absolute left-0 bottom-0 top-0 grow h-full z-0"
-        >
-          {isDefaultTab && (
-            <PrototypeTabInfo prototype={prototype} />
+            </div>
           )}
-          {tab == 'journey' && <PrototypeTabJourney prototype={prototype} />}
-          {tab == 'code' && <PrototypeTabCode />}
-          {tab == 'dashboard' && <PrototypeTabDashboard />}
-          {tab == 'feedback' && <PrototypeTabFeedback />}
-          {tab == 'staging' && <PrototypeTabStaging prototype={prototype} />}
-          
-          {/* Render ALL plugin components unconditionally - they stay mounted and cached */}
-          {/* Only show the one that matches current tab and pluginId */}
-          {prototypeTabs
-            .filter((tabConfig): tabConfig is TabConfig & { plugin: string } => 
-              tabConfig.type === 'custom' && !!tabConfig.plugin
-            )
-            .map((tabConfig) => {
-              // Show only if we're on the 'plug' tab AND this plugin matches the pluginId
-              const isActive = tab === 'plug' && pluginId === tabConfig.plugin
-              return (
-                <div
-                  key={tabConfig.plugin}
-                  className={isActive ? 'w-full h-full' : 'hidden'}
+          <div className="grow"></div>
+          {/* Staging tab - right side, before three dots */}
+          <DaTabItem
+            active={tab === 'staging'}
+            to={`/model/${model_id}/library/prototype/${prototype_id}/staging`}
+            dataId="tab-staging"
+          >
+            <TbListCheck className="w-5 h-5 mr-2" />
+            Staging
+          </DaTabItem>
+          {isModelOwner && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-[52px] w-12 rounded-none hover:bg-accent"
                 >
-                  <PagePrototypePlugin pluginSlug={tabConfig.plugin} />
-                </div>
-              )
-            })}
-          
-          {/* Fallback: if no plugin tabs configured but plugid in URL, render single instance */}
-          {/* (for backward compatibility or direct navigation) */}
-          {tab === 'plug' && pluginId && 
-            prototypeTabs.filter(t => t.type === 'custom' && t.plugin === pluginId).length === 0 && (
-              <PagePrototypePlugin pluginSlug={pluginId} />
-            )
-          }
+                  <TbDotsVertical className="w-5 h-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onSelect={() => setOpenManageAddonsDialog(true)}
+                >
+                  <TbSettings className="w-5 h-5" />
+                  Manage Prototype Tabs
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => {
+                    // Capture current model.custom_template data at the moment of click
+                    if (model) {
+                      const initialData = {
+                        name: model.name || '',
+                        description: '',
+                        image: model.model_home_image_file || '',
+                        visibility: model.visibility || 'public',
+                        config: model.custom_template || {},
+                        model_tabs: model.custom_template?.model_tabs || [],
+                        prototype_tabs: model.custom_template?.prototype_tabs || [],
+                      }
+                      console.log('[PagePrototypeDetail] Setting templateInitialData:', {
+                        model,
+                        custom_template: model.custom_template,
+                        initialData,
+                      })
+                      setTemplateInitialData(initialData)
+                    }
+                    setOpenTemplateForm(true)
+                  }}
+                >
+                  <GiSaveArrow className="w-5 h-5" />
+                  Save Solution as Template
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
-        {showRt && <DaRuntimeControl />}
+
+        {/* Main content area */}
+        <div className="flex flex-col flex-1 h-full overflow-y-auto relative">
+          <div
+            style={{ right: showRt ? '3.5rem' : '0' }}
+            className="absolute left-0 bottom-0 top-0 grow h-full z-0"
+          >
+            {isDefaultTab && (
+              <PrototypeTabInfo prototype={prototype} />
+            )}
+            {tab == 'journey' && <PrototypeTabJourney prototype={prototype} />}
+            {tab == 'code' && <PrototypeTabCode />}
+            {tab == 'dashboard' && <PrototypeTabDashboard />}
+            {tab == 'feedback' && <PrototypeTabFeedback />}
+            {tab == 'staging' && <PrototypeTabStaging prototype={prototype} />}
+
+            {/* Render ALL plugin components unconditionally - they stay mounted and cached */}
+            {/* Only show the one that matches current tab and pluginId */}
+            {prototypeTabs
+              .filter((tabConfig): tabConfig is TabConfig & { plugin: string } =>
+                tabConfig.type === 'custom' && !!tabConfig.plugin
+              )
+              .map((tabConfig) => {
+                // Show only if we're on the 'plug' tab AND this plugin matches the pluginId
+                const isActive = tab === 'plug' && pluginId === tabConfig.plugin
+                return (
+                  <div
+                    key={tabConfig.plugin}
+                    className={isActive ? 'w-full h-full' : 'hidden'}
+                  >
+                    <PagePrototypePlugin pluginSlug={tabConfig.plugin} onSetActiveTab={handleSetActiveTab} />
+                  </div>
+                )
+              })}
+
+            {/* Fallback: if no plugin tabs configured but plugid in URL, render single instance */}
+            {/* (for backward compatibility or direct navigation) */}
+            {tab === 'plug' && pluginId &&
+              prototypeTabs.filter(t => t.type === 'custom' && t.plugin === pluginId).length === 0 && (
+                <PagePrototypePlugin pluginSlug={pluginId} onSetActiveTab={handleSetActiveTab} />
+              )
+            }
+          </div>
+          {showRt && <DaRuntimeControl />}
+        </div>
       </div>
 
       {/* Addon Select Dialog */}
@@ -362,6 +407,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
         onOpenChange={setOpenManageAddonsDialog}
         tabs={getTabConfig(model?.custom_template?.prototype_tabs)}
         onSave={handleSaveCustomTabs}
+        sidebarPlugin={sidebarPlugin}
         title="Manage Prototype Tabs"
         description="Reorder tabs, edit labels, hide/show tabs, and remove custom tabs"
       />

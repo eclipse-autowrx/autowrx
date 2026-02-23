@@ -18,11 +18,15 @@ import {
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
-import { 
-  TbGripVertical, 
-  TbPencil, 
-  TbTrash, 
-  TbCheck, 
+import { Checkbox } from '@/components/atoms/checkbox'
+import { useQuery } from '@tanstack/react-query'
+import { listPlugins, Plugin } from '@/services/plugin.service'
+import { Spinner } from '@/components/atoms/spinner'
+import {
+  TbGripVertical,
+  TbPencil,
+  TbTrash,
+  TbCheck,
   TbX,
   TbRoute,
   TbMapPin,
@@ -30,7 +34,9 @@ import {
   TbGauge,
   TbPuzzle,
   TbEye,
-  TbEyeOff
+  TbEyeOff,
+  TbLayoutSidebar,
+  TbSearch,
 } from 'react-icons/tb'
 import { MdOutlineDoubleArrow } from 'react-icons/md'
 
@@ -51,7 +57,8 @@ interface CustomTabEditorProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   tabs: TabConfig[]
-  onSave: (updatedTabs: TabConfig[]) => Promise<void>
+  onSave: (updatedTabs: TabConfig[], updatedSidebarPlugin?: string | null) => Promise<void>
+  sidebarPlugin?: string
   title?: string
   description?: string
 }
@@ -61,6 +68,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
   onOpenChange,
   tabs,
   onSave,
+  sidebarPlugin,
   title = 'Manage Custom Tabs',
   description = 'Edit, reorder, and remove custom tabs',
 }) => {
@@ -68,15 +76,32 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const [editingLabel, setEditingLabel] = useState<string>('')
   const [isSaving, setIsSaving] = useState(false)
+  const [activeDialogTab, setActiveDialogTab] = useState<'tabs' | 'sidebar'>('tabs')
+
+  // Sidebar plugin state
+  const [localSidebarPlugin, setLocalSidebarPlugin] = useState<string | null>(sidebarPlugin || null)
+  const [showSidebarPluginPicker, setShowSidebarPluginPicker] = useState(false)
+  const [sidebarSearchTerm, setSidebarSearchTerm] = useState('')
+
+  // Fetch plugins for sidebar picker
+  const { data: pluginsData, isLoading: pluginsLoading } = useQuery({
+    queryKey: ['plugins'],
+    queryFn: () => listPlugins({ page: 1, limit: 100 }),
+    enabled: activeDialogTab === 'sidebar',
+  })
 
   // Update local tabs when dialog opens or tabs change
   useEffect(() => {
     if (open) {
       setLocalTabs(tabs)
+      setLocalSidebarPlugin(sidebarPlugin || null)
+      setActiveDialogTab('tabs')
       setEditingIndex(null)
       setEditingLabel('')
+      setShowSidebarPluginPicker(false)
+      setSidebarSearchTerm('')
     }
-  }, [open, tabs])
+  }, [open, tabs, sidebarPlugin])
 
   // Get icon for builtin tabs
   const getBuiltinIcon = (key?: string) => {
@@ -140,12 +165,12 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
   const handleToggleHidden = (index: number) => {
     const updatedTabs = [...localTabs]
     const tab = updatedTabs[index]
-    
+
     // Don't allow hiding Overview tab
     if (tab.type === 'builtin' && tab.key === 'overview') {
       return
     }
-    
+
     updatedTabs[index] = {
       ...tab,
       hidden: !tab.hidden
@@ -156,7 +181,9 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      await onSave(localTabs)
+      // Determine if sidebar plugin changed
+      const sidebarChanged = localSidebarPlugin !== (sidebarPlugin || null)
+      await onSave(localTabs, sidebarChanged ? localSidebarPlugin : undefined)
       onOpenChange(false)
     } catch (error) {
       console.error('Failed to save tabs:', error)
@@ -167,20 +194,189 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
 
   const handleCancel = () => {
     setLocalTabs(tabs) // Reset to original
+    setLocalSidebarPlugin(sidebarPlugin || null)
     setEditingIndex(null)
     setEditingLabel('')
+    setShowSidebarPluginPicker(false)
     onOpenChange(false)
   }
 
+  // Get the selected sidebar plugin details
+  const selectedSidebarPluginData = pluginsData?.results?.find(
+    (p) => p.slug === localSidebarPlugin
+  )
+
+  // Filter plugins for sidebar picker
+  const filteredSidebarPlugins = pluginsData?.results?.filter(
+    (plugin) =>
+      plugin.name.toLowerCase().includes(sidebarSearchTerm.toLowerCase()) ||
+      plugin.slug?.toLowerCase().includes(sidebarSearchTerm.toLowerCase()) ||
+      plugin.description?.toLowerCase().includes(sidebarSearchTerm.toLowerCase())
+  ) ?? []
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4 py-4">
+        {/* Internal Tab Switcher */}
+        <div className="flex border-b border-border -mx-6 px-6">
+          <button
+            onClick={() => setActiveDialogTab('tabs')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              activeDialogTab === 'tabs'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <TbPuzzle className="w-4 h-4" />
+            Prototype Tabs
+          </button>
+          <button
+            onClick={() => setActiveDialogTab('sidebar')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              activeDialogTab === 'sidebar'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <TbLayoutSidebar className="w-4 h-4" />
+            Left Sidebar Plugin
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-4 py-4 overflow-y-auto flex-1">
+          {/* Left Sidebar Plugin Tab */}
+          {activeDialogTab === 'sidebar' && (
+          <div className="flex flex-col gap-3">
+            <p className="text-sm text-muted-foreground">
+              Set a plugin to display in a resizable left sidebar, visible across all tabs. Only one plugin can be assigned.
+            </p>
+
+            {localSidebarPlugin && !showSidebarPluginPicker ? (
+              <div className="flex items-center gap-3 p-3 border border-border rounded bg-accent/50">
+                <TbPuzzle className="w-5 h-5 text-muted-foreground shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {selectedSidebarPluginData?.name || localSidebarPlugin}
+                  </p>
+                  <p className="text-xs text-muted-foreground font-mono truncate">
+                    plugin: {localSidebarPlugin}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowSidebarPluginPicker(true)}
+                  className="h-8 w-8"
+                  title="Change plugin"
+                >
+                  <TbPencil className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setLocalSidebarPlugin(null)
+                    setShowSidebarPluginPicker(false)
+                  }}
+                  className="h-8 w-8 text-destructive hover:text-destructive"
+                  title="Remove sidebar plugin"
+                >
+                  <TbTrash className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : showSidebarPluginPicker ? (
+              <div className="flex flex-col gap-2 border border-border rounded p-3">
+                <div className="relative">
+                  <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Search plugins..."
+                    value={sidebarSearchTerm}
+                    onChange={(e) => setSidebarSearchTerm(e.target.value)}
+                    className="pl-10 text-sm"
+                    autoFocus
+                  />
+                </div>
+                <div className="flex flex-col max-h-48 overflow-y-auto">
+                  {pluginsLoading ? (
+                    <div className="flex items-center justify-center p-4">
+                      <Spinner size={20} />
+                    </div>
+                  ) : filteredSidebarPlugins.length === 0 ? (
+                    <p className="text-xs text-muted-foreground p-4 text-center">
+                      {sidebarSearchTerm ? 'No plugins found' : 'No plugins available'}
+                    </p>
+                  ) : (
+                    filteredSidebarPlugins.map((plugin) => (
+                      <button
+                        key={plugin.id}
+                        onClick={() => {
+                          setLocalSidebarPlugin(plugin.slug)
+                          setShowSidebarPluginPicker(false)
+                          setSidebarSearchTerm('')
+                        }}
+                        className="flex items-center gap-3 p-2 hover:bg-accent rounded transition-colors text-left"
+                      >
+                        {plugin.image ? (
+                          <img
+                            src={plugin.image}
+                            alt={plugin.name}
+                            className="w-8 h-8 rounded object-cover shrink-0"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded bg-muted flex items-center justify-center shrink-0">
+                            <span className="text-xs text-muted-foreground">
+                              {plugin.name.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {plugin.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground font-mono truncate">
+                            {plugin.slug}
+                          </p>
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+                <div className="flex justify-end">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setShowSidebarPluginPicker(false)
+                      setSidebarSearchTerm('')
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-fit"
+                onClick={() => setShowSidebarPluginPicker(true)}
+              >
+                <TbPuzzle className="w-4 h-4 mr-2" />
+                Set Sidebar Plugin
+              </Button>
+            )}
+          </div>
+          )}
+
+          {/* Prototype Tabs Tab */}
+          {activeDialogTab === 'tabs' && (
+          <>
           {localTabs.length > 0 ? (
             <DragDropContext onDragEnd={handleDragEnd}>
               <Droppable droppableId="custom-tabs" renderClone={(provided, snapshot, rubric) => {
@@ -359,6 +555,8 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
             <div className="flex items-center justify-center p-8 border border-dashed border-border rounded">
               <p className="text-sm text-muted-foreground">No custom tabs added yet</p>
             </div>
+          )}
+          </>
           )}
         </div>
 

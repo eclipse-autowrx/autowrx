@@ -16,9 +16,10 @@ import useModelStore from '@/stores/modelStore'
 
 interface PagePrototypePluginProps {
   pluginSlug?: string // If provided, use this instead of reading from URL
+  onSetActiveTab?: (tab: string, pluginSlug?: string) => void
 }
 
-const PagePrototypePlugin: FC<PagePrototypePluginProps> = ({ pluginSlug }) => {
+const PagePrototypePlugin: FC<PagePrototypePluginProps> = ({ pluginSlug, onSetActiveTab }) => {
   const { data: model, isLoading: isModelLoading } = useCurrentModel()
   const { data: prototype, isLoading: isPrototypeLoading } = useCurrentPrototype()
   const [searchParams] = useSearchParams()
@@ -96,6 +97,7 @@ const PagePrototypePlugin: FC<PagePrototypePluginProps> = ({ pluginSlug }) => {
           model: model || null,
           prototype: prototypeWithApis,
         }}
+        onSetActiveTab={onSetActiveTab}
       />
     </div>
   )
