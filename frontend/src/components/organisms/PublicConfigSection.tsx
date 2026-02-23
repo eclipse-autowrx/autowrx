@@ -20,6 +20,8 @@ import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 import NavBarActionsEditor, { NavBarAction } from '@/components/molecules/NavBarActionsEditor'
 import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
 
+type PublicSubTab = 'config' | 'history'
+
 const PublicConfigSection: React.FC = () => {
   const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
   const [configs, setConfigs] = useState<Config[]>([])
@@ -29,6 +31,7 @@ const PublicConfigSection: React.FC = () => {
   const [navBarActions, setNavBarActions] = useState<NavBarAction[]>([])
   const [originalNavBarActions, setOriginalNavBarActions] = useState<NavBarAction[]>([])
   const [isSavingNavBarActions, setIsSavingNavBarActions] = useState(false)
+  const [subTab, setSubTab] = useState<PublicSubTab>('config')
   const { toast } = useToast()
 
   useEffect(() => {
@@ -311,16 +314,16 @@ const PublicConfigSection: React.FC = () => {
 
   return (
     <>
-      <div className="px-6 py-4 border-b border-border">
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col">
-            <h2 className="text-lg font-semibold text-foreground">
-              Public Configurations
-            </h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Manage public site configuration values
-            </p>
-          </div>
+      <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+        <div className="flex flex-col">
+          <h2 className="text-lg font-semibold text-foreground">
+            Public Configurations
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage public site configuration values
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
           <Button
             onClick={handleFactoryReset}
             variant="outline"
@@ -332,10 +335,42 @@ const PublicConfigSection: React.FC = () => {
         </div>
       </div>
 
+      {/* Sub-tabs: Config | History */}
+      <div className="px-6 pt-2 border-b border-border flex items-end justify-between">
+        <div className="flex gap-1 pb-2">
+          <button
+            type="button"
+            onClick={() => setSubTab('config')}
+            className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${
+              subTab === 'config'
+                ? 'bg-muted text-foreground border border-b-0 border-border -mb-px'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+            }`}
+          >
+            Config
+          </button>
+          <button
+            type="button"
+            onClick={() => setSubTab('history')}
+            className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${
+              subTab === 'history'
+                ? 'bg-muted text-foreground border border-b-0 border-border -mb-px'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+            }`}
+          >
+            History
+          </button>
+        </div>
+      </div>
+
       <div className="p-6">
         {isLoading ? (
           <div className="flex justify-center items-center py-8">
             <Spinner />
+          </div>
+        ) : subTab === 'history' ? (
+          <div className="px-0">
+            <SiteConfigEditHistory section="public" />
           </div>
         ) : (
           <>
@@ -374,9 +409,6 @@ const PublicConfigSection: React.FC = () => {
                   </div>
                 )}
               </div>
-            </div>
-            <div className="pb-6">
-              <SiteConfigEditHistory section="public" />
             </div>
           </>
         )}

@@ -104,12 +104,15 @@ const SiteStyleColorPreview: React.FC<{ css: string }> = ({ css }) => {
   )
 }
 
+type StyleSubTab = 'style' | 'history'
+
 const SiteStyleSection: React.FC = () => {
   const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
   const [globalCss, setGlobalCss] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
   const [savingStyle, setSavingStyle] = useState<boolean>(false)
   const [restoringDefault, setRestoringDefault] = useState<boolean>(false)
+  const [subTab, setSubTab] = useState<StyleSubTab>('style')
   const lastSavedCssRef = useRef<string>('')
   const { toast } = useToast()
 
@@ -217,28 +220,59 @@ const SiteStyleSection: React.FC = () => {
         </div>
       </div>
 
+      {/* Sub-tabs: Style | History */}
+      <div className="px-6 pt-2 border-b border-border flex items-end justify-between">
+        <div className="flex gap-1 pb-2">
+          <button
+            type="button"
+            onClick={() => setSubTab('style')}
+            className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${
+              subTab === 'style'
+                ? 'bg-muted text-foreground border border-b-0 border-border -mb-px'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+            }`}
+          >
+            Style
+          </button>
+          <button
+            type="button"
+            onClick={() => setSubTab('history')}
+            className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${
+              subTab === 'history'
+                ? 'bg-muted text-foreground border border-b-0 border-border -mb-px'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+            }`}
+          >
+            History
+          </button>
+        </div>
+      </div>
+
       <div className="p-6">
         {isLoading ? (
           <div className="flex justify-center items-center py-8">
             <Spinner />
           </div>
+        ) : subTab === 'history' ? (
+          <div className="px-0">
+            <SiteConfigEditHistory section="style" />
+          </div>
         ) : (
           <div className="flex flex-col gap-4">
             <HexOklchConverter />
             <SiteStyleColorPreview css={globalCss} />
-            <div className="h-[70vh] flex flex-col">
-            <CodeEditor
-              code={globalCss}
-              setCode={setGlobalCss}
-              editable={true}
-              language="css"
-              onBlur={() => {}}
-              fontSize={14}
-            />
+            <div className="h-[60vh] flex flex-col">
+              <CodeEditor
+                code={globalCss}
+                setCode={setGlobalCss}
+                editable={true}
+                language="css"
+                onBlur={() => {}}
+                fontSize={14}
+              />
             </div>
           </div>
         )}
-        <SiteConfigEditHistory section="style" />
       </div>
     </>
   )

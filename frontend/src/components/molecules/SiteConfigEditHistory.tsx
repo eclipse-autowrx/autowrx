@@ -96,11 +96,6 @@ const SiteConfigEditHistory: React.FC<SiteConfigEditHistoryProps> = ({
 
   return (
     <div className="rounded-lg border border-border overflow-hidden bg-muted/20">
-      <div className="px-4 py-3 border-b border-border">
-        <h3 className="text-sm font-semibold text-foreground">
-          Edit history (5 most recent)
-        </h3>
-      </div>
       <ul className="p-3 max-h-[360px] overflow-y-auto space-y-3">
         {editHistory.map((entry, i) => {
           const valueBefore = entry.valueBefore
