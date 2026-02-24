@@ -25,6 +25,7 @@ const PrototypeSidebar: FC<PrototypeSidebarProps> = ({
   onSetActiveTab,
 }) => {
   const [width, setWidth] = useState<number | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
   const sidebarRef = useRef<HTMLDivElement>(null)
   const isResizing = useRef(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -41,6 +42,7 @@ const PrototypeSidebar: FC<PrototypeSidebarProps> = ({
 
   const startResize = useCallback((startX: number) => {
     isResizing.current = true
+    setIsDragging(true)
     document.body.style.cursor = 'col-resize'
     document.body.style.userSelect = 'none'
 
@@ -57,6 +59,7 @@ const PrototypeSidebar: FC<PrototypeSidebarProps> = ({
 
     const onEnd = () => {
       isResizing.current = false
+      setIsDragging(false)
       document.body.style.cursor = ''
       document.body.style.userSelect = ''
       document.removeEventListener('mousemove', handleMouseMove)
@@ -95,7 +98,7 @@ const PrototypeSidebar: FC<PrototypeSidebarProps> = ({
       {/* Plugin stays mounted always (hidden when collapsed) to avoid reload */}
       <div
         ref={sidebarRef}
-        className="h-full overflow-hidden transition-[width] duration-200 ease-in-out"
+        className={`h-full overflow-hidden ${isDragging ? '' : 'transition-[width] duration-200 ease-in-out'}`}
         style={{
           width: isCollapsed ? 0 : (width ?? minWidthPx),
           minWidth: isCollapsed ? 0 : minWidthPx,

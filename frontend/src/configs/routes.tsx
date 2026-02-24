@@ -18,6 +18,7 @@ import SiteConfigManagement from '@/pages/SiteConfigManagement.tsx'
 import PluginList from '@/pages/PluginList.tsx'
 import PluginManagement from '@/pages/PluginManagement.tsx'
 import TemplateManager from '@/pages/TemplateManager.tsx'
+import DashboardTemplateManager from '@/pages/DashboardTemplateManager.tsx'
 import PageTestPlugin from '@/pages/PageTestPlugin.tsx'
 import PageModelList from '@/pages/PageModelList.tsx'
 import ModelDetailLayout from '@/layouts/ModelDetailLayout.tsx'
@@ -201,6 +202,19 @@ const routesConfig: RouteConfig[] = [
                     element: (
                       <SuspenseProvider>
                         <TemplateManager />
+                      </SuspenseProvider>
+                    ),
+                  },
+                ],
+              },
+              {
+                path: 'dashboard-templates',
+                children: [
+                  {
+                    index: true,
+                    element: (
+                      <SuspenseProvider>
+                        <DashboardTemplateManager />
                       </SuspenseProvider>
                     ),
                   },

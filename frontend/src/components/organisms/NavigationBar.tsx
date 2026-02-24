@@ -52,23 +52,21 @@ const SimpleSwitch = ({
 }) => (
   <button
     type="button"
-    className={`${
-      checked ? 'bg-blue-600' : 'bg-gray-200'
-    } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+    className={`${checked ? 'bg-blue-600' : 'bg-gray-200'
+      } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
     role="switch"
     aria-checked={checked}
     onClick={() => onChange(!checked)}
   >
     <span
       aria-hidden="true"
-      className={`${
-        checked ? 'translate-x-5' : 'translate-x-0'
-      } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+      className={`${checked ? 'translate-x-5' : 'translate-x-0'
+        } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
     />
   </button>
 )
 
-const NavigationBar = ({}) => {
+const NavigationBar = ({ }) => {
   const { data: user } = useSelfProfileQuery()
   // const { data: model } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
@@ -137,10 +135,10 @@ const NavigationBar = ({}) => {
             >
               {action.icon && (
                 <div
-                  dangerouslySetInnerHTML={{ 
-                    __html: DOMPurify.sanitize(action.icon, { 
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(action.icon, {
                       USE_PROFILES: { svg: true, svgFilters: true }
-                    }) 
+                    })
                   }}
                   className="w-6 h-6 flex items-center justify-center"
                 />
@@ -182,7 +180,7 @@ const NavigationBar = ({}) => {
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="w-42 text-sm font-medium"
+                className="w-52 text-sm font-medium"
               >
                 <DropdownMenuItem asChild>
                   <Link
@@ -222,6 +220,14 @@ const NavigationBar = ({}) => {
                     className="flex items-center gap-2 cursor-pointer"
                   >
                     <TbPalette className="text-base" /> Templates
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/admin/dashboard-templates"
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <TbBuildingWarehouse className="text-base" /> Dashboard Templates
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
