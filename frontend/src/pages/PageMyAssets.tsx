@@ -8,7 +8,8 @@
 
 import { useEffect, useState } from 'react'
 import { useAssets } from '@/hooks/useAssets.ts'
-import { TbTrash, TbPencil, TbShare, TbPlug, TbPlus } from 'react-icons/tb'
+import { TbTrash, TbPencil, TbShare, TbPlus, TbDeviceDesktopCog } from 'react-icons/tb'
+import FormHardwareKitManager from '@/components/organisms/FormHardwareKitManager'
 import DaDialog from '@/components/molecules/DaDialog'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
@@ -85,7 +86,7 @@ const PythonGenAIEditor = ({ dataStr, onDataChange }: iPropGenAIPython) => {
       setMethod(data.method || '')
       setUrl(data.url || '')
       setAccessToken(data.accessToken || '')
-    } catch (e) {}
+    } catch (e) { }
   }, [dataStr])
 
   const onUrlChange = (value: string) => {
@@ -252,16 +253,18 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
   }, [asset])
 
   return (
-    <div className="flex flex-col w-[540px] px-4">
+    <div className="flex flex-col w-full min-w-[400px] max-w-[540px] px-4">
       <h2 className="text-xl font-semibold">Edit Asset</h2>
       <div className="w-full min-h-[200px]">
         <div className="flex items-center space-x-2 mt-4">
           <label className="text-sm w-20">Name *</label>
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="flex grow text-[14px]"
-          />
+          <div className="grow">
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full text-[14px]"
+            />
+          </div>
         </div>
 
         <div className="flex items-center space-x-2 mt-4">
@@ -273,18 +276,20 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
               onValueChange={(value: string) => setType(value)}
             >
               <SelectTrigger className="h-10 border border-gray-200 shadow-none! text-[14px]">
-                <SelectValue />
+                <SelectValue>
+                  {ASSET_BARE_TYPES.find((t) => t.value === type)?.name ?? type}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {ASSET_BARE_TYPES &&
                   ASSET_BARE_TYPES.map((type: any, tIndex: number) => (
                     <SelectItem key={tIndex} value={type.value}>
-                      <div className="flex flex-col">
+                      <div className="flex flex-col py-1">
                         <span className="text-sm text-foreground">
-                          {type.value}
+                          {type.name}
                         </span>
                         {type.helperText && (
-                          <span className="text-sm text-muted-foreground">
+                          <span className="text-xs text-muted-foreground">
                             {type.helperText}
                           </span>
                         )}
@@ -383,6 +388,7 @@ const PageMyAssets = () => {
   const [activeAsset, setActiveAsset] = useState<any>()
   const editDialogState = useState<boolean>(false)
   const shareDialogState = useState<boolean>(false)
+  const kitManagerDialogState = useState<boolean>(false)
 
   const [activeTab, setActiveTab] = useState(ASSET_TYPES[0].value)
   const [filteredAssets, setFilteredAssets] = useState([])
@@ -459,6 +465,20 @@ const PageMyAssets = () => {
               />
             </DaDialog>
 
+            <DaDialog
+              open={kitManagerDialogState[0]}
+              onOpenChange={kitManagerDialogState[1]}
+              className="h-fit overflow-auto max-w-[80dvw]"
+            >
+              <FormHardwareKitManager
+                kitId={activeAsset?.id}
+                kitName={activeAsset?.name}
+                onCancel={() => {
+                  kitManagerDialogState[1](false)
+                }}
+              />
+            </DaDialog>
+
             {isLoading && (
               <div className="w-full flex py-4 justify-center items-center">
                 Loading...
@@ -487,11 +507,10 @@ const PageMyAssets = () => {
                         key={type.value}
                         className={`
                                     px-4 py-2 cursor-pointer text-lg font-semibold
-                                    ${
-                                      activeTab === type.value
-                                        ? 'border-b-2 border-primary text-primary'
-                                        : 'text-foreground hover:text-primary/80'
-                                    }
+                                    ${activeTab === type.value
+                            ? 'border-b-2 border-primary text-primary'
+                            : 'text-foreground hover:text-primary/80'
+                          }
                                 `}
                         onClick={() => setActiveTab(type.value)}
                       >
@@ -534,6 +553,18 @@ const PageMyAssets = () => {
                             {asset.type}
                           </div>
                           <div className="w-[220px] min-w-[220px] flex space-x-4">
+                            {asset.type === 'HARDWARE_KIT' && (
+                              <TbDeviceDesktopCog
+                                className="text-muted-foreground cursor-pointer hover:opacity-60"
+                                size={22}
+                                onClick={() => {
+                                  setActiveAsset(
+                                    JSON.parse(JSON.stringify(asset)),
+                                  )
+                                  kitManagerDialogState[1](true)
+                                }}
+                              />
+                            )}
                             <TbPencil
                               className="text-muted-foreground cursor-pointer hover:opacity-60"
                               size={22}
