@@ -16,6 +16,7 @@ import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
+import type { SiteConfigEditEntry } from '@/utils/siteConfigHistory'
 import { HomePartners } from '@/components/organisms/HomePartners'
 import HomeHeroSection from '@/components/organisms/HomeHeroSection'
 import HomeFeatureList from '@/components/organisms/HomeFeatureList'
@@ -176,6 +177,16 @@ const HomeConfigSection: React.FC = () => {
     const confirmed = window.confirm('Remove this block from the home layout?')
     if (!confirmed) return
     setPreviewEditOrder((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const handleRestoreHistoryEntry = (entry: SiteConfigEditEntry) => {
+    const target = entry.valueAfter ?? entry.value
+    const jsonStr =
+      typeof target === 'string'
+        ? target
+        : JSON.stringify(target ?? [], null, 2)
+    setHomeConfig(jsonStr)
+    handleSave(jsonStr)
   }
 
   const handlePreviewDragEnd = (result: DropResult) => {
@@ -370,7 +381,7 @@ const HomeConfigSection: React.FC = () => {
           </div>
         ) : homeSubTab === 'history' ? (
           <div className="px-0">
-            <SiteConfigEditHistory section="home" />
+            <SiteConfigEditHistory section="home" onRestoreEntry={handleRestoreHistoryEntry} />
           </div>
         ) : homeSubTab === 'raw' ? (
           <div className="h-[70vh] flex flex-col">
@@ -426,7 +437,7 @@ const HomeConfigSection: React.FC = () => {
                                         {...provided.dragHandleProps}
                                         className="flex items-center justify-center w-6 h-6 rounded cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
                                       >
-                                        <TbGripVertical className="w-4 h-4" />
+                                        <TbGripVertical className="w-5 h-5" />
                                       </div>
                                       <div className="flex-1 flex items-center justify-between min-w-0">
                                         <span className="text-xs font-medium truncate">
@@ -437,8 +448,7 @@ const HomeConfigSection: React.FC = () => {
                                           onClick={() => handlePreviewDeleteBlock(index)}
                                           className="cursor-pointer inline-flex items-center text-[11px] text-destructive hover:text-destructive/80 px-2 py-0.5 rounded-md"
                                         >
-                                          <TbTrash className="w-3 h-3 mr-1" />
-                                          Remove
+                                          <TbTrash className="w-5 h-5" />
                                         </button>
                                       </div>
                                     </div>

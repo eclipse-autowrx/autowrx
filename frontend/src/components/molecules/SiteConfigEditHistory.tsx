@@ -15,6 +15,7 @@ import Diff from 'diff-match-patch'
 
 interface SiteConfigEditHistoryProps {
   section: SiteConfigHistorySection
+  onRestoreEntry?: (entry: SiteConfigEditEntry) => void
 }
 
 const dmp = new Diff()
@@ -70,6 +71,7 @@ function formatRelativeTime(ts: number): string {
 
 const SiteConfigEditHistory: React.FC<SiteConfigEditHistoryProps> = ({
   section,
+  onRestoreEntry,
 }) => {
   const [editHistory, setEditHistory] = useState<SiteConfigEditEntry[]>(() =>
     getSiteConfigEditHistory(section),
@@ -96,7 +98,7 @@ const SiteConfigEditHistory: React.FC<SiteConfigEditHistoryProps> = ({
 
   return (
     <div className="rounded-lg border border-border overflow-hidden bg-muted/20">
-      <ul className="p-3 max-h-[360px] overflow-y-auto space-y-3">
+      <ul className="p-3 max-h-[70vh] min-h-[280px] overflow-y-auto space-y-3">
         {editHistory.map((entry, i) => {
           const valueBefore = entry.valueBefore
           const valueAfter = entry.valueAfter ?? entry.value
@@ -106,12 +108,32 @@ const SiteConfigEditHistory: React.FC<SiteConfigEditHistoryProps> = ({
               className="rounded-md border border-border overflow-hidden bg-background"
             >
               <div className="px-3 py-1.5 flex items-center justify-between gap-2 border-b border-border bg-muted/50">
-                <span className="font-mono text-xs font-medium text-primary truncate">
-                  {entry.key}
-                </span>
-                <span className="text-xs text-muted-foreground shrink-0">
-                  {formatRelativeTime(entry.timestamp)}
-                </span>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-mono text-xs font-medium text-primary truncate">
+                    {entry.key}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground shrink-0">
+                    {formatRelativeTime(entry.timestamp)}
+                  </span>
+                </div>
+                {/* Do not allow restoring the latest (current) snapshot: only older entries */}
+                {onRestoreEntry && i > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          'Restore this configuration snapshot? This will overwrite the current value for this key.',
+                        )
+                      ) {
+                        onRestoreEntry(entry)
+                      }
+                    }}
+                    className="text-[11px] px-2 py-0.5 rounded border border-border text-foreground hover:bg-muted"
+                  >
+                    Restore
+                  </button>
+                )}
               </div>
               <div className="p-2">
                 <pre className="w-full text-xs text-foreground overflow-auto max-h-40 rounded bg-muted/30 border border-border p-3">

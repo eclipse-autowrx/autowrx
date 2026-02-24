@@ -19,6 +19,7 @@ import { PREDEFINED_SITE_CONFIGS } from '@/pages/SiteConfigManagement'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 import NavBarActionsEditor, { NavBarAction } from '@/components/molecules/NavBarActionsEditor'
 import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
+import type { SiteConfigEditEntry } from '@/utils/siteConfigHistory'
 
 type PublicSubTab = 'config' | 'history'
 
@@ -312,6 +313,52 @@ const PublicConfigSection: React.FC = () => {
     return JSON.stringify(navBarActions) !== JSON.stringify(originalNavBarActions)
   }
 
+  const handleRestoreHistoryEntry = async (entry: SiteConfigEditEntry) => {
+    try {
+      setIsLoading(true)
+      const target = entry.valueAfter ?? entry.value
+      const res = await configManagementService.getConfigs({
+        key: entry.key,
+        scope: 'site',
+        limit: 1,
+      })
+      const valueBefore =
+        res.results && res.results.length > 0 ? res.results[0].value : undefined
+      if (res.results && res.results.length > 0) {
+        await configManagementService.updateConfigById(res.results[0].id!, {
+          value: target,
+        })
+      } else {
+        await configManagementService.createConfig({
+          key: entry.key,
+          scope: 'site',
+          value: target,
+          secret: false,
+          valueType: (entry.valueType as 'string' | 'object' | 'array' | 'boolean') ?? 'string',
+        })
+      }
+      pushSiteConfigEdit({
+        key: entry.key,
+        valueBefore,
+        valueAfter: target,
+        valueType: entry.valueType,
+        section: 'public',
+      })
+      toast({
+        title: 'Restored',
+        description: `Configuration "${entry.key}" restored. Reloading page...`,
+      })
+      setTimeout(() => window.location.reload(), 800)
+    } catch (err) {
+      toast({
+        title: 'Restore failed',
+        description: err instanceof Error ? err.message : 'Failed to restore configuration',
+        variant: 'destructive',
+      })
+      setIsLoading(false)
+    }
+  }
+
   return (
     <>
       <div className="px-6 py-4 border-b border-border flex items-center justify-between">
@@ -370,7 +417,7 @@ const PublicConfigSection: React.FC = () => {
           </div>
         ) : subTab === 'history' ? (
           <div className="px-0">
-            <SiteConfigEditHistory section="public" />
+            <SiteConfigEditHistory section="public" onRestoreEntry={handleRestoreHistoryEntry} />
           </div>
         ) : (
           <>

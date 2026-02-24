@@ -15,6 +15,7 @@ import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
+import type { SiteConfigEditEntry } from '@/utils/siteConfigHistory'
 import HexOklchConverter from '@/components/molecules/HexOklchConverter'
 
 function getPreviewScopedCss(css: string): string {
@@ -194,6 +195,44 @@ const SiteStyleSection: React.FC = () => {
     }
   }
 
+  const handleRestoreHistoryEntry = async (entry: SiteConfigEditEntry) => {
+    try {
+      const target = entry.valueAfter ?? entry.value
+      const css =
+        typeof target === 'string'
+          ? target
+          : target != null
+            ? JSON.stringify(target, null, 2)
+            : ''
+      setSavingStyle(true)
+      const valueBefore = lastSavedCssRef.current
+      await configManagementService.updateGlobalCss(css)
+      pushSiteConfigEdit({
+        key: 'SITE_STYLE_CSS',
+        valueBefore,
+        valueAfter: css,
+        section: 'style',
+      })
+      lastSavedCssRef.current = css
+      setGlobalCss(css)
+      toast({
+        title: 'Restored',
+        description: 'Site style restored to selected snapshot. Reloading page...',
+      })
+      setTimeout(() => {
+        window.location.href = window.location.href
+      }, 800)
+    } catch (err) {
+      toast({
+        title: 'Restore failed',
+        description:
+          err instanceof Error ? err.message : 'Failed to restore style snapshot',
+        variant: 'destructive',
+      })
+      setSavingStyle(false)
+    }
+  }
+
   return (
     <>
       <div className="px-6 py-4 border-b border-border flex items-center justify-between">
@@ -255,7 +294,7 @@ const SiteStyleSection: React.FC = () => {
           </div>
         ) : subTab === 'history' ? (
           <div className="px-0">
-            <SiteConfigEditHistory section="style" />
+            <SiteConfigEditHistory section="style" onRestoreEntry={handleRestoreHistoryEntry} />
           </div>
         ) : (
           <div className="flex flex-col gap-4">
