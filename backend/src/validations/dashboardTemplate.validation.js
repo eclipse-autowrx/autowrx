@@ -22,6 +22,7 @@ const create = {
     name: Joi.string().required().max(255),
     description: Joi.string().allow(''),
     image: Joi.string().allow(''),
+    visibility: Joi.string().valid('public', 'private'),
     widget_config: Joi.any(),
   }),
 };
@@ -33,6 +34,7 @@ const update = {
       name: Joi.string().max(255),
       description: Joi.string().allow(''),
       image: Joi.string().allow(''),
+      visibility: Joi.string().valid('public', 'private'),
       widget_config: Joi.any(),
     })
     .min(1),

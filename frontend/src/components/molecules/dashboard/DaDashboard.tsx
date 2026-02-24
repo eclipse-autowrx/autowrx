@@ -22,6 +22,7 @@ import {
   TbPalette,
   TbDeviceFloppy,
   TbCheck,
+  TbDots,
 } from 'react-icons/tb'
 import { Button } from '@/components/atoms/button'
 const MODE_RUN = 'run'
@@ -350,6 +351,26 @@ const DaDashboard = () => {
                   <TbEdit className="size-4" />
                   Edit
                 </Button>
+
+                {/* 3-dot menu — admin only */}
+                {isAdmin && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <TbDots className="size-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        className="cursor-pointer"
+                        onClick={() => setShowSaveDialog(true)}
+                      >
+                        <TbDeviceFloppy className="size-4 mr-2" />
+                        Save as Template
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
             )}
 
@@ -384,18 +405,6 @@ const DaDashboard = () => {
                     >
                       Save
                     </Button>
-                    {/* Save as Template — admin only */}
-                    {isAdmin && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        data-id="dashboard-save-template-button"
-                        onClick={() => setShowSaveDialog(true)}
-                      >
-                        <TbDeviceFloppy className="size-4 mr-1" />
-                        Save as Template
-                      </Button>
-                    )}
                   </div>
                 </div>
               </div>
