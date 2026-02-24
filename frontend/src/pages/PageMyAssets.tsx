@@ -253,16 +253,18 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
   }, [asset])
 
   return (
-    <div className="flex flex-col w-[540px] px-4">
+    <div className="flex flex-col w-full min-w-[400px] max-w-[540px] px-4">
       <h2 className="text-xl font-semibold">Edit Asset</h2>
       <div className="w-full min-h-[200px]">
         <div className="flex items-center space-x-2 mt-4">
           <label className="text-sm w-20">Name *</label>
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="flex grow text-[14px]"
-          />
+          <div className="grow">
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full text-[14px]"
+            />
+          </div>
         </div>
 
         <div className="flex items-center space-x-2 mt-4">
@@ -274,18 +276,20 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
               onValueChange={(value: string) => setType(value)}
             >
               <SelectTrigger className="h-10 border border-gray-200 shadow-none! text-[14px]">
-                <SelectValue />
+                <SelectValue>
+                  {ASSET_BARE_TYPES.find((t) => t.value === type)?.name ?? type}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {ASSET_BARE_TYPES &&
                   ASSET_BARE_TYPES.map((type: any, tIndex: number) => (
                     <SelectItem key={tIndex} value={type.value}>
-                      <div className="flex flex-col">
+                      <div className="flex flex-col py-1">
                         <span className="text-sm text-foreground">
-                          {type.value}
+                          {type.name}
                         </span>
                         {type.helperText && (
-                          <span className="text-sm text-muted-foreground">
+                          <span className="text-xs text-muted-foreground">
                             {type.helperText}
                           </span>
                         )}
