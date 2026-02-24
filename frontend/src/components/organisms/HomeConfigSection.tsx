@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
 import { configManagementService } from '@/services/configManagement.service'
 import { Button } from '@/components/atoms/button'
@@ -66,10 +66,36 @@ function getHomeComponent(elementType: string) {
   }
 }
 
+const ScaledBlock: React.FC<{ scale: number; pageWidth: number; children: React.ReactNode }> = ({
+  scale,
+  pageWidth,
+  children,
+}) => {
+  const innerRef = useRef<HTMLDivElement>(null)
+  const [height, setHeight] = useState(0)
+
+  useEffect(() => {
+    const el = innerRef.current
+    if (!el) return
+    const observer = new ResizeObserver(() => setHeight(el.offsetHeight))
+    observer.observe(el)
+    setHeight(el.offsetHeight)
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <div className="bg-background overflow-hidden" style={{ height: height > 0 ? height * scale : undefined }}>
+      <div ref={innerRef} style={{ width: pageWidth, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+        {children}
+      </div>
+    </div>
+  )
+}
+
 const HomeConfigSection: React.FC = () => {
   const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
   const [homeConfig, setHomeConfig] = useState<string>('')
-  const [homeSubTab, setHomeSubTab] = useState<HomeSubTab>('raw')
+  const [homeSubTab, setHomeSubTab] = useState<HomeSubTab>('edit')
   const [isLoading, setIsLoading] = useState(false)
   const [savingHome, setSavingHome] = useState<boolean>(false)
   const { toast } = useToast()
@@ -79,6 +105,10 @@ const HomeConfigSection: React.FC = () => {
   const [previewScale, setPreviewScale] = useState(1)
   const [previewContentHeight, setPreviewContentHeight] = useState(0)
   const [previewEditOrder, setPreviewEditOrder] = useState<any[]>([])
+  const [editScale, setEditScale] = useState(1)
+  const [editingBlockIndex, setEditingBlockIndex] = useState<number | null>(null)
+  const [editingBlockJson, setEditingBlockJson] = useState<string>('')
+  const blockJsonEditorRef = useRef<CodeEditorHandle>(null)
 
   const previewElements = useMemo(() => {
     try {
@@ -89,8 +119,28 @@ const HomeConfigSection: React.FC = () => {
     }
   }, [homeConfig])
 
-  // Scale preview to fit container so layout matches real home page (1280px reference width)
+  // Keep previewEditOrder in sync when data loads and we're on the edit tab
+  useEffect(() => {
+    if (homeSubTab === 'edit') {
+      setPreviewEditOrder([...previewElements])
+    }
+  }, [previewElements])
+
   const PREVIEW_PAGE_WIDTH = 1280
+
+  const editContainerCallbackRef = useCallback((el: HTMLDivElement | null) => {
+    if (!el) return
+    const update = () => {
+      const w = el.offsetWidth
+      setEditScale(w > 0 ? Math.min(1, w / PREVIEW_PAGE_WIDTH) : 1)
+    }
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(el)
+    // no cleanup needed — element unmounts when tab changes
+  }, [])
+
+  // Scale preview to fit container so layout matches real home page (1280px reference width)
   useEffect(() => {
     if (homeSubTab !== 'preview' || !previewWrapRef.current) return
     const el = previewWrapRef.current
@@ -187,6 +237,26 @@ const HomeConfigSection: React.FC = () => {
         : JSON.stringify(target ?? [], null, 2)
     setHomeConfig(jsonStr)
     handleSave(jsonStr)
+  }
+
+  const handleOpenBlockEditor = (index: number) => {
+    setEditingBlockIndex(index)
+    setEditingBlockJson(JSON.stringify(previewEditOrder[index], null, 2))
+  }
+
+  const handleSaveBlockJson = () => {
+    if (editingBlockIndex === null) return
+    try {
+      const parsed = JSON.parse(editingBlockJson)
+      setPreviewEditOrder((prev) => {
+        const next = [...prev]
+        next[editingBlockIndex] = parsed
+        return next
+      })
+      setEditingBlockIndex(null)
+    } catch {
+      toast({ title: 'Invalid JSON', description: 'Please fix the JSON before saving.', variant: 'destructive' })
+    }
   }
 
   const handlePreviewDragEnd = (result: DropResult) => {
@@ -374,7 +444,7 @@ const HomeConfigSection: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-6">
+      <div className="px-4 py-4">
         {isLoading ? (
           <div className="flex justify-center items-center py-8">
             <Spinner />
@@ -397,7 +467,7 @@ const HomeConfigSection: React.FC = () => {
           </div>
         ) : homeSubTab === 'edit' ? (
           <>
-            <div className="min-h-[70vh] overflow-auto flex justify-center">
+            <div className="min-h-[70vh]">
               {previewElements.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-muted-foreground text-sm">
                   <p>No content to edit.</p>
@@ -406,55 +476,93 @@ const HomeConfigSection: React.FC = () => {
                   </p>
                 </div>
               ) : (
-                <div className="w-full max-w-4xl rounded-md border border-border bg-background overflow-auto mt-4 mb-6">
-                  <div className="px-4 pt-3 pb-2 text-xs text-muted-foreground">
-                    Drag blocks using the handle on the left to reorder home page sections.
+                <div
+                  ref={editContainerCallbackRef}
+                  className="w-full rounded-sm border border-border bg-zinc-50 dark:bg-zinc-900 overflow-hidden mb-2"
+                >
+                  <div className="px-2 py-1">
+                    <span className="text-[12px] text-foreground">Drag blocks to reorder</span>
                   </div>
+                  {/* DragDropContext outside the scale transform — fixes drag offset bug */}
                   <DragDropContext onDragEnd={handlePreviewDragEnd}>
                     <Droppable droppableId="home-blocks">
                       {(provided) => (
                         <div
                           ref={provided.innerRef}
                           {...provided.droppableProps}
-                          className="space-y-2 px-4 pb-3"
+                          className="flex flex-col gap-3 p-3"
                         >
                           {previewEditOrder.map((element: any, index: number) => {
                             const Component = getHomeComponent(element?.type)
                             if (!Component) return null
                             const blockId = `block-${index}-${element?.type ?? 'unknown'}`
+                            const isPlaceholderBlock = element?.type === 'recent' || element?.type === 'popular'
                             return (
                               <Draggable key={blockId} draggableId={blockId} index={index}>
                                 {(provided, snapshot) => (
                                   <div
                                     ref={provided.innerRef}
                                     {...provided.draggableProps}
-                                    className={`rounded-md border bg-background px-2 py-1.5 ${
-                                      snapshot.isDragging ? 'opacity-95 shadow-md ring-2 ring-primary' : ''
+                                    className={`rounded-lg border border-border overflow-hidden transition-shadow ${
+                                      snapshot.isDragging
+                                        ? 'shadow-xl ring-2 ring-primary opacity-95'
+                                        : 'shadow-md hover:shadow-lg'
                                     }`}
                                   >
-                                    <div className="flex items-center gap-2 h-8">
+                                    {/* Block title bar — unscaled, in normal flow */}
+                                    <div className="flex items-center gap-2 h-9 px-2 bg-zinc-200 dark:bg-zinc-700 border-b border-border">
                                       <div
                                         {...provided.dragHandleProps}
                                         className="flex items-center justify-center w-6 h-6 rounded cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
                                       >
-                                        <TbGripVertical className="w-5 h-5" />
+                                        <TbGripVertical className="w-4 h-4" />
                                       </div>
-                                      <div className="flex-1 flex items-center justify-between min-w-0">
-                                        <span className="text-xs font-medium truncate">
-                                          {getBlockTypeLabel(element?.type ?? '')}
-                                        </span>
-                                        <button
-                                          type="button"
-                                          onClick={() => handlePreviewDeleteBlock(index)}
-                                          className="cursor-pointer inline-flex items-center text-[11px] text-destructive hover:text-destructive/80 px-2 py-0.5 rounded-md"
-                                        >
-                                          <TbTrash className="w-5 h-5" />
-                                        </button>
+                                      <span className="flex-1 text-xs font-semibold text-foreground truncate">
+                                        {getBlockTypeLabel(element?.type ?? '')}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleOpenBlockEditor(index)}
+                                        className="cursor-pointer inline-flex items-center justify-center w-6 h-6 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                                        title="Edit block config"
+                                      >
+                                        <TbPencil className="w-4 h-4" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handlePreviewDeleteBlock(index)}
+                                        className="cursor-pointer inline-flex items-center justify-center w-6 h-6 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                                      >
+                                        <TbTrash className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                    {/* Block content — scaled to fit width */}
+                                    {isPlaceholderBlock ? (
+                                      <div className="bg-background px-4 py-3">
+                                        <div className="grid grid-cols-4 gap-3">
+                                          {[...Array(4)].map((_, i) => (
+                                            <div key={i} className="rounded-md border border-border bg-muted/20 flex flex-col overflow-hidden">
+                                              {/* Image skeleton with mountain/landscape icon */}
+                                              <div className="h-28 bg-muted/50 flex items-center justify-center relative overflow-hidden">
+                                                <svg className="w-10 h-10 text-muted-foreground/20" viewBox="0 0 24 24" fill="currentColor">
+                                                  <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                                                </svg>
+                                              </div>
+                                              <div className="px-2 py-2">
+                                                <div className="h-2 w-3/4 rounded bg-muted-foreground/15" />
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                        <p className="mt-2 text-[11px] text-muted-foreground/40 italic text-center">
+                                          Content loaded dynamically at runtime
+                                        </p>
                                       </div>
-                                    </div>
-                                    <div className="mt-1 h-20 overflow-y-auto text-xs">
-                                      <Component {...element} />
-                                    </div>
+                                    ) : (
+                                      <ScaledBlock scale={editScale} pageWidth={PREVIEW_PAGE_WIDTH}>
+                                        <Component {...element} />
+                                      </ScaledBlock>
+                                    )}
                                   </div>
                                 )}
                               </Draggable>
@@ -468,6 +576,46 @@ const HomeConfigSection: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {/* Block JSON editor popup */}
+            {editingBlockIndex !== null && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                <div className="bg-background rounded-xl border border-border shadow-2xl w-[600px] max-w-[90vw] flex flex-col overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                    <span className="text-sm font-semibold text-foreground">
+                      Edit block config — {getBlockTypeLabel(previewEditOrder[editingBlockIndex]?.type ?? '')}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setEditingBlockIndex(null)}
+                      className="inline-flex items-center justify-center w-7 h-7 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    >
+                      <TbX className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="h-[400px]">
+                    <CodeEditor
+                      ref={blockJsonEditorRef}
+                      code={editingBlockJson}
+                      setCode={setEditingBlockJson}
+                      editable={true}
+                      language="json"
+                      onBlur={() => {}}
+                      fontSize={13}
+                    />
+                  </div>
+                  <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-border">
+                    <Button variant="outline" size="sm" onClick={() => setEditingBlockIndex(null)}>
+                      Cancel
+                    </Button>
+                    <Button size="sm" onClick={handleSaveBlockJson}>
+                      <TbCheck className="w-4 h-4 mr-1" />
+                      Apply
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         ) : (
           <>

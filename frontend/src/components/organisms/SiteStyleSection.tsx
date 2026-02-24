@@ -17,6 +17,7 @@ import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
 import type { SiteConfigEditEntry } from '@/utils/siteConfigHistory'
 import HexOklchConverter from '@/components/molecules/HexOklchConverter'
+import { TbX, TbTool } from 'react-icons/tb'
 
 function getPreviewScopedCss(css: string): string {
   const start = css.indexOf(':root')
@@ -115,6 +116,7 @@ const SiteStyleSection: React.FC = () => {
   const [restoringDefault, setRestoringDefault] = useState<boolean>(false)
   const [subTab, setSubTab] = useState<StyleSubTab>('style')
   const lastSavedCssRef = useRef<string>('')
+  const [showConverterPopup, setShowConverterPopup] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -246,6 +248,14 @@ const SiteStyleSection: React.FC = () => {
         </div>
         <div className="flex gap-2">
           <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowConverterPopup(true)}
+          >
+            <TbTool className="w-4 h-4 mr-1" />
+            Tools
+          </Button>
+          <Button
             onClick={handleRestoreDefault}
             variant="outline"
             size="sm"
@@ -258,6 +268,30 @@ const SiteStyleSection: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      {/* Tools popup — Hex ↔ OKLCH converter */}
+      {showConverterPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-background rounded-xl border border-border shadow-2xl w-[680px] max-w-[90vw] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <span className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <TbTool className="w-4 h-4" />
+                Color Tools — Hex ↔ OKLCH
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowConverterPopup(false)}
+                className="inline-flex items-center justify-center w-7 h-7 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              >
+                <TbX className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="px-5 py-4">
+              <HexOklchConverter />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Sub-tabs: Style | History */}
       <div className="px-6 pt-2 border-b border-border flex items-end justify-between">
@@ -298,7 +332,6 @@ const SiteStyleSection: React.FC = () => {
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            <HexOklchConverter />
             <SiteStyleColorPreview css={globalCss} />
             <div className="h-[60vh] flex flex-col">
               <CodeEditor

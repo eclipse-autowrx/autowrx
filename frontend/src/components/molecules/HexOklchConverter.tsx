@@ -10,7 +10,7 @@ import { parse, converter, formatHex, formatHex8 } from 'culori'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { useToast } from '@/components/molecules/toaster/use-toast'
-import { ArrowRightIcon } from 'lucide-react'
+import { ArrowRightIcon, Copy, Check } from 'lucide-react'
 
 const toOklch = converter('oklch')
 const toRgb = converter('rgb')
@@ -42,6 +42,28 @@ function formatOklchCss(c: { l?: number; c?: number; h?: number; alpha?: number 
   return `oklch(${L} ${C} ${H})`
 }
 
+function CopyButton({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false)
+  const handleCopy = () => {
+    if (!value) return
+    navigator.clipboard.writeText(value).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    })
+  }
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      disabled={!value}
+      className="inline-flex items-center justify-center w-8 h-8 rounded border border-border text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 transition-colors shrink-0"
+      title="Copy"
+    >
+      {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+    </button>
+  )
+}
+
 const HexOklchConverter: React.FC = () => {
   const [hex, setHex] = useState('')
   const [oklch, setOklch] = useState('')
@@ -64,9 +86,6 @@ const HexOklchConverter: React.FC = () => {
       const oklchColor = toOklch(color)
       const out = oklchColor ? formatOklchCss(oklchColor) : ''
       setOklch(out)
-      if (out) {
-        toast({ title: 'Converted', description: 'Hex → OKLCH' })
-      }
       return
     }
 
@@ -93,9 +112,6 @@ const HexOklchConverter: React.FC = () => {
       const hasAlpha = alpha !== undefined && alpha < 1
       const hexOut = hasAlpha ? formatHex8(rgbColor) : formatHex(rgbColor)
       setHex(hexOut ?? '')
-      if (hexOut) {
-        toast({ title: 'Converted', description: 'OKLCH → Hex' })
-      }
       return
     }
 
@@ -106,38 +122,43 @@ const HexOklchConverter: React.FC = () => {
     })
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleConvert()
+  }
+
   return (
-    <div className="rounded-lg border border-border bg-muted/20 p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <h4 className="text-sm font-semibold text-foreground">
-          Hex <ArrowRightIcon className="w-4 h-4 inline-block" /> OKLCH
-        </h4>
-        <Button type="button" size="sm" onClick={handleConvert}>
-          Convert
-        </Button>
-      </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div className="space-y-1.5">
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-2">
+        <div className="flex-1 flex items-center gap-2">
           <Input
-            id="hex-input"
             type="text"
             placeholder="Hex (#RGB, #RRGGBB, or #RRGGBBAA)"
             value={hex}
             onChange={(e) => setHex(e.target.value)}
+            onKeyDown={handleKeyDown}
             className="font-mono text-sm"
           />
+          <CopyButton value={hex} />
         </div>
-        <div className="space-y-1.5">
+        <Button type="button" size="sm" onClick={handleConvert} className="shrink-0">
+          <ArrowRightIcon className="w-4 h-4" />
+          Convert
+        </Button>
+        <div className="flex-1 flex items-center gap-2">
           <Input
-            id="oklch-input"
             type="text"
             placeholder="oklch(l c h / a)"
             value={oklch}
             onChange={(e) => setOklch(e.target.value)}
+            onKeyDown={handleKeyDown}
             className="font-mono text-sm"
           />
+          <CopyButton value={oklch} />
         </div>
       </div>
+      <p className="text-[11px] text-muted-foreground/60 italic">
+        Fill either field and click Convert (or press Enter). Supports bidirectional conversion.
+      </p>
     </div>
   )
 }
