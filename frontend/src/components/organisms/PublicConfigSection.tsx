@@ -16,7 +16,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/a
 import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { PREDEFINED_SITE_CONFIGS } from '@/pages/SiteConfigManagement'
+import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 import NavBarActionsEditor, { NavBarAction } from '@/components/molecules/NavBarActionsEditor'
+import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
+import type { SiteConfigEditEntry } from '@/utils/siteConfigHistory'
+
+type PublicSubTab = 'config' | 'history'
 
 const PublicConfigSection: React.FC = () => {
   const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
@@ -27,6 +32,7 @@ const PublicConfigSection: React.FC = () => {
   const [navBarActions, setNavBarActions] = useState<NavBarAction[]>([])
   const [originalNavBarActions, setOriginalNavBarActions] = useState<NavBarAction[]>([])
   const [isSavingNavBarActions, setIsSavingNavBarActions] = useState(false)
+  const [subTab, setSubTab] = useState<PublicSubTab>('config')
   const { toast } = useToast()
 
   useEffect(() => {
@@ -191,6 +197,13 @@ const PublicConfigSection: React.FC = () => {
       setIsLoading(true)
       if (editingConfig?.id) {
         await configManagementService.updateConfigById(editingConfig.id, config)
+        pushSiteConfigEdit({
+          key: config.key,
+          valueBefore: editingConfig.value,
+          valueAfter: config.value,
+          valueType: config.valueType,
+          section: 'public',
+        })
         toast({ title: 'Updated', description: `Config "${config.key}" updated. Reloading page...` })
       } else {
         await configManagementService.createConfig({ ...config, secret: false })
@@ -224,7 +237,13 @@ const PublicConfigSection: React.FC = () => {
       await configManagementService.updateConfigByKey('NAV_BAR_ACTIONS', {
         value: navBarActions,
       })
-      
+      pushSiteConfigEdit({
+        key: 'NAV_BAR_ACTIONS',
+        valueBefore: originalNavBarActions,
+        valueAfter: navBarActions,
+        valueType: 'array',
+        section: 'public',
+      })
       toast({ 
         title: 'Saved', 
         description: 'Navigation bar actions updated successfully. Reloading page...' 
@@ -245,19 +264,25 @@ const PublicConfigSection: React.FC = () => {
   }
 
   const handleFactoryReset = async () => {
-    if (!window.confirm('Reset all public configs to factory defaults? This will restore predefined configurations.')) return
+    if (!window.confirm('Restore all public configs to default values? This will overwrite your current settings.')) return
 
     try {
       setIsLoading(true)
-      // Delete all configs and reload - the predefined ones will be re-created on load
+      // Only delete public configs (predefined public keys + NAV_BAR_ACTIONS), not other sections
+      const publicKeys = new Set([
+        ...PREDEFINED_SITE_CONFIGS.map((c) => c.key),
+        'NAV_BAR_ACTIONS',
+      ])
+
       const allConfigs = await configManagementService.getConfigs({
         secret: false,
         scope: 'site',
         limit: 100,
       })
 
-      // Delete all existing configs
+      // Delete only public configs
       for (const config of allConfigs.results || []) {
+        if (!publicKeys.has(config.key)) continue
         try {
           if (config.id) {
             await configManagementService.deleteConfigById(config.id)
@@ -267,7 +292,7 @@ const PublicConfigSection: React.FC = () => {
         }
       }
 
-      toast({ title: 'Reset', description: 'Public configs reset to factory defaults. Reloading page...' })
+      toast({ title: 'Restored', description: 'Public configs restored to default values. Reloading page...' })
       
       // Reload page to show changes immediately
       setTimeout(() => {
@@ -288,26 +313,100 @@ const PublicConfigSection: React.FC = () => {
     return JSON.stringify(navBarActions) !== JSON.stringify(originalNavBarActions)
   }
 
+  const handleRestoreHistoryEntry = async (entry: SiteConfigEditEntry) => {
+    try {
+      setIsLoading(true)
+      const target = entry.valueAfter ?? entry.value
+      const res = await configManagementService.getConfigs({
+        key: entry.key,
+        scope: 'site',
+        limit: 1,
+      })
+      const valueBefore =
+        res.results && res.results.length > 0 ? res.results[0].value : undefined
+      if (res.results && res.results.length > 0) {
+        await configManagementService.updateConfigById(res.results[0].id!, {
+          value: target,
+        })
+      } else {
+        await configManagementService.createConfig({
+          key: entry.key,
+          scope: 'site',
+          value: target,
+          secret: false,
+          valueType: (entry.valueType as 'string' | 'object' | 'array' | 'boolean') ?? 'string',
+        })
+      }
+      pushSiteConfigEdit({
+        key: entry.key,
+        valueBefore,
+        valueAfter: target,
+        valueType: entry.valueType,
+        section: 'public',
+      })
+      toast({
+        title: 'Restored',
+        description: `Configuration "${entry.key}" restored. Reloading page...`,
+      })
+      setTimeout(() => window.location.reload(), 800)
+    } catch (err) {
+      toast({
+        title: 'Restore failed',
+        description: err instanceof Error ? err.message : 'Failed to restore configuration',
+        variant: 'destructive',
+      })
+      setIsLoading(false)
+    }
+  }
+
   return (
     <>
-      <div className="px-6 py-4 border-b border-border">
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col">
-            <h2 className="text-lg font-semibold text-foreground">
-              Public Configurations
-            </h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Manage public site configuration values
-            </p>
-          </div>
+      <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+        <div className="flex flex-col">
+          <h2 className="text-lg font-semibold text-foreground">
+            Public Configurations
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage public site configuration values
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
           <Button
             onClick={handleFactoryReset}
-            variant="destructive"
+            variant="outline"
             size="sm"
             disabled={isLoading}
           >
-            Factory Reset
+            Restore default
           </Button>
+        </div>
+      </div>
+
+      {/* Sub-tabs: Config | History */}
+      <div className="px-6 pt-2 border-b border-border flex items-end justify-between">
+        <div className="flex gap-1 pb-2">
+          <button
+            type="button"
+            onClick={() => setSubTab('config')}
+            className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${
+              subTab === 'config'
+                ? 'bg-muted text-foreground border border-b-0 border-border -mb-px'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+            }`}
+          >
+            Config
+          </button>
+          <button
+            type="button"
+            onClick={() => setSubTab('history')}
+            className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${
+              subTab === 'history'
+                ? 'bg-muted text-foreground border border-b-0 border-border -mb-px'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+            }`}
+          >
+            History
+          </button>
         </div>
       </div>
 
@@ -315,6 +414,10 @@ const PublicConfigSection: React.FC = () => {
         {isLoading ? (
           <div className="flex justify-center items-center py-8">
             <Spinner />
+          </div>
+        ) : subTab === 'history' ? (
+          <div className="px-0">
+            <SiteConfigEditHistory section="public" onRestoreEntry={handleRestoreHistoryEntry} />
           </div>
         ) : (
           <>
@@ -324,6 +427,7 @@ const PublicConfigSection: React.FC = () => {
               onEdit={handleEditConfig}
               onDelete={handleDeleteConfig}
               isLoading={isLoading}
+              historySection="public"
             />
 
             {/* Navigation Bar Actions Section - Moved to bottom */}

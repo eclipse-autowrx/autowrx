@@ -16,6 +16,7 @@ import {
   TbRoute,
 } from 'react-icons/tb'
 import { TabConfig } from '@/components/organisms/CustomTabEditor'
+import { MdOutlineDoubleArrow } from 'react-icons/md';
 
 interface PrototypeTabsProps {
   tabs?: TabConfig[]

@@ -28,6 +28,7 @@ pids
 dist/
 build/
 out/
+**/flow-plugin.generated.css
 
 ### Caches
 .cache/
