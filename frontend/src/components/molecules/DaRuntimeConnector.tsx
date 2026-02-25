@@ -29,7 +29,7 @@ interface KitConnectProps {
   kitServerUrl?: string
   socketIoConfig?: Record<string, any>
   hideLabel?: boolean
-  targetPrefix: string
+  targetPrefix: string | string[]
   usedAPIs: string[]
   onActiveRtChanged?: (newActiveKitId: string | undefined) => void
   onLoadedMockSignals?: (signals: []) => void
@@ -38,6 +38,7 @@ interface KitConnectProps {
   onAppRunningStateChanged?: (isRunning: boolean) => void
   onRuntimeInfoReceived?: (payload: any) => void
   onDeployResponse?: (log: string, isDone: boolean) => void
+  onReadFileResponse?: (filePath: string, fileContent: string) => void
   isDeployMode?: boolean
 }
 
@@ -55,6 +56,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       onAppRunningStateChanged,
       onRuntimeInfoReceived,
       onDeployResponse,
+      onReadFileResponse,
       isDeployMode = false,
     },
     ref,
@@ -85,7 +87,9 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         writeVarsValue,
         revertToDefaultVehicleModel,
         builldVehicleModel,
-        getRuntimeInfo
+        getRuntimeInfo,
+        readFile,
+        writeFile,
       }
     })
 
@@ -279,6 +283,22 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       })
     }
 
+    const readFile = (filePath: string) => {
+      socketio?.emit('messageToKit', {
+        cmd: 'read_file',
+        to_kit_id: activeRtId,
+        data: filePath,
+      })
+    }
+
+    const writeFile = (filePath: string, fileContent: string) => {
+      socketio?.emit('messageToKit', {
+        cmd: 'write_file',
+        to_kit_id: activeRtId,
+        data: { path: filePath, content: fileContent },
+      })
+    }
+
     useEffect(() => {
       if (onActiveRtChanged) {
         onActiveRtChanged(activeRtId)
@@ -373,11 +393,13 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         return kit.is_online
       })
 
-      let sortedKits = kits.filter((rt) =>
-        rt.kit_id
-          .toLowerCase()
-          .startsWith(targetPrefix ? targetPrefix.toLowerCase() : 'runtime-'),
-      )
+      let sortedKits = kits.filter((rt) => {
+        const kitIdLower = rt.kit_id.toLowerCase()
+        if (Array.isArray(targetPrefix)) {
+          return targetPrefix.some(prefix => kitIdLower.startsWith(prefix.toLowerCase()))
+        }
+        return kitIdLower.startsWith(targetPrefix ? targetPrefix.toLowerCase() : 'runtime-')
+      })
 
       sortedKits.sort((a, b) => {
         if (a.is_online !== b.is_online) {
@@ -486,6 +508,10 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
 
       if (['get-runtime-info', 'report-runtime-state'].includes(payload.cmd) && onNewLog) {
         onRuntimeStateResponse(payload)
+      }
+
+      if (payload.cmd === 'read_file' && onReadFileResponse) {
+        onReadFileResponse(payload.data?.path || '', payload.data?.content || '')
       }
     }
 

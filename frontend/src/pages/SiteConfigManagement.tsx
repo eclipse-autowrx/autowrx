@@ -239,31 +239,34 @@ const SiteConfigManagement: React.FC = () => {
                   Home Config
                 </button>
                 <button
+                  onClick={() => handleTabChange('style')}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'style'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
+                >
+                  Site Style (CSS)
+                </button>
+                <button
                   onClick={() => handleTabChange('auth')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'auth'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'auth'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
                 >
                   Auth Config
                 </button>
                 <button
                   onClick={() => handleTabChange('sso')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'sso'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'sso'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
                 >
                   SSO Config
-                </button>
-                <button
-                  onClick={() => handleTabChange('style')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'style'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
-                >
-                  Site Style (CSS)
                 </button>
                 <button
                   onClick={() => handleTabChange('secrets')}

@@ -6,11 +6,11 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import Editor from '@monaco-editor/react'
 import { File } from './types'
 import Introduction from './Introduction'
-import { VscSave, VscSaveAll } from 'react-icons/vsc'
+import { VscSave, VscSaveAll, VscChevronLeft, VscChevronRight } from 'react-icons/vsc'
 import { TbX } from 'react-icons/tb'
 
 interface EditorComponentProps {
@@ -45,6 +45,52 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
   const tabsContainerRef = useRef<HTMLDivElement>(null)
   const activeTabRef = useRef<HTMLDivElement>(null)
 
+  // Horizontal tab scrolling state for editor header
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+  const [hasOverflow, setHasOverflow] = useState(false)
+
+  const updateScrollButtons = () => {
+    const container = tabsContainerRef.current
+    if (!container) return
+
+    const { scrollLeft, scrollWidth, clientWidth } = container
+    const overflow = scrollWidth > clientWidth + 1
+
+    // Track whether tab strip actually overflows horizontally
+    setHasOverflow(overflow)
+
+    if (!overflow) {
+      // If there is no overflow, hide any scroll indicators
+      setCanScrollLeft(false)
+      setCanScrollRight(false)
+      return
+    }
+
+    setCanScrollLeft(scrollLeft > 0)
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 1)
+  }
+
+  const scrollTabs = (direction: 'left' | 'right') => {
+    const container = tabsContainerRef.current
+    if (!container) return
+
+    const scrollAmount = container.clientWidth * 0.6 // scroll by ~60% of visible width
+    const next =
+      direction === 'left'
+        ? container.scrollLeft - scrollAmount
+        : container.scrollLeft + scrollAmount
+
+    container.scrollTo({
+      left: next,
+      behavior: 'smooth',
+    })
+  }
+
+  const handleTabsScroll = () => {
+    updateScrollButtons()
+  }
+
   // Auto-scroll to active tab when it changes and auto-close leftmost tabs if needed
   useEffect(() => {
     if (activeTabRef.current && tabsContainerRef.current) {
@@ -69,8 +115,51 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
           behavior: 'smooth',
         })
       }
+
+      // Keep arrow button state in sync when active tab changes
+      updateScrollButtons()
     }
   }, [file])
+
+  // Recalculate scroll button state when the number of open files changes
+  useEffect(() => {
+    updateScrollButtons()
+  }, [openFiles.length])
+
+  // Keep scroll indicators in sync when the tab strip is resized
+  useEffect(() => {
+    const container = tabsContainerRef.current
+    if (!container) {
+      updateScrollButtons()
+      return
+    }
+
+    // Run once on mount to initialize state
+    updateScrollButtons()
+
+    // Prefer ResizeObserver so it works with internal layout resizes (split panels, etc.)
+    if (typeof ResizeObserver !== 'undefined') {
+      const observer = new ResizeObserver(() => {
+        updateScrollButtons()
+      })
+
+      observer.observe(container)
+
+      return () => {
+        observer.disconnect()
+      }
+    }
+
+    // Fallback: listen to window resize if ResizeObserver is not available
+    const handleResize = () => {
+      updateScrollButtons()
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => {
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [file, openFiles.length])
 
   // Auto-close leftmost tabs when there are too many open
   // useEffect(() => {
@@ -380,89 +469,106 @@ const EditorComponent: React.FC<EditorComponentProps> = ({
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Tabs */}
-      <div className="flex items-center bg-gray-100 border-b border-gray-200 min-h-0 relative">
+      <div className="flex items-center bg-gray-100 border-b border-gray-200 min-h-0 relative gap-1">
+        {/* Left arrow button for horizontal tab scrolling (only show when tabs overflow) */}
+        {hasOverflow && (
+          <button
+            type="button"
+            onClick={() => scrollTabs('left')}
+            disabled={!canScrollLeft}
+            className="ml-1 p-1.5 rounded border bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-default"
+          >
+            <VscChevronLeft size={16} />
+          </button>
+        )}
+
+        {/* Scrollable tab strip with hidden scrollbar */}
         <div
           ref={tabsContainerRef}
-          className="flex overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pr-[180px]"
-          style={{ scrollbarWidth: 'thin', msOverflowStyle: 'none' }}
+          onScroll={handleTabsScroll}
+          className="flex flex-1 min-w-0 overflow-x-auto scrollbar-hide"
         >
-          {openFiles.map((openFile) => {
-            const openFilePath = openFile.path || openFile.name
-            const activeFilePath = file?.path || file?.name
-            const isActive = openFilePath === activeFilePath
-            const isUnsaved = unsavedFiles.has(openFilePath)
+          <div className="flex">
+            {openFiles.map((openFile) => {
+              const openFilePath = openFile.path || openFile.name
+              const activeFilePath = file?.path || file?.name
+              const isActive = openFilePath === activeFilePath
+              const isUnsaved = unsavedFiles.has(openFilePath)
 
-            return (
-              <div
-                key={openFilePath}
-                ref={isActive ? activeTabRef : null}
-                onClick={() => onSelectFile(openFile)}
-                className={`
-                  flex items-center justify-between px-2 py-2 text-sm cursor-pointer border-r border-gray-200 max-w-[200px] shrink-0
-                  ${isActive
-                    ? 'bg-white text-gray-900 border-b-2 border-b-blue-500'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }
-                `}
-                title={openFilePath}
-              >
-                <span className="truncate flex-1">{openFile.name}</span>
-                {isUnsaved ? (
-                  <div className="ml-2 relative shrink-0 group w-5 h-5 flex items-center justify-center">
-                    <span
-                      className="w-2 h-2 bg-yellow-500 rounded-full block group-hover:opacity-0 transition-opacity"
-                      title="Unsaved changes"
-                    ></span>
+              return (
+                <div
+                  key={openFilePath}
+                  ref={isActive ? activeTabRef : null}
+                  onClick={() => onSelectFile(openFile)}
+                  className={`
+                    flex items-center justify-between px-2 py-2 text-sm cursor-pointer border-r border-gray-200 max-w-[200px] shrink-0
+                    ${isActive
+                      ? 'bg-white text-gray-900 border-b-2 border-b-blue-500'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }
+                  `}
+                  title={openFilePath}
+                >
+                  <span className="truncate flex-1">{openFile.name}</span>
+                  {isUnsaved ? (
+                    <div className="ml-2 relative shrink-0 group w-5 h-5 flex items-center justify-center">
+                      <span
+                        className="w-2 h-2 bg-yellow-500 rounded-full block group-hover:opacity-0 transition-opacity"
+                        title="Unsaved changes"
+                      ></span>
+                      <button
+                        onClick={(e) => handleClose(e, openFile)}
+                        className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-gray-300 rounded"
+                        title="Close tab"
+                      >
+                        <TbX size={16} />
+                      </button>
+                    </div>
+                  ) : (
                     <button
                       onClick={(e) => handleClose(e, openFile)}
-                      className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-gray-300 rounded"
+                      className="ml-2 p-0.5 hover:bg-gray-300 rounded opacity-60 hover:opacity-100 transition-opacity shrink-0"
                       title="Close tab"
                     >
                       <TbX size={16} />
                     </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={(e) => handleClose(e, openFile)}
-                    className="ml-2 p-0.5 hover:bg-gray-300 rounded opacity-60 hover:opacity-100 transition-opacity shrink-0"
-                    title="Close tab"
-                  >
-                    <TbX size={16} />
-                  </button>
-                )}
-              </div>
-            )
-          })}
+                  )}
+                </div>
+              )
+            })}
+          </div>
         </div>
 
-        {/* Language indicator and Save buttons - Fixed on right */}
-        <div className="absolute right-0 top-0 bottom-0 flex items-center bg-gray-100 border-l border-gray-200">
-          {/* Language indicator */}
-          {/* <div className="flex items-center px-3 border-l border-gray-200 bg-gray-50">
-            <span className="text-xs text-gray-500 font-mono">
-              {getLanguageFromFileName(file.name)}
-            </span>
-          </div> */}
+        {/* Right arrow button for horizontal tab scrolling (only show when tabs overflow) */}
+        {hasOverflow && (
+          <button
+            type="button"
+            onClick={() => scrollTabs('right')}
+            disabled={!canScrollRight}
+            className="p-1.5 rounded border bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-default"
+          >
+            <VscChevronRight size={16} />
+          </button>
+        )}
 
-          {/* Save buttons */}
-          <div className="flex items-center px-2 border-l border-gray-200">
-            <button
-              onClick={() => onSave()}
-              disabled={!file || !unsavedFiles.has(file.path || file.name)}
-              className="p-2 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Save (Ctrl+S)"
-            >
-              <VscSave size={16} />
-            </button>
-            <button
-              onClick={onSaveAll}
-              disabled={unsavedFiles.size === 0}
-              className="p-2 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Save All (Ctrl+Shift+S)"
-            >
-              <VscSaveAll size={16} />
-            </button>
-          </div>
+        {/* Save buttons */}
+        <div className="flex items-center px-2 border-l border-gray-200 bg-gray-100">
+          <button
+            onClick={() => onSave()}
+            disabled={!file || !unsavedFiles.has(file.path || file.name)}
+            className="p-2 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Save (Ctrl+S)"
+          >
+            <VscSave size={16} />
+          </button>
+          <button
+            onClick={onSaveAll}
+            disabled={unsavedFiles.size === 0}
+            className="p-2 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Save All (Ctrl+Shift+S)"
+          >
+            <VscSaveAll size={16} />
+          </button>
         </div>
       </div>
 
