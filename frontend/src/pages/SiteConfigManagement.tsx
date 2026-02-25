@@ -72,6 +72,14 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     description: 'Custom JSON options passed to the Socket.IO client when connecting to the runtime server. Example: {"transports":["websocket"],"reconnectionAttempts":5}. Leave empty to use default Socket.IO options.',
   },
   {
+    key: 'SHOW_CODE_API_PANEL',
+    scope: 'site',
+    value: true,
+    secret: false,
+    valueType: 'boolean',
+    description: 'Show or hide the API panel on the Prototype Code tab.',
+  },
+  {
     key: 'DEFAULT_MARKETPLACE_URL',
     scope: 'site',
     value: 'https://marketplace.digitalauto.tech',
