@@ -25,6 +25,7 @@ import usePermissionHook from '@/hooks/usePermissionHook'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { PERMISSIONS } from '@/data/permission'
 import { updatePrototypeService } from '@/services/prototype.service'
+import { useSiteConfig } from '@/utils/siteConfig'
 
 import CodeEditor from '@/components/molecules/CodeEditor'
 import { Spinner } from '@/components/atoms/spinner'
@@ -77,6 +78,7 @@ const PrototypeTabCode: FC = () => {
   const [isOpenGenAI, setIsOpenGenAI] = useState(false)
   const { data: model } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
+  const showCodeApiPanel = useSiteConfig('SHOW_CODE_API_PANEL', true)
 
   // Editor type state
   const [editorType, setEditorType] = useState<'project' | 'code'>('code')
@@ -320,45 +322,49 @@ const PrototypeTabCode: FC = () => {
           )}
         </Suspense>
       </div>
-      {/* Resize handle */}
-      <div
-        ref={resizeRef}
-        className="mx-0.5 w-1 bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors cursor-col-resize shrink-0"
-        onMouseDown={handleMouseDown}
-        title="Drag to resize"
-      >
-        <div className="w-full h-full flex items-center justify-center">
+      {showCodeApiPanel && (
+        <>
+          {/* Resize handle */}
           <div
-            className={`w-0.5 h-8 bg-gray-400 transition-opacity ${isResizing ? 'opacity-100' : 'opacity-0 hover:opacity-60'}`}
-          />
-        </div>
-      </div>
-      <div
-        className="flex h-full flex-col bg-white rounded-md shrink-0 transition-all duration-200 ease-in-out"
-        style={{
-          width:
-            isApiPanelCollapsed
-              ? '48px'
-              : rightPanelWidth !== null
-                ? `${rightPanelWidth}px`
-                : '40%', // Fallback to 40% if not calculated yet
-        }}
-      >
-        {activeTab == 'api' && (
-          <Suspense
-            fallback={
-              <div className="flex items-center justify-center h-full">
-                <Spinner />
-              </div>
-            }
+            ref={resizeRef}
+            className="mx-0.5 w-1 bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors cursor-col-resize shrink-0"
+            onMouseDown={handleMouseDown}
+            title="Drag to resize"
           >
-            <PrototypeTabCodeApiPanel
-              code={code || ''}
-              onCollapsedChange={setIsApiPanelCollapsed}
-            />
-          </Suspense>
-        )}
-      </div>
+            <div className="w-full h-full flex items-center justify-center">
+              <div
+                className={`w-0.5 h-8 bg-gray-400 transition-opacity ${isResizing ? 'opacity-100' : 'opacity-0 hover:opacity-60'}`}
+              />
+            </div>
+          </div>
+          <div
+            className="flex h-full flex-col bg-white rounded-md shrink-0 transition-all duration-200 ease-in-out"
+            style={{
+              width:
+                isApiPanelCollapsed
+                  ? '48px'
+                  : rightPanelWidth !== null
+                    ? `${rightPanelWidth}px`
+                    : '40%',
+            }}
+          >
+            {activeTab == 'api' && (
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center h-full">
+                    <Spinner />
+                  </div>
+                }
+              >
+                <PrototypeTabCodeApiPanel
+                  code={code || ''}
+                  onCollapsedChange={setIsApiPanelCollapsed}
+                />
+              </Suspense>
+            )}
+          </div>
+        </>
+      )}
     </div>
   )
 }

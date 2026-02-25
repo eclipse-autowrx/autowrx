@@ -72,6 +72,14 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     description: 'Custom JSON options passed to the Socket.IO client when connecting to the runtime server. Example: {"transports":["websocket"],"reconnectionAttempts":5}. Leave empty to use default Socket.IO options.',
   },
   {
+    key: 'SHOW_CODE_API_PANEL',
+    scope: 'site',
+    value: true,
+    secret: false,
+    valueType: 'boolean',
+    description: 'Show or hide the API panel on the Prototype Code tab.',
+  },
+  {
     key: 'DEFAULT_MARKETPLACE_URL',
     scope: 'site',
     value: 'https://marketplace.digitalauto.tech',
@@ -250,21 +258,19 @@ const SiteConfigManagement: React.FC = () => {
                 </button>
                 <button
                   onClick={() => handleTabChange('auth')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
-                    activeTab === 'auth'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground hover:bg-muted'
-                  }`}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'auth'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-muted'
+                    }`}
                 >
                   Auth Config
                 </button>
                 <button
                   onClick={() => handleTabChange('sso')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
-                    activeTab === 'sso'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground hover:bg-muted'
-                  }`}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'sso'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-muted'
+                    }`}
                 >
                   SSO Config
                 </button>

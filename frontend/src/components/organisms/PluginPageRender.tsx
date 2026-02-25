@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import { Spinner } from '@/components/atoms/spinner'
 import { getPluginById, getPluginBySlug } from '@/services/plugin.service'
@@ -61,6 +62,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
 
   // Access runtime store for API values
   const { apisValue, setActiveApis } = useRuntimeStore()
+  const queryClient = useQueryClient()
 
   // Create API callbacks for plugin to interact with host
   const handleUpdateModel = useCallback(async (updates: Partial<Model>): Promise<Model> => {
@@ -88,6 +90,8 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
     }
     try {
       const updatedPrototype = await updatePrototypeService(prototype_id, updates)
+      // Invalidate React Query cache so parent re-fetches and passes fresh data.prototype to the plugin
+      await queryClient.invalidateQueries({ queryKey: ['prototype', prototype_id] })
       toast.success('Prototype updated successfully')
       return updatedPrototype
     } catch (err: any) {
@@ -95,7 +99,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
       toast.error(errorMsg)
       throw err
     }
-  }, [prototype_id])
+  }, [prototype_id, queryClient])
 
   // Vehicle API operations (read-only)
   const handleGetComputedAPIs = useCallback(async (targetModelId?: string): Promise<CVI> => {
@@ -270,14 +274,14 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
 
   // Log when component mounts/remounts
   useEffect(() => {
-    return () => {}
+    return () => { }
   }, [])
 
   useEffect(() => {
     let cancelled = false
     loadIdRef.current += 1
     const myLoadId = loadIdRef.current
-    const log = (..._args: any[]) => {}
+    const log = (..._args: any[]) => { }
 
     const loadPlugin = async () => {
       try {
@@ -313,25 +317,25 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
           throw new Error(`Plugin "${plugin_id}" has no URL configured`)
         }
 
-        
+
 
         const PLUGIN_URL = pluginMeta.url
         log('Plugin URL:', PLUGIN_URL)
 
         // Step 2: Ensure global dependencies (React, ReactDOM) - MUST be available BEFORE script executes
         log('Ensuring global dependencies')
-        
+
         // Always ensure React is available (plugins might check for it)
         const ReactMod = await import('react')
-        ;(window as any).React = (ReactMod as any).default || ReactMod
+          ; (window as any).React = (ReactMod as any).default || ReactMod
         log('React attached to window')
-        
+
         // Always ensure ReactDOM is available (plugins need this)
         const ReactDOMClient = await import('react-dom/client')
-        ;(window as any).ReactDOM = ReactDOMClient
-        ;(window as any).ReactDOMClient = ReactDOMClient // Some plugins might look for this
+          ; (window as any).ReactDOM = ReactDOMClient
+          ; (window as any).ReactDOMClient = ReactDOMClient // Some plugins might look for this
         log('ReactDOM attached to window')
-        
+
         // Ensure require shim is available and handles all React-related modules
         const ReactDOMMod = await import('react-dom/client')
         const JSXRuntime = await import('react/jsx-runtime')
@@ -345,23 +349,23 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
           'react/jsx-runtime': JSXRuntime,
           'react/jsx-dev-runtime': JSXRuntime,
         }
-        
-        // Make module registry available synchronously
-        ;(window as any).__PLUGIN_MODULES__ = moduleRegistry
-        
-        const requireShim = function(id: string) {
+
+          // Make module registry available synchronously
+          ; (window as any).__PLUGIN_MODULES__ = moduleRegistry
+
+        const requireShim = function (id: string) {
           if (moduleRegistry[id]) {
             return moduleRegistry[id]
           }
           throw new Error(`Module ${id} not found`)
         }
 
-        ;(window as any).require = requireShim
-        ;(globalThis as any).require = requireShim
-        
+          ; (window as any).require = requireShim
+          ; (globalThis as any).require = requireShim
+
         // Some loaders might check for webpack-style module cache
         if (!(window as any).__webpack_require__) {
-          ;(window as any).__webpack_require__ = {
+          ; (window as any).__webpack_require__ = {
             cache: moduleRegistry,
             resolve: (id: string) => {
               if (moduleRegistry[id]) return id
@@ -372,9 +376,9 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
           // Merge with existing webpack cache if it exists
           Object.assign((window as any).__webpack_require__.cache || {}, moduleRegistry)
         }
-        
+
         log('require() shim added with react-dom/client support and module registry')
-        
+
         // Small delay to ensure module registry is fully set up before script executes
         // Some loaders check module availability synchronously during script evaluation
         await new Promise((r) => setTimeout(r, 50))
@@ -383,7 +387,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
         // Step 3: Load plugin script and wait for global registration under a fixed key.
         // Since components now stay mounted (show/hide), we don't need versioning - use base URL for proper caching.
         // IMPORTANT: All plugins register under the same 'page-plugin' key, so we intercept and store per plugin_id
-        
+
         // Check if this plugin is already registered in our map
         const existingRegistration = pluginRegistrations.get(plugin_id)
         if (existingRegistration) {
@@ -422,19 +426,19 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
             return // Skip injection, use cached registration
           }
         }
-        
+
         // Map this URL to plugin_id so we can match registrations even when multiple plugins load simultaneously
         urlToPluginId.set(PLUGIN_URL, plugin_id)
-        ;(window as any).DAPlugins = (window as any).DAPlugins || {}
-        
+          ; (window as any).DAPlugins = (window as any).DAPlugins || {}
+
         // Always use base URL (no versioning) - components stay mounted so script only loads once per component
         // Browser caching will work properly with the same URL
         const scriptUrl = PLUGIN_URL
 
         async function injectAndWait(asModule: boolean): Promise<any> {
           // Clear the global slot so plugin can register fresh
-          ;(window as any).DAPlugins = (window as any).DAPlugins || {}
-          ;(window as any).DAPlugins[GLOBAL_KEY] = undefined
+          ; (window as any).DAPlugins = (window as any).DAPlugins || {}
+            ; (window as any).DAPlugins[GLOBAL_KEY] = undefined
 
           // Remove any existing script tags with this URL to force fresh execution
           const existingScripts = Array.from(document.querySelectorAll(`script[src="${scriptUrl}"], script[src="${PLUGIN_URL}"]`))
@@ -530,7 +534,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
             log('Plugin registered immediately after yield (from map)')
             return obj
           }
-          
+
           // Check global registration - match by URL to plugin_id mapping
           obj = (window as any).DAPlugins?.[GLOBAL_KEY]
           if (obj) {
@@ -553,14 +557,14 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
           let attempts = 0
           while (attempts < maxAttempts) {
             if (cancelled) return null
-            
+
             // Check our plugin-specific map first
             obj = pluginRegistrations.get(plugin_id)
             if (obj) {
               log(`Plugin registered after ${attempts * POLL_INTERVAL_MS}ms (from map)`)
               return obj
             }
-            
+
             // Check global - match by URL to plugin_id mapping
             obj = (window as any).DAPlugins?.[GLOBAL_KEY]
             if (obj) {
@@ -571,7 +575,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
                 return obj
               }
             }
-            
+
             // Log every 10 attempts (1 second) for debugging
             if (attempts > 0 && attempts % 10 === 0) {
               log(`Still waiting for registration... ${attempts * POLL_INTERVAL_MS}ms elapsed`)
@@ -582,14 +586,14 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
             await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS))
             attempts++
           }
-          
+
           // Final check before throwing
           obj = pluginRegistrations.get(plugin_id)
           if (obj) {
             log('Plugin registered at final check (from map)')
             return obj
           }
-          
+
           obj = (window as any).DAPlugins?.[GLOBAL_KEY]
           if (obj) {
             const mappedPluginId = urlToPluginId.get(PLUGIN_URL)
@@ -599,7 +603,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
               return obj
             }
           }
-          
+
           // Enhanced error message with debugging info
           const errorMsg = `Plugin did not register at window.DAPlugins['${GLOBAL_KEY}'] within ${REGISTER_TIMEOUT_MS}ms. ` +
             `Script URL: ${scriptUrl}, ` +
@@ -684,9 +688,9 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
         if (registration?.unmount) {
           registration.unmount(el)
         } else {
-          ;(window as any)?.DAPlugins?.[GLOBAL_KEY]?.unmount?.(el)
+          ; (window as any)?.DAPlugins?.[GLOBAL_KEY]?.unmount?.(el)
         }
-      } catch {}
+      } catch { }
       if (injectedScriptRef.current?.parentNode) {
         injectedScriptRef.current.remove()
       }
