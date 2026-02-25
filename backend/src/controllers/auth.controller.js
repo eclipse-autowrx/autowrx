@@ -61,6 +61,10 @@ const register = catchAsync(async (req, res) => {
     ...config.jwt.cookie.options,
   });
 
+  // Send welcome email (non-blocking, don't fail registration if email fails)
+  const domain = req.headers.origin || req.headers.referer || config.client.baseUrl;
+  emailService.sendWelcomeEmail(user.email, user.name, domain).catch(() => {});
+
   delete tokens.refresh;
   res.status(httpStatus.CREATED).send({ user, tokens });
 });
@@ -98,24 +102,10 @@ const refreshTokens = catchAsync(async (req, res) => {
 });
 
 const forgotPassword = catchAsync(async (req, res) => {
-  const returnRawToken = req.query.return_raw_token;
+  const { code, user } = await tokenService.generateResetPasswordCode(req.body.email);
 
-  const resetPasswordToken = await tokenService.generateResetPasswordToken(req.body.email);
-
-  let domain = undefined;
-  try {
-    const hostname = new URL(req.get('referer')).hostname;
-    if (hostname === 'auth.digital.auto') {
-      domain = hostname;
-    }
-  } catch (error) { }
-
-  if (returnRawToken) {
-    res.status(httpStatus.OK).send({ resetPasswordToken });
-  } else {
-    await emailService.sendResetPasswordEmail(req.body.email, resetPasswordToken, domain);
-    res.status(httpStatus.NO_CONTENT).send();
-  }
+  await emailService.sendResetPasswordCodeEmail(req.body.email, code, user.name);
+  res.status(httpStatus.OK).send({ message: 'Reset code sent to your email' });
 
   try {
     await logService.createLog(
@@ -123,7 +113,7 @@ const forgotPassword = catchAsync(async (req, res) => {
         name: 'Forgot password',
         type: 'forgot_password',
         created_by: req.body.email,
-        description: `User with email ${req.body.email} has triggered forgot password flow`,
+        description: `User with email ${req.body.email} has triggered forgot password flow (code-based)`,
       },
       {
         headers: {
@@ -138,14 +128,20 @@ const forgotPassword = catchAsync(async (req, res) => {
 });
 
 const resetPassword = catchAsync(async (req, res) => {
+  const { email, code, password } = req.body;
   let user;
-  try {
-    user = await authService.resetPassword(req.query.token, req.body.password);
-  } catch (error) {
-    logger.info(`Failed to reset password: ${error}`);
-  } finally {
-    res.status(httpStatus.NO_CONTENT).send();
+
+  if (email && code) {
+    // Code-based reset (new flow)
+    user = await authService.resetPasswordWithCode(email, code, password);
+  } else if (req.query.token) {
+    // Legacy token-based reset (backward compatibility)
+    user = await authService.resetPassword(req.query.token, password);
+  } else {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Email and code are required');
   }
+
+  res.status(httpStatus.NO_CONTENT).send();
 
   try {
     await logService.createLog(

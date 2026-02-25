@@ -122,6 +122,25 @@ const resetPassword = async (resetPasswordToken, newPassword) => {
 };
 
 /**
+ * Reset password using a 6-digit code + email
+ * @param {string} email
+ * @param {string} code - The 6-digit code
+ * @param {string} newPassword
+ * @returns {Promise<User>}
+ */
+const resetPasswordWithCode = async (email, code, newPassword) => {
+  // verifyResetPasswordCode throws if code is invalid/expired
+  const tokenDoc = await tokenService.verifyResetPasswordCode(email, code);
+  const user = await userService.getUserById(tokenDoc.user, true);
+  if (!user) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Password reset failed');
+  }
+  await userService.updateUserById(user._id, { password: newPassword });
+  await Token.deleteMany({ user: user._id, type: tokenTypes.RESET_PASSWORD });
+  return user;
+};
+
+/**
  * Verify email
  * @param {string} verifyEmailToken
  * @returns {Promise}
@@ -245,6 +264,7 @@ module.exports = {
   logout,
   refreshAuth,
   resetPassword,
+  resetPasswordWithCode,
   verifyEmail,
   githubCallback,
   callMsGraph,

@@ -8,7 +8,7 @@
 
 const httpStatus = require('http-status');
 const catchAsync = require('../utils/catchAsync');
-const { siteConfigService, ssoService } = require('../services');
+const { siteConfigService, ssoService, emailService } = require('../services');
 const pick = require('../utils/pick');
 const ApiError = require('../utils/ApiError');
 const fs = require('fs');
@@ -143,6 +143,16 @@ const getPublicSSOProviders = catchAsync(async (req, res) => {
   res.send(providers);
 });
 
+// Send test email
+const sendTestEmail = catchAsync(async (req, res) => {
+  const { to } = req.body;
+  if (!to) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Recipient email (to) is required');
+  }
+  await emailService.sendTestEmail(to);
+  res.status(httpStatus.OK).send({ message: `Test email sent to ${to}` });
+});
+
 module.exports = {
   createSiteConfig,
   getSiteConfigs,
@@ -162,6 +172,7 @@ module.exports = {
   deleteSiteConfigByKey,
   bulkUpsertSiteConfigs,
   getPublicSSOProviders,
+  sendTestEmail,
   // global.css helpers
   getGlobalCss: catchAsync(async (req, res) => {
     const cssPath = path.join(__dirname, '..', '..', 'static', 'global.css');

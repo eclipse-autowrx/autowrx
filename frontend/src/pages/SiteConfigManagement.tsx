@@ -14,11 +14,12 @@ import SiteStyleSection from '@/components/organisms/SiteStyleSection'
 import HomeConfigSection from '@/components/organisms/HomeConfigSection'
 import AuthConfigSection from '@/components/organisms/AuthConfigSection'
 import SSOConfigSection from '@/components/organisms/SSOConfigSection'
+import EmailConfigSection from '@/components/organisms/EmailConfigSection'
 import StagingConfigSection from '@/components/organisms/StagingConfigSection'
 
 // Keys that should be excluded from the site-config page
 // These keys are managed in their own dedicated pages
-export const EXCLUDED_FROM_SITE_CONFIG_KEYS = ['STAGING_FRAME', 'STANDARD_STAGE']
+export const EXCLUDED_FROM_SITE_CONFIG_KEYS = ['STAGING_FRAME', 'STANDARD_STAGE', 'EMAIL_CONFIG']
 
 export const PREDEFINED_SITE_CONFIGS: any[] = [
   {
@@ -183,15 +184,18 @@ const SiteConfigManagement: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
 
   // Get initial section from URL or default to 'public'
-  const getSectionFromUrl = (): 'public' | 'style' | 'secrets' | 'home' | 'auth' | 'sso' | 'staging' => {
+  type SectionTab = 'public' | 'style' | 'secrets' | 'home' | 'auth' | 'sso' | 'email' | 'staging'
+  const validSections: SectionTab[] = ['public', 'style', 'secrets', 'home', 'auth', 'sso', 'email', 'staging']
+
+  const getSectionFromUrl = (): SectionTab => {
     const section = searchParams.get('section')
-    if (section === 'public' || section === 'style' || section === 'secrets' || section === 'home' || section === 'auth' || section === 'sso' || section === 'staging') {
-      return section
+    if (section && validSections.includes(section as SectionTab)) {
+      return section as SectionTab
     }
     return 'public'
   }
 
-  const [activeTab, setActiveTab] = useState<'public' | 'style' | 'secrets' | 'home' | 'auth' | 'sso' | 'staging'>(
+  const [activeTab, setActiveTab] = useState<SectionTab>(
     getSectionFromUrl(),
   )
 
@@ -200,7 +204,7 @@ const SiteConfigManagement: React.FC = () => {
     setSearchParams({ section: activeTab }, { replace: true })
   }, [activeTab, setSearchParams])
 
-  const handleTabChange = (tab: 'public' | 'style' | 'secrets' | 'home' | 'auth' | 'sso' | 'staging') => {
+  const handleTabChange = (tab: SectionTab) => {
     setActiveTab(tab)
   }
 
@@ -275,6 +279,15 @@ const SiteConfigManagement: React.FC = () => {
                   SSO Config
                 </button>
                 <button
+                  onClick={() => handleTabChange('email')}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'email'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-muted'
+                    }`}
+                >
+                  Email Config
+                </button>
+                <button
                   onClick={() => handleTabChange('secrets')}
                   className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'secrets'
                     ? 'bg-primary text-primary-foreground'
@@ -306,6 +319,7 @@ const SiteConfigManagement: React.FC = () => {
               {activeTab === 'auth' && <AuthConfigSection />}
               {activeTab === 'sso' && <SSOConfigSection />}
               {activeTab === 'style' && <SiteStyleSection />}
+              {activeTab === 'email' && <EmailConfigSection />}
               {activeTab === 'secrets' && <SecretConfigSection />}
             </div>
           </div>
