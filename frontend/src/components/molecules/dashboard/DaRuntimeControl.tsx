@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { FC, useEffect, useRef, useState } from 'react'
+import { FC, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { TbPlayerPlayFilled, TbPlayerStopFilled, TbSettings } from 'react-icons/tb'
@@ -65,6 +65,19 @@ const DaRuntimeControl: FC = () => {
     'RUNTIME_SERVER_URL',
     DEFAULT_KIT_SERVER,
   )
+  const runtimeServerConfigRaw = useSiteConfig('RUNTIME_SERVER_CONFIG', '')
+  const runtimeServerConfig = useMemo(() => {
+    if (!runtimeServerConfigRaw) return {}
+    try {
+      const parsed =
+        typeof runtimeServerConfigRaw === 'string'
+          ? JSON.parse(runtimeServerConfigRaw)
+          : runtimeServerConfigRaw
+      return typeof parsed === 'object' && parsed !== null ? parsed : {}
+    } catch {
+      return {}
+    }
+  }, [runtimeServerConfigRaw])
   const { showPrototypeDashboardFullScreen } = useSystemUI()
 
   const [isExpand, setIsExpand] = useState(false)
@@ -386,6 +399,7 @@ const DaRuntimeControl: FC = () => {
               <DaRuntimeConnector
                 targetPrefix="runtime-"
                 kitServerUrl={customKitServer}
+                socketIoConfig={runtimeServerConfig}
                 ref={runTimeRef}
                 usedAPIs={usedApis}
                 hideLabel={true}
@@ -403,6 +417,7 @@ const DaRuntimeControl: FC = () => {
               <DaRuntimeConnector
                 targetPrefix="runtime-"
                 kitServerUrl={runtimeServerUrl}
+                socketIoConfig={runtimeServerConfig}
                 ref={runTimeRef1}
                 usedAPIs={usedApis}
                 hideLabel={true}
@@ -570,11 +585,10 @@ const DaRuntimeControl: FC = () => {
                         }}
                       />
                       <div
-                        className={`ml-2 mr-2 px-2 py-1 rounded text-xs ${
-                          requestContent.trim()
-                            ? 'text-yellow-400 font-semibold cursor-pointer hover:underline'
-                            : 'text-gray-400 font-thin'
-                        }`}
+                        className={`ml-2 mr-2 px-2 py-1 rounded text-xs ${requestContent.trim()
+                          ? 'text-yellow-400 font-semibold cursor-pointer hover:underline'
+                          : 'text-gray-400 font-thin'
+                          }`}
                         onClick={() => {
                           if (!requestContent.trim()) return
                           if (runTimeRef.current) {

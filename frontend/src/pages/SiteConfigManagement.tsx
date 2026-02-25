@@ -64,6 +64,14 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     valueType: 'string',
   },
   {
+    key: 'RUNTIME_SERVER_CONFIG',
+    scope: 'site',
+    value: '{}',
+    secret: false,
+    valueType: 'string',
+    description: 'Custom JSON options passed to the Socket.IO client when connecting to the runtime server. Example: {"transports":["websocket"],"reconnectionAttempts":5}. Leave empty to use default Socket.IO options.',
+  },
+  {
     key: 'DEFAULT_MARKETPLACE_URL',
     scope: 'site',
     value: 'https://marketplace.digitalauto.tech',
@@ -214,21 +222,19 @@ const SiteConfigManagement: React.FC = () => {
               <nav className="p-2">
                 <button
                   onClick={() => handleTabChange('public')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
-                    activeTab === 'public'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground hover:bg-muted'
-                  }`}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'public'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-muted'
+                    }`}
                 >
                   Public Config
                 </button>
                 <button
                   onClick={() => handleTabChange('home')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
-                    activeTab === 'home'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground hover:bg-muted'
-                  }`}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'home'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-muted'
+                    }`}
                 >
                   Home Config
                 </button>
@@ -264,21 +270,19 @@ const SiteConfigManagement: React.FC = () => {
                 </button>
                 <button
                   onClick={() => handleTabChange('secrets')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
-                    activeTab === 'secrets'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground hover:bg-muted'
-                  }`}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'secrets'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-muted'
+                    }`}
                 >
                   Secret Config
                 </button>
                 <button
                   onClick={() => handleTabChange('staging')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
-                    activeTab === 'staging'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground hover:bg-muted'
-                  }`}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'staging'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-muted'
+                    }`}
                 >
                   Standard Staging Frame
                 </button>

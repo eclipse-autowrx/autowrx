@@ -27,6 +27,7 @@ export interface Runtime {
 
 interface KitConnectProps {
   kitServerUrl?: string
+  socketIoConfig?: Record<string, any>
   hideLabel?: boolean
   targetPrefix: string | string[]
   usedAPIs: string[]
@@ -47,6 +48,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       hideLabel = false,
       targetPrefix = 'runtime-',
       kitServerUrl,
+      socketIoConfig,
       usedAPIs,
       onActiveRtChanged,
       onLoadedMockSignals,
@@ -310,8 +312,9 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
 
     useEffect(() => {
       if (!kitServerUrl) return
-      setSocketIo(io(kitServerUrl))
-    }, [kitServerUrl])
+      setSocketIo(io(kitServerUrl, socketIoConfig || {}))
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [kitServerUrl, JSON.stringify(socketIoConfig)])
 
     useEffect(() => {
       if (!socketio) return

@@ -99,9 +99,10 @@ const PublicConfigSection: React.FC = () => {
 
         // Filter to only show predefined configs (excluding NAV_BAR_ACTIONS)
         const predefinedKeys = new Set(PREDEFINED_SITE_CONFIGS.map(c => c.key))
-        const filteredConfigs = (updatedRes.results || []).filter(
-          config => predefinedKeys.has(config.key) && config.key !== 'NAV_BAR_ACTIONS'
-        )
+        const predefinedOrder = new Map(PREDEFINED_SITE_CONFIGS.map((c, i) => [c.key, i]))
+        const filteredConfigs = (updatedRes.results || [])
+          .filter(config => predefinedKeys.has(config.key) && config.key !== 'NAV_BAR_ACTIONS')
+          .sort((a, b) => (predefinedOrder.get(a.key) ?? 999) - (predefinedOrder.get(b.key) ?? 999))
 
         // Load nav bar actions separately - only show actual DB data, empty if null/undefined
         const navBarActionsConfig = (updatedRes.results || []).find(
@@ -121,9 +122,10 @@ const PublicConfigSection: React.FC = () => {
       } else {
         // Filter to only show predefined configs (excluding NAV_BAR_ACTIONS)
         const predefinedKeys = new Set(PREDEFINED_SITE_CONFIGS.map(c => c.key))
-        const filteredConfigs = existingConfigs.filter(
-          config => predefinedKeys.has(config.key) && config.key !== 'NAV_BAR_ACTIONS'
-        )
+        const predefinedOrder = new Map(PREDEFINED_SITE_CONFIGS.map((c, i) => [c.key, i]))
+        const filteredConfigs = existingConfigs
+          .filter(config => predefinedKeys.has(config.key) && config.key !== 'NAV_BAR_ACTIONS')
+          .sort((a, b) => (predefinedOrder.get(a.key) ?? 999) - (predefinedOrder.get(b.key) ?? 999))
 
         // Load nav bar actions separately - only show actual DB data, empty if null/undefined
         const navBarActionsConfig = existingConfigs.find(
