@@ -12,6 +12,58 @@ const httpStatus = require('http-status');
 const fs = require('fs');
 const path = require('path');
 const ssoService = require('./sso.service');
+const { encrypt, decrypt } = require('../utils/encryption');
+
+/**
+ * Encrypt sensitive fields in EMAIL_CONFIG value before storage.
+ * Only encrypts values that are not already encrypted (no colon separator).
+ * @param {Object} emailConfig - The email config object
+ * @returns {Object} Config with encrypted secrets
+ */
+const encryptEmailConfigSecrets = (emailConfig) => {
+  if (!emailConfig || typeof emailConfig !== 'object') return emailConfig;
+  const result = { ...emailConfig };
+
+  // Encrypt apiKey if present and not already encrypted
+  if (result.apiKey && typeof result.apiKey === 'string' && !result.apiKey.includes(':')) {
+    result.apiKey = encrypt(result.apiKey);
+  }
+
+  // Encrypt SMTP password if present and not already encrypted
+  if (result.smtpConfig && result.smtpConfig.pass && typeof result.smtpConfig.pass === 'string' && !result.smtpConfig.pass.includes(':')) {
+    result.smtpConfig = { ...result.smtpConfig, pass: encrypt(result.smtpConfig.pass) };
+  }
+
+  return result;
+};
+
+/**
+ * Decrypt sensitive fields in EMAIL_CONFIG value for admin read.
+ * @param {Object} emailConfig - The email config object with encrypted secrets
+ * @returns {Object} Config with decrypted secrets
+ */
+const decryptEmailConfigSecrets = (emailConfig) => {
+  if (!emailConfig || typeof emailConfig !== 'object') return emailConfig;
+  const result = { ...emailConfig };
+
+  if (result.apiKey && typeof result.apiKey === 'string' && result.apiKey.includes(':')) {
+    try {
+      result.apiKey = decrypt(result.apiKey);
+    } catch {
+      // Leave as-is if decryption fails
+    }
+  }
+
+  if (result.smtpConfig && result.smtpConfig.pass && typeof result.smtpConfig.pass === 'string' && result.smtpConfig.pass.includes(':')) {
+    try {
+      result.smtpConfig = { ...result.smtpConfig, pass: decrypt(result.smtpConfig.pass) };
+    } catch {
+      // Leave as-is if decryption fails
+    }
+  }
+
+  return result;
+};
 
 /**
  * Get value type from a value
@@ -305,12 +357,15 @@ const createSiteConfig = async (siteConfigBody) => {
 
   const valueType = clientValueType || getValueType(value);
   
-  // Encrypt SSO provider secrets if this is SSO_PROVIDERS config
+  // Encrypt secrets for specific config keys
   let processedValue = value;
   if (key === 'SSO_PROVIDERS' && Array.isArray(value)) {
     processedValue = ssoService.encryptProviderSecrets(value);
   }
-  
+  if (key === 'EMAIL_CONFIG' && value && typeof value === 'object') {
+    processedValue = encryptEmailConfigSecrets(value);
+  }
+
   return SiteConfig.create({
     key,
     scope,
@@ -408,12 +463,15 @@ const querySiteConfigs = async (filter, options) => {
 const getSiteConfigById = async (id) => {
   const config = await SiteConfig.findById(id);
   
-  // Decrypt SSO provider secrets for admin access
+  // Decrypt secrets for admin access
   if (config && config.key === 'SSO_PROVIDERS' && Array.isArray(config.value)) {
     const decryptedValue = ssoService.decryptProviderSecrets(config.value);
     return { ...config.toObject(), value: decryptedValue };
   }
-  
+  if (config && config.key === 'EMAIL_CONFIG' && config.value && typeof config.value === 'object') {
+    return { ...config.toObject(), value: decryptEmailConfigSecrets(config.value) };
+  }
+
   return config;
 };
 
@@ -607,20 +665,26 @@ const updateSiteConfigById = async (siteConfigId, updateBody) => {
   // Preserve existing valueType unless client explicitly provides a new one
   // If only value is updated, do NOT auto-derive and overwrite valueType
 
-  // Encrypt SSO provider secrets if this is SSO_PROVIDERS config and value is being updated
+  // Encrypt secrets for specific config keys
   if (siteConfig.key === 'SSO_PROVIDERS' && updateBody.value && Array.isArray(updateBody.value)) {
     updateBody.value = ssoService.encryptProviderSecrets(updateBody.value);
+  }
+  if (siteConfig.key === 'EMAIL_CONFIG' && updateBody.value && typeof updateBody.value === 'object') {
+    updateBody.value = encryptEmailConfigSecrets(updateBody.value);
   }
 
   Object.assign(siteConfig, updateBody);
   await siteConfig.save();
-  
-  // Return decrypted version for SSO_PROVIDERS
+
+  // Return decrypted version for admin access
   if (siteConfig.key === 'SSO_PROVIDERS' && Array.isArray(siteConfig.value)) {
     const decryptedValue = ssoService.decryptProviderSecrets(siteConfig.value);
     return { ...siteConfig.toObject(), value: decryptedValue };
   }
-  
+  if (siteConfig.key === 'EMAIL_CONFIG' && siteConfig.value && typeof siteConfig.value === 'object') {
+    return { ...siteConfig.toObject(), value: decryptEmailConfigSecrets(siteConfig.value) };
+  }
+
   return siteConfig;
 };
 
@@ -652,19 +716,25 @@ const updateSiteConfigByKey = async (key, updateBody) => {
       updated_by: updateBody.updated_by,
     };
 
-    // Encrypt SSO provider secrets if this is SSO_PROVIDERS config
+    // Encrypt secrets for specific config keys
     if (key === 'SSO_PROVIDERS' && newConfigBody.value && Array.isArray(newConfigBody.value)) {
       newConfigBody.value = ssoService.encryptProviderSecrets(newConfigBody.value);
     }
+    if (key === 'EMAIL_CONFIG' && newConfigBody.value && typeof newConfigBody.value === 'object') {
+      newConfigBody.value = encryptEmailConfigSecrets(newConfigBody.value);
+    }
 
     siteConfig = await SiteConfig.create(newConfigBody);
-    
-    // Return decrypted version for SSO_PROVIDERS
+
+    // Return decrypted version for admin access
     if (siteConfig.key === 'SSO_PROVIDERS' && Array.isArray(siteConfig.value)) {
       const decryptedValue = ssoService.decryptProviderSecrets(siteConfig.value);
       return { ...siteConfig.toObject(), value: decryptedValue };
     }
-    
+    if (siteConfig.key === 'EMAIL_CONFIG' && siteConfig.value && typeof siteConfig.value === 'object') {
+      return { ...siteConfig.toObject(), value: decryptEmailConfigSecrets(siteConfig.value) };
+    }
+
     return siteConfig;
   }
 
@@ -672,20 +742,26 @@ const updateSiteConfigByKey = async (key, updateBody) => {
   // Preserve existing valueType unless client explicitly provides a new one
   // If only value is updated, do NOT auto-derive and overwrite valueType
 
-  // Encrypt SSO provider secrets if this is SSO_PROVIDERS config and value is being updated
+  // Encrypt secrets for specific config keys
   if (siteConfig.key === 'SSO_PROVIDERS' && updateBody.value && Array.isArray(updateBody.value)) {
     updateBody.value = ssoService.encryptProviderSecrets(updateBody.value);
+  }
+  if (siteConfig.key === 'EMAIL_CONFIG' && updateBody.value && typeof updateBody.value === 'object') {
+    updateBody.value = encryptEmailConfigSecrets(updateBody.value);
   }
 
   Object.assign(siteConfig, updateBody);
   await siteConfig.save();
-  
-  // Return decrypted version for SSO_PROVIDERS
+
+  // Return decrypted version for admin access
   if (siteConfig.key === 'SSO_PROVIDERS' && Array.isArray(siteConfig.value)) {
     const decryptedValue = ssoService.decryptProviderSecrets(siteConfig.value);
     return { ...siteConfig.toObject(), value: decryptedValue };
   }
-  
+  if (siteConfig.key === 'EMAIL_CONFIG' && siteConfig.value && typeof siteConfig.value === 'object') {
+    return { ...siteConfig.toObject(), value: decryptEmailConfigSecrets(siteConfig.value) };
+  }
+
   return siteConfig;
 };
 
