@@ -14,7 +14,6 @@ import { InvitedUser } from "@/types/user.type"
 import UserList from "@/components/molecules/UserList"
 import { User } from "@/types/user.type"
 import { TbUserPlus } from "react-icons/tb"
-import { IoClose } from "react-icons/io5";
 
 interface iPropShareAssetPanel {
     asset: any,
@@ -61,11 +60,6 @@ const ShareAssetPanel = ({ asset, onDone, onCancel }: iPropShareAssetPanel) => {
     return <div className="flex flex-col w-[480px] px-4">
         <div className="flex items-center">
             <h2 className="text-xl font-semibold">Share to</h2>
-            <div className="grow"></div>
-            <IoClose size={24} className="hover:opacity-70 cursor-pointer"
-                onClick={() => {
-                    if(onDone) onDone()
-                }}/>
         </div>
         
         <div className="mt-2 w-full min-h-[200px] overflow-auto">

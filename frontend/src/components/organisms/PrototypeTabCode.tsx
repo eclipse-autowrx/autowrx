@@ -141,24 +141,29 @@ const PrototypeTabCode: FC = () => {
   }, [prototype])
 
   const saveCodeToDb = async (codeToSave?: string) => {
-    // Use the passed code parameter if available, otherwise use current code state
-    const dataToSave = codeToSave !== undefined ? codeToSave : code
+    let dataToSave: string | undefined
+    if (codeToSave !== undefined) {
+      // Explicit save from editor (Save All or Ctrl+S) — always persist, do not skip
+      if (!codeToSave) return
+      dataToSave = codeToSave
+    } else {
+      // Periodic auto-save — skip if unchanged
+      if (!code || code === savedCode) return
+      dataToSave = code
+    }
 
-    if (!dataToSave || dataToSave === savedCode) return
+    if (!prototype?.id) return
 
-    // Update local state with the new code
-    setCode(dataToSave)
-    setSavedCode(dataToSave)
-
-    let newPrototype = JSON.parse(JSON.stringify(prototype))
-    newPrototype.code = dataToSave || ''
-    setActivePrototype(newPrototype)
-
-    if (!prototype || !prototype.id) return
     try {
       await updatePrototypeService(prototype.id, {
         code: dataToSave || '',
       })
+      // Only mark as saved after API succeeds
+      setCode(dataToSave)
+      setSavedCode(dataToSave)
+      const newPrototype = JSON.parse(JSON.stringify(prototype))
+      newPrototype.code = dataToSave || ''
+      setActivePrototype(newPrototype)
     } catch (err) {
       console.error('Error saving code:', err)
     }
@@ -299,7 +304,8 @@ const PrototypeTabCode: FC = () => {
               prototypeName={prototype.name}
               onChange={(data: string) => {
                 setCode(data)
-                setSavedCode(data)
+                // Do not set savedCode here — only when we actually persist (saveCodeToDb)
+                // so that Save All / Ctrl+S still trigger the API when there are unsaved changes
               }}
               onSave={async (data: string) => {
                 await saveCodeToDb(data)

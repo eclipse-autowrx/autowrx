@@ -16,6 +16,7 @@ import { Badge } from '../atoms/badge'
 import { Spinner } from '../atoms/spinner'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import { uploadFileService } from '@/services/upload.service'
+import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 import { Input } from '../atoms/input'
 import { Textarea } from '../atoms/textarea'
 import { Checkbox } from '../atoms/checkbox'
@@ -23,12 +24,22 @@ import DaImportFile from '../atoms/DaImportFile'
 import DatePicker from '../atoms/DatePicker'
 import { Label } from '../atoms/label'
 
+export type SiteConfigHistorySection =
+  | 'public'
+  | 'home'
+  | 'auth'
+  | 'sso'
+  | 'style'
+  | 'secrets'
+  | 'staging'
+
 interface ConfigListProps {
   configs: Config[]
   onEdit: (config: Config) => void // kept for compatibility, unused for inline edit
   onDelete: (config: Config) => void // kept for compatibility, delete hidden per request
   isLoading?: boolean
   onUpdated?: () => void // optional callback to refresh parent list
+  historySection?: SiteConfigHistorySection // when set, site config saves are recorded in localStorage history for this section
 }
 
 const ConfigList: React.FC<ConfigListProps> = ({
@@ -37,6 +48,7 @@ const ConfigList: React.FC<ConfigListProps> = ({
   onDelete,
   isLoading = false,
   onUpdated,
+  historySection,
 }) => {
   const { toast } = useToast()
   const [editingKey, setEditingKey] = useState<string | null>(null)
@@ -124,6 +136,15 @@ const ConfigList: React.FC<ConfigListProps> = ({
         })
       }
       setLocalValues((prev) => ({ ...prev, [config.key]: newValue }))
+      if (config.scope === 'site' && historySection) {
+        pushSiteConfigEdit({
+          key: config.key,
+          valueBefore: config.value,
+          valueAfter: newValue,
+          valueType: config.valueType,
+          section: historySection,
+        })
+      }
       toast({ title: 'Configuration updated', description: config.key })
       cancelEdit()
       if (onUpdated) onUpdated()
@@ -248,7 +269,6 @@ const ConfigList: React.FC<ConfigListProps> = ({
                               <img
                                 src={editValue as any}
                                 alt="Preview"
-                                className="w-full max-w-[200px] h-fit max-h-[160px]  object-contain"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement
                                   target.style.display = 'none'
@@ -407,7 +427,6 @@ const ConfigList: React.FC<ConfigListProps> = ({
                                     config.value) as any
                                 }
                                 alt="Preview"
-                                className="w-full max-w-[200px] h-fit max-h-[160px] object-contain"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement
                                   target.style.display = 'none'

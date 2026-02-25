@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/a
 import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { EXCLUDED_FROM_SITE_CONFIG_KEYS } from '@/pages/SiteConfigManagement'
+import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 
 const SecretConfigSection: React.FC = () => {
   const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
@@ -85,6 +86,13 @@ const SecretConfigSection: React.FC = () => {
       setIsLoading(true)
       if (editingConfig?.id) {
         await configManagementService.updateConfigById(editingConfig.id, config)
+        pushSiteConfigEdit({
+          key: config.key,
+          valueBefore: editingConfig.value,
+          valueAfter: config.value,
+          valueType: config.valueType,
+          section: 'secrets',
+        })
         toast({ title: 'Updated', description: `Config "${config.key}" updated. Reloading page...` })
       } else {
         await configManagementService.createConfig({ ...config, secret: true })
@@ -111,7 +119,7 @@ const SecretConfigSection: React.FC = () => {
   }
 
   const handleFactoryReset = async () => {
-    if (!window.confirm('Reset all secret configs to factory defaults? This cannot be undone.')) return
+    if (!window.confirm('Restore all secret configs to default values? This cannot be undone.')) return
 
     try {
       setIsLoading(true)
@@ -132,7 +140,7 @@ const SecretConfigSection: React.FC = () => {
         }
       }
 
-      toast({ title: 'Reset', description: 'Secret configs reset to factory defaults. Reloading page...' })
+      toast({ title: 'Restored', description: 'Secret configs restored to default values. Reloading page...' })
       
       // Reload page to show changes immediately
       setTimeout(() => {
@@ -162,11 +170,11 @@ const SecretConfigSection: React.FC = () => {
           </div>
           <Button
             onClick={handleFactoryReset}
-            variant="destructive"
+            variant="outline"
             size="sm"
             disabled={isLoading}
           >
-            Factory Reset
+            Restore default
           </Button>
         </div>
       </div>
@@ -182,6 +190,7 @@ const SecretConfigSection: React.FC = () => {
             onEdit={handleEditConfig}
             onDelete={handleDeleteConfig}
             isLoading={isLoading}
+            historySection="secrets"
           />
         )}
       </div>

@@ -168,6 +168,51 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   const [isCollapsed, setIsCollapsed] = useState(false)
   const { data: model } = useCurrentModel()
 
+  // Horizontal tab scrolling state
+  const scrollContainerRef = React.useRef<HTMLDivElement | null>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+  const [hasOverflow, setHasOverflow] = useState(false)
+
+  // Update arrow button enabled/disabled state based on current scroll position
+  const updateScrollButtons = () => {
+    const el = scrollContainerRef.current
+    if (!el) return
+
+    const { scrollLeft, scrollWidth, clientWidth } = el
+    const overflow = scrollWidth > clientWidth + 1
+
+    // Track whether tab strip actually overflows horizontally
+    setHasOverflow(overflow)
+
+    if (!overflow) {
+      // If there is no overflow, hide any scroll indicators
+      setCanScrollLeft(false)
+      setCanScrollRight(false)
+      return
+    }
+
+    setCanScrollLeft(scrollLeft > 0)
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 1)
+  }
+
+  // Programmatically scroll the tab strip left/right
+  const scrollTabs = (direction: 'left' | 'right') => {
+    const el = scrollContainerRef.current
+    if (!el) return
+
+    const scrollAmount = el.clientWidth * 0.6 // scroll by ~60% of visible width
+    const next =
+      direction === 'left' ? el.scrollLeft - scrollAmount : el.scrollLeft + scrollAmount
+
+    el.scrollTo({ left: next, behavior: 'smooth' })
+  }
+
+  // Keep arrow state in sync when user scrolls with touchpad / trackwheel
+  const handleTabsScroll: React.UIEventHandler<HTMLDivElement> = () => {
+    updateScrollButtons()
+  }
+
   const toggleCollapse = () => {
     const newCollapsedState = !isCollapsed
     setIsCollapsed(newCollapsedState)
@@ -188,6 +233,46 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
       !!id && typeof id === 'string' && id !== '[object Object]' && id !== 'undefined' && id !== 'null'
     )
   }, [model?.custom_api_sets])
+
+  // Recalculate scroll buttons whenever tab set changes
+  useEffect(() => {
+    updateScrollButtons()
+  }, [tab, customApiSetIds.length])
+
+  // Keep scroll indicators in sync when the tab strip is resized
+  useEffect(() => {
+    const el = scrollContainerRef.current
+    if (!el) {
+      updateScrollButtons()
+      return
+    }
+
+    // Run once on mount to initialize state
+    updateScrollButtons()
+
+    // Prefer ResizeObserver so it works with internal layout resizes (split panels, etc.)
+    if (typeof ResizeObserver !== 'undefined') {
+      const observer = new ResizeObserver(() => {
+        updateScrollButtons()
+      })
+
+      observer.observe(el)
+
+      return () => {
+        observer.disconnect()
+      }
+    }
+
+    // Fallback: listen to window resize if ResizeObserver is not available
+    const handleResize = () => {
+      updateScrollButtons()
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => {
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [])
 
   // Determine if current tab is a CustomApiSet tab
   const isCustomApiSetTab = tab.startsWith('custom-api-set-')
@@ -375,80 +460,113 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
       ) : (
         // Expanded view - normal layout
         <>
-          <div className="flex items-center border-b mt-2 shrink-0 relative select-none">
-            <div className="flex overflow-x-auto scrollbar-thin flex-1 min-w-0">
-              <DaTabItem
-                active={tab === 'used-signals'}
-                dataId="used-signals-tab"
-                to="#"
-                onClick={(e) => {
-                  e.preventDefault()
-                  setTab('used-signals')
-                }}
+          <div className="flex items-center border-b mt-2 shrink-0 relative select-none gap-1">
+            {/* Left arrow button for horizontal tab scrolling (only show when tabs overflow) */}
+            {hasOverflow && (
+              <button
+                type="button"
+                onClick={() => scrollTabs('left')}
+                disabled={!canScrollLeft}
+                className="p-1.5 rounded border bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-default"
               >
-                <span className="max-w-[200px] truncate">
-                  Used APIs
-                </span>
-              </DaTabItem>
-              <DaTabItem
-                active={tab === 'all-signals'}
-                dataId="all-signals-tab"
-                to="#"
-                onClick={(e) => {
-                  e.preventDefault()
-                  setTab('all-signals')
-                }}
-              >
-                <span className="max-w-[200px] truncate">
-                  COVESA Signals
-                </span>
-              </DaTabItem>
-              {/* USP and V2C tabs (for backward compatibility) */}
-              {hasUSP && (
+                <VscChevronLeft size={16} />
+              </button>
+            )}
+
+            {/* Scrollable tab strip with hidden scrollbar */}
+            <div
+              ref={scrollContainerRef}
+              onScroll={handleTabsScroll}
+              className="flex flex-1 min-w-0 overflow-x-auto scrollbar-hide"
+            >
+              <div className="flex">
                 <DaTabItem
-                  active={tab === 'usp'}
+                  active={tab === 'used-signals'}
+                  dataId="used-signals-tab"
                   to="#"
                   onClick={(e) => {
                     e.preventDefault()
-                    setTab('usp')
+                    setTab('used-signals')
                   }}
                 >
                   <span className="max-w-[200px] truncate">
-                    USP 2.0
+                    Used APIs
                   </span>
                 </DaTabItem>
-              )}
-              {hasV2C && (
                 <DaTabItem
-                  active={tab === 'v2c'}
+                  active={tab === 'all-signals'}
+                  dataId="all-signals-tab"
                   to="#"
                   onClick={(e) => {
                     e.preventDefault()
-                    setTab('v2c')
+                    setTab('all-signals')
                   }}
                 >
                   <span className="max-w-[200px] truncate">
-                    V2C
+                    COVESA Signals
                   </span>
                 </DaTabItem>
-              )}
-              {/* CustomApiSet tabs */}
-              {customApiSetIds.map((setId) => {
-                const tabId = `custom-api-set-${setId}`
-                return (
-                  <CustomApiSetTab
-                    key={setId}
-                    setId={setId}
-                    active={tab === tabId}
+                {/* USP and V2C tabs (for backward compatibility) */}
+                {hasUSP && (
+                  <DaTabItem
+                    active={tab === 'usp'}
+                    to="#"
                     onClick={(e) => {
                       e.preventDefault()
-                      setTab(tabId)
-                      setSelectedCustomApiItemId(null) // Reset selection when switching tabs
+                      setTab('usp')
                     }}
-                  />
-                )
-              })}
+                  >
+                    <span className="max-w-[200px] truncate">
+                      USP 2.0
+                    </span>
+                  </DaTabItem>
+                )}
+                {hasV2C && (
+                  <DaTabItem
+                    active={tab === 'v2c'}
+                    to="#"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      setTab('v2c')
+                    }}
+                  >
+                    <span className="max-w-[200px] truncate">
+                      V2C
+                    </span>
+                  </DaTabItem>
+                )}
+                {/* CustomApiSet tabs */}
+                {customApiSetIds.map((setId) => {
+                  const tabId = `custom-api-set-${setId}`
+                  return (
+                    <CustomApiSetTab
+                      key={setId}
+                      setId={setId}
+                      active={tab === tabId}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setTab(tabId)
+                        setSelectedCustomApiItemId(null) // Reset selection when switching tabs
+                      }}
+                    />
+                  )
+                })}
+              </div>
             </div>
+
+            {/* Right arrow button for horizontal tab scrolling (only show when tabs overflow) */}
+            {hasOverflow && (
+              <button
+                type="button"
+                onClick={() => scrollTabs('right')}
+                disabled={!canScrollRight}
+                className="p-1.5 rounded border bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-default"
+              >
+                <VscChevronRight size={16} />
+              </button>
+            )}
+
+            {/* Collapse panel button */}
             <button
               onClick={toggleCollapse}
               title="Collapse Panel"
