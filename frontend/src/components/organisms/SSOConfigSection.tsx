@@ -17,16 +17,17 @@ import { TbPlus, TbEdit, TbTrash, TbToggleLeft, TbToggleRight } from 'react-icon
 import { v4 as uuidv4 } from 'uuid'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
+import config from '@/configs/config'
 
 interface SSOProvider {
   id: string
   name: string
-  type: 'MSAL'
+  type: 'MSAL' | 'GITHUB'
   enabled: boolean
   clientId: string
-  authority: string
-  clientSecret: string
-  scopes: string[]
+  authority?: string
+  clientSecret?: string
+  scopes?: string[]
 }
 
 const SSOConfigSection: React.FC = () => {
@@ -94,7 +95,7 @@ const SSOConfigSection: React.FC = () => {
       authority: '',
       clientSecret: '',
       scopes: ['User.Read'],
-    })
+    } as SSOProvider)
     setIsFormOpen(true)
   }
 
@@ -159,11 +160,18 @@ const SSOConfigSection: React.FC = () => {
   }
 
   const handleSaveProvider = async () => {
-    // Validate form
-    if (!formData.name || !formData.clientId || !formData.authority || !formData.clientSecret) {
+    if (!formData.name || !formData.clientId || !formData.clientSecret) {
       toast({
         title: 'Validation error',
         description: 'Please fill in all required fields',
+        variant: 'destructive',
+      })
+      return
+    }
+    if (formData.type === 'MSAL' && !formData.authority) {
+      toast({
+        title: 'Validation error',
+        description: 'Authority URL is required for MSAL',
         variant: 'destructive',
       })
       return
@@ -173,14 +181,15 @@ const SSOConfigSection: React.FC = () => {
       setIsSaving(true)
       let updatedProviders: SSOProvider[]
       
+      const toSave = formData.type === 'GITHUB'
+        ? { ...formData, authority: undefined, scopes: (formData.scopes && formData.scopes.length) ? formData.scopes : ['user:email'] }
+        : { ...formData, authority: formData.authority || '', scopes: formData.scopes || ['User.Read'] }
       if (editingProvider) {
-        // Update existing provider
         updatedProviders = providers.map(p =>
-          p.id === editingProvider.id ? formData : p
+          p.id === editingProvider.id ? toSave : p
         )
       } else {
-        // Add new provider
-        updatedProviders = [...providers, formData]
+        updatedProviders = [...providers, toSave]
       }
 
       await saveProviders(updatedProviders)
@@ -314,13 +323,15 @@ const SSOConfigSection: React.FC = () => {
                       <dt className="text-muted-foreground">Client ID:</dt>
                       <dd className="font-mono text-xs">{provider.clientId}</dd>
                     </div>
-                    <div className="flex gap-2">
-                      <dt className="text-muted-foreground">Authority:</dt>
-                      <dd className="font-mono text-xs break-all">{provider.authority}</dd>
-                    </div>
+                    {provider.type === 'MSAL' && (
+                      <div className="flex gap-2">
+                        <dt className="text-muted-foreground">Authority:</dt>
+                        <dd className="font-mono text-xs break-all">{provider.authority || '—'}</dd>
+                      </div>
+                    )}
                     <div className="flex gap-2">
                       <dt className="text-muted-foreground">Scopes:</dt>
-                      <dd className="text-xs">{provider.scopes.join(', ')}</dd>
+                      <dd className="text-xs">{(provider.scopes || []).join(', ')}</dd>
                     </div>
                   </dl>
                 </div>
@@ -379,7 +390,22 @@ const SSOConfigSection: React.FC = () => {
               
               <div>
                 <Label htmlFor="type">Type</Label>
-                <Input id="type" value="MSAL / Azure AD" disabled />
+                <select
+                  id="type"
+                  value={formData.type}
+                  onChange={(e) => {
+                    const newType = e.target.value as 'MSAL' | 'GITHUB'
+                    setFormData({
+                      ...formData,
+                      type: newType,
+                      ...(newType === 'GITHUB' ? { scopes: ['user:email'], authority: undefined } : { scopes: formData.scopes?.length ? formData.scopes : ['User.Read'], authority: formData.authority || '' }),
+                    })
+                  }}
+                  className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                >
+                  <option value="MSAL">MSAL / Azure AD</option>
+                  <option value="GITHUB">GitHub</option>
+                </select>
               </div>
 
               <div>
@@ -388,30 +414,32 @@ const SSOConfigSection: React.FC = () => {
                   id="clientId"
                   value={formData.clientId}
                   onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                  placeholder="Azure AD Application (client) ID"
+                  placeholder={formData.type === 'GITHUB' ? 'GitHub OAuth App Client ID' : 'Azure AD Application (client) ID'}
                   className="font-mono text-sm"
                 />
               </div>
 
-              <div>
-                <Label htmlFor="authority">Authority URL *</Label>
-                <Input
-                  id="authority"
-                  value={formData.authority}
-                  onChange={(e) => setFormData({ ...formData, authority: e.target.value })}
-                  placeholder="https://login.microsoftonline.com/{tenant-id}"
-                  className="font-mono text-sm"
-                />
-              </div>
+              {formData.type === 'MSAL' && (
+                <div>
+                  <Label htmlFor="authority">Authority URL *</Label>
+                  <Input
+                    id="authority"
+                    value={formData.authority || ''}
+                    onChange={(e) => setFormData({ ...formData, authority: e.target.value })}
+                    placeholder="https://login.microsoftonline.com/{tenant-id}"
+                    className="font-mono text-sm"
+                  />
+                </div>
+              )}
 
               <div>
                 <Label htmlFor="clientSecret">Client Secret *</Label>
                 <Input
                   id="clientSecret"
                   type="password"
-                  value={formData.clientSecret}
+                  value={formData.clientSecret || ''}
                   onChange={(e) => setFormData({ ...formData, clientSecret: e.target.value })}
-                  placeholder="Client secret from Azure AD"
+                  placeholder={formData.type === 'GITHUB' ? 'GitHub OAuth App Client Secret' : 'Client secret from Azure AD'}
                   className="font-mono text-sm"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
@@ -419,18 +447,47 @@ const SSOConfigSection: React.FC = () => {
                 </p>
               </div>
 
-              <div>
-                <Label htmlFor="scopes">Scopes (comma-separated)</Label>
-                <Input
-                  id="scopes"
-                  value={formData.scopes.join(', ')}
-                  onChange={(e) => setFormData({ 
-                    ...formData, 
-                    scopes: e.target.value.split(',').map(s => s.trim()).filter(Boolean) 
-                  })}
-                  placeholder="User.Read, email, profile"
-                />
-              </div>
+              {formData.type === 'GITHUB' && (
+                <>
+                  <div>
+                    <Label htmlFor="github-scopes">Scopes (comma or space-separated)</Label>
+                    <Input
+                      id="github-scopes"
+                      value={(formData.scopes && formData.scopes.length) ? formData.scopes.join(', ') : 'user:email'}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        scopes: e.target.value.split(/[\s,]+/).map(s => s.trim()).filter(Boolean),
+                      })}
+                      placeholder="user:email, read:user"
+                      className="font-mono text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      e.g. user:email (required for login), read:user. Leave default for sign-in.
+                    </p>
+                  </div>
+                  <div>
+                    <Label>Callback URL (add this in GitHub OAuth App settings)</Label>
+                    <p className="text-xs font-mono text-muted-foreground mt-1 break-all">
+                      {`${config.serverBaseUrl}/${config.serverVersion}/auth/github-sso/callback`}
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {formData.type === 'MSAL' && (
+                <div>
+                  <Label htmlFor="scopes">Scopes (comma-separated)</Label>
+                  <Input
+                    id="scopes"
+                    value={(formData.scopes || []).join(', ')}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      scopes: e.target.value.split(',').map(s => s.trim()).filter(Boolean) 
+                    })}
+                    placeholder="User.Read, email, profile"
+                  />
+                </div>
+              )}
 
               <div className="flex items-center gap-2">
                 <input
