@@ -42,12 +42,17 @@ export const migrateTabConfig = (oldTabs?: Array<{ label: string; plugin: string
     return oldTabs as TabConfig[]
   }
 
-  // Old format: prepend default builtin tabs
-  const customTabs: TabConfig[] = oldTabs.map(tab => ({
-    type: 'custom',
-    label: tab.label,
-    plugin: tab.plugin,
-  }))
+  // Old format: prepend default builtin tabs.
+  // Entries with an empty plugin string were originally builtin tabs whose type/key metadata
+  // was lost during serialization (e.g. saved by an older version of TemplateForm that stripped
+  // TabConfig fields). They carry no actionable info, so we skip them to avoid ghost custom tabs.
+  const customTabs: TabConfig[] = oldTabs
+    .filter(tab => !!tab.plugin)
+    .map(tab => ({
+      type: 'custom',
+      label: tab.label,
+      plugin: tab.plugin,
+    }))
 
   return [...DEFAULT_BUILTIN_TABS, ...customTabs]
 }
@@ -65,6 +70,9 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs }) => {
 
   // Filter out hidden tabs
   const visibleTabs = tabConfigs.filter(t => !t.hidden)
+
+  // The first visible tab is the default when no tab is in the URL
+  const firstVisibleTab = visibleTabs[0]
 
   return (
     <>
@@ -102,7 +110,7 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs }) => {
 
           // Determine if tab is active
           const isActive =
-            (key === 'overview' && (!tab || tab === 'view')) ||
+            ((!tab || tab === 'view') && firstVisibleTab?.type === 'builtin' && firstVisibleTab?.key === key) ||
             (tab === key)
 
           return (

@@ -17,6 +17,23 @@ import { uploadFileService } from '@/services/upload.service'
 import { TbPhotoEdit } from 'react-icons/tb'
 import { toast } from 'react-toastify'
 import { listPlugins, type Plugin } from '@/services/plugin.service'
+import { TabConfig } from '@/components/organisms/CustomTabEditor'
+import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
+
+// Template-safe normalizer: preserves full TabConfig without injecting default builtin tabs.
+// Used only inside TemplateForm so that the saved template contains exactly what was configured,
+// and builtin tabs that are not explicitly listed are NOT auto-added on the new model.
+const normalizeTabsForTemplate = (tabs?: any[]): TabConfig[] => {
+  if (!tabs || tabs.length === 0) return []
+  // Already new format (has 'type' field) — return as-is
+  if ('type' in tabs[0]) return tabs as TabConfig[]
+  // Old format ({ label, plugin }): convert to custom type only, no builtin defaults
+  return tabs.map((tab) => ({
+    type: 'custom' as const,
+    label: tab.label || '',
+    plugin: tab.plugin || '',
+  }))
+}
 
 type Props = {
   templateId?: string
@@ -29,7 +46,7 @@ type Props = {
     visibility?: string
     config?: any // Full custom_template object
     model_tabs?: Array<{ label: string; plugin: string }>
-    prototype_tabs?: Array<{ label: string; plugin: string }>
+    prototype_tabs?: TabConfig[]
   }
 }
 
@@ -65,9 +82,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
   const [modelTabs, setModelTabs] = useState<
     Array<{ label: string; plugin: string }>
   >([])
-  const [prototypeTabs, setPrototypeTabs] = useState<
-    Array<{ label: string; plugin: string }>
-  >([])
+  const [prototypeTabs, setPrototypeTabs] = useState<TabConfig[]>([])
   const { data: pluginData } = useQuery({
     queryKey: ['plugins-for-template'],
     queryFn: () => listPlugins({ limit: 1000, page: 1 }),
@@ -81,17 +96,14 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
       setModelTabs(
         Array.isArray(cfg.model_tabs)
           ? cfg.model_tabs.map((x: any) => ({
-              label: x.label || '',
-              plugin: x.plugin || '',
-            }))
+            label: x.label || '',
+            plugin: x.plugin || '',
+          }))
           : [],
       )
       setPrototypeTabs(
         Array.isArray(cfg.prototype_tabs)
-          ? cfg.prototype_tabs.map((x: any) => ({
-              label: x.label || '',
-              plugin: x.plugin || '',
-            }))
+          ? normalizeTabsForTemplate(cfg.prototype_tabs)
           : [],
       )
     } else {
@@ -112,7 +124,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
   useEffect(() => {
     const wasOpen = prevOpenRef.current
     prevOpenRef.current = open
-    
+
     if (open && !wasOpen && isCreate) {
       console.log('[TemplateForm] Dialog opened in create mode. initialData:', initialData)
       setActiveTab('meta')
@@ -142,20 +154,20 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
       console.log('[TemplateForm] initialData.config.prototype_tabs:', initialData.config?.prototype_tabs)
       const fullConfig = initialData.config || {}
       console.log('[TemplateForm] fullConfig:', fullConfig)
-      
+
       // Extract tabs directly from config (custom_template) - this is the source of truth
-      const modelTabsFromConfig = Array.isArray(fullConfig.model_tabs) 
-        ? fullConfig.model_tabs 
+      const modelTabsFromConfig = Array.isArray(fullConfig.model_tabs)
+        ? fullConfig.model_tabs
         : []
-      const prototypeTabsFromConfig = Array.isArray(fullConfig.prototype_tabs) 
-        ? fullConfig.prototype_tabs 
+      const prototypeTabsFromConfig = Array.isArray(fullConfig.prototype_tabs)
+        ? fullConfig.prototype_tabs
         : []
-      
+
       console.log('[TemplateForm] Extracted tabs:', {
         modelTabsFromConfig,
         prototypeTabsFromConfig,
       })
-      
+
       // Pre-populate with initial data, preserving entire config structure
       setForm({
         name: initialData.name || '',
@@ -170,12 +182,8 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
           plugin: x.plugin || '',
         }))
       )
-      setPrototypeTabs(
-        prototypeTabsFromConfig.map((x: any) => ({
-          label: x.label || '',
-          plugin: x.plugin || '',
-        }))
-      )
+      // Preserve full TabConfig structure (type, key, hidden) without adding default builtin tabs
+      setPrototypeTabs(normalizeTabsForTemplate(prototypeTabsFromConfig))
     }
   }, [open, isCreate, initialData])
 
@@ -263,15 +271,15 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <Label>Visibility</Label>
-                    <select
-                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                    <DaSelect
                       value={form.visibility || 'public'}
-                      onChange={(e) => onChange('visibility', e.target.value)}
+                      onValueChange={(v) => onChange('visibility', v)}
+                      className="h-9 text-sm"
                     >
-                      <option value="public">public</option>
-                      <option value="private">private</option>
-                      <option value="default">default</option>
-                    </select>
+                      <DaSelectItem value="public">public</DaSelectItem>
+                      <DaSelectItem value="private">private</DaSelectItem>
+                      <DaSelectItem value="default">default</DaSelectItem>
+                    </DaSelect>
                   </div>
                 </div>
                 <div className="w-44 flex-shrink-0">
@@ -347,25 +355,24 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                       />
                     </div>
                     <div className="col-span-6">
-                      <select
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-                        value={it.plugin}
-                        onChange={(e) => {
-                          const v = e.target.value
+                      <DaSelect
+                        value={it.plugin || '__none__'}
+                        onValueChange={(v) => {
                           setModelTabs((arr) =>
                             arr.map((x, i) =>
-                              i === idx ? { ...x, plugin: v } : x,
+                              i === idx ? { ...x, plugin: v === '__none__' ? '' : v } : x,
                             ),
                           )
                         }}
+                        className="h-9 text-sm"
                       >
-                        <option value="">Select plugin</option>
+                        <DaSelectItem value="__none__">Select plugin</DaSelectItem>
                         {pluginData?.results?.map((p: Plugin) => (
-                          <option key={p.id} value={p.id}>
+                          <DaSelectItem key={p.id} value={p.id}>
                             {p.name}
-                          </option>
+                          </DaSelectItem>
                         ))}
-                      </select>
+                      </DaSelect>
                     </div>
                     <div className="col-span-1 flex justify-end">
                       <Button
@@ -392,7 +399,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                   <Button
                     size="sm"
                     onClick={() =>
-                      setPrototypeTabs((t) => [...t, { label: '', plugin: '' }])
+                      setPrototypeTabs((t) => [...t, { type: 'custom', label: '', plugin: '' }])
                     }
                   >
                     Add Item
@@ -408,7 +415,12 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                     key={idx}
                     className="grid grid-cols-12 gap-2 items-center"
                   >
-                    <div className="col-span-5">
+                    <div className="col-span-5 flex items-center gap-1.5">
+                      {it.type === 'builtin' && (
+                        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide bg-muted text-muted-foreground rounded px-1.5 py-0.5">
+                          built-in
+                        </span>
+                      )}
                       <Input
                         placeholder="Label"
                         value={it.label}
@@ -422,39 +434,46 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                         }}
                       />
                     </div>
-                    <div className="col-span-6">
-                      <select
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-                        value={it.plugin}
-                        onChange={(e) => {
-                          const v = e.target.value
-                          setPrototypeTabs((arr) =>
-                            arr.map((x, i) =>
-                              i === idx ? { ...x, plugin: v } : x,
-                            ),
-                          )
-                        }}
-                      >
-                        <option value="">Select plugin</option>
-                        {pluginData?.results?.map((p: Plugin) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    {it.type === 'builtin' ? (
+                      <div className="col-span-6 text-sm text-muted-foreground px-2">
+                        Built-in tab ({it.key}){it.hidden ? ' — hidden' : ''}
+                      </div>
+                    ) : (
+                      <div className="col-span-6">
+                        <DaSelect
+                          value={it.plugin || '__none__'}
+                          onValueChange={(v) => {
+                            setPrototypeTabs((arr) =>
+                              arr.map((x, i) =>
+                                i === idx ? { ...x, plugin: v === '__none__' ? '' : v } : x,
+                              ),
+                            )
+                          }}
+                          className="h-9 text-sm"
+                        >
+                          <DaSelectItem value="__none__">Select plugin</DaSelectItem>
+                          {pluginData?.results?.map((p: Plugin) => (
+                            <DaSelectItem key={p.id} value={p.slug || p.id}>
+                              {p.name}
+                            </DaSelectItem>
+                          ))}
+                        </DaSelect>
+                      </div>
+                    )}
                     <div className="col-span-1 flex justify-end">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() =>
-                          setPrototypeTabs((arr) =>
-                            arr.filter((_, i) => i !== idx),
-                          )
-                        }
-                      >
-                        Delete
-                      </Button>
+                      {it.type !== 'builtin' && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() =>
+                            setPrototypeTabs((arr) =>
+                              arr.filter((_, i) => i !== idx),
+                            )
+                          }
+                        >
+                          Delete
+                        </Button>
+                      )}
                     </div>
                   </div>
                 ))}

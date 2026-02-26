@@ -84,7 +84,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
     visibility?: string
     config?: any
     model_tabs?: Array<{ label: string; plugin: string }>
-    prototype_tabs?: Array<{ label: string; plugin: string }>
+    prototype_tabs?: TabConfig[]
   } | undefined>(undefined)
 
   // Load staging config to extract plugins for preloading
@@ -143,12 +143,30 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
 
   useEffect(() => {
     if (!tab || tab === 'view') {
-      setIsDefaultTab(true)
+      // Only show overview content if overview is actually the first visible tab
+      const firstVisible = prototypeTabs.find(t => !t.hidden)
+      setIsDefaultTab(!firstVisible || (firstVisible.type === 'builtin' && firstVisible.key === 'overview'))
     } else {
       setIsDefaultTab(false)
     }
     setShowRt(['code', 'dashboard'].includes(tab || ''))
-  }, [tab])
+  }, [tab, prototypeTabs])
+
+  // Auto-navigate to first visible tab when arriving on the default (no-tab / view) route
+  useEffect(() => {
+    if ((!tab || tab === 'view') && model_id && prototype_id && prototypeTabs.length > 0) {
+      const firstVisible = prototypeTabs.find(t => !t.hidden)
+      if (!firstVisible) return
+      // overview maps to /view — already there, nothing to do
+      if (firstVisible.type === 'builtin' && firstVisible.key === 'overview') return
+      const base = `/model/${model_id}/library/prototype/${prototype_id}`
+      if (firstVisible.type === 'builtin' && firstVisible.key) {
+        navigate(`${base}/${firstVisible.key}`, { replace: true })
+      } else if (firstVisible.type === 'custom' && firstVisible.plugin) {
+        navigate(`${base}/plug?plugid=${firstVisible.plugin}`, { replace: true })
+      }
+    }
+  }, [tab, prototypeTabs, model_id, prototype_id, navigate])
 
   useEffect(() => {
     if (user && prototype && tab) {
@@ -318,14 +336,20 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
                   onSelect={() => {
                     // Capture current model.custom_template data at the moment of click
                     if (model) {
+                      // Normalize prototype_tabs to full TabConfig format (resolves old-format entries
+                      // where builtin tabs were stored as { label, plugin: "" } without type/key).
+                      const normalizedPrototypeTabs = getTabConfig(model.custom_template?.prototype_tabs)
                       const initialData = {
                         name: model.name || '',
                         description: '',
                         image: model.model_home_image_file || '',
                         visibility: model.visibility || 'public',
-                        config: model.custom_template || {},
+                        config: {
+                          ...model.custom_template,
+                          prototype_tabs: normalizedPrototypeTabs,
+                        },
                         model_tabs: model.custom_template?.model_tabs || [],
-                        prototype_tabs: model.custom_template?.prototype_tabs || [],
+                        prototype_tabs: normalizedPrototypeTabs,
                       }
                       console.log('[PagePrototypeDetail] Setting templateInitialData:', {
                         model,
