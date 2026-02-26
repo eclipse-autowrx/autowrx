@@ -18,6 +18,53 @@ const modelService = require('./model.service');
 const _ = require('lodash');
 
 /**
+ * Strip trailing number suffix from a prototype name.
+ * e.g. "test_2" → "test", "test" → "test"
+ * @param {string} name
+ * @returns {string}
+ */
+const stripTrailingNumber = (name) => {
+  return name.replace(/_\d+$/, '');
+};
+
+/**
+ * Generate up to 3 available prototype name suggestions for a model.
+ * @param {string} modelId
+ * @param {string} baseName
+ * @returns {Promise<string[]>}
+ */
+const getSuggestedNames = async (modelId, baseName) => {
+  const suggestions = [];
+  let counter = 1;
+  while (suggestions.length < 3) {
+    const candidateName = `${baseName}_${counter}`;
+    const exists = await Prototype.existsPrototypeInModel(modelId, candidateName);
+    if (!exists) {
+      suggestions.push(candidateName);
+    }
+    counter++;
+  }
+  return suggestions;
+};
+
+/**
+ * Handle duplicate prototype name error with suggestions.
+ * @param {string} modelId
+ * @param {string} prototypeName
+ * @param {string} userId
+ * @throws {ApiError}
+ */
+const throwDuplicateNameError = async (modelId, prototypeName, userId) => {
+  const model = await modelService.getModelById(modelId, userId);
+  const baseName = stripTrailingNumber(prototypeName);
+  const suggestions = await getSuggestedNames(modelId, baseName);
+  throw new ApiError(
+    httpStatus.BAD_REQUEST,
+    `The prototype name '${prototypeName}' is already in use for model '${model.name}'. Please choose another name like: ${suggestions.join(', ')}.`
+  );
+};
+
+/**
  *
  * @param {string} userId
  * @param {Object} prototypeBody
@@ -25,10 +72,7 @@ const _ = require('lodash');
  */
 const createPrototype = async (userId, prototypeBody) => {
   if (await Prototype.existsPrototypeInModel(prototypeBody.model_id, prototypeBody.name)) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      `Duplicate prototype name '${prototypeBody.name}' in model ${prototypeBody.model_id}`
-    );
+    await throwDuplicateNameError(prototypeBody.model_id, prototypeBody.name, userId);
   }
 
   if (prototypeBody.extend && typeof prototypeBody.extend === 'string') {
@@ -65,10 +109,7 @@ const createPrototype = async (userId, prototypeBody) => {
 const bulkCreatePrototypes = async (userId, prototypes) => {
   for (const prototype of prototypes) {
     if (await Prototype.existsPrototypeInModel(prototype.model_id, prototype.name)) {
-      throw new ApiError(
-        httpStatus.BAD_REQUEST,
-        `Duplicate prototype name '${prototype.name}' in model ${prototype.model_id}`
-      );
+      await throwDuplicateNameError(prototype.model_id, prototype.name, userId);
     }
   }
 
@@ -145,10 +186,7 @@ const updatePrototypeById = async (id, updateBody, actionOwner) => {
   }
 
   if (updateBody.name && (await Prototype.existsPrototypeInModel(prototype.model_id, updateBody.name, id))) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      `Duplicate prototype name '${updateBody.name}' in model ${prototype.model_id}`
-    );
+    await throwDuplicateNameError(prototype.model_id, updateBody.name, actionOwner);
   }
 
   if (updateBody.extend && typeof updateBody.extend === 'string') {

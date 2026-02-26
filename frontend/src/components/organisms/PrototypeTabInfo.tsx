@@ -72,6 +72,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
   const [isDeleting, setIsDeleting] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState<string>('')
   const [confirmPopupOpen, setConfirmPopupOpen] = useState(false)
   const { data: currentUser } = useSelfProfileQuery()
 
@@ -89,7 +90,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
 
   const handleSave = async () => {
     if (!localPrototype) return
-    setIsEditing(false)
+    setError('')
     setIsSaving(true)
     const updateData = {
       name: localPrototype.name,
@@ -119,9 +120,14 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
         })
       }
       await refetchCurrentPrototype()
+      setIsEditing(false)
     } catch (error) {
       console.error('Error updating prototype:', error)
-      toast.error('Failed to update prototype')
+      if (isAxiosError(error)) {
+        setError(error.response?.data?.message || 'Failed to update prototype')
+      } else {
+        setError('Failed to update prototype')
+      }
     } finally {
       setIsSaving(false)
     }
@@ -130,6 +136,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
   const handleCancel = () => {
     setLocalPrototype(prototype)
     setIsEditing(false)
+    setError('')
   }
 
   const handleChange = (field: keyof Prototype, value: any) => {
@@ -364,7 +371,9 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                       id="prototype-name"
                       value={localPrototype.name}
                       onChange={(e) => handleChange('name', e.target.value)}
+                      className={error ? 'border-secondary' : ''}
                     />
+                    {error && <p className="mt-2 text-sm text-secondary">{error}</p>}
                   </div>
                   <div className="flex flex-col gap-2">
                     <Label htmlFor="problem">Problem</Label>
