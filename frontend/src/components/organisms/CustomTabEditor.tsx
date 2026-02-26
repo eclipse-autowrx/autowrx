@@ -50,7 +50,7 @@ export interface TabConfig {
   key?: string  // For builtin: 'overview' | 'journey' | 'code' | 'dashboard'
   label: string
   plugin?: string  // For custom tabs only
-  hidden?: boolean  // If true, tab is hidden (not allowed for Overview)
+  hidden?: boolean  // If true, tab is hidden 
 }
 
 interface CustomTabEditorProps {
@@ -166,8 +166,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
     const updatedTabs = [...localTabs]
     const tab = updatedTabs[index]
 
-    // Don't allow hiding Overview tab
-    if (tab.type === 'builtin' && tab.key === 'overview') {
+    if (tab.type === 'builtin' && tab.key !== 'overview') {
       return
     }
 
@@ -226,22 +225,20 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
         <div className="flex border-b border-border -mx-6 px-6">
           <button
             onClick={() => setActiveDialogTab('tabs')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              activeDialogTab === 'tabs'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeDialogTab === 'tabs'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
           >
             <TbPuzzle className="w-4 h-4" />
             Prototype Tabs
           </button>
           <button
             onClick={() => setActiveDialogTab('sidebar')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              activeDialogTab === 'sidebar'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeDialogTab === 'sidebar'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
           >
             <TbLayoutSidebar className="w-4 h-4" />
             Left Sidebar Plugin
@@ -251,312 +248,311 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
         <div className="flex flex-col gap-4 py-4 overflow-y-auto flex-1">
           {/* Left Sidebar Plugin Tab */}
           {activeDialogTab === 'sidebar' && (
-          <div className="flex flex-col gap-3">
-            <p className="text-sm text-muted-foreground">
-              Set a plugin to display in a resizable left sidebar, visible across all tabs. Only one plugin can be assigned.
-            </p>
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-muted-foreground">
+                Set a plugin to display in a resizable left sidebar, visible across all tabs. Only one plugin can be assigned.
+              </p>
 
-            {localSidebarPlugin && !showSidebarPluginPicker ? (
-              <div className="flex items-center gap-3 p-3 border border-border rounded bg-accent/50">
-                <TbPuzzle className="w-5 h-5 text-muted-foreground shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {selectedSidebarPluginData?.name || localSidebarPlugin}
-                  </p>
-                  <p className="text-xs text-muted-foreground font-mono truncate">
-                    plugin: {localSidebarPlugin}
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowSidebarPluginPicker(true)}
-                  className="h-8 w-8"
-                  title="Change plugin"
-                >
-                  <TbPencil className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    setLocalSidebarPlugin(null)
-                    setShowSidebarPluginPicker(false)
-                  }}
-                  className="h-8 w-8 text-destructive hover:text-destructive"
-                  title="Remove sidebar plugin"
-                >
-                  <TbTrash className="w-4 h-4" />
-                </Button>
-              </div>
-            ) : showSidebarPluginPicker ? (
-              <div className="flex flex-col gap-2 border border-border rounded p-3">
-                <div className="relative">
-                  <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder="Search plugins..."
-                    value={sidebarSearchTerm}
-                    onChange={(e) => setSidebarSearchTerm(e.target.value)}
-                    className="pl-10 text-sm"
-                    autoFocus
-                  />
-                </div>
-                <div className="flex flex-col max-h-48 overflow-y-auto">
-                  {pluginsLoading ? (
-                    <div className="flex items-center justify-center p-4">
-                      <Spinner size={20} />
-                    </div>
-                  ) : filteredSidebarPlugins.length === 0 ? (
-                    <p className="text-xs text-muted-foreground p-4 text-center">
-                      {sidebarSearchTerm ? 'No plugins found' : 'No plugins available'}
+              {localSidebarPlugin && !showSidebarPluginPicker ? (
+                <div className="flex items-center gap-3 p-3 border border-border rounded bg-accent/50">
+                  <TbPuzzle className="w-5 h-5 text-muted-foreground shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {selectedSidebarPluginData?.name || localSidebarPlugin}
                     </p>
-                  ) : (
-                    filteredSidebarPlugins.map((plugin) => (
-                      <button
-                        key={plugin.id}
-                        onClick={() => {
-                          setLocalSidebarPlugin(plugin.slug)
-                          setShowSidebarPluginPicker(false)
-                          setSidebarSearchTerm('')
-                        }}
-                        className="flex items-center gap-3 p-2 hover:bg-accent rounded transition-colors text-left"
-                      >
-                        {plugin.image ? (
-                          <img
-                            src={plugin.image}
-                            alt={plugin.name}
-                            className="w-8 h-8 rounded object-cover shrink-0"
-                          />
-                        ) : (
-                          <div className="w-8 h-8 rounded bg-muted flex items-center justify-center shrink-0">
-                            <span className="text-xs text-muted-foreground">
-                              {plugin.name.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {plugin.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground font-mono truncate">
-                            {plugin.slug}
-                          </p>
-                        </div>
-                      </button>
-                    ))
-                  )}
-                </div>
-                <div className="flex justify-end">
+                    <p className="text-xs text-muted-foreground font-mono truncate">
+                      plugin: {localSidebarPlugin}
+                    </p>
+                  </div>
                   <Button
                     variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setShowSidebarPluginPicker(false)
-                      setSidebarSearchTerm('')
-                    }}
+                    size="icon"
+                    onClick={() => setShowSidebarPluginPicker(true)}
+                    className="h-8 w-8"
+                    title="Change plugin"
                   >
-                    Cancel
+                    <TbPencil className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setLocalSidebarPlugin(null)
+                      setShowSidebarPluginPicker(false)
+                    }}
+                    className="h-8 w-8 text-destructive hover:text-destructive"
+                    title="Remove sidebar plugin"
+                  >
+                    <TbTrash className="w-4 h-4" />
                   </Button>
                 </div>
-              </div>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-fit"
-                onClick={() => setShowSidebarPluginPicker(true)}
-              >
-                <TbPuzzle className="w-4 h-4 mr-2" />
-                Set Sidebar Plugin
-              </Button>
-            )}
-          </div>
+              ) : showSidebarPluginPicker ? (
+                <div className="flex flex-col gap-2 border border-border rounded p-3">
+                  <div className="relative">
+                    <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Search plugins..."
+                      value={sidebarSearchTerm}
+                      onChange={(e) => setSidebarSearchTerm(e.target.value)}
+                      className="pl-10 text-sm"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="flex flex-col max-h-48 overflow-y-auto">
+                    {pluginsLoading ? (
+                      <div className="flex items-center justify-center p-4">
+                        <Spinner size={20} />
+                      </div>
+                    ) : filteredSidebarPlugins.length === 0 ? (
+                      <p className="text-xs text-muted-foreground p-4 text-center">
+                        {sidebarSearchTerm ? 'No plugins found' : 'No plugins available'}
+                      </p>
+                    ) : (
+                      filteredSidebarPlugins.map((plugin) => (
+                        <button
+                          key={plugin.id}
+                          onClick={() => {
+                            setLocalSidebarPlugin(plugin.slug)
+                            setShowSidebarPluginPicker(false)
+                            setSidebarSearchTerm('')
+                          }}
+                          className="flex items-center gap-3 p-2 hover:bg-accent rounded transition-colors text-left"
+                        >
+                          {plugin.image ? (
+                            <img
+                              src={plugin.image}
+                              alt={plugin.name}
+                              className="w-8 h-8 rounded object-cover shrink-0"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded bg-muted flex items-center justify-center shrink-0">
+                              <span className="text-xs text-muted-foreground">
+                                {plugin.name.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">
+                              {plugin.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground font-mono truncate">
+                              {plugin.slug}
+                            </p>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                  <div className="flex justify-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setShowSidebarPluginPicker(false)
+                        setSidebarSearchTerm('')
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-fit"
+                  onClick={() => setShowSidebarPluginPicker(true)}
+                >
+                  <TbPuzzle className="w-4 h-4 mr-2" />
+                  Set Sidebar Plugin
+                </Button>
+              )}
+            </div>
           )}
 
           {/* Prototype Tabs Tab */}
           {activeDialogTab === 'tabs' && (
-          <>
-          {localTabs.length > 0 ? (
-            <DragDropContext onDragEnd={handleDragEnd}>
-              <Droppable droppableId="custom-tabs" renderClone={(provided, snapshot, rubric) => {
-                const tab = localTabs[rubric.source.index]
-                return (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
-                    style={{
-                      ...provided.draggableProps.style,
-                    }}
-                    className="flex items-center gap-3 p-4 border border-border rounded bg-background shadow-lg opacity-90"
-                  >
-                    <TbGripVertical className="w-5 h-5 text-muted-foreground" />
-                    {tab?.type === 'builtin' && (
-                      <div className="text-muted-foreground">
-                        {getBuiltinIcon(tab.key)}
+            <>
+              {localTabs.length > 0 ? (
+                <DragDropContext onDragEnd={handleDragEnd}>
+                  <Droppable droppableId="custom-tabs" renderClone={(provided, snapshot, rubric) => {
+                    const tab = localTabs[rubric.source.index]
+                    return (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        style={{
+                          ...provided.draggableProps.style,
+                        }}
+                        className="flex items-center gap-3 p-4 border border-border rounded bg-background shadow-lg opacity-90"
+                      >
+                        <TbGripVertical className="w-5 h-5 text-muted-foreground" />
+                        {tab?.type === 'builtin' && (
+                          <div className="text-muted-foreground">
+                            {getBuiltinIcon(tab.key)}
+                          </div>
+                        )}
+                        <div className="flex-1 flex flex-col gap-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {tab?.label}
+                          </p>
+                          <p className="text-xs text-muted-foreground font-mono truncate">
+                            {tab?.type === 'builtin' ? `builtin: ${tab.key}` : `plugin: ${tab.plugin}`}
+                          </p>
+                        </div>
                       </div>
-                    )}
-                    <div className="flex-1 flex flex-col gap-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {tab?.label}
-                      </p>
-                      <p className="text-xs text-muted-foreground font-mono truncate">
-                        {tab?.type === 'builtin' ? `builtin: ${tab.key}` : `plugin: ${tab.plugin}`}
-                      </p>
-                    </div>
-                  </div>
-                )
-              }}>
-                {(provided, snapshot) => (
-                  <div
-                    {...provided.droppableProps}
-                    ref={provided.innerRef}
-                    className="flex flex-col gap-2"
-                  >
-                    {localTabs.map((tab, index) => {
-                      const draggableId = tab.type === 'builtin' ? `builtin-${tab.key}` : `custom-${tab.plugin}`
-                      return (
-                        <Draggable key={draggableId} draggableId={draggableId} index={index}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              className={`flex items-center gap-3 p-4 border border-border rounded bg-background ${
-                                snapshot.isDragging ? 'opacity-40' : ''
-                              } ${tab.hidden ? 'opacity-60' : ''}`}
-                            >
-                              {/* Drag Handle */}
-                              <div
-                                {...provided.dragHandleProps}
-                                className="flex items-center justify-center text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing"
-                              >
-                                <TbGripVertical className="w-5 h-5" />
-                              </div>
+                    )
+                  }}>
+                    {(provided, snapshot) => (
+                      <div
+                        {...provided.droppableProps}
+                        ref={provided.innerRef}
+                        className="flex flex-col gap-2"
+                      >
+                        {localTabs.map((tab, index) => {
+                          const draggableId = tab.type === 'builtin' ? `builtin-${tab.key}` : `custom-${tab.plugin}`
+                          return (
+                            <Draggable key={draggableId} draggableId={draggableId} index={index}>
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  className={`flex items-center gap-3 p-4 border border-border rounded bg-background ${snapshot.isDragging ? 'opacity-40' : ''
+                                    } ${tab.hidden ? 'opacity-60' : ''}`}
+                                >
+                                  {/* Drag Handle */}
+                                  <div
+                                    {...provided.dragHandleProps}
+                                    className="flex items-center justify-center text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing"
+                                  >
+                                    <TbGripVertical className="w-5 h-5" />
+                                  </div>
 
-                              {/* Icon for builtin tabs */}
-                              {tab.type === 'builtin' && (
-                                <div className="text-muted-foreground">
-                                  {getBuiltinIcon(tab.key)}
+                                  {/* Icon for builtin tabs */}
+                                  {tab.type === 'builtin' && (
+                                    <div className="text-muted-foreground">
+                                      {getBuiltinIcon(tab.key)}
+                                    </div>
+                                  )}
+
+                                  {/* Content */}
+                                  <div className="flex-1 flex flex-col gap-1 min-w-0">
+                                    {editingIndex === index ? (
+                                      <div className="flex flex-col gap-2">
+                                        <Label htmlFor={`edit-label-${index}`} className="text-xs">
+                                          Tab Label
+                                        </Label>
+                                        <Input
+                                          id={`edit-label-${index}`}
+                                          value={editingLabel}
+                                          onChange={(e) => setEditingLabel(e.target.value)}
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') handleSaveEdit()
+                                            if (e.key === 'Escape') handleCancelEdit()
+                                          }}
+                                          className="text-sm"
+                                          autoFocus
+                                        />
+                                      </div>
+                                    ) : (
+                                      <>
+                                        <div className="flex items-center gap-2">
+                                          <p className="text-sm font-medium text-foreground truncate">
+                                            {tab.label}
+                                          </p>
+                                          {tab.type === 'builtin' && (
+                                            <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded">
+                                              Built-in
+                                            </span>
+                                          )}
+                                        </div>
+                                        <p className="text-xs text-muted-foreground font-mono truncate">
+                                          {tab.type === 'builtin' ? `builtin: ${tab.key}` : `plugin: ${tab.plugin}`}
+                                        </p>
+                                      </>
+                                    )}
+                                  </div>
+
+                                  {/* Visibility Toggle */}
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => handleToggleHidden(index)}
+                                      className="h-8 w-8"
+                                      disabled={tab.type === 'builtin' && tab.key !== 'overview'}
+                                      title={tab.hidden ? 'Show tab' : 'Hide tab'}
+                                    >
+                                      {tab.hidden ? (
+                                        <TbEyeOff className="w-4 h-4 text-muted-foreground" />
+                                      ) : (
+                                        <TbEye className="w-4 h-4" />
+                                      )}
+                                    </Button>
+                                  </div>
+
+                                  {/* Actions */}
+                                  <div className="flex items-center gap-2">
+                                    {editingIndex === index ? (
+                                      <>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={handleSaveEdit}
+                                          className="h-8 w-8"
+                                        >
+                                          <TbCheck className="w-4 h-4 text-green-600" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={handleCancelEdit}
+                                          className="h-8 w-8"
+                                        >
+                                          <TbX className="w-4 h-4 text-muted-foreground" />
+                                        </Button>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => handleStartEdit(index)}
+                                          className="h-8 w-8"
+                                        >
+                                          <TbPencil className="w-4 h-4" />
+                                        </Button>
+                                        {tab.type === 'custom' && (
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => handleRemove(index)}
+                                            className="h-8 w-8 text-destructive hover:text-destructive"
+                                          >
+                                            <TbTrash className="w-4 h-4" />
+                                          </Button>
+                                        )}
+                                      </>
+                                    )}
+                                  </div>
                                 </div>
                               )}
-
-                              {/* Content */}
-                              <div className="flex-1 flex flex-col gap-1 min-w-0">
-                                {editingIndex === index ? (
-                                  <div className="flex flex-col gap-2">
-                                    <Label htmlFor={`edit-label-${index}`} className="text-xs">
-                                      Tab Label
-                                    </Label>
-                                    <Input
-                                      id={`edit-label-${index}`}
-                                      value={editingLabel}
-                                      onChange={(e) => setEditingLabel(e.target.value)}
-                                      onKeyDown={(e) => {
-                                        if (e.key === 'Enter') handleSaveEdit()
-                                        if (e.key === 'Escape') handleCancelEdit()
-                                      }}
-                                      className="text-sm"
-                                      autoFocus
-                                    />
-                                  </div>
-                                ) : (
-                                  <>
-                                    <div className="flex items-center gap-2">
-                                      <p className="text-sm font-medium text-foreground truncate">
-                                        {tab.label}
-                                      </p>
-                                      {tab.type === 'builtin' && (
-                                        <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded">
-                                          Built-in
-                                        </span>
-                                      )}
-                                    </div>
-                                    <p className="text-xs text-muted-foreground font-mono truncate">
-                                      {tab.type === 'builtin' ? `builtin: ${tab.key}` : `plugin: ${tab.plugin}`}
-                                    </p>
-                                  </>
-                                )}
-                              </div>
-
-                              {/* Visibility Toggle */}
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleToggleHidden(index)}
-                                  className="h-8 w-8"
-                                  disabled={tab.type === 'builtin' && tab.key === 'overview'}
-                                  title={tab.hidden ? 'Show tab' : 'Hide tab'}
-                                >
-                                  {tab.hidden ? (
-                                    <TbEyeOff className="w-4 h-4 text-muted-foreground" />
-                                  ) : (
-                                    <TbEye className="w-4 h-4" />
-                                  )}
-                                </Button>
-                              </div>
-
-                              {/* Actions */}
-                              <div className="flex items-center gap-2">
-                                {editingIndex === index ? (
-                                  <>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={handleSaveEdit}
-                                      className="h-8 w-8"
-                                    >
-                                      <TbCheck className="w-4 h-4 text-green-600" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={handleCancelEdit}
-                                      className="h-8 w-8"
-                                    >
-                                      <TbX className="w-4 h-4 text-muted-foreground" />
-                                    </Button>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => handleStartEdit(index)}
-                                      className="h-8 w-8"
-                                    >
-                                      <TbPencil className="w-4 h-4" />
-                                    </Button>
-                                    {tab.type === 'custom' && (
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => handleRemove(index)}
-                                        className="h-8 w-8 text-destructive hover:text-destructive"
-                                      >
-                                        <TbTrash className="w-4 h-4" />
-                                      </Button>
-                                    )}
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </Draggable>
-                      )
-                    })}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </DragDropContext>
-          ) : (
-            <div className="flex items-center justify-center p-8 border border-dashed border-border rounded">
-              <p className="text-sm text-muted-foreground">No custom tabs added yet</p>
-            </div>
-          )}
-          </>
+                            </Draggable>
+                          )
+                        })}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
+              ) : (
+                <div className="flex items-center justify-center p-8 border border-dashed border-border rounded">
+                  <p className="text-sm text-muted-foreground">No custom tabs added yet</p>
+                </div>
+              )}
+            </>
           )}
         </div>
 
