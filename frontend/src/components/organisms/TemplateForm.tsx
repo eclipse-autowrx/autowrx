@@ -8,15 +8,32 @@ import {
 } from '@/services/modelTemplate.service'
 import { Input } from '@/components/atoms/input'
 import { Textarea } from '@/components/atoms/textarea'
-import { Button } from '@/components/atoms/button'
 import { Label } from '@/components/atoms/label'
+import { Button } from '@/components/atoms/button'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import DaImportFile from '@/components/atoms/DaImportFile'
 // No direct JSON editor; we provide structured editors for config
 import { uploadFileService } from '@/services/upload.service'
-import { TbPhotoEdit } from 'react-icons/tb'
+import { TbPhotoEdit, TbListCheck, TbEye, TbEyeOff } from 'react-icons/tb'
 import { toast } from 'react-toastify'
 import { listPlugins, type Plugin } from '@/services/plugin.service'
+import { TabConfig, StagingConfig, RightNavPluginButton } from '@/components/organisms/CustomTabEditor'
+import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
+
+// Template-safe normalizer: preserves full TabConfig without injecting default builtin tabs.
+// Used only inside TemplateForm so that the saved template contains exactly what was configured,
+// and builtin tabs that are not explicitly listed are NOT auto-added on the new model.
+const normalizeTabsForTemplate = (tabs?: any[]): TabConfig[] => {
+  if (!tabs || tabs.length === 0) return []
+  // Already new format (has 'type' field) — return as-is
+  if ('type' in tabs[0]) return tabs as TabConfig[]
+  // Old format ({ label, plugin }): convert to custom type only, no builtin defaults
+  return tabs.map((tab) => ({
+    type: 'custom' as const,
+    label: tab.label || '',
+    plugin: tab.plugin || '',
+  }))
+}
 
 type Props = {
   templateId?: string
@@ -29,7 +46,7 @@ type Props = {
     visibility?: string
     config?: any // Full custom_template object
     model_tabs?: Array<{ label: string; plugin: string }>
-    prototype_tabs?: Array<{ label: string; plugin: string }>
+    prototype_tabs?: TabConfig[]
   }
 }
 
@@ -65,9 +82,10 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
   const [modelTabs, setModelTabs] = useState<
     Array<{ label: string; plugin: string }>
   >([])
-  const [prototypeTabs, setPrototypeTabs] = useState<
-    Array<{ label: string; plugin: string }>
-  >([])
+  const [prototypeTabs, setPrototypeTabs] = useState<TabConfig[]>([])
+  const [prototypeStagingConfig, setPrototypeStagingConfig] = useState<StagingConfig>({})
+  const [prototypeTabsVariant, setPrototypeTabsVariant] = useState<string>('tab')
+  const [prototypeRightNavButtons, setPrototypeRightNavButtons] = useState<RightNavPluginButton[]>([])
   const { data: pluginData } = useQuery({
     queryKey: ['plugins-for-template'],
     queryFn: () => listPlugins({ limit: 1000, page: 1 }),
@@ -81,19 +99,26 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
       setModelTabs(
         Array.isArray(cfg.model_tabs)
           ? cfg.model_tabs.map((x: any) => ({
-              label: x.label || '',
-              plugin: x.plugin || '',
-            }))
+            label: x.label || '',
+            plugin: x.plugin || '',
+          }))
           : [],
       )
       setPrototypeTabs(
         Array.isArray(cfg.prototype_tabs)
-          ? cfg.prototype_tabs.map((x: any) => ({
-              label: x.label || '',
-              plugin: x.plugin || '',
-            }))
+          ? normalizeTabsForTemplate(cfg.prototype_tabs)
           : [],
       )
+      setPrototypeTabsVariant(cfg.prototype_tabs_variant || 'tab')
+      // Extract staging config and non-staging right nav buttons from prototype_right_nav_buttons
+      const rightNavRaw: RightNavPluginButton[] = Array.isArray(cfg.prototype_right_nav_buttons) ? cfg.prototype_right_nav_buttons : []
+      const stagingItem = rightNavRaw.find(b => b.builtin === 'staging')
+      if (stagingItem) {
+        setPrototypeStagingConfig({ label: stagingItem.label, iconSvg: stagingItem.iconSvg, hideIcon: stagingItem.hideIcon, variant: stagingItem.variant })
+      } else {
+        setPrototypeStagingConfig({})
+      }
+      setPrototypeRightNavButtons(rightNavRaw.filter(b => b.builtin !== 'staging'))
     } else {
       console.log('[TemplateForm] initial not found')
       setForm({
@@ -105,6 +130,9 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
       })
       setModelTabs([])
       setPrototypeTabs([])
+      setPrototypeStagingConfig({})
+      setPrototypeRightNavButtons([])
+      setPrototypeTabsVariant('tab')
     }
   }, [initial])
 
@@ -112,7 +140,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
   useEffect(() => {
     const wasOpen = prevOpenRef.current
     prevOpenRef.current = open
-    
+
     if (open && !wasOpen && isCreate) {
       console.log('[TemplateForm] Dialog opened in create mode. initialData:', initialData)
       setActiveTab('meta')
@@ -128,6 +156,8 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
         })
         setModelTabs([])
         setPrototypeTabs([])
+        setPrototypeStagingConfig({})
+        setPrototypeRightNavButtons([])
       }
     }
   }, [open, isCreate, initialData])
@@ -142,20 +172,20 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
       console.log('[TemplateForm] initialData.config.prototype_tabs:', initialData.config?.prototype_tabs)
       const fullConfig = initialData.config || {}
       console.log('[TemplateForm] fullConfig:', fullConfig)
-      
+
       // Extract tabs directly from config (custom_template) - this is the source of truth
-      const modelTabsFromConfig = Array.isArray(fullConfig.model_tabs) 
-        ? fullConfig.model_tabs 
+      const modelTabsFromConfig = Array.isArray(fullConfig.model_tabs)
+        ? fullConfig.model_tabs
         : []
-      const prototypeTabsFromConfig = Array.isArray(fullConfig.prototype_tabs) 
-        ? fullConfig.prototype_tabs 
+      const prototypeTabsFromConfig = Array.isArray(fullConfig.prototype_tabs)
+        ? fullConfig.prototype_tabs
         : []
-      
+
       console.log('[TemplateForm] Extracted tabs:', {
         modelTabsFromConfig,
         prototypeTabsFromConfig,
       })
-      
+
       // Pre-populate with initial data, preserving entire config structure
       setForm({
         name: initialData.name || '',
@@ -170,12 +200,18 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
           plugin: x.plugin || '',
         }))
       )
-      setPrototypeTabs(
-        prototypeTabsFromConfig.map((x: any) => ({
-          label: x.label || '',
-          plugin: x.plugin || '',
-        }))
-      )
+      // Preserve full TabConfig structure (type, key, hidden) without adding default builtin tabs
+      setPrototypeTabs(normalizeTabsForTemplate(prototypeTabsFromConfig))
+      setPrototypeTabsVariant(fullConfig.prototype_tabs_variant || 'tab')
+      // Extract staging config and non-staging right nav buttons from prototype_right_nav_buttons
+      const rightNavRaw2: RightNavPluginButton[] = Array.isArray(fullConfig.prototype_right_nav_buttons) ? fullConfig.prototype_right_nav_buttons : []
+      const stagingItem2 = rightNavRaw2.find(b => b.builtin === 'staging')
+      if (stagingItem2) {
+        setPrototypeStagingConfig({ label: stagingItem2.label, iconSvg: stagingItem2.iconSvg, hideIcon: stagingItem2.hideIcon, variant: stagingItem2.variant })
+      } else {
+        setPrototypeStagingConfig({})
+      }
+      setPrototypeRightNavButtons(rightNavRaw2.filter(b => b.builtin !== 'staging'))
     }
   }, [open, isCreate, initialData])
 
@@ -193,6 +229,12 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
           ...(form.config || {}),
           model_tabs: [...modelTabs],
           prototype_tabs: [...prototypeTabs],
+          prototype_tabs_variant: prototypeTabsVariant !== 'tab' ? prototypeTabsVariant : null,
+          prototype_right_nav_buttons: [
+            // Staging is always first item in the right nav list
+            { builtin: 'staging' as const, ...prototypeStagingConfig },
+            ...prototypeRightNavButtons,
+          ],
         },
       }
       if (isCreate) return createModelTemplate(payload)
@@ -209,7 +251,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
   })
 
   return (
-    <div className="flex flex-col w-full">
+    <div className="flex flex-col w-full h-full overflow-auto">
       <h2 className="text-xl font-semibold text-foreground mb-4">
         {isCreate ? 'Create Template' : 'Edit Template'}
       </h2>
@@ -237,7 +279,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
         </DaTabItem>
       </div>
 
-      <div className="p-6 overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto p-6">
         {isFetching && !isCreate ? (
           <p className="text-sm text-muted-foreground">Loading...</p>
         ) : (
@@ -263,15 +305,15 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <Label>Visibility</Label>
-                    <select
-                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                    <DaSelect
                       value={form.visibility || 'public'}
-                      onChange={(e) => onChange('visibility', e.target.value)}
+                      onValueChange={(v) => onChange('visibility', v)}
+                      className="h-9 text-sm"
                     >
-                      <option value="public">public</option>
-                      <option value="private">private</option>
-                      <option value="default">default</option>
-                    </select>
+                      <DaSelectItem value="public">public</DaSelectItem>
+                      <DaSelectItem value="private">private</DaSelectItem>
+                      <DaSelectItem value="default">default</DaSelectItem>
+                    </DaSelect>
                   </div>
                 </div>
                 <div className="w-44 flex-shrink-0">
@@ -347,25 +389,24 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                       />
                     </div>
                     <div className="col-span-6">
-                      <select
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-                        value={it.plugin}
-                        onChange={(e) => {
-                          const v = e.target.value
+                      <DaSelect
+                        value={it.plugin || '__none__'}
+                        onValueChange={(v) => {
                           setModelTabs((arr) =>
                             arr.map((x, i) =>
-                              i === idx ? { ...x, plugin: v } : x,
+                              i === idx ? { ...x, plugin: v === '__none__' ? '' : v } : x,
                             ),
                           )
                         }}
+                        className="h-9 text-sm"
                       >
-                        <option value="">Select plugin</option>
+                        <DaSelectItem value="__none__">Select plugin</DaSelectItem>
                         {pluginData?.results?.map((p: Plugin) => (
-                          <option key={p.id} value={p.id}>
+                          <DaSelectItem key={p.id} value={p.id}>
                             {p.name}
-                          </option>
+                          </DaSelectItem>
                         ))}
-                      </select>
+                      </DaSelect>
                     </div>
                     <div className="col-span-1 flex justify-end">
                       <Button
@@ -385,6 +426,76 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
 
             {activeTab === 'prototype' && (
               <div className="space-y-3">
+                <div className="flex flex-col gap-3 pb-3 border-b border-border">
+                  <span className="text-sm font-semibold text-foreground">Staging Tab</span>
+
+                  {/* Visibility */}
+                  <div className="flex items-center gap-3">
+                    <Label className="text-xs w-20 shrink-0">Show Icon</Label>
+                    <button
+                      type="button"
+                      onClick={() => setPrototypeStagingConfig(c => ({ ...c, hideIcon: !c.hideIcon }))}
+                      className="flex items-center gap-2 text-sm hover:opacity-70 transition-opacity"
+                    >
+                      {prototypeStagingConfig.hideIcon
+                        ? <><TbEyeOff className="w-4 h-4 text-muted-foreground" /><span className="text-muted-foreground">Hidden</span></>
+                        : <><TbEye className="w-4 h-4" /><span>Visible</span></>}
+                    </button>
+                  </div>
+
+                  {/* Label */}
+                  <div className="flex items-center gap-3">
+                    <Label className="text-xs w-20 shrink-0">Label</Label>
+                    <Input
+                      placeholder="Staging"
+                      value={prototypeStagingConfig.label || ''}
+                      onChange={(e) => setPrototypeStagingConfig(c => ({ ...c, label: e.target.value }))}
+                      className="max-w-xs text-sm"
+                    />
+                  </div>
+
+                  {/* Icon SVG */}
+                  <div className="flex items-start gap-3">
+                    <Label className="text-xs w-20 shrink-0 mt-1">Icon (SVG)</Label>
+                    <div className="flex gap-2 items-start flex-1">
+                      <textarea
+                        value={prototypeStagingConfig.iconSvg || ''}
+                        onChange={(e) => setPrototypeStagingConfig(c => ({ ...c, iconSvg: e.target.value || undefined }))}
+                        placeholder="<svg xmlns=&quot;...&quot;>...</svg>"
+                        className="text-xs font-mono flex-1 min-h-15 resize-y rounded border border-input bg-background px-2 py-1.5 outline-none focus:ring-1 focus:ring-ring"
+                        spellCheck={false}
+                      />
+                      {prototypeStagingConfig.iconSvg ? (
+                        <span
+                          className="w-6 h-6 shrink-0 mt-0.5 [&>svg]:w-full [&>svg]:h-full [&>svg]:fill-current"
+                          dangerouslySetInnerHTML={{ __html: prototypeStagingConfig.iconSvg }}
+                        />
+                      ) : (
+                        <TbListCheck className="w-6 h-6 text-muted-foreground shrink-0 mt-0.5" />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Style / Variant */}
+                  <div className="flex items-start gap-3">
+                    <Label className="text-xs w-20 shrink-0 mt-1">Style</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {(['tab', 'primary', 'outline', 'ghost'] as const).map((v) => (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => setPrototypeStagingConfig(c => ({ ...c, variant: v }))}
+                          className={`px-3 py-1 text-xs rounded border capitalize transition-colors ${(prototypeStagingConfig.variant || 'tab') === v
+                            ? 'bg-primary text-primary-foreground border-primary'
+                            : 'bg-background text-foreground border-border hover:bg-accent'
+                            }`}
+                        >
+                          {v}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-semibold text-foreground">
                     Prototype Tabs
@@ -392,11 +503,30 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                   <Button
                     size="sm"
                     onClick={() =>
-                      setPrototypeTabs((t) => [...t, { label: '', plugin: '' }])
+                      setPrototypeTabs((t) => [...t, { type: 'custom', label: '', plugin: '' }])
                     }
                   >
                     Add Item
                   </Button>
+                </div>
+                {/* Global Tab Style */}
+                <div className="flex items-start gap-3">
+                  <Label className="text-xs w-20 shrink-0 text-foreground mt-1">Tab Style</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {(['tab', 'primary', 'outline', 'ghost'] as const).map((v) => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => setPrototypeTabsVariant(v)}
+                        className={`px-3 py-1 text-xs rounded border capitalize transition-colors ${prototypeTabsVariant === v
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-background text-foreground border-border hover:bg-accent'
+                          }`}
+                      >
+                        {v}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 {prototypeTabs.length === 0 && (
                   <p className="text-sm text-muted-foreground">
@@ -406,55 +536,97 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                 {prototypeTabs.map((it, idx) => (
                   <div
                     key={idx}
-                    className="grid grid-cols-12 gap-2 items-center"
+                    className="flex flex-col gap-2 p-3 border border-border rounded"
                   >
-                    <div className="col-span-5">
-                      <Input
-                        placeholder="Label"
-                        value={it.label}
-                        onChange={(e) => {
-                          const v = e.target.value
-                          setPrototypeTabs((arr) =>
-                            arr.map((x, i) =>
-                              i === idx ? { ...x, label: v } : x,
-                            ),
-                          )
-                        }}
-                      />
+                    <div className="grid grid-cols-12 gap-2 items-center">
+                      <div className="col-span-5 flex items-center gap-1.5">
+                        {it.type === 'builtin' && (
+                          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide bg-muted text-muted-foreground rounded px-1.5 py-0.5">
+                            built-in
+                          </span>
+                        )}
+                        <Input
+                          placeholder="Label"
+                          value={it.label}
+                          onChange={(e) => {
+                            const v = e.target.value
+                            setPrototypeTabs((arr) =>
+                              arr.map((x, i) =>
+                                i === idx ? { ...x, label: v } : x,
+                              ),
+                            )
+                          }}
+                        />
+                      </div>
+                      {it.type === 'builtin' ? (
+                        <div className="col-span-6 text-sm text-muted-foreground px-2">
+                          Built-in tab ({it.key}){it.hidden ? ' — hidden' : ''}
+                        </div>
+                      ) : (
+                        <div className="col-span-6">
+                          <DaSelect
+                            value={it.plugin || '__none__'}
+                            onValueChange={(v) => {
+                              setPrototypeTabs((arr) =>
+                                arr.map((x, i) =>
+                                  i === idx ? { ...x, plugin: v === '__none__' ? '' : v } : x,
+                                ),
+                              )
+                            }}
+                            className="h-9 text-sm"
+                          >
+                            <DaSelectItem value="__none__">Select plugin</DaSelectItem>
+                            {pluginData?.results?.map((p: Plugin) => (
+                              <DaSelectItem key={p.id} value={p.slug || p.id}>
+                                {p.name}
+                              </DaSelectItem>
+                            ))}
+                          </DaSelect>
+                        </div>
+                      )}
+                      <div className="col-span-1 flex justify-end">
+                        {it.type !== 'builtin' && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() =>
+                              setPrototypeTabs((arr) =>
+                                arr.filter((_, i) => i !== idx),
+                              )
+                            }
+                          >
+                            Delete
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                    <div className="col-span-6">
-                      <select
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-                        value={it.plugin}
-                        onChange={(e) => {
-                          const v = e.target.value
-                          setPrototypeTabs((arr) =>
-                            arr.map((x, i) =>
-                              i === idx ? { ...x, plugin: v } : x,
-                            ),
-                          )
-                        }}
-                      >
-                        <option value="">Select plugin</option>
-                        {pluginData?.results?.map((p: Plugin) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="col-span-1 flex justify-end">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() =>
-                          setPrototypeTabs((arr) =>
-                            arr.filter((_, i) => i !== idx),
-                          )
-                        }
-                      >
-                        Delete
-                      </Button>
+                    {/* Per-tab custom icon SVG */}
+                    <div className="flex items-start gap-2">
+                      <Label className="text-xs w-20 shrink-0 text-muted-foreground mt-1">Icon (SVG)</Label>
+                      <div className="flex gap-2 items-start flex-1">
+                        <textarea
+                          value={it.iconSvg || ''}
+                          onChange={(e) => {
+                            const v = e.target.value
+                            setPrototypeTabs((arr) =>
+                              arr.map((x, i) =>
+                                i === idx ? { ...x, iconSvg: v || undefined } : x,
+                              ),
+                            )
+                          }}
+                          placeholder="Paste SVG (optional)"
+                          className="text-xs font-mono flex-1 min-h-12 resize-y rounded border border-input bg-background px-2 py-1.5 outline-none focus:ring-1 focus:ring-ring"
+                          spellCheck={false}
+                        />
+                        {it.iconSvg ? (
+                          <span
+                            className="w-6 h-6 shrink-0 mt-0.5 [&>svg]:w-full [&>svg]:h-full [&>svg]:fill-current"
+                            dangerouslySetInnerHTML={{ __html: it.iconSvg }}
+                          />
+                        ) : (
+                          <span className="w-6 h-6 shrink-0 mt-0.5 flex items-center justify-center rounded border border-dashed border-border text-muted-foreground text-xs">—</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}

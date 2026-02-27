@@ -86,7 +86,7 @@ const RootLayout = () => {
       </div>
 
       {config && config.instance !== 'digitalauto' && (
-        <div className="flex w-full justify-center sticky bottom-0 right-0 z-10 bg-gray-100 px-4 py-1 text-xs text-da-white border-t gap-5">
+        <div className="flex w-full justify-center sticky bottom-0 right-0 z-10 bg-gray-100 px-4 py-1 text-xs text-da-gray-dark border-t gap-5">
           <a
             href="https://www.digital.auto/"
             target="_blank"
