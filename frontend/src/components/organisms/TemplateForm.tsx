@@ -480,7 +480,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                   <div className="flex items-start gap-3">
                     <Label className="text-xs w-20 shrink-0 mt-1">Style</Label>
                     <div className="flex flex-wrap gap-2">
-                      {(['tab', 'primary', 'outline', 'secondary', 'ghost'] as const).map((v) => (
+                      {(['tab', 'primary', 'outline', 'ghost'] as const).map((v) => (
                         <button
                           key={v}
                           type="button"
