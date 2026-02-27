@@ -37,8 +37,10 @@ import {
   TbEyeOff,
   TbLayoutSidebar,
   TbSearch,
+  TbListCheck,
 } from 'react-icons/tb'
 import { MdOutlineDoubleArrow } from 'react-icons/md'
+import StagingTabButtonPreview from '@/components/organisms/StagingTabButtonPreview'
 
 export interface CustomTab {
   label: string
@@ -53,12 +55,20 @@ export interface TabConfig {
   hidden?: boolean  // If true, tab is hidden 
 }
 
+export interface StagingConfig {
+  label?: string
+  hideIcon?: boolean
+  iconUrl?: string
+  variant?: 'tab' | 'primary' | 'outline' | 'secondary' | 'ghost'
+}
+
 interface CustomTabEditorProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   tabs: TabConfig[]
-  onSave: (updatedTabs: TabConfig[], updatedSidebarPlugin?: string | null) => Promise<void>
+  onSave: (updatedTabs: TabConfig[], updatedSidebarPlugin?: string | null, updatedStagingConfig?: StagingConfig | null) => Promise<void>
   sidebarPlugin?: string
+  stagingConfig?: StagingConfig
   title?: string
   description?: string
 }
@@ -69,6 +79,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
   tabs,
   onSave,
   sidebarPlugin,
+  stagingConfig,
   title = 'Manage Custom Tabs',
   description = 'Edit, reorder, and remove custom tabs',
 }) => {
@@ -76,7 +87,8 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const [editingLabel, setEditingLabel] = useState<string>('')
   const [isSaving, setIsSaving] = useState(false)
-  const [activeDialogTab, setActiveDialogTab] = useState<'tabs' | 'sidebar'>('tabs')
+  const [activeDialogTab, setActiveDialogTab] = useState<'tabs' | 'sidebar' | 'staging'>('tabs')
+  const [localStagingConfig, setLocalStagingConfig] = useState<StagingConfig>(stagingConfig || {})
 
   // Sidebar plugin state
   const [localSidebarPlugin, setLocalSidebarPlugin] = useState<string | null>(sidebarPlugin || null)
@@ -95,13 +107,14 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
     if (open) {
       setLocalTabs(tabs)
       setLocalSidebarPlugin(sidebarPlugin || null)
+      setLocalStagingConfig(stagingConfig || {})
       setActiveDialogTab('tabs')
       setEditingIndex(null)
       setEditingLabel('')
       setShowSidebarPluginPicker(false)
       setSidebarSearchTerm('')
     }
-  }, [open, tabs, sidebarPlugin])
+  }, [open, tabs, sidebarPlugin, stagingConfig])
 
   // Get icon for builtin tabs
   const getBuiltinIcon = (key?: string) => {
@@ -182,7 +195,13 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
     try {
       // Determine if sidebar plugin changed
       const sidebarChanged = localSidebarPlugin !== (sidebarPlugin || null)
-      await onSave(localTabs, sidebarChanged ? localSidebarPlugin : undefined)
+      // Determine if staging config changed
+      const stagingChanged = JSON.stringify(localStagingConfig) !== JSON.stringify(stagingConfig || {})
+      await onSave(
+        localTabs,
+        sidebarChanged ? localSidebarPlugin : undefined,
+        stagingChanged ? (Object.keys(localStagingConfig).length ? localStagingConfig : null) : undefined,
+      )
       onOpenChange(false)
     } catch (error) {
       console.error('Failed to save tabs:', error)
@@ -194,6 +213,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
   const handleCancel = () => {
     setLocalTabs(tabs) // Reset to original
     setLocalSidebarPlugin(sidebarPlugin || null)
+    setLocalStagingConfig(stagingConfig || {})
     setEditingIndex(null)
     setEditingLabel('')
     setShowSidebarPluginPicker(false)
@@ -242,6 +262,16 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
           >
             <TbLayoutSidebar className="w-4 h-4" />
             Left Sidebar Plugin
+          </button>
+          <button
+            onClick={() => setActiveDialogTab('staging')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeDialogTab === 'staging'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+          >
+            <TbListCheck className="w-4 h-4" />
+            Staging Tab
           </button>
         </div>
 
@@ -368,6 +398,88 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
                   Set Sidebar Plugin
                 </Button>
               )}
+            </div>
+          )}
+
+          {/* Staging Tab */}
+          {activeDialogTab === 'staging' && (
+            <div className="flex flex-col gap-5">
+              <p className="text-sm text-muted-foreground">
+                Customize the appearance and visibility of the Staging tab button.
+              </p>
+
+              {/* Show Icon */}
+              <div className="flex items-center gap-3">
+                <Label className="text-xs w-20 shrink-0 text-foreground">Show Icon</Label>
+                <button
+                  type="button"
+                  onClick={() => setLocalStagingConfig(c => ({ ...c, hideIcon: !c.hideIcon }))}
+                  className="flex items-center gap-2 text-sm hover:opacity-70 transition-opacity"
+                >
+                  {localStagingConfig.hideIcon ? (
+                    <><TbEyeOff className="w-4 h-4 text-muted-foreground" /><span className="text-muted-foreground">Hidden</span></>
+                  ) : (
+                    <><TbEye className="w-4 h-4" /><span>Visible</span></>
+                  )}
+                </button>
+              </div>
+
+              {/* Label */}
+              <div className="flex items-center gap-3">
+                <Label htmlFor="staging-label-input" className="text-xs w-20 shrink-0 text-foreground">Label</Label>
+                <Input
+                  id="staging-label-input"
+                  value={localStagingConfig.label || ''}
+                  onChange={(e) => setLocalStagingConfig(c => ({ ...c, label: e.target.value }))}
+                  placeholder="Staging"
+                  className="text-sm flex-1"
+                />
+              </div>
+
+              {/* Icon URL */}
+              <div className="flex items-center gap-3">
+                <Label htmlFor="staging-icon-input" className="text-xs w-20 shrink-0 text-foreground">Icon URL</Label>
+                <Input
+                  id="staging-icon-input"
+                  value={localStagingConfig.iconUrl || ''}
+                  onChange={(e) => setLocalStagingConfig(c => ({ ...c, iconUrl: e.target.value }))}
+                  placeholder="https://example.com/icon.png"
+                  className="text-sm flex-1"
+                />
+                {localStagingConfig.iconUrl ? (
+                  <img src={localStagingConfig.iconUrl} alt="icon" className="w-7 h-7 object-contain rounded border border-border shrink-0" />
+                ) : (
+                  <TbListCheck className="w-7 h-7 text-muted-foreground shrink-0" />
+                )}
+              </div>
+
+              {/* Style / Variant */}
+              <div className="flex items-start gap-3">
+                <Label className="text-xs w-20 shrink-0 text-foreground mt-1">Style</Label>
+                <div className="flex flex-wrap gap-2">
+                  {(['tab', 'primary', 'outline', 'secondary', 'ghost'] as const).map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => setLocalStagingConfig(c => ({ ...c, variant: v }))}
+                      className={`px-3 py-1 text-xs rounded border capitalize transition-colors ${(localStagingConfig.variant || 'tab') === v
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-background text-foreground border-border hover:bg-accent'
+                        }`}
+                    >
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Preview */}
+              <div className="flex items-center gap-3">
+                <Label className="text-xs w-20 shrink-0 text-foreground">Preview</Label>
+                <div className="flex items-center h-10 border border-dashed border-border rounded px-4 bg-accent/20 gap-2">
+                  <StagingTabButtonPreview stagingConfig={localStagingConfig} />
+                </div>
+              </div>
             </div>
           )}
 

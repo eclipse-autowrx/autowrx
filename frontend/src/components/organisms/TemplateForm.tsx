@@ -8,16 +8,16 @@ import {
 } from '@/services/modelTemplate.service'
 import { Input } from '@/components/atoms/input'
 import { Textarea } from '@/components/atoms/textarea'
-import { Button } from '@/components/atoms/button'
 import { Label } from '@/components/atoms/label'
+import { Button } from '@/components/atoms/button'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import DaImportFile from '@/components/atoms/DaImportFile'
 // No direct JSON editor; we provide structured editors for config
 import { uploadFileService } from '@/services/upload.service'
-import { TbPhotoEdit } from 'react-icons/tb'
+import { TbPhotoEdit, TbListCheck, TbEye, TbEyeOff } from 'react-icons/tb'
 import { toast } from 'react-toastify'
 import { listPlugins, type Plugin } from '@/services/plugin.service'
-import { TabConfig } from '@/components/organisms/CustomTabEditor'
+import { TabConfig, StagingConfig } from '@/components/organisms/CustomTabEditor'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 
 // Template-safe normalizer: preserves full TabConfig without injecting default builtin tabs.
@@ -83,6 +83,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
     Array<{ label: string; plugin: string }>
   >([])
   const [prototypeTabs, setPrototypeTabs] = useState<TabConfig[]>([])
+  const [prototypeStagingConfig, setPrototypeStagingConfig] = useState<StagingConfig>({})
   const { data: pluginData } = useQuery({
     queryKey: ['plugins-for-template'],
     queryFn: () => listPlugins({ limit: 1000, page: 1 }),
@@ -106,6 +107,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
           ? normalizeTabsForTemplate(cfg.prototype_tabs)
           : [],
       )
+      setPrototypeStagingConfig(cfg.prototype_staging_config || (cfg.prototype_staging_label ? { label: cfg.prototype_staging_label } : {}))
     } else {
       console.log('[TemplateForm] initial not found')
       setForm({
@@ -117,6 +119,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
       })
       setModelTabs([])
       setPrototypeTabs([])
+      setPrototypeStagingConfig({})
     }
   }, [initial])
 
@@ -140,6 +143,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
         })
         setModelTabs([])
         setPrototypeTabs([])
+        setPrototypeStagingConfig({})
       }
     }
   }, [open, isCreate, initialData])
@@ -184,6 +188,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
       )
       // Preserve full TabConfig structure (type, key, hidden) without adding default builtin tabs
       setPrototypeTabs(normalizeTabsForTemplate(prototypeTabsFromConfig))
+      setPrototypeStagingConfig(fullConfig.prototype_staging_config || (fullConfig.prototype_staging_label ? { label: fullConfig.prototype_staging_label } : {}))
     }
   }, [open, isCreate, initialData])
 
@@ -201,6 +206,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
           ...(form.config || {}),
           model_tabs: [...modelTabs],
           prototype_tabs: [...prototypeTabs],
+          prototype_staging_config: Object.keys(prototypeStagingConfig).length ? prototypeStagingConfig : null,
         },
       }
       if (isCreate) return createModelTemplate(payload)
@@ -392,6 +398,68 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
 
             {activeTab === 'prototype' && (
               <div className="space-y-3">
+                <div className="flex flex-col gap-3 pb-3 border-b border-border">
+                  <span className="text-sm font-semibold text-foreground">Staging Tab</span>
+
+                  {/* Visibility */}
+                  <div className="flex items-center gap-3">
+                    <Label className="text-xs w-20 shrink-0">Show Icon</Label>
+                    <button
+                      type="button"
+                      onClick={() => setPrototypeStagingConfig(c => ({ ...c, hideIcon: !c.hideIcon }))}
+                      className="flex items-center gap-2 text-sm hover:opacity-70 transition-opacity"
+                    >
+                      {prototypeStagingConfig.hideIcon
+                        ? <><TbEyeOff className="w-4 h-4 text-muted-foreground" /><span className="text-muted-foreground">Hidden</span></>
+                        : <><TbEye className="w-4 h-4" /><span>Visible</span></>}
+                    </button>
+                  </div>
+
+                  {/* Label */}
+                  <div className="flex items-center gap-3">
+                    <Label className="text-xs w-20 shrink-0">Label</Label>
+                    <Input
+                      placeholder="Staging"
+                      value={prototypeStagingConfig.label || ''}
+                      onChange={(e) => setPrototypeStagingConfig(c => ({ ...c, label: e.target.value }))}
+                      className="max-w-xs text-sm"
+                    />
+                  </div>
+
+                  {/* Icon URL */}
+                  <div className="flex items-center gap-3">
+                    <Label className="text-xs w-20 shrink-0">Icon URL</Label>
+                    <Input
+                      placeholder="https://example.com/icon.png"
+                      value={prototypeStagingConfig.iconUrl || ''}
+                      onChange={(e) => setPrototypeStagingConfig(c => ({ ...c, iconUrl: e.target.value }))}
+                      className="max-w-xs text-sm"
+                    />
+                    {prototypeStagingConfig.iconUrl
+                      ? <img src={prototypeStagingConfig.iconUrl} alt="icon" className="w-6 h-6 object-contain rounded border border-border shrink-0" />
+                      : <TbListCheck className="w-6 h-6 text-muted-foreground shrink-0" />}
+                  </div>
+
+                  {/* Style / Variant */}
+                  <div className="flex items-start gap-3">
+                    <Label className="text-xs w-20 shrink-0 mt-1">Style</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {(['tab', 'primary', 'outline', 'secondary', 'ghost'] as const).map((v) => (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => setPrototypeStagingConfig(c => ({ ...c, variant: v }))}
+                          className={`px-3 py-1 text-xs rounded border capitalize transition-colors ${(prototypeStagingConfig.variant || 'tab') === v
+                            ? 'bg-primary text-primary-foreground border-primary'
+                            : 'bg-background text-foreground border-border hover:bg-accent'
+                            }`}
+                        >
+                          {v}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-semibold text-foreground">
                     Prototype Tabs

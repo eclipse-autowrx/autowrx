@@ -7,12 +7,17 @@
 // SPDX-License-Identifier: MIT
 
 import { useQuery } from '@tanstack/react-query'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { Prototype } from '@/types/model.type'
 import { getPrototype } from '@/services/prototype.service'
 
 const useCurrentPrototype = () => {
-  const { prototype_id } = useParams<{ prototype_id: string }>()
+  const { prototype_id: pathPrototypeId } = useParams<{
+    prototype_id: string
+  }>()
+  const [searchParams] = useSearchParams()
+  const prototype_id =
+    pathPrototypeId || searchParams.get('prototype_id') || undefined
 
   return useQuery<Prototype>({
     queryKey: ['prototype', prototype_id],

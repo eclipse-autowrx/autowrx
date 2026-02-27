@@ -10,7 +10,7 @@ import { FC, useCallback, useEffect, useState } from 'react'
 import { configManagementService } from '@/services/configManagement.service'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
 import { Spinner } from '@/components/atoms/spinner'
 import {
   TbDotsVertical,
@@ -42,7 +42,7 @@ import { updateModelService } from '@/services/model.service'
 import { toast } from 'react-toastify'
 import { Dialog, DialogContent } from '@/components/atoms/dialog'
 import PagePrototypePlugin from '@/pages/PagePrototypePlugin'
-import CustomTabEditor, { TabConfig } from '@/components/organisms/CustomTabEditor'
+import CustomTabEditor, { TabConfig, StagingConfig } from '@/components/organisms/CustomTabEditor'
 import PrototypeTabInfo from '../components/organisms/PrototypeTabInfo'
 import TemplateForm from '@/components/organisms/TemplateForm'
 import PrototypeTabJourney from '@/components/organisms/PrototypeTabJourney'
@@ -51,6 +51,7 @@ import PrototypeTabs, { getTabConfig } from '@/components/molecules/PrototypeTab
 import DaTabItem from '@/components/atoms/DaTabItem'
 import usePluginPreloader from '@/hooks/usePluginPreloader'
 import PrototypeSidebar from '@/components/organisms/PrototypeSidebar'
+import StagingTabButton from '@/components/organisms/StagingTabButton'
 
 interface ViewPrototypeProps {
   display?: 'tree' | 'list'
@@ -125,6 +126,10 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
 
   // Extract sidebar plugin slug
   const sidebarPlugin: string | undefined = model?.custom_template?.prototype_sidebar_plugin || undefined
+
+  // Extract staging tab config (with fallback from legacy prototype_staging_label)
+  const stagingConfig: StagingConfig = model?.custom_template?.prototype_staging_config
+    || (model?.custom_template?.prototype_staging_label ? { label: model.custom_template.prototype_staging_label } : {})
 
   // Preload plugin JavaScript files
   usePluginPreloader({
@@ -240,7 +245,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
     }
   }
 
-  const handleSaveCustomTabs = async (updatedTabs: TabConfig[], updatedSidebarPlugin?: string | null) => {
+  const handleSaveCustomTabs = async (updatedTabs: TabConfig[], updatedSidebarPlugin?: string | null, updatedStagingConfig?: StagingConfig | null) => {
     if (!model_id || !model) {
       toast.error('Model not found')
       return
@@ -255,6 +260,11 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
       // Update sidebar plugin: null means remove, string means set, undefined means no change
       if (updatedSidebarPlugin !== undefined) {
         updates.prototype_sidebar_plugin = updatedSidebarPlugin
+      }
+
+      // Update staging config: null means remove, object means set, undefined means no change
+      if (updatedStagingConfig !== undefined) {
+        updates.prototype_staging_config = updatedStagingConfig
       }
 
       await updateModelService(model_id, {
@@ -306,14 +316,12 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
           )}
           <div className="grow"></div>
           {/* Staging tab - right side, before three dots */}
-          <DaTabItem
-            active={tab === 'staging'}
-            to={`/model/${model_id}/library/prototype/${prototype_id}/staging`}
-            dataId="tab-staging"
-          >
-            <TbListCheck className="w-5 h-5 mr-2" />
-            Staging
-          </DaTabItem>
+          <StagingTabButton
+            model_id={model_id}
+            prototype_id={prototype_id}
+            stagingConfig={stagingConfig}
+            tab={tab}
+          />
           {isModelOwner && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -432,6 +440,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
         tabs={getTabConfig(model?.custom_template?.prototype_tabs)}
         onSave={handleSaveCustomTabs}
         sidebarPlugin={sidebarPlugin}
+        stagingConfig={stagingConfig}
         title="Manage Prototype Tabs"
         description="Reorder tabs, edit labels, hide/show tabs, and remove custom tabs"
       />
