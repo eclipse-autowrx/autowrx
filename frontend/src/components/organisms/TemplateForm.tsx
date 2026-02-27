@@ -17,7 +17,7 @@ import { uploadFileService } from '@/services/upload.service'
 import { TbPhotoEdit } from 'react-icons/tb'
 import { toast } from 'react-toastify'
 import { listPlugins, type Plugin } from '@/services/plugin.service'
-
+import type { TabConfig } from '@/components/organisms/CustomTabEditor'
 type Props = {
   templateId?: string
   onClose: () => void
@@ -65,9 +65,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
   const [modelTabs, setModelTabs] = useState<
     Array<{ label: string; plugin: string }>
   >([])
-  const [prototypeTabs, setPrototypeTabs] = useState<
-    Array<{ label: string; plugin: string }>
-  >([])
+  const [prototypeTabs, setPrototypeTabs] = useState<TabConfig[]>([])
   const { data: pluginData } = useQuery({
     queryKey: ['plugins-for-template'],
     queryFn: () => listPlugins({ limit: 1000, page: 1 }),
@@ -88,10 +86,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
       )
       setPrototypeTabs(
         Array.isArray(cfg.prototype_tabs)
-          ? cfg.prototype_tabs.map((x: any) => ({
-              label: x.label || '',
-              plugin: x.plugin || '',
-            }))
+          ? cfg.prototype_tabs
           : [],
       )
     } else {
@@ -171,10 +166,9 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
         }))
       )
       setPrototypeTabs(
-        prototypeTabsFromConfig.map((x: any) => ({
-          label: x.label || '',
-          plugin: x.plugin || '',
-        }))
+        Array.isArray(prototypeTabsFromConfig)
+          ? prototypeTabsFromConfig
+          : [],
       )
     }
   }, [open, isCreate, initialData])
@@ -392,7 +386,10 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                   <Button
                     size="sm"
                     onClick={() =>
-                      setPrototypeTabs((t) => [...t, { label: '', plugin: '' }])
+                      setPrototypeTabs((t) => [
+                        ...t,
+                        { type: 'custom', label: '', plugin: '' },
+                      ])
                     }
                   >
                     Add Item
