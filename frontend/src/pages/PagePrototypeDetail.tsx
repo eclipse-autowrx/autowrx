@@ -127,6 +127,9 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
   // Extract sidebar plugin slug
   const sidebarPlugin: string | undefined = model?.custom_template?.prototype_sidebar_plugin || undefined
 
+  // Extract global tab style variant
+  const tabsVariant: string | undefined = model?.custom_template?.prototype_tabs_variant || undefined
+
   // Extract staging tab config (with fallback from legacy prototype_staging_label)
   const stagingConfig: StagingConfig = model?.custom_template?.prototype_staging_config
     || (model?.custom_template?.prototype_staging_label ? { label: model.custom_template.prototype_staging_label } : {})
@@ -245,7 +248,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
     }
   }
 
-  const handleSaveCustomTabs = async (updatedTabs: TabConfig[], updatedSidebarPlugin?: string | null, updatedStagingConfig?: StagingConfig | null) => {
+  const handleSaveCustomTabs = async (updatedTabs: TabConfig[], updatedSidebarPlugin?: string | null, updatedStagingConfig?: StagingConfig | null, updatedTabsVariant?: string | null) => {
     if (!model_id || !model) {
       toast.error('Model not found')
       return
@@ -265,6 +268,11 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
       // Update staging config: null means remove, object means set, undefined means no change
       if (updatedStagingConfig !== undefined) {
         updates.prototype_staging_config = updatedStagingConfig
+      }
+
+      // Update tabs variant: null means remove (revert to default), string means set, undefined means no change
+      if (updatedTabsVariant !== undefined) {
+        updates.prototype_tabs_variant = updatedTabsVariant ?? undefined
       }
 
       await updateModelService(model_id, {
@@ -301,7 +309,10 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
             </Button>
           )}
           <div className="flex w-fit">
-            <PrototypeTabs tabs={model?.custom_template?.prototype_tabs} />
+            <PrototypeTabs
+              tabs={model?.custom_template?.prototype_tabs}
+              tabsVariant={tabsVariant}
+            />
           </div>
           {isModelOwner && (
             <div className="flex w-fit h-full items-center">
@@ -441,6 +452,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
         onSave={handleSaveCustomTabs}
         sidebarPlugin={sidebarPlugin}
         stagingConfig={stagingConfig}
+        tabsVariant={tabsVariant}
         title="Manage Prototype Tabs"
         description="Reorder tabs, edit labels, hide/show tabs, and remove custom tabs"
       />
@@ -449,7 +461,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
       <DaDialog
         open={openTemplateForm}
         onOpenChange={setOpenTemplateForm}
-        className="w-[840px] max-w-[calc(100vw-80px)]"
+        className="w-[840px] max-w-[calc(100vw-80px)] max-h-[90vh] overflow-hidden flex flex-col"
       >
         <TemplateForm
           open={openTemplateForm}

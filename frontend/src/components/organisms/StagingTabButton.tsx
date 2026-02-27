@@ -37,8 +37,8 @@ const StagingTabButton: FC<StagingTabButtonProps> = ({
     const stagingLabel = stagingConfig.label || 'Staging'
 
     const stagingIcon = stagingConfig.hideIcon ? null : (
-        stagingConfig.iconUrl
-            ? <img src={stagingConfig.iconUrl} alt="" className="w-5 h-5 mr-2 object-contain shrink-0" />
+        stagingConfig.iconSvg
+            ? <span className="w-5 h-5 mr-2 shrink-0 [&>svg]:w-full [&>svg]:h-full [&>svg]:fill-current" dangerouslySetInnerHTML={{ __html: stagingConfig.iconSvg }} />
             : <TbListCheck className="w-5 h-5 mr-2" />
     )
 

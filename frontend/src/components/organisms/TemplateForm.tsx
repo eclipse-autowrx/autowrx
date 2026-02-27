@@ -84,6 +84,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
   >([])
   const [prototypeTabs, setPrototypeTabs] = useState<TabConfig[]>([])
   const [prototypeStagingConfig, setPrototypeStagingConfig] = useState<StagingConfig>({})
+  const [prototypeTabsVariant, setPrototypeTabsVariant] = useState<string>('tab')
   const { data: pluginData } = useQuery({
     queryKey: ['plugins-for-template'],
     queryFn: () => listPlugins({ limit: 1000, page: 1 }),
@@ -108,6 +109,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
           : [],
       )
       setPrototypeStagingConfig(cfg.prototype_staging_config || (cfg.prototype_staging_label ? { label: cfg.prototype_staging_label } : {}))
+      setPrototypeTabsVariant(cfg.prototype_tabs_variant || 'tab')
     } else {
       console.log('[TemplateForm] initial not found')
       setForm({
@@ -120,6 +122,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
       setModelTabs([])
       setPrototypeTabs([])
       setPrototypeStagingConfig({})
+      setPrototypeTabsVariant('tab')
     }
   }, [initial])
 
@@ -189,6 +192,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
       // Preserve full TabConfig structure (type, key, hidden) without adding default builtin tabs
       setPrototypeTabs(normalizeTabsForTemplate(prototypeTabsFromConfig))
       setPrototypeStagingConfig(fullConfig.prototype_staging_config || (fullConfig.prototype_staging_label ? { label: fullConfig.prototype_staging_label } : {}))
+      setPrototypeTabsVariant(fullConfig.prototype_tabs_variant || 'tab')
     }
   }, [open, isCreate, initialData])
 
@@ -207,6 +211,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
           model_tabs: [...modelTabs],
           prototype_tabs: [...prototypeTabs],
           prototype_staging_config: Object.keys(prototypeStagingConfig).length ? prototypeStagingConfig : null,
+          prototype_tabs_variant: prototypeTabsVariant !== 'tab' ? prototypeTabsVariant : null,
         },
       }
       if (isCreate) return createModelTemplate(payload)
@@ -223,7 +228,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
   })
 
   return (
-    <div className="flex flex-col w-full">
+    <div className="flex flex-col w-full h-full overflow-auto">
       <h2 className="text-xl font-semibold text-foreground mb-4">
         {isCreate ? 'Create Template' : 'Edit Template'}
       </h2>
@@ -251,7 +256,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
         </DaTabItem>
       </div>
 
-      <div className="p-6 overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto p-6">
         {isFetching && !isCreate ? (
           <p className="text-sm text-muted-foreground">Loading...</p>
         ) : (
@@ -426,18 +431,26 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                     />
                   </div>
 
-                  {/* Icon URL */}
-                  <div className="flex items-center gap-3">
-                    <Label className="text-xs w-20 shrink-0">Icon URL</Label>
-                    <Input
-                      placeholder="https://example.com/icon.png"
-                      value={prototypeStagingConfig.iconUrl || ''}
-                      onChange={(e) => setPrototypeStagingConfig(c => ({ ...c, iconUrl: e.target.value }))}
-                      className="max-w-xs text-sm"
-                    />
-                    {prototypeStagingConfig.iconUrl
-                      ? <img src={prototypeStagingConfig.iconUrl} alt="icon" className="w-6 h-6 object-contain rounded border border-border shrink-0" />
-                      : <TbListCheck className="w-6 h-6 text-muted-foreground shrink-0" />}
+                  {/* Icon SVG */}
+                  <div className="flex items-start gap-3">
+                    <Label className="text-xs w-20 shrink-0 mt-1">Icon (SVG)</Label>
+                    <div className="flex gap-2 items-start flex-1">
+                      <textarea
+                        value={prototypeStagingConfig.iconSvg || ''}
+                        onChange={(e) => setPrototypeStagingConfig(c => ({ ...c, iconSvg: e.target.value || undefined }))}
+                        placeholder="Paste SVG content, e.g. <svg xmlns=&quot;...&quot;>...</svg>"
+                        className="text-xs font-mono flex-1 min-h-15 resize-y rounded border border-input bg-background px-2 py-1.5 outline-none focus:ring-1 focus:ring-ring"
+                        spellCheck={false}
+                      />
+                      {prototypeStagingConfig.iconSvg ? (
+                        <span
+                          className="w-6 h-6 shrink-0 mt-0.5 [&>svg]:w-full [&>svg]:h-full [&>svg]:fill-current"
+                          dangerouslySetInnerHTML={{ __html: prototypeStagingConfig.iconSvg }}
+                        />
+                      ) : (
+                        <TbListCheck className="w-6 h-6 text-muted-foreground shrink-0 mt-0.5" />
+                      )}
+                    </div>
                   </div>
 
                   {/* Style / Variant */}
@@ -473,6 +486,25 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                     Add Item
                   </Button>
                 </div>
+                {/* Global Tab Style */}
+                <div className="flex items-start gap-3">
+                  <Label className="text-xs w-20 shrink-0 text-foreground mt-1">Tab Style</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {(['tab', 'primary', 'outline', 'ghost'] as const).map((v) => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => setPrototypeTabsVariant(v)}
+                        className={`px-3 py-1 text-xs rounded border capitalize transition-colors ${prototypeTabsVariant === v
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-background text-foreground border-border hover:bg-accent'
+                          }`}
+                      >
+                        {v}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 {prototypeTabs.length === 0 && (
                   <p className="text-sm text-muted-foreground">
                     No items. Click Add Item.
@@ -481,67 +513,97 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                 {prototypeTabs.map((it, idx) => (
                   <div
                     key={idx}
-                    className="grid grid-cols-12 gap-2 items-center"
+                    className="flex flex-col gap-2 p-3 border border-border rounded"
                   >
-                    <div className="col-span-5 flex items-center gap-1.5">
-                      {it.type === 'builtin' && (
-                        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide bg-muted text-muted-foreground rounded px-1.5 py-0.5">
-                          built-in
-                        </span>
-                      )}
-                      <Input
-                        placeholder="Label"
-                        value={it.label}
-                        onChange={(e) => {
-                          const v = e.target.value
-                          setPrototypeTabs((arr) =>
-                            arr.map((x, i) =>
-                              i === idx ? { ...x, label: v } : x,
-                            ),
-                          )
-                        }}
-                      />
-                    </div>
-                    {it.type === 'builtin' ? (
-                      <div className="col-span-6 text-sm text-muted-foreground px-2">
-                        Built-in tab ({it.key}){it.hidden ? ' — hidden' : ''}
-                      </div>
-                    ) : (
-                      <div className="col-span-6">
-                        <DaSelect
-                          value={it.plugin || '__none__'}
-                          onValueChange={(v) => {
+                    <div className="grid grid-cols-12 gap-2 items-center">
+                      <div className="col-span-5 flex items-center gap-1.5">
+                        {it.type === 'builtin' && (
+                          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide bg-muted text-muted-foreground rounded px-1.5 py-0.5">
+                            built-in
+                          </span>
+                        )}
+                        <Input
+                          placeholder="Label"
+                          value={it.label}
+                          onChange={(e) => {
+                            const v = e.target.value
                             setPrototypeTabs((arr) =>
                               arr.map((x, i) =>
-                                i === idx ? { ...x, plugin: v === '__none__' ? '' : v } : x,
+                                i === idx ? { ...x, label: v } : x,
                               ),
                             )
                           }}
-                          className="h-9 text-sm"
-                        >
-                          <DaSelectItem value="__none__">Select plugin</DaSelectItem>
-                          {pluginData?.results?.map((p: Plugin) => (
-                            <DaSelectItem key={p.id} value={p.slug || p.id}>
-                              {p.name}
-                            </DaSelectItem>
-                          ))}
-                        </DaSelect>
+                        />
                       </div>
-                    )}
-                    <div className="col-span-1 flex justify-end">
-                      {it.type !== 'builtin' && (
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() =>
-                            setPrototypeTabs((arr) =>
-                              arr.filter((_, i) => i !== idx),
-                            )
-                          }
-                        >
-                          Delete
-                        </Button>
+                      {it.type === 'builtin' ? (
+                        <div className="col-span-6 text-sm text-muted-foreground px-2">
+                          Built-in tab ({it.key}){it.hidden ? ' — hidden' : ''}
+                        </div>
+                      ) : (
+                        <div className="col-span-6">
+                          <DaSelect
+                            value={it.plugin || '__none__'}
+                            onValueChange={(v) => {
+                              setPrototypeTabs((arr) =>
+                                arr.map((x, i) =>
+                                  i === idx ? { ...x, plugin: v === '__none__' ? '' : v } : x,
+                                ),
+                              )
+                            }}
+                            className="h-9 text-sm"
+                          >
+                            <DaSelectItem value="__none__">Select plugin</DaSelectItem>
+                            {pluginData?.results?.map((p: Plugin) => (
+                              <DaSelectItem key={p.id} value={p.slug || p.id}>
+                                {p.name}
+                              </DaSelectItem>
+                            ))}
+                          </DaSelect>
+                        </div>
                       )}
+                      <div className="col-span-1 flex justify-end">
+                        {it.type !== 'builtin' && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() =>
+                              setPrototypeTabs((arr) =>
+                                arr.filter((_, i) => i !== idx),
+                              )
+                            }
+                          >
+                            Delete
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    {/* Per-tab custom icon SVG */}
+                    <div className="flex items-start gap-2">
+                      <Label className="text-xs w-20 shrink-0 text-muted-foreground mt-1">Icon (SVG)</Label>
+                      <div className="flex gap-2 items-start flex-1">
+                        <textarea
+                          value={it.iconSvg || ''}
+                          onChange={(e) => {
+                            const v = e.target.value
+                            setPrototypeTabs((arr) =>
+                              arr.map((x, i) =>
+                                i === idx ? { ...x, iconSvg: v || undefined } : x,
+                              ),
+                            )
+                          }}
+                          placeholder="Paste SVG (optional)"
+                          className="text-xs font-mono flex-1 min-h-12 resize-y rounded border border-input bg-background px-2 py-1.5 outline-none focus:ring-1 focus:ring-ring"
+                          spellCheck={false}
+                        />
+                        {it.iconSvg ? (
+                          <span
+                            className="w-6 h-6 shrink-0 mt-0.5 [&>svg]:w-full [&>svg]:h-full [&>svg]:fill-current"
+                            dangerouslySetInnerHTML={{ __html: it.iconSvg }}
+                          />
+                        ) : (
+                          <span className="w-6 h-6 shrink-0 mt-0.5 flex items-center justify-center rounded border border-dashed border-border text-muted-foreground text-xs">—</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}

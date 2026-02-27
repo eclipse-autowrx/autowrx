@@ -14,8 +14,8 @@ const StagingTabButtonPreview: FC<StagingTabButtonPreviewProps> = ({
     const previewVariant = stagingConfig.variant || 'tab'
 
     const icon = stagingConfig.hideIcon ? null : (
-        stagingConfig.iconUrl
-            ? <img src={stagingConfig.iconUrl} alt="" className="w-4 h-4 object-contain" />
+        stagingConfig.iconSvg
+            ? <span className="w-4 h-4 shrink-0 [&>svg]:w-full [&>svg]:h-full [&>svg]:fill-current" dangerouslySetInnerHTML={{ __html: stagingConfig.iconSvg }} />
             : <TbListCheck className="w-4 h-4" />
     )
 

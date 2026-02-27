@@ -55,6 +55,7 @@ import FormCreateModel from '@/components/molecules/forms/FormCreateModel'
 import PrototypeTabJourney from '@/components/organisms/PrototypeTabJourney'
 import PrototypeTabStaging from '@/components/organisms/PrototypeTabStaging'
 import PrototypeTabs, { getTabConfig } from '@/components/molecules/PrototypeTabs'
+import NewPrototypeTabs from '@/components/molecules/NewPrototypeTabs'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import usePluginPreloader from '@/hooks/usePluginPreloader'
 import PrototypeSidebar from '@/components/organisms/PrototypeSidebar'
@@ -266,6 +267,9 @@ const PageNewPrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
     const sidebarPlugin: string | undefined = model?.custom_template?.prototype_sidebar_plugin || undefined
     const effectiveSidebarPlugin: string | undefined = effectiveModel?.custom_template?.prototype_sidebar_plugin || undefined
 
+    // Extract global tab style variant (from effective model)
+    const effectiveTabsVariant: string | undefined = effectiveModel?.custom_template?.prototype_tabs_variant || undefined
+
     // Extract staging tab config (with fallback from legacy prototype_staging_label)
     const stagingConfig: StagingConfig = model?.custom_template?.prototype_staging_config
         || (model?.custom_template?.prototype_staging_label ? { label: model.custom_template.prototype_staging_label } : {})
@@ -427,7 +431,7 @@ const PageNewPrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
         }
     }
 
-    const handleSaveCustomTabs = async (updatedTabs: TabConfig[], updatedSidebarPlugin?: string | null, updatedStagingConfig?: StagingConfig | null) => {
+    const handleSaveCustomTabs = async (updatedTabs: TabConfig[], updatedSidebarPlugin?: string | null, updatedStagingConfig?: StagingConfig | null, updatedTabsVariant?: string | null) => {
         if (!model_id || !model) {
             toast.error('Model not found')
             return
@@ -447,6 +451,11 @@ const PageNewPrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
             // Update staging config: null means remove, object means set, undefined means no change
             if (updatedStagingConfig !== undefined) {
                 updates.prototype_staging_config = updatedStagingConfig
+            }
+
+            // Update tabs variant: null means remove (revert to default), string means set, undefined means no change
+            if (updatedTabsVariant !== undefined) {
+                updates.prototype_tabs_variant = updatedTabsVariant ?? undefined
             }
 
             await updateModelService(model_id, {
@@ -504,42 +513,14 @@ const PageNewPrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
                         )}
                         {/* Inline tab bar — local state, never touches URL */}
                         <div className="flex flex-1 min-w-0 overflow-x-auto">
-                            {newFlowVisibleTabs.map((tabConfig, index) => {
-                                if (tabConfig.type === 'custom' && tabConfig.plugin) {
-                                    const isActive = newFlowActivePluginId === tabConfig.plugin
-                                    return (
-                                        <button
-                                            key={`nf-tab-${tabConfig.plugin}-${index}`}
-                                            onClick={() => setNewFlowActivePluginId(tabConfig.plugin!)}
-                                            className={`flex items-center px-4 h-full text-sm border-b-2 transition-colors ${isActive
-                                                ? 'border-primary text-primary font-medium'
-                                                : 'border-transparent text-muted-foreground hover:text-foreground'
-                                                }`}
-                                        >
-                                            {tabConfig.label}
-                                        </button>
-                                    )
-                                }
-                                // Builtin tabs — clickable when prototype exists
-                                const builtinKey = tabConfig.key as string
-                                const isBuiltinActive = newFlowActiveBuiltinKey === builtinKey && !newFlowActivePluginId
-                                const builtinClickable = hasPrototype
-                                return (
-                                    <button
-                                        key={`nf-builtin-${builtinKey}-${index}`}
-                                        disabled={!builtinClickable}
-                                        onClick={() => builtinClickable && handleNewFlowSetActiveTab(builtinKey)}
-                                        className={`flex items-center px-4 h-full text-sm border-b-2 transition-colors ${isBuiltinActive
-                                            ? 'border-primary text-primary font-medium'
-                                            : builtinClickable
-                                                ? 'border-transparent text-muted-foreground hover:text-foreground'
-                                                : 'border-transparent text-muted-foreground/30 cursor-default'
-                                            }`}
-                                    >
-                                        {tabConfig.label}
-                                    </button>
-                                )
-                            })}
+                            <NewPrototypeTabs
+                                tabs={effectiveModel?.custom_template?.prototype_tabs}
+                                activePluginId={newFlowActivePluginId}
+                                activeBuiltinKey={newFlowActiveBuiltinKey}
+                                hasPrototype={hasPrototype}
+                                onTabChange={handleNewFlowSetActiveTab}
+                                tabsVariant={effectiveTabsVariant}
+                            />
                         </div>
 
                         {/* Right-side actions — always visible (shrink-0) */}
@@ -551,7 +532,7 @@ const PageNewPrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
                                 active={newFlowActiveBuiltinKey === 'staging'}
                                 title={hasPrototype ? 'View staging' : 'Create a prototype to enable staging'}
                             />
-                            {isModelOwner && (
+                            {/* {isModelOwner && (
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button
@@ -603,7 +584,7 @@ const PageNewPrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
-                            )}
+                            )} */}
                         </div>
                     </div>
 

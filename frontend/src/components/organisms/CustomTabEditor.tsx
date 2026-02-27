@@ -52,13 +52,14 @@ export interface TabConfig {
   key?: string  // For builtin: 'overview' | 'journey' | 'code' | 'dashboard'
   label: string
   plugin?: string  // For custom tabs only
-  hidden?: boolean  // If true, tab is hidden 
+  hidden?: boolean  // If true, tab is hidden
+  iconSvg?: string  // Custom SVG icon content (overrides the default icon)
 }
 
 export interface StagingConfig {
   label?: string
   hideIcon?: boolean
-  iconUrl?: string
+  iconSvg?: string  // Custom SVG icon content (inline SVG string)
   variant?: 'tab' | 'primary' | 'outline' | 'secondary' | 'ghost'
 }
 
@@ -66,9 +67,11 @@ interface CustomTabEditorProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   tabs: TabConfig[]
-  onSave: (updatedTabs: TabConfig[], updatedSidebarPlugin?: string | null, updatedStagingConfig?: StagingConfig | null) => Promise<void>
+  onSave: (updatedTabs: TabConfig[], updatedSidebarPlugin?: string | null, updatedStagingConfig?: StagingConfig | null, updatedTabsVariant?: string | null) => Promise<void>
   sidebarPlugin?: string
   stagingConfig?: StagingConfig
+  /** Global style variant for all prototype tab buttons ('tab' | 'primary' | 'outline' | 'ghost') */
+  tabsVariant?: string
   title?: string
   description?: string
 }
@@ -80,15 +83,18 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
   onSave,
   sidebarPlugin,
   stagingConfig,
+  tabsVariant,
   title = 'Manage Custom Tabs',
   description = 'Edit, reorder, and remove custom tabs',
 }) => {
   const [localTabs, setLocalTabs] = useState<TabConfig[]>(tabs)
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const [editingLabel, setEditingLabel] = useState<string>('')
+  const [editingIconSvg, setEditingIconSvg] = useState<string>('')
   const [isSaving, setIsSaving] = useState(false)
   const [activeDialogTab, setActiveDialogTab] = useState<'tabs' | 'sidebar' | 'staging'>('tabs')
   const [localStagingConfig, setLocalStagingConfig] = useState<StagingConfig>(stagingConfig || {})
+  const [localTabsVariant, setLocalTabsVariant] = useState<string>(tabsVariant || 'tab')
 
   // Sidebar plugin state
   const [localSidebarPlugin, setLocalSidebarPlugin] = useState<string | null>(sidebarPlugin || null)
@@ -108,13 +114,15 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
       setLocalTabs(tabs)
       setLocalSidebarPlugin(sidebarPlugin || null)
       setLocalStagingConfig(stagingConfig || {})
+      setLocalTabsVariant(tabsVariant || 'tab')
       setActiveDialogTab('tabs')
       setEditingIndex(null)
       setEditingLabel('')
+      setEditingIconSvg('')
       setShowSidebarPluginPicker(false)
       setSidebarSearchTerm('')
     }
-  }, [open, tabs, sidebarPlugin, stagingConfig])
+  }, [open, tabs, sidebarPlugin, stagingConfig, tabsVariant])
 
   // Get icon for builtin tabs
   const getBuiltinIcon = (key?: string) => {
@@ -147,6 +155,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
   const handleStartEdit = (index: number) => {
     setEditingIndex(index)
     setEditingLabel(localTabs[index].label)
+    setEditingIconSvg(localTabs[index].iconSvg || '')
   }
 
   const handleSaveEdit = () => {
@@ -155,16 +164,19 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
       updatedTabs[editingIndex] = {
         ...updatedTabs[editingIndex],
         label: editingLabel.trim(),
+        iconSvg: editingIconSvg.trim() || undefined,
       }
       setLocalTabs(updatedTabs)
       setEditingIndex(null)
       setEditingLabel('')
+      setEditingIconSvg('')
     }
   }
 
   const handleCancelEdit = () => {
     setEditingIndex(null)
     setEditingLabel('')
+    setEditingIconSvg('')
   }
 
   const handleRemove = (index: number) => {
@@ -197,10 +209,13 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
       const sidebarChanged = localSidebarPlugin !== (sidebarPlugin || null)
       // Determine if staging config changed
       const stagingChanged = JSON.stringify(localStagingConfig) !== JSON.stringify(stagingConfig || {})
+      // Determine if tabs variant changed
+      const variantChanged = localTabsVariant !== (tabsVariant || 'tab')
       await onSave(
         localTabs,
         sidebarChanged ? localSidebarPlugin : undefined,
         stagingChanged ? (Object.keys(localStagingConfig).length ? localStagingConfig : null) : undefined,
+        variantChanged ? (localTabsVariant !== 'tab' ? localTabsVariant : null) : undefined,
       )
       onOpenChange(false)
     } catch (error) {
@@ -214,8 +229,10 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
     setLocalTabs(tabs) // Reset to original
     setLocalSidebarPlugin(sidebarPlugin || null)
     setLocalStagingConfig(stagingConfig || {})
+    setLocalTabsVariant(tabsVariant || 'tab')
     setEditingIndex(null)
     setEditingLabel('')
+    setEditingIconSvg('')
     setShowSidebarPluginPicker(false)
     onOpenChange(false)
   }
@@ -436,21 +453,27 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
                 />
               </div>
 
-              {/* Icon URL */}
-              <div className="flex items-center gap-3">
-                <Label htmlFor="staging-icon-input" className="text-xs w-20 shrink-0 text-foreground">Icon URL</Label>
-                <Input
-                  id="staging-icon-input"
-                  value={localStagingConfig.iconUrl || ''}
-                  onChange={(e) => setLocalStagingConfig(c => ({ ...c, iconUrl: e.target.value }))}
-                  placeholder="https://example.com/icon.png"
-                  className="text-sm flex-1"
-                />
-                {localStagingConfig.iconUrl ? (
-                  <img src={localStagingConfig.iconUrl} alt="icon" className="w-7 h-7 object-contain rounded border border-border shrink-0" />
-                ) : (
-                  <TbListCheck className="w-7 h-7 text-muted-foreground shrink-0" />
-                )}
+              {/* Icon SVG */}
+              <div className="flex items-start gap-3">
+                <Label htmlFor="staging-icon-input" className="text-xs w-20 shrink-0 text-foreground mt-1">Icon (SVG)</Label>
+                <div className="flex gap-2 items-start flex-1">
+                  <textarea
+                    id="staging-icon-input"
+                    value={localStagingConfig.iconSvg || ''}
+                    onChange={(e) => setLocalStagingConfig(c => ({ ...c, iconSvg: e.target.value || undefined }))}
+                    placeholder="Paste SVG content, e.g. <svg xmlns=&quot;...&quot;>...</svg>"
+                    className="text-xs font-mono flex-1 min-h-15 resize-y rounded border border-input bg-background px-2 py-1.5 outline-none focus:ring-1 focus:ring-ring"
+                    spellCheck={false}
+                  />
+                  {localStagingConfig.iconSvg ? (
+                    <span
+                      className="w-7 h-7 shrink-0 mt-0.5 [&>svg]:w-full [&>svg]:h-full"
+                      dangerouslySetInnerHTML={{ __html: localStagingConfig.iconSvg }}
+                    />
+                  ) : (
+                    <TbListCheck className="w-7 h-7 text-muted-foreground shrink-0 mt-0.5" />
+                  )}
+                </div>
               </div>
 
               {/* Style / Variant */}
@@ -567,6 +590,29 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
                                           className="text-sm"
                                           autoFocus
                                         />
+                                        <Label htmlFor={`edit-svg-${index}`} className="text-xs mt-1">
+                                          Custom Icon (SVG)
+                                        </Label>
+                                        <div className="flex gap-2 items-start">
+                                          <textarea
+                                            id={`edit-svg-${index}`}
+                                            value={editingIconSvg}
+                                            onChange={(e) => setEditingIconSvg(e.target.value)}
+                                            placeholder="Paste SVG content here, e.g. <svg xmlns=&quot;...&quot;>...</svg>"
+                                            className="text-xs font-mono flex-1 min-h-15 resize-y rounded border border-input bg-background px-2 py-1.5 outline-none focus:ring-1 focus:ring-ring"
+                                            spellCheck={false}
+                                          />
+                                          {editingIconSvg.trim() ? (
+                                            <span
+                                              className="w-7 h-7 shrink-0 mt-0.5 [&>svg]:w-full [&>svg]:h-full"
+                                              dangerouslySetInnerHTML={{ __html: editingIconSvg }}
+                                            />
+                                          ) : (
+                                            <span className="w-7 h-7 shrink-0 mt-0.5 flex items-center justify-center rounded border border-dashed border-border">
+                                              <TbPuzzle className="w-4 h-4 text-muted-foreground" />
+                                            </span>
+                                          )}
+                                        </div>
                                       </div>
                                     ) : (
                                       <>
@@ -583,6 +629,15 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
                                         <p className="text-xs text-muted-foreground font-mono truncate">
                                           {tab.type === 'builtin' ? `builtin: ${tab.key}` : `plugin: ${tab.plugin}`}
                                         </p>
+                                        {tab.iconSvg && (
+                                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                            <span
+                                              className="inline-flex w-3 h-3 [&>svg]:w-full [&>svg]:h-full"
+                                              dangerouslySetInnerHTML={{ __html: tab.iconSvg }}
+                                            />
+                                            custom icon
+                                          </p>
+                                        )}
                                       </>
                                     )}
                                   </div>
@@ -664,6 +719,46 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
                   <p className="text-sm text-muted-foreground">No custom tabs added yet</p>
                 </div>
               )}
+
+              {/* Global Tab Style */}
+              <div className="flex items-start gap-3 pt-3 border-t border-border mt-1">
+                <Label className="text-xs w-20 shrink-0 text-foreground mt-1">Tab Style</Label>
+                <div className="flex flex-col gap-3 flex-1">
+                  <div className="flex flex-wrap gap-2">
+                    {(['tab', 'primary', 'outline', 'ghost'] as const).map((v) => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => setLocalTabsVariant(v)}
+                        className={`px-3 py-1 text-xs rounded border capitalize transition-colors ${localTabsVariant === v
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-background text-foreground border-border hover:bg-accent'
+                          }`}
+                      >
+                        {v}
+                      </button>
+                    ))}
+                  </div>
+                  {/* Preview */}
+                  <div className="flex items-center h-10 border border-dashed border-border rounded px-3 bg-accent/20 gap-1">
+                    {(['Overview', 'Code', 'Plugin'] as const).map((lbl, i) => {
+                      const isActive = i === 0
+                      const base = 'flex items-center text-xs font-semibold px-2.5 py-1 transition-colors'
+                      let cls = ''
+                      if (localTabsVariant === 'primary') {
+                        cls = isActive ? `${base} bg-primary text-primary-foreground rounded-md` : `${base} text-muted-foreground hover:bg-accent rounded-md`
+                      } else if (localTabsVariant === 'outline') {
+                        cls = isActive ? `${base} border border-primary text-primary rounded-md` : `${base} border border-transparent text-muted-foreground hover:bg-accent rounded-md`
+                      } else if (localTabsVariant === 'ghost') {
+                        cls = isActive ? `${base} bg-accent text-foreground rounded-md` : `${base} text-muted-foreground rounded-md`
+                      } else {
+                        cls = isActive ? `${base} border-b-2 border-primary text-primary h-full` : `${base} border-b-2 border-transparent text-muted-foreground h-full`
+                      }
+                      return <span key={lbl} className={cls}>{lbl}</span>
+                    })}
+                  </div>
+                </div>
+              </div>
             </>
           )}
         </div>

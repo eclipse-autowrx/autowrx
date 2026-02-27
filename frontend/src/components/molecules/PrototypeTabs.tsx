@@ -8,7 +8,7 @@
 
 import { FC } from 'react'
 import DaTabItem from '@/components/atoms/DaTabItem'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import {
   TbCode,
   TbGauge,
@@ -16,10 +16,59 @@ import {
   TbRoute,
 } from 'react-icons/tb'
 import { TabConfig } from '@/components/organisms/CustomTabEditor'
-import { MdOutlineDoubleArrow } from 'react-icons/md';
+import { cn } from '@/lib/utils'
 
 interface PrototypeTabsProps {
   tabs?: TabConfig[]
+  /** Global visual style for all tab buttons. Defaults to 'tab' (bottom-border style). */
+  tabsVariant?: string
+}
+
+/** Render a tab icon: use custom SVG if present, otherwise fall back to the default icon node. */
+const renderTabIcon = (tabConfig: TabConfig, defaultIcon: React.ReactNode) => {
+  if (tabConfig.iconSvg) {
+    return (
+      <span
+        className="w-5 h-5 mr-2 shrink-0 [&>svg]:w-full [&>svg]:h-full [&>svg]:fill-current"
+        dangerouslySetInnerHTML={{ __html: tabConfig.iconSvg }}
+      />
+    )
+  }
+  return defaultIcon
+}
+
+/** Compute class names for a tab item based on the global tabsVariant. */
+const tabItemClasses = (variant: string | undefined, isActive: boolean) => {
+  switch (variant) {
+    case 'primary':
+      return cn(
+        'flex items-center self-center px-3 py-1.5 rounded-md text-sm font-semibold mx-1 cursor-pointer transition-colors',
+        isActive
+          ? 'bg-primary text-primary-foreground'
+          : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+      )
+    case 'outline':
+      return cn(
+        'flex items-center self-center px-3 py-1.5 rounded-md text-sm font-semibold mx-1 cursor-pointer border transition-colors',
+        isActive
+          ? 'border-primary text-primary'
+          : 'border-transparent text-muted-foreground hover:bg-accent hover:text-foreground',
+      )
+    case 'ghost':
+      return cn(
+        'flex items-center self-center px-3 py-1.5 rounded-md text-sm font-semibold mx-1 cursor-pointer transition-colors',
+        isActive
+          ? 'bg-accent text-foreground'
+          : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground',
+      )
+    default: // 'tab'
+      return cn(
+        'flex h-full text-sm font-semibold items-center justify-center min-w-20 cursor-pointer hover:opacity-80 border-b-2 py-1 px-4',
+        isActive
+          ? 'text-primary border-primary'
+          : 'text-muted-foreground border-transparent',
+      )
+  }
 }
 
 // Default builtin tabs
@@ -62,8 +111,9 @@ export const getTabConfig = (tabs?: any[]): TabConfig[] => {
   return migrateTabConfig(tabs)
 }
 
-const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs }) => {
+const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant }) => {
   const { model_id, prototype_id, tab } = useParams()
+  const variant = tabsVariant || 'tab'
 
   // Get tabs with migration
   const tabConfigs = getTabConfig(tabs)
@@ -78,64 +128,80 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs }) => {
     <>
       {visibleTabs.map((tabConfig, index) => {
         if (tabConfig.type === 'builtin') {
-          // Render builtin tabs
           const { key, label } = tabConfig
           let route = ''
-          let icon = null
+          let defaultIcon: React.ReactNode = null
           let dataId = ''
 
           switch (key) {
             case 'overview':
               route = `/model/${model_id}/library/prototype/${prototype_id}/view`
-              icon = <TbRoute className="w-5 h-5 mr-2" />
+              defaultIcon = <TbRoute className="w-5 h-5 mr-2" />
               break
             case 'journey':
               route = `/model/${model_id}/library/prototype/${prototype_id}/journey`
-              icon = <TbMapPin className="w-5 h-5 mr-2" />
+              defaultIcon = <TbMapPin className="w-5 h-5 mr-2" />
               dataId = 'tab-journey'
               break
             case 'code':
               route = `/model/${model_id}/library/prototype/${prototype_id}/code`
-              icon = <TbCode className="w-5 h-5 mr-2" />
+              defaultIcon = <TbCode className="w-5 h-5 mr-2" />
               dataId = 'tab-code'
               break
             case 'dashboard':
               route = `/model/${model_id}/library/prototype/${prototype_id}/dashboard`
-              icon = <TbGauge className="w-5 h-5 mr-2" />
+              defaultIcon = <TbGauge className="w-5 h-5 mr-2" />
               dataId = 'tab-dashboard'
               break
             default:
               return null
           }
 
-          // Determine if tab is active
           const isActive =
             ((!tab || tab === 'view') && firstVisibleTab?.type === 'builtin' && firstVisibleTab?.key === key) ||
             (tab === key)
 
+          const icon = renderTabIcon(tabConfig, defaultIcon)
+
+          if (variant !== 'tab') {
+            return (
+              <Link
+                key={`builtin-${key}`}
+                to={route}
+                data-id={dataId}
+                className={tabItemClasses(variant, isActive)}
+              >
+                {icon}{label}
+              </Link>
+            )
+          }
+
           return (
-            <DaTabItem
-              key={`builtin-${key}`}
-              active={isActive}
-              to={route}
-              dataId={dataId}
-            >
-              {icon}
-              {label}
+            <DaTabItem key={`builtin-${key}`} active={isActive} to={route} dataId={dataId}>
+              {icon}{label}
             </DaTabItem>
           )
         } else {
-          // Render custom tabs
           const { label, plugin } = tabConfig
           const isActive = tab === 'plug' && window.location.search.includes(`plugid=${plugin}`)
+          const icon = renderTabIcon(tabConfig, null)
+          const to = `/model/${model_id}/library/prototype/${prototype_id}/plug?plugid=${plugin}`
+
+          if (variant !== 'tab') {
+            return (
+              <Link
+                key={`custom-${plugin}-${index}`}
+                to={to}
+                className={tabItemClasses(variant, isActive)}
+              >
+                {icon}{label}
+              </Link>
+            )
+          }
 
           return (
-            <DaTabItem
-              key={`custom-${plugin}-${index}`}
-              active={isActive}
-              to={`/model/${model_id}/library/prototype/${prototype_id}/plug?plugid=${plugin}`}
-            >
-              {label}
+            <DaTabItem key={`custom-${plugin}-${index}`} active={isActive} to={to}>
+              {icon}{label}
             </DaTabItem>
           )
         }
@@ -145,4 +211,3 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs }) => {
 }
 
 export default PrototypeTabs
-
