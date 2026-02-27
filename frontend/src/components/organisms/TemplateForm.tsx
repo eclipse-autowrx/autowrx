@@ -274,7 +274,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                     </select>
                   </div>
                 </div>
-                <div className="w-44 flex-shrink-0">
+                <div className="w-44 shrink-0">
                   <div className="relative aspect-square w-full border border-input rounded-md overflow-hidden bg-white">
                     <img
                       src={form.image || '/imgs/plugin.png'}
@@ -330,9 +330,9 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                 {modelTabs.map((it, idx) => (
                   <div
                     key={idx}
-                    className="grid grid-cols-12 gap-2 items-center"
+                    className="flex flex-wrap gap-3 items-center"
                   >
-                    <div className="col-span-5">
+                    <div className="flex-1 min-w-[180px]">
                       <Input
                         placeholder="Label"
                         value={it.label}
@@ -346,7 +346,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                         }}
                       />
                     </div>
-                    <div className="col-span-6">
+                    <div className="flex-[2] min-w-[220px]">
                       <select
                         className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                         value={it.plugin}
@@ -367,7 +367,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                         ))}
                       </select>
                     </div>
-                    <div className="col-span-1 flex justify-end">
+                    <div className="flex justify-end">
                       <Button
                         variant="destructive"
                         size="sm"
@@ -406,9 +406,9 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                 {prototypeTabs.map((it, idx) => (
                   <div
                     key={idx}
-                    className="grid grid-cols-12 gap-2 items-center"
+                    className="flex flex-wrap gap-3 items-center"
                   >
-                    <div className="col-span-5">
+                    <div className="flex-1 min-w-[180px]">
                       <Input
                         placeholder="Label"
                         value={it.label}
@@ -422,7 +422,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                         }}
                       />
                     </div>
-                    <div className="col-span-6">
+                    <div className="flex-[2] min-w-[220px]">
                       <select
                         className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-colors outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                         value={it.plugin}
@@ -443,7 +443,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                         ))}
                       </select>
                     </div>
-                    <div className="col-span-1 flex justify-end">
+                    <div className="flex justify-end">
                       <Button
                         variant="destructive"
                         size="sm"

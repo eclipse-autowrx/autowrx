@@ -37,6 +37,10 @@
   }
 }
 
+body {
+  pointer-events: auto !important;
+}
+
 /* ============================================
    CUSTOM PROJECT UTILITIES
    ============================================ */
