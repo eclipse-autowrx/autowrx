@@ -42,7 +42,7 @@ import { updateModelService } from '@/services/model.service'
 import { toast } from 'react-toastify'
 import { Dialog, DialogContent } from '@/components/atoms/dialog'
 import PagePrototypePlugin from '@/pages/PagePrototypePlugin'
-import CustomTabEditor, { TabConfig, StagingConfig } from '@/components/organisms/CustomTabEditor'
+import CustomTabEditor, { TabConfig, StagingConfig, RightNavPluginButton } from '@/components/organisms/CustomTabEditor'
 import PrototypeTabInfo from '../components/organisms/PrototypeTabInfo'
 import TemplateForm from '@/components/organisms/TemplateForm'
 import PrototypeTabJourney from '@/components/organisms/PrototypeTabJourney'
@@ -130,9 +130,15 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
   // Extract global tab style variant
   const tabsVariant: string | undefined = model?.custom_template?.prototype_tabs_variant || undefined
 
-  // Extract staging tab config (with fallback from legacy prototype_staging_label)
-  const stagingConfig: StagingConfig = model?.custom_template?.prototype_staging_config
-    || (model?.custom_template?.prototype_staging_label ? { label: model.custom_template.prototype_staging_label } : {})
+  // Extract staging tab config from prototype_right_nav_buttons
+  const _rightNavRaw: RightNavPluginButton[] = model?.custom_template?.prototype_right_nav_buttons || []
+  const _stagingNavItem = _rightNavRaw.find(b => b.builtin === 'staging')
+  const stagingConfig: StagingConfig = _stagingNavItem
+    ? { label: _stagingNavItem.label, iconSvg: _stagingNavItem.iconSvg, hideIcon: _stagingNavItem.hideIcon, variant: _stagingNavItem.variant }
+    : {}
+
+  // Extract right nav plugin buttons (exclude the built-in staging item)
+  const rightNavButtons: RightNavPluginButton[] = _rightNavRaw.filter(b => b.builtin !== 'staging')
 
   // Preload plugin JavaScript files
   usePluginPreloader({
@@ -248,7 +254,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
     }
   }
 
-  const handleSaveCustomTabs = async (updatedTabs: TabConfig[], updatedSidebarPlugin?: string | null, updatedStagingConfig?: StagingConfig | null, updatedTabsVariant?: string | null) => {
+  const handleSaveCustomTabs = async (updatedTabs: TabConfig[], updatedSidebarPlugin?: string | null, updatedTabsVariant?: string | null, updatedRightNavButtons?: RightNavPluginButton[] | null) => {
     if (!model_id || !model) {
       toast.error('Model not found')
       return
@@ -265,14 +271,14 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
         updates.prototype_sidebar_plugin = updatedSidebarPlugin
       }
 
-      // Update staging config: null means remove, object means set, undefined means no change
-      if (updatedStagingConfig !== undefined) {
-        updates.prototype_staging_config = updatedStagingConfig
-      }
-
       // Update tabs variant: null means remove (revert to default), string means set, undefined means no change
       if (updatedTabsVariant !== undefined) {
         updates.prototype_tabs_variant = updatedTabsVariant ?? undefined
+      }
+
+      // Update right nav buttons: null means remove, array means set, undefined means no change
+      if (updatedRightNavButtons !== undefined) {
+        updates.prototype_right_nav_buttons = updatedRightNavButtons
       }
 
       await updateModelService(model_id, {
@@ -452,6 +458,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
         onSave={handleSaveCustomTabs}
         sidebarPlugin={sidebarPlugin}
         stagingConfig={stagingConfig}
+        rightNavButtons={rightNavButtons}
         tabsVariant={tabsVariant}
         title="Manage Prototype Tabs"
         description="Reorder tabs, edit labels, hide/show tabs, and remove custom tabs"

@@ -17,7 +17,7 @@ import { uploadFileService } from '@/services/upload.service'
 import { TbPhotoEdit, TbListCheck, TbEye, TbEyeOff } from 'react-icons/tb'
 import { toast } from 'react-toastify'
 import { listPlugins, type Plugin } from '@/services/plugin.service'
-import { TabConfig, StagingConfig } from '@/components/organisms/CustomTabEditor'
+import { TabConfig, StagingConfig, RightNavPluginButton } from '@/components/organisms/CustomTabEditor'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 
 // Template-safe normalizer: preserves full TabConfig without injecting default builtin tabs.
@@ -85,6 +85,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
   const [prototypeTabs, setPrototypeTabs] = useState<TabConfig[]>([])
   const [prototypeStagingConfig, setPrototypeStagingConfig] = useState<StagingConfig>({})
   const [prototypeTabsVariant, setPrototypeTabsVariant] = useState<string>('tab')
+  const [prototypeRightNavButtons, setPrototypeRightNavButtons] = useState<RightNavPluginButton[]>([])
   const { data: pluginData } = useQuery({
     queryKey: ['plugins-for-template'],
     queryFn: () => listPlugins({ limit: 1000, page: 1 }),
@@ -108,8 +109,16 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
           ? normalizeTabsForTemplate(cfg.prototype_tabs)
           : [],
       )
-      setPrototypeStagingConfig(cfg.prototype_staging_config || (cfg.prototype_staging_label ? { label: cfg.prototype_staging_label } : {}))
       setPrototypeTabsVariant(cfg.prototype_tabs_variant || 'tab')
+      // Extract staging config and non-staging right nav buttons from prototype_right_nav_buttons
+      const rightNavRaw: RightNavPluginButton[] = Array.isArray(cfg.prototype_right_nav_buttons) ? cfg.prototype_right_nav_buttons : []
+      const stagingItem = rightNavRaw.find(b => b.builtin === 'staging')
+      if (stagingItem) {
+        setPrototypeStagingConfig({ label: stagingItem.label, iconSvg: stagingItem.iconSvg, hideIcon: stagingItem.hideIcon, variant: stagingItem.variant })
+      } else {
+        setPrototypeStagingConfig({})
+      }
+      setPrototypeRightNavButtons(rightNavRaw.filter(b => b.builtin !== 'staging'))
     } else {
       console.log('[TemplateForm] initial not found')
       setForm({
@@ -122,6 +131,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
       setModelTabs([])
       setPrototypeTabs([])
       setPrototypeStagingConfig({})
+      setPrototypeRightNavButtons([])
       setPrototypeTabsVariant('tab')
     }
   }, [initial])
@@ -147,6 +157,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
         setModelTabs([])
         setPrototypeTabs([])
         setPrototypeStagingConfig({})
+        setPrototypeRightNavButtons([])
       }
     }
   }, [open, isCreate, initialData])
@@ -191,8 +202,16 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
       )
       // Preserve full TabConfig structure (type, key, hidden) without adding default builtin tabs
       setPrototypeTabs(normalizeTabsForTemplate(prototypeTabsFromConfig))
-      setPrototypeStagingConfig(fullConfig.prototype_staging_config || (fullConfig.prototype_staging_label ? { label: fullConfig.prototype_staging_label } : {}))
       setPrototypeTabsVariant(fullConfig.prototype_tabs_variant || 'tab')
+      // Extract staging config and non-staging right nav buttons from prototype_right_nav_buttons
+      const rightNavRaw2: RightNavPluginButton[] = Array.isArray(fullConfig.prototype_right_nav_buttons) ? fullConfig.prototype_right_nav_buttons : []
+      const stagingItem2 = rightNavRaw2.find(b => b.builtin === 'staging')
+      if (stagingItem2) {
+        setPrototypeStagingConfig({ label: stagingItem2.label, iconSvg: stagingItem2.iconSvg, hideIcon: stagingItem2.hideIcon, variant: stagingItem2.variant })
+      } else {
+        setPrototypeStagingConfig({})
+      }
+      setPrototypeRightNavButtons(rightNavRaw2.filter(b => b.builtin !== 'staging'))
     }
   }, [open, isCreate, initialData])
 
@@ -210,8 +229,12 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
           ...(form.config || {}),
           model_tabs: [...modelTabs],
           prototype_tabs: [...prototypeTabs],
-          prototype_staging_config: Object.keys(prototypeStagingConfig).length ? prototypeStagingConfig : null,
           prototype_tabs_variant: prototypeTabsVariant !== 'tab' ? prototypeTabsVariant : null,
+          prototype_right_nav_buttons: [
+            // Staging is always first item in the right nav list
+            { builtin: 'staging' as const, ...prototypeStagingConfig },
+            ...prototypeRightNavButtons,
+          ],
         },
       }
       if (isCreate) return createModelTemplate(payload)
@@ -438,7 +461,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                       <textarea
                         value={prototypeStagingConfig.iconSvg || ''}
                         onChange={(e) => setPrototypeStagingConfig(c => ({ ...c, iconSvg: e.target.value || undefined }))}
-                        placeholder="Paste SVG content, e.g. <svg xmlns=&quot;...&quot;>...</svg>"
+                        placeholder="<svg xmlns=&quot;...&quot;>...</svg>"
                         className="text-xs font-mono flex-1 min-h-15 resize-y rounded border border-input bg-background px-2 py-1.5 outline-none focus:ring-1 focus:ring-ring"
                         spellCheck={false}
                       />

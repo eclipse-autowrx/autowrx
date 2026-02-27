@@ -38,6 +38,8 @@ import {
   TbLayoutSidebar,
   TbSearch,
   TbListCheck,
+  TbPlus,
+  TbChevronUp,
 } from 'react-icons/tb'
 import { MdOutlineDoubleArrow } from 'react-icons/md'
 import StagingTabButtonPreview from '@/components/organisms/StagingTabButtonPreview'
@@ -63,13 +65,24 @@ export interface StagingConfig {
   variant?: 'tab' | 'primary' | 'outline' | 'secondary' | 'ghost'
 }
 
+export interface RightNavPluginButton {
+  builtin?: 'staging'         // Marks the built-in staging button item
+  plugin?: string             // Plugin slug (required for plugin-type items)
+  label?: string
+  iconSvg?: string
+  hideIcon?: boolean          // For staging: whether to hide the icon
+  variant?: 'tab' | 'primary' | 'outline' | 'secondary' | 'ghost'
+  hidden?: boolean
+}
+
 interface CustomTabEditorProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   tabs: TabConfig[]
-  onSave: (updatedTabs: TabConfig[], updatedSidebarPlugin?: string | null, updatedStagingConfig?: StagingConfig | null, updatedTabsVariant?: string | null) => Promise<void>
+  onSave: (updatedTabs: TabConfig[], updatedSidebarPlugin?: string | null, updatedTabsVariant?: string | null, updatedRightNavButtons?: RightNavPluginButton[] | null) => Promise<void>
   sidebarPlugin?: string
   stagingConfig?: StagingConfig
+  rightNavButtons?: RightNavPluginButton[]
   /** Global style variant for all prototype tab buttons ('tab' | 'primary' | 'outline' | 'ghost') */
   tabsVariant?: string
   title?: string
@@ -83,6 +96,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
   onSave,
   sidebarPlugin,
   stagingConfig,
+  rightNavButtons,
   tabsVariant,
   title = 'Manage Custom Tabs',
   description = 'Edit, reorder, and remove custom tabs',
@@ -92,20 +106,26 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
   const [editingLabel, setEditingLabel] = useState<string>('')
   const [editingIconSvg, setEditingIconSvg] = useState<string>('')
   const [isSaving, setIsSaving] = useState(false)
-  const [activeDialogTab, setActiveDialogTab] = useState<'tabs' | 'sidebar' | 'staging'>('tabs')
+  const [activeDialogTab, setActiveDialogTab] = useState<'tabs' | 'sidebar' | 'rightnav' | 'style'>('tabs')
   const [localStagingConfig, setLocalStagingConfig] = useState<StagingConfig>(stagingConfig || {})
   const [localTabsVariant, setLocalTabsVariant] = useState<string>(tabsVariant || 'tab')
+  const [localRightNavPlugins, setLocalRightNavPlugins] = useState<RightNavPluginButton[]>(rightNavButtons || [])
+  const [expandedRightNavItem, setExpandedRightNavItem] = useState<'staging' | number | null>(null)
 
   // Sidebar plugin state
   const [localSidebarPlugin, setLocalSidebarPlugin] = useState<string | null>(sidebarPlugin || null)
   const [showSidebarPluginPicker, setShowSidebarPluginPicker] = useState(false)
   const [sidebarSearchTerm, setSidebarSearchTerm] = useState('')
 
-  // Fetch plugins for sidebar picker
+  // Right nav plugin picker state
+  const [showRightNavPluginPicker, setShowRightNavPluginPicker] = useState(false)
+  const [rightNavSearchTerm, setRightNavSearchTerm] = useState('')
+
+  // Fetch plugins for plugin pickers
   const { data: pluginsData, isLoading: pluginsLoading } = useQuery({
     queryKey: ['plugins'],
     queryFn: () => listPlugins({ page: 1, limit: 100 }),
-    enabled: activeDialogTab === 'sidebar',
+    enabled: activeDialogTab === 'sidebar' || activeDialogTab === 'rightnav',
   })
 
   // Update local tabs when dialog opens or tabs change
@@ -115,14 +135,18 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
       setLocalSidebarPlugin(sidebarPlugin || null)
       setLocalStagingConfig(stagingConfig || {})
       setLocalTabsVariant(tabsVariant || 'tab')
+      setLocalRightNavPlugins(rightNavButtons || [])
       setActiveDialogTab('tabs')
       setEditingIndex(null)
       setEditingLabel('')
       setEditingIconSvg('')
+      setExpandedRightNavItem(null)
       setShowSidebarPluginPicker(false)
       setSidebarSearchTerm('')
+      setShowRightNavPluginPicker(false)
+      setRightNavSearchTerm('')
     }
-  }, [open, tabs, sidebarPlugin, stagingConfig, tabsVariant])
+  }, [open, tabs, sidebarPlugin, stagingConfig, tabsVariant, rightNavButtons])
 
   // Get icon for builtin tabs
   const getBuiltinIcon = (key?: string) => {
@@ -207,15 +231,24 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
     try {
       // Determine if sidebar plugin changed
       const sidebarChanged = localSidebarPlugin !== (sidebarPlugin || null)
-      // Determine if staging config changed
-      const stagingChanged = JSON.stringify(localStagingConfig) !== JSON.stringify(stagingConfig || {})
       // Determine if tabs variant changed
       const variantChanged = localTabsVariant !== (tabsVariant || 'tab')
+      // Merge staging config into right nav buttons (staging is always first item)
+      const mergedRightNav: RightNavPluginButton[] = [
+        { builtin: 'staging' as const, ...localStagingConfig },
+        ...localRightNavPlugins,
+      ]
+      // Determine if right nav (including staging) changed
+      const originalRightNav: RightNavPluginButton[] = [
+        { builtin: 'staging' as const, ...(stagingConfig || {}) },
+        ...(rightNavButtons || []),
+      ]
+      const rightNavChanged = JSON.stringify(mergedRightNav) !== JSON.stringify(originalRightNav)
       await onSave(
         localTabs,
         sidebarChanged ? localSidebarPlugin : undefined,
-        stagingChanged ? (Object.keys(localStagingConfig).length ? localStagingConfig : null) : undefined,
         variantChanged ? (localTabsVariant !== 'tab' ? localTabsVariant : null) : undefined,
+        rightNavChanged ? (mergedRightNav.length ? mergedRightNav : null) : undefined,
       )
       onOpenChange(false)
     } catch (error) {
@@ -230,10 +263,13 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
     setLocalSidebarPlugin(sidebarPlugin || null)
     setLocalStagingConfig(stagingConfig || {})
     setLocalTabsVariant(tabsVariant || 'tab')
+    setLocalRightNavPlugins(rightNavButtons || [])
     setEditingIndex(null)
     setEditingLabel('')
     setEditingIconSvg('')
+    setExpandedRightNavItem(null)
     setShowSidebarPluginPicker(false)
+    setShowRightNavPluginPicker(false)
     onOpenChange(false)
   }
 
@@ -248,6 +284,14 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
       plugin.name.toLowerCase().includes(sidebarSearchTerm.toLowerCase()) ||
       plugin.slug?.toLowerCase().includes(sidebarSearchTerm.toLowerCase()) ||
       plugin.description?.toLowerCase().includes(sidebarSearchTerm.toLowerCase())
+  ) ?? []
+
+  // Filter plugins for right nav picker (excluding already-added ones)
+  const filteredRightNavPlugins = pluginsData?.results?.filter(
+    (plugin) =>
+      !localRightNavPlugins.some((b) => b.plugin === plugin.slug) &&
+      (plugin.name.toLowerCase().includes(rightNavSearchTerm.toLowerCase()) ||
+        plugin.slug?.toLowerCase().includes(rightNavSearchTerm.toLowerCase()))
   ) ?? []
 
   return (
@@ -271,6 +315,26 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
             Prototype Tabs
           </button>
           <button
+            onClick={() => setActiveDialogTab('style')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeDialogTab === 'style'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+          >
+            <TbEye className="w-4 h-4" />
+            Tab Style
+          </button>
+          <button
+            onClick={() => setActiveDialogTab('rightnav')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeDialogTab === 'rightnav'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+          >
+            <TbListCheck className="w-4 h-4" />
+            Right Nav
+          </button>
+          <button
             onClick={() => setActiveDialogTab('sidebar')}
             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeDialogTab === 'sidebar'
               ? 'border-primary text-primary'
@@ -278,17 +342,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
               }`}
           >
             <TbLayoutSidebar className="w-4 h-4" />
-            Left Sidebar Plugin
-          </button>
-          <button
-            onClick={() => setActiveDialogTab('staging')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeDialogTab === 'staging'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-          >
-            <TbListCheck className="w-4 h-4" />
-            Staging Tab
+            Left Sidebar
           </button>
         </div>
 
@@ -418,91 +472,251 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
             </div>
           )}
 
-          {/* Staging Tab */}
-          {activeDialogTab === 'staging' && (
-            <div className="flex flex-col gap-5">
+          {/* Right Nav Tab */}
+          {activeDialogTab === 'rightnav' && (
+            <div className="flex flex-col gap-3">
               <p className="text-sm text-muted-foreground">
-                Customize the appearance and visibility of the Staging tab button.
+                Configure buttons shown in the right navigation area.
               </p>
 
-              {/* Show Icon */}
-              <div className="flex items-center gap-3">
-                <Label className="text-xs w-20 shrink-0 text-foreground">Show Icon</Label>
-                <button
-                  type="button"
-                  onClick={() => setLocalStagingConfig(c => ({ ...c, hideIcon: !c.hideIcon }))}
-                  className="flex items-center gap-2 text-sm hover:opacity-70 transition-opacity"
-                >
-                  {localStagingConfig.hideIcon ? (
-                    <><TbEyeOff className="w-4 h-4 text-muted-foreground" /><span className="text-muted-foreground">Hidden</span></>
-                  ) : (
-                    <><TbEye className="w-4 h-4" /><span>Visible</span></>
-                  )}
-                </button>
-              </div>
-
-              {/* Label */}
-              <div className="flex items-center gap-3">
-                <Label htmlFor="staging-label-input" className="text-xs w-20 shrink-0 text-foreground">Label</Label>
-                <Input
-                  id="staging-label-input"
-                  value={localStagingConfig.label || ''}
-                  onChange={(e) => setLocalStagingConfig(c => ({ ...c, label: e.target.value }))}
-                  placeholder="Staging"
-                  className="text-sm flex-1"
-                />
-              </div>
-
-              {/* Icon SVG */}
-              <div className="flex items-start gap-3">
-                <Label htmlFor="staging-icon-input" className="text-xs w-20 shrink-0 text-foreground mt-1">Icon (SVG)</Label>
-                <div className="flex gap-2 items-start flex-1">
-                  <textarea
-                    id="staging-icon-input"
-                    value={localStagingConfig.iconSvg || ''}
-                    onChange={(e) => setLocalStagingConfig(c => ({ ...c, iconSvg: e.target.value || undefined }))}
-                    placeholder="Paste SVG content, e.g. <svg xmlns=&quot;...&quot;>...</svg>"
-                    className="text-xs font-mono flex-1 min-h-15 resize-y rounded border border-input bg-background px-2 py-1.5 outline-none focus:ring-1 focus:ring-ring"
-                    spellCheck={false}
-                  />
-                  {localStagingConfig.iconSvg ? (
-                    <span
-                      className="w-7 h-7 shrink-0 mt-0.5 [&>svg]:w-full [&>svg]:h-full"
-                      dangerouslySetInnerHTML={{ __html: localStagingConfig.iconSvg }}
-                    />
-                  ) : (
-                    <TbListCheck className="w-7 h-7 text-muted-foreground shrink-0 mt-0.5" />
-                  )}
-                </div>
-              </div>
-
-              {/* Style / Variant */}
-              <div className="flex items-start gap-3">
-                <Label className="text-xs w-20 shrink-0 text-foreground mt-1">Style</Label>
-                <div className="flex flex-wrap gap-2">
-                  {(['tab', 'primary', 'outline', 'secondary', 'ghost'] as const).map((v) => (
-                    <button
-                      key={v}
-                      type="button"
-                      onClick={() => setLocalStagingConfig(c => ({ ...c, variant: v }))}
-                      className={`px-3 py-1 text-xs rounded border capitalize transition-colors ${(localStagingConfig.variant || 'tab') === v
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-background text-foreground border-border hover:bg-accent'
-                        }`}
+              <div className="flex flex-col gap-2">
+                {/* Staging button — always first, built-in */}
+                <div className="border border-border rounded bg-background">
+                  <div className="flex items-center gap-3 p-3">
+                    {localStagingConfig.iconSvg ? (
+                      <span className="w-5 h-5 shrink-0 [&>svg]:w-full [&>svg]:h-full" dangerouslySetInnerHTML={{ __html: localStagingConfig.iconSvg }} />
+                    ) : (
+                      <TbListCheck className="w-5 h-5 text-muted-foreground shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium">{localStagingConfig.label || 'Staging'}</p>
+                      <p className="text-xs text-muted-foreground">Built-in staging button</p>
+                    </div>
+                    <span className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded shrink-0">Built-in</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setExpandedRightNavItem(expandedRightNavItem === 'staging' ? null : 'staging')}
+                      className="h-8 w-8 shrink-0"
                     >
-                      {v}
-                    </button>
-                  ))}
+                      {expandedRightNavItem === 'staging' ? <TbChevronUp className="w-4 h-4" /> : <TbPencil className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                  {expandedRightNavItem === 'staging' && (
+                    <div className="border-t border-border p-3 flex flex-col gap-3">
+                      {/* Show Icon */}
+                      <div className="flex items-center gap-3">
+                        <Label className="text-xs w-20 shrink-0 text-foreground">Show Icon</Label>
+                        <button
+                          type="button"
+                          onClick={() => setLocalStagingConfig(c => ({ ...c, hideIcon: !c.hideIcon }))}
+                          className="flex items-center gap-2 text-sm hover:opacity-70 transition-opacity"
+                        >
+                          {localStagingConfig.hideIcon ? (
+                            <><TbEyeOff className="w-4 h-4 text-muted-foreground" /><span className="text-muted-foreground">Hidden</span></>
+                          ) : (
+                            <><TbEye className="w-4 h-4" /><span>Visible</span></>
+                          )}
+                        </button>
+                      </div>
+                      {/* Label */}
+                      <div className="flex items-center gap-3">
+                        <Label className="text-xs w-20 shrink-0 text-foreground">Label</Label>
+                        <Input
+                          value={localStagingConfig.label || ''}
+                          onChange={(e) => setLocalStagingConfig(c => ({ ...c, label: e.target.value }))}
+                          placeholder="Staging"
+                          className="text-sm flex-1"
+                        />
+                      </div>
+                      {/* Icon SVG */}
+                      <div className="flex items-start gap-3">
+                        <Label className="text-xs w-20 shrink-0 text-foreground mt-1">Icon (SVG)</Label>
+                        <div className="flex gap-2 items-start flex-1">
+                          <textarea
+                            value={localStagingConfig.iconSvg || ''}
+                            onChange={(e) => setLocalStagingConfig(c => ({ ...c, iconSvg: e.target.value || undefined }))}
+                            placeholder="<svg xmlns=..."
+                            className="text-xs font-mono flex-1 min-h-15 resize-y rounded border border-input bg-background px-2 py-1.5 outline-none focus:ring-1 focus:ring-ring"
+                            spellCheck={false}
+                          />
+                          {localStagingConfig.iconSvg ? (
+                            <span className="w-7 h-7 shrink-0 mt-0.5 [&>svg]:w-full [&>svg]:h-full" dangerouslySetInnerHTML={{ __html: localStagingConfig.iconSvg }} />
+                          ) : (
+                            <TbListCheck className="w-7 h-7 text-muted-foreground shrink-0 mt-0.5" />
+                          )}
+                        </div>
+                      </div>
+                      {/* Style */}
+                      <div className="flex items-start gap-3">
+                        <Label className="text-xs w-20 shrink-0 text-foreground mt-1">Style</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {(['tab', 'primary', 'outline', 'secondary', 'ghost'] as const).map((v) => (
+                            <button
+                              key={v}
+                              type="button"
+                              onClick={() => setLocalStagingConfig(c => ({ ...c, variant: v }))}
+                              className={`px-3 py-1 text-xs rounded border capitalize transition-colors ${(localStagingConfig.variant || 'tab') === v ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-foreground border-border hover:bg-accent'}`}
+                            >
+                              {v}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      {/* Preview */}
+                      <div className="flex items-center gap-3">
+                        <Label className="text-xs w-20 shrink-0 text-foreground">Preview</Label>
+                        <div className="flex items-center h-10 border border-dashed border-border rounded px-4 bg-accent/20 gap-2">
+                          <StagingTabButtonPreview stagingConfig={localStagingConfig} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
+
+                {/* Additional plugin buttons */}
+                {localRightNavPlugins.map((btn, i) => (
+                  <div key={i} className="border border-border rounded bg-background">
+                    <div className="flex items-center gap-3 p-3">
+                      {btn.iconSvg ? (
+                        <span className="w-5 h-5 shrink-0 [&>svg]:w-full [&>svg]:h-full" dangerouslySetInnerHTML={{ __html: btn.iconSvg }} />
+                      ) : (
+                        <TbPuzzle className="w-5 h-5 text-muted-foreground shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{btn.label || btn.plugin}</p>
+                        <p className="text-xs text-muted-foreground font-mono truncate">plugin: {btn.plugin}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setExpandedRightNavItem(expandedRightNavItem === i ? null : i)}
+                        className="h-8 w-8 shrink-0"
+                      >
+                        {expandedRightNavItem === i ? <TbChevronUp className="w-4 h-4" /> : <TbPencil className="w-4 h-4" />}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setLocalRightNavPlugins(prev => prev.filter((_, idx) => idx !== i))}
+                        className="h-8 w-8 shrink-0 text-destructive hover:text-destructive"
+                      >
+                        <TbTrash className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    {expandedRightNavItem === i && (
+                      <div className="border-t border-border p-3 flex flex-col gap-3">
+                        {/* Label */}
+                        <div className="flex items-center gap-3">
+                          <Label className="text-xs w-20 shrink-0 text-foreground">Label</Label>
+                          <Input
+                            value={btn.label || ''}
+                            onChange={(e) => setLocalRightNavPlugins(prev => prev.map((b, idx) => idx === i ? { ...b, label: e.target.value } : b))}
+                            placeholder={btn.plugin}
+                            className="text-sm flex-1"
+                          />
+                        </div>
+                        {/* Icon SVG */}
+                        <div className="flex items-start gap-3">
+                          <Label className="text-xs w-20 shrink-0 text-foreground mt-1">Icon (SVG)</Label>
+                          <div className="flex gap-2 items-start flex-1">
+                            <textarea
+                              value={btn.iconSvg || ''}
+                              onChange={(e) => setLocalRightNavPlugins(prev => prev.map((b, idx) => idx === i ? { ...b, iconSvg: e.target.value || undefined } : b))}
+                              placeholder="<svg xmlns=..."
+                              className="text-xs font-mono flex-1 min-h-15 resize-y rounded border border-input bg-background px-2 py-1.5 outline-none focus:ring-1 focus:ring-ring"
+                              spellCheck={false}
+                            />
+                            {btn.iconSvg ? (
+                              <span className="w-7 h-7 shrink-0 mt-0.5 [&>svg]:w-full [&>svg]:h-full" dangerouslySetInnerHTML={{ __html: btn.iconSvg }} />
+                            ) : (
+                              <span className="w-7 h-7 shrink-0 mt-0.5 flex items-center justify-center rounded border border-dashed border-border">
+                                <TbPuzzle className="w-4 h-4 text-muted-foreground" />
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {/* Style */}
+                        <div className="flex items-start gap-3">
+                          <Label className="text-xs w-20 shrink-0 text-foreground mt-1">Style</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {(['tab', 'primary', 'outline', 'secondary', 'ghost'] as const).map((v) => (
+                              <button
+                                key={v}
+                                type="button"
+                                onClick={() => setLocalRightNavPlugins(prev => prev.map((b, idx) => idx === i ? { ...b, variant: v } : b))}
+                                className={`px-3 py-1 text-xs rounded border capitalize transition-colors ${(btn.variant || 'tab') === v ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-foreground border-border hover:bg-accent'}`}
+                              >
+                                {v}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
 
-              {/* Preview */}
-              <div className="flex items-center gap-3">
-                <Label className="text-xs w-20 shrink-0 text-foreground">Preview</Label>
-                <div className="flex items-center h-10 border border-dashed border-border rounded px-4 bg-accent/20 gap-2">
-                  <StagingTabButtonPreview stagingConfig={localStagingConfig} />
+              {/* Add button / plugin picker */}
+              {!showRightNavPluginPicker ? (
+                <Button variant="outline" size="sm" className="w-fit" onClick={() => setShowRightNavPluginPicker(true)}>
+                  <TbPlus className="w-4 h-4 mr-2" />
+                  Add Button
+                </Button>
+              ) : (
+                <div className="flex flex-col gap-2 border border-border rounded p-3">
+                  <div className="relative">
+                    <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Search plugins..."
+                      value={rightNavSearchTerm}
+                      onChange={(e) => setRightNavSearchTerm(e.target.value)}
+                      className="pl-10 text-sm"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="flex flex-col max-h-48 overflow-y-auto">
+                    {pluginsLoading ? (
+                      <div className="flex items-center justify-center p-4">
+                        <Spinner size={20} />
+                      </div>
+                    ) : filteredRightNavPlugins.length === 0 ? (
+                      <p className="text-xs text-muted-foreground p-4 text-center">
+                        {rightNavSearchTerm ? 'No plugins found' : 'No plugins available'}
+                      </p>
+                    ) : (
+                      filteredRightNavPlugins.map((plugin) => (
+                        <button
+                          key={plugin.id}
+                          onClick={() => {
+                            setLocalRightNavPlugins(prev => [...prev, { plugin: plugin.slug, label: plugin.name }])
+                            setShowRightNavPluginPicker(false)
+                            setRightNavSearchTerm('')
+                          }}
+                          className="flex items-center gap-3 p-2 hover:bg-accent rounded transition-colors text-left"
+                        >
+                          {plugin.image ? (
+                            <img src={plugin.image} alt={plugin.name} className="w-8 h-8 rounded object-cover shrink-0" />
+                          ) : (
+                            <div className="w-8 h-8 rounded bg-muted flex items-center justify-center shrink-0">
+                              <span className="text-xs text-muted-foreground">{plugin.name.charAt(0).toUpperCase()}</span>
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{plugin.name}</p>
+                            <p className="text-xs text-muted-foreground font-mono truncate">{plugin.slug}</p>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                  <div className="flex justify-end">
+                    <Button variant="ghost" size="sm" onClick={() => { setShowRightNavPluginPicker(false); setRightNavSearchTerm('') }}>Cancel</Button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
@@ -566,7 +780,12 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
                                   </div>
 
                                   {/* Icon for builtin tabs */}
-                                  {tab.type === 'builtin' && (
+                                  {tab.iconSvg ? (
+                                    <span
+                                      className="inline-flex size-5 [&>svg]:w-full [&>svg]:h-full"
+                                      dangerouslySetInnerHTML={{ __html: tab.iconSvg }}
+                                    />
+                                  ) : tab.type === 'builtin' && (
                                     <div className="text-muted-foreground">
                                       {getBuiltinIcon(tab.key)}
                                     </div>
@@ -598,7 +817,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
                                             id={`edit-svg-${index}`}
                                             value={editingIconSvg}
                                             onChange={(e) => setEditingIconSvg(e.target.value)}
-                                            placeholder="Paste SVG content here, e.g. <svg xmlns=&quot;...&quot;>...</svg>"
+                                            placeholder="<svg xmlns=&quot;...&quot;>...</svg>"
                                             className="text-xs font-mono flex-1 min-h-15 resize-y rounded border border-input bg-background px-2 py-1.5 outline-none focus:ring-1 focus:ring-ring"
                                             spellCheck={false}
                                           />
@@ -629,15 +848,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
                                         <p className="text-xs text-muted-foreground font-mono truncate">
                                           {tab.type === 'builtin' ? `builtin: ${tab.key}` : `plugin: ${tab.plugin}`}
                                         </p>
-                                        {tab.iconSvg && (
-                                          <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                            <span
-                                              className="inline-flex w-3 h-3 [&>svg]:w-full [&>svg]:h-full"
-                                              dangerouslySetInnerHTML={{ __html: tab.iconSvg }}
-                                            />
-                                            custom icon
-                                          </p>
-                                        )}
+
                                       </>
                                     )}
                                   </div>
@@ -720,8 +931,16 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
                 </div>
               )}
 
-              {/* Global Tab Style */}
-              <div className="flex items-start gap-3 pt-3 border-t border-border mt-1">
+            </>
+          )}
+
+          {/* Tab Style Panel */}
+          {activeDialogTab === 'style' && (
+            <div className="flex flex-col gap-5">
+              <p className="text-sm text-muted-foreground">
+                Choose the visual style applied to all prototype tab buttons.
+              </p>
+              <div className="gap-3 grid grid-cols-[auto_1fr]">
                 <Label className="text-xs w-20 shrink-0 text-foreground mt-1">Tab Style</Label>
                 <div className="flex flex-col gap-3 flex-1">
                   <div className="flex flex-wrap gap-2">
@@ -739,27 +958,29 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
                       </button>
                     ))}
                   </div>
-                  {/* Preview */}
-                  <div className="flex items-center h-10 border border-dashed border-border rounded px-3 bg-accent/20 gap-1">
-                    {(['Overview', 'Code', 'Plugin'] as const).map((lbl, i) => {
-                      const isActive = i === 0
-                      const base = 'flex items-center text-xs font-semibold px-2.5 py-1 transition-colors'
-                      let cls = ''
-                      if (localTabsVariant === 'primary') {
-                        cls = isActive ? `${base} bg-primary text-primary-foreground rounded-md` : `${base} text-muted-foreground hover:bg-accent rounded-md`
-                      } else if (localTabsVariant === 'outline') {
-                        cls = isActive ? `${base} border border-primary text-primary rounded-md` : `${base} border border-transparent text-muted-foreground hover:bg-accent rounded-md`
-                      } else if (localTabsVariant === 'ghost') {
-                        cls = isActive ? `${base} bg-accent text-foreground rounded-md` : `${base} text-muted-foreground rounded-md`
-                      } else {
-                        cls = isActive ? `${base} border-b-2 border-primary text-primary h-full` : `${base} border-b-2 border-transparent text-muted-foreground h-full`
-                      }
-                      return <span key={lbl} className={cls}>{lbl}</span>
-                    })}
-                  </div>
+                </div>
+                {/* Preview */}
+                <Label className="text-xs w-20 shrink-0 text-foreground mt-1">Preview</Label>
+
+                <div className="flex items-center h-10 border border-dashed border-border rounded px-3 bg-accent/20 gap-1">
+                  {(['Overview', 'Code', 'Plugin'] as const).map((lbl, i) => {
+                    const isActive = i === 0
+                    const base = 'flex items-center text-xs font-semibold px-2.5 py-1 transition-colors'
+                    let cls = ''
+                    if (localTabsVariant === 'primary') {
+                      cls = isActive ? `${base} bg-primary text-primary-foreground rounded-md` : `${base} text-muted-foreground hover:bg-accent rounded-md`
+                    } else if (localTabsVariant === 'outline') {
+                      cls = isActive ? `${base} border border-primary text-primary rounded-md` : `${base} border border-transparent text-muted-foreground hover:bg-accent rounded-md`
+                    } else if (localTabsVariant === 'ghost') {
+                      cls = isActive ? `${base} bg-accent text-foreground rounded-md` : `${base} text-muted-foreground rounded-md`
+                    } else {
+                      cls = isActive ? `${base} border-b-2 border-primary text-primary h-full` : `${base} border-b-2 border-transparent text-muted-foreground h-full`
+                    }
+                    return <button key={lbl} className={cls}>{lbl}</button>
+                  })}
                 </div>
               </div>
-            </>
+            </div>
           )}
         </div>
 

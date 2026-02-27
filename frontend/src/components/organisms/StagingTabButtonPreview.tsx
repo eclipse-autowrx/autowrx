@@ -35,9 +35,9 @@ const StagingTabButtonPreview: FC<StagingTabButtonPreviewProps> = ({
     }
 
     return (
-        <span className={`flex items-center gap-1.5 ${btnClass[previewVariant] || ''}`}>
+        <button className={`flex items-center gap-1.5 ${btnClass[previewVariant] || ''}`}>
             {icon}{previewLabel}
-        </span>
+        </button>
     )
 }
 
