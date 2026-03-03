@@ -28,7 +28,7 @@ const stripTrailingNumber = (name) => {
 };
 
 /**
- * Generate up to 3 available prototype name suggestions for a model.
+ * Generate up to 1 available prototype name suggestion for a model.  
  * @param {string} modelId
  * @param {string} baseName
  * @returns {Promise<string[]>}
@@ -36,8 +36,7 @@ const stripTrailingNumber = (name) => {
 const getSuggestedNames = async (modelId, baseName) => {
   const suggestions = [];
   let counter = 1;
-  while (suggestions.length < 3) {
-    const candidateName = `${baseName}_${counter}`;
+  while (suggestions.length < 1) {
     const exists = await Prototype.existsPrototypeInModel(modelId, candidateName);
     if (!exists) {
       suggestions.push(candidateName);
