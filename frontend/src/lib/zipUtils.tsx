@@ -20,6 +20,8 @@ import {
 
 import { convertCode } from '@/services/convert_code.service'
 import DaWidgetSetup from '@/components/molecules/widgets/DaWidgetSetup'
+import { FileSystemItem } from '@/components/molecules/project_editor/types'
+import { base64ToArrayBuffer } from '@/lib/utils'
 
 const removeSpecialCharacters = (str: string) => {
   return str.replace(/[^a-zA-Z0-9 ]/g, '')
@@ -38,6 +40,54 @@ const getImgFile = (zip: JSZip, imageUrl: string, filename: string) => {
         resolve()
       })
   })
+}
+
+const isProjectCode = (code?: string | null): boolean => {
+  if (!code) return false
+  try {
+    const parsed = JSON.parse(code)
+    if (!Array.isArray(parsed) || parsed.length === 0) return false
+
+    const first = parsed[0] as any
+    return (
+      first &&
+      typeof first === 'object' &&
+      (first.type === 'file' || first.type === 'folder') &&
+      typeof first.name === 'string'
+    )
+  } catch {
+    return false
+  }
+}
+
+const addProjectFilesToZip = (zip: JSZip, fsData: FileSystemItem[]) => {
+  const addItems = (items: FileSystemItem[], basePath: string) => {
+    items.forEach((item) => {
+      if (item.type === 'file') {
+        // Binary file stored as base64
+        if ((item as any).isBase64 && item.content) {
+          try {
+            const arrayBuffer = base64ToArrayBuffer(item.content)
+            zip.file(basePath + item.name, arrayBuffer, { binary: true })
+          } catch (error) {
+            console.error(`Error converting base64 for ${item.name}:`, error)
+            zip.file(basePath + item.name, item.content || '')
+          }
+        } else {
+          zip.file(basePath + item.name, item.content || '')
+        }
+      } else if (item.type === 'folder') {
+        addItems(item.items, basePath + item.name + '/')
+      }
+    })
+  }
+
+  if (!fsData || fsData.length === 0) return
+  const root = fsData[0]
+  if (root && root.type === 'folder') {
+    // Place all project files under a dedicated "code/" folder in the zip
+    addItems(root.items, 'code/')
+  }
 }
 
 const downloadAllPrototypeInModel = async (model: Model, zip: JSZip) => {
@@ -206,7 +256,19 @@ export const downloadPrototypeZip = async (prototype: Prototype) => {
   try {
     const zip = new JSZip()
     const zipFilename = `prototype_${removeSpecialCharacters(prototype.name)}.zip`
-    zip.file('code.py', prototype.code)
+
+    // If prototype.code is a JSON array, treat it as a multi-file project
+    if (isProjectCode(prototype.code)) {
+      try {
+        const fsData = JSON.parse(prototype.code || '[]') as FileSystemItem[]
+        addProjectFilesToZip(zip, fsData)
+      } catch (e) {
+        console.error('Failed to parse project code for prototype export', e)
+      }
+    }
+
+    // Always include the legacy single-file payload for compatibility
+    zip.file('code.py', prototype.code || '')
     zip.file('dashboard.json', prototype.widget_config || '{"widgets":[]}')
     zip.file(
       'metadata.json',
@@ -230,24 +292,6 @@ export const downloadPrototypeZip = async (prototype: Prototype) => {
     )
     if (prototype.image_file) {
       await getImgFile(zip, prototype.image_file, 'image_file.png')
-    }
-
-    if (prototype.widget_config) {
-      try {
-        const pluginList: any[] = []
-        const wConfig = JSON.parse(prototype.widget_config)
-        if (Array.isArray(wConfig) && wConfig.length > 0) {
-          for (const widget of wConfig) {
-            if (
-              widget.plugin &&
-              widget.plugin.length > 0 &&
-              !pluginList.includes(widget.plugin)
-            ) {
-              pluginList.push(widget.plugin)
-            }
-          }
-        }
-      } catch (e) { }
     }
 
     const content = await zip.generateAsync({ type: 'blob' })
