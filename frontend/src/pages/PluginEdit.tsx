@@ -71,7 +71,7 @@ const PluginEdit = ({ mode }: { mode: 'create' | 'edit' }) => {
     onSuccess: (p: Plugin) => {
       toast.success('Saved')
       qc.invalidateQueries({ queryKey: ['plugins'] })
-      if (mode === 'create') navigate(`/plugins/${p.id}`)
+      if (mode === 'create') navigate(`/me/plugins/${p.id}`)
       else qc.invalidateQueries({ queryKey: ['plugin', id] })
     },
     onError: (e: any) =>
@@ -190,7 +190,7 @@ const PluginEdit = ({ mode }: { mode: 'create' | 'edit' }) => {
             <Button onClick={() => save.mutate()} disabled={save.isPending}>
               {save.isPending ? 'Saving...' : 'Save'}
             </Button>
-            <Button variant="outline" onClick={() => navigate('/plugins')}>
+            <Button variant="outline" onClick={() => navigate('/me/plugins')}>
               Back
             </Button>
           </div>

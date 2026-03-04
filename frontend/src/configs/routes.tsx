@@ -236,7 +236,7 @@ const routesConfig: RouteConfig[] = [
             ],
           },
           {
-            path: '/plugins',
+            path: '/me/plugins',
             children: [
               {
                 index: true,

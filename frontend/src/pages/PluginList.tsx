@@ -17,15 +17,25 @@ import PluginForm from '@/components/organisms/PluginForm'
 import { useState } from 'react'
 import { TbPencil, TbTrash } from 'react-icons/tb'
 import { useQueryClient } from '@tanstack/react-query'
+import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
 
 const PluginList = () => {
   const qc = useQueryClient()
+  const { data: currentUser } = useSelfProfileQuery()
+  const [isAdmin] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
   const { data, isLoading } = useQuery({
     queryKey: ['plugins'],
     queryFn: () => listPlugins({ limit: 100, page: 1 }),
   })
   const [openForm, setOpenForm] = useState(false)
   const [editId, setEditId] = useState<string | undefined>(undefined)
+
+  const allPlugins = data?.results || []
+  const visiblePlugins = isAdmin
+    ? allPlugins
+    : allPlugins.filter((p: Plugin) => p.created_by === currentUser?.id)
 
   return (
     <div className="p-6">
@@ -45,7 +55,7 @@ const PluginList = () => {
         <p className="text-sm text-muted-foreground">Loading...</p>
       ) : (
         <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-          {data?.results?.map((p: Plugin) => (
+          {visiblePlugins.map((p: Plugin) => (
             <div
               key={p.id}
               className="rounded-md border border-input bg-background p-3 shadow-sm flex flex-col cursor-pointer hover:shadow-medium transition"
@@ -98,7 +108,7 @@ const PluginList = () => {
               </div>
             </div>
           ))}
-          {!data?.results?.length && (
+          {!visiblePlugins.length && (
             <div className="col-span-full text-center py-6">
               <p className="text-sm text-muted-foreground">No plugins yet</p>
             </div>

@@ -20,6 +20,8 @@ export interface Plugin {
   type?: 'prototype_function' | 'deploy' | string
   createdAt: string
   updatedAt: string
+  created_by?: string
+  updated_by?: string
 }
 
 export interface Paged<T> {
