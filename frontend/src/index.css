@@ -37,6 +37,14 @@
   }
 }
 
+/* Radix UI DismissableLayer bug: multiple Radix components (dialog, dropdown-menu, select)
+   each bundle separate DismissableLayer copies that independently set pointer-events: none
+   on <body>. When one opens another (e.g. DropdownMenu → Dialog), the stale value persists
+   after close. The overlay already blocks outside clicks, so body pointer-events is redundant. */
+body {
+  pointer-events: auto !important;
+}
+
 /* ============================================
    CUSTOM PROJECT UTILITIES
    ============================================ */
