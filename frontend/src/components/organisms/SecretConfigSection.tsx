@@ -65,7 +65,7 @@ const SecretConfigSection: React.FC = () => {
       if (config.id) {
         await configManagementService.deleteConfigById(config.id)
         toast({ title: 'Deleted', description: `Config "${config.key}" deleted. Reloading page...` })
-        
+
         // Reload page to show changes immediately
         setTimeout(() => {
           window.location.href = window.location.href
@@ -98,7 +98,7 @@ const SecretConfigSection: React.FC = () => {
         await configManagementService.createConfig({ ...config, secret: true })
         toast({ title: 'Created', description: `Config "${config.key}" created. Reloading page...` })
       }
-      
+
       // Reload page to show changes immediately
       setTimeout(() => {
         window.location.href = window.location.href
@@ -141,7 +141,7 @@ const SecretConfigSection: React.FC = () => {
       }
 
       toast({ title: 'Restored', description: 'Secret configs restored to default values. Reloading page...' })
-      
+
       // Reload page to show changes immediately
       setTimeout(() => {
         window.location.href = window.location.href
@@ -168,14 +168,20 @@ const SecretConfigSection: React.FC = () => {
               Manage sensitive configuration values (admin only)
             </p>
           </div>
-          <Button
-            onClick={handleFactoryReset}
-            variant="outline"
-            size="sm"
-            disabled={isLoading}
-          >
-            Restore default
-          </Button>
+
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setIsFormOpen(true)} size="sm" disabled={isLoading}>
+              + Add Secret
+            </Button>
+            <Button
+              onClick={handleFactoryReset}
+              variant="outline"
+              size="sm"
+              disabled={isLoading}
+            >
+              Restore default
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -189,6 +195,7 @@ const SecretConfigSection: React.FC = () => {
             configs={configs}
             onEdit={handleEditConfig}
             onDelete={handleDeleteConfig}
+            showDelete
             isLoading={isLoading}
             historySection="secrets"
           />
