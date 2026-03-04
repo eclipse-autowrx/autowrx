@@ -42,46 +42,37 @@ interface DialogContentProps
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
->(({ className, showCloseButton = true, children, ...props }, ref) => {
-  // Guard against Radix DismissableLayer leaving `pointer-events: none` on <body>.
-  // Root cause: Radix bundles separate DismissableLayer copies per component (dialog,
-  // dropdown-menu, select, etc.), each with its own module-level `originalBodyPointerEvents`.
-  // When a DropdownMenu opens a Dialog, the Dialog's DismissableLayer captures the already-
-  // polluted `pointer-events: none` as its "original" value. When the Dialog closes, Radix
-  // restores that stale value, leaving body stuck. We use requestAnimationFrame to ensure
-  // our cleanup runs after Radix's own cleanup effect has executed.
-  React.useEffect(() => {
-    return () => {
-      requestAnimationFrame(() => {
+>(({ className, showCloseButton = true, children, ...props }, ref) => (
+  <DialogPortal>
+    <DialogOverlay />
+    <DialogPrimitive.Content
+      ref={ref}
+      className={cn(
+        'fixed left-[50%] top-[50%] z-50 grid w-full rounded-xl max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-muted dark:border-zinc-700 bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
+        className,
+      )}
+      {...props}
+      // Radix DismissableLayer sets `pointer-events: none` on <body> when modal dialogs open.
+      // Multiple Radix components (dialog, dropdown-menu, select) each bundle their own
+      // DismissableLayer copy with separate state, causing stale `pointer-events: none` to
+      // persist after close (e.g. opening this dialog from a DropdownMenu).
+      // Fix: clear it on every close animation end. The overlay already blocks outside clicks.
+      onAnimationEnd={() => {
         if (document.body.style.pointerEvents === 'none') {
           document.body.style.pointerEvents = ''
         }
-      })
-    }
-  }, [])
-
-  return (
-    <DialogPortal>
-      <DialogOverlay />
-      <DialogPrimitive.Content
-        ref={ref}
-        className={cn(
-          'fixed left-[50%] top-[50%] z-50 grid w-full rounded-xl max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-muted dark:border-zinc-700 bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
-          className,
-        )}
-        {...props}
-      >
-        {children}
-        {showCloseButton && (
-          <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-muted data-[state=open]:text-muted-foreground">
-            <Cross2Icon className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </DialogPrimitive.Close>
-        )}
-      </DialogPrimitive.Content>
-    </DialogPortal>
-  )
-})
+      }}
+    >
+      {children}
+      {showCloseButton && (
+        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-muted data-[state=open]:text-muted-foreground">
+          <Cross2Icon className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </DialogPrimitive.Close>
+      )}
+    </DialogPrimitive.Content>
+  </DialogPortal>
+))
 DialogContent.displayName = DialogPrimitive.Content.displayName
 
 const DialogHeader = ({
