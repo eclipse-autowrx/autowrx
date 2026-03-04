@@ -8,7 +8,7 @@
 
 import { ReactNode, useState, useEffect } from 'react'
 import { PublicClientApplication } from '@azure/msal-browser'
-import { createMSALInstance, getLoginRequest, SSOProvider } from '@/services/sso.service'
+import { createMSALInstance, getLoginRequest, getGithubSsoStartUrl, SSOProvider } from '@/services/sso.service'
 import { ssoService } from '@/services/auth.service'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 
@@ -24,18 +24,13 @@ const SSOHandler = ({ provider, setSSOLoading, children }: SSOHandlerProps) => {
   const { toast } = useToast()
 
   useEffect(() => {
-    // Initialize MSAL instance when provider changes
-    if (provider) {
+    if (provider?.type === 'MSAL') {
       const initializeMsal = async () => {
         try {
           setIsInitializing(true)
           const instance = createMSALInstance(provider)
-
-          // MUST call and await initialize() before using any MSAL API
           await instance.initialize()
-
           setMsalInstance(instance)
-          console.log('MSAL instance initialized successfully')
         } catch (error) {
           console.error('Failed to initialize MSAL instance:', error)
           toast({
@@ -47,14 +42,22 @@ const SSOHandler = ({ provider, setSSOLoading, children }: SSOHandlerProps) => {
           setIsInitializing(false)
         }
       }
-
       initializeMsal()
+    } else {
+      setMsalInstance(null)
+      setIsInitializing(false)
     }
   }, [provider, toast])
 
   const handleSSOLogin = async (event: React.MouseEvent) => {
     event.preventDefault()
     event.stopPropagation()
+
+    if (provider.type === 'GITHUB') {
+      if (setSSOLoading) setSSOLoading(true)
+      window.location.href = getGithubSsoStartUrl(provider.id)
+      return
+    }
 
     if (isInitializing) {
       toast({
@@ -76,7 +79,6 @@ const SSOHandler = ({ provider, setSSOLoading, children }: SSOHandlerProps) => {
     if (setSSOLoading) setSSOLoading(true)
 
     try {
-      // Initiate popup login
       const loginRequest = getLoginRequest(provider)
       const loginResponse = await msalInstance.loginPopup(loginRequest)
 
@@ -84,7 +86,6 @@ const SSOHandler = ({ provider, setSSOLoading, children }: SSOHandlerProps) => {
         throw new Error('No access token received from Microsoft')
       }
 
-      // Call backend with ID token and provider ID (no User.Read scope needed)
       const response = await ssoService(loginResponse.idToken, provider.id)
 
       if (response.data) {
@@ -92,24 +93,18 @@ const SSOHandler = ({ provider, setSSOLoading, children }: SSOHandlerProps) => {
           title: 'Login Successful',
           description: `Welcome back, ${response.data.user?.name || 'User'}!`,
         })
-
-        // Reload page to refresh auth state
         setTimeout(() => {
           window.location.href = window.location.href
         }, 500)
       }
     } catch (error: any) {
-      console.log('error in SSOHandler', error)
-      // Handle specific MSAL errors
       if (error.errorCode === 'user_cancelled') {
-        // User intentionally cancelled - no need to log as error
         toast({
           title: 'Login Cancelled',
           description: 'You cancelled the login process.',
         })
       } else {
         console.error('SSO login error:', error)
-
         if (error.errorCode === 'popup_window_error') {
           toast({
             title: 'Popup Blocked',

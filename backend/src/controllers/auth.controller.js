@@ -232,6 +232,89 @@ const sso = catchAsync(async (req, res) => {
   res.send({ user, tokens });
 });
 
+const ssoService = require('../services/sso.service');
+
+const githubSsoStart = catchAsync(async (req, res) => {
+  const { providerId, origin } = req.query;
+  if (!providerId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'providerId is required');
+  }
+  const provider = await ssoService.getSSOProviderById(providerId, true);
+  if (provider.type !== 'GITHUB') {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Provider is not a GitHub SSO provider');
+  }
+  const baseUrl = `${req.protocol}://${req.get('host')}`;
+  const pathWithoutQuery = (req.originalUrl || '').split('?')[0];
+  const callbackPath = pathWithoutQuery.replace(/\/github-sso\/start\/?$/, '') + '/github-sso/callback';
+  const redirectUri = baseUrl + callbackPath;
+  const returnOrigin = origin || config.client.baseUrl;
+  const state = encodeURIComponent(JSON.stringify({ providerId, origin: returnOrigin }));
+  const scope = (Array.isArray(provider.scopes) && provider.scopes.length)
+    ? provider.scopes.join(' ')
+    : (typeof provider.scopes === 'string' && provider.scopes.trim())
+      ? provider.scopes.trim()
+      : 'user:email';
+  const params = new URLSearchParams({
+    client_id: provider.clientId,
+    redirect_uri: redirectUri,
+    scope,
+    state,
+  });
+  const url = `https://github.com/login/oauth/authorize?${params.toString()}`;
+  res.redirect(url);
+});
+
+const githubSsoCallback = catchAsync(async (req, res) => {
+  const { code, state } = req.query;
+  let origin = config.client.baseUrl;
+  let providerId = null;
+  if (state) {
+    try {
+      const decoded = JSON.parse(decodeURIComponent(state));
+      providerId = decoded.providerId;
+      if (decoded.origin) origin = decoded.origin;
+    } catch (e) {
+      providerId = decodeURIComponent(state);
+    }
+  }
+  if (!code || !providerId) {
+    return res.redirect(`${origin}?error=missing_code_or_state`);
+  }
+  let provider;
+  try {
+    provider = await ssoService.getSSOProviderById(providerId, true);
+  } catch (e) {
+    return res.redirect(`${origin}?error=invalid_provider`);
+  }
+  if (provider.type !== 'GITHUB') {
+    return res.redirect(`${origin}?error=invalid_provider`);
+  }
+  let graphData;
+  try {
+    graphData = await authService.exchangeGithubSSOCode(code, provider);
+  } catch (error) {
+    logger.error(error);
+    const message = encodeURIComponent(error.message || 'GitHub authentication failed');
+    return res.redirect(`${origin}?error=${message}`);
+  }
+  let user = await userService.getUserByEmail(graphData.mail);
+  if (!user) {
+    if (!req.authConfig.SSO_AUTO_REGISTRATION) {
+      return res.redirect(`${origin}?error=${encodeURIComponent('User not registered. Contact admin to register your account.')}`);
+    }
+    user = await userService.createSSOUser(graphData);
+  } else {
+    user = await userService.updateSSOUser(user, graphData);
+  }
+  const tokens = await tokenService.generateAuthTokens(user);
+  res.cookie(config.jwt.cookie.name, tokens.refresh.token, {
+    expires: tokens.refresh.expires,
+    ...config.jwt.cookie.options,
+  });
+  delete tokens.refresh;
+  res.redirect(origin);
+});
+
 module.exports = {
   authenticate,
   authorize,
@@ -245,4 +328,6 @@ module.exports = {
   verifyEmail,
   githubCallback,
   sso,
+  githubSsoStart,
+  githubSsoCallback,
 };

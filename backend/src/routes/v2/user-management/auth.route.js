@@ -22,6 +22,8 @@ router.post('/authenticate', auth(), authController.authenticate);
 router.post('/authorize', validate(authValidation.authorize), authController.authorize);
 
 router.get('/github/callback', authController.githubCallback);
+router.get('/github-sso/start', authController.githubSsoStart);
+router.get('/github-sso/callback', authController.githubSsoCallback);
 router.post('/sso', validate(authValidation.sso), authController.sso);
 
 // Registration endpoint - always registered but checks SELF_REGISTRATION config

@@ -13,7 +13,8 @@ import { Spinner } from '@/components/atoms/spinner'
 import { loginService } from '@/services/auth.service'
 import { addLog } from '@/services/log.service'
 import { isAxiosError } from 'axios'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { TbAt, TbLock } from 'react-icons/tb'
 import SSOHandler from '../SSOHandler'
 import config from '@/configs/config'
@@ -25,11 +26,21 @@ interface FormSignInProps {
 }
 
 const FormSignIn = ({ setAuthType }: FormSignInProps) => {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [loading, setLoading] = useState(false)
   const [ssoLoading, setSSOLoading] = useState<string | null>(null)
   const [error, setError] = useState<string>('')
   const { authConfigs } = useAuthConfigs()
   const { providers: ssoProviders } = useSSOProviders()
+
+  useEffect(() => {
+    const err = searchParams.get('error')
+    if (err) {
+      setError(decodeURIComponent(err))
+      setSearchParams({}, { replace: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const signIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()

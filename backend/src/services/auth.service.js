@@ -207,6 +207,65 @@ const callMsGraph = async (accessToken, providerId = null) => {
 };
 
 /**
+ * Exchange GitHub OAuth code for access token and fetch user profile (for GitHub SSO login).
+ * @param {string} code - Authorization code from GitHub callback
+ * @param {Object} provider - SSO provider config { clientId, clientSecret }
+ * @returns {Promise<{ id: string, displayName: string, mail: string, userPhotoUrl: string | null, providerId: string }>} graphData shape
+ */
+const exchangeGithubSSOCode = async (code, provider) => {
+  const { clientId, clientSecret } = provider;
+  if (!clientId || !clientSecret) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'GitHub SSO provider is missing clientId or clientSecret');
+  }
+  const { data: tokenData } = await axios.post(
+    'https://github.com/login/oauth/access_token',
+    {
+      client_id: clientId,
+      client_secret: clientSecret,
+      code,
+    },
+    {
+      headers: { Accept: 'application/json' },
+    }
+  ).catch((err) => {
+    logger.error(`GitHub token exchange failed: ${err.response?.data?.error_description || err.message}`);
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Failed to authenticate with GitHub');
+  });
+
+  const accessToken = tokenData.access_token;
+  if (!accessToken) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, tokenData.error_description || 'No access token from GitHub');
+  }
+
+  const { data: userData } = await axios.get('https://api.github.com/user', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  }).catch((err) => {
+    logger.error(`GitHub user fetch failed: ${err.message}`);
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Failed to fetch GitHub user');
+  });
+
+  let mail = userData.email;
+  if (!mail) {
+    const { data: emails } = await axios.get('https://api.github.com/user/emails', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }).catch(() => ({ data: [] }));
+    const primary = Array.isArray(emails) ? emails.find((e) => e.primary) : null;
+    mail = primary ? primary.email : null;
+  }
+  if (!mail) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'GitHub account has no public or primary email. Please add an email in GitHub settings.');
+  }
+
+  return {
+    id: String(userData.id),
+    displayName: userData.name || userData.login || mail.split('@')[0],
+    mail,
+    userPhotoUrl: userData.avatar_url || null,
+    providerId: provider.id,
+  };
+};
+
+/**
  * Parse ID token to extract user data (alternative to calling Graph API)
  * @param {string} idToken - MSAL ID token (JWT)
  * @param {string} providerId - SSO provider ID
@@ -269,4 +328,5 @@ module.exports = {
   githubCallback,
   callMsGraph,
   parseIdToken,
+  exchangeGithubSSOCode,
 };

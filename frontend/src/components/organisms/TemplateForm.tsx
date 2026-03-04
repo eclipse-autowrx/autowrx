@@ -298,7 +298,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                     </DaSelect>
                   </div>
                 </div>
-                <div className="w-44 flex-shrink-0">
+                <div className="w-44 shrink-0">
                   <div className="relative aspect-square w-full border border-input rounded-md overflow-hidden bg-white">
                     <img
                       src={form.image || '/imgs/plugin.png'}
@@ -354,9 +354,9 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                 {modelTabs.map((it, idx) => (
                   <div
                     key={idx}
-                    className="grid grid-cols-12 gap-2 items-center"
+                    className="flex flex-wrap gap-3 items-center"
                   >
-                    <div className="col-span-5">
+                    <div className="flex-1 min-w-[180px]">
                       <Input
                         placeholder="Label"
                         value={it.label}
@@ -390,7 +390,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                         ))}
                       </DaSelect>
                     </div>
-                    <div className="col-span-1 flex justify-end">
+                    <div className="flex justify-end">
                       <Button
                         variant="destructive"
                         size="sm"

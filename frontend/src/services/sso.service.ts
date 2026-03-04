@@ -8,15 +8,17 @@
 
 import { LogLevel, PublicClientApplication, Configuration } from '@azure/msal-browser'
 import { serverAxios } from './base'
+import config from '@/configs/config'
 
 export interface SSOProvider {
   id: string
   name: string
-  type: 'MSAL'
+  type: 'MSAL' | 'GITHUB'
   enabled: boolean
   clientId: string
-  authority: string
-  scopes: string[]
+  authority?: string
+  clientSecret?: string
+  scopes?: string[]
 }
 
 /**
@@ -33,13 +35,22 @@ export const getPublicSSOProviders = async (): Promise<SSOProvider[]> => {
 }
 
 /**
- * Create MSAL configuration from SSO provider
+ * Build GitHub SSO start URL (redirect user to backend, then to GitHub).
+ */
+export const getGithubSsoStartUrl = (providerId: string): string => {
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  const params = new URLSearchParams({ providerId, origin })
+  return `${config.serverBaseUrl}/${config.serverVersion}/auth/github-sso/start?${params.toString()}`
+}
+
+/**
+ * Create MSAL configuration from SSO provider (MSAL only).
  */
 export const createMSALConfig = (provider: SSOProvider): Configuration => {
   return {
     auth: {
       clientId: provider.clientId,
-      authority: provider.authority,
+      authority: provider.authority || '',
       redirectUri: `${window.location.origin}/`,
       postLogoutRedirectUri: `${window.location.origin}/`,
       navigateToLoginRequestUrl: false,
