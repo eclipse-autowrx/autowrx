@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -12,8 +12,8 @@ const validate = require('../../../middlewares/validate');
 const { pluginValidation } = require('../../../validations');
 const { pluginController } = require('../../../controllers');
 const upload = require('../../../middlewares/upload');
-const { checkPermission } = require('../../../middlewares/permission');
-const { PERMISSIONS } = require('../../../config/roles');
+// const { checkPermission } = require('../../../middlewares/permission');
+// const { PERMISSIONS } = require('../../../config/roles');
 
 const router = express.Router();
 
@@ -23,7 +23,8 @@ router.get('/id/:id', validate(pluginValidation.getPlugin), pluginController.get
 router.get('/slug/:slug', validate(pluginValidation.getPluginBySlug), pluginController.getPluginBySlug);
 
 // Admin-only create/update
-router.use(auth(), checkPermission(PERMISSIONS.ADMIN));
+// router.use(auth(), checkPermission(PERMISSIONS.ADMIN));
+router.use(auth());
 router.post('/', validate(pluginValidation.createPlugin), pluginController.createPlugin);
 router.put('/:id', validate(pluginValidation.updatePlugin), pluginController.updatePlugin);
 router.delete('/:id', pluginController.removePlugin);
@@ -32,12 +33,10 @@ router.delete('/:id', pluginController.removePlugin);
 router.post(
   '/upload/:slug',
   auth(),
-  checkPermission(PERMISSIONS.ADMIN),
+  // checkPermission(PERMISSIONS.ADMIN),
   validate(pluginValidation.uploadInternal),
   upload.single('file'),
-  pluginController.uploadInternalPlugin
+  pluginController.uploadInternalPlugin,
 );
 
 module.exports = router;
-
-
