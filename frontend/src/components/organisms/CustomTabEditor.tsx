@@ -43,6 +43,7 @@ import {
 } from 'react-icons/tb'
 import { MdOutlineDoubleArrow } from 'react-icons/md'
 import StagingTabButtonPreview from '@/components/organisms/StagingTabButtonPreview'
+import DOMPurify from 'dompurify'
 
 export interface CustomTab {
   label: string
@@ -484,7 +485,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
                 <div className="border border-border rounded bg-background">
                   <div className="flex items-center gap-3 p-3">
                     {localStagingConfig.iconSvg ? (
-                      <span className="w-5 h-5 shrink-0 [&>svg]:w-full [&>svg]:h-full" dangerouslySetInnerHTML={{ __html: localStagingConfig.iconSvg }} />
+                      <span className="w-5 h-5 shrink-0 [&>svg]:w-full [&>svg]:h-full" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(localStagingConfig.iconSvg, { USE_PROFILES: { svg: true, svgFilters: true } }) }} />
                     ) : (
                       <TbListCheck className="w-5 h-5 text-muted-foreground shrink-0" />
                     )}
@@ -541,7 +542,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
                             spellCheck={false}
                           />
                           {localStagingConfig.iconSvg ? (
-                            <span className="w-7 h-7 shrink-0 mt-0.5 [&>svg]:w-full [&>svg]:h-full" dangerouslySetInnerHTML={{ __html: localStagingConfig.iconSvg }} />
+                            <span className="w-7 h-7 shrink-0 mt-0.5 [&>svg]:w-full [&>svg]:h-full" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(localStagingConfig.iconSvg, { USE_PROFILES: { svg: true, svgFilters: true } }) }} />
                           ) : (
                             <TbListCheck className="w-7 h-7 text-muted-foreground shrink-0 mt-0.5" />
                           )}
@@ -579,7 +580,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
                   <div key={i} className="border border-border rounded bg-background">
                     <div className="flex items-center gap-3 p-3">
                       {btn.iconSvg ? (
-                        <span className="w-5 h-5 shrink-0 [&>svg]:w-full [&>svg]:h-full" dangerouslySetInnerHTML={{ __html: btn.iconSvg }} />
+                        <span className="w-5 h-5 shrink-0 [&>svg]:w-full [&>svg]:h-full" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(btn.iconSvg, { USE_PROFILES: { svg: true, svgFilters: true } }) }} />
                       ) : (
                         <TbPuzzle className="w-5 h-5 text-muted-foreground shrink-0" />
                       )}
@@ -628,7 +629,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
                               spellCheck={false}
                             />
                             {btn.iconSvg ? (
-                              <span className="w-7 h-7 shrink-0 mt-0.5 [&>svg]:w-full [&>svg]:h-full" dangerouslySetInnerHTML={{ __html: btn.iconSvg }} />
+                              <span className="w-7 h-7 shrink-0 mt-0.5 [&>svg]:w-full [&>svg]:h-full" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(btn.iconSvg, { USE_PROFILES: { svg: true, svgFilters: true } }) }} />
                             ) : (
                               <span className="w-7 h-7 shrink-0 mt-0.5 flex items-center justify-center rounded border border-dashed border-border">
                                 <TbPuzzle className="w-4 h-4 text-muted-foreground" />
@@ -783,7 +784,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
                                   {tab.iconSvg ? (
                                     <span
                                       className="inline-flex size-5 [&>svg]:w-full [&>svg]:h-full"
-                                      dangerouslySetInnerHTML={{ __html: tab.iconSvg }}
+                                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(tab.iconSvg, { USE_PROFILES: { svg: true, svgFilters: true } }) }}
                                     />
                                   ) : tab.type === 'builtin' && (
                                     <div className="text-muted-foreground">
@@ -824,7 +825,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
                                           {editingIconSvg.trim() ? (
                                             <span
                                               className="w-7 h-7 shrink-0 mt-0.5 [&>svg]:w-full [&>svg]:h-full"
-                                              dangerouslySetInnerHTML={{ __html: editingIconSvg }}
+                                              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(editingIconSvg, { USE_PROFILES: { svg: true, svgFilters: true } }) }}
                                             />
                                           ) : (
                                             <span className="w-7 h-7 shrink-0 mt-0.5 flex items-center justify-center rounded border border-dashed border-border">

@@ -2,6 +2,7 @@ import { FC } from 'react'
 import { TbListCheck } from 'react-icons/tb'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import { StagingConfig } from '@/components/organisms/CustomTabEditor'
+import DOMPurify from 'dompurify'
 
 interface StagingTabButtonPreviewProps {
     stagingConfig: StagingConfig
@@ -15,7 +16,7 @@ const StagingTabButtonPreview: FC<StagingTabButtonPreviewProps> = ({
 
     const icon = stagingConfig.hideIcon ? null : (
         stagingConfig.iconSvg
-            ? <span className="w-4 h-4 shrink-0 [&>svg]:w-full [&>svg]:h-full [&>svg]:fill-current" dangerouslySetInnerHTML={{ __html: stagingConfig.iconSvg }} />
+            ? <span className="w-4 h-4 shrink-0 [&>svg]:w-full [&>svg]:h-full [&>svg]:fill-current" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(stagingConfig.iconSvg, { USE_PROFILES: { svg: true, svgFilters: true } }) }} />
             : <TbListCheck className="w-4 h-4" />
     )
 

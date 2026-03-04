@@ -18,6 +18,7 @@ import { TbPhotoEdit, TbListCheck, TbEye, TbEyeOff } from 'react-icons/tb'
 import { toast } from 'react-toastify'
 import { listPlugins, type Plugin } from '@/services/plugin.service'
 import { TabConfig, StagingConfig, RightNavPluginButton } from '@/components/organisms/CustomTabEditor'
+import DOMPurify from 'dompurify'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 
 // Template-safe normalizer: preserves full TabConfig without injecting default builtin tabs.
@@ -468,7 +469,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                       {prototypeStagingConfig.iconSvg ? (
                         <span
                           className="w-6 h-6 shrink-0 mt-0.5 [&>svg]:w-full [&>svg]:h-full [&>svg]:fill-current"
-                          dangerouslySetInnerHTML={{ __html: prototypeStagingConfig.iconSvg }}
+                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(prototypeStagingConfig.iconSvg, { USE_PROFILES: { svg: true, svgFilters: true } }) }}
                         />
                       ) : (
                         <TbListCheck className="w-6 h-6 text-muted-foreground shrink-0 mt-0.5" />
@@ -621,7 +622,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                         {it.iconSvg ? (
                           <span
                             className="w-6 h-6 shrink-0 mt-0.5 [&>svg]:w-full [&>svg]:h-full [&>svg]:fill-current"
-                            dangerouslySetInnerHTML={{ __html: it.iconSvg }}
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(it.iconSvg, { USE_PROFILES: { svg: true, svgFilters: true } }) }}
                           />
                         ) : (
                           <span className="w-6 h-6 shrink-0 mt-0.5 flex items-center justify-center rounded border border-dashed border-border text-muted-foreground text-xs">—</span>

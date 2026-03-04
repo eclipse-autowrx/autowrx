@@ -17,6 +17,7 @@ import {
 } from 'react-icons/tb'
 import { TabConfig } from '@/components/organisms/CustomTabEditor'
 import { cn } from '@/lib/utils'
+import DOMPurify from 'dompurify'
 
 interface PrototypeTabsProps {
   tabs?: TabConfig[]
@@ -30,7 +31,7 @@ const renderTabIcon = (tabConfig: TabConfig, defaultIcon: React.ReactNode) => {
     return (
       <span
         className="w-5 h-5 mr-2 shrink-0 [&>svg]:w-full [&>svg]:h-full [&>svg]:fill-current"
-        dangerouslySetInnerHTML={{ __html: tabConfig.iconSvg }}
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(tabConfig.iconSvg, { USE_PROFILES: { svg: true, svgFilters: true } }) }}
       />
     )
   }
