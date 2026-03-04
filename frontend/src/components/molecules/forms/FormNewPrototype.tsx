@@ -54,6 +54,9 @@ interface FormNewPrototypeProps {
     onSuccess?: (modelId: string, prototypeId: string, prototypeName: string) => void
 }
 
+const DUPLICATE_NAME_ERROR =
+    'A prototype with this name already exists. Please choose a different name.'
+
 const FormNewPrototype = ({
     onClose,
     code,
@@ -102,7 +105,7 @@ const FormNewPrototype = ({
             setSelectedModelId('new')
             onModelChange?.(null)
         }
-    }, [allModels, isFetchingModels])
+    }, [allModels, isFetchingModels, onModelChange])
 
     // Check for duplicate prototype name
     useEffect(() => {
@@ -111,13 +114,8 @@ const FormNewPrototype = ({
                 (p: Prototype) => p.name.toLowerCase() === prototypeName.toLowerCase(),
             )
             if (nameExists) {
-                setError(
-                    'A prototype with this name already exists. Please choose a different name.',
-                )
-            } else if (
-                error ===
-                'A prototype with this name already exists. Please choose a different name.'
-            ) {
+                setError(DUPLICATE_NAME_ERROR)
+            } else if (error === DUPLICATE_NAME_ERROR) {
                 setError('')
             }
         }
@@ -177,7 +175,7 @@ const FormNewPrototype = ({
                 name: `New prototype '${prototypeName}'`,
                 description: `Prototype '${prototypeName}' was created by ${currentUser?.email || currentUser?.name || currentUser?.id}`,
                 type: 'new-prototype',
-                create_by: currentUser?.id!,
+                create_by: currentUser?.id ?? '',
                 ref_id: response.id,
                 ref_type: 'prototype',
                 parent_id: modelId,

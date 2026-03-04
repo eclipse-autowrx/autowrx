@@ -63,7 +63,7 @@ export interface StagingConfig {
   label?: string
   hideIcon?: boolean
   iconSvg?: string  // Custom SVG icon content (inline SVG string)
-  variant?: 'tab' | 'primary' | 'outline' | 'secondary' | 'ghost'
+  variant?: 'tab' | 'primary' | 'outline' | 'ghost'
 }
 
 export interface RightNavPluginButton {
@@ -72,7 +72,7 @@ export interface RightNavPluginButton {
   label?: string
   iconSvg?: string
   hideIcon?: boolean          // For staging: whether to hide the icon
-  variant?: 'tab' | 'primary' | 'outline' | 'secondary' | 'ghost'
+  variant?: 'tab' | 'primary' | 'outline' | 'ghost'
   hidden?: boolean
 }
 

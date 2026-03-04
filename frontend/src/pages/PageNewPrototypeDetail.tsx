@@ -93,11 +93,10 @@ const clearSession = () => {
 const PageNewPrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
     const { model_id, prototype_id, tab } = useParams()
     const [searchParams, setSearchParams] = useSearchParams()
-    const pluginId = searchParams.get('plugid')
     const newPrototypeParam = searchParams.get('newPrototype')
     const createModelParam = searchParams.get('create-model')
     const navigate = useNavigate()
-    const { data: user } = useSelfProfileQuery()
+    const { data: user, isLoading: isUserLoading } = useSelfProfileQuery()
     const { data: model } = useCurrentModel()
     const { data: fetchedPrototype, isLoading: isPrototypeLoading } =
         useCurrentPrototype()
@@ -141,6 +140,13 @@ const PageNewPrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
             setOpenNewPrototypeDialog(true)
         }
     }, [newPrototypeParam])
+
+    // Redirect unauthenticated users away from this page
+    useEffect(() => {
+        if (!isUserLoading && !user) {
+            navigate('/')
+        }
+    }, [isUserLoading, user, navigate])
 
     // Open create model dialog when ?create-model is present in URL
     useEffect(() => {
