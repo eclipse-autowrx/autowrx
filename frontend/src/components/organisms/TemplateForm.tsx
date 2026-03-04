@@ -86,7 +86,12 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
       )
       setPrototypeTabs(
         Array.isArray(cfg.prototype_tabs)
-          ? cfg.prototype_tabs
+          ? cfg.prototype_tabs.map((x: any) => ({
+              type: x.type || 'custom',
+              label: x.label || '',
+              plugin: x.plugin || '',
+              ...x,
+            }))
           : [],
       )
     } else {
@@ -167,7 +172,12 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
       )
       setPrototypeTabs(
         Array.isArray(prototypeTabsFromConfig)
-          ? prototypeTabsFromConfig
+          ? prototypeTabsFromConfig.map((x: any) => ({
+              type: x.type || 'custom',
+              label: x.label || '',
+              plugin: x.plugin || '',
+              ...x,
+            }))
           : [],
       )
     }

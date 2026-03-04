@@ -37,6 +37,19 @@
   }
 }
 
+/*
+ * WORKAROUND: Radix UI DismissableLayer sets `pointer-events: none` on <body>
+ * when a modal dialog opens (see @radix-ui/react-dismissable-layer, lines 72-73).
+ * The cleanup effect (lines 80-81) restores the original value on unmount, but if
+ * a dialog component is unmounted abruptly (e.g., conditional render removal, route
+ * navigation) instead of going through Radix's controlled `open` → `false` lifecycle,
+ * the cleanup fails and <body> stays stuck with `pointer-events: none`.
+ *
+ * Proper fix: ensure all dialogs always unmount through Radix's controlled lifecycle
+ * (use `<Dialog open={show}>` instead of `{show && <Dialog>}`).
+ *
+ * TODO: Remove this override once all dialog consumers are fixed.
+ */
 body {
   pointer-events: auto !important;
 }
