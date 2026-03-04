@@ -18,6 +18,7 @@ import { RouteConfig } from '@/types/common.type.ts'
 import { retry } from '@/lib/retry.ts'
 import useGlobalStore from '@/stores/globalStore.ts'
 import ActiveObjectManagement from '@/components/organisms/ActiveObjectManagement.tsx'
+import packageInfo from '@/../package.json'
 
 // const ActiveObjectManagement = lazy(() =>
 //   retry(() => import('@/components/organisms/ActiveObjectManagement')),
@@ -86,7 +87,7 @@ const RootLayout = () => {
       </div>
 
       {config && config.instance !== 'digitalauto' && (
-        <div className="flex w-full justify-center sticky bottom-0 right-0 z-10 bg-gray-100 px-4 py-1 text-xs text-da-gray-dark border-t gap-5">
+        <div className="flex w-full justify-center sticky bottom-0 right-0 z-10 bg-gray-100 px-4 py-1 text-xs border-t gap-5">
           <a
             href="https://www.digital.auto/"
             target="_blank"
@@ -105,8 +106,8 @@ const RootLayout = () => {
               Privacy Policy
             </Link>
           )}
-          {import.meta.env.VITE_APP_VERSION && <span>
-            Version {import.meta.env.VITE_APP_VERSION}
+          {packageInfo.version && <span>
+            Version {packageInfo.version}
           </span>}
         </div>
       )}
