@@ -43,13 +43,20 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
 >(({ className, showCloseButton = true, children, ...props }, ref) => {
-  // Guard against Radix DismissableLayer leaving `pointer-events: none` on <body>
-  // when the dialog unmounts while still open (e.g., route navigation).
+  // Guard against Radix DismissableLayer leaving `pointer-events: none` on <body>.
+  // Root cause: Radix bundles separate DismissableLayer copies per component (dialog,
+  // dropdown-menu, select, etc.), each with its own module-level `originalBodyPointerEvents`.
+  // When a DropdownMenu opens a Dialog, the Dialog's DismissableLayer captures the already-
+  // polluted `pointer-events: none` as its "original" value. When the Dialog closes, Radix
+  // restores that stale value, leaving body stuck. We use requestAnimationFrame to ensure
+  // our cleanup runs after Radix's own cleanup effect has executed.
   React.useEffect(() => {
     return () => {
-      if (document.body.style.pointerEvents === 'none') {
-        document.body.style.pointerEvents = ''
-      }
+      requestAnimationFrame(() => {
+        if (document.body.style.pointerEvents === 'none') {
+          document.body.style.pointerEvents = ''
+        }
+      })
     }
   }, [])
 
