@@ -52,16 +52,6 @@ const DialogContent = React.forwardRef<
         className,
       )}
       {...props}
-      // Radix DismissableLayer sets `pointer-events: none` on <body> when modal dialogs open.
-      // Multiple Radix components (dialog, dropdown-menu, select) each bundle their own
-      // DismissableLayer copy with separate state, causing stale `pointer-events: none` to
-      // persist after close (e.g. opening this dialog from a DropdownMenu).
-      // Fix: clear it on every close animation end. The overlay already blocks outside clicks.
-      onAnimationEnd={() => {
-        if (document.body.style.pointerEvents === 'none') {
-          document.body.style.pointerEvents = ''
-        }
-      }}
     >
       {children}
       {showCloseButton && (
