@@ -56,7 +56,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
   const [error, setError] = useState<string | null>(null)
   const [PluginComponent, setPluginComponent] = useState<React.ComponentType<any> | null>(null)
   const [loadedPluginName, setLoadedPluginName] = useState<string | null>(null)
-  const [siteConfigs, setSiteConfigs] = useState<{ secret: Record<string, any>; public: Record<string, any> }>({ secret: {}, public: {} })
+  const [siteConfigs, setSiteConfigs] = useState<{ public: Record<string, any> }>({ public: {} })
 
   // Extract IDs from data
   const model_id = data?.model?.id
@@ -274,19 +274,13 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
     listWishlistApis: model_id ? handleListWishlistApis : undefined,
   }
 
-  // Fetch all site configs grouped by secret/public and pass to plugin via config prop
+  // Fetch public site configs only — never expose secrets to plugins
   useEffect(() => {
-    configManagementService.getConfigs({ scope: 'site', limit: 1000 }).then(res => {
-      const grouped: { secret: Record<string, any>; public: Record<string, any> } = { secret: {}, public: {} }
-      for (const cfg of res.results || []) {
-        if (cfg.secret) {
-          grouped.secret[cfg.key] = cfg.value
-        } else {
-          grouped.public[cfg.key] = cfg.value
-        }
-      }
-      setSiteConfigs(grouped)
-    }).catch(() => { })
+    configManagementService.getPublicConfigs('site').then(publicConfigs => {
+      setSiteConfigs({ public: publicConfigs })
+    }).catch((err) => {
+      console.error('Failed to fetch site configs for plugin:', err)
+    })
   }, [])
 
   // Log when component mounts/remounts
