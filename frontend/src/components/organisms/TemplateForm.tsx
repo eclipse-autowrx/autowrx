@@ -59,11 +59,6 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
   )
   const prevOpenRef = useRef(open)
 
-  // Debug: Log when initialData changes
-  // useEffect(() => {
-  //   console.log('[TemplateForm] initialData received:', initialData)
-  // }, [initialData])
-
   const { data: initial, isFetching } = useQuery({
     queryKey: ['model-template', templateId],
     queryFn: () =>
@@ -94,7 +89,6 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
 
   useEffect(() => {
     if (initial) {
-      console.log('[TemplateForm] initial found:', initial)
       setForm(initial)
       const cfg: any = initial.config || {}
       setModelTabs(
@@ -121,7 +115,6 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
       }
       setPrototypeRightNavButtons(rightNavRaw.filter(b => b.builtin !== 'staging'))
     } else {
-      console.log('[TemplateForm] initial not found')
       setForm({
         name: '',
         description: '',
@@ -143,11 +136,9 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
     prevOpenRef.current = open
 
     if (open && !wasOpen && isCreate) {
-      console.log('[TemplateForm] Dialog opened in create mode. initialData:', initialData)
       setActiveTab('meta')
       // If no initialData, reset to empty form
       if (!initialData) {
-        console.log('[TemplateForm] initialData not found, resetting form')
         setForm({
           name: '',
           description: '',
@@ -166,13 +157,8 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
   // Handle initialData when dialog is open and in create mode
   useEffect(() => {
     if (open && isCreate && initialData) {
-      console.log('[TemplateForm] Processing initialData:', initialData)
       // Get the full config from initialData.config (custom_template)
-      console.log('[TemplateForm] initialData.config:', initialData.config)
-      console.log('[TemplateForm] initialData.config.model_tabs:', initialData.config?.model_tabs)
-      console.log('[TemplateForm] initialData.config.prototype_tabs:', initialData.config?.prototype_tabs)
       const fullConfig = initialData.config || {}
-      console.log('[TemplateForm] fullConfig:', fullConfig)
 
       // Extract tabs directly from config (custom_template) - this is the source of truth
       const modelTabsFromConfig = Array.isArray(fullConfig.model_tabs)
@@ -181,11 +167,6 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
       const prototypeTabsFromConfig = Array.isArray(fullConfig.prototype_tabs)
         ? fullConfig.prototype_tabs
         : []
-
-      console.log('[TemplateForm] Extracted tabs:', {
-        modelTabsFromConfig,
-        prototypeTabsFromConfig,
-      })
 
       // Pre-populate with initial data, preserving entire config structure
       setForm({

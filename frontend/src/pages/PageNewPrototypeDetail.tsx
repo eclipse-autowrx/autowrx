@@ -118,7 +118,6 @@ const PageNewPrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
     const [openCreateModelDialog, setOpenCreateModelDialog] = useState(false)
     // Previous session resume dialog
     const [openResumeDialog, setOpenResumeDialog] = useState(false)
-    console.log({ openResumeDialog })
     const [savedSession, setSavedSession] = useState<NewPrototypeSession | null>(null)
     // Active plugin tab in new-prototype flow
     const [newFlowActivePluginId, setNewFlowActivePluginId] = useState<string | null>(null)
@@ -575,11 +574,6 @@ const PageNewPrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
                                                         model_tabs: model.custom_template?.model_tabs || [],
                                                         prototype_tabs: normalizedPrototypeTabs,
                                                     }
-                                                    console.log('[PageNewPrototypeDetail] Setting templateInitialData:', {
-                                                        model,
-                                                        custom_template: model.custom_template,
-                                                        initialData,
-                                                    })
                                                     setTemplateInitialData(initialData)
                                                 }
                                                 setOpenTemplateForm(true)

@@ -8,7 +8,7 @@
 
 import { FC } from 'react'
 import DaTabItem from '@/components/atoms/DaTabItem'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import {
   TbCode,
   TbGauge,
@@ -16,8 +16,7 @@ import {
   TbRoute,
 } from 'react-icons/tb'
 import { TabConfig } from '@/components/organisms/CustomTabEditor'
-import { cn } from '@/lib/utils'
-import DOMPurify from 'dompurify'
+import { renderTabIcon, tabItemClasses } from '@/lib/tabUtils'
 
 interface PrototypeTabsProps {
   tabs?: TabConfig[]
@@ -25,52 +24,6 @@ interface PrototypeTabsProps {
   tabsVariant?: string
 }
 
-/** Render a tab icon: use custom SVG if present, otherwise fall back to the default icon node. */
-const renderTabIcon = (tabConfig: TabConfig, defaultIcon: React.ReactNode) => {
-  if (tabConfig.iconSvg) {
-    return (
-      <span
-        className="w-5 h-5 mr-2 shrink-0 [&>svg]:w-full [&>svg]:h-full [&>svg]:fill-current"
-        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(tabConfig.iconSvg, { USE_PROFILES: { svg: true, svgFilters: true } }) }}
-      />
-    )
-  }
-  return defaultIcon
-}
-
-/** Compute class names for a tab item based on the global tabsVariant. */
-const tabItemClasses = (variant: string | undefined, isActive: boolean) => {
-  switch (variant) {
-    case 'primary':
-      return cn(
-        'flex items-center self-center px-3 py-1.5 rounded-md text-sm font-semibold mx-1 cursor-pointer transition-colors',
-        isActive
-          ? 'bg-primary text-primary-foreground'
-          : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-      )
-    case 'outline':
-      return cn(
-        'flex items-center self-center px-3 py-1.5 rounded-md text-sm font-semibold mx-1 cursor-pointer border transition-colors',
-        isActive
-          ? 'border-primary text-primary'
-          : 'border-transparent text-muted-foreground hover:bg-accent hover:text-foreground',
-      )
-    case 'ghost':
-      return cn(
-        'flex items-center self-center px-3 py-1.5 rounded-md text-sm font-semibold mx-1 cursor-pointer transition-colors',
-        isActive
-          ? 'bg-accent text-foreground'
-          : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground',
-      )
-    default: // 'tab'
-      return cn(
-        'flex h-full text-sm font-semibold items-center justify-center min-w-20 cursor-pointer hover:opacity-80 border-b-2 py-1 px-4',
-        isActive
-          ? 'text-primary border-primary'
-          : 'text-muted-foreground border-transparent',
-      )
-  }
-}
 
 // Default builtin tabs
 const DEFAULT_BUILTIN_TABS: TabConfig[] = [
@@ -114,6 +67,7 @@ export const getTabConfig = (tabs?: any[]): TabConfig[] => {
 
 const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant }) => {
   const { model_id, prototype_id, tab } = useParams()
+  const [searchParams] = useSearchParams()
   const variant = tabsVariant || 'tab'
 
   // Get tabs with migration
@@ -184,7 +138,7 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant }) => {
           )
         } else {
           const { label, plugin } = tabConfig
-          const isActive = tab === 'plug' && window.location.search.includes(`plugid=${plugin}`)
+          const isActive = tab === 'plug' && searchParams.get('plugid') === plugin
           const icon = renderTabIcon(tabConfig, null)
           const to = `/model/${model_id}/library/prototype/${prototype_id}/plug?plugid=${plugin}`
 
