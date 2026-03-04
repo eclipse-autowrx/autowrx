@@ -22,7 +22,7 @@ import {
   TbPalette,
   TbDeviceFloppy,
   TbCheck,
-  TbDots,
+  TbDotsVertical
 } from 'react-icons/tb'
 import { Button } from '@/components/atoms/button'
 const MODE_RUN = 'run'
@@ -293,7 +293,7 @@ const DaDashboard = () => {
     <div className="w-full h-full relative border bg-white">
       <div
         className={cn(
-          'absolute z-10 left-0 px-2 top-0 flex w-full py-1 shadow-xl bg-white items-center',
+          'absolute z-10 left-0 px-2 top-0 flex gap-1 w-full py-1 shadow-xl bg-white items-center',
           showPrototypeDashboardFullScreen && 'h-[56px]',
         )}
       >
@@ -303,7 +303,7 @@ const DaDashboard = () => {
           </Link>
         )}
         {isAuthorized && (
-          <div className="flex w-full h-fit items-center justify-end mr-2">
+          <div className="flex w-full h-fit items-center justify-end">
             {mode == MODE_RUN && (
               <div className="flex items-center gap-1">
                 {/* Apply Template — all authorized users */}
@@ -351,26 +351,6 @@ const DaDashboard = () => {
                   <TbEdit className="size-4" />
                   Edit
                 </Button>
-
-                {/* 3-dot menu — admin only */}
-                {isAdmin && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <TbDots className="size-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        className="cursor-pointer"
-                        onClick={() => setShowSaveDialog(true)}
-                      >
-                        <TbDeviceFloppy className="size-4 mr-2" />
-                        Save as Template
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
               </div>
             )}
 
@@ -427,6 +407,24 @@ const DaDashboard = () => {
             <TbArrowsMaximize className="size-4" />
           )}
         </Button>
+        {isAdmin && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <TbDotsVertical className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => setShowSaveDialog(true)}
+              >
+                <TbDeviceFloppy className="size-4 mr-2" />
+                Save as Template
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
       <div
