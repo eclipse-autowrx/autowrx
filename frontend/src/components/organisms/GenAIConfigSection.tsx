@@ -21,6 +21,12 @@ import { PREDEFINED_SITE_CONFIGS } from '@/pages/SiteConfigManagement'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 import type { SiteConfigEditEntry } from '@/utils/siteConfigHistory'
 
+import {
+  deleteConfigsById,
+  reloadSoon,
+  upsertConfigFromHistory,
+} from '@/utils/siteConfigAdmin'
+
 type GenAISubTab = 'config' | 'history'
 
 const GenAIConfigSection: React.FC = () => {
@@ -112,15 +118,10 @@ const GenAIConfigSection: React.FC = () => {
         limit: 100,
       })
 
-      for (const config of allConfigs.results || []) {
-        try {
-          if (config.id) {
-            await configManagementService.deleteConfigById(config.id)
-          }
-        } catch (e) {
-          console.warn('Failed to delete GenAI config', config.key, e)
-        }
-      }
+      const { failed } = await deleteConfigsById(allConfigs.results || [])
+      failed.forEach((f) =>
+        console.warn('Failed to delete GenAI config', f.key, f.reason),
+      )
 
       // Recreate defaults
       if (predefinedGenAIConfigs.length > 0) {
@@ -135,9 +136,7 @@ const GenAIConfigSection: React.FC = () => {
           'GenAI configs restored to default values. Reloading page...',
       })
 
-      setTimeout(() => {
-        window.location.href = window.location.href
-      }, 800)
+      reloadSoon()
     } catch (err) {
       toast({
         title: 'Reset failed',
@@ -152,44 +151,16 @@ const GenAIConfigSection: React.FC = () => {
   const handleRestoreHistoryEntry = async (entry: SiteConfigEditEntry) => {
     try {
       setIsLoading(true)
-      const target = entry.valueAfter ?? entry.value
-
-      const res = await configManagementService.getConfigs({
-        key: entry.key,
+      const { valueBefore, targetValue } = await upsertConfigFromHistory({
+        entry,
         scope: 'site',
         category: 'genai',
-        limit: 1,
       })
-
-      const valueBefore =
-        res.results && res.results.length > 0
-          ? res.results[0].value
-          : undefined
-
-      if (res.results && res.results.length > 0) {
-        await configManagementService.updateConfigById(res.results[0].id!, {
-          value: target,
-        })
-      } else {
-        await configManagementService.createConfig({
-          key: entry.key,
-          scope: 'site',
-          category: 'genai',
-          value: target,
-          secret: false,
-          valueType:
-            (entry.valueType as
-              | 'string'
-              | 'object'
-              | 'array'
-              | 'boolean') ?? 'string',
-        })
-      }
 
       pushSiteConfigEdit({
         key: entry.key,
         valueBefore,
-        valueAfter: target,
+        valueAfter: targetValue,
         valueType: entry.valueType,
         section: 'genai',
       })
@@ -199,7 +170,7 @@ const GenAIConfigSection: React.FC = () => {
         description: `Configuration "${entry.key}" restored. Reloading page...`,
       })
 
-      setTimeout(() => window.location.reload(), 800)
+      reloadSoon()
     } catch (err) {
       toast({
         title: 'Restore failed',

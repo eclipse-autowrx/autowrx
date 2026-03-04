@@ -16,7 +16,7 @@ import AuthConfigSection from '@/components/organisms/AuthConfigSection'
 import SSOConfigSection from '@/components/organisms/SSOConfigSection'
 import EmailConfigSection from '@/components/organisms/EmailConfigSection'
 import StagingConfigSection from '@/components/organisms/StagingConfigSection'
-import GenAIConfigSection from '../components/organisms/GenAIConfigSection'
+import GenAIConfigSection from '@/components/organisms/GenAIConfigSection'
 
 // Keys that should be excluded from the site-config page
 // These keys are managed in their own dedicated pages

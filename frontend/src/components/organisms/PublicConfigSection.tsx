@@ -23,6 +23,11 @@ import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 import NavBarActionsEditor, { NavBarAction } from '@/components/molecules/NavBarActionsEditor'
 import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
 import type { SiteConfigEditEntry } from '@/utils/siteConfigHistory'
+import {
+  deleteConfigsById,
+  reloadSoon,
+  upsertConfigFromHistory,
+} from '@/utils/siteConfigAdmin'
 
 type PublicSubTab = 'config' | 'history'
 
@@ -307,23 +312,16 @@ const PublicConfigSection: React.FC = () => {
       })
 
       // Delete only public configs
-      for (const config of allConfigs.results || []) {
-        if (!publicKeys.has(config.key)) continue
-        try {
-          if (config.id) {
-            await configManagementService.deleteConfigById(config.id)
-          }
-        } catch (e) {
-          console.warn('Failed to delete config', config.key, e)
-        }
-      }
+      const publicConfigs = (allConfigs.results || []).filter((c) =>
+        publicKeys.has(c.key),
+      )
+      const { failed } = await deleteConfigsById(publicConfigs)
+      failed.forEach((f) => console.warn('Failed to delete config', f.key, f))
 
       toast({ title: 'Restored', description: 'Public configs restored to default values. Reloading page...' })
       
       // Reload page to show changes immediately
-      setTimeout(() => {
-        window.location.reload()
-      }, 800)
+      reloadSoon()
     } catch (err) {
       toast({
         title: 'Reset failed',
@@ -342,31 +340,14 @@ const PublicConfigSection: React.FC = () => {
   const handleRestoreHistoryEntry = async (entry: SiteConfigEditEntry) => {
     try {
       setIsLoading(true)
-      const target = entry.valueAfter ?? entry.value
-      const res = await configManagementService.getConfigs({
-        key: entry.key,
+      const { valueBefore, targetValue } = await upsertConfigFromHistory({
+        entry,
         scope: 'site',
-        limit: 1,
       })
-      const valueBefore =
-        res.results && res.results.length > 0 ? res.results[0].value : undefined
-      if (res.results && res.results.length > 0) {
-        await configManagementService.updateConfigById(res.results[0].id!, {
-          value: target,
-        })
-      } else {
-        await configManagementService.createConfig({
-          key: entry.key,
-          scope: 'site',
-          value: target,
-          secret: false,
-          valueType: (entry.valueType as 'string' | 'object' | 'array' | 'boolean') ?? 'string',
-        })
-      }
       pushSiteConfigEdit({
         key: entry.key,
         valueBefore,
-        valueAfter: target,
+        valueAfter: targetValue,
         valueType: entry.valueType,
         section: 'public',
       })
