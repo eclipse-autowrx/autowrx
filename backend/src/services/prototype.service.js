@@ -34,16 +34,16 @@ const stripTrailingNumber = (name) => {
  * @returns {Promise<string[]>}
  */
 const getSuggestedNames = async (modelId, baseName) => {
-  const suggestions = [];
-  let counter = 1;
-  while (suggestions.length < 1) {
+  // Try clean sequential names first (user-friendly)
+  for (let counter = 1; counter <= 50; counter++) {
+    const candidateName = `${baseName}_${counter}`;
     const exists = await Prototype.existsPrototypeInModel(modelId, candidateName);
     if (!exists) {
-      suggestions.push(candidateName);
+      return [candidateName];
     }
-    counter++;
   }
-  return suggestions;
+  // Fallback: timestamp (guaranteed unique, but unlikely to ever reach here)
+  return [`${baseName}_${Date.now()}`];
 };
 
 /**
