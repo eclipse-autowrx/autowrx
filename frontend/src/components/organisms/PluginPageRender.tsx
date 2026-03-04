@@ -22,6 +22,7 @@ import {
   listExtendedApis
 } from '@/services/extendedApis.service'
 import useRuntimeStore from '@/stores/runtimeStore'
+import { configManagementService } from '@/services/configManagement.service'
 import type { PluginAPI } from '@/types/plugin.types'
 import type { Model, Prototype } from '@/types/model.type'
 import type { CVI, VehicleAPI, VSSRelease, ExtendedApi, ExtendedApiCreate, ExtendedApiRet } from '@/types/api.type'
@@ -55,6 +56,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
   const [error, setError] = useState<string | null>(null)
   const [PluginComponent, setPluginComponent] = useState<React.ComponentType<any> | null>(null)
   const [loadedPluginName, setLoadedPluginName] = useState<string | null>(null)
+  const [siteConfigs, setSiteConfigs] = useState<{ public: Record<string, any> }>({ public: {} })
 
   // Extract IDs from data
   const model_id = data?.model?.id
@@ -271,6 +273,15 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
     getWishlistApi: model_id ? handleGetWishlistApi : undefined,
     listWishlistApis: model_id ? handleListWishlistApis : undefined,
   }
+
+  // Fetch public site configs only — never expose secrets to plugins
+  useEffect(() => {
+    configManagementService.getPublicConfigs('site').then(publicConfigs => {
+      setSiteConfigs({ public: publicConfigs })
+    }).catch((err) => {
+      console.error('Failed to fetch site configs for plugin:', err)
+    })
+  }, [])
 
   // Log when component mounts/remounts
   useEffect(() => {
@@ -726,7 +737,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
 
       {shouldRenderPlugin && (
         <div key={`plugin-${plugin_id}-${loadedPluginName}`} className="w-full h-full">
-          <PluginComponent data={data} config={{ plugin_id: loadedPluginName }} api={pluginAPI} />
+          <PluginComponent data={data} config={{ plugin_id: loadedPluginName, ...siteConfigs }} api={pluginAPI} />
         </div>
       )}
 
