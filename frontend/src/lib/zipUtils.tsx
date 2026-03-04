@@ -19,7 +19,6 @@ import {
 } from '@/services/extendedApis.service'
 
 import { convertCode } from '@/services/convert_code.service'
-import DaWidgetSetup from '@/components/molecules/widgets/DaWidgetSetup'
 import { FileSystemItem } from '@/components/molecules/project_editor/types'
 import { base64ToArrayBuffer } from '@/lib/utils'
 
@@ -83,11 +82,36 @@ const addProjectFilesToZip = (zip: JSZip, fsData: FileSystemItem[]) => {
   }
 
   if (!fsData || fsData.length === 0) return
-  const root = fsData[0]
-  if (root && root.type === 'folder') {
-    // Place all project files under a dedicated "code/" folder in the zip
-    addItems(root.items, 'code/')
+
+  // The project editor currently produces a single root folder, but we defensively
+  // handle multiple root items and root-level files. Everything is still placed
+  // under the top-level "code/" folder in the zip.
+  if (fsData.length > 1) {
+    console.warn(
+      'addProjectFilesToZip: multiple root items detected; exporting all under code/.',
+    )
   }
+
+  fsData.forEach((item) => {
+    if (item.type === 'folder') {
+      addItems(item.items, 'code/' + item.name + '/')
+    } else if (item.type === 'file') {
+      // Root-level files are placed directly under code/
+      if ((item as any).isBase64 && item.content) {
+        try {
+          const arrayBuffer = base64ToArrayBuffer(item.content)
+          zip.file('code/' + item.name, arrayBuffer, { binary: true })
+        } catch (error) {
+          console.error(`Error converting base64 for ${item.name}:`, error)
+          zip.file('code/' + item.name, item.content || '')
+        }
+      } else {
+        zip.file('code/' + item.name, item.content || '')
+      }
+    } else {
+      console.warn('addProjectFilesToZip: unknown root item type', item)
+    }
+  })
 }
 
 const downloadAllPrototypeInModel = async (model: Model, zip: JSZip) => {
@@ -267,7 +291,12 @@ export const downloadPrototypeZip = async (prototype: Prototype) => {
       }
     }
 
-    // Always include the legacy single-file payload for compatibility
+    // Always include the legacy single-file payload for compatibility.
+    // NOTE:
+    // - For single-file prototypes, code.py contains actual Python code.
+    // - For multi-file projects, code.py contains the raw JSON FileSystemItem array
+    //   (not Python code) but we keep the .py name for backward compatibility with
+    //   existing import flows that only read code.py.
     zip.file('code.py', prototype.code || '')
     zip.file('dashboard.json', prototype.widget_config || '{"widgets":[]}')
     zip.file(
@@ -332,7 +361,24 @@ export const zipToPrototype = async (
     const metadata = JSON.parse(
       (await zipFile.file('metadata.json')?.async('string')) || '{}',
     )
+    // Import currently reads only code.py as the source of truth for prototype.code.
+    // For multi-file exports, code.py contains the JSON FileSystemItem tree and the
+    // concrete files are also written under the code/ folder. Any manual edits to
+    // the files in code/ will be ignored on import until we add support for
+    // reconstructing prototype.code from that folder.
+    // TODO: consider rebuilding prototype.code from the code/ folder contents.
     let code = (await zipFile.file('code.py')?.async('string')) || ''
+
+    // Guard against the case where code.py is missing but a code/ folder exists,
+    // to avoid silently ignoring user changes.
+    const hasCodeFolder = Object.keys(zipFile.files).some((key) =>
+      key.startsWith('code/'),
+    )
+    if (!code && hasCodeFolder) {
+      console.warn(
+        'zipToPrototype: found code/ folder without code.py; project files are currently ignored on import.',
+      )
+    }
     if (code.startsWith("from sdv_model import Vehicle")) {
       let converted_code = await convertCode(code)
       code = converted_code || code
