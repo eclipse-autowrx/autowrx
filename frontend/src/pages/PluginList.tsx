@@ -8,7 +8,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import {
-  listPlugins,
+  listMyPlugins,
   deletePlugin,
   type Plugin,
 } from '@/services/plugin.service'
@@ -25,26 +25,18 @@ import {
 import { useState } from 'react'
 import { TbPencil, TbTrash } from 'react-icons/tb'
 import { useQueryClient } from '@tanstack/react-query'
-import useSelfProfileQuery from '@/hooks/useSelfProfile'
-import usePermissionHook from '@/hooks/usePermissionHook'
-import { PERMISSIONS } from '@/data/permission'
 
 const PluginList = () => {
   const qc = useQueryClient()
-  const { data: currentUser } = useSelfProfileQuery()
-  const [isAdmin] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
   const { data, isLoading } = useQuery({
-    queryKey: ['plugins'],
-    queryFn: () => listPlugins({ limit: 100, page: 1 }),
+    queryKey: ['plugins', 'mine'],
+    queryFn: () => listMyPlugins({ limit: 100, page: 1 }),
   })
   const [openForm, setOpenForm] = useState(false)
   const [editId, setEditId] = useState<string | undefined>(undefined)
   const [pluginToDelete, setPluginToDelete] = useState<Plugin | null>(null)
 
-  const allPlugins = data?.results || []
-  const visiblePlugins = isAdmin
-    ? allPlugins
-    : allPlugins.filter((p: Plugin) => p.created_by === currentUser?.id)
+  const visiblePlugins = data?.results || []
 
   return (
     <div className="p-6">

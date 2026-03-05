@@ -22,9 +22,12 @@ router.get('/', validate(pluginValidation.listPlugins), pluginController.listPlu
 router.get('/id/:id', validate(pluginValidation.getPlugin), pluginController.getPluginById);
 router.get('/slug/:slug', validate(pluginValidation.getPluginBySlug), pluginController.getPluginBySlug);
 
-// Admin-only create/update
+// Authenticated endpoints
 // router.use(auth(), checkPermission(PERMISSIONS.ADMIN));
 router.use(auth());
+
+// Current user's plugins
+router.get('/mine', validate(pluginValidation.listPlugins), pluginController.listMyPlugins);
 router.post('/', validate(pluginValidation.createPlugin), pluginController.createPlugin);
 router.put('/:id', validate(pluginValidation.updatePlugin), pluginController.updatePlugin);
 router.delete('/:id', pluginController.removePlugin);

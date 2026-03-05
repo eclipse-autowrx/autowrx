@@ -9,7 +9,7 @@
 import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
-  listPlugins,
+  listMyPlugins,
   deletePlugin,
   type Plugin,
 } from '@/services/plugin.service'
@@ -29,9 +29,9 @@ import { useQueryClient } from '@tanstack/react-query'
 const PrototypePluginSection: React.FC = () => {
   const qc = useQueryClient()
   const { data, isLoading } = useQuery({
-    queryKey: ['plugins', 'prototype_function'],
+    queryKey: ['plugins', 'prototype_function', 'mine'],
     queryFn: () =>
-      listPlugins({ limit: 100, page: 1, type: 'prototype_function' }),
+      listMyPlugins({ limit: 100, page: 1, type: 'prototype_function' }),
   })
   const [openForm, setOpenForm] = useState(false)
   const [editId, setEditId] = useState<string | undefined>(undefined)
@@ -153,7 +153,7 @@ const PrototypePluginSection: React.FC = () => {
                 try {
                   await deletePlugin(pluginToDelete.id)
                   qc.invalidateQueries({
-                    queryKey: ['plugins', 'prototype_function'],
+                    queryKey: ['plugins', 'prototype_function', 'mine'],
                   })
                   setPluginToDelete(null)
                 } catch (e) {}

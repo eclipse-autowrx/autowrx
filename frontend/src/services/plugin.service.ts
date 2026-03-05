@@ -35,6 +35,9 @@ export interface Paged<T> {
 export const listPlugins = (params?: any): Promise<Paged<Plugin>> =>
   serverAxios.get('/system/plugin', { params }).then((r) => r.data)
 
+export const listMyPlugins = (params?: any): Promise<Paged<Plugin>> =>
+  serverAxios.get('/system/plugin/mine', { params }).then((r) => r.data)
+
 export const getPluginById = (id: string): Promise<Plugin> =>
   serverAxios.get(`/system/plugin/id/${id}`).then((r) => r.data)
 
