@@ -19,6 +19,8 @@ const router = express.Router();
 
 // Public read endpoints
 router.get('/', validate(pluginValidation.listPlugins), pluginController.listPlugins);
+// Plugins created by admin users (public)
+router.get('/admin', validate(pluginValidation.listPlugins), pluginController.listAdminPlugins);
 router.get('/id/:id', validate(pluginValidation.getPlugin), pluginController.getPluginById);
 router.get('/slug/:slug', validate(pluginValidation.getPluginBySlug), pluginController.getPluginBySlug);
 

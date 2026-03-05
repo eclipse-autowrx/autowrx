@@ -29,6 +29,14 @@ const listPlugins = catchAsync(async (req, res) => {
   res.send(result);
 });
 
+// List plugins created by admin users (public)
+const listAdminPlugins = catchAsync(async (req, res) => {
+  const filter = pick(req.query, ['type', 'slug', 'name']);
+  const options = pick(req.query, ['sortBy', 'limit', 'page', 'fields']);
+  const result = await pluginService.queryAdminPlugins(filter, options);
+  res.send(result);
+});
+
 // List plugins created by the current user
 const listMyPlugins = catchAsync(async (req, res) => {
   const filter = pick(req.query, ['type', 'slug', 'name']);
@@ -148,6 +156,7 @@ const removePlugin = catchAsync(async (req, res) => {
 
 module.exports = {
   listPlugins,
+  listAdminPlugins,
   listMyPlugins,
   getPluginById,
   getPluginBySlug,
