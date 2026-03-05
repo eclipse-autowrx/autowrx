@@ -8,7 +8,7 @@
 
 import { FC, useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { listPlugins, Plugin } from '@/services/plugin.service'
+import { listAdminPlugins, listMyPlugins, Plugin } from '@/services/plugin.service'
 import { Input } from '@/components/atoms/input'
 import { Button } from '@/components/atoms/button'
 import { Spinner } from '@/components/atoms/spinner'
@@ -21,27 +21,34 @@ interface AddonSelectProps {
 }
 
 const AddonSelect: FC<AddonSelectProps> = ({ onSelect, onCancel }) => {
+  const [activeTab, setActiveTab] = useState<'system' | 'mine'>('system')
   const [searchTerm, setSearchTerm] = useState('')
   const [filteredPlugins, setFilteredPlugins] = useState<Plugin[]>([])
   const [selectedPlugin, setSelectedPlugin] = useState<Plugin | null>(null)
   const [labelName, setLabelName] = useState('')
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['plugins'],
-    queryFn: () => listPlugins({ page: 1, limit: 100 }),
+  const systemQuery = useQuery({
+    queryKey: ['plugins', 'admin'],
+    queryFn: () => listAdminPlugins({ page: 1, limit: 100 }),
   })
 
+  const mineQuery = useQuery({
+    queryKey: ['plugins', 'mine'],
+    queryFn: () => listMyPlugins({ page: 1, limit: 100 }),
+  })
+
+  const activeQuery = activeTab === 'system' ? systemQuery : mineQuery
+
   useEffect(() => {
-    if (data?.results) {
-      const filtered = data.results.filter(
+    const results = activeQuery.data?.results || []
+    const filtered = results.filter(
         (plugin) =>
           plugin.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           plugin.slug?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           plugin.description?.toLowerCase().includes(searchTerm.toLowerCase())
       )
-      setFilteredPlugins(filtered)
-    }
-  }, [data, searchTerm])
+    setFilteredPlugins(filtered)
+  }, [activeQuery.data, searchTerm, activeTab])
 
   const handlePluginClick = (plugin: Plugin) => {
     setSelectedPlugin(plugin)
@@ -59,7 +66,7 @@ const AddonSelect: FC<AddonSelectProps> = ({ onSelect, onCancel }) => {
     setLabelName('')
   }
 
-  if (isLoading) {
+  if (activeQuery.isLoading) {
     return (
       <div className="flex flex-col items-center justify-center p-8 gap-4">
         <Spinner size={32} />
@@ -68,7 +75,7 @@ const AddonSelect: FC<AddonSelectProps> = ({ onSelect, onCancel }) => {
     )
   }
 
-  if (error) {
+  if (activeQuery.error) {
     return (
       <div className="flex flex-col items-center justify-center p-8 gap-4">
         <p className="text-sm text-destructive">
@@ -180,6 +187,40 @@ const AddonSelect: FC<AddonSelectProps> = ({ onSelect, onCancel }) => {
         </p>
       </div>
 
+      {/* Tabs */}
+      <div className="px-6 pt-4">
+        <div className="flex border-b border-border">
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('system')
+              setSearchTerm('')
+            }}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'system'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            System plugins
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('mine')
+              setSearchTerm('')
+            }}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'mine'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            My plugins
+          </button>
+        </div>
+      </div>
+
       {/* Search */}
       <div className="p-6 border-b border-border">
         <div className="relative">
@@ -196,7 +237,14 @@ const AddonSelect: FC<AddonSelectProps> = ({ onSelect, onCancel }) => {
 
       {/* List */}
       <div className="flex flex-col max-h-96 overflow-y-auto">
-        {filteredPlugins.length === 0 ? (
+        {activeTab === 'mine' && (mineQuery.error as any)?.response?.status === 401 ? (
+          <div className="flex items-center justify-center p-8">
+            <p className="text-sm text-muted-foreground">
+              Please sign in to view your plugins.
+            </p>
+          </div>
+        ) : (
+        filteredPlugins.length === 0 ? (
           <div className="flex items-center justify-center p-8">
             <p className="text-sm text-muted-foreground">
               {searchTerm ? 'No addons found matching your search' : 'No addons available'}
@@ -245,6 +293,7 @@ const AddonSelect: FC<AddonSelectProps> = ({ onSelect, onCancel }) => {
               </div>
             </button>
           ))
+        )
         )}
       </div>
 
