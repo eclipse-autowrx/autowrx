@@ -56,6 +56,7 @@ const ModelDetailLayout = () => {
   const [openAddonDialog, setOpenAddonDialog] = useState(false)
   const [openManageAddonsDialog, setOpenManageAddonsDialog] = useState(false)
   const [isModelOwner, setIsModelOwner] = useState(false)
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false)
 
   // Update store when model is fetched
   useEffect(() => {
@@ -266,7 +267,7 @@ const ModelDetailLayout = () => {
         )}
         <div className="grow"></div>
         {isModelOwner && model && (
-          <DropdownMenu>
+          <DropdownMenu open={moreMenuOpen} onOpenChange={setMoreMenuOpen}>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
@@ -278,7 +279,10 @@ const ModelDetailLayout = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem
-                onSelect={() => setOpenManageAddonsDialog(true)}
+                onClick={() => {
+                  setMoreMenuOpen(false)
+                  setOpenManageAddonsDialog(true)
+                }}
               >
                 <TbSettings className="w-5 h-5" />
                 Manage Addons
