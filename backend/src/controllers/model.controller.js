@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -39,8 +39,8 @@ const createModel = catchAsync(async (req, res) => {
             ...api,
             model: model._id,
             isWishlist: api.isWishlist || false,
-          })
-        )
+          }),
+        ),
       );
     }
   } catch (error) {
@@ -69,8 +69,8 @@ const createModel = catchAsync(async (req, res) => {
               datatype: api.datatype || (api.type !== 'branch' ? 'string' : null),
               isWishlist: api.isWishlist || false,
               unit: api.unit,
-            })
-          )
+            }),
+          ),
         );
       }
     }
@@ -98,68 +98,177 @@ const listModels = catchAsync(async (req, res) => {
   res.json(models);
 });
 
-const listAllModels = catchAsync(async (req, res) => {
-  const options = pick(req.query, ['fields']);
+const DEFAULT_PAGE_SIZE = 24;
+const LEGACY_PAGE_SIZE = 1000;
 
+const listAllModels = catchAsync(async (req, res) => {
+  const options = pick(req.query, ['fields', 'tab', 'page', 'limit']);
+  const { tab } = options;
+  const page = options.page ? parseInt(options.page, 10) : 1;
+  const limit = options.limit ? parseInt(options.limit, 10) : tab ? DEFAULT_PAGE_SIZE : LEGACY_PAGE_SIZE;
+
+  const runOneTab = async (filter, advanced) => {
+    const result = await modelService.queryModels(
+      filter,
+      { ...options, limit, page, sortBy: options.sortBy },
+      advanced,
+      req.user?.id,
+    );
+    return result;
+  };
+
+  if (tab === 'owned') {
+    if (!req.user?.id) {
+      return res.status(200).send({
+        results: [],
+        page: 1,
+        limit,
+        totalPages: 0,
+        totalResults: 0,
+      });
+    }
+    const result = await runOneTab({ created_by: req.user.id }, {});
+    if (options.fields) {
+      return res.status(200).send({
+        results: result.results,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+        totalResults: result.totalResults,
+      });
+    }
+    const cacheResult = new Map();
+    const processStats = async (model) => {
+      if (!model) return;
+      const modelId = model._id || model.id;
+      if (cacheResult.has(modelId)) {
+        model.stats = cacheResult.get(modelId);
+        return;
+      }
+      const stats = await modelService.getModelStats(model);
+      model.stats = stats;
+      cacheResult.set(modelId, stats);
+    };
+    await Promise.all(result.results.map((model) => processStats(model)));
+    return res.status(200).send({
+      results: result.results,
+      page: result.page,
+      limit: result.limit,
+      totalPages: result.totalPages,
+      totalResults: result.totalResults,
+    });
+  }
+
+  if (tab === 'contributed') {
+    if (!req.user?.id) {
+      return res.status(200).send({
+        results: [],
+        page: 1,
+        limit,
+        totalPages: 0,
+        totalResults: 0,
+      });
+    }
+    const result = await runOneTab({}, { is_contributor: req.user.id });
+    if (options.fields) {
+      return res.status(200).send({
+        results: result.results,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+        totalResults: result.totalResults,
+      });
+    }
+    const cacheResult = new Map();
+    const processStats = async (model) => {
+      if (!model) return;
+      const modelId = model._id || model.id;
+      if (cacheResult.has(modelId)) {
+        model.stats = cacheResult.get(modelId);
+        return;
+      }
+      const stats = await modelService.getModelStats(model);
+      model.stats = stats;
+      cacheResult.set(modelId, stats);
+    };
+    await Promise.all(result.results.map((model) => processStats(model)));
+    return res.status(200).send({
+      results: result.results,
+      page: result.page,
+      limit: result.limit,
+      totalPages: result.totalPages,
+      totalResults: result.totalResults,
+    });
+  }
+
+  if (tab === 'public') {
+    const result = await runOneTab({ visibility: 'public', state: 'released' }, {});
+    if (options.fields) {
+      return res.status(200).send({
+        results: result.results,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+        totalResults: result.totalResults,
+      });
+    }
+    const cacheResult = new Map();
+    const processStats = async (model) => {
+      if (!model) return;
+      const modelId = model._id || model.id;
+      if (cacheResult.has(modelId)) {
+        model.stats = cacheResult.get(modelId);
+        return;
+      }
+      const stats = await modelService.getModelStats(model);
+      model.stats = stats;
+      cacheResult.set(modelId, stats);
+    };
+    await Promise.all(result.results.map((model) => processStats(model)));
+    return res.status(200).send({
+      results: result.results,
+      page: result.page,
+      limit: result.limit,
+      totalPages: result.totalPages,
+      totalResults: result.totalResults,
+    });
+  }
+
+  // Backward compatibility: no tab = return all three categories (legacy)
   const ownedModels = await modelService.queryModels(
-    {
-      created_by: req.user?.id,
-    },
-    {
-      ...options,
-      limit: 1000,
-    },
+    { created_by: req.user?.id },
+    { ...options, limit: LEGACY_PAGE_SIZE, page: 1 },
     {},
-    req.user?.id
+    req.user?.id,
   );
 
   const contributedModels = req.user?.id
     ? await modelService.queryModels(
         {},
-        {
-          ...options,
-          limit: 1000,
-        },
-        {
-          is_contributor: req.user?.id,
-        },
-        req.user?.id
+        { ...options, limit: LEGACY_PAGE_SIZE, page: 1 },
+        { is_contributor: req.user?.id },
+        req.user?.id,
       )
     : { results: [] };
 
   const publicReleasedModels = await modelService.queryModels(
-    {
-      visibility: 'public',
-      state: 'released',
-    },
-    {
-      ...options,
-      limit: 1000,
-    },
+    { visibility: 'public', state: 'released' },
+    { ...options, limit: LEGACY_PAGE_SIZE, page: 1 },
     {},
-    req.user?.id
+    req.user?.id,
   );
 
   if (options.fields) {
     return res.status(200).send({
-      ownedModels: {
-        results: ownedModels.results,
-      },
-      contributedModels: {
-        results: contributedModels.results,
-      },
-      publicReleasedModels: {
-        results: publicReleasedModels.results,
-      },
+      ownedModels: { results: ownedModels.results },
+      contributedModels: { results: contributedModels.results },
+      publicReleasedModels: { results: publicReleasedModels.results },
     });
   }
 
   const cacheResult = new Map();
-
   const processStats = async (model) => {
-    if (!model) {
-      throw new Error("Error in processStats: model can't be null");
-    }
+    if (!model) return;
     const modelId = model._id || model.id;
     if (cacheResult.has(modelId)) {
       model.stats = cacheResult.get(modelId);
@@ -170,27 +279,13 @@ const listAllModels = catchAsync(async (req, res) => {
     cacheResult.set(modelId, stats);
   };
 
-  // Add stats to each model
-  for (const model of ownedModels.results) {
-    await processStats(model);
-  }
-  for (const model of contributedModels.results) {
-    await processStats(model);
-  }
-  for (const model of publicReleasedModels.results) {
-    await processStats(model);
-  }
+  const allModels = [...ownedModels.results, ...contributedModels.results, ...publicReleasedModels.results];
+  await Promise.all(allModels.map((model) => processStats(model)));
 
   res.status(200).send({
-    ownedModels: {
-      results: ownedModels.results,
-    },
-    contributedModels: {
-      results: contributedModels.results,
-    },
-    publicReleasedModels: {
-      results: publicReleasedModels.results,
-    },
+    ownedModels: { results: ownedModels.results },
+    contributedModels: { results: contributedModels.results },
+    publicReleasedModels: { results: publicReleasedModels.results },
   });
 });
 
@@ -241,7 +336,7 @@ const updateModel = catchAsync(async (req, res) => {
       ...req.body,
       ...(req.body.custom_apis && { custom_apis: JSON.parse(req.body.custom_apis) }),
     },
-    req.user.id
+    req.user.id,
   );
   res.send(model);
 });
@@ -254,7 +349,7 @@ const deleteModel = catchAsync(async (req, res) => {
 const addAuthorizedUser = catchAsync(async (req, res) => {
   const userIds = req.body.userId?.split(',');
   const promises = userIds.map((userId) =>
-    modelService.addAuthorizedUser(req.params.id, { userId, role: req.body.role }, req.user.id)
+    modelService.addAuthorizedUser(req.params.id, { userId, role: req.body.role }, req.user.id),
   );
   await Promise.all(promises).catch((err) => {
     throw new ApiError(httpStatus.BAD_REQUEST, err.message);
@@ -269,7 +364,7 @@ const deleteAuthorizedUser = catchAsync(async (req, res) => {
       role: req.query.role,
       userId: req.query.userId,
     },
-    req.user.id
+    req.user.id,
   );
   res.status(httpStatus.NO_CONTENT).send();
 });
@@ -296,13 +391,13 @@ const getApiDetail = catchAsync(async (req, res) => {
 const replaceApi = catchAsync(async (req, res) => {
   const modelId = req.params.id;
   const apiDataUrl = req.body.api_data_url;
-  
+
   if (!apiDataUrl) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'api_data_url is required');
   }
-  
+
   logger.info(`Replacing API for model ${modelId} with URL: ${apiDataUrl}`);
-  
+
   let extended_apis, api_version, main_api;
   try {
     const result = await modelService.processApiDataUrl(apiDataUrl);
@@ -314,7 +409,7 @@ const replaceApi = catchAsync(async (req, res) => {
     logger.error(error);
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      `Failed to process API data: ${error.message || 'Invalid API data URL or file format'}`
+      `Failed to process API data: ${error.message || 'Invalid API data URL or file format'}`,
     );
   }
 
@@ -337,7 +432,7 @@ const replaceApi = catchAsync(async (req, res) => {
       if (error) {
         throw new ApiError(
           httpStatus.BAD_REQUEST,
-          `Error in validating extended API ${extended_api.name || extended_api.apiName} - ${error.details.join(', ')}`
+          `Error in validating extended API ${extended_api.name || extended_api.apiName} - ${error.details.join(', ')}`,
         );
       }
     }
@@ -352,8 +447,8 @@ const replaceApi = catchAsync(async (req, res) => {
         ...api,
         model: modelId,
         isWishlist: api.isWishlist || false,
-      })
-    )
+      }),
+    ),
   );
 
   res.status(httpStatus.OK).send();

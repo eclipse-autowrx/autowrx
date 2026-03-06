@@ -39,6 +39,7 @@ interface DaSkeletonGridProps {
   emptyContainerClassName?: string
   primarySkeletonClassName?: string
   secondarySkeletonClassName?: string
+  emptyAction?: React.ReactNode
   children?: React.ReactNode
 }
 
@@ -57,6 +58,7 @@ const DaSkeletonGrid = ({
   emptyContainerClassName = '',
   primarySkeletonClassName = '',
   secondarySkeletonClassName = '',
+  emptyAction,
   onTimeout,
   children,
 }: DaSkeletonGridProps) => {
@@ -160,9 +162,10 @@ const DaSkeletonGrid = ({
   if (data !== undefined && data.length === 0) {
     return (
       <div
-        className={`flex flex-col w-full ${containerHeight} items-center justify-center ${emptyContainerClassName}`}
+        className={`flex flex-col w-full ${containerHeight} items-center justify-center gap-3 ${emptyContainerClassName}`}
       >
         <p className="text-base font-semibold">{emptyText}</p>
+        {emptyAction}
       </div>
     )
   }
