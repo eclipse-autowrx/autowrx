@@ -7,13 +7,27 @@
 // SPDX-License-Identifier: MIT
 
 import { FC, useState, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { listPlugins, Plugin } from '@/services/plugin.service'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  listAdminPlugins,
+  listMyPlugins,
+  deletePlugin,
+  Plugin,
+} from '@/services/plugin.service'
 import { Input } from '@/components/atoms/input'
 import { Button } from '@/components/atoms/button'
 import { Spinner } from '@/components/atoms/spinner'
 import { Label } from '@/components/atoms/label'
-import { TbSearch, TbArrowLeft } from 'react-icons/tb'
+import { TbSearch, TbArrowLeft, TbPencil, TbTrash } from 'react-icons/tb'
+import PluginForm from '@/components/organisms/PluginForm'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/atoms/dialog'
 
 interface AddonSelectProps {
   onSelect: (plugin: Plugin, label: string) => void
@@ -21,27 +35,38 @@ interface AddonSelectProps {
 }
 
 const AddonSelect: FC<AddonSelectProps> = ({ onSelect, onCancel }) => {
+  const qc = useQueryClient()
+  const [activeTab, setActiveTab] = useState<'system' | 'mine'>('system')
   const [searchTerm, setSearchTerm] = useState('')
   const [filteredPlugins, setFilteredPlugins] = useState<Plugin[]>([])
   const [selectedPlugin, setSelectedPlugin] = useState<Plugin | null>(null)
   const [labelName, setLabelName] = useState('')
+  const [openPluginForm, setOpenPluginForm] = useState(false)
+  const [editPluginId, setEditPluginId] = useState<string | undefined>(undefined)
+  const [pluginToDelete, setPluginToDelete] = useState<Plugin | null>(null)
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['plugins'],
-    queryFn: () => listPlugins({ page: 1, limit: 100 }),
+  const systemQuery = useQuery({
+    queryKey: ['plugins', 'admin'],
+    queryFn: () => listAdminPlugins({ page: 1, limit: 100 }),
   })
 
+  const mineQuery = useQuery({
+    queryKey: ['plugins', 'mine'],
+    queryFn: () => listMyPlugins({ page: 1, limit: 100 }),
+  })
+
+  const activeQuery = activeTab === 'system' ? systemQuery : mineQuery
+
   useEffect(() => {
-    if (data?.results) {
-      const filtered = data.results.filter(
+    const results = activeQuery.data?.results || []
+    const filtered = results.filter(
         (plugin) =>
           plugin.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           plugin.slug?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           plugin.description?.toLowerCase().includes(searchTerm.toLowerCase())
       )
-      setFilteredPlugins(filtered)
-    }
-  }, [data, searchTerm])
+    setFilteredPlugins(filtered)
+  }, [activeQuery.data, searchTerm, activeTab])
 
   const handlePluginClick = (plugin: Plugin) => {
     setSelectedPlugin(plugin)
@@ -59,7 +84,7 @@ const AddonSelect: FC<AddonSelectProps> = ({ onSelect, onCancel }) => {
     setLabelName('')
   }
 
-  if (isLoading) {
+  if (activeQuery.isLoading) {
     return (
       <div className="flex flex-col items-center justify-center p-8 gap-4">
         <Spinner size={32} />
@@ -68,7 +93,7 @@ const AddonSelect: FC<AddonSelectProps> = ({ onSelect, onCancel }) => {
     )
   }
 
-  if (error) {
+  if (activeQuery.error) {
     return (
       <div className="flex flex-col items-center justify-center p-8 gap-4">
         <p className="text-sm text-destructive">
@@ -180,6 +205,53 @@ const AddonSelect: FC<AddonSelectProps> = ({ onSelect, onCancel }) => {
         </p>
       </div>
 
+      {/* Tabs */}
+      <div className="px-6 pt-4">
+        <div className="flex border-b border-border">
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('system')
+              setSearchTerm('')
+            }}
+            className={`cursor-pointer px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'system'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            System plugins
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('mine')
+              setSearchTerm('')
+            }}
+            className={`cursor-pointer px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'mine'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            My plugins
+          </button>
+          <div className="flex-1" />
+          {activeTab === 'mine' && (
+            <Button
+              className="px-3 ml-2 mb-2"
+              onClick={() => {
+                setEditPluginId(undefined)
+                setOpenPluginForm(true)
+              }}
+              disabled={(mineQuery.error as any)?.response?.status === 401}
+            >
+              Add plugin
+            </Button>
+          )}
+        </div>
+      </div>
+
       {/* Search */}
       <div className="p-6 border-b border-border">
         <div className="relative">
@@ -196,7 +268,14 @@ const AddonSelect: FC<AddonSelectProps> = ({ onSelect, onCancel }) => {
 
       {/* List */}
       <div className="flex flex-col max-h-96 overflow-y-auto">
-        {filteredPlugins.length === 0 ? (
+        {activeTab === 'mine' && (mineQuery.error as any)?.response?.status === 401 ? (
+          <div className="flex items-center justify-center p-8">
+            <p className="text-sm text-muted-foreground">
+              Please sign in to view your plugins.
+            </p>
+          </div>
+        ) : (
+        filteredPlugins.length === 0 ? (
           <div className="flex items-center justify-center p-8">
             <p className="text-sm text-muted-foreground">
               {searchTerm ? 'No addons found matching your search' : 'No addons available'}
@@ -204,47 +283,81 @@ const AddonSelect: FC<AddonSelectProps> = ({ onSelect, onCancel }) => {
           </div>
         ) : (
           filteredPlugins.map((plugin) => (
-            <button
+            <div
               key={plugin.id}
-              onClick={() => handlePluginClick(plugin)}
-              className="flex items-start gap-4 p-4 border-b border-border hover:bg-accent transition-colors text-left"
+              className="flex items-start gap-4 p-4 border-b border-border cursor-pointer"
             >
-              {/* Plugin Image */}
-              {plugin.image ? (
-                <img
-                  src={plugin.image}
-                  alt={plugin.name}
-                  className="w-12 h-12 rounded object-cover flex-shrink-0"
-                />
-              ) : (
-                <div className="w-12 h-12 rounded bg-muted flex items-center justify-center flex-shrink-0">
-                  <span className="text-lg text-muted-foreground">
-                    {plugin.name.charAt(0).toUpperCase()}
-                  </span>
+              <button
+                type="button"
+                onClick={() => handlePluginClick(plugin)}
+                className="flex items-start gap-4 flex-1 min-w-0 text-left cursor-pointer"
+              >
+                {/* Plugin Image */}
+                {plugin.image ? (
+                  <img
+                    src={plugin.image}
+                    alt={plugin.name}
+                    className="w-12 h-12 rounded object-cover flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                    <span className="text-lg text-muted-foreground">
+                      {plugin.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                )}
+
+                {/* Plugin Info */}
+                <div className="flex flex-col gap-1 flex-1 min-w-0">
+                  <h3 className="text-sm font-medium text-foreground truncate">
+                    {plugin.name}
+                  </h3>
+                  {plugin.description && (
+                    <p className="text-xs text-muted-foreground line-clamp-2">
+                      {plugin.description}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="px-2 py-0.5 bg-muted rounded">
+                      {plugin.is_internal ? 'Internal' : 'External'}
+                    </span>
+                    {plugin.slug && (
+                      <span className="font-mono">{plugin.slug}</span>
+                    )}
+                  </div>
+                </div>
+              </button>
+              {activeTab === 'mine' && (
+                <div className="flex gap-1 flex-shrink-0">
+                  <Button
+                    title="Edit"
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setEditPluginId(plugin.id)
+                      setOpenPluginForm(true)
+                    }}
+                  >
+                    <TbPencil className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    title="Delete"
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setPluginToDelete(plugin)
+                    }}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <TbTrash className="w-4 h-4" />
+                  </Button>
                 </div>
               )}
-
-              {/* Plugin Info */}
-              <div className="flex flex-col gap-1 flex-1 min-w-0">
-                <h3 className="text-sm font-medium text-foreground truncate">
-                  {plugin.name}
-                </h3>
-                {plugin.description && (
-                  <p className="text-xs text-muted-foreground line-clamp-2">
-                    {plugin.description}
-                  </p>
-                )}
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="px-2 py-0.5 bg-muted rounded">
-                    {plugin.is_internal ? 'Internal' : 'External'}
-                  </span>
-                  {plugin.slug && (
-                    <span className="font-mono">{plugin.slug}</span>
-                  )}
-                </div>
-              </div>
-            </button>
+            </div>
           ))
+        )
         )}
       </div>
 
@@ -256,6 +369,55 @@ const AddonSelect: FC<AddonSelectProps> = ({ onSelect, onCancel }) => {
           </Button>
         </div>
       )}
+
+      <PluginForm
+        open={openPluginForm}
+        onClose={() => {
+          setOpenPluginForm(false)
+          setEditPluginId(undefined)
+        }}
+        mode={editPluginId ? 'edit' : 'create'}
+        pluginId={editPluginId}
+        defaultType="prototype_function"
+        onSaved={() => {
+          qc.invalidateQueries({ queryKey: ['plugins', 'mine'] })
+          setActiveTab('mine')
+          setSearchTerm('')
+        }}
+      />
+
+      <Dialog
+        open={!!pluginToDelete}
+        onOpenChange={(open) => !open && setPluginToDelete(null)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete plugin</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete &quot;{pluginToDelete?.name}
+              &quot;? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setPluginToDelete(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                if (!pluginToDelete) return
+                try {
+                  await deletePlugin(pluginToDelete.id)
+                  qc.invalidateQueries({ queryKey: ['plugins', 'mine'] })
+                  setPluginToDelete(null)
+                } catch (e) {}
+              }}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

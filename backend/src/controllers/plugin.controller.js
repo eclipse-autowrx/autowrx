@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -26,6 +26,22 @@ const listPlugins = catchAsync(async (req, res) => {
   const filter = pick(req.query, ['type', 'slug', 'name']);
   const options = pick(req.query, ['sortBy', 'limit', 'page', 'fields']);
   const result = await pluginService.queryPlugins(filter, options);
+  res.send(result);
+});
+
+// List plugins created by admin users (public)
+const listAdminPlugins = catchAsync(async (req, res) => {
+  const filter = pick(req.query, ['type', 'slug', 'name']);
+  const options = pick(req.query, ['sortBy', 'limit', 'page', 'fields']);
+  const result = await pluginService.queryAdminPlugins(filter, options);
+  res.send(result);
+});
+
+// List plugins created by the current user
+const listMyPlugins = catchAsync(async (req, res) => {
+  const filter = pick(req.query, ['type', 'slug', 'name']);
+  const options = pick(req.query, ['sortBy', 'limit', 'page', 'fields']);
+  const result = await pluginService.queryPlugins({ ...filter, created_by: req.user.id }, options);
   res.send(result);
 });
 
@@ -111,7 +127,9 @@ const uploadInternalPlugin = catchAsync(async (req, res) => {
   });
 
   // Remove uploaded temp file
-  try { fs.unlinkSync(req.file.path); } catch (e) {}
+  try {
+    fs.unlinkSync(req.file.path);
+  } catch (e) {}
 
   // Try to detect entry file (index.js preferred, fallback index.html)
   let entryRel = await findEntryFile(pluginPath, ['index.js', 'index.html']);
@@ -138,6 +156,8 @@ const removePlugin = catchAsync(async (req, res) => {
 
 module.exports = {
   listPlugins,
+  listAdminPlugins,
+  listMyPlugins,
   getPluginById,
   getPluginBySlug,
   createPlugin,
@@ -145,5 +165,3 @@ module.exports = {
   uploadInternalPlugin,
   removePlugin,
 };
-
-
