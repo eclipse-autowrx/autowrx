@@ -397,7 +397,9 @@ const FormCreatePrototype = ({
           onChange={(e) => handleChange('prototypeName', e.target.value)}
           placeholder="Name"
           data-id="prototype-name-input"
+          className={error ? 'border-secondary' : ''}
         />
+        {error && <p className="mt-2 text-sm text-secondary">{error}</p>}
       </div>
 
       <div className="flex flex-col mt-4">
@@ -420,8 +422,6 @@ const FormCreatePrototype = ({
           </SelectContent>
         </Select>
       </div>
-
-      {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
 
       <Button
         disabled={disabled}
