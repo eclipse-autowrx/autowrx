@@ -235,9 +235,9 @@ const ConfigList: React.FC<ConfigListProps> = ({
             </div>
 
             {/* Right: value (2/3) */}
-            <div className="md:col-span-2 flex flex-1 gap-1">
+            <div className="md:col-span-2 flex flex-1 gap-1 min-w-0">
               <div
-                className="bg-muted flex-1 rounded-md p-3 mb-2 cursor-pointer hover:ring-1 hover:ring-border"
+                className="bg-muted flex-1 min-w-0 rounded-md p-3 mb-2 cursor-pointer hover:ring-1 hover:ring-border"
                 onClick={() => {
                   if (
                     config.valueType !== 'image_url' &&
@@ -251,7 +251,7 @@ const ConfigList: React.FC<ConfigListProps> = ({
                     {config.valueType === 'image_url' ? (
                       <div className="space-y-3">
                         <Textarea
-                          className="w-full font-mono text-xs bg-white"
+                          className="w-full font-mono text-xs bg-white max-h-32 overflow-auto"
                           rows={2}
                           value={editValue ?? ''}
                           onChange={(e) => setEditValue(e.target.value)}
@@ -280,11 +280,12 @@ const ConfigList: React.FC<ConfigListProps> = ({
                           </Button>
                         </div>
                         <div className="flex flex-col items-center gap-1.5">
-                          <div className="w-full border border-border rounded-md p-1 bg-white flex items-center justify-center overflow-hidden">
+                          <div className="w-full max-w-[280px] max-h-[160px] rounded-md p-1 bg-muted flex items-center justify-center overflow-hidden">
                             {editValue ? (
                               <img
                                 src={editValue as any}
                                 alt="Preview"
+                                className="max-w-full max-h-[140px] w-auto h-auto object-contain"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement
                                   target.style.display = 'none'
@@ -426,22 +427,29 @@ const ConfigList: React.FC<ConfigListProps> = ({
                         </p>
                       </div>
                     ) : config.valueType === 'image_url' ? (
-                      <div className="space-y-3">
+                      <div className="space-y-3 min-w-0">
                         <div
-                          className="cursor-text"
+                          className="cursor-text min-w-0"
                           onClick={(e) => {
                             e.stopPropagation()
                             startEdit(config)
                           }}
                         >
-                          <p className="text-sm font-mono break-all">
+                          <p
+                            className="text-sm font-mono truncate"
+                            title={
+                              (typeof (localValues[config.key] ?? config.value) === 'string'
+                                ? (localValues[config.key] ?? config.value)
+                                : '') || undefined
+                            }
+                          >
                             {((localValues[config.key] ??
                               config.value) as any) ||
                               'Click to enter image URL'}
                           </p>
                         </div>
                         <div className="flex flex-col items-center gap-0">
-                          <div className="w-full border border-border rounded-md p-1 bg-white flex items-center justify-center overflow-hidden">
+                          <div className="w-full max-w-[280px] max-h-[160px] rounded-md p-1 bg-muted flex items-center justify-center overflow-hidden">
                             {(localValues[config.key] ?? config.value) ? (
                               <img
                                 src={
@@ -449,6 +457,7 @@ const ConfigList: React.FC<ConfigListProps> = ({
                                     config.value) as any
                                 }
                                 alt="Preview"
+                                className="max-w-full max-h-[140px] w-auto h-auto object-contain"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement
                                   target.style.display = 'none'
@@ -497,8 +506,27 @@ const ConfigList: React.FC<ConfigListProps> = ({
                           </div>
                         </div>
                       </div>
+                    ) : config.valueType === 'object' || config.valueType === 'array' ? (
+                      <p
+                        className="text-sm text-foreground font-mono line-clamp-3 overflow-hidden"
+                        title={formatValue(
+                          localValues[config.key] ?? config.value,
+                          config.valueType,
+                        )}
+                      >
+                        {formatValue(
+                          localValues[config.key] ?? config.value,
+                          config.valueType,
+                        )}
+                      </p>
                     ) : (
-                      <p className="text-sm text-foreground whitespace-pre-wrap break-words font-mono">
+                      <p
+                        className="text-sm text-foreground font-mono truncate"
+                        title={formatValue(
+                          localValues[config.key] ?? config.value,
+                          config.valueType,
+                        )}
+                      >
                         {formatValue(
                           localValues[config.key] ?? config.value,
                           config.valueType,

@@ -16,6 +16,8 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 // Default fallback values for site configs
 const DEFAULT_SITE_CONFIGS: Record<string, any> = {
   SITE_LOGO_WIDE: '/imgs/logo-wide.png',
+  DEFAULT_MODEL_IMAGE: '/imgs/default-model-image.png',
+  DEFAULT_PROTOTYPE_IMAGE: '/imgs/default_prototype_cover.jpg',
   SITE_TITLE: 'AutoWRX',
   SITE_DESCRIPTION: 'Vehicle Signal Specification Management Platform',
   SITE_FAVICON: '/imgs/favicon.ico',

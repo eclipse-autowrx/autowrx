@@ -30,6 +30,22 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     valueType: 'image_url',
   },
   {
+    key: 'DEFAULT_MODEL_IMAGE',
+    scope: 'site',
+    value: '/imgs/default-model-image.png',
+    secret: false,
+    valueType: 'image_url',
+    description: 'Default image used when creating a new model.',
+  },
+  {
+    key: 'DEFAULT_PROTOTYPE_IMAGE',
+    scope: 'site',
+    value: '/imgs/default_prototype_cover.jpg',
+    secret: false,
+    valueType: 'image_url',
+    description: 'Default cover image used when creating a new prototype.',
+  },
+  {
     key: 'SITE_TITLE',
     scope: 'site',
     value: 'Playground | digital.auto',

@@ -34,6 +34,7 @@ import { createModelService } from '@/services/model.service'
 import { cn } from '@/lib/utils'
 import default_journey from '@/data/default_journey'
 import { SAMPLE_PROJECTS } from '@/data/sampleProjects'
+import { getConfig } from '@/utils/siteConfig'
 
 interface FormCreatePrototypeProps {
   onClose?: () => void
@@ -221,6 +222,13 @@ const FormCreatePrototype = ({
         throw new Error('Model data is missing')
       }
 
+      const defaultPrototypeImage = await getConfig(
+        'DEFAULT_PROTOTYPE_IMAGE',
+        'site',
+        undefined,
+        '/imgs/default_prototype_cover.jpg',
+      )
+
       const body = {
         model_id: modelId,
         name: data.prototypeName,
@@ -236,7 +244,7 @@ const FormCreatePrototype = ({
           solution: '',
           status: '',
         },
-        image_file: '/imgs/default_prototype_cover.jpg',
+        image_file: defaultPrototypeImage || '/imgs/default_prototype_cover.jpg',
         skeleton: '{}',
         tags: [],
         widget_config:
