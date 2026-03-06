@@ -20,7 +20,9 @@ import PluginManagement from '@/pages/PluginManagement.tsx'
 import TemplateManager from '@/pages/TemplateManager.tsx'
 import DashboardTemplateManager from '@/pages/DashboardTemplateManager.tsx'
 import PageTestPlugin from '@/pages/PageTestPlugin.tsx'
-import PageModelList from '@/pages/PageModelList.tsx'
+const PageModelList = lazy(() =>
+  retry(() => import('@/pages/PageModelList')),
+)
 import ModelDetailLayout from '@/layouts/ModelDetailLayout.tsx'
 import PageModelDetail from '@/pages/PageModelDetail.tsx'
 import PageHome from '@/pages/PageHome.tsx'
