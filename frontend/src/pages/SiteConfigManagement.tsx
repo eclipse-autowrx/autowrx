@@ -81,6 +81,22 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     description: 'Show or hide the API panel on the Prototype Code tab.',
   },
   {
+    key: 'SHOW_CODE_DIFF',
+    scope: 'site',
+    value: false,
+    secret: false,
+    valueType: 'boolean',
+    description: 'Enable the code diff feature on the Prototype Code tab. When enabled, a "Show Diff" button appears after AI or plugin code generation, allowing users to compare the new code with the previous version.',
+  },
+  {
+    key: 'SHOW_SDV_PROTOPILOT',
+    scope: 'site',
+    value: true,
+    secret: false,
+    valueType: 'boolean',
+    description: 'Show or hide the SDV ProtoPilot (AI code generation) button on the Prototype Code tab.',
+  },
+  {
     key: 'DEFAULT_MARKETPLACE_URL',
     scope: 'site',
     value: 'https://marketplace.digitalauto.tech',
@@ -252,11 +268,10 @@ const SiteConfigManagement: React.FC = () => {
                 </button>
                 <button
                   onClick={() => handleTabChange('style')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
-                    activeTab === 'style'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground hover:bg-muted'
-                  }`}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'style'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-muted'
+                    }`}
                 >
                   Site Style (CSS)
                 </button>
