@@ -10,7 +10,7 @@ import { FC, useCallback, useEffect, useState } from 'react'
 import { configManagementService } from '@/services/configManagement.service'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
 import { Spinner } from '@/components/atoms/spinner'
 import {
   TbDotsVertical,
@@ -42,7 +42,7 @@ import { updateModelService } from '@/services/model.service'
 import { toast } from 'react-toastify'
 import { Dialog, DialogContent } from '@/components/atoms/dialog'
 import PagePrototypePlugin from '@/pages/PagePrototypePlugin'
-import CustomTabEditor, { TabConfig } from '@/components/organisms/CustomTabEditor'
+import CustomTabEditor, { TabConfig, StagingConfig, RightNavPluginButton } from '@/components/organisms/CustomTabEditor'
 import PrototypeTabInfo from '../components/organisms/PrototypeTabInfo'
 import TemplateForm from '@/components/organisms/TemplateForm'
 import PrototypeTabJourney from '@/components/organisms/PrototypeTabJourney'
@@ -51,6 +51,7 @@ import PrototypeTabs, { getTabConfig } from '@/components/molecules/PrototypeTab
 import DaTabItem from '@/components/atoms/DaTabItem'
 import usePluginPreloader from '@/hooks/usePluginPreloader'
 import PrototypeSidebar from '@/components/organisms/PrototypeSidebar'
+import StagingTabButton from '@/components/organisms/StagingTabButton'
 
 interface ViewPrototypeProps {
   display?: 'tree' | 'list'
@@ -84,7 +85,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
     visibility?: string
     config?: any
     model_tabs?: Array<{ label: string; plugin: string }>
-    prototype_tabs?: Array<{ label: string; plugin: string }>
+    prototype_tabs?: TabConfig[]
   } | undefined>(undefined)
 
   // Load staging config to extract plugins for preloading
@@ -126,6 +127,19 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
   // Extract sidebar plugin slug
   const sidebarPlugin: string | undefined = model?.custom_template?.prototype_sidebar_plugin || undefined
 
+  // Extract global tab style variant
+  const tabsVariant: string | undefined = model?.custom_template?.prototype_tabs_variant || undefined
+
+  // Extract staging tab config from prototype_right_nav_buttons
+  const _rightNavRaw: RightNavPluginButton[] = model?.custom_template?.prototype_right_nav_buttons || []
+  const _stagingNavItem = _rightNavRaw.find(b => b.builtin === 'staging')
+  const stagingConfig: StagingConfig = _stagingNavItem
+    ? { label: _stagingNavItem.label, iconSvg: _stagingNavItem.iconSvg, hideIcon: _stagingNavItem.hideIcon, variant: _stagingNavItem.variant }
+    : {}
+
+  // Extract right nav plugin buttons (exclude the built-in staging item)
+  const rightNavButtons: RightNavPluginButton[] = _rightNavRaw.filter(b => b.builtin !== 'staging')
+
   // Preload plugin JavaScript files
   usePluginPreloader({
     prototypeTabs,
@@ -143,12 +157,30 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
 
   useEffect(() => {
     if (!tab || tab === 'view') {
-      setIsDefaultTab(true)
+      // Only show overview content if overview is actually the first visible tab
+      const firstVisible = prototypeTabs.find(t => !t.hidden)
+      setIsDefaultTab(!firstVisible || (firstVisible.type === 'builtin' && firstVisible.key === 'overview'))
     } else {
       setIsDefaultTab(false)
     }
     setShowRt(['code', 'dashboard'].includes(tab || ''))
-  }, [tab])
+  }, [tab, prototypeTabs])
+
+  // Auto-navigate to first visible tab when arriving on the default (no-tab / view) route
+  useEffect(() => {
+    if ((!tab || tab === 'view') && model_id && prototype_id && prototypeTabs.length > 0) {
+      const firstVisible = prototypeTabs.find(t => !t.hidden)
+      if (!firstVisible) return
+      // overview maps to /view — already there, nothing to do
+      if (firstVisible.type === 'builtin' && firstVisible.key === 'overview') return
+      const base = `/model/${model_id}/library/prototype/${prototype_id}`
+      if (firstVisible.type === 'builtin' && firstVisible.key) {
+        navigate(`${base}/${firstVisible.key}`, { replace: true })
+      } else if (firstVisible.type === 'custom' && firstVisible.plugin) {
+        navigate(`${base}/plug?plugid=${firstVisible.plugin}`, { replace: true })
+      }
+    }
+  }, [tab, prototypeTabs, model_id, prototype_id, navigate])
 
   useEffect(() => {
     if (user && prototype && tab) {
@@ -222,7 +254,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
     }
   }
 
-  const handleSaveCustomTabs = async (updatedTabs: TabConfig[], updatedSidebarPlugin?: string | null) => {
+  const handleSaveCustomTabs = async (updatedTabs: TabConfig[], updatedSidebarPlugin?: string | null, updatedTabsVariant?: string | null, updatedRightNavButtons?: RightNavPluginButton[] | null) => {
     if (!model_id || !model) {
       toast.error('Model not found')
       return
@@ -237,6 +269,16 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
       // Update sidebar plugin: null means remove, string means set, undefined means no change
       if (updatedSidebarPlugin !== undefined) {
         updates.prototype_sidebar_plugin = updatedSidebarPlugin
+      }
+
+      // Update tabs variant: null means remove (revert to default), string means set, undefined means no change
+      if (updatedTabsVariant !== undefined) {
+        updates.prototype_tabs_variant = updatedTabsVariant ?? undefined
+      }
+
+      // Update right nav buttons: null means remove, array means set, undefined means no change
+      if (updatedRightNavButtons !== undefined) {
+        updates.prototype_right_nav_buttons = updatedRightNavButtons
       }
 
       await updateModelService(model_id, {
@@ -273,7 +315,10 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
             </Button>
           )}
           <div className="flex w-fit">
-            <PrototypeTabs tabs={model?.custom_template?.prototype_tabs} />
+            <PrototypeTabs
+              tabs={model?.custom_template?.prototype_tabs}
+              tabsVariant={tabsVariant}
+            />
           </div>
           {isModelOwner && (
             <div className="flex w-fit h-full items-center">
@@ -288,14 +333,12 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
           )}
           <div className="grow"></div>
           {/* Staging tab - right side, before three dots */}
-          <DaTabItem
-            active={tab === 'staging'}
-            to={`/model/${model_id}/library/prototype/${prototype_id}/staging`}
-            dataId="tab-staging"
-          >
-            <TbListCheck className="w-5 h-5 mr-2" />
-            Staging
-          </DaTabItem>
+          <StagingTabButton
+            model_id={model_id}
+            prototype_id={prototype_id}
+            stagingConfig={stagingConfig}
+            tab={tab}
+          />
           {isModelOwner && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -318,14 +361,20 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
                   onSelect={() => {
                     // Capture current model.custom_template data at the moment of click
                     if (model) {
+                      // Normalize prototype_tabs to full TabConfig format (resolves old-format entries
+                      // where builtin tabs were stored as { label, plugin: "" } without type/key).
+                      const normalizedPrototypeTabs = getTabConfig(model.custom_template?.prototype_tabs)
                       const initialData = {
                         name: model.name || '',
                         description: '',
                         image: model.model_home_image_file || '',
                         visibility: model.visibility || 'public',
-                        config: model.custom_template || {},
+                        config: {
+                          ...model.custom_template,
+                          prototype_tabs: normalizedPrototypeTabs,
+                        },
                         model_tabs: model.custom_template?.model_tabs || [],
-                        prototype_tabs: model.custom_template?.prototype_tabs || [],
+                        prototype_tabs: normalizedPrototypeTabs,
                       }
                       console.log('[PagePrototypeDetail] Setting templateInitialData:', {
                         model,
@@ -408,6 +457,9 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
         tabs={getTabConfig(model?.custom_template?.prototype_tabs)}
         onSave={handleSaveCustomTabs}
         sidebarPlugin={sidebarPlugin}
+        stagingConfig={stagingConfig}
+        rightNavButtons={rightNavButtons}
+        tabsVariant={tabsVariant}
         title="Manage Prototype Tabs"
         description="Reorder tabs, edit labels, hide/show tabs, and remove custom tabs"
       />
@@ -416,7 +468,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
       <DaDialog
         open={openTemplateForm}
         onOpenChange={setOpenTemplateForm}
-        className="w-[840px] max-w-[calc(100vw-80px)]"
+        className="w-[840px] max-w-[calc(100vw-80px)] max-h-[90vh] overflow-hidden flex flex-col"
       >
         <TemplateForm
           open={openTemplateForm}

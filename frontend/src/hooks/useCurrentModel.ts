@@ -7,12 +7,14 @@
 // SPDX-License-Identifier: MIT
 
 import { useQuery } from '@tanstack/react-query'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { Model } from '@/types/model.type'
 import { getModel } from '@/services/model.service'
 
 const useCurrentModel = () => {
-  const { model_id } = useParams<{ model_id: string }>()
+  const { model_id: pathModelId } = useParams<{ model_id: string }>()
+  const [searchParams] = useSearchParams()
+  const model_id = pathModelId || searchParams.get('model_id') || undefined
 
   return useQuery<Model>({
     queryKey: ['model', model_id],
