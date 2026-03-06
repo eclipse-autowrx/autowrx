@@ -16,6 +16,7 @@ import AuthConfigSection from '@/components/organisms/AuthConfigSection'
 import SSOConfigSection from '@/components/organisms/SSOConfigSection'
 import EmailConfigSection from '@/components/organisms/EmailConfigSection'
 import StagingConfigSection from '@/components/organisms/StagingConfigSection'
+import PrototypeConfigSection from '@/components/organisms/PrototypeConfigSection'
 
 // Keys that should be excluded from the site-config page
 // These keys are managed in their own dedicated pages
@@ -63,22 +64,6 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     value: 'https://kit.digitalauto.tech',
     secret: false,
     valueType: 'string',
-  },
-  {
-    key: 'RUNTIME_SERVER_CONFIG',
-    scope: 'site',
-    value: '{}',
-    secret: false,
-    valueType: 'string',
-    description: 'Custom JSON options passed to the Socket.IO client when connecting to the runtime server. Example: {"transports":["websocket"],"reconnectionAttempts":5}. Leave empty to use default Socket.IO options.',
-  },
-  {
-    key: 'SHOW_CODE_API_PANEL',
-    scope: 'site',
-    value: true,
-    secret: false,
-    valueType: 'boolean',
-    description: 'Show or hide the API panel on the Prototype Code tab.',
   },
   {
     key: 'DEFAULT_MARKETPLACE_URL',
@@ -141,6 +126,45 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
   },
 ]
 
+export const PREDEFINED_PROTOTYPE_CONFIGS: any[] = [
+  {
+    key: 'SHOW_CODE_API_PANEL',
+    scope: 'site',
+    value: true,
+    secret: false,
+    valueType: 'boolean',
+    category: 'prototype',
+    description: 'Show or hide the API panel on the Prototype Code tab.',
+  },
+  {
+    key: 'SHOW_CODE_DIFF',
+    scope: 'site',
+    value: false,
+    secret: false,
+    valueType: 'boolean',
+    category: 'prototype',
+    description: 'Enable the code diff feature on the Prototype Code tab. When enabled, a "Show Diff" button appears after AI or plugin code generation, allowing users to compare the new code with the previous version.',
+  },
+  {
+    key: 'SHOW_SDV_PROTOPILOT',
+    scope: 'site',
+    value: true,
+    secret: false,
+    valueType: 'boolean',
+    category: 'prototype',
+    description: 'Show or hide the SDV ProtoPilot (AI code generation) button on the Prototype Code tab.',
+  },
+  {
+    key: 'RUNTIME_SERVER_CONFIG',
+    scope: 'site',
+    value: '{}',
+    secret: false,
+    valueType: 'string',
+    category: 'prototype',
+    description: 'Custom JSON options passed to the Socket.IO client when connecting to the runtime server. Example: {"transports":["websocket"],"reconnectionAttempts":5}. Leave empty to use default Socket.IO options.',
+  },
+]
+
 export const PREDEFINED_AUTH_CONFIGS: any[] = [
   {
     key: 'PUBLIC_VIEWING',
@@ -184,8 +208,8 @@ const SiteConfigManagement: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
 
   // Get initial section from URL or default to 'public'
-  type SectionTab = 'public' | 'style' | 'secrets' | 'home' | 'auth' | 'sso' | 'email' | 'staging'
-  const validSections: SectionTab[] = ['public', 'style', 'secrets', 'home', 'auth', 'sso', 'email', 'staging']
+  type SectionTab = 'public' | 'style' | 'secrets' | 'home' | 'auth' | 'sso' | 'email' | 'staging' | 'prototype'
+  const validSections: SectionTab[] = ['public', 'style', 'secrets', 'home', 'auth', 'sso', 'email', 'staging', 'prototype']
 
   const getSectionFromUrl = (): SectionTab => {
     const section = searchParams.get('section')
@@ -242,6 +266,15 @@ const SiteConfigManagement: React.FC = () => {
                   Public Config
                 </button>
                 <button
+                  onClick={() => handleTabChange('prototype')}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'prototype'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-muted'
+                    }`}
+                >
+                  Prototype Config
+                </button>
+                <button
                   onClick={() => handleTabChange('home')}
                   className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'home'
                     ? 'bg-primary text-primary-foreground'
@@ -252,11 +285,10 @@ const SiteConfigManagement: React.FC = () => {
                 </button>
                 <button
                   onClick={() => handleTabChange('style')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
-                    activeTab === 'style'
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'style'
                       ? 'bg-primary text-primary-foreground'
                       : 'text-foreground hover:bg-muted'
-                  }`}
+                    }`}
                 >
                   Site Style (CSS)
                 </button>
@@ -314,6 +346,7 @@ const SiteConfigManagement: React.FC = () => {
             <div className="bg-background rounded-lg shadow border border-border">
               {/* Conditionally render only the active section */}
               {activeTab === 'public' && <PublicConfigSection />}
+              {activeTab === 'prototype' && <PrototypeConfigSection />}
               {activeTab === 'home' && <HomeConfigSection />}
               {activeTab === 'staging' && <StagingConfigSection />}
               {activeTab === 'auth' && <AuthConfigSection />}

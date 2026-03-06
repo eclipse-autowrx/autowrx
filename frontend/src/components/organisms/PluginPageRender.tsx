@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import { Spinner } from '@/components/atoms/spinner'
@@ -56,14 +56,25 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
   const [error, setError] = useState<string | null>(null)
   const [PluginComponent, setPluginComponent] = useState<React.ComponentType<any> | null>(null)
   const [loadedPluginName, setLoadedPluginName] = useState<string | null>(null)
-  const [siteConfigs, setSiteConfigs] = useState<{ public: Record<string, any> }>({ public: {} })
-
+  const [siteConfigs, setSiteConfigs] = useState<{ public: Record<string, any>; secret: Record<string, any> }>({ public: {}, secret: {} })
   // Extract IDs from data
   const model_id = data?.model?.id
   const prototype_id = data?.prototype?.id
 
   // Access runtime store for API values
   const { apisValue, setActiveApis } = useRuntimeStore()
+  // Keep a ref so handleGetRuntimeApiValues never changes reference when apisValue updates
+  const apisValueRef = useRef(apisValue)
+  useEffect(() => { apisValueRef.current = apisValue }, [apisValue])
+
+  // Keep a ref for onSetActiveTab so pluginAPI is never invalidated by parent re-renders
+  const onSetActiveTabRef = useRef(onSetActiveTab)
+  useEffect(() => { onSetActiveTabRef.current = onSetActiveTab }, [onSetActiveTab])
+  const stableSetActiveTab = useCallback(
+    (tab: string, pluginSlug?: string) => onSetActiveTabRef.current?.(tab, pluginSlug),
+    [],
+  )
+
   const queryClient = useQueryClient()
 
   // Create API callbacks for plugin to interact with host
@@ -177,8 +188,8 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
   }, [setActiveApis])
 
   const handleGetRuntimeApiValues = useCallback((): Record<string, any> => {
-    return (apisValue as Record<string, any>) || {}
-  }, [apisValue])
+    return (apisValueRef.current as Record<string, any>) || {}
+  }, []) // stable — reads from ref, never re-creates
 
   // Wishlist API operations
   const handleCreateWishlistApi = useCallback(async (data: ExtendedApiCreate): Promise<ExtendedApiRet> => {
@@ -248,7 +259,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
     }
   }, [model_id])
 
-  const pluginAPI: PluginAPI = {
+  const pluginAPI: PluginAPI = useMemo(() => ({
     // Model & Prototype updates
     updateModel: model_id ? handleUpdateModel : undefined,
     updatePrototype: prototype_id ? handleUpdatePrototype : undefined,
@@ -264,7 +275,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
     getRuntimeApiValues: handleGetRuntimeApiValues,
 
     // Navigation
-    setActiveTab: onSetActiveTab,
+    setActiveTab: stableSetActiveTab,
 
     // Wishlist API operations
     createWishlistApi: handleCreateWishlistApi,
@@ -272,12 +283,39 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
     deleteWishlistApi: handleDeleteWishlistApi,
     getWishlistApi: model_id ? handleGetWishlistApi : undefined,
     listWishlistApis: model_id ? handleListWishlistApis : undefined,
-  }
+  }), [
+    model_id,
+    prototype_id,
+    handleUpdateModel,
+    handleUpdatePrototype,
+    handleGetComputedAPIs,
+    handleGetApiDetail,
+    handleListVSSVersions,
+    handleReplaceAPIs,
+    handleSetRuntimeApiValues,
+    handleGetRuntimeApiValues,
+    stableSetActiveTab,
+    handleCreateWishlistApi,
+    handleUpdateWishlistApi,
+    handleDeleteWishlistApi,
+    handleGetWishlistApi,
+    handleListWishlistApis,
+  ])
 
-  // Fetch public site configs only — never expose secrets to plugins
+  // Fetch public and secret site configs and pass both to plugins
   useEffect(() => {
-    configManagementService.getPublicConfigs('site').then(publicConfigs => {
-      setSiteConfigs({ public: publicConfigs })
+    Promise.all([
+      configManagementService.getPublicConfigs('site'),
+      configManagementService.getAllConfigs('site').catch(() => ({})),
+    ]).then(([publicConfigs, allConfigs]) => {
+      // Extract only secret entries from allConfigs (keys not present in publicConfigs)
+      const secretConfigs: Record<string, any> = {}
+      for (const [key, value] of Object.entries(allConfigs)) {
+        if (!(key in publicConfigs)) {
+          secretConfigs[key] = value
+        }
+      }
+      setSiteConfigs({ public: publicConfigs, secret: secretConfigs })
     }).catch((err) => {
       console.error('Failed to fetch site configs for plugin:', err)
     })
@@ -332,6 +370,29 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
 
         const PLUGIN_URL = pluginMeta.url
         log('Plugin URL:', PLUGIN_URL)
+
+        try {
+          const importUrl = PLUGIN_URL
+          log('[dev-import] Attempting dynamic module import:', importUrl)
+          const mod: any = await import(/* @vite-ignore */ importUrl)
+          if (cancelled || myLoadId !== loadIdRef.current) return
+
+          const component: React.ComponentType<any> | null =
+            mod?.default ?? mod?.Page ?? mod?.components?.Page ?? null
+
+          if (component) {
+            log('[dev-import] Succeeded — using exported component directly (no build needed)')
+            pluginRegistrations.set(plugin_id, { components: { Page: component } })
+            setLoadedPluginName(plugin_id)
+            setPluginComponent(() => component)
+            setLoading(false)
+            return
+          }
+          log('[dev-import] Module loaded but no default/Page export — continuing to script injection')
+        } catch (importErr: any) {
+          log('[dev-import] Dynamic import failed, falling back to script injection:', importErr?.message)
+        }
+        if (cancelled || myLoadId !== loadIdRef.current) return
 
         // Step 2: Ensure global dependencies (React, ReactDOM) - MUST be available BEFORE script executes
         log('Ensuring global dependencies')
@@ -716,6 +777,12 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
   const shouldRenderPlugin =
     !loading && !error && !!PluginComponent && loadedPluginName === plugin_id
 
+  // Memoize config so plugins don't get a new object reference on every render
+  const pluginConfig = useMemo(
+    () => ({ plugin_id: loadedPluginName, ...siteConfigs }),
+    [loadedPluginName, siteConfigs],
+  )
+
   // Log what we're about to render
   useEffect(() => {
   }, [shouldRenderPlugin, loadedPluginName, plugin_id])
@@ -737,7 +804,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
 
       {shouldRenderPlugin && (
         <div key={`plugin-${plugin_id}-${loadedPluginName}`} className="w-full h-full">
-          <PluginComponent data={data} config={{ plugin_id: loadedPluginName, ...siteConfigs }} api={pluginAPI} />
+          <PluginComponent data={data} config={pluginConfig} api={pluginAPI} />
         </div>
       )}
 
