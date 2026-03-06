@@ -16,6 +16,7 @@ import AuthConfigSection from '@/components/organisms/AuthConfigSection'
 import SSOConfigSection from '@/components/organisms/SSOConfigSection'
 import EmailConfigSection from '@/components/organisms/EmailConfigSection'
 import StagingConfigSection from '@/components/organisms/StagingConfigSection'
+import GenAIConfigSection from '@/components/organisms/GenAIConfigSection'
 
 // Keys that should be excluded from the site-config page
 // These keys are managed in their own dedicated pages
@@ -124,10 +125,22 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
   {
     key: 'GENAI_SDV_APP_ENDPOINT',
     scope: 'site',
-    value: 'https://workflow.digital.auto/webhook/c0ba14bc-c6a3-4319-ad0a-ad89b1460b36',
+    value:
+      'https://workflow.digital.auto/webhook/c0ba14bc-c6a3-4319-ad0a-ad89b1460b36',
     secret: false,
     valueType: 'string',
-    description: 'GenAI endpoint URL for SDV App generation. Used by the SDV Copilot built-in generator. Default: https://workflow.digital.auto/webhook/c0ba14bc-c6a3-4319-ad0a-ad89b1460b36',
+    description:
+      'GenAI endpoint URL for SDV App generation. Used by the SDV Copilot built-in generator. Default: https://workflow.digital.auto/webhook/c0ba14bc-c6a3-4319-ad0a-ad89b1460b36',
+    category: 'genai',
+  },
+  {
+    key: 'SHOW_SDV_PROTOPILOT_BUTTON',
+    scope: 'site',
+    value: true,
+    secret: false,
+    valueType: 'boolean',
+    description:
+      "Show or hide the 'SDV ProtoPilot' GenAI button on the Prototype Code tab.",
     category: 'genai',
   },
   {
@@ -136,10 +149,15 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     value: 'https://store-be.digitalauto.tech',
     secret: false,
     valueType: 'string',
-    description: 'Marketplace URL for fetching GenAI addons/generators. Used to load marketplace generators in ProtoPilot. Leave empty to hide the Marketplace Generators section.',
+    description:
+      'Marketplace URL for fetching GenAI addons/generators. Used to load marketplace generators in ProtoPilot. Leave empty to hide the Marketplace Generators section.',
     category: 'genai',
   },
 ]
+
+export const PREDEFINED_GENAI_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(
+  (config) => config.category === 'genai',
+).map((config) => config.key)
 
 export const PREDEFINED_AUTH_CONFIGS: any[] = [
   {
@@ -184,8 +202,27 @@ const SiteConfigManagement: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
 
   // Get initial section from URL or default to 'public'
-  type SectionTab = 'public' | 'style' | 'secrets' | 'home' | 'auth' | 'sso' | 'email' | 'staging'
-  const validSections: SectionTab[] = ['public', 'style', 'secrets', 'home', 'auth', 'sso', 'email', 'staging']
+  type SectionTab =
+    | 'public'
+    | 'style'
+    | 'secrets'
+    | 'home'
+    | 'auth'
+    | 'sso'
+    | 'email'
+    | 'staging'
+    | 'genai'
+  const validSections: SectionTab[] = [
+    'public',
+    'style',
+    'secrets',
+    'home',
+    'auth',
+    'sso',
+    'email',
+    'staging',
+    'genai',
+  ]
 
   const getSectionFromUrl = (): SectionTab => {
     const section = searchParams.get('section')
@@ -270,6 +307,16 @@ const SiteConfigManagement: React.FC = () => {
                   Auth Config
                 </button>
                 <button
+                  onClick={() => handleTabChange('genai')}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'genai'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
+                >
+                  GenAI / ProtoPilot
+                </button>
+                <button
                   onClick={() => handleTabChange('sso')}
                   className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'sso'
                     ? 'bg-primary text-primary-foreground'
@@ -321,6 +368,7 @@ const SiteConfigManagement: React.FC = () => {
               {activeTab === 'style' && <SiteStyleSection />}
               {activeTab === 'email' && <EmailConfigSection />}
               {activeTab === 'secrets' && <SecretConfigSection />}
+              {activeTab === 'genai' && <GenAIConfigSection />}
             </div>
           </div>
         </div>

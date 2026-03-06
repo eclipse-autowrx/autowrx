@@ -79,6 +79,10 @@ const PrototypeTabCode: FC = () => {
   const { data: model } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
   const showCodeApiPanel = useSiteConfig('SHOW_CODE_API_PANEL', true)
+  const showSdvProtoPilotButton = useSiteConfig(
+    'SHOW_SDV_PROTOPILOT_BUTTON',
+    false,
+  )
 
   // Editor type state
   const [editorType, setEditorType] = useState<'project' | 'code'>('code')
@@ -246,11 +250,9 @@ const PrototypeTabCode: FC = () => {
 
   return (
     <div ref={containerRef} className="flex h-[calc(100%-0px)] w-full p-2 bg-gray-100">
-      <div
-        className="flex h-full flex-1 min-w-0 flex-col border-r bg-white rounded-md"
-      >
+      <div className="flex h-full flex-1 min-w-0 flex-col border-r bg-white rounded-md">
         <div className="flex min-h-12 w-full items-center justify-between">
-          {isAuthorized && (
+          {isAuthorized && showSdvProtoPilotButton && (
             <div className="flex mx-2 space-x-4">
               <DaDialog
                 open={isOpenGenAI}

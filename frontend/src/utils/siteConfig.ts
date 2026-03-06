@@ -213,7 +213,27 @@ export const useSiteConfig = (key: string, fallback?: any, scope: string = 'site
       try {
         const result = await getConfig(key, scope, target_id, fallback ?? DEFAULT_SITE_CONFIGS[key]);
         // Treat null/undefined/empty string as missing -> use fallback/default
-        const next = result !== null && result !== undefined && result !== '' ? result : (fallback ?? DEFAULT_SITE_CONFIGS[key]);
+        const raw =
+          result !== null && result !== undefined && result !== ''
+            ? result
+            : (fallback ?? DEFAULT_SITE_CONFIGS[key]);
+
+        // Coerce booleans when the consumer expects a boolean fallback.
+        // The config API may return string values like "true"/"false".
+        let next = raw;
+        if (typeof (fallback ?? DEFAULT_SITE_CONFIGS[key]) === 'boolean') {
+          if (raw === true || raw === false) {
+            next = raw;
+          } else if (typeof raw === 'string') {
+            const normalized = raw.trim().toLowerCase();
+            if (normalized === 'true') next = true;
+            else if (normalized === 'false') next = false;
+            else if (normalized === '1') next = true;
+            else if (normalized === '0') next = false;
+          } else if (typeof raw === 'number') {
+            next = raw === 1;
+          }
+        }
         setValue(next);
       } catch {
         setValue(fallback ?? DEFAULT_SITE_CONFIGS[key]);

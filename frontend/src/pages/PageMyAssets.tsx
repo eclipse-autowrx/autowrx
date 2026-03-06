@@ -193,17 +193,19 @@ const PythonGenAIEditor = ({ dataStr, onDataChange }: iPropGenAIPython) => {
         </div>
       </div>
 
-      <div className="flex items-center space-x-2 mt-4">
-        <label className="text-sm w-20">Access Token *</label>
-        <div className="grow">
-          <Textarea
-            value={accessToken}
-            onChange={(e) => onAccessTokenChange(e.target.value)}
-            className="flex grow text-[14px]! leading-tight!"
-          />
-          <div className=" text-sm mt-1 text-foreground">
-            * Notice: This token will be sent in the Authorization header.
+      <div className="mt-4">
+        <div className="flex items-center space-x-2">
+          <label className="text-sm w-20">Access Token *</label>
+          <div className="grow">
+            <Textarea
+              value={accessToken}
+              onChange={(e) => onAccessTokenChange(e.target.value)}
+              className="flex grow text-[14px]! leading-tight!"
+            />
           </div>
+        </div>
+        <div className="text-sm mt-1 text-foreground">
+          * Notice: This token will be sent in the Authorization header.
         </div>
       </div>
 
