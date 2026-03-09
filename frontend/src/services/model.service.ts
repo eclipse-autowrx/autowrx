@@ -59,6 +59,27 @@ interface AllModelsResponse {
   publicReleasedModels: List<ModelLite>
 }
 
+export type ModelsTab = 'owned' | 'contributed' | 'public'
+
+export interface ListModelsByTabResponse {
+  results: ModelLite[]
+  page: number
+  limit: number
+  totalPages: number
+  totalResults: number
+}
+
+export const listModelsByTab = async (
+  tab: ModelsTab,
+  page: number,
+  limit: number = 24,
+): Promise<ListModelsByTabResponse> => {
+  const { data } = await serverAxios.get<ListModelsByTabResponse>('/models/all', {
+    params: { tab, page, limit },
+  })
+  return data
+}
+
 export const listAllModels = async (): Promise<{
   ownedModels: ModelLite[]
   contributedModels: ModelLite[]
@@ -66,7 +87,6 @@ export const listAllModels = async (): Promise<{
 }> => {
   try {
     const { data } = await serverAxios.get<AllModelsResponse>('/models/all')
-    // console.log('Raw data from /models/all:', data)
 
     const ownedModels = data.ownedModels?.results || []
     const contributedModels = data.contributedModels?.results || []

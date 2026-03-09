@@ -78,6 +78,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
   const [openAddonDialog, setOpenAddonDialog] = useState(false)
   const [openManageAddonsDialog, setOpenManageAddonsDialog] = useState(false)
   const [openTemplateForm, setOpenTemplateForm] = useState(false)
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false)
   const [templateInitialData, setTemplateInitialData] = useState<{
     name?: string
     description?: string
@@ -340,7 +341,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
             tab={tab}
           />
           {isModelOwner && (
-            <DropdownMenu>
+            <DropdownMenu open={moreMenuOpen} onOpenChange={setMoreMenuOpen}>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
@@ -352,13 +353,17 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
-                  onSelect={() => setOpenManageAddonsDialog(true)}
+                  onClick={() => {
+                    setMoreMenuOpen(false)
+                    setOpenManageAddonsDialog(true)
+                  }}
                 >
                   <TbSettings className="w-5 h-5" />
                   Manage Prototype Tabs
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onSelect={() => {
+                  onClick={() => {
+                    setMoreMenuOpen(false)
                     // Capture current model.custom_template data at the moment of click
                     if (model) {
                       // Normalize prototype_tabs to full TabConfig format (resolves old-format entries

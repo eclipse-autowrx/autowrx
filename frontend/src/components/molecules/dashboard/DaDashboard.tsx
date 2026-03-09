@@ -82,6 +82,7 @@ const DaDashboard = () => {
   const [templateName, setTemplateName] = useState('')
   const [templateDesc, setTemplateDesc] = useState('')
   const [applyOpen, setApplyOpen] = useState(false)
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false)
 
   const [conflictTemplate, setConflictTemplate] = useState<DashboardTemplate | null>(null)
   const [showOverrideDialog, setShowOverrideDialog] = useState(false)
@@ -408,7 +409,7 @@ const DaDashboard = () => {
           )}
         </Button>
         {isAdmin && (
-          <DropdownMenu>
+          <DropdownMenu open={adminMenuOpen} onOpenChange={setAdminMenuOpen}>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
                 <TbDotsVertical className="size-4" />
@@ -417,7 +418,10 @@ const DaDashboard = () => {
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 className="cursor-pointer"
-                onClick={() => setShowSaveDialog(true)}
+                onClick={() => {
+                  setAdminMenuOpen(false)
+                  setShowSaveDialog(true)
+                }}
               >
                 <TbDeviceFloppy className="size-4 mr-2" />
                 Save as Template

@@ -203,6 +203,7 @@ const ApiDetail = ({
   }, [apiDetails?.custom_properties])
 
   const [confirmPopupOpen, setConfirmPopupOpen] = useState(false)
+  const [actionMenuOpen, setActionMenuOpen] = useState(false)
 
   return (
     <div className="flex h-full w-full flex-col">
@@ -232,7 +233,7 @@ const ApiDetail = ({
                 (api) => api?.name === apiDetails?.name,
               )) &&
             isAuthorized && (
-              <DropdownMenu>
+              <DropdownMenu open={actionMenuOpen} onOpenChange={setActionMenuOpen}>
                 <DropdownMenuTrigger asChild>
                   <Button variant="default" size="sm">
                     <div className="text-sm font-medium">Signal Action</div>
@@ -240,11 +241,21 @@ const ApiDetail = ({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setActionMenuOpen(false)
+                      setIsEditing(true)
+                    }}
+                  >
                     <TbEdit className="mr-2 h-5 w-5" />
                     <div className="text-sm font-medium">Edit Signal</div>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setConfirmPopupOpen(true)}>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setActionMenuOpen(false)
+                      setConfirmPopupOpen(true)
+                    }}
+                  >
                     <TbTrash className="mr-2 h-5 w-5" />
                     <div className="text-sm font-medium">Delete Signal</div>
                   </DropdownMenuItem>

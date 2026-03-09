@@ -364,11 +364,11 @@ const DaGenAI_Base = ({
 
   return (
     <div className={cn('flex h-full w-full rounded', className)}>
-      <div className="flex h-full w-full flex-col border-r border-border pl-0.5 pr-2">
-        <div className="flex w-full items-center justify-between">
+      <div className="flex h-full w-full flex-col border-r border-border pl-0.5 pr-2 min-h-0 overflow-hidden">
+        <div className="flex w-full items-center justify-between shrink-0">
           <DaSectionTitle number={1} title="Prompting" />
         </div>
-        <div className="mt-1 flex h-full max-h-[300px] w-full">
+        <div className="mt-1 flex w-full shrink-0" style={{ maxHeight: '200px' }}>
           <Textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
@@ -381,13 +381,14 @@ const DaGenAI_Base = ({
               }
             }}
             placeholder={placeholderText}
-            className="w-full h-full resize-none bg-muted text-foreground"
-            rows={8}
+            className="w-full resize-none bg-muted text-foreground"
+            rows={6}
+            style={{ maxHeight: '200px' }}
           />
         </div>
 
-        <DaSectionTitle number={2} title="Select Generator" className="mt-4" />
-        <div className="flex h-[150px] xl:h-[300px] w-full">
+        <DaSectionTitle number={2} title="Select Generator" className="mt-4 shrink-0" />
+        <div className="flex w-full shrink-0" style={{ maxHeight: '200px', minHeight: '120px' }}>
           {addonsLoaded ? (
             <DaGeneratorSelector
               builtInAddOns={mergedBuiltInAddOns}
@@ -415,49 +416,53 @@ const DaGenAI_Base = ({
           )}
         </div>
 
-        {!canUseGenAI && !hasGenAIAssets ? (
-          <div className="flex w-full select-none justify-center items-center text-sm text-muted-foreground py-1 font-medium">
-            <TbAlertCircle className="text-destructive mr-1 size-5" />
-            Permission required
-            <span className="xl:flex hidden ml-1"> for GenAI access</span>.
-            Contact
-            <span
-              className="ml-1 py-0.5 px-1 rounded-lg bg-muted hover:bg-muted/80 cursor-pointer"
-              onClick={handleCopy}
-            >
-              info@digital.auto{' '}
-              {copied ? (
-                <TbCheck className="text-green-500 h-4 w-4 inline-block" />
-              ) : (
-                <TbCopy className="h-4 w-4 inline-block" />
-              )}
-            </span>
-          </div>
-        ) : (
-          !prompt && (
-            <div className="flex w-full select-none justify-center items-center text-sm text-muted-foreground py-1 font-medium">
-              <TbExclamationMark className="text-orange-500 mr-1 size-5" />
-              You need to enter prompt and select generator
+        <div className="mt-auto pt-2 flex flex-col gap-2 shrink-0">
+          {!canUseGenAI && !hasGenAIAssets ? (
+            <div className="flex w-full select-none justify-start items-center text-sm text-muted-foreground py-1 font-medium">
+              <TbAlertCircle className="text-destructive mr-1 size-5 shrink-0" />
+              <span className="flex items-center flex-wrap gap-1">
+                Permission required
+                <span className="xl:inline hidden"> for GenAI access</span>.
+                Contact
+                <span
+                  className="py-0.5 px-1 rounded-lg bg-muted hover:bg-muted/80 cursor-pointer inline-flex items-center gap-1"
+                  onClick={handleCopy}
+                >
+                  info@digital.auto{' '}
+                  {copied ? (
+                    <TbCheck className="text-green-500 h-4 w-4 inline-block" />
+                  ) : (
+                    <TbCopy className="h-4 w-4 inline-block" />
+                  )}
+                </span>
+              </span>
             </div>
-          )
-        )}
+          ) : (
+            !prompt && (
+              <div className="flex w-full select-none justify-start items-center text-sm text-muted-foreground py-1 font-medium">
+                <TbExclamationMark className="text-orange-500 mr-1 size-5 shrink-0" />
+                You need to enter prompt and select generator
+              </div>
+            )
+          )}
 
-        <Button
-          variant="default"
-          disabled={
-            !prompt ||
-            loading ||
-            !addonsLoaded ||
-            (!canUseGenAI && !hasGenAIAssets)
-          }
-          className={cn('min-h-8 w-full py-1', prompt ? 'mt-1' : '')}
-          onClick={handleGenerate}
-        >
-          <BsStars
-            className={`mb-0.5 mr-1 inline-block size-4 ${loading ? 'animate-pulse' : ''}`}
-          />
-          {!loading && <div>{buttonText}</div>}
-        </Button>
+          <Button
+            variant="default"
+            disabled={
+              !prompt ||
+              loading ||
+              !addonsLoaded ||
+              (!canUseGenAI && !hasGenAIAssets)
+            }
+            className="min-h-8 w-full py-1 shrink-0"
+            onClick={handleGenerate}
+          >
+            <BsStars
+              className={`mb-0.5 mr-1 inline-block size-4 ${loading ? 'animate-pulse' : ''}`}
+            />
+            {!loading && <div>{buttonText}</div>}
+          </Button>
+        </div>
       </div>
     </div>
   )
