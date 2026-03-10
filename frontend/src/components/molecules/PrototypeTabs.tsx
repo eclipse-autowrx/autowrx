@@ -13,6 +13,7 @@ import {
   TbCode,
   TbGauge,
   TbMapPin,
+  TbMessagePlus,
   TbRoute,
 } from 'react-icons/tb'
 import { TabConfig } from '@/components/organisms/CustomTabEditor'
@@ -97,6 +98,11 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant }) => {
               route = `/model/${model_id}/library/prototype/${prototype_id}/journey`
               defaultIcon = <TbMapPin className="w-5 h-5 mr-2" />
               dataId = 'tab-journey'
+              break
+            case 'feedback':
+              route = `/model/${model_id}/library/prototype/${prototype_id}/feedback`
+              defaultIcon = <TbMessagePlus className="w-5 h-5 mr-2" />
+              dataId = 'tab-feedback'
               break
             case 'code':
               route = `/model/${model_id}/library/prototype/${prototype_id}/code`

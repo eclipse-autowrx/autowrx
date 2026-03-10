@@ -127,7 +127,7 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
         </h2>
 
         <div className="flex flex-col mt-4">
-          <Label className="mb-2">Interviewee?</Label>
+          <Label className="mb-2">Interviewee <span className="text-red-500">*</span></Label>
           <Input
             name="interviewee"
             value={data.interviewee}
@@ -139,7 +139,7 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
         </div>
 
         <div className="flex flex-col mt-4">
-          <Label className="mb-2">From organization</Label>
+          <Label className="mb-2">From organization <span className="text-red-500">*</span></Label>
           <Input
             name="organization"
             value={data.organization}
@@ -152,7 +152,7 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
 
         {/* Star ratings for Needs Addressed, Relevance, and Ease of Use */}
         <div className="mt-4 flex items-center">
-          <p className="text-base font-medium mr-2">Needs addressed?</p>
+          <p className="text-base font-medium mr-2">Needs addressed <span className="text-red-500">*</span></p>
           <DaStarsRating
             initialRating={data.needsAddressed}
             onChange={(value) => handleChange('needsAddressed', value)}
@@ -160,7 +160,7 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
         </div>
 
         <div className="mt-4 flex items-center">
-          <p className="text-base font-medium mr-2">Relevance?</p>
+          <p className="text-base font-medium mr-2">Relevance <span className="text-red-500">*</span></p>
           <DaStarsRating
             initialRating={data.relevance}
             onChange={(value) => handleChange('relevance', value)}
@@ -168,7 +168,7 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
         </div>
 
         <div className="mt-4 flex items-center">
-          <p className="text-base font-medium mr-2">Ease of use?</p>
+          <p className="text-base font-medium mr-2">Ease of use <span className="text-red-500">*</span></p>
           <DaStarsRating
             initialRating={data.easeOfUse}
             onChange={(value) => handleChange('easeOfUse', value)}

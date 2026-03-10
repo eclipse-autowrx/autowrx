@@ -1,12 +1,13 @@
-// useListPrototypeFeedback hook stub
 import { useQuery } from '@tanstack/react-query'
+import { listPrototypeFeedback } from '@/services/feedback.service'
 
-export const useListPrototypeFeedback = (prototypeId: string) => {
+const useListPrototypeFeedback = (prototypeId: string, page: number = 1) => {
   return useQuery({
-    queryKey: ['prototype-feedback', prototypeId],
-    queryFn: async () => {
-      return []
-    },
-    enabled: !!prototypeId, // Only run query when prototypeId is truthy
+    queryKey: ['listPrototypeFeedback', prototypeId, page],
+    queryFn: () => listPrototypeFeedback(prototypeId, page),
+    enabled: !!prototypeId,
   })
 }
+
+export { useListPrototypeFeedback }
+export default useListPrototypeFeedback
