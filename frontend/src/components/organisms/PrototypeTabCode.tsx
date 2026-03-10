@@ -20,16 +20,53 @@ import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
 import { shallow } from 'zustand/shallow'
 import { BsStars } from 'react-icons/bs'
+import { DiffEditor } from '@monaco-editor/react'
 import DaDialog from '@/components/molecules/DaDialog'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { PERMISSIONS } from '@/data/permission'
 import { updatePrototypeService } from '@/services/prototype.service'
 import { useSiteConfig } from '@/utils/siteConfig'
-
+import { PiArrowsLeftRight, PiCode } from 'react-icons/pi'
 import CodeEditor from '@/components/molecules/CodeEditor'
 import { Spinner } from '@/components/atoms/spinner'
 import { retry } from '@/lib/retry'
+
+// sessionStorage helpers for diff previous code
+const getDiffStorageKey = (prototypeId: string) => `code_diff_prev_${prototypeId}`
+const getDiffVisibleKey = (prototypeId: string) => `code_diff_visible_${prototypeId}`
+
+const savePreviousCodeToSession = (prototypeId: string, prevCode: string) => {
+  try {
+    sessionStorage.setItem(getDiffStorageKey(prototypeId), prevCode)
+  } catch {
+    // ignore storage errors
+  }
+}
+
+const getPreviousCodeFromSession = (prototypeId: string): string | undefined => {
+  try {
+    return sessionStorage.getItem(getDiffStorageKey(prototypeId)) ?? undefined
+  } catch {
+    return undefined
+  }
+}
+
+const saveDiffVisibleToSession = (prototypeId: string, visible: boolean) => {
+  try {
+    sessionStorage.setItem(getDiffVisibleKey(prototypeId), visible ? '1' : '0')
+  } catch {
+    // ignore storage errors
+  }
+}
+
+const getDiffVisibleFromSession = (prototypeId: string): boolean => {
+  try {
+    return sessionStorage.getItem(getDiffVisibleKey(prototypeId)) === '1'
+  } catch {
+    return false
+  }
+}
 
 // Helper function to determine editor type
 const getEditorType = (content: string): 'project' | 'code' => {
@@ -79,6 +116,7 @@ const PrototypeTabCode: FC = () => {
   const { data: model } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
   const showCodeApiPanel = useSiteConfig('SHOW_CODE_API_PANEL', true)
+  const showCodeDiff = useSiteConfig('SHOW_CODE_DIFF', true)
   const showSdvProtoPilotButton = useSiteConfig(
     'SHOW_SDV_PROTOPILOT_BUTTON',
     false,
@@ -86,6 +124,12 @@ const PrototypeTabCode: FC = () => {
 
   // Editor type state
   const [editorType, setEditorType] = useState<'project' | 'code'>('code')
+
+  // Diff state
+  const [previousCode, setPreviousCode] = useState<string | undefined>(undefined)
+  const [showDiff, setShowDiff] = useState(false)
+  // Ref to track last code saved by us — used to detect external (plugin/AI) code changes
+  const savedCodeRef = useRef<string | undefined>(undefined)
 
   // Resize state
   const [rightPanelWidth, setRightPanelWidth] = useState<number | null>(null) // Will be calculated based on container
@@ -131,14 +175,34 @@ const PrototypeTabCode: FC = () => {
   useEffect(() => {
     if (!prototype) {
       setSavedCode(undefined)
+      savedCodeRef.current = undefined
       setCode(undefined)
       setEditorType('code')
+      setPreviousCode(undefined)
+      setShowDiff(false)
       return
     }
 
     const prototypeCode = prototype.code || ''
+
+    if (savedCodeRef.current === undefined) {
+      // Initial mount — restore diff state from sessionStorage if available
+      const restoredPrev = getPreviousCodeFromSession(prototype.id)
+      if (restoredPrev !== undefined) {
+        setPreviousCode(restoredPrev)
+        setShowDiff(getDiffVisibleFromSession(prototype.id))
+      }
+    } else if (prototypeCode !== savedCodeRef.current) {
+      // External (plugin/AI) update — capture previous code for diff
+      savePreviousCodeToSession(prototype.id, savedCodeRef.current)
+      saveDiffVisibleToSession(prototype.id, true)
+      setPreviousCode(savedCodeRef.current)
+      setShowDiff(true)
+    }
+
     setCode(prototypeCode)
     setSavedCode(prototypeCode)
+    savedCodeRef.current = prototypeCode
 
     const newEditorType = getEditorType(prototypeCode)
     setEditorType(newEditorType)
@@ -165,6 +229,7 @@ const PrototypeTabCode: FC = () => {
       // Only mark as saved after API succeeds
       setCode(dataToSave)
       setSavedCode(dataToSave)
+      savedCodeRef.current = dataToSave
       const newPrototype = JSON.parse(JSON.stringify(prototype))
       newPrototype.code = dataToSave || ''
       setActivePrototype(newPrototype)
@@ -276,8 +341,20 @@ const PrototypeTabCode: FC = () => {
                     }
                   >
                     <DaGenAI_Python
-                      onCodeChanged={(code: string) => {
-                        setCode(code)
+                      onCodeChanged={(newCode: string) => {
+                        // Capture current editor code as diff baseline before applying AI code
+                        const currentCode = code
+                        if (currentCode !== undefined && prototype?.id) {
+                          savePreviousCodeToSession(prototype.id, currentCode)
+                          saveDiffVisibleToSession(prototype.id, true)
+                          setPreviousCode(currentCode)
+                          setShowDiff(true)
+                        }
+                        setCode(newCode)
+                        // Immediately advance savedCodeRef so that the next generation
+                        // (whether via this dialog or via plugin) correctly diffs against
+                        // this result rather than the stale pre-AI code.
+                        savedCodeRef.current = newCode
                         setIsOpenGenAI(false)
                       }}
                     />
@@ -285,13 +362,41 @@ const PrototypeTabCode: FC = () => {
                 </div>
               </DaDialog>
             </div>
-          )}
+          ) : showCodeDiff && <div className="px-4 text-sm">
+            Language: <b>{(prototype.language || 'python').toUpperCase()}</b>
+          </div>}
 
           <div className="grow"></div>
 
-          <div className="mr-2 text-sm">
+          {showCodeDiff && editorType === 'code' && previousCode !== undefined && (
+            <Button
+              size="sm"
+              variant={showDiff ? 'default' : 'ghost'}
+              className="mr-1"
+              onClick={() => setShowDiff((v) => {
+                const next = !v
+                if (prototype?.id) saveDiffVisibleToSession(prototype.id, next)
+                return next
+              })}
+              title={showDiff ? 'Hide diff view' : 'Show diff with previous version'}
+            >
+              {showDiff ? (
+                <>
+                  <PiCode className="size-4" />
+                  Hide Diff
+                </>
+              ) : (
+                <>
+                  <PiArrowsLeftRight className="size-4" />
+                  Show Diff
+                </>
+              )}
+            </Button>
+          )}
+
+          {!showCodeDiff && <div className="mr-2 text-sm">
             Language: <b>{(prototype.language || 'python').toUpperCase()}</b>
-          </div>
+          </div>}
         </div>
         <Suspense
           fallback={
@@ -312,6 +417,25 @@ const PrototypeTabCode: FC = () => {
               onSave={async (data: string) => {
                 await saveCodeToDb(data)
               }}
+            />
+          ) : showCodeDiff && showDiff && previousCode !== undefined ? (
+            <DiffEditor
+              original={previousCode}
+              modified={code || ''}
+              language={prototype.language || 'python'}
+              height="100%"
+              options={{
+                readOnly: true,
+                minimap: { enabled: false },
+                wordWrap: 'on',
+                scrollBeyondLastLine: false,
+                renderSideBySide: true,
+              }}
+              loading={
+                <div className="flex items-center justify-center h-full">
+                  <Spinner />
+                </div>
+              }
             />
           ) : (
             <CodeEditor
