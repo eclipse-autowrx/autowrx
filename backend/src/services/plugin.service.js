@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -24,7 +24,7 @@ const slugify = (name) =>
     .replace(/(^-|-$)+/g, '');
 
 const ensureUniqueSlug = async (base) => {
-  let candidate = base || 'plugin';
+  const candidate = base || 'plugin';
   let suffix = 0;
   // Try base, base-1, base-2, ... until unique
   // Guard to avoid infinite loop
@@ -57,11 +57,7 @@ const queryPlugins = async (filter = {}, options = {}) => {
   // also include plugins with null/undefined type (legacy plugins)
   if (filter.type === 'prototype_function' || !filter.type) {
     // Include both 'prototype_function' and null/undefined types
-    mongoFilter.$or = [
-      { type: 'prototype_function' },
-      { type: null },
-      { type: { $exists: false } },
-    ];
+    mongoFilter.$or = [{ type: 'prototype_function' }, { type: null }, { type: { $exists: false } }];
     delete mongoFilter.type;
   }
 
@@ -102,10 +98,22 @@ const getPluginById = async (id) => Plugin.findById(id);
 /** Get plugin by slug */
 const getPluginBySlug = async (slug) => Plugin.findOne({ slug });
 
-/** Update plugin by id */
-const updatePluginById = async (id, updateBody) => {
+/** Update plugin by id with ownership validation */
+const updatePluginById = async (id, updateBody, actor) => {
   const plugin = await getPluginById(id);
   if (!plugin) throw new ApiError(httpStatus.NOT_FOUND, 'Plugin not found');
+
+  if (!actor || !actor.id) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Missing user context');
+  }
+
+  const isOwner = String(plugin.created_by) === String(actor.id);
+  const isAdmin = !!actor.isAdmin;
+
+  if (!isOwner && !isAdmin) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'You do not own this plugin');
+  }
+
   Object.assign(plugin, updateBody);
   await plugin.save();
   return plugin;
@@ -113,18 +121,26 @@ const updatePluginById = async (id, updateBody) => {
 
 /** Upsert plugin by slug */
 const upsertPluginBySlug = async (slug, updateBody) => {
-  const plugin = await Plugin.findOneAndUpdate(
-    { slug },
-    { $set: updateBody },
-    { upsert: true, new: true }
-  );
+  const plugin = await Plugin.findOneAndUpdate({ slug }, { $set: updateBody }, { upsert: true, new: true });
   return plugin;
 };
 
-/** Delete plugin by id */
-const deletePluginById = async (id) => {
+/** Delete plugin by id with ownership validation */
+const deletePluginById = async (id, actor) => {
   const plugin = await getPluginById(id);
   if (!plugin) throw new ApiError(httpStatus.NOT_FOUND, 'Plugin not found');
+
+  if (!actor || !actor.id) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Missing user context');
+  }
+
+  const isOwner = String(plugin.created_by) === String(actor.id);
+  const isAdmin = !!actor.isAdmin;
+
+  if (!isOwner && !isAdmin) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'You do not own this plugin');
+  }
+
   await plugin.deleteOne();
   return true;
 };
@@ -139,5 +155,3 @@ module.exports = {
   upsertPluginBySlug,
   deletePluginById,
 };
-
-

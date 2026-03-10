@@ -12,8 +12,6 @@ const validate = require('../../../middlewares/validate');
 const { pluginValidation } = require('../../../validations');
 const { pluginController } = require('../../../controllers');
 const upload = require('../../../middlewares/upload');
-// const { checkPermission } = require('../../../middlewares/permission');
-// const { PERMISSIONS } = require('../../../config/roles');
 
 const router = express.Router();
 
@@ -25,7 +23,6 @@ router.get('/id/:id', validate(pluginValidation.getPlugin), pluginController.get
 router.get('/slug/:slug', validate(pluginValidation.getPluginBySlug), pluginController.getPluginBySlug);
 
 // Authenticated endpoints
-// router.use(auth(), checkPermission(PERMISSIONS.ADMIN));
 router.use(auth());
 
 // Current user's plugins

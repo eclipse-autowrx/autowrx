@@ -19,6 +19,9 @@ const ApiError = require('../utils/ApiError');
 const PLUGIN_DIR = path.join(__dirname, '../../static/plugin');
 
 async function ensureDir(dir) {
+  // Directory paths are derived from trusted configuration and sanitized inputs (e.g. slug),
+  // so using a non-literal path here is intentional.
+  // eslint-disable-next-line security/detect-non-literal-fs-filename
   await fsp.mkdir(dir, { recursive: true });
 }
 
@@ -72,10 +75,15 @@ const updatePlugin = catchAsync(async (req, res) => {
     ...req.body,
     updated_by: req.user.id,
   };
-  const plugin = await pluginService.updatePluginById(req.params.id, body);
+  const actor = {
+    id: req.user.id,
+    isAdmin: Array.isArray(req.user.roles) && req.user.roles.includes('admin'),
+  };
+  const plugin = await pluginService.updatePluginById(req.params.id, body, actor);
   res.send(plugin);
 });
 
+/* eslint-disable no-await-in-loop, no-continue, no-restricted-syntax */
 async function findEntryFile(rootDir, candidates = ['index.js', 'index.html']) {
   const stack = ['']; // relative paths
   while (stack.length) {
@@ -83,6 +91,9 @@ async function findEntryFile(rootDir, candidates = ['index.js', 'index.html']) {
     const dir = path.join(rootDir, rel);
     let entries = [];
     try {
+      // Directory paths are constructed from the plugin root and relative segments,
+      // which are not influenced by user-controlled values beyond a validated slug.
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
       entries = await fsp.readdir(dir, { withFileTypes: true });
     } catch (_) {
       continue;
@@ -91,11 +102,15 @@ async function findEntryFile(rootDir, candidates = ['index.js', 'index.html']) {
     for (const name of candidates) {
       const cur = path.join(dir, name);
       try {
+        // File paths are resolved relative to a trusted plugin directory.
+        // eslint-disable-next-line security/detect-non-literal-fs-filename
         const st = await fsp.stat(cur);
         if (st.isFile()) {
           return path.join(rel, name).replace(/\\/g, '/');
         }
-      } catch (_) {}
+      } catch (_) {
+        // Ignore missing candidate files in this directory and continue search
+      }
     }
     // Breadth-first: enqueue subdirectories
     for (const entry of entries) {
@@ -106,6 +121,7 @@ async function findEntryFile(rootDir, candidates = ['index.js', 'index.html']) {
   }
   return null;
 }
+/* eslint-enable no-await-in-loop, no-continue, no-restricted-syntax */
 
 const uploadInternalPlugin = catchAsync(async (req, res) => {
   const { slug } = req.params;
@@ -128,8 +144,13 @@ const uploadInternalPlugin = catchAsync(async (req, res) => {
 
   // Remove uploaded temp file
   try {
+    // Temp upload path is provided by the trusted multer middleware.
+    // eslint-disable-next-line security/detect-non-literal-fs-filename
     fs.unlinkSync(req.file.path);
-  } catch (e) {}
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(e);
+  }
 
   // Try to detect entry file (index.js preferred, fallback index.html)
   let entryRel = await findEntryFile(pluginPath, ['index.js', 'index.html']);
@@ -139,6 +160,20 @@ const uploadInternalPlugin = catchAsync(async (req, res) => {
   }
   const safeRel = entryRel.replace(/^\/+/, '');
   const pluginUrl = `/plugin/${slug}/${safeRel}`.replace(/\\/g, '/');
+
+  const actor = {
+    id: req.user.id,
+    isAdmin: Array.isArray(req.user.roles) && req.user.roles.includes('admin'),
+  };
+
+  const existing = await pluginService.getPluginBySlug(slug);
+
+  if (existing) {
+    const isOwner = String(existing.created_by) === String(actor.id);
+    if (!isOwner && !actor.isAdmin) {
+      throw new ApiError(httpStatus.FORBIDDEN, 'You do not own this plugin');
+    }
+  }
 
   const plugin = await pluginService.upsertPluginBySlug(slug, {
     is_internal: true,
@@ -150,7 +185,11 @@ const uploadInternalPlugin = catchAsync(async (req, res) => {
 });
 
 const removePlugin = catchAsync(async (req, res) => {
-  await pluginService.deletePluginById(req.params.id);
+  const actor = {
+    id: req.user.id,
+    isAdmin: Array.isArray(req.user.roles) && req.user.roles.includes('admin'),
+  };
+  await pluginService.deletePluginById(req.params.id, actor);
   res.status(httpStatus.NO_CONTENT).send();
 });
 
