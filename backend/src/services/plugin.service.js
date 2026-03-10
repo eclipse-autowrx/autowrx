@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 const httpStatus = require('http-status');
-const { Plugin } = require('../models');
+const { Plugin, Role, UserRole } = require('../models');
 const ApiError = require('../utils/ApiError');
 
 /**
@@ -24,7 +24,7 @@ const slugify = (name) =>
     .replace(/(^-|-$)+/g, '');
 
 const ensureUniqueSlug = async (base) => {
-  let candidate = base || 'plugin';
+  const candidate = base || 'plugin';
   let suffix = 0;
   // Try base, base-1, base-2, ... until unique
   // Guard to avoid infinite loop
@@ -52,20 +52,44 @@ const createPlugin = async (body) => {
  */
 const queryPlugins = async (filter = {}, options = {}) => {
   const mongoFilter = { ...filter };
-  
+
   // For backward compatibility: if type is 'prototype_function' or not specified,
   // also include plugins with null/undefined type (legacy plugins)
   if (filter.type === 'prototype_function' || !filter.type) {
     // Include both 'prototype_function' and null/undefined types
-    mongoFilter.$or = [
-      { type: 'prototype_function' },
-      { type: null },
-      { type: { $exists: false } },
-    ];
+    mongoFilter.$or = [{ type: 'prototype_function' }, { type: null }, { type: { $exists: false } }];
     delete mongoFilter.type;
   }
-  
+
   return Plugin.paginate(mongoFilter, options);
+};
+
+/**
+ * Query plugins created by admin users
+ * Publicly readable; admin users are determined via Role/UserRole with ref "admin"
+ * @param {Object} filter
+ * @param {Object} options
+ */
+const queryAdminPlugins = async (filter = {}, options = {}) => {
+  // Find admin role
+  const adminRole = await Role.findOne({ ref: 'admin' });
+  if (!adminRole) {
+    // No admin role configured => no admin plugins
+    return Plugin.paginate({ _id: null }, options);
+  }
+
+  // Get all user ids that have the admin role
+  const adminUserIds = await UserRole.find({ role: adminRole._id }).distinct('user');
+  if (!adminUserIds.length) {
+    // No admin users => no plugins
+    return Plugin.paginate({ _id: null }, options);
+  }
+
+  const extendedFilter = {
+    ...filter,
+    created_by: { $in: adminUserIds },
+  };
+  return queryPlugins(extendedFilter, options);
 };
 
 /** Get plugin by id */
@@ -74,10 +98,22 @@ const getPluginById = async (id) => Plugin.findById(id);
 /** Get plugin by slug */
 const getPluginBySlug = async (slug) => Plugin.findOne({ slug });
 
-/** Update plugin by id */
-const updatePluginById = async (id, updateBody) => {
+/** Update plugin by id with ownership validation */
+const updatePluginById = async (id, updateBody, actor) => {
   const plugin = await getPluginById(id);
   if (!plugin) throw new ApiError(httpStatus.NOT_FOUND, 'Plugin not found');
+
+  if (!actor || !actor.id) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Missing user context');
+  }
+
+  const isOwner = String(plugin.created_by) === String(actor.id);
+  const isAdmin = !!actor.isAdmin;
+
+  if (!isOwner && !isAdmin) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'You do not own this plugin');
+  }
+
   Object.assign(plugin, updateBody);
   await plugin.save();
   return plugin;
@@ -85,18 +121,26 @@ const updatePluginById = async (id, updateBody) => {
 
 /** Upsert plugin by slug */
 const upsertPluginBySlug = async (slug, updateBody) => {
-  const plugin = await Plugin.findOneAndUpdate(
-    { slug },
-    { $set: updateBody },
-    { upsert: true, new: true }
-  );
+  const plugin = await Plugin.findOneAndUpdate({ slug }, { $set: updateBody }, { upsert: true, new: true });
   return plugin;
 };
 
-/** Delete plugin by id */
-const deletePluginById = async (id) => {
+/** Delete plugin by id with ownership validation */
+const deletePluginById = async (id, actor) => {
   const plugin = await getPluginById(id);
   if (!plugin) throw new ApiError(httpStatus.NOT_FOUND, 'Plugin not found');
+
+  if (!actor || !actor.id) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Missing user context');
+  }
+
+  const isOwner = String(plugin.created_by) === String(actor.id);
+  const isAdmin = !!actor.isAdmin;
+
+  if (!isOwner && !isAdmin) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'You do not own this plugin');
+  }
+
   await plugin.deleteOne();
   return true;
 };
@@ -104,11 +148,10 @@ const deletePluginById = async (id) => {
 module.exports = {
   createPlugin,
   queryPlugins,
+  queryAdminPlugins,
   getPluginById,
   getPluginBySlug,
   updatePluginById,
   upsertPluginBySlug,
   deletePluginById,
 };
-
-

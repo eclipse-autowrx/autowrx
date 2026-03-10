@@ -169,70 +169,80 @@ const NavigationBar = ({ }) => {
               Search
             </DaButton>
           </DaGlobalSearch>{' '} */}
-          {isAuthorized && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" >
-                  {/* <TbMenu2 className="size-5" /> */}
-                  <Wrench />
-                  Admin Tools
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="w-52 text-sm font-medium"
-              >
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost">
+                <Wrench />
+                {isAuthorized ? 'Admin Tools' : 'Tools'}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="w-52 text-sm font-medium"
+            >
+              {isAuthorized ? (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link
+                      to="/manage-users"
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <TbUsers className="text-base" /> Manage Users
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link
+                      to="/manage-features"
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <TbStack2 className="text-base" /> Manage Features
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link
+                      to="/admin/site-config"
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <TbSettings className="text-base" /> Site Config
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link
+                      to="/admin/plugins"
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <TbApps className="text-base" /> Plugins
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link
+                      to="/admin/templates"
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <TbPalette className="text-base" /> Templates
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link
+                      to="/admin/dashboard-templates"
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <TbBuildingWarehouse className="text-base" /> Dashboard Templates
+                    </Link>
+                  </DropdownMenuItem>
+                </>
+              ) : (
                 <DropdownMenuItem asChild>
                   <Link
-                    to="/manage-users"
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <TbUsers className="text-base" /> Manage Users
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/manage-features"
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <TbStack2 className="text-base" /> Manage Features
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/admin/site-config"
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <TbSettings className="text-base" /> Site Config
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/admin/plugins"
+                    to="/me/plugins"
                     className="flex items-center gap-2 cursor-pointer"
                   >
                     <TbApps className="text-base" /> Plugins
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/admin/templates"
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <TbPalette className="text-base" /> Templates
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/admin/dashboard-templates"
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <TbBuildingWarehouse className="text-base" /> Dashboard Templates
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
           {/* {model ? (
             <Link to={`/model/${model.id}`}>
               <DaButton variant="plain">
