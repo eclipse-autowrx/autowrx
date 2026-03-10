@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { FC } from 'react'
-import { TbCode, TbGauge, TbMapPin, TbRoute } from 'react-icons/tb'
+import { TbCode, TbGauge, TbMapPin, TbMessagePlus, TbRoute } from 'react-icons/tb'
 import { TabConfig } from '@/components/organisms/CustomTabEditor'
 import { getTabConfig } from '@/components/molecules/PrototypeTabs'
 import { renderTabIcon, tabItemClasses } from '@/lib/tabUtils'
@@ -59,6 +59,9 @@ const NewPrototypeTabs: FC<NewPrototypeTabsProps> = ({
                             break
                         case 'dashboard':
                             defaultIcon = <TbGauge className="w-5 h-5 mr-2" />
+                            break
+                        case 'feedback':
+                            defaultIcon = <TbMessagePlus className="w-5 h-5 mr-2" />
                             break
                         default:
                             return null

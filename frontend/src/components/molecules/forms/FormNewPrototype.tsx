@@ -34,7 +34,7 @@ import { createPrototypeService } from '@/services/prototype.service'
 import { ModelLite, Prototype } from '@/types/model.type'
 import { useQuery } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, useEffect, useRef, useState } from 'react'
 import { TbLoader } from 'react-icons/tb'
 import { useNavigate } from 'react-router-dom'
 
@@ -83,6 +83,11 @@ const FormNewPrototype = ({
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
 
+    // Keep a stable ref to onModelChange so the initialization effect below
+    // doesn't re-run just because the parent passed a new inline function reference.
+    const onModelChangeRef = useRef(onModelChange)
+    useEffect(() => { onModelChangeRef.current = onModelChange })
+
     const { data: vssVersions } = useListVSSVersions()
     const { data: templatesData } = useQuery({
         queryKey: ['model-templates'],
@@ -94,18 +99,20 @@ const FormNewPrototype = ({
         isCreatingNewModel ? '' : selectedModelId,
     )
 
-    // Set default to last model once models are loaded
+    // Set default to last model once models are loaded.
+    // Use onModelChangeRef so this effect doesn't re-run when the parent re-renders
+    // with a new inline function reference (which would reset the user's selection).
     useEffect(() => {
         if (allModels && !isFetchingModels && allModels.results.length > 0) {
             const last = allModels.results[allModels.results.length - 1]
             setSelectedModelId(last.id)
-            onModelChange?.(last.id)
+            onModelChangeRef.current?.(last.id)
         } else if (allModels && !isFetchingModels && allModels.results.length === 0) {
             setIsCreatingNewModel(true)
             setSelectedModelId('new')
-            onModelChange?.(null)
+            onModelChangeRef.current?.(null)
         }
-    }, [allModels, isFetchingModels, onModelChange])
+    }, [allModels, isFetchingModels]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // Check for duplicate prototype name
     useEffect(() => {

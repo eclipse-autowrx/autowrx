@@ -122,8 +122,9 @@ const PageNewPrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
     const [newFlowActivePluginId, setNewFlowActivePluginId] = useState<string | null>(null)
     // Active builtin tab in new-prototype flow ('code' | 'dashboard' | 'overview' | 'journey' | null)
     const [newFlowActiveBuiltinKey, setNewFlowActiveBuiltinKey] = useState<string | null>(null)
-    // Preview model for the new-prototype flow (no prototype_id in URL)
-    const [previewModelId, setPreviewModelId] = useState<string>('')
+    // Preview model for the new-prototype flow (no prototype_id in URL).
+    // Seed from URL so ?model_id=... is respected on initial load.
+    const [previewModelId, setPreviewModelId] = useState<string>(searchParams.get('model_id') || '')
     const [templateInitialData, setTemplateInitialData] = useState<{
         name?: string
         description?: string
@@ -393,6 +394,9 @@ const PageNewPrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
         }
     }, [model_id, prototype_id, navigate])
 
+    // Stable callback for FormNewPrototype model selection — must not be inline in JSX
+    const handlePreviewModelChange = useCallback((id: string | null) => setPreviewModelId(id ?? ''), [])
+
     const handleAddonSelect = async (plugin: Plugin, label: string) => {
         if (!model_id || !model) {
             toast.error('Model not found')
@@ -636,6 +640,9 @@ const PageNewPrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
                             {!newFlowActivePluginId && newFlowActiveBuiltinKey === 'staging' && hasPrototype && (
                                 <PrototypeTabStaging prototype={newFlowPrototype!} />
                             )}
+                            {!newFlowActivePluginId && newFlowActiveBuiltinKey === 'feedback' && hasPrototype && (
+                                <PrototypeTabFeedback />
+                            )}
                             {!newFlowActivePluginId &&
                                 (!newFlowActiveBuiltinKey || newFlowActiveBuiltinKey === 'overview') &&
                                 hasPrototype && <PrototypeTabInfo prototype={newFlowPrototype!} />}
@@ -672,7 +679,7 @@ const PageNewPrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
                             setOpenNewPrototypeDialog(false)
                             if (!savedSession) navigate('/')
                         }}
-                        onModelChange={(id) => setPreviewModelId(id ?? '')}
+                        onModelChange={handlePreviewModelChange}
                         onSuccess={handlePrototypeCreated}
                     />
                 </DaDialog>
