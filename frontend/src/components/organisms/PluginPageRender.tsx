@@ -14,6 +14,7 @@ import { getPluginById, getPluginBySlug } from '@/services/plugin.service'
 import { updateModelService, getComputedAPIs, getApiDetailService, replaceAPIsService } from '@/services/model.service'
 import { updatePrototypeService } from '@/services/prototype.service'
 import { listVSSVersionsService } from '@/services/api.service'
+import { uploadFileService } from '@/services/upload.service'
 import {
   createExtendedApi,
   updateExtendedApi,
@@ -248,6 +249,18 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
     }
   }, [model_id])
 
+  // File operations
+  const handleUploadFile = useCallback(async (file: File): Promise<{ url: string }> => {
+    try {
+      const result = await uploadFileService(file)
+      return result
+    } catch (err: any) {
+      const errorMsg = err?.message || 'Failed to upload file'
+      toast.error(errorMsg)
+      throw err
+    }
+  }, [])
+
   const pluginAPI: PluginAPI = {
     // Model & Prototype updates
     updateModel: model_id ? handleUpdateModel : undefined,
@@ -272,6 +285,9 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
     deleteWishlistApi: handleDeleteWishlistApi,
     getWishlistApi: model_id ? handleGetWishlistApi : undefined,
     listWishlistApis: model_id ? handleListWishlistApis : undefined,
+
+    // File operations
+    uploadFile: handleUploadFile,
   }
 
   // Fetch public site configs only — never expose secrets to plugins
