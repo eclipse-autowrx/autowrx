@@ -20,14 +20,7 @@ import { Spinner } from '@/components/atoms/spinner'
 import { Label } from '@/components/atoms/label'
 import { TbSearch, TbArrowLeft, TbPencil, TbTrash } from 'react-icons/tb'
 import PluginForm from '@/components/organisms/PluginForm'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/atoms/dialog'
+import DeletePluginDialog from '@/components/organisms/DeletePluginDialog'
 
 interface AddonSelectProps {
   onSelect: (plugin: Plugin, label: string) => void
@@ -386,38 +379,24 @@ const AddonSelect: FC<AddonSelectProps> = ({ onSelect, onCancel }) => {
         }}
       />
 
-      <Dialog
+      <DeletePluginDialog
         open={!!pluginToDelete}
-        onOpenChange={(open) => !open && setPluginToDelete(null)}
-      >
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Delete plugin</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete &quot;{pluginToDelete?.name}
-              &quot;? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setPluginToDelete(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={async () => {
-                if (!pluginToDelete) return
-                try {
-                  await deletePlugin(pluginToDelete.id)
-                  qc.invalidateQueries({ queryKey: ['plugins', 'mine'] })
-                  setPluginToDelete(null)
-                } catch (e) {}
-              }}
-            >
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        pluginName={pluginToDelete?.name || ''}
+        isLoading={false}
+        onCancel={() => setPluginToDelete(null)}
+        onConfirm={async () => {
+          if (!pluginToDelete) return
+          try {
+            await deletePlugin(pluginToDelete.id)
+            qc.invalidateQueries({ queryKey: ['plugins', 'mine'] })
+            setPluginToDelete(null)
+          } catch (e: any) {
+            // Optional: surface error via global toast if available
+            // eslint-disable-next-line no-console
+            console.error(e)
+          }
+        }}
+      />
     </div>
   )
 }
