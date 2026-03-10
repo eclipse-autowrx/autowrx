@@ -174,6 +174,7 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({ prototype }) 
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set()) // Default: all collapsed
   const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null) // Plugin ID or slug
   const [selectedStageName, setSelectedStageName] = useState<string | null>(null) // Stage name for back button
+  const [openStageMenuName, setOpenStageMenuName] = useState<string | null>(null)
   const { toast } = useToast()
   const { data: model } = useCurrentModel()
 
@@ -708,7 +709,10 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({ prototype }) 
                 </span>
                 {/* Update Button with Plugin Dropdown */}
                 <div className="mt-2">
-                  <DropdownMenu>
+                  <DropdownMenu
+                    open={openStageMenuName === stage.name}
+                    onOpenChange={(open) => setOpenStageMenuName(open ? stage.name : null)}
+                  >
                     <DropdownMenuTrigger asChild>
                       <Button
                         variant="outline"
@@ -729,6 +733,7 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({ prototype }) 
                             <PluginDropdownItem
                               plugin={plugin}
                               onClick={() => {
+                                setOpenStageMenuName(null)
                                 // Use slug if available, otherwise use id
                                 const pluginId = plugin.slug || plugin.id
                                 setSelectedPlugin(pluginId)

@@ -7,15 +7,13 @@
 // SPDX-License-Identifier: MIT
 
 import * as React from 'react'
-import { Badge } from '@/components/atoms/badge'
-import { Model, ModelLite } from '@/types/model.type'
+import { ModelLite } from '@/types/model.type'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/atoms/tooltip'
-import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { Link } from 'react-router-dom'
 import { TbAffiliate, TbCode, TbUsers } from 'react-icons/tb'
 import { cn } from '@/lib/utils'
@@ -25,9 +23,7 @@ interface DaModelItemProps {
   className?: string
 }
 
-const DaModelItem = ({ model, className }: DaModelItemProps) => {
-  const { data: user } = useSelfProfileQuery()
-
+const DaModelItem = React.memo(({ model, className }: DaModelItemProps) => {
   const contributorsCount =
     model?.stats?.collaboration?.contributors?.count ?? 0
   const membersCount = model?.stats?.collaboration?.members?.count ?? 0
@@ -51,6 +47,7 @@ const DaModelItem = ({ model, className }: DaModelItemProps) => {
             }
             alt={model?.name || 'Model image'}
             className="w-full h-full rounded-lg aspect-video object-cover shadow border"
+            loading="lazy"
           />
           <div className="absolute bottom-0 w-full h-[30px] p-[1px] blur-xl bg-black/80 transition-opacity duration-200 ease-in-out opacity-0 group-hover:opacity-100"></div>
           <div className="absolute bottom-0 w-full h-[50px] p-[1px] transition-opacity duration-200 ease-in-out opacity-0 group-hover:opacity-100">
@@ -114,6 +111,8 @@ const DaModelItem = ({ model, className }: DaModelItemProps) => {
       </div>
     </div>
   )
-}
+})
+
+DaModelItem.displayName = 'DaModelItem'
 
 export default DaModelItem

@@ -31,6 +31,7 @@ import useListVSSVersions from '@/hooks/useListVSSVersions'
 import DaFileUpload from '@/components/atoms/DaFileUpload'
 import { useQuery } from '@tanstack/react-query'
 import { listModelTemplates } from '@/services/modelTemplate.service'
+import { getConfig } from '@/utils/siteConfig'
 
 type ModelData = {
   cvi: string
@@ -84,6 +85,12 @@ const FormCreateModel = () => {
     e.preventDefault()
     try {
       setLoading(true)
+      const defaultModelImage = await getConfig(
+        'DEFAULT_MODEL_IMAGE',
+        'site',
+        undefined,
+        '/imgs/default-model-image.png',
+      )
       const body: ModelCreate = {
         main_api: data.mainApi,
         name: data.name,
@@ -92,6 +99,9 @@ const FormCreateModel = () => {
       }
       if (data.api_data_url) {
         body.api_data_url = data.api_data_url
+      }
+      if (defaultModelImage) {
+        body.model_home_image_file = defaultModelImage
       }
       const modelId = await createModelService(body)
       await refetchModelLite()

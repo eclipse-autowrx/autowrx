@@ -20,7 +20,9 @@ import PluginManagement from '@/pages/PluginManagement.tsx'
 import TemplateManager from '@/pages/TemplateManager.tsx'
 import DashboardTemplateManager from '@/pages/DashboardTemplateManager.tsx'
 import PageTestPlugin from '@/pages/PageTestPlugin.tsx'
-import PageModelList from '@/pages/PageModelList.tsx'
+const PageModelList = lazy(() =>
+  retry(() => import('@/pages/PageModelList')),
+)
 import ModelDetailLayout from '@/layouts/ModelDetailLayout.tsx'
 import PageModelDetail from '@/pages/PageModelDetail.tsx'
 import PageHome from '@/pages/PageHome.tsx'
@@ -30,6 +32,7 @@ import PagePrototypePlugin from '@/pages/PagePrototypePlugin.tsx'
 import PageModelPlugin from '@/pages/PageModelPlugin.tsx'
 import PageManageUsers from '@/pages/PageManageUsers.tsx'
 import PageManageFeatures from '@/pages/PageManageFeatures.tsx'
+import PageNewPrototypeDetail from '@/pages/PageNewPrototypeDetail.tsx'
 // import PageAuthSuccess from '@/pages/PageAuthSuccess.ts'
 import { retry } from '@/lib/retry.ts'
 // const PageAbout = lazy(() => retry(() => import('@/pages/PageAbout')))
@@ -134,6 +137,19 @@ const routesConfig: RouteConfig[] = [
                 element: (
                   <SuspenseProvider>
                     <PageMyAssets />
+                  </SuspenseProvider>
+                ),
+              },
+            ],
+          },
+          {
+            path: '/new-prototype',
+            children: [
+              {
+                index: true,
+                element: (
+                  <SuspenseProvider>
+                    <PageNewPrototypeDetail />
                   </SuspenseProvider>
                 ),
               },

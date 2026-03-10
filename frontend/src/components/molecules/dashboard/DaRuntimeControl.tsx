@@ -95,6 +95,7 @@ const DaRuntimeControl: FC = () => {
     localStorage.getItem('customKitServer') || '',
   )
   const [showConfigDialog, setShowConfigDialog] = useState<boolean>(false)
+  const [runtimeMenuOpen, setRuntimeMenuOpen] = useState(false)
   const [useRuntime, setUseRuntime] = useState<boolean>(true)
   const [mockSignals, setMockSignals] = useState<any[]>([])
   const [curRuntimeInfo, setCurRuntimeInfo] = useState<any>(null)
@@ -448,7 +449,7 @@ const DaRuntimeControl: FC = () => {
           </Button>
         </div>
         <div className="grow" />
-        <DropdownMenu>
+        <DropdownMenu open={runtimeMenuOpen} onOpenChange={setRuntimeMenuOpen}>
           <DropdownMenuTrigger asChild>
             <div
               className="cursor-pointer hover:bg-slate-500 p-2 rounded"
@@ -460,6 +461,7 @@ const DaRuntimeControl: FC = () => {
           <DropdownMenuContent align="end">
             <DropdownMenuItem
               onClick={() => {
+                setRuntimeMenuOpen(false)
                 setTmpCustomKitServer(customKitServer)
                 setShowConfigDialog(true)
               }}
