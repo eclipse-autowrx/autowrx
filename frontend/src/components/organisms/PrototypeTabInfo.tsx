@@ -20,17 +20,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../atoms/select'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../atoms/dropdown-menu'
 import { DaTableProperty } from '../molecules/DaTableProperty'
 import DaImportFile from '../atoms/DaImportFile'
 import DaConfirmPopup from '../molecules/DaConfirmPopup'
 import {
-  TbDotsVertical,
   TbDownload,
   TbEdit,
   TbLoader,
@@ -79,6 +72,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
   const [isDeleting, setIsDeleting] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState<string>('')
   const [confirmPopupOpen, setConfirmPopupOpen] = useState(false)
   const { data: currentUser } = useSelfProfileQuery()
 
@@ -96,7 +90,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
 
   const handleSave = async () => {
     if (!localPrototype) return
-    setIsEditing(false)
+    setError('')
     setIsSaving(true)
     const updateData = {
       name: localPrototype.name,
@@ -126,9 +120,14 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
         })
       }
       await refetchCurrentPrototype()
+      setIsEditing(false)
     } catch (error) {
       console.error('Error updating prototype:', error)
-      toast.error('Failed to update prototype')
+      if (isAxiosError(error)) {
+        setError(error.response?.data?.message || 'Failed to update prototype')
+      } else {
+        setError('Failed to update prototype')
+      }
     } finally {
       setIsSaving(false)
     }
@@ -137,6 +136,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
   const handleCancel = () => {
     setLocalPrototype(prototype)
     setIsEditing(false)
+    setError('')
   }
 
   const handleChange = (field: keyof Prototype, value: any) => {
@@ -220,14 +220,15 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
   return (
     <div className="flex flex-col h-full w-full">
       <div className="flex flex-col h-full w-full bg-background rounded-lg overflow-y-auto">
-        <div className="flex flex-col h-full w-full pt-6 bg-background px-2">
-          <div className="flex mr-4 mb-3 justify-between items-center">
+        <div className="flex flex-col h-full w-full pt-6 bg-background px-6">
+          {/* Header */}
+          <div className="flex mb-3 justify-between items-center">
             {isEditing ? (
               <>
                 <h2 className="text-lg font-semibold text-primary">
                   Editing Prototype
                 </h2>
-                <div className="flex space-x-2 mr-2">
+                <div className="flex space-x-2">
                   <Button variant="outline" onClick={handleCancel} size="sm">
                     Cancel
                   </Button>
@@ -247,7 +248,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                     {isAdmin && (
                       <Button
                         onClick={updateEditorChoice}
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         title={`${prototype?.editors_choice ? 'Unmark' : 'Mark'} as Editor Choice`}
                       >
@@ -260,53 +261,54 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                     )}
                     <Button
                       onClick={() => setIsEditing(true)}
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                     >
-                      <TbEdit className="w-4 h-4 mr-1" /> Edit
+                      <TbEdit className="w-4 h-4" /> Edit
                     </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className={cn(
-                            isEditing && 'pointer-events-none opacity-50',
-                          )}
-                        >
-                          {!isDeleting && !isEditing && !isSaving && (
-                            <TbDotsVertical className="size-4" />
-                          )}
-                          {isSaving && (
-                            <div className="flex items-center">
-                              <TbLoader className="w-4 h-4 mr-1 animate-spin" />
-                              Saving...
-                            </div>
-                          )}
-                          {isDeleting && (
-                            <div className="flex items-center">
-                              <TbLoader className="w-4 h-4 mr-1 animate-spin" />
-                              Deleting...
-                            </div>
-                          )}
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => downloadPrototypeZip(prototype)}
-                        >
-                          <TbDownload className="w-4 h-4 mr-2" />
-                          Export Prototype
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => setConfirmPopupOpen(true)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <TbTrashX className="w-4 h-4 mr-2" />
-                          Delete Prototype
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Button
+                      onClick={() => downloadPrototypeZip(prototype)}
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        isEditing && 'pointer-events-none opacity-50',
+                      )}
+                      disabled={isDeleting || isEditing || isSaving}
+                    >
+                      {isSaving ? (
+                        <div className="flex items-center">
+                          <TbLoader className="w-4 h-4 animate-spin" />
+                          Saving...
+                        </div>
+                      ) : (
+                        <>
+                          <TbDownload className="w-4 h-4" />
+                          Export
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      onClick={() => setConfirmPopupOpen(true)}
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        'text-destructive hover:text-destructive',
+                        isEditing && 'pointer-events-none opacity-50',
+                      )}
+                      disabled={isDeleting || isEditing || isSaving}
+                    >
+                      {isDeleting ? (
+                        <div className="flex items-center">
+                          <TbLoader className="w-4 h-4 animate-spin" />
+                          Deleting...
+                        </div>
+                      ) : (
+                        <>
+                          <TbTrashX className="w-4 h-4" />
+                          Delete
+                        </>
+                      )}
+                    </Button>
                     <DaConfirmPopup
                       onConfirm={handleDeletePrototype}
                       title="Delete Prototype"
@@ -321,7 +323,9 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
               </div>
             )}
           </div>
-          <div className="flex w-full">
+          {/* Content */}
+          <div className="flex w-full gap-6">
+            {/* Image */}
             <div className="flex-1 h-fit relative">
               <DaImage
                 src={
@@ -357,7 +361,8 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                 </DaImportFile>
               )}
             </div>
-            <div className="flex flex-1 h-full px-4 ml-4">
+            {/* Properties */}
+            <div className="flex flex-1 h-full">
               {isEditing ? (
                 <div className="flex flex-col w-full gap-4">
                   <div className="flex flex-col gap-2">
@@ -366,7 +371,9 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                       id="prototype-name"
                       value={localPrototype.name}
                       onChange={(e) => handleChange('name', e.target.value)}
+                      className={error ? 'border-secondary' : ''}
                     />
+                    {error && <p className="mt-2 text-sm text-secondary">{error}</p>}
                   </div>
                   <div className="flex flex-col gap-2">
                     <Label htmlFor="problem">Problem</Label>

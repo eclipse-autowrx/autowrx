@@ -1,0 +1,30 @@
+// Copyright (c) 2025 Eclipse Foundation.
+// 
+// This program and the accompanying materials are made available under the
+// terms of the MIT License which is available at
+// https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: MIT
+
+export interface AddOn {
+  id: string
+  model_id?: string
+  createdBy?: string
+  createdAt?: Date
+  type: 'GenAI_Widget' | 'GenAI_Python' | 'GenAI_Dashboard'
+  name: string
+  description: string
+  image_file?: string
+  apiKey: string
+  endpointUrl: string
+  version?: any
+  visibility?: 'public' | 'private'
+  customPayload?: (prompt: string) => any
+  rating?: number
+  samples?: string
+  team?: any
+  isMock?: boolean
+  method?: string
+  requestField?: string
+  responseField?: string
+}

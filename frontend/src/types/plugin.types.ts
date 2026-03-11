@@ -7,7 +7,13 @@
 // SPDX-License-Identifier: MIT
 
 import type { Model, Prototype } from './model.type'
-import type { VehicleAPI, CVI, ExtendedApi, ExtendedApiCreate, ExtendedApiRet } from './api.type'
+import type {
+  VehicleAPI,
+  CVI,
+  ExtendedApi,
+  ExtendedApiCreate,
+  ExtendedApiRet,
+} from './api.type'
 import type { List } from './common.type'
 
 /**
@@ -119,6 +125,27 @@ export interface PluginAPI {
   getRuntimeApiValues?: () => Record<string, any>
 
   // ========================================
+  // Navigation
+  // ========================================
+
+  /**
+   * Navigate to a specific prototype tab
+   * @param tab Built-in tab key ('view', 'journey', 'code', 'dashboard') or 'plug' for custom plugin tabs
+   * @param pluginSlug Required when tab is 'plug' — the plugin slug to activate
+   *
+   * @example
+   * // Navigate to the code tab
+   * api.setActiveTab?.('code')
+   *
+   * // Navigate to a custom plugin tab
+   * api.setActiveTab?.('plug', 'my-plugin-slug')
+   *
+   * // Navigate to dashboard
+   * api.setActiveTab?.('dashboard')
+   */
+  setActiveTab?: (tab: string, pluginSlug?: string) => void
+
+  // ========================================
   // Wishlist API Operations (Custom/Extended APIs)
   // ========================================
 
@@ -152,7 +179,10 @@ export interface PluginAPI {
    *   datatype: 'double'
    * })
    */
-  updateWishlistApi?: (id: string, data: Partial<ExtendedApiCreate>) => Promise<Partial<ExtendedApiCreate>>
+  updateWishlistApi?: (
+    id: string,
+    data: Partial<ExtendedApiCreate>,
+  ) => Promise<Partial<ExtendedApiCreate>>
 
   /**
    * Delete a wishlist API
@@ -184,6 +214,22 @@ export interface PluginAPI {
    * const wishlistApis = await api.listWishlistApis()
    */
   listWishlistApis?: (model_id?: string) => Promise<List<ExtendedApi>>
+
+  // ========================================
+  // File Operations
+  // ========================================
+
+  /**
+   * Upload a file to the server
+   * @param file The file to upload
+   * @returns Promise resolving to an object containing the uploaded file's URL
+   *
+   * @example
+   * const file = new File(['content'], 'example.txt', { type: 'text/plain' })
+   * const result = await api.uploadFile(file)
+   * console.log(result.url) // URL to access the uploaded file
+   */
+  uploadFile?: (file: File) => Promise<{ url: string }>
 }
 
 /**

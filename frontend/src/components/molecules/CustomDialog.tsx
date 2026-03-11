@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-//
+// 
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
 } from '@/components/atoms/dialog'
 import { cn } from '@/lib/utils'
 
@@ -43,6 +44,7 @@ const CustomDialog = ({
 }: CustomDialogProps) => {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
 
+  // Use controlled state if provided, otherwise use internal state
   const isOpen = controlledOpen ?? uncontrolledOpen
   const handleOpenChange = onOpenChange ?? setUncontrolledOpen
 
@@ -54,16 +56,17 @@ const CustomDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent
         className={cn(
           'flex flex-col w-[90vw] xl:w-[60vw] h-[90vh] xl:h-[75vh] min-w-[700px] max-h-[700px] text-primary outline-none',
           className,
         )}
+        // onOpenAutoFocus={(e) => e.preventDefault()}
         showCloseButton={showCloseButton}
       >
         {dialogTitle && (
-          <DialogHeader className="text-primary space-y-1">
+          <DialogHeader className="text-da-primary-500 space-y-1">
             <DialogTitle>{dialogTitle}</DialogTitle>
             {description && (
               <div className="text-sm text-muted-foreground leading-loose">
@@ -72,6 +75,7 @@ const CustomDialog = ({
             )}
           </DialogHeader>
         )}
+        {/* <div className="border-b border-border"></div> */}
         <div
           className={cn(
             'flex flex-col w-full h-full overflow-y-auto scroll',

@@ -6,13 +6,14 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { configManagementService } from '@/services/configManagement.service'
 import { Button } from '@/components/atoms/button'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import CodeEditor from '@/components/molecules/CodeEditor'
 import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 
 const STANDARD_STAGE_KEY = 'STANDARD_STAGE'
 
@@ -21,6 +22,7 @@ const StagingConfigSection: React.FC = () => {
   const [stagingConfig, setStagingConfig] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
   const [saving, setSaving] = useState<boolean>(false)
+  const lastSavedStagingRef = useRef<string>('')
   const { toast } = useToast()
 
   useEffect(() => {
@@ -40,6 +42,7 @@ const StagingConfigSection: React.FC = () => {
             ? config.value
             : JSON.stringify(config.value || {}, null, 2)
         setStagingConfig(content)
+        lastSavedStagingRef.current = content
       } catch (err: any) {
         // Config doesn't exist yet, use default structure as fallback
         const defaultStandardStage = {
@@ -50,6 +53,7 @@ const StagingConfigSection: React.FC = () => {
         }
         const fallbackContent = JSON.stringify(defaultStandardStage, null, 2)
         setStagingConfig(fallbackContent)
+        lastSavedStagingRef.current = fallbackContent
       }
     } catch (err: any) {
       console.error('Load staging config error:', err)
@@ -62,6 +66,7 @@ const StagingConfigSection: React.FC = () => {
       }
       const fallbackContent = JSON.stringify(defaultStandardStage, null, 2)
       setStagingConfig(fallbackContent)
+      lastSavedStagingRef.current = fallbackContent
       toast({
         title: 'Load staging config failed',
         description:
@@ -93,9 +98,11 @@ const StagingConfigSection: React.FC = () => {
         return
       }
 
+      const valueBefore = lastSavedStagingRef.current
+
       // Check if config exists first
       try {
-        const existing = await configManagementService.getConfigByKey(STANDARD_STAGE_KEY)
+        await configManagementService.getConfigByKey(STANDARD_STAGE_KEY)
         // Update existing config
         await configManagementService.updateConfigByKey(STANDARD_STAGE_KEY, {
           value: configValue,
@@ -111,6 +118,15 @@ const StagingConfigSection: React.FC = () => {
           category: 'deploy',
         })
       }
+
+      pushSiteConfigEdit({
+        key: STANDARD_STAGE_KEY,
+        valueBefore: valueBefore || undefined,
+        valueAfter: configValue,
+        valueType: 'object',
+        section: 'staging',
+      })
+      lastSavedStagingRef.current = stagingConfig
 
       toast({ title: 'Saved', description: 'Standard staging frame configuration updated successfully' })
     } catch (err: any) {
@@ -140,7 +156,7 @@ const StagingConfigSection: React.FC = () => {
             Configure standard staging frame structure and component hierarchy
           </p>
         </div>
-        <Button onClick={handleSave} disabled={saving}>
+        <Button size="sm" onClick={handleSave} disabled={saving}>
           {saving ? 'Saving...' : 'Save'}
         </Button>
       </div>

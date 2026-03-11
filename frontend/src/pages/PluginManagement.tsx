@@ -12,9 +12,12 @@ import PrototypePluginSection from '@/components/organisms/PrototypePluginSectio
 import CustomApiSchemaSection from '@/components/organisms/CustomApiSchemaSection'
 import CustomApiSetSection from '@/components/organisms/CustomApiSetSection'
 import DeployPluginSection from '@/components/organisms/DeployPluginSection'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
 
 const PluginManagement: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
 
   // Get initial section from URL or default to 'prototype'
   const getSectionFromUrl = (): 'prototype' | 'vehicle-api-schema' | 'vehicle-api' | 'deploy' => {
@@ -25,9 +28,7 @@ const PluginManagement: React.FC = () => {
     return 'prototype'
   }
 
-  const [activeTab, setActiveTab] = useState<'prototype' | 'vehicle-api-schema' | 'vehicle-api' | 'deploy'>(
-    getSectionFromUrl(),
-  )
+  const [activeTab, setActiveTab] = useState<'prototype' | 'vehicle-api-schema' | 'vehicle-api' | 'deploy'>(getSectionFromUrl())
 
   // Update URL when activeTab changes
   useEffect(() => {
@@ -36,6 +37,19 @@ const PluginManagement: React.FC = () => {
 
   const handleTabChange = (tab: 'prototype' | 'vehicle-api-schema' | 'vehicle-api' | 'deploy') => {
     setActiveTab(tab)
+  }
+
+  if (!isAuthorized) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold text-foreground">Access denied</h1>
+          <p className="mt-2 text-base text-muted-foreground">
+            You do not have permission to manage plugins.
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (

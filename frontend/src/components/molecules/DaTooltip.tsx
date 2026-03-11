@@ -81,7 +81,7 @@ const DaTooltip = ({
       </TooltipTrigger>
       <TooltipContent
         side={side}
-        className={cn('z-[9999]', tooltipContainerClassName)}
+        className={cn('z-9999', tooltipContainerClassName)}
       >
         <span
           className={cn(

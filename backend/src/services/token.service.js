@@ -6,6 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const moment = require('moment');
 const httpStatus = require('http-status');
@@ -111,6 +112,68 @@ const generateResetPasswordToken = async (email) => {
 };
 
 /**
+ * Generate a 6-digit reset password code (sent via email instead of a link).
+ * Code expires in 60 minutes. Any previous codes for this user are deleted first.
+ * @param {string} email
+ * @returns {Promise<{code: string, user: Object}>}
+ */
+const generateResetPasswordCode = async (email) => {
+  const user = await userService.getUserByEmail(email);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'No users found with this email');
+  }
+
+  // Delete any existing reset password tokens for this user
+  await Token.deleteMany({ user: user._id, type: tokenTypes.RESET_PASSWORD });
+
+  // Generate a cryptographically random 6-digit code
+  const code = crypto.randomInt(100000, 999999).toString();
+  const expires = moment().add(60, 'minutes');
+
+  await Token.create({
+    token: code,
+    user: user._id,
+    expires: expires.toDate(),
+    type: tokenTypes.RESET_PASSWORD,
+    blacklisted: false,
+  });
+
+  return { code, user };
+};
+
+/**
+ * Verify a 6-digit reset password code for a given email.
+ * @param {string} email
+ * @param {string} code - The 6-digit code
+ * @returns {Promise<Token>} The token document
+ */
+const verifyResetPasswordCode = async (email, code) => {
+  const user = await userService.getUserByEmail(email);
+  if (!user) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid code');
+  }
+
+  const tokenDoc = await Token.findOne({
+    token: code,
+    type: tokenTypes.RESET_PASSWORD,
+    user: user._id,
+    blacklisted: false,
+  });
+
+  if (!tokenDoc) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid or expired code');
+  }
+
+  // Check expiration
+  if (moment().isAfter(moment(tokenDoc.expires))) {
+    await tokenDoc.deleteOne();
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Code has expired. Please request a new one.');
+  }
+
+  return tokenDoc;
+};
+
+/**
  * Generate verify email token
  * @param {User} user
  * @returns {Promise<string>}
@@ -128,5 +191,7 @@ module.exports = {
   verifyToken,
   generateAuthTokens,
   generateResetPasswordToken,
+  generateResetPasswordCode,
+  verifyResetPasswordCode,
   generateVerifyEmailToken,
 };

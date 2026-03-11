@@ -61,6 +61,10 @@ const register = catchAsync(async (req, res) => {
     ...config.jwt.cookie.options,
   });
 
+  // Send welcome email (non-blocking, don't fail registration if email fails)
+  const domain = req.headers.origin || req.headers.referer || config.client.baseUrl;
+  emailService.sendWelcomeEmail(user.email, user.name, domain).catch(() => {});
+
   delete tokens.refresh;
   res.status(httpStatus.CREATED).send({ user, tokens });
 });
@@ -98,24 +102,10 @@ const refreshTokens = catchAsync(async (req, res) => {
 });
 
 const forgotPassword = catchAsync(async (req, res) => {
-  const returnRawToken = req.query.return_raw_token;
+  const { code, user } = await tokenService.generateResetPasswordCode(req.body.email);
 
-  const resetPasswordToken = await tokenService.generateResetPasswordToken(req.body.email);
-
-  let domain = undefined;
-  try {
-    const hostname = new URL(req.get('referer')).hostname;
-    if (hostname === 'auth.digital.auto') {
-      domain = hostname;
-    }
-  } catch (error) {}
-
-  if (returnRawToken) {
-    res.status(httpStatus.OK).send({ resetPasswordToken });
-  } else {
-    await emailService.sendResetPasswordEmail(req.body.email, resetPasswordToken, domain);
-    res.status(httpStatus.NO_CONTENT).send();
-  }
+  await emailService.sendResetPasswordCodeEmail(req.body.email, code, user.name);
+  res.status(httpStatus.OK).send({ message: 'Reset code sent to your email' });
 
   try {
     await logService.createLog(
@@ -123,7 +113,7 @@ const forgotPassword = catchAsync(async (req, res) => {
         name: 'Forgot password',
         type: 'forgot_password',
         created_by: req.body.email,
-        description: `User with email ${req.body.email} has triggered forgot password flow`,
+        description: `User with email ${req.body.email} has triggered forgot password flow (code-based)`,
       },
       {
         headers: {
@@ -138,14 +128,20 @@ const forgotPassword = catchAsync(async (req, res) => {
 });
 
 const resetPassword = catchAsync(async (req, res) => {
+  const { email, code, password } = req.body;
   let user;
-  try {
-    user = await authService.resetPassword(req.query.token, req.body.password);
-  } catch (error) {
-    logger.info(`Failed to reset password: ${error}`);
-  } finally {
-    res.status(httpStatus.NO_CONTENT).send();
+
+  if (email && code) {
+    // Code-based reset (new flow)
+    user = await authService.resetPasswordWithCode(email, code, password);
+  } else if (req.query.token) {
+    // Legacy token-based reset (backward compatibility)
+    user = await authService.resetPassword(req.query.token, password);
+  } else {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Email and code are required');
   }
+
+  res.status(httpStatus.NO_CONTENT).send();
 
   try {
     await logService.createLog(
@@ -192,7 +188,7 @@ const githubCallback = catchAsync(async (req, res) => {
 });
 
 const sso = catchAsync(async (req, res) => {
-  const { msAccessToken, providerId } = req.body;
+  const { providerId, idToken } = req.body;
   const ssoService = require('../services/sso.service');
 
   // Validate that provider exists and is enabled
@@ -202,17 +198,25 @@ const sso = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.BAD_REQUEST, error.message || 'Invalid or disabled SSO provider');
   }
 
-  const graphData = await authService.callMsGraph(msAccessToken, providerId);
-  if (graphData.error) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, 'Invalid MS access token');
+  // Validate ID token is provided
+  if (!idToken) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'ID token is required');
   }
 
+  // Parse ID token to extract user data (no additional scopes needed)
+  let graphData;
+  try {
+    graphData = await authService.parseIdToken(idToken, providerId);
+  } catch (error) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, `Invalid ID token: ${error.message}`);
+  }
   let user = await userService.getUserByEmail(graphData.mail);
   if (!user) {
     // Check if SSO auto-registration is enabled
     if (!req.authConfig.SSO_AUTO_REGISTRATION) {
       throw new ApiError(httpStatus.UNAUTHORIZED, 'User not registered. Contact admin to register your account.');
     }
+
     user = await userService.createSSOUser(graphData);
   } else {
     user = await userService.updateSSOUser(user, graphData);
@@ -228,6 +232,89 @@ const sso = catchAsync(async (req, res) => {
   res.send({ user, tokens });
 });
 
+const ssoService = require('../services/sso.service');
+
+const githubSsoStart = catchAsync(async (req, res) => {
+  const { providerId, origin } = req.query;
+  if (!providerId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'providerId is required');
+  }
+  const provider = await ssoService.getSSOProviderById(providerId, true);
+  if (provider.type !== 'GITHUB') {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Provider is not a GitHub SSO provider');
+  }
+  const baseUrl = `${req.protocol}://${req.get('host')}`;
+  const pathWithoutQuery = (req.originalUrl || '').split('?')[0];
+  const callbackPath = pathWithoutQuery.replace(/\/github-sso\/start\/?$/, '') + '/github-sso/callback';
+  const redirectUri = baseUrl + callbackPath;
+  const returnOrigin = origin || config.client.baseUrl;
+  const state = encodeURIComponent(JSON.stringify({ providerId, origin: returnOrigin }));
+  const scope = (Array.isArray(provider.scopes) && provider.scopes.length)
+    ? provider.scopes.join(' ')
+    : (typeof provider.scopes === 'string' && provider.scopes.trim())
+      ? provider.scopes.trim()
+      : 'user:email';
+  const params = new URLSearchParams({
+    client_id: provider.clientId,
+    redirect_uri: redirectUri,
+    scope,
+    state,
+  });
+  const url = `https://github.com/login/oauth/authorize?${params.toString()}`;
+  res.redirect(url);
+});
+
+const githubSsoCallback = catchAsync(async (req, res) => {
+  const { code, state } = req.query;
+  let origin = config.client.baseUrl;
+  let providerId = null;
+  if (state) {
+    try {
+      const decoded = JSON.parse(decodeURIComponent(state));
+      providerId = decoded.providerId;
+      if (decoded.origin) origin = decoded.origin;
+    } catch (e) {
+      providerId = decodeURIComponent(state);
+    }
+  }
+  if (!code || !providerId) {
+    return res.redirect(`${origin}?error=missing_code_or_state`);
+  }
+  let provider;
+  try {
+    provider = await ssoService.getSSOProviderById(providerId, true);
+  } catch (e) {
+    return res.redirect(`${origin}?error=invalid_provider`);
+  }
+  if (provider.type !== 'GITHUB') {
+    return res.redirect(`${origin}?error=invalid_provider`);
+  }
+  let graphData;
+  try {
+    graphData = await authService.exchangeGithubSSOCode(code, provider);
+  } catch (error) {
+    logger.error(error);
+    const message = encodeURIComponent(error.message || 'GitHub authentication failed');
+    return res.redirect(`${origin}?error=${message}`);
+  }
+  let user = await userService.getUserByEmail(graphData.mail);
+  if (!user) {
+    if (!req.authConfig.SSO_AUTO_REGISTRATION) {
+      return res.redirect(`${origin}?error=${encodeURIComponent('User not registered. Contact admin to register your account.')}`);
+    }
+    user = await userService.createSSOUser(graphData);
+  } else {
+    user = await userService.updateSSOUser(user, graphData);
+  }
+  const tokens = await tokenService.generateAuthTokens(user);
+  res.cookie(config.jwt.cookie.name, tokens.refresh.token, {
+    expires: tokens.refresh.expires,
+    ...config.jwt.cookie.options,
+  });
+  delete tokens.refresh;
+  res.redirect(origin);
+});
+
 module.exports = {
   authenticate,
   authorize,
@@ -241,4 +328,6 @@ module.exports = {
   verifyEmail,
   githubCallback,
   sso,
+  githubSsoStart,
+  githubSsoCallback,
 };

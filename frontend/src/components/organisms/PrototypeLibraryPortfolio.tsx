@@ -130,10 +130,9 @@ const PrototypeLibraryPortfolio = () => {
             retItem.x = prototype.portfolio?.needs_addressed ?? 0
             retItem.y = prototype.portfolio?.relevance ?? 0
             retItem.r =
-              ((prototype.portfolio?.needs_addressed ??
-                0 + prototype.portfolio?.relevance ??
-                0 + prototype.portfolio?.easy_to_use ??
-                0) /
+              (((prototype.portfolio?.needs_addressed ?? 0) +
+                (prototype.portfolio?.relevance ?? 0) +
+                (prototype.portfolio?.easy_to_use ?? 0)) /
                 3) *
               5
           }

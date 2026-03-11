@@ -16,6 +16,7 @@ import HomePrototypePopular from '@/components/organisms/HomePrototypePopular'
 import HomeNews from '@/components/organisms/HomeNews'
 import { configManagementService } from '@/services/configManagement.service'
 import { Spinner } from '@/components/atoms/spinner'
+import HomeFooterSection from '@/components/organisms/HomeFooterSection'
 
 const PageHome = () => {
   const [homeElements, setHomeElements] = useState<any[]>([])
@@ -58,6 +59,8 @@ const PageHome = () => {
         return HomePrototypePopular
       case 'partner-list':
         return HomePartners
+      case 'home-footer':
+        return HomeFooterSection
       default:
         return null
     }

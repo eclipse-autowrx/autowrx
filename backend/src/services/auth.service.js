@@ -122,6 +122,25 @@ const resetPassword = async (resetPasswordToken, newPassword) => {
 };
 
 /**
+ * Reset password using a 6-digit code + email
+ * @param {string} email
+ * @param {string} code - The 6-digit code
+ * @param {string} newPassword
+ * @returns {Promise<User>}
+ */
+const resetPasswordWithCode = async (email, code, newPassword) => {
+  // verifyResetPasswordCode throws if code is invalid/expired
+  const tokenDoc = await tokenService.verifyResetPasswordCode(email, code);
+  const user = await userService.getUserById(tokenDoc.user, true);
+  if (!user) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Password reset failed');
+  }
+  await userService.updateUserById(user._id, { password: newPassword });
+  await Token.deleteMany({ user: user._id, type: tokenTypes.RESET_PASSWORD });
+  return user;
+};
+
+/**
  * Verify email
  * @param {string} verifyEmailToken
  * @returns {Promise}
@@ -142,6 +161,7 @@ const verifyEmail = async (verifyEmailToken) => {
 
 /**
  * Call Microsoft Graph API to fetch user data
+ * @deprecated This method requires User.Read scope. Use parseIdToken() instead which only needs OpenID scopes.
  * @param {string} accessToken - Microsoft access token
  * @param {string} providerId - SSO provider ID (optional for backward compatibility)
  * @returns {Promise<import('../typedefs/msGraph').MSGraph>}
@@ -150,7 +170,7 @@ const callMsGraph = async (accessToken, providerId = null) => {
   // If providerId provided, fetch provider config for validation
   // For now, we'll use the default endpoint but this allows for future tenant-specific validation
   const msGraphMeEndpoint = config.sso.msGraphMeEndpoint;
-  
+
   logger.debug(`Fetching user data from: ${msGraphMeEndpoint}${providerId ? ` (Provider: ${providerId})` : ''}`);
 
   // Fetch user data
@@ -186,12 +206,127 @@ const callMsGraph = async (accessToken, providerId = null) => {
   return { ...userData, userPhotoUrl, providerId };
 };
 
+/**
+ * Exchange GitHub OAuth code for access token and fetch user profile (for GitHub SSO login).
+ * @param {string} code - Authorization code from GitHub callback
+ * @param {Object} provider - SSO provider config { clientId, clientSecret }
+ * @returns {Promise<{ id: string, displayName: string, mail: string, userPhotoUrl: string | null, providerId: string }>} graphData shape
+ */
+const exchangeGithubSSOCode = async (code, provider) => {
+  const { clientId, clientSecret } = provider;
+  if (!clientId || !clientSecret) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'GitHub SSO provider is missing clientId or clientSecret');
+  }
+  const { data: tokenData } = await axios.post(
+    'https://github.com/login/oauth/access_token',
+    {
+      client_id: clientId,
+      client_secret: clientSecret,
+      code,
+    },
+    {
+      headers: { Accept: 'application/json' },
+    }
+  ).catch((err) => {
+    logger.error(`GitHub token exchange failed: ${err.response?.data?.error_description || err.message}`);
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Failed to authenticate with GitHub');
+  });
+
+  const accessToken = tokenData.access_token;
+  if (!accessToken) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, tokenData.error_description || 'No access token from GitHub');
+  }
+
+  const { data: userData } = await axios.get('https://api.github.com/user', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  }).catch((err) => {
+    logger.error(`GitHub user fetch failed: ${err.message}`);
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Failed to fetch GitHub user');
+  });
+
+  let mail = userData.email;
+  if (!mail) {
+    const { data: emails } = await axios.get('https://api.github.com/user/emails', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }).catch(() => ({ data: [] }));
+    const primary = Array.isArray(emails) ? emails.find((e) => e.primary) : null;
+    mail = primary ? primary.email : null;
+  }
+  if (!mail) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'GitHub account has no public or primary email. Please add an email in GitHub settings.');
+  }
+
+  return {
+    id: String(userData.id),
+    displayName: userData.name || userData.login || mail.split('@')[0],
+    mail,
+    userPhotoUrl: userData.avatar_url || null,
+    providerId: provider.id,
+  };
+};
+
+/**
+ * Parse ID token to extract user data (alternative to calling Graph API)
+ * @param {string} idToken - MSAL ID token (JWT)
+ * @param {string} providerId - SSO provider ID
+ * @returns {Promise<import('../typedefs/msGraph').MSGraph>}
+ */
+const parseIdToken = async (idToken, providerId = null) => {
+  try {
+    if (!idToken || typeof idToken !== 'string') {
+      throw new Error('ID token is missing or invalid format');
+    }
+
+    // Decode JWT (ID tokens are not encrypted, just signed)
+    const parts = idToken.split('.');
+    if (parts.length !== 3) {
+      throw new Error('ID token is not a valid JWT (expected 3 parts)');
+    }
+
+    const base64Payload = parts[1];
+    const payload = JSON.parse(Buffer.from(base64Payload, 'base64').toString());
+
+    // Extract user data from ID token claims
+    // Map common OIDC claims to our MSGraph format
+    const userData = {
+      id: payload.oid || payload.sub, // oid = Azure AD object ID, sub = subject
+      displayName: payload.name,
+      mail: payload.email || payload.preferred_username, // email or UPN
+      userPhotoUrl: null, // ID token doesn't contain photo
+      providerId,
+    };
+
+
+    // Validate required fields
+    if (!userData.mail) {
+      logger.error(`Email not found in ID token. Available claims: ${JSON.stringify(payload)}`);
+      throw new Error('Email not found in ID token');
+    }
+
+    if (!userData.displayName) {
+      // Fallback to email if name not provided
+      userData.displayName = userData.mail.split('@')[0];
+    }
+
+    return userData;
+  } catch (error) {
+    logger.error(`Error parsing ID token: ${error.message}`);
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError(httpStatus.UNAUTHORIZED, `Invalid ID token: ${error.message}`);
+  }
+};
+
 module.exports = {
   loginUserWithEmailAndPassword,
   logout,
   refreshAuth,
   resetPassword,
+  resetPasswordWithCode,
   verifyEmail,
   githubCallback,
   callMsGraph,
+  parseIdToken,
+  exchangeGithubSSOCode,
 };

@@ -46,6 +46,14 @@ export const sendResetPasswordEmailService = async (email: string) => {
   })
 }
 
+export const resetPasswordWithCodeService = async (email: string, code: string, password: string) => {
+  return serverAxios.post('/auth/reset-password', {
+    email,
+    code,
+    password,
+  })
+}
+
 export const resetPasswordService = async (password: string, token: string) => {
   return serverAxios.post(
     '/auth/reset-password',
@@ -60,9 +68,9 @@ export const resetPasswordService = async (password: string, token: string) => {
   )
 }
 
-export const ssoService = async (msAccessToken: string, providerId: string) => {
+export const ssoService = async (idToken: string, providerId: string) => {
   return serverAxios.post('/auth/sso', {
-    msAccessToken,
     providerId,
+    idToken,
   })
 }

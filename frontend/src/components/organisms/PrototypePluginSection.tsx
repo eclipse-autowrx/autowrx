@@ -6,27 +6,29 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React from 'react'
+import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
-  listPlugins,
+  listMyPlugins,
   deletePlugin,
   type Plugin,
 } from '@/services/plugin.service'
 import { Button } from '@/components/atoms/button'
 import PluginForm from '@/components/organisms/PluginForm'
-import { useState } from 'react'
+import DeletePluginDialog from '@/components/organisms/DeletePluginDialog'
 import { TbPencil, TbTrash } from 'react-icons/tb'
 import { useQueryClient } from '@tanstack/react-query'
 
 const PrototypePluginSection: React.FC = () => {
   const qc = useQueryClient()
   const { data, isLoading } = useQuery({
-    queryKey: ['plugins', 'prototype_function'],
-    queryFn: () => listPlugins({ limit: 100, page: 1, type: 'prototype_function' }),
+    queryKey: ['plugins', 'prototype_function', 'mine'],
+    queryFn: () =>
+      listMyPlugins({ limit: 100, page: 1, type: 'prototype_function' }),
   })
   const [openForm, setOpenForm] = useState(false)
   const [editId, setEditId] = useState<string | undefined>(undefined)
+  const [pluginToDelete, setPluginToDelete] = useState<Plugin | null>(null)
 
   return (
     <>
@@ -95,16 +97,12 @@ const PrototypePluginSection: React.FC = () => {
                     title="Delete"
                     variant="ghost"
                     size="icon"
-                    onClick={async (e) => {
+                    onClick={(e) => {
                       e.stopPropagation()
-                      if (!confirm('Delete this plugin?')) return
-                      try {
-                        await deletePlugin(p.id)
-                        qc.invalidateQueries({ queryKey: ['plugins', 'prototype_function'] })
-                      } catch (e) {}
+                      setPluginToDelete(p)
                     }}
                   >
-                    <TbTrash className="text-xl" />
+                    <TbTrash className="text-xl text-destructive" />
                   </Button>
                 </div>
               </div>
@@ -123,6 +121,26 @@ const PrototypePluginSection: React.FC = () => {
         mode={editId ? 'edit' : 'create'}
         pluginId={editId}
         defaultType="prototype_function"
+      />
+
+      <DeletePluginDialog
+        open={!!pluginToDelete}
+        pluginName={pluginToDelete?.name || ''}
+        isLoading={false}
+        onCancel={() => setPluginToDelete(null)}
+        onConfirm={async () => {
+          if (!pluginToDelete) return
+          try {
+            await deletePlugin(pluginToDelete.id)
+            qc.invalidateQueries({
+              queryKey: ['plugins', 'prototype_function', 'mine'],
+            })
+            setPluginToDelete(null)
+          } catch (e: any) {
+            // eslint-disable-next-line no-console
+            console.error(e)
+          }
+        }}
       />
     </>
   )

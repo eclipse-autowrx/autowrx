@@ -63,6 +63,9 @@ router.get('/global-css', siteConfigController.getGlobalCss);
 router.put('/global-css', siteConfigController.updateGlobalCss);
 router.post('/global-css/restore-default', siteConfigController.restoreDefaultGlobalCss);
 
+// Test email endpoint
+router.post('/email/test', siteConfigController.sendTestEmail);
+
 // Individual config operations by key (MUST come before /:scope/:target_id to avoid route conflict)
 router
   .route('/key/:key')

@@ -28,7 +28,7 @@ import VssComparator from '@/components/organisms/VssComparator'
 import { getComputedAPIs, replaceAPIsService } from '@/services/model.service'
 import { isAxiosError } from 'axios'
 import { toast } from 'react-toastify'
-import { Dialog, DialogContent } from '@/components/atoms/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/atoms/dialog'
 import DaFileUpload from '@/components/atoms/DaFileUpload'
 import { Button } from '@/components/atoms/button'
 import usePermissionHook from '@/hooks/usePermissionHook'
@@ -124,11 +124,15 @@ const ViewApiCovesa = () => {
 
   return (
     <div className="bg-white rounded-md h-full w-full flex flex-col">
-      {/* <div className="flex w-full min-h-10 items-center justify-between">
+      <div className="flex w-full min-h-10 items-center justify-between border-b border-muted-foreground/50 shrink-0">
         <div className="flex space-x-2 h-full">
           <DaTabItem
             active={activeTab === 'list'}
-            onClick={() => setActiveTab('list')}
+            to="#"
+            onClick={(e) => {
+              e.preventDefault()
+              setActiveTab('list')
+            }}
           >
             <TbList className="w-5 h-5 mr-2" />
             List View
@@ -136,22 +140,32 @@ const ViewApiCovesa = () => {
 
           <DaTabItem
             active={activeTab === 'tree'}
-            onClick={() => setActiveTab('tree')}
+            to="#"
+            onClick={(e) => {
+              e.preventDefault()
+              setActiveTab('tree')
+            }}
           >
-            <TbBinaryTree2 className="w-5 h-5 mr-2 rotate-[270deg]" />
+            <TbBinaryTree2 className="w-5 h-5 mr-2 rotate-270" />
             Tree View
           </DaTabItem>
 
           <DaTabItem
             active={activeTab === 'compare'}
-            onClick={() => setActiveTab('compare')}
+            to="#"
+            onClick={(e) => {
+              e.preventDefault()
+              setActiveTab('compare')
+            }}
           >
             <TbGitCompare className="w-5 h-5 mr-2" />
             Version Diff
           </DaTabItem>
           <DaTabItem
             active={false}
-            onClick={async () => {
+            to="#"
+            onClick={async (e) => {
+              e.preventDefault()
               if (!model) return
               try {
                 const data = await getComputedAPIs(model.id)
@@ -161,8 +175,10 @@ const ViewApiCovesa = () => {
                 document.body.appendChild(link)
                 link.click()
                 document.body.removeChild(link)
+                toast.success('JSON file downloaded successfully')
               } catch (e) {
                 console.error(e)
+                toast.error('Failed to download JSON file')
               }
             }}
           >
@@ -172,7 +188,9 @@ const ViewApiCovesa = () => {
           {hasWritePermission && (
             <DaTabItem
               active={false}
-              onClick={() => {
+              to="#"
+              onClick={(e) => {
+                e.preventDefault()
                 if (!model) return
                 setShowUpload(true)
               }}
@@ -185,7 +203,7 @@ const ViewApiCovesa = () => {
         <div className="text-sm font-medium text-primary pr-4">
           {model?.api_version && `COVESA VSS ${model.api_version}`}
         </div>
-      </div> */}
+      </div>
 
       {(activeTab === 'list' || activeTab === 'hierarchical') && (
         <div className="grow w-full flex overflow-auto">
@@ -210,32 +228,32 @@ const ViewApiCovesa = () => {
         </div>
       )}
 
-      {/* {activeTab === 'tree' && (
+      {activeTab === 'tree' && (
         <div className="flex w-full grow overflow-auto items-center justify-center">
           <DaTreeView onNodeClick={() => setActiveTab('list')} />
         </div>
-      )} */}
-      {/* {activeTab === 'compare' && (
+      )}
+      {activeTab === 'compare' && (
         <div className="flex w-full grow overflow-auto justify-center">
           <VssComparator />
         </div>
-      )} */}
+      )}
 
-      {/* {hasWritePermission && (
+      {hasWritePermission && (
         <Dialog open={showUpload} onOpenChange={setShowUpload}>
-          <DialogContent>
-            <div className="w-[280px]">
-              <div className="text-sm font-medium text-center">
-                Upload Vehicle API file
-              </div>
-              <div className="h-2" />
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Upload Vehicle API file</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
               <DaFileUpload
                 onFileUpload={(url) => setUrl(url)}
                 accept=".json"
+                className="w-full"
               />
               <Button
-                size="sm"
-                className="w-full mt-4"
+                size="default"
+                className="w-full"
                 onClick={handleReplaceAPI}
                 disabled={!url || loading}
               >
@@ -245,7 +263,7 @@ const ViewApiCovesa = () => {
             </div>
           </DialogContent>
         </Dialog>
-      )} */}
+      )}
     </div>
   )
 }

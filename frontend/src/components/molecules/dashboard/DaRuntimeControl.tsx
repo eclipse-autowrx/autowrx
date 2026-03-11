@@ -6,10 +6,10 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { FC, useEffect, useRef, useState } from 'react'
+import { FC, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
-import { TbPlayerPlayFilled, TbPlayerStopFilled } from 'react-icons/tb'
+import { TbPlayerPlayFilled, TbPlayerStopFilled, TbSettings } from 'react-icons/tb'
 import { FaAnglesLeft, FaAnglesRight } from 'react-icons/fa6'
 import { SlOptionsVertical } from 'react-icons/sl'
 import { cn } from '@/lib/utils'
@@ -38,6 +38,7 @@ import { GoDotFill } from 'react-icons/go'
 import DaMockManager from './DaMockManager'
 import PrototypeVarsWatch from './PrototypeVarsWatch'
 import DaRemoteCompileRust from '../remote-compiler/DaRemoteCompileRust'
+import { useSystemUI } from '@/hooks/useSystemUI'
 
 const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
 
@@ -64,6 +65,20 @@ const DaRuntimeControl: FC = () => {
     'RUNTIME_SERVER_URL',
     DEFAULT_KIT_SERVER,
   )
+  const runtimeServerConfigRaw = useSiteConfig('RUNTIME_SERVER_CONFIG', '')
+  const runtimeServerConfig = useMemo(() => {
+    if (!runtimeServerConfigRaw) return {}
+    try {
+      const parsed =
+        typeof runtimeServerConfigRaw === 'string'
+          ? JSON.parse(runtimeServerConfigRaw)
+          : runtimeServerConfigRaw
+      return typeof parsed === 'object' && parsed !== null ? parsed : {}
+    } catch {
+      return {}
+    }
+  }, [runtimeServerConfigRaw])
+  const { showPrototypeDashboardFullScreen } = useSystemUI()
 
   const [isExpand, setIsExpand] = useState(false)
   const [isRunning, setIsRunning] = useState(false)
@@ -80,6 +95,7 @@ const DaRuntimeControl: FC = () => {
     localStorage.getItem('customKitServer') || '',
   )
   const [showConfigDialog, setShowConfigDialog] = useState<boolean>(false)
+  const [runtimeMenuOpen, setRuntimeMenuOpen] = useState(false)
   const [useRuntime, setUseRuntime] = useState<boolean>(true)
   const [mockSignals, setMockSignals] = useState<any[]>([])
   const [curRuntimeInfo, setCurRuntimeInfo] = useState<any>(null)
@@ -287,7 +303,10 @@ const DaRuntimeControl: FC = () => {
     <div
       data-id="runtime-control-panel"
       className={cn(
-        'absolute bottom-0 right-0 top-0 z-10 flex flex-col px-1 py-1',
+        'bottom-0 right-0 z-10 flex flex-col px-1 py-1',
+        showPrototypeDashboardFullScreen
+          ? 'fixed top-[58px]'
+          : 'absolute top-0',
         isExpand ? 'w-[500px]' : 'w-14',
       )}
       style={{
@@ -381,6 +400,7 @@ const DaRuntimeControl: FC = () => {
               <DaRuntimeConnector
                 targetPrefix="runtime-"
                 kitServerUrl={customKitServer}
+                socketIoConfig={runtimeServerConfig}
                 ref={runTimeRef}
                 usedAPIs={usedApis}
                 hideLabel={true}
@@ -398,6 +418,7 @@ const DaRuntimeControl: FC = () => {
               <DaRuntimeConnector
                 targetPrefix="runtime-"
                 kitServerUrl={runtimeServerUrl}
+                socketIoConfig={runtimeServerConfig}
                 ref={runTimeRef1}
                 usedAPIs={usedApis}
                 hideLabel={true}
@@ -428,7 +449,7 @@ const DaRuntimeControl: FC = () => {
           </Button>
         </div>
         <div className="grow" />
-        <DropdownMenu>
+        <DropdownMenu open={runtimeMenuOpen} onOpenChange={setRuntimeMenuOpen}>
           <DropdownMenuTrigger asChild>
             <div
               className="cursor-pointer hover:bg-slate-500 p-2 rounded"
@@ -440,12 +461,14 @@ const DaRuntimeControl: FC = () => {
           <DropdownMenuContent align="end">
             <DropdownMenuItem
               onClick={() => {
+                setRuntimeMenuOpen(false)
                 setTmpCustomKitServer(customKitServer)
                 setShowConfigDialog(true)
               }}
             >
-              <div className="flex w-full items-center">
-                Config Runtime Server
+              <div className="flex w-full items-center justify-between gap-2">
+                <TbSettings className="w-5 h-5" />
+                <span>Config Runtime Server</span>
               </div>
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -564,11 +587,10 @@ const DaRuntimeControl: FC = () => {
                         }}
                       />
                       <div
-                        className={`ml-2 mr-2 px-2 py-1 rounded text-xs ${
-                          requestContent.trim()
-                            ? 'text-yellow-400 font-semibold cursor-pointer hover:underline'
-                            : 'text-gray-400 font-thin'
-                        }`}
+                        className={`ml-2 mr-2 px-2 py-1 rounded text-xs ${requestContent.trim()
+                          ? 'text-yellow-400 font-semibold cursor-pointer hover:underline'
+                          : 'text-gray-400 font-thin'
+                          }`}
                         onClick={() => {
                           if (!requestContent.trim()) return
                           if (runTimeRef.current) {

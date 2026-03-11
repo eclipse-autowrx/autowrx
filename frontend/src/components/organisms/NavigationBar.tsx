@@ -40,6 +40,8 @@ import { useState, useEffect } from 'react'
 // import useLastAccessedModel from '@/hooks/useLastAccessedModel'
 import { useSiteConfig } from '@/utils/siteConfig'
 import { Button } from '../atoms/button'
+import { Wrench } from 'lucide-react'
+import DOMPurify from 'dompurify'
 
 const SimpleSwitch = ({
   checked,
@@ -50,23 +52,21 @@ const SimpleSwitch = ({
 }) => (
   <button
     type="button"
-    className={`${
-      checked ? 'bg-blue-600' : 'bg-gray-200'
-    } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+    className={`${checked ? 'bg-blue-600' : 'bg-gray-200'
+      } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
     role="switch"
     aria-checked={checked}
     onClick={() => onChange(!checked)}
   >
     <span
       aria-hidden="true"
-      className={`${
-        checked ? 'translate-x-5' : 'translate-x-0'
-      } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+      className={`${checked ? 'translate-x-5' : 'translate-x-0'
+        } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
     />
   </button>
 )
 
-const NavigationBar = ({}) => {
+const NavigationBar = ({ }) => {
   const { data: user } = useSelfProfileQuery()
   // const { data: model } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
@@ -74,6 +74,7 @@ const NavigationBar = ({}) => {
   const siteTitle = useSiteConfig('SITE_TITLE', 'AutoWRX')
   const logoUrl = useSiteConfig('SITE_LOGO_WIDE', '/imgs/logo-wide.png')
   const enableLearningMode = useSiteConfig('ENABLE_LEARNING_MODE', false)
+  const navBarActions = useSiteConfig('NAV_BAR_ACTIONS', [])
 
   useEffect(() => {
     if (siteTitle) {
@@ -120,6 +121,34 @@ const NavigationBar = ({}) => {
         </div>
       )}
 
+      {/* Navigation Bar Actions */}
+      {navBarActions && Array.isArray(navBarActions) && navBarActions.length > 0 && (
+        <div className="mr-2 flex items-center gap-2">
+          {navBarActions.map((action: any, index: number) => (
+            <a
+              key={index}
+              href={action.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium hover:bg-muted transition-colors"
+              title={action.label}
+            >
+              {action.icon && (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(action.icon, {
+                      USE_PROFILES: { svg: true, svgFilters: true }
+                    })
+                  }}
+                  className="w-6 h-6 flex items-center justify-center"
+                />
+              )}
+              {action.label && <span className="ml-1">{action.label}</span>}
+            </a>
+          ))}
+        </div>
+      )}
+
       {/* {config && config.enableSupport && (
         <Link to="https://forms.office.com/e/P5gv3U3dzA">
           <div className="h-full flex text-gray-500 font-medium text-base items-center text-skye-600 mr-4 hover:underline">
@@ -140,60 +169,80 @@ const NavigationBar = ({}) => {
               Search
             </DaButton>
           </DaGlobalSearch>{' '} */}
-          {isAuthorized && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="size-10">
-                  <TbMenu2 className="size-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="w-42 text-sm font-medium"
-              >
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost">
+                <Wrench />
+                {isAuthorized ? 'Admin Tools' : 'Tools'}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="w-52 text-sm font-medium"
+            >
+              {isAuthorized ? (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link
+                      to="/manage-users"
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <TbUsers className="text-base" /> Manage Users
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link
+                      to="/manage-features"
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <TbStack2 className="text-base" /> Manage Features
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link
+                      to="/admin/site-config"
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <TbSettings className="text-base" /> Site Config
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link
+                      to="/admin/plugins"
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <TbApps className="text-base" /> Plugins
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link
+                      to="/admin/templates"
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <TbPalette className="text-base" /> Templates
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link
+                      to="/admin/dashboard-templates"
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <TbBuildingWarehouse className="text-base" /> Dashboard Templates
+                    </Link>
+                  </DropdownMenuItem>
+                </>
+              ) : (
                 <DropdownMenuItem asChild>
                   <Link
-                    to="/manage-users"
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <TbUsers className="text-base" /> Manage Users
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/manage-features"
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <TbStack2 className="text-base" /> Manage Features
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/admin/site-config"
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <TbSettings className="text-base" /> Site Config
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/admin/plugins"
+                    to="/me/plugins"
                     className="flex items-center gap-2 cursor-pointer"
                   >
                     <TbApps className="text-base" /> Plugins
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/admin/templates"
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <TbPalette className="text-base" /> Templates
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
           {/* {model ? (
             <Link to={`/model/${model.id}`}>
               <DaButton variant="plain">

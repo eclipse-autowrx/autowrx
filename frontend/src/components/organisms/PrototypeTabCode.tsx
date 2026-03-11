@@ -20,19 +20,54 @@ import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
 import { shallow } from 'zustand/shallow'
 import { BsStars } from 'react-icons/bs'
+import { DiffEditor } from '@monaco-editor/react'
 import DaDialog from '@/components/molecules/DaDialog'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { PERMISSIONS } from '@/data/permission'
 import { updatePrototypeService } from '@/services/prototype.service'
-
-import { GrDeploy } from 'react-icons/gr'
-import { toast } from 'react-toastify'
-import config from '@/configs/config'
+import { useSiteConfig } from '@/utils/siteConfig'
+import { PiArrowsLeftRight, PiCode } from 'react-icons/pi'
 import CodeEditor from '@/components/molecules/CodeEditor'
 import { Spinner } from '@/components/atoms/spinner'
 import { retry } from '@/lib/retry'
 import { useParams } from 'react-router-dom'
+
+// sessionStorage helpers for diff previous code
+const getDiffStorageKey = (prototypeId: string) => `code_diff_prev_${prototypeId}`
+const getDiffVisibleKey = (prototypeId: string) => `code_diff_visible_${prototypeId}`
+
+const savePreviousCodeToSession = (prototypeId: string, prevCode: string) => {
+  try {
+    sessionStorage.setItem(getDiffStorageKey(prototypeId), prevCode)
+  } catch {
+    // ignore storage errors
+  }
+}
+
+const getPreviousCodeFromSession = (prototypeId: string): string | undefined => {
+  try {
+    return sessionStorage.getItem(getDiffStorageKey(prototypeId)) ?? undefined
+  } catch {
+    return undefined
+  }
+}
+
+const saveDiffVisibleToSession = (prototypeId: string, visible: boolean) => {
+  try {
+    sessionStorage.setItem(getDiffVisibleKey(prototypeId), visible ? '1' : '0')
+  } catch {
+    // ignore storage errors
+  }
+}
+
+const getDiffVisibleFromSession = (prototypeId: string): boolean => {
+  try {
+    return sessionStorage.getItem(getDiffVisibleKey(prototypeId)) === '1'
+  } catch {
+    return false
+  }
+}
 
 // Helper function to determine editor type
 const getEditorType = (content: string): 'project' | 'code' => {
@@ -62,16 +97,8 @@ const PrototypeTabCodeApiPanel = lazy(() =>
 )
 
 const DaGenAI_Python = lazy(() =>
-  Promise.resolve({
-    default: ({ onCodeChanged }: { onCodeChanged: (code: string) => void }) => (
-      <div className="p-4 text-muted-foreground">GenAI not available</div>
-    ),
-  }).catch(() => ({
-    default: ({ onCodeChanged }: { onCodeChanged: (code: string) => void }) => (
-      <div className="p-4 text-muted-foreground">GenAI not available</div>
-    ),
-  })),
-) as any
+  retry(() => import('../molecules/genAI/DaGenAI_Python')),
+)
 
 const PrototypeTabCode: FC = () => {
   const { prototype_id } = useParams<{ prototype_id: string }>()
@@ -90,17 +117,49 @@ const PrototypeTabCode: FC = () => {
   const [isOpenGenAI, setIsOpenGenAI] = useState(false)
   const { data: model } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
+  const showCodeApiPanel = useSiteConfig('SHOW_CODE_API_PANEL', true)
+  const showCodeDiff = useSiteConfig('SHOW_CODE_DIFF', true)
+  const showSdvProtoPilotButton = useSiteConfig(
+    'SHOW_SDV_PROTOPILOT_BUTTON',
+    false,
+  )
 
   // Editor type state
   const [editorType, setEditorType] = useState<'project' | 'code'>('code')
 
+  // Diff state
+  const [previousCode, setPreviousCode] = useState<string | undefined>(undefined)
+  const [showDiff, setShowDiff] = useState(false)
+  // Ref to track last code saved by us — used to detect external (plugin/AI) code changes
+  const savedCodeRef = useRef<string | undefined>(undefined)
+
   // Resize state
-  const [rightPanelWidth, setRightPanelWidth] = useState(600) // Initial width in px
+  const [rightPanelWidth, setRightPanelWidth] = useState<number | null>(null) // Will be calculated based on container
   const [isResizing, setIsResizing] = useState(false)
+  const [isApiPanelCollapsed, setIsApiPanelCollapsed] = useState(false)
   const resizeRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const startXRef = useRef(0)
   const startWidthRef = useRef(0)
 
+  // Calculate initial width based on container size with 6:4 ratio (60% editor, 40% API panel)
+  useEffect(() => {
+    const calculateInitialWidth = () => {
+      if (containerRef.current) {
+        const containerWidth = containerRef.current.offsetWidth
+        // 40% of container width for API panel (6:4 ratio)
+        const calculatedWidth = containerWidth * 0.4
+        setRightPanelWidth(calculatedWidth)
+      }
+    }
+
+    // Calculate on mount
+    calculateInitialWidth()
+
+    // Recalculate on window resize
+    window.addEventListener('resize', calculateInitialWidth)
+    return () => window.removeEventListener('resize', calculateInitialWidth)
+  }, [])
 
   useEffect(() => {
     let timer = setInterval(() => {
@@ -118,38 +177,64 @@ const PrototypeTabCode: FC = () => {
   useEffect(() => {
     if (!prototype) {
       setSavedCode(undefined)
+      savedCodeRef.current = undefined
       setCode(undefined)
       setEditorType('code')
+      setPreviousCode(undefined)
+      setShowDiff(false)
       return
     }
 
     const prototypeCode = prototype.code || ''
+
+    if (savedCodeRef.current === undefined) {
+      // Initial mount — restore diff state from sessionStorage if available
+      const restoredPrev = getPreviousCodeFromSession(prototype.id)
+      if (restoredPrev !== undefined) {
+        setPreviousCode(restoredPrev)
+        setShowDiff(getDiffVisibleFromSession(prototype.id))
+      }
+    } else if (prototypeCode !== savedCodeRef.current) {
+      // External (plugin/AI) update — capture previous code for diff
+      savePreviousCodeToSession(prototype.id, savedCodeRef.current)
+      saveDiffVisibleToSession(prototype.id, true)
+      setPreviousCode(savedCodeRef.current)
+      setShowDiff(true)
+    }
+
     setCode(prototypeCode)
     setSavedCode(prototypeCode)
+    savedCodeRef.current = prototypeCode
 
     const newEditorType = getEditorType(prototypeCode)
     setEditorType(newEditorType)
   }, [prototype])
 
   const saveCodeToDb = async (codeToSave?: string) => {
-    // Use the passed code parameter if available, otherwise use current code state
-    const dataToSave = codeToSave !== undefined ? codeToSave : code
+    let dataToSave: string | undefined
+    if (codeToSave !== undefined) {
+      // Explicit save from editor (Save All or Ctrl+S) — always persist, do not skip
+      if (!codeToSave) return
+      dataToSave = codeToSave
+    } else {
+      // Periodic auto-save — skip if unchanged
+      if (!code || code === savedCode) return
+      dataToSave = code
+    }
 
-    if (!dataToSave || dataToSave === savedCode) return
+    if (!prototype?.id) return
 
-    // Update local state with the new code
-    setCode(dataToSave)
-    setSavedCode(dataToSave)
-
-    let newPrototype = JSON.parse(JSON.stringify(prototype))
-    newPrototype.code = dataToSave || ''
-    setActivePrototype(newPrototype)
-
-    if (!prototype || !prototype.id) return
     try {
       await updatePrototypeService(prototype.id, {
         code: dataToSave || '',
       })
+      // Only mark as saved after API succeeds
+      setCode(dataToSave)
+      setSavedCode(dataToSave)
+      savedCodeRef.current = dataToSave
+      const newPrototype = JSON.parse(JSON.stringify(prototype))
+      newPrototype.code = dataToSave || ''
+      setActivePrototype(newPrototype)
     } catch (err) {
       console.error('Error saving code:', err)
     }
@@ -159,7 +244,14 @@ const PrototypeTabCode: FC = () => {
     (e: React.MouseEvent) => {
       e.preventDefault()
       startXRef.current = e.clientX
-      startWidthRef.current = rightPanelWidth
+      // Use current width or calculate from container if null
+      if (rightPanelWidth !== null) {
+        startWidthRef.current = rightPanelWidth
+      } else if (containerRef.current) {
+        startWidthRef.current = containerRef.current.offsetWidth * 0.4
+      } else {
+        startWidthRef.current = 0
+      }
       // Disable transitions during resize for instant feedback
       const leftPanel = resizeRef.current?.previousElementSibling as HTMLElement
       const rightPanel = resizeRef.current?.nextElementSibling as HTMLElement
@@ -172,10 +264,12 @@ const PrototypeTabCode: FC = () => {
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
-      if (!isResizing) return
+      if (!isResizing || !containerRef.current) return
 
-      const minWidth = 300
-      const maxWidth = 800
+      const containerWidth = containerRef.current.offsetWidth
+      // Min 20% and max 60% of container width for responsive behavior
+      const minWidth = containerWidth * 0.2
+      const maxWidth = containerWidth * 0.6
       const deltaX = e.clientX - startXRef.current
       // Dragging left (negative deltaX) increases width, dragging right (positive deltaX) decreases width
       const newWidth = Math.min(
@@ -222,13 +316,10 @@ const PrototypeTabCode: FC = () => {
   }
 
   return (
-    <div className="flex h-[calc(100%-0px)] w-full p-2 bg-gray-100">
-      <div
-        className="flex h-full flex-1 min-w-0 flex-col border-r bg-white rounded-md"
-        style={{ marginRight: '0px' }}
-      >
+    <div ref={containerRef} className="flex h-[calc(100%-0px)] w-full p-2 bg-gray-100">
+      <div className="flex h-full flex-1 min-w-0 flex-col border-r bg-white rounded-md">
         <div className="flex min-h-12 w-full items-center justify-between">
-          {isAuthorized && (
+          {isAuthorized && showSdvProtoPilotButton ? (
             <div className="flex mx-2 space-x-4">
               <DaDialog
                 open={isOpenGenAI}
@@ -252,8 +343,20 @@ const PrototypeTabCode: FC = () => {
                     }
                   >
                     <DaGenAI_Python
-                      onCodeChanged={(code: string) => {
-                        setCode(code)
+                      onCodeChanged={(newCode: string) => {
+                        // Capture current editor code as diff baseline before applying AI code
+                        const currentCode = code
+                        if (currentCode !== undefined && prototype?.id) {
+                          savePreviousCodeToSession(prototype.id, currentCode)
+                          saveDiffVisibleToSession(prototype.id, true)
+                          setPreviousCode(currentCode)
+                          setShowDiff(true)
+                        }
+                        setCode(newCode)
+                        // Immediately advance savedCodeRef so that the next generation
+                        // (whether via this dialog or via plugin) correctly diffs against
+                        // this result rather than the stale pre-AI code.
+                        savedCodeRef.current = newCode
                         setIsOpenGenAI(false)
                       }}
                     />
@@ -261,13 +364,41 @@ const PrototypeTabCode: FC = () => {
                 </div>
               </DaDialog>
             </div>
-          )}
+          ) : showCodeDiff && <div className="px-4 text-sm">
+            Language: <b>{(prototype.language || 'python').toUpperCase()}</b>
+          </div>}
 
           <div className="grow"></div>
 
-          <div className="mr-2 text-sm">
+          {showCodeDiff && editorType === 'code' && previousCode !== undefined && (
+            <Button
+              size="sm"
+              variant={showDiff ? 'default' : 'ghost'}
+              className="mr-1"
+              onClick={() => setShowDiff((v) => {
+                const next = !v
+                if (prototype?.id) saveDiffVisibleToSession(prototype.id, next)
+                return next
+              })}
+              title={showDiff ? 'Hide diff view' : 'Show diff with previous version'}
+            >
+              {showDiff ? (
+                <>
+                  <PiCode className="size-4" />
+                  Hide Diff
+                </>
+              ) : (
+                <>
+                  <PiArrowsLeftRight className="size-4" />
+                  Show Diff
+                </>
+              )}
+            </Button>
+          )}
+
+          {!showCodeDiff && <div className="mr-2 text-sm">
             Language: <b>{(prototype.language || 'python').toUpperCase()}</b>
-          </div>
+          </div>}
         </div>
         <div className="flex-1 overflow-hidden">
           {editorType === 'project' ? (
@@ -280,12 +411,36 @@ const PrototypeTabCode: FC = () => {
             >
               <ProjectEditor
                 data={code || ''}
-                onChange={(newData) => {
-                  setCode(newData)
+                prototypeName={prototype.name}
+                onChange={(data: string) => {
+                  setCode(data)
+                  // Do not set savedCode here — only when we actually persist (saveCodeToDb)
+                  // so that Save All / Ctrl+S still trigger the API when there are unsaved changes
                 }}
-                onSave={saveCodeToDb}
+                onSave={async (data: string) => {
+                  await saveCodeToDb(data)
+                }}
               />
             </Suspense>
+          ) : showCodeDiff && showDiff && previousCode !== undefined ? (
+            <DiffEditor
+              original={previousCode}
+              modified={code || ''}
+              language={prototype.language || 'python'}
+              height="100%"
+              options={{
+                readOnly: true,
+                minimap: { enabled: false },
+                wordWrap: 'on',
+                scrollBeyondLastLine: false,
+                renderSideBySide: true,
+              }}
+              loading={
+                <div className="flex items-center justify-center h-full">
+                  <Spinner />
+                </div>
+              }
+            />
           ) : (
             <CodeEditor
               code={code || ''}
@@ -301,36 +456,49 @@ const PrototypeTabCode: FC = () => {
           )}
         </div>
       </div>
-      {/* Resize handle */}
-      <div
-        ref={resizeRef}
-        className="w-1 bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors cursor-col-resize shrink-0"
-        onMouseDown={handleMouseDown}
-        title="Drag to resize"
-        style={{ marginLeft: '8px', marginRight: '8px' }}
-      >
-        <div className="w-full h-full flex items-center justify-center">
+      {showCodeApiPanel && (
+        <>
+          {/* Resize handle */}
           <div
-            className={`w-0.5 h-8 bg-gray-400 transition-opacity ${isResizing ? 'opacity-100' : 'opacity-0 hover:opacity-60'}`}
-          />
-        </div>
-      </div>
-      <div
-        className="flex h-full flex-col bg-white rounded-md shrink-0"
-        style={{ width: `${rightPanelWidth}px` }}
-      >
-        {activeTab == 'api' && (
-          <Suspense
-            fallback={
-              <div className="flex items-center justify-center h-full">
-                <Spinner />
-              </div>
-            }
+            ref={resizeRef}
+            className="mx-0.5 w-1 bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors cursor-col-resize shrink-0"
+            onMouseDown={handleMouseDown}
+            title="Drag to resize"
           >
-            <PrototypeTabCodeApiPanel code={code || ''} />
-          </Suspense>
-        )}
-      </div>
+            <div className="w-full h-full flex items-center justify-center">
+              <div
+                className={`w-0.5 h-8 bg-gray-400 transition-opacity ${isResizing ? 'opacity-100' : 'opacity-0 hover:opacity-60'}`}
+              />
+            </div>
+          </div>
+          <div
+            className="flex h-full flex-col bg-white rounded-md shrink-0 transition-all duration-200 ease-in-out"
+            style={{
+              width:
+                isApiPanelCollapsed
+                  ? '48px'
+                  : rightPanelWidth !== null
+                    ? `${rightPanelWidth}px`
+                    : '40%',
+            }}
+          >
+            {activeTab == 'api' && (
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center h-full">
+                    <Spinner />
+                  </div>
+                }
+              >
+                <PrototypeTabCodeApiPanel
+                  code={code || ''}
+                  onCollapsedChange={setIsApiPanelCollapsed}
+                />
+              </Suspense>
+            )}
+          </div>
+        </>
+      )}
     </div>
   )
 }

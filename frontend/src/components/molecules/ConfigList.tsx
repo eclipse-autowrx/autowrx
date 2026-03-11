@@ -16,19 +16,33 @@ import { Badge } from '../atoms/badge'
 import { Spinner } from '../atoms/spinner'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import { uploadFileService } from '@/services/upload.service'
+import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 import { Input } from '../atoms/input'
 import { Textarea } from '../atoms/textarea'
 import { Checkbox } from '../atoms/checkbox'
 import DaImportFile from '../atoms/DaImportFile'
 import DatePicker from '../atoms/DatePicker'
 import { Label } from '../atoms/label'
+import { LuTrash2 } from 'react-icons/lu'
+
+export type SiteConfigHistorySection =
+  | 'public'
+  | 'home'
+  | 'auth'
+  | 'sso'
+  | 'style'
+  | 'secrets'
+  | 'staging'
+  | 'genai'
 
 interface ConfigListProps {
   configs: Config[]
   onEdit: (config: Config) => void // kept for compatibility, unused for inline edit
-  onDelete: (config: Config) => void // kept for compatibility, delete hidden per request
+  onDelete: (config: Config) => void
   isLoading?: boolean
   onUpdated?: () => void // optional callback to refresh parent list
+  historySection?: SiteConfigHistorySection // when set, site config saves are recorded in localStorage history for this section
+  showDelete?: boolean // when true, shows a delete button per row
 }
 
 const ConfigList: React.FC<ConfigListProps> = ({
@@ -37,6 +51,8 @@ const ConfigList: React.FC<ConfigListProps> = ({
   onDelete,
   isLoading = false,
   onUpdated,
+  historySection,
+  showDelete = false,
 }) => {
   const { toast } = useToast()
   const [editingKey, setEditingKey] = useState<string | null>(null)
@@ -66,7 +82,8 @@ const ConfigList: React.FC<ConfigListProps> = ({
   }
   const startEdit = (config: Config) => {
     setEditingKey(config.key)
-    setEditValue(localValues[config.key] ?? config.value)
+    // Secret configs always start with empty so user types a fresh value
+    setEditValue(config.secret ? '' : (localValues[config.key] ?? config.value))
   }
 
   const cancelEdit = () => {
@@ -113,6 +130,14 @@ const ConfigList: React.FC<ConfigListProps> = ({
     try {
       setSavingKey(config.key)
       const candidate = overrideValue !== undefined ? overrideValue : editValue
+
+      // For secret fields, skip update when value is empty (keep current)
+      if (config.secret && (candidate === '' || candidate === null || candidate === undefined)) {
+        toast({ title: 'No changes', description: 'Enter a new value to update a secret config.' })
+        cancelEdit()
+        return
+      }
+
       const newValue = parseEditedValue(candidate, config.valueType)
       if (config.id) {
         await configManagementService.updateConfigById(config.id, {
@@ -123,7 +148,18 @@ const ConfigList: React.FC<ConfigListProps> = ({
           value: newValue,
         })
       }
-      setLocalValues((prev) => ({ ...prev, [config.key]: newValue }))
+      if (!config.secret) {
+        setLocalValues((prev) => ({ ...prev, [config.key]: newValue }))
+      }
+      if (config.scope === 'site' && historySection) {
+        pushSiteConfigEdit({
+          key: config.key,
+          valueBefore: config.value,
+          valueAfter: newValue,
+          valueType: config.valueType,
+          section: historySection,
+        })
+      }
       toast({ title: 'Configuration updated', description: config.key })
       cancelEdit()
       if (onUpdated) onUpdated()
@@ -145,8 +181,10 @@ const ConfigList: React.FC<ConfigListProps> = ({
       : 'default'
   }
 
-  // Delete is hidden per request; keeping handler for compatibility (unused)
-  const handleDelete = (_config: Config) => {}
+  // Delete is hidden by default; only shown when showDelete=true
+  const handleDelete = (config: Config) => {
+    onDelete(config)
+  }
 
   if (isLoading) {
     return (
@@ -178,8 +216,8 @@ const ConfigList: React.FC<ConfigListProps> = ({
         >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
             {/* Left: key and meta (1/3) */}
-            <div className="md:col-span-1 min-w-0 flex items-center ">
-              <div className="flex space-x-2 ">
+            <div className="md:col-span-1 min-w-0 flex items-center justify-between">
+              <div className="flex space-x-2">
                 <p className="text-sm font-mono font-semibold text-primary truncate">
                   {config.key}
                 </p>
@@ -198,9 +236,9 @@ const ConfigList: React.FC<ConfigListProps> = ({
             </div>
 
             {/* Right: value (2/3) */}
-            <div className="md:col-span-2">
+            <div className="md:col-span-2 flex flex-1 gap-1 min-w-0">
               <div
-                className="bg-muted rounded-md p-3 mb-2 cursor-pointer hover:ring-1 hover:ring-border"
+                className="bg-muted flex-1 min-w-0 rounded-md p-3 mb-2 cursor-pointer hover:ring-1 hover:ring-border"
                 onClick={() => {
                   if (
                     config.valueType !== 'image_url' &&
@@ -214,7 +252,7 @@ const ConfigList: React.FC<ConfigListProps> = ({
                     {config.valueType === 'image_url' ? (
                       <div className="space-y-3">
                         <Textarea
-                          className="w-full font-mono text-xs bg-white"
+                          className="w-full font-mono text-xs bg-white max-h-32 overflow-auto"
                           rows={2}
                           value={editValue ?? ''}
                           onChange={(e) => setEditValue(e.target.value)}
@@ -243,12 +281,12 @@ const ConfigList: React.FC<ConfigListProps> = ({
                           </Button>
                         </div>
                         <div className="flex flex-col items-center gap-1.5">
-                          <div className="w-full border border-border rounded-md p-1 bg-white flex items-center justify-center overflow-hidden">
+                          <div className="w-full max-w-[280px] max-h-[160px] rounded-md p-1 bg-muted flex items-center justify-center overflow-hidden">
                             {editValue ? (
                               <img
                                 src={editValue as any}
                                 alt="Preview"
-                                className="w-full max-w-[200px] h-fit max-h-[160px]  object-contain"
+                                className="max-w-full max-h-[140px] w-auto h-auto object-contain"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement
                                   target.style.display = 'none'
@@ -299,9 +337,22 @@ const ConfigList: React.FC<ConfigListProps> = ({
                       <div className="flex items-center space-x-2">
                         <Checkbox
                           checked={Boolean(editValue)}
-                          onCheckedChange={(checked) => setEditValue(checked)}
+                          onCheckedChange={(checked) =>
+                            setEditValue(Boolean(checked))
+                          }
+                          className="cursor-pointer"
                         />
-                        <Label>{String(Boolean(editValue))}</Label>
+                        <button
+                          type="button"
+                          className="cursor-pointer select-none"
+                          onClick={() =>
+                            setEditValue(!Boolean(editValue))
+                          }
+                        >
+                          <Label className="cursor-pointer">
+                            {String(Boolean(editValue))}
+                          </Label>
+                        </button>
                       </div>
                     )}
                     {config.valueType === 'number' && (
@@ -321,26 +372,28 @@ const ConfigList: React.FC<ConfigListProps> = ({
                     )}
                     {(config.valueType === 'string' ||
                       config.valueType === 'color') && (
-                      <Input
-                        type="text"
-                        className="w-full text-sm"
-                        value={editValue ?? ''}
-                        onChange={(e) => setEditValue(e.target.value)}
-                      />
-                    )}
+                        <Input
+                          type={config.secret ? 'password' : 'text'}
+                          className="w-full text-sm"
+                          value={editValue ?? ''}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          placeholder={undefined}
+                          autoFocus
+                        />
+                      )}
                     {(config.valueType === 'object' ||
                       config.valueType === 'array') && (
-                      <Textarea
-                        className="w-full font-mono text-sm bg-white"
-                        rows={3}
-                        value={
-                          typeof editValue === 'string'
-                            ? editValue
-                            : JSON.stringify(editValue, null, 2)
-                        }
-                        onChange={(e) => setEditValue(e.target.value)}
-                      />
-                    )}
+                        <Textarea
+                          className="w-full font-mono text-sm bg-white"
+                          rows={3}
+                          value={
+                            typeof editValue === 'string'
+                              ? editValue
+                              : JSON.stringify(editValue, null, 2)
+                          }
+                          onChange={(e) => setEditValue(e.target.value)}
+                        />
+                      )}
                     {/* For non-image types, keep actions directly under the editor */}
                     {config.valueType !== 'image_url' && (
                       <div className="flex items-center gap-2">
@@ -370,7 +423,11 @@ const ConfigList: React.FC<ConfigListProps> = ({
                   </div>
                 ) : (
                   <div>
-                    {config.valueType === 'color' ? (
+                    {config.secret ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-mono text-muted-foreground tracking-widest">••••••••</span>
+                      </div>
+                    ) : config.valueType === 'color' ? (
                       <div className="flex items-center space-x-2">
                         <div
                           className="w-8 h-8 border border-border rounded-md"
@@ -384,22 +441,29 @@ const ConfigList: React.FC<ConfigListProps> = ({
                         </p>
                       </div>
                     ) : config.valueType === 'image_url' ? (
-                      <div className="space-y-3">
+                      <div className="space-y-3 min-w-0">
                         <div
-                          className="cursor-text"
+                          className="cursor-text min-w-0"
                           onClick={(e) => {
                             e.stopPropagation()
                             startEdit(config)
                           }}
                         >
-                          <p className="text-sm font-mono break-all">
+                          <p
+                            className="text-sm font-mono truncate"
+                            title={
+                              (typeof (localValues[config.key] ?? config.value) === 'string'
+                                ? (localValues[config.key] ?? config.value)
+                                : '') || undefined
+                            }
+                          >
                             {((localValues[config.key] ??
                               config.value) as any) ||
                               'Click to enter image URL'}
                           </p>
                         </div>
                         <div className="flex flex-col items-center gap-0">
-                          <div className="w-full border border-border rounded-md p-1 bg-white flex items-center justify-center overflow-hidden">
+                          <div className="w-full max-w-[280px] max-h-[160px] rounded-md p-1 bg-muted flex items-center justify-center overflow-hidden">
                             {(localValues[config.key] ?? config.value) ? (
                               <img
                                 src={
@@ -407,7 +471,7 @@ const ConfigList: React.FC<ConfigListProps> = ({
                                     config.value) as any
                                 }
                                 alt="Preview"
-                                className="w-full max-w-[200px] h-fit max-h-[160px] object-contain"
+                                className="max-w-full max-h-[140px] w-auto h-auto object-contain"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement
                                   target.style.display = 'none'
@@ -456,8 +520,27 @@ const ConfigList: React.FC<ConfigListProps> = ({
                           </div>
                         </div>
                       </div>
+                    ) : config.valueType === 'object' || config.valueType === 'array' ? (
+                      <p
+                        className="text-sm text-foreground font-mono line-clamp-3 overflow-hidden"
+                        title={formatValue(
+                          localValues[config.key] ?? config.value,
+                          config.valueType,
+                        )}
+                      >
+                        {formatValue(
+                          localValues[config.key] ?? config.value,
+                          config.valueType,
+                        )}
+                      </p>
                     ) : (
-                      <p className="text-sm text-foreground whitespace-pre-wrap break-words font-mono">
+                      <p
+                        className="text-sm text-foreground font-mono truncate"
+                        title={formatValue(
+                          localValues[config.key] ?? config.value,
+                          config.valueType,
+                        )}
+                      >
                         {formatValue(
                           localValues[config.key] ?? config.value,
                           config.valueType,
@@ -467,6 +550,17 @@ const ConfigList: React.FC<ConfigListProps> = ({
                   </div>
                 )}
               </div>
+              {showDelete && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive shrink-0"
+                  onClick={() => handleDelete(config)}
+                  title={`Delete ${config.key}`}
+                >
+                  <LuTrash2 className="w-3.5 h-3.5" />
+                </Button>
+              )}
             </div>
           </div>
         </div>

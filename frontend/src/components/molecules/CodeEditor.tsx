@@ -9,7 +9,7 @@
 import Editor from '@monaco-editor/react'
 import clsx from 'clsx'
 import { Spinner } from '../atoms/spinner'
-import { useEffect } from 'react'
+import { useEffect, useImperativeHandle, useRef, forwardRef } from 'react'
 import { useMonaco } from '@monaco-editor/react'
 import { useState } from 'react'
 
@@ -23,26 +23,54 @@ export interface CodeEditorProps {
   fontSize?: number
 }
 
-const CodeEditor = ({
-  code,
-  setCode,
-  editable = false,
-  language,
-  onBlur,
-  fontSize,
-}: CodeEditorProps) => {
+export interface CodeEditorHandle {
+  foldAll: () => void
+  unfoldAll: () => void
+}
+
+const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function CodeEditor(
+  {
+    code,
+    setCode,
+    editable = false,
+    language,
+    onBlur,
+    fontSize,
+  },
+  ref
+) {
   const monaco = useMonaco()
   const [show, setShow] = useState(false)
+  const editorRef = useRef<any>(null)
+
+  useImperativeHandle(ref, () => ({
+    foldAll() {
+      const editor = editorRef.current
+      if (!editor) return
+      const model = editor.getModel()
+      if (!model) return
+      const lineCount = model.getLineCount()
+      const lastCol = model.getLineMaxColumn(lineCount)
+      editor.setSelection({
+        startLineNumber: 1,
+        startColumn: 1,
+        endLineNumber: lineCount,
+        endColumn: lastCol,
+      })
+      editor.trigger('foldAll', 'editor.fold', { levels: 2, direction: 'down' })
+    },
+    unfoldAll() {
+      const editor = editorRef.current
+      if (editor) {
+        editor.getAction('editor.unfoldAll')?.run()
+      }
+    },
+  }), [])
 
   function handleEditorMount(editor: any) {
-    // editor.onDidFocusEditorText(() => {
-    //     if(onFocus) onFocus()
-    // //
-    // });
-
+    editorRef.current = editor
     editor.onDidBlurEditorText(() => {
       if (onBlur) onBlur()
-      //
     })
   }
 
@@ -70,6 +98,7 @@ const CodeEditor = ({
     <div className={clsx('flex flex-col h-full w-full overflow-hidden')}>
       {show && (
         <Editor
+          key={language}
           theme={editable ? 'vs-dauto' : 'read-only'}
           height="100%"
           defaultLanguage={language}
@@ -100,6 +129,6 @@ const CodeEditor = ({
       )}
     </div>
   )
-}
+})
 
 export default CodeEditor

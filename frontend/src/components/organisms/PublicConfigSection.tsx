@@ -15,7 +15,21 @@ import { useToast } from '@/components/molecules/toaster/use-toast'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/atoms/dialog'
 import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
-import { PREDEFINED_SITE_CONFIGS } from '@/pages/SiteConfigManagement'
+import {
+  PREDEFINED_SITE_CONFIGS,
+  PREDEFINED_GENAI_CONFIG_KEYS,
+} from '@/pages/SiteConfigManagement'
+import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
+import NavBarActionsEditor, { NavBarAction } from '@/components/molecules/NavBarActionsEditor'
+import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
+import type { SiteConfigEditEntry } from '@/utils/siteConfigHistory'
+import {
+  deleteConfigsById,
+  reloadSoon,
+  upsertConfigFromHistory,
+} from '@/utils/siteConfigAdmin'
+
+type PublicSubTab = 'config' | 'history'
 
 const PublicConfigSection: React.FC = () => {
   const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
@@ -23,7 +37,14 @@ const PublicConfigSection: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingConfig, setEditingConfig] = useState<Config | undefined>()
+  const [navBarActions, setNavBarActions] = useState<NavBarAction[]>([])
+  const [originalNavBarActions, setOriginalNavBarActions] = useState<NavBarAction[]>([])
+  const [isSavingNavBarActions, setIsSavingNavBarActions] = useState(false)
+  const [subTab, setSubTab] = useState<PublicSubTab>('config')
   const { toast } = useToast()
+
+  const isGenAIKey = (key: string) =>
+    PREDEFINED_GENAI_CONFIG_KEYS.includes(key)
 
   useEffect(() => {
     if (selfLoading || !self) return
@@ -45,14 +66,43 @@ const PublicConfigSection: React.FC = () => {
       const existingConfigs = res.results || []
       const existingKeys = new Set(existingConfigs.map(config => config.key))
 
-      // Find missing predefined configs and create them
+      // Find missing predefined configs and create them (excluding NAV_BAR_ACTIONS and GenAI keys)
+      // NAV_BAR_ACTIONS should only be created when user explicitly adds actions
       const missingConfigs = PREDEFINED_SITE_CONFIGS.filter(
-        config => !existingKeys.has(config.key)
+        (config) =>
+          !existingKeys.has(config.key) &&
+          config.key !== 'NAV_BAR_ACTIONS' &&
+          !isGenAIKey(config.key),
       )
 
-      if (missingConfigs.length > 0) {
+      // Find existing configs with empty values (empty string, null, or undefined) that should have defaults
+      const configsToUpdate: any[] = []
+      PREDEFINED_SITE_CONFIGS.forEach(predefinedConfig => {
+        if (predefinedConfig.key === 'NAV_BAR_ACTIONS') return
+        if (isGenAIKey(predefinedConfig.key)) return
+        
+        const existingConfig = existingConfigs.find(c => c.key === predefinedConfig.key)
+        if (existingConfig) {
+          const isEmpty = existingConfig.value === null || 
+                         existingConfig.value === undefined || 
+                         existingConfig.value === '' ||
+                         (typeof existingConfig.value === 'string' && existingConfig.value.trim() === '')
+          
+          // If existing config is empty but predefined has a non-empty default, update it
+          if (isEmpty && predefinedConfig.value !== null && 
+              predefinedConfig.value !== undefined && 
+              predefinedConfig.value !== '' &&
+              !(typeof predefinedConfig.value === 'string' && predefinedConfig.value.trim() === '')) {
+            configsToUpdate.push(predefinedConfig)
+          }
+        }
+      })
+
+      // Create missing configs and update empty ones
+      const configsToUpsert = [...missingConfigs, ...configsToUpdate]
+      if (configsToUpsert.length > 0) {
         await configManagementService.bulkUpsertConfigs({
-          configs: missingConfigs,
+          configs: configsToUpsert,
         })
 
         // Reload configs after creating missing ones
@@ -62,19 +112,61 @@ const PublicConfigSection: React.FC = () => {
           limit: 100,
         })
 
-        // Filter to only show predefined configs
-        const predefinedKeys = new Set(PREDEFINED_SITE_CONFIGS.map(c => c.key))
-        const filteredConfigs = (updatedRes.results || []).filter(
-          config => predefinedKeys.has(config.key)
+        // Filter to only show predefined non‑GenAI configs (excluding NAV_BAR_ACTIONS)
+        const predefinedKeys = new Set(
+          PREDEFINED_SITE_CONFIGS.map((c) => c.key).filter(
+            (key) => !isGenAIKey(key) && key !== 'NAV_BAR_ACTIONS',
+          ),
         )
+        const predefinedOrder = new Map(
+          PREDEFINED_SITE_CONFIGS.map((c, i) => [c.key, i]),
+        )
+        const filteredConfigs = (updatedRes.results || [])
+          .filter((config) => predefinedKeys.has(config.key))
+          .sort((a, b) => (predefinedOrder.get(a.key) ?? 999) - (predefinedOrder.get(b.key) ?? 999))
+
+        // Load nav bar actions separately - only show actual DB data, empty if null/undefined
+        const navBarActionsConfig = (updatedRes.results || []).find(
+          config => config.key === 'NAV_BAR_ACTIONS'
+        )
+        if (navBarActionsConfig && navBarActionsConfig.value !== null && navBarActionsConfig.value !== undefined) {
+          const actions = Array.isArray(navBarActionsConfig.value) ? navBarActionsConfig.value as NavBarAction[] : []
+          setNavBarActions(actions)
+          setOriginalNavBarActions(JSON.parse(JSON.stringify(actions)))
+        } else {
+          // DB is empty/null - show empty state
+          setNavBarActions([])
+          setOriginalNavBarActions([])
+        }
 
         setConfigs(filteredConfigs)
       } else {
-        // Filter to only show predefined configs
-        const predefinedKeys = new Set(PREDEFINED_SITE_CONFIGS.map(c => c.key))
-        const filteredConfigs = existingConfigs.filter(
-          config => predefinedKeys.has(config.key)
+        // Filter to only show predefined non‑GenAI configs (excluding NAV_BAR_ACTIONS)
+        const predefinedKeys = new Set(
+          PREDEFINED_SITE_CONFIGS.map((c) => c.key).filter(
+            (key) => !isGenAIKey(key) && key !== 'NAV_BAR_ACTIONS',
+          ),
         )
+        const predefinedOrder = new Map(
+          PREDEFINED_SITE_CONFIGS.map((c, i) => [c.key, i]),
+        )
+        const filteredConfigs = existingConfigs
+          .filter((config) => predefinedKeys.has(config.key))
+          .sort((a, b) => (predefinedOrder.get(a.key) ?? 999) - (predefinedOrder.get(b.key) ?? 999))
+
+        // Load nav bar actions separately - only show actual DB data, empty if null/undefined
+        const navBarActionsConfig = existingConfigs.find(
+          config => config.key === 'NAV_BAR_ACTIONS'
+        )
+        if (navBarActionsConfig && navBarActionsConfig.value !== null && navBarActionsConfig.value !== undefined) {
+          const actions = Array.isArray(navBarActionsConfig.value) ? navBarActionsConfig.value as NavBarAction[] : []
+          setNavBarActions(actions)
+          setOriginalNavBarActions(JSON.parse(JSON.stringify(actions)))
+        } else {
+          // DB is empty/null - show empty state
+          setNavBarActions([])
+          setOriginalNavBarActions([])
+        }
 
         setConfigs(filteredConfigs)
       }
@@ -116,7 +208,7 @@ const PublicConfigSection: React.FC = () => {
         
         // Reload page to show changes immediately
         setTimeout(() => {
-          window.location.href = window.location.href
+          window.location.reload()
         }, 800)
       }
     } catch (err) {
@@ -134,6 +226,13 @@ const PublicConfigSection: React.FC = () => {
       setIsLoading(true)
       if (editingConfig?.id) {
         await configManagementService.updateConfigById(editingConfig.id, config)
+        pushSiteConfigEdit({
+          key: config.key,
+          valueBefore: editingConfig.value,
+          valueAfter: config.value,
+          valueType: config.valueType,
+          section: 'public',
+        })
         toast({ title: 'Updated', description: `Config "${config.key}" updated. Reloading page...` })
       } else {
         await configManagementService.createConfig({ ...config, secret: false })
@@ -142,7 +241,7 @@ const PublicConfigSection: React.FC = () => {
       
       // Reload page to show changes immediately
       setTimeout(() => {
-        window.location.href = window.location.href
+        window.location.reload()
       }, 800)
     } catch (err) {
       toast({
@@ -159,35 +258,70 @@ const PublicConfigSection: React.FC = () => {
     setEditingConfig(undefined)
   }
 
+  const handleSaveNavBarActions = async () => {
+    try {
+      setIsSavingNavBarActions(true)
+      
+      // Update the NAV_BAR_ACTIONS config
+      await configManagementService.updateConfigByKey('NAV_BAR_ACTIONS', {
+        value: navBarActions,
+      })
+      pushSiteConfigEdit({
+        key: 'NAV_BAR_ACTIONS',
+        valueBefore: originalNavBarActions,
+        valueAfter: navBarActions,
+        valueType: 'array',
+        section: 'public',
+      })
+      toast({ 
+        title: 'Saved', 
+        description: 'Navigation bar actions updated successfully. Reloading page...' 
+      })
+      
+      // Reload page to show changes immediately
+      setTimeout(() => {
+        window.location.reload()
+      }, 800)
+    } catch (err) {
+      toast({
+        title: 'Save failed',
+        description: err instanceof Error ? err.message : 'Failed to save navigation bar actions',
+        variant: 'destructive',
+      })
+      setIsSavingNavBarActions(false)
+    }
+  }
+
   const handleFactoryReset = async () => {
-    if (!window.confirm('Reset all public configs to factory defaults? This will restore predefined configurations.')) return
+    if (!window.confirm('Restore all public configs to default values? This will overwrite your current settings.')) return
 
     try {
       setIsLoading(true)
-      // Delete all configs and reload - the predefined ones will be re-created on load
+      // Only delete public configs (predefined non‑GenAI keys + NAV_BAR_ACTIONS), not other sections
+      const publicKeys = new Set([
+        ...PREDEFINED_SITE_CONFIGS
+          .map((c) => c.key)
+          .filter((key) => !isGenAIKey(key)),
+        'NAV_BAR_ACTIONS',
+      ])
+
       const allConfigs = await configManagementService.getConfigs({
         secret: false,
         scope: 'site',
         limit: 100,
       })
 
-      // Delete all existing configs
-      for (const config of allConfigs.results || []) {
-        try {
-          if (config.id) {
-            await configManagementService.deleteConfigById(config.id)
-          }
-        } catch (e) {
-          console.warn('Failed to delete config', config.key, e)
-        }
-      }
+      // Delete only public configs
+      const publicConfigs = (allConfigs.results || []).filter((c) =>
+        publicKeys.has(c.key),
+      )
+      const { failed } = await deleteConfigsById(publicConfigs)
+      failed.forEach((f) => console.warn('Failed to delete config', f.key, f))
 
-      toast({ title: 'Reset', description: 'Public configs reset to factory defaults. Reloading page...' })
+      toast({ title: 'Restored', description: 'Public configs restored to default values. Reloading page...' })
       
       // Reload page to show changes immediately
-      setTimeout(() => {
-        window.location.href = window.location.href
-      }, 800)
+      reloadSoon()
     } catch (err) {
       toast({
         title: 'Reset failed',
@@ -198,26 +332,88 @@ const PublicConfigSection: React.FC = () => {
     }
   }
 
+  // Check if navBarActions have changed
+  const hasNavBarActionsChanged = () => {
+    return JSON.stringify(navBarActions) !== JSON.stringify(originalNavBarActions)
+  }
+
+  const handleRestoreHistoryEntry = async (entry: SiteConfigEditEntry) => {
+    try {
+      setIsLoading(true)
+      const { valueBefore, targetValue } = await upsertConfigFromHistory({
+        entry,
+        scope: 'site',
+      })
+      pushSiteConfigEdit({
+        key: entry.key,
+        valueBefore,
+        valueAfter: targetValue,
+        valueType: entry.valueType,
+        section: 'public',
+      })
+      toast({
+        title: 'Restored',
+        description: `Configuration "${entry.key}" restored. Reloading page...`,
+      })
+      setTimeout(() => window.location.reload(), 800)
+    } catch (err) {
+      toast({
+        title: 'Restore failed',
+        description: err instanceof Error ? err.message : 'Failed to restore configuration',
+        variant: 'destructive',
+      })
+      setIsLoading(false)
+    }
+  }
+
   return (
     <>
-      <div className="px-6 py-4 border-b border-border">
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col">
-            <h2 className="text-lg font-semibold text-foreground">
-              Public Configurations
-            </h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Manage public site configuration values
-            </p>
-          </div>
+      <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+        <div className="flex flex-col">
+          <h2 className="text-lg font-semibold text-foreground">
+            Public Configurations
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage public site configuration values
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
           <Button
             onClick={handleFactoryReset}
-            variant="destructive"
+            variant="outline"
             size="sm"
             disabled={isLoading}
           >
-            Factory Reset
+            Restore default
           </Button>
+        </div>
+      </div>
+
+      {/* Sub-tabs: Config | History */}
+      <div className="px-6 pt-2 border-b border-border flex items-end justify-between">
+        <div className="flex gap-1 pb-2">
+          <button
+            type="button"
+            onClick={() => setSubTab('config')}
+            className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${
+              subTab === 'config'
+                ? 'bg-muted text-foreground border border-b-0 border-border -mb-px'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+            }`}
+          >
+            Config
+          </button>
+          <button
+            type="button"
+            onClick={() => setSubTab('history')}
+            className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${
+              subTab === 'history'
+                ? 'bg-muted text-foreground border border-b-0 border-border -mb-px'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+            }`}
+          >
+            History
+          </button>
         </div>
       </div>
 
@@ -226,13 +422,49 @@ const PublicConfigSection: React.FC = () => {
           <div className="flex justify-center items-center py-8">
             <Spinner />
           </div>
+        ) : subTab === 'history' ? (
+          <div className="px-0">
+            <SiteConfigEditHistory section="public" onRestoreEntry={handleRestoreHistoryEntry} />
+          </div>
         ) : (
-          <ConfigList
-            configs={configs}
-            onEdit={handleEditConfig}
-            onDelete={handleDeleteConfig}
-            isLoading={isLoading}
-          />
+          <>
+            {/* Other Configs List */}
+            <ConfigList
+              configs={configs}
+              onEdit={handleEditConfig}
+              onDelete={handleDeleteConfig}
+              isLoading={isLoading}
+              historySection="public"
+            />
+
+            {/* Navigation Bar Actions Section - Moved to bottom */}
+            <div className="mt-8 border border-border rounded-lg bg-card">
+              <div className="px-6 py-4 border-b border-border">
+                <h3 className="text-lg font-semibold text-foreground">
+                  Navigation Bar Actions
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Configure custom action buttons with icons and links for the navigation bar
+                </p>
+              </div>
+              <div className="p-6">
+                <NavBarActionsEditor
+                  value={navBarActions}
+                  onChange={setNavBarActions}
+                />
+                {hasNavBarActionsChanged() && (
+                  <div className="mt-4 flex justify-end">
+                    <Button
+                      onClick={handleSaveNavBarActions}
+                      disabled={isSavingNavBarActions}
+                    >
+                      {isSavingNavBarActions ? 'Saving...' : 'Save Navigation Bar Actions'}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
         )}
       </div>
 

@@ -16,10 +16,13 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 // Default fallback values for site configs
 const DEFAULT_SITE_CONFIGS: Record<string, any> = {
   SITE_LOGO_WIDE: '/imgs/logo-wide.png',
+  DEFAULT_MODEL_IMAGE: '/imgs/default-model-image.png',
+  DEFAULT_PROTOTYPE_IMAGE: '/imgs/default_prototype_cover.jpg',
   SITE_TITLE: 'AutoWRX',
   SITE_DESCRIPTION: 'Vehicle Signal Specification Management Platform',
   SITE_FAVICON: '/imgs/favicon.ico',
   SITE_THEME_COLOR: '#198100',
+  GENAI_SDV_APP_ENDPOINT: 'https://workflow.digital.auto/webhook/c0ba14bc-c6a3-4319-ad0a-ad89b1460b36',
 };
 
 /**
@@ -212,7 +215,27 @@ export const useSiteConfig = (key: string, fallback?: any, scope: string = 'site
       try {
         const result = await getConfig(key, scope, target_id, fallback ?? DEFAULT_SITE_CONFIGS[key]);
         // Treat null/undefined/empty string as missing -> use fallback/default
-        const next = result !== null && result !== undefined && result !== '' ? result : (fallback ?? DEFAULT_SITE_CONFIGS[key]);
+        const raw =
+          result !== null && result !== undefined && result !== ''
+            ? result
+            : (fallback ?? DEFAULT_SITE_CONFIGS[key]);
+
+        // Coerce booleans when the consumer expects a boolean fallback.
+        // The config API may return string values like "true"/"false".
+        let next = raw;
+        if (typeof (fallback ?? DEFAULT_SITE_CONFIGS[key]) === 'boolean') {
+          if (raw === true || raw === false) {
+            next = raw;
+          } else if (typeof raw === 'string') {
+            const normalized = raw.trim().toLowerCase();
+            if (normalized === 'true') next = true;
+            else if (normalized === 'false') next = false;
+            else if (normalized === '1') next = true;
+            else if (normalized === '0') next = false;
+          } else if (typeof raw === 'number') {
+            next = raw === 1;
+          }
+        }
         setValue(next);
       } catch {
         setValue(fallback ?? DEFAULT_SITE_CONFIGS[key]);
@@ -220,7 +243,8 @@ export const useSiteConfig = (key: string, fallback?: any, scope: string = 'site
     };
 
     loadConfig();
-  }, [key, scope, target_id, fallback]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, scope, target_id]); // Removed 'fallback' from deps - it's just a default value, not a fetch trigger
 
   return value;
 };

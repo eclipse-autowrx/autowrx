@@ -86,7 +86,7 @@ const HomePartners: FC<HomePartnersProps> = ({ items, children }) => {
                   rel="noopener noreferrer"
                 >
                   <img
-                    src="./imgs/da.png"
+                    src="/imgs/da.png"
                     className="h-[70px]"
                     alt="digital.auto"
                   />

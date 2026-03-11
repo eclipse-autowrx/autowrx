@@ -47,6 +47,9 @@ const createModel = {
 const listAllModels = {
   query: Joi.object().keys({
     fields: Joi.string().allow(''),
+    tab: Joi.string().valid('owned', 'contributed', 'public').allow(''),
+    page: Joi.number().integer().min(1),
+    limit: Joi.number().integer().min(1).max(100),
   }),
 };
 

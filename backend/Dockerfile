@@ -41,6 +41,10 @@ RUN apk del make g++
 
 COPY --chown=node:node backend/ .
 
+# Create data directory for VSS files (will be populated by setupScheduledCheck on startup)
+# This ensures the directory exists even if files haven't been downloaded yet
+RUN mkdir -p data && chown -R node:node data
+
 # Copy frontend build into backend static folder
 COPY --from=frontend-builder --chown=node:node /app/backend/static/frontend-dist ./static/frontend-dist
 

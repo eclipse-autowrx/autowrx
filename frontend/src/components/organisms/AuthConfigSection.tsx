@@ -15,6 +15,7 @@ import { useToast } from '@/components/molecules/toaster/use-toast'
 import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { PREDEFINED_AUTH_CONFIGS } from '@/pages/SiteConfigManagement'
+import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 
 const AuthConfigSection: React.FC = () => {
   const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
@@ -86,7 +87,13 @@ const AuthConfigSection: React.FC = () => {
         await configManagementService.updateConfigById(config.id, {
           value: newValue,
         })
-
+        pushSiteConfigEdit({
+          key: config.key,
+          valueBefore: config.value,
+          valueAfter: newValue,
+          valueType: config.valueType,
+          section: 'auth',
+        })
         toast({
           title: 'Updated',
           description: `${config.key} ${newValue ? 'enabled' : 'disabled'}. Reloading page...`,
@@ -110,7 +117,7 @@ const AuthConfigSection: React.FC = () => {
   const handleFactoryReset = async () => {
     if (
       !window.confirm(
-        'Reset all auth configs to factory defaults? This will restore all authentication settings to their default open mode (all enabled).'
+        'Restore all auth configs to default values? This will reset authentication settings to their default open mode (all enabled).'
       )
     )
       return
@@ -137,8 +144,8 @@ const AuthConfigSection: React.FC = () => {
       }
 
       toast({ 
-        title: 'Reset', 
-        description: 'Auth configs reset to factory defaults. Reloading page...' 
+        title: 'Restored', 
+        description: 'Auth configs restored to default values. Reloading page...' 
       })
       
       // Force hard reload to clear all caches including auth config cache
@@ -173,11 +180,11 @@ const AuthConfigSection: React.FC = () => {
           </div>
           <Button
             onClick={handleFactoryReset}
-            variant="destructive"
+            variant="outline"
             size="sm"
             disabled={isLoading || isSaving}
           >
-            Factory Reset
+            Restore default
           </Button>
         </div>
       </div>
