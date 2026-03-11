@@ -317,7 +317,7 @@ const PrototypeTabCode: FC = () => {
     <div ref={containerRef} className="flex h-[calc(100%-0px)] w-full p-2 bg-gray-100">
       <div className="flex h-full flex-1 min-w-0 flex-col border-r bg-white rounded-md">
         <div className="flex min-h-12 w-full items-center justify-between">
-          {isAuthorized && showSdvProtoPilotButton && (
+          {isAuthorized && showSdvProtoPilotButton ? (
             <div className="flex mx-2 space-x-4">
               <DaDialog
                 open={isOpenGenAI}
