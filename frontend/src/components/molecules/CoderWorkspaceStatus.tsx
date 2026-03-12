@@ -8,14 +8,15 @@
 
 import { FC } from 'react'
 import { Spinner } from '@/components/atoms/spinner'
-import { WorkspaceStatus } from '@/services/coder.service'
+import { WorkspaceStatus, WorkspaceTimings } from '@/services/coder.service'
 
 interface CoderWorkspaceStatusProps {
   status: WorkspaceStatus
   error?: string | null
+  timings?: WorkspaceTimings | null
 }
 
-const CoderWorkspaceStatus: FC<CoderWorkspaceStatusProps> = ({ status, error }) => {
+const CoderWorkspaceStatus: FC<CoderWorkspaceStatusProps> = ({ status, error, timings }) => {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4 p-8">
@@ -68,6 +69,13 @@ const CoderWorkspaceStatus: FC<CoderWorkspaceStatusProps> = ({ status, error }) 
         <p className="text-sm text-muted-foreground text-center max-w-md">
           This may take a few minutes. The workspace is being created and configured...
         </p>
+      )}
+      {timings && (
+        <div className="mt-2 text-xs text-muted-foreground max-w-md text-center">
+          <pre className="whitespace-pre-wrap break-words bg-muted/40 rounded-md px-3 py-2 max-h-48 overflow-auto text-left">
+            {JSON.stringify(timings, null, 2)}
+          </pre>
+        </div>
       )}
       {status.transition && (
         <p className="text-sm text-muted-foreground">Transition: {status.transition}</p>

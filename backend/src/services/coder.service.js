@@ -441,6 +441,31 @@ const getWorkspaceStatus = async (workspaceId) => {
 };
 
 /**
+ * Get workspace build timings
+ * @param {string} workspaceId - Workspace ID
+ * @returns {Promise<Object>} Workspace build timings
+ */
+const getWorkspaceTimings = async (workspaceId) => {
+  try {
+    // Coder API: GET /api/v2/workspaces/{workspace}/timings
+    const response = await axios.get(`${CODER_API_BASE}/workspaces/${workspaceId}/timings`, {
+      headers: getAdminHeaders(),
+    });
+
+    return response.data;
+  } catch (error) {
+    logger.error(`Failed to get Coder workspace timings: ${error.message}`);
+    if (error.response) {
+      throw new ApiError(
+        error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
+        `Coder API error: ${error.response.data?.message || error.message}`,
+      );
+    }
+    throw error;
+  }
+};
+
+/**
  * Get workspace app URL for iframe embedding
  * @param {string} workspaceId - Workspace ID
  * @param {string} appSlug - App slug (default: "code-server")
@@ -649,4 +674,5 @@ module.exports = {
   getWorkspaceAppUrl,
   getTemplateId,
   sanitizeWorkspaceName,
+  getWorkspaceTimings,
 };

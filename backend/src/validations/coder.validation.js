@@ -27,8 +27,15 @@ const getWorkspaceStatus = {
   }),
 };
 
+const getWorkspaceTimings = {
+  params: Joi.object().keys({
+    prototypeId: Joi.string().custom(objectId).required(),
+  }),
+};
+
 module.exports = {
   getWorkspace,
   prepareWorkspace,
   getWorkspaceStatus,
+  getWorkspaceTimings,
 };

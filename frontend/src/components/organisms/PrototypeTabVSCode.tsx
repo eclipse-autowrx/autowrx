@@ -6,18 +6,18 @@
 //
 // SPDX-License-Identifier: MIT
 
-import {
-  FC,
-  useEffect,
-  useState,
-  lazy,
-  Suspense,
-  useRef,
-  useCallback,
-} from 'react'
+import { FC, useEffect, useState, lazy, Suspense, useRef, useCallback } from 'react'
 import { Spinner } from '@/components/atoms/spinner'
 import { retry } from '@/lib/retry'
-import { getWorkspaceUrl, prepareWorkspace, getWorkspaceStatus, WorkspaceInfo, WorkspaceStatus } from '@/services/coder.service'
+import {
+  getWorkspaceUrl,
+  prepareWorkspace,
+  getWorkspaceStatus,
+  getWorkspaceTimings,
+  WorkspaceInfo,
+  WorkspaceStatus,
+  WorkspaceTimings,
+} from '@/services/coder.service'
 import CoderWorkspaceStatus from '@/components/molecules/CoderWorkspaceStatus'
 import { useParams } from 'react-router-dom'
 import usePermissionHook from '@/hooks/usePermissionHook'
@@ -43,6 +43,7 @@ const PrototypeTabVSCode: FC = () => {
   // Coder workspace state
   const [workspaceInfo, setWorkspaceInfo] = useState<WorkspaceInfo | null>(null)
   const [workspaceStatus, setWorkspaceStatus] = useState<WorkspaceStatus | null>(null)
+  const [workspaceTimings, setWorkspaceTimings] = useState<WorkspaceTimings | null>(null)
   const [workspaceError, setWorkspaceError] = useState<string | null>(null)
   const [isLoadingWorkspace, setIsLoadingWorkspace] = useState(true)
   const workspacePollIntervalRef = useRef<NodeJS.Timeout | null>(null)
@@ -78,18 +79,8 @@ const PrototypeTabVSCode: FC = () => {
           const status = await getWorkspaceStatus(prototype_id)
           setWorkspaceStatus(status)
           
-          if (status.exists && status.status === 'running') {
-            // Workspace is running, get the URL
-            try {
-              const info = await getWorkspaceUrl(prototype_id)
-              setWorkspaceInfo(info)
-              setIsLoadingWorkspace(false)
-            } catch (urlError: any) {
-              // Don't set error, just keep polling - the workspace might still be starting up
-              startWorkspacePolling(prototype_id)
-            }
-          } else if (status.exists) {
-            // Workspace exists but not running - poll until it's ready
+          if (status.exists) {
+            // Workspace exists - start polling until timings indicate readiness
             startWorkspacePolling(prototype_id)
           } else {
             // Workspace doesn't exist, create it
@@ -148,7 +139,7 @@ const PrototypeTabVSCode: FC = () => {
     }
   }, [prototype_id, isAuthorized])
 
-  // Poll workspace status until it's running
+  // Poll workspace status + timings until both status and timings indicate readiness
   const startWorkspacePolling = (prototypeId: string) => {
     if (workspacePollIntervalRef.current) {
       clearInterval(workspacePollIntervalRef.current)
@@ -158,26 +149,41 @@ const PrototypeTabVSCode: FC = () => {
       try {
         const status = await getWorkspaceStatus(prototypeId)
         setWorkspaceStatus(status)
-        
+
+        // Always try to fetch timings so we can decide when to stop polling
+        let latestTimings: WorkspaceTimings | null = workspaceTimings
+        try {
+          const timings = await getWorkspaceTimings(prototypeId)
+          setWorkspaceTimings(timings)
+          latestTimings = timings
+        } catch {
+          // Timings may fail transiently; reuse the last known timings if any
+        }
+
         // Clear any previous errors if we're making progress
         if (status.exists && status.status !== 'failed' && workspaceError) {
           setWorkspaceError(null)
         }
 
-        if (status.status === 'running') {
-          // Workspace is running, get the URL
+        const ready =
+          status.status === 'running' &&
+          isAgentReadyFromTimings(latestTimings)
+
+        if (ready) {
+          // Workspace and timings both look ready: resolve URL (if needed) and stop polling
           try {
-            const info = await getWorkspaceUrl(prototypeId)
-            setWorkspaceInfo(info)
+            if (!workspaceInfo?.appUrl) {
+              const info = await getWorkspaceUrl(prototypeId)
+              setWorkspaceInfo(info)
+            }
             setIsLoadingWorkspace(false)
-            setWorkspaceError(null) // Clear any errors
+            setWorkspaceError(null)
             if (workspacePollIntervalRef.current) {
               clearInterval(workspacePollIntervalRef.current)
               workspacePollIntervalRef.current = null
             }
-          } catch (urlError: any) {
-            // Don't set error - the workspace is running but app might not be ready yet
-            // Continue polling
+          } catch {
+            // If URL resolution fails, keep polling; iframe won't render until appUrl is set
           }
         } else if (status.status === 'failed') {
           // Workspace failed - stop polling and show error
@@ -197,7 +203,7 @@ const PrototypeTabVSCode: FC = () => {
             workspacePollIntervalRef.current = null
           }
         }
-        // For other statuses (pending, starting, etc.), just continue polling
+        // For other statuses or non-ready timings, just continue polling
       } catch (error: any) {
         // Don't stop polling on transient errors - might be network issues
         // Only stop if it's a persistent 404 (workspace doesn't exist)
@@ -256,6 +262,23 @@ const PrototypeTabVSCode: FC = () => {
     if (rightPanel) rightPanel.style.transition = ''
   }, [])
 
+  const isAgentReadyFromTimings = useCallback((timings: WorkspaceTimings | null) => {
+    if (!timings) return false
+
+    const hasConnectionTimings =
+      Array.isArray(timings.agent_connection_timings) && timings.agent_connection_timings.length > 0
+
+    const scriptTimings = Array.isArray(timings.agent_script_timings) ? timings.agent_script_timings : []
+    const hasCodeServerOk = scriptTimings.some(
+      (t) => t.display_name === 'code-server' && t.status === 'ok' && t.exit_code === 0,
+    )
+
+    // Heuristic: agent is truly ready only when
+    // - there is at least one connection timing, and
+    // - the code-server script has completed successfully.
+    return hasConnectionTimings && hasCodeServerOk
+  }, [])
+
   useEffect(() => {
     if (isResizing) {
       document.addEventListener('mousemove', handleMouseMove)
@@ -279,14 +302,23 @@ const PrototypeTabVSCode: FC = () => {
 
   // Always render the component, even if prototype isn't loaded yet
   // The workspace loading depends on prototype_id from URL, not prototype from store
+  const shouldShowIframe =
+    !isLoadingWorkspace &&
+    !!workspaceInfo?.appUrl &&
+    workspaceStatus?.status === 'running' &&
+    isAgentReadyFromTimings(workspaceTimings)
   return (
     <div className="flex h-[calc(100%-0px)] w-full p-2 bg-gray-100">
       <div
         className="flex h-full flex-1 min-w-0 flex-col border-r bg-white rounded-md"
         style={{ marginRight: '0px' }}
       >
-        {isLoadingWorkspace || !workspaceInfo || workspaceStatus?.status !== 'running' ? (
-          <CoderWorkspaceStatus status={workspaceStatus || { exists: false, status: 'not_created' }} error={workspaceError} />
+        {!shouldShowIframe ? (
+          <CoderWorkspaceStatus
+            status={workspaceStatus || { exists: false, status: 'not_created' }}
+            error={workspaceError}
+            timings={workspaceTimings}
+          />
         ) : workspaceInfo?.appUrl ? (
           <iframe
             src={`${workspaceInfo.appUrl}?folder=/home/coder/project`}

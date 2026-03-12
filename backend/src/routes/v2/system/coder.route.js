@@ -26,4 +26,8 @@ router
   .route('/workspace/:prototypeId/status')
   .get(auth(), validate(coderValidation.getWorkspaceStatus), coderController.getWorkspaceStatus);
 
+router
+  .route('/workspace/:prototypeId/timings')
+  .get(auth(), validate(coderValidation.getWorkspaceTimings), coderController.getWorkspaceTimings);
+
 module.exports = router;
