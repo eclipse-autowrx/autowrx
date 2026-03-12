@@ -305,13 +305,56 @@ const getOrCreateWorkspace = async (coderUserId, workspaceName, templateId, gitR
       logger.error(`Error details: ${JSON.stringify(error.response.data)}`);
       logger.error(`Request URL: ${error.config?.url}`);
       logger.error(`Request body: ${JSON.stringify(error.config?.data)}`);
-      
+
       // Extract validation errors if present
       const validationErrors = error.response.data?.validations || error.response.data?.detail;
       if (validationErrors) {
         logger.error(`Validation errors: ${JSON.stringify(validationErrors)}`);
       }
-      
+
+      // Handle duplicate workspace race condition:
+      // Coder may return a 500 with a "duplicate key value violates unique constraint"
+      // error when a workspace with the same owner/name already exists.
+      const isDuplicateKeyError =
+        typeof validationErrors === 'string' &&
+        validationErrors.includes('duplicate key value violates unique constraint "workspaces_owner_id_lower_idx"');
+
+      if (error.response.status === 500 && isDuplicateKeyError) {
+        logger.warn(
+          `Duplicate workspace constraint hit for ${workspaceName}, attempting to find existing workspace instead of failing.`
+        );
+        try {
+          // Re-query workspaces and return the existing one if found
+          const retryResponse = await axios.get(`${CODER_API_BASE}/workspaces`, {
+            headers: getAdminHeaders(),
+            params: { q: workspaceName },
+          });
+
+          let retryWorkspaces = [];
+          if (Array.isArray(retryResponse.data)) {
+            retryWorkspaces = retryResponse.data;
+          } else if (retryResponse.data?.workspaces && Array.isArray(retryResponse.data.workspaces)) {
+            retryWorkspaces = retryResponse.data.workspaces;
+          }
+
+          const existingWorkspace = retryWorkspaces.find((w) => w.name === workspaceName);
+          if (existingWorkspace) {
+            logger.info(
+              `Recovered from duplicate key error by using existing workspace: ${workspaceName} (${existingWorkspace.id})`
+            );
+            return existingWorkspace;
+          }
+
+          logger.error(
+            `Duplicate key error reported but no existing workspace named ${workspaceName} was found on retry.`
+          );
+        } catch (retryError) {
+          logger.error(
+            `Failed to recover from duplicate key error for workspace ${workspaceName}: ${retryError.message}`
+          );
+        }
+      }
+
       throw new ApiError(
         error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
         `Coder API error: ${error.response.data?.message || error.message || JSON.stringify(error.response.data)}`

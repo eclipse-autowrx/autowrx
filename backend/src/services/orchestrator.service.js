@@ -173,7 +173,25 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
     }
 
     // 8. Get workspace app URL
-    const appUrl = await coderService.getWorkspaceAppUrl(workspace.id, 'code-server');
+    // In some cases the workspace may be running but the agent/app is not yet
+    // fully initialized. In that case getWorkspaceAppUrl can return a 404
+    // ("Workspace agent not found"). We don't want to fail the whole prepare
+    // flow just because the app URL is not ready yet – the frontend can keep
+    // polling until the URL becomes available.
+    let appUrl = null;
+    try {
+      appUrl = await coderService.getWorkspaceAppUrl(workspace.id, 'code-server');
+    } catch (error) {
+      if (error instanceof ApiError && error.statusCode === httpStatus.NOT_FOUND) {
+        logger.warn(
+          `Workspace app URL not ready yet for workspace ${workspace.id}: ${error.message}. ` +
+            'Continuing without app URL so the frontend can poll until it is available.'
+        );
+        appUrl = null;
+      } else {
+        throw error;
+      }
+    }
 
     // 9. Generate session token for user
     const sessionToken = await coderService.generateSessionToken(coderUsername);
