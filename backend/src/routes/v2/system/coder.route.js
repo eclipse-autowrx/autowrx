@@ -30,4 +30,12 @@ router
   .route('/workspace/:prototypeId/timings')
   .get(auth(), validate(coderValidation.getWorkspaceTimings), coderController.getWorkspaceTimings);
 
+router
+  .route('/workspace/:prototypeId/logs')
+  .get(auth(), validate(coderValidation.getWorkspaceLogs), coderController.getWorkspaceLogs);
+
+router
+  .route('/workspaceagents/:workspaceAgentId/logs')
+  .get(auth(), validate(coderValidation.getWorkspaceAgentLogs), coderController.getWorkspaceAgentLogs);
+
 module.exports = router;

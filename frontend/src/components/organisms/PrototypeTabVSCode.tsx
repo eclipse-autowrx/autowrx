@@ -13,10 +13,10 @@ import {
   getWorkspaceUrl,
   prepareWorkspace,
   getWorkspaceStatus,
-  getWorkspaceTimings,
+  getWorkspaceLogs,
   WorkspaceInfo,
   WorkspaceStatus,
-  WorkspaceTimings,
+  WorkspaceAgentLog,
 } from '@/services/coder.service'
 import CoderWorkspaceStatus from '@/components/molecules/CoderWorkspaceStatus'
 import { useParams } from 'react-router-dom'
@@ -43,10 +43,12 @@ const PrototypeTabVSCode: FC = () => {
   // Coder workspace state
   const [workspaceInfo, setWorkspaceInfo] = useState<WorkspaceInfo | null>(null)
   const [workspaceStatus, setWorkspaceStatus] = useState<WorkspaceStatus | null>(null)
-  const [workspaceTimings, setWorkspaceTimings] = useState<WorkspaceTimings | null>(null)
+  const [workspaceLogs, setWorkspaceLogs] = useState<WorkspaceAgentLog[]>([])
+  const [isWorkspaceReadyFromLogs, setIsWorkspaceReadyFromLogs] = useState(false)
   const [workspaceError, setWorkspaceError] = useState<string | null>(null)
   const [isLoadingWorkspace, setIsLoadingWorkspace] = useState(true)
   const workspacePollIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const lastLogIdRef = useRef<number | null>(null)
 
   // Resize state
   const [rightPanelWidth, setRightPanelWidth] = useState(600) // Initial width in px
@@ -73,6 +75,9 @@ const PrototypeTabVSCode: FC = () => {
       try {
         setIsLoadingWorkspace(true)
         setWorkspaceError(null)
+        setWorkspaceLogs([])
+        setIsWorkspaceReadyFromLogs(false)
+        lastLogIdRef.current = null
         
         // First, check workspace status
         try {
@@ -139,7 +144,7 @@ const PrototypeTabVSCode: FC = () => {
     }
   }, [prototype_id, isAuthorized])
 
-  // Poll workspace status + timings until both status and timings indicate readiness
+  // Poll workspace status + logs until logs indicate readiness
   const startWorkspacePolling = (prototypeId: string) => {
     if (workspacePollIntervalRef.current) {
       clearInterval(workspacePollIntervalRef.current)
@@ -150,14 +155,37 @@ const PrototypeTabVSCode: FC = () => {
         const status = await getWorkspaceStatus(prototypeId)
         setWorkspaceStatus(status)
 
-        // Always try to fetch timings so we can decide when to stop polling
-        let latestTimings: WorkspaceTimings | null = workspaceTimings
-        try {
-          const timings = await getWorkspaceTimings(prototypeId)
-          setWorkspaceTimings(timings)
-          latestTimings = timings
-        } catch {
-          // Timings may fail transiently; reuse the last known timings if any
+        // Fetch workspace logs when workspace exists
+        let readyFromLogs = false
+        if (status.exists) {
+          try {
+            const logs = await getWorkspaceLogs(prototypeId, {
+              after: lastLogIdRef.current ?? undefined,
+              format: 'json',
+            })
+
+            if (Array.isArray(logs)) {
+              if (logs.length > 0) {
+                const typedLogs = logs as WorkspaceAgentLog[]
+                const mergedLogs =
+                  lastLogIdRef.current == null ? typedLogs : [...workspaceLogs, ...typedLogs]
+
+                setWorkspaceLogs(mergedLogs)
+                lastLogIdRef.current = mergedLogs[mergedLogs.length - 1]?.id ?? lastLogIdRef.current
+
+                // Stop condition: when we see the specific "workspace ready" log line
+                readyFromLogs = mergedLogs.some(
+                  (log) =>
+                    typeof log.output === 'string' &&
+                    log.output.includes(
+                      'Session server listening on /home/coder/.local/share/code-server/code-server-ipc.sock',
+                    ),
+                )
+              }
+            }
+          } catch {
+            // Ignore log fetching errors, keep polling status/timings
+          }
         }
 
         // Clear any previous errors if we're making progress
@@ -165,9 +193,11 @@ const PrototypeTabVSCode: FC = () => {
           setWorkspaceError(null)
         }
 
-        const ready =
-          status.status === 'running' &&
-          isAgentReadyFromTimings(latestTimings)
+        if (readyFromLogs) {
+          setIsWorkspaceReadyFromLogs(true)
+        }
+
+        const ready = status.status === 'running' && readyFromLogs
 
         if (ready) {
           // Workspace and timings both look ready: resolve URL (if needed) and stop polling
@@ -262,23 +292,6 @@ const PrototypeTabVSCode: FC = () => {
     if (rightPanel) rightPanel.style.transition = ''
   }, [])
 
-  const isAgentReadyFromTimings = useCallback((timings: WorkspaceTimings | null) => {
-    if (!timings) return false
-
-    const hasConnectionTimings =
-      Array.isArray(timings.agent_connection_timings) && timings.agent_connection_timings.length > 0
-
-    const scriptTimings = Array.isArray(timings.agent_script_timings) ? timings.agent_script_timings : []
-    const hasCodeServerOk = scriptTimings.some(
-      (t) => t.display_name === 'code-server' && t.status === 'ok' && t.exit_code === 0,
-    )
-
-    // Heuristic: agent is truly ready only when
-    // - there is at least one connection timing, and
-    // - the code-server script has completed successfully.
-    return hasConnectionTimings && hasCodeServerOk
-  }, [])
-
   useEffect(() => {
     if (isResizing) {
       document.addEventListener('mousemove', handleMouseMove)
@@ -306,7 +319,7 @@ const PrototypeTabVSCode: FC = () => {
     !isLoadingWorkspace &&
     !!workspaceInfo?.appUrl &&
     workspaceStatus?.status === 'running' &&
-    isAgentReadyFromTimings(workspaceTimings)
+    isWorkspaceReadyFromLogs
   return (
     <div className="flex h-[calc(100%-0px)] w-full p-2 bg-gray-100">
       <div
@@ -317,7 +330,7 @@ const PrototypeTabVSCode: FC = () => {
           <CoderWorkspaceStatus
             status={workspaceStatus || { exists: false, status: 'not_created' }}
             error={workspaceError}
-            timings={workspaceTimings}
+            logs={workspaceLogs}
           />
         ) : workspaceInfo?.appUrl ? (
           <iframe

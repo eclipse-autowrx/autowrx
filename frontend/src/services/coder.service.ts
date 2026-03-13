@@ -49,6 +49,14 @@ export interface WorkspaceTimings {
   provisioner_timings?: unknown
 }
 
+export interface WorkspaceAgentLog {
+  created_at?: string
+  id?: number
+  level?: 'debug' | 'error' | 'info' | 'trace' | 'warn'
+  output?: string
+  source_id?: string
+}
+
 /**
  * Get workspace URL and session token for a prototype
  */
@@ -78,5 +86,19 @@ export const getWorkspaceStatus = async (prototypeId: string): Promise<Workspace
  */
 export const getWorkspaceTimings = async (prototypeId: string): Promise<WorkspaceTimings> => {
   const response = await serverAxios.get<WorkspaceTimings>(`/system/coder/workspace/${prototypeId}/timings`)
+  return response.data
+}
+
+/**
+ * Get logs for a workspace (by prototype)
+ */
+export const getWorkspaceLogs = async (
+  prototypeId: string,
+  params?: { before?: number; after?: number; format?: 'json' | 'text' },
+): Promise<WorkspaceAgentLog[] | string> => {
+  const response = await serverAxios.get<WorkspaceAgentLog[] | string>(
+    `/system/coder/workspace/${prototypeId}/logs`,
+    { params },
+  )
   return response.data
 }

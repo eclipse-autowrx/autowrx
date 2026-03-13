@@ -283,8 +283,41 @@ const getWorkspaceTimings = async (userId, prototypeId) => {
   }
 };
 
+/**
+ * Get workspace logs for a prototype (by resolving its workspace and agent)
+ * @param {string} userId - User ID
+ * @param {string} prototypeId - Prototype ID
+ * @param {Object} options - Log query options (before, after, follow, no_compression, format)
+ * @returns {Promise<any>} Workspace agent logs
+ */
+const getWorkspaceLogs = async (userId, prototypeId, options = {}) => {
+  try {
+    const prototype = await Prototype.findById(prototypeId);
+    if (!prototype) {
+      throw new ApiError(httpStatus.NOT_FOUND, 'Prototype not found');
+    }
+
+    if (!prototype.coder_workspace_id) {
+      throw new ApiError(
+        httpStatus.NOT_FOUND,
+        'Workspace not found for this prototype. Create and start the workspace first.',
+      );
+    }
+
+    const logs = await coderService.getWorkspaceLogsByWorkspaceId(prototype.coder_workspace_id, options);
+    return logs;
+  } catch (error) {
+    logger.error(`Failed to get workspace logs: ${error.message}`);
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, `Failed to get workspace logs: ${error.message}`);
+  }
+};
+
 module.exports = {
   prepareWorkspaceForPrototype,
   getWorkspaceStatus,
   getWorkspaceTimings,
+  getWorkspaceLogs,
 };

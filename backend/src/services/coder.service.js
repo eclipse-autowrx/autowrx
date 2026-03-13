@@ -592,6 +592,56 @@ const getWorkspaceAppUrl = async (workspaceId, appSlug = 'code-server', maxRetri
 };
 
 /**
+ * Get the first workspace agent ID for a workspace
+ * @param {string} workspaceId - Workspace ID
+ * @returns {Promise<string>} Workspace agent ID
+ */
+const getWorkspaceAgentId = async (workspaceId) => {
+  const workspace = await getWorkspaceStatus(workspaceId);
+
+  // Try multiple ways to find the agent, same as getWorkspaceAppUrl
+  let agent = null;
+
+  // Method 1: latest_build.resources[0].agents[0]
+  if (workspace.latest_build?.resources?.[0]?.agents?.[0]) {
+    agent = workspace.latest_build.resources[0].agents[0];
+  }
+  // Method 2: resources[0].agents[0] (direct on workspace)
+  else if (workspace.resources?.[0]?.agents?.[0]) {
+    agent = workspace.resources[0].agents[0];
+  }
+  // Method 3: agents[0] (direct on workspace)
+  else if (workspace.agents?.[0]) {
+    agent = workspace.agents[0];
+  }
+  // Method 4: Search through all resources in latest_build
+  else if (workspace.latest_build?.resources) {
+    for (const resource of workspace.latest_build.resources) {
+      if (resource.agents && resource.agents.length > 0) {
+        agent = resource.agents[0];
+        break;
+      }
+    }
+  }
+  // Method 5: Search through workspace resources
+  else if (workspace.resources) {
+    for (const resource of workspace.resources) {
+      if (resource.agents && resource.agents.length > 0) {
+        agent = resource.agents[0];
+        break;
+      }
+    }
+  }
+
+  if (!agent || !agent.id) {
+    logger.error(`Workspace agent not found for workspace ${workspaceId}. Workspace: ${JSON.stringify(workspace, null, 2)}`);
+    throw new ApiError(httpStatus.NOT_FOUND, 'Workspace agent not found for this workspace');
+  }
+
+  return agent.id;
+};
+
+/**
  * Sanitize workspace name for Coder
  * Coder requirements:
  * - 1-32 characters
@@ -665,6 +715,66 @@ const generateRandomPassword = () => {
   return `pwd_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
 };
 
+/**
+ * Get logs for a workspace agent
+ * Wraps Coder API: GET /api/v2/workspaceagents/{workspaceagent}/logs
+ * @param {string} workspaceAgentId - Workspace agent ID (UUID)
+ * @param {Object} [options] - Query options
+ * @param {number} [options.before] - Before log id
+ * @param {number} [options.after] - After log id
+ * @param {boolean} [options.follow] - Follow log stream
+ * @param {boolean} [options.no_compression] - Disable compression for WebSocket connection
+ * @param {string} [options.format] - 'json' (default) or 'text'
+ * @returns {Promise<any>} Logs array or text, depending on format
+ */
+const getWorkspaceAgentLogs = async (workspaceAgentId, options = {}) => {
+  try {
+    const { before, after, follow, no_compression, format } = options;
+
+    const response = await axios.get(`${CODER_API_BASE}/workspaceagents/${workspaceAgentId}/logs`, {
+      headers: getAdminHeaders(),
+      params: {
+        ...(before !== undefined && { before }),
+        ...(after !== undefined && { after }),
+        ...(follow !== undefined && { follow }),
+        ...(no_compression !== undefined && { no_compression }),
+        ...(format && { format }),
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    logger.error(`Failed to get workspace agent logs: ${error.message}`);
+    if (error.response) {
+      logger.error(
+        `Workspace agent logs error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`
+      );
+      throw new ApiError(
+        error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
+        `Coder API error: ${error.response.data?.message || error.message || JSON.stringify(error.response.data)}`
+      );
+    }
+    if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+      throw new ApiError(
+        httpStatus.SERVICE_UNAVAILABLE,
+        `Cannot connect to Coder at ${config.coder.url}. Is Coder running?`
+      );
+    }
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, `Coder service error: ${error.message}`);
+  }
+};
+
+/**
+ * Get logs for the first agent of a workspace
+ * @param {string} workspaceId - Workspace ID
+ * @param {Object} [options] - Query options (same as getWorkspaceAgentLogs)
+ * @returns {Promise<any>} Logs array or text, depending on format
+ */
+const getWorkspaceLogsByWorkspaceId = async (workspaceId, options = {}) => {
+  const agentId = await getWorkspaceAgentId(workspaceId);
+  return getWorkspaceAgentLogs(agentId, options);
+};
+
 module.exports = {
   ensureUserExists,
   generateSessionToken,
@@ -675,4 +785,7 @@ module.exports = {
   getTemplateId,
   sanitizeWorkspaceName,
   getWorkspaceTimings,
+  getWorkspaceAgentLogs,
+  getWorkspaceAgentId,
+  getWorkspaceLogsByWorkspaceId,
 };
