@@ -104,14 +104,7 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     secret: false,
     valueType: 'boolean',
     description: 'Enable the code diff feature on the Prototype Code tab. When enabled, a "Show Diff" button appears after AI or plugin code generation, allowing users to compare the new code with the previous version.',
-  },
-  {
-    key: 'SHOW_SDV_PROTOPILOT',
-    scope: 'site',
-    value: true,
-    secret: false,
-    valueType: 'boolean',
-    description: 'Show or hide the SDV ProtoPilot (AI code generation) button on the Prototype Code tab.',
+    category: 'genai',
   },
   {
     key: 'DEFAULT_MARKETPLACE_URL',
@@ -184,6 +177,15 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     description:
       'Marketplace URL for fetching GenAI addons/generators. Used to load marketplace generators in ProtoPilot. Leave empty to hide the Marketplace Generators section.',
     category: 'genai',
+  },
+  {
+    key: 'PROTOTYPE_ITEM_MENU_CONTEXT',
+    scope: 'site',
+    value: false,
+    secret: false,
+    valueType: 'boolean',
+    description:
+      'Enable or disable the context menu on prototype items in the prototype list. When enabled, right-clicking on a prototype will show a menu context.',
   },
 ]
 
