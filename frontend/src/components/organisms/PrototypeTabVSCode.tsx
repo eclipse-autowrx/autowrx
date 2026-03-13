@@ -349,7 +349,7 @@ const PrototypeTabVSCode: FC = () => {
         className="w-1 bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors cursor-col-resize shrink-0"
         onMouseDown={handleMouseDown}
         title="Drag to resize"
-        style={{ marginLeft: '8px', marginRight: '8px' }}
+        style={{ margin: '2px'}}
       >
         <div className="w-full h-full flex items-center justify-center">
           <div

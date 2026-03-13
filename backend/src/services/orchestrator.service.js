@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -16,6 +16,72 @@ const logger = require('../config/logger');
 const ApiError = require('../utils/ApiError');
 const httpStatus = require('http-status');
 const { decrypt } = require('../utils/encryption');
+
+const looksLikeFileTree = (value) => {
+  if (!Array.isArray(value)) return false;
+  return value.every(
+    (item) =>
+      item && typeof item === 'object' && (item.type === 'file' || item.type === 'folder') && typeof item.name === 'string',
+  );
+};
+
+const flattenFileTree = (items, basePath = '') => {
+  const files = [];
+  for (const item of items) {
+    if (!item || typeof item !== 'object') continue;
+    const name = typeof item.name === 'string' ? item.name : '';
+    if (!name) continue;
+
+    const currentPath = basePath ? `${basePath}/${name}` : name;
+
+    if (item.type === 'folder') {
+      const children = Array.isArray(item.items) ? item.items : [];
+      files.push(...flattenFileTree(children, currentPath));
+      continue;
+    }
+
+    if (item.type === 'file') {
+      const content = typeof item.content === 'string' ? item.content : '';
+      files.push({ path: currentPath, content });
+    }
+  }
+  return files;
+};
+
+const buildInitialRepoContentFromPrototype = (prototype) => {
+  const code = typeof prototype?.code === 'string' ? prototype.code : '';
+
+  // Multi-file templates store FileSystemItem[] as JSON string.
+  try {
+    const parsed = JSON.parse(code);
+    if (looksLikeFileTree(parsed)) {
+      const files = flattenFileTree(parsed).filter((f) => f.path && typeof f.content === 'string');
+      if (files.length > 0) {
+        return {
+          files,
+        };
+      }
+    }
+  } catch {
+    // Not JSON => treat as single-file code below.
+  }
+
+  // Single-file templates: store raw code. Seed a minimal project.
+  if (code.trim().length > 0) {
+    const mainFileByLanguage = prototype?.language === 'python' ? 'main.py' : 'main.txt';
+    return {
+      readme: `# ${prototype?.name || 'Prototype'}\n\nGenerated from single-file template.\n`,
+      files: [
+        {
+          path: mainFileByLanguage,
+          content: code,
+        },
+      ],
+    };
+  }
+
+  return {};
+};
 
 /**
  * Prepare workspace for a prototype - complete orchestration flow
@@ -56,22 +122,30 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
     // 3. Ensure Gitea repository exists (from prototype)
     const repoName = prototype.name;
     const repoUrl = prototype.gitea_repo_url || giteaService.getRepositoryUrl(orgName, repoName);
-    
+
     // Check if repository was just created (we need to initialize it)
     const repoJustCreated = !prototype.gitea_repo_url;
-    
+
     if (repoJustCreated) {
       logger.info(`Creating new repository ${orgName}/${repoName} for prototype ${prototypeId}`);
       await giteaService.ensureRepositoryExists(orgName, repoName, prototypeId);
-      
+
       // Wait a moment for repository to be fully initialized by Gitea
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      
-      // Initialize with default Python Multiple Files project structure
-      // (This will use the default structure from sampleProjects.ts)
-      logger.info(`Initializing repository ${orgName}/${repoName} with default Python project files`);
+
+      // Initialize repository based on prototype template/code.
+      // - Single-file templates store raw code (string) -> seed main.py
+      // - Multi-file templates store a JSON string (FileSystemItem[]) -> seed full tree
+      const initialContent = buildInitialRepoContentFromPrototype(prototype);
+      logger.info(
+        `Initializing repository ${orgName}/${repoName} with prototype content (hasCustomContent: ${!!(
+          initialContent.readme ||
+          initialContent.gitignore ||
+          (initialContent.files && initialContent.files.length)
+        )})`,
+      );
       try {
-        await giteaService.initializeRepository(orgName, repoName);
+        await giteaService.initializeRepository(orgName, repoName, initialContent);
         logger.info(`✓ Repository initialization completed for ${orgName}/${repoName}`);
       } catch (initError) {
         logger.error(`✗ Repository initialization failed for ${orgName}/${repoName}: ${initError.message}`);
@@ -93,18 +167,18 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
     const giteaAdminUsername = config.gitea.adminUsername;
     const giteaAdminToken = config.gitea.adminToken || config.gitea.adminPassword;
     const containerRepoUrl = giteaService.getRepositoryUrlForContainer(
-      orgName, 
-      repoName, 
-      giteaAdminUsername, 
-      giteaAdminToken
+      orgName,
+      repoName,
+      giteaAdminUsername,
+      giteaAdminToken,
     );
 
     // 4. Sync user permissions to Gitea (lazy sync)
     await permissionSyncService.lazySyncUserPermissions(userId, model._id.toString());
-    
+
     const userRoles = await UserRole.find({ user: userId, ref: model._id }).populate('role');
     const giteaUsername = user.coder_username || `user-${userId.toString().slice(-12)}`;
-    
+
     // Ensure Gitea user exists
     await giteaService.ensureUserExists(giteaUsername, user.email);
 
@@ -127,7 +201,7 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
     // Use sanitized workspace name (Coder requires 1-32 chars, alphanumeric + hyphens only)
     const workspaceName = coderService.sanitizeWorkspaceName(prototypeId);
     const templateId = await coderService.getTemplateId('docker-template');
-    
+
     // Get GitHub token if user has one (optional, decrypt if encrypted)
     let githubToken = null;
     if (user.github_token) {
@@ -150,7 +224,7 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
         workspaceName,
         templateId,
         containerRepoUrl, // Use container-accessible URL with authentication
-        githubToken
+        githubToken,
       );
 
       // Update prototype with workspace info
@@ -165,7 +239,7 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
       // startWorkspace will handle the case where a build is already active
       const updatedWorkspace = await coderService.startWorkspace(workspace.id);
       workspace = updatedWorkspace;
-      
+
       // If workspace is starting, wait a bit
       if (workspace.latest_build?.status === 'starting') {
         await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -185,7 +259,7 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
       if (error instanceof ApiError && error.statusCode === httpStatus.NOT_FOUND) {
         logger.warn(
           `Workspace app URL not ready yet for workspace ${workspace.id}: ${error.message}. ` +
-            'Continuing without app URL so the frontend can poll until it is available.'
+            'Continuing without app URL so the frontend can poll until it is available.',
         );
         appUrl = null;
       } else {
