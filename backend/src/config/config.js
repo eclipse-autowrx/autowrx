@@ -55,6 +55,8 @@ const envVarsSchema = Joi.object()
     OPENAI_API_KEY: Joi.string().description('OpenAI API key'),
     OPENAI_ENDPOINT_URL: Joi.string().description('OpenAI endpoint url'),
     STRICT_AUTH: Joi.boolean().description('Strict auth'),
+    // GenAI service
+    GENAI_URL: Joi.string().description('GenAI service url'),
     // Admin emails
     ADMIN_EMAILS: Joi.string().description('Admin emails'),
     ADMIN_PASSWORD: Joi.string().description('Admin password'),
@@ -116,10 +118,10 @@ const config = {
       if (!origin) {
         return callback(null, true);
       }
-      
+
       // Parse CORS_ORIGINS from environment variable (comma-separated regex patterns)
       const corsOriginsPatterns = envVars.CORS_ORIGINS.split(',').map(pattern => pattern.trim()).filter(Boolean);
-      
+
       // Build allowed origins list with both http and https for each pattern
       const allowedOrigins = [];
       corsOriginsPatterns.forEach(pattern => {
@@ -130,10 +132,10 @@ const config = {
           console.error(`Invalid CORS origin pattern: ${pattern}`, e);
         }
       });
-      
+
       // Check if origin matches any of the allowed patterns
       const isAllowed = allowedOrigins.some(pattern => pattern.test(origin));
-      
+
       if (isAllowed) {
         callback(null, true);
       } else {
@@ -166,6 +168,9 @@ const config = {
       url: envVars.EMAIL_URL, // This is the URL for your custom email service
       apiKey: envVars.EMAIL_API_KEY,
       endpointUrl: envVars.EMAIL_ENDPOINT_URL, // This is the endpoint URL for the default email service: Brevo
+    },
+    genAI: {
+      url: envVars.GENAI_URL,
     },
     log: {
       url: envVars.LOG_URL,

@@ -15,6 +15,7 @@ const pluginRoute = require('./plugin.route');
 const modelTemplateRoute = require('./modelTemplate.route');
 const dashboardTemplateRoute = require('./dashboardTemplate.route');
 const customApiSchemaRoute = require('./custom-api-schema.route');
+const genaiRoute = require('./genai.route');
 
 const router = express.Router();
 
@@ -27,6 +28,7 @@ router.use('/plugin', pluginRoute);
 router.use('/model-template', modelTemplateRoute);
 router.use('/dashboard-template', dashboardTemplateRoute);
 router.use('/custom-api-schema', customApiSchemaRoute);
+router.use('/genai', genaiRoute);
 // Backward/compat path to match docs and frontend
 router.use('/system/plugin', pluginRoute);
 router.use('/system/model-template', modelTemplateRoute);
