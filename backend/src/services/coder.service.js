@@ -665,29 +665,26 @@ const getWorkspaceAgentId = async (workspaceId) => {
 };
 
 /**
- * Sanitize workspace name for Coder
+ * Sanitize workspace name for Coder (one workspace per user)
  * Coder requirements:
  * - 1-32 characters
  * - Only letters, numbers, and hyphens
  * - Must start and end with letter or number
- * @param {string} prototypeId - Prototype ID
+ * @param {string} userId - User ID
  * @returns {string} Sanitized workspace name
  */
-const sanitizeWorkspaceName = (prototypeId) => {
-  // Use shorter prefix and last 12 chars of ID to stay within 32 char limit
-  // Format: "proto-{last12chars}" = max 18 chars
-  const shortId = prototypeId.toString().slice(-12);
-  const name = `proto-${shortId}`;
+const sanitizeWorkspaceName = (userId) => {
+  const shortId = userId.toString().slice(-12);
+  const name = `ws-${shortId}`;
 
-  // Ensure it only contains allowed characters (a-z, 0-9, -)
   const sanitized = name
     .toLowerCase()
     .replace(/[^a-z0-9-]/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
-    .slice(0, 32); // Enforce max length
+    .slice(0, 32);
 
-  return sanitized || `proto-${shortId}`;
+  return sanitized || `ws-${shortId}`;
 };
 
 /**

@@ -78,56 +78,21 @@ const PrototypeTabVSCode: FC = () => {
         setWorkspaceLogs([])
         setIsWorkspaceReadyFromLogs(false)
         lastLogIdRef.current = null
-        
-        // First, check workspace status
+
+        // Always prepare workspace first (idempotent: creates folder, seeds code, reuses existing workspace)
         try {
-          const status = await getWorkspaceStatus(prototype_id)
-          setWorkspaceStatus(status)
-          
-          if (status.exists) {
-            // Workspace exists - start polling until timings indicate readiness
-            startWorkspacePolling(prototype_id)
-          } else {
-            // Workspace doesn't exist, create it
-            try {
-              await prepareWorkspace(prototype_id)
-              // Start polling immediately after prepare
-              startWorkspacePolling(prototype_id)
-            } catch (prepareError: any) {
-              // Only set error if it's a real error, not a 409 (already creating)
-              if (prepareError.response?.status !== 409) {
-                console.error('[PrototypeTabVSCode] Failed to prepare workspace:', prepareError)
-                setWorkspaceError(prepareError.message || 'Failed to prepare workspace')
-                setIsLoadingWorkspace(false)
-              } else {
-                // 409 means workspace is already being created, just poll
-                startWorkspacePolling(prototype_id)
-              }
-            }
-          }
-        } catch (error: any) {
-          // If status check fails, try to prepare workspace
-          if (error.response?.status === 404 || error.message?.includes('not found')) {
-            try {
-              await prepareWorkspace(prototype_id)
-              startWorkspacePolling(prototype_id)
-            } catch (prepareError: any) {
-              if (prepareError.response?.status !== 409) {
-                console.error('[PrototypeTabVSCode] Failed to prepare workspace:', prepareError)
-                setWorkspaceError(prepareError.message || 'Failed to prepare workspace')
-                setIsLoadingWorkspace(false)
-              } else {
-                startWorkspacePolling(prototype_id)
-              }
-            }
-          } else {
-            // Other errors - show error but keep trying
-            console.error('[PrototypeTabVSCode] Error checking workspace status:', error)
-            setWorkspaceError(error.message || 'Failed to check workspace status')
-            // Still try to poll in case it's a transient error
-            startWorkspacePolling(prototype_id)
+          await prepareWorkspace(prototype_id)
+        } catch (prepareError: any) {
+          if (prepareError.response?.status !== 409) {
+            console.error('[PrototypeTabVSCode] Failed to prepare workspace:', prepareError)
+            setWorkspaceError(prepareError.message || 'Failed to prepare workspace')
+            setIsLoadingWorkspace(false)
+            return
           }
         }
+
+        // Start polling for workspace readiness
+        startWorkspacePolling(prototype_id)
       } catch (error: any) {
         console.error('[PrototypeTabVSCode] Failed to load workspace:', error)
         setWorkspaceError(error.message || 'Failed to load workspace')

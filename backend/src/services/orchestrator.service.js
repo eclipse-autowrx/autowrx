@@ -57,7 +57,18 @@ const buildInitialRepoContentFromPrototype = (prototype) => {
   try {
     const parsed = JSON.parse(code);
     if (looksLikeFileTree(parsed)) {
-      const files = flattenFileTree(parsed).filter((f) => f.path && typeof f.content === 'string');
+      // If the tree is wrapped in a single root folder (common in templates),
+      // unwrap it so files are written directly to the prototype folder root.
+      const shouldUnwrapRootFolder =
+        Array.isArray(parsed) &&
+        parsed.length === 1 &&
+        parsed[0] &&
+        typeof parsed[0] === 'object' &&
+        parsed[0].type === 'folder' &&
+        Array.isArray(parsed[0].items);
+
+      const flattened = shouldUnwrapRootFolder ? flattenFileTree(parsed[0].items) : flattenFileTree(parsed);
+      const files = flattened.filter((f) => f.path && typeof f.content === 'string');
       if (files.length > 0) {
         return {
           files,
@@ -83,6 +94,56 @@ const buildInitialRepoContentFromPrototype = (prototype) => {
   }
 
   return {};
+};
+
+/**
+ * Sanitize prototype name for use as folder name
+ * @param {string} name - Prototype name
+ * @returns {string} Sanitized folder name
+ */
+const sanitizePrototypeFolderName = (name) => {
+  if (!name || typeof name !== 'string') return 'unnamed-prototype';
+  const sanitized = name
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9\-_]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 64);
+  return sanitized || 'unnamed-prototype';
+};
+
+/**
+ * Seed initial code files into a prototype folder (only if folder is empty)
+ * @param {string} folderPath - Host folder path
+ * @param {Object} prototype - Prototype document
+ */
+const seedPrototypeFiles = (folderPath, prototype) => {
+  try {
+    const existingFiles = fs.readdirSync(folderPath);
+    if (existingFiles.length > 0) {
+      logger.info(`Folder ${folderPath} already has ${existingFiles.length} file(s), skipping seed`);
+      return;
+    }
+
+    const content = buildInitialRepoContentFromPrototype(prototype);
+
+    if (content.readme) {
+      fs.writeFileSync(path.join(folderPath, 'README.md'), content.readme);
+    }
+
+    if (content.files && content.files.length > 0) {
+      content.files.forEach((file) => {
+        const filePath = path.join(folderPath, file.path);
+        fs.mkdirSync(path.dirname(filePath), { recursive: true });
+        fs.writeFileSync(filePath, file.content);
+      });
+      logger.info(`Seeded ${content.files.length} file(s) into ${folderPath}`);
+    }
+  } catch (err) {
+    logger.warn(`Failed to seed prototype files: ${err.message}`);
+  }
 };
 
 /**
@@ -199,71 +260,55 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
 
     const coderUser = await coderService.ensureUserExists(userId, coderUsername, user.email);
 
-    // 6. Ensure prototype folder exists on host (bind-mount)
+    // 6. Prepare prototype folder on host (per-user dir, prototype name as subfolder)
     const prototypesPath = config.prototypes?.path || '/tmp/autowrx/prototypes';
-    const prototypeFolderHost = path.join(prototypesPath, userId.toString(), prototypeId.toString());
+    const userHostPath = path.join(prototypesPath, userId.toString());
+    const prototypeFolderName = sanitizePrototypeFolderName(prototype.name);
+    const prototypeFolderHost = path.join(userHostPath, prototypeFolderName);
+
     try {
       fs.mkdirSync(prototypeFolderHost, { recursive: true });
       logger.info(`Ensured prototype folder exists: ${prototypeFolderHost}`);
     } catch (mkdirErr) {
       logger.warn(`Could not create prototype folder ${prototypeFolderHost}: ${mkdirErr.message}`);
-      // Continue - mount may still work if parent exists
     }
 
-    // 7. Get or create Coder workspace
-    // Use sanitized workspace name (Coder requires 1-32 chars, alphanumeric + hyphens only)
-    const workspaceName = coderService.sanitizeWorkspaceName(prototypeId);
+    // 7. Seed initial code files (only if folder is empty)
+    seedPrototypeFiles(prototypeFolderHost, prototype);
+
+    // 8. Get or create ONE workspace per user (reuse across prototypes)
+    const workspaceName = coderService.sanitizeWorkspaceName(userId);
     const templateId = await coderService.getTemplateId('docker-template');
 
-    // DISABLED - Gitea disabled
-    // let githubToken = null;
-    // if (user.github_token) {
-    //   try {
-    //     githubToken = decrypt(user.github_token);
-    //   } catch (error) {
-    //     githubToken = user.github_token;
-    //   }
-    // }
-
-    let workspace = prototype.coder_workspace_id
-      ? await coderService.getWorkspaceStatus(prototype.coder_workspace_id).catch(() => null)
+    let workspace = user.coder_workspace_id
+      ? await coderService.getWorkspaceStatus(user.coder_workspace_id).catch(() => null)
       : null;
 
-    if (!workspace || workspace.latest_build?.status !== 'running') {
+    if (!workspace) {
       workspace = await coderService.getOrCreateWorkspace(
         coderUser.id,
         workspaceName,
         templateId,
-        prototypesPath,
-        null, // githubToken - DISABLED
-        null, // gitRepoUrl - DISABLED
+        userHostPath,
       );
 
-      // Update prototype with workspace info
-      prototype.coder_workspace_id = workspace.id;
-      prototype.coder_workspace_name = workspaceName;
-      await prototype.save();
+      user.coder_workspace_id = workspace.id;
+      user.coder_workspace_name = workspaceName;
+      await user.save();
     }
 
-    // 8. Start workspace if stopped (or refresh status if build is in progress)
+    // 9. Start workspace if stopped
     const currentStatus = workspace.latest_build?.status;
     if (currentStatus !== 'running') {
-      // startWorkspace will handle the case where a build is already active
       const updatedWorkspace = await coderService.startWorkspace(workspace.id);
       workspace = updatedWorkspace;
 
-      // If workspace is starting, wait a bit
       if (workspace.latest_build?.status === 'starting') {
         await new Promise((resolve) => setTimeout(resolve, 2000));
       }
     }
 
-    // 9. Get workspace app URL
-    // In some cases the workspace may be running but the agent/app is not yet
-    // fully initialized. In that case getWorkspaceAppUrl can return a 404
-    // ("Workspace agent not found"). We don't want to fail the whole prepare
-    // flow just because the app URL is not ready yet – the frontend can keep
-    // polling until the URL becomes available.
+    // 10. Get workspace app URL
     let appUrl = null;
     try {
       appUrl = await coderService.getWorkspaceAppUrl(workspace.id, 'code-server');
@@ -279,13 +324,13 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
       }
     }
 
-    // 10. Generate session token for user
+    // 11. Generate session token for user
     const sessionToken = await coderService.generateSessionToken(coderUsername);
 
-    // Container path for this prototype (bind-mount: host prototypesPath -> /home/coder/prototypes)
-    const folderPath = `/home/coder/prototypes/${userId}/${prototypeId}`;
+    // Container path: user host path is mounted at /home/coder/prototypes
+    const folderPath = `/home/coder/prototypes/${prototypeFolderName}`;
 
-    logger.info(`Workspace prepared for prototype ${prototypeId}: ${workspace.id}`);
+    logger.info(`Workspace prepared for prototype ${prototypeId}: ${workspace.id}, folder: ${folderPath}`);
 
     return {
       workspaceId: workspace.id,
@@ -293,7 +338,7 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
       status: workspace.latest_build?.status || 'unknown',
       appUrl,
       sessionToken,
-      repoUrl: null, // DISABLED - Gitea disabled
+      repoUrl: null,
       folderPath,
     };
   } catch (error) {
@@ -313,19 +358,19 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
  */
 const getWorkspaceStatus = async (userId, prototypeId) => {
   try {
-    const prototype = await Prototype.findById(prototypeId);
-    if (!prototype) {
-      throw new ApiError(httpStatus.NOT_FOUND, 'Prototype not found');
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
     }
 
-    if (!prototype.coder_workspace_id) {
+    if (!user.coder_workspace_id) {
       return {
         exists: false,
         status: 'not_created',
       };
     }
 
-    const workspace = await coderService.getWorkspaceStatus(prototype.coder_workspace_id);
+    const workspace = await coderService.getWorkspaceStatus(user.coder_workspace_id);
 
     return {
       exists: true,
@@ -334,6 +379,9 @@ const getWorkspaceStatus = async (userId, prototypeId) => {
       transition: workspace.latest_build?.transition || null,
     };
   } catch (error) {
+    if (error instanceof ApiError && error.statusCode === 404) {
+      return { exists: false, status: 'not_created' };
+    }
     logger.error(`Failed to get workspace status: ${error.message}`);
     if (error instanceof ApiError) {
       throw error;
@@ -350,19 +398,12 @@ const getWorkspaceStatus = async (userId, prototypeId) => {
  */
 const getWorkspaceTimings = async (userId, prototypeId) => {
   try {
-    const prototype = await Prototype.findById(prototypeId);
-    if (!prototype) {
-      throw new ApiError(httpStatus.NOT_FOUND, 'Prototype not found');
+    const user = await User.findById(userId);
+    if (!user?.coder_workspace_id) {
+      throw new ApiError(httpStatus.NOT_FOUND, 'Workspace not found. Create and start the workspace first.');
     }
 
-    if (!prototype.coder_workspace_id) {
-      throw new ApiError(
-        httpStatus.NOT_FOUND,
-        'Workspace not found for this prototype. Create and start the workspace first.',
-      );
-    }
-
-    const timings = await coderService.getWorkspaceTimings(prototype.coder_workspace_id);
+    const timings = await coderService.getWorkspaceTimings(user.coder_workspace_id);
     return timings;
   } catch (error) {
     logger.error(`Failed to get workspace timings: ${error.message}`);
@@ -382,19 +423,12 @@ const getWorkspaceTimings = async (userId, prototypeId) => {
  */
 const getWorkspaceLogs = async (userId, prototypeId, options = {}) => {
   try {
-    const prototype = await Prototype.findById(prototypeId);
-    if (!prototype) {
-      throw new ApiError(httpStatus.NOT_FOUND, 'Prototype not found');
+    const user = await User.findById(userId);
+    if (!user?.coder_workspace_id) {
+      throw new ApiError(httpStatus.NOT_FOUND, 'Workspace not found. Create and start the workspace first.');
     }
 
-    if (!prototype.coder_workspace_id) {
-      throw new ApiError(
-        httpStatus.NOT_FOUND,
-        'Workspace not found for this prototype. Create and start the workspace first.',
-      );
-    }
-
-    const logs = await coderService.getWorkspaceLogsByWorkspaceId(prototype.coder_workspace_id, options);
+    const logs = await coderService.getWorkspaceLogsByWorkspaceId(user.coder_workspace_id, options);
     return logs;
   } catch (error) {
     logger.error(`Failed to get workspace logs: ${error.message}`);
