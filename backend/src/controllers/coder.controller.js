@@ -41,6 +41,7 @@ const getWorkspace = catchAsync(async (req, res) => {
     appUrl: workspaceInfo.appUrl,
     sessionToken: workspaceInfo.sessionToken,
     repoUrl: workspaceInfo.repoUrl,
+    folderPath: workspaceInfo.folderPath,
   });
 });
 
@@ -72,6 +73,7 @@ const prepareWorkspace = catchAsync(async (req, res) => {
     appUrl: workspaceInfo.appUrl,
     sessionToken: workspaceInfo.sessionToken,
     repoUrl: workspaceInfo.repoUrl,
+    folderPath: workspaceInfo.folderPath,
   });
 });
 

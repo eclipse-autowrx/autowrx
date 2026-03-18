@@ -65,7 +65,9 @@ const envVarsSchema = Joi.object()
     // Coder integration
     CODER_URL: Joi.string().default('http://localhost:7080').description('Coder instance URL'),
     CODER_ADMIN_API_KEY: Joi.string().description('Coder admin API token for impersonation'),
-    // Gitea integration
+    // Prototypes folder path (host path for bind-mount)
+    PROTOTYPES_PATH: Joi.string().default('/tmp/autowrx/prototypes').description('Host path for prototypes folder (bind-mount into Coder workspace)'),
+    // Gitea integration (DISABLED - kept for reference)
     GITEA_URL: Joi.string().default('http://localhost:3000').description('Gitea instance URL'),
     GITEA_ADMIN_USERNAME: Joi.string().default('gitea-admin').description('Gitea admin username'),
     GITEA_ADMIN_PASSWORD: Joi.string().description('Gitea admin password'),
@@ -175,9 +177,6 @@ const config = {
       apiKey: envVars.EMAIL_API_KEY,
       endpointUrl: envVars.EMAIL_ENDPOINT_URL, // This is the endpoint URL for the default email service: Brevo
     },
-    log: {
-      url: envVars.LOG_URL,
-    },
   },
   openai: {
     apiKey: envVars.OPENAI_API_KEY,
@@ -199,6 +198,9 @@ const config = {
   coder: {
     url: envVars.CODER_URL,
     adminApiKey: envVars.CODER_ADMIN_API_KEY,
+  },
+  prototypes: {
+    path: envVars.PROTOTYPES_PATH,
   },
   gitea: {
     url: envVars.GITEA_URL,

@@ -214,7 +214,7 @@ const CoderWorkspaceStatus: FC<CoderWorkspaceStatusProps> = ({
                           key={`${log.id ?? idx}-${lineIdx}`}
                           className={
                             line.includes(
-                              'Session server listening on /home/coder/.local/share/code-server/code-server-ipc.sock',
+                              'Setup complete.',
                             )
                               ? 'text-emerald-300'
                               : ''

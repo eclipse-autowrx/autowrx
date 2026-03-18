@@ -14,7 +14,9 @@ export interface WorkspaceInfo {
   status: string
   appUrl: string
   sessionToken?: string | null
-  repoUrl: string
+  repoUrl: string | null
+  /** Container path for prototype folder (mount from host) */
+  folderPath?: string | null
 }
 
 export interface WorkspaceStatus {

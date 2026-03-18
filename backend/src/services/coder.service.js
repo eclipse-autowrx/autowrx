@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -43,30 +43,32 @@ const getOrCreateDefaultOrganization = async () => {
 
     logger.info(`Found ${organizations.length} organization(s) in Coder`);
     if (organizations.length > 0) {
-      logger.debug(`Organizations: ${JSON.stringify(organizations.map(org => ({ name: org.name, id: org.id, is_default: org.is_default })))}`);
+      logger.debug(
+        `Organizations: ${JSON.stringify(organizations.map((org) => ({ name: org.name, id: org.id, is_default: org.is_default })))}`,
+      );
     }
-    
+
     // Find the default organization (marked with is_default: true)
     const defaultOrg = organizations.find((org) => org.is_default === true);
-    
+
     if (defaultOrg) {
       logger.info(`Using default Coder organization: ${defaultOrg.name} (${defaultOrg.id})`);
       return defaultOrg.id;
     }
-    
+
     // Fallback: look for organization named "coder" (default name)
     const coderOrg = organizations.find((org) => org.name === 'coder');
     if (coderOrg) {
       logger.info(`Using Coder organization: ${coderOrg.name} (${coderOrg.id})`);
       return coderOrg.id;
     }
-    
+
     // Last resort: use first available organization
     if (organizations.length > 0) {
       logger.warn(`No default organization found, using first available: ${organizations[0].name}`);
       return organizations[0].id;
     }
-    
+
     // If no organizations found, try to get organization from admin user as fallback
     if (organizations.length === 0) {
       logger.warn(`No organizations found via organizations endpoint, trying to get from admin user...`);
@@ -75,11 +77,9 @@ const getOrCreateDefaultOrganization = async () => {
         const usersResponse = await axios.get(`${CODER_API_BASE}/users`, {
           headers: getAdminHeaders(),
         });
-        
-        const users = Array.isArray(usersResponse.data) 
-          ? usersResponse.data 
-          : (usersResponse.data?.users || []);
-        
+
+        const users = Array.isArray(usersResponse.data) ? usersResponse.data : usersResponse.data?.users || [];
+
         // Find the first user with organization_ids
         const userWithOrg = users.find((u) => u.organization_ids && u.organization_ids.length > 0);
         if (userWithOrg && userWithOrg.organization_ids.length > 0) {
@@ -91,23 +91,32 @@ const getOrCreateDefaultOrganization = async () => {
         logger.error(`Failed to get organization from user: ${userError.message}`);
       }
     }
-    
+
     // If still no organizations found, log the full response for debugging
     logger.error(`No organizations found. API response: ${JSON.stringify(orgsResponse.data)}`);
     throw new ApiError(
       httpStatus.INTERNAL_SERVER_ERROR,
-      'No organizations found in Coder instance. Please ensure Coder is properly initialized with at least one organization.'
+      'No organizations found in Coder instance. Please ensure Coder is properly initialized with at least one organization.',
     );
   } catch (error) {
     logger.error(`Failed to get default organization: ${error.message}`);
     if (error.response) {
-      logger.error(`Organization API error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`);
+      logger.error(
+        `Organization API error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`,
+      );
       logger.error(`Request URL: ${error.config?.url}, Headers: ${JSON.stringify(error.config?.headers)}`);
     } else if (error.request) {
       logger.error(`No response received from Coder API. Request: ${JSON.stringify(error.request)}`);
     }
     throw error;
   }
+};
+
+/**
+ * Generate random password for Coder users (they won't use it)
+ */
+const generateRandomPassword = () => {
+  return `pwd_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
 };
 
 /**
@@ -145,36 +154,35 @@ const ensureUserExists = async (userId, username, email) => {
         login_type: 'password',
         organization_ids: [organizationId], // Required by Coder API v2
       },
-      { headers: getAdminHeaders() }
+      { headers: getAdminHeaders() },
     );
 
     logger.info(`Created Coder user: ${username} in organization ${organizationId}`);
     return createResponse.data;
   } catch (error) {
     logger.error(`Failed to ensure Coder user exists: ${error.message}`);
-    logger.error(`Error details: ${JSON.stringify({
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status,
-      url: error.config?.url,
-      code: error.code,
-    })}`);
+    logger.error(
+      `Error details: ${JSON.stringify({
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        url: error.config?.url,
+        code: error.code,
+      })}`,
+    );
     if (error.response) {
       throw new ApiError(
         error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
-        `Coder API error: ${error.response.data?.message || error.message || JSON.stringify(error.response.data)}`
+        `Coder API error: ${error.response.data?.message || error.message || JSON.stringify(error.response.data)}`,
       );
     }
     if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
       throw new ApiError(
         httpStatus.SERVICE_UNAVAILABLE,
-        `Cannot connect to Coder at ${config.coder.url}. Is Coder running?`
+        `Cannot connect to Coder at ${config.coder.url}. Is Coder running?`,
       );
     }
-    throw new ApiError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      `Coder service error: ${error.message}`
-    );
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, `Coder service error: ${error.message}`);
   }
 };
 
@@ -196,7 +204,7 @@ const generateSessionToken = async (coderUsername) => {
         lifetime: 86400000, // 24 hours in milliseconds
         scope: 'workspace:*', // Full workspace access
       },
-      { headers: getAdminHeaders() }
+      { headers: getAdminHeaders() },
     );
 
     // The response should contain a key field with the token
@@ -220,14 +228,14 @@ const generateSessionToken = async (coderUsername) => {
     if (error.response) {
       logger.error(`Token creation error - Status: ${error.response.status}`);
       logger.error(`Error details: ${JSON.stringify(error.response.data)}`);
-      
+
       // For other errors, log but don't fail - token is optional
       if (error.response.status >= 500) {
         logger.warn(`Token generation failed but continuing without token`);
         return null;
       }
     }
-    
+
     // For non-404 errors, return null instead of throwing
     // The workspace URL can still be used without authentication
     logger.warn(`Token generation unavailable, continuing without token`);
@@ -240,11 +248,19 @@ const generateSessionToken = async (coderUsername) => {
  * @param {string} coderUserId - Coder user ID
  * @param {string} workspaceName - Workspace name (e.g., "prototype-{prototypeId}")
  * @param {string} templateId - Coder template ID
- * @param {string} gitRepoUrl - Git repository URL
- * @param {string} githubToken - Optional GitHub token
+ * @param {string} prototypesHostPath - Host path for prototypes folder (bind-mount)
+ * @param {string} githubToken - Optional GitHub token (DISABLED - Gitea disabled)
+ * @param {string} gitRepoUrl - Git repository URL (DISABLED - Gitea disabled)
  * @returns {Promise<Object>} Workspace object
  */
-const getOrCreateWorkspace = async (coderUserId, workspaceName, templateId, gitRepoUrl, githubToken = null) => {
+const getOrCreateWorkspace = async (
+  coderUserId,
+  workspaceName,
+  templateId,
+  prototypesHostPath,
+  _githubToken = null, // DISABLED - Gitea disabled
+  _gitRepoUrl = null, // DISABLED - Gitea disabled
+) => {
   try {
     // Get organization ID (required for API v2)
     const organizationId = await getOrCreateDefaultOrganization();
@@ -270,20 +286,21 @@ const getOrCreateWorkspace = async (coderUserId, workspaceName, templateId, gitR
       return existingWorkspace;
     }
 
-    // Create new workspace
+    // Create new workspace - pass prototypes_host_path from config
     const richParameterValues = [
       {
-        name: 'git_repo',
-        value: gitRepoUrl,
+        name: 'prototypes_host_path',
+        value: prototypesHostPath || config.prototypes?.path || '/tmp/autowrx/prototypes',
       },
     ];
 
-    if (githubToken) {
-      richParameterValues.push({
-        name: 'github_token',
-        value: githubToken,
-      });
-    }
+    // DISABLED - Gitea disabled
+    // if (gitRepoUrl) {
+    //   richParameterValues.push({ name: 'git_repo', value: gitRepoUrl });
+    // }
+    // if (githubToken) {
+    //   richParameterValues.push({ name: 'github_token', value: githubToken });
+    // }
 
     // Use the correct API v2 endpoint format: /organizations/{organization}/members/{user}/workspaces
     const createResponse = await axios.post(
@@ -293,7 +310,7 @@ const getOrCreateWorkspace = async (coderUserId, workspaceName, templateId, gitR
         name: workspaceName,
         rich_parameter_values: richParameterValues,
       },
-      { headers: getAdminHeaders() }
+      { headers: getAdminHeaders() },
     );
 
     logger.info(`Created Coder workspace: ${workspaceName} in organization ${organizationId}`);
@@ -321,7 +338,7 @@ const getOrCreateWorkspace = async (coderUserId, workspaceName, templateId, gitR
 
       if (error.response.status === 500 && isDuplicateKeyError) {
         logger.warn(
-          `Duplicate workspace constraint hit for ${workspaceName}, attempting to find existing workspace instead of failing.`
+          `Duplicate workspace constraint hit for ${workspaceName}, attempting to find existing workspace instead of failing.`,
         );
         try {
           // Re-query workspaces and return the existing one if found
@@ -340,24 +357,20 @@ const getOrCreateWorkspace = async (coderUserId, workspaceName, templateId, gitR
           const existingWorkspace = retryWorkspaces.find((w) => w.name === workspaceName);
           if (existingWorkspace) {
             logger.info(
-              `Recovered from duplicate key error by using existing workspace: ${workspaceName} (${existingWorkspace.id})`
+              `Recovered from duplicate key error by using existing workspace: ${workspaceName} (${existingWorkspace.id})`,
             );
             return existingWorkspace;
           }
 
-          logger.error(
-            `Duplicate key error reported but no existing workspace named ${workspaceName} was found on retry.`
-          );
+          logger.error(`Duplicate key error reported but no existing workspace named ${workspaceName} was found on retry.`);
         } catch (retryError) {
-          logger.error(
-            `Failed to recover from duplicate key error for workspace ${workspaceName}: ${retryError.message}`
-          );
+          logger.error(`Failed to recover from duplicate key error for workspace ${workspaceName}: ${retryError.message}`);
         }
       }
 
       throw new ApiError(
         error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
-        `Coder API error: ${error.response.data?.message || error.message || JSON.stringify(error.response.data)}`
+        `Coder API error: ${error.response.data?.message || error.message || JSON.stringify(error.response.data)}`,
       );
     }
     throw error;
@@ -391,7 +404,7 @@ const startWorkspace = async (workspaceId) => {
     const response = await axios.post(
       `${CODER_API_BASE}/workspaces/${workspaceId}/builds`,
       { transition: 'start' },
-      { headers: getAdminHeaders() }
+      { headers: getAdminHeaders() },
     );
 
     logger.info(`Started Coder workspace: ${workspaceId}`);
@@ -409,7 +422,7 @@ const startWorkspace = async (workspaceId) => {
       logger.error(`Start workspace error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`);
       throw new ApiError(
         error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
-        `Coder API error: ${error.response.data?.message || error.message}`
+        `Coder API error: ${error.response.data?.message || error.message}`,
       );
     }
     throw error;
@@ -433,7 +446,7 @@ const getWorkspaceStatus = async (workspaceId) => {
     if (error.response) {
       throw new ApiError(
         error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
-        `Coder API error: ${error.response.data?.message || error.message}`
+        `Coder API error: ${error.response.data?.message || error.message}`,
       );
     }
     throw error;
@@ -480,17 +493,21 @@ const getWorkspaceAppUrl = async (workspaceId, appSlug = 'code-server', maxRetri
 
       // Log workspace structure for debugging
       if (attempt === 1) {
-        logger.debug(`Workspace structure: ${JSON.stringify({
-          id: workspace.id,
-          name: workspace.name,
-          latest_build: workspace.latest_build ? {
-            id: workspace.latest_build.id,
-            status: workspace.latest_build.status,
-            resources_count: workspace.latest_build.resources?.length || 0,
-          } : null,
-          resources: workspace.resources?.length || 0,
-          agents: workspace.agents?.length || 0,
-        })}`);
+        logger.debug(
+          `Workspace structure: ${JSON.stringify({
+            id: workspace.id,
+            name: workspace.name,
+            latest_build: workspace.latest_build
+              ? {
+                  id: workspace.latest_build.id,
+                  status: workspace.latest_build.status,
+                  resources_count: workspace.latest_build.resources?.length || 0,
+                }
+              : null,
+            resources: workspace.resources?.length || 0,
+            agents: workspace.agents?.length || 0,
+          })}`,
+        );
       }
 
       // Try multiple ways to find the agent
@@ -539,9 +556,11 @@ const getWorkspaceAppUrl = async (workspaceId, appSlug = 'code-server', maxRetri
           await new Promise((resolve) => setTimeout(resolve, retryDelay));
           continue;
         }
-        
+
         // Log full workspace structure for debugging
-        logger.error(`Workspace agent not found after ${maxRetries} attempts. Full workspace structure: ${JSON.stringify(workspace, null, 2)}`);
+        logger.error(
+          `Workspace agent not found after ${maxRetries} attempts. Full workspace structure: ${JSON.stringify(workspace, null, 2)}`,
+        );
         throw new ApiError(httpStatus.NOT_FOUND, 'Workspace agent not found. The agent may still be initializing.');
       }
 
@@ -558,12 +577,16 @@ const getWorkspaceAppUrl = async (workspaceId, appSlug = 'code-server', maxRetri
       // Construct URL (we can construct it even if app isn't in the response yet)
       const username = workspace.owner_name || workspace.owner || workspace.owner_id;
       const workspaceName = workspace.name;
-      
+      const agentName = agent.name || 'main';
+
       if (!username || !workspaceName) {
-        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Cannot construct workspace URL: missing owner or workspace name');
+        throw new ApiError(
+          httpStatus.INTERNAL_SERVER_ERROR,
+          'Cannot construct workspace URL: missing owner or workspace name',
+        );
       }
 
-      const url = `${config.coder.url}/@${username}/${workspaceName}/apps/${appSlug}`;
+      const url = `${config.coder.url}/@${username}/${workspaceName}.${agentName}/apps/${appSlug}/`;
       logger.info(`Constructed workspace app URL: ${url}`);
       return url;
     } catch (error) {
@@ -575,7 +598,7 @@ const getWorkspaceAppUrl = async (workspaceId, appSlug = 'code-server', maxRetri
           continue;
         }
       }
-      
+
       // If it's the last attempt or a non-retryable error, throw
       if (attempt === maxRetries || !(error instanceof ApiError && error.statusCode === httpStatus.NOT_FOUND)) {
         if (error instanceof ApiError) {
@@ -655,7 +678,7 @@ const sanitizeWorkspaceName = (prototypeId) => {
   // Format: "proto-{last12chars}" = max 18 chars
   const shortId = prototypeId.toString().slice(-12);
   const name = `proto-${shortId}`;
-  
+
   // Ensure it only contains allowed characters (a-z, 0-9, -)
   const sanitized = name
     .toLowerCase()
@@ -663,7 +686,7 @@ const sanitizeWorkspaceName = (prototypeId) => {
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
     .slice(0, 32); // Enforce max length
-  
+
   return sanitized || `proto-${shortId}`;
 };
 
@@ -687,10 +710,10 @@ const getTemplateId = async (templateName = 'docker-template') => {
     }
 
     logger.debug(`Found ${templates.length} template(s) in Coder`);
-    
+
     const template = templates.find((t) => t.name === templateName);
     if (!template) {
-      logger.error(`Template ${templateName} not found. Available templates: ${templates.map(t => t.name).join(', ')}`);
+      logger.error(`Template ${templateName} not found. Available templates: ${templates.map((t) => t.name).join(', ')}`);
       throw new ApiError(httpStatus.NOT_FOUND, `Template ${templateName} not found`);
     }
 
@@ -706,13 +729,6 @@ const getTemplateId = async (templateName = 'docker-template') => {
     }
     throw error;
   }
-};
-
-/**
- * Generate random password for Coder users (they won't use it)
- */
-const generateRandomPassword = () => {
-  return `pwd_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
 };
 
 /**
@@ -747,17 +763,17 @@ const getWorkspaceAgentLogs = async (workspaceAgentId, options = {}) => {
     logger.error(`Failed to get workspace agent logs: ${error.message}`);
     if (error.response) {
       logger.error(
-        `Workspace agent logs error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`
+        `Workspace agent logs error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`,
       );
       throw new ApiError(
         error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
-        `Coder API error: ${error.response.data?.message || error.message || JSON.stringify(error.response.data)}`
+        `Coder API error: ${error.response.data?.message || error.message || JSON.stringify(error.response.data)}`,
       );
     }
     if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
       throw new ApiError(
         httpStatus.SERVICE_UNAVAILABLE,
-        `Cannot connect to Coder at ${config.coder.url}. Is Coder running?`
+        `Cannot connect to Coder at ${config.coder.url}. Is Coder running?`,
       );
     }
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, `Coder service error: ${error.message}`);

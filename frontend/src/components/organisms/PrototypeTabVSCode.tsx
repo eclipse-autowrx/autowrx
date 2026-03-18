@@ -178,7 +178,7 @@ const PrototypeTabVSCode: FC = () => {
                   (log) =>
                     typeof log.output === 'string' &&
                     log.output.includes(
-                      'Session server listening on /home/coder/.local/share/code-server/code-server-ipc.sock',
+                      'Setup complete.',
                     ),
                 )
               }
@@ -334,7 +334,7 @@ const PrototypeTabVSCode: FC = () => {
           />
         ) : workspaceInfo?.appUrl ? (
           <iframe
-            src={`${workspaceInfo.appUrl}?folder=/home/coder/project`}
+            src={`${workspaceInfo.appUrl}?folder=${encodeURIComponent(workspaceInfo.folderPath || '/home/coder/prototypes')}`}
             className="w-full h-full border-0"
             allow="clipboard-read; clipboard-write;"
             title="Coder Workspace"
