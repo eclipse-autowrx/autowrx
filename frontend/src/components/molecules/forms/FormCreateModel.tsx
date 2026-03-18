@@ -195,10 +195,10 @@ const FormCreateModel = () => {
 
       <p className="text-base font-medium">Signal *</p>
       <div className="border mt-1 rounded-lg p-2">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col items-center gap-2">
           {!data.api_data_url && (
             <>
-              <div className="flex flex-col gap-1 flex-1">
+              <div className="flex flex-col gap-1 flex-1 w-full">
                 <p className="text-xs text-muted-foreground">VSS version</p>
                 <Select onValueChange={handleVSSChange} defaultValue="v4.1">
                   <SelectTrigger
@@ -228,7 +228,7 @@ const FormCreateModel = () => {
               <span className="text-xs text-muted-foreground self-center shrink-0">or</span>
             </>
           )}
-          <div className="flex flex-col gap-1 flex-1">
+          <div className="flex flex-col gap-1 flex-1 w-full">
             <p className="text-xs text-muted-foreground">Upload file</p>
             <DaFileUploadButton
               onStartUpload={() => {

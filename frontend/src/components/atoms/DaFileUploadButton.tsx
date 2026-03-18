@@ -90,7 +90,7 @@ const DaFileUploadButton = ({
                     type="button"
                     onClick={() => ref.current?.click()}
                     disabled={uploading}
-                    className="w-full cursor-pointer flex items-center gap-1.5 text-sm border border-dashed rounded-md px-2.5 py-1.5 text-muted-foreground hover:text-foreground hover:border-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full h-20 justify-center cursor-pointer flex items-center gap-1.5 text-sm border border-dashed rounded-md px-2.5 py-1.5 text-muted-foreground hover:text-foreground hover:border-foreground disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {uploading ? (
                         <TbLoader className="w-3.5 h-3.5 animate-spin" />
