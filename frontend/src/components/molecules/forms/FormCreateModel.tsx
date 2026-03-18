@@ -195,7 +195,7 @@ const FormCreateModel = () => {
 
       <p className="text-base font-medium">Signal *</p>
       <div className="border mt-1 rounded-lg p-2">
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex items-stretch gap-2">
           {!data.api_data_url && (
             <>
               <div className="flex flex-col gap-1 flex-1 w-full">
