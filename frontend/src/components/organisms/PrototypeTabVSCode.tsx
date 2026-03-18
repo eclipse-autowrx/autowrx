@@ -26,12 +26,17 @@ import { PERMISSIONS } from '@/data/permission'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
 import { shallow } from 'zustand/shallow'
+import useCoderWorkspaceStore from '@/stores/coderWorkspaceStore'
 
 const PrototypeTabCodeApiPanel = lazy(() =>
   retry(() => import('./PrototypeTabCodeApiPanel')),
 )
 
-const PrototypeTabVSCode: FC = () => {
+interface PrototypeTabVSCodeProps {
+  isActive?: boolean
+}
+
+const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({ isActive = true }) => {
   const { prototype_id } = useParams<{ prototype_id: string }>()
   const [prototype] = useModelStore(
     (state) => [state.prototype as Prototype],
@@ -39,6 +44,10 @@ const PrototypeTabVSCode: FC = () => {
   )
   const { data: model } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
+  const cachedEntry = useCoderWorkspaceStore((state) =>
+    prototype_id ? state.byPrototypeId[prototype_id] : undefined,
+  )
+  const upsertCacheEntry = useCoderWorkspaceStore((state) => state.upsertEntry)
 
   // Coder workspace state
   const [workspaceInfo, setWorkspaceInfo] = useState<WorkspaceInfo | null>(null)
@@ -65,6 +74,16 @@ const PrototypeTabVSCode: FC = () => {
       return
     }
 
+    if (!isActive) {
+      // Keep state for instant resume, but stop background polling when tab is hidden
+      if (workspacePollIntervalRef.current) {
+        clearInterval(workspacePollIntervalRef.current)
+        workspacePollIntervalRef.current = null
+      }
+      setIsLoadingWorkspace(false)
+      return
+    }
+
     if (!isAuthorized) {
       setIsLoadingWorkspace(false)
       setWorkspaceError('You do not have permission to access this workspace')
@@ -73,6 +92,25 @@ const PrototypeTabVSCode: FC = () => {
 
     const loadWorkspace = async () => {
       try {
+        const canUseCache =
+          !!cachedEntry?.workspaceInfo?.appUrl &&
+          cachedEntry?.workspaceStatus?.status === 'running' &&
+          cachedEntry?.isWorkspaceReadyFromLogs
+
+        if (canUseCache) {
+          setWorkspaceInfo(cachedEntry.workspaceInfo)
+          setWorkspaceStatus(cachedEntry.workspaceStatus)
+          setWorkspaceLogs(cachedEntry.workspaceLogs || [])
+          setIsWorkspaceReadyFromLogs(true)
+          setWorkspaceError(null)
+          setIsLoadingWorkspace(false)
+          lastLogIdRef.current = cachedEntry.workspaceLogs?.at(-1)?.id ?? null
+
+          // Keep polling in background to refresh status/logs silently
+          startWorkspacePolling(prototype_id)
+          return
+        }
+
         setIsLoadingWorkspace(true)
         setWorkspaceError(null)
         setWorkspaceLogs([])
@@ -107,7 +145,18 @@ const PrototypeTabVSCode: FC = () => {
         clearInterval(workspacePollIntervalRef.current)
       }
     }
-  }, [prototype_id, isAuthorized])
+  }, [prototype_id, isAuthorized, isActive])
+
+  // Persist workspace state across tab switches (route unmount/remount)
+  useEffect(() => {
+    if (!prototype_id) return
+    upsertCacheEntry(prototype_id, {
+      workspaceInfo,
+      workspaceStatus,
+      workspaceLogs,
+      isWorkspaceReadyFromLogs,
+    })
+  }, [prototype_id, workspaceInfo, workspaceStatus, workspaceLogs, isWorkspaceReadyFromLogs, upsertCacheEntry])
 
   // Poll workspace status + logs until logs indicate readiness
   const startWorkspacePolling = (prototypeId: string) => {

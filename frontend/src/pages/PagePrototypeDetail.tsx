@@ -411,7 +411,10 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
             )}
             {tab == 'journey' && <PrototypeTabJourney prototype={prototype} />}
             {tab == 'code' && <PrototypeTabCode />}
-            {tab == 'vscode' && <PrototypeTabVSCode />}
+            {/* Keep VS Code mounted to avoid iframe reload "stutter" on tab switches */}
+            <div className={tab === 'vscode' ? 'w-full h-full' : 'hidden'}>
+              <PrototypeTabVSCode isActive={tab === 'vscode'} />
+            </div>
             {tab == 'dashboard' && <PrototypeTabDashboard />}
             {tab == 'feedback' && <PrototypeTabFeedback />}
             {tab == 'staging' && <PrototypeTabStaging prototype={prototype} />}
