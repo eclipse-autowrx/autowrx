@@ -75,9 +75,12 @@ const updatePlugin = catchAsync(async (req, res) => {
     ...req.body,
     updated_by: req.user.id,
   };
+  const isAdmin =
+    (Array.isArray(req.user.roles) && req.user.roles.includes('admin')) ||
+    (await pluginService.isAdminUser(req.user.id));
   const actor = {
     id: req.user.id,
-    isAdmin: Array.isArray(req.user.roles) && req.user.roles.includes('admin'),
+    isAdmin,
   };
   const plugin = await pluginService.updatePluginById(req.params.id, body, actor);
   res.send(plugin);
@@ -163,7 +166,9 @@ const uploadInternalPlugin = catchAsync(async (req, res) => {
 
   const actor = {
     id: req.user.id,
-    isAdmin: Array.isArray(req.user.roles) && req.user.roles.includes('admin'),
+    isAdmin:
+      (Array.isArray(req.user.roles) && req.user.roles.includes('admin')) ||
+      (await pluginService.isAdminUser(req.user.id)),
   };
 
   const existing = await pluginService.getPluginBySlug(slug);
@@ -193,9 +198,12 @@ const uploadInternalPlugin = catchAsync(async (req, res) => {
 });
 
 const removePlugin = catchAsync(async (req, res) => {
+  const isAdmin =
+    (Array.isArray(req.user.roles) && req.user.roles.includes('admin')) ||
+    (await pluginService.isAdminUser(req.user.id));
   const actor = {
     id: req.user.id,
-    isAdmin: Array.isArray(req.user.roles) && req.user.roles.includes('admin'),
+    isAdmin,
   };
   await pluginService.deletePluginById(req.params.id, actor);
   res.status(httpStatus.NO_CONTENT).send();
