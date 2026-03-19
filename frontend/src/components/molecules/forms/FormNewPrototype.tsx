@@ -8,7 +8,7 @@
 
 import { Button } from '@/components/atoms/button'
 import DaCheckbox from '@/components/atoms/DaCheckbox'
-import DaFileUpload from '@/components/atoms/DaFileUpload'
+import DaFileUploadButton from '@/components/atoms/DaFileUploadButton'
 import { DaInput } from '@/components/atoms/DaInput'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import { DaText } from '@/components/atoms/DaText'
@@ -272,45 +272,54 @@ const FormNewPrototype = ({
                     {/* Signal */}
                     <div>
                         <Label className="text-sm font-medium">Signal *</Label>
-                        <div className="border rounded-lg px-2 pb-2 pt-1 mt-1">
-                            {!newModelApiDataUrl && (
-                                <>
-                                    <p className="text-xs text-muted-foreground mb-1">Select VSS version</p>
-                                    <Select
-                                        value={newModelApiVersion}
-                                        onValueChange={setNewModelApiVersion}
-                                    >
-                                        <SelectTrigger className="w-full h-9">
-                                            <SelectValue placeholder="Select VSS version" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {vssVersions && Array.isArray(vssVersions) ? (
-                                                vssVersions.map((v: any) => (
-                                                    <SelectItem key={v.name} value={v.name}>
-                                                        COVESA VSS {v.name}
-                                                    </SelectItem>
-                                                ))
-                                            ) : (
-                                                <>
-                                                    <SelectItem value="v5.0">COVESA VSS v5.0</SelectItem>
-                                                    <SelectItem value="v4.1">COVESA VSS v4.1</SelectItem>
-                                                    <SelectItem value="v4.0">COVESA VSS v4.0</SelectItem>
-                                                    <SelectItem value="v3.1">COVESA VSS v3.1</SelectItem>
-                                                </>
-                                            )}
-                                        </SelectContent>
-                                    </Select>
-                                </>
-                            )}
-                            <p className="text-xs text-muted-foreground mt-2 mb-1">Or upload a file</p>
-                            <DaFileUpload
-                                onStartUpload={() => setUploading(true)}
-                                onFileUpload={(url) => {
-                                    setNewModelApiDataUrl(url)
-                                    setUploading(false)
-                                }}
-                                accept=".json"
-                            />
+                        <div className="border rounded-lg p-2 mt-1">
+                            <div className="flex items-stretch gap-2">
+                                {!newModelApiDataUrl && (
+                                    <>
+                                        <div className="flex flex-col gap-1 flex-1">
+                                            <p className="text-xs text-muted-foreground">VSS version</p>
+                                            <Select
+                                                value={newModelApiVersion}
+                                                onValueChange={setNewModelApiVersion}
+                                            >
+                                                <SelectTrigger className="w-full h-9">
+                                                    <SelectValue placeholder="Select VSS version" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {vssVersions && Array.isArray(vssVersions) ? (
+                                                        vssVersions.map((v: any) => (
+                                                            <SelectItem key={v.name} value={v.name}>
+                                                                COVESA VSS {v.name}
+                                                            </SelectItem>
+                                                        ))
+                                                    ) : (
+                                                        <>
+                                                            <SelectItem value="v5.0">COVESA VSS v5.0</SelectItem>
+                                                            <SelectItem value="v4.1">COVESA VSS v4.1</SelectItem>
+                                                            <SelectItem value="v4.0">COVESA VSS v4.0</SelectItem>
+                                                            <SelectItem value="v3.1">COVESA VSS v3.1</SelectItem>
+                                                        </>
+                                                    )}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <span className="text-xs text-muted-foreground self-center shrink-0">or</span>
+                                    </>
+                                )}
+                                <div className="flex flex-col gap-1 flex-1">
+                                    <p className="text-xs text-muted-foreground">Upload file</p>
+                                    <DaFileUploadButton
+                                        onStartUpload={() => setUploading(true)}
+                                        onFileUpload={(url) => {
+                                            setNewModelApiDataUrl(url)
+                                            setUploading(false)
+                                        }}
+                                        label="Upload"
+                                        className="w-full"
+                                        accept=".json"
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </div>
 

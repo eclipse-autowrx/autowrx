@@ -20,7 +20,7 @@ import { CVI } from '@/data/CVI'
 import { createModelService } from '@/services/model.service'
 import { ModelCreate } from '@/types/model.type'
 import { isAxiosError } from 'axios'
-import { FormEvent, useState } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 import { TbCircleCheckFilled, TbLoader } from 'react-icons/tb'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '../toaster/use-toast'
@@ -28,7 +28,7 @@ import useListModelLite from '@/hooks/useListModelLite'
 import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import useListVSSVersions from '@/hooks/useListVSSVersions'
-import DaFileUpload from '@/components/atoms/DaFileUpload'
+import DaFileUploadButton from '@/components/atoms/DaFileUploadButton'
 import { useQuery } from '@tanstack/react-query'
 import { listModelTemplates } from '@/services/modelTemplate.service'
 import { getConfig } from '@/utils/siteConfig'
@@ -60,12 +60,19 @@ const FormCreateModel = () => {
   const { toast } = useToast()
 
   const { data: currentUser } = useSelfProfileQuery()
-  
+
   // Fetch templates
   const { data: templatesData } = useQuery({
     queryKey: ['model-templates'],
     queryFn: () => listModelTemplates({ limit: 100, page: 1 }),
   })
+
+  // Auto-select the first template once templates are loaded
+  useEffect(() => {
+    if (templatesData?.results?.length && selectedTemplateId === null) {
+      setSelectedTemplateId(templatesData.results[0].id)
+    }
+  }, [templatesData])
 
   const navigate = useNavigate()
 
@@ -187,131 +194,80 @@ const FormCreateModel = () => {
       <div className="mt-4" />
 
       <p className="text-base font-medium">Signal *</p>
-      <div className="border mt-1 rounded-lg px-2 pb-2 pt-1">
-        {!data.api_data_url && (
-          <>
-            <p className="text-sm">select VSS version</p>
-            <Select onValueChange={handleVSSChange} defaultValue="v4.1">
-              <SelectTrigger
-                className="mt-1 w-full"
-                data-id="form-create-model-select-api"
-              >
-                <SelectValue placeholder="Select VSS version" />
-              </SelectTrigger>
-              <SelectContent>
-                {versions && Array.isArray(versions) ? (
-                  versions.map((version: any) => (
-                    <SelectItem key={version.name} value={version.name}>
-                      COVESA VSS {version.name}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <>
-                    <SelectItem value="v5.0">COVESA VSS v5.0</SelectItem>
-                    <SelectItem value="v4.1">COVESA VSS v4.1</SelectItem>
-                    <SelectItem value="v4.0">COVESA VSS v4.0</SelectItem>
-                    <SelectItem value="v3.1">COVESA VSS v3.1</SelectItem>
-                  </>
-                )}
-              </SelectContent>
-            </Select>
-          </>
-        )}
-
-        <p className="text-sm mt-2">or upload a file</p>
-
-        <DaFileUpload
-          onStartUpload={() => {
-            setUploading(true)
-          }}
-          onFileUpload={(url) => {
-            setData((prev) => ({ ...prev, api_data_url: url }))
-            setUploading(false)
-          }}
-          className="mt-1"
-          accept=".json"
-          validate={signalFileValidator}
-        />
+      <div className="border mt-1 rounded-lg p-2">
+        <div className="flex items-stretch gap-2">
+          {!data.api_data_url && (
+            <>
+              <div className="flex flex-col gap-1 flex-1 w-full">
+                <p className="text-xs text-muted-foreground">VSS version</p>
+                <Select onValueChange={handleVSSChange} defaultValue="v4.1">
+                  <SelectTrigger
+                    className="w-full"
+                    data-id="form-create-model-select-api"
+                  >
+                    <SelectValue placeholder="Select VSS version" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {versions && Array.isArray(versions) ? (
+                      versions.map((version: any) => (
+                        <SelectItem key={version.name} value={version.name}>
+                          COVESA VSS {version.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <>
+                        <SelectItem value="v5.0">COVESA VSS v5.0</SelectItem>
+                        <SelectItem value="v4.1">COVESA VSS v4.1</SelectItem>
+                        <SelectItem value="v4.0">COVESA VSS v4.0</SelectItem>
+                        <SelectItem value="v3.1">COVESA VSS v3.1</SelectItem>
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              <span className="text-xs text-muted-foreground self-center shrink-0">or</span>
+            </>
+          )}
+          <div className="flex flex-col gap-1 flex-1 w-full">
+            <p className="text-xs text-muted-foreground">Upload file</p>
+            <DaFileUploadButton
+              onStartUpload={() => {
+                setUploading(true)
+              }}
+              onFileUpload={(url) => {
+                setData((prev) => ({ ...prev, api_data_url: url }))
+                setUploading(false)
+              }}
+              label="Upload"
+              className="w-full"
+              accept=".json"
+              validate={signalFileValidator}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="grow"></div>
 
-      {/* Template Selection - Moved to bottom */}
+      {/* Template Selection */}
       <div className="mt-6 flex flex-col gap-1.5">
         <Label>Start from Template (Optional)</Label>
-        <div className="mt-1 space-y-2 max-h-48 overflow-y-auto">
-          {/* Start from scratch option */}
-          <div
-            onClick={() => setSelectedTemplateId(null)}
-            className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
-              selectedTemplateId === null
-                ? 'border-primary bg-primary/5'
-                : 'border-input hover:border-primary/50'
-            }`}
-          >
-            <div className="w-16 h-16 rounded border border-input bg-background flex items-center justify-center flex-shrink-0">
-              <span className="text-xs text-muted-foreground text-center px-2">
-                Start from scratch
-              </span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium">Start from scratch</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Create a new model without a template
-              </p>
-            </div>
-            <input
-              type="radio"
-              name="template"
-              value="scratch"
-              checked={selectedTemplateId === null}
-              onChange={() => setSelectedTemplateId(null)}
-              className="w-4 h-4 text-primary"
-            />
-          </div>
-
-          {/* Template options */}
-          {templatesData?.results?.map((template) => (
-            <div
-              key={template.id}
-              onClick={() => setSelectedTemplateId(template.id)}
-              className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
-                selectedTemplateId === template.id
-                  ? 'border-primary bg-primary/5'
-                  : 'border-input hover:border-primary/50'
-              }`}
-            >
-              <div className="w-16 h-16 rounded border border-input bg-background flex items-center justify-center flex-shrink-0 overflow-hidden">
-                <img
-                  src={template.image || '/imgs/plugin.png'}
-                  alt={template.name}
-                  className="w-full h-full object-contain p-2"
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{template.name}</p>
-                {template.description && (
-                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                    {template.description}
-                  </p>
-                )}
-              </div>
-              <input
-                type="radio"
-                name="template"
-                value={template.id}
-                checked={selectedTemplateId === template.id}
-                onChange={() => setSelectedTemplateId(template.id)}
-                className="w-4 h-4 text-primary flex-shrink-0"
-              />
-            </div>
-          ))}
-          {templatesData?.results?.length === 0 && (
-            <p className="text-xs text-muted-foreground text-center py-4">
-              No templates available
-            </p>
-          )}
-        </div>
+        <Select
+          value={selectedTemplateId ?? '__scratch__'}
+          onValueChange={(v) => setSelectedTemplateId(v === '__scratch__' ? null : v)}
+        >
+          <SelectTrigger className="mt-1 w-full">
+            <SelectValue placeholder="Select a template" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__scratch__">Start from scratch</SelectItem>
+            {templatesData?.results?.map((template) => (
+              <SelectItem key={template.id} value={template.id}>
+                {template.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Error */}
