@@ -17,7 +17,7 @@ import DaImportFile from '@/components/atoms/DaImportFile'
 import { zipToModel } from '@/lib/zipUtils'
 import { createModelService } from '@/services/model.service'
 import { createPrototypeService } from '@/services/prototype.service'
-import { ModelCreate, Prototype } from '@/types/model.type'
+import { ModelCreate, ModelLite, Prototype } from '@/types/model.type'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { addLog } from '@/services/log.service'
 import { useNavigate } from 'react-router-dom'
@@ -26,11 +26,7 @@ import DaSkeletonGrid from '@/components/molecules/DaSkeletonGrid'
 import { Skeleton } from '@/components/atoms/skeleton'
 import DaModelItem from '@/components/molecules/DaModelItem'
 import { Link } from 'react-router-dom'
-import { ModelLite } from '@/types/model.type'
-import useListModelsByTab from '@/hooks/useListModelsByTab'
-import useModelTabCounts from '@/hooks/useModelTabCounts'
-
-const PAGE_SIZE = 24
+import useListAllModels from '@/hooks/useListAllModel'
 
 type ModelTab = 'myModel' | 'myContribution' | 'public'
 
@@ -46,11 +42,17 @@ const PageModelList = () => {
   )
 
   const queryClient = useQueryClient()
-  const { tabCounts } = useModelTabCounts()
 
-  const owned = useListModelsByTab('myModel')
-  const contributed = useListModelsByTab('myContribution')
-  const publicModels = useListModelsByTab('public')
+  const {
+    ownedModels,
+    contributedModels,
+    publicReleasedModels,
+    totalResults,
+    isLoading,
+    error,
+    refetch,
+    isFetchingNextPage,
+  } = useListAllModels()
 
   const filterModels = useCallback(
     (models: ModelLite[]) => {
@@ -90,8 +92,8 @@ const PageModelList = () => {
   )
 
   const handleRetry = useCallback(async () => {
-    await Promise.all([owned.refetch(), contributed.refetch(), publicModels.refetch()])
-  }, [owned, contributed, publicModels])
+    await refetch()
+  }, [refetch])
 
   const handleTabClick = useCallback(
     (tab: ModelTab) => {
@@ -156,8 +158,8 @@ const PageModelList = () => {
           )
         }
 
-        await owned.refetch()
-        queryClient.invalidateQueries({ queryKey: ['modelTabCounts'] })
+        await refetch()
+        queryClient.invalidateQueries({ queryKey: ['allModels'] })
         navigate(`/model/${createdModel}`)
       } catch (err) {
         console.error('Error creating model from zip: ', err)
@@ -165,7 +167,7 @@ const PageModelList = () => {
         setIsImporting(false)
       }
     },
-    [user, owned, navigate, queryClient],
+    [user, refetch, navigate, queryClient],
   )
 
   const handleImportModelZip = useCallback(async (file: File) => {
@@ -177,52 +179,21 @@ const PageModelList = () => {
   }, [createNewModel])
 
   const tabItems = useMemo(() => {
-    const getCount = (tab: ModelTab) => tabCounts[tab] ?? null
     if (user) {
       return [
-        { title: 'My Models', value: 'myModel' as const, count: getCount('myModel') },
+        { title: 'My Models', value: 'myModel' as const, count: ownedModels.length },
         {
           title: 'My Contributions',
           value: 'myContribution' as const,
-          count: getCount('myContribution'),
+          count: contributedModels.length,
         },
-        { title: 'Public', value: 'public' as const, count: getCount('public') },
+        { title: 'Public', value: 'public' as const, count: publicReleasedModels.length },
       ]
     }
-    return [{ title: 'Public', value: 'public' as const, count: getCount('public') }]
-  }, [user, tabCounts])
+    return [{ title: 'Public', value: 'public' as const, count: publicReleasedModels.length }]
+  }, [user, ownedModels.length, contributedModels.length, publicReleasedModels.length])
 
-  const useLoadMoreObserver = useCallback(
-    (
-      sentinel: React.RefObject<HTMLDivElement | null>,
-      opts: {
-        hasNextPage: boolean | undefined
-        isFetchingNextPage: boolean
-        fetchNextPage: () => any
-      },
-    ) => {
-      useEffect(() => {
-        if (!opts.hasNextPage || opts.isFetchingNextPage) return
-        const el = sentinel.current
-        const root = scrollContainerRef.current
-        if (!el || !root) return
-        const observer = new IntersectionObserver(
-          (entries) => {
-            if (entries[0]?.isIntersecting) opts.fetchNextPage()
-          },
-          { root, rootMargin: '200px', threshold: 0 },
-        )
-        observer.observe(el)
-        return () => observer.disconnect()
-      }, [sentinel, opts.hasNextPage, opts.isFetchingNextPage, opts.fetchNextPage])
-    },
-    [],
-  )
-
-  // Track active section while scrolling
   useEffect(() => {
-    const root = scrollContainerRef.current
-    if (!root) return
     const targets: Array<{ tab: ModelTab; el: HTMLElement | null }> = [
       { tab: 'myModel', el: myModelsRef.current },
       { tab: 'myContribution', el: myContribRef.current },
@@ -233,18 +204,22 @@ const PageModelList = () => {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => (a.boundingClientRect.top ?? 0) - (b.boundingClientRect.top ?? 0))
-        const top = visible[0]
+        const intersecting = entries.filter((e) => e.isIntersecting)
+        if (!intersecting.length) return
+
+        const visibleSorted = intersecting.sort(
+          (a, b) => (a.boundingClientRect.top ?? 0) - (b.boundingClientRect.top ?? 0),
+        )
+        const top = visibleSorted[0]
         if (!top?.target) return
-        const found = targets.find((t) => t.el === top.target)
-        if (found) setActiveSection(found.tab)
+        const foundTop = targets.find((t) => t.el === top.target)
+        if (foundTop) {
+          setActiveSection(foundTop.tab)
+        }
       },
       {
-        root,
-        // treat a section as "active" when its header is near the top
-        rootMargin: '-40% 0px -55% 0px',
+        root: null,
+        rootMargin: '0px 0px -40% 0px',
         threshold: 0,
       },
     )
@@ -256,26 +231,24 @@ const PageModelList = () => {
   return (
     <div className="flex flex-col w-full h-full relative">
       <div className="sticky top-0 flex min-h-[52px] border-b border-muted-foreground/50 bg-background z-50">
-        {(owned.isLoading && owned.models.length === 0) ||
-        (publicModels.isLoading && publicModels.models.length === 0) ? (
+        {isLoading && totalResults === 0 ? (
           <div className="flex items-center h-full space-x-6 px-4">
             {tabItems.map((_, index) => (
               <Skeleton key={index} className="w-[100px] h-6" />
             ))}
           </div>
         ) : (
-          tabItems.map((tab, index) => (
+          tabItems.map((tab) => (
             <DaTabItem
               key={tab.value}
               active={activeSection === tab.value}
               onClick={() => handleTabClick(tab.value as ModelTab)}
             >
               {tab.title}
-              {tab.count !== null && (
-                <div className="flex min-w-5 px-1.5 py-0.5 items-center justify-center text-xs ml-1 bg-gray-200 rounded-md">
-                  {tab.count}
-                </div>
-              )}
+              <div className="flex min-w-5 px-1.5 py-0.5 items-center justify-center text-xs ml-1 bg-gray-200 rounded-md">
+                {tab.count}
+                {isFetchingNextPage && <TbLoader className="animate-spin ml-1 text-xs" />}
+              </div>
             </DaTabItem>
           ))
         )}
@@ -287,7 +260,7 @@ const PageModelList = () => {
           className="flex flex-col w-full h-full bg-background rounded-lg overflow-y-auto"
         >
           <div className="flex flex-col w-full h-full container px-4 pb-6">
-            {(owned.error || contributed.error || publicModels.error) && (
+            {error && (
               <div className="flex flex-col items-center justify-center gap-3 py-12">
                 <p className="text-base text-destructive font-medium">
                   Something went wrong. Please try again.
@@ -303,31 +276,48 @@ const PageModelList = () => {
                 </Button>
               </div>
             )}
-            {!(owned.error || contributed.error || publicModels.error) && (
+            {!error && (
               <>
-                <div className="pt-6 pb-2">
-                  <div className="relative w-full max-w-sm">
-                    <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      type="text"
-                      placeholder="Search models..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-9"
-                      data-id="model-search-input"
-                    />
-                  </div>
+                <div className="pt-6 pb-2 flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    Select a vehicle model to start
+                  </p>
+                  {user && (
+                    <div className="flex items-center gap-2">
+                      {!isImporting ? (
+                        <DaImportFile accept=".zip" onFileChange={handleImportModelZip}>
+                          <Button variant="outline" size="sm">
+                            <TbPackageExport className="mr-1 text-lg" /> Import Model
+                          </Button>
+                        </DaImportFile>
+                      ) : (
+                        <p className="flex items-center text-sm text-muted-foreground">
+                          <TbLoader className="animate-spin text-lg mr-2" />
+                          Importing model ...
+                        </p>
+                      )}
+
+                      <DaDialog
+                        open={createDialogOpen}
+                        onOpenChange={setCreateDialogOpen}
+                        trigger={
+                          <Button variant="default" size="sm" data-id="btn-open-form-create">
+                            <HiPlus className="mr-1 text-lg" />
+                            Create New Model
+                          </Button>
+                        }
+                      >
+                        <FormCreateModel />
+                      </DaDialog>
+                    </div>
+                  )}
                 </div>
 
                 {user && (
                   <ModelSection
-                    tab="myModel"
                     title="My Models"
-                    models={filterModels(owned.models)}
-                    isLoading={owned.isLoading}
-                    fetchNextPage={owned.fetchNextPage}
-                    hasNextPage={owned.hasNextPage}
-                    isFetchingNextPage={owned.isFetchingNextPage}
+                    models={filterModels(ownedModels)}
+                    isLoading={isLoading && ownedModels.length === 0}
                     emptyText={
                       searchQuery.trim()
                         ? 'No models match your search.'
@@ -345,71 +335,59 @@ const PageModelList = () => {
                       </Button>
                     }
                     headerExtras={
-                      <div className="flex">
-                        {!isImporting ? (
-                          <DaImportFile accept=".zip" onFileChange={handleImportModelZip}>
-                            <Button variant="outline" size="sm" className="mr-2">
-                              <TbPackageExport className="mr-1 text-lg" /> Import Model
-                            </Button>
-                          </DaImportFile>
-                        ) : (
-                          <p className="flex items-center text-base text-muted-foreground mr-2">
-                            <TbLoader className="animate-spin text-lg mr-2" />
-                            Importing model ...
-                          </p>
-                        )}
-                        <DaDialog
-                          open={createDialogOpen}
-                          onOpenChange={setCreateDialogOpen}
-                          trigger={
-                            <Button variant="default" size="sm" data-id="btn-open-form-create">
-                              <HiPlus className="mr-1 text-lg" />
-                              Create New Model
-                            </Button>
-                          }
-                        >
-                          <FormCreateModel />
-                        </DaDialog>
+                      <div className="flex flex-col w-80 items-end gap-2">
+                        <div className="relative w-full max-w-sm">
+                          <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            type="text"
+                            placeholder="Search models..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-9"
+                            data-id="model-search-input"
+                          />
+                        </div>
                       </div>
                     }
                     sectionRef={myModelsRef}
-                    scrollContainerRef={scrollContainerRef}
-                    useLoadMoreObserver={useLoadMoreObserver}
                   />
                 )}
 
                 {user && (
                   <ModelSection
-                    tab="myContribution"
                     title="My Contributions"
-                    models={filterModels(contributed.models)}
-                    isLoading={contributed.isLoading}
-                    fetchNextPage={contributed.fetchNextPage}
-                    hasNextPage={contributed.hasNextPage}
-                    isFetchingNextPage={contributed.isFetchingNextPage}
+                    models={filterModels(contributedModels)}
+                    isLoading={isLoading && contributedModels.length === 0}
                     emptyText={
                       searchQuery.trim() ? 'No models match your search.' : 'No contributions found.'
                     }
                     sectionRef={myContribRef}
-                    scrollContainerRef={scrollContainerRef}
-                    useLoadMoreObserver={useLoadMoreObserver}
                   />
                 )}
 
                 <ModelSection
-                  tab="public"
                   title="Public"
-                  models={filterModels(publicModels.models)}
-                  isLoading={publicModels.isLoading}
-                  fetchNextPage={publicModels.fetchNextPage}
-                  hasNextPage={publicModels.hasNextPage}
-                  isFetchingNextPage={publicModels.isFetchingNextPage}
+                  models={filterModels(publicReleasedModels)}
+                  isLoading={isLoading && publicReleasedModels.length === 0}
                   emptyText={
                     searchQuery.trim() ? 'No models match your search.' : 'No public models found.'
                   }
+                  headerExtras={
+                    !user ? (
+                      <div className="relative w-full max-w-sm">
+                        <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          type="text"
+                          placeholder="Search models..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="pl-9"
+                          data-id="model-search-input"
+                        />
+                      </div>
+                    ) : undefined
+                  }
                   sectionRef={publicRef}
-                  scrollContainerRef={scrollContainerRef}
-                  useLoadMoreObserver={useLoadMoreObserver}
                 />
               </>
             )}
@@ -423,48 +401,27 @@ const PageModelList = () => {
 export default PageModelList
 
 type ModelSectionProps = {
-  tab: ModelTab
   title: string
   models: ModelLite[]
   isLoading: boolean
-  fetchNextPage: () => any
-  hasNextPage: boolean | undefined
-  isFetchingNextPage: boolean
   emptyText: string
   emptyAction?: React.ReactNode
   headerExtras?: React.ReactNode
   sectionRef: React.RefObject<HTMLDivElement>
-  scrollContainerRef: React.RefObject<HTMLDivElement>
-  useLoadMoreObserver: (
-    sentinel: React.RefObject<HTMLDivElement>,
-    opts: {
-      hasNextPage: boolean | undefined
-      isFetchingNextPage: boolean
-      fetchNextPage: () => any
-    },
-  ) => void
 }
 
 const ModelSection = ({
   title,
   models,
   isLoading,
-  fetchNextPage,
-  hasNextPage,
-  isFetchingNextPage,
   emptyText,
   emptyAction,
   headerExtras,
   sectionRef,
-  useLoadMoreObserver,
 }: ModelSectionProps) => {
-  const loadMoreRef = useRef<HTMLDivElement>(null)
-  useLoadMoreObserver(loadMoreRef, { hasNextPage, isFetchingNextPage, fetchNextPage })
-
   return (
     <section className="py-6">
-      {/* Anchor for scroll + active section tracking */}
-      <div ref={sectionRef} className="scroll-mt-20" />
+      <div ref={sectionRef} className="scroll-mt-20 h-px" />
 
       <div className="flex items-center justify-between gap-4 mb-4">
         <h2 className="text-base font-semibold text-primary">{title}</h2>
@@ -493,12 +450,6 @@ const ModelSection = ({
           </div>
         )}
       </DaSkeletonGrid>
-
-      <div ref={loadMoreRef} className="h-4 flex justify-center py-4">
-        {isFetchingNextPage && (
-          <TbLoader className="animate-spin text-2xl text-muted-foreground" />
-        )}
-      </div>
     </section>
   )
 }

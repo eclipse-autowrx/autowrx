@@ -234,13 +234,14 @@ const listAllModels = catchAsync(async (req, res) => {
     });
   }
 
-  // Backward compatibility: no tab = return all three categories (legacy)
-  const ownedModels = await modelService.queryModels(
-    { created_by: req.user?.id },
-    { ...options, limit: LEGACY_PAGE_SIZE, page: 1 },
-    {},
-    req.user?.id,
-  );
+  const ownedModels = req.user?.id
+    ? await modelService.queryModels(
+        { created_by: req.user?.id },
+        { ...options, limit: LEGACY_PAGE_SIZE, page: 1 },
+        {},
+        req.user?.id,
+      )
+    : { results: [] };
 
   const contributedModels = req.user?.id
     ? await modelService.queryModels(

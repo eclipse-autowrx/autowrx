@@ -53,54 +53,15 @@ export const listModelsLite = async (
   }
 }
 
-interface AllModelsResponse {
-  ownedModels: List<ModelLite>
-  contributedModels: List<ModelLite>
-  publicReleasedModels: List<ModelLite>
+export interface AllModelsResponse {
+  ownedModels: { results: ModelLite[] }
+  contributedModels: { results: ModelLite[] }
+  publicReleasedModels: { results: ModelLite[] }
 }
 
-export type ModelsTab = 'owned' | 'contributed' | 'public'
-
-export interface ListModelsByTabResponse {
-  results: ModelLite[]
-  page: number
-  limit: number
-  totalPages: number
-  totalResults: number
-}
-
-export const listModelsByTab = async (
-  tab: ModelsTab,
-  page: number,
-  limit: number = 24,
-): Promise<ListModelsByTabResponse> => {
-  const { data } = await serverAxios.get<ListModelsByTabResponse>('/models/all', {
-    params: { tab, page, limit },
-  })
+export const listAllModels = async (): Promise<AllModelsResponse> => {
+  const { data } = await serverAxios.get<AllModelsResponse>('/models/all')
   return data
-}
-
-export const listAllModels = async (): Promise<{
-  ownedModels: ModelLite[]
-  contributedModels: ModelLite[]
-  publicReleasedModels: ModelLite[]
-}> => {
-  try {
-    const { data } = await serverAxios.get<AllModelsResponse>('/models/all')
-
-    const ownedModels = data.ownedModels?.results || []
-    const contributedModels = data.contributedModels?.results || []
-    const publicReleasedModels = data.publicReleasedModels?.results || []
-
-    return {
-      ownedModels,
-      contributedModels,
-      publicReleasedModels,
-    }
-  } catch (error: any) {
-    console.error('[listAllModels] error:', error.message)
-    throw error
-  }
 }
 
 export const listModelContributions = async (): Promise<List<ModelLite>> => {

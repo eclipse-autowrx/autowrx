@@ -122,8 +122,6 @@ const PluginForm = ({
       // Parse latest JSON text regardless of editor blur
       let parsedConfig: any = jsonText
       try {
-        console.log('jsonText', jsonText)
-        console.log('form.config', form.config)
         parsedConfig = JSON.parse(jsonText || '{}')
         setJsonError(null)
       } catch (e: any) {
