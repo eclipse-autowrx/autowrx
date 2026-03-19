@@ -13,6 +13,7 @@ interface DaImportFileProps {
   children: React.ReactNode
   accept?: string
   className?: string
+  disabled?: boolean
 }
 
 const DaImportFile: React.FC<DaImportFileProps> = ({
@@ -20,10 +21,12 @@ const DaImportFile: React.FC<DaImportFileProps> = ({
   children,
   accept = '.png, .jpg, .jpeg',
   className,
+  disabled = false,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleClick = () => {
+    if (disabled) return
     fileInputRef.current?.click()
   }
 
@@ -36,7 +39,11 @@ const DaImportFile: React.FC<DaImportFileProps> = ({
 
   return (
     <>
-      <div className={className} onClick={handleClick}>
+      <div
+        className={className}
+        onClick={handleClick}
+        aria-disabled={disabled || undefined}
+      >
         {children}
       </div>
       <input

@@ -171,7 +171,10 @@ const uploadInternalPlugin = catchAsync(async (req, res) => {
   if (existing) {
     const isOwner = String(existing.created_by) === String(actor.id);
     if (!isOwner && !actor.isAdmin) {
-      throw new ApiError(httpStatus.FORBIDDEN, 'You do not own this plugin');
+      throw new ApiError(
+        httpStatus.FORBIDDEN,
+        'This plugin name is already used by another account. Please choose a different name and upload again.'
+      );
     }
   }
 

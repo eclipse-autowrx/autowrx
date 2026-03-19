@@ -15,7 +15,13 @@ const createPlugin = {
     image: Joi.string().allow(''),
     description: Joi.string().allow(''),
     is_internal: Joi.boolean().required(),
-    url: Joi.string().uri().when('is_internal', { is: true, then: Joi.string().allow(''), otherwise: Joi.required() }),
+    // For internal plugins we store a relative path like `/plugin/slug/index.js`,
+    // so only enforce full URI format for external (non-internal) plugins.
+    url: Joi.when('is_internal', {
+      is: true,
+      then: Joi.string().allow(''),
+      otherwise: Joi.string().uri().required(),
+    }),
     config: Joi.any(),
     type: Joi.string().valid('prototype_function', 'deploy').allow(null, ''),
   }),

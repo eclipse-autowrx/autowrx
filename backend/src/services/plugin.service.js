@@ -111,7 +111,7 @@ const updatePluginById = async (id, updateBody, actor) => {
   const isAdmin = !!actor.isAdmin;
 
   if (!isOwner && !isAdmin) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'You do not own this plugin');
+    throw new ApiError(httpStatus.FORBIDDEN, 'You cannot modify this plugin because it belongs to another account.');
   }
 
   Object.assign(plugin, updateBody);
@@ -138,7 +138,7 @@ const deletePluginById = async (id, actor) => {
   const isAdmin = !!actor.isAdmin;
 
   if (!isOwner && !isAdmin) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'You do not own this plugin');
+    throw new ApiError(httpStatus.FORBIDDEN, 'You cannot delete this plugin because it belongs to another account.');
   }
 
   await plugin.deleteOne();

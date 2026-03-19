@@ -33,9 +33,13 @@ cd my-plugin
 Plugins have access to a limited but powerful API that allows them to:
 
 ✅ **Update Model/Prototype Data** - Save custom data to models and prototypes
+
 ✅ **Read Vehicle APIs** - Access vehicle signal specifications (VSS)
+
 ✅ **Manage Runtime Values** - Set and get API values for testing/simulation
+
 ✅ **Create Custom Signals** - Define wishlist/extended APIs
+
 ✅ **Integrate with Host UI** - Seamlessly render within the digital.auto interface
 
 ## Examples

@@ -289,6 +289,7 @@ const PluginForm = ({
               <div className="space-y-2 flex items-center gap-2">
                 <DaImportFile
                   accept=".zip"
+                  disabled={!form.name || doUpload.isPending}
                   onFileChange={async (file) => {
                     setZip(file)
                     try {
