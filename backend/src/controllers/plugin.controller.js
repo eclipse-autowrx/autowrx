@@ -176,15 +176,20 @@ const uploadInternalPlugin = catchAsync(async (req, res) => {
         'This plugin name is already used by another account. Please choose a different name and upload again.'
       );
     }
+    // Plugin already exists — update its URL in place
+    const plugin = await pluginService.upsertPluginBySlug(slug, {
+      is_internal: true,
+      url: pluginUrl,
+      updated_by: req.user.id,
+    });
+    return res.status(httpStatus.OK).send({ plugin, url: pluginUrl });
   }
 
-  const plugin = await pluginService.upsertPluginBySlug(slug, {
-    is_internal: true,
-    url: pluginUrl,
-    updated_by: req.user.id,
-  });
-
-  res.status(httpStatus.OK).send({ plugin, url: pluginUrl });
+  // Plugin does not exist yet (create flow) — return the URL only so the
+  // caller can include it in the subsequent createPlugin call.  Creating a
+  // stub record here would produce an incomplete document (missing name,
+  // description, image, created_by, …).
+  res.status(httpStatus.OK).send({ plugin: null, url: pluginUrl });
 });
 
 const removePlugin = catchAsync(async (req, res) => {

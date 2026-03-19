@@ -672,7 +672,7 @@ const PageNewPrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
                         setOpenNewPrototypeDialog(v)
                         if (!v && !savedSession) navigate('/')
                     }}
-                    className="w-115 max-w-[calc(100vw-40px)]"
+                    className="w-115 max-w-[calc(100vw-40px)] max-h-[90vh] overflow-auto"
                 >
                     <FormNewPrototype
                         onClose={() => {
