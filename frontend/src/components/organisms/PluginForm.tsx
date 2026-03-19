@@ -106,7 +106,8 @@ const PluginForm = ({
 
   useEffect(() => {
     try {
-      setJsonText(JSON.stringify(form.config || {}, null, 2))
+      const config = initial?.config ?? {}
+      setJsonText(JSON.stringify(config, null, 2))
       setJsonError(null)
     } catch {
       setJsonText('{}')
@@ -119,8 +120,10 @@ const PluginForm = ({
   const save = useMutation({
     mutationFn: async () => {
       // Parse latest JSON text regardless of editor blur
-      let parsedConfig: any = form.config
+      let parsedConfig: any = jsonText
       try {
+        console.log('jsonText', jsonText)
+        console.log('form.config', form.config)
         parsedConfig = JSON.parse(jsonText || '{}')
         setJsonError(null)
       } catch (e: any) {
