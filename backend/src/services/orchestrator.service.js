@@ -114,6 +114,32 @@ const sanitizePrototypeFolderName = (name) => {
   return sanitized || 'unnamed-prototype';
 };
 
+const PROTOTYPES_DIR_MODE = 0o777;
+const PROTOTYPES_FILE_MODE = 0o666;
+
+const chmodSafe = (targetPath, mode) => {
+  try {
+    fs.chmodSync(targetPath, mode);
+  } catch (err) {
+    logger.warn(`Failed to chmod ${targetPath}: ${err.message}`);
+  }
+};
+
+const chmodRecursiveSafe = (rootPath) => {
+  try {
+    const stat = fs.lstatSync(rootPath);
+    if (stat.isDirectory()) {
+      chmodSafe(rootPath, PROTOTYPES_DIR_MODE);
+      const entries = fs.readdirSync(rootPath);
+      entries.forEach((entry) => chmodRecursiveSafe(path.join(rootPath, entry)));
+      return;
+    }
+    chmodSafe(rootPath, PROTOTYPES_FILE_MODE);
+  } catch (err) {
+    logger.warn(`Failed to chmod recursively under ${rootPath}: ${err.message}`);
+  }
+};
+
 /**
  * Seed initial code files into a prototype folder (only if folder is empty)
  * @param {string} folderPath - Host folder path
@@ -127,20 +153,30 @@ const seedPrototypeFiles = (folderPath, prototype) => {
       return;
     }
 
+    // Ensure folder is writable even under restrictive umask/ownership.
+    chmodSafe(folderPath, PROTOTYPES_DIR_MODE);
+
     const content = buildInitialRepoContentFromPrototype(prototype);
 
     if (content.readme) {
-      fs.writeFileSync(path.join(folderPath, 'README.md'), content.readme);
+      const readmePath = path.join(folderPath, 'README.md');
+      fs.writeFileSync(readmePath, content.readme, { mode: PROTOTYPES_FILE_MODE });
+      chmodSafe(readmePath, PROTOTYPES_FILE_MODE);
     }
 
     if (content.files && content.files.length > 0) {
       content.files.forEach((file) => {
         const filePath = path.join(folderPath, file.path);
         fs.mkdirSync(path.dirname(filePath), { recursive: true });
-        fs.writeFileSync(filePath, file.content);
+        chmodSafe(path.dirname(filePath), PROTOTYPES_DIR_MODE);
+        fs.writeFileSync(filePath, file.content, { mode: PROTOTYPES_FILE_MODE });
+        chmodSafe(filePath, PROTOTYPES_FILE_MODE);
       });
       logger.info(`Seeded ${content.files.length} file(s) into ${folderPath}`);
     }
+
+    // Make sure nested dirs/files are accessible to the workspace container.
+    chmodRecursiveSafe(folderPath);
   } catch (err) {
     logger.warn(`Failed to seed prototype files: ${err.message}`);
   }
@@ -269,6 +305,8 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
     try {
       fs.mkdirSync(prototypeFolderHost, { recursive: true });
       logger.info(`Ensured prototype folder exists: ${prototypeFolderHost}`);
+      chmodSafe(userHostPath, PROTOTYPES_DIR_MODE);
+      chmodSafe(prototypeFolderHost, PROTOTYPES_DIR_MODE);
     } catch (mkdirErr) {
       logger.warn(`Could not create prototype folder ${prototypeFolderHost}: ${mkdirErr.message}`);
     }
@@ -285,12 +323,7 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
       : null;
 
     if (!workspace) {
-      workspace = await coderService.getOrCreateWorkspace(
-        coderUser.id,
-        workspaceName,
-        templateId,
-        userHostPath,
-      );
+      workspace = await coderService.getOrCreateWorkspace(coderUser.id, workspaceName, templateId, userHostPath);
 
       user.coder_workspace_id = workspace.id;
       user.coder_workspace_name = workspaceName;
