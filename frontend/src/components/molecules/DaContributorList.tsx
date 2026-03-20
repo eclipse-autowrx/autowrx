@@ -25,22 +25,23 @@ import UserList from './UserList'
 
 interface ContributorListProps {
   className?: string
+  canEdit?: boolean
 }
 
 const accessLevels = [
   {
     value: 'model_contributor',
     label: 'Contributor',
-    helperText: 'Can view and create prototype',
+    helperText: 'Can view, create prototypes, and update model',
   },
   {
     value: 'model_member',
-    label: 'Member',
-    helperText: 'Can view, create prototype and update model',
+    label: 'Reader',
+    helperText: 'Can view model and prototypes (read-only)',
   },
 ]
 
-const DaContributorList = ({ className }: ContributorListProps) => {
+const DaContributorList = ({ className, canEdit = true }: ContributorListProps) => {
   const { data: model, refetch } = useCurrentModel()
   const [activeTab, setActiveTab] = useState('contributors')
   const { data: currentUser } = useSelfProfileQuery()
@@ -68,7 +69,7 @@ const DaContributorList = ({ className }: ContributorListProps) => {
         id: c.id || '',
         email: c.email || '',
         image_file: c.image_file,
-        access_level: 'Member',
+        access_level: 'Reader',
         access_level_id: 'model_member',
       }))
 
@@ -167,17 +168,19 @@ const DaContributorList = ({ className }: ContributorListProps) => {
             active={activeTab === 'members'}
           >
             {' '}
-            Member ({model.members?.length ?? 0})
+            Reader ({model.members?.length ?? 0})
           </DaTabItem>
         </div>
-        <Button
-          size="sm"
-          className="flex items-center text-primary"
-          variant="outline"
-          onClick={() => setOpen(true)}
-        >
-          <TbUserPlus className="mr-2" /> Add user
-        </Button>
+        {canEdit && (
+          <Button
+            size="sm"
+            className="flex items-center text-primary"
+            variant="outline"
+            onClick={() => setOpen(true)}
+          >
+            <TbUserPlus className="mr-2" /> Add user
+          </Button>
+        )}
       </div>
       <div className="flex h-full flex-col overflow-y-auto pr-2">
         {activeTab === 'contributors' ? (
@@ -186,7 +189,7 @@ const DaContributorList = ({ className }: ContributorListProps) => {
             {model.contributors && (
               <UserList
                 users={model.contributors}
-                onRemoveUser={onRemoveUser}
+                onRemoveUser={canEdit ? onRemoveUser : undefined}
               />
             )}
           </>
@@ -194,26 +197,31 @@ const DaContributorList = ({ className }: ContributorListProps) => {
           <>
             {' '}
             {model.members && (
-              <UserList users={model.members} onRemoveUser={onRemoveUser} />
+              <UserList
+                users={model.members}
+                onRemoveUser={canEdit ? onRemoveUser : undefined}
+              />
             )}
           </>
         )}
       </div>
 
-      <AccessInvitation
-        label="Collaborator Invitation"
-        open={open}
-        onClose={() => setOpen(false)}
-        accessLevels={accessLevels}
-        invitedUsers={invitedUsers}
-        onInviteUsers={handleInviteUsers}
-        onInviteSuccess={(role) => {
-          setActiveTab(
-            role === 'model_contributor' ? 'contributors' : 'members',
-          )
-        }}
-        onRemoveUserAccess={handleRemoveUserAccess}
-      />
+      {canEdit && (
+        <AccessInvitation
+          label="Collaborator Invitation"
+          open={open}
+          onClose={() => setOpen(false)}
+          accessLevels={accessLevels}
+          invitedUsers={invitedUsers}
+          onInviteUsers={handleInviteUsers}
+          onInviteSuccess={(role) => {
+            setActiveTab(
+              role === 'model_contributor' ? 'contributors' : 'members',
+            )
+          }}
+          onRemoveUserAccess={handleRemoveUserAccess}
+        />
+      )}
     </div>
   )
 }

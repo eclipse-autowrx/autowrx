@@ -114,7 +114,8 @@ const PrototypeTabCode: FC = () => {
   const [activeTab, setActiveTab] = useState('api')
   const [isOpenGenAI, setIsOpenGenAI] = useState(false)
   const { data: model } = useCurrentModel()
-  const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
+  // Editing prototype code requires write permission on the parent model
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model?.id])
   const showCodeApiPanel = useSiteConfig('SHOW_CODE_API_PANEL', true)
   const showCodeDiff = useSiteConfig('SHOW_CODE_DIFF', true)
   const showSdvProtoPilotButton = useSiteConfig(

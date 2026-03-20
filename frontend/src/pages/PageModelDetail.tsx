@@ -49,15 +49,18 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 interface VisibilityControlProps {
   initialVisibility: 'public' | 'private' | undefined
   onVisibilityChange: (newVisibility: 'public' | 'private') => void
+  canEdit: boolean
 }
 
 const DaVisibilityControl: React.FC<VisibilityControlProps> = ({
   initialVisibility,
   onVisibilityChange,
+  canEdit,
 }) => {
   const [visibility, setVisibility] = useState(initialVisibility)
 
   const toggleVisibility = () => {
+    if (!canEdit) return
     const newVisibility = visibility === 'public' ? 'private' : 'public'
     setVisibility(newVisibility)
     onVisibilityChange(newVisibility)
@@ -71,14 +74,16 @@ const DaVisibilityControl: React.FC<VisibilityControlProps> = ({
           {visibility}
         </span>
       </p>
-      <Button
-        onClick={toggleVisibility}
-        variant="outline"
-        size="sm"
-        className="text-primary"
-      >
-        Change to {visibility === 'public' ? 'private' : 'public'}
-      </Button>
+      {canEdit && (
+        <Button
+          onClick={toggleVisibility}
+          variant="outline"
+          size="sm"
+          className="text-primary"
+        >
+          Change to {visibility === 'public' ? 'private' : 'public'}
+        </Button>
+      )}
     </div>
   )
 }
@@ -86,7 +91,8 @@ const DaVisibilityControl: React.FC<VisibilityControlProps> = ({
 const DaStateControl: React.FC<{
   initialState: string
   onStateChange: (value: string) => void
-}> = ({ initialState, onStateChange }) => {
+  canEdit: boolean
+}> = ({ initialState, onStateChange, canEdit }) => {
   const [state, setState] = useState(initialState)
 
   const handleUpdate = (newState: string) => async () => {
@@ -108,24 +114,26 @@ const DaStateControl: React.FC<{
           {state}
         </span>
       </p>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="text-primary">
-            Change state
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem onClick={handleUpdate('draft')}>
-            Draft
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleUpdate('released')}>
-            <span className="text-secondary">Released</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleUpdate('blocked')}>
-            <span className="text-destructive">Blocked</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {canEdit && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="text-primary">
+              Change state
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={handleUpdate('draft')}>
+              Draft
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleUpdate('released')}>
+              <span className="text-secondary">Released</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleUpdate('blocked')}>
+              <span className="text-destructive">Blocked</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </div>
   )
 }
@@ -401,38 +409,37 @@ const PageModelDetail = () => {
             </div>
           </div>
           <div className="col-span-6">
-            {isAuthorized && (
-              <>
-                <DaVehicleProperties
-                  key={model.id}
-                  category={
-                    model.vehicle_category ? model.vehicle_category : ''
-                  }
-                  properties={convertJSONToProperty(model.property) ?? []}
-                />
+            <>
+              <DaVehicleProperties
+                key={model.id}
+                category={model.vehicle_category ? model.vehicle_category : ''}
+                properties={convertJSONToProperty(model.property) ?? []}
+                canEdit={isAuthorized}
+              />
 
-                <DaVisibilityControl
-                  initialVisibility={model.visibility}
-                  onVisibilityChange={(newVisibility) => {
-                    updateModelService(model.id, {
-                      visibility: newVisibility,
-                    })
-                  }}
-                />
+              <DaVisibilityControl
+                initialVisibility={model.visibility}
+                onVisibilityChange={(newVisibility) => {
+                  updateModelService(model.id, {
+                    visibility: newVisibility,
+                  })
+                }}
+                canEdit={isAuthorized}
+              />
 
-                <DaStateControl
-                  initialState={model.state || ''}
-                  onStateChange={async (state) => {
-                    await updateModelService(model.id, {
-                      state: (state || 'draft') as Model['state'],
-                    })
-                    await refetch()
-                  }}
-                />
+              <DaStateControl
+                initialState={model.state || ''}
+                onStateChange={async (state) => {
+                  await updateModelService(model.id, {
+                    state: (state || 'draft') as Model['state'],
+                  })
+                  await refetch()
+                }}
+                canEdit={isAuthorized}
+              />
 
-                <DaContributorList className="mt-3" />
-              </>
-            )}
+              {isAuthorized && <DaContributorList className="mt-3" canEdit={true} />}
+            </>
           </div>
         </div>
       </div>

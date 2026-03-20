@@ -33,6 +33,8 @@ import { Plugin } from '@/services/plugin.service'
 import { updateModelService } from '@/services/model.service'
 import { toast } from 'react-toastify'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
 import { useSiteConfig } from '@/utils/siteConfig'
 
 const ModelDetailLayout = () => {
@@ -58,6 +60,7 @@ const ModelDetailLayout = () => {
   const [openManageAddonsDialog, setOpenManageAddonsDialog] = useState(false)
   const [isModelOwner, setIsModelOwner] = useState(false)
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
+  const [hasWritePermission] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model?.id])
   const allowNonAdminAddonConfig = useSiteConfig(
     'ALLOW_NON_ADMIN_ADDON_CONFIG',
     true,
@@ -169,6 +172,7 @@ const ModelDetailLayout = () => {
 
   // Use actual model loading state
   const isLoading = isModelLoading || !model
+  const canManageModelUI = isModelOwner || hasWritePermission
 
   const skeleton = JSON.parse(model?.skeleton || '{}')
   const numberOfNodes = skeleton?.nodes?.length || 0
@@ -260,7 +264,7 @@ const ModelDetailLayout = () => {
             </div>
           )}
         </div>
-        {canConfigureModelAddons && model && (
+        {canManageModelUI && model && (
           <div className="flex w-fit h-full items-center">
             <Button
               variant="ghost"
@@ -273,7 +277,7 @@ const ModelDetailLayout = () => {
           </div>
         )}
         <div className="grow"></div>
-        {canConfigureModelAddons && model && (
+        {canManageModelUI && model && (
           <DropdownMenu open={moreMenuOpen} onOpenChange={setMoreMenuOpen}>
             <DropdownMenuTrigger asChild>
               <Button
