@@ -325,14 +325,13 @@ const DaDashboard = () => {
                           onClick={() => handleApplyTemplate(t)}
                           className="cursor-pointer"
                         >
-                          <span className="flex size-4 mr-2 shrink-0 items-center justify-center">
-                            {t.id === activeTemplateId
-                              ? <TbCheck className="size-4 text-da-primary-500" />
-                              : <TbPalette className="size-4" />}
-                          </span>
-                          <span className={`truncate ${t.id === activeTemplateId ? 'font-semibold text-da-primary-500' : ''}`}>
+                          <span className={`truncate ${t.id === activeTemplateId ? 'flex-1 font-semibold text-da-primary-500' : ''}`}>
                             {t.name}
                           </span>
+                          {t.id === activeTemplateId
+                            ? (<span className="flex size-4 mr-2 shrink-0 items-center justify-center">
+                              <TbCheck className="size-4 text-da-primary-500" />
+                            </span>) : null}
                         </DropdownMenuItem>
                       ))
                     ) : (
