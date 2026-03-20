@@ -22,13 +22,16 @@ interface VehiclePropertiesProps {
   category: string
   properties: Property[]
   className?: string
+  canEdit?: boolean
 }
 
 const DaVehicleProperties = ({
   category,
   properties,
   className,
+  canEdit = true,
 }: VehiclePropertiesProps) => {
+  // Keep collapsed by default (matches owner view state), hide edit controls.
   const [isVisible, setIsVisible] = useState(false)
   const [isOpenUpdateForm, setIsOpenUpdateForm] = useState(false)
   const { data: model, refetch } = useCurrentModel()
@@ -39,6 +42,7 @@ const DaVehicleProperties = ({
     useState<string>('Passenger cars')
 
   const toggleVisibility = () => {
+    if (!canEdit) return
     setIsVisible(!isVisible)
   }
 
@@ -69,23 +73,27 @@ const DaVehicleProperties = ({
           Vehicle Properties
         </h3>
         <div>
-          <Button
-            className="text-primary mr-2"
-            variant="outline"
-            size="sm"
-            onClick={() => setIsOpenUpdateForm(true)}
-          >
-            Update property
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-primary"
-            onClick={toggleVisibility}
-          >
-            <div className="pr-1 w-12">{isVisible ? 'Hide' : 'Show'}</div>
-            {isVisible ? <TbChevronRight /> : <TbChevronDown />}
-          </Button>
+          {canEdit && (
+            <>
+              <Button
+                className="text-primary mr-2"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsOpenUpdateForm(true)}
+              >
+                Update property
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-primary"
+                onClick={toggleVisibility}
+              >
+                <div className="pr-1 w-12">{isVisible ? 'Hide' : 'Show'}</div>
+                {isVisible ? <TbChevronRight /> : <TbChevronDown />}
+              </Button>
+            </>
+          )}
         </div>
       </div>
       {isVisible && (
