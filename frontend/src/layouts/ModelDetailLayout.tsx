@@ -34,8 +34,6 @@ import { updateModelService } from '@/services/model.service'
 import { toast } from 'react-toastify'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { useSiteConfig } from '@/utils/siteConfig'
-import usePermissionHook from '@/hooks/usePermissionHook'
-import { PERMISSIONS } from '@/data/permission'
 
 const ModelDetailLayout = () => {
   const { data: fetchedModel, isLoading: isModelLoading } = useCurrentModel()

@@ -53,8 +53,6 @@ import usePluginPreloader from '@/hooks/usePluginPreloader'
 import PrototypeSidebar from '@/components/organisms/PrototypeSidebar'
 import StagingTabButton from '@/components/organisms/StagingTabButton'
 import { useSiteConfig } from '@/utils/siteConfig'
-import usePermissionHook from '@/hooks/usePermissionHook'
-import { PERMISSIONS } from '@/data/permission'
 
 interface ViewPrototypeProps {
   display?: 'tree' | 'list'
