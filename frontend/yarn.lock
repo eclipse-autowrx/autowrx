@@ -3893,10 +3893,10 @@ keyv@^4.5.4:
   dependencies:
     json-buffer "3.0.1"
 
-konva@9.2.3:
-  version "9.2.3"
-  resolved "https://registry.yarnpkg.com/konva/-/konva-9.2.3.tgz#84f0a828a040b4aeb9f90625e89fdfe0662075a2"
-  integrity sha512-oQ6VQ6kUL9IlhOGuEKKhxqnv6g/t8jZpVuWahQQ6hCqAsO8Ydi1zFGv7ef4EOq5GoPNq/d6Fyj/3i5Y/a5NooA==
+konva@9.3.22:
+  version "9.3.22"
+  resolved "https://registry.yarnpkg.com/konva/-/konva-9.3.22.tgz#aa979c410127dda20bf0788ab70a414648c25a91"
+  integrity sha512-yQI5d1bmELlD/fowuyfOp9ff+oamg26WOCkyqUyc+nczD/lhRa3EvD2MZOoc4c1293TAubW9n34fSQLgSeEgSw==
 
 language-subtag-registry@^0.3.20:
   version "0.3.23"

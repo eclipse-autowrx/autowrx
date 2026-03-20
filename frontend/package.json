@@ -54,7 +54,7 @@
     "file-saver": "^2.0.5",
     "immer": "^10.1.1",
     "jszip": "^3.10.1",
-    "konva": "9.2.3",
+    "konva": "9.3.22",
     "lodash": "^4.17.21",
     "lucide-react": "^0.548.0",
     "microsoft-cognitiveservices-speech-sdk": "^1.41.0",
