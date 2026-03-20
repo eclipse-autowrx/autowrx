@@ -16,7 +16,8 @@ const logger = require('../config/logger');
 const ModelTemplate = require('../models/modelTemplate.model');
 
 const createModel = catchAsync(async (req, res) => {
-  let { cvi, custom_apis, extended_apis, api_data_url, ...reqBody } = req.body;
+  const { cvi, custom_apis, api_data_url, extended_apis: initialExtendedApis, ...reqBody } = req.body;
+  let extended_apis = initialExtendedApis;
 
   if (api_data_url) {
     const result = await modelService.processApiDataUrl(api_data_url);
@@ -98,141 +99,10 @@ const listModels = catchAsync(async (req, res) => {
   res.json(models);
 });
 
-const DEFAULT_PAGE_SIZE = 24;
 const LEGACY_PAGE_SIZE = 1000;
 
 const listAllModels = catchAsync(async (req, res) => {
-  const options = pick(req.query, ['fields', 'tab', 'page', 'limit']);
-  const { tab } = options;
-  const page = options.page ? parseInt(options.page, 10) : 1;
-  const limit = options.limit ? parseInt(options.limit, 10) : tab ? DEFAULT_PAGE_SIZE : LEGACY_PAGE_SIZE;
-
-  const runOneTab = async (filter, advanced) => {
-    const result = await modelService.queryModels(
-      filter,
-      { ...options, limit, page, sortBy: options.sortBy },
-      advanced,
-      req.user?.id,
-    );
-    return result;
-  };
-
-  if (tab === 'owned') {
-    if (!req.user?.id) {
-      return res.status(200).send({
-        results: [],
-        page: 1,
-        limit,
-        totalPages: 0,
-        totalResults: 0,
-      });
-    }
-    const result = await runOneTab({ created_by: req.user.id }, {});
-    if (options.fields) {
-      return res.status(200).send({
-        results: result.results,
-        page: result.page,
-        limit: result.limit,
-        totalPages: result.totalPages,
-        totalResults: result.totalResults,
-      });
-    }
-    const cacheResult = new Map();
-    const processStats = async (model) => {
-      if (!model) return;
-      const modelId = model._id || model.id;
-      if (cacheResult.has(modelId)) {
-        model.stats = cacheResult.get(modelId);
-        return;
-      }
-      const stats = await modelService.getModelStats(model);
-      model.stats = stats;
-      cacheResult.set(modelId, stats);
-    };
-    await Promise.all(result.results.map((model) => processStats(model)));
-    return res.status(200).send({
-      results: result.results,
-      page: result.page,
-      limit: result.limit,
-      totalPages: result.totalPages,
-      totalResults: result.totalResults,
-    });
-  }
-
-  if (tab === 'contributed') {
-    if (!req.user?.id) {
-      return res.status(200).send({
-        results: [],
-        page: 1,
-        limit,
-        totalPages: 0,
-        totalResults: 0,
-      });
-    }
-    const result = await runOneTab({}, { is_contributor: req.user.id });
-    if (options.fields) {
-      return res.status(200).send({
-        results: result.results,
-        page: result.page,
-        limit: result.limit,
-        totalPages: result.totalPages,
-        totalResults: result.totalResults,
-      });
-    }
-    const cacheResult = new Map();
-    const processStats = async (model) => {
-      if (!model) return;
-      const modelId = model._id || model.id;
-      if (cacheResult.has(modelId)) {
-        model.stats = cacheResult.get(modelId);
-        return;
-      }
-      const stats = await modelService.getModelStats(model);
-      model.stats = stats;
-      cacheResult.set(modelId, stats);
-    };
-    await Promise.all(result.results.map((model) => processStats(model)));
-    return res.status(200).send({
-      results: result.results,
-      page: result.page,
-      limit: result.limit,
-      totalPages: result.totalPages,
-      totalResults: result.totalResults,
-    });
-  }
-
-  if (tab === 'public') {
-    const result = await runOneTab({ visibility: 'public', state: 'released' }, {});
-    if (options.fields) {
-      return res.status(200).send({
-        results: result.results,
-        page: result.page,
-        limit: result.limit,
-        totalPages: result.totalPages,
-        totalResults: result.totalResults,
-      });
-    }
-    const cacheResult = new Map();
-    const processStats = async (model) => {
-      if (!model) return;
-      const modelId = model._id || model.id;
-      if (cacheResult.has(modelId)) {
-        model.stats = cacheResult.get(modelId);
-        return;
-      }
-      const stats = await modelService.getModelStats(model);
-      model.stats = stats;
-      cacheResult.set(modelId, stats);
-    };
-    await Promise.all(result.results.map((model) => processStats(model)));
-    return res.status(200).send({
-      results: result.results,
-      page: result.page,
-      limit: result.limit,
-      totalPages: result.totalPages,
-      totalResults: result.totalResults,
-    });
-  }
+  const options = pick(req.query, ['fields']);
 
   const ownedModels = req.user?.id
     ? await modelService.queryModels(
@@ -270,20 +140,21 @@ const listAllModels = catchAsync(async (req, res) => {
   const cacheResult = new Map();
   const processStats = async (model) => {
     if (!model) return;
-    const modelId = model._id || model.id;
+    const doc = model;
+    const modelId = doc._id || doc.id;
     if (cacheResult.has(modelId)) {
-      model.stats = cacheResult.get(modelId);
+      doc.stats = cacheResult.get(modelId);
       return;
     }
-    const stats = await modelService.getModelStats(model);
-    model.stats = stats;
+    const stats = await modelService.getModelStats(doc);
+    doc.stats = stats;
     cacheResult.set(modelId, stats);
   };
 
   const allModels = [...ownedModels.results, ...contributedModels.results, ...publicReleasedModels.results];
   await Promise.all(allModels.map((model) => processStats(model)));
 
-  res.status(200).send({
+  return res.status(200).send({
     ownedModels: { results: ownedModels.results },
     contributedModels: { results: contributedModels.results },
     publicReleasedModels: { results: publicReleasedModels.results },
@@ -399,7 +270,9 @@ const replaceApi = catchAsync(async (req, res) => {
 
   logger.info(`Replacing API for model ${modelId} with URL: ${apiDataUrl}`);
 
-  let extended_apis, api_version, main_api;
+  let extended_apis;
+  let api_version;
+  let main_api;
   try {
     const result = await modelService.processApiDataUrl(apiDataUrl);
     extended_apis = result.extended_apis;
@@ -425,17 +298,22 @@ const replaceApi = catchAsync(async (req, res) => {
 
   // Validate extended_apis
   if (Array.isArray(extended_apis)) {
-    for (const extended_api of extended_apis) {
-      const error = await extendedApiService.validateExtendedApi({
-        ...extended_api,
-        model: modelId,
-      });
-      if (error) {
-        throw new ApiError(
-          httpStatus.BAD_REQUEST,
-          `Error in validating extended API ${extended_api.name || extended_api.apiName} - ${error.details.join(', ')}`,
-        );
-      }
+    const validated = await Promise.all(
+      extended_apis.map(async (extendedApi) => {
+        const validationError = await extendedApiService.validateExtendedApi({
+          ...extendedApi,
+          model: modelId,
+        });
+        return { extendedApi, validationError };
+      }),
+    );
+    const firstInvalid = validated.find((r) => r.validationError);
+    if (firstInvalid) {
+      const { validationError: error, extendedApi } = firstInvalid;
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        `Error in validating extended API ${extendedApi.name || extendedApi.apiName} - ${error.details.join(', ')}`,
+      );
     }
   }
 
