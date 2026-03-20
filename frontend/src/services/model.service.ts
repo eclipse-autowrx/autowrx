@@ -53,6 +53,38 @@ export const listModelsLite = async (
   }
 }
 
+const DEFAULT_MODEL_LIST_FIELDS = [
+  'name',
+  'visibility',
+  'model_home_image_file',
+  'created_at',
+  'created_by',
+  'tags',
+  'state',
+  'api_version',
+]
+
+export const listModelsPage = async (
+  params: Record<string, unknown>,
+  {
+    page = 1,
+    fields = DEFAULT_MODEL_LIST_FIELDS,
+  }: {
+    page?: number
+    fields?: string[]
+  } = {},
+): Promise<List<ModelLite>> => {
+  const response = await serverAxios.get<List<ModelLite>>('/models', {
+    params: {
+      ...params,
+      fields: fields.join(','),
+      page,
+    },
+  })
+
+  return response.data
+}
+
 export interface AllModelsResponse {
   ownedModels: { results: ModelLite[] }
   contributedModels: { results: ModelLite[] }

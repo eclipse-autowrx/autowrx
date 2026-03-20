@@ -28,6 +28,7 @@ const DaModelItem = React.memo(({ model, className }: DaModelItemProps) => {
     model?.stats?.collaboration?.contributors?.count ?? 0
   const membersCount = model?.stats?.collaboration?.members?.count ?? 0
   const totalCount = contributorsCount + membersCount
+  const hasStats = Boolean(model?.stats)
 
   return (
     <div
@@ -94,17 +95,19 @@ const DaModelItem = React.memo(({ model, className }: DaModelItemProps) => {
                 </Tooltip>
               )}
 
-              <Tooltip delayDuration={300}>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center font-semibold ">
-                    <TbCode className="text-primary size-4 mr-1" />
-                    {model.stats?.prototypes?.count || 0}
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Prototypes</p>
-                </TooltipContent>
-              </Tooltip>
+              {hasStats && (
+                <Tooltip delayDuration={300}>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center font-semibold ">
+                      <TbCode className="text-primary size-4 mr-1" />
+                      {model.stats?.prototypes?.count || 0}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Prototypes</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </TooltipProvider>
           </div>
         </div>

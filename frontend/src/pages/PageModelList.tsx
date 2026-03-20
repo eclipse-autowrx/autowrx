@@ -159,7 +159,9 @@ const PageModelList = () => {
         }
 
         await refetch()
-        queryClient.invalidateQueries({ queryKey: ['allModels'] })
+        queryClient.invalidateQueries({
+          queryKey: ['modelsList', user?.id ?? 'anonymous'],
+        })
         navigate(`/model/${createdModel}`)
       } catch (err) {
         console.error('Error creating model from zip: ', err)
@@ -170,28 +172,50 @@ const PageModelList = () => {
     [user, refetch, navigate, queryClient],
   )
 
-  const handleImportModelZip = useCallback(async (file: File) => {
-    const model = await zipToModel(file)
-    if (model) {
-      setIsImporting(true)
-      await createNewModel(model)
-    }
-  }, [createNewModel])
+  const handleImportModelZip = useCallback(
+    async (file: File) => {
+      const model = await zipToModel(file)
+      if (model) {
+        setIsImporting(true)
+        await createNewModel(model)
+      }
+    },
+    [createNewModel],
+  )
 
   const tabItems = useMemo(() => {
     if (user) {
       return [
-        { title: 'My Models', value: 'myModel' as const, count: ownedModels.length },
+        {
+          title: 'My Models',
+          value: 'myModel' as const,
+          count: ownedModels.length,
+        },
         {
           title: 'My Contributions',
           value: 'myContribution' as const,
           count: contributedModels.length,
         },
-        { title: 'Public', value: 'public' as const, count: publicReleasedModels.length },
+        {
+          title: 'Public',
+          value: 'public' as const,
+          count: publicReleasedModels.length,
+        },
       ]
     }
-    return [{ title: 'Public', value: 'public' as const, count: publicReleasedModels.length }]
-  }, [user, ownedModels.length, contributedModels.length, publicReleasedModels.length])
+    return [
+      {
+        title: 'Public',
+        value: 'public' as const,
+        count: publicReleasedModels.length,
+      },
+    ]
+  }, [
+    user,
+    ownedModels.length,
+    contributedModels.length,
+    publicReleasedModels.length,
+  ])
 
   useEffect(() => {
     const targets: Array<{ tab: ModelTab; el: HTMLElement | null }> = [
@@ -208,7 +232,8 @@ const PageModelList = () => {
         if (!intersecting.length) return
 
         const visibleSorted = intersecting.sort(
-          (a, b) => (a.boundingClientRect.top ?? 0) - (b.boundingClientRect.top ?? 0),
+          (a, b) =>
+            (a.boundingClientRect.top ?? 0) - (b.boundingClientRect.top ?? 0),
         )
         const top = visibleSorted[0]
         if (!top?.target) return
@@ -247,7 +272,6 @@ const PageModelList = () => {
               {tab.title}
               <div className="flex min-w-5 px-1.5 py-0.5 items-center justify-center text-xs ml-1 bg-gray-200 rounded-md">
                 {tab.count}
-                {isFetchingNextPage && <TbLoader className="animate-spin ml-1 text-xs" />}
               </div>
             </DaTabItem>
           ))
@@ -285,9 +309,13 @@ const PageModelList = () => {
                   {user && (
                     <div className="flex items-center gap-2">
                       {!isImporting ? (
-                        <DaImportFile accept=".zip" onFileChange={handleImportModelZip}>
+                        <DaImportFile
+                          accept=".zip"
+                          onFileChange={handleImportModelZip}
+                        >
                           <Button variant="outline" size="sm">
-                            <TbPackageExport className="mr-1 text-lg" /> Import Model
+                            <TbPackageExport className="mr-1 text-lg" /> Import
+                            Model
                           </Button>
                         </DaImportFile>
                       ) : (
@@ -301,7 +329,11 @@ const PageModelList = () => {
                         open={createDialogOpen}
                         onOpenChange={setCreateDialogOpen}
                         trigger={
-                          <Button variant="default" size="sm" data-id="btn-open-form-create">
+                          <Button
+                            variant="default"
+                            size="sm"
+                            data-id="btn-open-form-create"
+                          >
                             <HiPlus className="mr-1 text-lg" />
                             Create New Model
                           </Button>
@@ -359,7 +391,9 @@ const PageModelList = () => {
                     models={filterModels(contributedModels)}
                     isLoading={isLoading && contributedModels.length === 0}
                     emptyText={
-                      searchQuery.trim() ? 'No models match your search.' : 'No contributions found.'
+                      searchQuery.trim()
+                        ? 'No models match your search.'
+                        : 'No contributions found.'
                     }
                     sectionRef={myContribRef}
                   />
@@ -370,7 +404,9 @@ const PageModelList = () => {
                   models={filterModels(publicReleasedModels)}
                   isLoading={isLoading && publicReleasedModels.length === 0}
                   emptyText={
-                    searchQuery.trim() ? 'No models match your search.' : 'No public models found.'
+                    searchQuery.trim()
+                      ? 'No models match your search.'
+                      : 'No public models found.'
                   }
                   headerExtras={
                     !user ? (

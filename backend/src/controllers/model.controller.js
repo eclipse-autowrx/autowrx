@@ -14,6 +14,67 @@ const ApiError = require('../utils/ApiError');
 const { PERMISSIONS } = require('../config/roles');
 const logger = require('../config/logger');
 const ModelTemplate = require('../models/modelTemplate.model');
+const config = require('../config/config');
+
+const listAllModels = catchAsync(async (req, res) => {
+  const options = pick(req.query, ['fields']);
+
+  const ownedModels = req.user?.id
+    ? await modelService.queryModels(
+        { created_by: req.user?.id },
+        { ...options, limit: config.constraints.defaultPageSize, page: 1 },
+        {},
+        req.user?.id,
+      )
+    : { results: [] };
+
+  const contributedModels = req.user?.id
+    ? await modelService.queryModels(
+        {},
+        { ...options, limit: config.constraints.defaultPageSize, page: 1 },
+        { is_contributor: req.user?.id },
+        req.user?.id,
+      )
+    : { results: [] };
+
+  const publicReleasedModels = await modelService.queryModels(
+    { visibility: 'public', state: 'released' },
+    { ...options, limit: config.constraints.defaultPageSize, page: 1 },
+    {},
+    req.user?.id,
+  );
+
+  if (options.fields) {
+    return res.status(200).send({
+      ownedModels: { results: ownedModels.results },
+      contributedModels: { results: contributedModels.results },
+      publicReleasedModels: { results: publicReleasedModels.results },
+    });
+  }
+
+  const cacheResult = new Map();
+  const processStats = async (model) => {
+    if (!model) return;
+    const doc = model;
+    const modelId = doc._id || doc.id;
+    if (cacheResult.has(modelId)) {
+      doc.stats = cacheResult.get(modelId);
+      return;
+    }
+    const stats = await modelService.getModelStats(doc);
+    doc.stats = stats;
+    cacheResult.set(modelId, stats);
+  };
+
+  const allModels = [...ownedModels.results, ...contributedModels.results, ...publicReleasedModels.results];
+  await Promise.all(allModels.map((model) => processStats(model)));
+
+  return res.status(200).send({
+    ownedModels: { results: ownedModels.results },
+    contributedModels: { results: contributedModels.results },
+    publicReleasedModels: { results: publicReleasedModels.results },
+  });
+});
 
 const createModel = catchAsync(async (req, res) => {
   const { cvi, custom_apis, api_data_url, extended_apis: initialExtendedApis, ...reqBody } = req.body;
@@ -94,71 +155,12 @@ const listModels = catchAsync(async (req, res) => {
     'created_by',
   ]);
   const options = pick(req.query, ['sortBy', 'limit', 'page', 'fields']);
+  if (typeof options.limit === 'undefined') {
+    options.limit = config.constraints.defaultPageSize;
+  }
   const advanced = pick(req.query, ['is_contributor']);
   const models = await modelService.queryModels(filter, options, advanced, req.user?.id);
   res.json(models);
-});
-
-const LEGACY_PAGE_SIZE = 1000;
-
-const listAllModels = catchAsync(async (req, res) => {
-  const options = pick(req.query, ['fields']);
-
-  const ownedModels = req.user?.id
-    ? await modelService.queryModels(
-        { created_by: req.user?.id },
-        { ...options, limit: LEGACY_PAGE_SIZE, page: 1 },
-        {},
-        req.user?.id,
-      )
-    : { results: [] };
-
-  const contributedModels = req.user?.id
-    ? await modelService.queryModels(
-        {},
-        { ...options, limit: LEGACY_PAGE_SIZE, page: 1 },
-        { is_contributor: req.user?.id },
-        req.user?.id,
-      )
-    : { results: [] };
-
-  const publicReleasedModels = await modelService.queryModels(
-    { visibility: 'public', state: 'released' },
-    { ...options, limit: LEGACY_PAGE_SIZE, page: 1 },
-    {},
-    req.user?.id,
-  );
-
-  if (options.fields) {
-    return res.status(200).send({
-      ownedModels: { results: ownedModels.results },
-      contributedModels: { results: contributedModels.results },
-      publicReleasedModels: { results: publicReleasedModels.results },
-    });
-  }
-
-  const cacheResult = new Map();
-  const processStats = async (model) => {
-    if (!model) return;
-    const doc = model;
-    const modelId = doc._id || doc.id;
-    if (cacheResult.has(modelId)) {
-      doc.stats = cacheResult.get(modelId);
-      return;
-    }
-    const stats = await modelService.getModelStats(doc);
-    doc.stats = stats;
-    cacheResult.set(modelId, stats);
-  };
-
-  const allModels = [...ownedModels.results, ...contributedModels.results, ...publicReleasedModels.results];
-  await Promise.all(allModels.map((model) => processStats(model)));
-
-  return res.status(200).send({
-    ownedModels: { results: ownedModels.results },
-    contributedModels: { results: contributedModels.results },
-    publicReleasedModels: { results: publicReleasedModels.results },
-  });
 });
 
 const getModel = catchAsync(async (req, res) => {

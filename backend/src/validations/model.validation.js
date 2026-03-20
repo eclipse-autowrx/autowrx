@@ -52,6 +52,7 @@ const listModels = {
   query: Joi.object().keys({
     name: Joi.string(),
     visibility: Joi.string().valid(...Object.values(visibilityTypes)),
+    state: Joi.string().valid('draft', 'released', 'blocked'),
     tenant_id: Joi.string(),
     vehicle_category: Joi.string(),
     main_api: Joi.string(),
