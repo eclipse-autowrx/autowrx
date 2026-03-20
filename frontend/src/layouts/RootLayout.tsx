@@ -76,7 +76,7 @@ const RootLayout = () => {
       <Suspense>
         <NavigationBar />
         {!pathsWithoutBreadcrumb.has(location.pathname) && (
-          <div className="flex items-center justify-between bg-primary h-[52px] px-4">
+          <div className="flex items-center justify-between bg-primary h-[52px] px-4 da-secondary-nav-bar">
             <DaBreadcrumbBar />
           </div>
         )}

@@ -20,7 +20,7 @@ import { CVI } from '@/data/CVI'
 import { createModelService } from '@/services/model.service'
 import { ModelCreate } from '@/types/model.type'
 import { isAxiosError } from 'axios'
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, useState } from 'react'
 import { TbCircleCheckFilled, TbLoader } from 'react-icons/tb'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '../toaster/use-toast'
@@ -66,13 +66,6 @@ const FormCreateModel = () => {
     queryKey: ['model-templates'],
     queryFn: () => listModelTemplates({ limit: 100, page: 1 }),
   })
-
-  // Auto-select the first template once templates are loaded
-  useEffect(() => {
-    if (templatesData?.results?.length && selectedTemplateId === null) {
-      setSelectedTemplateId(templatesData.results[0].id)
-    }
-  }, [templatesData])
 
   const navigate = useNavigate()
 
@@ -238,7 +231,7 @@ const FormCreateModel = () => {
                 setData((prev) => ({ ...prev, api_data_url: url }))
                 setUploading(false)
               }}
-              label="Upload"
+              label="Browse"
               className="w-full"
               accept=".json"
               validate={signalFileValidator}
