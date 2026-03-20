@@ -18,6 +18,7 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import {
   PREDEFINED_SITE_CONFIGS,
   PREDEFINED_GENAI_CONFIG_KEYS,
+  PREDEFINED_PROTOTYPE_CONFIG_KEYS,
 } from '@/pages/SiteConfigManagement'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 import NavBarActionsEditor, { NavBarAction } from '@/components/molecules/NavBarActionsEditor'
@@ -45,6 +46,9 @@ const PublicConfigSection: React.FC = () => {
 
   const isGenAIKey = (key: string) =>
     PREDEFINED_GENAI_CONFIG_KEYS.includes(key)
+  const isPrototypeKey = (key: string) =>
+    PREDEFINED_PROTOTYPE_CONFIG_KEYS.includes(key)
+  const isSpecialSectionKey = (key: string) => isGenAIKey(key) || isPrototypeKey(key)
 
   useEffect(() => {
     if (selfLoading || !self) return
@@ -66,33 +70,33 @@ const PublicConfigSection: React.FC = () => {
       const existingConfigs = res.results || []
       const existingKeys = new Set(existingConfigs.map(config => config.key))
 
-      // Find missing predefined configs and create them (excluding NAV_BAR_ACTIONS and GenAI keys)
+      // Find missing predefined configs and create them (excluding NAV_BAR_ACTIONS and section-specific keys)
       // NAV_BAR_ACTIONS should only be created when user explicitly adds actions
       const missingConfigs = PREDEFINED_SITE_CONFIGS.filter(
         (config) =>
           !existingKeys.has(config.key) &&
           config.key !== 'NAV_BAR_ACTIONS' &&
-          !isGenAIKey(config.key),
+          !isSpecialSectionKey(config.key),
       )
 
       // Find existing configs with empty values (empty string, null, or undefined) that should have defaults
       const configsToUpdate: any[] = []
       PREDEFINED_SITE_CONFIGS.forEach(predefinedConfig => {
         if (predefinedConfig.key === 'NAV_BAR_ACTIONS') return
-        if (isGenAIKey(predefinedConfig.key)) return
-        
+        if (isSpecialSectionKey(predefinedConfig.key)) return
+
         const existingConfig = existingConfigs.find(c => c.key === predefinedConfig.key)
         if (existingConfig) {
-          const isEmpty = existingConfig.value === null || 
-                         existingConfig.value === undefined || 
-                         existingConfig.value === '' ||
-                         (typeof existingConfig.value === 'string' && existingConfig.value.trim() === '')
-          
+          const isEmpty = existingConfig.value === null ||
+            existingConfig.value === undefined ||
+            existingConfig.value === '' ||
+            (typeof existingConfig.value === 'string' && existingConfig.value.trim() === '')
+
           // If existing config is empty but predefined has a non-empty default, update it
-          if (isEmpty && predefinedConfig.value !== null && 
-              predefinedConfig.value !== undefined && 
-              predefinedConfig.value !== '' &&
-              !(typeof predefinedConfig.value === 'string' && predefinedConfig.value.trim() === '')) {
+          if (isEmpty && predefinedConfig.value !== null &&
+            predefinedConfig.value !== undefined &&
+            predefinedConfig.value !== '' &&
+            !(typeof predefinedConfig.value === 'string' && predefinedConfig.value.trim() === '')) {
             configsToUpdate.push(predefinedConfig)
           }
         }
@@ -112,10 +116,10 @@ const PublicConfigSection: React.FC = () => {
           limit: 100,
         })
 
-        // Filter to only show predefined non‑GenAI configs (excluding NAV_BAR_ACTIONS)
+        // Filter to only show predefined public configs (excluding NAV_BAR_ACTIONS and section-specific keys)
         const predefinedKeys = new Set(
           PREDEFINED_SITE_CONFIGS.map((c) => c.key).filter(
-            (key) => !isGenAIKey(key) && key !== 'NAV_BAR_ACTIONS',
+            (key) => !isSpecialSectionKey(key) && key !== 'NAV_BAR_ACTIONS',
           ),
         )
         const predefinedOrder = new Map(
@@ -141,10 +145,10 @@ const PublicConfigSection: React.FC = () => {
 
         setConfigs(filteredConfigs)
       } else {
-        // Filter to only show predefined non‑GenAI configs (excluding NAV_BAR_ACTIONS)
+        // Filter to only show predefined public configs (excluding NAV_BAR_ACTIONS and section-specific keys)
         const predefinedKeys = new Set(
           PREDEFINED_SITE_CONFIGS.map((c) => c.key).filter(
-            (key) => !isGenAIKey(key) && key !== 'NAV_BAR_ACTIONS',
+            (key) => !isSpecialSectionKey(key) && key !== 'NAV_BAR_ACTIONS',
           ),
         )
         const predefinedOrder = new Map(
@@ -205,7 +209,7 @@ const PublicConfigSection: React.FC = () => {
       if (config.id) {
         await configManagementService.deleteConfigById(config.id)
         toast({ title: 'Deleted', description: `Config "${config.key}" deleted. Reloading page...` })
-        
+
         // Reload page to show changes immediately
         setTimeout(() => {
           window.location.reload()
@@ -238,7 +242,7 @@ const PublicConfigSection: React.FC = () => {
         await configManagementService.createConfig({ ...config, secret: false })
         toast({ title: 'Created', description: `Config "${config.key}" created. Reloading page...` })
       }
-      
+
       // Reload page to show changes immediately
       setTimeout(() => {
         window.location.reload()
@@ -261,7 +265,7 @@ const PublicConfigSection: React.FC = () => {
   const handleSaveNavBarActions = async () => {
     try {
       setIsSavingNavBarActions(true)
-      
+
       // Update the NAV_BAR_ACTIONS config
       await configManagementService.updateConfigByKey('NAV_BAR_ACTIONS', {
         value: navBarActions,
@@ -273,11 +277,11 @@ const PublicConfigSection: React.FC = () => {
         valueType: 'array',
         section: 'public',
       })
-      toast({ 
-        title: 'Saved', 
-        description: 'Navigation bar actions updated successfully. Reloading page...' 
+      toast({
+        title: 'Saved',
+        description: 'Navigation bar actions updated successfully. Reloading page...'
       })
-      
+
       // Reload page to show changes immediately
       setTimeout(() => {
         window.location.reload()
@@ -319,7 +323,7 @@ const PublicConfigSection: React.FC = () => {
       failed.forEach((f) => console.warn('Failed to delete config', f.key, f))
 
       toast({ title: 'Restored', description: 'Public configs restored to default values. Reloading page...' })
-      
+
       // Reload page to show changes immediately
       reloadSoon()
     } catch (err) {
@@ -395,22 +399,20 @@ const PublicConfigSection: React.FC = () => {
           <button
             type="button"
             onClick={() => setSubTab('config')}
-            className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${
-              subTab === 'config'
+            className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${subTab === 'config'
                 ? 'bg-muted text-foreground border border-b-0 border-border -mb-px'
                 : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-            }`}
+              }`}
           >
             Config
           </button>
           <button
             type="button"
             onClick={() => setSubTab('history')}
-            className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${
-              subTab === 'history'
+            className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${subTab === 'history'
                 ? 'bg-muted text-foreground border border-b-0 border-border -mb-px'
                 : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-            }`}
+              }`}
           >
             History
           </button>
