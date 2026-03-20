@@ -82,7 +82,7 @@
     "zustand": "^4.5.2"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.1.15",
+    "@tailwindcss/postcss": "^4.2.2",
     "@tanstack/eslint-plugin-query": "^5.35.6",
     "@tanstack/react-query-devtools": "^5.37.1",
     "@types/culori": "^4.0.1",
