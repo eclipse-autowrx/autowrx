@@ -87,7 +87,6 @@ const ModelDetailLayout = () => {
     )
   }, [user, model])
 
-  const isTenantAdmin = !!user?.roles?.tenant_admin?.length
   const canConfigureModelAddons =
     isAuthoredAdmin || (isModelOwner && !!allowNonAdminAddonConfig)
 
