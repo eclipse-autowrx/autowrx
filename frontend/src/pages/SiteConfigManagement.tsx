@@ -190,6 +190,16 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
       'Enable or disable the context menu on prototype items in the prototype list. When enabled, right-clicking on a prototype will show a menu context.',
     category: 'prototype',
   },
+  {
+    key: 'ALLOW_NON_ADMIN_ADDON_CONFIG',
+    scope: 'site',
+    value: true,
+    secret: false,
+    valueType: 'boolean',
+    description:
+      'Allow non-admin model owners to add/manage addon tabs on model and prototype detail pages. Admin users can always configure addon tabs regardless of this setting.',
+    category: 'prototype',
+  },
 ]
 
 export const PREDEFINED_GENAI_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(
