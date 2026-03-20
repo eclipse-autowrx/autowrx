@@ -86,9 +86,6 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
     'ALLOW_NON_ADMIN_ADDON_CONFIG',
     true,
   )
-  const [isAuthoredAdmin] = usePermissionHook(
-    [PERMISSIONS.MANAGE_USERS],
-  )
   const [templateInitialData, setTemplateInitialData] = useState<{
     name?: string
     description?: string
@@ -206,7 +203,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
   }, [user, model])
 
   const canConfigurePrototypeAddons =
-    isAuthoredAdmin || (isModelOwner && !!allowNonAdminAddonConfig)
+    (isModelOwner && !!allowNonAdminAddonConfig)
 
   // Callback for plugins to navigate to a specific prototype tab
   const handleSetActiveTab = useCallback((targetTab: string, targetPluginSlug?: string) => {

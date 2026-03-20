@@ -64,9 +64,6 @@ const ModelDetailLayout = () => {
     'ALLOW_NON_ADMIN_ADDON_CONFIG',
     true,
   )
-  const [isAuthoredAdmin] = usePermissionHook(
-    [PERMISSIONS.MANAGE_USERS],
-  )
   // Update store when model is fetched
   useEffect(() => {
     if (fetchedModel && fetchedModel.id) {
@@ -88,7 +85,7 @@ const ModelDetailLayout = () => {
   }, [user, model])
 
   const canConfigureModelAddons =
-    isAuthoredAdmin || (isModelOwner && !!allowNonAdminAddonConfig)
+    (isModelOwner && !!allowNonAdminAddonConfig)
 
   // Helper to get model tabs in TabConfig format
   const getModelTabs = (): TabConfig[] => {
