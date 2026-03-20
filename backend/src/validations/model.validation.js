@@ -48,6 +48,12 @@ const listAllModels = {
   }),
 };
 
+const listModelStats = {
+  body: Joi.object().keys({
+    ids: Joi.array().items(Joi.string().custom(objectId)).min(1).required(),
+  }),
+};
+
 const listModels = {
   query: Joi.object().keys({
     name: Joi.string(),
@@ -60,6 +66,7 @@ const listModels = {
     id: Joi.string().custom(objectId),
     created_by: Joi.string().custom(objectId),
     is_contributor: Joi.boolean(),
+    include_stats: Joi.boolean(),
     sortBy: Joi.string(),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),
@@ -157,4 +164,5 @@ module.exports = {
   getApiByModelId,
   replaceApi,
   listAllModels,
+  listModelStats,
 };

@@ -14,6 +14,7 @@ const ApiError = require('../utils/ApiError');
 const { PERMISSIONS } = require('../config/roles');
 const logger = require('../config/logger');
 const ModelTemplate = require('../models/modelTemplate.model');
+const { Model } = require('../models');
 const config = require('../config/config');
 
 const listAllModels = catchAsync(async (req, res) => {
@@ -155,12 +156,54 @@ const listModels = catchAsync(async (req, res) => {
     'created_by',
   ]);
   const options = pick(req.query, ['sortBy', 'limit', 'page', 'fields']);
+  const includeStats = req.query.include_stats;
   if (typeof options.limit === 'undefined') {
     options.limit = config.constraints.defaultPageSize;
   }
   const advanced = pick(req.query, ['is_contributor']);
   const models = await modelService.queryModels(filter, options, advanced, req.user?.id);
+
+  if (includeStats && Array.isArray(models.results) && models.results.length > 0) {
+    const statsById = await modelService.getModelStatsSummaryByIds(models.results);
+    models.results = models.results.map((model) => ({
+      ...model,
+      stats: statsById[String(model.id)] || undefined,
+    }));
+  }
+
   res.json(models);
+});
+
+const listModelStatsByIds = catchAsync(async (req, res) => {
+  const ids = req.body?.ids || [];
+  const requestedIds = Array.isArray(ids) ? ids : [];
+
+  if (requestedIds.length === 0) {
+    return res.json({ statsById: {} });
+  }
+
+  const userId = req.user?.id;
+  let allowedIds = requestedIds;
+
+  // Fast path for anonymous/public-only.
+  if (!userId) {
+    const publicModels = await Model.find({ _id: { $in: requestedIds }, visibility: 'public' }).select('_id');
+    const publicIds = new Set(publicModels.map((m) => String(m._id)));
+    allowedIds = requestedIds.filter((id) => publicIds.has(String(id)));
+  } else {
+    const readable = await permissionService.listReadableModelIds(userId);
+    if (readable !== '*') {
+      const readableSet = new Set((readable || []).map((id) => String(id)));
+      allowedIds = requestedIds.filter((id) => readableSet.has(String(id)));
+    }
+  }
+
+  if (allowedIds.length === 0) {
+    return res.json({ statsById: {} });
+  }
+
+  const statsById = await modelService.getModelStatsSummaryByIds(allowedIds);
+  return res.json({ statsById });
 });
 
 const getModel = catchAsync(async (req, res) => {
@@ -345,6 +388,7 @@ module.exports = {
   deleteAuthorizedUser,
   getComputedVSSApi,
   listAllModels,
+  listModelStatsByIds,
   getApiDetail,
   replaceApi,
 };

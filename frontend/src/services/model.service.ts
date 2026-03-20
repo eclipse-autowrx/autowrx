@@ -180,6 +180,14 @@ export const getComputedAPIs = async (model_id: string) => {
   return (await serverAxios.get(`/models/${model_id}/api`)).data
 }
 
+export const getModelStatsByIds = async (ids: string[]) => {
+  const { data } = await serverAxios.post<{ statsById: Record<string, ModelLite['stats']> }>(
+    '/models/stats',
+    { ids },
+  )
+  return data.statsById
+}
+
 export const getApiDetailService = async (
   model_id: string,
   api_name: string,
