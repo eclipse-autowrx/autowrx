@@ -8,6 +8,7 @@
 
 import * as React from 'react'
 import { ModelLite } from '@/types/model.type'
+import { getModelStatsByIds } from '@/services/model.service'
 import {
   Tooltip,
   TooltipContent,
@@ -23,14 +24,157 @@ interface DaModelItemProps {
   className?: string
 }
 
+type ModelStats = NonNullable<ModelLite['stats']>
+
+const modelStatsMemo = new Map<string, ModelStats>()
+
+// Batch stats requests across multiple DaModelItem instances.
+// Key idea: each visible card enqueues its `modelId`, then a single debounced
+// request fetches stats for the whole queue (instead of N+1 requests).
+const modelStatsPromises = new Map<string, Promise<ModelStats | undefined>>()
+const modelStatsResolvers = new Map<string, (value: ModelStats | undefined) => void>()
+
+const pendingIds = new Set<string>()
+let batchTimer: ReturnType<typeof setTimeout> | undefined
+let isBatchInFlight = false
+
+const STATS_DEBOUNCE_MS = 150
+const MAX_BATCH_SIZE = 25
+
+const flushStatsQueue = async () => {
+  if (isBatchInFlight) return
+  if (batchTimer) {
+    clearTimeout(batchTimer)
+    batchTimer = undefined
+  }
+
+  const ids = Array.from(pendingIds)
+  pendingIds.clear()
+  if (ids.length === 0) return
+
+  isBatchInFlight = true
+  try {
+    const statsById = await getModelStatsByIds(ids)
+    ids.forEach((id) => {
+      const stats = statsById?.[id]
+      if (stats) modelStatsMemo.set(id, stats)
+
+      const resolve = modelStatsResolvers.get(id)
+      if (resolve) resolve(stats)
+
+      modelStatsPromises.delete(id)
+      modelStatsResolvers.delete(id)
+    })
+  } catch (e) {
+    // On error, resolve promises as `undefined` so UI won't be stuck.
+    ids.forEach((id) => {
+      const resolve = modelStatsResolvers.get(id)
+      if (resolve) resolve(undefined)
+
+      modelStatsPromises.delete(id)
+      modelStatsResolvers.delete(id)
+    })
+  } finally {
+    isBatchInFlight = false
+
+    // If something was enqueued during the in-flight request, schedule another flush.
+    if (pendingIds.size > 0) {
+      batchTimer = setTimeout(() => {
+        void flushStatsQueue()
+      }, STATS_DEBOUNCE_MS)
+    }
+  }
+}
+
+const enqueueModelStats = (id: string) => {
+  const cached = modelStatsMemo.get(id)
+  if (cached) return Promise.resolve(cached)
+
+  const existing = modelStatsPromises.get(id)
+  if (existing) return existing
+
+  const p = new Promise<ModelStats | undefined>((resolve) => {
+    modelStatsResolvers.set(id, resolve)
+  })
+  modelStatsPromises.set(id, p)
+  pendingIds.add(id)
+
+  if (pendingIds.size >= MAX_BATCH_SIZE) {
+    void flushStatsQueue()
+    return p
+  }
+
+  if (!batchTimer) {
+    batchTimer = setTimeout(() => {
+      void flushStatsQueue()
+    }, STATS_DEBOUNCE_MS)
+  }
+
+  return p
+}
+
 const DaModelItem = React.memo(({ model, className }: DaModelItemProps) => {
-  const contributorsCount =
-    model?.stats?.collaboration?.contributors?.count ?? 0
-  const membersCount = model?.stats?.collaboration?.members?.count ?? 0
+  const rootRef = React.useRef<HTMLDivElement | null>(null)
+  const modelId = model?.id
+
+  const [lazyStats, setLazyStats] = React.useState<ModelStats | undefined>(model?.stats)
+
+  React.useEffect(() => {
+    // If the parent already has stats (e.g. prefetch or cache), sync local state.
+    setLazyStats(model?.stats)
+  }, [modelId, model?.stats])
+
+  const requestStats = React.useCallback(async () => {
+    if (!modelId) return
+    const result = await enqueueModelStats(modelId)
+    setLazyStats(result)
+  }, [modelId])
+
+  React.useEffect(() => {
+    // If we already have stats, or modelId missing, no need to lazy fetch.
+    if (!modelId) return
+    if (lazyStats) return
+    if (!rootRef.current) return
+
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
+      void requestStats()
+      return
+    }
+
+    let isMounted = true
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0]
+        if (!entry?.isIntersecting) return
+        observer.disconnect()
+        void (async () => {
+          const result = await enqueueModelStats(modelId)
+          if (isMounted) setLazyStats(result)
+        })()
+      },
+      {
+        root: null,
+        rootMargin: '200px 0px',
+        threshold: 0.01,
+      },
+    )
+
+    observer.observe(rootRef.current)
+    return () => {
+      isMounted = false
+      observer.disconnect()
+    }
+  }, [modelId, lazyStats])
+
+  const stats = lazyStats
+  const contributorsCount = stats?.collaboration?.contributors?.count ?? 0
+  const membersCount = stats?.collaboration?.members?.count ?? 0
   const totalCount = contributorsCount + membersCount
+  const hasStats = Boolean(stats)
 
   return (
     <div
+      ref={rootRef}
       className={cn(
         'lg:w-full lg:h-full group bg-background rounded-lg cursor-pointer',
         className,
@@ -80,12 +224,12 @@ const DaModelItem = React.memo(({ model, className }: DaModelItemProps) => {
                 </Tooltip>
               )}
 
-              {model.stats && model.stats?.apis?.used?.count > 0 && (
+              {hasStats && (
                 <Tooltip delayDuration={300}>
                   <TooltipTrigger asChild>
                     <div className="flex items-center font-semibold">
                       <TbAffiliate className="text-primary size-4 mr-1" />
-                      {model.stats?.apis?.used?.count || 0}
+                      {stats?.apis?.used?.count || 0}
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -94,17 +238,19 @@ const DaModelItem = React.memo(({ model, className }: DaModelItemProps) => {
                 </Tooltip>
               )}
 
-              <Tooltip delayDuration={300}>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center font-semibold ">
-                    <TbCode className="text-primary size-4 mr-1" />
-                    {model.stats?.prototypes?.count || 0}
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Prototypes</p>
-                </TooltipContent>
-              </Tooltip>
+              {hasStats && (
+                <Tooltip delayDuration={300}>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center font-semibold ">
+                      <TbCode className="text-primary size-4 mr-1" />
+                      {stats?.prototypes?.count || 0}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Prototypes</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </TooltipProvider>
           </div>
         </div>

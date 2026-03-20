@@ -254,7 +254,7 @@ const AddonSelect: FC<AddonSelectProps> = ({ onSelect, onCancel }) => {
             placeholder="Search addons..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="!pl-10"
           />
         </div>
       </div>
