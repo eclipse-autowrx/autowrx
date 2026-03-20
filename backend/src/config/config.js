@@ -68,7 +68,7 @@ const envVarsSchema = Joi.object()
     CODER_URL: Joi.string().default('http://localhost:7080').description('Coder instance URL'),
     CODER_ADMIN_API_KEY: Joi.string().description('Coder admin API token for impersonation'),
     // Prototypes folder path (host path for bind-mount)
-    PROTOTYPES_PATH: Joi.string().default('/tmp/autowrx/prototypes').description('Host path for prototypes folder (bind-mount into Coder workspace)'),
+    PROTOTYPES_PATH: Joi.string().default('/var/lib/autowrx/prototypes').description('Host path for prototypes folder (bind-mount into Coder workspace)'),
     // Gitea integration (DISABLED - kept for reference)
     GITEA_URL: Joi.string().default('http://localhost:3000').description('Gitea instance URL'),
     GITEA_ADMIN_USERNAME: Joi.string().default('gitea-admin').description('Gitea admin username'),

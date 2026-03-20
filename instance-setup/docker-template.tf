@@ -45,7 +45,7 @@ data "coder_parameter" "prototypes_host_path" {
   name         = "prototypes_host_path"
   display_name = "Prototypes Host Path"
   description  = "Host path to prototypes folder (bind-mount into workspace)"
-  default      = "/tmp/autowrx/prototypes"
+  default      = "/var/lib/autowrx/prototypes"
   mutable      = true
 }
 
@@ -57,7 +57,7 @@ resource "docker_volume" "home_volume" {
 # 3. Create the Workspace Container
 resource "docker_container" "workspace" {
   count = data.coder_workspace.me.start_count
-  image = "codercom/code-server:latest"
+  image = docker_image.autowrx_workspace.image_id
   # Name must be unique per workspace
   name  = "coder-${data.coder_workspace_owner.me.id}-${data.coder_workspace.me.name}"
   
@@ -101,6 +101,17 @@ ${replace(coder_agent.main.init_script, "localhost:7080", "coder:7080")}
   }
 }
 
+# 3b. Build a pinned "golden" workspace image (fast startup)
+resource "docker_image" "autowrx_workspace" {
+  name         = "autowrx-workspace:1"
+  keep_locally = true
+
+  build {
+    context    = "${path.module}/workspace-image"
+    dockerfile = "Dockerfile"
+  }
+}
+
 # 4. The Agent (Connects container to Coder Dashboard)
 resource "coder_agent" "main" {
   arch = "amd64"  # x86_64 Linux (change to "arm64" for Apple Silicon)
@@ -110,13 +121,18 @@ resource "coder_agent" "main" {
     #!/bin/bash
     # Do NOT use set -e: any failed command would kill the script
 
-    # Install development tools
-    echo "Installing development tools..."
-    sudo apt-get update -qq || echo "Warning: apt-get update failed, continuing..."
-    sudo apt-get install -y \
-      build-essential g++ gcc \
-      python3 python3-pip python3-venv \
-      cmake git curl wget vim nano 2>&1 || echo "Warning: some packages failed to install"
+    # Seed home directory once for fast new-workspace readiness
+    if [ ! -f "/home/coder/.autowrx_seeded" ]; then
+      if [ -d "/opt/autowrx-home-seed" ]; then
+        echo "Seeding /home/coder from /opt/autowrx-home-seed ..."
+        if command -v rsync >/dev/null 2>&1; then
+          rsync -a "/opt/autowrx-home-seed/" "/home/coder/" || true
+        else
+          cp -a "/opt/autowrx-home-seed/." "/home/coder/" 2>/dev/null || true
+        fi
+      fi
+      touch "/home/coder/.autowrx_seeded" 2>/dev/null || true
+    fi
 
     # Configure Git
     git config --global init.defaultBranch main
@@ -180,9 +196,8 @@ resource "coder_script" "code_server" {
     elif [ -f "/usr/local/bin/code-server" ]; then
       CODE_SERVER_CMD="/usr/local/bin/code-server"
     else
-      echo "code-server not found, installing..."
-      curl -fsSL https://code-server.dev/install.sh | sh
-      CODE_SERVER_CMD="code-server"
+      echo "ERROR: code-server not found in image."
+      exit 1
     fi
 
     echo "Starting code-server on port 13337..."

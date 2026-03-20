@@ -290,7 +290,7 @@ const getOrCreateWorkspace = async (
     const richParameterValues = [
       {
         name: 'prototypes_host_path',
-        value: prototypesHostPath || config.prototypes?.path || '/tmp/autowrx/prototypes',
+        value: prototypesHostPath || config.prototypes?.path || '/var/lib/autowrx/prototypes',
       },
     ];
 

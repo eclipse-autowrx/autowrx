@@ -297,7 +297,7 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
     const coderUser = await coderService.ensureUserExists(userId, coderUsername, user.email);
 
     // 6. Prepare prototype folder on host (per-user dir, prototype name as subfolder)
-    const prototypesPath = config.prototypes?.path || '/tmp/autowrx/prototypes';
+    const prototypesPath = config.prototypes?.path || '/var/lib/autowrx/prototypes';
     const userHostPath = path.join(prototypesPath, userId.toString());
     const prototypeFolderName = sanitizePrototypeFolderName(prototype.name);
     const prototypeFolderHost = path.join(userHostPath, prototypeFolderName);
