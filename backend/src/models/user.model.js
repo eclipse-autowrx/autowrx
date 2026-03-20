@@ -71,6 +71,22 @@ const userSchema = mongoose.Schema(
     provider_data: {
       type: [userInfo],
     },
+    github_token: {
+      type: String,
+      private: true, // Encrypted, don't expose in JSON
+    },
+    coder_username: {
+      type: String,
+      trim: true,
+    },
+    coder_workspace_id: {
+      type: String,
+      trim: true,
+    },
+    coder_workspace_name: {
+      type: String,
+      trim: true,
+    },
   },
   {
     timestamps: true,

@@ -235,9 +235,9 @@ const CustomAPIList: React.FC<CustomAPIListProps> = ({
 
   return (
     <div className="flex flex-col h-full min-h-0 p-3">
-      {/* Top Row: Search, Filter */}
-      <div className="mb-2 flex items-center shrink-0">
-        <div className="relative w-full mr-2">
+      {/* Top Row: Search, Filter, Create Button */}
+      <div className="mb-2 flex items-center shrink-0 gap-2">
+        <div className="relative w-full">
           <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search APIs..."
@@ -253,6 +253,17 @@ const CustomAPIList: React.FC<CustomAPIListProps> = ({
             className="w-full"
             defaultValue={filterDefaultValue}
           />
+        )}
+        {mode === 'edit' && onCreateNew && (
+          <Button
+            variant="default"
+            size="sm"
+            onClick={onCreateNew}
+            className="flex items-center gap-2 shrink-0"
+          >
+            <TbPlus className="h-4 w-4" />
+            New API
+          </Button>
         )}
       </div>
 

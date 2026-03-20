@@ -27,7 +27,7 @@ type DaFileUploadProps = {
   image?: string // This must go with isImage = true
 }
 
-const MIN_HEIGHT = '120px'
+const MIN_HEIGHT = '60px'
 
 const DaFileUpload = ({
   onStartUpload,

@@ -26,6 +26,7 @@ import useCurrentModel from '@/hooks/useCurrentModel'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import DaDialog from '@/components/molecules/DaDialog'
 import PrototypeTabCode from '@/components/organisms/PrototypeTabCode'
+import PrototypeTabVSCode from '@/components/organisms/PrototypeTabVSCode'
 import PrototypeTabDashboard from '@/components/organisms/PrototypeTabDashboard'
 import PrototypeTabFeedback from '@/components/organisms/PrototypeTabFeedback'
 import DaRuntimeControl from '@/components/molecules/dashboard/DaRuntimeControl'
@@ -164,7 +165,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
     } else {
       setIsDefaultTab(false)
     }
-    setShowRt(['code', 'dashboard'].includes(tab || ''))
+    setShowRt(['code', 'vscode', 'dashboard'].includes(tab || ''))
   }, [tab, prototypeTabs])
 
   // Auto-navigate to first visible tab when arriving on the default (no-tab / view) route
@@ -410,6 +411,10 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
             )}
             {tab == 'journey' && <PrototypeTabJourney prototype={prototype} />}
             {tab == 'code' && <PrototypeTabCode />}
+            {/* Keep VS Code mounted to avoid iframe reload "stutter" on tab switches */}
+            <div className={tab === 'vscode' ? 'w-full h-full' : 'hidden'}>
+              <PrototypeTabVSCode isActive={tab === 'vscode'} />
+            </div>
             {tab == 'dashboard' && <PrototypeTabDashboard />}
             {tab == 'feedback' && <PrototypeTabFeedback />}
             {tab == 'staging' && <PrototypeTabStaging prototype={prototype} />}

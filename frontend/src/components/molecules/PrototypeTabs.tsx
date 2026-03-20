@@ -15,6 +15,7 @@ import {
   TbMapPin,
   TbMessagePlus,
   TbRoute,
+  TbBrandVscode,
 } from 'react-icons/tb'
 import { TabConfig } from '@/components/organisms/CustomTabEditor'
 import { renderTabIcon, tabItemClasses } from '@/lib/tabUtils'
@@ -31,6 +32,7 @@ const DEFAULT_BUILTIN_TABS: TabConfig[] = [
   { type: 'builtin', key: 'overview', label: 'Overview' },
   { type: 'builtin', key: 'journey', label: 'Customer Journey' },
   { type: 'builtin', key: 'code', label: 'SDV Code' },
+  { type: 'builtin', key: 'vscode', label: 'VS Code' },
   { type: 'builtin', key: 'dashboard', label: 'Dashboard' },
 ]
 
@@ -43,7 +45,33 @@ export const migrateTabConfig = (oldTabs?: Array<{ label: string; plugin: string
   // Check if it's already in new format (has 'type' property)
   const firstTab = oldTabs[0] as any
   if (firstTab && 'type' in firstTab) {
-    return oldTabs as TabConfig[]
+    // Already in new format - merge with default built-in tabs to ensure all built-ins are present
+    const existingTabs = oldTabs as TabConfig[]
+    const existingBuiltinKeys = new Set(
+      existingTabs.filter(t => t.type === 'builtin' && t.key).map(t => t.key!)
+    )
+    
+    // Add any missing built-in tabs from DEFAULT_BUILTIN_TABS
+    const missingBuiltinTabs = DEFAULT_BUILTIN_TABS.filter(
+      defaultTab => !existingBuiltinKeys.has(defaultTab.key!)
+    )
+    
+    // Merge: existing built-ins (preserve their order/hidden state) + missing built-ins + custom tabs
+    const existingBuiltinTabs = existingTabs.filter(t => t.type === 'builtin')
+    const customTabs = existingTabs.filter(t => t.type === 'custom')
+    
+    // Reorder built-ins to match DEFAULT_BUILTIN_TABS order, then add missing ones
+    const orderedBuiltinTabs: TabConfig[] = []
+    for (const defaultTab of DEFAULT_BUILTIN_TABS) {
+      const existing = existingBuiltinTabs.find(t => t.key === defaultTab.key)
+      if (existing) {
+        orderedBuiltinTabs.push(existing)
+      } else {
+        orderedBuiltinTabs.push(defaultTab)
+      }
+    }
+    
+    return [...orderedBuiltinTabs, ...customTabs]
   }
 
   // Old format: prepend default builtin tabs.
@@ -108,6 +136,11 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant }) => {
               route = `/model/${model_id}/library/prototype/${prototype_id}/code`
               defaultIcon = <TbCode className="w-5 h-5 mr-2" />
               dataId = 'tab-code'
+              break
+            case 'vscode':
+              route = `/model/${model_id}/library/prototype/${prototype_id}/vscode`
+              defaultIcon = <TbBrandVscode className="w-5 h-5 mr-2" />
+              dataId = 'tab-vscode'
               break
             case 'dashboard':
               route = `/model/${model_id}/library/prototype/${prototype_id}/dashboard`

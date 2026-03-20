@@ -31,6 +31,7 @@ import { PiArrowsLeftRight, PiCode } from 'react-icons/pi'
 import CodeEditor from '@/components/molecules/CodeEditor'
 import { Spinner } from '@/components/atoms/spinner'
 import { retry } from '@/lib/retry'
+import { useParams } from 'react-router-dom'
 
 // sessionStorage helpers for diff previous code
 const getDiffStorageKey = (prototypeId: string) => `code_diff_prev_${prototypeId}`
@@ -100,6 +101,7 @@ const DaGenAI_Python = lazy(() =>
 )
 
 const PrototypeTabCode: FC = () => {
+  const { prototype_id } = useParams<{ prototype_id: string }>()
   const [prototype, setActivePrototype, activeModelApis] = useModelStore(
     (state) => [
       state.prototype as Prototype,
@@ -398,26 +400,28 @@ const PrototypeTabCode: FC = () => {
             Language: <b>{(prototype.language || 'python').toUpperCase()}</b>
           </div>}
         </div>
-        <Suspense
-          fallback={
-            <div className="flex items-center justify-center h-full">
-              <Spinner />
-            </div>
-          }
-        >
+        <div className="flex-1 overflow-hidden">
           {editorType === 'project' ? (
-            <ProjectEditor
-              data={code || ''}
-              prototypeName={prototype.name}
-              onChange={(data: string) => {
-                setCode(data)
-                // Do not set savedCode here — only when we actually persist (saveCodeToDb)
-                // so that Save All / Ctrl+S still trigger the API when there are unsaved changes
-              }}
-              onSave={async (data: string) => {
-                await saveCodeToDb(data)
-              }}
-            />
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center h-full">
+                  <Spinner />
+                </div>
+              }
+            >
+              <ProjectEditor
+                data={code || ''}
+                prototypeName={prototype.name}
+                onChange={(data: string) => {
+                  setCode(data)
+                  // Do not set savedCode here — only when we actually persist (saveCodeToDb)
+                  // so that Save All / Ctrl+S still trigger the API when there are unsaved changes
+                }}
+                onSave={async (data: string) => {
+                  await saveCodeToDb(data)
+                }}
+              />
+            </Suspense>
           ) : showCodeDiff && showDiff && previousCode !== undefined ? (
             <DiffEditor
               original={previousCode}
@@ -440,13 +444,17 @@ const PrototypeTabCode: FC = () => {
           ) : (
             <CodeEditor
               code={code || ''}
-              setCode={setCode}
+              setCode={(newCode) => {
+                setCode(newCode)
+              }}
               editable={isAuthorized}
               language={prototype.language || 'python'}
-              onBlur={saveCodeToDb}
+              onBlur={() => {
+                saveCodeToDb()
+              }}
             />
           )}
-        </Suspense>
+        </div>
       </div>
       {showCodeApiPanel && (
         <>
