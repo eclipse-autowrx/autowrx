@@ -34,6 +34,8 @@ import { updateModelService } from '@/services/model.service'
 import { toast } from 'react-toastify'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { useSiteConfig } from '@/utils/siteConfig'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
 
 const ModelDetailLayout = () => {
   const { data: fetchedModel, isLoading: isModelLoading } = useCurrentModel()
@@ -62,7 +64,9 @@ const ModelDetailLayout = () => {
     'ALLOW_NON_ADMIN_ADDON_CONFIG',
     true,
   )
-
+  const [isAuthoredAdmin] = usePermissionHook(
+    [PERMISSIONS.MANAGE_USERS],
+  )
   // Update store when model is fetched
   useEffect(() => {
     if (fetchedModel && fetchedModel.id) {
@@ -85,7 +89,7 @@ const ModelDetailLayout = () => {
 
   const isTenantAdmin = !!user?.roles?.tenant_admin?.length
   const canConfigureModelAddons =
-    isModelOwner && (isTenantAdmin || !!allowNonAdminAddonConfig)
+    isAuthoredAdmin || (isModelOwner && !!allowNonAdminAddonConfig)
 
   // Helper to get model tabs in TabConfig format
   const getModelTabs = (): TabConfig[] => {
