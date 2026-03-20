@@ -31,12 +31,12 @@ const accessLevels = [
   {
     value: 'model_contributor',
     label: 'Contributor',
-    helperText: 'Can view and create prototype',
+    helperText: 'Can view, create prototypes, and update model',
   },
   {
     value: 'model_member',
-    label: 'Member',
-    helperText: 'Can view, create prototype and update model',
+    label: 'Reader',
+    helperText: 'Can view model and prototypes (read-only)',
   },
 ]
 
@@ -68,7 +68,7 @@ const DaContributorList = ({ className }: ContributorListProps) => {
         id: c.id || '',
         email: c.email || '',
         image_file: c.image_file,
-        access_level: 'Member',
+        access_level: 'Reader',
         access_level_id: 'model_member',
       }))
 
@@ -167,7 +167,7 @@ const DaContributorList = ({ className }: ContributorListProps) => {
             active={activeTab === 'members'}
           >
             {' '}
-            Member ({model.members?.length ?? 0})
+            Reader ({model.members?.length ?? 0})
           </DaTabItem>
         </div>
         <Button

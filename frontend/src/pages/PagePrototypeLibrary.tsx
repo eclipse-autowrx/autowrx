@@ -43,7 +43,8 @@ const PagePrototypeLibrary = () => {
   const { model_id, tab } = useParams<{ model_id: string; tab?: string }>()
   const { refetch } = useListModelPrototypes(model ? model.id : '')
   const { data: user } = useSelfProfileQuery()
-  const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model_id])
+  // Prototype "create/import" requires write permission on the parent model
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model_id])
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
   const [selectedFilters, setSelectedFilters] = useState<string[]>(() =>
