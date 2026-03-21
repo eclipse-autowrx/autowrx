@@ -41,13 +41,19 @@ npx playwright test --headed
 
 ## Environment
 
-Set `BASE_URL` in `.env` or `playwright.config.ts`:
+Copy `.env.example` to `.env` and fill in your values:
+
+```bash
+cp .env.example .env
+```
 
 ```
-BASE_URL=http://192.168.1.6:3210
-ADMIN_EMAIL=admin89@email.com
-ADMIN_PASSWORD=789789789
+BASE_URL=http://localhost:3210
+ADMIN_EMAIL=your-admin@email.com
+ADMIN_PASSWORD=your-password
 ```
+
+⚠️ Never commit `.env` — it is gitignored.
 
 ## Snapshot Policy
 
