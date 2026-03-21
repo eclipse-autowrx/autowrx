@@ -8,7 +8,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { TbCircleCheck, TbCircleX, TbCircleDashed, TbRefresh, TbLoader } from 'react-icons/tb'
-import DaButton from '@/components/atoms/DaButton'
+import { DaButton } from '@/components/atoms/DaButton'
 
 type ServiceStatus = 'ok' | 'error' | 'skipped' | 'degraded'
 
@@ -110,7 +110,7 @@ const PageHealth = () => {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('/api/v2/health')
+      const res = await fetch('/v2/health')
       const data: HealthReport = await res.json()
       setReport(data)
       setSecondsAgo(0)
