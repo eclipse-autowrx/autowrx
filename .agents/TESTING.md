@@ -65,6 +65,6 @@ ADMIN_PASSWORD=your-password
 
 When running as an AI agent:
 1. Start backend + frontend on Jetson before testing
-2. Check `http://192.168.1.6:3210` is reachable
+2. Check `BASE_URL` is reachable
 3. After test run, send screenshots of any FAILs to Theo via Telegram
 4. PASS = silent, FAIL = notify immediately

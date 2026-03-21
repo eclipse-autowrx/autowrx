@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginAsAdmin, saveScreenshot } from './helpers';
+import { loginAsAdmin, saveScreenshot, ADMIN, API_URL } from './helpers';
 
 const PROTO_NAME = `AgentProto_${Date.now()}`;
 
@@ -152,13 +152,13 @@ test.describe('Prototypes - CRUD', () => {
     console.log('Prototype ID:', protoId);
 
     // Rename via API
-    const loginRes = await page.request.post('http://192.168.1.6:3200/v2/auth/login', {
-      data: { email: 'admin89@email.com', password: '789789789' }
+    const loginRes = await page.request.post('`${API_URL}/v2/auth/login`', {
+      data: { email: ADMIN.email, password: ADMIN.password }
     });
     const loginData = await loginRes.json();
     const token = loginData?.tokens?.access?.token;
 
-    const renameRes = await page.request.patch(`http://192.168.1.6:3200/v2/prototypes/${protoId}`, {
+    const renameRes = await page.request.patch(``${API_URL}/v2/prototypes/${protoId}``, {
       data: { name: renamedName },
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -197,13 +197,13 @@ test.describe('Prototypes - CRUD', () => {
     console.log('Deleting prototype ID:', protoId);
 
     // Delete via API
-    const loginRes = await page.request.post('http://192.168.1.6:3200/v2/auth/login', {
-      data: { email: 'admin89@email.com', password: '789789789' }
+    const loginRes = await page.request.post('`${API_URL}/v2/auth/login`', {
+      data: { email: ADMIN.email, password: ADMIN.password }
     });
     const loginData = await loginRes.json();
     const token = loginData?.tokens?.access?.token;
 
-    const deleteRes = await page.request.delete(`http://192.168.1.6:3200/v2/prototypes/${protoId}`, {
+    const deleteRes = await page.request.delete(``${API_URL}/v2/prototypes/${protoId}``, {
       headers: { Authorization: `Bearer ${token}` }
     });
     console.log('Delete API status:', deleteRes.status());

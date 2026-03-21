@@ -1,9 +1,11 @@
 import { Page, expect } from '@playwright/test';
 
 export const ADMIN = {
-  email: process.env.ADMIN_EMAIL || 'admin89@email.com',
-  password: process.env.ADMIN_PASSWORD || '789789789',
+  email: process.env.ADMIN_EMAIL!,
+  password: process.env.ADMIN_PASSWORD!,
 };
+
+export const API_URL = process.env.API_URL || process.env.BASE_URL?.replace(':3210', ':3200') || '';
 
 export const TEST_USER = {
   email: 'testuser@autowrx.test',

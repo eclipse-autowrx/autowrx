@@ -8,7 +8,7 @@ export default defineConfig({
   retries: 1,
   reporter: [['line'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
   use: {
-    baseURL: process.env.BASE_URL || 'http://192.168.1.6:3210',
+    baseURL: process.env.BASE_URL,
     headless: true,
     screenshot: 'only-on-failure',
     video: 'off',
