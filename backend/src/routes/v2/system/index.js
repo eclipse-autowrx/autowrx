@@ -16,10 +16,12 @@ const modelTemplateRoute = require('./modelTemplate.route');
 const dashboardTemplateRoute = require('./dashboardTemplate.route');
 const customApiSchemaRoute = require('./custom-api-schema.route');
 const genaiRoute = require('./genai.route');
+const healthRoute = require('./health.route');
 
 const router = express.Router();
 
 // System Routes
+router.use('/health', healthRoute);
 router.use('/search', searchRoute);
 router.use('/change-logs', changeLogRoute);
 router.use('/file', fileRoute);
