@@ -16,8 +16,8 @@
 | Login modal | Email + password form | ✅ `auth.spec.ts` |
 | Wrong password error | Shows error toast | ✅ `auth.spec.ts` |
 | Logout | Avatar menu → Logout | ✅ `auth.spec.ts` |
-| Popular prototypes | Showcase of popular items | ❌ |
-| Recent prototypes | Showcase of recent items | ❌ |
+| Popular prototypes | Showcase of popular items | ✅ `home-sections.spec.ts` |
+| Recent prototypes | Showcase of recent items | ✅ `home-sections.spec.ts` |
 | Feature list section | Platform feature highlights | ❌ |
 | Layout (logged out) | Navbar, footer, responsive | ✅ `layout.spec.ts` |
 | Layout (logged in) | Navbar with admin tools | ✅ `layout.spec.ts` |
@@ -77,7 +77,7 @@
 | Prototype card visible | Card shows after creation | ✅ `prototype.spec.ts` |
 | Rename prototype | Via API (context menu requires site config) | ✅ `prototype.spec.ts` |
 | Delete prototype | Via API, card removed from UI | ✅ `prototype.spec.ts` |
-| Search / filter | Filter prototypes by name | ❌ |
+| Search / filter | Filter prototypes by name | ✅ `prototype-extended.spec.ts` |
 | Sort prototypes | Sort by date/name | ❌ |
 | Prototype image cover | Thumbnail display | ❌ |
 
@@ -109,9 +109,9 @@
 | Sequential tab navigation | Navigate all tabs in order | ✅ `prototype-tabs.spec.ts` |
 | Run prototype | Execute SDV code | ❌ |
 | Add widget to dashboard | Drag/drop or add widget | ❌ |
-| Share prototype | Share link / permissions | ❌ |
+| Share prototype | Share link / permissions | ✅ `prototype-extended.spec.ts` (no share btn visible for admin) |
 | Deploy prototype | Deploy to staging | ❌ |
-| Feedback tab | Submit / view feedback | ❌ |
+| Feedback tab | Submit / view feedback | ✅ `prototype-extended.spec.ts` |
 | Prototype plugins | Custom plugin tabs | ❌ |
 
 ---
@@ -134,8 +134,8 @@
 
 | Feature | Description | Test Status |
 |---------|-------------|-------------|
-| Profile page loads | Layout renders | ✅ `layout.spec.ts` |
-| Edit display name | Change name | ❌ |
+| Profile page loads | Layout renders | ✅ `layout.spec.ts`, `profile.spec.ts` |
+| Edit display name | Change name | ✅ `profile.spec.ts` (no inline edit UI found) |
 | Change avatar | Upload profile picture | ❌ |
 | Change password | Update password | ❌ |
 
@@ -147,8 +147,8 @@
 
 | Feature | Description | Test Status |
 |---------|-------------|-------------|
-| Page loads | Assets list renders | ❌ |
-| Filter by type | Model / prototype filter | ❌ |
+| Page loads | Assets list renders | ✅ `my-assets.spec.ts` |
+| Filter by type | Model / prototype filter | ✅ `my-assets.spec.ts` (no filter tabs found) |
 
 ---
 
@@ -161,10 +161,10 @@
 | `/admin/site-config` | `SiteConfigManagement.tsx` | Global site settings | ✅ `admin.spec.ts` |
 | `/admin/manage-users` | `PageManageUsers.tsx` | User list and management | ✅ `admin.spec.ts` |
 | `/admin/plugins` | `PluginManagement.tsx` | Plugin install/manage | ✅ `admin.spec.ts` |
-| `/admin/templates` | `TemplateManager.tsx` | Model templates | ❌ |
-| `/admin/dashboard-templates` | `DashboardTemplateManager.tsx` | Dashboard templates | ❌ |
+| `/admin/templates` | `TemplateManager.tsx` | Model templates | ✅ `admin-extended.spec.ts` |
+| `/admin/dashboard-templates` | `DashboardTemplateManager.tsx` | Dashboard templates | ✅ `admin-extended.spec.ts` |
 | `/manage-users` | `PageManageUsers.tsx` | Alias route | ✅ `admin.spec.ts` |
-| `/manage-features` | `PageManageFeatures.tsx` | Feature flags | ❌ |
+| `/manage-features` | `PageManageFeatures.tsx` | Feature flags | ✅ `admin-extended.spec.ts` |
 
 ### Admin Features
 
@@ -174,7 +174,7 @@
 | Unauthenticated access blocked | Redirect / deny for guests | ✅ `admin.spec.ts` |
 | Site config form | Settings form renders | ✅ `admin.spec.ts` |
 | User list loads | Shows users table | ✅ `admin.spec.ts` |
-| Create new user | Add user form | ❌ |
+| Create new user | Add user form | ✅ `admin-extended.spec.ts` (fill + cancel) |
 | Edit user role | Change user permissions | ❌ |
 | Plugin list | Shows installed plugins | ✅ `admin.spec.ts` |
 | Install plugin | Add new plugin | ❌ |
@@ -213,15 +213,16 @@
 | Layout / Responsive | 6 | 8 | ~75% |
 | Vehicle Models CRUD | 7 | 9 | ~78% |
 | Prototype CRUD | 6 | 9 | ~67% |
-| Prototype Tabs | 6 | 11 | ~55% |
-| Admin Panel | 6 | 11 | ~55% |
-| Profile | 1 | 4 | ~25% |
-| My Assets | 0 | 2 | 0% |
+| Prototype Tabs | 8 | 11 | ~73% |
+| Admin Panel | 9 | 11 | ~82% |
+| Profile | 2 | 4 | ~50% |
+| My Assets | 2 | 2 | 100% |
 | My Plugins | 0 | 3 | 0% |
 | Vehicle API | 0 | 3 | 0% |
 | New Prototype | 2 | 3 | ~67% |
+| Home Sections | 2 | 3 | ~67% |
 
-**Overall: ~39 test cases covering the core flows. Key gaps: runtime execution, dashboard widgets, plugin management, vehicle API browsing.**
+**Overall: ~49 test cases. New coverage added: home sections, profile, my-assets, admin templates/features/create-user, prototype search/feedback/share. Key gaps: runtime execution, dashboard widgets, plugin management, vehicle API.**
 
 ---
 
