@@ -4,7 +4,7 @@ import { loginAsAdmin, saveScreenshot, checkLayoutAnomalies } from './helpers';
 // Helper: get first available prototype URL
 async function getFirstPrototypeUrl(page: any): Promise<{ modelId: string; protoId: string } | null> {
   await page.goto('/model');
-  await page.waitForTimeout(3000);
+  await page.waitForTimeout(5000);
 
   const firstModel = page.locator('a[href*="/model/"]').first();
   await expect(firstModel).toBeVisible({ timeout: 8000 });
@@ -13,7 +13,7 @@ async function getFirstPrototypeUrl(page: any): Promise<{ modelId: string; proto
   if (!modelId) return null;
 
   await page.goto(`/model/${modelId}/library/list`);
-  await page.waitForTimeout(3000);
+  await page.waitForTimeout(5000);
 
   const firstProto = page.locator('[data-id^="prototype-item-"]').first();
   await expect(firstProto).toBeVisible({ timeout: 10000 });
@@ -33,7 +33,7 @@ test.describe('Prototype Tabs - Layout Check', () => {
     const { modelId, protoId } = ids;
 
     await page.goto(`/model/${modelId}/library/prototype/${protoId}/view`);
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(5000);
     await saveScreenshot(page, 'tab-overview');
 
     const anomalies = await checkLayoutAnomalies(page, 'tab-overview');
@@ -53,7 +53,7 @@ test.describe('Prototype Tabs - Layout Check', () => {
     const { modelId, protoId } = ids;
 
     await page.goto(`/model/${modelId}/library/prototype/${protoId}/code`);
-    await page.waitForTimeout(4000);
+    await page.waitForTimeout(6000);
     await saveScreenshot(page, 'tab-code');
 
     const anomalies = await checkLayoutAnomalies(page, 'tab-code');
@@ -74,7 +74,7 @@ test.describe('Prototype Tabs - Layout Check', () => {
     const { modelId, protoId } = ids;
 
     await page.goto(`/model/${modelId}/library/prototype/${protoId}/dashboard`);
-    await page.waitForTimeout(4000);
+    await page.waitForTimeout(6000);
     await saveScreenshot(page, 'tab-dashboard');
 
     const anomalies = await checkLayoutAnomalies(page, 'tab-dashboard');
@@ -92,7 +92,7 @@ test.describe('Prototype Tabs - Layout Check', () => {
     const { modelId, protoId } = ids;
 
     await page.goto(`/model/${modelId}/library/prototype/${protoId}/journey`);
-    await page.waitForTimeout(4000);
+    await page.waitForTimeout(6000);
     await saveScreenshot(page, 'tab-journey');
 
     const anomalies = await checkLayoutAnomalies(page, 'tab-journey');
@@ -119,7 +119,7 @@ test.describe('Prototype Tabs - Layout Check', () => {
 
     for (const tab of tabs) {
       await page.goto(tab.route);
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(5000);
       await saveScreenshot(page, `tab-sequential-${tab.dataId}`);
 
       const anomalies = await checkLayoutAnomalies(page, tab.dataId);
@@ -138,7 +138,7 @@ test.describe('Prototype Tabs - Layout Check', () => {
     const { modelId, protoId } = ids;
 
     await page.goto(`/model/${modelId}/library/prototype/${protoId}/view`);
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(5000);
     await saveScreenshot(page, 'tab-bar-overview');
 
     // Check tab bar has at least the main tabs

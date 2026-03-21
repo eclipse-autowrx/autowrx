@@ -41,6 +41,9 @@ export async function logout(page: Page) {
 }
 
 export async function saveScreenshot(page: Page, name: string) {
+  // Wait for network to be idle and any animations to settle before capturing
+  await page.waitForLoadState('networkidle').catch(() => {});
+  await page.waitForTimeout(1000);
   const path = `tests/screenshots/${name}-${Date.now()}.png`;
   await page.screenshot({ path, fullPage: false });
   console.log(`📸 Screenshot saved: ${path}`);
