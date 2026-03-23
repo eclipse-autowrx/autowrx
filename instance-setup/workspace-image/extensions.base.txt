@@ -1,0 +1,3 @@
+# Python
+ms-python.python
+ms-python.black-formatter
