@@ -79,7 +79,7 @@ const queryAdminPlugins = async (filter = {}, options = {}) => {
   }
 
   // Get all user ids that have the admin role
-  const adminUserIds = await UserRole.find({ role: adminRole._id }).distinct('user');
+  const adminUserIds = await UserRole.find({ role: adminRole.id }).distinct('user');
   if (!adminUserIds.length) {
     // No admin users => no plugins
     return Plugin.paginate({ _id: null }, options);
@@ -90,6 +90,19 @@ const queryAdminPlugins = async (filter = {}, options = {}) => {
     created_by: { $in: adminUserIds },
   };
   return queryPlugins(extendedFilter, options);
+};
+
+/**
+ * Check whether a user is an admin (role ref "admin")
+ * @param {string|import('mongoose').Types.ObjectId} userId
+ * @returns {Promise<boolean>}
+ */
+const isAdminUser = async (userId) => {
+  if (!userId) return false;
+  const adminRole = await Role.findOne({ ref: 'admin' }).select('_id');
+  if (!adminRole) return false;
+  const exists = await UserRole.exists({ user: userId, role: adminRole.id });
+  return !!exists;
 };
 
 /** Get plugin by id */
@@ -149,6 +162,7 @@ module.exports = {
   createPlugin,
   queryPlugins,
   queryAdminPlugins,
+  isAdminUser,
   getPluginById,
   getPluginBySlug,
   updatePluginById,

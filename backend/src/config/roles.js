@@ -66,9 +66,10 @@ const ROLES = {
     not_feature: true,
   },
   model_member: {
-    permissions: [PERMISSIONS.READ_MODEL, PERMISSIONS.WRITE_MODEL],
+    // Reader: can only read models (no write/update/delete or manage collaborators)
+    permissions: [PERMISSIONS.READ_MODEL],
     ref: 'model_member',
-    name: 'Model member',
+    name: 'Model reader',
     not_feature: true,
   },
   admin: {

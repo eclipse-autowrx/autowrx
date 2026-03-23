@@ -33,6 +33,9 @@ import { Plugin } from '@/services/plugin.service'
 import { updateModelService } from '@/services/model.service'
 import { toast } from 'react-toastify'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
+import { useSiteConfig } from '@/utils/siteConfig'
 
 const ModelDetailLayout = () => {
   const { data: fetchedModel, isLoading: isModelLoading } = useCurrentModel()
@@ -57,7 +60,11 @@ const ModelDetailLayout = () => {
   const [openManageAddonsDialog, setOpenManageAddonsDialog] = useState(false)
   const [isModelOwner, setIsModelOwner] = useState(false)
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
-
+  const [hasWritePermission] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model?.id])
+  const allowNonAdminAddonConfig = useSiteConfig(
+    'ALLOW_NON_ADMIN_ADDON_CONFIG',
+    true,
+  )
   // Update store when model is fetched
   useEffect(() => {
     if (fetchedModel && fetchedModel.id) {
@@ -77,6 +84,9 @@ const ModelDetailLayout = () => {
       !!(user && model?.created_by && user.id === model.created_by.id)
     )
   }, [user, model])
+
+  const canConfigureModelAddons =
+    (isModelOwner && !!allowNonAdminAddonConfig)
 
   // Helper to get model tabs in TabConfig format
   const getModelTabs = (): TabConfig[] => {
@@ -162,12 +172,13 @@ const ModelDetailLayout = () => {
 
   // Use actual model loading state
   const isLoading = isModelLoading || !model
+  const canManageModelUI = isModelOwner || hasWritePermission
 
   const skeleton = JSON.parse(model?.skeleton || '{}')
   const numberOfNodes = skeleton?.nodes?.length || 0
   const numberOfPrototypes = fetchedPrototypes?.length || 0
   const numberOfApis = activeModelApis?.length || 0
-  
+
   // Count API sets: 1 for COVESA + number of custom_api_sets
   const customApiSetCount = (model?.custom_api_sets || []).length
   const totalApiSetCount = 1 + customApiSetCount // 1 for COVESA
@@ -253,7 +264,7 @@ const ModelDetailLayout = () => {
             </div>
           )}
         </div>
-        {isModelOwner && model && (
+        {canManageModelUI && model && (
           <div className="flex w-fit h-full items-center">
             <Button
               variant="ghost"
@@ -266,7 +277,7 @@ const ModelDetailLayout = () => {
           </div>
         )}
         <div className="grow"></div>
-        {isModelOwner && model && (
+        {canManageModelUI && model && (
           <DropdownMenu open={moreMenuOpen} onOpenChange={setMoreMenuOpen}>
             <DropdownMenuTrigger asChild>
               <Button

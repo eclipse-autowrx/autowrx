@@ -152,6 +152,15 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
     }
   }
 
+  const runAfterMenuClose = useCallback((action: () => void) => {
+    // Force-close the context menu first to avoid a stuck modal layer.
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+    )
+    // Delay the next layer opening until the context menu has fully closed.
+    window.setTimeout(action, 0)
+  }, [])
+
   const cardContent = (
     <div
       className={cn(
@@ -272,8 +281,10 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
           <ContextMenuItem
             className="cursor-pointer"
             onSelect={() => {
-              setNewName(prototype?.name ?? '')
-              setRenameOpen(true)
+              runAfterMenuClose(() => {
+                setNewName(prototype?.name ?? '')
+                setRenameOpen(true)
+              })
             }}
           >
             <TbEdit className="mr-2 size-4" />
@@ -295,21 +306,27 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
           <ContextMenuSeparator />
           <ContextMenuItem
             className="cursor-pointer"
-            onSelect={() => setDeployOpen(true)}
+            onSelect={() => runAfterMenuClose(() => setDeployOpen(true))}
           >
             <TbCloudDown className="mr-2 size-4" />
             Deploy
           </ContextMenuItem>
           <ContextMenuItem
             className="cursor-pointer"
-            onSelect={() => prototype && downloadPrototypeZip(prototype)}
+            onSelect={() =>
+              runAfterMenuClose(() => {
+                if (prototype) {
+                  downloadPrototypeZip(prototype)
+                }
+              })
+            }
           >
             <TbDownload className="mr-2 size-4" />
             Export Prototype
           </ContextMenuItem>
           <ContextMenuItem
             className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
-            onSelect={() => setDeleteOpen(true)}
+            onSelect={() => runAfterMenuClose(() => setDeleteOpen(true))}
           >
             <TbTrashX className="mr-2 size-4" />
             Delete Prototype

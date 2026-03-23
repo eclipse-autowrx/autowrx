@@ -17,6 +17,7 @@ import SSOConfigSection from '@/components/organisms/SSOConfigSection'
 import EmailConfigSection from '@/components/organisms/EmailConfigSection'
 import StagingConfigSection from '@/components/organisms/StagingConfigSection'
 import GenAIConfigSection from '@/components/organisms/GenAIConfigSection'
+import PrototypeConfigSection from '../components/organisms/PrototypeConfigSection'
 
 // Keys that should be excluded from the site-config page
 // These keys are managed in their own dedicated pages
@@ -96,6 +97,7 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     secret: false,
     valueType: 'boolean',
     description: 'Show or hide the API panel on the Prototype Code tab.',
+    category: 'prototype',
   },
   {
     key: 'SHOW_CODE_DIFF',
@@ -186,11 +188,26 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     valueType: 'boolean',
     description:
       'Enable or disable the context menu on prototype items in the prototype list. When enabled, right-clicking on a prototype will show a menu context.',
+    category: 'prototype',
+  },
+  {
+    key: 'ALLOW_NON_ADMIN_ADDON_CONFIG',
+    scope: 'site',
+    value: true,
+    secret: false,
+    valueType: 'boolean',
+    description:
+      'Allow non-admin model owners to add/manage addon tabs on model and prototype detail pages. Admin users can always configure addon tabs regardless of this setting.',
+    category: 'prototype',
   },
 ]
 
 export const PREDEFINED_GENAI_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(
   (config) => config.category === 'genai',
+).map((config) => config.key)
+
+export const PREDEFINED_PROTOTYPE_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(
+  (config) => config.category === 'prototype',
 ).map((config) => config.key)
 
 export const PREDEFINED_AUTH_CONFIGS: any[] = [
@@ -245,6 +262,7 @@ const SiteConfigManagement: React.FC = () => {
     | 'sso'
     | 'email'
     | 'staging'
+    | 'prototype'
     | 'genai'
   const validSections: SectionTab[] = [
     'public',
@@ -255,6 +273,7 @@ const SiteConfigManagement: React.FC = () => {
     'sso',
     'email',
     'staging',
+    'prototype',
     'genai',
   ]
 
@@ -340,12 +359,20 @@ const SiteConfigManagement: React.FC = () => {
                   Auth Config
                 </button>
                 <button
+                  onClick={() => handleTabChange('prototype')}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'prototype'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-muted'
+                    }`}
+                >
+                  Prototype Config
+                </button>
+                <button
                   onClick={() => handleTabChange('genai')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
-                    activeTab === 'genai'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground hover:bg-muted'
-                  }`}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'genai'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-muted'
+                    }`}
                 >
                   GenAI / ProtoPilot
                 </button>
@@ -401,6 +428,7 @@ const SiteConfigManagement: React.FC = () => {
               {activeTab === 'style' && <SiteStyleSection />}
               {activeTab === 'email' && <EmailConfigSection />}
               {activeTab === 'secrets' && <SecretConfigSection />}
+              {activeTab === 'prototype' && <PrototypeConfigSection />}
               {activeTab === 'genai' && <GenAIConfigSection />}
             </div>
           </div>

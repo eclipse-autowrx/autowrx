@@ -29,7 +29,8 @@ const PrototypeTabCodeDashboardCfg: FC = ({}) => {
   const [ticker, setTicker] = useState(0)
   const [isOpenGenAI, setIsOpenGenAI] = useState(false)
   const { data: model } = useCurrentModel()
-  const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
+  // Editing prototype dashboard config requires write permission on the parent model
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model?.id])
 
   useEffect(() => {
     let timer = setInterval(() => {

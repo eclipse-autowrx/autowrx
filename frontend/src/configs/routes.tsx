@@ -12,6 +12,7 @@ import SuspenseProvider from '@/providers/SuspenseProvider'
 import { RouteConfig } from '@/types/common.type.ts'
 import PageUserProfile from '@/pages/PageUserProfile.tsx'
 import PageMyAssets from '@/pages/PageMyAssets.tsx'
+import PageHealth from '@/pages/PageHealth.tsx'
 import PageNotFound from '@/pages/PageNotFound.tsx'
 import PageTest from '@/pages/PageTest.tsx'
 import SiteConfigManagement from '@/pages/SiteConfigManagement.tsx'
@@ -137,6 +138,19 @@ const routesConfig: RouteConfig[] = [
                 element: (
                   <SuspenseProvider>
                     <PageMyAssets />
+                  </SuspenseProvider>
+                ),
+              },
+            ],
+          },
+          {
+            path: '/health',
+            children: [
+              {
+                index: true,
+                element: (
+                  <SuspenseProvider>
+                    <PageHealth />
                   </SuspenseProvider>
                 ),
               },

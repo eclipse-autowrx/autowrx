@@ -1,0 +1,19 @@
+{
+  "name": "autowrx-agent-tests",
+  "version": "1.0.0",
+  "description": "Playwright tests for autowrx - agent-readable",
+  "scripts": {
+    "test": "playwright test",
+    "test:auth": "playwright test tests/auth.spec.ts",
+    "test:models": "playwright test tests/vehicle-models.spec.ts",
+    "test:prototype": "playwright test tests/prototype.spec.ts",
+    "test:admin": "playwright test tests/admin.spec.ts",
+    "test:layout": "playwright test tests/layout.spec.ts",
+    "test:smoke": "playwright test tests/auth.spec.ts tests/layout.spec.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@types/node": "^20.0.0",
+    "dotenv": "^17.3.1"
+  }
+}

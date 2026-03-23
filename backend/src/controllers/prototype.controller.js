@@ -17,7 +17,7 @@ const FeedbackPrototypeDecorator = require('../decorators/FeedbackPrototypeDecor
 const FeedbackPrototypeListDecorator = require('../decorators/FeedbackPrototypeListDecorator');
 
 const createPrototype = catchAsync(async (req, res) => {
-  if (!(await permissionService.hasPermission(req.user.id, PERMISSIONS.READ_MODEL, req.body.model_id))) {
+  if (!(await permissionService.hasPermission(req.user.id, PERMISSIONS.WRITE_MODEL, req.body.model_id))) {
     throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
   }
   const prototypeId = await prototypeService.createPrototype(req.user.id, req.body);
@@ -36,7 +36,7 @@ const bulkCreatePrototypes = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.BAD_REQUEST, 'All prototypes must belong to the same model');
   }
 
-  if (!(await permissionService.hasPermission(req.user.id, PERMISSIONS.READ_MODEL, modelIds.values().next().value))) {
+  if (!(await permissionService.hasPermission(req.user.id, PERMISSIONS.WRITE_MODEL, modelIds.values().next().value))) {
     throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
   }
 

@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -8,7 +8,7 @@
 
 const Joi = require('joi');
 const { visibilityTypes } = require('../config/enums');
-const { jsonString, slug, objectId } = require('./custom.validation');
+const { jsonString, objectId } = require('./custom.validation');
 
 const createModel = {
   body: Joi.object().keys({
@@ -19,9 +19,7 @@ const createModel = {
     cvi: Joi.string().custom(jsonString),
     extended_apis: Joi.array().items(Joi.any()),
     main_api: Joi.string().required().max(255),
-    model_home_image_file: Joi.string()
-      .allow('')
-      .default('/imgs/default-model-image.png'),
+    model_home_image_file: Joi.string().allow('').default('/imgs/default-model-image.png'),
     detail_image_file: Joi.string().allow(''),
     model_files: Joi.object(),
     name: Joi.string().required().max(255),
@@ -35,7 +33,7 @@ const createModel = {
       Joi.object().keys({
         title: Joi.string().required(),
         description: Joi.string().allow(''),
-      })
+      }),
     ),
     state: Joi.string().max(255).default('draft'),
     model_template_id: Joi.string().custom(objectId).allow(null),
@@ -47,9 +45,12 @@ const createModel = {
 const listAllModels = {
   query: Joi.object().keys({
     fields: Joi.string().allow(''),
-    tab: Joi.string().valid('owned', 'contributed', 'public').allow(''),
-    page: Joi.number().integer().min(1),
-    limit: Joi.number().integer().min(1).max(100),
+  }),
+};
+
+const listModelStats = {
+  body: Joi.object().keys({
+    ids: Joi.array().items(Joi.string().custom(objectId)).min(1).required(),
   }),
 };
 
@@ -57,6 +58,7 @@ const listModels = {
   query: Joi.object().keys({
     name: Joi.string(),
     visibility: Joi.string().valid(...Object.values(visibilityTypes)),
+    state: Joi.string().valid('draft', 'released', 'blocked'),
     tenant_id: Joi.string(),
     vehicle_category: Joi.string(),
     main_api: Joi.string(),
@@ -64,6 +66,7 @@ const listModels = {
     id: Joi.string().custom(objectId),
     created_by: Joi.string().custom(objectId),
     is_contributor: Joi.boolean(),
+    include_stats: Joi.boolean(),
     sortBy: Joi.string(),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),
@@ -90,7 +93,7 @@ const updateModel = {
         Joi.object().keys({
           title: Joi.string().required(),
           description: Joi.string().allow(''),
-        })
+        }),
       ),
       state: Joi.string().max(255),
       model_template_id: Joi.string().custom(objectId).allow(null),
@@ -161,4 +164,5 @@ module.exports = {
   getApiByModelId,
   replaceApi,
   listAllModels,
+  listModelStats,
 };

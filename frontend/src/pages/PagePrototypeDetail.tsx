@@ -53,6 +53,7 @@ import DaTabItem from '@/components/atoms/DaTabItem'
 import usePluginPreloader from '@/hooks/usePluginPreloader'
 import PrototypeSidebar from '@/components/organisms/PrototypeSidebar'
 import StagingTabButton from '@/components/organisms/StagingTabButton'
+import { useSiteConfig } from '@/utils/siteConfig'
 
 interface ViewPrototypeProps {
   display?: 'tree' | 'list'
@@ -80,6 +81,10 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
   const [openManageAddonsDialog, setOpenManageAddonsDialog] = useState(false)
   const [openTemplateForm, setOpenTemplateForm] = useState(false)
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
+  const allowNonAdminAddonConfig = useSiteConfig(
+    'ALLOW_NON_ADMIN_ADDON_CONFIG',
+    true,
+  )
   const [templateInitialData, setTemplateInitialData] = useState<{
     name?: string
     description?: string
@@ -195,6 +200,9 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
       !!(user && model?.created_by && user.id === model.created_by.id)
     )
   }, [user, model])
+
+  const canConfigurePrototypeAddons =
+    (isModelOwner && !!allowNonAdminAddonConfig)
 
   // Callback for plugins to navigate to a specific prototype tab
   const handleSetActiveTab = useCallback((targetTab: string, targetPluginSlug?: string) => {
@@ -322,7 +330,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
               tabsVariant={tabsVariant}
             />
           </div>
-          {isModelOwner && (
+          {canConfigurePrototypeAddons && (
             <div className="flex w-fit h-full items-center">
               <Button
                 variant="ghost"
@@ -341,7 +349,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
             stagingConfig={stagingConfig}
             tab={tab}
           />
-          {isModelOwner && (
+          {canConfigurePrototypeAddons && (
             <DropdownMenu open={moreMenuOpen} onOpenChange={setMoreMenuOpen}>
               <DropdownMenuTrigger asChild>
                 <Button

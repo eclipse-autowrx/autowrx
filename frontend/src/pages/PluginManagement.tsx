@@ -94,7 +94,7 @@ const PluginManagement: React.FC = () => {
                       : 'text-foreground hover:bg-muted'
                   }`}
                 >
-                  Deploy Plugin
+                  Deployment Plugin
                 </button>
                 <button
                   onClick={() => handleTabChange('vehicle-api-schema')}

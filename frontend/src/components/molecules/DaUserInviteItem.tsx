@@ -41,7 +41,7 @@ const DaUserInviteItem = ({
         if (isInviting) onSelect(user)
       }}
       className={clsx(
-        'flex items-center gap-2 px-5 py-2 text-left hover:bg-foreground/5',
+        'flex items-center gap-2 px-4 py-2 text-left hover:bg-foreground/5',
         !isInviting ? 'cursor-default' : 'cursor-pointer',
       )}
     >
@@ -76,7 +76,7 @@ const DaUserInviteItem = ({
                   onClick={() => onRemoveAccess && onRemoveAccess(user)}
                   variant="destructive"
                   size="sm"
-                  className="w-full cursor-pointer"
+                  className="w-full cursor-pointer !text-white"
                 >
                   Remove
                 </Button>

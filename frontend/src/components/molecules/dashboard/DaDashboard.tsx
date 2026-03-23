@@ -98,7 +98,14 @@ const DaDashboard = () => {
   }
 
   // Derive the currently applied template ID from prototype.extend
-  const activeTemplateId: string | undefined = prototype?.extend?.dashboard_template_id ?? undefined
+  let activeTemplateId: string | undefined = prototype?.extend?.dashboard_template_id ?? undefined
+  // If no template is applied, auto-apply the first available template
+  useEffect(() => {
+    if (!activeTemplateId && templatesData?.results?.length && prototype && mode === MODE_RUN) {
+      handleApplyTemplate(templatesData.results[0])
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTemplateId, templatesData, prototype, mode])
 
   const closeSaveDialog = () => {
     setShowSaveDialog(false)
@@ -325,14 +332,13 @@ const DaDashboard = () => {
                           onClick={() => handleApplyTemplate(t)}
                           className="cursor-pointer"
                         >
-                          <span className="flex size-4 mr-2 shrink-0 items-center justify-center">
-                            {t.id === activeTemplateId
-                              ? <TbCheck className="size-4 text-da-primary-500" />
-                              : <TbPalette className="size-4" />}
-                          </span>
-                          <span className={`truncate ${t.id === activeTemplateId ? 'font-semibold text-da-primary-500' : ''}`}>
+                          <span className={`truncate ${t.id === activeTemplateId ? 'flex-1 font-semibold text-da-primary-500' : ''}`}>
                             {t.name}
                           </span>
+                          {t.id === activeTemplateId
+                            ? (<span className="flex size-4 mr-2 shrink-0 items-center justify-center">
+                              <TbCheck className="size-4 text-da-primary-500" />
+                            </span>) : null}
                         </DropdownMenuItem>
                       ))
                     ) : (
