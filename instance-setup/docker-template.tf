@@ -216,5 +216,5 @@ resource "coder_app" "code-server" {
   url          = "http://localhost:13337/?folder=/home/coder/prototypes"
   icon         = "/icon/code.svg"
   subdomain    = false  # Set to false for local development (no wildcard DNS needed)
-  share        = "authenticated"  # Allow authenticated users to access (changed from "owner")
+  share        = "owner"  # Only owner can access
 }
