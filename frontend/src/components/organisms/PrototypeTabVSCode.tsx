@@ -62,6 +62,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({ isActive = true }) =>
   // Resize state
   const [rightPanelWidth, setRightPanelWidth] = useState(600) // Initial width in px
   const [isResizing, setIsResizing] = useState(false)
+  const [isApiPanelCollapsed, setIsApiPanelCollapsed] = useState(false)
   const resizeRef = useRef<HTMLDivElement>(null)
   const startXRef = useRef(0)
   const startWidthRef = useRef(0)
@@ -327,6 +328,12 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({ isActive = true }) =>
     }
   }, [isResizing, handleMouseMove, handleMouseUp])
 
+  // If user collapses the panel, stop any ongoing resize interaction.
+  useEffect(() => {
+    if (!isApiPanelCollapsed) return
+    setIsResizing(false)
+  }, [isApiPanelCollapsed])
+
   // Always render the component, even if prototype isn't loaded yet
   // The workspace loading depends on prototype_id from URL, not prototype from store
   const shouldShowIframe =
@@ -357,23 +364,27 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({ isActive = true }) =>
           <CoderWorkspaceStatus status={workspaceStatus || { exists: false, status: 'not_created' }} error="Workspace URL not available" />
         )}
       </div>
-      {/* Resize handle */}
-      <div
-        ref={resizeRef}
-        className="w-1 bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors cursor-col-resize shrink-0"
-        onMouseDown={handleMouseDown}
-        title="Drag to resize"
-        style={{ margin: '2px'}}
-      >
-        <div className="w-full h-full flex items-center justify-center">
-          <div
-            className={`w-0.5 h-8 bg-gray-400 transition-opacity ${isResizing ? 'opacity-100' : 'opacity-0 hover:opacity-60'}`}
-          />
+      {!isApiPanelCollapsed && (
+        // Resize handle (hide while collapsed to avoid weird interactions).
+        <div
+          ref={resizeRef}
+          className="w-1 bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors cursor-col-resize shrink-0"
+          onMouseDown={handleMouseDown}
+          title="Drag to resize"
+          style={{ margin: '2px'}}
+        >
+          <div className="w-full h-full flex items-center justify-center">
+            <div
+              className={`w-0.5 h-8 bg-gray-400 transition-opacity ${
+                isResizing ? 'opacity-100' : 'opacity-0 hover:opacity-60'
+              }`}
+            />
+          </div>
         </div>
-      </div>
+      )}
       <div
-        className="flex h-full flex-col bg-white rounded-md shrink-0"
-        style={{ width: `${rightPanelWidth}px` }}
+        className="flex h-full flex-col bg-white rounded-md shrink-0 transition-[width] duration-200 ease-in-out"
+        style={{ width: isApiPanelCollapsed ? '48px' : `${rightPanelWidth}px` }}
       >
         <Suspense
           fallback={
@@ -382,7 +393,10 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({ isActive = true }) =>
             </div>
           }
         >
-          <PrototypeTabCodeApiPanel code={prototype?.code || ''} />
+          <PrototypeTabCodeApiPanel
+            code={prototype?.code || ''}
+            onCollapsedChange={setIsApiPanelCollapsed}
+          />
         </Suspense>
       </div>
     </div>
