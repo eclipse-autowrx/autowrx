@@ -1,7 +1,7 @@
 services:
   coder-init:
     # Init container to fix volume permissions
-    image: alpine:latest
+    image: alpine:3.23.3
     user: "0:0"
     volumes:
       - coder_data:/home/coder/.config
@@ -18,7 +18,7 @@ services:
 
   coder:
     # This is the Coder Control Plane
-    image: ghcr.io/coder/coder:ghcr.io/coder/coder:v2.31.5
+    image: ghcr.io/coder/coder:v2.31.5
     container_name: coder
     depends_on:
       - coder-init
