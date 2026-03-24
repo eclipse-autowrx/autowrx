@@ -400,8 +400,8 @@ const PublicConfigSection: React.FC = () => {
             type="button"
             onClick={() => setSubTab('config')}
             className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${subTab === 'config'
-                ? 'bg-muted text-foreground border border-b-0 border-border -mb-px'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+              ? 'bg-muted text-foreground border border-b-0 border-border -mb-px'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
               }`}
           >
             Config
@@ -410,8 +410,8 @@ const PublicConfigSection: React.FC = () => {
             type="button"
             onClick={() => setSubTab('history')}
             className={`px-4 py-2 rounded-t-md text-sm font-medium transition-colors ${subTab === 'history'
-                ? 'bg-muted text-foreground border border-b-0 border-border -mb-px'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+              ? 'bg-muted text-foreground border border-b-0 border-border -mb-px'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
               }`}
           >
             History

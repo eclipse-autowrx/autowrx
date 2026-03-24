@@ -1,17 +1,17 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
 //
 // SPDX-License-Identifier: MIT
 
-import { configManagementService } from '../services/configManagement.service';
+import { configManagementService } from '../services/configManagement.service'
 
 // Cache for site configs to avoid repeated API calls
-let configCache = new Map<string, any>();
-let cacheExpiry: number | null = null;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+let configCache = new Map<string, any>()
+let cacheExpiry: number | null = null
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
 // Default fallback values for site configs
 const DEFAULT_SITE_CONFIGS: Record<string, any> = {
@@ -22,8 +22,11 @@ const DEFAULT_SITE_CONFIGS: Record<string, any> = {
   SITE_DESCRIPTION: 'Vehicle Signal Specification Management Platform',
   SITE_FAVICON: '/imgs/favicon.ico',
   SITE_THEME_COLOR: '#198100',
-  GENAI_SDV_APP_ENDPOINT: 'https://workflow.digital.auto/webhook/c0ba14bc-c6a3-4319-ad0a-ad89b1460b36',
-};
+  HEADER_BACKGROUND_GRADIENT: '#ffffff',
+  HEADER_BUTTON_HOVER_BG_COLOR: '#dbe4ee',
+  GENAI_SDV_APP_ENDPOINT:
+    'https://workflow.digital.auto/webhook/c0ba14bc-c6a3-4319-ad0a-ad89b1460b36',
+}
 
 /**
  * Get a single site config value by key with fallback to default
@@ -33,16 +36,29 @@ const DEFAULT_SITE_CONFIGS: Record<string, any> = {
  * @param defaultValue - Default value if key not found
  * @returns Promise with the config value or default value
  */
-export const getConfig = async (key: string, scope: string = 'site', target_id?: string, defaultValue: any = null): Promise<any> => {
+export const getConfig = async (
+  key: string,
+  scope: string = 'site',
+  target_id?: string,
+  defaultValue: any = null,
+): Promise<any> => {
   try {
-    const result = await configManagementService.getPublicConfig(key, scope, target_id);
-    const value = result?.value;
-    return value !== null && value !== undefined ? value : (defaultValue !== null ? defaultValue : DEFAULT_SITE_CONFIGS[key]);
+    const result = await configManagementService.getPublicConfig(
+      key,
+      scope,
+      target_id,
+    )
+    const value = result?.value
+    return value !== null && value !== undefined
+      ? value
+      : defaultValue !== null
+        ? defaultValue
+        : DEFAULT_SITE_CONFIGS[key]
   } catch (error) {
-    console.warn(`Failed to get config for key "${key}":`, error);
-    return defaultValue !== null ? defaultValue : DEFAULT_SITE_CONFIGS[key];
+    console.warn(`Failed to get config for key "${key}":`, error)
+    return defaultValue !== null ? defaultValue : DEFAULT_SITE_CONFIGS[key]
   }
-};
+}
 
 /**
  * Get a site config value synchronously from cache or return default
@@ -50,13 +66,13 @@ export const getConfig = async (key: string, scope: string = 'site', target_id?:
  * @returns The config value or default value
  */
 export const getSiteConfigSync = (key: string): any => {
-  const cacheKey = `public_site_`;
-  const cached = configCache.get(cacheKey);
+  const cacheKey = `public_site_`
+  const cached = configCache.get(cacheKey)
   if (cached && cached[key]) {
-    return cached[key];
+    return cached[key]
   }
-  return DEFAULT_SITE_CONFIGS[key];
-};
+  return DEFAULT_SITE_CONFIGS[key]
+}
 
 /**
  * Get multiple site config values by keys
@@ -65,21 +81,25 @@ export const getSiteConfigSync = (key: string): any => {
  * @param target_id - The target ID for scoped configs
  * @returns Promise with object containing key-value pairs
  */
-export const getConfigs = async (keys: string[], scope: string = 'site', target_id?: string): Promise<Record<string, any>> => {
+export const getConfigs = async (
+  keys: string[],
+  scope: string = 'site',
+  target_id?: string,
+): Promise<Record<string, any>> => {
   try {
-    const all = await configManagementService.getPublicConfigs(scope, target_id);
-    const result: Record<string, any> = {};
+    const all = await configManagementService.getPublicConfigs(scope, target_id)
+    const result: Record<string, any> = {}
     keys.forEach((k) => {
       if (all && Object.prototype.hasOwnProperty.call(all, k)) {
-        result[k] = (all as any)[k];
+        result[k] = (all as any)[k]
       }
-    });
-    return result;
+    })
+    return result
   } catch (error) {
-    console.warn('Failed to get configs:', error);
-    return {};
+    console.warn('Failed to get configs:', error)
+    return {}
   }
-};
+}
 
 /**
  * Get all public site configs (cached)
@@ -88,28 +108,40 @@ export const getConfigs = async (keys: string[], scope: string = 'site', target_
  * @param forceRefresh - Force refresh cache
  * @returns Promise with object containing all public configs
  */
-export const getPublicConfigs = async (scope: string = 'site', target_id?: string, forceRefresh: boolean = false): Promise<Record<string, any>> => {
-  const now = Date.now();
-  const cacheKey = `public_${scope}_${target_id || 'site'}`;
-  
+export const getPublicConfigs = async (
+  scope: string = 'site',
+  target_id?: string,
+  forceRefresh: boolean = false,
+): Promise<Record<string, any>> => {
+  const now = Date.now()
+  const cacheKey = `public_${scope}_${target_id || 'site'}`
+
   // Return cached data if still valid and not forcing refresh
-  if (!forceRefresh && cacheExpiry && now < cacheExpiry && configCache.has(cacheKey)) {
-    return configCache.get(cacheKey)!;
+  if (
+    !forceRefresh &&
+    cacheExpiry &&
+    now < cacheExpiry &&
+    configCache.has(cacheKey)
+  ) {
+    return configCache.get(cacheKey)!
   }
 
   try {
-    const configs = await configManagementService.getPublicConfigs(scope, target_id);
-    
+    const configs = await configManagementService.getPublicConfigs(
+      scope,
+      target_id,
+    )
+
     // Update cache
-    configCache.set(cacheKey, configs);
-    cacheExpiry = now + CACHE_DURATION;
-    
-    return configs;
+    configCache.set(cacheKey, configs)
+    cacheExpiry = now + CACHE_DURATION
+
+    return configs
   } catch (error) {
-    console.warn('Failed to get public configs:', error);
-    return configCache.get(cacheKey) || {};
+    console.warn('Failed to get public configs:', error)
+    return configCache.get(cacheKey) || {}
   }
-};
+}
 
 /**
  * Get a config value synchronously from cache (if available)
@@ -119,18 +151,18 @@ export const getPublicConfigs = async (scope: string = 'site', target_id?: strin
  */
 export const getConfigSync = (key: string, defaultValue: any = null): any => {
   // Try common cache keys for site scope
-  const siteCacheKey = `public_site_site`;
-  const fallbackKey = 'public';
+  const siteCacheKey = `public_site_site`
+  const fallbackKey = 'public'
   if (configCache.has(siteCacheKey)) {
-    const publicConfigs = configCache.get(siteCacheKey)!;
-    return publicConfigs[key] !== undefined ? publicConfigs[key] : defaultValue;
+    const publicConfigs = configCache.get(siteCacheKey)!
+    return publicConfigs[key] !== undefined ? publicConfigs[key] : defaultValue
   }
   if (configCache.has(fallbackKey)) {
-    const publicConfigs = configCache.get(fallbackKey)!;
-    return publicConfigs[key] !== undefined ? publicConfigs[key] : defaultValue;
+    const publicConfigs = configCache.get(fallbackKey)!
+    return publicConfigs[key] !== undefined ? publicConfigs[key] : defaultValue
   }
-  return defaultValue;
-};
+  return defaultValue
+}
 
 /**
  * Get multiple config values synchronously from cache (if available)
@@ -139,25 +171,25 @@ export const getConfigSync = (key: string, defaultValue: any = null): any => {
  */
 export const getConfigsSync = (keys: string[]): Record<string, any> => {
   if (configCache.has('public')) {
-    const publicConfigs = configCache.get('public')!;
-    const result: Record<string, any> = {};
-    keys.forEach(key => {
+    const publicConfigs = configCache.get('public')!
+    const result: Record<string, any> = {}
+    keys.forEach((key) => {
       if (publicConfigs[key] !== undefined) {
-        result[key] = publicConfigs[key];
+        result[key] = publicConfigs[key]
       }
-    });
-    return result;
+    })
+    return result
   }
-  return {};
-};
+  return {}
+}
 
 /**
  * Clear the config cache
  */
 export const clearCache = (): void => {
-  configCache.clear();
-  cacheExpiry = null;
-};
+  configCache.clear()
+  cacheExpiry = null
+}
 
 /**
  * React hook for getting site configs
@@ -165,40 +197,43 @@ export const clearCache = (): void => {
  * @param defaultValue - Default values for the keys
  * @returns Object with config values and loading state
  */
-export const useSiteConfigs = (keys: string[], defaultValue: Record<string, any> = {}) => {
-  const [configs, setConfigs] = useState<Record<string, any>>(defaultValue);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export const useSiteConfigs = (
+  keys: string[],
+  defaultValue: Record<string, any> = {},
+) => {
+  const [configs, setConfigs] = useState<Record<string, any>>(defaultValue)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchConfigs = async () => {
       try {
-        setLoading(true);
-        setError(null);
-        
+        setLoading(true)
+        setError(null)
+
         // Try to get from cache first
-        const cachedConfigs = getConfigsSync(keys);
+        const cachedConfigs = getConfigsSync(keys)
         if (Object.keys(cachedConfigs).length === keys.length) {
-          setConfigs(cachedConfigs);
-          setLoading(false);
-          return;
+          setConfigs(cachedConfigs)
+          setLoading(false)
+          return
         }
 
         // Fetch from API
-        const fetchedConfigs = await getConfigs(keys);
-        setConfigs(fetchedConfigs);
+        const fetchedConfigs = await getConfigs(keys)
+        setConfigs(fetchedConfigs)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch configs');
+        setError(err instanceof Error ? err.message : 'Failed to fetch configs')
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    fetchConfigs();
-  }, [keys.join(',')]);
+    fetchConfigs()
+  }, [keys.join(',')])
 
-  return { configs, loading, error };
-};
+  return { configs, loading, error }
+}
 
 /**
  * React hook for getting a single site config value
@@ -207,47 +242,57 @@ export const useSiteConfigs = (keys: string[], defaultValue: Record<string, any>
  * @param target_id - The target ID for scoped configs
  * @returns Object with value, loading state, and error
  */
-export const useSiteConfig = (key: string, fallback?: any, scope: string = 'site', target_id?: string) => {
-  const [value, setValue] = useState<any>(fallback ?? DEFAULT_SITE_CONFIGS[key]);
+export const useSiteConfig = (
+  key: string,
+  fallback?: any,
+  scope: string = 'site',
+  target_id?: string,
+) => {
+  const [value, setValue] = useState<any>(fallback ?? DEFAULT_SITE_CONFIGS[key])
 
   useEffect(() => {
     const loadConfig = async () => {
       try {
-        const result = await getConfig(key, scope, target_id, fallback ?? DEFAULT_SITE_CONFIGS[key]);
+        const result = await getConfig(
+          key,
+          scope,
+          target_id,
+          fallback ?? DEFAULT_SITE_CONFIGS[key],
+        )
         // Treat null/undefined/empty string as missing -> use fallback/default
         const raw =
           result !== null && result !== undefined && result !== ''
             ? result
-            : (fallback ?? DEFAULT_SITE_CONFIGS[key]);
+            : (fallback ?? DEFAULT_SITE_CONFIGS[key])
 
         // Coerce booleans when the consumer expects a boolean fallback.
         // The config API may return string values like "true"/"false".
-        let next = raw;
+        let next = raw
         if (typeof (fallback ?? DEFAULT_SITE_CONFIGS[key]) === 'boolean') {
           if (raw === true || raw === false) {
-            next = raw;
+            next = raw
           } else if (typeof raw === 'string') {
-            const normalized = raw.trim().toLowerCase();
-            if (normalized === 'true') next = true;
-            else if (normalized === 'false') next = false;
-            else if (normalized === '1') next = true;
-            else if (normalized === '0') next = false;
+            const normalized = raw.trim().toLowerCase()
+            if (normalized === 'true') next = true
+            else if (normalized === 'false') next = false
+            else if (normalized === '1') next = true
+            else if (normalized === '0') next = false
           } else if (typeof raw === 'number') {
-            next = raw === 1;
+            next = raw === 1
           }
         }
-        setValue(next);
+        setValue(next)
       } catch {
-        setValue(fallback ?? DEFAULT_SITE_CONFIGS[key]);
+        setValue(fallback ?? DEFAULT_SITE_CONFIGS[key])
       }
-    };
+    }
 
-    loadConfig();
+    loadConfig()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, scope, target_id]); // Removed 'fallback' from deps - it's just a default value, not a fetch trigger
+  }, [key, scope, target_id]) // Removed 'fallback' from deps - it's just a default value, not a fetch trigger
 
-  return value;
-};
+  return value
+}
 
 // Import React hooks (you might need to adjust the import based on your React version)
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'

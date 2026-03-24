@@ -35,7 +35,7 @@ import { IoIosHelpBuoy } from 'react-icons/io'
 import config from '@/configs/config'
 import LearningIntegration from './LearningIntegration'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, type CSSProperties } from 'react'
 
 // import useLastAccessedModel from '@/hooks/useLastAccessedModel'
 import { useSiteConfig } from '@/utils/siteConfig'
@@ -73,8 +73,44 @@ const NavigationBar = ({ }) => {
   const [learningMode, setIsLearningMode] = useState(false)
   const siteTitle = useSiteConfig('SITE_TITLE', 'AutoWRX')
   const logoUrl = useSiteConfig('SITE_LOGO_WIDE', '/imgs/logo-wide.png')
+  const headerBackgroundGradient = useSiteConfig(
+    'HEADER_BACKGROUND_GRADIENT',
+    '#ffffff',
+  )
+  const headerButtonHoverBgColor = useSiteConfig(
+    'HEADER_BUTTON_HOVER_BG_COLOR',
+    '#dbe4ee',
+  )
   const enableLearningMode = useSiteConfig('ENABLE_LEARNING_MODE', false)
   const navBarActions = useSiteConfig('NAV_BAR_ACTIONS', [])
+
+  const safeHeaderBackground = useMemo(() => {
+    const fallback = '#ffffff'
+    const value =
+      typeof headerBackgroundGradient === 'string'
+        ? headerBackgroundGradient.trim()
+        : ''
+
+    if (!value) return fallback
+    if (typeof CSS !== 'undefined' && CSS.supports('background', value)) {
+      return value
+    }
+    return fallback
+  }, [headerBackgroundGradient])
+
+  const safeHeaderHoverBg = useMemo(() => {
+    const fallback = '#dbe4ee'
+    const value =
+      typeof headerButtonHoverBgColor === 'string'
+        ? headerButtonHoverBgColor.trim()
+        : ''
+
+    if (!value) return fallback
+    if (typeof CSS !== 'undefined' && CSS.supports('color', value)) {
+      return value
+    }
+    return fallback
+  }, [headerButtonHoverBgColor])
 
   useEffect(() => {
     if (siteTitle) {
@@ -85,7 +121,12 @@ const NavigationBar = ({ }) => {
   // const { lastAccessedModel } = useLastAccessedModel()
 
   return (
-    <header className="flex items-center w-full py-1 px-3 border-2">
+    <header
+      className="flex items-center w-full py-1 px-3 border-2"
+      style={{
+        background: safeHeaderBackground,
+      }}
+    >
       <Link to="/" className="shrink-0">
         <img src={logoUrl} alt="Logo" className="h-7" />
       </Link>
@@ -130,7 +171,8 @@ const NavigationBar = ({ }) => {
               href={action.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium hover:bg-muted transition-colors"
+              className="flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium hover:bg-[var(--header-hover-bg)] transition-colors"
+              style={{ '--header-hover-bg': safeHeaderHoverBg } as CSSProperties}
               title={action.label}
             >
               {action.icon && (
@@ -171,7 +213,11 @@ const NavigationBar = ({ }) => {
           </DaGlobalSearch>{' '} */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost">
+              <Button
+                variant="ghost"
+                className="hover:bg-[var(--header-hover-bg)]"
+                style={{ '--header-hover-bg': safeHeaderHoverBg } as CSSProperties}
+              >
                 <Wrench />
                 {isAuthorized ? 'Admin Tools' : 'Tools'}
               </Button>

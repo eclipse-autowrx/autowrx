@@ -9,6 +9,7 @@
 import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import PublicConfigSection from '@/components/organisms/PublicConfigSection'
+import HeaderStyleConfigSection from '@/components/organisms/HeaderStyleConfigSection'
 import SecretConfigSection from '@/components/organisms/SecretConfigSection'
 import SiteStyleSection from '@/components/organisms/SiteStyleSection'
 import HomeConfigSection from '@/components/organisms/HomeConfigSection'
@@ -255,6 +256,7 @@ const SiteConfigManagement: React.FC = () => {
   // Get initial section from URL or default to 'public'
   type SectionTab =
     | 'public'
+    | 'header-style'
     | 'style'
     | 'secrets'
     | 'home'
@@ -266,6 +268,7 @@ const SiteConfigManagement: React.FC = () => {
     | 'genai'
   const validSections: SectionTab[] = [
     'public',
+    'header-style',
     'style',
     'secrets',
     'home',
@@ -330,6 +333,15 @@ const SiteConfigManagement: React.FC = () => {
                     }`}
                 >
                   Public Config
+                </button>
+                <button
+                  onClick={() => handleTabChange('header-style')}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'header-style'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-muted'
+                    }`}
+                >
+                  Header Style
                 </button>
                 <button
                   onClick={() => handleTabChange('home')}
@@ -421,6 +433,7 @@ const SiteConfigManagement: React.FC = () => {
             <div className="bg-background rounded-lg shadow border border-border">
               {/* Conditionally render only the active section */}
               {activeTab === 'public' && <PublicConfigSection />}
+              {activeTab === 'header-style' && <HeaderStyleConfigSection />}
               {activeTab === 'home' && <HomeConfigSection />}
               {activeTab === 'staging' && <StagingConfigSection />}
               {activeTab === 'auth' && <AuthConfigSection />}
