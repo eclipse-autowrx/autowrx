@@ -18,7 +18,7 @@ services:
 
   coder:
     # This is the Coder Control Plane
-    image: ghcr.io/coder/coder:latest
+    image: ghcr.io/coder/coder:ghcr.io/coder/coder:v2.31.5
     container_name: coder
     depends_on:
       - coder-init
