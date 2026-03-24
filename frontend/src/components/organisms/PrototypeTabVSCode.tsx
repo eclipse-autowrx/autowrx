@@ -479,6 +479,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
           <PrototypeTabCodeApiPanel
             code={prototype?.code || ''}
             onCollapsedChange={setIsApiPanelCollapsed}
+            enableWorkspacePolling={isActive}
           />
         </Suspense>
       </div>

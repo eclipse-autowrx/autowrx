@@ -158,11 +158,13 @@ const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
 interface PrototypeTabCodeApiPanelProps {
   code: string
   onCollapsedChange?: (isCollapsed: boolean) => void
+  enableWorkspacePolling?: boolean
 }
 
 const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   code,
   onCollapsedChange,
+  enableWorkspacePolling = false,
 }) => {
   const { prototype_id } = useParams<{ prototype_id: string }>()
   const [tab, setTab] = useState<
@@ -363,7 +365,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
     queryKey: ['prototype-used-apis-workspace', prototype_id],
     queryFn: () => getPrototypeUsedApisFromWorkspaceService(prototype_id!),
     enabled: !!prototype_id,
-    refetchInterval: 3000,
+    refetchInterval: enableWorkspacePolling ? 3000 : false,
   })
 
   const analyzedCode = workspaceUsedApisQuery.data?.code ?? code ?? ''
