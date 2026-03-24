@@ -7,12 +7,17 @@
 // SPDX-License-Identifier: MIT
 
 const axios = require('axios');
+const httpStatus = require('http-status');
 const config = require('../config/config');
 const logger = require('../config/logger');
 const ApiError = require('../utils/ApiError');
-const httpStatus = require('http-status');
 
 const CODER_API_BASE = `${config.coder.url}/api/v2`;
+
+const normalizeIdForName = (value) =>
+  String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
 
 /**
  * Get Coder API headers with admin token
@@ -279,7 +284,10 @@ const getOrCreateWorkspace = async (
       workspaces = workspacesResponse.data.workspaces;
     }
 
-    const existingWorkspace = workspaces.find((w) => w.name === workspaceName);
+    const existingWorkspace = workspaces.find((w) => {
+      const ownerId = w.owner_id || w.owner?.id || w.owner;
+      return w.name === workspaceName && String(ownerId) === String(coderUserId);
+    });
 
     if (existingWorkspace) {
       logger.info(`Coder workspace already exists: ${workspaceName}`);
@@ -354,7 +362,10 @@ const getOrCreateWorkspace = async (
             retryWorkspaces = retryResponse.data.workspaces;
           }
 
-          const existingWorkspace = retryWorkspaces.find((w) => w.name === workspaceName);
+          const existingWorkspace = retryWorkspaces.find((w) => {
+            const ownerId = w.owner_id || w.owner?.id || w.owner;
+            return w.name === workspaceName && String(ownerId) === String(coderUserId);
+          });
           if (existingWorkspace) {
             logger.info(
               `Recovered from duplicate key error by using existing workspace: ${workspaceName} (${existingWorkspace.id})`,
@@ -674,8 +685,9 @@ const getWorkspaceAgentId = async (workspaceId) => {
  * @returns {string} Sanitized workspace name
  */
 const sanitizeWorkspaceName = (userId) => {
-  const shortId = userId.toString().slice(-12);
-  const name = `ws-${shortId}`;
+  const normalizedId = normalizeIdForName(userId);
+  const idPart = normalizedId.length <= 29 ? normalizedId : `${normalizedId.slice(0, 14)}${normalizedId.slice(-15)}`;
+  const name = `ws-${idPart}`;
 
   const sanitized = name
     .toLowerCase()
@@ -684,7 +696,7 @@ const sanitizeWorkspaceName = (userId) => {
     .replace(/^-|-$/g, '')
     .slice(0, 32);
 
-  return sanitized || `ws-${shortId}`;
+  return sanitized || `ws-${Date.now().toString(36)}`;
 };
 
 /**

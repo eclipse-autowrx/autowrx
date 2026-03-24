@@ -69,6 +69,8 @@ const envVarsSchema = Joi.object()
     CODER_ADMIN_API_KEY: Joi.string().description('Coder admin API token for impersonation'),
     // Prototypes folder path (host path for bind-mount)
     PROTOTYPES_PATH: Joi.string().default('/var/lib/autowrx/prototypes').description('Host path for prototypes folder (bind-mount into Coder workspace)'),
+    PROTOTYPES_LINUX_UID: Joi.number().integer().min(0).default(1000).description('Linux UID used by workspace container user for prototype folder ownership'),
+    PROTOTYPES_LINUX_GID: Joi.number().integer().min(0).default(1000).description('Linux GID used by workspace container user for prototype folder ownership'),
     // Gitea integration (DISABLED - kept for reference)
     GITEA_URL: Joi.string().default('http://localhost:3000').description('Gitea instance URL'),
     GITEA_ADMIN_USERNAME: Joi.string().default('gitea-admin').description('Gitea admin username'),
@@ -206,6 +208,8 @@ const config = {
   },
   prototypes: {
     path: envVars.PROTOTYPES_PATH,
+    linuxUid: envVars.PROTOTYPES_LINUX_UID,
+    linuxGid: envVars.PROTOTYPES_LINUX_GID,
   },
   gitea: {
     url: envVars.GITEA_URL,

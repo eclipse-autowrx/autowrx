@@ -8,16 +8,61 @@
 
 const fs = require('fs');
 const path = require('path');
+const httpStatus = require('http-status');
 const coderService = require('./coder.service');
 // const giteaService = require('./gitea.service');  // DISABLED - Gitea disabled
 // const permissionSyncService = require('./permissionSync.service');  // DISABLED - Gitea disabled
 const config = require('../config/config');
 const { Prototype, Model, User } = require('../models');
-const { UserRole } = require('../models');
+// const { UserRole } = require('../models');  // DISABLED - Gitea disabled
 const logger = require('../config/logger');
 const ApiError = require('../utils/ApiError');
-const httpStatus = require('http-status');
 // const { decrypt } = require('../utils/encryption');  // DISABLED - Gitea disabled (was for github_token)
+
+const PROTOTYPES_LINUX_UID = config.prototypes?.linuxUid || 1000;
+const PROTOTYPES_LINUX_GID = config.prototypes?.linuxGid || 1000;
+// Host/container UID mismatch is common in local deployments. We keep
+// permissive modes so the workspace user can write without manual chmod.
+const PROTOTYPES_DIR_MODE = 0o777;
+const PROTOTYPES_FILE_MODE = 0o666;
+
+const normalizeIdForName = (value) =>
+  String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+
+const chmodSafe = (targetPath, mode) => {
+  try {
+    fs.chmodSync(targetPath, mode);
+  } catch (err) {
+    logger.warn(`chmod failed for ${targetPath}: ${err.message}`);
+  }
+};
+
+const chownSafe = (targetPath, uid = PROTOTYPES_LINUX_UID, gid = PROTOTYPES_LINUX_GID) => {
+  try {
+    fs.chownSync(targetPath, uid, gid);
+  } catch (err) {
+    logger.warn(`chown failed for ${targetPath} -> ${uid}:${gid}: ${err.message}`);
+  }
+};
+
+const setOwnershipAndPermissionsRecursive = (rootPath) => {
+  try {
+    const stat = fs.lstatSync(rootPath);
+    if (stat.isDirectory()) {
+      chownSafe(rootPath);
+      chmodSafe(rootPath, PROTOTYPES_DIR_MODE);
+      const entries = fs.readdirSync(rootPath);
+      entries.forEach((entry) => setOwnershipAndPermissionsRecursive(path.join(rootPath, entry)));
+      return;
+    }
+    chownSafe(rootPath);
+    chmodSafe(rootPath, PROTOTYPES_FILE_MODE);
+  } catch (err) {
+    logger.warn(`Failed to set ownership/permissions recursively for ${rootPath}: ${err.message}`);
+  }
+};
 
 const looksLikeFileTree = (value) => {
   if (!Array.isArray(value)) return false;
@@ -132,6 +177,8 @@ const seedPrototypeFiles = (folderPath, prototype) => {
     if (content.readme) {
       const readmePath = path.join(folderPath, 'README.md');
       fs.writeFileSync(readmePath, content.readme);
+      chownSafe(readmePath);
+      chmodSafe(readmePath, PROTOTYPES_FILE_MODE);
     }
 
     if (content.files && content.files.length > 0) {
@@ -139,6 +186,9 @@ const seedPrototypeFiles = (folderPath, prototype) => {
         const filePath = path.join(folderPath, file.path);
         fs.mkdirSync(path.dirname(filePath), { recursive: true });
         fs.writeFileSync(filePath, file.content);
+        setOwnershipAndPermissionsRecursive(path.dirname(filePath));
+        chownSafe(filePath);
+        chmodSafe(filePath, PROTOTYPES_FILE_MODE);
       });
       logger.info(`Seeded ${content.files.length} file(s) into ${folderPath}`);
     }
@@ -253,7 +303,8 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
     // }
 
     // 5. Ensure Coder user exists
-    const coderUsername = user.coder_username || `user-${userId.toString().slice(-12)}`;
+    const normalizedUserId = normalizeIdForName(userId);
+    const coderUsername = user.coder_username || `user-${normalizedUserId || Date.now().toString(36)}`;
     if (!user.coder_username) {
       user.coder_username = coderUsername;
       await user.save();
@@ -269,6 +320,7 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
 
     try {
       fs.mkdirSync(prototypeFolderHost, { recursive: true });
+      setOwnershipAndPermissionsRecursive(userHostPath);
       logger.info(`Ensured prototype folder exists: ${prototypeFolderHost}`);
     } catch (mkdirErr) {
       logger.warn(`Could not create prototype folder ${prototypeFolderHost}: ${mkdirErr.message}`);
@@ -276,6 +328,7 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
 
     // 7. Seed initial code files (only if folder is empty)
     seedPrototypeFiles(prototypeFolderHost, prototype);
+    setOwnershipAndPermissionsRecursive(prototypeFolderHost);
 
     // 8. Get or create ONE workspace per user (reuse across prototypes)
     const workspaceName = coderService.sanitizeWorkspaceName(userId);

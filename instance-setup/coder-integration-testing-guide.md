@@ -18,6 +18,22 @@ cd instance-setup
 docker compose -f coder-docker-compose.yml up -d
 ```
 
+### 1.1.1 Docker socket permissions (important)
+
+If template creation fails with `permission denied` on `unix:///var/run/docker.sock`, make sure the Coder container joins the Docker socket group.
+
+In `instance-setup/coder-docker-compose.yml`, set `group_add` on the `coder` service to either:
+
+- `group_add: ["998"]` (fixed GID example), or
+- `group_add: ["${DOCKER_GID}"]` (recommended, dynamic)
+
+If using `DOCKER_GID`, export it before starting compose:
+
+```bash
+export DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)
+docker compose -f coder-docker-compose.yml up -d
+```
+
 ### 1.2 Verify Services are Running
 
 ```bash
@@ -160,6 +176,11 @@ Edit `backend/.env` (or create from `.env.example`) and add:
 CODER_URL=http://localhost:7080
 CODER_ADMIN_API_KEY=your-coder-admin-token-here
 
+# Prototypes HostPath (bind-mounted into workspace)
+PROTOTYPES_PATH=/var/lib/autowrx/prototypes
+PROTOTYPES_LINUX_UID=1000
+PROTOTYPES_LINUX_GID=1000
+
 # Gitea Configuration
 GITEA_URL=http://localhost:3000
 GITEA_ADMIN_USERNAME=gitea-admin
@@ -181,6 +202,30 @@ npm restart  # or yarn restart
 # If using Docker
 docker compose restart autowrx
 ```
+
+### 4.3 Prepare and Verify HostPath (critical)
+
+Create the prototypes host directory once:
+
+```bash
+sudo mkdir -p /var/lib/autowrx/prototypes
+```
+
+For local testing, normalize permissions so workspace users can read/write without manual chmod per prototype:
+
+```bash
+sudo chmod -R a+rwX /var/lib/autowrx/prototypes
+```
+
+Verify permissions:
+
+```bash
+stat -c "%a %u:%g %n" /var/lib/autowrx/prototypes
+```
+
+Expected (local/dev):
+- Mode is writable (`777` is acceptable in local testing)
+- Path exists before opening VS Code tab
 
 ## Step 5: Test the Integration
 
@@ -250,7 +295,14 @@ This should return the workspace URL and session token.
 3. **Expected Behavior**:
    - You should see a loading state: "Creating workspace..." or "Starting workspace..."
    - After 1-2 minutes, the Coder workspace (VS Code) should load in an iframe
-   - The workspace should have the repository cloned in `/home/coder/project`
+   - The workspace should expose prototypes under `/home/coder/prototypes`
+
+4. **HostPath verification inside workspace terminal**:
+   ```bash
+   ls -la /home/coder/prototypes
+   ls -la /home/coder/prototypes/<prototype-folder>
+   ```
+   You should be able to create/edit files under your prototype folder.
 
 ### 5.3 Verify Gitea Integration
 
@@ -345,12 +397,21 @@ This should return the workspace URL and session token.
 
 3. Verify Docker socket is accessible:
    ```bash
-   docker ps  # Should work from inside Coder container
+   docker exec -it coder docker ps
    ```
 
 4. Check template is correct:
    - Verify `docker-template.tf` is uploaded correctly
    - Check for syntax errors
+
+5. If you see `permission denied` for `/var/run/docker.sock`, update `group_add` in `coder-docker-compose.yml`:
+   - `group_add: ["998"]`, or
+   - `group_add: ["${DOCKER_GID}"]` with:
+     ```bash
+     export DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)
+     docker compose -f coder-docker-compose.yml down
+     docker compose -f coder-docker-compose.yml up -d
+     ```
 
 ### Issue: Gitea API errors
 
@@ -388,6 +449,39 @@ This should return the workspace URL and session token.
 4. Check workspace URL is correct:
    - Format: `http://localhost:7080/@username/workspace-name/apps/code-server`
 
+### Issue: `EACCES` / permission denied under `/home/coder/prototypes/...`
+
+**Symptoms**:
+- VS Code popup: `EACCES: permission denied, scandir ...`
+- Cannot create or edit files in prototype folder
+
+**Root cause**:
+- HostPath permissions are too restrictive for the workspace user
+
+**Fix**:
+1. Normalize host permissions:
+   ```bash
+   sudo chmod -R a+rwX /var/lib/autowrx/prototypes
+   ```
+2. Restart backend and reopen VS Code tab.
+3. Re-test by creating a file in `/home/coder/prototypes/<prototype-folder>`.
+
+### Issue: "Workspace does not exist"
+
+**Symptoms**:
+- App popup says workspace does not exist, even though folder exists on host
+
+**Root cause**:
+- User is reusing an old Coder workspace created with stale mount/template values
+
+**Fix**:
+1. Delete that user's old workspace in Coder UI.
+2. Reopen VS Code tab so backend creates a fresh workspace from current template.
+3. Confirm mount path from workspace terminal:
+   ```bash
+   ls -la /home/coder/prototypes
+   ```
+
 ### Issue: Git operations fail
 
 **Symptoms**: Can't clone, push, or pull
@@ -418,7 +512,7 @@ This should return the workspace URL and session token.
 - [ ] Coder template created and uploaded
 - [ ] Backend API endpoints respond correctly
 - [ ] Frontend Code tab loads workspace
-- [ ] Workspace has repository cloned
+- [ ] Workspace can read/write `/home/coder/prototypes/<prototype-folder>`
 - [ ] Git operations work (clone, commit, push)
 - [ ] Gitea organizations and repositories are created
 - [ ] User permissions sync to Gitea teams
