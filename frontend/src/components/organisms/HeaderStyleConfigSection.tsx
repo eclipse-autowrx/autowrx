@@ -48,8 +48,7 @@ const GRADIENT_DIRECTION_OPTIONS = [
     { value: '315deg', label: 'Diagonal (315deg)' },
 ] as const
 
-const CSS_VAR_OPTIONS = [
-    { value: '', label: 'Custom value' },
+const DEFAULT_CSS_VAR_OPTIONS: { value: string; label: string }[] = [
     { value: 'var(--primary)', label: '--primary' },
     { value: 'var(--primary-foreground)', label: '--primary-foreground' },
     { value: 'var(--secondary)', label: '--secondary' },
@@ -61,7 +60,21 @@ const CSS_VAR_OPTIONS = [
     { value: 'var(--destructive)', label: '--destructive' },
     { value: 'var(--border)', label: '--border' },
     { value: 'var(--accent)', label: '--accent' },
-] as const
+]
+
+const parseCssVarsFromGlobalCss = (content: string): { value: string; label: string }[] => {
+    const varRegex = /--([\w-]+)\s*:/g
+    const vars: { value: string; label: string }[] = []
+    const seen = new Set<string>()
+    let match
+    while ((match = varRegex.exec(content)) !== null) {
+        const name = match[1]
+        if (name === 'radius' || seen.has(name)) continue
+        seen.add(name)
+        vars.push({ value: `var(--${name})`, label: `--${name}` })
+    }
+    return vars
+}
 
 const LOGO_FILTER_PRESETS = [
     { value: '', label: 'None' },
@@ -108,8 +121,8 @@ const buildLinearGradient = (direction: string, startColor: string, endColor: st
     return `linear-gradient(${direction}, ${startColor} 0%, ${endColor} 100%)`
 }
 
-const getCssVarSelection = (value: string) => {
-    const match = CSS_VAR_OPTIONS.find((opt) => opt.value === value)
+const getCssVarSelection = (value: string, options: { value: string; label: string }[]) => {
+    const match = options.find((opt) => opt.value === value)
     return match ? match.value : ''
 }
 
@@ -121,6 +134,8 @@ const HeaderStyleConfigSection: React.FC = () => {
     const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
     const { toast } = useToast()
     const logoUrl = useSiteConfig('SITE_LOGO_WIDE', '/imgs/logo-wide.png')
+
+    const [cssVarOptions, setCssVarOptions] = useState(DEFAULT_CSS_VAR_OPTIONS)
 
     const [isLoading, setIsLoading] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
@@ -187,6 +202,19 @@ const HeaderStyleConfigSection: React.FC = () => {
     const loadConfigs = async () => {
         try {
             setIsLoading(true)
+
+            // Fetch global CSS variables
+            try {
+                const globalCss = await configManagementService.getGlobalCss()
+                if (globalCss?.content) {
+                    const parsed = parseCssVarsFromGlobalCss(globalCss.content)
+                    if (parsed.length > 0) {
+                        setCssVarOptions(parsed)
+                    }
+                }
+            } catch {
+                // Fall back to defaults silently
+            }
 
             const res = await configManagementService.getConfigs({
                 secret: false,
@@ -606,7 +634,7 @@ const HeaderStyleConfigSection: React.FC = () => {
         onChange: (v: string) => void
         label: string
     }) => {
-        const selectedVar = getCssVarSelection(value)
+        const selectedVar = getCssVarSelection(value, cssVarOptions)
         return (
             <div className="space-y-2">
                 <Label>{label}</Label>
@@ -626,7 +654,7 @@ const HeaderStyleConfigSection: React.FC = () => {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="_custom">Custom value</SelectItem>
-                            {CSS_VAR_OPTIONS.filter((o) => o.value).map((option) => (
+                            {cssVarOptions.map((option) => (
                                 <SelectItem key={option.value} value={option.value}>
                                     {option.label}
                                 </SelectItem>
