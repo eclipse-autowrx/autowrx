@@ -65,6 +65,8 @@ const ModelDetailLayout = () => {
     'ALLOW_NON_ADMIN_ADDON_CONFIG',
     true,
   )
+  const navbarBackgroundColor = useSiteConfig('NAVBAR_BACKGROUND_COLOR', '')
+  const navbarTextColor = useSiteConfig('NAVBAR_TEXT_COLOR', '')
   // Update store when model is fetched
   useEffect(() => {
     if (fetchedModel && fetchedModel.id) {
@@ -228,7 +230,13 @@ const ModelDetailLayout = () => {
 
   return (
     <div className="flex flex-col w-full h-full rounded-md bg-muted">
-      <div className="flex min-h-[52px] border-b border-muted-foreground/50 bg-background">
+      <div
+        className="flex min-h-[52px] border-b border-muted-foreground/50 bg-background"
+        style={{
+          background: typeof navbarBackgroundColor === 'string' && navbarBackgroundColor.trim() ? navbarBackgroundColor.trim() : undefined,
+          color: typeof navbarTextColor === 'string' && navbarTextColor.trim() ? navbarTextColor.trim() : undefined,
+        }}
+      >
         <div className="flex w-fit">
           {model ? (
             <>
@@ -245,6 +253,7 @@ const ModelDetailLayout = () => {
                   }
                   key={index}
                   dataId={intro.dataId}
+                  customTextColor={typeof navbarTextColor === 'string' && navbarTextColor.trim() ? navbarTextColor.trim() : undefined}
                 >
                   {intro.title}
                   {intro.count !== null && (
@@ -254,7 +263,10 @@ const ModelDetailLayout = () => {
                   )}
                 </DaTabItem>
               ))}
-              <CustomModelTabs customTabs={model?.custom_template?.model_tabs} />
+              <CustomModelTabs
+                customTabs={model?.custom_template?.model_tabs}
+                customTextColor={typeof navbarTextColor === 'string' && navbarTextColor.trim() ? navbarTextColor.trim() : undefined}
+              />
             </>
           ) : (
             <div className="flex items-center h-full space-x-6 px-4">

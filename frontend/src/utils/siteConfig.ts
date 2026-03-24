@@ -27,6 +27,8 @@ const DEFAULT_SITE_CONFIGS: Record<string, any> = {
   HEADER_TEXT_COLOR: '',
   HEADER_LOGO_HEIGHT: '28',
   HEADER_LOGO_FILTER: '',
+  NAVBAR_BACKGROUND_COLOR: '',
+  NAVBAR_TEXT_COLOR: '',
   GENAI_SDV_APP_ENDPOINT:
     'https://workflow.digital.auto/webhook/c0ba14bc-c6a3-4319-ad0a-ad89b1460b36',
 }

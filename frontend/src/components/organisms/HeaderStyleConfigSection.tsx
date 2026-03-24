@@ -23,12 +23,16 @@ const HEADER_BUTTON_HOVER_BG_COLOR_KEY = 'HEADER_BUTTON_HOVER_BG_COLOR'
 const HEADER_TEXT_COLOR_KEY = 'HEADER_TEXT_COLOR'
 const HEADER_LOGO_HEIGHT_KEY = 'HEADER_LOGO_HEIGHT'
 const HEADER_LOGO_FILTER_KEY = 'HEADER_LOGO_FILTER'
+const NAVBAR_BACKGROUND_COLOR_KEY = 'NAVBAR_BACKGROUND_COLOR'
+const NAVBAR_TEXT_COLOR_KEY = 'NAVBAR_TEXT_COLOR'
 
 const DEFAULT_HEADER_BACKGROUND_GRADIENT = '#ffffff'
 const DEFAULT_HEADER_BUTTON_HOVER_BG_COLOR = '#dbe4ee'
 const DEFAULT_HEADER_TEXT_COLOR = ''
 const DEFAULT_HEADER_LOGO_HEIGHT = '28'
 const DEFAULT_HEADER_LOGO_FILTER = ''
+const DEFAULT_NAVBAR_BACKGROUND_COLOR = ''
+const DEFAULT_NAVBAR_TEXT_COLOR = ''
 const DEFAULT_GRADIENT_DIRECTION = '90deg'
 const DEFAULT_GRADIENT_START_COLOR = '#ffffff'
 const DEFAULT_GRADIENT_END_COLOR = '#ffffff'
@@ -134,6 +138,8 @@ const HeaderStyleConfigSection: React.FC = () => {
     const [headerTextColor, setHeaderTextColor] = useState(DEFAULT_HEADER_TEXT_COLOR)
     const [headerLogoHeight, setHeaderLogoHeight] = useState(DEFAULT_HEADER_LOGO_HEIGHT)
     const [headerLogoFilter, setHeaderLogoFilter] = useState(DEFAULT_HEADER_LOGO_FILTER)
+    const [navbarBackgroundColor, setNavbarBackgroundColor] = useState(DEFAULT_NAVBAR_BACKGROUND_COLOR)
+    const [navbarTextColor, setNavbarTextColor] = useState(DEFAULT_NAVBAR_TEXT_COLOR)
 
     const [originalHeaderBackgroundGradient, setOriginalHeaderBackgroundGradient] =
         useState(DEFAULT_HEADER_BACKGROUND_GRADIENT)
@@ -142,6 +148,8 @@ const HeaderStyleConfigSection: React.FC = () => {
     const [originalHeaderTextColor, setOriginalHeaderTextColor] = useState(DEFAULT_HEADER_TEXT_COLOR)
     const [originalHeaderLogoHeight, setOriginalHeaderLogoHeight] = useState(DEFAULT_HEADER_LOGO_HEIGHT)
     const [originalHeaderLogoFilter, setOriginalHeaderLogoFilter] = useState(DEFAULT_HEADER_LOGO_FILTER)
+    const [originalNavbarBackgroundColor, setOriginalNavbarBackgroundColor] = useState(DEFAULT_NAVBAR_BACKGROUND_COLOR)
+    const [originalNavbarTextColor, setOriginalNavbarTextColor] = useState(DEFAULT_NAVBAR_TEXT_COLOR)
 
     useEffect(() => {
         if (selfLoading || !self) return
@@ -241,6 +249,26 @@ const HeaderStyleConfigSection: React.FC = () => {
                     description: 'CSS filter for the header logo. Example: brightness(0) invert(1).',
                 })
             }
+            if (!byKey.has(NAVBAR_BACKGROUND_COLOR_KEY)) {
+                missingConfigs.push({
+                    key: NAVBAR_BACKGROUND_COLOR_KEY,
+                    scope: 'site',
+                    value: DEFAULT_NAVBAR_BACKGROUND_COLOR,
+                    secret: false,
+                    valueType: 'string',
+                    description: 'Background for the secondary navigation bar. Supports CSS variables, solid colors, and gradients.',
+                })
+            }
+            if (!byKey.has(NAVBAR_TEXT_COLOR_KEY)) {
+                missingConfigs.push({
+                    key: NAVBAR_TEXT_COLOR_KEY,
+                    scope: 'site',
+                    value: DEFAULT_NAVBAR_TEXT_COLOR,
+                    secret: false,
+                    valueType: 'string',
+                    description: 'Text color for the secondary navigation bar. Supports CSS variables.',
+                })
+            }
 
             if (missingConfigs.length > 0) {
                 await configManagementService.bulkUpsertConfigs({ configs: missingConfigs })
@@ -251,6 +279,8 @@ const HeaderStyleConfigSection: React.FC = () => {
             const textColorRaw = byKey.get(HEADER_TEXT_COLOR_KEY)?.value
             const logoHeightRaw = byKey.get(HEADER_LOGO_HEIGHT_KEY)?.value
             const logoFilterRaw = byKey.get(HEADER_LOGO_FILTER_KEY)?.value
+            const navbarBgRaw = byKey.get(NAVBAR_BACKGROUND_COLOR_KEY)?.value
+            const navbarTextRaw = byKey.get(NAVBAR_TEXT_COLOR_KEY)?.value
 
             const backgroundValue =
                 typeof backgroundRaw === 'string' && backgroundRaw.trim()
@@ -268,6 +298,10 @@ const HeaderStyleConfigSection: React.FC = () => {
                     : DEFAULT_HEADER_LOGO_HEIGHT
             const logoFilterValue =
                 typeof logoFilterRaw === 'string' ? logoFilterRaw : DEFAULT_HEADER_LOGO_FILTER
+            const navbarBgValue =
+                typeof navbarBgRaw === 'string' ? navbarBgRaw : DEFAULT_NAVBAR_BACKGROUND_COLOR
+            const navbarTextValue =
+                typeof navbarTextRaw === 'string' ? navbarTextRaw : DEFAULT_NAVBAR_TEXT_COLOR
 
             setHeaderBackgroundGradient(backgroundValue)
             setOriginalHeaderBackgroundGradient(backgroundValue)
@@ -279,6 +313,10 @@ const HeaderStyleConfigSection: React.FC = () => {
             setOriginalHeaderLogoHeight(logoHeightValue)
             setHeaderLogoFilter(logoFilterValue)
             setOriginalHeaderLogoFilter(logoFilterValue)
+            setNavbarBackgroundColor(navbarBgValue)
+            setOriginalNavbarBackgroundColor(navbarBgValue)
+            setNavbarTextColor(navbarTextValue)
+            setOriginalNavbarTextColor(navbarTextValue)
 
             const parsedGradient = parseLinearGradientParts(backgroundValue)
             if (parsedGradient) {
@@ -308,7 +346,9 @@ const HeaderStyleConfigSection: React.FC = () => {
             headerButtonHoverBgColor !== originalHeaderButtonHoverBgColor ||
             headerTextColor !== originalHeaderTextColor ||
             headerLogoHeight !== originalHeaderLogoHeight ||
-            headerLogoFilter !== originalHeaderLogoFilter
+            headerLogoFilter !== originalHeaderLogoFilter ||
+            navbarBackgroundColor !== originalNavbarBackgroundColor ||
+            navbarTextColor !== originalNavbarTextColor
         )
     }
 
@@ -321,6 +361,8 @@ const HeaderStyleConfigSection: React.FC = () => {
             const nextTextColor = headerTextColor.trim()
             const nextLogoHeight = headerLogoHeight.trim()
             const nextLogoFilter = headerLogoFilter.trim()
+            const nextNavbarBg = navbarBackgroundColor.trim()
+            const nextNavbarText = navbarTextColor.trim()
 
             await configManagementService.updateConfigByKey(HEADER_BACKGROUND_GRADIENT_KEY, {
                 value: nextBackground,
@@ -336,6 +378,12 @@ const HeaderStyleConfigSection: React.FC = () => {
             })
             await configManagementService.updateConfigByKey(HEADER_LOGO_FILTER_KEY, {
                 value: nextLogoFilter,
+            })
+            await configManagementService.updateConfigByKey(NAVBAR_BACKGROUND_COLOR_KEY, {
+                value: nextNavbarBg,
+            })
+            await configManagementService.updateConfigByKey(NAVBAR_TEXT_COLOR_KEY, {
+                value: nextNavbarText,
             })
 
             pushSiteConfigEdit({
@@ -373,12 +421,28 @@ const HeaderStyleConfigSection: React.FC = () => {
                 valueType: 'string',
                 section: 'public',
             })
+            pushSiteConfigEdit({
+                key: NAVBAR_BACKGROUND_COLOR_KEY,
+                valueBefore: originalNavbarBackgroundColor,
+                valueAfter: nextNavbarBg,
+                valueType: 'string',
+                section: 'public',
+            })
+            pushSiteConfigEdit({
+                key: NAVBAR_TEXT_COLOR_KEY,
+                valueBefore: originalNavbarTextColor,
+                valueAfter: nextNavbarText,
+                valueType: 'string',
+                section: 'public',
+            })
 
             setOriginalHeaderBackgroundGradient(nextBackground)
             setOriginalHeaderButtonHoverBgColor(nextHoverBg)
             setOriginalHeaderTextColor(nextTextColor)
             setOriginalHeaderLogoHeight(nextLogoHeight)
             setOriginalHeaderLogoFilter(nextLogoFilter)
+            setOriginalNavbarBackgroundColor(nextNavbarBg)
+            setOriginalNavbarTextColor(nextNavbarText)
 
             toast({
                 title: 'Saved',
@@ -420,6 +484,12 @@ const HeaderStyleConfigSection: React.FC = () => {
             await configManagementService.updateConfigByKey(HEADER_LOGO_FILTER_KEY, {
                 value: DEFAULT_HEADER_LOGO_FILTER,
             })
+            await configManagementService.updateConfigByKey(NAVBAR_BACKGROUND_COLOR_KEY, {
+                value: DEFAULT_NAVBAR_BACKGROUND_COLOR,
+            })
+            await configManagementService.updateConfigByKey(NAVBAR_TEXT_COLOR_KEY, {
+                value: DEFAULT_NAVBAR_TEXT_COLOR,
+            })
 
             pushSiteConfigEdit({
                 key: HEADER_BACKGROUND_GRADIENT_KEY,
@@ -456,6 +526,20 @@ const HeaderStyleConfigSection: React.FC = () => {
                 valueType: 'string',
                 section: 'public',
             })
+            pushSiteConfigEdit({
+                key: NAVBAR_BACKGROUND_COLOR_KEY,
+                valueBefore: originalNavbarBackgroundColor,
+                valueAfter: DEFAULT_NAVBAR_BACKGROUND_COLOR,
+                valueType: 'string',
+                section: 'public',
+            })
+            pushSiteConfigEdit({
+                key: NAVBAR_TEXT_COLOR_KEY,
+                valueBefore: originalNavbarTextColor,
+                valueAfter: DEFAULT_NAVBAR_TEXT_COLOR,
+                valueType: 'string',
+                section: 'public',
+            })
 
             setHeaderBackgroundGradient(DEFAULT_HEADER_BACKGROUND_GRADIENT)
             setHeaderButtonHoverBgColor(DEFAULT_HEADER_BUTTON_HOVER_BG_COLOR)
@@ -467,6 +551,10 @@ const HeaderStyleConfigSection: React.FC = () => {
             setOriginalHeaderTextColor(DEFAULT_HEADER_TEXT_COLOR)
             setOriginalHeaderLogoHeight(DEFAULT_HEADER_LOGO_HEIGHT)
             setOriginalHeaderLogoFilter(DEFAULT_HEADER_LOGO_FILTER)
+            setNavbarBackgroundColor(DEFAULT_NAVBAR_BACKGROUND_COLOR)
+            setNavbarTextColor(DEFAULT_NAVBAR_TEXT_COLOR)
+            setOriginalNavbarBackgroundColor(DEFAULT_NAVBAR_BACKGROUND_COLOR)
+            setOriginalNavbarTextColor(DEFAULT_NAVBAR_TEXT_COLOR)
 
             setGradientDirection(DEFAULT_GRADIENT_DIRECTION)
             setGradientStartColor(DEFAULT_GRADIENT_START_COLOR)
@@ -739,6 +827,64 @@ const HeaderStyleConfigSection: React.FC = () => {
                                         </SelectContent>
                                     </Select>
                                 </div>
+                            </div>
+                        </div>
+
+                        <div className="border-t border-border pt-6 space-y-4">
+                            <div className="rounded-lg border border-border overflow-hidden">
+                                <div
+                                    className="px-4 py-3 flex items-center gap-6 border-b border-muted-foreground/50"
+                                    style={{
+                                        background: navbarBackgroundColor.trim() || undefined,
+                                        color: navbarTextColor.trim() || undefined,
+                                    }}
+                                >
+                                    <span
+                                        className="text-sm font-semibold border-b-2 px-2 py-1"
+                                        style={{
+                                            color: navbarTextColor.trim() || undefined,
+                                            borderColor: navbarTextColor.trim() || 'currentColor',
+                                        }}
+                                    >
+                                        Overview
+                                    </span>
+                                    <span
+                                        className="text-sm px-2 py-1 opacity-60"
+                                        style={{ color: navbarTextColor.trim() || undefined }}
+                                    >
+                                        Vehicle API
+                                    </span>
+                                    <span
+                                        className="text-sm px-2 py-1 opacity-60"
+                                        style={{ color: navbarTextColor.trim() || undefined }}
+                                    >
+                                        Prototype Library
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <Label className="text-base font-semibold">Navigation Bar Style</Label>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setNavbarBackgroundColor('linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%)')}
+                                    disabled={isLoading || isSaving}
+                                >
+                                    Apply --primary to --secondary gradient
+                                </Button>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <ColorVarSelector
+                                    label="Navbar Background"
+                                    value={navbarBackgroundColor}
+                                    onChange={setNavbarBackgroundColor}
+                                />
+                                <ColorVarSelector
+                                    label="Navbar Text Color"
+                                    value={navbarTextColor}
+                                    onChange={setNavbarTextColor}
+                                />
                             </div>
                         </div>
                     </div>
