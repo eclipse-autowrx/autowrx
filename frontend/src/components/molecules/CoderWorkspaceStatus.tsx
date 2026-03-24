@@ -38,7 +38,7 @@ const CoderWorkspaceStatus: FC<CoderWorkspaceStatusProps> = ({
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4 p-8">
         <Spinner className="w-8 h-8" />
-        <p className="text-muted-foreground">Creating workspace...</p>
+        <p className="text-muted-foreground">Loading workspace...</p>
       </div>
     )
   }
@@ -51,9 +51,9 @@ const CoderWorkspaceStatus: FC<CoderWorkspaceStatusProps> = ({
     stopped: 'Workspace is stopped',
     failed: 'Workspace failed to start',
     canceling: 'Canceling workspace...',
-    canceled: 'Workspace creation canceled',
+    canceled: 'Workspace loading canceled',
     unknown: 'Checking workspace status...',
-    not_created: 'Creating workspace...',
+    not_created: 'Loading workspace...',
   }
 
   const statusMessage =
@@ -73,30 +73,34 @@ const CoderWorkspaceStatus: FC<CoderWorkspaceStatusProps> = ({
     (t) => t.display_name === 'code-server' && t.status === 'ok',
   )
   const showTopSpinner = !isError && (!isReady || (isReady && !isCodeServerReady))
+  const hasLiveLogs = Array.isArray(logs) && logs.length > 0
+  const showLoadingSection = !hasLiveLogs || isError
 
   return (
     <div className="flex flex-col h-full gap-6 p-6 max-w-5xl mx-auto">
-      <div className="flex flex-col items-center justify-center gap-4">
-        {showTopSpinner && <Spinner className="w-8 h-8" />}
-        {isError && <div className="text-red-500 text-4xl mb-2">⚠️</div>}
-        <p
-          className={`text-center text-lg font-medium ${isError ? 'text-red-500' : isReady ? 'text-primary' : 'text-muted-foreground'}`}
-        >
-          {statusMessage}
-        </p>
-        {isInProgress && (
-          <p className="text-sm text-muted-foreground text-center max-w-md">
-            This may take a few minutes. The workspace is being created and
-            configured...
+      {showLoadingSection && (
+        <div className="flex flex-col items-center justify-center gap-4">
+          {showTopSpinner && <Spinner className="w-8 h-8" />}
+          {isError && <div className="text-red-500 text-4xl mb-2">⚠️</div>}
+          <p
+            className={`text-center text-lg font-medium ${isError ? 'text-red-500' : isReady ? 'text-primary' : 'text-muted-foreground'}`}
+          >
+            {statusMessage}
           </p>
-        )}
-        {isError && status.status === 'failed' && (
-          <p className="text-sm text-muted-foreground text-center max-w-md">
-            The workspace failed to start. Please try refreshing the page or
-            contact support if the issue persists.
-          </p>
-        )}
-      </div>
+          {isInProgress && (
+            <p className="text-sm text-muted-foreground text-center max-w-md">
+              This may take a few minutes. The workspace is being loaded and
+              configured...
+            </p>
+          )}
+          {isError && status.status === 'failed' && (
+            <p className="text-sm text-muted-foreground text-center max-w-md">
+              The workspace failed to start. Please try refreshing the page or
+              contact support if the issue persists.
+            </p>
+          )}
+        </div>
+      )}
 
       {timings && (
         <div className="mt-1 text-xs text-muted-foreground max-w-3xl text-left space-y-3 mx-auto w-full">
@@ -188,7 +192,7 @@ const CoderWorkspaceStatus: FC<CoderWorkspaceStatusProps> = ({
             )}
         </div>
       )}
-      {Array.isArray(logs) && logs.length > 0 && (
+      {hasLiveLogs && (
         <div className="mt-4 w-full max-w-4xl mx-auto flex-1 min-h-0">
           <p className="text-[11px] font-semibold text-muted-foreground mb-2 uppercase tracking-wide">
             Live logs
