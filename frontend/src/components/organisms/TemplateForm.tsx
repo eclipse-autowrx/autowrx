@@ -288,14 +288,29 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                   <div className="flex flex-col gap-1.5">
                     <Label>Visibility</Label>
                     <DaSelect
-                      value={form.visibility || 'public'}
-                      onValueChange={(v) => onChange('visibility', v)}
+                      value={form.visibility === 'default' ? 'public' : (form.visibility || 'public')}
+                      onValueChange={(v) => onChange('visibility', form.visibility === 'default' ? 'default' : v)}
+                      disabled={form.visibility === 'default'}
                       className="h-9 text-sm"
                     >
                       <DaSelectItem value="public">public</DaSelectItem>
                       <DaSelectItem value="private">private</DaSelectItem>
-                      <DaSelectItem value="default">default</DaSelectItem>
                     </DaSelect>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <input
+                      type="checkbox"
+                      id="is-default-template"
+                      checked={form.visibility === 'default'}
+                      onChange={(e) => onChange('visibility', e.target.checked ? 'default' : 'public')}
+                      className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <Label htmlFor="is-default-template" className="cursor-pointer text-sm">
+                      Set as default template
+                    </Label>
+                    <span className="text-xs text-muted-foreground">
+                      (auto-selected when creating new models)
+                    </span>
                   </div>
                 </div>
                 <div className="w-44 shrink-0">

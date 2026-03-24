@@ -116,6 +116,18 @@ const FormNewPrototype = ({
         enabled: isCreatingNewModel,
     })
 
+    const defaultTemplate = useMemo(
+        () => templatesData?.results?.find((t) => t.visibility === 'default'),
+        [templatesData],
+    )
+
+    // Auto-select default template when templates load
+    useEffect(() => {
+        if (defaultTemplate && newModelTemplateId === null) {
+            setNewModelTemplateId(defaultTemplate.id)
+        }
+    }, [defaultTemplate]) // eslint-disable-line react-hooks/exhaustive-deps
+
     const { data: fetchedPrototypes } = useListModelPrototypes(
         isCreatingNewModel ? '' : selectedModelId,
     )
@@ -346,25 +358,29 @@ const FormNewPrototype = ({
 
                     {/* Template */}
                     <div>
-                        <Label className="text-sm font-medium">Start from Template (Optional)</Label>
+                        <Label className="text-sm font-medium">
+                            {defaultTemplate ? 'Template' : 'Start from Template (Optional)'}
+                        </Label>
                         <div className="mt-1 space-y-1.5 max-h-36 overflow-y-auto">
-                            <div
-                                onClick={() => setNewModelTemplateId(null)}
-                                className={`flex items-center gap-2 p-2 border rounded-lg cursor-pointer transition-colors ${newModelTemplateId === null
-                                    ? 'border-primary bg-primary/5'
-                                    : 'border-input hover:border-primary/50'
-                                    }`}
-                            >
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-medium">Start from scratch</p>
+                            {!defaultTemplate && (
+                                <div
+                                    onClick={() => setNewModelTemplateId(null)}
+                                    className={`flex items-center gap-2 p-2 border rounded-lg cursor-pointer transition-colors ${newModelTemplateId === null
+                                        ? 'border-primary bg-primary/5'
+                                        : 'border-input hover:border-primary/50'
+                                        }`}
+                                >
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-medium">Start from scratch</p>
+                                    </div>
+                                    <input
+                                        type="radio"
+                                        readOnly
+                                        checked={newModelTemplateId === null}
+                                        className="w-3.5 h-3.5 text-primary"
+                                    />
                                 </div>
-                                <input
-                                    type="radio"
-                                    readOnly
-                                    checked={newModelTemplateId === null}
-                                    className="w-3.5 h-3.5 text-primary"
-                                />
-                            </div>
+                            )}
                             {templatesData?.results?.map((template) => (
                                 <div
                                     key={template.id}

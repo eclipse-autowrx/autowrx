@@ -20,7 +20,7 @@ import { CVI } from '@/data/CVI'
 import { createModelService } from '@/services/model.service'
 import { ModelCreate } from '@/types/model.type'
 import { isAxiosError } from 'axios'
-import { FormEvent, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { TbCircleCheckFilled, TbLoader } from 'react-icons/tb'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '../toaster/use-toast'
@@ -66,6 +66,18 @@ const FormCreateModel = () => {
     queryKey: ['model-templates'],
     queryFn: () => listModelTemplates({ limit: 100, page: 1 }),
   })
+
+  const defaultTemplate = useMemo(
+    () => templatesData?.results?.find((t) => t.visibility === 'default'),
+    [templatesData],
+  )
+
+  // Auto-select default template when templates load
+  useEffect(() => {
+    if (defaultTemplate && selectedTemplateId === null) {
+      setSelectedTemplateId(defaultTemplate.id)
+    }
+  }, [defaultTemplate]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const navigate = useNavigate()
 
@@ -244,7 +256,7 @@ const FormCreateModel = () => {
 
       {/* Template Selection */}
       <div className="mt-6 flex flex-col gap-1.5">
-        <Label>Start from Template (Optional)</Label>
+        <Label>{defaultTemplate ? 'Template' : 'Start from Template (Optional)'}</Label>
         <Select
           value={selectedTemplateId ?? '__scratch__'}
           onValueChange={(v) => setSelectedTemplateId(v === '__scratch__' ? null : v)}
@@ -253,7 +265,9 @@ const FormCreateModel = () => {
             <SelectValue placeholder="Select a template" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="__scratch__">Start from scratch</SelectItem>
+            {!defaultTemplate && (
+              <SelectItem value="__scratch__">Start from scratch</SelectItem>
+            )}
             {templatesData?.results?.map((template) => (
               <SelectItem key={template.id} value={template.id}>
                 {template.name}
