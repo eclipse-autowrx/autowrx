@@ -102,7 +102,7 @@ const NavigationBar = ({ }) => {
         <img
           src={logoUrl}
           alt="Logo"
-          style={{ height: '28px' }}
+          style={{ height: '28px', filter: gradientHeader ? 'brightness(0) invert(1)' : undefined }}
         />
       </Link>
 
