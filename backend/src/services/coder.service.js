@@ -125,6 +125,28 @@ const generateRandomPassword = () => {
 };
 
 /**
+ * Ensure a Coder user is active.
+ * Some Coder deployments can return newly-created/existing users with
+ * non-active statuses (for example dormant), which blocks app access.
+ * @param {Object} user - Coder user object
+ * @returns {Promise<Object>} User object (possibly updated)
+ */
+const ensureUserIsActive = async (user) => {
+  if (!user || user.status === 'active') {
+    return user;
+  }
+
+  try {
+    await axios.put(`${CODER_API_BASE}/users/${user.id}/status/activate`, {}, { headers: getAdminHeaders() });
+    logger.info(`Activated Coder user: ${user.username} (${user.id}) from status ${user.status}`);
+    return { ...user, status: 'active' };
+  } catch (error) {
+    logger.error(`Failed to activate user ${user.username} (status ${user.status}): ${error.message}`);
+    return user;
+  }
+};
+
+/**
  * Ensure user exists in Coder, create if not
  * @param {string} userId - Internal user ID
  * @param {string} username - Username for Coder
@@ -142,8 +164,9 @@ const ensureUserExists = async (userId, username, email) => {
     const existingUser = usersResponse.data.users?.find((u) => u.username === username || u.email === email);
 
     if (existingUser) {
+      const activeUser = await ensureUserIsActive(existingUser);
       logger.info(`Coder user already exists: ${username}`);
-      return existingUser;
+      return activeUser;
     }
 
     // Get or create default organization
@@ -163,7 +186,8 @@ const ensureUserExists = async (userId, username, email) => {
     );
 
     logger.info(`Created Coder user: ${username} in organization ${organizationId}`);
-    return createResponse.data;
+    const activeCreatedUser = await ensureUserIsActive(createResponse.data);
+    return activeCreatedUser;
   } catch (error) {
     logger.error(`Failed to ensure Coder user exists: ${error.message}`);
     logger.error(
@@ -199,36 +223,63 @@ const ensureUserExists = async (userId, username, email) => {
  * @returns {Promise<string|null>} Session token or null if not available
  */
 const generateSessionToken = async (coderUsername) => {
-  try {
-    // Try the API v2 endpoint: /users/{user}/tokens
-    // This creates a long-lived API token for the user
-    const response = await axios.post(
-      `${CODER_API_BASE}/users/${coderUsername}/tokens`,
-      {
+  const tokenEndpoints = [
+    {
+      url: `${CODER_API_BASE}/users/${coderUsername}/tokens`,
+      body: {
         name: `autowrx-session-${Date.now()}`,
         lifetime: 86400000, // 24 hours in milliseconds
         scope: 'workspace:*', // Full workspace access
       },
-      { headers: getAdminHeaders() },
-    );
+    },
+    {
+      // Backward-compatible endpoint on older/newer Coder variants.
+      url: `${CODER_API_BASE}/users/${coderUsername}/keys/tokens`,
+      body: {
+        token_name: `autowrx-session-${Date.now()}`,
+        lifetime: 86400000,
+        scope: 'workspace:*',
+      },
+    },
+    {
+      // Some deployments expose /keys directly for API key creation.
+      url: `${CODER_API_BASE}/users/${coderUsername}/keys`,
+      body: {
+        token_name: `autowrx-session-${Date.now()}`,
+        lifetime: 86400000,
+        scope: 'workspace:*',
+      },
+    },
+  ];
 
-    // The response should contain a key field with the token
-    const token = response.data.key || response.data.id || response.data;
-    if (!token) {
-      logger.warn(`Token creation succeeded but no token was returned for user: ${coderUsername}`);
-      return null;
+  try {
+    for (const endpoint of tokenEndpoints) {
+      try {
+        const response = await axios.post(endpoint.url, endpoint.body, { headers: getAdminHeaders() });
+        const token = response.data?.key || response.data?.token || response.data?.id || response.data;
+        if (!token) {
+          logger.warn(
+            `Token creation succeeded via ${endpoint.url} but no token was returned for user: ${coderUsername}`,
+          );
+          return null;
+        }
+        logger.info(`Generated Coder session token for user: ${coderUsername} via ${endpoint.url}`);
+        return typeof token === 'string' ? token : JSON.stringify(token);
+      } catch (endpointError) {
+        if (endpointError.response?.status === 404) {
+          logger.warn(`Token endpoint unavailable (404): ${endpoint.url}`);
+          continue;
+        }
+        logger.warn(
+          `Token endpoint failed (${endpointError.response?.status || endpointError.code || 'unknown'}): ${endpoint.url}`,
+        );
+        continue;
+      }
     }
 
-    logger.info(`Generated Coder session token for user: ${coderUsername}`);
-    return typeof token === 'string' ? token : JSON.stringify(token);
+    logger.warn(`No supported token endpoint is available for user: ${coderUsername}`);
+    return null;
   } catch (error) {
-    // If endpoint doesn't exist (404), token generation is not available
-    // This is OK - workspace URLs can be used directly in iframes
-    if (error.response?.status === 404) {
-      logger.warn(`Token generation endpoint not available (404). Workspace URL can be used directly without token.`);
-      return null;
-    }
-
     logger.error(`Failed to generate Coder session token: ${error.message}`);
     if (error.response) {
       logger.error(`Token creation error - Status: ${error.response.status}`);

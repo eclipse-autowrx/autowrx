@@ -77,9 +77,9 @@ const CoderWorkspaceStatus: FC<CoderWorkspaceStatusProps> = ({
   const showLoadingSection = !hasLiveLogs || isError
 
   return (
-    <div className="flex flex-col h-full gap-6 p-6 max-w-5xl mx-auto">
+    <div className="flex flex-col min-h-screen gap-6 p-6 max-w-5xl mx-auto">
       {showLoadingSection && (
-        <div className="flex flex-col items-center justify-center gap-4">
+        <div className="flex flex-1 flex-col items-center justify-center gap-4">
           {showTopSpinner && <Spinner className="w-8 h-8" />}
           {isError && <div className="text-red-500 text-4xl mb-2">⚠️</div>}
           <p

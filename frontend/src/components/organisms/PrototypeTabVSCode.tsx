@@ -6,7 +6,15 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { FC, useEffect, useState, lazy, Suspense, useRef, useCallback } from 'react'
+import {
+  FC,
+  useEffect,
+  useState,
+  lazy,
+  Suspense,
+  useRef,
+  useCallback,
+} from 'react'
 import { Spinner } from '@/components/atoms/spinner'
 import { retry } from '@/lib/retry'
 import {
@@ -36,7 +44,9 @@ interface PrototypeTabVSCodeProps {
   isActive?: boolean
 }
 
-const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({ isActive = true }) => {
+const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
+  isActive = true,
+}) => {
   const { prototype_id } = useParams<{ prototype_id: string }>()
   const [prototype] = useModelStore(
     (state) => [state.prototype as Prototype],
@@ -51,9 +61,11 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({ isActive = true }) =>
 
   // Coder workspace state
   const [workspaceInfo, setWorkspaceInfo] = useState<WorkspaceInfo | null>(null)
-  const [workspaceStatus, setWorkspaceStatus] = useState<WorkspaceStatus | null>(null)
+  const [workspaceStatus, setWorkspaceStatus] =
+    useState<WorkspaceStatus | null>(null)
   const [workspaceLogs, setWorkspaceLogs] = useState<WorkspaceAgentLog[]>([])
-  const [isWorkspaceReadyFromLogs, setIsWorkspaceReadyFromLogs] = useState(false)
+  const [isWorkspaceReadyFromLogs, setIsWorkspaceReadyFromLogs] =
+    useState(false)
   const [workspaceError, setWorkspaceError] = useState<string | null>(null)
   const [isLoadingWorkspace, setIsLoadingWorkspace] = useState(true)
   const workspacePollIntervalRef = useRef<NodeJS.Timeout | null>(null)
@@ -68,21 +80,42 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({ isActive = true }) =>
   const startXRef = useRef(0)
   const startWidthRef = useRef(0)
 
+  const buildCoderIframeSrc = useCallback((info: WorkspaceInfo) => {
+    const url = new URL(info.appUrl)
+    const folder = info.folderPath || '/home/coder/prototypes'
+    url.searchParams.set('folder', folder)
+
+    // When Coder is embedded in an iframe, reusing browser cookies is brittle.
+    // Attach the per-user token so the iframe can authenticate directly.
+    if (info.sessionToken) {
+      url.searchParams.set('token', info.sessionToken)
+      url.searchParams.set('coder_session_token', info.sessionToken)
+    }
+
+    return url.toString()
+  }, [])
+
   // Calculate initial width based on container size with 6:4 ratio (60% editor, 40% API panel)
+  // Guard against hidden/inactive tabs where measured width can be 0.
   useEffect(() => {
     const calculateInitialWidth = () => {
       if (containerRef.current) {
         const containerWidth = containerRef.current.offsetWidth
+        if (containerWidth <= 0) return
         const calculatedWidth = containerWidth * 0.4
         setRightPanelWidth(calculatedWidth)
       }
     }
 
-    calculateInitialWidth()
+    // Defer one frame so layout can settle when switching tabs.
+    const rafId = window.requestAnimationFrame(calculateInitialWidth)
 
     window.addEventListener('resize', calculateInitialWidth)
-    return () => window.removeEventListener('resize', calculateInitialWidth)
-  }, [])
+    return () => {
+      window.cancelAnimationFrame(rafId)
+      window.removeEventListener('resize', calculateInitialWidth)
+    }
+  }, [isActive])
 
   // Load Coder workspace
   useEffect(() => {
@@ -140,8 +173,13 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({ isActive = true }) =>
           await prepareWorkspace(prototype_id)
         } catch (prepareError: any) {
           if (prepareError.response?.status !== 409) {
-            console.error('[PrototypeTabVSCode] Failed to prepare workspace:', prepareError)
-            setWorkspaceError(prepareError.message || 'Failed to prepare workspace')
+            console.error(
+              '[PrototypeTabVSCode] Failed to prepare workspace:',
+              prepareError,
+            )
+            setWorkspaceError(
+              prepareError.message || 'Failed to prepare workspace',
+            )
             setIsLoadingWorkspace(false)
             return
           }
@@ -174,7 +212,14 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({ isActive = true }) =>
       workspaceLogs,
       isWorkspaceReadyFromLogs,
     })
-  }, [prototype_id, workspaceInfo, workspaceStatus, workspaceLogs, isWorkspaceReadyFromLogs, upsertCacheEntry])
+  }, [
+    prototype_id,
+    workspaceInfo,
+    workspaceStatus,
+    workspaceLogs,
+    isWorkspaceReadyFromLogs,
+    upsertCacheEntry,
+  ])
 
   // Poll workspace status + logs until logs indicate readiness
   const startWorkspacePolling = (prototypeId: string) => {
@@ -200,18 +245,19 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({ isActive = true }) =>
               if (logs.length > 0) {
                 const typedLogs = logs as WorkspaceAgentLog[]
                 const mergedLogs =
-                  lastLogIdRef.current == null ? typedLogs : [...workspaceLogs, ...typedLogs]
+                  lastLogIdRef.current == null
+                    ? typedLogs
+                    : [...workspaceLogs, ...typedLogs]
 
                 setWorkspaceLogs(mergedLogs)
-                lastLogIdRef.current = mergedLogs[mergedLogs.length - 1]?.id ?? lastLogIdRef.current
+                lastLogIdRef.current =
+                  mergedLogs[mergedLogs.length - 1]?.id ?? lastLogIdRef.current
 
                 // Stop condition: when we see the specific "workspace ready" log line
                 readyFromLogs = mergedLogs.some(
                   (log) =>
                     typeof log.output === 'string' &&
-                    log.output.includes(
-                      'Setup complete.',
-                    ),
+                    log.output.includes('Setup complete.'),
                 )
               }
             }
@@ -366,7 +412,10 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({ isActive = true }) =>
     workspaceStatus?.status === 'running' &&
     isWorkspaceReadyFromLogs
   return (
-    <div ref={containerRef} className="flex h-[calc(100%-0px)] w-full p-2 bg-gray-100">
+    <div
+      ref={containerRef}
+      className="flex h-[calc(100%-0px)] w-full p-2 bg-gray-100"
+    >
       <div
         className="flex h-full flex-1 min-w-0 flex-col border-r bg-white rounded-md"
         style={{ marginRight: '0px' }}
@@ -379,14 +428,17 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({ isActive = true }) =>
           />
         ) : workspaceInfo?.appUrl ? (
           <iframe
-            src={`${workspaceInfo.appUrl}?folder=${encodeURIComponent(workspaceInfo.folderPath || '/home/coder/prototypes')}`}
+            src={buildCoderIframeSrc(workspaceInfo)}
             className="w-full h-full border-0"
             style={{ pointerEvents: isResizing ? 'none' : 'auto' }}
             allow="clipboard-read; clipboard-write;"
             title="Coder Workspace"
           />
         ) : (
-          <CoderWorkspaceStatus status={workspaceStatus || { exists: false, status: 'not_created' }} error="Workspace URL not available" />
+          <CoderWorkspaceStatus
+            status={workspaceStatus || { exists: false, status: 'not_created' }}
+            error="Workspace URL not available"
+          />
         )}
       </div>
       {!isApiPanelCollapsed && (
@@ -396,7 +448,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({ isActive = true }) =>
           className="w-1 bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors cursor-col-resize shrink-0"
           onMouseDown={handleMouseDown}
           title="Drag to resize"
-          style={{ margin: '2px'}}
+          style={{ margin: '2px' }}
         >
           <div className="w-full h-full flex items-center justify-center">
             <div
@@ -410,12 +462,11 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({ isActive = true }) =>
       <div
         className="flex h-full flex-col bg-white rounded-md shrink-0 transition-[width] duration-200 ease-in-out"
         style={{
-          width:
-            isApiPanelCollapsed
-              ? '48px'
-              : rightPanelWidth !== null
-                ? `${rightPanelWidth}px`
-                : '40%',
+          width: isApiPanelCollapsed
+            ? '48px'
+            : rightPanelWidth !== null
+              ? `${rightPanelWidth}px`
+              : '40%',
         }}
       >
         <Suspense
