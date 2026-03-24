@@ -81,6 +81,9 @@ const NavigationBar = ({ }) => {
     'HEADER_BUTTON_HOVER_BG_COLOR',
     '#dbe4ee',
   )
+  const headerTextColor = useSiteConfig('HEADER_TEXT_COLOR', '')
+  const headerLogoHeight = useSiteConfig('HEADER_LOGO_HEIGHT', '28')
+  const headerLogoFilter = useSiteConfig('HEADER_LOGO_FILTER', '')
   const enableLearningMode = useSiteConfig('ENABLE_LEARNING_MODE', false)
   const navBarActions = useSiteConfig('NAV_BAR_ACTIONS', [])
 
@@ -92,6 +95,8 @@ const NavigationBar = ({ }) => {
         : ''
 
     if (!value) return fallback
+    if (/^var\(--[\w-]+\)$/.test(value)) return value
+    if (value.includes('var(--')) return value
     if (typeof CSS !== 'undefined' && CSS.supports('background', value)) {
       return value
     }
@@ -106,11 +111,44 @@ const NavigationBar = ({ }) => {
         : ''
 
     if (!value) return fallback
+    if (/^var\(--[\w-]+\)$/.test(value)) return value
     if (typeof CSS !== 'undefined' && CSS.supports('color', value)) {
       return value
     }
     return fallback
   }, [headerButtonHoverBgColor])
+
+  const safeTextColor = useMemo(() => {
+    const value =
+      typeof headerTextColor === 'string' ? headerTextColor.trim() : ''
+    if (!value) return undefined
+    if (/^var\(--[\w-]+\)$/.test(value)) return value
+    if (typeof CSS !== 'undefined' && CSS.supports('color', value)) {
+      return value
+    }
+    return undefined
+  }, [headerTextColor])
+
+  const safeLogoHeight = useMemo(() => {
+    const value =
+      typeof headerLogoHeight === 'string' ? headerLogoHeight.trim() : '28'
+    const num = parseInt(value, 10)
+    return num > 0 && num <= 80 ? num : 28
+  }, [headerLogoHeight])
+
+  const safeLogoFilter = useMemo(() => {
+    const value =
+      typeof headerLogoFilter === 'string' ? headerLogoFilter.trim() : ''
+    if (!value) return undefined
+    if (typeof CSS !== 'undefined' && CSS.supports('filter', value)) {
+      return value
+    }
+    return undefined
+  }, [headerLogoFilter])
+
+  const isGradientBackground = useMemo(() => {
+    return safeHeaderBackground.trim().startsWith('linear-gradient(')
+  }, [safeHeaderBackground])
 
   useEffect(() => {
     if (siteTitle) {
@@ -122,13 +160,21 @@ const NavigationBar = ({ }) => {
 
   return (
     <header
-      className="flex items-center w-full py-1 px-3 border-2"
+      className={`flex items-center w-full py-1 px-3 ${isGradientBackground ? '' : 'border-2'}`}
       style={{
         background: safeHeaderBackground,
+        color: safeTextColor,
       }}
     >
       <Link to="/" className="shrink-0">
-        <img src={logoUrl} alt="Logo" className="h-7" />
+        <img
+          src={logoUrl}
+          alt="Logo"
+          style={{
+            height: `${safeLogoHeight}px`,
+            filter: safeLogoFilter,
+          }}
+        />
       </Link>
 
       {config && config.enableBranding && (
