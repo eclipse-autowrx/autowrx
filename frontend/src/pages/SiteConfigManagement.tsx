@@ -9,7 +9,6 @@
 import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import PublicConfigSection from '@/components/organisms/PublicConfigSection'
-import HeaderStyleConfigSection from '@/components/organisms/HeaderStyleConfigSection'
 import SecretConfigSection from '@/components/organisms/SecretConfigSection'
 import SiteStyleSection from '@/components/organisms/SiteStyleSection'
 import HomeConfigSection from '@/components/organisms/HomeConfigSection'
@@ -201,6 +200,15 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
       'Allow non-admin model owners to add/manage addon tabs on model and prototype detail pages. Admin users can always configure addon tabs regardless of this setting.',
     category: 'prototype',
   },
+  {
+    key: 'GRADIENT_HEADER',
+    scope: 'site',
+    value: false,
+    secret: false,
+    valueType: 'boolean',
+    description:
+      'Apply a primary-to-secondary gradient to the main header and secondary navigation bar.',
+  },
 ]
 
 export const PREDEFINED_GENAI_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(
@@ -256,7 +264,6 @@ const SiteConfigManagement: React.FC = () => {
   // Get initial section from URL or default to 'public'
   type SectionTab =
     | 'public'
-    | 'header-style'
     | 'style'
     | 'secrets'
     | 'home'
@@ -268,7 +275,6 @@ const SiteConfigManagement: React.FC = () => {
     | 'genai'
   const validSections: SectionTab[] = [
     'public',
-    'header-style',
     'style',
     'secrets',
     'home',
@@ -333,15 +339,6 @@ const SiteConfigManagement: React.FC = () => {
                     }`}
                 >
                   Public Config
-                </button>
-                <button
-                  onClick={() => handleTabChange('header-style')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'header-style'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
-                >
-                  Header Style
                 </button>
                 <button
                   onClick={() => handleTabChange('home')}
@@ -433,7 +430,6 @@ const SiteConfigManagement: React.FC = () => {
             <div className="bg-background rounded-lg shadow border border-border">
               {/* Conditionally render only the active section */}
               {activeTab === 'public' && <PublicConfigSection />}
-              {activeTab === 'header-style' && <HeaderStyleConfigSection />}
               {activeTab === 'home' && <HomeConfigSection />}
               {activeTab === 'staging' && <StagingConfigSection />}
               {activeTab === 'auth' && <AuthConfigSection />}

@@ -62,8 +62,7 @@ const RootLayout = () => {
   // }, [isChatShowed])
 
   const { data: currentUser } = useSelfProfileQuery()
-  const navbarBg = useSiteConfig('NAVBAR_BACKGROUND_COLOR', '')
-  const navbarText = useSiteConfig('NAVBAR_TEXT_COLOR', '')
+  const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
 
   const pathsWithoutBreadcrumb = useMemo(
     () => getPathsWithoutBreadcrumb(routesConfig),
@@ -81,10 +80,10 @@ const RootLayout = () => {
         {!pathsWithoutBreadcrumb.has(location.pathname) && (
           <div
             className="flex items-center justify-between bg-primary h-[52px] px-4 da-secondary-nav-bar"
-            style={{
-              background: typeof navbarBg === 'string' && navbarBg.trim() ? navbarBg.trim() : undefined,
-              color: typeof navbarText === 'string' && navbarText.trim() ? navbarText.trim() : undefined,
-            }}
+            style={gradientHeader ? {
+              background: 'linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%)',
+              color: 'var(--primary-foreground)',
+            } : undefined}
           >
             <DaBreadcrumbBar />
           </div>

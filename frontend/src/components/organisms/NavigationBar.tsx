@@ -73,82 +73,14 @@ const NavigationBar = ({ }) => {
   const [learningMode, setIsLearningMode] = useState(false)
   const siteTitle = useSiteConfig('SITE_TITLE', 'AutoWRX')
   const logoUrl = useSiteConfig('SITE_LOGO_WIDE', '/imgs/logo-wide.png')
-  const headerBackgroundGradient = useSiteConfig(
-    'HEADER_BACKGROUND_GRADIENT',
-    '#ffffff',
-  )
-  const headerButtonHoverBgColor = useSiteConfig(
-    'HEADER_BUTTON_HOVER_BG_COLOR',
-    '#dbe4ee',
-  )
-  const headerTextColor = useSiteConfig('HEADER_TEXT_COLOR', '')
-  const headerLogoHeight = useSiteConfig('HEADER_LOGO_HEIGHT', '28')
-  const headerLogoFilter = useSiteConfig('HEADER_LOGO_FILTER', '')
+  const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
   const enableLearningMode = useSiteConfig('ENABLE_LEARNING_MODE', false)
   const navBarActions = useSiteConfig('NAV_BAR_ACTIONS', [])
 
-  const safeHeaderBackground = useMemo(() => {
-    const fallback = '#ffffff'
-    const value =
-      typeof headerBackgroundGradient === 'string'
-        ? headerBackgroundGradient.trim()
-        : ''
-
-    if (!value) return fallback
-    if (/^var\(--[\w-]+\)$/.test(value)) return value
-    if (value.includes('var(--')) return value
-    if (typeof CSS !== 'undefined' && CSS.supports('background', value)) {
-      return value
-    }
-    return fallback
-  }, [headerBackgroundGradient])
-
-  const safeHeaderHoverBg = useMemo(() => {
-    const fallback = '#dbe4ee'
-    const value =
-      typeof headerButtonHoverBgColor === 'string'
-        ? headerButtonHoverBgColor.trim()
-        : ''
-
-    if (!value) return fallback
-    if (/^var\(--[\w-]+\)$/.test(value)) return value
-    if (typeof CSS !== 'undefined' && CSS.supports('color', value)) {
-      return value
-    }
-    return fallback
-  }, [headerButtonHoverBgColor])
-
-  const safeTextColor = useMemo(() => {
-    const value =
-      typeof headerTextColor === 'string' ? headerTextColor.trim() : ''
-    if (!value) return undefined
-    if (/^var\(--[\w-]+\)$/.test(value)) return value
-    if (typeof CSS !== 'undefined' && CSS.supports('color', value)) {
-      return value
-    }
-    return undefined
-  }, [headerTextColor])
-
-  const safeLogoHeight = useMemo(() => {
-    const value =
-      typeof headerLogoHeight === 'string' ? headerLogoHeight.trim() : '28'
-    const num = parseInt(value, 10)
-    return num > 0 && num <= 80 ? num : 28
-  }, [headerLogoHeight])
-
-  const safeLogoFilter = useMemo(() => {
-    const value =
-      typeof headerLogoFilter === 'string' ? headerLogoFilter.trim() : ''
-    if (!value) return undefined
-    if (typeof CSS !== 'undefined' && CSS.supports('filter', value)) {
-      return value
-    }
-    return undefined
-  }, [headerLogoFilter])
-
-  const isGradientBackground = useMemo(() => {
-    return safeHeaderBackground.trim().startsWith('linear-gradient(')
-  }, [safeHeaderBackground])
+  const headerBackground = gradientHeader
+    ? 'linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%)'
+    : '#ffffff'
+  const headerTextColor = gradientHeader ? 'var(--primary-foreground)' : undefined
 
   useEffect(() => {
     if (siteTitle) {
@@ -160,20 +92,17 @@ const NavigationBar = ({ }) => {
 
   return (
     <header
-      className={`flex items-center w-full py-1 px-3 ${isGradientBackground ? '' : 'border-2'}`}
+      className={`flex items-center w-full py-1 px-3 ${gradientHeader ? '' : 'border-2'}`}
       style={{
-        background: safeHeaderBackground,
-        color: safeTextColor,
+        background: headerBackground,
+        color: headerTextColor,
       }}
     >
       <Link to="/" className="shrink-0">
         <img
           src={logoUrl}
           alt="Logo"
-          style={{
-            height: `${safeLogoHeight}px`,
-            filter: safeLogoFilter,
-          }}
+          style={{ height: '28px' }}
         />
       </Link>
 
@@ -218,7 +147,7 @@ const NavigationBar = ({ }) => {
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium hover:bg-[var(--header-hover-bg)] transition-colors"
-              style={{ '--header-hover-bg': safeHeaderHoverBg } as CSSProperties}
+              style={{ '--header-hover-bg': '#dbe4ee' } as CSSProperties}
               title={action.label}
             >
               {action.icon && (
@@ -262,7 +191,7 @@ const NavigationBar = ({ }) => {
               <Button
                 variant="ghost"
                 className="hover:bg-[var(--header-hover-bg)]"
-                style={{ '--header-hover-bg': safeHeaderHoverBg } as CSSProperties}
+                style={{ '--header-hover-bg': '#dbe4ee' } as CSSProperties}
               >
                 <Wrench />
                 {isAuthorized ? 'Admin Tools' : 'Tools'}

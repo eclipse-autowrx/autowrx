@@ -22,13 +22,7 @@ const DEFAULT_SITE_CONFIGS: Record<string, any> = {
   SITE_DESCRIPTION: 'Vehicle Signal Specification Management Platform',
   SITE_FAVICON: '/imgs/favicon.ico',
   SITE_THEME_COLOR: '#198100',
-  HEADER_BACKGROUND_GRADIENT: '#ffffff',
-  HEADER_BUTTON_HOVER_BG_COLOR: '#dbe4ee',
-  HEADER_TEXT_COLOR: '',
-  HEADER_LOGO_HEIGHT: '28',
-  HEADER_LOGO_FILTER: '',
-  NAVBAR_BACKGROUND_COLOR: '',
-  NAVBAR_TEXT_COLOR: '',
+  GRADIENT_HEADER: false,
   GENAI_SDV_APP_ENDPOINT:
     'https://workflow.digital.auto/webhook/c0ba14bc-c6a3-4319-ad0a-ad89b1460b36',
 }
