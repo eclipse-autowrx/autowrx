@@ -54,6 +54,8 @@ import usePluginPreloader from '@/hooks/usePluginPreloader'
 import PrototypeSidebar from '@/components/organisms/PrototypeSidebar'
 import StagingTabButton from '@/components/organisms/StagingTabButton'
 import { useSiteConfig } from '@/utils/siteConfig'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
 
 interface ViewPrototypeProps {
   display?: 'tree' | 'list'
@@ -81,6 +83,10 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
   const [openManageAddonsDialog, setOpenManageAddonsDialog] = useState(false)
   const [openTemplateForm, setOpenTemplateForm] = useState(false)
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
+  const [hasWritePermission] = usePermissionHook([
+    PERMISSIONS.WRITE_MODEL,
+    model?.id,
+  ])
   const allowNonAdminAddonConfig = useSiteConfig(
     'ALLOW_NON_ADMIN_ADDON_CONFIG',
     true,
@@ -202,7 +208,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
   }, [user, model])
 
   const canConfigurePrototypeAddons =
-    (isModelOwner && !!allowNonAdminAddonConfig)
+    (isModelOwner && !!allowNonAdminAddonConfig) || hasWritePermission
 
   // Callback for plugins to navigate to a specific prototype tab
   const handleSetActiveTab = useCallback((targetTab: string, targetPluginSlug?: string) => {

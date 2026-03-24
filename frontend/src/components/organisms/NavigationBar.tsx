@@ -35,7 +35,7 @@ import { IoIosHelpBuoy } from 'react-icons/io'
 import config from '@/configs/config'
 import LearningIntegration from './LearningIntegration'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, type CSSProperties } from 'react'
 
 // import useLastAccessedModel from '@/hooks/useLastAccessedModel'
 import { useSiteConfig } from '@/utils/siteConfig'
@@ -73,8 +73,14 @@ const NavigationBar = ({ }) => {
   const [learningMode, setIsLearningMode] = useState(false)
   const siteTitle = useSiteConfig('SITE_TITLE', 'AutoWRX')
   const logoUrl = useSiteConfig('SITE_LOGO_WIDE', '/imgs/logo-wide.png')
+  const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
   const enableLearningMode = useSiteConfig('ENABLE_LEARNING_MODE', false)
   const navBarActions = useSiteConfig('NAV_BAR_ACTIONS', [])
+
+  const headerBackground = gradientHeader
+    ? 'linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%)'
+    : '#ffffff'
+  const headerTextColor = gradientHeader ? 'var(--primary-foreground)' : undefined
 
   useEffect(() => {
     if (siteTitle) {
@@ -85,9 +91,19 @@ const NavigationBar = ({ }) => {
   // const { lastAccessedModel } = useLastAccessedModel()
 
   return (
-    <header className="flex items-center w-full py-1 px-3 border-2">
+    <header
+      className={`flex items-center w-full py-1 px-3 ${gradientHeader ? '' : 'border-2'}`}
+      style={{
+        background: headerBackground,
+        color: headerTextColor,
+      }}
+    >
       <Link to="/" className="shrink-0">
-        <img src={logoUrl} alt="Logo" className="h-7" />
+        <img
+          src={logoUrl}
+          alt="Logo"
+          style={{ height: '28px', filter: gradientHeader ? 'brightness(0) invert(1)' : undefined }}
+        />
       </Link>
 
       {config && config.enableBranding && (
@@ -130,7 +146,8 @@ const NavigationBar = ({ }) => {
               href={action.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium hover:bg-muted transition-colors"
+              className="flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium hover:bg-[var(--header-hover-bg)] transition-colors"
+              style={{ '--header-hover-bg': '#dbe4ee' } as CSSProperties}
               title={action.label}
             >
               {action.icon && (
@@ -171,7 +188,11 @@ const NavigationBar = ({ }) => {
           </DaGlobalSearch>{' '} */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost">
+              <Button
+                variant="ghost"
+                className="hover:bg-[var(--header-hover-bg)]"
+                style={{ '--header-hover-bg': '#dbe4ee' } as CSSProperties}
+              >
                 <Wrench />
                 {isAuthorized ? 'Admin Tools' : 'Tools'}
               </Button>

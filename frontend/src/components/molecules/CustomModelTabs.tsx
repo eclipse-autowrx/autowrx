@@ -15,9 +15,10 @@ interface CustomModelTabsProps {
     label: string
     plugin: string
   }>
+  customTextColor?: string
 }
 
-const CustomModelTabs: FC<CustomModelTabsProps> = ({ customTabs }) => {
+const CustomModelTabs: FC<CustomModelTabsProps> = ({ customTabs, customTextColor }) => {
   const { model_id } = useParams()
   const location = useLocation()
 
@@ -32,6 +33,7 @@ const CustomModelTabs: FC<CustomModelTabsProps> = ({ customTabs }) => {
           key={`${customTab.plugin}-${index}`}
           active={location.pathname.includes('/plugin') && location.search.includes(`plugid=${customTab.plugin}`)}
           to={`/model/${model_id}/plugin?plugid=${customTab.plugin}`}
+          customTextColor={customTextColor}
         >
           {customTab.label}
         </DaTabItem>

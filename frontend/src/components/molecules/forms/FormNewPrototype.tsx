@@ -23,18 +23,17 @@ import {
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import default_journey from '@/data/default_journey'
 import { SAMPLE_PROJECTS } from '@/data/sampleProjects'
-import useListModelLite from '@/hooks/useListModelLite'
 import useListModelPrototypes from '@/hooks/useListModelPrototypes'
 import useListVSSVersions from '@/hooks/useListVSSVersions'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { addLog } from '@/services/log.service'
-import { createModelService } from '@/services/model.service'
+import { createModelService, listModelsLite } from '@/services/model.service'
 import { listModelTemplates } from '@/services/modelTemplate.service'
 import { createPrototypeService } from '@/services/prototype.service'
 import { ModelLite, Prototype } from '@/types/model.type'
 import { useQuery } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
-import { FormEvent, useEffect, useRef, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { TbLoader } from 'react-icons/tb'
 import { useNavigate } from 'react-router-dom'
 
@@ -68,8 +67,30 @@ const FormNewPrototype = ({
 }: FormNewPrototypeProps) => {
     const navigate = useNavigate()
     const { toast } = useToast()
-    const { data: currentUser } = useSelfProfileQuery()
-    const { data: allModels, isLoading: isFetchingModels } = useListModelLite()
+    const { data: currentUser, isLoading: isCurrentUserLoading } = useSelfProfileQuery()
+
+    const { data: ownedModelsData, isLoading: isFetchingOwnedModels } = useQuery({
+        queryKey: ['listModelLiteOwned', currentUser?.id],
+        queryFn: () => listModelsLite({ created_by: currentUser!.id }),
+        enabled: !!currentUser?.id,
+    })
+
+    const { data: contributedModelsData, isLoading: isFetchingContributedModels } = useQuery({
+        queryKey: ['listModelLiteContributed', currentUser?.id],
+        queryFn: () => listModelsLite({ is_contributor: true }),
+        enabled: !!currentUser?.id,
+    })
+
+    const allModels = useMemo(() => {
+        const owned = ownedModelsData?.results ?? []
+        const contributed = contributedModelsData?.results ?? []
+        const byId = new Map<string, ModelLite>()
+            ;[...owned, ...contributed].forEach((model) => byId.set(model.id, model))
+        return { results: Array.from(byId.values()) }
+    }, [ownedModelsData?.results, contributedModelsData?.results])
+
+    const isFetchingModels =
+        isCurrentUserLoading || isFetchingOwnedModels || isFetchingContributedModels
 
     const [prototypeName, setPrototypeName] = useState('')
     const [selectedModelId, setSelectedModelId] = useState<string>('')
@@ -94,6 +115,18 @@ const FormNewPrototype = ({
         queryFn: () => listModelTemplates({ limit: 100, page: 1 }),
         enabled: isCreatingNewModel,
     })
+
+    const defaultTemplate = useMemo(
+        () => templatesData?.results?.find((t) => t.visibility === 'default'),
+        [templatesData],
+    )
+
+    // Auto-select default template when templates load
+    useEffect(() => {
+        if (defaultTemplate && newModelTemplateId === null) {
+            setNewModelTemplateId(defaultTemplate.id)
+        }
+    }, [defaultTemplate]) // eslint-disable-line react-hooks/exhaustive-deps
 
     const { data: fetchedPrototypes } = useListModelPrototypes(
         isCreatingNewModel ? '' : selectedModelId,
@@ -212,7 +245,7 @@ const FormNewPrototype = ({
         }
     }
 
-    const modelList = allModels?.results ?? []
+    const modelList = allModels.results
 
     return (
         <form
@@ -325,25 +358,29 @@ const FormNewPrototype = ({
 
                     {/* Template */}
                     <div>
-                        <Label className="text-sm font-medium">Start from Template (Optional)</Label>
+                        <Label className="text-sm font-medium">
+                            {defaultTemplate ? 'Template' : 'Start from Template (Optional)'}
+                        </Label>
                         <div className="mt-1 space-y-1.5 max-h-36 overflow-y-auto">
-                            <div
-                                onClick={() => setNewModelTemplateId(null)}
-                                className={`flex items-center gap-2 p-2 border rounded-lg cursor-pointer transition-colors ${newModelTemplateId === null
-                                    ? 'border-primary bg-primary/5'
-                                    : 'border-input hover:border-primary/50'
-                                    }`}
-                            >
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-medium">Start from scratch</p>
+                            {!defaultTemplate && (
+                                <div
+                                    onClick={() => setNewModelTemplateId(null)}
+                                    className={`flex items-center gap-2 p-2 border rounded-lg cursor-pointer transition-colors ${newModelTemplateId === null
+                                        ? 'border-primary bg-primary/5'
+                                        : 'border-input hover:border-primary/50'
+                                        }`}
+                                >
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-medium">Start from scratch</p>
+                                    </div>
+                                    <input
+                                        type="radio"
+                                        readOnly
+                                        checked={newModelTemplateId === null}
+                                        className="w-3.5 h-3.5 text-primary"
+                                    />
                                 </div>
-                                <input
-                                    type="radio"
-                                    readOnly
-                                    checked={newModelTemplateId === null}
-                                    className="w-3.5 h-3.5 text-primary"
-                                />
-                            </div>
+                            )}
                             {templatesData?.results?.map((template) => (
                                 <div
                                     key={template.id}

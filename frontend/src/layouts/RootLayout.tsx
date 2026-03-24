@@ -27,6 +27,7 @@ import packageInfo from '@/../package.json'
 //   retry(() => import('@/components/organisms/NavigationBar.tsx')),
 // )
 import { NavigationBar } from '@/components/organisms/NavigationBar.tsx'
+import { useSiteConfig } from '@/utils/siteConfig'
 
 const traverse = (
   route: RouteConfig,
@@ -61,6 +62,7 @@ const RootLayout = () => {
   // }, [isChatShowed])
 
   const { data: currentUser } = useSelfProfileQuery()
+  const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
 
   const pathsWithoutBreadcrumb = useMemo(
     () => getPathsWithoutBreadcrumb(routesConfig),
@@ -76,7 +78,13 @@ const RootLayout = () => {
       <Suspense>
         <NavigationBar />
         {!pathsWithoutBreadcrumb.has(location.pathname) && (
-          <div className="flex items-center justify-between bg-primary h-[52px] px-4 da-secondary-nav-bar">
+          <div
+            className="flex items-center justify-between bg-primary h-[52px] px-4 da-secondary-nav-bar"
+            style={gradientHeader ? {
+              background: 'linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%)',
+              color: 'var(--primary-foreground)',
+            } : undefined}
+          >
             <DaBreadcrumbBar />
           </div>
         )}
