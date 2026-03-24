@@ -58,6 +58,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
   const [PluginComponent, setPluginComponent] = useState<React.ComponentType<any> | null>(null)
   const [loadedPluginName, setLoadedPluginName] = useState<string | null>(null)
   const [siteConfigs, setSiteConfigs] = useState<{ public: Record<string, any> }>({ public: {} })
+  const [pluginMetaConfig, setPluginMetaConfig] = useState<Record<string, any>>({})
 
   // Extract IDs from data
   const model_id = data?.model?.id
@@ -316,6 +317,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
         setError(null)
         setPluginComponent(null)
         setLoadedPluginName(null)
+        setPluginMetaConfig({})
 
         log('Starting plugin load')
 
@@ -343,6 +345,12 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
         if (!pluginMeta.url) {
           throw new Error(`Plugin "${plugin_id}" has no URL configured`)
         }
+
+        setPluginMetaConfig(
+          pluginMeta.config && typeof pluginMeta.config === 'object' && !Array.isArray(pluginMeta.config)
+            ? pluginMeta.config
+            : {}
+        )
 
 
 
@@ -731,6 +739,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
   // Only render when we have a component and it was loaded for this exact plugin_id (deep check)
   const shouldRenderPlugin =
     !loading && !error && !!PluginComponent && loadedPluginName === plugin_id
+  const pluginConfig = { plugin_id: loadedPluginName, ...siteConfigs, ...pluginMetaConfig }
 
   // Log what we're about to render
   useEffect(() => {
@@ -753,7 +762,11 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
 
       {shouldRenderPlugin && (
         <div key={`plugin-${plugin_id}-${loadedPluginName}`} className="w-full h-full">
-          <PluginComponent data={data} config={{ plugin_id: loadedPluginName, ...siteConfigs }} api={pluginAPI} />
+          <PluginComponent
+            data={data}
+            config={pluginConfig}
+            api={pluginAPI}
+          />
         </div>
       )}
 
