@@ -62,5 +62,8 @@ router
   );
 
 router.route('/:id/execute-code').post(auth(), validate(prototypeValidation.executeCode), prototypeController.executeCode);
+router
+  .route('/:id/used-apis')
+  .get(auth(), validate(prototypeValidation.getUsedApisFromWorkspace), prototypeController.getUsedApisFromWorkspace);
 
 module.exports = router;

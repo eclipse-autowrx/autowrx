@@ -60,12 +60,29 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({ isActive = true }) =>
   const lastLogIdRef = useRef<number | null>(null)
 
   // Resize state
-  const [rightPanelWidth, setRightPanelWidth] = useState(600) // Initial width in px
+  const [rightPanelWidth, setRightPanelWidth] = useState<number | null>(null) // Will be calculated based on container
   const [isResizing, setIsResizing] = useState(false)
   const [isApiPanelCollapsed, setIsApiPanelCollapsed] = useState(false)
   const resizeRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const startXRef = useRef(0)
   const startWidthRef = useRef(0)
+
+  // Calculate initial width based on container size with 6:4 ratio (60% editor, 40% API panel)
+  useEffect(() => {
+    const calculateInitialWidth = () => {
+      if (containerRef.current) {
+        const containerWidth = containerRef.current.offsetWidth
+        const calculatedWidth = containerWidth * 0.4
+        setRightPanelWidth(calculatedWidth)
+      }
+    }
+
+    calculateInitialWidth()
+
+    window.addEventListener('resize', calculateInitialWidth)
+    return () => window.removeEventListener('resize', calculateInitialWidth)
+  }, [])
 
   // Load Coder workspace
   useEffect(() => {
@@ -270,7 +287,13 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({ isActive = true }) =>
     (e: React.MouseEvent) => {
       e.preventDefault()
       startXRef.current = e.clientX
-      startWidthRef.current = rightPanelWidth
+      if (rightPanelWidth !== null) {
+        startWidthRef.current = rightPanelWidth
+      } else if (containerRef.current) {
+        startWidthRef.current = containerRef.current.offsetWidth * 0.4
+      } else {
+        startWidthRef.current = 0
+      }
       // Disable transitions during resize for instant feedback
       const leftPanel = resizeRef.current?.previousElementSibling as HTMLElement
       const rightPanel = resizeRef.current?.nextElementSibling as HTMLElement
@@ -283,10 +306,11 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({ isActive = true }) =>
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
-      if (!isResizing) return
+      if (!isResizing || !containerRef.current) return
 
-      const minWidth = 300
-      const maxWidth = 800
+      const containerWidth = containerRef.current.offsetWidth
+      const minWidth = containerWidth * 0.2
+      const maxWidth = containerWidth * 0.6
       const deltaX = e.clientX - startXRef.current
       // Dragging left (negative deltaX) increases width, dragging right (positive deltaX) decreases width
       const newWidth = Math.min(
@@ -342,7 +366,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({ isActive = true }) =>
     workspaceStatus?.status === 'running' &&
     isWorkspaceReadyFromLogs
   return (
-    <div className="flex h-[calc(100%-0px)] w-full p-2 bg-gray-100">
+    <div ref={containerRef} className="flex h-[calc(100%-0px)] w-full p-2 bg-gray-100">
       <div
         className="flex h-full flex-1 min-w-0 flex-col border-r bg-white rounded-md"
         style={{ marginRight: '0px' }}
@@ -357,6 +381,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({ isActive = true }) =>
           <iframe
             src={`${workspaceInfo.appUrl}?folder=${encodeURIComponent(workspaceInfo.folderPath || '/home/coder/prototypes')}`}
             className="w-full h-full border-0"
+            style={{ pointerEvents: isResizing ? 'none' : 'auto' }}
             allow="clipboard-read; clipboard-write;"
             title="Coder Workspace"
           />
@@ -384,7 +409,14 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({ isActive = true }) =>
       )}
       <div
         className="flex h-full flex-col bg-white rounded-md shrink-0 transition-[width] duration-200 ease-in-out"
-        style={{ width: isApiPanelCollapsed ? '48px' : `${rightPanelWidth}px` }}
+        style={{
+          width:
+            isApiPanelCollapsed
+              ? '48px'
+              : rightPanelWidth !== null
+                ? `${rightPanelWidth}px`
+                : '40%',
+        }}
       >
         <Suspense
           fallback={
