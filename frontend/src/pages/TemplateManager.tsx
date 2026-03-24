@@ -62,9 +62,16 @@ export default function TemplateManager() {
                 className="absolute p-6 inset-0 w-full h-full object-contain"
               />
             </div>
-            <h3 className="text-base font-semibold text-foreground mt-3 truncate">
-              {t.name}
-            </h3>
+            <div className="flex items-center gap-2 mt-3">
+              <h3 className="text-base font-semibold text-foreground truncate">
+                {t.name}
+              </h3>
+              {t.visibility === 'default' && (
+                <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide bg-primary text-primary-foreground rounded px-1.5 py-0.5">
+                  Default
+                </span>
+              )}
+            </div>
             <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap break-words">
               {t.description || ''}
             </p>

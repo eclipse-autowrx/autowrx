@@ -200,6 +200,15 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
       'Allow non-admin model owners to add/manage addon tabs on model and prototype detail pages. Admin users can always configure addon tabs regardless of this setting.',
     category: 'prototype',
   },
+  {
+    key: 'GRADIENT_HEADER',
+    scope: 'site',
+    value: false,
+    secret: false,
+    valueType: 'boolean',
+    description:
+      'Apply a primary-to-secondary gradient to the main header and secondary navigation bar.',
+  },
 ]
 
 export const PREDEFINED_GENAI_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(
