@@ -63,8 +63,8 @@ const PrototypeLibraryList = ({
             .includes(searchInput.toLowerCase())
         })
         .sort((a: Prototype, b: Prototype) => {
-          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
-          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
+          const dateA = (a.createdAt) ? new Date(a.createdAt).getTime() : 0
+          const dateB = (b.createdAt) ? new Date(b.createdAt).getTime() : 0
 
           if (selectedFilters?.includes('Newest')) {
             return dateB - dateA
