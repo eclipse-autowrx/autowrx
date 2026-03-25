@@ -35,6 +35,7 @@ services:
     volumes:
       - '${UPLOAD_PATH_HOST:-./data/upload}:/usr/src/playground-be/static/uploads'
       - '${PLUGIN_PATH_HOST:-./data/plugin}:/usr/src/playground-be/static/plugin'
+      - '${INSTANCE_PATH:-./data/instance}:/usr/src/playground-be/instance'
     depends_on:
       autowrx-db:
         condition: service_healthy

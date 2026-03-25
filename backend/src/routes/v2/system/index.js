@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 const express = require('express');
+const instanceRoute = require('./instance.route');
 const searchRoute = require('./search.route');
 const changeLogRoute = require('./changeLog.route');
 const fileRoute = require('./file.route');
@@ -37,5 +38,6 @@ router.use('/system/model-template', modelTemplateRoute);
 router.use('/system/dashboard-template', dashboardTemplateRoute);
 router.use('/system/site-management', siteManagementRoute);
 router.use('/system/custom-api-schema', customApiSchemaRoute);
+router.use('/instance', instanceRoute);
 
 module.exports = router;
