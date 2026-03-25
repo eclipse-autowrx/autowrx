@@ -304,7 +304,7 @@ const FormNewPrototype = ({
 
                     {/* Signal */}
                     <div>
-                        <Label className="text-sm font-medium">Signal *</Label>
+                        <Label className="text-sm font-medium text-primary">Signal *</Label>
                         <div className="border rounded-lg p-2 mt-1">
                             <div className="flex items-stretch gap-2">
                                 {!newModelApiDataUrl && (

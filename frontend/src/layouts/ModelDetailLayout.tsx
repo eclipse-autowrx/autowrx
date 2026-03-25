@@ -231,10 +231,6 @@ const ModelDetailLayout = () => {
     <div className="flex flex-col w-full h-full rounded-md bg-muted">
       <div
         className="flex min-h-[52px] border-b border-muted-foreground/50 bg-background"
-        style={gradientHeader ? {
-          background: 'linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%)',
-          color: 'var(--primary-foreground)',
-        } : undefined}
       >
         <div className="flex w-fit">
           {model ? (
@@ -252,7 +248,6 @@ const ModelDetailLayout = () => {
                   }
                   key={index}
                   dataId={intro.dataId}
-                  customTextColor={gradientHeader ? 'var(--primary-foreground)' : undefined}
                 >
                   {intro.title}
                   {intro.count !== null && (
@@ -264,7 +259,6 @@ const ModelDetailLayout = () => {
               ))}
               <CustomModelTabs
                 customTabs={model?.custom_template?.model_tabs}
-                customTextColor={gradientHeader ? 'var(--primary-foreground)' : undefined}
               />
             </>
           ) : (
