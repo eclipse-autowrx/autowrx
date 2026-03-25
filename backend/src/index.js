@@ -29,11 +29,11 @@ mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
 
   convertLogsCap();
   initializeRoles().then(async () => {
-    await assignAdmins();
-    // Seed predefined configs first (code defaults), then instance bundle (overrides defaults)
+    // assignAdmins ensures admin user always exists and returns their ID
+    const adminUserId = await assignAdmins();
+    // Seed predefined configs first (code defaults), then instance bundle (instance overrides)
     await seedPredefinedSiteConfigs(PREDEFINED_SITE_CONFIGS);
-    const systemUser = await require('./services/user.service').getUserByEmail(process.env.ADMIN_EMAILS?.split(',')[0]?.trim());
-    await seedFromInstanceBundle(systemUser?._id);
+    await seedFromInstanceBundle(adminUserId);
   });
   // config.port is loaded from the PORT environment variable, defaulting to 8080 (see backend/src/config/config.js).
   server = app.listen(config.port, () => {

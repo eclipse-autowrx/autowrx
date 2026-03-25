@@ -61,7 +61,8 @@ const exportSnapshot = async (res, instanceName = 'autowrx-instance') => {
   }));
   archive.append(JSON.stringify(configsExport, null, 2), { name: 'site-configs.json' });
 
-  // 3. Static images — logo and default images referenced in site configs
+  // 3. User-uploaded images only — logo and covers that admin has explicitly uploaded
+  // We only backup what the user created, not baked-in defaults (/imgs/ are in the container)
   const imageKeys = ['SITE_LOGO_WIDE', 'DEFAULT_MODEL_IMAGE', 'DEFAULT_PROTOTYPE_IMAGE'];
   const imageConfigs = await SiteConfig.find({ key: { $in: imageKeys }, scope: 'site' }).lean();
 
@@ -69,15 +70,11 @@ const exportSnapshot = async (res, instanceName = 'autowrx-instance') => {
     const imgValue = cfg.value;
     if (!imgValue || typeof imgValue !== 'string') continue;
 
-    // Resolve local file path from URL-like value (/d/..., /images/..., /imgs/...)
-    let filePath = null;
-    if (imgValue.startsWith('/d/')) {
-      filePath = path.join(STATIC_UPLOADS_DIR, imgValue.slice(3));
-    } else if (imgValue.startsWith('/images/')) {
-      filePath = path.join(STATIC_IMGS_DIR, imgValue.slice(8));
-    }
+    // Only export user-uploaded files (served under /d/ from static/uploads)
+    if (!imgValue.startsWith('/d/')) continue;
 
-    if (filePath && fs.existsSync(filePath)) {
+    const filePath = path.join(STATIC_UPLOADS_DIR, imgValue.slice(3));
+    if (fs.existsSync(filePath)) {
       const ext = path.extname(filePath);
       archive.file(filePath, { name: `imgs/${cfg.key}${ext}` });
     }
