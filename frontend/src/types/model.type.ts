@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -94,6 +94,7 @@ export type Prototype = {
   }
   description: any
   created_at?: Date
+  createdAt?: Date
   tags?: Tag[]
   avg_score?: number
   requirements?: string

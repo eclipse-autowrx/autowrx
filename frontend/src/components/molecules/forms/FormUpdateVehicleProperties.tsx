@@ -120,7 +120,7 @@ const FormUpdateVehicleProperties = ({
     <div className="flex flex-col mt-2">
       <p className="text-sm font-semibold">Category</p>
       <Select value={vehicleCategory} onValueChange={setVehicleCategory}>
-        <SelectTrigger className="bg-background rounded-lg mt-2 text-sm">
+        <SelectTrigger className="bg-background rounded-lg mt-2 text-sm w-full">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

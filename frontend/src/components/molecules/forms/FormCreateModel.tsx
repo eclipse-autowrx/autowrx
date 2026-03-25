@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { Button } from '@/components/atoms/button'
+import { cn } from '@/lib/utils'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
 import {
@@ -31,7 +32,7 @@ import useListVSSVersions from '@/hooks/useListVSSVersions'
 import DaFileUploadButton from '@/components/atoms/DaFileUploadButton'
 import { useQuery } from '@tanstack/react-query'
 import { listModelTemplates } from '@/services/modelTemplate.service'
-import { getConfig } from '@/utils/siteConfig'
+import { getConfig, useSiteConfig } from '@/utils/siteConfig'
 
 type ModelData = {
   cvi: string
@@ -60,6 +61,7 @@ const FormCreateModel = () => {
   const { toast } = useToast()
 
   const { data: currentUser } = useSelfProfileQuery()
+  const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
 
   // Fetch templates
   const { data: templatesData } = useQuery({
@@ -198,7 +200,7 @@ const FormCreateModel = () => {
 
       <div className="mt-4" />
 
-      <p className="text-base font-medium">Signal *</p>
+      <p className="text-base font-medium text-primary">Signal *</p>
       <div className="border mt-1 rounded-lg p-2">
         <div className="flex items-stretch gap-2">
           {!data.api_data_url && (
@@ -283,7 +285,7 @@ const FormCreateModel = () => {
       <Button
         disabled={loading || uploading}
         type="submit"
-        className="mt-8 w-full"
+        className={cn('mt-8 w-full', gradientHeader && 'bg-gradient-to-r from-primary to-secondary border-0')}
         data-id="form-create-model-btn-submit"
       >
         {loading && <TbLoader className="mr-2 animate-spin text-lg" />}
