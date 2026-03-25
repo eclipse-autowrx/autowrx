@@ -72,6 +72,8 @@ const PrototypeLibraryList = ({
             return dateA - dateB
           } else if (selectedFilters?.includes('Name A-Z')) {
             return a.name.localeCompare(b.name)
+          } else if (selectedFilters?.includes('Rating')) {
+            return (b.avg_score ?? 0) - (a.avg_score ?? 0)
           }
           return 0
         }),
