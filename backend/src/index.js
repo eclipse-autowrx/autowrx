@@ -13,6 +13,8 @@ const logger = require('./config/logger');
 const initializeRoles = require('./scripts/initializeRoles');
 const { init } = require('./config/socket');
 const { setupScheduledCheck, assignAdmins, convertLogsCap } = require('./scripts');
+const { seedPredefinedSiteConfigs } = require('./services/siteConfig.service');
+const PREDEFINED_SITE_CONFIGS = require('./config/predefinedSiteConfigs');
 
 // console.log('>>>>>>>>>>>>> mongo_url', config.mongoose.url);
 // console.log('>>>>>>>>>>>>> config', config);
@@ -26,6 +28,7 @@ mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
 
   convertLogsCap();
   initializeRoles().then(() => assignAdmins());
+  seedPredefinedSiteConfigs(PREDEFINED_SITE_CONFIGS);
   // config.port is loaded from the PORT environment variable, defaulting to 8080 (see backend/src/config/config.js).
   server = app.listen(config.port, () => {
     logger.info(`Listening to port ${config.port}`);

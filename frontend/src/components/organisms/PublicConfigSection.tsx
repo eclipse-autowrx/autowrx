@@ -60,120 +60,40 @@ const PublicConfigSection: React.FC = () => {
     try {
       setIsLoading(true)
 
-      // First, get existing configs from DB
+      // BE seeds all predefined configs on startup — just fetch and render
       const res = await configManagementService.getConfigs({
         secret: false,
         scope: 'site',
         limit: 100,
       })
 
-      const existingConfigs = res.results || []
-      const existingKeys = new Set(existingConfigs.map(config => config.key))
+      const allConfigs = res.results || []
 
-      // Find missing predefined configs and create them (excluding NAV_BAR_ACTIONS and section-specific keys)
-      // NAV_BAR_ACTIONS should only be created when user explicitly adds actions
-      const missingConfigs = PREDEFINED_SITE_CONFIGS.filter(
-        (config) =>
-          !existingKeys.has(config.key) &&
-          config.key !== 'NAV_BAR_ACTIONS' &&
-          !isSpecialSectionKey(config.key),
+      // Filter to only show predefined public configs (excluding NAV_BAR_ACTIONS and section-specific keys)
+      const predefinedKeys = new Set(
+        PREDEFINED_SITE_CONFIGS.map((c) => c.key).filter(
+          (key) => !isSpecialSectionKey(key) && key !== 'NAV_BAR_ACTIONS',
+        ),
       )
+      const predefinedOrder = new Map(
+        PREDEFINED_SITE_CONFIGS.map((c, i) => [c.key, i]),
+      )
+      const filteredConfigs = allConfigs
+        .filter((config) => predefinedKeys.has(config.key))
+        .sort((a, b) => (predefinedOrder.get(a.key) ?? 999) - (predefinedOrder.get(b.key) ?? 999))
 
-      // Find existing configs with empty values (empty string, null, or undefined) that should have defaults
-      const configsToUpdate: any[] = []
-      PREDEFINED_SITE_CONFIGS.forEach(predefinedConfig => {
-        if (predefinedConfig.key === 'NAV_BAR_ACTIONS') return
-        if (isSpecialSectionKey(predefinedConfig.key)) return
-
-        const existingConfig = existingConfigs.find(c => c.key === predefinedConfig.key)
-        if (existingConfig) {
-          const isEmpty = existingConfig.value === null ||
-            existingConfig.value === undefined ||
-            existingConfig.value === '' ||
-            (typeof existingConfig.value === 'string' && existingConfig.value.trim() === '')
-
-          // If existing config is empty but predefined has a non-empty default, update it
-          if (isEmpty && predefinedConfig.value !== null &&
-            predefinedConfig.value !== undefined &&
-            predefinedConfig.value !== '' &&
-            !(typeof predefinedConfig.value === 'string' && predefinedConfig.value.trim() === '')) {
-            configsToUpdate.push(predefinedConfig)
-          }
-        }
-      })
-
-      // Create missing configs and update empty ones
-      const configsToUpsert = [...missingConfigs, ...configsToUpdate]
-      if (configsToUpsert.length > 0) {
-        await configManagementService.bulkUpsertConfigs({
-          configs: configsToUpsert,
-        })
-
-        // Reload configs after creating missing ones
-        const updatedRes = await configManagementService.getConfigs({
-          secret: false,
-          scope: 'site',
-          limit: 100,
-        })
-
-        // Filter to only show predefined public configs (excluding NAV_BAR_ACTIONS and section-specific keys)
-        const predefinedKeys = new Set(
-          PREDEFINED_SITE_CONFIGS.map((c) => c.key).filter(
-            (key) => !isSpecialSectionKey(key) && key !== 'NAV_BAR_ACTIONS',
-          ),
-        )
-        const predefinedOrder = new Map(
-          PREDEFINED_SITE_CONFIGS.map((c, i) => [c.key, i]),
-        )
-        const filteredConfigs = (updatedRes.results || [])
-          .filter((config) => predefinedKeys.has(config.key))
-          .sort((a, b) => (predefinedOrder.get(a.key) ?? 999) - (predefinedOrder.get(b.key) ?? 999))
-
-        // Load nav bar actions separately - only show actual DB data, empty if null/undefined
-        const navBarActionsConfig = (updatedRes.results || []).find(
-          config => config.key === 'NAV_BAR_ACTIONS'
-        )
-        if (navBarActionsConfig && navBarActionsConfig.value !== null && navBarActionsConfig.value !== undefined) {
-          const actions = Array.isArray(navBarActionsConfig.value) ? navBarActionsConfig.value as NavBarAction[] : []
-          setNavBarActions(actions)
-          setOriginalNavBarActions(JSON.parse(JSON.stringify(actions)))
-        } else {
-          // DB is empty/null - show empty state
-          setNavBarActions([])
-          setOriginalNavBarActions([])
-        }
-
-        setConfigs(filteredConfigs)
+      // Load nav bar actions
+      const navBarActionsConfig = allConfigs.find((config) => config.key === 'NAV_BAR_ACTIONS')
+      if (navBarActionsConfig && navBarActionsConfig.value !== null && navBarActionsConfig.value !== undefined) {
+        const actions = Array.isArray(navBarActionsConfig.value) ? navBarActionsConfig.value as NavBarAction[] : []
+        setNavBarActions(actions)
+        setOriginalNavBarActions(JSON.parse(JSON.stringify(actions)))
       } else {
-        // Filter to only show predefined public configs (excluding NAV_BAR_ACTIONS and section-specific keys)
-        const predefinedKeys = new Set(
-          PREDEFINED_SITE_CONFIGS.map((c) => c.key).filter(
-            (key) => !isSpecialSectionKey(key) && key !== 'NAV_BAR_ACTIONS',
-          ),
-        )
-        const predefinedOrder = new Map(
-          PREDEFINED_SITE_CONFIGS.map((c, i) => [c.key, i]),
-        )
-        const filteredConfigs = existingConfigs
-          .filter((config) => predefinedKeys.has(config.key))
-          .sort((a, b) => (predefinedOrder.get(a.key) ?? 999) - (predefinedOrder.get(b.key) ?? 999))
-
-        // Load nav bar actions separately - only show actual DB data, empty if null/undefined
-        const navBarActionsConfig = existingConfigs.find(
-          config => config.key === 'NAV_BAR_ACTIONS'
-        )
-        if (navBarActionsConfig && navBarActionsConfig.value !== null && navBarActionsConfig.value !== undefined) {
-          const actions = Array.isArray(navBarActionsConfig.value) ? navBarActionsConfig.value as NavBarAction[] : []
-          setNavBarActions(actions)
-          setOriginalNavBarActions(JSON.parse(JSON.stringify(actions)))
-        } else {
-          // DB is empty/null - show empty state
-          setNavBarActions([])
-          setOriginalNavBarActions([])
-        }
-
-        setConfigs(filteredConfigs)
+        setNavBarActions([])
+        setOriginalNavBarActions([])
       }
+
+      setConfigs(filteredConfigs)
     } catch (err) {
       toast({
         title: 'Load failed',
