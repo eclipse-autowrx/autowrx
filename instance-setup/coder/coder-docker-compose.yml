@@ -24,15 +24,11 @@ services:
       - CODER_ACCESS_URL=http://localhost:7080
       - CODER_HTTP_ADDRESS=0.0.0.0:7080
       - CODER_BROWSER_ONLY=true
-      - CODER_USERNAME=admin
-      - CODER_EMAIL=admin@coder.com
-      - CODER_PASSWORD=123123123
     entrypoint:
-      - sh
-      - -c
-      - |
-        /opt/coder server create-admin-user --username "$$CODER_USERNAME" --email "$$CODER_EMAIL" --password "$$CODER_PASSWORD" || true
-        exec /opt/coder server --dangerous-allow-path-app-sharing --dangerous-allow-path-app-site-owner-access
+      - /opt/coder
+      - server
+      - --dangerous-allow-path-app-sharing
+      - --dangerous-allow-path-app-site-owner-access
     ports:
       - "7080:7080"
     volumes:

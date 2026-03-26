@@ -107,7 +107,7 @@ resource "docker_image" "autowrx_workspace" {
   keep_locally = true
 
   build {
-    context    = "${path.module}/workspace-image"
+    context    = "./workspace-image"
     dockerfile = "Dockerfile"
   }
 }
