@@ -105,9 +105,9 @@ const PREDEFINED_SITE_CONFIGS = [
   {
     key: 'RUNTIME_SERVER_CONFIG',
     scope: 'site',
-    value: {},
+    value: '{}',
     secret: false,
-    valueType: 'object',
+    valueType: 'string',
     description: 'Custom JSON options passed to the Socket.IO client when connecting to the runtime server.',
   },
   {
