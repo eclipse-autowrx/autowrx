@@ -78,6 +78,15 @@ const PREDEFINED_SITE_CONFIGS = [
     description: 'URL for the Privacy Policy page.',
   },
   {
+    key: 'PRIVACY_POLICY_CONTENT',
+    scope: 'site',
+    value: '',
+    secret: false,
+    valueType: 'string',
+    description: 'Markdown content for the Privacy Policy page displayed at /privacy-policy.',
+    category: 'privacy',
+  },
+  {
     key: 'TERMS_OF_SERVICE_URL',
     scope: 'site',
     value: '/terms-of-service',
@@ -96,9 +105,9 @@ const PREDEFINED_SITE_CONFIGS = [
   {
     key: 'RUNTIME_SERVER_CONFIG',
     scope: 'site',
-    value: '{}',
+    value: {},
     secret: false,
-    valueType: 'string',
+    valueType: 'object',
     description: 'Custom JSON options passed to the Socket.IO client when connecting to the runtime server.',
   },
   {
