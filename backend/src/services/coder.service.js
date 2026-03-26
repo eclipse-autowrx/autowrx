@@ -189,6 +189,25 @@ const ensureUserExists = async (userId, username, email) => {
     const activeCreatedUser = await ensureUserIsActive(createResponse.data);
     return activeCreatedUser;
   } catch (error) {
+    // Handle 409 Conflict - user already exists (email collision with different username)
+    if (error.response?.status === 409) {
+      logger.info(`Coder user creation conflict for ${username}, fetching existing user by email...`);
+      try {
+        const usersResponse = await axios.get(`${CODER_API_BASE}/users`, {
+          headers: getAdminHeaders(),
+          params: { q: email },
+        });
+        const existingUser = usersResponse.data.users?.find((u) => u.email === email);
+        if (existingUser) {
+          const activeUser = await ensureUserIsActive(existingUser);
+          logger.info(`Found existing Coder user by email: ${existingUser.username}`);
+          return activeUser;
+        }
+      } catch (retryError) {
+        logger.error(`Failed to fetch existing user after 409: ${retryError.message}`);
+      }
+    }
+
     logger.error(`Failed to ensure Coder user exists: ${error.message}`);
     logger.error(
       `Error details: ${JSON.stringify({
@@ -648,7 +667,7 @@ const getWorkspaceAppUrl = async (workspaceId, appSlug = 'code-server', maxRetri
         );
       }
 
-      const url = `${config.coder.url}/@${username}/${workspaceName}.${agentName}/apps/${appSlug}/`;
+      const url = `${config.coder.externalUrl}/@${username}/${workspaceName}.${agentName}/apps/${appSlug}/`;
       logger.info(`Constructed workspace app URL: ${url}`);
       return url;
     } catch (error) {

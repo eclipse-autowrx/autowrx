@@ -428,7 +428,14 @@ const getWorkspaceStatus = async (userId, prototypeId) => {
       transition: workspace.latest_build?.transition || null,
     };
   } catch (error) {
-    if (error instanceof ApiError && error.statusCode === 404) {
+    if (error instanceof ApiError && (error.statusCode === 404 || error.statusCode === 410)) {
+      // Workspace was deleted externally — clear stale reference
+      if (user && user.coder_workspace_id) {
+        user.coder_workspace_id = null;
+        user.coder_workspace_name = null;
+        await user.save();
+        logger.info(`Cleared stale workspace reference for user ${userId}`);
+      }
       return { exists: false, status: 'not_created' };
     }
     logger.error(`Failed to get workspace status: ${error.message}`);

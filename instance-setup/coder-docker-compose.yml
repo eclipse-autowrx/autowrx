@@ -23,8 +23,8 @@ services:
     depends_on:
       - coder-init
     environment:
-      # The URL where users access the dashboard
-      - CODER_ACCESS_URL=http://localhost:7080
+      # The URL where users access the dashboard (browser-facing)
+      - CODER_ACCESS_URL=${CODER_ACCESS_URL:-https://coder.test.digital.auto}
       # Address to listen on inside the container
       - CODER_HTTP_ADDRESS=0.0.0.0:7080
       # Allow iframe embedding from your domain
@@ -40,7 +40,7 @@ services:
       # Persist Coder's internal database
       - coder_data:/home/coder/.config
     group_add:
-      - "0" # Add root group for docker socket access
+      - "${DOCKER_GROUP_ID:-999}" # Must match host's docker socket GID
     restart: unless-stopped
     networks:
       - coder_network

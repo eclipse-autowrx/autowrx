@@ -64,9 +64,10 @@ resource "docker_container" "workspace" {
   # Hostname inside the container
   hostname = data.coder_workspace.me.name
   
-  # Entrypoint: Use agent init script with URL replacements (amd64 Linux - no arch replacement)
+  # Entrypoint: Use agent init script with URL replacements
+  # Replace any CODER_ACCESS_URL (external domain or localhost) with internal Docker DNS
   entrypoint = ["sh", "-c", <<EOT
-${replace(coder_agent.main.init_script, "localhost:7080", "coder:7080")}
+${replace(replace(coder_agent.main.init_script, "localhost:7080", "coder:7080"), "https://coder.test.digital.auto", "http://coder:7080")}
   EOT
   ]
 

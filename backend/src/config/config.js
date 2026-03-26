@@ -65,7 +65,8 @@ const envVarsSchema = Joi.object()
     // File upload settings
     MAX_IMAGE_DIMENSION: Joi.number().default(1024).description('Maximum image dimension in pixels'),
     // Coder integration
-    CODER_URL: Joi.string().default('http://localhost:7080').description('Coder instance URL'),
+    CODER_URL: Joi.string().default('http://localhost:7080').description('Coder instance URL (internal, for backend API calls)'),
+    CODER_EXTERNAL_URL: Joi.string().default('').description('Coder external URL (for frontend iframe). Falls back to CODER_URL if not set.'),
     CODER_ADMIN_API_KEY: Joi.string().description('Coder admin API token for impersonation'),
     // Prototypes folder path (host path for bind-mount)
     PROTOTYPES_PATH: Joi.string().default('/var/lib/autowrx/prototypes').description('Host path for prototypes folder (bind-mount into Coder workspace)'),
@@ -204,6 +205,7 @@ const config = {
   },
   coder: {
     url: envVars.CODER_URL,
+    externalUrl: envVars.CODER_EXTERNAL_URL || envVars.CODER_URL,
     adminApiKey: envVars.CODER_ADMIN_API_KEY,
   },
   prototypes: {
