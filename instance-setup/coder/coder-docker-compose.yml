@@ -1,6 +1,5 @@
 services:
   coder-init:
-    # Init container to fix volume permissions
     image: alpine:3.23.3
     user: "0:0"
     volumes:
@@ -17,36 +16,30 @@ services:
     restart: "no"
 
   coder:
-    # This is the Coder Control Plane
     image: ghcr.io/coder/coder:v2.31.5
     container_name: coder
     depends_on:
       - coder-init
     environment:
-      # The URL where users access the dashboard
       - CODER_ACCESS_URL=http://localhost:7080
-      # Address to listen on inside the container
       - CODER_HTTP_ADDRESS=0.0.0.0:7080
-      # Allow iframe embedding from your domain
       - CODER_BROWSER_ONLY=true
-    # Override entrypoint to pass flags for path-based app sharing
-    # The Coder binary is located at /opt/coder
+      - CODER_USERNAME=admin
+      - CODER_EMAIL=admin@coder.com
+      - CODER_PASSWORD=123123123
     entrypoint:
-      [
-        "/opt/coder",
-        "server",
-        "--dangerous-allow-path-app-sharing",
-        "--dangerous-allow-path-app-site-owner-access",
-      ]
+      - sh
+      - -c
+      - |
+        /opt/coder server create-admin-user --username "$$CODER_USERNAME" --email "$$CODER_EMAIL" --password "$$CODER_PASSWORD" || true
+        exec /opt/coder server --dangerous-allow-path-app-sharing --dangerous-allow-path-app-site-owner-access
     ports:
       - "7080:7080"
     volumes:
-      # Critical: Mount the docker socket so Coder can spawn sibling containers
       - /var/run/docker.sock:/var/run/docker.sock
-      # Persist Coder's internal database
       - coder_data:/home/coder/.config
     group_add:
-      - "0" # Add root group for docker socket access
+      - "0"
     restart: unless-stopped
     networks:
       - coder_network
