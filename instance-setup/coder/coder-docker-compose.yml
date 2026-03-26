@@ -39,7 +39,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - coder_data:/home/coder/.config
     group_add:
-      - "0"
+      - "${DOCKER_GID:-0}"
     restart: unless-stopped
     networks:
       - coder_network
