@@ -18,10 +18,17 @@ import EmailConfigSection from '@/components/organisms/EmailConfigSection'
 import StagingConfigSection from '@/components/organisms/StagingConfigSection'
 import GenAIConfigSection from '@/components/organisms/GenAIConfigSection'
 import PrototypeConfigSection from '../components/organisms/PrototypeConfigSection'
+import VscodeConfigSection from '../components/organisms/VscodeConfigSection'
 
 // Keys that should be excluded from the site-config page
 // These keys are managed in their own dedicated pages
-export const EXCLUDED_FROM_SITE_CONFIG_KEYS = ['STAGING_FRAME', 'STANDARD_STAGE', 'EMAIL_CONFIG']
+export const EXCLUDED_FROM_SITE_CONFIG_KEYS = [
+  'STAGING_FRAME',
+  'STANDARD_STAGE',
+  'EMAIL_CONFIG',
+  // Managed in VSCode / Coder configuration tab
+  'CODER_ADMIN_API_KEY',
+]
 
 export const PREDEFINED_SITE_CONFIGS: any[] = [
   {
@@ -225,6 +232,61 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     description:
       'Apply a primary-to-secondary gradient to the main header and secondary navigation bar.',
   },
+  // VSCode / Coder integration settings (managed in VSCode config tab)
+  {
+    key: 'VSCODE_ENABLE',
+    scope: 'site',
+    value: false,
+    secret: false,
+    valueType: 'boolean',
+    description: 'Enable VS Code / Coder workspace integration (show VS Code tab)',
+    category: 'vscode',
+  },
+  {
+    key: 'CODER_URL',
+    scope: 'site',
+    value: 'http://localhost:7080',
+    secret: false,
+    valueType: 'string',
+    description: 'Coder instance URL',
+    category: 'vscode',
+  },
+  {
+    key: 'CODER_ADMIN_API_KEY',
+    scope: 'site',
+    value: '',
+    secret: true,
+    valueType: 'string',
+    description: 'Coder admin API token for impersonation',
+    category: 'vscode',
+  },
+  {
+    key: 'PROTOTYPES_PATH',
+    scope: 'site',
+    value: '/var/lib/autowrx/prototypes',
+    secret: false,
+    valueType: 'string',
+    description: 'Host path for prototypes folder (bind-mount into Coder workspace)',
+    category: 'vscode',
+  },
+  {
+    key: 'PROTOTYPES_LINUX_UID',
+    scope: 'site',
+    value: 1000,
+    secret: false,
+    valueType: 'number',
+    description: 'Linux UID used by workspace container user for prototype folder ownership',
+    category: 'vscode',
+  },
+  {
+    key: 'PROTOTYPES_LINUX_GID',
+    scope: 'site',
+    value: 1000,
+    secret: false,
+    valueType: 'number',
+    description: 'Linux GID used by workspace container user for prototype folder ownership',
+    category: 'vscode',
+  },
 ]
 
 export const PREDEFINED_GENAI_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(
@@ -233,6 +295,10 @@ export const PREDEFINED_GENAI_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.fi
 
 export const PREDEFINED_PROTOTYPE_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(
   (config) => config.category === 'prototype',
+).map((config) => config.key)
+
+export const PREDEFINED_VSCODE_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(
+  (config) => config.category === 'vscode',
 ).map((config) => config.key)
 
 export const PREDEFINED_AUTH_CONFIGS: any[] = [
@@ -288,6 +354,7 @@ const SiteConfigManagement: React.FC = () => {
     | 'email'
     | 'staging'
     | 'prototype'
+    | 'vscode'
     | 'genai'
   const validSections: SectionTab[] = [
     'public',
@@ -299,6 +366,7 @@ const SiteConfigManagement: React.FC = () => {
     'email',
     'staging',
     'prototype',
+    'vscode',
     'genai',
   ]
 
@@ -393,6 +461,15 @@ const SiteConfigManagement: React.FC = () => {
                   Prototype Config
                 </button>
                 <button
+                  onClick={() => handleTabChange('vscode')}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'vscode'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-muted'
+                    }`}
+                >
+                  VSCode Config
+                </button>
+                <button
                   onClick={() => handleTabChange('genai')}
                   className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'genai'
                     ? 'bg-primary text-primary-foreground'
@@ -454,6 +531,7 @@ const SiteConfigManagement: React.FC = () => {
               {activeTab === 'email' && <EmailConfigSection />}
               {activeTab === 'secrets' && <SecretConfigSection />}
               {activeTab === 'prototype' && <PrototypeConfigSection />}
+              {activeTab === 'vscode' && <VscodeConfigSection />}
               {activeTab === 'genai' && <GenAIConfigSection />}
             </div>
           </div>

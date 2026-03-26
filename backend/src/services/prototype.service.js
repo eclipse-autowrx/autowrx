@@ -14,7 +14,7 @@ const ApiError = require('../utils/ApiError');
 const permissionService = require('./permission.service');
 const { PERMISSIONS } = require('../config/roles');
 const { default: axios, isAxiosError } = require('axios');
-const config = require('../config/config');
+const coderConfig = require('../utils/coderConfig');
 const logger = require('../config/logger');
 const modelService = require('./model.service');
 const apiService = require('./api.service');
@@ -108,7 +108,7 @@ const listTextFilesRecursively = (rootPath) => {
 };
 
 const readPrototypeCodeFromPrototypesPath = (userId, prototypeName) => {
-  const prototypesRoot = config.prototypes?.path || '/var/lib/autowrx/prototypes';
+  const prototypesRoot = coderConfig.getCoderConfigSync().prototypesPath || '/var/lib/autowrx/prototypes';
   const prototypeFolder = path.join(prototypesRoot, String(userId), sanitizePrototypeFolderName(prototypeName));
 
   if (!fs.existsSync(prototypeFolder)) {

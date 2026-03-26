@@ -8,11 +8,24 @@
 
 const axios = require('axios');
 const httpStatus = require('http-status');
-const config = require('../config/config');
 const logger = require('../config/logger');
 const ApiError = require('../utils/ApiError');
 
-const CODER_API_BASE = `${config.coder.url}/api/v2`;
+const coderConfig = require('../utils/coderConfig');
+
+const getCoderApiBase = () => {
+  const coderCfg = coderConfig.getCoderConfigSync();
+  if (!coderCfg.enabled) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
+  }
+
+  const base = String(coderCfg.coderUrl || '').replace(/\/$/, '');
+  if (!base) {
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'CODER_URL is not configured');
+  }
+
+  return `${base}/api/v2`;
+};
 
 const normalizeIdForName = (value) =>
   String(value || '')
@@ -22,10 +35,20 @@ const normalizeIdForName = (value) =>
 /**
  * Get Coder API headers with admin token
  */
-const getAdminHeaders = () => ({
-  'Coder-Session-Token': config.coder.adminApiKey,
-  'Content-Type': 'application/json',
-});
+const getAdminHeaders = () => {
+  const coderCfg = coderConfig.getCoderConfigSync();
+  if (!coderCfg.enabled) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
+  }
+  if (!coderCfg.adminApiKey) {
+    throw new ApiError(httpStatus.SERVICE_UNAVAILABLE, 'CODER_ADMIN_API_KEY is not configured');
+  }
+
+  return {
+    'Coder-Session-Token': coderCfg.adminApiKey,
+    'Content-Type': 'application/json',
+  };
+};
 
 /**
  * Get default organization (Coder Community Edition only supports one default org)
@@ -34,7 +57,7 @@ const getAdminHeaders = () => ({
 const getOrCreateDefaultOrganization = async () => {
   try {
     // Get all organizations
-    const orgsResponse = await axios.get(`${CODER_API_BASE}/organizations`, {
+    const orgsResponse = await axios.get(`${getCoderApiBase()}/organizations`, {
       headers: getAdminHeaders(),
     });
 
@@ -79,7 +102,7 @@ const getOrCreateDefaultOrganization = async () => {
       logger.warn(`No organizations found via organizations endpoint, trying to get from admin user...`);
       try {
         // Get the admin user to find their organization
-        const usersResponse = await axios.get(`${CODER_API_BASE}/users`, {
+        const usersResponse = await axios.get(`${getCoderApiBase()}/users`, {
           headers: getAdminHeaders(),
         });
 
@@ -137,7 +160,7 @@ const ensureUserIsActive = async (user) => {
   }
 
   try {
-    await axios.put(`${CODER_API_BASE}/users/${user.id}/status/activate`, {}, { headers: getAdminHeaders() });
+    await axios.put(`${getCoderApiBase()}/users/${user.id}/status/activate`, {}, { headers: getAdminHeaders() });
     logger.info(`Activated Coder user: ${user.username} (${user.id}) from status ${user.status}`);
     return { ...user, status: 'active' };
   } catch (error) {
@@ -156,7 +179,7 @@ const ensureUserIsActive = async (user) => {
 const ensureUserExists = async (userId, username, email) => {
   try {
     // Check if user exists
-    const usersResponse = await axios.get(`${CODER_API_BASE}/users`, {
+    const usersResponse = await axios.get(`${getCoderApiBase()}/users`, {
       headers: getAdminHeaders(),
       params: { q: username },
     });
@@ -174,7 +197,7 @@ const ensureUserExists = async (userId, username, email) => {
 
     // Create new user with organization
     const createResponse = await axios.post(
-      `${CODER_API_BASE}/users`,
+      `${getCoderApiBase()}/users`,
       {
         email,
         username,
@@ -208,7 +231,7 @@ const ensureUserExists = async (userId, username, email) => {
     if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
       throw new ApiError(
         httpStatus.SERVICE_UNAVAILABLE,
-        `Cannot connect to Coder at ${config.coder.url}. Is Coder running?`,
+        `Cannot connect to Coder at ${coderConfig.getCoderConfigSync().coderUrl}. Is Coder running?`,
       );
     }
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, `Coder service error: ${error.message}`);
@@ -225,7 +248,7 @@ const ensureUserExists = async (userId, username, email) => {
 const generateSessionToken = async (coderUsername) => {
   const tokenEndpoints = [
     {
-      url: `${CODER_API_BASE}/users/${coderUsername}/tokens`,
+      url: `${getCoderApiBase()}/users/${coderUsername}/tokens`,
       body: {
         name: `autowrx-session-${Date.now()}`,
         lifetime: 86400000, // 24 hours in milliseconds
@@ -234,7 +257,7 @@ const generateSessionToken = async (coderUsername) => {
     },
     {
       // Backward-compatible endpoint on older/newer Coder variants.
-      url: `${CODER_API_BASE}/users/${coderUsername}/keys/tokens`,
+      url: `${getCoderApiBase()}/users/${coderUsername}/keys/tokens`,
       body: {
         token_name: `autowrx-session-${Date.now()}`,
         lifetime: 86400000,
@@ -243,7 +266,7 @@ const generateSessionToken = async (coderUsername) => {
     },
     {
       // Some deployments expose /keys directly for API key creation.
-      url: `${CODER_API_BASE}/users/${coderUsername}/keys`,
+      url: `${getCoderApiBase()}/users/${coderUsername}/keys`,
       body: {
         token_name: `autowrx-session-${Date.now()}`,
         lifetime: 86400000,
@@ -258,9 +281,7 @@ const generateSessionToken = async (coderUsername) => {
         const response = await axios.post(endpoint.url, endpoint.body, { headers: getAdminHeaders() });
         const token = response.data?.key || response.data?.token || response.data?.id || response.data;
         if (!token) {
-          logger.warn(
-            `Token creation succeeded via ${endpoint.url} but no token was returned for user: ${coderUsername}`,
-          );
+          logger.warn(`Token creation succeeded via ${endpoint.url} but no token was returned for user: ${coderUsername}`);
           return null;
         }
         logger.info(`Generated Coder session token for user: ${coderUsername} via ${endpoint.url}`);
@@ -322,7 +343,7 @@ const getOrCreateWorkspace = async (
     const organizationId = await getOrCreateDefaultOrganization();
 
     // Check if workspace exists
-    const workspacesResponse = await axios.get(`${CODER_API_BASE}/workspaces`, {
+    const workspacesResponse = await axios.get(`${getCoderApiBase()}/workspaces`, {
       headers: getAdminHeaders(),
       params: { q: workspaceName },
     });
@@ -349,7 +370,7 @@ const getOrCreateWorkspace = async (
     const richParameterValues = [
       {
         name: 'prototypes_host_path',
-        value: prototypesHostPath || config.prototypes?.path || '/var/lib/autowrx/prototypes',
+        value: prototypesHostPath || coderConfig.getCoderConfigSync().prototypesPath || '/var/lib/autowrx/prototypes',
       },
     ];
 
@@ -363,7 +384,7 @@ const getOrCreateWorkspace = async (
 
     // Use the correct API v2 endpoint format: /organizations/{organization}/members/{user}/workspaces
     const createResponse = await axios.post(
-      `${CODER_API_BASE}/organizations/${organizationId}/members/${coderUserId}/workspaces`,
+      `${getCoderApiBase()}/organizations/${organizationId}/members/${coderUserId}/workspaces`,
       {
         template_id: templateId,
         name: workspaceName,
@@ -401,7 +422,7 @@ const getOrCreateWorkspace = async (
         );
         try {
           // Re-query workspaces and return the existing one if found
-          const retryResponse = await axios.get(`${CODER_API_BASE}/workspaces`, {
+          const retryResponse = await axios.get(`${getCoderApiBase()}/workspaces`, {
             headers: getAdminHeaders(),
             params: { q: workspaceName },
           });
@@ -464,7 +485,7 @@ const startWorkspace = async (workspaceId) => {
 
     // Start the workspace
     const response = await axios.post(
-      `${CODER_API_BASE}/workspaces/${workspaceId}/builds`,
+      `${getCoderApiBase()}/workspaces/${workspaceId}/builds`,
       { transition: 'start' },
       { headers: getAdminHeaders() },
     );
@@ -498,7 +519,7 @@ const startWorkspace = async (workspaceId) => {
  */
 const getWorkspaceStatus = async (workspaceId) => {
   try {
-    const response = await axios.get(`${CODER_API_BASE}/workspaces/${workspaceId}`, {
+    const response = await axios.get(`${getCoderApiBase()}/workspaces/${workspaceId}`, {
       headers: getAdminHeaders(),
     });
 
@@ -523,7 +544,7 @@ const getWorkspaceStatus = async (workspaceId) => {
 const getWorkspaceTimings = async (workspaceId) => {
   try {
     // Coder API: GET /api/v2/workspaces/{workspace}/timings
-    const response = await axios.get(`${CODER_API_BASE}/workspaces/${workspaceId}/timings`, {
+    const response = await axios.get(`${getCoderApiBase()}/workspaces/${workspaceId}/timings`, {
       headers: getAdminHeaders(),
     });
 
@@ -648,7 +669,7 @@ const getWorkspaceAppUrl = async (workspaceId, appSlug = 'code-server', maxRetri
         );
       }
 
-      const url = `${config.coder.url}/@${username}/${workspaceName}.${agentName}/apps/${appSlug}/`;
+      const url = `${coderConfig.getCoderConfigSync().coderUrl}/@${username}/${workspaceName}.${agentName}/apps/${appSlug}/`;
       logger.info(`Constructed workspace app URL: ${url}`);
       return url;
     } catch (error) {
@@ -757,7 +778,7 @@ const sanitizeWorkspaceName = (userId) => {
  */
 const getTemplateId = async (templateName = 'docker-template') => {
   try {
-    const response = await axios.get(`${CODER_API_BASE}/templates`, {
+    const response = await axios.get(`${getCoderApiBase()}/templates`, {
       headers: getAdminHeaders(),
     });
 
@@ -807,7 +828,7 @@ const getWorkspaceAgentLogs = async (workspaceAgentId, options = {}) => {
   try {
     const { before, after, follow, no_compression, format } = options;
 
-    const response = await axios.get(`${CODER_API_BASE}/workspaceagents/${workspaceAgentId}/logs`, {
+    const response = await axios.get(`${getCoderApiBase()}/workspaceagents/${workspaceAgentId}/logs`, {
       headers: getAdminHeaders(),
       params: {
         ...(before !== undefined && { before }),
@@ -833,7 +854,7 @@ const getWorkspaceAgentLogs = async (workspaceAgentId, options = {}) => {
     if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
       throw new ApiError(
         httpStatus.SERVICE_UNAVAILABLE,
-        `Cannot connect to Coder at ${config.coder.url}. Is Coder running?`,
+        `Cannot connect to Coder at ${coderConfig.getCoderConfigSync().coderUrl}. Is Coder running?`,
       );
     }
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, `Coder service error: ${error.message}`);

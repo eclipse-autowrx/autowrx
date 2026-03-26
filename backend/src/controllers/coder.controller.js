@@ -12,11 +12,17 @@ const { orchestratorService, permissionService, coderService } = require('../ser
 const { PERMISSIONS } = require('../config/roles');
 const ApiError = require('../utils/ApiError');
 const { Prototype } = require('../models');
+const coderConfig = require('../utils/coderConfig');
 
 /**
  * Get workspace URL and session token for a prototype
  */
 const getWorkspace = catchAsync(async (req, res) => {
+  const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
+  if (!coderCfg.enabled) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
+  }
+
   const { prototypeId } = req.params;
   const userId = req.user.id;
 
@@ -49,6 +55,11 @@ const getWorkspace = catchAsync(async (req, res) => {
  * Prepare workspace (create if needed)
  */
 const prepareWorkspace = catchAsync(async (req, res) => {
+  const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
+  if (!coderCfg.enabled) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
+  }
+
   const { prototypeId } = req.params;
   const userId = req.user.id;
 
@@ -81,6 +92,11 @@ const prepareWorkspace = catchAsync(async (req, res) => {
  * Get workspace status
  */
 const getWorkspaceStatus = catchAsync(async (req, res) => {
+  const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
+  if (!coderCfg.enabled) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
+  }
+
   const { prototypeId } = req.params;
   const userId = req.user.id;
 
@@ -104,6 +120,11 @@ const getWorkspaceStatus = catchAsync(async (req, res) => {
  * Get workspace timings
  */
 const getWorkspaceTimings = catchAsync(async (req, res) => {
+  const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
+  if (!coderCfg.enabled) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
+  }
+
   const { prototypeId } = req.params;
   const userId = req.user.id;
 
@@ -127,6 +148,11 @@ const getWorkspaceTimings = catchAsync(async (req, res) => {
  * Get logs for a Coder workspace agent
  */
 const getWorkspaceAgentLogs = catchAsync(async (req, res) => {
+  const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
+  if (!coderCfg.enabled) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
+  }
+
   const { workspaceAgentId } = req.params;
   const { before, after, follow, no_compression, format } = req.query;
 
@@ -145,6 +171,11 @@ const getWorkspaceAgentLogs = catchAsync(async (req, res) => {
  * Get logs for a workspace (by prototype)
  */
 const getWorkspaceLogs = catchAsync(async (req, res) => {
+  const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
+  if (!coderCfg.enabled) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
+  }
+
   const { prototypeId } = req.params;
   const userId = req.user.id;
   const { before, after, follow, no_compression, format } = req.query;

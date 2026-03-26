@@ -23,6 +23,7 @@ const DEFAULT_SITE_CONFIGS: Record<string, any> = {
   SITE_FAVICON: '/imgs/favicon.ico',
   SITE_THEME_COLOR: '#198100',
   GRADIENT_HEADER: false,
+  VSCODE_ENABLE: false,
   GENAI_SDV_APP_ENDPOINT:
     'https://workflow.digital.auto/webhook/c0ba14bc-c6a3-4319-ad0a-ad89b1460b36',
 }
@@ -247,27 +248,25 @@ export const useSiteConfig = (
   scope: string = 'site',
   target_id?: string,
 ) => {
-  const [value, setValue] = useState<any>(fallback ?? DEFAULT_SITE_CONFIGS[key])
+  const expectedDefault = DEFAULT_SITE_CONFIGS[key]
+  const initialValue = fallback !== undefined ? fallback : expectedDefault
+  const [value, setValue] = useState<any>(initialValue)
 
   useEffect(() => {
     const loadConfig = async () => {
       try {
-        const result = await getConfig(
-          key,
-          scope,
-          target_id,
-          fallback ?? DEFAULT_SITE_CONFIGS[key],
-        )
+        const resolvedFallback = fallback !== undefined ? fallback : expectedDefault
+        const result = await getConfig(key, scope, target_id, resolvedFallback)
         // Treat null/undefined/empty string as missing -> use fallback/default
         const raw =
           result !== null && result !== undefined && result !== ''
             ? result
-            : (fallback ?? DEFAULT_SITE_CONFIGS[key])
+            : resolvedFallback
 
         // Coerce booleans when the consumer expects a boolean fallback.
         // The config API may return string values like "true"/"false".
         let next = raw
-        if (typeof (fallback ?? DEFAULT_SITE_CONFIGS[key]) === 'boolean') {
+        if (typeof expectedDefault === 'boolean') {
           if (raw === true || raw === false) {
             next = raw
           } else if (typeof raw === 'string') {
@@ -282,13 +281,13 @@ export const useSiteConfig = (
         }
         setValue(next)
       } catch {
-        setValue(fallback ?? DEFAULT_SITE_CONFIGS[key])
+        setValue(fallback !== undefined ? fallback : expectedDefault)
       }
     }
 
     loadConfig()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, scope, target_id]) // Removed 'fallback' from deps - it's just a default value, not a fetch trigger
+  }, [key, scope, target_id]) // Removed 'fallback' from deps - it's just a default/sentinel value
 
   return value
 }

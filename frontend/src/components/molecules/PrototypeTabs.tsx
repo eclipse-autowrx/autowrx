@@ -19,6 +19,7 @@ import {
 } from 'react-icons/tb'
 import { TabConfig } from '@/components/organisms/CustomTabEditor'
 import { renderTabIcon, tabItemClasses } from '@/lib/tabUtils'
+import { useSiteConfig } from '@/utils/siteConfig'
 
 interface PrototypeTabsProps {
   tabs?: TabConfig[]
@@ -99,12 +100,16 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant }) => {
   const { model_id, prototype_id, tab } = useParams()
   const [searchParams] = useSearchParams()
   const variant = tabsVariant || 'tab'
+  // Use null sentinel while config is loading so we don't hide/redirect too early.
+  const vscodeEnabled = useSiteConfig('VSCODE_ENABLE', null as any)
 
   // Get tabs with migration
   const tabConfigs = getTabConfig(tabs)
 
   // Filter out hidden tabs
-  const visibleTabs = tabConfigs.filter(t => !t.hidden)
+  const visibleTabs = tabConfigs
+    .filter((t) => !t.hidden)
+    .filter((t) => !(t.type === 'builtin' && t.key === 'vscode' && vscodeEnabled === false))
 
   // The first visible tab is the default when no tab is in the URL
   const firstVisibleTab = visibleTabs[0]
