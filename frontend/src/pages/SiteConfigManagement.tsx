@@ -8,6 +8,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { serverAxios } from '@/services/base'
 import PublicConfigSection from '@/components/organisms/PublicConfigSection'
 import SecretConfigSection from '@/components/organisms/SecretConfigSection'
 import SiteStyleSection from '@/components/organisms/SiteStyleSection'
@@ -282,11 +283,10 @@ const SiteConfigManagement: React.FC = () => {
     try {
       setIsExporting(true)
       const instanceName = window.location.hostname.replace(/\./g, '-') || 'autowrx-instance'
-      const response = await fetch(`/v2/instance/export?name=${instanceName}`, {
-        credentials: 'include',
+      const response = await serverAxios.get(`/instance/export?name=${instanceName}`, {
+        responseType: 'blob',
       })
-      if (!response.ok) throw new Error('Export failed')
-      const blob = await response.blob()
+      const blob = response.data
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url

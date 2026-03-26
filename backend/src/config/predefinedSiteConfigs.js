@@ -220,6 +220,46 @@ const PREDEFINED_SITE_CONFIGS = [
     valueType: 'boolean',
     description: 'Allow unauthenticated users to view public content.',
   },
+  {
+    key: 'SELF_REGISTRATION',
+    scope: 'site',
+    value: true,
+    secret: false,
+    valueType: 'boolean',
+    description: 'Allow new users to register accounts themselves.',
+  },
+  {
+    key: 'PASSWORD_MANAGEMENT',
+    scope: 'site',
+    value: true,
+    secret: false,
+    valueType: 'boolean',
+    description: 'Allow users to set and change passwords.',
+  },
+  {
+    key: 'SSO_AUTO_REGISTRATION',
+    scope: 'site',
+    value: true,
+    secret: false,
+    valueType: 'boolean',
+    description: 'Automatically create accounts for users who sign in via SSO for the first time.',
+  },
+  {
+    key: 'SITE_FAVICON',
+    scope: 'site',
+    value: '/imgs/favicon.ico',
+    secret: false,
+    valueType: 'string',
+    description: 'Favicon image displayed in the browser tab.',
+  },
+  {
+    key: 'SITE_THEME_COLOR',
+    scope: 'site',
+    value: '#198100',
+    secret: false,
+    valueType: 'string',
+    description: 'Primary theme color used across the site.',
+  },
 ];
 
 module.exports = PREDEFINED_SITE_CONFIGS;

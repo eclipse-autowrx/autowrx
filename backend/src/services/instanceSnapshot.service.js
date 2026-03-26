@@ -64,7 +64,7 @@ const exportSnapshot = async (res, instanceName = 'autowrx-instance') => {
     version: '1.0',
     exportedAt: new Date().toISOString(),
     instanceName: safeName,
-    contents: ['site-configs.json', 'imgs/', 'seed/plugins.json', 'seed/model-templates.json', 'seed/dashboard-templates.json'],
+    contents: ['site-configs.json', 'uploads/', 'seed/plugins.json', 'seed/model-templates.json', 'seed/dashboard-templates.json'],
   };
   archive.append(JSON.stringify(manifest, null, 2), { name: 'manifest.json' });
 
@@ -75,25 +75,10 @@ const exportSnapshot = async (res, instanceName = 'autowrx-instance') => {
   }));
   archive.append(JSON.stringify(configsExport, null, 2), { name: 'site-configs.json' });
 
-  // 3. User-uploaded images only — logo and covers that admin has explicitly uploaded
-  // We only backup what the user created, not baked-in defaults (/imgs/ are in the container)
-  const imageKeys = ['SITE_LOGO_WIDE', 'DEFAULT_MODEL_IMAGE', 'DEFAULT_PROTOTYPE_IMAGE'];
-  const imageConfigs = await SiteConfig.find({ key: { $in: imageKeys }, scope: 'site' }).lean();
-
-  for (const cfg of imageConfigs) {
-    const imgValue = cfg.value;
-    if (!imgValue || typeof imgValue !== 'string') continue;
-
-    // Only export user-uploaded files (served under /d/ from static/uploads)
-    if (!imgValue.startsWith('/d/')) continue;
-
-    // Use basename to prevent path traversal — only resolve the filename, not arbitrary paths
-    const fileName = path.basename(imgValue);
-    const filePath = path.join(STATIC_UPLOADS_DIR, fileName);
-    if (fs.existsSync(filePath)) {
-      const ext = path.extname(filePath);
-      archive.file(filePath, { name: `imgs/${cfg.key}${ext}` });
-    }
+  // 3. User-uploaded files — everything in static/uploads/ (date-based directories)
+  // These are files admins/users have uploaded (logos, covers, etc.)
+  if (fs.existsSync(STATIC_UPLOADS_DIR)) {
+    archive.directory(STATIC_UPLOADS_DIR, 'uploads');
   }
 
   // 4. Plugins
@@ -171,7 +156,30 @@ const seedFromInstanceBundle = async (systemUserId) => {
     }
   }
 
-  // 2. Seed plugins
+  // 2. Restore uploaded files (date-based directories)
+  const instanceUploadsDir = path.join(INSTANCE_DIR, 'uploads');
+  if (fs.existsSync(instanceUploadsDir)) {
+    try {
+      const copyRecursive = (src, dest) => {
+        if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+        for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+          const srcPath = path.join(src, entry.name);
+          const destPath = path.join(dest, entry.name);
+          if (entry.isDirectory()) {
+            copyRecursive(srcPath, destPath);
+          } else if (!fs.existsSync(destPath)) {
+            fs.copyFileSync(srcPath, destPath);
+          }
+        }
+      };
+      copyRecursive(instanceUploadsDir, STATIC_UPLOADS_DIR);
+      logger.info('[Instance] Restored uploaded files.');
+    } catch (e) {
+      logger.error('[Instance] Failed to restore uploads:', e.message);
+    }
+  }
+
+  // 3. Seed plugins
   const pluginsSeedPath = path.join(INSTANCE_SEED_DIR, 'plugins.json');
   if (fs.existsSync(pluginsSeedPath)) {
     try {
@@ -192,7 +200,7 @@ const seedFromInstanceBundle = async (systemUserId) => {
     }
   }
 
-  // 3. Seed model templates
+  // 4. Seed model templates
   const modelTplPath = path.join(INSTANCE_SEED_DIR, 'model-templates.json');
   if (fs.existsSync(modelTplPath)) {
     try {
@@ -213,7 +221,7 @@ const seedFromInstanceBundle = async (systemUserId) => {
     }
   }
 
-  // 4. Seed dashboard templates
+  // 5. Seed dashboard templates
   const dashTplPath = path.join(INSTANCE_SEED_DIR, 'dashboard-templates.json');
   if (fs.existsSync(dashTplPath)) {
     try {
