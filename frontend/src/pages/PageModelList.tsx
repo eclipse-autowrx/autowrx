@@ -343,19 +343,36 @@ const PageModelList = () => {
                     </div>
                   )}
                 </div>
-                {
-                  filterModels(ownedModels)?.length === 0 &&
-                  !isLoading && ownedModels.length === 0 && (
-                    <div className="flex flex-col items-center justify-center gap-3 py-12">
-                      <p className="text-base text-muted-foreground font-medium">
-                        {
-                          searchQuery.trim() ?
-                            "No models found. Please create a new model."
-                            : "You don't have any models yet. Please create your first model."}
-                      </p>
-                    </div>
-                  )
-                }
+
+                {user && (
+                  <ModelSection
+                    title="My Models"
+                    models={filterModels(ownedModels)}
+                    isLoading={isLoading && ownedModels.length === 0}
+                    emptyText={
+                      searchQuery.trim()
+                        ? 'No models match your search.'
+                        : 'No models found. Please create a new model.'
+                    }
+                    emptyAction={null}
+                    headerExtras={
+                      <div className="flex flex-col w-80 items-end gap-2">
+                        <div className="relative w-full max-w-sm">
+                          <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            type="text"
+                            placeholder="Search models..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-9"
+                            data-id="model-search-input"
+                          />
+                        </div>
+                      </div>
+                    }
+                    sectionRef={myModelsRef}
+                  />
+                )}
 
                 {user && (
                   <ModelSection
