@@ -95,9 +95,9 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
   {
     key: 'RUNTIME_SERVER_CONFIG',
     scope: 'site',
-    value: {},
+    value: '{}',
     secret: false,
-    valueType: 'object',
+    valueType: 'string',
     description: 'Custom JSON options passed to the Socket.IO client when connecting to the runtime server. Example: {"transports":["websocket"],"reconnectionAttempts":5}. Leave empty to use default Socket.IO options.',
   },
   {
