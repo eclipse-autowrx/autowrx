@@ -63,8 +63,8 @@ const PrototypeLibraryList = ({
             .includes(searchInput.toLowerCase())
         })
         .sort((a: Prototype, b: Prototype) => {
-          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
-          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
+          const dateA = (a.createdAt) ? new Date(a.createdAt).getTime() : 0
+          const dateB = (b.createdAt) ? new Date(b.createdAt).getTime() : 0
 
           if (selectedFilters?.includes('Newest')) {
             return dateB - dateA
@@ -72,6 +72,8 @@ const PrototypeLibraryList = ({
             return dateA - dateB
           } else if (selectedFilters?.includes('Name A-Z')) {
             return a.name.localeCompare(b.name)
+          } else if (selectedFilters?.includes('Rating')) {
+            return (b.avg_score ?? 0) - (a.avg_score ?? 0)
           }
           return 0
         }),

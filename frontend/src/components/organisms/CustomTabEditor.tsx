@@ -32,6 +32,7 @@ import {
   TbMapPin,
   TbCode,
   TbGauge,
+  TbMessagePlus,
   TbPuzzle,
   TbEye,
   TbEyeOff,
@@ -160,6 +161,8 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
         return <TbCode className="w-4 h-4" />
       case 'dashboard':
         return <TbGauge className="w-4 h-4" />
+      case 'feedback':
+        return <TbMessagePlus className="w-4 h-4" />
       case 'flow':
         return <MdOutlineDoubleArrow className="w-4 h-4" />
       default:
@@ -215,11 +218,6 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
   const handleToggleHidden = (index: number) => {
     const updatedTabs = [...localTabs]
     const tab = updatedTabs[index]
-
-    if (tab.type === 'builtin' && tab.key !== 'overview') {
-      return
-    }
-
     updatedTabs[index] = {
       ...tab,
       hidden: !tab.hidden
@@ -861,7 +859,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
                                       size="icon"
                                       onClick={() => handleToggleHidden(index)}
                                       className="h-8 w-8"
-                                      disabled={tab.type === 'builtin' && tab.key !== 'overview'}
+                                      disabled={false}
                                       title={tab.hidden ? 'Show tab' : 'Hide tab'}
                                     >
                                       {tab.hidden ? (

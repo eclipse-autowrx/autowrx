@@ -34,7 +34,7 @@ import { createModelService } from '@/services/model.service'
 import { cn } from '@/lib/utils'
 import default_journey from '@/data/default_journey'
 import { SAMPLE_PROJECTS } from '@/data/sampleProjects'
-import { getConfig } from '@/utils/siteConfig'
+import { getConfig, useSiteConfig } from '@/utils/siteConfig'
 
 interface FormCreatePrototypeProps {
   onClose?: () => void
@@ -155,6 +155,7 @@ const FormCreatePrototype = ({
   const [error, setError] = useState<string>('')
   const [data, setData] = useState(initialState)
   const [disabled, setDisabled] = disabledState ?? useState(false)
+  const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
 
   const { data: currentModel } = useCurrentModel()
   const { data: contributionModels, isLoading: isFetchingModelContribution } =
@@ -435,7 +436,7 @@ const FormCreatePrototype = ({
         disabled={disabled}
         type="submit"
         data-id="btn-create-prototype"
-        className={cn('mt-8 w-full', hideCreateButton && 'hidden')}
+        className={cn('mt-8 w-full', hideCreateButton && 'hidden', gradientHeader && 'bg-gradient-to-r from-primary to-secondary border-0')}
       >
         {loading && <TbLoader className="mr-2 animate-spin text-lg" />}
         {buttonText ?? 'Create Prototype'}

@@ -63,6 +63,7 @@ const RootLayout = () => {
 
   const { data: currentUser } = useSelfProfileQuery()
   const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
+  const privacyPolicyUrl = useSiteConfig('PRIVACY_POLICY_URL', '')
 
   const pathsWithoutBreadcrumb = useMemo(
     () => getPathsWithoutBreadcrumb(routesConfig),
@@ -104,9 +105,9 @@ const RootLayout = () => {
           >
             Powered by digital.auto
           </a>
-          {config.showPrivacyPolicy && (
+          {privacyPolicyUrl && (
             <Link
-              to="/privacy-policy"
+              to={privacyPolicyUrl}
               target="_blank"
               rel="noreferrer"
               className="hover:underline flex h-fit"
