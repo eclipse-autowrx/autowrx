@@ -45,6 +45,14 @@ COPY --chown=node:node backend/ .
 # This ensures the directory exists even if files haven't been downloaded yet
 RUN mkdir -p data && chown -R node:node data
 
+# Create backups directory — mount ./data/backups here for persistent backup storage
+# and for placing a restore.zip to auto-restore on startup
+RUN mkdir -p backups && chown -R node:node backups
+
+# Ensure the entrypoint script is executable (COPY preserves permissions from source,
+# but chmod guarantees this regardless of how the repo was checked out)
+RUN chmod +x ./docker-entrypoint.sh
+
 # Copy frontend build into backend static folder
 COPY --from=frontend-builder --chown=node:node /app/backend/static/frontend-dist ./static/frontend-dist
 
@@ -54,5 +62,6 @@ EXPOSE 3200
 
 ENV PORT=3200
 
+ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["yarn", "prod:test"]
 

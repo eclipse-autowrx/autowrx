@@ -20,6 +20,7 @@ import PluginList from '@/pages/PluginList.tsx'
 import PluginManagement from '@/pages/PluginManagement.tsx'
 import TemplateManager from '@/pages/TemplateManager.tsx'
 import DashboardTemplateManager from '@/pages/DashboardTemplateManager.tsx'
+import AdminBackupRestore from '@/pages/AdminBackupRestore.tsx'
 import PageTestPlugin from '@/pages/PageTestPlugin.tsx'
 const PageModelList = lazy(() =>
   retry(() => import('@/pages/PageModelList')),
@@ -258,6 +259,19 @@ const routesConfig: RouteConfig[] = [
                     element: (
                       <SuspenseProvider>
                         <PageManageUsers />
+                      </SuspenseProvider>
+                    ),
+                  },
+                ],
+              },
+              {
+                path: 'backup-restore',
+                children: [
+                  {
+                    index: true,
+                    element: (
+                      <SuspenseProvider>
+                        <AdminBackupRestore />
                       </SuspenseProvider>
                     ),
                   },

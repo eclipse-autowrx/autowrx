@@ -23,4 +23,5 @@ module.exports.modelTemplateController = require('./modelTemplate.controller');
 module.exports.dashboardTemplateController = require('./dashboardTemplate.controller');
 module.exports.customApiSchemaController = require('./customApiSchema.controller');
 module.exports.customApiSetController = require('./customApiSet.controller');
+module.exports.backupController = require('./backupController');
 // Inventory controllers removed

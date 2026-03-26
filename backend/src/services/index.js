@@ -30,4 +30,5 @@ module.exports.modelTemplateService = require('./modelTemplate.service');
 module.exports.dashboardTemplateService = require('./dashboardTemplate.service');
 module.exports.customApiSchemaService = require('./customApiSchema.service');
 module.exports.customApiSetService = require('./customApiSet.service');
+module.exports.backupService = require('./backupService');
 // Inventory services removed

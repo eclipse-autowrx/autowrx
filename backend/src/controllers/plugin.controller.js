@@ -10,7 +10,7 @@ const httpStatus = require('http-status');
 const fs = require('fs');
 const fsp = require('fs/promises');
 const path = require('path');
-const { spawn } = require('child_process');
+const AdmZip = require('adm-zip');
 const catchAsync = require('../utils/catchAsync');
 const { pluginService } = require('../services');
 const pick = require('../utils/pick');
@@ -135,15 +135,9 @@ const uploadInternalPlugin = catchAsync(async (req, res) => {
   const pluginPath = path.join(PLUGIN_DIR, slug);
   await ensureDir(pluginPath);
 
-  // Extract zip to target dir using system unzip (no extra npm deps)
-  await new Promise((resolve, reject) => {
-    const unzip = spawn('unzip', ['-o', req.file.path, '-d', pluginPath]);
-    unzip.on('error', reject);
-    unzip.on('close', (code) => {
-      if (code === 0) resolve();
-      else reject(new Error(`unzip exited with code ${code}`));
-    });
-  });
+  // Extract zip to target dir using adm-zip (cross-platform, no system unzip needed)
+  const zip = new AdmZip(req.file.path);
+  zip.extractAllTo(pluginPath, /* overwrite */ true);
 
   // Remove uploaded temp file
   try {

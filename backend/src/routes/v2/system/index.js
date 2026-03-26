@@ -17,10 +17,12 @@ const dashboardTemplateRoute = require('./dashboardTemplate.route');
 const customApiSchemaRoute = require('./custom-api-schema.route');
 const genaiRoute = require('./genai.route');
 const healthRoute = require('./health.route');
+const backupRoute = require('./backup.route');
 
 const router = express.Router();
 
 // System Routes
+router.use('/backup', backupRoute);
 router.use('/health', healthRoute);
 router.use('/search', searchRoute);
 router.use('/change-logs', changeLogRoute);
@@ -32,6 +34,7 @@ router.use('/dashboard-template', dashboardTemplateRoute);
 router.use('/custom-api-schema', customApiSchemaRoute);
 router.use('/genai', genaiRoute);
 // Backward/compat path to match docs and frontend
+router.use('/system/backup', backupRoute);
 router.use('/system/plugin', pluginRoute);
 router.use('/system/model-template', modelTemplateRoute);
 router.use('/system/dashboard-template', dashboardTemplateRoute);

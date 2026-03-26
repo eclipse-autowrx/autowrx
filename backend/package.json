@@ -13,6 +13,8 @@
     "start": "pm2 start ecosystem.config.json --no-daemon",
     "dev": "cross-env NODE_ENV=development nodemon --ignore 'data/*' src/index.js",
     "prod:test": "cross-env NODE_ENV=production node src/index.js",
+    "backup": "cross-env NODE_ENV=production node scripts/backup-cli.js backup",
+    "restore": "cross-env NODE_ENV=production node scripts/backup-cli.js restore",
     "test": "jest -i --colors --verbose --detectOpenHandles",
     "test:watch": "jest -i --watchAll",
     "coverage": "jest -i --coverage",
@@ -47,6 +49,7 @@
     "prettier"
   ],
   "dependencies": {
+    "adm-zip": "^0.5.16",
     "ajv": "^8.17.1",
     "axios": "^1.7.0",
     "bcryptjs": "^2.4.3",

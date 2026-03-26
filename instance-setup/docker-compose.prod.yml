@@ -32,9 +32,21 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS}
       ADMIN_EMAILS: ${ADMIN_EMAILS}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      # ── Backup / Restore ──────────────────────────────────────────────────
+      # Set RESTORE_FILE to auto-restore a backup ZIP on container startup.
+      # Place the ZIP in ./data/backups/ on the host and reference it here.
+      # The file is renamed to *.restored after a successful restore so it
+      # does not re-run on subsequent restarts.
+      # Example: RESTORE_FILE=/usr/src/playground-be/backups/restore.zip
+      RESTORE_FILE: ${RESTORE_FILE:-}
+      # Set RESTORE_REPLACE_ALL=1 to replace all conflicting items during restore.
+      # If unset, conflicts are skipped (existing data is kept).
+      RESTORE_REPLACE_ALL: ${RESTORE_REPLACE_ALL:-}
     volumes:
       - '${UPLOAD_PATH_HOST:-./data/upload}:/usr/src/playground-be/static/uploads'
       - '${PLUGIN_PATH_HOST:-./data/plugin}:/usr/src/playground-be/static/plugin'
+      # Backup storage: place backup ZIPs here; set RESTORE_FILE in .env.prod to auto-restore
+      - '${BACKUP_PATH_HOST:-./data/backups}:/usr/src/playground-be/backups'
     depends_on:
       autowrx-db:
         condition: service_healthy
