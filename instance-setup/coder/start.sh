@@ -26,4 +26,7 @@ tar -cf template.tar -C ./my-template-dir .
 echo "Creating Coder Template..."
 cat template.tar | docker exec -i coder /opt/coder templates push docker-template -d - --yes
 
+echo "Warming up Docker cache for better UX..."
+docker build -t autowrx-workspace:1 ./my-template-dir/workspace-image
+
 rm -rf ./my-template-dir template.tar
