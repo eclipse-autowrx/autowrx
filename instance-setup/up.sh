@@ -8,4 +8,4 @@ docker compose \
   --project-directory "${REPO_ROOT}" \
   -f "${SCRIPT_DIR}/docker-compose.prod.yml" \
   --env-file "${SCRIPT_DIR}/.env.prod" \
-  up -d --build
+  up -d
