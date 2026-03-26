@@ -19,6 +19,8 @@ import StagingConfigSection from '@/components/organisms/StagingConfigSection'
 import GenAIConfigSection from '@/components/organisms/GenAIConfigSection'
 import PrototypeConfigSection from '../components/organisms/PrototypeConfigSection'
 import VscodeConfigSection from '../components/organisms/VscodeConfigSection'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
 
 // Keys that should be excluded from the site-config page
 // These keys are managed in their own dedicated pages
@@ -342,6 +344,7 @@ export const PREDEFINED_AUTH_CONFIGS: any[] = [
 
 const SiteConfigManagement: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
 
   // Get initial section from URL or default to 'public'
   type SectionTab =
@@ -389,6 +392,19 @@ const SiteConfigManagement: React.FC = () => {
 
   const handleTabChange = (tab: SectionTab) => {
     setActiveTab(tab)
+  }
+
+  if (!isAuthorized) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold text-foreground">Access denied</h1>
+          <p className="mt-2 text-base text-muted-foreground">
+            You do not have permission to manage site configurations.
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
