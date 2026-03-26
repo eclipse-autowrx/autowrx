@@ -29,9 +29,7 @@ mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
 
   convertLogsCap();
   initializeRoles().then(async () => {
-    // assignAdmins ensures admin user always exists and returns their ID
     const adminUserId = await assignAdmins();
-    // Seed predefined configs first (code defaults), then instance bundle (instance overrides)
     await seedPredefinedSiteConfigs(PREDEFINED_SITE_CONFIGS);
     await seedFromInstanceBundle(adminUserId);
   });
