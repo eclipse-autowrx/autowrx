@@ -828,7 +828,7 @@ const bulkUpsertSiteConfigs = async (configs, userId) => {
  * @param {Array} predefinedConfigs - Array of predefined config objects
  * @returns {Promise<void>}
  */
-const seedPredefinedSiteConfigs = async (predefinedConfigs) => {
+const seedPredefinedSiteConfigs = async (predefinedConfigs, systemUserId = null) => {
   if (!predefinedConfigs || predefinedConfigs.length === 0) return;
 
   try {
@@ -844,6 +844,7 @@ const seedPredefinedSiteConfigs = async (predefinedConfigs) => {
             secret: config.secret !== undefined ? config.secret : false,
             description: config.description || '',
             category: config.category || 'general',
+            ...(systemUserId && { created_by: systemUserId, updated_by: systemUserId }),
           },
         },
         upsert: true,

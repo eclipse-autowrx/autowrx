@@ -30,8 +30,9 @@ mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
   convertLogsCap();
   initializeRoles().then(async () => {
     const adminUserId = await assignAdmins();
-    await seedPredefinedSiteConfigs(PREDEFINED_SITE_CONFIGS);
+    // Instance bundle first (admin's exported customizations), then predefined defaults fill gaps
     await seedFromInstanceBundle(adminUserId);
+    await seedPredefinedSiteConfigs(PREDEFINED_SITE_CONFIGS, adminUserId);
   });
   // config.port is loaded from the PORT environment variable, defaulting to 8080 (see backend/src/config/config.js).
   server = app.listen(config.port, () => {

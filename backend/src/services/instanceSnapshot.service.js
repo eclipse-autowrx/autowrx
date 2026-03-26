@@ -39,17 +39,31 @@ const STATIC_UPLOADS_DIR = path.join(__dirname, '../../static/uploads');
  * @param {string} instanceName - Name for the snapshot (used in manifest)
  */
 const exportSnapshot = async (res, instanceName = 'autowrx-instance') => {
+  // Sanitize instance name for use in HTTP headers and filenames
+  const safeName = instanceName.replace(/[^a-zA-Z0-9\-_]/g, '-').slice(0, 80) || 'autowrx-instance';
+
   const archive = archiver('zip', { zlib: { level: 6 } });
 
+  // Handle archive and stream errors
+  archive.on('error', (err) => {
+    logger.error('[Export] Archive error:', err.message);
+    if (!res.headersSent) res.status(500).json({ message: 'Export failed' });
+    else res.end();
+  });
+  res.on('error', (err) => {
+    logger.error('[Export] Response stream error:', err.message);
+    archive.destroy();
+  });
+
   res.setHeader('Content-Type', 'application/zip');
-  res.setHeader('Content-Disposition', `attachment; filename="${instanceName}-snapshot.zip"`);
+  res.setHeader('Content-Disposition', `attachment; filename="${safeName}-snapshot.zip"`);
   archive.pipe(res);
 
   // 1. Manifest
   const manifest = {
     version: '1.0',
     exportedAt: new Date().toISOString(),
-    instanceName,
+    instanceName: safeName,
     contents: ['site-configs.json', 'imgs/', 'seed/plugins.json', 'seed/model-templates.json', 'seed/dashboard-templates.json'],
   };
   archive.append(JSON.stringify(manifest, null, 2), { name: 'manifest.json' });
@@ -73,7 +87,9 @@ const exportSnapshot = async (res, instanceName = 'autowrx-instance') => {
     // Only export user-uploaded files (served under /d/ from static/uploads)
     if (!imgValue.startsWith('/d/')) continue;
 
-    const filePath = path.join(STATIC_UPLOADS_DIR, imgValue.slice(3));
+    // Use basename to prevent path traversal — only resolve the filename, not arbitrary paths
+    const fileName = path.basename(imgValue);
+    const filePath = path.join(STATIC_UPLOADS_DIR, fileName);
     if (fs.existsSync(filePath)) {
       const ext = path.extname(filePath);
       archive.file(filePath, { name: `imgs/${cfg.key}${ext}` });
@@ -141,6 +157,7 @@ const seedFromInstanceBundle = async (systemUserId) => {
                 secret: cfg.secret || false,
                 description: cfg.description || '',
                 category: cfg.category || 'general',
+                ...(systemUserId && { created_by: systemUserId, updated_by: systemUserId }),
               },
             },
             upsert: true,
