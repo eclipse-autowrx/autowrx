@@ -11,9 +11,6 @@ docker exec -it coder /opt/coder login http://localhost:7080 \
   --first-user-full-name "Admin User" \
   --first-user-trial=false
 
-echo "Creating Token..."
-docker exec -it coder /opt/coder tokens create --name "auto-token" --lifetime "7d"
-
 echo "Preparing Template files..."
 rm -rf ./my-template-dir template.tar
 
@@ -30,3 +27,6 @@ echo "Warming up Docker cache for better UX..."
 docker build -t autowrx-workspace:1 ./my-template-dir/workspace-image
 
 rm -rf ./my-template-dir template.tar
+
+echo "Creating Token..."
+docker exec -it coder /opt/coder tokens create --name "auto-token" --lifetime "7d"
