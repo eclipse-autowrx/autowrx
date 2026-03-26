@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useState, useEffect, useRef } from 'react'
-import ReactMarkdown, { Components } from 'react-markdown'
+import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { configManagementService } from '@/services/configManagement.service'
 import { Button } from '@/components/atoms/button'
@@ -15,29 +15,9 @@ import { useToast } from '@/components/molecules/toaster/use-toast'
 import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
+import privacyMarkdownComponents from '@/lib/privacyMarkdownComponents'
 
 const PRIVACY_POLICY_KEY = 'PRIVACY_POLICY_CONTENT'
-
-const mdComponents: Components = {
-  h1: ({ children }) => <h1 className="text-3xl font-bold text-foreground mt-8 mb-4 leading-tight">{children}</h1>,
-  h2: ({ children }) => <h2 className="text-xl font-semibold text-foreground mt-8 mb-3 border-b border-border pb-2">{children}</h2>,
-  h3: ({ children }) => <h3 className="text-lg font-semibold text-foreground mt-6 mb-2">{children}</h3>,
-  p: ({ children }) => <p className="text-base text-foreground leading-7 mb-4">{children}</p>,
-  a: ({ href, children }) => <a href={href} className="text-primary underline underline-offset-2 hover:opacity-80">{children}</a>,
-  ul: ({ children }) => <ul className="list-disc list-outside pl-6 mb-4 space-y-1.5">{children}</ul>,
-  ol: ({ children }) => <ol className="list-decimal list-outside pl-6 mb-4 space-y-1.5">{children}</ol>,
-  li: ({ children }) => <li className="text-base leading-7">{children}</li>,
-  blockquote: ({ children }) => <blockquote className="border-l-4 border-primary pl-4 italic text-muted-foreground my-4">{children}</blockquote>,
-  code: ({ className, children, ...props }) => {
-    const isBlock = className?.includes('language-')
-    return isBlock
-      ? <code className={`block bg-muted rounded px-4 py-3 text-sm font-mono overflow-x-auto my-3 ${className ?? ''}`} {...props}>{children}</code>
-      : <code className="bg-muted rounded px-1.5 py-0.5 text-sm font-mono" {...props}>{children}</code>
-  },
-  pre: ({ children }) => <pre className="bg-muted rounded-lg overflow-x-auto my-4">{children}</pre>,
-  hr: () => <hr className="border-border my-8" />,
-  strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
-}
 
 type SubTab = 'edit' | 'preview'
 
@@ -163,7 +143,7 @@ const PrivacyPolicySection: React.FC = () => {
         ) : (
           <div className="border border-border rounded-md px-10 py-8 bg-background min-h-[200px]">
             {content ? (
-              <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>{content}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={privacyMarkdownComponents}>{content}</ReactMarkdown>
             ) : (
               <p className="text-muted-foreground italic">No content yet. Switch to the Edit tab to add privacy policy content.</p>
             )}
