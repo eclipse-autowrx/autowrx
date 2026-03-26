@@ -15,6 +15,7 @@ const { init } = require('./config/socket');
 const { setupScheduledCheck, assignAdmins, convertLogsCap } = require('./scripts');
 const { seedPredefinedSiteConfigs } = require('./services/siteConfig.service');
 const PREDEFINED_SITE_CONFIGS = require('./config/predefinedSiteConfigs');
+const { seedFromInstanceBundle } = require('./services/instanceSnapshot.service');
 
 // console.log('>>>>>>>>>>>>> mongo_url', config.mongoose.url);
 // console.log('>>>>>>>>>>>>> config', config);
@@ -27,8 +28,12 @@ mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
   logger.info(`🍪 Cookie Config: secure=${config.jwt.cookie.options.secure}, sameSite=${config.jwt.cookie.options.sameSite}, httpOnly=${config.jwt.cookie.options.httpOnly}`);
 
   convertLogsCap();
-  initializeRoles().then(() => assignAdmins());
-  seedPredefinedSiteConfigs(PREDEFINED_SITE_CONFIGS);
+  initializeRoles().then(async () => {
+    const adminUserId = await assignAdmins();
+    // Instance bundle first (admin's exported customizations), then predefined defaults fill gaps
+    await seedFromInstanceBundle(adminUserId);
+    await seedPredefinedSiteConfigs(PREDEFINED_SITE_CONFIGS, adminUserId);
+  });
   // config.port is loaded from the PORT environment variable, defaulting to 8080 (see backend/src/config/config.js).
   server = app.listen(config.port, () => {
     logger.info(`Listening to port ${config.port}`);

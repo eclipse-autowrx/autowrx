@@ -68,6 +68,8 @@ const assignAdmins = async () => {
   }
 
   logger.info('Admins assigned successfully');
+  // Return first admin user ID — used by callers that need a system user ID (e.g. instance seed)
+  return (allAdmins[0]?.id || allAdmins[0]?._id) || null;
 };
 
 module.exports = assignAdmins;

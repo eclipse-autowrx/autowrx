@@ -117,6 +117,9 @@ app.use('/v2', routesV2);
 app.use('/static', express.static(path.join(__dirname, '../static')));
 app.use('/builtin-widgets', express.static(path.join(__dirname, '../static/builtin-widgets')));
 app.use('/images', express.static(path.join(__dirname, '../static/images')));
+// Instance-specific static files (logo, images from snapshot bundle)
+// These take priority: mount before /images so instance imgs can override defaults
+app.use('/instance/imgs', express.static(path.join(__dirname, '../instance/imgs')));
 app.use('/static/plugin', express.static(path.join(__dirname, '../static/plugin')));
 app.use('/plugin', express.static(path.join(__dirname, '../static/plugin')));
 // Serve uploaded files with date-based directory structure
