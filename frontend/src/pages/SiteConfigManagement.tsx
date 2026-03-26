@@ -39,7 +39,6 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     secret: false,
     valueType: 'image_url',
     description: 'Default image used when creating a new model.',
-    category: 'prototype',
   },
   {
     key: 'DEFAULT_PROTOTYPE_IMAGE',
@@ -48,7 +47,6 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     secret: false,
     valueType: 'image_url',
     description: 'Default cover image used when creating a new prototype.',
-    category: 'prototype',
   },
   {
     key: 'SITE_TITLE',
@@ -126,6 +124,22 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     value: 'https://marketplace.digitalauto.tech',
     secret: false,
     valueType: 'string',
+  },
+  {
+    key: 'ABOUT_LINK',
+    scope: 'site',
+    value: '',
+    secret: false,
+    valueType: 'string',
+    description: 'URL for the "About" link shown in the navigation bar next to the site logo. Leave empty to hide the link.',
+  },
+  {
+    key: 'ABOUT_LINK_TEXT',
+    scope: 'site',
+    value: 'About',
+    secret: false,
+    valueType: 'string',
+    description: 'Label text for the navigation bar "About" link. Defaults to "About" when left empty.',
   },
   {
     key: 'SUPPORT_CENTER_URL',
