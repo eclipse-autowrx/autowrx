@@ -126,22 +126,6 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     valueType: 'string',
   },
   {
-    key: 'ABOUT_LINK',
-    scope: 'site',
-    value: '',
-    secret: false,
-    valueType: 'string',
-    description: 'URL for the "About" link shown in the navigation bar next to the site logo. Leave empty to hide the link.',
-  },
-  {
-    key: 'ABOUT_LINK_TEXT',
-    scope: 'site',
-    value: 'About',
-    secret: false,
-    valueType: 'string',
-    description: 'Label text for the navigation bar "About" link. Defaults to "About" when left empty.',
-  },
-  {
     key: 'SUPPORT_CENTER_URL',
     scope: 'site',
     value: 'https://github.com/eclipse-autowrx/autowrx/issues',
