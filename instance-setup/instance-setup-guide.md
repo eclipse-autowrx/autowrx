@@ -120,11 +120,88 @@ git pull
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 ```
 
+## Site Configuration
+
+On startup, the backend automatically seeds 25 default site configs (title, logo, feature toggles, etc.) into MongoDB. It uses `$setOnInsert` so existing values are never overwritten — safe across restarts and upgrades.
+
+You can customize configs in two ways:
+
+- **Admin panel**: Log in as admin → Profile avatar → Settings
+- **API**: `PATCH /v2/system/site-management/key/{KEY}` with Bearer token
+
+## Instance Snapshot (Export / Import)
+
+Snapshots let you capture a fully configured instance and reproduce it on new deployments.
+
+### The workflow
+
+```
+Deploy → Customize via UI → Export Snapshot → Drop zip into new deploy → Done
+```
+
+### Export
+
+In the admin panel (Settings page), click **Export Snapshot**. This downloads a zip containing:
+
+```
+instance-snapshot.zip
+├── manifest.json              # version, export date, instance name
+├── site-configs.json          # all non-secret site configs
+├── imgs/                      # admin-uploaded images (logo, covers)
+└── seed/
+    ├── plugins.json
+    ├── model-templates.json
+    └── dashboard-templates.json
+```
+
+Or via API:
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:3200/v2/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@example.com","password":"yourpassword"}' \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['tokens']['access']['token'])")
+
+curl -o snapshot.zip http://localhost:3200/v2/instance/export \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Import (seed on deploy)
+
+1. Extract the snapshot into the instance data directory:
+
+```bash
+unzip snapshot.zip -d ./data/instance/
+```
+
+2. Start (or restart) the instance:
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+```
+
+On startup, the backend reads `./data/instance/manifest.json` and seeds all configs, plugins, and templates. The seed order is:
+
+1. Instance bundle (your exported customizations)
+2. Predefined defaults (fills in any keys the bundle doesn't cover)
+
+Both use `$setOnInsert` — once a key exists, it is never overwritten by the seed. Admin changes made after deploy are always preserved.
+
+### Seed behavior summary
+
+| Scenario | What happens |
+|----------|-------------|
+| Fresh deploy, no bundle | Predefined defaults only |
+| Fresh deploy with bundle | Bundle values win, defaults fill gaps |
+| Restart with bundle | All keys exist, both seeds skip — no changes |
+| Admin updates a value, then restart | Admin value preserved (seeds skip existing keys) |
+
 ## Data Persistence
 
 - **MongoDB data**: Stored in Docker volume `autowrx-dbdata`
 - **Uploads**: Stored in `./data/upload` (configurable via `UPLOAD_PATH_HOST`)
 - **Plugins**: Stored in `./data/plugin` (configurable via `PLUGIN_PATH_HOST`)
+- **Instance bundle**: Stored in `./data/instance` (configurable via `INSTANCE_PATH`)
 
 ## Configuration Options
 
@@ -135,6 +212,7 @@ See `.env.prod.sample` for all available configuration options:
 - `PLUGIN_PATH_HOST`: Path for plugin files
 - `JWT_COOKIE_NAME`: Cookie name for authentication
 - `JWT_COOKIE_DOMAIN`: Cookie domain (for cross-subdomain auth)
+- `INSTANCE_PATH`: Path for instance snapshot bundle (default: `./data/instance`)
 
 ## Troubleshooting
 
