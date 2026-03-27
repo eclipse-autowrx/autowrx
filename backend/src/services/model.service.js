@@ -372,7 +372,7 @@ const queryModels = async (filter, options, advanced, userId) => {
             $function: {
               body: `function (map, modelId, permission, requesterId, createdById) {
                 const stringModelId = modelId.toString();
-                const stringCreatedById = createdById.toString();
+                const stringCreatedById = createdById ? createdById.toString() : null;
                 return (map && map[stringModelId] && map[stringModelId].includes(permission)) || (requesterId == stringCreatedById);
               }`,
               args: [

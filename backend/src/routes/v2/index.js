@@ -11,8 +11,11 @@ const userManagementRoutes = require('./user-management');
 const vehicleDataRoutes = require('./vehicle-data');
 const contentRoutes = require('./content');
 const systemRoutes = require('./system');
+const instanceRoute = require('./instance.route');
 
 const router = express.Router();
+
+router.use('/instance', instanceRoute);
 
 const defaultRoutes = [
   {
