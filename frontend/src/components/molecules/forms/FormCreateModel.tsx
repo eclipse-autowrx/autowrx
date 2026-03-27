@@ -56,12 +56,33 @@ const FormCreateModel = () => {
   const [error, setError] = useState<string>('')
   const [data, setData] = useState(initialState)
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
-  const { refetch: refetchModelLite } = useListModelLite()
+  const { refetch: refetchModelLite, data: modelList } = useListModelLite()
   const { data: versions } = useListVSSVersions()
   const { toast } = useToast()
 
   const { data: currentUser } = useSelfProfileQuery()
   const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
+
+  const isDuplicateName = useMemo(() => {
+    if (!data.name.trim() || !currentUser) return false
+    return modelList?.results?.some(
+      (m) => m.created_by === currentUser.id && m.name.toLowerCase() === data.name.trim().toLowerCase(),
+    ) ?? false
+  }, [data.name, modelList, currentUser])
+
+  const suggestedName = useMemo(() => {
+    if (!isDuplicateName || !data.name.trim()) return null
+    const owned = new Set(
+      modelList?.results?.filter((m) => m.created_by === currentUser?.id).map((m) => m.name.toLowerCase()) ?? [],
+    )
+    let counter = 1
+    let candidate = `${data.name.trim()}_${counter}`
+    while (owned.has(candidate.toLowerCase())) {
+      counter++
+      candidate = `${data.name.trim()}_${counter}`
+    }
+    return candidate
+  }, [isDuplicateName, data.name, modelList, currentUser])
 
   // Fetch templates
   const { data: templatesData } = useQuery({
@@ -196,6 +217,18 @@ const FormCreateModel = () => {
           placeholder="Model name"
           data-id="form-create-model-input-name"
         />
+        {isDuplicateName && suggestedName && (
+          <p className="text-xs text-destructive">
+            A model with this name already exists, using{' '}
+            <button
+              type="button"
+              className="underline hover:opacity-75"
+              onClick={() => handleChange('name', suggestedName)}
+            >
+              {suggestedName}
+            </button>
+          </p>
+        )}
       </div>
 
       <div className="mt-4" />
@@ -283,7 +316,7 @@ const FormCreateModel = () => {
       {error && <p className="text-sm mt-2 text-destructive">{error}</p>}
       {/* Action */}
       <Button
-        disabled={loading || uploading}
+        disabled={loading || uploading || !data.name.trim() || isDuplicateName}
         type="submit"
         className={cn('mt-8 w-full', gradientHeader && 'bg-gradient-to-r from-primary to-secondary border-0')}
         data-id="form-create-model-btn-submit"
