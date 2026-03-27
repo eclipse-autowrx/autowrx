@@ -65,7 +65,7 @@ const ModelDetailLayout = () => {
     'ALLOW_NON_ADMIN_ADDON_CONFIG',
     true,
   )
-  const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
+
   // Update store when model is fetched
   useEffect(() => {
     if (fetchedModel && fetchedModel.id) {
@@ -86,8 +86,6 @@ const ModelDetailLayout = () => {
     )
   }, [user, model])
 
-  const canConfigureModelAddons =
-    (isModelOwner && !!allowNonAdminAddonConfig)
 
   // Helper to get model tabs in TabConfig format
   const getModelTabs = (): TabConfig[] => {
@@ -173,7 +171,7 @@ const ModelDetailLayout = () => {
 
   // Use actual model loading state
   const isLoading = isModelLoading || !model
-  const canManageModelUI = isModelOwner || hasWritePermission
+  const canManageModelUI = (isModelOwner || hasWritePermission) && !!allowNonAdminAddonConfig
 
   const skeleton = JSON.parse(model?.skeleton || '{}')
   const numberOfNodes = skeleton?.nodes?.length || 0
