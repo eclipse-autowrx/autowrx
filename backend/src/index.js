@@ -16,6 +16,8 @@ const { setupScheduledCheck, assignAdmins, convertLogsCap } = require('./scripts
 const { seedPredefinedSiteConfigs } = require('./services/siteConfig.service');
 const PREDEFINED_SITE_CONFIGS = require('./config/predefinedSiteConfigs');
 const { seedFromInstanceBundle } = require('./services/instanceSnapshot.service');
+const { seedPredefinedSiteConfigs } = require('./services/siteConfig.service');
+const PREDEFINED_SITE_CONFIGS = require('./config/predefinedSiteConfigs');
 
 // console.log('>>>>>>>>>>>>> mongo_url', config.mongoose.url);
 // console.log('>>>>>>>>>>>>> config', config);
