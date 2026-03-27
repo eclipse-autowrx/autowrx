@@ -41,6 +41,11 @@ const createModel = async (userId, modelBody) => {
     }
   }
 
+  const existingModel = await Model.findOne({ created_by: userId, name: modelBody.name });
+  if (existingModel) {
+    throw new ApiError(httpStatus.CONFLICT, 'A model with this name already exists');
+  }
+
   if (modelBody.extend && typeof modelBody.extend === 'string') {
     try {
       const parsedExtend = JSON.parse(modelBody.extend);
@@ -504,6 +509,13 @@ const updateModelById = async (id, updateBody, actionOwner) => {
   }
 
   updateBody.action_owner = actionOwner;
+
+  if (updateBody.name) {
+    const duplicate = await Model.findOne({ created_by: model.created_by, name: updateBody.name, _id: { $ne: id } });
+    if (duplicate) {
+      throw new ApiError(httpStatus.CONFLICT, 'A model with this name already exists');
+    }
+  }
 
   if (updateBody.extend && typeof updateBody.extend === 'string') {
     try {

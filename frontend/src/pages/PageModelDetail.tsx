@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { Spinner } from '@/components/atoms/spinner'
@@ -45,6 +45,7 @@ import { PERMISSIONS } from '@/data/permission'
 import { cn } from '@/lib/utils'
 import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import useListModelLite from '@/hooks/useListModelLite'
 
 interface VisibilityControlProps {
   initialVisibility: 'public' | 'private' | undefined
@@ -153,6 +154,29 @@ const PageModelDetail = () => {
   const [confirmPopupOpen, setConfirmPopupOpen] = useState(false)
 
   const { data: currentUser } = useSelfProfileQuery()
+  const { data: modelList } = useListModelLite()
+
+  const isDuplicateName = useMemo(() => {
+    if (!newName.trim() || !currentUser || !model) return false
+    if (newName.trim().toLowerCase() === model.name.toLowerCase()) return false
+    return modelList?.results?.some(
+      (m) => m.created_by === currentUser.id && m.name.toLowerCase() === newName.trim().toLowerCase(),
+    ) ?? false
+  }, [newName, modelList, currentUser, model])
+
+  const suggestedName = useMemo(() => {
+    if (!isDuplicateName || !newName.trim()) return null
+    const owned = new Set(
+      modelList?.results?.filter((m) => m.created_by === currentUser?.id).map((m) => m.name.toLowerCase()) ?? [],
+    )
+    let counter = 1
+    let candidate = `${newName.trim()}_${counter}`
+    while (owned.has(candidate.toLowerCase())) {
+      counter++
+      candidate = `${newName.trim()}_${counter}`
+    }
+    return candidate
+  }, [isDuplicateName, newName, modelList, currentUser])
 
   const handleAvatarChange = async (file: File) => {
     if (!model || !model.id) return
@@ -219,12 +243,24 @@ const PageModelDetail = () => {
           <div className="flex items-center">
             <div className="flex flex-col items-center space-y-2">
               {isEditingName ? (
-                <div className="flex items-center h-[36px]">
+                <div className="flex flex-col gap-1">
                   <Input
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
                     className="h-8 min-w-[300px]"
                   />
+                  {isDuplicateName && suggestedName && (
+                    <p className="text-xs text-destructive">
+                      A model with this name already exists, using{' '}
+                      <button
+                        type="button"
+                        className="underline hover:opacity-75"
+                        onClick={() => setNewName(suggestedName)}
+                      >
+                        {suggestedName}
+                      </button>
+                    </p>
+                  )}
                 </div>
               ) : (
                 <h1 className="text2xl font-semibold text-primary w-full">
@@ -264,6 +300,7 @@ const PageModelDetail = () => {
                   size="sm"
                   className="w-16"
                   onClick={handleNameSave}
+                  disabled={isDuplicateName || !newName.trim()}
                 >
                   Save
                 </Button>
