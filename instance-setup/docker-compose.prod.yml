@@ -16,7 +16,7 @@ services:
     # platform: linux/amd64  # Commented out for local testing on non-AMD64 machines
     container_name: ${NAME:-prod}-autowrx
     build:
-      context: .
+      context: ..
       dockerfile: ./backend/Dockerfile
     image: ghcr.io/eclipse-autowrx/autowrx/autowrx:latest
     ports:
@@ -32,9 +32,12 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS}
       ADMIN_EMAILS: ${ADMIN_EMAILS}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      JWT_COOKIE_DOMAIN: ${JWT_COOKIE_DOMAIN:-}
     volumes:
       - '${UPLOAD_PATH_HOST:-./data/upload}:/usr/src/playground-be/static/uploads'
       - '${PLUGIN_PATH_HOST:-./data/plugin}:/usr/src/playground-be/static/plugin'
+      # Instance snapshot: extract a snapshot zip here and restart to seed configs, plugins, templates
+      - '${INSTANCE_PATH:-./data/instance}:/usr/src/playground-be/instance'
     depends_on:
       autowrx-db:
         condition: service_healthy
