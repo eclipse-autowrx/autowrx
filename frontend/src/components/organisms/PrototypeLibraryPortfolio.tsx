@@ -219,15 +219,15 @@ const PrototypeLibraryPortfolio = () => {
         },
         backgroundColor: (context) =>
           context.dataIndex === hoveredIndex
-            ? 'hsl(var(--primary))'
-            : 'rgba(255, 255, 255, 0.5)',
-        borderColor: 'hsl(var(--border))',
+            ? `hsl(${getCSSVariable('--primary')})`
+            : '#f3f4f6',
+        borderColor: '#d1d5db',
         borderRadius: 4,
         borderWidth: 1,
         color: (context) =>
           context.dataIndex === hoveredIndex
-            ? '#FFFFFF'
-            : 'hsl(var(--muted-foreground))',
+            ? '#ffffff'
+            : '#374151',
         font: {
           size: 12,
           weight: 'normal',
