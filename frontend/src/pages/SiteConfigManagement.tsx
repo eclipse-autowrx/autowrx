@@ -187,6 +187,15 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     category: 'genai',
   },
   {
+    key: 'SHOW_USER_ASSET_PYTHON_GENAI',
+    scope: 'site',
+    value: true,
+    secret: false,
+    valueType: 'boolean',
+    description: "Show or hide the 'Python genAI' asset type in the My Assets page.",
+    category: 'genai',
+  },
+  {
     key: 'GENAI_MARKETPLACE_URL',
     scope: 'site',
     value: 'https://store-be.digitalauto.tech',
