@@ -48,9 +48,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/atoms/dropdown-menu'
 import DaDialog from '@/components/molecules/DaDialog'
+import { useSiteConfig } from '@/utils/siteConfig'
 
 const DaDashboard = () => {
   const { data: model } = useCurrentModel()
+  const logoUrl = useSiteConfig('SITE_LOGO_WIDE', '/imgs/logo-wide.png')
   const [
     prototype,
     setActivePrototype,
@@ -307,7 +309,7 @@ const DaDashboard = () => {
       >
         {showPrototypeDashboardFullScreen && (
           <Link to="/" className="w-fit h-[56px] flex items-center px-2">
-            <DaImage src="/imgs/logo-wide.png" className="object-contain" />
+            <DaImage src={logoUrl} className="object-contain" style={{ height: '28px' }} />
           </Link>
         )}
         {isAuthorized && (
