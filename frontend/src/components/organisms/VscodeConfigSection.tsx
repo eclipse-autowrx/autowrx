@@ -47,11 +47,27 @@ const VscodeConfigSection: React.FC = () => {
         }),
       ])
 
-      const existingConfigs = [...(publicRes.results || []), ...(secretRes.results || [])]
+      const existingConfigs = [
+        ...(publicRes.results || []),
+        ...(secretRes.results || []),
+      ]
+      const predefinedKeys = new Set(predefinedVscodeConfigs.map((c) => c.key))
       const existingKeys = new Set(existingConfigs.map((c) => c.key))
+      const obsoleteConfigs = existingConfigs.filter(
+        (c) => !predefinedKeys.has(c.key),
+      )
+
+      // Remove legacy/unsupported keys from VSCode category.
+      if (obsoleteConfigs.length > 0) {
+        await deleteConfigsById(
+          obsoleteConfigs.map((c) => ({ id: c.id!, key: c.key })),
+        )
+      }
 
       // Create missing defaults (including secret ones)
-      const missingConfigs = predefinedVscodeConfigs.filter((c) => !existingKeys.has(c.key))
+      const missingConfigs = predefinedVscodeConfigs.filter(
+        (c) => !existingKeys.has(c.key),
+      )
       if (missingConfigs.length > 0) {
         await configManagementService.bulkUpsertConfigs({
           configs: missingConfigs,
@@ -76,19 +92,22 @@ const VscodeConfigSection: React.FC = () => {
       const updatedConfigs = [
         ...(updatedPublicRes.results || []),
         ...(updatedSecretRes.results || []),
-      ]
+      ].filter((c) => predefinedKeys.has(c.key))
 
       // Keep a stable order matching PREDEFINED_SITE_CONFIGS
       const order = new Map(
         predefinedVscodeConfigs.map((c, idx) => [c.key, idx]),
       )
-      updatedConfigs.sort((a, b) => (order.get(a.key) ?? 999) - (order.get(b.key) ?? 999))
+      updatedConfigs.sort(
+        (a, b) => (order.get(a.key) ?? 999) - (order.get(b.key) ?? 999),
+      )
 
       setConfigs(updatedConfigs)
     } catch (err) {
       toast({
         title: 'Load failed',
-        description: err instanceof Error ? err.message : 'Failed to load VSCode configs',
+        description:
+          err instanceof Error ? err.message : 'Failed to load VSCode configs',
         variant: 'destructive',
       })
     } finally {
@@ -127,11 +146,16 @@ const VscodeConfigSection: React.FC = () => {
         }),
       ])
 
-      const allConfigs = [...(publicRes.results || []), ...(secretRes.results || [])]
+      const allConfigs = [
+        ...(publicRes.results || []),
+        ...(secretRes.results || []),
+      ]
       const { failed } = await deleteConfigsById(
         allConfigs.map((c) => ({ id: c.id!, key: c.key })),
       )
-      failed.forEach((f) => console.warn('Failed to delete VSCode config', f.key, f.reason))
+      failed.forEach((f) =>
+        console.warn('Failed to delete VSCode config', f.key, f.reason),
+      )
 
       await configManagementService.bulkUpsertConfigs({
         configs: predefinedVscodeConfigs,
@@ -139,13 +163,15 @@ const VscodeConfigSection: React.FC = () => {
 
       toast({
         title: 'Restored',
-        description: 'VSCode configs restored to default values. Reloading page...',
+        description:
+          'VSCode configs restored to default values. Reloading page...',
       })
       reloadSoon()
     } catch (err) {
       toast({
         title: 'Reset failed',
-        description: err instanceof Error ? err.message : 'Failed to reset VSCode configs',
+        description:
+          err instanceof Error ? err.message : 'Failed to reset VSCode configs',
         variant: 'destructive',
       })
       setIsLoading(false)
@@ -156,13 +182,21 @@ const VscodeConfigSection: React.FC = () => {
     <>
       <div className="px-6 py-4 border-b border-border flex items-center justify-between">
         <div className="flex flex-col">
-          <h2 className="text-lg font-semibold text-foreground">VSCode / Coder Configuration</h2>
+          <h2 className="text-lg font-semibold text-foreground">
+            VSCode / Coder Configuration
+          </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Configure Coder workspace integration and the prototypes folder mapping
+            Configure Coder workspace integration and the prototypes folder
+            mapping
           </p>
         </div>
 
-        <Button onClick={handleFactoryReset} variant="outline" size="sm" disabled={isLoading}>
+        <Button
+          onClick={handleFactoryReset}
+          variant="outline"
+          size="sm"
+          disabled={isLoading}
+        >
           Restore default
         </Button>
       </div>
@@ -187,4 +221,3 @@ const VscodeConfigSection: React.FC = () => {
 }
 
 export default VscodeConfigSection
-

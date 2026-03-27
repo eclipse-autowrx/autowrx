@@ -23,6 +23,8 @@ const coderConfig = require('../utils/coderConfig');
 // permissive modes so the workspace user can write without manual chmod.
 const PROTOTYPES_DIR_MODE = 0o777;
 const PROTOTYPES_FILE_MODE = 0o666;
+const PROTOTYPES_LINUX_UID = 1000;
+const PROTOTYPES_LINUX_GID = 1000;
 
 const normalizeIdForName = (value) =>
   String(value || '')
@@ -227,8 +229,6 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
       throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
     }
     const prototypesPath = coderCfg.prototypesPath;
-    const prototypesLinuxUid = coderCfg.prototypesLinuxUid;
-    const prototypesLinuxGid = coderCfg.prototypesLinuxGid;
 
     // // 2. Ensure Gitea organization exists (from model)
     // const orgName = model.gitea_org_name || giteaService.sanitizeOrgName(model._id.toString(), model.name);
@@ -328,15 +328,15 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
 
     try {
       fs.mkdirSync(prototypeFolderHost, { recursive: true });
-      setOwnershipAndPermissionsRecursive(userHostPath, prototypesLinuxUid, prototypesLinuxGid);
+      setOwnershipAndPermissionsRecursive(userHostPath, PROTOTYPES_LINUX_UID, PROTOTYPES_LINUX_GID);
       logger.info(`Ensured prototype folder exists: ${prototypeFolderHost}`);
     } catch (mkdirErr) {
       logger.warn(`Could not create prototype folder ${prototypeFolderHost}: ${mkdirErr.message}`);
     }
 
     // 7. Seed initial code files (only if folder is empty)
-    seedPrototypeFiles(prototypeFolderHost, prototype, prototypesLinuxUid, prototypesLinuxGid);
-    setOwnershipAndPermissionsRecursive(prototypeFolderHost, prototypesLinuxUid, prototypesLinuxGid);
+    seedPrototypeFiles(prototypeFolderHost, prototype, PROTOTYPES_LINUX_UID, PROTOTYPES_LINUX_GID);
+    setOwnershipAndPermissionsRecursive(prototypeFolderHost, PROTOTYPES_LINUX_UID, PROTOTYPES_LINUX_GID);
 
     // 8. Get or create ONE workspace per user (reuse across prototypes)
     const workspaceName = coderService.sanitizeWorkspaceName(userId);

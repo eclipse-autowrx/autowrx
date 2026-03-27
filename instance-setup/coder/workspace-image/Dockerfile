@@ -33,9 +33,12 @@ RUN chown -R coder:coder /opt/autowrx-home-seed
 
 USER coder
 
+# Install OpenCode CLI for the coder user at build-time
+RUN curl -fsSL https://opencode.ai/install | bash
+
 # Use the venv Python by default for all subsequent processes
 ENV VIRTUAL_ENV="/opt/venv"
-ENV PATH="/opt/venv/bin:${PATH}"
+ENV PATH="/home/coder/.local/bin:/opt/venv/bin:${PATH}"
 
 # Auto-activate venv in interactive shells (if shell reads /etc/profile.d)
 USER root
