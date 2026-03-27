@@ -283,7 +283,7 @@ const FormCreateModel = () => {
       {error && <p className="text-sm mt-2 text-destructive">{error}</p>}
       {/* Action */}
       <Button
-        disabled={loading || uploading}
+        disabled={loading || uploading || !data.name.trim()}
         type="submit"
         className={cn('mt-8 w-full', gradientHeader && 'bg-gradient-to-r from-primary to-secondary border-0')}
         data-id="form-create-model-btn-submit"
