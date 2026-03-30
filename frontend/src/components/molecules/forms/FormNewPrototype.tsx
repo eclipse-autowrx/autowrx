@@ -168,25 +168,12 @@ const FormNewPrototype = ({
         return candidate
     }, [isDuplicatePrototypeName, prototypeName, fetchedPrototypes])
 
-    // Check for duplicate prototype name
-    useEffect(() => {
-        if (fetchedPrototypes && selectedModelId && prototypeName) {
-            const nameExists = fetchedPrototypes.some(
-                (p: Prototype) => p.name.toLowerCase() === prototypeName.toLowerCase(),
-            )
-            if (nameExists) {
-                setError(DUPLICATE_NAME_ERROR)
-            } else if (error === DUPLICATE_NAME_ERROR) {
-                setError('')
-            }
-        }
-    }, [fetchedPrototypes, prototypeName, selectedModelId])
-
     const disabled =
         loading ||
         uploading ||
         !prototypeName.trim() ||
         (isCreatingNewModel ? !newModelName.trim() : !selectedModelId) ||
+        isDuplicatePrototypeName ||
         !!error
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {

@@ -289,7 +289,7 @@ const PageModelDetail = () => {
                 Edit
               </Button>
             ) : (
-              <div className="flex items-center space-x-2 mr-1">
+              <div className="flex items-center space-x-2 mr-1 h-fit">
                 <Button
                   variant="outline"
                   size="sm"

@@ -29,6 +29,8 @@ const path = require('path');
  * @param {Object} modelBody
  * @returns {Promise<string>}
  */
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const createModel = async (userId, modelBody) => {
   const user = await userService.getUserById(userId);
 
@@ -41,7 +43,10 @@ const createModel = async (userId, modelBody) => {
     }
   }
 
-  const existingModel = await Model.findOne({ created_by: userId, name: modelBody.name });
+  const existingModel = await Model.findOne({
+    created_by: userId,
+    name: { $regex: `^${escapeRegex(modelBody.name)}$`, $options: 'i' },
+  });
   if (existingModel) {
     throw new ApiError(httpStatus.CONFLICT, 'A model with this name already exists');
   }
@@ -511,7 +516,11 @@ const updateModelById = async (id, updateBody, actionOwner) => {
   updateBody.action_owner = actionOwner;
 
   if (updateBody.name) {
-    const duplicate = await Model.findOne({ created_by: model.created_by, name: updateBody.name, _id: { $ne: id } });
+    const duplicate = await Model.findOne({
+      created_by: model.created_by,
+      name: { $regex: `^${escapeRegex(updateBody.name)}$`, $options: 'i' },
+      _id: { $ne: id },
+    });
     if (duplicate) {
       throw new ApiError(httpStatus.CONFLICT, 'A model with this name already exists');
     }
