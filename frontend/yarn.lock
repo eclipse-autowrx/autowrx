@@ -1463,10 +1463,10 @@
     postcss "^8.5.6"
     tailwindcss "4.2.2"
 
-"@tanstack/eslint-plugin-query@^5.35.6":
-  version "5.91.4"
-  resolved "https://registry.yarnpkg.com/@tanstack/eslint-plugin-query/-/eslint-plugin-query-5.91.4.tgz#b12f35280379aef0787074932ad698fd9bc621cc"
-  integrity sha512-8a+GAeR7oxJ5laNyYBQ6miPK09Hi18o5Oie/jx8zioXODv/AUFLZQecKabPdpQSLmuDXEBPKFh+W5DKbWlahjQ==
+"@tanstack/eslint-plugin-query@^5.95.2":
+  version "5.95.2"
+  resolved "https://registry.yarnpkg.com/@tanstack/eslint-plugin-query/-/eslint-plugin-query-5.95.2.tgz#3d110a98fb8d48243db3d7c4ac7eb9ae0093d407"
+  integrity sha512-EYUFRaqjBep4EHMPpZR12sXP7Kr5qv9iDIlq93NfbhHwhITaW6Txu3ROO6dLFz5r84T8p+oZXBG77pa2Wuok7A==
   dependencies:
     "@typescript-eslint/utils" "^8.48.0"
 
