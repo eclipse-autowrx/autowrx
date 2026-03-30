@@ -16,6 +16,7 @@ import PageHealth from '@/pages/PageHealth.tsx'
 import PageNotFound from '@/pages/PageNotFound.tsx'
 import PageTest from '@/pages/PageTest.tsx'
 import SiteConfigManagement from '@/pages/SiteConfigManagement.tsx'
+import PagePrivacyPolicy from '@/pages/PagePrivacyPolicy.tsx'
 import PluginList from '@/pages/PluginList.tsx'
 import PluginManagement from '@/pages/PluginManagement.tsx'
 import TemplateManager from '@/pages/TemplateManager.tsx'
@@ -469,19 +470,19 @@ const routesConfig: RouteConfig[] = [
       //     },
       //   ],
       // },
-      // {
-      //   path: '/privacy-policy',
-      //   children: [
-      //     {
-      //       index: true,
-      //       element: (
-      //         <SuspenseProvider>
-      //           <PagePrivacyPolicy />
-      //         </SuspenseProvider>
-      //       ),
-      //     },
-      //   ],
-      // },
+      {
+        path: '/privacy-policy',
+        children: [
+          {
+            index: true,
+            element: (
+              <SuspenseProvider>
+                <PagePrivacyPolicy />
+              </SuspenseProvider>
+            ),
+          },
+        ],
+      },
       // {
       //   path: '/auth/:provider/success',
       //   element: <PageAuthSuccess />,
