@@ -147,6 +147,27 @@ const FormNewPrototype = ({
         }
     }, [allModels, isFetchingModels]) // eslint-disable-line react-hooks/exhaustive-deps
 
+    const isDuplicatePrototypeName = useMemo(() => {
+        if (!prototypeName.trim() || !selectedModelId || isCreatingNewModel) return false
+        return fetchedPrototypes?.some(
+            (p: Prototype) => p.name.toLowerCase() === prototypeName.trim().toLowerCase(),
+        ) ?? false
+    }, [prototypeName, fetchedPrototypes, selectedModelId, isCreatingNewModel])
+
+    const suggestedPrototypeName = useMemo(() => {
+        if (!isDuplicatePrototypeName || !prototypeName.trim()) return null
+        const existing = new Set(
+            fetchedPrototypes?.map((p: Prototype) => p.name.toLowerCase()) ?? [],
+        )
+        let counter = 1
+        let candidate = `${prototypeName.trim()}_${counter}`
+        while (existing.has(candidate.toLowerCase())) {
+            counter++
+            candidate = `${prototypeName.trim()}_${counter}`
+        }
+        return candidate
+    }, [isDuplicatePrototypeName, prototypeName, fetchedPrototypes])
+
     // Check for duplicate prototype name
     useEffect(() => {
         if (fetchedPrototypes && selectedModelId && prototypeName) {
@@ -437,7 +458,27 @@ const FormNewPrototype = ({
                 </DaText>
             </div>
 
-            {error && (
+            {isDuplicatePrototypeName && (
+                <p className="text-xs text-destructive mt-1">
+                    A prototype with this name already exists
+                    {suggestedPrototypeName && (
+                        <>, using{' '}
+                            <button
+                                type="button"
+                                className="underline hover:opacity-75"
+                                onClick={() => {
+                                    setPrototypeName(suggestedPrototypeName)
+                                    setError('')
+                                }}
+                            >
+                                {suggestedPrototypeName}
+                            </button>
+                        </>
+                    )}
+                </p>
+            )}
+
+            {error && !isDuplicatePrototypeName && (
                 <DaText variant="small" className="mt-4 text-red-500">
                     {error}
                 </DaText>

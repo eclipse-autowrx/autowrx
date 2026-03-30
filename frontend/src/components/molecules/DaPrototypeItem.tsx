@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import * as React from 'react'
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useMemo } from 'react'
 import { DaImage } from '../atoms/DaImage'
 import { cn } from '@/lib/utils'
 import { Prototype } from '@/types/model.type'
@@ -106,6 +106,20 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
     !!existingPrototypes?.some(
       (p) => p.name.toLowerCase() === newName.trim().toLowerCase(),
     )
+
+  const suggestedName = useMemo(() => {
+    if (!isDuplicateName || !newName.trim()) return null
+    const existing = new Set(
+      existingPrototypes?.map((p) => p.name.toLowerCase()) ?? [],
+    )
+    let counter = 1
+    let candidate = `${newName.trim()}_${counter}`
+    while (existing.has(candidate.toLowerCase())) {
+      counter++
+      candidate = `${newName.trim()}_${counter}`
+    }
+    return candidate
+  }, [isDuplicateName, newName, existingPrototypes])
 
   const handleRename = async () => {
     if (!prototype || !newName.trim() || isDuplicateName) return
@@ -357,8 +371,18 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
             />
             {isDuplicateName && (
               <p className="text-sm text-red-500 mt-1">
-                A prototype with this name already exists. Please choose a
-                different name.
+                A prototype with this name already exists
+                {suggestedName && (
+                  <>, using{' '}
+                    <button
+                      type="button"
+                      className="underline hover:opacity-75"
+                      onClick={() => setNewName(suggestedName)}
+                    >
+                      {suggestedName}
+                    </button>
+                  </>
+                )}
               </p>
             )}
           </div>
