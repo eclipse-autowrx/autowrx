@@ -130,9 +130,17 @@ In the admin panel go to **Settings → Site Management** and click **Export Sna
 
 ```
 <instance>-snapshot.zip
-├── manifest.json          # version, export date, instance name
-├── site-configs.json      # all non-secret site configs
-├── uploads/               # user-uploaded files (logos, covers, etc.)
+├── manifest.json              # version, export date, instance name
+├── site-configs.json          # all non-secret site configs
+├── global.css                 # custom global CSS
+├── uploads/                   # user-uploaded files (logos, covers, etc.)
+├── plugin/                    # plugin JS files
+├── builtin-widgets/           # builtin widget files
+├── vss/
+│   ├── vss.json               # VSS version catalog
+│   ├── v4.1.json
+│   ├── v5.0.json
+│   └── ...                    # one file per available VSS version
 └── seed/
     ├── plugins.json
     ├── model-templates.json
@@ -177,6 +185,8 @@ On startup, the backend reads `./data/instance/manifest.json` and seeds all conf
 - **MongoDB data**: Stored in Docker volume `autowrx-dbdata`
 - **Uploads**: Stored in `./data/upload` (configurable via `UPLOAD_PATH_HOST`)
 - **Plugins**: Stored in `./data/plugin` (configurable via `PLUGIN_PATH_HOST`)
+- **Builtin widgets**: Stored in `./data/builtin-widgets` (configurable via `BUILTIN_WIDGETS_PATH_HOST`)
+- **VSS data files**: Stored in `./data/vss-data` (configurable via `VSS_DATA_PATH_HOST`)
 - **Instance snapshot**: Stored in `./data/instance` (configurable via `INSTANCE_PATH`)
 
 ## Configuration Options

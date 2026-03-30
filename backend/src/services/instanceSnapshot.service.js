@@ -24,15 +24,17 @@ const logger = require('../config/logger');
 
 // Path to the mounted instance volume
 const INSTANCE_DIR = path.join(__dirname, '../../instance');
-const INSTANCE_SEED_DIR = path.join(INSTANCE_DIR, 'seed');
 const INSTANCE_MANIFEST = path.join(INSTANCE_DIR, 'manifest.json');
-const INSTANCE_SITE_CONFIGS = path.join(INSTANCE_DIR, 'site-configs.json');
+
+// Backend data directory (VSS JSON files)
+const BACKEND_DATA_DIR = path.join(__dirname, '../../data');
 
 // Static dirs served by the BE
 const STATIC_DIR = path.join(__dirname, '../../static');
 const STATIC_UPLOADS_DIR = path.join(STATIC_DIR, 'uploads');
 const STATIC_IMAGES_DIR = path.join(STATIC_DIR, 'images');
 const STATIC_PLUGIN_DIR = path.join(STATIC_DIR, 'plugin');
+const STATIC_BUILTIN_WIDGETS_DIR = path.join(STATIC_DIR, 'builtin-widgets');
 const STATIC_GLOBAL_CSS = path.join(STATIC_DIR, 'global.css');
 
 /**
@@ -65,7 +67,7 @@ const exportSnapshot = async (res, instanceName = 'autowrx-instance') => {
     version: '1.0',
     exportedAt: new Date().toISOString(),
     instanceName: safeName,
-    contents: ['site-configs.json', 'uploads/', 'global.css', 'plugin/', 'seed/plugins.json', 'seed/model-templates.json', 'seed/dashboard-templates.json'],
+    contents: ['site-configs.json', 'uploads/', 'global.css', 'plugin/', 'builtin-widgets/', 'vss/', 'seed/plugins.json', 'seed/model-templates.json', 'seed/dashboard-templates.json'],
   };
   archive.append(JSON.stringify(manifest, null, 2), { name: 'manifest.json' });
 
@@ -91,10 +93,34 @@ const exportSnapshot = async (res, instanceName = 'autowrx-instance') => {
     archive.directory(STATIC_PLUGIN_DIR, 'plugin');
   }
 
+  // 3d. Builtin widget files
+  if (fs.existsSync(STATIC_BUILTIN_WIDGETS_DIR)) {
+    archive.directory(STATIC_BUILTIN_WIDGETS_DIR, 'builtin-widgets');
+  }
+
+  // 3e. VSS data files (vss.json catalog + all vX.Y.json version files)
+  const vssListPath = path.join(BACKEND_DATA_DIR, 'vss.json');
+  if (fs.existsSync(vssListPath)) {
+    archive.file(vssListPath, { name: 'vss/vss.json' });
+    try {
+      const vssList = JSON.parse(fs.readFileSync(vssListPath, 'utf8'));
+      if (Array.isArray(vssList)) {
+        for (const entry of vssList) {
+          const vssFilePath = path.join(BACKEND_DATA_DIR, `${entry.name}.json`);
+          if (fs.existsSync(vssFilePath)) {
+            archive.file(vssFilePath, { name: `vss/${entry.name}.json` });
+          }
+        }
+      }
+    } catch (e) {
+      logger.warn('[Export] Could not enumerate VSS version files:', e.message);
+    }
+  }
+
   // 4. Plugins
   const plugins = await Plugin.find({}).lean();
-  const pluginsExport = plugins.map(({ name, slug, image, description, apis, config, tags, type }) => ({
-    name, slug, image, description, apis, config, tags, type,
+  const pluginsExport = plugins.map(({ name, slug, image, description, is_internal, url, config, type }) => ({
+    name, slug, image, description, is_internal, url, config, type,
   }));
   archive.append(JSON.stringify(pluginsExport, null, 2), { name: 'seed/plugins.json' });
 
@@ -145,6 +171,12 @@ function resolvePaths(instanceDir) {
     pluginFiles: isNewFormat
       ? path.join(instanceDir, 'plugin')
       : path.join(instanceDir, 'files', 'plugins'),
+    builtinWidgets: isNewFormat
+      ? path.join(instanceDir, 'builtin-widgets')
+      : null,
+    vssDir: isNewFormat
+      ? path.join(instanceDir, 'vss')
+      : null,
     plugins: isNewFormat
       ? path.join(instanceDir, 'seed', 'plugins.json')
       : path.join(instanceDir, 'data', 'plugins.json'),
@@ -276,6 +308,35 @@ const seedFromInstanceBundle = async (systemUserId) => {
     }
   }
 
+  // 2e. Move builtin widget files (new format only)
+  if (paths.builtinWidgets && fs.existsSync(paths.builtinWidgets)) {
+    try {
+      moveRecursive(paths.builtinWidgets, STATIC_BUILTIN_WIDGETS_DIR);
+      fs.rmdirSync(paths.builtinWidgets);
+      logger.info('[Instance] Moved builtin widget files.');
+    } catch (e) {
+      logger.error('[Instance] Failed to move builtin widget files:', e.message);
+    }
+  }
+
+  // 2f. Replace VSS data files (new format only)
+  if (paths.vssDir && fs.existsSync(paths.vssDir)) {
+    try {
+      if (!fs.existsSync(BACKEND_DATA_DIR)) fs.mkdirSync(BACKEND_DATA_DIR, { recursive: true });
+      for (const entry of fs.readdirSync(paths.vssDir, { withFileTypes: true })) {
+        if (!entry.isFile()) continue;
+        const srcPath = path.join(paths.vssDir, entry.name);
+        const destPath = path.join(BACKEND_DATA_DIR, entry.name);
+        fs.copyFileSync(srcPath, destPath);
+        fs.unlinkSync(srcPath);
+      }
+      fs.rmdirSync(paths.vssDir);
+      logger.info('[Instance] Replaced VSS data files.');
+    } catch (e) {
+      logger.error('[Instance] Failed to replace VSS data files:', e.message);
+    }
+  }
+
   // 3. Seed plugins
   if (fs.existsSync(paths.plugins)) {
     try {
@@ -340,7 +401,7 @@ const seedFromInstanceBundle = async (systemUserId) => {
   // Static files were already moved above. Remove JSON seed files and the manifest.
   try {
     const removeIfExists = (p) => { if (fs.existsSync(p)) fs.unlinkSync(p); };
-    const removeDirIfEmpty = (p) => { try { fs.rmdirSync(p); } catch (_) {} };
+    const removeDirIfEmpty = (p) => { try { fs.rmdirSync(p); } catch (_) { } };
 
     removeIfExists(paths.siteConfigs);
     removeIfExists(paths.plugins);
