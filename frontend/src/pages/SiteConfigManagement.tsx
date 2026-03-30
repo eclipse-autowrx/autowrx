@@ -187,13 +187,13 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     category: 'genai',
   },
   {
-    key: 'SHOW_USER_ASSET_PYTHON_GENAI',
+    key: 'USER_ASSET_TYPES',
     scope: 'site',
-    value: true,
+    value: ['CLOUD_RUNTIME', 'HARDWARE_KIT', 'GENAI-PYTHON'],
     secret: false,
-    valueType: 'boolean',
-    description: "Show or hide the 'Python genAI' asset type in the My Assets page.",
-    category: 'genai',
+    valueType: 'array',
+    description: 'Asset types users can create and manage on the My Assets page.',
+    category: 'general',
   },
   {
     key: 'GENAI_MARKETPLACE_URL',

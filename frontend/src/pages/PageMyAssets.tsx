@@ -241,15 +241,10 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
   const [dataStr, setDataStr] = useState<any>('')
   const { createAsset, updateAsset } = useAssets()
   const { toast } = useToast()
-  const showPythonGenAI = useSiteConfig('SHOW_USER_ASSET_PYTHON_GENAI', true)
+  const enabledAssetTypes = useSiteConfig('USER_ASSET_TYPES', ['CLOUD_RUNTIME', 'HARDWARE_KIT', 'GENAI-PYTHON']) as string[]
   const visibleBareTypes = ASSET_BARE_TYPES.filter(
-    (t) => t.value !== 'GENAI-PYTHON' || showPythonGenAI,
+    (t) => enabledAssetTypes.includes(t.value),
   )
-
-  // const ASSET_TYPES = [
-  //     { name: 'CLOUD_RUNTIME', helperText: "Runtime on cloud to execute your app" },
-  //     { name: 'HARDWARE_KIT', helperText: "Hardware setup to get deploy app" }
-  // ]
 
   // const [readOnlyUsers, setReadOnlyUsers] = useState<any[]>([])
 
@@ -397,9 +392,9 @@ const PageMyAssets = () => {
   const shareDialogState = useState<boolean>(false)
   const kitManagerDialogState = useState<boolean>(false)
 
-  const showPythonGenAI = useSiteConfig('SHOW_USER_ASSET_PYTHON_GENAI', true)
+  const enabledAssetTypes = useSiteConfig('USER_ASSET_TYPES', ['CLOUD_RUNTIME', 'HARDWARE_KIT', 'GENAI-PYTHON']) as string[]
   const visibleAssetTypes = ASSET_TYPES.filter(
-    (t) => t.value !== 'GENAI-PYTHON' || showPythonGenAI,
+    (t) => t.value === 'all' || enabledAssetTypes.includes(t.value),
   )
 
   const [activeTab, setActiveTab] = useState(ASSET_TYPES[0].value)
