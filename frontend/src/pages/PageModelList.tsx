@@ -127,8 +127,9 @@ const PageModelList = () => {
 
         addLog({
           name: `New model '${createdModel.name}' with visibility: ${createdModel.visibility}`,
-          description: `New model '${createdModel.name}' was created by ${user?.email || user?.name || user?.id
-            }`,
+          description: `New model '${createdModel.name}' was created by ${
+            user?.email || user?.name || user?.id
+          }`,
           type: 'new-model',
           create_by: user?.id!,
           ref_id: createdModel.id,
@@ -343,7 +344,6 @@ const PageModelList = () => {
                     </div>
                   )}
                 </div>
-
                 {user && (
                   <ModelSection
                     title="My Models"
@@ -351,24 +351,8 @@ const PageModelList = () => {
                     isLoading={isLoading && ownedModels.length === 0}
                     emptyText={
                       searchQuery.trim()
-                        ? 'No models match your search.'
-                        : 'No models found. Please create a new model.'
-                    }
-                    emptyAction={null}
-                    headerExtras={
-                      <div className="flex flex-col w-80 items-end gap-2">
-                        <div className="relative w-full max-w-sm">
-                          <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            type="text"
-                            placeholder="Search models..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-9"
-                            data-id="model-search-input"
-                          />
-                        </div>
-                      </div>
+                        ? 'No models found. Please create a new model.'
+                        : "You don't have any models yet. Please create your first model."
                     }
                     sectionRef={myModelsRef}
                   />

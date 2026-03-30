@@ -11,6 +11,7 @@ import { useState, useRef, useCallback, useMemo } from 'react'
 import { DaImage } from '../atoms/DaImage'
 import { cn } from '@/lib/utils'
 import { Prototype } from '@/types/model.type'
+import { HiStar } from 'react-icons/hi'
 import {
   TbCloudDown,
   TbCode,
@@ -264,6 +265,12 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
                 {prototype?.executed_turns}
               </div>
             </DaTooltip>
+          )}
+          {prototype?.avg_score && (
+            <div className="flex w-fit items-center text-sm font-semibold">
+              <HiStar className="size-[18px] mr-0.5 text-yellow-500" />
+              {prototype?.avg_score.toFixed(1)}
+            </div>
           )}
         </div>
       </div>

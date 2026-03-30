@@ -18,6 +18,7 @@ import EmailConfigSection from '@/components/organisms/EmailConfigSection'
 import StagingConfigSection from '@/components/organisms/StagingConfigSection'
 import GenAIConfigSection from '@/components/organisms/GenAIConfigSection'
 import PrototypeConfigSection from '../components/organisms/PrototypeConfigSection'
+import PrivacyPolicySection from '../components/organisms/PrivacyPolicySection'
 
 // Keys that should be excluded from the site-config page
 // These keys are managed in their own dedicated pages
@@ -48,22 +49,6 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     description: 'Default cover image used when creating a new prototype.',
   },
   {
-    key: 'ABOUT_LINK',
-    scope: 'site',
-    value: '',
-    secret: false,
-    valueType: 'string',
-    description: 'URL displayed as a link next to the site logo (e.g. https://www.digital.auto/). Leave empty to hide.',
-  },
-  {
-    key: 'ABOUT_LINK_TEXT',
-    scope: 'site',
-    value: 'About',
-    secret: false,
-    valueType: 'string',
-    description: 'Display text for the About link next to the site logo.',
-  },
-  {
     key: 'SITE_TITLE',
     scope: 'site',
     value: 'Playground | digital.auto',
@@ -83,6 +68,15 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     value: '/privacy-policy',
     secret: false,
     valueType: 'string',
+  },
+  {
+    key: 'PRIVACY_POLICY_CONTENT',
+    scope: 'site',
+    value: '',
+    secret: false,
+    valueType: 'string',
+    description: 'Markdown content for the Privacy Policy page displayed at /privacy-policy.',
+    category: 'privacy',
   },
   {
     key: 'TERMS_OF_SERVICE_URL',
@@ -187,6 +181,15 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     category: 'genai',
   },
   {
+    key: 'USER_ASSET_TYPES',
+    scope: 'site',
+    value: ['CLOUD_RUNTIME', 'HARDWARE_KIT', 'GENAI-PYTHON'],
+    secret: false,
+    valueType: 'array',
+    description: 'Asset types users can create and manage on the My Assets page.',
+    category: 'general',
+  },
+  {
     key: 'GENAI_MARKETPLACE_URL',
     scope: 'site',
     value: 'https://store-be.digitalauto.tech',
@@ -229,6 +232,10 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
 
 export const PREDEFINED_GENAI_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(
   (config) => config.category === 'genai',
+).map((config) => config.key)
+
+export const PREDEFINED_PRIVACY_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(
+  (config) => config.category === 'privacy',
 ).map((config) => config.key)
 
 export const PREDEFINED_PROTOTYPE_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(
@@ -289,6 +296,7 @@ const SiteConfigManagement: React.FC = () => {
     | 'staging'
     | 'prototype'
     | 'genai'
+    | 'privacy'
   const validSections: SectionTab[] = [
     'public',
     'style',
@@ -300,6 +308,7 @@ const SiteConfigManagement: React.FC = () => {
     'staging',
     'prototype',
     'genai',
+    'privacy',
   ]
 
   const getSectionFromUrl = (): SectionTab => {
@@ -437,6 +446,15 @@ const SiteConfigManagement: React.FC = () => {
                 >
                   Standard Staging Frame
                 </button>
+                <button
+                  onClick={() => handleTabChange('privacy')}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'privacy'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-muted'
+                    }`}
+                >
+                  Privacy Policy
+                </button>
               </nav>
             </div>
           </div>
@@ -455,6 +473,7 @@ const SiteConfigManagement: React.FC = () => {
               {activeTab === 'secrets' && <SecretConfigSection />}
               {activeTab === 'prototype' && <PrototypeConfigSection />}
               {activeTab === 'genai' && <GenAIConfigSection />}
+              {activeTab === 'privacy' && <PrivacyPolicySection />}
             </div>
           </div>
         </div>
