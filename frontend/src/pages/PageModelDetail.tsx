@@ -156,18 +156,21 @@ const PageModelDetail = () => {
   const { data: currentUser } = useSelfProfileQuery()
   const { data: modelList } = useListModelLite()
 
+  const getCreatedById = (createdBy: any): string =>
+    typeof createdBy === 'object' ? createdBy?.id ?? '' : createdBy ?? ''
+
   const isDuplicateName = useMemo(() => {
     if (!newName.trim() || !currentUser || !model) return false
     if (newName.trim().toLowerCase() === model.name.toLowerCase()) return false
     return modelList?.results?.some(
-      (m) => m.created_by === currentUser.id && m.name.toLowerCase() === newName.trim().toLowerCase(),
+      (m) => getCreatedById(m.created_by) === currentUser.id && m.name.toLowerCase() === newName.trim().toLowerCase(),
     ) ?? false
   }, [newName, modelList, currentUser, model])
 
   const suggestedName = useMemo(() => {
     if (!isDuplicateName || !newName.trim()) return null
     const owned = new Set(
-      modelList?.results?.filter((m) => m.created_by === currentUser?.id).map((m) => m.name.toLowerCase()) ?? [],
+      modelList?.results?.filter((m) => getCreatedById(m.created_by) === currentUser?.id).map((m) => m.name.toLowerCase()) ?? [],
     )
     let counter = 1
     let candidate = `${newName.trim()}_${counter}`

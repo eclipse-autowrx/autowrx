@@ -63,17 +63,20 @@ const FormCreateModel = () => {
   const { data: currentUser } = useSelfProfileQuery()
   const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
 
+  const getCreatedById = (createdBy: any): string =>
+    typeof createdBy === 'object' ? createdBy?.id ?? '' : createdBy ?? ''
+
   const isDuplicateName = useMemo(() => {
     if (!data.name.trim() || !currentUser) return false
     return modelList?.results?.some(
-      (m) => m.created_by === currentUser.id && m.name.toLowerCase() === data.name.trim().toLowerCase(),
+      (m) => getCreatedById(m.created_by) === currentUser.id && m.name.toLowerCase() === data.name.trim().toLowerCase(),
     ) ?? false
   }, [data.name, modelList, currentUser])
 
   const suggestedName = useMemo(() => {
     if (!isDuplicateName || !data.name.trim()) return null
     const owned = new Set(
-      modelList?.results?.filter((m) => m.created_by === currentUser?.id).map((m) => m.name.toLowerCase()) ?? [],
+      modelList?.results?.filter((m) => getCreatedById(m.created_by) === currentUser?.id).map((m) => m.name.toLowerCase()) ?? [],
     )
     let counter = 1
     let candidate = `${data.name.trim()}_${counter}`
