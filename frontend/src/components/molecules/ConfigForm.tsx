@@ -95,7 +95,7 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
         case 'object':
         case 'array':
           // JsonEditor already passes parsed objects — only parse if it's a string
-          if (typeof value === 'object') return value;
+          if (value !== null && typeof value === 'object') return value;
           return JSON.parse(value);
         case 'date':
           return new Date(value).toISOString();

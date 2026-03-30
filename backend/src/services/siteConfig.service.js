@@ -857,11 +857,7 @@ const seedPredefinedSiteConfigs = async (predefinedConfigs, systemUserId) => {
     // Backfill created_by/updated_by for configs seeded before this fix
     if (systemUserId) {
       await SiteConfig.updateMany(
-        { scope: 'site', created_by: { $exists: false } },
-        { $set: { created_by: systemUserId, updated_by: systemUserId } }
-      );
-      await SiteConfig.updateMany(
-        { scope: 'site', created_by: null },
+        { scope: 'site', $or: [{ created_by: { $exists: false } }, { created_by: null }] },
         { $set: { created_by: systemUserId, updated_by: systemUserId } }
       );
     }
