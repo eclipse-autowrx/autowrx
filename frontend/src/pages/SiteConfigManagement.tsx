@@ -228,6 +228,14 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     description:
       'Apply a primary-to-secondary gradient to the main header and secondary navigation bar.',
   },
+  {
+    key: 'PREDEFINED_VSS_ONLY',
+    scope: 'site',
+    value: true,
+    secret: false,
+    valueType: 'boolean',
+    description: 'When enabled, only show the 10 predefined VSS versions (v3.0 – v5.0rc0) when creating a model, matching the etas-playground setup. Disable to show all available VSS versions.',
+  },
 ]
 
 export const PREDEFINED_GENAI_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(
