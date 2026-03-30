@@ -828,7 +828,7 @@ const bulkUpsertSiteConfigs = async (configs, userId) => {
  * @param {Array} predefinedConfigs - Array of predefined config objects
  * @returns {Promise<void>}
  */
-const seedPredefinedSiteConfigs = async (predefinedConfigs) => {
+const seedPredefinedSiteConfigs = async (predefinedConfigs, systemUserId) => {
   if (!predefinedConfigs || predefinedConfigs.length === 0) return;
 
   try {
@@ -844,6 +844,8 @@ const seedPredefinedSiteConfigs = async (predefinedConfigs) => {
             secret: config.secret !== undefined ? config.secret : false,
             description: config.description || '',
             category: config.category || 'general',
+            created_by: systemUserId,
+            updated_by: systemUserId,
           },
         },
         upsert: true,
@@ -851,6 +853,19 @@ const seedPredefinedSiteConfigs = async (predefinedConfigs) => {
     }));
 
     await SiteConfig.bulkWrite(operations, { ordered: false });
+
+    // Backfill created_by/updated_by for configs seeded before this fix
+    if (systemUserId) {
+      await SiteConfig.updateMany(
+        { scope: 'site', created_by: { $exists: false } },
+        { $set: { created_by: systemUserId, updated_by: systemUserId } }
+      );
+      await SiteConfig.updateMany(
+        { scope: 'site', created_by: null },
+        { $set: { created_by: systemUserId, updated_by: systemUserId } }
+      );
+    }
+
     console.log(`[SiteConfig] Seeded ${predefinedConfigs.length} predefined configs (skipped existing).`);
   } catch (error) {
     console.error('[SiteConfig] Failed to seed predefined configs:', error.message);

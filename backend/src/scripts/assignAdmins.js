@@ -68,6 +68,10 @@ const assignAdmins = async () => {
   }
 
   logger.info('Admins assigned successfully');
+
+  // Return the first admin's ID for use by seed functions
+  const firstAdmin = allAdmins[0];
+  return firstAdmin ? (firstAdmin.id || firstAdmin._id) : null;
 };
 
 module.exports = assignAdmins;
