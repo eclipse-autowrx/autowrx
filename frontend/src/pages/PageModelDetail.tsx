@@ -7,6 +7,8 @@
 // SPDX-License-Identifier: MIT
 
 import { useMemo, useState } from 'react'
+import { isAxiosError } from 'axios'
+import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { Spinner } from '@/components/atoms/spinner'
@@ -30,7 +32,6 @@ import {
 import { uploadFileService } from '@/services/upload.service'
 import { convertJSONToProperty } from '@/lib/vehiclePropertyUtils'
 import {
-  TbDotsVertical,
   TbDownload,
   TbEdit,
   TbFileExport,
@@ -45,7 +46,12 @@ import { PERMISSIONS } from '@/data/permission'
 import { cn } from '@/lib/utils'
 import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
-import useListModelLite from '@/hooks/useListModelLite'
+import { listModelsLite } from '@/services/model.service'
+import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
+import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
+
+const getCreatedById = (createdBy: any): string =>
+  typeof createdBy === 'object' ? createdBy?.id ?? '' : createdBy ?? ''
 
 interface VisibilityControlProps {
   initialVisibility: 'public' | 'private' | undefined
@@ -149,37 +155,33 @@ const PageModelDetail = () => {
   const [isDownloading, setIsDownloading] = useState(false)
 
   const [newName, setNewName] = useState(model?.name ?? '')
+  const [nameError, setNameError] = useState('')
   const { refetch } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model?.id])
   const [confirmPopupOpen, setConfirmPopupOpen] = useState(false)
 
   const { data: currentUser } = useSelfProfileQuery()
-  const { data: modelList } = useListModelLite()
 
-  const getCreatedById = (createdBy: any): string =>
-    typeof createdBy === 'object' ? createdBy?.id ?? '' : createdBy ?? ''
+  // Fetch the model list lazily — only when the user opens the rename input
+  const { data: modelList } = useQuery({
+    queryKey: ['listModelLite', currentUser?.id],
+    queryFn: () => listModelsLite({ created_by: currentUser!.id }),
+    enabled: isEditingName && !!currentUser?.id,
+  })
 
-  const isDuplicateName = useMemo(() => {
-    if (!newName.trim() || !currentUser || !model) return false
-    if (newName.trim().toLowerCase() === model.name.toLowerCase()) return false
-    return modelList?.results?.some(
-      (m) => getCreatedById(m.created_by) === currentUser.id && m.name.toLowerCase() === newName.trim().toLowerCase(),
-    ) ?? false
-  }, [newName, modelList, currentUser, model])
+  const ownedModelNames = useMemo(
+    () =>
+      modelList?.results
+        ?.filter((m) => getCreatedById(m.created_by) === currentUser?.id)
+        .map((m) => m.name) ?? [],
+    [modelList, currentUser],
+  )
 
-  const suggestedName = useMemo(() => {
-    if (!isDuplicateName || !newName.trim()) return null
-    const owned = new Set(
-      modelList?.results?.filter((m) => getCreatedById(m.created_by) === currentUser?.id).map((m) => m.name.toLowerCase()) ?? [],
-    )
-    let counter = 1
-    let candidate = `${newName.trim()}_${counter}`
-    while (owned.has(candidate.toLowerCase())) {
-      counter++
-      candidate = `${newName.trim()}_${counter}`
-    }
-    return candidate
-  }, [isDuplicateName, newName, modelList, currentUser])
+  const { isDuplicate: isDuplicateName, suggestedName } = useDuplicateNameCheck(
+    newName,
+    ownedModelNames,
+    model?.name,
+  )
 
   const handleAvatarChange = async (file: File) => {
     if (!model || !model.id) return
@@ -198,13 +200,18 @@ const PageModelDetail = () => {
   }
 
   const handleNameSave = async () => {
-    if (!model || !model.id) return
+    if (!model || !model.id || !newName.trim()) return
+    setNameError('')
     try {
-      await updateModelService(model.id, { name: newName })
+      await updateModelService(model.id, { name: newName.trim() })
       await refetch()
       setIsEditingName(false)
     } catch (error) {
-      console.error('Failed to update model name:', error)
+      if (isAxiosError(error) && error.response?.status === 409) {
+        setNameError(error.response.data?.message || 'A model with this name already exists')
+      } else {
+        console.error('Failed to update model name:', error)
+      }
     }
   }
 
@@ -249,20 +256,18 @@ const PageModelDetail = () => {
                 <div className="flex flex-col gap-1">
                   <Input
                     value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
+                    onChange={(e) => { setNewName(e.target.value); setNameError('') }}
                     className="h-8 min-w-[300px]"
                   />
-                  {isDuplicateName && suggestedName && (
-                    <p className="text-xs text-destructive">
-                      A model with this name already exists, using{' '}
-                      <button
-                        type="button"
-                        className="underline hover:opacity-75"
-                        onClick={() => setNewName(suggestedName)}
-                      >
-                        {suggestedName}
-                      </button>
-                    </p>
+                  {isDuplicateName && (
+                    <DaDuplicateNameHint
+                      message="A model with this name already exists"
+                      suggestedName={suggestedName}
+                      onApplySuggestion={(name) => { setNewName(name); setNameError('') }}
+                    />
+                  )}
+                  {nameError && !isDuplicateName && (
+                    <p className="text-xs text-destructive">{nameError}</p>
                   )}
                 </div>
               ) : (
@@ -303,7 +308,7 @@ const PageModelDetail = () => {
                   size="sm"
                   className="w-16"
                   onClick={handleNameSave}
-                  disabled={isDuplicateName || !newName.trim()}
+                  disabled={!newName.trim() || isDuplicateName}
                 >
                   Save
                 </Button>

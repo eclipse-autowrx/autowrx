@@ -18,6 +18,8 @@ import {
   SelectValue,
 } from '@/components/atoms/select'
 import { CVI } from '@/data/CVI'
+import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
+import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
 import { createModelService } from '@/services/model.service'
 import { ModelCreate } from '@/types/model.type'
 import { isAxiosError } from 'axios'
@@ -33,6 +35,9 @@ import DaFileUploadButton from '@/components/atoms/DaFileUploadButton'
 import { useQuery } from '@tanstack/react-query'
 import { listModelTemplates } from '@/services/modelTemplate.service'
 import { getConfig, useSiteConfig } from '@/utils/siteConfig'
+
+const getCreatedById = (createdBy: any): string =>
+  typeof createdBy === 'object' ? createdBy?.id ?? '' : createdBy ?? ''
 
 type ModelData = {
   cvi: string
@@ -63,29 +68,15 @@ const FormCreateModel = () => {
   const { data: currentUser } = useSelfProfileQuery()
   const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
 
-  const getCreatedById = (createdBy: any): string =>
-    typeof createdBy === 'object' ? createdBy?.id ?? '' : createdBy ?? ''
+  const ownedModelNames = useMemo(
+    () =>
+      modelList?.results
+        ?.filter((m) => getCreatedById(m.created_by) === currentUser?.id)
+        .map((m) => m.name) ?? [],
+    [modelList, currentUser],
+  )
 
-  const isDuplicateName = useMemo(() => {
-    if (!data.name.trim() || !currentUser) return false
-    return modelList?.results?.some(
-      (m) => getCreatedById(m.created_by) === currentUser.id && m.name.toLowerCase() === data.name.trim().toLowerCase(),
-    ) ?? false
-  }, [data.name, modelList, currentUser])
-
-  const suggestedName = useMemo(() => {
-    if (!isDuplicateName || !data.name.trim()) return null
-    const owned = new Set(
-      modelList?.results?.filter((m) => getCreatedById(m.created_by) === currentUser?.id).map((m) => m.name.toLowerCase()) ?? [],
-    )
-    let counter = 1
-    let candidate = `${data.name.trim()}_${counter}`
-    while (owned.has(candidate.toLowerCase())) {
-      counter++
-      candidate = `${data.name.trim()}_${counter}`
-    }
-    return candidate
-  }, [isDuplicateName, data.name, modelList, currentUser])
+  const { isDuplicate: isDuplicateName, suggestedName } = useDuplicateNameCheck(data.name, ownedModelNames)
 
   // Fetch templates
   const { data: templatesData } = useQuery({
@@ -220,17 +211,12 @@ const FormCreateModel = () => {
           placeholder="Model name"
           data-id="form-create-model-input-name"
         />
-        {isDuplicateName && suggestedName && (
-          <p className="text-xs text-destructive">
-            A model with this name already exists, using{' '}
-            <button
-              type="button"
-              className="underline hover:opacity-75"
-              onClick={() => handleChange('name', suggestedName)}
-            >
-              {suggestedName}
-            </button>
-          </p>
+        {isDuplicateName && (
+          <DaDuplicateNameHint
+            message="A model with this name already exists"
+            suggestedName={suggestedName}
+            onApplySuggestion={(name) => handleChange('name', name)}
+          />
         )}
       </div>
 

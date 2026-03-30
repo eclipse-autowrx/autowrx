@@ -26,6 +26,8 @@ import { SAMPLE_PROJECTS } from '@/data/sampleProjects'
 import useListModelPrototypes from '@/hooks/useListModelPrototypes'
 import useListVSSVersions from '@/hooks/useListVSSVersions'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
+import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
 import { addLog } from '@/services/log.service'
 import { createModelService, listModelsLite } from '@/services/model.service'
 import { listModelTemplates } from '@/services/modelTemplate.service'
@@ -53,8 +55,6 @@ interface FormNewPrototypeProps {
     onSuccess?: (modelId: string, prototypeId: string, prototypeName: string) => void
 }
 
-const DUPLICATE_NAME_ERROR =
-    'A prototype with this name already exists. Please choose a different name.'
 
 const FormNewPrototype = ({
     onClose,
@@ -147,26 +147,13 @@ const FormNewPrototype = ({
         }
     }, [allModels, isFetchingModels]) // eslint-disable-line react-hooks/exhaustive-deps
 
-    const isDuplicatePrototypeName = useMemo(() => {
-        if (!prototypeName.trim() || !selectedModelId || isCreatingNewModel) return false
-        return fetchedPrototypes?.some(
-            (p: Prototype) => p.name.toLowerCase() === prototypeName.trim().toLowerCase(),
-        ) ?? false
-    }, [prototypeName, fetchedPrototypes, selectedModelId, isCreatingNewModel])
+    const existingPrototypeNames = useMemo(
+        () => (!isCreatingNewModel && selectedModelId ? fetchedPrototypes?.map((p: Prototype) => p.name) ?? [] : []),
+        [fetchedPrototypes, isCreatingNewModel, selectedModelId],
+    )
 
-    const suggestedPrototypeName = useMemo(() => {
-        if (!isDuplicatePrototypeName || !prototypeName.trim()) return null
-        const existing = new Set(
-            fetchedPrototypes?.map((p: Prototype) => p.name.toLowerCase()) ?? [],
-        )
-        let counter = 1
-        let candidate = `${prototypeName.trim()}_${counter}`
-        while (existing.has(candidate.toLowerCase())) {
-            counter++
-            candidate = `${prototypeName.trim()}_${counter}`
-        }
-        return candidate
-    }, [isDuplicatePrototypeName, prototypeName, fetchedPrototypes])
+    const { isDuplicate: isDuplicatePrototypeName, suggestedName: suggestedPrototypeName } =
+        useDuplicateNameCheck(prototypeName, existingPrototypeNames)
 
     const disabled =
         loading ||
@@ -446,23 +433,14 @@ const FormNewPrototype = ({
             </div>
 
             {isDuplicatePrototypeName && (
-                <p className="text-xs text-destructive mt-1">
-                    A prototype with this name already exists
-                    {suggestedPrototypeName && (
-                        <>, using{' '}
-                            <button
-                                type="button"
-                                className="underline hover:opacity-75"
-                                onClick={() => {
-                                    setPrototypeName(suggestedPrototypeName)
-                                    setError('')
-                                }}
-                            >
-                                {suggestedPrototypeName}
-                            </button>
-                        </>
-                    )}
-                </p>
+                <DaDuplicateNameHint
+                    message="A prototype with this name already exists"
+                    suggestedName={suggestedPrototypeName}
+                    onApplySuggestion={(name) => {
+                        setPrototypeName(name)
+                        setError('')
+                    }}
+                />
             )}
 
             {error && !isDuplicatePrototypeName && (
