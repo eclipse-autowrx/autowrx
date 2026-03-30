@@ -4578,10 +4578,10 @@ node-releases@^2.0.27:
   resolved "https://registry.yarnpkg.com/node-releases/-/node-releases-2.0.27.tgz#eedca519205cf20f650f61d56b070db111231e4e"
   integrity sha512-nmh3lCkYZ3grZvqcCH+fjmQ7X+H0OeZgP40OierEaAptX4XofMh5kwNbWh7lBduUzCcV/8kZ+NDLCwm2iorIlA==
 
-non.geist@^1.0.3:
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/non.geist/-/non.geist-1.0.4.tgz#967b89cf433687778af90163292873e7263a5be2"
-  integrity sha512-2spmLTgz5ipZrFGLiI1YkiHb8Yit0yFySPvWzal3wCwCFilMFQQ/Jwwz4lcEatwIKUpOeMYwyFwP8MJ8EVKqGA==
+non.geist@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/non.geist/-/non.geist-2.0.1.tgz#319f5a9839188362494a40e1d3e128dff9f10a12"
+  integrity sha512-hCl7GMAbrEcxTTxVA7tJfqRuFkvLmqQKoKxyOiIFjaoWG7ZZu5TrZN7GqNJ83QLPDZgwqINnJVhRKVwb/Sz1JA==
 
 object-assign@^4.1.1:
   version "4.1.1"
