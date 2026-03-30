@@ -127,8 +127,9 @@ const PageModelList = () => {
 
         addLog({
           name: `New model '${createdModel.name}' with visibility: ${createdModel.visibility}`,
-          description: `New model '${createdModel.name}' was created by ${user?.email || user?.name || user?.id
-            }`,
+          description: `New model '${createdModel.name}' was created by ${
+            user?.email || user?.name || user?.id
+          }`,
           type: 'new-model',
           create_by: user?.id!,
           ref_id: createdModel.id,
@@ -343,19 +344,19 @@ const PageModelList = () => {
                     </div>
                   )}
                 </div>
-                {
-                  filterModels(ownedModels)?.length === 0 &&
-                  !isLoading && ownedModels.length === 0 && (
-                    <div className="flex flex-col items-center justify-center gap-3 py-12">
-                      <p className="text-base text-muted-foreground font-medium">
-                        {
-                          searchQuery.trim() ?
-                            "No models found. Please create a new model."
-                            : "You don't have any models yet. Please create your first model."}
-                      </p>
-                    </div>
-                  )
-                }
+                {user && (
+                  <ModelSection
+                    title="My Models"
+                    models={filterModels(ownedModels)}
+                    isLoading={isLoading && ownedModels.length === 0}
+                    emptyText={
+                      searchQuery.trim()
+                        ? 'No models found. Please create a new model.'
+                        : "You don't have any models yet. Please create your first model."
+                    }
+                    sectionRef={myModelsRef}
+                  />
+                )}
 
                 {user && (
                   <ModelSection
