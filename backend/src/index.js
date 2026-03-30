@@ -33,6 +33,7 @@ mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
   initializeRoles().then(async () => {
     const adminUserId = await assignAdmins();
     await seedFromInstanceBundle(adminUserId);
+    // await seedPredefinedSiteConfigs(PREDEFINED_SITE_CONFIGS, adminUserId)
     // Run after seeding so VSS files from snapshot are in place before the
     // scheduled check can download/overwrite them from GitHub.
     setupScheduledCheck();

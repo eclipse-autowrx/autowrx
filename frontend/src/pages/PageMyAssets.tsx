@@ -8,6 +8,7 @@
 
 import { useEffect, useState } from 'react'
 import { useAssets } from '@/hooks/useAssets.ts'
+import { useSiteConfig } from '@/utils/siteConfig'
 import { TbTrash, TbPencil, TbShare, TbPlus, TbDeviceDesktopCog } from 'react-icons/tb'
 import FormHardwareKitManager from '@/components/organisms/FormHardwareKitManager'
 import DaDialog from '@/components/molecules/DaDialog'
@@ -240,11 +241,10 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
   const [dataStr, setDataStr] = useState<any>('')
   const { createAsset, updateAsset } = useAssets()
   const { toast } = useToast()
-
-  // const ASSET_TYPES = [
-  //     { name: 'CLOUD_RUNTIME', helperText: "Runtime on cloud to execute your app" },
-  //     { name: 'HARDWARE_KIT', helperText: "Hardware setup to get deploy app" }
-  // ]
+  const enabledAssetTypes = useSiteConfig('USER_ASSET_TYPES', ['CLOUD_RUNTIME', 'HARDWARE_KIT', 'GENAI-PYTHON']) as string[]
+  const visibleBareTypes = ASSET_BARE_TYPES.filter(
+    (t) => enabledAssetTypes.includes(t.value),
+  )
 
   // const [readOnlyUsers, setReadOnlyUsers] = useState<any[]>([])
 
@@ -279,12 +279,12 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
             >
               <SelectTrigger className="h-10 border border-gray-200 shadow-none! text-[14px]">
                 <SelectValue>
-                  {ASSET_BARE_TYPES.find((t) => t.value === type)?.name ?? type}
+                  {visibleBareTypes.find((t) => t.value === type)?.name ?? type}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {ASSET_BARE_TYPES &&
-                  ASSET_BARE_TYPES.map((type: any, tIndex: number) => (
+                {visibleBareTypes &&
+                  visibleBareTypes.map((type: any, tIndex: number) => (
                     <SelectItem key={tIndex} value={type.value}>
                       <div className="flex flex-col py-1">
                         <span className="text-sm text-foreground">
@@ -392,6 +392,11 @@ const PageMyAssets = () => {
   const shareDialogState = useState<boolean>(false)
   const kitManagerDialogState = useState<boolean>(false)
 
+  const enabledAssetTypes = useSiteConfig('USER_ASSET_TYPES', ['CLOUD_RUNTIME', 'HARDWARE_KIT', 'GENAI-PYTHON']) as string[]
+  const visibleAssetTypes = ASSET_TYPES.filter(
+    (t) => t.value === 'all' || enabledAssetTypes.includes(t.value),
+  )
+
   const [activeTab, setActiveTab] = useState(ASSET_TYPES[0].value)
   const [filteredAssets, setFilteredAssets] = useState([])
 
@@ -493,7 +498,7 @@ const PageMyAssets = () => {
                   {(() => {
                     const assetCounts: { [key: string]: number } = {}
                     if (assets) {
-                      ASSET_TYPES.forEach((type) => {
+                      visibleAssetTypes.forEach((type) => {
                         if (type.value === 'all') {
                           assetCounts[type.value] = assets.length
                         } else {
@@ -504,7 +509,7 @@ const PageMyAssets = () => {
                       })
                     }
 
-                    return ASSET_TYPES.map((type) => (
+                    return visibleAssetTypes.map((type) => (
                       <div
                         key={type.value}
                         className={`

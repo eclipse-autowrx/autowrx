@@ -73,8 +73,6 @@ const NavigationBar = ({ }) => {
   const [learningMode, setIsLearningMode] = useState(false)
   const siteTitle = useSiteConfig('SITE_TITLE', 'AutoWRX')
   const logoUrl = useSiteConfig('SITE_LOGO_WIDE', '/imgs/logo-wide.png')
-  const aboutLink = useSiteConfig('ABOUT_LINK', '')
-  const aboutLinkText = useSiteConfig('ABOUT_LINK_TEXT', 'About')
   const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
   const enableLearningMode = useSiteConfig('ENABLE_LEARNING_MODE', false)
   const navBarActions = useSiteConfig('NAV_BAR_ACTIONS', [])
@@ -104,22 +102,9 @@ const NavigationBar = ({ }) => {
         <img
           src={logoUrl}
           alt="Logo"
-          style={{ height: aboutLink ? '18px' : '28px', filter: gradientHeader ? 'brightness(0) invert(1)' : undefined }}
+          style={{ height: '28px', filter: gradientHeader ? 'brightness(0) invert(1)' : undefined }}
         />
       </Link>
-
-      {aboutLink && (
-        <div className="ml-4 text-sm text-white/90 shrink-0">
-          <a
-            href={aboutLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-white/90 hover:text-white no-underline"
-          >
-            {aboutLinkText || 'About'}
-          </a>
-        </div>
-      )}
 
       {config && config.enableBranding && (
         <div className="ml-4 text-sm text-white/90 shrink-0">

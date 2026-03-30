@@ -42,20 +42,21 @@ app.use(cookies());
 
 // set security HTTP headers
 if (config.env === 'development') {
-  // More permissive CSP for development
+  // Permissive CSP for development — mirrors production
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {
-        defaultSrc: ["'self'", "http://localhost:3210", "https://localhost:3210"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "http://localhost:3210", "https://localhost:3210"],
-        scriptSrcElem: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "http://localhost:3210", "https://localhost:3210"],
-        styleSrc: ["'self'", "'unsafe-inline'", "http://localhost:3210", "https://localhost:3210", "https:"],
-        imgSrc: ["'self'", "data:", "http://localhost:3210", "https://localhost:3210", "https:"],
-        connectSrc: ["'self'", "ws:", "wss:", "http://localhost:3210", "https://localhost:3210"],
-        fontSrc: ["'self'", "https:", "data:", "http://localhost:3210", "https://localhost:3210"],
+        defaultSrc: ["*"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "*"],
+        scriptSrcElem: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "*"],
+        styleSrc: ["'self'", "'unsafe-inline'", "*"],
+        imgSrc: ["*", "data:", "blob:"],
+        connectSrc: ["*", "ws:", "wss:"],
+        fontSrc: ["*", "data:"],
         objectSrc: ["'none'"],
-        mediaSrc: ["'self'", "http://localhost:3210", "https://localhost:3210"],
-        frameSrc: ["'self'"],
+        mediaSrc: ["*"],
+        frameSrc: ["*"],
+        workerSrc: ["'self'", "blob:", "*"],
         upgradeInsecureRequests: null, // Disable upgrade to HTTPS in development
       },
     },

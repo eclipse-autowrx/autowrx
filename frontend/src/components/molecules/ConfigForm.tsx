@@ -84,15 +84,18 @@ const ConfigForm: React.FC<ConfigFormProps> = ({
     setValueError('');
   };
 
-  const parseValue = (value: string, type: string): any => {
+  const parseValue = (value: any, type: string): any => {
     try {
       switch (type) {
         case 'number':
           return parseFloat(value);
         case 'boolean':
-          return value.toLowerCase() === 'true';
+          if (typeof value === 'boolean') return value;
+          return String(value).toLowerCase() === 'true';
         case 'object':
         case 'array':
+          // JsonEditor already passes parsed objects — only parse if it's a string
+          if (value !== null && typeof value === 'object') return value;
           return JSON.parse(value);
         case 'date':
           return new Date(value).toISOString();
