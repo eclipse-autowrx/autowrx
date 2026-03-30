@@ -7,7 +7,9 @@
 // SPDX-License-Identifier: MIT
 
 import * as React from 'react'
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useMemo } from 'react'
+import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
+import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
 import { DaImage } from '../atoms/DaImage'
 import { cn } from '@/lib/utils'
 import { Prototype } from '@/types/model.type'
@@ -100,12 +102,16 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
     [],
   )
 
-  const isDuplicateName =
-    !!newName.trim() &&
-    newName.trim().toLowerCase() !== prototype?.name?.toLowerCase() &&
-    !!existingPrototypes?.some(
-      (p) => p.name.toLowerCase() === newName.trim().toLowerCase(),
-    )
+  const existingPrototypeNames = useMemo(
+    () => existingPrototypes?.map((p) => p.name) ?? [],
+    [existingPrototypes],
+  )
+
+  const { isDuplicate: isDuplicateName, suggestedName } = useDuplicateNameCheck(
+    newName,
+    existingPrototypeNames,
+    prototype?.name,
+  )
 
   const handleRename = async () => {
     if (!prototype || !newName.trim() || isDuplicateName) return
@@ -356,10 +362,11 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
               placeholder="Prototype name"
             />
             {isDuplicateName && (
-              <p className="text-sm text-red-500 mt-1">
-                A prototype with this name already exists. Please choose a
-                different name.
-              </p>
+              <DaDuplicateNameHint
+                message="A prototype with this name already exists"
+                suggestedName={suggestedName}
+                onApplySuggestion={setNewName}
+              />
             )}
           </div>
           <div className="flex justify-end gap-2">

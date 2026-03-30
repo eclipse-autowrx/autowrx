@@ -18,6 +18,8 @@ import {
   SelectValue,
 } from '@/components/atoms/select'
 import { CVI } from '@/data/CVI'
+import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
+import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
 import { createModelService } from '@/services/model.service'
 import { ModelCreate } from '@/types/model.type'
 import { isAxiosError } from 'axios'
@@ -33,6 +35,9 @@ import DaFileUploadButton from '@/components/atoms/DaFileUploadButton'
 import { useQuery } from '@tanstack/react-query'
 import { listModelTemplates } from '@/services/modelTemplate.service'
 import { getConfig, useSiteConfig } from '@/utils/siteConfig'
+
+const getCreatedById = (createdBy: any): string =>
+  typeof createdBy === 'object' ? createdBy?.id ?? '' : createdBy ?? ''
 
 type ModelData = {
   cvi: string
@@ -56,12 +61,22 @@ const FormCreateModel = () => {
   const [error, setError] = useState<string>('')
   const [data, setData] = useState(initialState)
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
-  const { refetch: refetchModelLite } = useListModelLite()
+  const { refetch: refetchModelLite, data: modelList } = useListModelLite()
   const { data: versions } = useListVSSVersions()
   const { toast } = useToast()
 
   const { data: currentUser } = useSelfProfileQuery()
   const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
+
+  const ownedModelNames = useMemo(
+    () =>
+      modelList?.results
+        ?.filter((m) => getCreatedById(m.created_by) === currentUser?.id)
+        .map((m) => m.name) ?? [],
+    [modelList, currentUser],
+  )
+
+  const { isDuplicate: isDuplicateName, suggestedName } = useDuplicateNameCheck(data.name, ownedModelNames)
 
   // Fetch templates
   const { data: templatesData } = useQuery({
@@ -196,6 +211,13 @@ const FormCreateModel = () => {
           placeholder="Model name"
           data-id="form-create-model-input-name"
         />
+        {isDuplicateName && (
+          <DaDuplicateNameHint
+            message="A model with this name already exists"
+            suggestedName={suggestedName}
+            onApplySuggestion={(name) => handleChange('name', name)}
+          />
+        )}
       </div>
 
       <div className="mt-4" />
@@ -283,7 +305,7 @@ const FormCreateModel = () => {
       {error && <p className="text-sm mt-2 text-destructive">{error}</p>}
       {/* Action */}
       <Button
-        disabled={loading || uploading}
+        disabled={loading || uploading || !data.name.trim() || isDuplicateName}
         type="submit"
         className={cn('mt-8 w-full', gradientHeader && 'bg-gradient-to-r from-primary to-secondary border-0')}
         data-id="form-create-model-btn-submit"
