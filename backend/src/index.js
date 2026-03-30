@@ -33,6 +33,9 @@ mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
   initializeRoles().then(async () => {
     const adminUserId = await assignAdmins();
     await seedFromInstanceBundle(adminUserId);
+    // Run after seeding so VSS files from snapshot are in place before the
+    // scheduled check can download/overwrite them from GitHub.
+    setupScheduledCheck();
   });
   seedPredefinedSiteConfigs(PREDEFINED_SITE_CONFIGS);
   // config.port is loaded from the PORT environment variable, defaulting to 8080 (see backend/src/config/config.js).
@@ -41,6 +44,9 @@ mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
   });
   init(server);
 });
+
+// setupScheduledCheck is now called inside the initializeRoles chain (after seedFromInstanceBundle)
+// to avoid a race condition where it overwrites VSS files placed by the snapshot seed.
 
 const exitHandler = () => {
   if (server) {
@@ -67,5 +73,3 @@ process.on('SIGTERM', () => {
     server.close();
   }
 });
-
-setupScheduledCheck();

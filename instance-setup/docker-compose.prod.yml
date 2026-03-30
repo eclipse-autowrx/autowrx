@@ -36,6 +36,8 @@ services:
     volumes:
       - '${UPLOAD_PATH_HOST:-./data/upload}:/usr/src/playground-be/static/uploads'
       - '${PLUGIN_PATH_HOST:-./data/plugin}:/usr/src/playground-be/static/plugin'
+      - '${BUILTIN_WIDGETS_PATH_HOST:-./data/builtin-widgets}:/usr/src/playground-be/static/builtin-widgets'
+      - '${VSS_DATA_PATH_HOST:-./data/vss-data}:/usr/src/playground-be/data'
       # Instance snapshot: extract a snapshot zip here and restart to seed configs, plugins, templates
       - '${INSTANCE_PATH:-./data/instance}:/usr/src/playground-be/instance'
     depends_on:
