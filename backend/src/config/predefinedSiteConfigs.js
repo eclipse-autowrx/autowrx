@@ -171,6 +171,15 @@ const PREDEFINED_SITE_CONFIGS = [
     category: 'genai',
   },
   {
+    key: 'USER_ASSET_TYPES',
+    scope: 'site',
+    value: ['CLOUD_RUNTIME', 'HARDWARE_KIT', 'GENAI-PYTHON'],
+    secret: false,
+    valueType: 'array',
+    description: 'Asset types users can create and manage on the My Assets page.',
+    category: 'general',
+  },
+  {
     key: 'GENAI_MARKETPLACE_URL',
     scope: 'site',
     value: 'https://store-be.digitalauto.tech',

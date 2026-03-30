@@ -27,8 +27,9 @@ mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
   logger.info(`🍪 Cookie Config: secure=${config.jwt.cookie.options.secure}, sameSite=${config.jwt.cookie.options.sameSite}, httpOnly=${config.jwt.cookie.options.httpOnly}`);
 
   convertLogsCap();
-  initializeRoles().then(() => assignAdmins());
-  seedPredefinedSiteConfigs(PREDEFINED_SITE_CONFIGS);
+  initializeRoles()
+    .then(() => assignAdmins())
+    .then((adminUserId) => seedPredefinedSiteConfigs(PREDEFINED_SITE_CONFIGS, adminUserId));
   // config.port is loaded from the PORT environment variable, defaulting to 8080 (see backend/src/config/config.js).
   server = app.listen(config.port, () => {
     logger.info(`Listening to port ${config.port}`);

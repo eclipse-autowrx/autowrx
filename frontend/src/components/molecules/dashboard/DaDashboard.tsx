@@ -49,6 +49,7 @@ import {
 } from '@/components/atoms/dropdown-menu'
 import DaDialog from '@/components/molecules/DaDialog'
 import { useSiteConfig } from '@/utils/siteConfig'
+import dashboardTemplates from '@/data/dashboard_templates'
 
 const DaDashboard = () => {
   const { data: model } = useCurrentModel()
@@ -88,6 +89,7 @@ const DaDashboard = () => {
 
   const [conflictTemplate, setConflictTemplate] = useState<DashboardTemplate | null>(null)
   const [showOverrideDialog, setShowOverrideDialog] = useState(false)
+  const [activeLocalTemplateName, setActiveLocalTemplateName] = useState<string | null>(null)
 
   const { data: templatesData } = useQuery({
     queryKey: ['dashboard-templates-list'],
@@ -170,6 +172,7 @@ const DaDashboard = () => {
     const newExtend = { ...(prototype?.extend ?? {}), dashboard_template_id: template.id }
     const newPrototype = { ...prototype, widget_config: newConfig, extend: newExtend }
     setActivePrototype(newPrototype)
+    setActiveLocalTemplateName(null)
     setApplyOpen(false)
     if (prototype?.id) {
       try {
@@ -181,6 +184,26 @@ const DaDashboard = () => {
         toast.success(`Template "${template.name}" applied`)
       } catch (error) {
         console.error('Error applying template:', error)
+        toast.error('Failed to save template to prototype')
+      }
+    }
+  }
+
+  const handleApplyLocalTemplate = async (t: { name: string; config: string }) => {
+    let widgetConfig
+    try { widgetConfig = JSON.parse(t.config) } catch { return }
+    const newConfig = JSON.stringify(widgetConfig, null, 2)
+    const newExtend = { ...(prototype?.extend ?? {}), dashboard_template_id: null }
+    const newPrototype = { ...prototype, widget_config: newConfig, extend: newExtend }
+    setActivePrototype(newPrototype)
+    setActiveLocalTemplateName(t.name)
+    setApplyOpen(false)
+    if (prototype?.id) {
+      try {
+        await updatePrototypeService(prototype.id, { widget_config: newConfig, extend: newExtend })
+        setPrototypeHasUnsavedChanges(false)
+        toast.success(`Template "${t.name}" applied`)
+      } catch (error) {
         toast.error('Failed to save template to prototype')
       }
     }
@@ -341,6 +364,23 @@ const DaDashboard = () => {
                             ? (<span className="flex size-4 mr-2 shrink-0 items-center justify-center">
                               <TbCheck className="size-4 text-da-primary-500" />
                             </span>) : null}
+                        </DropdownMenuItem>
+                      ))
+                    ) : dashboardTemplates.length ? (
+                      dashboardTemplates.map((t, i) => (
+                        <DropdownMenuItem
+                          key={`local-${i}`}
+                          onClick={() => handleApplyLocalTemplate(t)}
+                          className="cursor-pointer"
+                        >
+                          <span className={`truncate ${activeLocalTemplateName === t.name ? 'flex-1 font-semibold text-da-primary-500' : ''}`}>
+                            {t.name}
+                          </span>
+                          {activeLocalTemplateName === t.name && (
+                            <span className="flex size-4 mr-2 shrink-0 items-center justify-center">
+                              <TbCheck className="size-4 text-da-primary-500" />
+                            </span>
+                          )}
                         </DropdownMenuItem>
                       ))
                     ) : (
