@@ -30,31 +30,43 @@ const DaTabItem: FC<DaTabItemProps> = ({
   customTextColor,
 }) => {
   const hasCustomColor = !!customTextColor
+  const inner = (
+    <div
+      onClick={onClick}
+      data-id={dataId}
+      className={cn(
+        `flex h-full text-sm font-semibold items-center justify-center min-w-20 cursor-pointer hover:opacity-80 border-b-2 border-transparent `,
+        small ? 'py-0.5 px-2' : 'py-1 px-4',
+        hasCustomColor
+          ? active
+            ? 'border-b-2'
+            : 'opacity-60'
+          : active
+            ? 'text-primary border-b-2 border-primary'
+            : 'text-muted-foreground',
+      )}
+      style={
+        hasCustomColor
+          ? {
+              color: customTextColor,
+              borderColor: active ? customTextColor : 'transparent',
+            }
+          : undefined
+      }
+    >
+      {children}
+    </div>
+  )
+  if (!to) {
+    return inner
+  }
   return (
     <Link
-      to={to || ''}
-      target={to && to.startsWith('http') ? '_blank' : '_self'}
+      to={to}
+      target={to.startsWith('http') ? '_blank' : '_self'}
       rel="noopener noreferrer"
     >
-      <div
-        onClick={onClick}
-        data-id={dataId}
-        className={cn(
-          `flex h-full text-sm font-semibold items-center justify-center min-w-20 cursor-pointer hover:opacity-80 border-b-2 border-transparent `,
-          small ? 'py-0.5 px-2' : 'py-1 px-4',
-          hasCustomColor
-            ? (active ? 'border-b-2' : 'opacity-60')
-            : (active
-              ? 'text-primary border-b-2 border-primary'
-              : 'text-muted-foreground'),
-        )}
-        style={hasCustomColor ? {
-          color: customTextColor,
-          borderColor: active ? customTextColor : 'transparent',
-        } : undefined}
-      >
-        {children}
-      </div>
+      {inner}
     </Link>
   )
 }
