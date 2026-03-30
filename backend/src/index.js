@@ -16,8 +16,6 @@ const { setupScheduledCheck, assignAdmins, convertLogsCap } = require('./scripts
 const { seedPredefinedSiteConfigs } = require('./services/siteConfig.service');
 const PREDEFINED_SITE_CONFIGS = require('./config/predefinedSiteConfigs');
 const { seedFromInstanceBundle } = require('./services/instanceSnapshot.service');
-const { seedPredefinedSiteConfigs } = require('./services/siteConfig.service');
-const PREDEFINED_SITE_CONFIGS = require('./config/predefinedSiteConfigs');
 
 // console.log('>>>>>>>>>>>>> mongo_url', config.mongoose.url);
 // console.log('>>>>>>>>>>>>> config', config);
@@ -33,7 +31,7 @@ mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
   initializeRoles().then(async () => {
     const adminUserId = await assignAdmins();
     await seedFromInstanceBundle(adminUserId);
-    // await seedPredefinedSiteConfigs(PREDEFINED_SITE_CONFIGS, adminUserId)
+    await seedPredefinedSiteConfigs(PREDEFINED_SITE_CONFIGS, adminUserId)
     // Run after seeding so VSS files from snapshot are in place before the
     // scheduled check can download/overwrite them from GitHub.
     setupScheduledCheck();
