@@ -38,22 +38,6 @@ const PREDEFINED_SITE_CONFIGS = [
     description: 'Default cover image used when creating a new prototype.',
   },
   {
-    key: 'ABOUT_LINK',
-    scope: 'site',
-    value: '',
-    secret: false,
-    valueType: 'string',
-    description: 'URL displayed as a link next to the site logo (e.g. https://www.digital.auto/). Leave empty to hide.',
-  },
-  {
-    key: 'ABOUT_LINK_TEXT',
-    scope: 'site',
-    value: 'About',
-    secret: false,
-    valueType: 'string',
-    description: 'Display text for the About link next to the site logo.',
-  },
-  {
     key: 'SITE_TITLE',
     scope: 'site',
     value: 'Playground | digital.auto',
