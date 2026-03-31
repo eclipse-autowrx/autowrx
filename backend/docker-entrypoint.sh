@@ -4,7 +4,7 @@
 #
 # Usage: place a ZIP in the instance volume and create manifest.json:
 #   { "restoreFile": "my-snapshot.zip" }
-# The ZIP is extracted in-place and renamed to *.imported so it won't re-run.
+# The ZIP is extracted in-place and deleted after extraction.
 
 INSTANCE_DIR="/usr/src/playground-be/instance"
 MANIFEST="$INSTANCE_DIR/manifest.json"
@@ -16,8 +16,8 @@ if [ -f "$MANIFEST" ]; then
     if [ -f "$ZIP_PATH" ]; then
       echo "[entrypoint] Extracting instance snapshot: $RESTORE_FILE"
       unzip -o "$ZIP_PATH" -d "$INSTANCE_DIR"
-      mv "$ZIP_PATH" "$ZIP_PATH.imported"
-      echo "[entrypoint] Extraction complete. Renamed to $RESTORE_FILE.imported"
+      rm -f "$ZIP_PATH"
+      echo "[entrypoint] Extraction complete. Removed $RESTORE_FILE"
     else
       echo "[entrypoint] WARNING: restoreFile '$RESTORE_FILE' not found in instance dir — skipping extraction."
     fi

@@ -495,28 +495,20 @@ const seedFromInstanceBundle = async (systemUserId) => {
     }
   }
 
-  // Cleanup: remove bundle data from instance dir so it is not re-applied on next restart.
-  // Static files were already moved above. Remove JSON seed files and the manifest.
+  // Cleanup: wipe all remaining content from instance dir so it is empty after restore.
+  // Static files were already moved above; JSON/manifest files are removed here.
   try {
-    const removeIfExists = (p) => { if (fs.existsSync(p)) fs.unlinkSync(p); };
-    const removeDirIfEmpty = (p) => { try { fs.rmdirSync(p); } catch (_) { } };
-
-    removeIfExists(paths.siteConfigs);
-    removeIfExists(paths.plugins);
-    removeIfExists(paths.modelTemplates);
-    removeIfExists(paths.dashboardTemplates);
-    if (paths.models) removeIfExists(paths.models);
-    if (paths.prototypes) removeIfExists(paths.prototypes);
-    removeIfExists(INSTANCE_MANIFEST);
-
-    // Remove now-empty seed/ or data/ subdirectories
-    removeDirIfEmpty(path.join(INSTANCE_DIR, 'seed'));
-    removeDirIfEmpty(path.join(INSTANCE_DIR, 'data'));
-    removeDirIfEmpty(path.join(INSTANCE_DIR, 'files'));
-
-    logger.info('[Instance] Bundle data cleaned up from instance directory.');
+    for (const entry of fs.readdirSync(INSTANCE_DIR, { withFileTypes: true })) {
+      const p = path.join(INSTANCE_DIR, entry.name);
+      if (entry.isDirectory()) {
+        fs.rmSync(p, { recursive: true, force: true });
+      } else {
+        fs.unlinkSync(p);
+      }
+    }
+    logger.info('[Instance] Instance directory cleared.');
   } catch (e) {
-    logger.warn('[Instance] Could not fully clean up instance directory:', e.message);
+    logger.warn('[Instance] Could not fully clear instance directory:', e.message);
   }
 
   logger.info('[Instance] Instance bundle seed complete.');
