@@ -330,14 +330,27 @@ const seedFromInstanceBundle = async (systemUserId) => {
     }
   }
 
-  // 2e. Move builtin widget files (new format only)
+  // 2e. Replace builtin widget files (new format only) — clear contents first so snapshot wins
   if (paths.builtinWidgets && fs.existsSync(paths.builtinWidgets)) {
     try {
+      // Clear existing contents (keep the directory itself — it may be a mount point)
+      if (fs.existsSync(STATIC_BUILTIN_WIDGETS_DIR)) {
+        for (const entry of fs.readdirSync(STATIC_BUILTIN_WIDGETS_DIR, { withFileTypes: true })) {
+          const p = path.join(STATIC_BUILTIN_WIDGETS_DIR, entry.name);
+          if (entry.isDirectory()) {
+            fs.rmSync(p, { recursive: true, force: true });
+          } else {
+            fs.unlinkSync(p);
+          }
+        }
+      } else {
+        fs.mkdirSync(STATIC_BUILTIN_WIDGETS_DIR, { recursive: true });
+      }
       moveRecursive(paths.builtinWidgets, STATIC_BUILTIN_WIDGETS_DIR);
       fs.rmdirSync(paths.builtinWidgets);
-      logger.info('[Instance] Moved builtin widget files.');
+      logger.info('[Instance] Replaced builtin widget files.');
     } catch (e) {
-      logger.error('[Instance] Failed to move builtin widget files:', e.message);
+      logger.error('[Instance] Failed to replace builtin widget files:', e.message);
     }
   }
 

@@ -47,6 +47,10 @@ RUN chmod +x ./docker-entrypoint.sh
 # This ensures the directory exists even if files haven't been downloaded yet
 RUN mkdir -p data && chown -R node:node data
 
+# Keep a copy of the built-in widgets so docker-entrypoint.sh can seed the
+# volume-mounted static/builtin-widgets/ directory on first startup.
+RUN cp -r static/builtin-widgets static/builtin-widgets-default
+
 # Copy frontend build into backend static folder
 COPY --from=frontend-builder --chown=node:node /app/backend/static/frontend-dist ./static/frontend-dist
 
