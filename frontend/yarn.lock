@@ -1463,17 +1463,17 @@
     postcss "^8.5.6"
     tailwindcss "4.2.2"
 
-"@tanstack/eslint-plugin-query@^5.35.6":
-  version "5.91.4"
-  resolved "https://registry.yarnpkg.com/@tanstack/eslint-plugin-query/-/eslint-plugin-query-5.91.4.tgz#b12f35280379aef0787074932ad698fd9bc621cc"
-  integrity sha512-8a+GAeR7oxJ5laNyYBQ6miPK09Hi18o5Oie/jx8zioXODv/AUFLZQecKabPdpQSLmuDXEBPKFh+W5DKbWlahjQ==
+"@tanstack/eslint-plugin-query@^5.95.2":
+  version "5.95.2"
+  resolved "https://registry.yarnpkg.com/@tanstack/eslint-plugin-query/-/eslint-plugin-query-5.95.2.tgz#3d110a98fb8d48243db3d7c4ac7eb9ae0093d407"
+  integrity sha512-EYUFRaqjBep4EHMPpZR12sXP7Kr5qv9iDIlq93NfbhHwhITaW6Txu3ROO6dLFz5r84T8p+oZXBG77pa2Wuok7A==
   dependencies:
     "@typescript-eslint/utils" "^8.48.0"
 
-"@tanstack/query-core@5.91.2":
-  version "5.91.2"
-  resolved "https://registry.yarnpkg.com/@tanstack/query-core/-/query-core-5.91.2.tgz#d83825a928aa49ded38d3910f05284178cce89d3"
-  integrity sha512-Uz2pTgPC1mhqrrSGg18RKCWT/pkduAYtxbcyIyKBhw7dTWjXZIzqmpzO2lBkyWr4hlImQgpu1m1pei3UnkFRWw==
+"@tanstack/query-core@5.95.2":
+  version "5.95.2"
+  resolved "https://registry.yarnpkg.com/@tanstack/query-core/-/query-core-5.95.2.tgz#9e3299d0c1c8785dd9e3d0cac1993e45f35113f2"
+  integrity sha512-o4T8vZHZET4Bib3jZ/tCW9/7080urD4c+0/AUaYVpIqOsr7y0reBc1oX3ttNaSW5mYyvZHctiQ/UOP2PfdmFEQ==
 
 "@tanstack/query-devtools@5.93.0":
   version "5.93.0"
@@ -1487,12 +1487,12 @@
   dependencies:
     "@tanstack/query-devtools" "5.93.0"
 
-"@tanstack/react-query@^5.91.3":
-  version "5.91.3"
-  resolved "https://registry.yarnpkg.com/@tanstack/react-query/-/react-query-5.91.3.tgz#7fa7d728badbc6372dfd1ff3030da876c8113a56"
-  integrity sha512-D8jsCexxS5crZxAeiH6VlLHOUzmHOxeW5c11y8rZu0c34u/cy18hUKQXA/gn1Ila3ZIFzP+Pzv76YnliC0EtZQ==
+"@tanstack/react-query@^5.95.2":
+  version "5.95.2"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-query/-/react-query-5.95.2.tgz#7daf77342a4e374c22fad88bb98ea13fc19ae086"
+  integrity sha512-/wGkvLj/st5Ud1Q76KF1uFxScV7WeqN1slQx5280ycwAyYkIPGaRZAEgHxe3bjirSd5Zpwkj6zNcR4cqYni/ZA==
   dependencies:
-    "@tanstack/query-core" "5.91.2"
+    "@tanstack/query-core" "5.95.2"
 
 "@tanstack/react-table@^8.21.3":
   version "8.21.3"
@@ -1679,12 +1679,12 @@
   resolved "https://registry.yarnpkg.com/@types/ms/-/ms-2.1.0.tgz#052aa67a48eccc4309d7f0191b7e41434b90bb78"
   integrity sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==
 
-"@types/node@^20.12.12":
-  version "20.19.30"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.19.30.tgz#84fa87498ade5cd2b6ba8f8eec01d3b138ca60d0"
-  integrity sha512-WJtwWJu7UdlvzEAUm484QNg5eAoq5QR08KDNx7g45Usrs2NtOPiX8ugDqmKdXkyL03rBqU5dYNYVQetEpBHq2g==
+"@types/node@^25.5.0":
+  version "25.5.0"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-25.5.0.tgz#5c99f37c443d9ccc4985866913f1ed364217da31"
+  integrity sha512-jp2P3tQMSxWugkCUKLRPVUpGaL5MVFwF8RDuSRztfwgN1wmqJeMSbKlnEtQqU8UrhTmzEmZdu2I6v2dpp7XIxw==
   dependencies:
-    undici-types "~6.21.0"
+    undici-types "~7.18.0"
 
 "@types/prismjs@^1.0.0":
   version "1.26.6"
@@ -1935,19 +1935,19 @@
     "@types/babel__core" "^7.20.5"
     react-refresh "^0.18.0"
 
-"@xyflow/react@^12.10.1":
-  version "12.10.1"
-  resolved "https://registry.yarnpkg.com/@xyflow/react/-/react-12.10.1.tgz#6c61cc271ac4b21dd6d60525b527c8e9f0395f28"
-  integrity sha512-5eSWtIK/+rkldOuFbOOz44CRgQRjtS9v5nufk77DV+XBnfCGL9HAQ8PG00o2ZYKqkEU/Ak6wrKC95Tu+2zuK3Q==
+"@xyflow/react@^12.10.2":
+  version "12.10.2"
+  resolved "https://registry.yarnpkg.com/@xyflow/react/-/react-12.10.2.tgz#40f6d71944f674f0ffbb83c660f9473018adbe61"
+  integrity sha512-CgIi6HwlcHXwlkTpr0fxLv/0sRVNZ8IdwKLzzeCscaYBwpvfcH1QFOCeaTCuEn1FQEs/B8CjnTSjhs8udgmBgQ==
   dependencies:
-    "@xyflow/system" "0.0.75"
+    "@xyflow/system" "0.0.76"
     classcat "^5.0.3"
     zustand "^4.4.0"
 
-"@xyflow/system@0.0.75":
-  version "0.0.75"
-  resolved "https://registry.yarnpkg.com/@xyflow/system/-/system-0.0.75.tgz#8bf988fe7943f0d7a26a594acd6a588af1d6b764"
-  integrity sha512-iXs+AGFLi8w/VlAoc/iSxk+CxfT6o64Uw/k0CKASOPqjqz6E0rb5jFZgJtXGZCpfQI6OQpu5EnumP5fGxQheaQ==
+"@xyflow/system@0.0.76":
+  version "0.0.76"
+  resolved "https://registry.yarnpkg.com/@xyflow/system/-/system-0.0.76.tgz#57da5e4d230cdbec56548a6d5eec115f22858259"
+  integrity sha512-hvwvnRS1B3REwVDlWexsq7YQaPZeG3/mKo1jv38UmnpWmxihp14bW6VtEOuHEwJX2FvzFw8k77LyKSk/wiZVNA==
   dependencies:
     "@types/d3-drag" "^3.0.7"
     "@types/d3-interpolate" "^3.0.4"
@@ -2949,10 +2949,10 @@ eslint-plugin-react-hooks@^4.6.2:
   resolved "https://registry.yarnpkg.com/eslint-plugin-react-hooks/-/eslint-plugin-react-hooks-4.6.2.tgz#c829eb06c0e6f484b3fbb85a97e57784f328c596"
   integrity sha512-QzliNJq4GinDBcD8gPB5v0wh6g8q3SUi6EFF0x8N/BL9PoVs0atuGc47ozMRyOWAKdwaZ5OnbOEa3WR+dSGKuQ==
 
-eslint-plugin-react-refresh@^0.4.6:
-  version "0.4.26"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-react-refresh/-/eslint-plugin-react-refresh-0.4.26.tgz#2bcdd109ea9fb4e0b56bb1b5146cf8841b21b626"
-  integrity sha512-1RETEylht2O6FM/MvgnyvT+8K21wLqDNg4qD51Zj3guhjt433XbnnkVttHMyaVyAFD03QSV4LPS5iE3VQmO7XQ==
+eslint-plugin-react-refresh@^0.5.2:
+  version "0.5.2"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-react-refresh/-/eslint-plugin-react-refresh-0.5.2.tgz#39e11021be10e1cd9adab2bdeabc65b17222409f"
+  integrity sha512-hmgTH57GfzoTFjVN0yBwTggnsVUF2tcqi7RJZHqi9lIezSs4eFyAMktA68YD4r5kNw1mxyY4dmkyoFDb3FIqrA==
 
 eslint-plugin-react@^7.34.1:
   version "7.37.5"
@@ -4873,10 +4873,10 @@ react-error-boundary@^4.1.2:
   dependencies:
     "@babel/runtime" "^7.12.5"
 
-react-hook-form@^7.71.2:
-  version "7.71.2"
-  resolved "https://registry.yarnpkg.com/react-hook-form/-/react-hook-form-7.71.2.tgz#a5f1d2b855be9ecf1af6e74df9b80f54beae7e35"
-  integrity sha512-1CHvcDYzuRUNOflt4MOq3ZM46AronNJtQ1S7tnX6YN4y72qhgiUItpacZUAQ0TyWYci3yz1X+rXaSxiuEm86PA==
+react-hook-form@^7.72.0:
+  version "7.72.0"
+  resolved "https://registry.yarnpkg.com/react-hook-form/-/react-hook-form-7.72.0.tgz#995a655b894249fd8798f36383e43f55ed66ae25"
+  integrity sha512-V4v6jubaf6JAurEaVnT9aUPKFbNtDgohj5CIgVGyPHvT9wRx5OZHVjz31GsxnPNI278XMu+ruFz+wGOscHaLKw==
 
 react-icons@^5.6.0:
   version "5.6.0"
@@ -5712,10 +5712,10 @@ unbox-primitive@^1.1.0:
     has-symbols "^1.1.0"
     which-boxed-primitive "^1.1.1"
 
-undici-types@~6.21.0:
-  version "6.21.0"
-  resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-6.21.0.tgz#691d00af3909be93a7faa13be61b3a5b50ef12cb"
-  integrity sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==
+undici-types@~7.18.0:
+  version "7.18.2"
+  resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-7.18.2.tgz#29357a89e7b7ca4aef3bf0fd3fd0cd73884229e9"
+  integrity sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==
 
 unified@^11.0.0:
   version "11.0.5"

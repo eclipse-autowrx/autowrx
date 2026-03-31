@@ -21,6 +21,7 @@ import PrototypeConfigSection from '../components/organisms/PrototypeConfigSecti
 import VscodeConfigSection from '../components/organisms/VscodeConfigSection'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
+import PrivacyPolicySection from '../components/organisms/PrivacyPolicySection'
 
 // Keys that should be excluded from the site-config page
 // These keys are managed in their own dedicated pages
@@ -93,6 +94,15 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     value: '/privacy-policy',
     secret: false,
     valueType: 'string',
+  },
+  {
+    key: 'PRIVACY_POLICY_CONTENT',
+    scope: 'site',
+    value: '',
+    secret: false,
+    valueType: 'string',
+    description: 'Markdown content for the Privacy Policy page displayed at /privacy-policy.',
+    category: 'privacy',
   },
   {
     key: 'TERMS_OF_SERVICE_URL',
@@ -199,6 +209,15 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     category: 'genai',
   },
   {
+    key: 'USER_ASSET_TYPES',
+    scope: 'site',
+    value: ['CLOUD_RUNTIME', 'HARDWARE_KIT', 'GENAI-PYTHON'],
+    secret: false,
+    valueType: 'array',
+    description: 'Asset types users can create and manage on the My Assets page.',
+    category: 'general',
+  },
+  {
     key: 'GENAI_MARKETPLACE_URL',
     scope: 'site',
     value: 'https://store-be.digitalauto.tech',
@@ -292,6 +311,13 @@ export const PREDEFINED_VSCODE_CONFIG_KEYS: string[] =
   PREDEFINED_SITE_CONFIGS.filter((config) => config.category === 'vscode').map(
     (config) => config.key,
   )
+export const PREDEFINED_PRIVACY_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(
+  (config) => config.category === 'privacy',
+).map((config) => config.key)
+
+export const PREDEFINED_PROTOTYPE_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(
+  (config) => config.category === 'prototype',
+).map((config) => config.key)
 
 export const PREDEFINED_AUTH_CONFIGS: any[] = [
   {
@@ -352,6 +378,7 @@ const SiteConfigManagement: React.FC = () => {
     | 'prototype'
     | 'vscode'
     | 'genai'
+    | 'privacy'
   const validSections: SectionTab[] = [
     'public',
     'style',
@@ -364,6 +391,7 @@ const SiteConfigManagement: React.FC = () => {
     'prototype',
     'vscode',
     'genai',
+    'privacy',
   ]
 
   const getSectionFromUrl = (): SectionTab => {
@@ -534,6 +562,15 @@ const SiteConfigManagement: React.FC = () => {
                 >
                   Standard Staging Frame
                 </button>
+                <button
+                  onClick={() => handleTabChange('privacy')}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'privacy'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-muted'
+                    }`}
+                >
+                  Privacy Policy
+                </button>
               </nav>
             </div>
           </div>
@@ -553,6 +590,7 @@ const SiteConfigManagement: React.FC = () => {
               {activeTab === 'prototype' && <PrototypeConfigSection />}
               {activeTab === 'vscode' && <VscodeConfigSection />}
               {activeTab === 'genai' && <GenAIConfigSection />}
+              {activeTab === 'privacy' && <PrivacyPolicySection />}
             </div>
           </div>
         </div>

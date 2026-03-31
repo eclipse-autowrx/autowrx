@@ -270,7 +270,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
   }, [user, model])
 
   const canConfigurePrototypeAddons =
-    (isModelOwner && !!allowNonAdminAddonConfig) || hasWritePermission
+    (isModelOwner || hasWritePermission) && !!allowNonAdminAddonConfig
 
   // Callback for plugins to navigate to a specific prototype tab
   const handleSetActiveTab = useCallback(

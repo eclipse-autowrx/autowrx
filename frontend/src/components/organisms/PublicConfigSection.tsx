@@ -20,6 +20,7 @@ import {
   PREDEFINED_GENAI_CONFIG_KEYS,
   PREDEFINED_PROTOTYPE_CONFIG_KEYS,
   PREDEFINED_VSCODE_CONFIG_KEYS,
+  PREDEFINED_PRIVACY_CONFIG_KEYS,
 } from '@/pages/SiteConfigManagement'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 import NavBarActionsEditor, { NavBarAction } from '@/components/molecules/NavBarActionsEditor'
@@ -50,8 +51,10 @@ const PublicConfigSection: React.FC = () => {
   const isPrototypeKey = (key: string) =>
     PREDEFINED_PROTOTYPE_CONFIG_KEYS.includes(key)
   const isVscodeKey = (key: string) => PREDEFINED_VSCODE_CONFIG_KEYS.includes(key)
+  const isPrivacyKey = (key: string) =>
+    PREDEFINED_PRIVACY_CONFIG_KEYS.includes(key)
   const isSpecialSectionKey = (key: string) =>
-    isGenAIKey(key) || isPrototypeKey(key) || isVscodeKey(key)
+    isGenAIKey(key) || isPrototypeKey(key) || isVscodeKey(key) || isPrivacyKey(key)
 
   useEffect(() => {
     if (selfLoading || !self) return
@@ -224,7 +227,7 @@ const PublicConfigSection: React.FC = () => {
 
     try {
       setIsLoading(true)
-      // Only delete public configs (predefined non‑GenAI keys + NAV_BAR_ACTIONS), not other sections
+      // Only delete public configs (predefined non‑GenAI, non‑privacy keys + NAV_BAR_ACTIONS), not other sections
       const publicKeys = new Set([
         ...PREDEFINED_SITE_CONFIGS
           .map((c) => c.key)
