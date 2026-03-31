@@ -26,7 +26,7 @@ RUN chmod +x build-frontend.sh && ./build-frontend.sh
 FROM node:20-alpine
 
 # Install Python and build tools needed for native dependencies (bufferutil, utf-8-validate)
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 make g++ unzip
 
 RUN mkdir -p /usr/src/playground-be && chown -R node:node /usr/src/playground-be
 
@@ -41,9 +41,15 @@ RUN apk del make g++
 
 COPY --chown=node:node backend/ .
 
+RUN chmod +x ./docker-entrypoint.sh
+
 # Create data directory for VSS files (will be populated by setupScheduledCheck on startup)
 # This ensures the directory exists even if files haven't been downloaded yet
 RUN mkdir -p data && chown -R node:node data
+
+# Keep a copy of the built-in widgets so docker-entrypoint.sh can seed the
+# volume-mounted static/builtin-widgets/ directory on first startup.
+RUN cp -r static/builtin-widgets static/builtin-widgets-default
 
 # Copy frontend build into backend static folder
 COPY --from=frontend-builder --chown=node:node /app/backend/static/frontend-dist ./static/frontend-dist
@@ -54,5 +60,6 @@ EXPOSE 3200
 
 ENV PORT=3200
 
+ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["yarn", "prod:test"]
 

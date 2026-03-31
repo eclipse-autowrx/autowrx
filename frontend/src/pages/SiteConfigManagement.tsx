@@ -8,6 +8,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { serverAxios } from '@/services/base'
 import PublicConfigSection from '@/components/organisms/PublicConfigSection'
 import SecretConfigSection from '@/components/organisms/SecretConfigSection'
 import SiteStyleSection from '@/components/organisms/SiteStyleSection'
@@ -283,6 +284,27 @@ export const PREDEFINED_AUTH_CONFIGS: any[] = [
 
 const SiteConfigManagement: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
+  const [isExporting, setIsExporting] = useState(false)
+
+  const handleExportSnapshot = async () => {
+    try {
+      setIsExporting(true)
+      const instanceName = window.location.hostname.replace(/\./g, '-') || 'autowrx-instance'
+      const response = await serverAxios.get(`/instance/export?name=${instanceName}`, {
+        responseType: 'blob',
+      })
+      const url = URL.createObjectURL(response.data)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${instanceName}-snapshot.zip`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('Export snapshot failed:', err)
+    } finally {
+      setIsExporting(false)
+    }
+  }
 
   // Get initial section from URL or default to 'public'
   type SectionTab =
@@ -337,12 +359,24 @@ const SiteConfigManagement: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8 flex flex-col">
-          <h1 className="text-4xl font-semibold text-foreground">
-            Site Management
-          </h1>
-          <p className="mt-2 text-base text-muted-foreground">
-            Manage site configurations and settings
-          </p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-4xl font-semibold text-foreground">
+                Site Management
+              </h1>
+              <p className="mt-2 text-base text-muted-foreground">
+                Manage site configurations and settings
+              </p>
+            </div>
+            <button
+              onClick={handleExportSnapshot}
+              disabled={isExporting}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md border border-border bg-background hover:bg-muted transition-colors disabled:opacity-50"
+              title="Export all configs, images, plugins and templates as a reusable snapshot bundle"
+            >
+              {isExporting ? 'Exporting...' : 'Export Snapshot'}
+            </button>
+          </div>
         </div>
 
         {/* Sidebar + Content Layout */}
