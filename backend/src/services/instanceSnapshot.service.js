@@ -19,7 +19,7 @@
 const fs = require('fs');
 const path = require('path');
 const archiver = require('archiver');
-const { SiteConfig, Plugin, ModelTemplate, DashboardTemplate } = require('../models');
+const { SiteConfig, Plugin, ModelTemplate, DashboardTemplate, Model, Prototype } = require('../models');
 const logger = require('../config/logger');
 
 // Path to the mounted instance volume
@@ -67,7 +67,7 @@ const exportSnapshot = async (res, instanceName = 'autowrx-instance') => {
     version: '1.0',
     exportedAt: new Date().toISOString(),
     instanceName: safeName,
-    contents: ['site-configs.json', 'uploads/', 'global.css', 'plugin/', 'builtin-widgets/', 'vss/', 'seed/plugins.json', 'seed/model-templates.json', 'seed/dashboard-templates.json'],
+    contents: ['site-configs.json', 'uploads/', 'imgs/', 'global.css', 'plugin/', 'builtin-widgets/', 'vss/', 'seed/plugins.json', 'seed/model-templates.json', 'seed/dashboard-templates.json', 'seed/models.json', 'seed/prototypes.json'],
   };
   archive.append(JSON.stringify(manifest, null, 2), { name: 'manifest.json' });
 
@@ -83,9 +83,16 @@ const exportSnapshot = async (res, instanceName = 'autowrx-instance') => {
     archive.directory(STATIC_UPLOADS_DIR, 'uploads');
   }
 
-  // 3b. global.css
+  // 3b. global.css — always include (empty string if not customised yet)
   if (fs.existsSync(STATIC_GLOBAL_CSS)) {
     archive.file(STATIC_GLOBAL_CSS, { name: 'global.css' });
+  } else {
+    archive.append('', { name: 'global.css' });
+  }
+
+  // 3c-bis. Static images (/imgs/ — logos, default model/prototype images, etc.)
+  if (fs.existsSync(STATIC_IMAGES_DIR)) {
+    archive.directory(STATIC_IMAGES_DIR, 'imgs');
   }
 
   // 3c. Plugin JS files
@@ -124,19 +131,27 @@ const exportSnapshot = async (res, instanceName = 'autowrx-instance') => {
   }));
   archive.append(JSON.stringify(pluginsExport, null, 2), { name: 'seed/plugins.json' });
 
-  // 5. Model templates (public + default)
+  // 5. Model templates (public + default) — preserve _id so model.model_template_id refs stay valid
   const modelTemplates = await ModelTemplate.find({ visibility: { $in: ['public', 'default'] } }).lean();
-  const modelTemplatesExport = modelTemplates.map(({ name, description, image, visibility, config }) => ({
-    name, description, image, visibility: visibility === 'default' ? 'default' : 'public', config,
+  const modelTemplatesExport = modelTemplates.map(({ _id, name, description, image, visibility, config }) => ({
+    _id, name, description, image, visibility: visibility === 'default' ? 'default' : 'public', config,
   }));
   archive.append(JSON.stringify(modelTemplatesExport, null, 2), { name: 'seed/model-templates.json' });
 
-  // 6. Dashboard templates (public)
-  const dashboardTemplates = await DashboardTemplate.find({ visibility: 'public' }).lean();
-  const dashboardTemplatesExport = dashboardTemplates.map(({ name, description, visibility, widget_config }) => ({
-    name, description, visibility, widget_config,
+  // 6. Dashboard templates (public) — preserve _id for stable references
+  const dashboardTemplates = await DashboardTemplate.find({ visibility: { $in: ['public', 'default'] } }).lean();
+  const dashboardTemplatesExport = dashboardTemplates.map(({ _id, name, description, visibility, widget_config }) => ({
+    _id, name, description, visibility, widget_config,
   }));
   archive.append(JSON.stringify(dashboardTemplatesExport, null, 2), { name: 'seed/dashboard-templates.json' });
+
+  // 7. Models
+  const models = await Model.find({}).lean();
+  archive.append(JSON.stringify(models, null, 2), { name: 'seed/models.json' });
+
+  // 8. Prototypes
+  const prototypes = await Prototype.find({}).lean();
+  archive.append(JSON.stringify(prototypes, null, 2), { name: 'seed/prototypes.json' });
 
   await archive.finalize();
 };
@@ -166,7 +181,7 @@ function resolvePaths(instanceDir) {
       ? path.join(instanceDir, 'global.css')
       : path.join(instanceDir, 'files', 'global.css'),
     imgs: isNewFormat
-      ? null
+      ? path.join(instanceDir, 'imgs')
       : path.join(instanceDir, 'files', 'imgs'),
     pluginFiles: isNewFormat
       ? path.join(instanceDir, 'plugin')
@@ -186,6 +201,12 @@ function resolvePaths(instanceDir) {
     dashboardTemplates: isNewFormat
       ? path.join(instanceDir, 'seed', 'dashboard-templates.json')
       : path.join(instanceDir, 'data', 'dashboard-templates.json'),
+    models: isNewFormat
+      ? path.join(instanceDir, 'seed', 'models.json')
+      : null,
+    prototypes: isNewFormat
+      ? path.join(instanceDir, 'seed', 'prototypes.json')
+      : null,
   };
 }
 
@@ -205,12 +226,13 @@ const seedFromInstanceBundle = async (systemUserId) => {
   let manifest;
   try {
     manifest = JSON.parse(fs.readFileSync(INSTANCE_MANIFEST, 'utf8'));
-    const label = manifest.instanceName || manifest.createdAt || 'unknown';
-    logger.info(`[Instance] Found bundle: "${label}"`);
   } catch (e) {
     logger.warn('[Instance] Could not parse manifest.json — skipping instance seed.');
     return;
   }
+
+  const label = manifest.instanceName || manifest.createdAt || 'unknown';
+  logger.info(`[Instance] Found bundle: "${label}"`);
 
   const paths = resolvePaths(INSTANCE_DIR);
   logger.info(`[Instance] Detected ${paths.isNewFormat ? 'new snapshot' : 'legacy backup'} format.`);
@@ -286,7 +308,7 @@ const seedFromInstanceBundle = async (systemUserId) => {
     }
   }
 
-  // 2c. Move static images (legacy only)
+  // 2c. Move static images
   if (paths.imgs && fs.existsSync(paths.imgs)) {
     try {
       moveRecursive(paths.imgs, STATIC_IMAGES_DIR);
@@ -320,9 +342,18 @@ const seedFromInstanceBundle = async (systemUserId) => {
   }
 
   // 2f. Replace VSS data files (new format only)
+  // Clear all existing VSS files in data dir first, then move from snapshot
   if (paths.vssDir && fs.existsSync(paths.vssDir)) {
     try {
       if (!fs.existsSync(BACKEND_DATA_DIR)) fs.mkdirSync(BACKEND_DATA_DIR, { recursive: true });
+      // Clear existing VSS files (vss.json catalog + all vX.Y.json version files)
+      for (const entry of fs.readdirSync(BACKEND_DATA_DIR, { withFileTypes: true })) {
+        if (!entry.isFile()) continue;
+        if (entry.name === 'vss.json' || /^v\d+\.\d+.*\.json$/.test(entry.name)) {
+          fs.unlinkSync(path.join(BACKEND_DATA_DIR, entry.name));
+        }
+      }
+      // Move snapshot VSS files to data dir
       for (const entry of fs.readdirSync(paths.vssDir, { withFileTypes: true })) {
         if (!entry.isFile()) continue;
         const srcPath = path.join(paths.vssDir, entry.name);
@@ -357,18 +388,22 @@ const seedFromInstanceBundle = async (systemUserId) => {
     }
   }
 
-  // 4. Seed model templates
+  // 4. Seed model templates — filter by _id when present so model.model_template_id refs stay valid
   if (fs.existsSync(paths.modelTemplates)) {
     try {
       const templates = JSON.parse(fs.readFileSync(paths.modelTemplates, 'utf8'));
       if (Array.isArray(templates) && templates.length > 0) {
-        const ops = templates.filter((t) => t.name).map((tpl) => ({
-          updateOne: {
-            filter: { name: tpl.name },
-            update: { $setOnInsert: { ...stripMongoFields(tpl), created_by: systemUserId, updated_by: systemUserId } },
-            upsert: true,
-          },
-        }));
+        const ops = templates.filter((t) => t.name).map((tpl) => {
+          const { _id, __v, createdAt, updatedAt, ...rest } = tpl;
+          const filter = _id ? { _id } : { name: tpl.name };
+          return {
+            updateOne: {
+              filter,
+              update: { $setOnInsert: { ...rest, created_by: systemUserId, updated_by: systemUserId } },
+              upsert: true,
+            },
+          };
+        });
         await ModelTemplate.bulkWrite(ops, { ordered: false });
         logger.info(`[Instance] Seeded ${templates.length} model templates.`);
       }
@@ -377,23 +412,73 @@ const seedFromInstanceBundle = async (systemUserId) => {
     }
   }
 
-  // 5. Seed dashboard templates
+  // 5. Seed dashboard templates — filter by _id when present
   if (fs.existsSync(paths.dashboardTemplates)) {
     try {
       const templates = JSON.parse(fs.readFileSync(paths.dashboardTemplates, 'utf8'));
       if (Array.isArray(templates) && templates.length > 0) {
-        const ops = templates.filter((t) => t.name).map((tpl) => ({
-          updateOne: {
-            filter: { name: tpl.name },
-            update: { $setOnInsert: { ...stripMongoFields(tpl), created_by: systemUserId, updated_by: systemUserId } },
-            upsert: true,
-          },
-        }));
+        const ops = templates.filter((t) => t.name).map((tpl) => {
+          const { _id, __v, createdAt, updatedAt, ...rest } = tpl;
+          const filter = _id ? { _id } : { name: tpl.name };
+          return {
+            updateOne: {
+              filter,
+              update: { $setOnInsert: { ...rest, created_by: systemUserId, updated_by: systemUserId } },
+              upsert: true,
+            },
+          };
+        });
         await DashboardTemplate.bulkWrite(ops, { ordered: false });
         logger.info(`[Instance] Seeded ${templates.length} dashboard templates.`);
       }
     } catch (e) {
       logger.error('[Instance] Failed to seed dashboard-templates.json:', e.message);
+    }
+  }
+
+  // 6. Seed models
+  if (paths.models && fs.existsSync(paths.models)) {
+    try {
+      const records = JSON.parse(fs.readFileSync(paths.models, 'utf8'));
+      if (Array.isArray(records) && records.length > 0) {
+        const ops = records.map((m) => {
+          const { _id, __v, createdAt, updatedAt, ...rest } = m;
+          return {
+            updateOne: {
+              filter: { _id },
+              update: { $setOnInsert: { ...rest, ...(systemUserId && { created_by: systemUserId }) } },
+              upsert: true,
+            },
+          };
+        });
+        await Model.bulkWrite(ops, { ordered: false });
+        logger.info(`[Instance] Seeded ${records.length} models.`);
+      }
+    } catch (e) {
+      logger.error('[Instance] Failed to seed models.json:', e.message);
+    }
+  }
+
+  // 7. Seed prototypes
+  if (paths.prototypes && fs.existsSync(paths.prototypes)) {
+    try {
+      const records = JSON.parse(fs.readFileSync(paths.prototypes, 'utf8'));
+      if (Array.isArray(records) && records.length > 0) {
+        const ops = records.map((p) => {
+          const { _id, __v, createdAt, updatedAt, ...rest } = p;
+          return {
+            updateOne: {
+              filter: { _id },
+              update: { $setOnInsert: { ...rest, ...(systemUserId && { created_by: systemUserId }) } },
+              upsert: true,
+            },
+          };
+        });
+        await Prototype.bulkWrite(ops, { ordered: false });
+        logger.info(`[Instance] Seeded ${records.length} prototypes.`);
+      }
+    } catch (e) {
+      logger.error('[Instance] Failed to seed prototypes.json:', e.message);
     }
   }
 
@@ -407,6 +492,8 @@ const seedFromInstanceBundle = async (systemUserId) => {
     removeIfExists(paths.plugins);
     removeIfExists(paths.modelTemplates);
     removeIfExists(paths.dashboardTemplates);
+    if (paths.models) removeIfExists(paths.models);
+    if (paths.prototypes) removeIfExists(paths.prototypes);
     removeIfExists(INSTANCE_MANIFEST);
 
     // Remove now-empty seed/ or data/ subdirectories

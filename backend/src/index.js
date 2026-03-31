@@ -36,7 +36,6 @@ mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
     // scheduled check can download/overwrite them from GitHub.
     setupScheduledCheck();
   });
-  seedPredefinedSiteConfigs(PREDEFINED_SITE_CONFIGS);
   // config.port is loaded from the PORT environment variable, defaulting to 8080 (see backend/src/config/config.js).
   server = app.listen(config.port, () => {
     logger.info(`Listening to port ${config.port}`);
