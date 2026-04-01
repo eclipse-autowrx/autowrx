@@ -18,6 +18,7 @@ const customApiSchemaRoute = require('./custom-api-schema.route');
 const coderRoute = require('./coder.route');
 const genaiRoute = require('./genai.route');
 const healthRoute = require('./health.route');
+
 const router = express.Router();
 
 // System Routes

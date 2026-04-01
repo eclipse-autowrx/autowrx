@@ -65,10 +65,6 @@ const updateVSS = async (releases) => {
 const checkUpdateVSS = async () => {
   try {
     const vssReleases = (await axios.get('https://api.github.com/repos/COVESA/vehicle_signal_specification/releases')).data;
-    if (!Array.isArray(vssReleases)) {
-      logger.info('[VSS] GitHub API did not return a release list — skipping update (no internet access?)');
-      return;
-    }
     setLastCheckTime();
     const regex = /v(\d+\.\d+)/;
 

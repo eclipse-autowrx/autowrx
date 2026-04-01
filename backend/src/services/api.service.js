@@ -101,8 +101,7 @@ const listVSSVersions = async () => {
     logger.error(error);
     versions = [];
   }
-  // Only return versions whose JSON files exist locally in backend/data/
-  return versions.filter((v) => v.name && fs.existsSync(path.join(__dirname, `../../data/${v.name}.json`)));
+  return versions;
 };
 
 /**

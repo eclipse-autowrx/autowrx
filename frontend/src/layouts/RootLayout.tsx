@@ -18,7 +18,7 @@ import { RouteConfig } from '@/types/common.type.ts'
 import { retry } from '@/lib/retry.ts'
 import useGlobalStore from '@/stores/globalStore.ts'
 import ActiveObjectManagement from '@/components/organisms/ActiveObjectManagement.tsx'
-declare const __APP_VERSION__: string
+import packageInfo from '@/../package.json'
 
 // const ActiveObjectManagement = lazy(() =>
 //   retry(() => import('@/components/organisms/ActiveObjectManagement')),
@@ -115,8 +115,8 @@ const RootLayout = () => {
               Privacy Policy
             </Link>
           )}
-          {__APP_VERSION__ && <span>
-            Version {__APP_VERSION__}
+          {packageInfo.version && <span>
+            Version {packageInfo.version}
           </span>}
         </div>
       )}
