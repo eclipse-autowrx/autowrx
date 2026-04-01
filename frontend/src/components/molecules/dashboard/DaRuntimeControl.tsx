@@ -63,7 +63,6 @@ const DaRuntimeControl: FC = () => {
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
   const runtimeServerUrl = useSiteConfig(
     'RUNTIME_SERVER_URL',
-    DEFAULT_KIT_SERVER,
   )
   const runtimeServerConfigRaw = useSiteConfig('RUNTIME_SERVER_CONFIG', '')
   const runtimeServerConfig = useMemo(() => {
