@@ -490,7 +490,7 @@ const PageNewPrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
         const newFlowVisibleTabs = newFlowTabs.filter(t => !t.hidden)
         const activeNewFlowSidebar = effectiveModel?.custom_template?.prototype_sidebar_plugin || undefined
         const hasPrototype = !!newFlowPrototype && !openResumeDialog
-        const newFlowShowRt = hasPrototype && (newFlowActiveBuiltinKey === 'code' || newFlowActiveBuiltinKey === 'dashboard')
+        const newFlowShowRt = hasPrototype && newFlowActiveBuiltinKey === 'dashboard'
 
         // Local tab navigation for new-prototype flow (never changes URL)
         const handleNewFlowSetActiveTab = (targetTab: string, targetPluginSlug?: string) => {
