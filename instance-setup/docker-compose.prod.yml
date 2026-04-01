@@ -33,14 +33,16 @@ services:
       ADMIN_EMAILS: ${ADMIN_EMAILS}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       JWT_COOKIE_DOMAIN: ${JWT_COOKIE_DOMAIN:-}
+      APP_DIR: ${APP_DIR:-/usr/src/playground-be}
+      INSTANCE_PATH: ${INSTANCE_PATH:-${APP_DIR:-/usr/src/playground-be}/instance}
     volumes:
-      - autowrx-uploads:/usr/src/playground-be/static/uploads
-      - autowrx-plugins:/usr/src/playground-be/static/plugin
-      - autowrx-builtin-widgets:/usr/src/playground-be/static/builtin-widgets
-      - autowrx-vss-data:/usr/src/playground-be/data
-      # Instance snapshot: place a snapshot ZIP here and restart to restore the instance.
-      # This is the only bind-mount so admins can easily drop files in from the host.
-      - '${INSTANCE_PATH:-./data/instance}:/usr/src/playground-be/instance'
+      - autowrx-uploads:${APP_DIR:-/usr/src/playground-be}/static/uploads
+      - autowrx-plugins:${APP_DIR:-/usr/src/playground-be}/static/plugin
+      - autowrx-builtin-widgets:${APP_DIR:-/usr/src/playground-be}/static/builtin-widgets
+      - autowrx-vss-data:${APP_DIR:-/usr/src/playground-be}/data
+      # Instance snapshot: place a snapshot ZIP + manifest.json in ./data/ (same dir as this compose file)
+      # and restart to restore. Override INSTANCE_HOST_PATH to use a different host directory.
+      - '${INSTANCE_HOST_PATH:-./data}:${INSTANCE_PATH:-${APP_DIR:-/usr/src/playground-be}/instance}'
     depends_on:
       autowrx-db:
         condition: service_healthy

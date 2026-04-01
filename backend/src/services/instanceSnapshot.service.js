@@ -22,14 +22,14 @@ const archiver = require('archiver');
 const { SiteConfig, Plugin, ModelTemplate, DashboardTemplate, Model, Prototype } = require('../models');
 const logger = require('../config/logger');
 
-// Path to the mounted instance volume
-const INSTANCE_DIR = path.join(__dirname, '../../instance');
+// Path to the mounted instance volume — configurable via INSTANCE_PATH env var
+const INSTANCE_DIR = process.env.INSTANCE_PATH || path.join(__dirname, '../../instance');
 const INSTANCE_MANIFEST = path.join(INSTANCE_DIR, 'manifest.json');
 
-// Backend data directory (VSS JSON files)
+// Backend data directory (VSS JSON files) — same __dirname-relative base as api.service.js
 const BACKEND_DATA_DIR = path.join(__dirname, '../../data');
 
-// Static dirs served by the BE
+// Static dirs served by the BE — same __dirname-relative base as app.js
 const STATIC_DIR = path.join(__dirname, '../../static');
 const STATIC_UPLOADS_DIR = path.join(STATIC_DIR, 'uploads');
 const STATIC_IMAGES_DIR = path.join(STATIC_DIR, 'images');

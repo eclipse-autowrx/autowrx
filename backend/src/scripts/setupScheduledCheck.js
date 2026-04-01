@@ -14,13 +14,15 @@ const _ = require('lodash');
 const logger = require('../config/logger');
 const { fileService } = require('../services');
 
+const DATA_DIR = path.join(__dirname, '../../data');
+
 const setLastCheckTime = () => {
-  fs.writeFileSync(path.join(__dirname, '../../data/clock.txt'), moment().format());
+  fs.writeFileSync(path.join(DATA_DIR, 'clock.txt'), moment().format());
 };
 
 const getLastCheckTime = () => {
   try {
-    const lastCheckTime = fs.readFileSync(path.join(__dirname, '../../data/clock.txt'), 'utf8');
+    const lastCheckTime = fs.readFileSync(path.join(DATA_DIR, 'clock.txt'), 'utf8');
     return moment(lastCheckTime);
   } catch (error) {
     return moment().subtract(1, 'hour');
@@ -33,13 +35,13 @@ const getLastCheckTime = () => {
  */
 const updateVSS = async (releases) => {
   try {
-    fs.writeFileSync(path.join(__dirname, '../../data/vss.json'), JSON.stringify(releases, null, 2));
+    fs.writeFileSync(path.join(DATA_DIR, 'vss.json'), JSON.stringify(releases, null, 2));
     logger.info('Updated VSS version list');
     logger.info(`Downloading VSS versions data for ${releases.length} versions`);
     
     // Download files with individual error handling so one failure doesn't stop others
     const downloadPromises = releases.map(async (release) => {
-      const filePath = path.join(__dirname, `../../data/${release.name}.json`);
+      const filePath = path.join(DATA_DIR, `${release.name}.json`);
       try {
         await fileService.downloadFile(release.browser_download_url, filePath);
         // Verify file was actually downloaded
@@ -95,7 +97,7 @@ const checkUpdateVSS = async () => {
         return true;
       });
 
-    const vssFilePath = path.join(__dirname, '../../data/vss.json');
+    const vssFilePath = path.join(DATA_DIR, 'vss.json');
 
     try {
       if (fs.existsSync(vssFilePath) && _.isEqual(filtered, JSON.parse(fs.readFileSync(vssFilePath, 'utf8')))) return;
@@ -112,9 +114,9 @@ const checkUpdateVSS = async () => {
 let interval = null;
 
 const setupScheduledCheck = () => {
-  const dataDirExist = fs.existsSync(path.join(__dirname, '../../data'));
+  const dataDirExist = fs.existsSync(DATA_DIR);
   if (!dataDirExist) {
-    fs.mkdirSync(path.join(__dirname, '../../data'));
+    fs.mkdirSync(DATA_DIR, { recursive: true });
   }
   const lastCheckTime = getLastCheckTime();
   if (moment().diff(lastCheckTime, 'seconds') > 120) {
