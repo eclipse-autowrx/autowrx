@@ -22,8 +22,8 @@ const archiver = require('archiver');
 const { SiteConfig, Plugin, ModelTemplate, DashboardTemplate, Model, Prototype } = require('../models');
 const logger = require('../config/logger');
 
-// Path to the mounted instance volume — configurable via INSTANCE_PATH env var
-const INSTANCE_DIR = process.env.INSTANCE_PATH || path.join(__dirname, '../../instance');
+// Path to the mounted instance volume
+const INSTANCE_DIR = path.join(__dirname, '../../instance');
 const INSTANCE_MANIFEST = path.join(INSTANCE_DIR, 'manifest.json');
 
 // Backend data directory (VSS JSON files) — same __dirname-relative base as api.service.js
