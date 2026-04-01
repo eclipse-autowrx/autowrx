@@ -17,21 +17,17 @@ git clone <repository-url>
 cd autowrx/instance-setup
 ```
 
-### (Alternative) Download from GitHub Release (wget)
+### (Alternative) Download from GitHub Release
 
-If you don’t want to clone the repo, you can download the instance setup files directly from a GitHub Release.
+If you don't want to clone the repo, download the instance setup files directly from a GitHub Release.
 
 ```bash
-# Option A: download a single file from the latest release (docker-compose)
-wget https://github.com/eclipse-autowrx/autowrx/releases/latest/download/docker-compose.prod.yml
-
-# Option B: download the full instance-setup package from the latest release (recommended)
+# Download the full instance-setup package from the latest release
 # NOTE: Replace TAG below if you want to pin to a specific version (e.g., TAG=v3.0.0)
 TAG=latest
 wget https://github.com/eclipse-autowrx/autowrx/releases/download/${TAG}/instance-setup-${TAG}.tar.gz
 tar -xzf instance-setup-${TAG}.tar.gz
 
-# After extracting (tarball contains the instance-setup directory contents)
 cp .env.prod.sample .env.prod
 # Edit .env.prod with your configuration, then:
 ./up.sh
@@ -126,7 +122,7 @@ Snapshots let you capture a fully configured instance and reproduce it on a fres
 
 ### Export
 
-In the admin panel go to **Settings → Site Management** and click **Export Snapshot**. This downloads a zip file containing:
+In the admin panel go to **Settings → Site Management** and click **Export Snapshot**. This downloads a ZIP file containing:
 
 ```
 <instance>-snapshot.zip
@@ -134,6 +130,7 @@ In the admin panel go to **Settings → Site Management** and click **Export Sna
 ├── site-configs.json          # all non-secret site configs
 ├── global.css                 # custom global CSS
 ├── uploads/                   # user-uploaded files (logos, covers, etc.)
+├── imgs/                      # static images (default model/prototype images, logos)
 ├── plugin/                    # plugin JS files
 ├── builtin-widgets/           # builtin widget files
 ├── vss/
@@ -144,32 +141,41 @@ In the admin panel go to **Settings → Site Management** and click **Export Sna
 └── seed/
     ├── plugins.json
     ├── model-templates.json
-    └── dashboard-templates.json
+    ├── dashboard-templates.json
+    ├── models.json
+    └── prototypes.json
 ```
 
-### Import (seed on deploy)
+### Import (restore on startup)
 
-The restore flow is git-based — no environment variables or CLI commands needed:
-
-1. Extract the snapshot zip locally:
+1. Extract the snapshot ZIP:
 ```bash
-unzip <instance>-snapshot.zip -d ./data/instance/
+unzip <instance>-snapshot.zip -d ./instance/
 ```
 
-2. Commit and push the extracted files to your repository (or copy them directly to the server).
-
-3. On the server, pull the latest changes and place the files in the deployment `data/instance/` folder:
-```bash
-git pull
-# ensure ./data/instance/manifest.json is present
+2. The `instance/` directory (next to `docker-compose.prod.yml`) should now contain the extracted files:
+```
+instance-setup/
+├── docker-compose.prod.yml
+├── .env.prod
+└── instance/
+    ├── manifest.json
+    ├── site-configs.json
+    ├── seed/
+    ├── uploads/
+    ├── imgs/
+    ├── plugin/
+    ├── builtin-widgets/
+    ├── vss/
+    └── global.css
 ```
 
-4. Restart the instance:
+3. Start (or restart) the instance:
 ```bash
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
 ```
 
-On startup, the backend reads `./data/instance/manifest.json` and seeds all configs, plugins, and templates using `$setOnInsert` — existing data is never overwritten.
+On startup the backend detects `instance/manifest.json`, seeds all data into Docker volumes, then **clears the `instance/` directory automatically**. After the container is running, `instance/` will be empty.
 
 ### Seed behaviour
 
@@ -177,28 +183,22 @@ On startup, the backend reads `./data/instance/manifest.json` and seeds all conf
 |---|---|
 | Fresh deploy, no snapshot | Default configs only |
 | Fresh deploy with snapshot | Snapshot values seeded, defaults fill any gaps |
-| Restart with snapshot present | All keys already exist — seed skips, no changes |
-| Admin edits a value, then restarts | Admin value preserved (seed never overwrites) |
+| Restart with no `instance/manifest.json` | No seed — skipped |
+| Admin edits a value after restore, then re-deploys with same snapshot | Admin value preserved — seed never overwrites existing data |
 
 ## Data Persistence
 
-- **MongoDB data**: Stored in Docker volume `autowrx-dbdata`
-- **Uploads**: Stored in `./data/upload` (configurable via `UPLOAD_PATH_HOST`)
-- **Plugins**: Stored in `./data/plugin` (configurable via `PLUGIN_PATH_HOST`)
-- **Builtin widgets**: Stored in `./data/builtin-widgets` (configurable via `BUILTIN_WIDGETS_PATH_HOST`)
-- **VSS data files**: Stored in `./data/vss-data` (configurable via `VSS_DATA_PATH_HOST`)
-- **Instance snapshot**: Stored in `./data/instance` (configurable via `INSTANCE_PATH`)
+All runtime data is stored in named Docker volumes, independent of the host directory:
 
-## Configuration Options
+| Data | Volume |
+|---|---|
+| MongoDB | `<NAME>-autowrx-dbdata` |
+| Uploaded files | `<NAME>-autowrx-uploads` |
+| Plugin JS files | `<NAME>-autowrx-plugins` |
+| Builtin widgets | `<NAME>-autowrx-builtin-widgets` |
+| VSS data files | `<NAME>-autowrx-vss-data` |
 
-See `.env.prod.sample` for all available configuration options:
-
-- `MONGODB_DATABASE`: Database name (default: `autowrx`)
-- `UPLOAD_PATH_HOST`: Path for user uploads
-- `PLUGIN_PATH_HOST`: Path for plugin files
-- `INSTANCE_PATH`: Path for instance snapshot data (default: `./data/instance`)
-- `JWT_COOKIE_NAME`: Cookie name for authentication
-- `JWT_COOKIE_DOMAIN`: Cookie domain (for cross-subdomain auth)
+The only bind-mount is `./instance/` — used exclusively for snapshot restore input. It is always empty during normal operation.
 
 ## Troubleshooting
 
@@ -216,6 +216,10 @@ See `.env.prod.sample` for all available configuration options:
 - Wait for MongoDB health check (15-30 seconds)
 - Check MongoDB logs: `docker compose -f docker-compose.prod.yml logs autowrx-db`
 
+**Snapshot not restored:**
+- Confirm `instance/manifest.json` exists before starting the container
+- Check backend logs for `[Instance]` lines: `docker compose -f docker-compose.prod.yml logs autowrx | grep Instance`
+
 ## Security Checklist
 
 - [ ] Changed `JWT_SECRET` to a strong random value
@@ -224,7 +228,7 @@ See `.env.prod.sample` for all available configuration options:
 - [ ] Changed default admin credentials
 - [ ] Configured firewall rules
 - [ ] Set up SSL/TLS (via reverse proxy like Nginx)
-- [ ] Regular exports of instance snapshots and MongoDB volume backups
+- [ ] Regularly export instance snapshots for backup
 
 ## Next Steps
 
