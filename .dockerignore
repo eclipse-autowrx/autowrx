@@ -1,0 +1,17 @@
+# Never bake local dev secrets into the image
+backend/.env
+backend/.env.*
+!backend/.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# Dev tooling
+**/node_modules
+**/.git
+**/.DS_Store
+**/coverage
+**/.nyc_output
+
+# Frontend build output is generated inside the Docker build — exclude the local copy
+backend/static/frontend-dist

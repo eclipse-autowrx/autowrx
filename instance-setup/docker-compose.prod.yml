@@ -16,7 +16,7 @@ services:
     # platform: linux/amd64  # Commented out for local testing on non-AMD64 machines
     container_name: ${NAME:-prod}-autowrx
     build:
-      context: .
+      context: ..
       dockerfile: ./backend/Dockerfile
     image: ghcr.io/eclipse-autowrx/autowrx/autowrx:latest
     ports:
@@ -32,9 +32,15 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS}
       ADMIN_EMAILS: ${ADMIN_EMAILS}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      JWT_COOKIE_DOMAIN: ${JWT_COOKIE_DOMAIN:-}
     volumes:
-      - '${UPLOAD_PATH_HOST:-./data/upload}:/usr/src/playground-be/static/uploads'
-      - '${PLUGIN_PATH_HOST:-./data/plugin}:/usr/src/playground-be/static/plugin'
+      - autowrx-uploads:/usr/src/playground-be/static/uploads
+      - autowrx-plugins:/usr/src/playground-be/static/plugin
+      - autowrx-builtin-widgets:/usr/src/playground-be/static/builtin-widgets
+      - autowrx-vss-data:/usr/src/playground-be/data
+      # Instance snapshot: place a snapshot ZIP here and restart to restore the instance.
+      # This is the only bind-mount so admins can easily drop files in from the host.
+      - '${INSTANCE_PATH:-./data/instance}:/usr/src/playground-be/instance'
     depends_on:
       autowrx-db:
         condition: service_healthy
@@ -64,6 +70,14 @@ services:
 volumes:
   autowrx-dbdata:
     name: ${NAME:-prod}-autowrx-dbdata
+  autowrx-uploads:
+    name: ${NAME:-prod}-autowrx-uploads
+  autowrx-plugins:
+    name: ${NAME:-prod}-autowrx-plugins
+  autowrx-builtin-widgets:
+    name: ${NAME:-prod}-autowrx-builtin-widgets
+  autowrx-vss-data:
+    name: ${NAME:-prod}-autowrx-vss-data
 
 networks:
   autowrx-network:
