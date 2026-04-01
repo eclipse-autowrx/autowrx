@@ -63,6 +63,7 @@ ADMIN_PASSWORD=your-secure-password
 ```
 
 **Important Notes:**
+
 - `JWT_SECRET`: Use a strong, random secret (e.g., `openssl rand -base64 32`)
 - `CORS_ORIGINS`: Escape dots with `\\.` (e.g., `example\\.com`)
 - Authentication settings (self-registration, public viewing, etc.) are configured via the Site Configuration in the admin panel after deployment
@@ -96,21 +97,25 @@ Access your instance at: `http://your-server:${FRONTEND_PORT}`
 ## Management Commands
 
 **Stop the instance:**
+
 ```bash
 ./down.sh
 ```
 
 **View logs:**
+
 ```bash
 docker compose -f docker-compose.prod.yml logs -f
 ```
 
 **Restart services:**
+
 ```bash
 docker compose -f docker-compose.prod.yml restart
 ```
 
 **Update to latest version:**
+
 ```bash
 git pull
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
@@ -149,11 +154,13 @@ In the admin panel go to **Settings → Site Management** and click **Export Sna
 ### Import (restore on startup)
 
 1. Extract the snapshot ZIP:
+
 ```bash
 unzip <instance>-snapshot.zip -d ./instance/
 ```
 
 2. The `instance/` directory (next to `docker-compose.prod.yml`) should now contain the extracted files:
+
 ```
 instance-setup/
 ├── docker-compose.prod.yml
@@ -171,6 +178,7 @@ instance-setup/
 ```
 
 3. Start (or restart) the instance:
+
 ```bash
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
 ```
@@ -179,44 +187,54 @@ On startup the backend detects `instance/manifest.json`, seeds all data into Doc
 
 ### Seed behaviour
 
-| Scenario | Result |
-|---|---|
-| Fresh deploy, no snapshot | Default configs only |
-| Fresh deploy with snapshot | Snapshot values seeded, defaults fill any gaps |
-| Restart with no `instance/manifest.json` | No seed — skipped |
+| Scenario                                                              | Result                                                      |
+| --------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Fresh deploy, no snapshot                                             | Default configs only                                        |
+| Fresh deploy with snapshot                                            | Snapshot values seeded, defaults fill any gaps              |
+| Restart with no `instance/manifest.json`                              | No seed — skipped                                           |
 | Admin edits a value after restore, then re-deploys with same snapshot | Admin value preserved — seed never overwrites existing data |
 
 ## Data Persistence
 
 All runtime data is stored in named Docker volumes, independent of the host directory:
 
-| Data | Volume |
-|---|---|
-| MongoDB | `<NAME>-autowrx-dbdata` |
-| Uploaded files | `<NAME>-autowrx-uploads` |
-| Plugin JS files | `<NAME>-autowrx-plugins` |
+| Data            | Volume                           |
+| --------------- | -------------------------------- |
+| MongoDB         | `<NAME>-autowrx-dbdata`          |
+| Uploaded files  | `<NAME>-autowrx-uploads`         |
+| Plugin JS files | `<NAME>-autowrx-plugins`         |
 | Builtin widgets | `<NAME>-autowrx-builtin-widgets` |
-| VSS data files | `<NAME>-autowrx-vss-data` |
+| VSS data files  | `<NAME>-autowrx-vss-data`        |
 
 The only bind-mount is `./instance/` — used exclusively for snapshot restore input. It is always empty during normal operation.
+
+> **Custom instance path:** If you need to use a different host directory, set `INSTANCE_PATH` in `.env.prod`:
+>
+> ```bash
+> INSTANCE_PATH=/opt/autowrx-snapshots
+> ```
 
 ## Troubleshooting
 
 **Containers won't start:**
+
 - Check logs: `docker compose -f docker-compose.prod.yml logs`
 - Verify `.env.prod` syntax (no spaces around `=`)
 - Ensure ports are not in use: `lsof -i :${FRONTEND_PORT}`
 
 **Can't access the application:**
+
 - Verify firewall allows traffic on `${FRONTEND_PORT}`
 - Check `CORS_ORIGINS` includes your domain
 - Review backend logs: `docker compose -f docker-compose.prod.yml logs autowrx`
 
 **MongoDB connection issues:**
+
 - Wait for MongoDB health check (15-30 seconds)
 - Check MongoDB logs: `docker compose -f docker-compose.prod.yml logs autowrx-db`
 
 **Snapshot not restored:**
+
 - Confirm `instance/manifest.json` exists before starting the container
 - Check backend logs for `[Instance]` lines: `docker compose -f docker-compose.prod.yml logs autowrx | grep Instance`
 

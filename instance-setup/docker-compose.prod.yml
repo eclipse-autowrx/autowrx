@@ -38,8 +38,9 @@ services:
       - autowrx-plugins:/usr/src/playground-be/static/plugin
       - autowrx-builtin-widgets:/usr/src/playground-be/static/builtin-widgets
       - autowrx-vss-data:/usr/src/playground-be/data
-      # Place a snapshot ZIP + manifest.json in ./instance/ (next to this compose file) to restore on startup.
-      - ./instance:/usr/src/playground-be/instance
+      # Place extracted snapshot contents in ./instance/ to restore on startup.
+      # Override INSTANCE_PATH in .env.prod to use a different host directory.
+      - ${INSTANCE_PATH:-./instance}:/usr/src/playground-be/instance
     depends_on:
       autowrx-db:
         condition: service_healthy

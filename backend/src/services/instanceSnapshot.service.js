@@ -26,10 +26,10 @@ const logger = require('../config/logger');
 const INSTANCE_DIR = path.join(__dirname, '../../instance');
 const INSTANCE_MANIFEST = path.join(INSTANCE_DIR, 'manifest.json');
 
-// Backend data directory (VSS JSON files) — same __dirname-relative base as api.service.js
+// Backend data directory (VSS JSON files) — resolved relative to this file
 const BACKEND_DATA_DIR = path.join(__dirname, '../../data');
 
-// Static dirs served by the BE — same __dirname-relative base as app.js
+// Static dirs served by the BE — resolved relative to this file
 const STATIC_DIR = path.join(__dirname, '../../static');
 const STATIC_UPLOADS_DIR = path.join(STATIC_DIR, 'uploads');
 const STATIC_IMAGES_DIR = path.join(STATIC_DIR, 'images');
