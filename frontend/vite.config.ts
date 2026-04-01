@@ -7,24 +7,17 @@
 // SPDX-License-Identifier: MIT
 
 import path from 'path'
-import { createRequire } from 'module'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import { visualizer } from 'rollup-plugin-visualizer'
-
-const require = createRequire(import.meta.url)
-const pkg = require('./package.json')
 
 export default defineConfig({
   plugins: [
     react(),
     visualizer({
-      open: !process.env.CI && process.env.NODE_ENV !== 'production',
+      open: true,
     }),
   ],
-  define: {
-    __APP_VERSION__: JSON.stringify(pkg.version),
-  },
   build: {
     // Output directory - relative to vite.config.ts location (frontend/)
     // For Docker builds, this should be ../backend/static/frontend-dist

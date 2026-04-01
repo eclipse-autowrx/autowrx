@@ -120,74 +120,11 @@ git pull
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 ```
 
-## Instance Snapshot (Export / Import)
-
-Snapshots let you capture a fully configured instance and reproduce it on a fresh deployment — no manual re-configuration needed.
-
-### Export
-
-In the admin panel go to **Settings → Site Management** and click **Export Snapshot**. This downloads a zip file containing:
-
-```
-<instance>-snapshot.zip
-├── manifest.json              # version, export date, instance name
-├── site-configs.json          # all non-secret site configs
-├── global.css                 # custom global CSS
-├── uploads/                   # user-uploaded files (logos, covers, etc.)
-├── plugin/                    # plugin JS files
-├── builtin-widgets/           # builtin widget files
-├── vss/
-│   ├── vss.json               # VSS version catalog
-│   ├── v4.1.json
-│   ├── v5.0.json
-│   └── ...                    # one file per available VSS version
-└── seed/
-    ├── plugins.json
-    ├── model-templates.json
-    └── dashboard-templates.json
-```
-
-### Import (seed on deploy)
-
-The restore flow is git-based — no environment variables or CLI commands needed:
-
-1. Extract the snapshot zip locally:
-```bash
-unzip <instance>-snapshot.zip -d ./data/instance/
-```
-
-2. Commit and push the extracted files to your repository (or copy them directly to the server).
-
-3. On the server, pull the latest changes and place the files in the deployment `data/instance/` folder:
-```bash
-git pull
-# ensure ./data/instance/manifest.json is present
-```
-
-4. Restart the instance:
-```bash
-docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
-```
-
-On startup, the backend reads `./data/instance/manifest.json` and seeds all configs, plugins, and templates using `$setOnInsert` — existing data is never overwritten.
-
-### Seed behaviour
-
-| Scenario | Result |
-|---|---|
-| Fresh deploy, no snapshot | Default configs only |
-| Fresh deploy with snapshot | Snapshot values seeded, defaults fill any gaps |
-| Restart with snapshot present | All keys already exist — seed skips, no changes |
-| Admin edits a value, then restarts | Admin value preserved (seed never overwrites) |
-
 ## Data Persistence
 
 - **MongoDB data**: Stored in Docker volume `autowrx-dbdata`
 - **Uploads**: Stored in `./data/upload` (configurable via `UPLOAD_PATH_HOST`)
 - **Plugins**: Stored in `./data/plugin` (configurable via `PLUGIN_PATH_HOST`)
-- **Builtin widgets**: Stored in `./data/builtin-widgets` (configurable via `BUILTIN_WIDGETS_PATH_HOST`)
-- **VSS data files**: Stored in `./data/vss-data` (configurable via `VSS_DATA_PATH_HOST`)
-- **Instance snapshot**: Stored in `./data/instance` (configurable via `INSTANCE_PATH`)
 
 ## Configuration Options
 
@@ -196,7 +133,6 @@ See `.env.prod.sample` for all available configuration options:
 - `MONGODB_DATABASE`: Database name (default: `autowrx`)
 - `UPLOAD_PATH_HOST`: Path for user uploads
 - `PLUGIN_PATH_HOST`: Path for plugin files
-- `INSTANCE_PATH`: Path for instance snapshot data (default: `./data/instance`)
 - `JWT_COOKIE_NAME`: Cookie name for authentication
 - `JWT_COOKIE_DOMAIN`: Cookie domain (for cross-subdomain auth)
 
@@ -224,13 +160,13 @@ See `.env.prod.sample` for all available configuration options:
 - [ ] Changed default admin credentials
 - [ ] Configured firewall rules
 - [ ] Set up SSL/TLS (via reverse proxy like Nginx)
-- [ ] Regular exports of instance snapshots and MongoDB volume backups
+- [ ] Regular backups of MongoDB volume
 
 ## Next Steps
 
 - Set up a reverse proxy (Nginx/Traefik) for SSL/TLS
 - Configure domain DNS
-- Export an instance snapshot after initial configuration to preserve your setup
+- Set up automated backups
 - Monitor logs and performance
 
 ---

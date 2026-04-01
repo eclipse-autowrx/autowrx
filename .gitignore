@@ -101,4 +101,3 @@ temp/
 .env.stack.secrets
 !.env.stack.example
 
-instance-setup/data/

@@ -24,7 +24,6 @@ module.exports.fileService = require('./file.service');
 module.exports.logService = require('./log.service');
 module.exports.changeLogService = require('./changeLog.service');
 module.exports.siteConfigService = require('./siteConfig.service');
-module.exports.instanceSnapshotService = require('./instanceSnapshot.service');
 module.exports.ssoService = require('./sso.service');
 module.exports.pluginService = require('./plugin.service');
 module.exports.modelTemplateService = require('./modelTemplate.service');
