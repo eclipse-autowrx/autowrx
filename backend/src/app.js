@@ -59,7 +59,8 @@ if (config.env === 'development') {
         workerSrc: ["'self'", "blob:", "*"],
         upgradeInsecureRequests: null, // Disable upgrade to HTTPS in development
       },
-    }),
+    },
+  }),
   );
 } else {
   // Production CSP - more restrictive but allows the frontend assets
