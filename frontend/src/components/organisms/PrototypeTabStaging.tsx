@@ -190,8 +190,8 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({ prototype }) 
     try {
       setIsLoading(true)
       const [stagingFrame, standardStage] = await Promise.allSettled([
-        configManagementService.getConfigByKey(STAGING_FRAME_KEY),
-        configManagementService.getConfigByKey(STANDARD_STAGE_KEY),
+        configManagementService.getPublicConfig(STAGING_FRAME_KEY),
+        configManagementService.getPublicConfig(STANDARD_STAGE_KEY),
       ])
       
       // Handle staging frame config

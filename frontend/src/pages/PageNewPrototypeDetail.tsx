@@ -226,15 +226,9 @@ const PageNewPrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
     const STAGING_FRAME_KEY = 'STAGING_FRAME'
 
     useEffect(() => {
-        // Only load staging config if user is authenticated
-        if (!user) {
-            setStagingPlugins([])
-            return
-        }
-
         const loadStagingPlugins = async () => {
             try {
-                const stagingConfig = await configManagementService.getConfigByKey(STAGING_FRAME_KEY)
+                const stagingConfig = await configManagementService.getPublicConfig(STAGING_FRAME_KEY)
                 if (stagingConfig?.value?.stages) {
                     // Extract all plugins from all stages
                     const allPlugins: Plugin[] = []
@@ -252,7 +246,7 @@ const PageNewPrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
         }
 
         loadStagingPlugins()
-    }, [user])
+    }, [])
 
     // Whether we are in the new-prototype creation flow (no prototype_id in URL)
     const isNewPrototypeFlow = !prototype_id
