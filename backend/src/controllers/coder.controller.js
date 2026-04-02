@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -11,7 +11,7 @@ const catchAsync = require('../utils/catchAsync');
 const { orchestratorService, permissionService, coderService } = require('../services');
 const { PERMISSIONS } = require('../config/roles');
 const ApiError = require('../utils/ApiError');
-const { Prototype } = require('../models');
+const { Prototype, User } = require('../models');
 const coderConfig = require('../utils/coderConfig');
 
 /**
@@ -154,15 +154,31 @@ const getWorkspaceAgentLogs = catchAsync(async (req, res) => {
   }
 
   const { workspaceAgentId } = req.params;
+  const userId = req.user.id;
   const { before, after, follow, no_compression, format } = req.query;
 
-  const logs = await coderService.getWorkspaceAgentLogs(workspaceAgentId, {
-    before,
-    after,
-    follow,
-    no_compression,
-    format,
-  });
+  const user = await User.findById(userId);
+  if (!user?.coder_workspace_id || !user?.coder_username) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Workspace not found. Prepare workspace first.');
+  }
+
+  const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, { workspaceId: user.coder_workspace_id });
+  const expectedWorkspaceAgentId = await coderService.getWorkspaceAgentId(user.coder_workspace_id, workspaceScopedToken);
+  if (String(workspaceAgentId) !== String(expectedWorkspaceAgentId)) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'You do not have permission to access this workspace agent logs');
+  }
+
+  const logs = await coderService.getWorkspaceAgentLogs(
+    workspaceAgentId,
+    {
+      before,
+      after,
+      follow,
+      no_compression,
+      format,
+    },
+    workspaceScopedToken,
+  );
 
   res.json(logs);
 });

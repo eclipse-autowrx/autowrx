@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 const axios = require('axios');
+const crypto = require('crypto');
 const httpStatus = require('http-status');
 const logger = require('../config/logger');
 const ApiError = require('../utils/ApiError');
@@ -48,6 +49,58 @@ const getAdminHeaders = () => {
     'Coder-Session-Token': coderCfg.adminApiKey,
     'Content-Type': 'application/json',
   };
+};
+
+const getHeadersWithToken = (sessionToken) => {
+  if (!sessionToken) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Missing Coder session token');
+  }
+  return {
+    'Coder-Session-Token': sessionToken,
+    'Content-Type': 'application/json',
+  };
+};
+
+const TOKEN_LIFETIME_MS = 24 * 60 * 60 * 1000; // 24h
+const TOKEN_REFRESH_SAFETY_MS = 5 * 60 * 1000; // refresh if expiring within 5m
+
+/**
+ * Get (and cache) a user-scoped token for Coder API calls.
+ *
+ * Admin API key is only used here to mint a safer token. All subsequent
+ * workspace operations should use the returned token via getHeadersWithToken().
+ *
+ * @param {import('mongoose').Document & {coder_username?: string, coder_scoped_token?: string, coder_scoped_token_expires_at?: Date, coder_scoped_token_allow?: string, save: Function}} user
+ * @param {Object} [options]
+ * @param {string} [options.workspaceId] - If provided, restrict token allow-list to this workspace.
+ * @returns {Promise<string>} scoped token
+ */
+const getOrCreateUserScopedToken = async (user, options = {}) => {
+  const { workspaceId } = options;
+  if (!user?.coder_username) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Coder user not found. Prepare workspace first.');
+  }
+
+  const desiredAllow = workspaceId ? `workspace:${workspaceId}` : '';
+  const expiresAt = user.coder_scoped_token_expires_at ? new Date(user.coder_scoped_token_expires_at).getTime() : 0;
+  const stillValid = user.coder_scoped_token && expiresAt > Date.now() + TOKEN_REFRESH_SAFETY_MS;
+  const allowMatches = String(user.coder_scoped_token_allow || '') === desiredAllow;
+
+  if (stillValid && allowMatches) {
+    return user.coder_scoped_token;
+  }
+
+  const token = await generateSessionToken(user.coder_username, { workspaceId });
+  if (!token) {
+    throw new ApiError(httpStatus.SERVICE_UNAVAILABLE, 'Failed to generate Coder user-scoped token');
+  }
+
+  user.coder_scoped_token = token;
+  user.coder_scoped_token_expires_at = new Date(Date.now() + TOKEN_LIFETIME_MS);
+  user.coder_scoped_token_allow = desiredAllow;
+  await user.save();
+
+  return token;
 };
 
 /**
@@ -144,7 +197,7 @@ const getOrCreateDefaultOrganization = async () => {
  * Generate random password for Coder users (they won't use it)
  */
 const generateRandomPassword = () => {
-  return `pwd_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+  return `pwd_${crypto.randomBytes(24).toString('base64url')}`;
 };
 
 /**
@@ -239,20 +292,29 @@ const ensureUserExists = async (userId, username, email) => {
 };
 
 /**
- * Generate a session token for a user (impersonation)
+ * Generate a user-scoped session token with optional allow-list restrictions.
  * Note: Token generation may not be available in all Coder versions.
  * For iframe embedding, the workspace URL can be used directly without a token.
  * @param {string} coderUsername - Coder username
+ * @param {Object} [options]
+ * @param {string} [options.workspaceId] - Restrict token to a single workspace
  * @returns {Promise<string|null>} Session token or null if not available
  */
-const generateSessionToken = async (coderUsername) => {
+const generateSessionToken = async (coderUsername, options = {}) => {
+  const { workspaceId } = options;
+  const allowList = workspaceId ? [`workspace:${workspaceId}`] : undefined;
+  // Scopes are still bounded by the user's permissions; allow-list further restricts resources.
+  // Keep broad-enough to operate workspaces and read templates without falling back to admin.
+  const scopeList = ['workspace:*', 'template:*'];
+
   const tokenEndpoints = [
     {
       url: `${getCoderApiBase()}/users/${coderUsername}/tokens`,
       body: {
         name: `autowrx-session-${Date.now()}`,
-        lifetime: 86400000, // 24 hours in milliseconds
-        scope: 'workspace:*', // Full workspace access
+        lifetime: TOKEN_LIFETIME_MS,
+        scope: scopeList,
+        ...(allowList ? { allow: allowList } : {}),
       },
     },
     {
@@ -260,8 +322,9 @@ const generateSessionToken = async (coderUsername) => {
       url: `${getCoderApiBase()}/users/${coderUsername}/keys/tokens`,
       body: {
         token_name: `autowrx-session-${Date.now()}`,
-        lifetime: 86400000,
-        scope: 'workspace:*',
+        lifetime: TOKEN_LIFETIME_MS,
+        scope: scopeList,
+        ...(allowList ? { allow: allowList } : {}),
       },
     },
     {
@@ -269,8 +332,9 @@ const generateSessionToken = async (coderUsername) => {
       url: `${getCoderApiBase()}/users/${coderUsername}/keys`,
       body: {
         token_name: `autowrx-session-${Date.now()}`,
-        lifetime: 86400000,
-        scope: 'workspace:*',
+        lifetime: TOKEN_LIFETIME_MS,
+        scope: scopeList,
+        ...(allowList ? { allow: allowList } : {}),
       },
     },
   ];
@@ -284,7 +348,9 @@ const generateSessionToken = async (coderUsername) => {
           logger.warn(`Token creation succeeded via ${endpoint.url} but no token was returned for user: ${coderUsername}`);
           return null;
         }
-        logger.info(`Generated Coder session token for user: ${coderUsername} via ${endpoint.url}`);
+        logger.info(
+          `Generated user-scoped Coder session token for user: ${coderUsername} via ${endpoint.url}${workspaceId ? ` (allow: workspace:${workspaceId})` : ''}`,
+        );
         return typeof token === 'string' ? token : JSON.stringify(token);
       } catch (endpointError) {
         if (endpointError.response?.status === 404) {
@@ -328,6 +394,7 @@ const generateSessionToken = async (coderUsername) => {
  * @param {string} prototypesHostPath - Host path for prototypes folder (bind-mount)
  * @param {string} githubToken - Optional GitHub token (DISABLED - Gitea disabled)
  * @param {string} gitRepoUrl - Git repository URL (DISABLED - Gitea disabled)
+ * @param {string} sessionToken - User-scoped token used for user operations
  * @returns {Promise<Object>} Workspace object
  */
 const getOrCreateWorkspace = async (
@@ -337,14 +404,12 @@ const getOrCreateWorkspace = async (
   prototypesHostPath,
   _githubToken = null, // DISABLED - Gitea disabled
   _gitRepoUrl = null, // DISABLED - Gitea disabled
+  sessionToken = null,
 ) => {
   try {
-    // Get organization ID (required for API v2)
-    const organizationId = await getOrCreateDefaultOrganization();
-
     // Check if workspace exists
     const workspacesResponse = await axios.get(`${getCoderApiBase()}/workspaces`, {
-      headers: getAdminHeaders(),
+      headers: getHeadersWithToken(sessionToken),
       params: { q: workspaceName },
     });
 
@@ -382,18 +447,19 @@ const getOrCreateWorkspace = async (
     //   richParameterValues.push({ name: 'github_token', value: githubToken });
     // }
 
-    // Use the correct API v2 endpoint format: /organizations/{organization}/members/{user}/workspaces
+    // Create workspace as the user (token-based), per Coder REST API docs.
+    // Prefer /users/me/workspaces so we don't need admin org membership endpoints here.
     const createResponse = await axios.post(
-      `${getCoderApiBase()}/organizations/${organizationId}/members/${coderUserId}/workspaces`,
+      `${getCoderApiBase()}/users/me/workspaces`,
       {
         template_id: templateId,
         name: workspaceName,
         rich_parameter_values: richParameterValues,
       },
-      { headers: getAdminHeaders() },
+      { headers: getHeadersWithToken(sessionToken) },
     );
 
-    logger.info(`Created Coder workspace: ${workspaceName} in organization ${organizationId}`);
+    logger.info(`Created Coder workspace: ${workspaceName} as user ${coderUserId}`);
     return createResponse.data;
   } catch (error) {
     logger.error(`Failed to get or create Coder workspace: ${error.message}`);
@@ -463,12 +529,13 @@ const getOrCreateWorkspace = async (
 /**
  * Start a stopped workspace
  * @param {string} workspaceId - Workspace ID
+ * @param {string} sessionToken - User-scoped token used for user operations
  * @returns {Promise<Object>} Build object or workspace status
  */
-const startWorkspace = async (workspaceId) => {
+const startWorkspace = async (workspaceId, sessionToken = null) => {
   try {
     // First check current workspace status
-    const workspace = await getWorkspaceStatus(workspaceId);
+    const workspace = await getWorkspaceStatus(workspaceId, sessionToken);
     const buildStatus = workspace.latest_build?.status;
 
     // If already running, return workspace status
@@ -487,7 +554,7 @@ const startWorkspace = async (workspaceId) => {
     const response = await axios.post(
       `${getCoderApiBase()}/workspaces/${workspaceId}/builds`,
       { transition: 'start' },
-      { headers: getAdminHeaders() },
+      { headers: getHeadersWithToken(sessionToken) },
     );
 
     logger.info(`Started Coder workspace: ${workspaceId}`);
@@ -497,7 +564,7 @@ const startWorkspace = async (workspaceId) => {
     if (error.response?.status === 409) {
       logger.info(`Coder workspace ${workspaceId} build is already active, fetching status...`);
       // Return current workspace status instead of erroring
-      return await getWorkspaceStatus(workspaceId);
+      return await getWorkspaceStatus(workspaceId, sessionToken);
     }
 
     logger.error(`Failed to start Coder workspace: ${error.message}`);
@@ -515,12 +582,13 @@ const startWorkspace = async (workspaceId) => {
 /**
  * Get workspace status
  * @param {string} workspaceId - Workspace ID
+ * @param {string} sessionToken - User-scoped token used for user operations
  * @returns {Promise<Object>} Workspace object with status
  */
-const getWorkspaceStatus = async (workspaceId) => {
+const getWorkspaceStatus = async (workspaceId, sessionToken = null) => {
   try {
     const response = await axios.get(`${getCoderApiBase()}/workspaces/${workspaceId}`, {
-      headers: getAdminHeaders(),
+      headers: getHeadersWithToken(sessionToken),
     });
 
     return response.data;
@@ -539,13 +607,14 @@ const getWorkspaceStatus = async (workspaceId) => {
 /**
  * Get workspace build timings
  * @param {string} workspaceId - Workspace ID
+ * @param {string} sessionToken - User-scoped token used for user operations
  * @returns {Promise<Object>} Workspace build timings
  */
-const getWorkspaceTimings = async (workspaceId) => {
+const getWorkspaceTimings = async (workspaceId, sessionToken = null) => {
   try {
     // Coder API: GET /api/v2/workspaces/{workspace}/timings
     const response = await axios.get(`${getCoderApiBase()}/workspaces/${workspaceId}/timings`, {
-      headers: getAdminHeaders(),
+      headers: getHeadersWithToken(sessionToken),
     });
 
     return response.data;
@@ -569,10 +638,10 @@ const getWorkspaceTimings = async (workspaceId) => {
  * @param {number} retryDelay - Delay between retries in ms (default: 2000)
  * @returns {Promise<string>} App URL
  */
-const getWorkspaceAppUrl = async (workspaceId, appSlug = 'code-server', maxRetries = 5, retryDelay = 2000) => {
+const getWorkspaceAppUrl = async (workspaceId, appSlug = 'code-server', maxRetries = 5, retryDelay = 2000, sessionToken) => {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const workspace = await getWorkspaceStatus(workspaceId);
+      const workspace = await getWorkspaceStatus(workspaceId, sessionToken);
 
       // Log workspace structure for debugging
       if (attempt === 1) {
@@ -702,8 +771,8 @@ const getWorkspaceAppUrl = async (workspaceId, appSlug = 'code-server', maxRetri
  * @param {string} workspaceId - Workspace ID
  * @returns {Promise<string>} Workspace agent ID
  */
-const getWorkspaceAgentId = async (workspaceId) => {
-  const workspace = await getWorkspaceStatus(workspaceId);
+const getWorkspaceAgentId = async (workspaceId, sessionToken) => {
+  const workspace = await getWorkspaceStatus(workspaceId, sessionToken);
 
   // Try multiple ways to find the agent, same as getWorkspaceAppUrl
   let agent = null;
@@ -822,14 +891,15 @@ const getTemplateId = async (templateName = 'docker-template') => {
  * @param {boolean} [options.follow] - Follow log stream
  * @param {boolean} [options.no_compression] - Disable compression for WebSocket connection
  * @param {string} [options.format] - 'json' (default) or 'text'
+ * @param {string} [sessionToken] - Optional user-scoped token. If omitted, admin token is used.
  * @returns {Promise<any>} Logs array or text, depending on format
  */
-const getWorkspaceAgentLogs = async (workspaceAgentId, options = {}) => {
+const getWorkspaceAgentLogs = async (workspaceAgentId, options = {}, sessionToken = null) => {
   try {
     const { before, after, follow, no_compression, format } = options;
 
     const response = await axios.get(`${getCoderApiBase()}/workspaceagents/${workspaceAgentId}/logs`, {
-      headers: getAdminHeaders(),
+      headers: sessionToken ? getHeadersWithToken(sessionToken) : getAdminHeaders(),
       params: {
         ...(before !== undefined && { before }),
         ...(after !== undefined && { after }),
@@ -867,14 +937,15 @@ const getWorkspaceAgentLogs = async (workspaceAgentId, options = {}) => {
  * @param {Object} [options] - Query options (same as getWorkspaceAgentLogs)
  * @returns {Promise<any>} Logs array or text, depending on format
  */
-const getWorkspaceLogsByWorkspaceId = async (workspaceId, options = {}) => {
-  const agentId = await getWorkspaceAgentId(workspaceId);
-  return getWorkspaceAgentLogs(agentId, options);
+const getWorkspaceLogsByWorkspaceId = async (workspaceId, options = {}, sessionToken = null) => {
+  const agentId = await getWorkspaceAgentId(workspaceId, sessionToken);
+  return getWorkspaceAgentLogs(agentId, options, sessionToken);
 };
 
 module.exports = {
   ensureUserExists,
   generateSessionToken,
+  getOrCreateUserScopedToken,
   getOrCreateWorkspace,
   startWorkspace,
   getWorkspaceStatus,

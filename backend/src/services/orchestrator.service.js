@@ -320,6 +320,9 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
     }
 
     const coderUser = await coderService.ensureUserExists(userId, coderUsername, user.email);
+    // Mint (or reuse) a user-scoped token. Admin key is only used inside this helper.
+    // Use an unrestricted token first (needed before workspaceId exists).
+    const userScopedToken = await coderService.getOrCreateUserScopedToken(user);
 
     // 6. Prepare prototype folder on host (per-user dir, prototype name as subfolder)
     const userHostPath = path.join(prototypesPath, userId.toString());
@@ -343,21 +346,32 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
     const templateId = await coderService.getTemplateId('docker-template');
 
     let workspace = user.coder_workspace_id
-      ? await coderService.getWorkspaceStatus(user.coder_workspace_id).catch(() => null)
+      ? await coderService.getWorkspaceStatus(user.coder_workspace_id, userScopedToken).catch(() => null)
       : null;
 
     if (!workspace) {
-      workspace = await coderService.getOrCreateWorkspace(coderUser.id, workspaceName, templateId, userHostPath);
+      workspace = await coderService.getOrCreateWorkspace(
+        coderUser.id,
+        workspaceName,
+        templateId,
+        userHostPath,
+        null,
+        null,
+        userScopedToken,
+      );
 
       user.coder_workspace_id = workspace.id;
       user.coder_workspace_name = workspaceName;
       await user.save();
     }
 
+    // Now that we have a workspace, mint (or reuse) an allow-listed token restricted to this workspace.
+    const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, { workspaceId: workspace.id });
+
     // 9. Start workspace if stopped
     const currentStatus = workspace.latest_build?.status;
     if (currentStatus !== 'running') {
-      const updatedWorkspace = await coderService.startWorkspace(workspace.id);
+      const updatedWorkspace = await coderService.startWorkspace(workspace.id, workspaceScopedToken);
       workspace = updatedWorkspace;
 
       if (workspace.latest_build?.status === 'starting') {
@@ -368,7 +382,7 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
     // 10. Get workspace app URL
     let appUrl = null;
     try {
-      appUrl = await coderService.getWorkspaceAppUrl(workspace.id, 'code-server');
+      appUrl = await coderService.getWorkspaceAppUrl(workspace.id, 'code-server', 5, 2000, workspaceScopedToken);
     } catch (error) {
       if (error instanceof ApiError && error.statusCode === httpStatus.NOT_FOUND) {
         logger.warn(
@@ -382,7 +396,8 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
     }
 
     // 11. Generate session token for user
-    const sessionToken = await coderService.generateSessionToken(coderUsername);
+    // Return the workspace-scoped token (allow-listed) for embedding/agent log access.
+    const sessionToken = workspaceScopedToken;
 
     // Container path: user host path is mounted at /home/coder/prototypes
     const folderPath = `/home/coder/prototypes/${prototypeFolderName}`;
@@ -427,7 +442,10 @@ const getWorkspaceStatus = async (userId, prototypeId) => {
       };
     }
 
-    const workspace = await coderService.getWorkspaceStatus(user.coder_workspace_id);
+    const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, {
+      workspaceId: user.coder_workspace_id,
+    });
+    const workspace = await coderService.getWorkspaceStatus(user.coder_workspace_id, workspaceScopedToken);
 
     return {
       exists: true,
@@ -460,7 +478,10 @@ const getWorkspaceTimings = async (userId, prototypeId) => {
       throw new ApiError(httpStatus.NOT_FOUND, 'Workspace not found. Create and start the workspace first.');
     }
 
-    const timings = await coderService.getWorkspaceTimings(user.coder_workspace_id);
+    const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, {
+      workspaceId: user.coder_workspace_id,
+    });
+    const timings = await coderService.getWorkspaceTimings(user.coder_workspace_id, workspaceScopedToken);
     return timings;
   } catch (error) {
     logger.error(`Failed to get workspace timings: ${error.message}`);
@@ -484,8 +505,10 @@ const getWorkspaceLogs = async (userId, prototypeId, options = {}) => {
     if (!user?.coder_workspace_id) {
       throw new ApiError(httpStatus.NOT_FOUND, 'Workspace not found. Create and start the workspace first.');
     }
-
-    const logs = await coderService.getWorkspaceLogsByWorkspaceId(user.coder_workspace_id, options);
+    const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, {
+      workspaceId: user.coder_workspace_id,
+    });
+    const logs = await coderService.getWorkspaceLogsByWorkspaceId(user.coder_workspace_id, options, workspaceScopedToken);
     return logs;
   } catch (error) {
     logger.error(`Failed to get workspace logs: ${error.message}`);

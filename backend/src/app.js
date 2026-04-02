@@ -43,24 +43,25 @@ app.use(cookies());
 // set security HTTP headers
 if (config.env === 'development') {
   // Permissive CSP for development — mirrors production
-  app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["*"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "*"],
-        scriptSrcElem: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "*"],
-        styleSrc: ["'self'", "'unsafe-inline'", "*"],
-        imgSrc: ["*", "data:", "blob:"],
-        connectSrc: ["*", "ws:", "wss:"],
-        fontSrc: ["*", "data:"],
-        objectSrc: ["'none'"],
-        mediaSrc: ["*"],
-        frameSrc: ["*"],
-        workerSrc: ["'self'", "blob:", "*"],
-        upgradeInsecureRequests: null, // Disable upgrade to HTTPS in development
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ['*'],
+          scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", '*'],
+          scriptSrcElem: ["'self'", "'unsafe-inline'", "'unsafe-eval'", '*'],
+          styleSrc: ["'self'", "'unsafe-inline'", '*'],
+          imgSrc: ['*', 'data:', 'blob:'],
+          connectSrc: ['*', 'ws:', 'wss:'],
+          fontSrc: ['*', 'data:'],
+          objectSrc: ["'none'"],
+          mediaSrc: ['*'],
+          frameSrc: ['*'],
+          workerSrc: ["'self'", 'blob:', '*'],
+          upgradeInsecureRequests: null, // Disable upgrade to HTTPS in development
+        },
       },
-    },
-  }),
+    }),
   );
 } else {
   // Production CSP - more restrictive but allows the frontend assets

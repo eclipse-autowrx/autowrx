@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 const axios = require('axios');
+const crypto = require('crypto');
 const config = require('../config/config');
 const logger = require('../config/logger');
 const ApiError = require('../utils/ApiError');
@@ -65,7 +66,7 @@ const ensureOrganizationExists = async (modelId, modelName) => {
         description: `Organization for model: ${modelName}`,
         visibility: 'private',
       },
-      { headers: getAuthHeaders() }
+      { headers: getAuthHeaders() },
     );
 
     logger.info(`Created Gitea organization: ${orgName}`);
@@ -75,7 +76,7 @@ const ensureOrganizationExists = async (modelId, modelName) => {
     if (error.response) {
       throw new ApiError(
         error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
-        `Gitea API error: ${error.response.data?.message || error.message}`
+        `Gitea API error: ${error.response.data?.message || error.message}`,
       );
     }
     throw error;
@@ -116,7 +117,7 @@ const ensureRepositoryExists = async (orgName, repoName, prototypeId) => {
         auto_init: true,
         default_branch: 'main',
       },
-      { headers: getAuthHeaders() }
+      { headers: getAuthHeaders() },
     );
 
     logger.info(`Created Gitea repository: ${orgName}/${sanitizedRepoName}`);
@@ -126,7 +127,7 @@ const ensureRepositoryExists = async (orgName, repoName, prototypeId) => {
     if (error.response) {
       throw new ApiError(
         error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
-        `Gitea API error: ${error.response.data?.message || error.message}`
+        `Gitea API error: ${error.response.data?.message || error.message}`,
       );
     }
     throw error;
@@ -163,13 +164,13 @@ const getRepositoryUrlForContainer = (orgName, repoName, username = null, token 
   // Replace localhost:3000 with gitea:3000 for Docker network access
   let url = config.gitea.url.replace('localhost:3000', 'gitea:3000');
   url = url.replace('127.0.0.1:3000', 'gitea:3000');
-  
+
   // Add authentication if provided
   if (username && token) {
     const host = url.replace(/^https?:\/\//, '').split('/')[0];
     url = url.replace(host, `${username}:${token}@${host}`);
   }
-  
+
   return `${url}/${orgName}/${sanitizedRepoName}.git`;
 };
 
@@ -209,7 +210,7 @@ const syncUserPermissions = async (orgName, giteaUsername, role) => {
           permission: teamName === 'Contributors' ? 'write' : 'read',
           includes_all_repositories: true,
         },
-        { headers: getAuthHeaders() }
+        { headers: getAuthHeaders() },
       );
       team = createTeamResponse.data;
       logger.info(`Created Gitea team: ${orgName}/${teamName}`);
@@ -232,7 +233,7 @@ const syncUserPermissions = async (orgName, giteaUsername, role) => {
     if (error.response) {
       throw new ApiError(
         error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
-        `Gitea API error: ${error.response.data?.message || error.message}`
+        `Gitea API error: ${error.response.data?.message || error.message}`,
       );
     }
     throw error;
@@ -295,7 +296,8 @@ LOOP.run_until_complete(main())
 LOOP.close()`;
 
   return {
-    'README.md': '# Python Project\n\nA simple Python project with multiple files.\n\n## Features\n- Multiple Python modules\n- Configuration file\n- Requirements file\n- Basic project structure',
+    'README.md':
+      '# Python Project\n\nA simple Python project with multiple files.\n\n## Features\n- Multiple Python modules\n- Configuration file\n- Requirements file\n- Basic project structure',
     'requirements.txt': 'requests==2.31.0',
     'main.py': DEFAULT_PYTHON_APP,
     '.gitignore': `# Python\n__pycache__/\n*.py[cod]\n*$py.class\n*.so\n.Python\nvenv/\nenv/\n\n# C++\n*.o\n*.a\n*.so\n*.exe\nbuild/\ndist/\n`,
@@ -305,17 +307,21 @@ LOOP.close()`;
 const initializeRepository = async (orgName, repoName, initialContent = {}) => {
   try {
     const sanitizedRepoName = sanitizeRepoName(repoName);
-    
-    logger.info(`initializeRepository called for ${orgName}/${sanitizedRepoName} with initialContent keys: ${Object.keys(initialContent).join(', ') || 'none'}`);
+
+    logger.info(
+      `initializeRepository called for ${orgName}/${sanitizedRepoName} with initialContent keys: ${Object.keys(initialContent).join(', ') || 'none'}`,
+    );
 
     // If no custom content provided, use default Python project structure
     const hasCustomContent = initialContent.readme || initialContent.gitignore || initialContent.files;
-    
+
     if (!hasCustomContent) {
       const defaultFiles = getDefaultPythonProjectContent();
-      
-      logger.info(`Initializing repository ${orgName}/${sanitizedRepoName} with default Python project structure (${Object.keys(defaultFiles).length} files)`);
-      
+
+      logger.info(
+        `Initializing repository ${orgName}/${sanitizedRepoName} with default Python project structure (${Object.keys(defaultFiles).length} files)`,
+      );
+
       // Create all default files
       // For README.md, force update if it exists (from auto_init)
       // For other files, create them normally
@@ -336,15 +342,15 @@ const initializeRepository = async (orgName, repoName, initialContent = {}) => {
           // Continue with other files even if one fails
         }
       }
-      
-      const successCount = fileResults.filter(r => r.status === 'success').length;
-      const errorCount = fileResults.filter(r => r.status === 'error').length;
+
+      const successCount = fileResults.filter((r) => r.status === 'success').length;
+      const errorCount = fileResults.filter((r) => r.status === 'error').length;
       logger.info(`Repository initialization completed: ${successCount} files created, ${errorCount} errors`);
-      
+
       if (errorCount > 0) {
         logger.warn(`Some files failed to create. Results: ${JSON.stringify(fileResults)}`);
       }
-      
+
       return;
     }
 
@@ -377,17 +383,17 @@ const initializeRepository = async (orgName, repoName, initialContent = {}) => {
 const createFileInRepo = async (orgName, repoName, filePath, content, branch = 'main', forceUpdate = false) => {
   try {
     let existingFileSha = null;
-    
+
     // Check if file exists
     try {
       const existingFileResponse = await axios.get(`${GITEA_API_BASE}/repos/${orgName}/${repoName}/contents/${filePath}`, {
         headers: getAuthHeaders(),
         params: { ref: branch },
       });
-      
+
       if (existingFileResponse.data && existingFileResponse.data.sha) {
         existingFileSha = existingFileResponse.data.sha;
-        
+
         // If file exists and we don't want to force update, skip
         if (!forceUpdate) {
           logger.info(`File ${filePath} already exists in ${orgName}/${repoName}, skipping`);
@@ -408,21 +414,23 @@ const createFileInRepo = async (orgName, repoName, filePath, content, branch = '
       content: contentBase64,
       branch: branch,
     };
-    
+
     // If updating existing file, include the SHA (required by Gitea API)
     if (existingFileSha) {
       requestBody.sha = existingFileSha;
     }
-    
-    logger.debug(`Creating/updating file ${filePath} in ${orgName}/${repoName} (branch: ${branch}, has SHA: ${!!existingFileSha})`);
-    
-    const response = await axios.post(
-      `${GITEA_API_BASE}/repos/${orgName}/${repoName}/contents/${filePath}`,
-      requestBody,
-      { headers: getAuthHeaders() }
+
+    logger.debug(
+      `Creating/updating file ${filePath} in ${orgName}/${repoName} (branch: ${branch}, has SHA: ${!!existingFileSha})`,
     );
 
-    logger.info(`${existingFileSha ? 'Updated' : 'Created'} file ${filePath} in ${orgName}/${repoName} - Commit: ${response.data?.commit?.sha || 'unknown'}`);
+    const response = await axios.post(`${GITEA_API_BASE}/repos/${orgName}/${repoName}/contents/${filePath}`, requestBody, {
+      headers: getAuthHeaders(),
+    });
+
+    logger.info(
+      `${existingFileSha ? 'Updated' : 'Created'} file ${filePath} in ${orgName}/${repoName} - Commit: ${response.data?.commit?.sha || 'unknown'}`,
+    );
   } catch (error) {
     logger.error(`Failed to create/update file in repository: ${error.message}`);
     if (error.response) {
@@ -465,7 +473,7 @@ const ensureUserExists = async (username, email, password = null) => {
         must_change_password: false,
         send_notify: false,
       },
-      { headers: getAuthHeaders() }
+      { headers: getAuthHeaders() },
     );
 
     logger.info(`Created Gitea user: ${username}`);
@@ -475,7 +483,7 @@ const ensureUserExists = async (username, email, password = null) => {
     if (error.response) {
       throw new ApiError(
         error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
-        `Gitea API error: ${error.response.data?.message || error.message}`
+        `Gitea API error: ${error.response.data?.message || error.message}`,
       );
     }
     throw error;
@@ -513,7 +521,7 @@ const sanitizeRepoName = (name) => {
  * Generate random password
  */
 const generateRandomPassword = () => {
-  return `pwd_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+  return `pwd_${crypto.randomBytes(24).toString('base64url')}`;
 };
 
 module.exports = {
