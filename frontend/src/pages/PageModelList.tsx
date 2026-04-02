@@ -263,7 +263,7 @@ const PageModelList = () => {
             ))}
           </div>
         ) : (
-          tabItems.map((tab) => (
+          tabItems.filter((tab) => tab.count > 0 || isLoading).map((tab) => (
             <DaTabItem
               key={tab.value}
               active={activeSection === tab.value}
@@ -344,43 +344,32 @@ const PageModelList = () => {
                     </div>
                   )}
                 </div>
-                {user && (
+                {user && (filterModels(ownedModels).length > 0 || isLoading) && (
                   <ModelSection
                     title="My Models"
                     models={filterModels(ownedModels)}
                     isLoading={isLoading && ownedModels.length === 0}
-                    emptyText={
-                      searchQuery.trim()
-                        ? 'No models found. Please create a new model.'
-                        : "You don't have any models yet. Please create your first model."
-                    }
+                    emptyText=""
                     sectionRef={myModelsRef}
                   />
                 )}
 
-                {user && (
+                {user && (filterModels(contributedModels).length > 0 || isLoading) && (
                   <ModelSection
                     title="My Contributions"
                     models={filterModels(contributedModels)}
                     isLoading={isLoading && contributedModels.length === 0}
-                    emptyText={
-                      searchQuery.trim()
-                        ? 'No models match your search.'
-                        : 'No contributions found.'
-                    }
+                    emptyText=""
                     sectionRef={myContribRef}
                   />
                 )}
 
+                {(filterModels(publicReleasedModels).length > 0 || isLoading) && (
                 <ModelSection
                   title="Public"
                   models={filterModels(publicReleasedModels)}
                   isLoading={isLoading && publicReleasedModels.length === 0}
-                  emptyText={
-                    searchQuery.trim()
-                      ? 'No models match your search.'
-                      : 'No public models found.'
-                  }
+                  emptyText=""
                   headerExtras={
                     !user ? (
                       <div className="relative w-full max-w-sm">
@@ -398,6 +387,7 @@ const PageModelList = () => {
                   }
                   sectionRef={publicRef}
                 />
+                )}
               </>
             )}
           </div>

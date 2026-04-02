@@ -117,16 +117,10 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
   const STAGING_FRAME_KEY = 'STAGING_FRAME'
 
   useEffect(() => {
-    // Only load staging config if user is authenticated
-    if (!user) {
-      setStagingPlugins([])
-      return
-    }
-
     const loadStagingPlugins = async () => {
       try {
         const stagingConfig =
-          await configManagementService.getConfigByKey(STAGING_FRAME_KEY)
+          await configManagementService.getPublicConfig(STAGING_FRAME_KEY)
         if (stagingConfig?.value?.stages) {
           // Extract all plugins from all stages
           const allPlugins: Plugin[] = []
@@ -144,7 +138,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
     }
 
     loadStagingPlugins()
-  }, [user])
+  }, [])
 
   // Extract prototype tabs for preloading (memoize to avoid unstable deps in effects)
   const prototypeTabs = useMemo(

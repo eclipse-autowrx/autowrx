@@ -186,6 +186,19 @@ app.get('/vss/:version/:filename', (req, res, next) => {
 // Setup proxy to other services
 setupProxy(app);
 
+// Proxy to internal kit-server (docker-compose service)
+if (config.services.kitServer.url) {
+  app.use(
+    '/kit-server',
+    createProxyMiddleware({
+      target: config.services.kitServer.url,
+      changeOrigin: true,
+      ws: true,
+      pathRewrite: { '^/kit-server': '' },
+    })
+  );
+}
+
 // Development proxy to frontend
 if (config.env === 'development') {
   // Only proxy the root route to frontend, let Vite handle all assets

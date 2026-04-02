@@ -57,6 +57,8 @@ const envVarsSchema = Joi.object()
     STRICT_AUTH: Joi.boolean().description('Strict auth'),
     // GenAI service
     GENAI_URL: Joi.string().description('GenAI service url'),
+    // Kit server
+    KIT_SERVER_URL: Joi.string().description('Kit server url'),
     // Admin emails
     ADMIN_EMAILS: Joi.string().description('Admin emails'),
     ADMIN_PASSWORD: Joi.string().description('Admin password'),
@@ -162,6 +164,7 @@ const config = {
   services: {
     log: {
       port: envVars.LOG_PORT || 9600,
+      url: envVars.LOG_URL,
     },
     cache: {
       url: envVars.CACHE_URL,
@@ -176,6 +179,9 @@ const config = {
     },
     genAI: {
       url: envVars.GENAI_URL,
+    },
+    kitServer: {
+      url: envVars.KIT_SERVER_URL,
     },
   },
   openai: {
