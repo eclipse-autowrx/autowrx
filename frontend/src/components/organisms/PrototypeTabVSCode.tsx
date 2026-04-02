@@ -40,6 +40,12 @@ const PrototypeTabCodeApiPanel = lazy(() =>
   retry(() => import('./PrototypeTabCodeApiPanel')),
 )
 
+/** Poll interval while waiting for workspace / logs (was 3s; faster feedback for tab open). */
+const WORKSPACE_POLL_INTERVAL_MS = 1000
+
+/** Background refresh when workspace already shown (lighter load on API). */
+const WORKSPACE_POLL_INTERVAL_IDLE_MS = 5000
+
 interface PrototypeTabVSCodeProps {
   isActive?: boolean
 }
@@ -68,8 +74,21 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
     useState(false)
   const [workspaceError, setWorkspaceError] = useState<string | null>(null)
   const [isLoadingWorkspace, setIsLoadingWorkspace] = useState(true)
-  const workspacePollIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const workspacePollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  )
   const lastLogIdRef = useRef<number | null>(null)
+  const workspaceInfoRef = useRef<WorkspaceInfo | null>(null)
+  const workspaceLogsRef = useRef<WorkspaceAgentLog[]>([])
+  const pollCancelledRef = useRef(false)
+
+  useEffect(() => {
+    workspaceInfoRef.current = workspaceInfo
+  }, [workspaceInfo])
+
+  useEffect(() => {
+    workspaceLogsRef.current = workspaceLogs
+  }, [workspaceLogs])
 
   // Resize state
   const [rightPanelWidth, setRightPanelWidth] = useState<number | null>(null) // Will be calculated based on container
@@ -117,6 +136,126 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
     }
   }, [isActive])
 
+  // Poll workspace status + logs until logs indicate readiness
+  const startWorkspacePolling = useCallback(
+    (prototypeId: string, options?: { idle?: boolean }) => {
+      const pollIntervalMs = options?.idle
+        ? WORKSPACE_POLL_INTERVAL_IDLE_MS
+        : WORKSPACE_POLL_INTERVAL_MS
+
+      if (workspacePollIntervalRef.current) {
+        clearInterval(workspacePollIntervalRef.current)
+        workspacePollIntervalRef.current = null
+      }
+      pollCancelledRef.current = false
+
+      let pollInFlight = false
+      const runPoll = async () => {
+        if (pollCancelledRef.current || pollInFlight) return
+        pollInFlight = true
+        try {
+          const status = await getWorkspaceStatus(prototypeId)
+          if (pollCancelledRef.current) return
+          setWorkspaceStatus(status)
+
+          let readyFromLogs = false
+          if (status.exists) {
+            try {
+              const logs = await getWorkspaceLogs(prototypeId, {
+                after: lastLogIdRef.current ?? undefined,
+                format: 'json',
+              })
+
+              let merged: WorkspaceAgentLog[] = workspaceLogsRef.current
+              if (Array.isArray(logs) && logs.length > 0) {
+                const typedLogs = logs as WorkspaceAgentLog[]
+                merged =
+                  lastLogIdRef.current == null
+                    ? typedLogs
+                    : [...workspaceLogsRef.current, ...typedLogs]
+                if (merged.length > 0) {
+                  lastLogIdRef.current =
+                    merged[merged.length - 1]?.id ?? lastLogIdRef.current
+                }
+                setWorkspaceLogs(merged)
+                workspaceLogsRef.current = merged
+              }
+
+              readyFromLogs = merged.some(
+                (log) =>
+                  typeof log.output === 'string' &&
+                  log.output.includes('Setup complete.'),
+              )
+              if (readyFromLogs) {
+                setIsWorkspaceReadyFromLogs(true)
+              }
+            } catch {
+              // Ignore log fetching errors, keep polling status/timings
+            }
+          }
+
+          if (status.exists && status.status !== 'failed') {
+            setWorkspaceError((prev) => (prev ? null : prev))
+          }
+
+          const ready = status.status === 'running' && readyFromLogs
+
+          if (ready) {
+            try {
+              if (!workspaceInfoRef.current?.appUrl) {
+                const info = await getWorkspaceUrl(prototypeId)
+                if (pollCancelledRef.current) return
+                setWorkspaceInfo(info)
+              }
+              setIsLoadingWorkspace(false)
+              setWorkspaceError(null)
+              if (workspacePollIntervalRef.current) {
+                clearInterval(workspacePollIntervalRef.current)
+                workspacePollIntervalRef.current = null
+              }
+            } catch {
+              // If URL resolution fails, keep polling; iframe won't render until appUrl is set
+            }
+          } else if (status.status === 'failed') {
+            console.error('[PrototypeTabVSCode] Workspace failed to start')
+            setWorkspaceError('Workspace failed to start. Please try again.')
+            setIsLoadingWorkspace(false)
+            if (workspacePollIntervalRef.current) {
+              clearInterval(workspacePollIntervalRef.current)
+              workspacePollIntervalRef.current = null
+            }
+          } else if (status.status === 'canceled') {
+            setWorkspaceError('Workspace creation was canceled')
+            setIsLoadingWorkspace(false)
+            if (workspacePollIntervalRef.current) {
+              clearInterval(workspacePollIntervalRef.current)
+              workspacePollIntervalRef.current = null
+            }
+          }
+        } catch (error: any) {
+          if (error.response?.status === 404) {
+            console.error('[PrototypeTabVSCode] Workspace not found during poll')
+            setWorkspaceError('Workspace not found')
+            setIsLoadingWorkspace(false)
+            if (workspacePollIntervalRef.current) {
+              clearInterval(workspacePollIntervalRef.current)
+              workspacePollIntervalRef.current = null
+            }
+          }
+        } finally {
+          pollInFlight = false
+        }
+      }
+
+      void runPoll()
+      workspacePollIntervalRef.current = setInterval(
+        () => void runPoll(),
+        pollIntervalMs,
+      )
+    },
+    [],
+  )
+
   // Load Coder workspace
   useEffect(() => {
     if (!prototype_id) {
@@ -127,6 +266,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
 
     if (!isActive) {
       // Keep state for instant resume, but stop background polling when tab is hidden
+      pollCancelledRef.current = true
       if (workspacePollIntervalRef.current) {
         clearInterval(workspacePollIntervalRef.current)
         workspacePollIntervalRef.current = null
@@ -150,27 +290,48 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
 
         if (canUseCache) {
           setWorkspaceInfo(cachedEntry.workspaceInfo)
+          workspaceInfoRef.current = cachedEntry.workspaceInfo
           setWorkspaceStatus(cachedEntry.workspaceStatus)
-          setWorkspaceLogs(cachedEntry.workspaceLogs || [])
+          const cachedLogs = cachedEntry.workspaceLogs || []
+          setWorkspaceLogs(cachedLogs)
+          workspaceLogsRef.current = cachedLogs
           setIsWorkspaceReadyFromLogs(true)
           setWorkspaceError(null)
           setIsLoadingWorkspace(false)
           lastLogIdRef.current = cachedEntry.workspaceLogs?.at(-1)?.id ?? null
 
-          // Keep polling in background to refresh status/logs silently
-          startWorkspacePolling(prototype_id)
+          // Keep polling in background to refresh status/logs silently (lighter interval)
+          startWorkspacePolling(prototype_id, { idle: true })
           return
         }
 
         setIsLoadingWorkspace(true)
         setWorkspaceError(null)
         setWorkspaceLogs([])
+        workspaceLogsRef.current = []
         setIsWorkspaceReadyFromLogs(false)
         lastLogIdRef.current = null
 
         // Always prepare workspace first (idempotent: creates folder, seeds code, reuses existing workspace)
         try {
-          await prepareWorkspace(prototype_id)
+          const prepared = await prepareWorkspace(prototype_id)
+          setWorkspaceStatus({
+            exists: true,
+            workspaceId: prepared.workspaceId,
+            status: prepared.status,
+          })
+          const prevInfo = workspaceInfoRef.current
+          const preparedInfo: WorkspaceInfo = {
+            workspaceId: prepared.workspaceId,
+            workspaceName: prepared.workspaceName,
+            status: prepared.status,
+            repoUrl: prepared.repoUrl ?? null,
+            folderPath: prepared.folderPath ?? prevInfo?.folderPath,
+            sessionToken: prepared.sessionToken ?? prevInfo?.sessionToken,
+            appUrl: prepared.appUrl || prevInfo?.appUrl || '',
+          }
+          workspaceInfoRef.current = preparedInfo
+          setWorkspaceInfo(preparedInfo)
         } catch (prepareError: any) {
           if (prepareError.response?.status !== 409) {
             console.error(
@@ -185,7 +346,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
           }
         }
 
-        // Start polling for workspace readiness
+        // Start polling for workspace readiness (immediate first poll + 1s cadence)
         startWorkspacePolling(prototype_id)
       } catch (error: any) {
         console.error('[PrototypeTabVSCode] Failed to load workspace:', error)
@@ -197,11 +358,19 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
     loadWorkspace()
 
     return () => {
+      pollCancelledRef.current = true
       if (workspacePollIntervalRef.current) {
         clearInterval(workspacePollIntervalRef.current)
+        workspacePollIntervalRef.current = null
       }
     }
-  }, [prototype_id, isAuthorized, isActive])
+  }, [
+    prototype_id,
+    isAuthorized,
+    isActive,
+    startWorkspacePolling,
+    // cachedEntry omitted on purpose: updates would re-run prepare; effect run already sees latest store snapshot.
+  ])
 
   // Persist workspace state across tab switches (route unmount/remount)
   useEffect(() => {
@@ -220,114 +389,6 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
     isWorkspaceReadyFromLogs,
     upsertCacheEntry,
   ])
-
-  // Poll workspace status + logs until logs indicate readiness
-  const startWorkspacePolling = (prototypeId: string) => {
-    if (workspacePollIntervalRef.current) {
-      clearInterval(workspacePollIntervalRef.current)
-    }
-
-    workspacePollIntervalRef.current = setInterval(async () => {
-      try {
-        const status = await getWorkspaceStatus(prototypeId)
-        setWorkspaceStatus(status)
-
-        // Fetch workspace logs when workspace exists
-        let readyFromLogs = false
-        if (status.exists) {
-          try {
-            const logs = await getWorkspaceLogs(prototypeId, {
-              after: lastLogIdRef.current ?? undefined,
-              format: 'json',
-            })
-
-            if (Array.isArray(logs)) {
-              if (logs.length > 0) {
-                const typedLogs = logs as WorkspaceAgentLog[]
-                const mergedLogs =
-                  lastLogIdRef.current == null
-                    ? typedLogs
-                    : [...workspaceLogs, ...typedLogs]
-
-                setWorkspaceLogs(mergedLogs)
-                lastLogIdRef.current =
-                  mergedLogs[mergedLogs.length - 1]?.id ?? lastLogIdRef.current
-
-                // Stop condition: when we see the specific "workspace ready" log line
-                readyFromLogs = mergedLogs.some(
-                  (log) =>
-                    typeof log.output === 'string' &&
-                    log.output.includes('Setup complete.'),
-                )
-              }
-            }
-          } catch {
-            // Ignore log fetching errors, keep polling status/timings
-          }
-        }
-
-        // Clear any previous errors if we're making progress
-        if (status.exists && status.status !== 'failed' && workspaceError) {
-          setWorkspaceError(null)
-        }
-
-        if (readyFromLogs) {
-          setIsWorkspaceReadyFromLogs(true)
-        }
-
-        const ready = status.status === 'running' && readyFromLogs
-
-        if (ready) {
-          // Workspace and timings both look ready: resolve URL (if needed) and stop polling
-          try {
-            if (!workspaceInfo?.appUrl) {
-              const info = await getWorkspaceUrl(prototypeId)
-              setWorkspaceInfo(info)
-            }
-            setIsLoadingWorkspace(false)
-            setWorkspaceError(null)
-            if (workspacePollIntervalRef.current) {
-              clearInterval(workspacePollIntervalRef.current)
-              workspacePollIntervalRef.current = null
-            }
-          } catch {
-            // If URL resolution fails, keep polling; iframe won't render until appUrl is set
-          }
-        } else if (status.status === 'failed') {
-          // Workspace failed - stop polling and show error
-          console.error('[PrototypeTabVSCode] Workspace failed to start')
-          setWorkspaceError('Workspace failed to start. Please try again.')
-          setIsLoadingWorkspace(false)
-          if (workspacePollIntervalRef.current) {
-            clearInterval(workspacePollIntervalRef.current)
-            workspacePollIntervalRef.current = null
-          }
-        } else if (status.status === 'canceled') {
-          // Workspace creation was canceled
-          setWorkspaceError('Workspace creation was canceled')
-          setIsLoadingWorkspace(false)
-          if (workspacePollIntervalRef.current) {
-            clearInterval(workspacePollIntervalRef.current)
-            workspacePollIntervalRef.current = null
-          }
-        }
-        // For other statuses or non-ready timings, just continue polling
-      } catch (error: any) {
-        // Don't stop polling on transient errors - might be network issues
-        // Only stop if it's a persistent 404 (workspace doesn't exist)
-        if (error.response?.status === 404) {
-          console.error('[PrototypeTabVSCode] Workspace not found during poll')
-          setWorkspaceError('Workspace not found')
-          setIsLoadingWorkspace(false)
-          if (workspacePollIntervalRef.current) {
-            clearInterval(workspacePollIntervalRef.current)
-            workspacePollIntervalRef.current = null
-          }
-        }
-        // Otherwise, continue polling - might be a transient error
-      }
-    }, 3000) // Poll every 3 seconds
-  }
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
