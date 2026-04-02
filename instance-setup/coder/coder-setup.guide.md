@@ -35,6 +35,10 @@ In **Site Management → VSCode Config** (or equivalent site config keys):
 
 If AutoWRX and Coder run on different hosts, `CODER_URL` must be reachable from the **backend**, and `PROTOTYPES_PATH` must be the path **on the Coder host** (or the path shared into the same mount namespace).
 
+## Workspace image (Python)
+
+The workspace Dockerfile installs `requirements.base.txt` into **system Python** (`pip3 --break-system-packages`) — no virtualenv in the image, so builds skip `python3 -m venv` and the extra pip layer. For a disposable workspace image this is normal; if you need isolation for a project, create a local `.venv` yourself.
+
 ## References
 
 - Flow: `coder-integration-flow.md`

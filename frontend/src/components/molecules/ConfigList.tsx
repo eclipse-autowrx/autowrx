@@ -551,7 +551,7 @@ const ConfigList: React.FC<ConfigListProps> = ({
                       </p>
                     ) : (
                       <p
-                        className="text-sm text-foreground font-mono truncate"
+                        className="min-h-5 text-sm text-foreground font-mono truncate leading-normal"
                         title={formatValue(
                           localValues[config.key] ?? config.value,
                           config.valueType,
