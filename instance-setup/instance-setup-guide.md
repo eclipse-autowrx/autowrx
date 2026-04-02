@@ -125,6 +125,25 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 - **MongoDB data**: Stored in Docker volume `autowrx-dbdata`
 - **Uploads**: Stored in `./data/upload` (configurable via `UPLOAD_PATH_HOST`)
 - **Plugins**: Stored in `./data/plugin` (configurable via `PLUGIN_PATH_HOST`)
+- **Builtin Widgets**: Bundled inside the Docker image by default. To override with custom widgets from the host, see [Custom Builtin Widgets](#custom-builtin-widgets) below.
+
+## Custom Builtin Widgets
+
+By default, builtin widgets are bundled inside the Docker image. If you want to override them with custom widgets from the host (e.g., to persist or customize widgets across updates), use the provided override file:
+
+```bash
+docker compose -f docker-compose.prod.yml -f docker-compose.widgets.yml --env-file .env.prod up -d
+```
+
+This mounts `./data/builtin-widgets` (or the path set in `BUILTIN_WIDGETS_PATH_HOST`) into the container, replacing the image's built-in widgets.
+
+**Note:** The bind mount overlays the container directory entirely. If `./data/builtin-widgets/` is empty, the container will see an empty directory. Make sure to populate it with your widget files before starting.
+
+To go back to the default image widgets, simply omit the override file:
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+```
 
 ## Configuration Options
 
