@@ -29,9 +29,11 @@ import BUILT_IN_WIDGETS, {
 } from '@/data/builtinWidgets'
 import DaTooltip from '@/components/molecules/DaTooltip'
 import config from '@/configs/config'
-import { isContinuousRectangle, doesOverlap, calculateSpans, parseWidgetConfig } from '@/lib/utils'
+import { isContinuousRectangle, doesOverlap, calculateSpans, parseWidgetConfig, parseCvi } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { WidgetConfig } from '@/types/widget.type'
+import { VehicleApi } from '@/types/model.type'
+import { CVI_v4_1 } from '@/data/CVI_v4.1'
 import DaDialog from '@/components/molecules/DaDialog'
 import CodeEditor from '@/components/molecules/CodeEditor'
 import useModelStore from '@/stores/modelStore'
@@ -46,6 +48,23 @@ import DaWidgetList from '@/components/molecules/widgets/DaWidgetList'
 import useListMarketplaceWidgets from '@/hooks/useListMarketplaceWidgets'
 import { Input } from '@/components/atoms/input'
 import ModelApiList from '@/components/organisms/ModelApiList'
+
+// Parse CVI once at module level — used as fallback API list when no model is loaded (e.g. template manager)
+let _defaultApis: VehicleApi[] | null = null
+const getDefaultApis = (): VehicleApi[] => {
+  if (!_defaultApis) {
+    try {
+      const parsed = parseCvi(JSON.parse(CVI_v4_1))
+      _defaultApis = parsed.map((item: any) => {
+        const parts = item.name.split('.')
+        return { ...item, shortName: parts.length > 1 ? '.' + parts.slice(1).join('.') : item.name }
+      })
+    } catch {
+      _defaultApis = []
+    }
+  }
+  return _defaultApis
+}
 
 interface DaDashboardWidgetEditorProps {
   widgetEditorPopupState: [
@@ -155,7 +174,7 @@ const DaDashboardWidgetEditor = ({
         )
         delete options.iconURL
         delete options.url
-      } catch (e) {}
+      } catch (e) { }
       setOptionStr(JSON.stringify(options, null, 4))
     }
   }, [selectedWidget])
@@ -164,7 +183,7 @@ const DaDashboardWidgetEditor = ({
     if (isWizard) {
       setLocalPrototype(prototypeData)
     } else {
-      setLocalPrototype(prototype)
+      setLocalPrototype(prototype ?? { code: '' })
     }
   }, [prototype, prototypeData, isWizard])
 
@@ -278,7 +297,7 @@ const DaDashboardWidgetEditor = ({
                 setCode={(e) => {
                   setOptionStr(e)
                 }}
-                onBlur={() => {}}
+                onBlur={() => { }}
               />
             </div>
 
@@ -306,7 +325,7 @@ const DaDashboardWidgetEditor = ({
             </div>
           </div>
           <div className="min-w-[500px] max-h-[400px] overflow-auto">
-            <ModelApiList />
+            <ModelApiList fallbackApis={getDefaultApis()} />
           </div>
         </div>
 
@@ -327,12 +346,12 @@ const DaDashboardWidgetEditor = ({
               let newOption = {} as any
               try {
                 newOption = JSON.parse(optionStr)
-              } catch (err) {}
+              } catch (err) { }
 
               let widget = {} as any
               try {
                 widget = JSON.parse(selectedWidget)
-              } catch (err) {}
+              } catch (err) { }
 
               // Check if this is a built-in widget (has a non-empty path)
               const isBuiltInWidget = widget.path && widget.path.trim() !== ''
@@ -349,7 +368,7 @@ const DaDashboardWidgetEditor = ({
               widget.options = newOption
               try {
                 widget.boxes = JSON.parse(boxes)
-              } catch (err) {}
+              } catch (err) { }
               handleUpdateWidget(JSON.stringify(widget, null, 4))
               codeEditorPopup[1](false)
             }}
@@ -430,7 +449,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
         // Fallback to activeWidget.options or empty object
         options = activeWidget.options ? JSON.parse(JSON.stringify(activeWidget.options)) : {}
       }
-      
+
       if (activeTab === 'market') {
         options['iconURL'] = activeWidget.icon
       }
@@ -550,7 +569,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
           if (a.weight > b.weight) return 1
           return 0
         })
-      } catch (e) {}
+      } catch (e) { }
     }
 
     setRenderWidgets(widgets)
@@ -776,7 +795,7 @@ const DaDashboardEditor = ({
   }
 
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       await new Promise((resolve) => setTimeout(resolve, 3000))
       setWarningMessage(null)
     })()
@@ -893,7 +912,7 @@ const DaDashboardEditor = ({
           'group relative flex cursor-pointer select-none border border-gray-300 text-gray-700 text-sm',
           `col-span-${colSpan} row-span-${rowSpan}`,
           selectedWidgetIndex === index &&
-            '!border-primary !bg-gray-100 !text-primary',
+          '!border-primary !bg-gray-100 !text-primary',
           'bg-gray-100 hover:bg-gray-100',
         )}
         key={`${index}-${cell}`}
@@ -949,8 +968,8 @@ const DaDashboardEditor = ({
                   widgetConfig.options && widgetConfig.options.iconURL
                     ? widgetConfig.options.iconURL
                     : buildinWidgets.find(
-                        (widget) => widget.widget === widgetConfig?.widget,
-                      )?.icon
+                      (widget) => widget.widget === widgetConfig?.widget,
+                    )?.icon
                 if (imageUrl) {
                   return (
                     <img
@@ -968,11 +987,11 @@ const DaDashboardEditor = ({
             </div>
             <div className="w-full pt-2 text-center !text-xs font-semibold">
               {widgetConfig.options?.url &&
-              widgetConfig.options.url.includes('/store-be/')
+                widgetConfig.options.url.includes('/store-be/')
                 ? widgetConfig.options.url
-                    .split('/store-be/')[1]
-                    .split('/')[0]
-                    .replace(/%20/g, ' ')
+                  .split('/store-be/')[1]
+                  .split('/')[0]
+                  .replace(/%20/g, ' ')
                 : widgetConfig.widget}
             </div>
           </div>
@@ -1103,11 +1122,6 @@ const DaDashboardEditor = ({
       >
         {widgetGrid()}
       </div>
-      {editable && (
-        <span className="py-2 text-sm font-semibold text-orange-500">
-          Click on empty cell to place new widget
-        </span>
-      )}
       {warningMessage && (
         <div className="mt-3 flex w-fit select-none items-center justify-center rounded border border-gray-200 px-2 py-1 shadow-sm">
           <TbExclamationMark className="mr-1 flex h-5 w-5 text-orange-500" />

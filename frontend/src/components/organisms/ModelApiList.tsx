@@ -28,20 +28,23 @@ interface ModelApiListProps {
   onApiClick?: (details: any) => void
   readOnly?: boolean
   viewMode?: 'list' | 'hierarchical'
+  fallbackApis?: VehicleApi[]
 }
 
 const ModelApiList = ({
   onApiClick,
   readOnly,
   viewMode = 'list',
+  fallbackApis,
 }: ModelApiListProps) => {
   const { model_id, api } = useParams()
   const location = useLocation()
   const navigate = useNavigate()
-  const [activeModelApis, modelFromStore] = useModelStore(
+  const [storeApis, modelFromStore] = useModelStore(
     (state) => [state.activeModelApis, state.model],
     shallow,
   )
+  const activeModelApis = (storeApis && storeApis.length > 0) ? storeApis : (fallbackApis ?? [])
   const [searchTerm, setSearchTerm] = useState('')
   const [filteredApiList, setFilteredApiList] = useState<VehicleApi[] | undefined>(undefined)
   const [selectedFilters, setSelectedFilters] = useState<string[]>([
@@ -60,8 +63,8 @@ const ModelApiList = ({
   const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model_id])
 
   // Check if data is ready: both model and APIs should be loaded
-  // In readOnly mode, we might not have a model from the route, so we check the store
-  const isDataReady = readOnly 
+  // In readOnly mode or when fallbackApis are provided, we only need the API list
+  const isDataReady = (readOnly || !!fallbackApis)
     ? (activeModelApis && activeModelApis.length > 0)
     : (currentModel && activeModelApis && activeModelApis.length > 0)
 
