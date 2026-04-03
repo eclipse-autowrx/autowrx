@@ -27,6 +27,7 @@ import useCurrentModel from '@/hooks/useCurrentModel'
 import { Plugin } from '@/services/plugin.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import useAuthStore from '@/stores/authStore'
+import { useSiteConfig } from '@/utils/siteConfig'
 
 const STAGING_FRAME_KEY = 'STAGING_FRAME'
 const STANDARD_STAGE_KEY = 'STANDARD_STAGE'
@@ -167,6 +168,7 @@ const PluginDropdownItem: React.FC<PluginDropdownItemProps> = ({ plugin, onClick
 const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({ prototype }) => {
   const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
   const { setOpenLoginDialog } = useAuthStore()
+  const showSystemColumn = useSiteConfig('SHOW_DEPLOY_SYSTEM_COLUMN', true)
   const [stagingFrameConfig, setStagingFrameConfig] = useState<Config | null>(null)
   const [standardStageConfig, setStandardStageConfig] = useState<Config | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -468,7 +470,7 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({ prototype }) 
       <>
         <div key={item.id} className="flex w-full border-b border-border/50 h-[28px] items-center">
           {/* System Column (Big Column) - Contains Component Name + Version */}
-          <div className="flex min-w-[340px] max-w-[340px] flex-1 items-center leading-none border-r border-border">
+          {showSystemColumn && <div className="flex min-w-[340px] max-w-[340px] flex-1 items-center leading-none border-r border-border">
             {/* Component Name Section */}
             <div className="h-full grow flex items-center">
               <div className="w-2"></div>
@@ -504,7 +506,7 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({ prototype }) 
                 <span className="text-xs text-muted-foreground">{item.version}</span>
               )}
             </div>
-          </div>
+          </div>}
 
           {/* Stage Columns - One for each stage - Only show values for leaf nodes */}
           <div className="grow flex items-center">
@@ -648,38 +650,42 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({ prototype }) 
       <div className="w-full rounded border border-border bg-background">
         {/* Title */}
         <div className="flex h-[28px] w-full rounded-t bg-gradient-to-r from-primary to-secondary text-primary-foreground">
-          <div className="flex w-[340px] items-center justify-center border-r border-primary-foreground/20 font-bold text-sm">
-            System
-          </div>
+          {showSystemColumn && (
+            <div className="flex w-[340px] items-center justify-center border-r border-primary-foreground/20 font-bold text-sm">
+              System
+            </div>
+          )}
           <div className="flex grow items-center justify-center border-primary-foreground/20 font-bold text-sm">
             Stages
           </div>
         </div>
         <div className="flex">
           {/* System Column */}
-          <div className="flex min-w-[340px] flex-1 flex-col border-r border-border items-center justify-center overflow-x-hidden rounded-s px-1 py-1">
-            <div className="flex py-1 h-[80px] w-full items-center justify-center">
-              <DaImage
-                src={system.icon}
-                alt="System"
-                className="scale-90 h-full w-full object-contain"
-              />
+          {showSystemColumn && (
+            <div className="flex min-w-[340px] flex-1 flex-col border-r border-border items-center justify-center overflow-x-hidden rounded-s px-1 py-1">
+              <div className="flex py-1 h-[80px] w-full items-center justify-center">
+                <DaImage
+                  src={system.icon}
+                  alt="System"
+                  className="scale-90 h-full w-full object-contain"
+                />
+              </div>
+              <div className="w-full px-2">
+                <select
+                  aria-label="deploy-select"
+                  className="text-center border rounded text-xs px-2 py-1 w-full min-w-[100px] text-foreground bg-muted cursor-pointer"
+                  value={activeLifeCycle}
+                  onChange={(e) => setActiveLifeCycle(e.target.value)}
+                >
+                  {LIFECYCLES.map((lifecycle) => (
+                    <option key={lifecycle} value={lifecycle}>
+                      {lifecycle}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div className="w-full px-2">
-              <select
-                aria-label="deploy-select"
-                className="text-center border rounded text-xs px-2 py-1 w-full min-w-[100px] text-foreground bg-muted cursor-pointer"
-                value={activeLifeCycle}
-                onChange={(e) => setActiveLifeCycle(e.target.value)}
-              >
-                {LIFECYCLES.map((lifecycle) => (
-                  <option key={lifecycle} value={lifecycle}>
-                    {lifecycle}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+          )}
 
           {/* Stage Columns */}
           {stages.map((stage, index) => (

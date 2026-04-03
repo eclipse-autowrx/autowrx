@@ -220,6 +220,16 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     category: 'prototype',
   },
   {
+    key: 'SHOW_DEPLOY_SYSTEM_COLUMN',
+    scope: 'site',
+    value: true,
+    secret: false,
+    valueType: 'boolean',
+    description:
+      'Show or hide the System column on the prototype Deploy tab.',
+    category: 'prototype',
+  },
+  {
     key: 'GRADIENT_HEADER',
     scope: 'site',
     value: false,
