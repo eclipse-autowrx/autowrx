@@ -175,7 +175,7 @@ module.exports = {
   sendTestEmail,
   // global.css helpers
   getGlobalCss: catchAsync(async (req, res) => {
-    const cssPath = path.join(__dirname, '..', '..', 'static', 'global.css');
+    const cssPath = path.join(__dirname, '..', '..', 'static', 'style', 'global.css');
     const exists = fs.existsSync(cssPath);
     if (!exists) {
       throw new ApiError(httpStatus.NOT_FOUND, 'global.css not found');
@@ -188,13 +188,14 @@ module.exports = {
     if (typeof content !== 'string') {
       throw new ApiError(httpStatus.BAD_REQUEST, 'content must be a string');
     }
-    const cssPath = path.join(__dirname, '..', '..', 'static', 'global.css');
+    const cssPath = path.join(__dirname, '..', '..', 'static', 'style', 'global.css');
+    await fsp.mkdir(path.dirname(cssPath), { recursive: true });
     await fsp.writeFile(cssPath, content, 'utf8');
     res.status(httpStatus.OK).send({ success: true });
   }),
   restoreDefaultGlobalCss: catchAsync(async (req, res) => {
     const orgCssPath = path.join(__dirname, '..', '..', 'static', 'global_org.css');
-    const cssPath = path.join(__dirname, '..', '..', 'static', 'global.css');
+    const cssPath = path.join(__dirname, '..', '..', 'static', 'style', 'global.css');
 
     // Check if original CSS file exists
     const orgExists = fs.existsSync(orgCssPath);
@@ -202,7 +203,8 @@ module.exports = {
       throw new ApiError(httpStatus.NOT_FOUND, 'global_org.css not found');
     }
 
-    // Copy global_org.css to global.css
+    // Ensure target directory exists, then copy global_org.css to global.css
+    await fsp.mkdir(path.dirname(cssPath), { recursive: true });
     await fsp.copyFile(orgCssPath, cssPath);
 
     // Read and return the content

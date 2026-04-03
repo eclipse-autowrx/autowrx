@@ -37,7 +37,7 @@ services:
     volumes:
       - '${UPLOAD_PATH_HOST:-./data/upload}:/usr/src/playground-be/static/uploads'
       - '${PLUGIN_PATH_HOST:-./data/plugin}:/usr/src/playground-be/static/plugin'
-      - '${GLOBAL_CSS_PATH_HOST:-./data/global.css}:/usr/src/playground-be/static/global.css'
+      - '${GLOBAL_CSS_DIR_HOST:-./data/style}:/usr/src/playground-be/static/style'
     depends_on:
       autowrx-db:
         condition: service_healthy

@@ -125,7 +125,7 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 - **MongoDB data**: Stored in Docker volume `autowrx-dbdata`
 - **Uploads**: Stored in `./data/upload` (configurable via `UPLOAD_PATH_HOST`)
 - **Plugins**: Stored in `./data/plugin` (configurable via `PLUGIN_PATH_HOST`)
-- **Global CSS**: Stored in `./data/global.css` (configurable via `GLOBAL_CSS_PATH_HOST`). Admins can edit via the UI; changes persist across container rebuilds.
+- **Global CSS**: Stored in `./data/style/` directory (configurable via `GLOBAL_CSS_DIR_HOST`). Admins can edit via the UI; changes persist across container rebuilds.
 - **Builtin Widgets**: Bundled inside the Docker image by default. To override with custom widgets from the host, see [Custom Builtin Widgets](#custom-builtin-widgets) below.
 
 ## Custom Builtin Widgets
