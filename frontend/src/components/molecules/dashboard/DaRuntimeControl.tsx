@@ -784,7 +784,47 @@ const DaRuntimeControl: FC = () => {
         )}
       </div>
 
-      <div className="flex mt-auto">
+      <div className="mt-auto flex w-full flex-col">
+        {activeRtId && !isExpand && (
+          <div className="flex flex-col items-stretch gap-1 px-1 pb-2">
+            <button
+              type="button"
+              data-id="btn-run-prototype-sidebar-lower"
+              className="flex items-center justify-center rounded border p-2 font-semibold text-sm"
+              style={{
+                color: 'hsl(0, 0%, 100%)',
+                borderColor: 'hsl(215, 16%, 47%)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'hsl(215, 16%, 47%)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent'
+              }}
+            >
+              <TbPlayerPlayFilled className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              data-id="btn-stop-prototype-sidebar-lower"
+              className="flex items-center justify-center rounded border p-2 font-semibold text-sm"
+              style={{
+                color: 'hsl(0, 0%, 100%)',
+                borderColor: 'hsl(215, 16%, 47%)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'hsl(215, 16%, 47%)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent'
+              }}
+            >
+              <TbPlayerStopFilled className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
+        <div className="flex">
         <Button
           variant="ghost"
           data-id="btn-expand-runtime-control"
@@ -951,6 +991,7 @@ const DaRuntimeControl: FC = () => {
             )}
           </>
         )}
+        </div>
       </div>
     </div>
   )
