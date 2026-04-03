@@ -8,7 +8,7 @@ export interface DashboardTemplate {
   name: string
   description?: string
   image?: string
-  visibility: 'public' | 'private'
+  visibility: 'public' | 'private' | 'default'
   widget_config?: any
   createdAt: string
   updatedAt: string
