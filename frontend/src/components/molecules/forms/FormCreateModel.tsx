@@ -76,7 +76,13 @@ const FormCreateModel = () => {
     [modelList, currentUser],
   )
 
-  const { isDuplicate: isDuplicateName, suggestedName } = useDuplicateNameCheck(data.name, ownedModelNames)
+  const [debouncedName, setDebouncedName] = useState('')
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedName(data.name), 300)
+    return () => clearTimeout(timer)
+  }, [data.name])
+
+  const { isDuplicate: isDuplicateName, suggestedName } = useDuplicateNameCheck(debouncedName, ownedModelNames)
 
   // Fetch templates
   const { data: templatesData } = useQuery({
