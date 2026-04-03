@@ -2,6 +2,7 @@
   "name": "autowrx-extension",
   "displayName": "AutoWRX Extension",
   "description": "",
+  "publisher": "autowrx",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.110.0"
@@ -9,13 +10,17 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onUri"
+  ],
   "main": "./extension.js",
   "contributes": {
-    "commands": [{
-      "command": "autowrx-extension.helloWorld",
-      "title": "Hello World"
-    }]
+    "commands": [
+      {
+        "command": "autowrx-extension.triggerFromWeb",
+        "title": "Trigger from Website"
+      }
+    ]
   },
   "scripts": {
     "lint": "eslint .",

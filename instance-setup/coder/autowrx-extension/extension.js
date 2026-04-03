@@ -1,36 +1,76 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
+function activate(context) {
+    console.log('AutoWRX Extension is now active!');
+
+    // Register command
+    let disposable = vscode.commands.registerCommand('autowrx-extension.triggerFromWeb', () => {
+        runPythonMain();
+    });
+
+    // Handle URI from website
+    let uriHandler = vscode.window.registerUriHandler({
+        handleUri(uri) {
+            console.log('Received URI from website:', uri.toString());
+
+            const params = new URLSearchParams(uri.query);
+            const action = params.get('action');
+
+            if (action === 'runPython') {
+                runPythonMain();
+            }
+        }
+    });
+
+    context.subscriptions.push(disposable, uriHandler);
+}
 
 /**
- * @param {vscode.ExtensionContext} context
+ * Run python3 main.py in terminal.
+ * Reuses existing terminal if available, otherwise creates a new one.
  */
-function activate(context) {
+function runPythonMain() {
+    try {
+        const terminalName = "AutoWRX - Run Python";
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "autowrx-extension" is now active!');
+        // Find existing terminal with the same name
+        let terminal = vscode.window.terminals.find(t => t.name === terminalName);
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with  registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('autowrx-extension.helloWorld', function () {
-		// The code you place here will be executed every time your command is executed
+        // Create new terminal if not found
+        if (!terminal) {
+            terminal = vscode.window.createTerminal({
+                name: terminalName,
+                cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || undefined
+            });
+            console.log('Created new terminal:', terminalName);
+        } else {
+            console.log('Reusing existing terminal:', terminalName);
+        }
 
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from AutoWRX Extension!');
-	});
+        // Show the terminal
+        terminal.show();
 
-	context.subscriptions.push(disposable);
+        // Clear terminal before running
+        if (process.platform === 'win32') {
+            terminal.sendText('cls');
+        } else {
+            terminal.sendText('clear');
+        }
+
+        // Run the python command
+        terminal.sendText('python3 main.py');
+
+        vscode.window.showInformationMessage('Running: python3 main.py');
+
+    } catch (error) {
+        console.error(error);
+        vscode.window.showErrorMessage('Failed to run python3 main.py: ' + error.message);
+    }
 }
 
-// This method is called when your extension is deactivated
-function deactivate() {}
+function deactivate() { }
 
 module.exports = {
-	activate,
-	deactivate
-}
+    activate,
+    deactivate
+};
