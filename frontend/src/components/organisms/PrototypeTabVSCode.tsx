@@ -48,6 +48,17 @@ const WORKSPACE_POLL_INTERVAL_MS = 1000
 /** Background refresh when workspace already shown (lighter load on API). */
 const WORKSPACE_POLL_INTERVAL_IDLE_MS = 5000
 
+/** Merge server workspace payload with prior state so we keep folderPath / appUrl if the API omits them. */
+const mergeWorkspaceInfo = (
+  prev: WorkspaceInfo | null | undefined,
+  next: WorkspaceInfo,
+): WorkspaceInfo => ({
+  ...next,
+  folderPath: next.folderPath ?? prev?.folderPath ?? null,
+  appUrl: next.appUrl || prev?.appUrl || '',
+  sessionToken: next.sessionToken ?? prev?.sessionToken ?? null,
+})
+
 interface PrototypeTabVSCodeProps {
   isActive?: boolean
 }
@@ -83,6 +94,10 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
   const workspaceInfoRef = useRef<WorkspaceInfo | null>(null)
   const workspaceLogsRef = useRef<WorkspaceAgentLog[]>([])
   const pollCancelledRef = useRef(false)
+  /** Bumps on every effect run so in-flight prepare/poll logic from a previous run is ignored. */
+  const loadEffectEpochRef = useRef(0)
+  /** When cache hydrate could not refresh credentials, idle poll should retry getWorkspaceUrl. */
+  const workspaceCredentialsNeedRetryRef = useRef(false)
 
   useEffect(() => {
     workspaceInfoRef.current = workspaceInfo
@@ -164,9 +179,9 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
         clearInterval(workspacePollIntervalRef.current)
         workspacePollIntervalRef.current = null
       }
-      pollCancelledRef.current = false
 
       let pollInFlight = false
+      const isIdlePoll = !!options?.idle
       const runPoll = async () => {
         if (pollCancelledRef.current || pollInFlight) return
         pollInFlight = true
@@ -219,10 +234,21 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
 
           if (ready) {
             try {
-              if (!workspaceInfoRef.current?.appUrl) {
-                const info = await getWorkspaceUrl(prototypeId)
+              const refInfo = workspaceInfoRef.current
+              const needsCredentialRefresh =
+                !isIdlePoll ||
+                !refInfo?.appUrl ||
+                !refInfo?.sessionToken ||
+                workspaceCredentialsNeedRetryRef.current
+              // Hot poll: always fetch so sessionToken matches server (fixes stale cached tokens).
+              // Idle poll: skip if we already refreshed when restoring from cache (avoids duplicate prepare).
+              if (needsCredentialRefresh) {
+                const fresh = await getWorkspaceUrl(prototypeId)
                 if (pollCancelledRef.current) return
-                setWorkspaceInfo(info)
+                workspaceCredentialsNeedRetryRef.current = false
+                const merged = mergeWorkspaceInfo(workspaceInfoRef.current, fresh)
+                workspaceInfoRef.current = merged
+                setWorkspaceInfo(merged)
               }
               setIsLoadingWorkspace(false)
               setWorkspaceError(null)
@@ -275,6 +301,8 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
 
   // Load Coder workspace
   useEffect(() => {
+    const epoch = ++loadEffectEpochRef.current
+
     if (!prototype_id) {
       setIsLoadingWorkspace(false)
       setWorkspaceError('Prototype ID is required')
@@ -298,6 +326,8 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
       return
     }
 
+    pollCancelledRef.current = false
+
     const loadWorkspace = async () => {
       try {
         const canUseCache =
@@ -306,22 +336,46 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
           cachedEntry?.isWorkspaceReadyFromLogs
 
         if (canUseCache) {
-          setWorkspaceInfo(cachedEntry.workspaceInfo)
-          workspaceInfoRef.current = cachedEntry.workspaceInfo
+          if (epoch !== loadEffectEpochRef.current) return
+
           setWorkspaceStatus(cachedEntry.workspaceStatus)
           const cachedLogs = cachedEntry.workspaceLogs || []
           setWorkspaceLogs(cachedLogs)
           workspaceLogsRef.current = cachedLogs
           setIsWorkspaceReadyFromLogs(true)
           setWorkspaceError(null)
-          setIsLoadingWorkspace(false)
           lastLogIdRef.current = cachedEntry.workspaceLogs?.at(-1)?.id ?? null
+
+          setIsLoadingWorkspace(true)
+          try {
+            const fresh = await getWorkspaceUrl(prototype_id)
+            if (epoch !== loadEffectEpochRef.current) return
+            if (pollCancelledRef.current) return
+            workspaceCredentialsNeedRetryRef.current = false
+            const merged = mergeWorkspaceInfo(cachedEntry.workspaceInfo, fresh)
+            workspaceInfoRef.current = merged
+            setWorkspaceInfo(merged)
+          } catch (refreshErr) {
+            console.warn(
+              '[PrototypeTabVSCode] Token/workspace refresh failed, using cache:',
+              refreshErr,
+            )
+            if (epoch !== loadEffectEpochRef.current) return
+            workspaceCredentialsNeedRetryRef.current = true
+            setWorkspaceInfo(cachedEntry.workspaceInfo)
+            workspaceInfoRef.current = cachedEntry.workspaceInfo
+          } finally {
+            if (epoch === loadEffectEpochRef.current) {
+              setIsLoadingWorkspace(false)
+            }
+          }
 
           // Keep polling in background to refresh status/logs silently (lighter interval)
           startWorkspacePolling(prototype_id, { idle: true })
           return
         }
 
+        workspaceCredentialsNeedRetryRef.current = false
         setIsLoadingWorkspace(true)
         setWorkspaceError(null)
         setWorkspaceLogs([])
@@ -332,6 +386,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
         // Always prepare workspace first (idempotent: creates folder, seeds code, reuses existing workspace)
         try {
           const prepared = await prepareWorkspace(prototype_id)
+          if (epoch !== loadEffectEpochRef.current) return
           setWorkspaceStatus({
             exists: true,
             workspaceId: prepared.workspaceId,
@@ -363,9 +418,12 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
           }
         }
 
+        if (epoch !== loadEffectEpochRef.current) return
+
         // Start polling for workspace readiness (immediate first poll + 1s cadence)
         startWorkspacePolling(prototype_id)
       } catch (error: any) {
+        if (epoch !== loadEffectEpochRef.current) return
         console.error('[PrototypeTabVSCode] Failed to load workspace:', error)
         setWorkspaceError(error.message || 'Failed to load workspace')
         setIsLoadingWorkspace(false)
@@ -509,6 +567,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
             <button onClick={handleRunClick} className='cursor-pointer'>Run</button>
             <iframe
               ref={iframeRef}
+              key={buildCoderIframeSrc(workspaceInfo)}
               src={buildCoderIframeSrc(workspaceInfo)}
               className="w-full h-full border-0"
               style={{ pointerEvents: isResizing ? 'none' : 'auto' }}

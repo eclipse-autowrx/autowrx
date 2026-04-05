@@ -16,6 +16,7 @@ rm -rf ./my-template-dir template.tar
 
 mkdir -p ./my-template-dir
 cp docker-template.tf ./my-template-dir/
+(cd autowrx-runner && yarn vsix -- -o ../workspace-image/autowrx-runner.vsix)
 cp -rL workspace-image ./my-template-dir/
 
 tar -cf template.tar -C ./my-template-dir .
@@ -26,6 +27,7 @@ cat template.tar | docker exec -i coder /opt/coder templates push docker-templat
 echo "Warming up Docker cache for better UX..."
 docker build -t autowrx-workspace:1 ./my-template-dir/workspace-image
 
+rm -f ./workspace-image/autowrx-runner.vsix
 rm -rf ./my-template-dir template.tar
 
 echo "Creating Token..."

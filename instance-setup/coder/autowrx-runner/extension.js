@@ -4,9 +4,9 @@ const TERMINAL_NAME = 'AutoWRX Console';
 const TRIGGER_GLOB = '**/.autowrx_run';
 
 function activate(context) {
-    console.log('AutoWRX file-watcher extension is active');
+    console.log('AutoWRX runner extension is active');
 
-    const disposableCmd = vscode.commands.registerCommand('autowrx-extension.triggerFromWeb', () => {
+    const disposableCmd = vscode.commands.registerCommand('autowrx-runner.triggerFromWeb', () => {
         runCommandInTerminal('python3 main.py');
     });
 

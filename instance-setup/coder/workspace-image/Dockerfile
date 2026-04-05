@@ -41,3 +41,6 @@ RUN if [ -s /tmp/extensions.base.txt ]; then \
         code-server --install-extension "$ext" || echo "Warning: failed to install extension: $ext"; \
   done < /tmp/extensions.base.txt; \
   fi
+
+COPY --chown=coder:coder autowrx-runner.vsix /tmp/autowrx-runner.vsix
+RUN code-server --install-extension /tmp/autowrx-runner.vsix && rm /tmp/autowrx-runner.vsix

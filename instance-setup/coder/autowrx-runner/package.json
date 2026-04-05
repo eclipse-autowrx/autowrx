@@ -1,6 +1,6 @@
 {
-  "name": "autowrx-extension",
-  "displayName": "AutoWRX Extension",
+  "name": "autowrx-runner",
+  "displayName": "AutoWRX Runner",
   "description": "",
   "publisher": "autowrx",
   "version": "0.0.1",
@@ -18,7 +18,7 @@
   "contributes": {
     "commands": [
       {
-        "command": "autowrx-extension.triggerFromWeb",
+        "command": "autowrx-runner.triggerFromWeb",
         "title": "Trigger from Website"
       }
     ]
@@ -26,7 +26,8 @@
   "scripts": {
     "lint": "eslint .",
     "pretest": "yarn run lint",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "vsix": "npx --yes @vscode/vsce package --allow-missing-repository --skip-license"
   },
   "devDependencies": {
     "@types/vscode": "^1.110.0",
