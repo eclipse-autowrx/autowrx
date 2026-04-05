@@ -1,70 +1,65 @@
 const vscode = require('vscode');
 
+const TERMINAL_NAME = 'AutoWRX Console';
+const TRIGGER_GLOB = '**/.autowrx_run';
+
 function activate(context) {
-    console.log('AutoWRX Extension is now active!');
+    console.log('AutoWRX file-watcher extension is active');
 
-    // Register command
-    let disposable = vscode.commands.registerCommand('autowrx-extension.triggerFromWeb', () => {
-        runPythonMain();
+    const disposableCmd = vscode.commands.registerCommand('autowrx-extension.triggerFromWeb', () => {
+        runCommandInTerminal('python3 main.py');
     });
 
-    // Handle URI from website
-    let uriHandler = vscode.window.registerUriHandler({
-        handleUri(uri) {
-            console.log('Received URI from website:', uri.toString());
+    const watcher = vscode.workspace.createFileSystemWatcher(TRIGGER_GLOB);
+    let isProcessing = false;
 
-            const params = new URLSearchParams(uri.query);
-            const action = params.get('action');
+    const handleCommandTrigger = async (uri) => {
+        if (isProcessing) return;
 
-            if (action === 'runPython') {
-                runPythonMain();
+        try {
+            isProcessing = true;
+            const fileData = await vscode.workspace.fs.readFile(uri);
+            const command = new TextDecoder().decode(fileData).trim();
+
+            if (command) {
+                runCommandInTerminal(command);
+                await vscode.workspace.fs.writeFile(uri, new Uint8Array(0));
             }
+        } catch (error) {
+            console.error('AutoWRX: failed to read trigger file:', error);
+        } finally {
+            setTimeout(() => {
+                isProcessing = false;
+            }, 300);
         }
-    });
+    };
 
-    context.subscriptions.push(disposable, uriHandler);
+    watcher.onDidChange(handleCommandTrigger);
+    watcher.onDidCreate(handleCommandTrigger);
+
+    context.subscriptions.push(disposableCmd, watcher);
 }
 
 /**
- * Run python3 main.py in terminal.
- * Reuses existing terminal if available, otherwise creates a new one.
+ * @param {string} command
  */
-function runPythonMain() {
+function runCommandInTerminal(command) {
     try {
-        const terminalName = "AutoWRX - Run Python";
+        let terminal = vscode.window.terminals.find((t) => t.name === TERMINAL_NAME);
 
-        // Find existing terminal with the same name
-        let terminal = vscode.window.terminals.find(t => t.name === terminalName);
-
-        // Create new terminal if not found
         if (!terminal) {
             terminal = vscode.window.createTerminal({
-                name: terminalName,
-                cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || undefined
+                name: TERMINAL_NAME,
+                cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || undefined,
             });
-            console.log('Created new terminal:', terminalName);
-        } else {
-            console.log('Reusing existing terminal:', terminalName);
         }
 
-        // Show the terminal
         terminal.show();
-
-        // Clear terminal before running
-        if (process.platform === 'win32') {
-            terminal.sendText('cls');
-        } else {
-            terminal.sendText('clear');
-        }
-
-        // Run the python command
-        terminal.sendText('python3 main.py');
-
-        vscode.window.showInformationMessage('Running: python3 main.py');
-
+        terminal.sendText(process.platform === 'win32' ? 'cls' : 'clear');
+        terminal.sendText(command);
     } catch (error) {
         console.error(error);
-        vscode.window.showErrorMessage('Failed to run python3 main.py: ' + error.message);
+        vscode.window.showErrorMessage('AutoWRX: failed to run command: ' + error.message);
     }
 }
 
@@ -72,5 +67,5 @@ function deactivate() { }
 
 module.exports = {
     activate,
-    deactivate
+    deactivate,
 };

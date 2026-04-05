@@ -519,9 +519,56 @@ const getWorkspaceLogs = async (userId, prototypeId, options = {}) => {
   }
 };
 
+/** Server-side only: maps client runKind to shell command (never accept raw command from client). */
+const RUN_KIND_COMMANDS = {
+  'python-main': 'python3 main.py',
+  'c-main': 'gcc main.c -o main && ./main',
+};
+
+/**
+ * Write `.autowrx_run` on the host prototypes volume so the VS Code extension in the
+ * Coder workspace (same mount) can pick it up via FileSystemWatcher.
+ * @param {string} userId
+ * @param {import('mongoose').Document} prototype - Prototype document (already authorized)
+ * @param {string} runKind - key in RUN_KIND_COMMANDS
+ */
+const triggerRunForPrototype = async (userId, prototype, runKind) => {
+  const safeCommand = RUN_KIND_COMMANDS[runKind];
+  if (!safeCommand) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid run kind');
+  }
+
+  const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
+  if (!coderCfg.enabled) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
+  }
+
+  const prototypesPath = coderCfg.prototypesPath;
+  if (!prototypesPath) {
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Prototypes path is not configured');
+  }
+
+  const prototypeFolderName = sanitizePrototypeFolderName(prototype.name);
+  const userHostPath = path.join(prototypesPath, userId.toString());
+  const prototypeFolderHost = path.join(userHostPath, prototypeFolderName);
+  const triggerFilePath = path.join(prototypeFolderHost, '.autowrx_run');
+
+  try {
+    fs.mkdirSync(prototypeFolderHost, { recursive: true });
+    fs.writeFileSync(triggerFilePath, safeCommand, 'utf8');
+    chownSafe(triggerFilePath, PROTOTYPES_LINUX_UID, PROTOTYPES_LINUX_GID);
+    chmodSafe(triggerFilePath, PROTOTYPES_FILE_MODE);
+    logger.info(`Wrote Coder trigger file for prototype ${prototype.id}: ${triggerFilePath}`);
+  } catch (err) {
+    logger.error(`Failed to write trigger file ${triggerFilePath}: ${err.message}`);
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, `Failed to write run trigger: ${err.message}`);
+  }
+};
+
 module.exports = {
   prepareWorkspaceForPrototype,
   getWorkspaceStatus,
   getWorkspaceTimings,
   getWorkspaceLogs,
+  triggerRunForPrototype,
 };

@@ -59,6 +59,15 @@ const getWorkspaceLogs = {
   }),
 };
 
+const triggerRun = {
+  params: Joi.object().keys({
+    prototypeId: Joi.string().custom(objectId).required(),
+  }),
+  body: Joi.object().keys({
+    runKind: Joi.string().valid('python-main', 'c-main').required(),
+  }),
+};
+
 module.exports = {
   getWorkspace,
   prepareWorkspace,
@@ -66,4 +75,5 @@ module.exports = {
   getWorkspaceTimings,
   getWorkspaceAgentLogs,
   getWorkspaceLogs,
+  triggerRun,
 };

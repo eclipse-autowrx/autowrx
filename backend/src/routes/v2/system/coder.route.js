@@ -23,6 +23,10 @@ router
   .post(auth(), validate(coderValidation.prepareWorkspace), coderController.prepareWorkspace);
 
 router
+  .route('/workspace/:prototypeId/trigger-run')
+  .post(auth(), validate(coderValidation.triggerRun), coderController.triggerRun);
+
+router
   .route('/workspace/:prototypeId/status')
   .get(auth(), validate(coderValidation.getWorkspaceStatus), coderController.getWorkspaceStatus);
 

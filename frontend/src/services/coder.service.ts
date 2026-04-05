@@ -59,6 +59,9 @@ export interface WorkspaceAgentLog {
   source_id?: string
 }
 
+/** Must match backend allowlist in orchestrator RUN_KIND_COMMANDS */
+export type CoderRunKind = 'python-main' | 'c-main'
+
 /**
  * Get workspace URL and session token for a prototype
  */
@@ -103,4 +106,14 @@ export const getWorkspaceLogs = async (
     { params },
   )
   return response.data
+}
+
+/**
+ * Write `.autowrx_run` on the server prototypes volume; VS Code extension picks it up via file watcher.
+ */
+export const triggerWorkspaceRun = async (
+  prototypeId: string,
+  runKind: CoderRunKind,
+): Promise<void> => {
+  await serverAxios.post(`/system/coder/workspace/${prototypeId}/trigger-run`, { runKind })
 }

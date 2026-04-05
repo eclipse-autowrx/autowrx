@@ -218,6 +218,34 @@ const getWorkspaceLogs = catchAsync(async (req, res) => {
   res.json(logs);
 });
 
+/**
+ * Write `.autowrx_run` on the host prototypes volume for the VS Code extension (file watcher).
+ */
+const triggerRun = catchAsync(async (req, res) => {
+  const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
+  if (!coderCfg.enabled) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
+  }
+
+  const { prototypeId } = req.params;
+  const userId = req.user.id;
+  const { runKind } = req.body;
+
+  const prototype = await Prototype.findById(prototypeId);
+  if (!prototype) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Prototype not found');
+  }
+
+  const hasPermission = await permissionService.hasPermission(userId, PERMISSIONS.READ_MODEL, prototype.model_id);
+  if (!hasPermission) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'You do not have permission to access this prototype');
+  }
+
+  await orchestratorService.triggerRunForPrototype(userId, prototype, runKind);
+
+  res.status(httpStatus.OK).json({ message: 'Run request written to workspace' });
+});
+
 module.exports = {
   getWorkspace,
   prepareWorkspace,
@@ -225,4 +253,5 @@ module.exports = {
   getWorkspaceTimings,
   getWorkspaceAgentLogs,
   getWorkspaceLogs,
+  triggerRun,
 };

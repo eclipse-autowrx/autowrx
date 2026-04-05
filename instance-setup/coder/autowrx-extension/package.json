@@ -11,7 +11,8 @@
     "Other"
   ],
   "activationEvents": [
-    "onUri"
+    "workspaceContains:**/.autowrx_run",
+    "onStartupFinished"
   ],
   "main": "./extension.js",
   "contributes": {
