@@ -48,6 +48,13 @@ const WORKSPACE_POLL_INTERVAL_MS = 1000
 /** Background refresh when workspace already shown (lighter load on API). */
 const WORKSPACE_POLL_INTERVAL_IDLE_MS = 5000
 
+/**
+ * Re-fetch workspace URL/token on this interval while the iframe is shown (idle poll).
+ * Backend only rotates the Coder token when the API is called near expiry; without this,
+ * the iframe keeps stale query-param tokens and Coder returns 401 ("session expired").
+ */
+const CREDENTIAL_REFRESH_INTERVAL_MS = 10 * 60 * 1000
+
 /** Merge server workspace payload with prior state so we keep folderPath / appUrl if the API omits them. */
 const mergeWorkspaceInfo = (
   prev: WorkspaceInfo | null | undefined,
@@ -98,6 +105,11 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
   const loadEffectEpochRef = useRef(0)
   /** When cache hydrate could not refresh credentials, idle poll should retry getWorkspaceUrl. */
   const workspaceCredentialsNeedRetryRef = useRef(false)
+  /** Last successful getWorkspaceUrl for iframe auth; scoped by prototype so tab switches do not mix TTL. */
+  const credentialRefreshMetaRef = useRef<{
+    prototypeId: string
+    at: number
+  } | null>(null)
 
   useEffect(() => {
     workspaceInfoRef.current = workspaceInfo
@@ -235,26 +247,40 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
           if (ready) {
             try {
               const refInfo = workspaceInfoRef.current
+              const meta = credentialRefreshMetaRef.current
+              const credentialsIdleStale =
+                isIdlePoll &&
+                meta?.prototypeId === prototypeId &&
+                Date.now() - meta.at >= CREDENTIAL_REFRESH_INTERVAL_MS
               const needsCredentialRefresh =
                 !isIdlePoll ||
                 !refInfo?.appUrl ||
                 !refInfo?.sessionToken ||
-                workspaceCredentialsNeedRetryRef.current
+                workspaceCredentialsNeedRetryRef.current ||
+                credentialsIdleStale
               // Hot poll: always fetch so sessionToken matches server (fixes stale cached tokens).
-              // Idle poll: skip if we already refreshed when restoring from cache (avoids duplicate prepare).
+              // Idle poll: refresh periodically so Coder tokens are rotated before expiry (avoids 401 in iframe).
               if (needsCredentialRefresh) {
                 const fresh = await getWorkspaceUrl(prototypeId)
                 if (pollCancelledRef.current) return
                 workspaceCredentialsNeedRetryRef.current = false
+                credentialRefreshMetaRef.current = {
+                  prototypeId,
+                  at: Date.now(),
+                }
                 const merged = mergeWorkspaceInfo(workspaceInfoRef.current, fresh)
                 workspaceInfoRef.current = merged
                 setWorkspaceInfo(merged)
               }
               setIsLoadingWorkspace(false)
               setWorkspaceError(null)
-              if (workspacePollIntervalRef.current) {
-                clearInterval(workspacePollIntervalRef.current)
-                workspacePollIntervalRef.current = null
+              // Stop the fast poll only; keep (or start) idle polling for status/logs + token rotation.
+              if (!isIdlePoll) {
+                if (workspacePollIntervalRef.current) {
+                  clearInterval(workspacePollIntervalRef.current)
+                  workspacePollIntervalRef.current = null
+                }
+                startWorkspacePolling(prototypeId, { idle: true })
               }
             } catch {
               // If URL resolution fails, keep polling; iframe won't render until appUrl is set
@@ -352,6 +378,10 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
             if (epoch !== loadEffectEpochRef.current) return
             if (pollCancelledRef.current) return
             workspaceCredentialsNeedRetryRef.current = false
+            credentialRefreshMetaRef.current = {
+              prototypeId: prototype_id,
+              at: Date.now(),
+            }
             const merged = mergeWorkspaceInfo(cachedEntry.workspaceInfo, fresh)
             workspaceInfoRef.current = merged
             setWorkspaceInfo(merged)
