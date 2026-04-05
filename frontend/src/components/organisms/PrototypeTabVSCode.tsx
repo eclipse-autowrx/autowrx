@@ -22,11 +22,9 @@ import {
   prepareWorkspace,
   getWorkspaceStatus,
   getWorkspaceLogs,
-  triggerWorkspaceRun,
   WorkspaceInfo,
   WorkspaceStatus,
   WorkspaceAgentLog,
-  CoderRunKind,
 } from '@/services/coder.service'
 import CoderWorkspaceStatus from '@/components/molecules/CoderWorkspaceStatus'
 import { useParams } from 'react-router-dom'
@@ -128,20 +126,6 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
   const startXRef = useRef(0)
   const startWidthRef = useRef(0)
   const iframeRef = useRef<HTMLIFrameElement>(null)
-
-  const resolveRunKind = useCallback((): CoderRunKind => {
-    const lang = prototype?.language?.toLowerCase() ?? ''
-    return lang === 'c' ? 'c-main' : 'python-main'
-  }, [prototype?.language])
-
-  const handleRunClick = useCallback(async () => {
-    if (!prototype_id) return
-    try {
-      await triggerWorkspaceRun(prototype_id, resolveRunKind())
-    } catch (error) {
-      console.error('[PrototypeTabVSCode] trigger-run failed:', error)
-    }
-  }, [prototype_id, resolveRunKind])
 
   const buildCoderIframeSrc = useCallback((info: WorkspaceInfo) => {
     const url = new URL(info.appUrl)
@@ -594,7 +578,6 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
           />
         ) : workspaceInfo?.appUrl ? (
           <>
-            <button onClick={handleRunClick} className='cursor-pointer'>Run</button>
             <iframe
               ref={iframeRef}
               key={buildCoderIframeSrc(workspaceInfo)}
