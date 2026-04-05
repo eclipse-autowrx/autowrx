@@ -27,6 +27,7 @@ export type User = Omit<UserCreate, 'password'> & {
   roles: Roles
   email_verified: boolean
   image_file?: string
+  github_token?: string
   provider: string
   provider_data?: UserInfo[]
   created_at: Date

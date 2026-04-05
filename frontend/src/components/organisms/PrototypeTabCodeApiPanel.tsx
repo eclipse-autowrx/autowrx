@@ -21,12 +21,14 @@ import { V2CApiList, ApiDetail, DEFAULT_V2C } from '@/components/organisms/ViewA
 import { useQuery } from '@tanstack/react-query'
 import { getCustomApiSetById } from '@/services/customApiSet.service'
 import { getCustomApiSchemaById } from '@/services/customApiSchema.service'
+import { getPrototypeUsedApisFromWorkspaceService } from '@/services/prototype.service'
 import CustomAPIList from '@/components/organisms/CustomAPIList'
 import CustomAPIView from '@/components/organisms/CustomAPIView'
 import { Spinner } from '@/components/atoms/spinner'
 import { VscChevronLeft, VscChevronRight } from 'react-icons/vsc'
 import { ArrowLeftFromLine, CopyMinus } from 'lucide-react'
 import { TbLayoutSidebar, TbLayoutSidebarRight, TbLayoutSidebarRightFilled } from 'react-icons/tb'
+import { useParams } from 'react-router-dom'
 
 interface ApiCodeBlockProps {
   content: string
@@ -156,12 +158,15 @@ const APIDetails: FC<APIDetailsProps> = ({ activeApi, requestCancel }) => {
 interface PrototypeTabCodeApiPanelProps {
   code: string
   onCollapsedChange?: (isCollapsed: boolean) => void
+  enableWorkspacePolling?: boolean
 }
 
 const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   code,
   onCollapsedChange,
+  enableWorkspacePolling = false,
 }) => {
+  const { prototype_id } = useParams<{ prototype_id: string }>()
   const [tab, setTab] = useState<
     'used-signals' | 'all-signals' | 'usp' | 'v2c' | string
   >('used-signals')
@@ -356,19 +361,34 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   const [activeService, setActiveService] = useState<any>(null)
   const [activeV2CApi, setActiveV2CApi] = useState<any>(null)
 
+  const workspaceUsedApisQuery = useQuery({
+    queryKey: ['prototype-used-apis-workspace', prototype_id],
+    queryFn: () => getPrototypeUsedApisFromWorkspaceService(prototype_id!),
+    enabled: !!prototype_id,
+    refetchInterval: enableWorkspacePolling ? 3000 : false,
+  })
+
+  const analyzedCode = workspaceUsedApisQuery.data?.code ?? code ?? ''
+
   useEffect(() => {
-    if (!code || !activeModelApis || activeModelApis.length === 0) {
+    if (!activeModelApis || activeModelApis.length === 0) {
       setUseApis([])
       return
     }
+
+    const usedApiNames = new Set(workspaceUsedApisQuery.data?.usedApiNames || [])
     let useList: any[] = []
-    activeModelApis.forEach((item: any) => {
-      if (code.includes(item.shortName)) {
-        useList.push(item)
-      }
-    })
+    if (usedApiNames.size > 0) {
+      useList = activeModelApis.filter((item: any) => item?.name && usedApiNames.has(item.name))
+    } else if (analyzedCode) {
+      activeModelApis.forEach((item: any) => {
+        if (item?.shortName && analyzedCode.includes(item.shortName)) {
+          useList.push(item)
+        }
+      })
+    }
     setUseApis(useList)
-  }, [code, activeModelApis])
+  }, [analyzedCode, activeModelApis, workspaceUsedApisQuery.data?.usedApiNames])
 
   // Fetch all CustomApiSets for "Used APIs" tab
   const customApiSetQueries = useQuery({
@@ -384,7 +404,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
 
   // Check for used CustomApiSet APIs in code
   useEffect(() => {
-    if (!code || !customApiSetQueries.data || customApiSetQueries.data.length === 0) {
+    if (!analyzedCode || !customApiSetQueries.data || customApiSetQueries.data.length === 0) {
       setUsedCustomApiItems(new Map())
       return
     }
@@ -397,9 +417,9 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
 
       items.forEach((item: any) => {
         // Check if code contains the API ID or path
-        if (item.id && code.includes(item.id)) {
+        if (item.id && analyzedCode.includes(item.id)) {
           usedItems.push(item)
-        } else if (item.path && code.includes(item.path)) {
+        } else if (item.path && analyzedCode.includes(item.path)) {
           usedItems.push(item)
         }
       })
@@ -410,7 +430,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
     })
 
     setUsedCustomApiItems(usedItemsMap)
-  }, [code, customApiSetQueries.data])
+  }, [analyzedCode, customApiSetQueries.data])
 
   const onApiClicked = (api: any) => {
     if (!api) return

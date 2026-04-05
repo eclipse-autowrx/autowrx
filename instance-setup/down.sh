@@ -1,1 +1,1 @@
-docker compose -f docker-compose.prod.yml --env-file .env.prod down -d
+docker compose -f docker-compose.prod.yml --env-file .env.prod down

@@ -39,6 +39,11 @@ import DaMockManager from './DaMockManager'
 import PrototypeVarsWatch from './PrototypeVarsWatch'
 import DaRemoteCompileRust from '../remote-compiler/DaRemoteCompileRust'
 import { useSystemUI } from '@/hooks/useSystemUI'
+import { useParams } from 'react-router-dom'
+import {
+  triggerWorkspaceRun,
+  type CoderRunKind,
+} from '@/services/coder.service'
 
 const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
 
@@ -54,6 +59,10 @@ const AlwaysScrollToBottom = () => {
 }
 
 const DaRuntimeControl: FC = () => {
+  const { tab, prototype_id: routePrototypeId } = useParams<{
+    tab?: string
+    prototype_id?: string
+  }>()
   const { data: currentUser } = useSelfProfileQuery()
   const [prototype, activeModelApis] = useModelStore(
     (state) => [state.prototype as Prototype, state.activeModelApis],
@@ -166,6 +175,11 @@ const DaRuntimeControl: FC = () => {
     setUsedApis(apis)
   }, [code, activeModelApis, prototype?.widget_config])
 
+  const resolveCoderRunKind = (): CoderRunKind => {
+    const lang = prototype?.language?.toLowerCase() ?? ''
+    return lang === 'c' ? 'c-main' : 'python-main'
+  }
+
   const handleRun = () => {
     setIsRunning(true)
     setActiveTab('output')
@@ -218,6 +232,18 @@ const DaRuntimeControl: FC = () => {
     notifyWidgetIframes({
       action: 'stop-app',
     })
+  }
+
+  const handlePlayClick = () => {
+    if (tab === 'vscode') {
+      const id = prototype?.id ?? routePrototypeId
+      if (!id) return
+      void triggerWorkspaceRun(id, resolveCoderRunKind()).catch((error) => {
+        console.error('[DaRuntimeControl] Coder trigger-run failed:', error)
+      })
+      return
+    }
+    handleRun()
   }
 
   const appendLog = (content: string) => {
@@ -476,19 +502,22 @@ const DaRuntimeControl: FC = () => {
 
       {/* Play/Stop Controls */}
       <div className={cn('flex px-1', !isExpand && 'flex-col')}>
-        {activeRtId && (
+        {(activeRtId || tab === 'vscode') && (
           <>
             <button
               data-id="btn-run-prototype"
-              disabled={isRunning}
-              onClick={handleRun}
+              disabled={tab === 'vscode' ? false : isRunning}
+              onClick={handlePlayClick}
               className="mt-1 flex items-center justify-center rounded border p-2 font-semibold text-sm"
               style={{
-                color: isRunning ? 'hsl(215, 16%, 47%)' : 'hsl(0, 0%, 100%)',
+                color:
+                  tab === 'vscode' || !isRunning
+                    ? 'hsl(0, 0%, 100%)'
+                    : 'hsl(215, 16%, 47%)',
                 borderColor: 'hsl(215, 16%, 47%)',
               }}
               onMouseEnter={(e) => {
-                if (!isRunning) {
+                if (tab === 'vscode' || !isRunning) {
                   e.currentTarget.style.backgroundColor = 'hsl(215, 16%, 47%)'
                 }
               }}
@@ -498,47 +527,54 @@ const DaRuntimeControl: FC = () => {
             >
               <TbPlayerPlayFilled className="w-4 h-4" />
             </button>
-            <button
-              data-id="btn-stop-prototype"
-              disabled={!isRunning}
-              onClick={handleStop}
-              className={cn(
-                'mt-1 flex items-center justify-center rounded border p-2 font-semibold text-sm',
-                isExpand && 'mx-2',
-              )}
-              style={{
-                color: !isRunning ? 'hsl(215, 16%, 47%)' : 'hsl(0, 0%, 100%)',
-                borderColor: 'hsl(215, 16%, 47%)',
-              }}
-              onMouseEnter={(e) => {
-                if (isRunning) {
-                  e.currentTarget.style.backgroundColor = 'hsl(215, 16%, 47%)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-              }}
-            >
-              <TbPlayerStopFilled className="w-4 h-4" />
-            </button>
-
-            {prototype?.language === 'rust' && (
-              <DaRemoteCompileRust
-                ref={rustCompilerRef}
-                onResponse={(log, isDone, status, appName) => {
-                  appendLog(log)
-                  if (isDone) {
-                    if (status === 'compile-done' && appName) {
-                      if (runTimeRef.current) {
-                        runTimeRef.current?.runBinApp(appName)
-                      }
-                      if (runTimeRef1.current) {
-                        runTimeRef1.current?.runBinApp(appName)
-                      }
+            {activeRtId && (
+              <>
+                <button
+                  data-id="btn-stop-prototype"
+                  disabled={!isRunning}
+                  onClick={handleStop}
+                  className={cn(
+                    'mt-1 flex items-center justify-center rounded border p-2 font-semibold text-sm',
+                    isExpand && 'mx-2',
+                  )}
+                  style={{
+                    color: !isRunning
+                      ? 'hsl(215, 16%, 47%)'
+                      : 'hsl(0, 0%, 100%)',
+                    borderColor: 'hsl(215, 16%, 47%)',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (isRunning) {
+                      e.currentTarget.style.backgroundColor =
+                        'hsl(215, 16%, 47%)'
                     }
-                  }
-                }}
-              />
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                  }}
+                >
+                  <TbPlayerStopFilled className="w-4 h-4" />
+                </button>
+
+                {prototype?.language === 'rust' && (
+                  <DaRemoteCompileRust
+                    ref={rustCompilerRef}
+                    onResponse={(log, isDone, status, appName) => {
+                      appendLog(log)
+                      if (isDone) {
+                        if (status === 'compile-done' && appName) {
+                          if (runTimeRef.current) {
+                            runTimeRef.current?.runBinApp(appName)
+                          }
+                          if (runTimeRef1.current) {
+                            runTimeRef1.current?.runBinApp(appName)
+                          }
+                        }
+                      }
+                    }}
+                  />
+                )}
+              </>
             )}
           </>
         )}
@@ -784,7 +820,57 @@ const DaRuntimeControl: FC = () => {
         )}
       </div>
 
-      <div className="flex mt-auto">
+      <div className="mt-auto flex w-full flex-col">
+        {(activeRtId || tab === 'vscode') && !isExpand && (
+          <div className="flex flex-col items-stretch gap-1 px-1 pb-2">
+            <button
+              type="button"
+              data-id="btn-run-prototype-sidebar-lower"
+              className="flex items-center justify-center rounded border p-2 font-semibold text-sm"
+              style={{
+                color: 'hsl(0, 0%, 100%)',
+                borderColor: 'hsl(215, 16%, 47%)',
+              }}
+              onClick={handlePlayClick}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'hsl(215, 16%, 47%)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent'
+              }}
+            >
+              <TbPlayerPlayFilled className="h-4 w-4" />
+            </button>
+            {activeRtId && (
+              <button
+                type="button"
+                data-id="btn-stop-prototype-sidebar-lower"
+                disabled={!isRunning}
+                onClick={handleStop}
+                className="flex items-center justify-center rounded border p-2 font-semibold text-sm"
+                style={{
+                  color: !isRunning
+                    ? 'hsl(215, 16%, 47%)'
+                    : 'hsl(0, 0%, 100%)',
+                  borderColor: 'hsl(215, 16%, 47%)',
+                }}
+                onMouseEnter={(e) => {
+                  if (isRunning) {
+                    e.currentTarget.style.backgroundColor =
+                      'hsl(215, 16%, 47%)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }}
+              >
+                <TbPlayerStopFilled className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        )}
+
+        <div className="flex">
         <Button
           variant="ghost"
           data-id="btn-expand-runtime-control"
@@ -951,6 +1037,7 @@ const DaRuntimeControl: FC = () => {
             )}
           </>
         )}
+        </div>
       </div>
     </div>
   )

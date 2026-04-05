@@ -1,0 +1,1 @@
+docker compose -f coder-docker-compose.yml down -v

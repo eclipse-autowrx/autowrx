@@ -133,7 +133,7 @@ const DaDialog = ({
         }}
         aria-describedby={description ? undefined : undefined}
       >
-        {dialogTitle && (
+        {dialogTitle ? (
           <DialogHeader className="text-primary space-y-1">
             <DialogTitle>{dialogTitle}</DialogTitle>
             {description && (
@@ -142,6 +142,9 @@ const DaDialog = ({
               </div>
             )}
           </DialogHeader>
+        ) : (
+          // Always provide a title for assistive technologies.
+          <DialogTitle className="sr-only">Dialog</DialogTitle>
         )}
         <div className={cn('flex flex-col w-full', contentContainerClassName)}>
           {children}

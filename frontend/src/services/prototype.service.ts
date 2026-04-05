@@ -118,3 +118,20 @@ export const saveRecentPrototype = async (
 export const countCodeExecution = async (prototypeId: string) => {
   return serverAxios.post(`/prototypes/${prototypeId}/execute-code`)
 }
+
+export type PrototypeUsedApisWorkspaceResponse = {
+  code: string
+  folderPath: string
+  source: string
+  usedApiNames: string[]
+}
+
+export const getPrototypeUsedApisFromWorkspaceService = async (
+  prototypeId: string,
+): Promise<PrototypeUsedApisWorkspaceResponse> => {
+  return (
+    await serverAxios.get<PrototypeUsedApisWorkspaceResponse>(
+      `/prototypes/${prototypeId}/used-apis`,
+    )
+  ).data
+}

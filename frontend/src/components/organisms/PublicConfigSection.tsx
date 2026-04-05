@@ -19,6 +19,7 @@ import {
   PREDEFINED_SITE_CONFIGS,
   PREDEFINED_GENAI_CONFIG_KEYS,
   PREDEFINED_PROTOTYPE_CONFIG_KEYS,
+  PREDEFINED_VSCODE_CONFIG_KEYS,
   PREDEFINED_PRIVACY_CONFIG_KEYS,
 } from '@/pages/SiteConfigManagement'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
@@ -49,9 +50,11 @@ const PublicConfigSection: React.FC = () => {
     PREDEFINED_GENAI_CONFIG_KEYS.includes(key)
   const isPrototypeKey = (key: string) =>
     PREDEFINED_PROTOTYPE_CONFIG_KEYS.includes(key)
+  const isVscodeKey = (key: string) => PREDEFINED_VSCODE_CONFIG_KEYS.includes(key)
   const isPrivacyKey = (key: string) =>
     PREDEFINED_PRIVACY_CONFIG_KEYS.includes(key)
-  const isSpecialSectionKey = (key: string) => isGenAIKey(key) || isPrototypeKey(key) || isPrivacyKey(key)
+  const isSpecialSectionKey = (key: string) =>
+    isGenAIKey(key) || isPrototypeKey(key) || isVscodeKey(key) || isPrivacyKey(key)
 
   useEffect(() => {
     if (selfLoading || !self) return
@@ -228,7 +231,7 @@ const PublicConfigSection: React.FC = () => {
       const publicKeys = new Set([
         ...PREDEFINED_SITE_CONFIGS
           .map((c) => c.key)
-          .filter((key) => !isGenAIKey(key) && !isPrivacyKey(key)),
+          .filter((key) => !isSpecialSectionKey(key)),
         'NAV_BAR_ACTIONS',
       ])
 

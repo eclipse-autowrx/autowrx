@@ -66,6 +66,11 @@ const envVarsSchema = Joi.object()
     LOGS_MAX_SIZE: Joi.number().default(100).description('Max size of change logs in megabytes'),
     // File upload settings
     MAX_IMAGE_DIMENSION: Joi.number().default(1024).description('Maximum image dimension in pixels'),
+    // Gitea integration (DISABLED - kept for reference)
+    GITEA_URL: Joi.string().default('http://localhost:3000').description('Gitea instance URL'),
+    GITEA_ADMIN_USERNAME: Joi.string().default('gitea-admin').description('Gitea admin username'),
+    GITEA_ADMIN_PASSWORD: Joi.string().description('Gitea admin password'),
+    GITEA_ADMIN_TOKEN: Joi.string().description('Gitea admin API token (optional, preferred over password)'),
   })
   .unknown();
 
@@ -159,6 +164,7 @@ const config = {
   services: {
     log: {
       port: envVars.LOG_PORT || 9600,
+      url: envVars.LOG_URL,
     },
     cache: {
       url: envVars.CACHE_URL,
@@ -177,9 +183,6 @@ const config = {
     kitServer: {
       url: envVars.KIT_SERVER_URL,
     },
-    log: {
-      url: envVars.LOG_URL,
-    },
   },
   openai: {
     apiKey: envVars.OPENAI_API_KEY,
@@ -197,6 +200,12 @@ const config = {
   logsMaxSize: envVars.LOGS_MAX_SIZE,
   fileUpload: {
     maxImageDimension: envVars.MAX_IMAGE_DIMENSION,
+  },
+  gitea: {
+    url: envVars.GITEA_URL,
+    adminUsername: envVars.GITEA_ADMIN_USERNAME,
+    adminPassword: envVars.GITEA_ADMIN_PASSWORD,
+    adminToken: envVars.GITEA_ADMIN_TOKEN,
   },
 };
 

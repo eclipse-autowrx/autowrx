@@ -8,10 +8,11 @@
 
 const httpStatus = require('http-status');
 const catchAsync = require('../utils/catchAsync');
-const { prototypeService, permissionService } = require('../services');
+const { prototypeService, permissionService, permissionSyncService } = require('../services');
 const pick = require('../utils/pick');
 const { PERMISSIONS } = require('../config/roles');
 const ApiError = require('../utils/ApiError');
+const logger = require('../config/logger');
 const FeedbackPrototypeDecorator = require('../decorators/FeedbackPrototypeDecorator');
 const FeedbackPrototypeListDecorator = require('../decorators/FeedbackPrototypeListDecorator');
 
@@ -20,6 +21,12 @@ const createPrototype = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
   }
   const prototypeId = await prototypeService.createPrototype(req.user.id, req.body);
+  
+  // Sync prototype to Gitea (async, don't wait)
+  permissionSyncService.syncPrototypeToGitea(prototypeId._id?.toString() || prototypeId.toString()).catch((error) => {
+    logger.error(`Failed to sync prototype to Gitea: ${error.message}`);
+  });
+  
   res.status(201).send(prototypeId);
 });
 
@@ -90,6 +97,11 @@ const executeCode = catchAsync(async (req, res) => {
   res.send('OK');
 });
 
+const getUsedApisFromWorkspace = catchAsync(async (req, res) => {
+  const data = await prototypeService.getPrototypeUsedApisFromWorkspace(req.params.id, req.user.id);
+  res.send(data);
+});
+
 const listPopularPrototypes = catchAsync(async (req, res) => {
   const prototypes = await prototypeService.listPopularPrototypes(req.user?.id);
   res.send(prototypes);
@@ -105,4 +117,5 @@ module.exports = {
   listPopularPrototypes,
   executeCode,
   bulkCreatePrototypes,
+  getUsedApisFromWorkspace,
 };

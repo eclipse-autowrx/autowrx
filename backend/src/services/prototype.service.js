@@ -7,14 +7,17 @@
 // SPDX-License-Identifier: MIT
 
 const httpStatus = require('http-status');
+const fs = require('fs');
+const path = require('path');
 const { Prototype } = require('../models');
 const ApiError = require('../utils/ApiError');
 const permissionService = require('./permission.service');
 const { PERMISSIONS } = require('../config/roles');
 const { default: axios, isAxiosError } = require('axios');
-const config = require('../config/config');
+const coderConfig = require('../utils/coderConfig');
 const logger = require('../config/logger');
 const modelService = require('./model.service');
+const apiService = require('./api.service');
 const _ = require('lodash');
 
 /**
@@ -25,6 +28,125 @@ const _ = require('lodash');
  */
 const stripTrailingNumber = (name) => {
   return name.replace(/_\d+$/, '');
+};
+
+const sanitizePrototypeFolderName = (name) => {
+  if (!name || typeof name !== 'string') return 'unnamed-prototype';
+  const sanitized = name
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9\-_]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 64);
+  return sanitized || 'unnamed-prototype';
+};
+
+const IGNORED_DIRS = new Set(['.git', '.svn', '.hg', 'node_modules', '__pycache__', '.venv', 'venv']);
+const ALLOWED_TEXT_EXTENSIONS = new Set([
+  '.py',
+  '.js',
+  '.ts',
+  '.tsx',
+  '.jsx',
+  '.json',
+  '.yaml',
+  '.yml',
+  '.toml',
+  '.ini',
+  '.env',
+  '.sh',
+  '.bash',
+  '.zsh',
+  '.c',
+  '.h',
+  '.cpp',
+  '.hpp',
+  '.java',
+  '.go',
+  '.rs',
+  '.sql',
+  '.xml',
+  '.html',
+  '.css',
+]);
+const MAX_FILE_SIZE_BYTES = 1024 * 1024; // 1MB/file
+const MAX_TOTAL_BYTES = 5 * 1024 * 1024; // 5MB total scan budget
+
+const listTextFilesRecursively = (rootPath) => {
+  const stack = [rootPath];
+  const files = [];
+
+  while (stack.length > 0) {
+    const currentPath = stack.pop();
+    let entries = [];
+    try {
+      entries = fs.readdirSync(currentPath, { withFileTypes: true });
+    } catch (error) {
+      logger.warn(`Failed to read directory ${currentPath}: ${error.message}`);
+      continue;
+    }
+
+    for (const entry of entries) {
+      const entryPath = path.join(currentPath, entry.name);
+      if (entry.isDirectory()) {
+        if (!IGNORED_DIRS.has(entry.name)) {
+          stack.push(entryPath);
+        }
+        continue;
+      }
+      if (!entry.isFile()) continue;
+
+      const ext = path.extname(entry.name).toLowerCase();
+      if (ext && !ALLOWED_TEXT_EXTENSIONS.has(ext)) continue;
+      files.push(entryPath);
+    }
+  }
+
+  return files;
+};
+
+const readPrototypeCodeFromPrototypesPath = (userId, prototypeName) => {
+  const prototypesRoot = coderConfig.getCoderConfigSync().prototypesPath || '/var/lib/autowrx/prototypes';
+  const prototypeFolder = path.join(prototypesRoot, String(userId), sanitizePrototypeFolderName(prototypeName));
+
+  if (!fs.existsSync(prototypeFolder)) {
+    return {
+      code: '',
+      folderPath: prototypeFolder,
+      source: 'prototypes_path',
+    };
+  }
+
+  const textFiles = listTextFilesRecursively(prototypeFolder);
+  const chunks = [];
+  let totalBytes = 0;
+
+  textFiles.forEach((filePath) => {
+    if (totalBytes >= MAX_TOTAL_BYTES) return;
+
+    try {
+      const fileStat = fs.statSync(filePath);
+      if (fileStat.size > MAX_FILE_SIZE_BYTES) return;
+      if (totalBytes + fileStat.size > MAX_TOTAL_BYTES) return;
+
+      const content = fs.readFileSync(filePath, 'utf8');
+      if (!content || !content.trim()) return;
+
+      const relativePath = path.relative(prototypeFolder, filePath);
+      chunks.push(`# FILE: ${relativePath}\n${content}`);
+      totalBytes += fileStat.size;
+    } catch (error) {
+      logger.warn(`Failed reading file ${filePath}: ${error.message}`);
+    }
+  });
+
+  return {
+    code: chunks.join('\n\n'),
+    folderPath: prototypeFolder,
+    source: 'prototypes_path',
+  };
 };
 
 /**
@@ -317,6 +439,29 @@ const listPopularPrototypes = async () => {
 };
 
 /**
+ * Read prototype code from the user's prototypes workspace path and compute used APIs.
+ * @param {string} id
+ * @param {string} userId
+ * @returns {Promise<{code: string, folderPath: string, source: string, usedApiNames: string[]}>}
+ */
+const getPrototypeUsedApisFromWorkspace = async (id, userId) => {
+  const prototype = await getPrototypeById(id, userId);
+  const modelId = prototype.model_id?._id || prototype.model_id?.id || prototype.model_id;
+  const codeData = readPrototypeCodeFromPrototypesPath(userId, prototype.name);
+
+  const cvi = await apiService.computeVSSApi(modelId);
+  const apiList = apiService.parseCvi(cvi);
+  const usedApiNames = apiService.getUsedApis(codeData.code || '', apiList);
+
+  return {
+    code: codeData.code || '',
+    folderPath: codeData.folderPath,
+    source: codeData.source,
+    usedApiNames,
+  };
+};
+
+/**
  *
  * @param {object} filter
  * @param {string} actionOwner
@@ -344,3 +489,4 @@ module.exports.executeCode = executeCode;
 module.exports.listPopularPrototypes = listPopularPrototypes;
 module.exports.bulkCreatePrototypes = bulkCreatePrototypes;
 module.exports.deleteMany = deleteMany;
+module.exports.getPrototypeUsedApisFromWorkspace = getPrototypeUsedApisFromWorkspace;
