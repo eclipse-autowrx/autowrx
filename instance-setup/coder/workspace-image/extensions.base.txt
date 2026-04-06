@@ -3,3 +3,4 @@ ms-python.python
 ms-python.black-formatter
 
 sst-dev.opencode
+anthropic.claude-code

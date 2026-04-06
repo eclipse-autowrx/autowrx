@@ -64,6 +64,14 @@ LOOP.add_signal_handler(signal.SIGTERM, LOOP.stop)
 LOOP.run_until_complete(main())
 LOOP.close()`
 
+const DEFAULT_CPP_MAIN = `#include <iostream>
+#include "greeting.h"
+
+int main() {
+    std::cout << getGreeting() << std::endl;
+    return 0;
+}`
+
 export const SAMPLE_PROJECTS: SampleProject[] = [
   {
     label: "Python Single File",
@@ -159,64 +167,54 @@ export const SAMPLE_PROJECTS: SampleProject[] = [
       }
     ]
   },
-  // {
-  //   label: "C++ Multiple Files",
-  //   language: "cpp",
-  //   description: "A C++ project with headers, source files, and CMake build system",
-  //   data: [
-  //     {
-  //       type: 'folder',
-  //       name: 'cpp-project',
-  //       items: [
-  //         {
-  //           type: 'file',
-  //           name: 'CMakeLists.txt',
-  //           content: 'cmake_minimum_required(VERSION 3.16)\nproject(cpp_project)\n\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\n\nadd_executable(main src/main.cpp src/utils.cpp src/calculator.cpp)\ntarget_include_directories(main PRIVATE include)\n\n# Set compiler flags\nif(MSVC)\n    target_compile_options(main PRIVATE /W4)\nelse()\n    target_compile_options(main PRIVATE -Wall -Wextra -Wpedantic)\nendif()'
-  //         },
-  //         {
-  //           type: 'file',
-  //           name: 'README.md',
-  //           content: '# C++ Project\n\nA C++ project with multiple files and CMake build system.\n\n## Features\n- Header files (.h)\n- Source files (.cpp)\n- CMake build system\n- Modern C++17 features\n\n## Build\n```bash\nmkdir build && cd build\ncmake ..\nmake\n```'
-  //         },
-  //         {
-  //           type: 'folder',
-  //           name: 'include',
-  //           items: [
-  //             {
-  //               type: 'file',
-  //               name: 'utils.h',
-  //               content: '#pragma once\n\n#include <string>\n#include <vector>\n\nnamespace utils {\n\nclass StringProcessor {\npublic:\n    StringProcessor();\n    ~StringProcessor();\n    \n    std::string process(const std::string& input);\n    std::vector<std::string> split(const std::string& input, char delimiter);\n};\n\n// Utility functions\nstd::string toUpperCase(const std::string& str);\nstd::string toLowerCase(const std::string& str);\nbool startsWith(const std::string& str, const std::string& prefix);\nbool endsWith(const std::string& str, const std::string& suffix);\n\n} // namespace utils'
-  //             },
-  //             {
-  //               type: 'file',
-  //               name: 'calculator.h',
-  //               content: '#pragma once\n\n#include <string>\n\nclass Calculator {\npublic:\n    Calculator();\n    ~Calculator();\n    \n    double add(double a, double b);\n    double subtract(double a, double b);\n    double multiply(double a, double b);\n    double divide(double a, double b);\n    \nprivate:\n    std::string lastOperation;\n};'
-  //             }
-  //           ]
-  //         },
-  //         {
-  //           type: 'folder',
-  //           name: 'src',
-  //           items: [
-  //             {
-  //               type: 'file',
-  //               name: 'main.cpp',
-  //               content: '#include <iostream>\n#include <memory>\n#include "utils.h"\n#include "calculator.h"\n\nint main(int argc, char* argv[]) {\n    try {\n        std::cout << "C++ Project Starting..." << std::endl;\n        \n        utils::StringProcessor processor;\n        Calculator calc;\n        \n        // Process command line arguments\n        if (argc > 1) {\n            std::string input = argv[1];\n            std::string result = processor.process(input);\n            std::cout << "Processed: " << result << std::endl;\n            \n            auto parts = processor.split(result, \' \');\n            std::cout << "Split into " << parts.size() << " parts" << std::endl;\n        }\n        \n        // Test calculator\n        double result = calc.add(10.0, 20.0);\n        std::cout << "10 + 20 = " << result << std::endl;\n        \n        std::cout << "Application completed successfully!" << std::endl;\n        return 0;\n        \n    } catch (const std::exception& e) {\n        std::cerr << "Error: " << e.what() << std::endl;\n        return 1;\n    }\n}'
-  //             },
-  //             {
-  //               type: 'file',
-  //               name: 'utils.cpp',
-  //               content: '#include "utils.h"\n#include <algorithm>\n#include <sstream>\n#include <cctype>\n\nnamespace utils {\n\nStringProcessor::StringProcessor() {}\nStringProcessor::~StringProcessor() {}\n\nstd::string StringProcessor::process(const std::string& input) {\n    std::string result = input;\n    \n    // Remove extra whitespace\n    std::string::iterator new_end = std::unique(result.begin(), result.end(),\n        [](char a, char b) { return a == \' \' && b == \' \'; });\n    result.erase(new_end, result.end());\n    \n    // Trim leading/trailing whitespace\n    result.erase(0, result.find_first_not_of(" \\t\\n\\r"));\n    result.erase(result.find_last_not_of(" \\t\\n\\r") + 1);\n    \n    return result;\n}\n\nstd::vector<std::string> StringProcessor::split(const std::string& input, char delimiter) {\n    std::vector<std::string> tokens;\n    std::stringstream ss(input);\n    std::string token;\n    \n    while (std::getline(ss, token, delimiter)) {\n        if (!token.empty()) {\n            tokens.push_back(token);\n        }\n    }\n    \n    return tokens;\n}\n\nstd::string toUpperCase(const std::string& str) {\n    std::string result = str;\n    std::transform(result.begin(), result.end(), result.begin(), ::toupper);\n    return result;\n}\n\nstd::string toLowerCase(const std::string& str) {\n    std::string result = str;\n    std::transform(result.begin(), result.end(), result.begin(), ::tolower);\n    return result;\n}\n\nbool startsWith(const std::string& str, const std::string& prefix) {\n    if (prefix.length() > str.length()) return false;\n    return str.compare(0, prefix.length(), prefix) == 0;\n}\n\nbool endsWith(const std::string& str, const std::string& suffix) {\n    if (suffix.length() > str.length()) return false;\n    return str.compare(str.length() - suffix.length(), suffix.length(), suffix) == 0;\n}\n\n} // namespace utils'
-  //             },
-  //             {
-  //               type: 'file',
-  //               name: 'calculator.cpp',
-  //               content: '#include "calculator.h"\n#include <stdexcept>\n\nCalculator::Calculator() : lastOperation("") {}\nCalculator::~Calculator() {}\n\ndouble Calculator::add(double a, double b) {\n    lastOperation = "add";\n    return a + b;\n}\n\ndouble Calculator::subtract(double a, double b) {\n    lastOperation = "subtract";\n    return a - b;\n}\n\ndouble Calculator::multiply(double a, double b) {\n    lastOperation = "multiply";\n    return a * b;\n}\n\ndouble Calculator::divide(double a, double b) {\n    if (b == 0.0) {\n        throw std::invalid_argument("Cannot divide by zero");\n    }\n    lastOperation = "divide";\n    return a / b;\n}'
-  //             }
-  //           ]
-  //         }
-  //       ]
-  //     }
-  //   ]
-  // }
+  {
+    label: "C++ Multiple File (Beta)",
+    language: "cpp",
+    description: "A minimal C++ multi-file hello world project",
+    data: [
+      {
+        type: 'folder',
+        name: 'cpp-project',
+        items: [
+          {
+            type: 'file',
+            name: 'CMakeLists.txt',
+            content: 'cmake_minimum_required(VERSION 3.16)\nproject(cpp_project)\n\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\n\nadd_executable(main src/main.cpp src/greeting.cpp)\ntarget_include_directories(main PRIVATE include)\n'
+          },
+          {
+            type: 'file',
+            name: 'README.md',
+            content: '# C++ Project\n\nMinimal multi-file C++ hello world template.\n'
+          },
+          {
+            type: 'folder',
+            name: 'include',
+            items: [
+              {
+                type: 'file',
+                name: 'greeting.h',
+                content: '#pragma once\n\nconst char* getGreeting();\n'
+              }
+            ]
+          },
+          {
+            type: 'folder',
+            name: 'src',
+            items: [
+              {
+                type: 'file',
+                name: 'main.cpp',
+                content: DEFAULT_CPP_MAIN
+              },
+              {
+                type: 'file',
+                name: 'greeting.cpp',
+                content: '#include "greeting.h"\n\nconst char* getGreeting() {\n    return "Hello, World from C++ multiple files!";\n}\n'
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
 ];
