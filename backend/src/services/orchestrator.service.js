@@ -439,6 +439,21 @@ const RUN_KIND_COMMANDS = {
   // -u: unbuffered stdout so tee sees lines immediately; tee copies to terminal and .autowrx_out
   'python-main': 'python3 -u main.py 2>&1 | tee .autowrx_out',
   'c-main': 'gcc main.c -o main && ./main 2>&1 | tee .autowrx_out',
+  'cpp-main': 'g++ -o main -Iinclude src/*.cpp && ./main 2>&1 | tee .autowrx_out',
+};
+
+/**
+ * Derive run kind from prototype.language (authoritative metadata).
+ * @param {import('mongoose').Document} prototype
+ * @returns {'python-main'|'c-main'|'cpp-main'}
+ */
+const resolveRunKindFromPrototype = (prototype) => {
+  const lang = String(prototype?.language ?? '')
+    .trim()
+    .toLowerCase();
+  if (lang === 'cpp' || lang === 'c++') return 'cpp-main';
+  if (lang === 'c') return 'c-main';
+  return 'python-main';
 };
 
 /**
@@ -529,4 +544,5 @@ module.exports = {
   getWorkspaceLogs,
   triggerRunForPrototype,
   getRunOutputForPrototype,
+  resolveRunKindFromPrototype,
 };

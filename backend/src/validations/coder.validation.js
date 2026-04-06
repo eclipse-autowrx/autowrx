@@ -64,7 +64,7 @@ const triggerRun = {
     prototypeId: Joi.string().custom(objectId).required(),
   }),
   body: Joi.object().keys({
-    runKind: Joi.string().valid('python-main', 'c-main').required(),
+    runKind: Joi.string().valid('python-main', 'c-main', 'cpp-main').optional(),
   }),
 };
 

@@ -229,7 +229,6 @@ const triggerRun = catchAsync(async (req, res) => {
 
   const { prototypeId } = req.params;
   const userId = req.user.id;
-  const { runKind } = req.body;
 
   const prototype = await Prototype.findById(prototypeId);
   if (!prototype) {
@@ -241,6 +240,7 @@ const triggerRun = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.FORBIDDEN, 'You do not have permission to access this prototype');
   }
 
+  const runKind = orchestratorService.resolveRunKindFromPrototype(prototype);
   await orchestratorService.triggerRunForPrototype(userId, prototype, runKind);
 
   res.status(httpStatus.OK).json({ message: 'Run request written to workspace' });

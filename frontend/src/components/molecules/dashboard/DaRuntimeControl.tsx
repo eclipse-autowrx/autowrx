@@ -39,11 +39,7 @@ import PrototypeVarsWatch from './PrototypeVarsWatch'
 import DaRemoteCompileRust from '../remote-compiler/DaRemoteCompileRust'
 import { useSystemUI } from '@/hooks/useSystemUI'
 import { useParams } from 'react-router-dom'
-import {
-  triggerWorkspaceRun,
-  getWorkspaceRunOutput,
-  type CoderRunKind,
-} from '@/services/coder.service'
+import { triggerWorkspaceRun, getWorkspaceRunOutput } from '@/services/coder.service'
 
 const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
 
@@ -194,11 +190,6 @@ const DaRuntimeControl: FC = () => {
     return kitEmpty ? vscodeRunOutput : log
   }, [tab, log, vscodeRunOutput])
 
-  const resolveCoderRunKind = (): CoderRunKind => {
-    const lang = prototype?.language?.toLowerCase() ?? ''
-    return lang === 'c' ? 'c-main' : 'python-main'
-  }
-
   const handleRun = () => {
     setIsRunning(true)
     setActiveTab('output')
@@ -257,7 +248,7 @@ const DaRuntimeControl: FC = () => {
   const handleCoderWorkspaceRun = () => {
     const id = prototype?.id ?? routePrototypeId
     if (!id) return
-    void triggerWorkspaceRun(id, resolveCoderRunKind()).catch((error) => {
+    void triggerWorkspaceRun(id).catch((error) => {
       console.error('[DaRuntimeControl] Coder trigger-run failed:', error)
     })
   }
