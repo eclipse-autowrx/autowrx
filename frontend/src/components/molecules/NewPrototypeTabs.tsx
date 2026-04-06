@@ -8,7 +8,7 @@
 
 import { FC } from 'react'
 import { TbCode, TbGauge, TbMapPin, TbMessagePlus, TbRoute } from 'react-icons/tb'
-import { TabConfig } from '@/components/organisms/CustomTabEditor'
+import { TabConfig, TabsBorderRadius } from '@/components/organisms/CustomTabEditor'
 import { getTabConfig } from '@/components/molecules/PrototypeTabs'
 import { renderTabIcon, tabItemClasses } from '@/lib/tabUtils'
 
@@ -25,6 +25,8 @@ interface NewPrototypeTabsProps {
     onTabChange: (targetTab: string, targetPluginSlug?: string) => void
     /** Global visual style for all tab buttons. Defaults to 'tab' (bottom-border style). */
     tabsVariant?: string
+    /** Border radius for tab buttons. Defaults to 'medium'. */
+    tabsBorderRadius?: TabsBorderRadius
 }
 
 
@@ -35,8 +37,10 @@ const NewPrototypeTabs: FC<NewPrototypeTabsProps> = ({
     hasPrototype,
     onTabChange,
     tabsVariant,
+    tabsBorderRadius,
 }) => {
     const variant = tabsVariant || 'tab'
+    const borderRadius = tabsBorderRadius || 'round'
     const tabConfigs = getTabConfig(tabs)
     const visibleTabs = tabConfigs.filter((t) => !t.hidden)
 
@@ -75,7 +79,7 @@ const NewPrototypeTabs: FC<NewPrototypeTabsProps> = ({
                             key={`nf-builtin-${key}-${index}`}
                             disabled={!hasPrototype}
                             onClick={() => hasPrototype && onTabChange(key)}
-                            className={tabItemClasses(variant, isActive, !hasPrototype)}
+                            className={tabItemClasses(variant, isActive, !hasPrototype, borderRadius)}
                         >
                             {icon}
                             {label}
@@ -90,7 +94,7 @@ const NewPrototypeTabs: FC<NewPrototypeTabsProps> = ({
                         <button
                             key={`nf-custom-${plugin}-${index}`}
                             onClick={() => plugin && onTabChange('plug', plugin)}
-                            className={tabItemClasses(variant, isActive)}
+                            className={tabItemClasses(variant, isActive, false, borderRadius)}
                         >
                             {icon}
                             {label}

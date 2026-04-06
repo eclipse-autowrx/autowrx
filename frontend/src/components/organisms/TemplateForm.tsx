@@ -495,7 +495,7 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-semibold text-foreground">
-                    Prototype Tabs
+                    Tab Bar
                   </span>
                   <Button
                     size="sm"
@@ -506,9 +506,9 @@ export default function TemplateForm({ templateId, onClose, open, initialData }:
                     Add Item
                   </Button>
                 </div>
-                {/* Global Tab Style */}
+                {/* Tab Bar Appearance */}
                 <div className="flex items-start gap-3">
-                  <Label className="text-xs w-20 shrink-0 text-foreground mt-1">Tab Style</Label>
+                  <Label className="text-xs w-20 shrink-0 text-foreground mt-1">Appearance</Label>
                   <div className="flex flex-wrap gap-2">
                     {(['tab', 'primary', 'outline', 'ghost'] as const).map((v) => (
                       <button
