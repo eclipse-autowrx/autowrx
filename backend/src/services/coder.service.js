@@ -605,6 +605,38 @@ const getWorkspaceStatus = async (workspaceId, sessionToken = null) => {
 };
 
 /**
+ * First agent on a workspace (Coder populates this after resources are provisioned).
+ * @param {Object} workspace - Workspace object from Coder API
+ * @returns {Object|null} Agent object or null while build is still starting
+ */
+const pickFirstWorkspaceAgent = (workspace) => {
+  if (workspace.latest_build?.resources?.[0]?.agents?.[0]) {
+    return workspace.latest_build.resources[0].agents[0];
+  }
+  if (workspace.resources?.[0]?.agents?.[0]) {
+    return workspace.resources[0].agents[0];
+  }
+  if (workspace.agents?.[0]) {
+    return workspace.agents[0];
+  }
+  if (workspace.latest_build?.resources) {
+    for (const resource of workspace.latest_build.resources) {
+      if (resource.agents?.length) {
+        return resource.agents[0];
+      }
+    }
+  }
+  if (workspace.resources) {
+    for (const resource of workspace.resources) {
+      if (resource.agents?.length) {
+        return resource.agents[0];
+      }
+    }
+  }
+  return null;
+};
+
+/**
  * Get workspace build timings
  * @param {string} workspaceId - Workspace ID
  * @param {string} sessionToken - User-scoped token used for user operations
@@ -662,47 +694,10 @@ const getWorkspaceAppUrl = async (workspaceId, appSlug = 'code-server', maxRetri
         );
       }
 
-      // Try multiple ways to find the agent
-      let agent = null;
-      let apps = null;
+      const agent = pickFirstWorkspaceAgent(workspace);
+      const apps = agent?.apps;
 
-      // Method 1: latest_build.resources[0].agents[0]
-      if (workspace.latest_build?.resources?.[0]?.agents?.[0]) {
-        agent = workspace.latest_build.resources[0].agents[0];
-        apps = agent.apps;
-      }
-      // Method 2: resources[0].agents[0] (direct on workspace)
-      else if (workspace.resources?.[0]?.agents?.[0]) {
-        agent = workspace.resources[0].agents[0];
-        apps = agent.apps;
-      }
-      // Method 3: agents[0] (direct on workspace)
-      else if (workspace.agents?.[0]) {
-        agent = workspace.agents[0];
-        apps = agent.apps;
-      }
-      // Method 4: Search through all resources
-      else if (workspace.latest_build?.resources) {
-        for (const resource of workspace.latest_build.resources) {
-          if (resource.agents && resource.agents.length > 0) {
-            agent = resource.agents[0];
-            apps = agent.apps;
-            break;
-          }
-        }
-      }
-      // Method 5: Search through workspace resources
-      else if (workspace.resources) {
-        for (const resource of workspace.resources) {
-          if (resource.agents && resource.agents.length > 0) {
-            agent = resource.agents[0];
-            apps = agent.apps;
-            break;
-          }
-        }
-      }
-
-      if (!agent) {
+      if (!agent?.id) {
         if (attempt < maxRetries) {
           logger.info(`Agent not found yet (attempt ${attempt}/${maxRetries}), waiting ${retryDelay}ms...`);
           await new Promise((resolve) => setTimeout(resolve, retryDelay));
@@ -769,51 +764,37 @@ const getWorkspaceAppUrl = async (workspaceId, appSlug = 'code-server', maxRetri
 /**
  * Get the first workspace agent ID for a workspace
  * @param {string} workspaceId - Workspace ID
+ * @param {string} sessionToken - User-scoped token
+ * @param {number} [maxRetries=5] - Poll while build is still provisioning agents
+ * @param {number} [retryDelay=2000] - Ms between polls (aligned with getWorkspaceAppUrl)
  * @returns {Promise<string>} Workspace agent ID
  */
-const getWorkspaceAgentId = async (workspaceId, sessionToken) => {
-  const workspace = await getWorkspaceStatus(workspaceId, sessionToken);
+const getWorkspaceAgentId = async (workspaceId, sessionToken, maxRetries = 5, retryDelay = 2000) => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const workspace = await getWorkspaceStatus(workspaceId, sessionToken);
+    const agent = pickFirstWorkspaceAgent(workspace);
 
-  // Try multiple ways to find the agent, same as getWorkspaceAppUrl
-  let agent = null;
-
-  // Method 1: latest_build.resources[0].agents[0]
-  if (workspace.latest_build?.resources?.[0]?.agents?.[0]) {
-    agent = workspace.latest_build.resources[0].agents[0];
-  }
-  // Method 2: resources[0].agents[0] (direct on workspace)
-  else if (workspace.resources?.[0]?.agents?.[0]) {
-    agent = workspace.resources[0].agents[0];
-  }
-  // Method 3: agents[0] (direct on workspace)
-  else if (workspace.agents?.[0]) {
-    agent = workspace.agents[0];
-  }
-  // Method 4: Search through all resources in latest_build
-  else if (workspace.latest_build?.resources) {
-    for (const resource of workspace.latest_build.resources) {
-      if (resource.agents && resource.agents.length > 0) {
-        agent = resource.agents[0];
-        break;
-      }
+    if (agent?.id) {
+      return agent.id;
     }
-  }
-  // Method 5: Search through workspace resources
-  else if (workspace.resources) {
-    for (const resource of workspace.resources) {
-      if (resource.agents && resource.agents.length > 0) {
-        agent = resource.agents[0];
-        break;
-      }
+
+    if (attempt < maxRetries) {
+      const buildStatus = workspace.latest_build?.status ?? 'unknown';
+      logger.info(
+        `Workspace agent not ready for ${workspaceId} (attempt ${attempt}/${maxRetries}, build=${buildStatus}), waiting ${retryDelay}ms...`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, retryDelay));
+      continue;
     }
-  }
 
-  if (!agent || !agent.id) {
-    logger.error(`Workspace agent not found for workspace ${workspaceId}. Workspace: ${JSON.stringify(workspace, null, 2)}`);
-    throw new ApiError(httpStatus.NOT_FOUND, 'Workspace agent not found for this workspace');
+    logger.error(
+      `Workspace agent not found for workspace ${workspaceId} after ${maxRetries} attempts. Workspace: ${JSON.stringify(workspace, null, 2)}`,
+    );
+    throw new ApiError(
+      httpStatus.SERVICE_UNAVAILABLE,
+      'Workspace agent not available yet. The workspace may still be starting; try again shortly.',
+    );
   }
-
-  return agent.id;
 };
 
 /**
