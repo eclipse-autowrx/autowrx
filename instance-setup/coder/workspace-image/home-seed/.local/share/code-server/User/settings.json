@@ -54,5 +54,9 @@
     "**/node_modules": true,
     "**/bower_components": true,
     "**/*.code-search": true
+  },
+  "files.exclude": {
+    "**/.autowrx_out": true,
+    "**/.autowrx_run": true
   }
 }
