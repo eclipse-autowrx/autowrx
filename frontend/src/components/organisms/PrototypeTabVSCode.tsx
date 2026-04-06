@@ -50,8 +50,11 @@ const WORKSPACE_POLL_INTERVAL_IDLE_MS = 5000
  * Re-fetch workspace URL/token on this interval while the iframe is shown (idle poll).
  * Backend only rotates the Coder token when the API is called near expiry; without this,
  * the iframe keeps stale query-param tokens and Coder returns 401 ("session expired").
+ *
+ * Coder's in-iframe browser session can expire sooner than the API token TTL.
+ * We refresh credentials periodically and let iframe reload only when src changes.
  */
-const CREDENTIAL_REFRESH_INTERVAL_MS = 10 * 60 * 1000
+const CREDENTIAL_REFRESH_INTERVAL_MS = 5 * 60 * 1000
 
 /** Merge server workspace payload with prior state so we keep folderPath / appUrl if the API omits them. */
 const mergeWorkspaceInfo = (
@@ -255,6 +258,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
                 const merged = mergeWorkspaceInfo(workspaceInfoRef.current, fresh)
                 workspaceInfoRef.current = merged
                 setWorkspaceInfo(merged)
+                // keep iframe stable unless URL/token truly changes
               }
               setIsLoadingWorkspace(false)
               setWorkspaceError(null)
@@ -478,6 +482,35 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
     isWorkspaceReadyFromLogs,
     upsertCacheEntry,
   ])
+
+  // Coder iframe sessions can expire while our backend token is still valid; refresh + remount when the user returns to the tab.
+  useEffect(() => {
+    if (!prototype_id || !isAuthorized || !isActive) return
+
+    const onVisibility = () => {
+      if (document.visibilityState !== 'visible') return
+      if (!workspaceInfoRef.current?.appUrl) return
+
+      void (async () => {
+        try {
+          const fresh = await getWorkspaceUrl(prototype_id)
+          if (pollCancelledRef.current) return
+          credentialRefreshMetaRef.current = {
+            prototypeId: prototype_id,
+            at: Date.now(),
+          }
+          const merged = mergeWorkspaceInfo(workspaceInfoRef.current, fresh)
+          workspaceInfoRef.current = merged
+          setWorkspaceInfo(merged)
+        } catch {
+          // ignore — idle poll will retry
+        }
+      })()
+    }
+
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
+  }, [prototype_id, isAuthorized, isActive])
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
