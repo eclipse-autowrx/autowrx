@@ -465,9 +465,8 @@ const DaRuntimeControl: FC = () => {
         </div>
       </DaDialog>
 
-      {/* Runtime Controls Header */}
-      {tab !== 'vscode' && (
-      <div className={cn('px-1 flex items-center', !isExpand && 'hidden')}>
+      {/* Runtime Controls Header — hidden on all prototype tabs (VS Code uses workspace run below). */}
+      <div className="hidden" aria-hidden>
         {useRuntime && (
           <>
             <label
@@ -554,11 +553,9 @@ const DaRuntimeControl: FC = () => {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      )}
 
-      {/* Play/Stop Controls */}
-      {tab !== 'vscode' && (
-      <div className={cn('flex px-1', !isExpand && 'flex-col')}>
+      {/* Play/Stop Controls — hidden on all tabs; kit run UI not used here. */}
+      <div className="hidden" aria-hidden>
         {(activeRtId || tab === 'vscode') && (
           <>
             <button
@@ -656,7 +653,6 @@ const DaRuntimeControl: FC = () => {
           </>
         )}
       </div>
-      )}
 
       {/* Content Area */}
       <div className={cn('mt-1 grow overflow-y-auto', !isExpand && 'hidden')}>
@@ -755,68 +751,65 @@ const DaRuntimeControl: FC = () => {
       </div>
 
       <div className="mt-auto flex w-full flex-col">
-        {(activeRtId || tab === 'vscode') &&
-          (!isExpand || tab === 'vscode') && (
-          <div
-            className={cn(
-              'flex flex-col items-stretch gap-1 px-1 pb-2',
-              isExpand && tab === 'vscode' && 'flex-row items-center justify-start gap-2',
-            )}
+        <div
+          className={cn(
+            'flex flex-col items-stretch gap-1 px-1 pb-2',
+            isExpand && 'flex-row items-center justify-start gap-2',
+          )}
+        >
+          <button
+            type="button"
+            data-id="btn-run-prototype-sidebar-lower"
+            disabled={tab === 'vscode' ? false : isRunning}
+            onClick={
+              tab === 'vscode' ? handleCoderWorkspaceRun : handleRun
+            }
+            className="flex items-center justify-center rounded border p-2 font-semibold text-sm"
+            style={{
+              color:
+                tab === 'vscode' || !isRunning
+                  ? 'hsl(0, 0%, 100%)'
+                  : 'hsl(215, 16%, 47%)',
+              borderColor: 'hsl(215, 16%, 47%)',
+            }}
+            onMouseEnter={(e) => {
+              if (tab === 'vscode' || !isRunning) {
+                e.currentTarget.style.backgroundColor = 'hsl(215, 16%, 47%)'
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent'
+            }}
           >
+            <TbPlayerPlayFilled className="h-4 w-4" />
+          </button>
+          {activeRtId && (
             <button
               type="button"
-              data-id="btn-run-prototype-sidebar-lower"
-              disabled={tab === 'vscode' ? false : isRunning}
-              onClick={
-                tab === 'vscode' ? handleCoderWorkspaceRun : handleRun
-              }
+              data-id="btn-stop-prototype-sidebar-lower"
+              disabled={!isRunning}
+              onClick={handleStop}
               className="flex items-center justify-center rounded border p-2 font-semibold text-sm"
               style={{
-                color:
-                  tab === 'vscode' || !isRunning
-                    ? 'hsl(0, 0%, 100%)'
-                    : 'hsl(215, 16%, 47%)',
+                color: !isRunning
+                  ? 'hsl(215, 16%, 47%)'
+                  : 'hsl(0, 0%, 100%)',
                 borderColor: 'hsl(215, 16%, 47%)',
               }}
               onMouseEnter={(e) => {
-                if (tab === 'vscode' || !isRunning) {
-                  e.currentTarget.style.backgroundColor = 'hsl(215, 16%, 47%)'
+                if (isRunning) {
+                  e.currentTarget.style.backgroundColor =
+                    'hsl(215, 16%, 47%)'
                 }
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent'
               }}
             >
-              <TbPlayerPlayFilled className="h-4 w-4" />
+              <TbPlayerStopFilled className="h-4 w-4" />
             </button>
-            {activeRtId && (
-              <button
-                type="button"
-                data-id="btn-stop-prototype-sidebar-lower"
-                disabled={!isRunning}
-                onClick={handleStop}
-                className="flex items-center justify-center rounded border p-2 font-semibold text-sm"
-                style={{
-                  color: !isRunning
-                    ? 'hsl(215, 16%, 47%)'
-                    : 'hsl(0, 0%, 100%)',
-                  borderColor: 'hsl(215, 16%, 47%)',
-                }}
-                onMouseEnter={(e) => {
-                  if (isRunning) {
-                    e.currentTarget.style.backgroundColor =
-                      'hsl(215, 16%, 47%)'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent'
-                }}
-              >
-                <TbPlayerStopFilled className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-        )}
+          )}
+        </div>
 
         <div className="flex">
         <Button
