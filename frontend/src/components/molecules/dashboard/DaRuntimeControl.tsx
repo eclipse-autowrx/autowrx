@@ -174,13 +174,10 @@ const DaRuntimeControl: FC = () => {
     setUsedApis(apis)
   }, [code, activeModelApis, prototype?.widget_config])
 
-  /** On VS Code tab, kit Run fills `log` while Coder Run fills `vscodeRunOutput` — show both. */
+  /** Kit traffic fills `log`; Coder extension run fills `vscodeRunOutput` — merge when both exist. */
   const outputPanelText = useMemo(() => {
     const placeholder =
       'No output yet. Click Run to start the prototype.'
-    if (tab !== 'vscode') {
-      return log || placeholder
-    }
     const kitEmpty = !String(log ?? '').trim()
     const wsEmpty = !String(vscodeRunOutput ?? '').trim()
     if (kitEmpty && wsEmpty) return placeholder
@@ -188,7 +185,7 @@ const DaRuntimeControl: FC = () => {
       return `— Runtime (kit) —\n${log}\n\n— Workspace terminal (.autowrx_out) —\n${vscodeRunOutput}`
     }
     return kitEmpty ? vscodeRunOutput : log
-  }, [tab, log, vscodeRunOutput])
+  }, [log, vscodeRunOutput])
 
   const handleRun = () => {
     setIsRunning(true)
@@ -244,10 +241,11 @@ const DaRuntimeControl: FC = () => {
     })
   }
 
-  /** Run inside Coder workspace (terminal via .autowrx_run) — lower button on VS Code tab only. */
+  /** Run inside Coder workspace (`.autowrx_run` → extension). Lower Run always uses this. */
   const handleCoderWorkspaceRun = () => {
     const id = prototype?.id ?? routePrototypeId
     if (!id) return
+    setActiveTab('output')
     void triggerWorkspaceRun(id).catch((error) => {
       console.error('[DaRuntimeControl] Coder trigger-run failed:', error)
     })
@@ -263,17 +261,15 @@ const DaRuntimeControl: FC = () => {
 
   const handleClearLog = () => {
     setLog('')
-    if (tab === 'vscode') {
-      setVscodeRunOutput('')
-      vscodeRunOutputClearBaselineRef.current = vscodeRunOutputMtimeRef.current
-    }
+    setVscodeRunOutput('')
+    vscodeRunOutputClearBaselineRef.current = vscodeRunOutputMtimeRef.current
   }
 
   const prototypeIdForCoder =
     prototype?.id ?? routePrototypeId ?? ''
 
   useEffect(() => {
-    if (tab !== 'vscode' || !isExpand || activeTab !== 'output') return
+    if (!isExpand || activeTab !== 'output') return
     if (!prototypeIdForCoder || !isAuthorized) return
 
     let cancelled = false
@@ -301,13 +297,7 @@ const DaRuntimeControl: FC = () => {
       cancelled = true
       window.clearInterval(id)
     }
-  }, [
-    tab,
-    isExpand,
-    activeTab,
-    prototypeIdForCoder,
-    isAuthorized,
-  ])
+  }, [isExpand, activeTab, prototypeIdForCoder, isAuthorized])
 
   const writeSignalValue = (obj: any) => {
     if (!obj) return
@@ -760,20 +750,17 @@ const DaRuntimeControl: FC = () => {
           <button
             type="button"
             data-id="btn-run-prototype-sidebar-lower"
-            disabled={tab === 'vscode' ? false : isRunning}
-            onClick={
-              tab === 'vscode' ? handleCoderWorkspaceRun : handleRun
-            }
+            disabled={!prototypeIdForCoder}
+            onClick={handleCoderWorkspaceRun}
             className="flex items-center justify-center rounded border p-2 font-semibold text-sm"
             style={{
-              color:
-                tab === 'vscode' || !isRunning
-                  ? 'hsl(0, 0%, 100%)'
-                  : 'hsl(215, 16%, 47%)',
+              color: prototypeIdForCoder
+                ? 'hsl(0, 0%, 100%)'
+                : 'hsl(215, 16%, 47%)',
               borderColor: 'hsl(215, 16%, 47%)',
             }}
             onMouseEnter={(e) => {
-              if (tab === 'vscode' || !isRunning) {
+              if (prototypeIdForCoder) {
                 e.currentTarget.style.backgroundColor = 'hsl(215, 16%, 47%)'
               }
             }}
