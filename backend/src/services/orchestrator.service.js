@@ -10,14 +10,10 @@ const fs = require('fs');
 const path = require('path');
 const httpStatus = require('http-status');
 const coderService = require('./coder.service');
-// const giteaService = require('./gitea.service');  // DISABLED - Gitea disabled
-// const permissionSyncService = require('./permissionSync.service');  // DISABLED - Gitea disabled
 const { Prototype, Model, User } = require('../models');
-// const { UserRole } = require('../models');  // DISABLED - Gitea disabled
 const logger = require('../config/logger');
 const ApiError = require('../utils/ApiError');
 const coderConfig = require('../utils/coderConfig');
-// const { decrypt } = require('../utils/encryption');  // DISABLED - Gitea disabled (was for github_token)
 
 // Host/container UID mismatch is common in local deployments. We keep
 // permissive modes so the workspace user can write without manual chmod.
@@ -230,88 +226,7 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
     }
     const prototypesPath = coderCfg.prototypesPath;
 
-    // // 2. Ensure Gitea organization exists (from model)
-    // const orgName = model.gitea_org_name || giteaService.sanitizeOrgName(model._id.toString(), model.name);
-    // if (!model.gitea_org_name) {
-    //   await giteaService.ensureOrganizationExists(model._id.toString(), model.name);
-    //   // Update model with org name
-    //   model.gitea_org_name = orgName;
-    //   await model.save();
-    // } else {
-    //   // Verify org still exists
-    //   await giteaService.ensureOrganizationExists(model._id.toString(), model.name);
-    // }
-
-    // // 3. Ensure Gitea repository exists (from prototype)
-    // const repoName = prototype.name;
-    // const repoUrl = prototype.gitea_repo_url || giteaService.getRepositoryUrl(orgName, repoName);
-
-    // // Check if repository was just created (we need to initialize it)
-    // const repoJustCreated = !prototype.gitea_repo_url;
-
-    // if (repoJustCreated) {
-    //   logger.info(`Creating new repository ${orgName}/${repoName} for prototype ${prototypeId}`);
-    //   await giteaService.ensureRepositoryExists(orgName, repoName, prototypeId);
-
-    //   // Wait a moment for repository to be fully initialized by Gitea
-    //   await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    //   // Initialize repository based on prototype template/code.
-    //   // - Single-file templates store raw code (string) -> seed main.py
-    //   // - Multi-file templates store a JSON string (FileSystemItem[]) -> seed full tree
-    //   const initialContent = buildInitialRepoContentFromPrototype(prototype);
-    //   logger.info(
-    //     `Initializing repository ${orgName}/${repoName} with prototype content (hasCustomContent: ${!!(
-    //       initialContent.readme ||
-    //       initialContent.gitignore ||
-    //       (initialContent.files && initialContent.files.length)
-    //     )})`,
-    //   );
-    //   try {
-    //     await giteaService.initializeRepository(orgName, repoName, initialContent);
-    //     logger.info(`✓ Repository initialization completed for ${orgName}/${repoName}`);
-    //   } catch (initError) {
-    //     logger.error(`✗ Repository initialization failed for ${orgName}/${repoName}: ${initError.message}`);
-    //     logger.error(`Init error stack: ${initError.stack}`);
-    //     // Don't throw - continue even if initialization fails
-    //   }
-
-    //   // Update prototype with repo URL
-    //   prototype.gitea_repo_url = repoUrl;
-    //   await prototype.save();
-    // } else {
-    //   // Repository already exists, just verify it
-    //   logger.info(`Repository ${orgName}/${repoName} already exists, verifying...`);
-    //   await giteaService.ensureRepositoryExists(orgName, repoName, prototypeId);
-    // }
-
-    // // Get container-accessible URL with authentication for private repos
-    // // Use Gitea admin credentials for workspace access
-    // const giteaAdminUsername = config.gitea.adminUsername;
-    // const giteaAdminToken = config.gitea.adminToken || config.gitea.adminPassword;
-    // const containerRepoUrl = giteaService.getRepositoryUrlForContainer(
-    //   orgName,
-    //   repoName,
-    //   giteaAdminUsername,
-    //   giteaAdminToken,
-    // );
-
-    // // 4. Sync user permissions to Gitea (lazy sync)
-    // await permissionSyncService.lazySyncUserPermissions(userId, model._id.toString());
-
-    // const userRoles = await UserRole.find({ user: userId, ref: model._id }).populate('role');
-    // const giteaUsername = user.coder_username || `user-${userId.toString().slice(-12)}`;
-
-    // // Ensure Gitea user exists
-    // await giteaService.ensureUserExists(giteaUsername, user.email);
-
-    // // Sync permissions based on roles
-    // for (const userRole of userRoles) {
-    //   const roleName = userRole.role?.ref || userRole.role?.name || 'model_member';
-    //   await giteaService.syncUserPermissions(orgName, giteaUsername, roleName);
-    // }
-
-    // 5. Ensure Coder user exists
+    // 2. Ensure Coder user exists
     const normalizedUserId = normalizeIdForName(userId);
     const coderUsername = user.coder_username || `user-${normalizedUserId || Date.now().toString(36)}`;
     if (!user.coder_username) {
@@ -324,7 +239,7 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
     // Use an unrestricted token first (needed before workspaceId exists).
     const userScopedToken = await coderService.getOrCreateUserScopedToken(user);
 
-    // 6. Prepare prototype folder on host (per-user dir, prototype name as subfolder)
+    // 3. Prepare prototype folder on host (per-user dir, prototype name as subfolder)
     const userHostPath = path.join(prototypesPath, userId.toString());
     const prototypeFolderName = sanitizePrototypeFolderName(prototype.name);
     const prototypeFolderHost = path.join(userHostPath, prototypeFolderName);
@@ -337,11 +252,11 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
       logger.warn(`Could not create prototype folder ${prototypeFolderHost}: ${mkdirErr.message}`);
     }
 
-    // 7. Seed initial code files (only if folder is empty)
+    // 4. Seed initial code files (only if folder is empty)
     seedPrototypeFiles(prototypeFolderHost, prototype, PROTOTYPES_LINUX_UID, PROTOTYPES_LINUX_GID);
     setOwnershipAndPermissionsRecursive(prototypeFolderHost, PROTOTYPES_LINUX_UID, PROTOTYPES_LINUX_GID);
 
-    // 8. Get or create ONE workspace per user (reuse across prototypes)
+    // 5. Get or create ONE workspace per user (reuse across prototypes)
     const workspaceName = coderService.sanitizeWorkspaceName(userId);
     const templateId = await coderService.getTemplateId('docker-template');
 
@@ -368,7 +283,7 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
     // Now that we have a workspace, mint (or reuse) an allow-listed token restricted to this workspace.
     const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, { workspaceId: workspace.id });
 
-    // 9. Start workspace if stopped
+    // 6. Start workspace if stopped
     const currentStatus = workspace.latest_build?.status;
     if (currentStatus !== 'running') {
       const updatedWorkspace = await coderService.startWorkspace(workspace.id, workspaceScopedToken);
@@ -379,7 +294,7 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
       }
     }
 
-    // 10. Get workspace app URL
+    // 7. Get workspace app URL
     let appUrl = null;
     try {
       appUrl = await coderService.getWorkspaceAppUrl(workspace.id, 'code-server', 5, 2000, workspaceScopedToken);
@@ -395,7 +310,7 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
       }
     }
 
-    // 11. Generate session token for user
+    // 8. Generate session token for user
     // Return the workspace-scoped token (allow-listed) for embedding/agent log access.
     const sessionToken = workspaceScopedToken;
 

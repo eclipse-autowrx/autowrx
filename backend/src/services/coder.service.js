@@ -392,8 +392,8 @@ const generateSessionToken = async (coderUsername, options = {}) => {
  * @param {string} workspaceName - Workspace name (e.g., "prototype-{prototypeId}")
  * @param {string} templateId - Coder template ID
  * @param {string} prototypesHostPath - Host path for prototypes folder (bind-mount)
- * @param {string} githubToken - Optional GitHub token (DISABLED - Gitea disabled)
- * @param {string} gitRepoUrl - Git repository URL (DISABLED - Gitea disabled)
+ * @param {string} githubToken - Optional GitHub token (currently unused)
+ * @param {string} gitRepoUrl - Git repository URL (currently unused)
  * @param {string} sessionToken - User-scoped token used for user operations
  * @returns {Promise<Object>} Workspace object
  */
@@ -402,8 +402,8 @@ const getOrCreateWorkspace = async (
   workspaceName,
   templateId,
   prototypesHostPath,
-  _githubToken = null, // DISABLED - Gitea disabled
-  _gitRepoUrl = null, // DISABLED - Gitea disabled
+  _githubToken = null, // Reserved for future template parameters.
+  _gitRepoUrl = null, // Reserved for future template parameters.
   sessionToken = null,
 ) => {
   try {
@@ -439,7 +439,7 @@ const getOrCreateWorkspace = async (
       },
     ];
 
-    // DISABLED - Gitea disabled
+    // Optional git parameters are intentionally not used in current flow.
     // if (gitRepoUrl) {
     //   richParameterValues.push({ name: 'git_repo', value: gitRepoUrl });
     // }

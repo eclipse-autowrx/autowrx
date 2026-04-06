@@ -21,7 +21,7 @@ provider "coder" {}
 data "coder_workspace" "me" {}
 data "coder_workspace_owner" "me" {}
 
-# 1. Ask for Git Repo (DISABLED - Gitea disabled, using prototypes folder mount)
+# 1. Ask for Git Repo (disabled; using prototypes folder mount)
 # data "coder_parameter" "git_repo" {
 #   name         = "git_repo"
 #   display_name = "Git Repository URL"
@@ -30,7 +30,7 @@ data "coder_workspace_owner" "me" {}
 #   mutable      = true
 # }
 
-# # Optional GitHub token for external repositories (DISABLED - Gitea disabled)
+# # Optional GitHub token for external repositories (disabled)
 # data "coder_parameter" "github_token" {
 #   name         = "github_token"
 #   display_name = "GitHub Personal Access Token"
@@ -138,8 +138,8 @@ resource "coder_agent" "main" {
     git config --global init.defaultBranch main
     git config --global credential.helper store
 
-    # --- GITEA / GIT CLONE (DISABLED) ---
-    # Re-enable when Gitea is back. Also re-enable coder_parameter git_repo and github_token above.
+    # --- OPTIONAL GIT CLONE (DISABLED) ---
+    # Re-enable when git clone flow is needed. Also re-enable coder_parameter git_repo and github_token above.
     #
     # if [ -n "$${data.coder_parameter.github_token.value}" ]; then
     #   echo "Configuring GitHub credentials..."
@@ -150,13 +150,10 @@ resource "coder_agent" "main" {
     # mkdir -p ~/project
     # cd ~/project
     # GIT_REPO_URL="$${data.coder_parameter.git_repo.value}"
-    # GIT_REPO_URL=$(echo "$GIT_REPO_URL" | sed 's|localhost:3000|gitea:3000|g')
-    # GIT_REPO_URL=$(echo "$GIT_REPO_URL" | sed 's|127\.0\.0\.1:3000|gitea:3000|g')
     # if [ ! -d ".git" ]; then
     #   echo "Cloning repository: $GIT_REPO_URL"
     #   git clone "$GIT_REPO_URL" . || {
-    #     GIT_REPO_URL_FALLBACK=$(echo "$GIT_REPO_URL" | sed 's|gitea:3000|host.docker.internal:3000|g')
-    #     git clone "$GIT_REPO_URL_FALLBACK" . || echo "Warning: Could not clone repository"
+    #     git clone "$GIT_REPO_URL" . || echo "Warning: Could not clone repository"
     #   }
     # else
     #   echo "Repository already exists, pulling latest changes..."
@@ -168,7 +165,7 @@ resource "coder_agent" "main" {
     #   echo "Installing Python dependencies..."
     #   python3 -m pip install --user -r requirements.txt || echo "Warning: Could not install Python dependencies"
     # fi
-    # --- END GITEA / GIT CLONE ---
+    # --- END OPTIONAL GIT CLONE ---
 
     # Ensure prototypes mount dir exists (fallback if backend didn't create it)
     mkdir -p /home/coder/prototypes

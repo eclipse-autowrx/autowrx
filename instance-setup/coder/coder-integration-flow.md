@@ -56,7 +56,7 @@ Rough order inside `prepareWorkspaceForPrototype` (shared by **prepare** and **G
 6. **Start** — start workspace if not **running**; resolve **code-server** `appUrl` when available (may still be pending right after start).
 7. **Response fields** — `workspaceId`, `workspaceName`, `status`, `appUrl`, `sessionToken`, `repoUrl` (currently unused / null in this flow), **`folderPath`** (container path to open, e.g. under `/home/coder/prototypes/...`).
 
-Gitea/git clone integration in the template is **disabled**; prototypes are **folder-mounted**, not cloned from a remote in this path.
+Git clone integration in the template is **disabled**; prototypes are **folder-mounted**, not cloned from a remote in this path.
 
 ## Phase 4 — Readiness polling (frontend)
 

@@ -46,7 +46,7 @@ Coder settings are stored as **site** configuration in the database (not `.env`)
 
 - **Dockerfile:** `instance-setup/coder/workspace-image/Dockerfile` — installs dependencies (including **`requirements.base.txt`** into system Python as documented in-image).
 - **Terraform:** `instance-setup/coder/docker-template.tf` — defines the **`docker-template`**, Docker provider on **`unix:///var/run/docker.sock`**, bind-mount of **`prototypes_host_path`**, and code-server-based workspace.
-- **Git / Gitea** parameters in the template are **commented out**; the live flow uses the **prototypes folder mount** only.
+- Optional Git parameters in the template are **commented out**; the live flow uses the **prototypes folder mount** only.
 
 ## Run button inside embedded VS Code
 

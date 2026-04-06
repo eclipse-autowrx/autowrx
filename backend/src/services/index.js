@@ -31,7 +31,5 @@ module.exports.dashboardTemplateService = require('./dashboardTemplate.service')
 module.exports.customApiSchemaService = require('./customApiSchema.service');
 module.exports.customApiSetService = require('./customApiSet.service');
 module.exports.coderService = require('./coder.service');
-module.exports.giteaService = require('./gitea.service');
 module.exports.orchestratorService = require('./orchestrator.service');
-module.exports.permissionSyncService = require('./permissionSync.service');
 // Inventory services removed
