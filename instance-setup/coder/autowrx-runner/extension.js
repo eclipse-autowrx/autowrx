@@ -7,7 +7,7 @@ function activate(context) {
     console.log('AutoWRX runner extension is active');
 
     const disposableCmd = vscode.commands.registerCommand('autowrx-runner.triggerFromWeb', () => {
-        runCommandInTerminal('python3 main.py');
+        runCommandInTerminal('python3 -u main.py 2>&1 | tee .autowrx_out');
     });
 
     const watcher = vscode.workspace.createFileSystemWatcher(TRIGGER_GLOB);

@@ -68,6 +68,12 @@ const triggerRun = {
   }),
 };
 
+const getRunOutput = {
+  params: Joi.object().keys({
+    prototypeId: Joi.string().custom(objectId).required(),
+  }),
+};
+
 module.exports = {
   getWorkspace,
   prepareWorkspace,
@@ -76,4 +82,5 @@ module.exports = {
   getWorkspaceAgentLogs,
   getWorkspaceLogs,
   triggerRun,
+  getRunOutput,
 };

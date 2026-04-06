@@ -246,6 +246,32 @@ const triggerRun = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json({ message: 'Run request written to workspace' });
 });
 
+/**
+ * Read `.autowrx_out` from the prototypes volume (updated by `tee` in allowlisted run commands).
+ */
+const getRunOutput = catchAsync(async (req, res) => {
+  const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
+  if (!coderCfg.enabled) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
+  }
+
+  const { prototypeId } = req.params;
+  const userId = req.user.id;
+
+  const prototype = await Prototype.findById(prototypeId);
+  if (!prototype) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Prototype not found');
+  }
+
+  const hasPermission = await permissionService.hasPermission(userId, PERMISSIONS.READ_MODEL, prototype.model_id);
+  if (!hasPermission) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'You do not have permission to access this prototype');
+  }
+
+  const payload = await orchestratorService.getRunOutputForPrototype(userId, prototype);
+  res.json(payload);
+});
+
 module.exports = {
   getWorkspace,
   prepareWorkspace,
@@ -254,4 +280,5 @@ module.exports = {
   getWorkspaceAgentLogs,
   getWorkspaceLogs,
   triggerRun,
+  getRunOutput,
 };

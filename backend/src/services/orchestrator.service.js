@@ -521,8 +521,9 @@ const getWorkspaceLogs = async (userId, prototypeId, options = {}) => {
 
 /** Server-side only: maps client runKind to shell command (never accept raw command from client). */
 const RUN_KIND_COMMANDS = {
-  'python-main': 'python3 main.py',
-  'c-main': 'gcc main.c -o main && ./main',
+  // -u: unbuffered stdout so tee sees lines immediately; tee copies to terminal and .autowrx_out
+  'python-main': 'python3 -u main.py 2>&1 | tee .autowrx_out',
+  'c-main': 'gcc main.c -o main && ./main 2>&1 | tee .autowrx_out',
 };
 
 /**
@@ -565,10 +566,52 @@ const triggerRunForPrototype = async (userId, prototype, runKind) => {
   }
 };
 
+const MAX_RUN_OUTPUT_BYTES = 512 * 1024;
+
+/**
+ * Read `.autowrx_out` from the host prototypes folder (same bind-mount as the Coder workspace).
+ * @returns {{ content: string, mtimeMs: number }}
+ */
+const getRunOutputForPrototype = async (userId, prototype) => {
+  const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
+  if (!coderCfg.enabled) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
+  }
+
+  const prototypesPath = coderCfg.prototypesPath;
+  if (!prototypesPath) {
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Prototypes path is not configured');
+  }
+
+  const prototypeFolderName = sanitizePrototypeFolderName(prototype.name);
+  const userHostPath = path.join(prototypesPath, userId.toString());
+  const prototypeFolderHost = path.join(userHostPath, prototypeFolderName);
+  const outPath = path.join(prototypeFolderHost, '.autowrx_out');
+
+  if (!fs.existsSync(outPath)) {
+    return { content: '', mtimeMs: 0 };
+  }
+
+  const stat = fs.statSync(outPath);
+  const buf = fs.readFileSync(outPath);
+  let body = buf;
+  let prefix = '';
+  if (buf.length > MAX_RUN_OUTPUT_BYTES) {
+    body = buf.subarray(buf.length - MAX_RUN_OUTPUT_BYTES);
+    prefix = '…(truncated, showing last 512 KiB)\n';
+  }
+
+  return {
+    content: prefix + body.toString('utf8'),
+    mtimeMs: stat.mtimeMs,
+  };
+};
+
 module.exports = {
   prepareWorkspaceForPrototype,
   getWorkspaceStatus,
   getWorkspaceTimings,
   getWorkspaceLogs,
   triggerRunForPrototype,
+  getRunOutputForPrototype,
 };

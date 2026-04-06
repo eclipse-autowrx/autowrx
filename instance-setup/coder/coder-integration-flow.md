@@ -24,6 +24,7 @@ Base path (with default frontend client): **`/v2/system/coder`** (see `backend/s
 | `GET` | `/workspace/:prototypeId/logs` | Agent logs; supports `after`, `before`, `format=json\|text`, etc. |
 | `GET` | `/workspace/:prototypeId/timings` | Build timing details. |
 | `POST` | `/workspace/:prototypeId/trigger-run` | Body: `{ runKind }`. Writes `.autowrx_run` on the host prototype folder (see Run phase). |
+| `GET` | `/workspace/:prototypeId/run-output` | Returns `{ content, mtimeMs }` for `.autowrx_out` (allowlisted runs use `tee`). Used by the dashboard Output panel on the VS Code tab (~700ms polling). |
 | `GET` | `/workspaceagents/:workspaceAgentId/logs` | Stricter agent log access (validates agent id vs user workspace). |
 
 All of the above require auth and **VSCode integration enabled**; prototype routes also require **READ_MODEL** on the prototype’s model.
@@ -79,7 +80,7 @@ Implemented in **`PrototypeTabVSCode.tsx`**:
 When the prototype **VS Code** tab is active and the user clicks **Run** in the runtime sidebar:
 
 1. **Frontend** — `POST .../trigger-run` with **`runKind`**: **`python-main`** or **`c-main`** (from prototype language).
-2. **Backend** — maps `runKind` to a **fixed** shell command (`RUN_KIND_COMMANDS` in `orchestrator.service.js`); writes **`.autowrx_run`** with that command into the prototype folder on the host (same path visible in the container).
+2. **Backend** — maps `runKind` to a **fixed** shell command (`RUN_KIND_COMMANDS` in `orchestrator.service.js`); writes **`.autowrx_run`** with that command into the prototype folder on the host (same path visible in the container). Commands use **`tee .autowrx_out`** so combined stdout/stderr are mirrored to the terminal and captured in **`.autowrx_out`** for tooling to read.
 3. **Extension** — **autowrx-runner** watches `.autowrx_run`, reads the command, opens/focuses terminal **AutoWRX Console**, runs the command, then clears the file.
 
 Raw shell commands are **never** accepted from the client — only the allowlisted `runKind` values.

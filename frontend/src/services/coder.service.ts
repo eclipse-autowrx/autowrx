@@ -117,3 +117,18 @@ export const triggerWorkspaceRun = async (
 ): Promise<void> => {
   await serverAxios.post(`/system/coder/workspace/${prototypeId}/trigger-run`, { runKind })
 }
+
+/** Body of `.autowrx_out` on the prototypes volume (`mtimeMs` for cheap change detection). */
+export interface WorkspaceRunOutput {
+  content: string
+  mtimeMs: number
+}
+
+export const getWorkspaceRunOutput = async (
+  prototypeId: string,
+): Promise<WorkspaceRunOutput> => {
+  const response = await serverAxios.get<WorkspaceRunOutput>(
+    `/system/coder/workspace/${prototypeId}/run-output`,
+  )
+  return response.data
+}
