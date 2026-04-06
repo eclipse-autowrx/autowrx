@@ -498,7 +498,13 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
             {tab == 'code' && <PrototypeTabCode />}
             {/* Keep VS Code mounted to avoid iframe reload "stutter" on tab switches */}
             {vscodeEnabled && (
-              <div className={tab === 'vscode' ? 'w-full h-full' : 'hidden'}>
+              <div
+                className={
+                  tab === 'vscode'
+                    ? 'absolute inset-0 z-10 w-full h-full visible pointer-events-auto'
+                    : 'absolute inset-0 z-0 w-full h-full invisible pointer-events-none'
+                }
+              >
                 <PrototypeTabVSCode isActive={tab === 'vscode'} />
               </div>
             )}

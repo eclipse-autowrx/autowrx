@@ -95,6 +95,8 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
     useState(false)
   const [workspaceError, setWorkspaceError] = useState<string | null>(null)
   const [isLoadingWorkspace, setIsLoadingWorkspace] = useState(true)
+  // Keep iframe src stable across tab switches to prevent reload flicker.
+  const [stableIframeSrc, setStableIframeSrc] = useState<string | null>(null)
   const workspacePollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
     null,
   )
@@ -119,6 +121,11 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
   useEffect(() => {
     workspaceLogsRef.current = workspaceLogs
   }, [workspaceLogs])
+
+  // New prototype/workspace route => allow a new iframe source to be established.
+  useEffect(() => {
+    setStableIframeSrc(null)
+  }, [prototype_id])
 
   // Resize state
   const [rightPanelWidth, setRightPanelWidth] = useState<number | null>(null) // Will be calculated based on container
@@ -360,7 +367,8 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
           setWorkspaceError(null)
           lastLogIdRef.current = cachedEntry.workspaceLogs?.at(-1)?.id ?? null
 
-          setIsLoadingWorkspace(true)
+          // Keep iframe visible while refreshing credentials in background.
+          setIsLoadingWorkspace(false)
           try {
             const fresh = await getWorkspaceUrl(prototype_id)
             if (epoch !== loadEffectEpochRef.current) return
@@ -382,10 +390,6 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
             workspaceCredentialsNeedRetryRef.current = true
             setWorkspaceInfo(cachedEntry.workspaceInfo)
             workspaceInfoRef.current = cachedEntry.workspaceInfo
-          } finally {
-            if (epoch === loadEffectEpochRef.current) {
-              setIsLoadingWorkspace(false)
-            }
           }
 
           // Keep polling in background to refresh status/logs silently (lighter interval)
@@ -594,6 +598,14 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
     !!workspaceInfo?.appUrl &&
     workspaceStatus?.status === 'running' &&
     isWorkspaceReadyFromLogs
+
+  useEffect(() => {
+    if (!shouldShowIframe || !workspaceInfo?.appUrl) return
+    // Lock source after first successful render to avoid reloading iframe on tab switch.
+    if (stableIframeSrc) return
+    setStableIframeSrc(buildCoderIframeSrc(workspaceInfo))
+  }, [shouldShowIframe, workspaceInfo, buildCoderIframeSrc, stableIframeSrc])
+
   return (
     <div
       ref={containerRef}
@@ -613,8 +625,8 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
           <>
             <iframe
               ref={iframeRef}
-              key={buildCoderIframeSrc(workspaceInfo)}
-              src={buildCoderIframeSrc(workspaceInfo)}
+              key={stableIframeSrc || buildCoderIframeSrc(workspaceInfo)}
+              src={stableIframeSrc || buildCoderIframeSrc(workspaceInfo)}
               className="w-full h-full border-0"
               style={{ pointerEvents: isResizing ? 'none' : 'auto' }}
               allow="clipboard-read; clipboard-write;"
