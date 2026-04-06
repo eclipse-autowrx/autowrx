@@ -30,7 +30,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/atoms/dropdown-menu'
-import { getComputedAPIs } from '@/services/model.service'
 import RuntimeAssetManager from '@/components/organisms/RuntimeAssetManager'
 import DaDialog from '@/components/molecules/DaDialog'
 import { countCodeExecution } from '@/services/prototype.service'
@@ -110,8 +109,6 @@ const DaRuntimeControl: FC = () => {
   const [curRuntimeInfo, setCurRuntimeInfo] = useState<any>(null)
   const [code, setCode] = useState<string>('')
   const [usedApis, setUsedApis] = useState<any[]>([])
-  const [requestContent, setRequestContent] = useState<string>('')
-  const [requestMode, setRequestMode] = useState<string>('')
   const [showRtDialog, setShowRtDialog] = useState<boolean>(false)
   const [runningAppsOnRt, setRunningAppsOnRt] = useState<any[]>([])
   const [listenerOnRt, setListenerOnRt] = useState<any[]>([])
@@ -478,6 +475,7 @@ const DaRuntimeControl: FC = () => {
       </DaDialog>
 
       {/* Runtime Controls Header */}
+      {tab !== 'vscode' && (
       <div className={cn('px-1 flex items-center', !isExpand && 'hidden')}>
         {useRuntime && (
           <>
@@ -565,8 +563,10 @@ const DaRuntimeControl: FC = () => {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      )}
 
       {/* Play/Stop Controls */}
+      {tab !== 'vscode' && (
       <div className={cn('flex px-1', !isExpand && 'flex-col')}>
         {(activeRtId || tab === 'vscode') && (
           <>
@@ -665,6 +665,7 @@ const DaRuntimeControl: FC = () => {
           </>
         )}
       </div>
+      )}
 
       {/* Content Area */}
       <div className={cn('mt-1 grow overflow-y-auto', !isExpand && 'hidden')}>
@@ -672,129 +673,6 @@ const DaRuntimeControl: FC = () => {
           <>
             {activeTab === 'output' && (
               <div className="h-full flex flex-col">
-                <div
-                  className="shrink flex items-center"
-                  style={{ backgroundColor: 'hsl(217, 13%, 32%)' }}
-                >
-                  {requestMode && (
-                    <div className="flex items-center">
-                      <Input
-                        className="grow text-xs w-[260px]"
-                        style={{ color: 'hsl(0, 0%, 0%)' }}
-                        value={requestContent}
-                        onChange={(e) => {
-                          setRequestContent(e.target.value)
-                        }}
-                      />
-                      <div
-                        className={`ml-2 mr-2 px-2 py-1 rounded text-xs ${requestContent.trim()
-                          ? 'text-yellow-400 font-semibold cursor-pointer hover:underline'
-                          : 'text-gray-400 font-thin'
-                          }`}
-                        onClick={() => {
-                          if (!requestContent.trim()) return
-                          if (runTimeRef.current) {
-                            runTimeRef.current?.requestInstallLib(
-                              requestContent,
-                            )
-                          }
-                          if (runTimeRef1.current) {
-                            runTimeRef1.current?.requestInstallLib(
-                              requestContent,
-                            )
-                          }
-                          setRequestMode('')
-                          setRequestContent('')
-                        }}
-                      >
-                        Request Install
-                      </div>
-                      <div
-                        className="px-2 py-1 rounded cursor-pointer hover:underline text-yellow-400 font-semibold text-xs"
-                        onClick={() => {
-                          setRequestMode('')
-                          setRequestContent('')
-                        }}
-                      >
-                        Cancel
-                      </div>
-                    </div>
-                  )}
-                  <div className="grow"></div>
-                  {!requestMode && (
-                    <div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <div
-                            className="text-sm cursor-pointer px-2 py-0.5 hover:underline"
-                            style={{ color: 'hsl(0, 0%, 100%)' }}
-                          >
-                            Send Request
-                          </div>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => {
-                              if (runTimeRef.current) {
-                                runTimeRef.current?.listPythonLibs()
-                              }
-                              if (runTimeRef1.current) {
-                                runTimeRef1.current?.listPythonLibs()
-                              }
-                            }}
-                          >
-                            <div className="flex w-full items-center">
-                              List All Python Libraries
-                            </div>
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setRequestContent('libname')
-                              setRequestMode('pip-install')
-                            }}
-                          >
-                            <div className="flex w-full items-center">
-                              Install New Python Library: pip install libname
-                            </div>
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem
-                            onClick={async () => {
-                              if (!model) return
-                              const vssJson = await getComputedAPIs(model.id)
-                              if (runTimeRef.current) {
-                                runTimeRef.current?.builldVehicleModel(vssJson)
-                              }
-                              if (runTimeRef1.current) {
-                                runTimeRef1.current?.builldVehicleModel(vssJson)
-                              }
-                            }}
-                          >
-                            <div className="flex w-full items-center">
-                              Rebuild Vehicle Model base on current Vehicle API
-                            </div>
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem
-                            onClick={() => {
-                              if (runTimeRef.current) {
-                                runTimeRef.current?.revertToDefaultVehicleModel()
-                              }
-                              if (runTimeRef1.current) {
-                                runTimeRef1.current?.revertToDefaultVehicleModel()
-                              }
-                            }}
-                          >
-                            <div className="flex w-full items-center">
-                              Revert to default Vehicle Model
-                            </div>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  )}
-                </div>
                 <div
                   data-id="current-log"
                   className="flex-1 overflow-y-auto whitespace-pre-wrap rounded bg-black px-2 py-1 text-xs"
