@@ -159,6 +159,7 @@ const config = {
   services: {
     log: {
       port: envVars.LOG_PORT || 9600,
+      url: envVars.LOG_URL,
     },
     cache: {
       url: envVars.CACHE_URL,
@@ -176,9 +177,6 @@ const config = {
     },
     kitServer: {
       url: envVars.KIT_SERVER_URL,
-    },
-    log: {
-      url: envVars.LOG_URL,
     },
   },
   openai: {

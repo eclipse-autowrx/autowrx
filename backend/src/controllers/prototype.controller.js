@@ -90,6 +90,11 @@ const executeCode = catchAsync(async (req, res) => {
   res.send('OK');
 });
 
+const getUsedApisFromWorkspace = catchAsync(async (req, res) => {
+  const data = await prototypeService.getPrototypeUsedApisFromWorkspace(req.params.id, req.user.id);
+  res.send(data);
+});
+
 const listPopularPrototypes = catchAsync(async (req, res) => {
   const prototypes = await prototypeService.listPopularPrototypes(req.user?.id);
   res.send(prototypes);
@@ -105,4 +110,5 @@ module.exports = {
   listPopularPrototypes,
   executeCode,
   bulkCreatePrototypes,
+  getUsedApisFromWorkspace,
 };

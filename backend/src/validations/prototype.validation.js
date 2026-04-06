@@ -160,6 +160,12 @@ const executeCode = {
   }),
 };
 
+const getUsedApisFromWorkspace = {
+  params: Joi.object().keys({
+    id: Joi.string().required().custom(objectId),
+  }),
+};
+
 module.exports = {
   listPrototypes,
   createPrototype,
@@ -168,4 +174,5 @@ module.exports = {
   deletePrototype,
   executeCode,
   bulkCreatePrototypes,
+  getUsedApisFromWorkspace,
 };

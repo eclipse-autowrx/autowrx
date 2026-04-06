@@ -53,7 +53,8 @@ const getRoles = catchAsync(async (req, res) => {
 });
 
 const removeRoleFromUser = catchAsync(async (req, res) => {
-  await permissionService.removeRoleFromUser(req.query.user, req.query.role);
+  const { user, role } = req.query;
+  await permissionService.removeRoleFromUser(user, role);
   res.status(204).send();
 });
 

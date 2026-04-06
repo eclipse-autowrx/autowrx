@@ -39,6 +39,12 @@ import DaMockManager from './DaMockManager'
 import PrototypeVarsWatch from './PrototypeVarsWatch'
 import DaRemoteCompileRust from '../remote-compiler/DaRemoteCompileRust'
 import { useSystemUI } from '@/hooks/useSystemUI'
+import { useParams } from 'react-router-dom'
+import {
+  triggerWorkspaceRun,
+  getWorkspaceRunOutput,
+  type CoderRunKind,
+} from '@/services/coder.service'
 
 const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
 
@@ -54,6 +60,10 @@ const AlwaysScrollToBottom = () => {
 }
 
 const DaRuntimeControl: FC = () => {
+  const { tab, prototype_id: routePrototypeId } = useParams<{
+    tab?: string
+    prototype_id?: string
+  }>()
   const { data: currentUser } = useSelfProfileQuery()
   const [prototype, activeModelApis] = useModelStore(
     (state) => [state.prototype as Prototype, state.activeModelApis],
@@ -107,6 +117,11 @@ const DaRuntimeControl: FC = () => {
   const [listenerOnRt, setListenerOnRt] = useState<any[]>([])
   const [isAdvantageMode, setIsAdvantageMode] = useState<number>(-5)
   const rustCompilerRef = useRef<any>()
+  /** Last `.autowrx_out` mtime from server (for clear-until-new-run). */
+  const vscodeRunOutputMtimeRef = useRef(0)
+  /** When set, hide run output until server file `mtimeMs` is greater than this. */
+  const vscodeRunOutputClearBaselineRef = useRef<number | null>(null)
+  const [vscodeRunOutput, setVscodeRunOutput] = useState('')
 
   useEffect(() => {
     localStorage.setItem('customKitServer', customKitServer.trim())
@@ -166,6 +181,27 @@ const DaRuntimeControl: FC = () => {
     setUsedApis(apis)
   }, [code, activeModelApis, prototype?.widget_config])
 
+  /** On VS Code tab, kit Run fills `log` while Coder Run fills `vscodeRunOutput` — show both. */
+  const outputPanelText = useMemo(() => {
+    const placeholder =
+      'No output yet. Click Run to start the prototype.'
+    if (tab !== 'vscode') {
+      return log || placeholder
+    }
+    const kitEmpty = !String(log ?? '').trim()
+    const wsEmpty = !String(vscodeRunOutput ?? '').trim()
+    if (kitEmpty && wsEmpty) return placeholder
+    if (!kitEmpty && !wsEmpty) {
+      return `— Runtime (kit) —\n${log}\n\n— Workspace terminal (.autowrx_out) —\n${vscodeRunOutput}`
+    }
+    return kitEmpty ? vscodeRunOutput : log
+  }, [tab, log, vscodeRunOutput])
+
+  const resolveCoderRunKind = (): CoderRunKind => {
+    const lang = prototype?.language?.toLowerCase() ?? ''
+    return lang === 'c' ? 'c-main' : 'python-main'
+  }
+
   const handleRun = () => {
     setIsRunning(true)
     setActiveTab('output')
@@ -220,6 +256,18 @@ const DaRuntimeControl: FC = () => {
     })
   }
 
+  /** Run inside Coder workspace (terminal via .autowrx_run) — lower button on VS Code tab only. */
+  const handleCoderWorkspaceRun = () => {
+    const id = prototype?.id ?? routePrototypeId
+    if (!id) return
+    void triggerWorkspaceRun(id, resolveCoderRunKind()).catch((error) => {
+      console.error('[DaRuntimeControl] Coder trigger-run failed:', error)
+    })
+  }
+
+  const kitRunDisabled =
+    tab === 'vscode' ? !activeRtId || isRunning : isRunning
+
   const appendLog = (content: string) => {
     if (!content) return
     setLog((prevLog) => prevLog + content)
@@ -227,7 +275,51 @@ const DaRuntimeControl: FC = () => {
 
   const handleClearLog = () => {
     setLog('')
+    if (tab === 'vscode') {
+      setVscodeRunOutput('')
+      vscodeRunOutputClearBaselineRef.current = vscodeRunOutputMtimeRef.current
+    }
   }
+
+  const prototypeIdForCoder =
+    prototype?.id ?? routePrototypeId ?? ''
+
+  useEffect(() => {
+    if (tab !== 'vscode' || !isExpand || activeTab !== 'output') return
+    if (!prototypeIdForCoder || !isAuthorized) return
+
+    let cancelled = false
+    const poll = async () => {
+      try {
+        const data = await getWorkspaceRunOutput(prototypeIdForCoder)
+        if (cancelled) return
+        vscodeRunOutputMtimeRef.current = data.mtimeMs
+        const baseline = vscodeRunOutputClearBaselineRef.current
+        if (baseline !== null && data.mtimeMs <= baseline) {
+          return
+        }
+        vscodeRunOutputClearBaselineRef.current = null
+        setVscodeRunOutput((prev) =>
+          prev === data.content ? prev : data.content,
+        )
+      } catch {
+        /* keep last good output */
+      }
+    }
+
+    void poll()
+    const id = window.setInterval(() => void poll(), 100)
+    return () => {
+      cancelled = true
+      window.clearInterval(id)
+    }
+  }, [
+    tab,
+    isExpand,
+    activeTab,
+    prototypeIdForCoder,
+    isAuthorized,
+  ])
 
   const writeSignalValue = (obj: any) => {
     if (!obj) return
@@ -476,19 +568,21 @@ const DaRuntimeControl: FC = () => {
 
       {/* Play/Stop Controls */}
       <div className={cn('flex px-1', !isExpand && 'flex-col')}>
-        {activeRtId && (
+        {(activeRtId || tab === 'vscode') && (
           <>
             <button
               data-id="btn-run-prototype"
-              disabled={isRunning}
+              disabled={kitRunDisabled}
               onClick={handleRun}
               className="mt-1 flex items-center justify-center rounded border p-2 font-semibold text-sm"
               style={{
-                color: isRunning ? 'hsl(215, 16%, 47%)' : 'hsl(0, 0%, 100%)',
+                color: !kitRunDisabled
+                  ? 'hsl(0, 0%, 100%)'
+                  : 'hsl(215, 16%, 47%)',
                 borderColor: 'hsl(215, 16%, 47%)',
               }}
               onMouseEnter={(e) => {
-                if (!isRunning) {
+                if (!kitRunDisabled) {
                   e.currentTarget.style.backgroundColor = 'hsl(215, 16%, 47%)'
                 }
               }}
@@ -498,47 +592,54 @@ const DaRuntimeControl: FC = () => {
             >
               <TbPlayerPlayFilled className="w-4 h-4" />
             </button>
-            <button
-              data-id="btn-stop-prototype"
-              disabled={!isRunning}
-              onClick={handleStop}
-              className={cn(
-                'mt-1 flex items-center justify-center rounded border p-2 font-semibold text-sm',
-                isExpand && 'mx-2',
-              )}
-              style={{
-                color: !isRunning ? 'hsl(215, 16%, 47%)' : 'hsl(0, 0%, 100%)',
-                borderColor: 'hsl(215, 16%, 47%)',
-              }}
-              onMouseEnter={(e) => {
-                if (isRunning) {
-                  e.currentTarget.style.backgroundColor = 'hsl(215, 16%, 47%)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-              }}
-            >
-              <TbPlayerStopFilled className="w-4 h-4" />
-            </button>
-
-            {prototype?.language === 'rust' && (
-              <DaRemoteCompileRust
-                ref={rustCompilerRef}
-                onResponse={(log, isDone, status, appName) => {
-                  appendLog(log)
-                  if (isDone) {
-                    if (status === 'compile-done' && appName) {
-                      if (runTimeRef.current) {
-                        runTimeRef.current?.runBinApp(appName)
-                      }
-                      if (runTimeRef1.current) {
-                        runTimeRef1.current?.runBinApp(appName)
-                      }
+            {activeRtId && (
+              <>
+                <button
+                  data-id="btn-stop-prototype"
+                  disabled={!isRunning}
+                  onClick={handleStop}
+                  className={cn(
+                    'mt-1 flex items-center justify-center rounded border p-2 font-semibold text-sm',
+                    isExpand && 'mx-2',
+                  )}
+                  style={{
+                    color: !isRunning
+                      ? 'hsl(215, 16%, 47%)'
+                      : 'hsl(0, 0%, 100%)',
+                    borderColor: 'hsl(215, 16%, 47%)',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (isRunning) {
+                      e.currentTarget.style.backgroundColor =
+                        'hsl(215, 16%, 47%)'
                     }
-                  }
-                }}
-              />
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                  }}
+                >
+                  <TbPlayerStopFilled className="w-4 h-4" />
+                </button>
+
+                {prototype?.language === 'rust' && (
+                  <DaRemoteCompileRust
+                    ref={rustCompilerRef}
+                    onResponse={(log, isDone, status, appName) => {
+                      appendLog(log)
+                      if (isDone) {
+                        if (status === 'compile-done' && appName) {
+                          if (runTimeRef.current) {
+                            runTimeRef.current?.runBinApp(appName)
+                          }
+                          if (runTimeRef1.current) {
+                            runTimeRef1.current?.runBinApp(appName)
+                          }
+                        }
+                      }
+                    }}
+                  />
+                )}
+              </>
             )}
           </>
         )}
@@ -702,7 +803,7 @@ const DaRuntimeControl: FC = () => {
                     color: 'hsl(0, 0%, 100%)',
                   }}
                 >
-                  {log || 'No output yet. Click Run to start the prototype.'}
+                  {outputPanelText}
                   <AlwaysScrollToBottom />
                 </div>
               </div>
@@ -784,7 +885,71 @@ const DaRuntimeControl: FC = () => {
         )}
       </div>
 
-      <div className="flex mt-auto">
+      <div className="mt-auto flex w-full flex-col">
+        {(activeRtId || tab === 'vscode') &&
+          (!isExpand || tab === 'vscode') && (
+          <div
+            className={cn(
+              'flex flex-col items-stretch gap-1 px-1 pb-2',
+              isExpand && tab === 'vscode' && 'flex-row items-center justify-start gap-2',
+            )}
+          >
+            <button
+              type="button"
+              data-id="btn-run-prototype-sidebar-lower"
+              disabled={tab === 'vscode' ? false : isRunning}
+              onClick={
+                tab === 'vscode' ? handleCoderWorkspaceRun : handleRun
+              }
+              className="flex items-center justify-center rounded border p-2 font-semibold text-sm"
+              style={{
+                color:
+                  tab === 'vscode' || !isRunning
+                    ? 'hsl(0, 0%, 100%)'
+                    : 'hsl(215, 16%, 47%)',
+                borderColor: 'hsl(215, 16%, 47%)',
+              }}
+              onMouseEnter={(e) => {
+                if (tab === 'vscode' || !isRunning) {
+                  e.currentTarget.style.backgroundColor = 'hsl(215, 16%, 47%)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent'
+              }}
+            >
+              <TbPlayerPlayFilled className="h-4 w-4" />
+            </button>
+            {activeRtId && (
+              <button
+                type="button"
+                data-id="btn-stop-prototype-sidebar-lower"
+                disabled={!isRunning}
+                onClick={handleStop}
+                className="flex items-center justify-center rounded border p-2 font-semibold text-sm"
+                style={{
+                  color: !isRunning
+                    ? 'hsl(215, 16%, 47%)'
+                    : 'hsl(0, 0%, 100%)',
+                  borderColor: 'hsl(215, 16%, 47%)',
+                }}
+                onMouseEnter={(e) => {
+                  if (isRunning) {
+                    e.currentTarget.style.backgroundColor =
+                      'hsl(215, 16%, 47%)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }}
+              >
+                <TbPlayerStopFilled className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        )}
+
+        <div className="flex">
         <Button
           variant="ghost"
           data-id="btn-expand-runtime-control"
@@ -951,6 +1116,7 @@ const DaRuntimeControl: FC = () => {
             )}
           </>
         )}
+        </div>
       </div>
     </div>
   )
