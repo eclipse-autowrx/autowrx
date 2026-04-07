@@ -42,7 +42,7 @@ import { updateModelService } from '@/services/model.service'
 import { toast } from 'react-toastify'
 import { Dialog, DialogContent } from '@/components/atoms/dialog'
 import PagePrototypePlugin from '@/pages/PagePrototypePlugin'
-import CustomTabEditor, { TabConfig, StagingConfig, RightNavPluginButton } from '@/components/organisms/CustomTabEditor'
+import CustomTabEditor, { TabConfig, StagingConfig, RightNavPluginButton, TabsBorderRadius } from '@/components/organisms/CustomTabEditor'
 import PrototypeTabInfo from '../components/organisms/PrototypeTabInfo'
 import TemplateForm from '@/components/organisms/TemplateForm'
 import PrototypeTabJourney from '@/components/organisms/PrototypeTabJourney'
@@ -135,6 +135,9 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
 
   // Extract global tab style variant
   const tabsVariant: string | undefined = model?.custom_template?.prototype_tabs_variant || undefined
+
+  // Extract global tab border radius
+  const tabsBorderRadius: TabsBorderRadius | undefined = model?.custom_template?.prototype_tabs_border_radius || undefined
 
   // Extract staging tab config from prototype_right_nav_buttons
   const _rightNavRaw: RightNavPluginButton[] = model?.custom_template?.prototype_right_nav_buttons || []
@@ -263,7 +266,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
     }
   }
 
-  const handleSaveCustomTabs = async (updatedTabs: TabConfig[], updatedSidebarPlugin?: string | null, updatedTabsVariant?: string | null, updatedRightNavButtons?: RightNavPluginButton[] | null) => {
+  const handleSaveCustomTabs = async (updatedTabs: TabConfig[], updatedSidebarPlugin?: string | null, updatedTabsVariant?: string | null, updatedRightNavButtons?: RightNavPluginButton[] | null, updatedTabsBorderRadius?: TabsBorderRadius | null) => {
     if (!model_id || !model) {
       toast.error('Model not found')
       return
@@ -283,6 +286,11 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
       // Update tabs variant: null means remove (revert to default), string means set, undefined means no change
       if (updatedTabsVariant !== undefined) {
         updates.prototype_tabs_variant = updatedTabsVariant ?? undefined
+      }
+
+      // Update border radius: null means remove (revert to default), string means set, undefined means no change
+      if (updatedTabsBorderRadius !== undefined) {
+        updates.prototype_tabs_border_radius = updatedTabsBorderRadius ?? undefined
       }
 
       // Update right nav buttons: null means remove, array means set, undefined means no change
@@ -327,6 +335,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
             <PrototypeTabs
               tabs={model?.custom_template?.prototype_tabs}
               tabsVariant={tabsVariant}
+              tabsBorderRadius={tabsBorderRadius}
             />
           </div>
           {canConfigurePrototypeAddons && (
@@ -367,7 +376,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
                   }}
                 >
                   <TbSettings className="w-5 h-5" />
-                  Manage Prototype Tabs
+                  Customize Layout...
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
@@ -473,8 +482,9 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
         stagingConfig={stagingConfig}
         rightNavButtons={rightNavButtons}
         tabsVariant={tabsVariant}
-        title="Manage Prototype Tabs"
-        description="Reorder tabs, edit labels, hide/show tabs, and remove custom tabs"
+        tabsBorderRadius={tabsBorderRadius}
+        title="Customize Prototype Layout"
+        description="Configure tabs, appearance, sidebar, and action buttons"
       />
 
       {/* Template Form Dialog */}
