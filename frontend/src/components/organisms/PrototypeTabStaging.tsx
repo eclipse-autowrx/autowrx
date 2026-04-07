@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useState, useEffect } from 'react'
-import { configManagementService, Config } from '@/services/configManagement.service'
+import { configManagementService } from '@/services/configManagement.service'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import { Spinner } from '@/components/atoms/spinner'
 import { Prototype } from '@/types/model.type'
@@ -164,11 +164,13 @@ const PluginDropdownItem: React.FC<PluginDropdownItemProps> = ({ plugin, onClick
   )
 }
 
+type PublicConfig = { key: string; value: any } | null
+
 const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({ prototype }) => {
   const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
   const { setOpenLoginDialog } = useAuthStore()
-  const [stagingFrameConfig, setStagingFrameConfig] = useState<Config | null>(null)
-  const [standardStageConfig, setStandardStageConfig] = useState<Config | null>(null)
+  const [stagingFrameConfig, setStagingFrameConfig] = useState<PublicConfig>(null)
+  const [standardStageConfig, setStandardStageConfig] = useState<PublicConfig>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [activeLifeCycle, setActiveLifeCycle] = useState<string>('Deployment Version')
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set()) // Default: all collapsed
@@ -201,7 +203,6 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({ prototype }) 
         // Use default if API fails
         setStagingFrameConfig({
           key: STAGING_FRAME_KEY,
-          scope: 'site',
           value: {
             stages: [
               {
@@ -226,9 +227,7 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({ prototype }) 
               },
             ],
           },
-          valueType: 'object',
-          secret: false,
-        } as Config)
+        })
       }
       
       // Handle standard stage config
@@ -238,34 +237,25 @@ const PrototypeTabStaging: React.FC<PrototypeTabStagingProps> = ({ prototype }) 
         // Use default if API fails - we'll set a minimal default structure
         setStandardStageConfig({
           key: STANDARD_STAGE_KEY,
-          scope: 'site',
           value: {
             isTopMost: true,
             name: '',
             id: '1',
             children: [],
           },
-          valueType: 'object',
-          secret: false,
-        } as Config)
+        })
       }
     } catch (err) {
       console.error('Failed to load staging configs:', err)
       // Set defaults on error
       setStagingFrameConfig({
         key: STAGING_FRAME_KEY,
-        scope: 'site',
         value: { stages: [] },
-        valueType: 'object',
-        secret: false,
-      } as Config)
+      })
       setStandardStageConfig({
         key: STANDARD_STAGE_KEY,
-        scope: 'site',
         value: { isTopMost: true, name: '', id: '1', children: [] },
-        valueType: 'object',
-        secret: false,
-      } as Config)
+      })
     } finally {
       setIsLoading(false)
     }

@@ -6,9 +6,9 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { isAxiosError } from 'axios'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { Spinner } from '@/components/atoms/spinner'
@@ -66,6 +66,10 @@ const DaVisibilityControl: React.FC<VisibilityControlProps> = ({
 }) => {
   const [visibility, setVisibility] = useState(initialVisibility)
 
+  useEffect(() => {
+    setVisibility(initialVisibility)
+  }, [initialVisibility])
+
   const toggleVisibility = () => {
     if (!canEdit) return
     const newVisibility = visibility === 'public' ? 'private' : 'public'
@@ -101,6 +105,10 @@ const DaStateControl: React.FC<{
   canEdit: boolean
 }> = ({ initialState, onStateChange, canEdit }) => {
   const [state, setState] = useState(initialState)
+
+  useEffect(() => {
+    setState(initialState)
+  }, [initialState])
 
   const handleUpdate = (newState: string) => async () => {
     setState(newState)
@@ -157,6 +165,7 @@ const PageModelDetail = () => {
   const [newName, setNewName] = useState(model?.name ?? '')
   const [nameError, setNameError] = useState('')
   const { refetch } = useCurrentModel()
+  const queryClient = useQueryClient()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model?.id])
   const [confirmPopupOpen, setConfirmPopupOpen] = useState(false)
 
@@ -464,10 +473,12 @@ const PageModelDetail = () => {
 
               <DaVisibilityControl
                 initialVisibility={model.visibility}
-                onVisibilityChange={(newVisibility) => {
-                  updateModelService(model.id, {
+                onVisibilityChange={async (newVisibility) => {
+                  await updateModelService(model.id, {
                     visibility: newVisibility,
                   })
+                  await refetch()
+                  await queryClient.invalidateQueries({ queryKey: ['modelsList'], refetchType: 'all' })
                 }}
                 canEdit={isAuthorized}
               />
@@ -479,6 +490,7 @@ const PageModelDetail = () => {
                     state: (state || 'draft') as Model['state'],
                   })
                   await refetch()
+                  await queryClient.invalidateQueries({ queryKey: ['modelsList'], refetchType: 'all' })
                 }}
                 canEdit={isAuthorized}
               />

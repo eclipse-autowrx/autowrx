@@ -32,7 +32,7 @@ import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import useListVSSVersions from '@/hooks/useListVSSVersions'
 import DaFileUploadButton from '@/components/atoms/DaFileUploadButton'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { listModelTemplates } from '@/services/modelTemplate.service'
 import { getConfig, useSiteConfig } from '@/utils/siteConfig'
 
@@ -55,6 +55,7 @@ const initialState: ModelData = {
 }
 
 const FormCreateModel = () => {
+  const queryClient = useQueryClient()
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
 
@@ -76,7 +77,13 @@ const FormCreateModel = () => {
     [modelList, currentUser],
   )
 
-  const { isDuplicate: isDuplicateName, suggestedName } = useDuplicateNameCheck(data.name, ownedModelNames)
+  const [debouncedName, setDebouncedName] = useState('')
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedName(data.name), 300)
+    return () => clearTimeout(timer)
+  }, [data.name])
+
+  const { isDuplicate: isDuplicateName, suggestedName } = useDuplicateNameCheck(debouncedName, ownedModelNames)
 
   // Fetch templates
   const { data: templatesData } = useQuery({
@@ -134,6 +141,9 @@ const FormCreateModel = () => {
       }
       const modelId = await createModelService(body)
       await refetchModelLite()
+      await queryClient.invalidateQueries({
+        queryKey: ['modelsList', currentUser.id],
+      })
       addLog({
         name: `New model '${body.name}' with visibility: ${body.visibility}`,
         description: `New model '${body.name}' was created by ${currentUser.email || currentUser.name || currentUser.id} version ${'a'}`,
