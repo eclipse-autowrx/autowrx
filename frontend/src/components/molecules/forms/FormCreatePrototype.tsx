@@ -425,13 +425,14 @@ const FormCreatePrototype = ({
         />
         {isDuplicatePrototypeName && (
           <DaDuplicateNameHint
-            message="A prototype with this name already exists"
+            message={`The prototype name '${data.prototypeName}' is already in use for model '${localModel?.name ?? data.modelName}'`}
             suggestedName={suggestedPrototypeName}
             onApplySuggestion={(name) => handleChange('prototypeName', name)}
+            className="text-sm text-secondary mt-2"
           />
         )}
         {error && !isDuplicatePrototypeName && (
-          <p className="mt-2 text-sm text-destructive">{error}</p>
+          <p className="mt-2 text-sm text-secondary">{error}</p>
         )}
       </div>
 

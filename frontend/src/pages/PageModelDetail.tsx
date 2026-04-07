@@ -273,10 +273,11 @@ const PageModelDetail = () => {
                       message="A model with this name already exists"
                       suggestedName={suggestedName}
                       onApplySuggestion={(name) => { setNewName(name); setNameError('') }}
+                      className="text-sm text-secondary mt-2"
                     />
                   )}
                   {nameError && !isDuplicateName && (
-                    <p className="text-xs text-destructive">{nameError}</p>
+                    <p className="text-sm text-secondary mt-2">{nameError}</p>
                   )}
                 </div>
               ) : (
