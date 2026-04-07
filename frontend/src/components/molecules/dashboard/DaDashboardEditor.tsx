@@ -21,8 +21,9 @@ import {
   TbSelector,
   TbCopy,
   TbCopyPlus,
+  TbShoppingCart,
+  TbLayoutGrid,
 } from 'react-icons/tb'
-import { TbShoppingCart, TbLayoutGrid } from 'react-icons/tb'
 import { BsStars } from 'react-icons/bs'
 import BUILT_IN_WIDGETS, {
   BUILT_IN_EMBEDDED_WIDGETS,
@@ -174,7 +175,7 @@ const DaDashboardWidgetEditor = ({
         )
         delete options.iconURL
         delete options.url
-      } catch (e) { }
+      } catch (e) {}
       setOptionStr(JSON.stringify(options, null, 4))
     }
   }, [selectedWidget])
@@ -297,7 +298,7 @@ const DaDashboardWidgetEditor = ({
                 setCode={(e) => {
                   setOptionStr(e)
                 }}
-                onBlur={() => { }}
+                onBlur={() => {}}
               />
             </div>
 
@@ -346,12 +347,12 @@ const DaDashboardWidgetEditor = ({
               let newOption = {} as any
               try {
                 newOption = JSON.parse(optionStr)
-              } catch (err) { }
+              } catch (err) {}
 
               let widget = {} as any
               try {
                 widget = JSON.parse(selectedWidget)
-              } catch (err) { }
+              } catch (err) {}
 
               // Check if this is a built-in widget (has a non-empty path)
               const isBuiltInWidget = widget.path && widget.path.trim() !== ''
@@ -402,13 +403,13 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
   const { data: marketWidgets } = useListMarketplaceWidgets()
   const modalRef = useRef<HTMLDivElement>(null)
   const buildinWidgets = BUILT_IN_WIDGETS
-  let [renderWidgets, setRenderWidgets] = useState<any[]>([])
-  let [activeTab, setActiveTab] = useState<'builtin' | 'market' | 'genAI'>(
+  const [renderWidgets, setRenderWidgets] = useState<any[]>([])
+  const [activeTab, setActiveTab] = useState<'builtin' | 'market' | 'genAI'>(
     'builtin',
   )
 
-  let [activeWidget, setActiveWidget] = useState<any>(null)
-  let [pickedCells, setPickedCells] = useState<any[]>([])
+  const [activeWidget, setActiveWidget] = useState<any>(null)
+  const [pickedCells, setPickedCells] = useState<any[]>([])
   const [optionsStr, setOptionStr] = useState<string>('')
   const [projectCreating, setProjectCreating] = useState<boolean>(false)
 
@@ -569,7 +570,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
           if (a.weight > b.weight) return 1
           return 0
         })
-      } catch (e) { }
+      } catch (e) {}
     }
 
     setRenderWidgets(widgets)
@@ -795,10 +796,8 @@ const DaDashboardEditor = ({
   }
 
   useEffect(() => {
-    ; (async () => {
-      await new Promise((resolve) => setTimeout(resolve, 3000))
-      setWarningMessage(null)
-    })()
+    const timer = setTimeout(() => setWarningMessage(null), 3000)
+    return () => clearTimeout(timer)
   }, [warningMessage])
 
   const handleAddWidget = () => {

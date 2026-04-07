@@ -99,17 +99,22 @@ const DaDashboard = () => {
     try { return JSON.parse(prototype.widget_config) } catch { return undefined }
   }
 
-  // Derive the currently applied template ID from prototype.extend
-  // undefined = never set (auto-apply eligible), null = user explicitly saved custom config, string = template applied
-  const activeTemplateId = prototype?.extend?.dashboard_template_id as string | null | undefined
-  // If no template has ever been applied, auto-apply the default template (visibility === 'default')
+  // Derive the currently applied template ID from prototype.extend.
+  // The key may be: absent (never set → auto-apply eligible), null (user saved custom config), or a string (template applied).
+  // Using `in` to distinguish "key never set" from "key set to null" — optional chaining alone can't tell them apart
+  // because (null)?.dashboard_template_id also yields undefined.
+  const extendObj = prototype?.extend
+  const hasTemplateDecision =
+    extendObj != null && typeof extendObj === 'object' && 'dashboard_template_id' in extendObj
+  const activeTemplateId = extendObj?.dashboard_template_id as string | null | undefined
+
   useEffect(() => {
-    if (activeTemplateId === undefined && templatesData?.results?.length && prototype && mode === MODE_RUN) {
+    if (!hasTemplateDecision && templatesData?.results?.length && prototype && mode === MODE_RUN) {
       const defaultTemplate = templatesData.results.find((t: DashboardTemplate) => t.visibility === 'default')
       if (defaultTemplate) handleApplyTemplate(defaultTemplate)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTemplateId, templatesData, prototype, mode])
+  }, [hasTemplateDecision, templatesData, prototype, mode])
 
   const closeSaveDialog = () => {
     setShowSaveDialog(false)

@@ -109,14 +109,14 @@ export default function DashboardTemplateEditor({
                 }
                 onOpenChange(v)
             }}
-            className="w-[90vw] max-w-[1200px] h-[90vh]"
+            className="w-[95vw] sm:w-[90vw] max-w-[1200px] h-[90vh] max-h-[calc(100dvh-2rem)]"
         >
-            <div className="flex flex-col h-full p-6 gap-4">
+            <div className="flex flex-col h-full p-4 sm:p-6 gap-4 overflow-y-auto">
                 <h2 className="text-lg font-semibold shrink-0">
                     {isEdit ? 'Edit Dashboard Template' : 'New Dashboard Template'}
                 </h2>
 
-                <div className="flex gap-4 shrink-0">
+                <div className="flex flex-col sm:flex-row gap-4 shrink-0">
                     <div className="flex-1 space-y-2">
                         <Label>Name *</Label>
                         <Input
