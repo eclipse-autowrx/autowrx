@@ -67,7 +67,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
   )
 
   const existingPrototypeNames = useMemo(
-    () => modelPrototypes?.filter((p: any) => p.id !== prototype.id).map((p: any) => p.name) ?? [],
+    () => modelPrototypes?.filter((p: Prototype) => p.id !== prototype.id).map((p: Prototype) => p.name) ?? [],
     [modelPrototypes, prototype.id],
   )
 
