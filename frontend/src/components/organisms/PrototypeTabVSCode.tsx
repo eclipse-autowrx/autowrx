@@ -369,27 +369,43 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
 
           // Keep iframe visible while refreshing credentials in background.
           setIsLoadingWorkspace(false)
-          try {
-            const fresh = await getWorkspaceUrl(prototype_id)
-            if (epoch !== loadEffectEpochRef.current) return
-            if (pollCancelledRef.current) return
-            workspaceCredentialsNeedRetryRef.current = false
-            credentialRefreshMetaRef.current = {
-              prototypeId: prototype_id,
-              at: Date.now(),
+          const cachedInfo = cachedEntry.workspaceInfo
+          const refreshMeta = credentialRefreshMetaRef.current
+          const shouldRefreshCachedCredentials =
+            !cachedInfo?.appUrl ||
+            !cachedInfo?.sessionToken ||
+            workspaceCredentialsNeedRetryRef.current ||
+            refreshMeta?.prototypeId !== prototype_id ||
+            !refreshMeta?.at ||
+            Date.now() - refreshMeta.at >= CREDENTIAL_REFRESH_INTERVAL_MS
+
+          if (shouldRefreshCachedCredentials) {
+            try {
+              const fresh = await getWorkspaceUrl(prototype_id)
+              if (epoch !== loadEffectEpochRef.current) return
+              if (pollCancelledRef.current) return
+              workspaceCredentialsNeedRetryRef.current = false
+              credentialRefreshMetaRef.current = {
+                prototypeId: prototype_id,
+                at: Date.now(),
+              }
+              const merged = mergeWorkspaceInfo(cachedInfo, fresh)
+              workspaceInfoRef.current = merged
+              setWorkspaceInfo(merged)
+            } catch (refreshErr) {
+              console.warn(
+                '[PrototypeTabVSCode] Token/workspace refresh failed, using cache:',
+                refreshErr,
+              )
+              if (epoch !== loadEffectEpochRef.current) return
+              workspaceCredentialsNeedRetryRef.current = true
+              setWorkspaceInfo(cachedInfo)
+              workspaceInfoRef.current = cachedInfo
             }
-            const merged = mergeWorkspaceInfo(cachedEntry.workspaceInfo, fresh)
-            workspaceInfoRef.current = merged
-            setWorkspaceInfo(merged)
-          } catch (refreshErr) {
-            console.warn(
-              '[PrototypeTabVSCode] Token/workspace refresh failed, using cache:',
-              refreshErr,
-            )
-            if (epoch !== loadEffectEpochRef.current) return
-            workspaceCredentialsNeedRetryRef.current = true
-            setWorkspaceInfo(cachedEntry.workspaceInfo)
-            workspaceInfoRef.current = cachedEntry.workspaceInfo
+          } else {
+            // Avoid rotating session token on every tab switch; keep iframe src stable.
+            setWorkspaceInfo(cachedInfo)
+            workspaceInfoRef.current = cachedInfo
           }
 
           // Keep polling in background to refresh status/logs silently (lighter interval)

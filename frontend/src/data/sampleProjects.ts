@@ -170,7 +170,7 @@ export const SAMPLE_PROJECTS: SampleProject[] = [
     ]
   },
   {
-    label: "C++ Multiple Files (Beta)",
+    label: "C++ Multiples Files (Beta)",
     language: "cpp",
     description: "A minimal C++ multi-file hello world project",
     data: [
@@ -211,7 +211,7 @@ export const SAMPLE_PROJECTS: SampleProject[] = [
               {
                 type: 'file',
                 name: 'greeting.cpp',
-                content: '#include "greeting.h"\n#include <iostream>\n#include <thread>\n\nconst char* getGreeting() {\n    return "Hello, World from C++ multiple files!";\n}\n\nvoid printWithTypingEffect(const char* text, int delay_ms) {\n    for (const char* p = text; *p; ++p) {\n        std::cout << *p << std::flush;\n        std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));\n    }\n}\n'
+                content: '#include "greeting.h"\n#include <iostream>\n#include <thread>\n\nconst char* getGreeting() {\n    return "Hello, World from C++ multiples files!";\n}\n\nvoid printWithTypingEffect(const char* text, int delay_ms) {\n    for (const char* p = text; *p; ++p) {\n        std::cout << *p << std::flush;\n        std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));\n    }\n}\n'
               }
             ]
           }
