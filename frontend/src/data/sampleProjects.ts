@@ -65,10 +65,12 @@ LOOP.run_until_complete(main())
 LOOP.close()`
 
 const DEFAULT_CPP_MAIN = `#include <iostream>
+#include <thread>
 #include "greeting.h"
 
 int main() {
-    std::cout << getGreeting() << std::endl;
+    printWithTypingEffect(getGreeting(), 100);
+    std::cout << std::endl;
     return 0;
 }`
 
@@ -179,7 +181,7 @@ export const SAMPLE_PROJECTS: SampleProject[] = [
           {
             type: 'file',
             name: 'CMakeLists.txt',
-            content: 'cmake_minimum_required(VERSION 3.16)\nproject(cpp_project)\n\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\n\nadd_executable(main src/main.cpp src/greeting.cpp)\ntarget_include_directories(main PRIVATE include)\n'
+            content: 'cmake_minimum_required(VERSION 3.16)\nproject(cpp_project)\n\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\n\nfind_package(Threads REQUIRED)\n\nadd_executable(main src/main.cpp src/greeting.cpp)\ntarget_include_directories(main PRIVATE include)\ntarget_link_libraries(main PRIVATE Threads::Threads)\n'
           },
           {
             type: 'file',
@@ -193,7 +195,7 @@ export const SAMPLE_PROJECTS: SampleProject[] = [
               {
                 type: 'file',
                 name: 'greeting.h',
-                content: '#pragma once\n\nconst char* getGreeting();\n'
+                content: '#pragma once\n\n#include <chrono>\n\nconst char* getGreeting();\nvoid printWithTypingEffect(const char* text, int delay_ms = 100);\n'
               }
             ]
           },
@@ -209,7 +211,7 @@ export const SAMPLE_PROJECTS: SampleProject[] = [
               {
                 type: 'file',
                 name: 'greeting.cpp',
-                content: '#include "greeting.h"\n\nconst char* getGreeting() {\n    return "Hello, World from C++ multiple files!";\n}\n'
+                content: '#include "greeting.h"\n#include <iostream>\n#include <thread>\n\nconst char* getGreeting() {\n    return "Hello, World from C++ multiple files!";\n}\n\nvoid printWithTypingEffect(const char* text, int delay_ms) {\n    for (const char* p = text; *p; ++p) {\n        std::cout << *p << std::flush;\n        std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));\n    }\n}\n'
               }
             ]
           }
