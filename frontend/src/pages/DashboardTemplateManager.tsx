@@ -80,7 +80,7 @@ function DashboardTemplateForm({
             try {
                 parsedConfig = JSON.parse(widgetConfig)
             } catch {
-                parsedConfig = { autorun: false, widgets: [] }
+                parsedConfig = { autorun: true, widgets: [] }
             }
             const payload = {
                 name: form.name,
