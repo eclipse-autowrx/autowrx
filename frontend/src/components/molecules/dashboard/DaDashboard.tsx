@@ -180,7 +180,6 @@ const DaDashboard = () => {
           extend: newExtend,
         })
         setPrototypeHasUnsavedChanges(false)
-        toast.success(`Template "${template.name}" applied`)
       } catch (error) {
         console.error('Error applying template:', error)
         toast.error('Failed to save template to prototype')
