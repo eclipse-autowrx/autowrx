@@ -9,7 +9,7 @@
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { TbCircleCheckFilled, TbLoader } from 'react-icons/tb'
 import { createPrototypeService } from '@/services/prototype.service'
 import { useToast } from '../toaster/use-toast'
@@ -20,6 +20,8 @@ import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { useNavigate, useLocation } from 'react-router-dom'
 import useListModelContribution from '@/hooks/useListModelContribution'
+import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
+import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
 import {
   Select,
   SelectContent,
@@ -161,8 +163,8 @@ const FormCreatePrototype = ({
   const { data: contributionModels, isLoading: isFetchingModelContribution } =
     useListModelContribution()
   const [localModel, setLocalModel] = useState<ModelLite>()
-  const { refetch } = useListModelPrototypes(
-    currentModel ? currentModel.id : '',
+  const { refetch, data: existingPrototypes } = useListModelPrototypes(
+    localModel?.id || '',
   )
   const navigate = useNavigate()
   const { toast } = useToast()
@@ -170,6 +172,20 @@ const FormCreatePrototype = ({
   const { data: currentUser } = useSelfProfileQuery()
 
   const [projectTemplate, setProjectTemplate] = useState<string>('')
+
+  const [debouncedPrototypeName, setDebouncedPrototypeName] = useState('')
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedPrototypeName(data.prototypeName), 300)
+    return () => clearTimeout(timer)
+  }, [data.prototypeName])
+
+  const existingPrototypeNames = useMemo(
+    () => (localModel ? existingPrototypes?.map((p: any) => p.name) ?? [] : []),
+    [existingPrototypes, localModel],
+  )
+
+  const { isDuplicate: isDuplicatePrototypeName, suggestedName: suggestedPrototypeName } =
+    useDuplicateNameCheck(debouncedPrototypeName, existingPrototypeNames)
 
   const handleChange = (name: keyof typeof data, value: string | number) => {
     setData((prev) => ({ ...prev, [name]: value }))
@@ -324,7 +340,7 @@ const FormCreatePrototype = ({
   }, [contributionModels, isFetchingModelContribution, currentModel])
 
   useEffect(() => {
-    if (loading || (!localModel && !data.modelName) || !data.prototypeName) {
+    if (loading || (!localModel && !data.modelName) || !data.prototypeName || isDuplicatePrototypeName) {
       setDisabled(true)
     } else setDisabled(false)
     if (onPrototypeChange) {
@@ -342,7 +358,7 @@ const FormCreatePrototype = ({
         })
       }
     }
-  }, [loading, localModel, data.modelName, data.prototypeName])
+  }, [loading, localModel, data.modelName, data.prototypeName, isDuplicatePrototypeName])
 
   return (
     <form
@@ -406,9 +422,17 @@ const FormCreatePrototype = ({
           onChange={(e) => handleChange('prototypeName', e.target.value)}
           placeholder="Name"
           data-id="prototype-name-input"
-          className={error ? 'border-secondary' : ''}
         />
-        {error && <p className="mt-2 text-sm text-secondary">{error}</p>}
+        {isDuplicatePrototypeName && (
+          <DaDuplicateNameHint
+            message="A prototype with this name already exists"
+            suggestedName={suggestedPrototypeName}
+            onApplySuggestion={(name) => handleChange('prototypeName', name)}
+          />
+        )}
+        {error && !isDuplicatePrototypeName && (
+          <p className="mt-2 text-sm text-destructive">{error}</p>
+        )}
       </div>
 
       <div className="flex flex-col mt-4">
