@@ -62,7 +62,10 @@ const getHeadersWithToken = (sessionToken) => {
 };
 
 const TOKEN_LIFETIME_MS = 24 * 60 * 60 * 1000; // 24h
+const TOKEN_LIFETIME_DURATION = '24h';
 const TOKEN_REFRESH_SAFETY_MS = 5 * 60 * 1000; // refresh if expiring within 5m
+// Bump when token generation policy changes so cached tokens are rotated automatically.
+const TOKEN_POLICY_VERSION = 'v2';
 
 /**
  * Get (and cache) a user-scoped token for Coder API calls.
@@ -81,7 +84,7 @@ const getOrCreateUserScopedToken = async (user, options = {}) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'Coder user not found. Prepare workspace first.');
   }
 
-  const desiredAllow = workspaceId ? `workspace:${workspaceId}` : '';
+  const desiredAllow = workspaceId ? `${TOKEN_POLICY_VERSION}|workspace:${workspaceId}` : `${TOKEN_POLICY_VERSION}|global`;
   const expiresAt = user.coder_scoped_token_expires_at ? new Date(user.coder_scoped_token_expires_at).getTime() : 0;
   const stillValid = user.coder_scoped_token && expiresAt > Date.now() + TOKEN_REFRESH_SAFETY_MS;
   const allowMatches = String(user.coder_scoped_token_allow || '') === desiredAllow;
@@ -303,17 +306,13 @@ const ensureUserExists = async (userId, username, email) => {
 const generateSessionToken = async (coderUsername, options = {}) => {
   const { workspaceId } = options;
   const allowList = workspaceId ? [`workspace:${workspaceId}`] : undefined;
-  // Scopes are still bounded by the user's permissions; allow-list further restricts resources.
-  // Keep broad-enough to operate workspaces and read templates without falling back to admin.
-  const scopeList = ['workspace:*', 'template:*'];
 
   const tokenEndpoints = [
     {
       url: `${getCoderApiBase()}/users/${coderUsername}/tokens`,
       body: {
         name: `autowrx-session-${Date.now()}`,
-        lifetime: TOKEN_LIFETIME_MS,
-        scope: scopeList,
+        lifetime: TOKEN_LIFETIME_DURATION,
         ...(allowList ? { allow: allowList } : {}),
       },
     },
@@ -322,8 +321,7 @@ const generateSessionToken = async (coderUsername, options = {}) => {
       url: `${getCoderApiBase()}/users/${coderUsername}/keys/tokens`,
       body: {
         token_name: `autowrx-session-${Date.now()}`,
-        lifetime: TOKEN_LIFETIME_MS,
-        scope: scopeList,
+        lifetime: TOKEN_LIFETIME_DURATION,
         ...(allowList ? { allow: allowList } : {}),
       },
     },
@@ -332,8 +330,7 @@ const generateSessionToken = async (coderUsername, options = {}) => {
       url: `${getCoderApiBase()}/users/${coderUsername}/keys`,
       body: {
         token_name: `autowrx-session-${Date.now()}`,
-        lifetime: TOKEN_LIFETIME_MS,
-        scope: scopeList,
+        lifetime: TOKEN_LIFETIME_DURATION,
         ...(allowList ? { allow: allowList } : {}),
       },
     },

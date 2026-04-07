@@ -599,12 +599,14 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
     workspaceStatus?.status === 'running' &&
     isWorkspaceReadyFromLogs
 
+  // Keep iframe URL in sync when the server rotates the token or app URL changes.
+  // We only set state when the built URL string actually changes so tab switches
+  // do not reload the iframe, but token refresh (idle poll / visibility) does.
   useEffect(() => {
     if (!shouldShowIframe || !workspaceInfo?.appUrl) return
-    // Lock source after first successful render to avoid reloading iframe on tab switch.
-    if (stableIframeSrc) return
-    setStableIframeSrc(buildCoderIframeSrc(workspaceInfo))
-  }, [shouldShowIframe, workspaceInfo, buildCoderIframeSrc, stableIframeSrc])
+    const nextSrc = buildCoderIframeSrc(workspaceInfo)
+    setStableIframeSrc((prev) => (prev === nextSrc ? prev : nextSrc))
+  }, [shouldShowIframe, workspaceInfo, buildCoderIframeSrc])
 
   return (
     <div
