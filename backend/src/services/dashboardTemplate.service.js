@@ -19,7 +19,7 @@ const updateById = async (id, updateBody) => {
   const doc = await getById(id);
   if (!doc) throw new ApiError(httpStatus.NOT_FOUND, 'DashboardTemplate not found');
   Object.assign(doc, updateBody);
-  await doc.save();
+  await doc.save({ validateModifiedOnly: true });
   return doc;
 };
 

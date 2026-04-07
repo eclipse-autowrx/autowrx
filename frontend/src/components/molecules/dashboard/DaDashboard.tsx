@@ -326,7 +326,7 @@ const DaDashboard = () => {
                       <TbPalette className="size-4" />
                       {activeTemplateId && templatesData?.results?.find((t) => t.id === activeTemplateId)
                         ? templatesData.results.find((t) => t.id === activeTemplateId)!.name
-                        : 'Templates'}
+                        : ''}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-64 max-h-64 overflow-y-auto">
