@@ -17,7 +17,7 @@ import {
   TbRoute,
   TbBrandVscode,
 } from 'react-icons/tb'
-import { TabConfig } from '@/components/organisms/CustomTabEditor'
+import { TabConfig, TabsBorderRadius } from '@/components/organisms/CustomTabEditor'
 import { renderTabIcon, tabItemClasses } from '@/lib/tabUtils'
 import { useSiteConfig } from '@/utils/siteConfig'
 
@@ -25,6 +25,8 @@ interface PrototypeTabsProps {
   tabs?: TabConfig[]
   /** Global visual style for all tab buttons. Defaults to 'tab' (bottom-border style). */
   tabsVariant?: string
+  /** Border radius for tab buttons. Defaults to 'medium'. */
+  tabsBorderRadius?: TabsBorderRadius
 }
 
 
@@ -96,12 +98,13 @@ export const getTabConfig = (tabs?: any[]): TabConfig[] => {
   return migrateTabConfig(tabs)
 }
 
-const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant }) => {
+const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant, tabsBorderRadius }) => {
   const { model_id, prototype_id, tab } = useParams()
   const [searchParams] = useSearchParams()
   const variant = tabsVariant || 'tab'
   // Use null sentinel while config is loading so we don't hide/redirect too early.
   const vscodeEnabled = useSiteConfig('VSCODE_ENABLE', null as any)
+  const borderRadius = tabsBorderRadius || 'round'
 
   // Get tabs with migration
   const tabConfigs = getTabConfig(tabs)
@@ -169,7 +172,7 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant }) => {
                 key={`builtin-${key}`}
                 to={route}
                 data-id={dataId}
-                className={tabItemClasses(variant, isActive)}
+                className={tabItemClasses(variant, isActive, false, borderRadius)}
               >
                 {icon}{label}
               </Link>
@@ -192,7 +195,7 @@ const PrototypeTabs: FC<PrototypeTabsProps> = ({ tabs, tabsVariant }) => {
               <Link
                 key={`custom-${plugin}-${index}`}
                 to={to}
-                className={tabItemClasses(variant, isActive)}
+                className={tabItemClasses(variant, isActive, false, borderRadius)}
               >
                 {icon}{label}
               </Link>

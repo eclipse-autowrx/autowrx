@@ -8,8 +8,21 @@
 
 import { ReactNode } from 'react'
 import DOMPurify from 'dompurify'
-import { TabConfig } from '@/components/organisms/CustomTabEditor'
+import { TabConfig, TabsBorderRadius } from '@/components/organisms/CustomTabEditor'
 import { cn } from '@/lib/utils'
+
+/** Get Tailwind border-radius class from TabsBorderRadius value */
+export const getBorderRadiusClass = (radius: TabsBorderRadius | undefined): string => {
+    switch (radius) {
+        case 'none':
+            return 'rounded-none'
+        case 'full':
+            return 'rounded-full'
+        case 'round':
+        default:
+            return 'rounded-md'
+    }
+}
 
 /** Render a tab icon: use custom SVG if present, otherwise fall back to the default icon node. */
 export const renderTabIcon = (tabConfig: TabConfig, defaultIcon: ReactNode): ReactNode => {
@@ -24,12 +37,14 @@ export const renderTabIcon = (tabConfig: TabConfig, defaultIcon: ReactNode): Rea
     return defaultIcon
 }
 
-/** Compute class names for an active/inactive/disabled tab button based on the global tabsVariant. */
-export const tabItemClasses = (variant: string | undefined, isActive: boolean, disabled?: boolean): string => {
+/** Compute class names for an active/inactive/disabled tab button based on the global tabsVariant and border radius. */
+export const tabItemClasses = (variant: string | undefined, isActive: boolean, disabled?: boolean, borderRadius?: TabsBorderRadius): string => {
+    const radiusClass = getBorderRadiusClass(borderRadius)
+
     switch (variant) {
         case 'primary':
             return cn(
-                'flex items-center self-center px-3 py-1.5 rounded-md text-sm font-semibold mx-1 cursor-pointer transition-colors',
+                `flex items-center self-center px-3 py-1.5 ${radiusClass} text-sm font-semibold mx-1 cursor-pointer transition-colors`,
                 isActive
                     ? 'bg-primary text-primary-foreground'
                     : disabled
@@ -38,7 +53,7 @@ export const tabItemClasses = (variant: string | undefined, isActive: boolean, d
             )
         case 'outline':
             return cn(
-                'flex items-center self-center px-3 py-1.5 rounded-md text-sm font-semibold mx-1 cursor-pointer border transition-colors',
+                `flex items-center self-center px-3 py-1.5 ${radiusClass} text-sm font-semibold mx-1 cursor-pointer border transition-colors`,
                 isActive
                     ? 'border-primary text-primary'
                     : disabled
@@ -47,7 +62,7 @@ export const tabItemClasses = (variant: string | undefined, isActive: boolean, d
             )
         case 'ghost':
             return cn(
-                'flex items-center self-center px-3 py-1.5 rounded-md text-sm font-semibold mx-1 cursor-pointer transition-colors',
+                `flex items-center self-center px-3 py-1.5 ${radiusClass} text-sm font-semibold mx-1 cursor-pointer transition-colors`,
                 isActive
                     ? 'bg-accent text-foreground'
                     : disabled

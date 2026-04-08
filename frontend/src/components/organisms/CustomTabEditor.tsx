@@ -77,16 +77,20 @@ export interface RightNavPluginButton {
   hidden?: boolean
 }
 
+export type TabsBorderRadius = 'none' | 'round' | 'full'
+
 interface CustomTabEditorProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   tabs: TabConfig[]
-  onSave: (updatedTabs: TabConfig[], updatedSidebarPlugin?: string | null, updatedTabsVariant?: string | null, updatedRightNavButtons?: RightNavPluginButton[] | null) => Promise<void>
+  onSave: (updatedTabs: TabConfig[], updatedSidebarPlugin?: string | null, updatedTabsVariant?: string | null, updatedRightNavButtons?: RightNavPluginButton[] | null, updatedTabsBorderRadius?: TabsBorderRadius | null) => Promise<void>
   sidebarPlugin?: string
   stagingConfig?: StagingConfig
   rightNavButtons?: RightNavPluginButton[]
   /** Global style variant for all prototype tab buttons ('tab' | 'primary' | 'outline' | 'ghost') */
   tabsVariant?: string
+  /** Border radius for tab buttons ('none' | 'small' | 'medium' | 'large' | 'full') */
+  tabsBorderRadius?: TabsBorderRadius
   title?: string
   description?: string
 }
@@ -100,17 +104,19 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
   stagingConfig,
   rightNavButtons,
   tabsVariant,
-  title = 'Manage Custom Tabs',
-  description = 'Edit, reorder, and remove custom tabs',
+  tabsBorderRadius,
+  title = 'Customize Prototype Layout',
+  description = 'Configure tabs, appearance, sidebar, and action buttons',
 }) => {
   const [localTabs, setLocalTabs] = useState<TabConfig[]>(tabs)
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const [editingLabel, setEditingLabel] = useState<string>('')
   const [editingIconSvg, setEditingIconSvg] = useState<string>('')
   const [isSaving, setIsSaving] = useState(false)
-  const [activeDialogTab, setActiveDialogTab] = useState<'tabs' | 'sidebar' | 'rightnav' | 'style'>('tabs')
+  const [activeDialogTab, setActiveDialogTab] = useState<'tabs' | 'style' | 'sidebar' | 'actions'>('tabs')
   const [localStagingConfig, setLocalStagingConfig] = useState<StagingConfig>(stagingConfig || {})
   const [localTabsVariant, setLocalTabsVariant] = useState<string>(tabsVariant || 'tab')
+  const [localTabsBorderRadius, setLocalTabsBorderRadius] = useState<TabsBorderRadius>(tabsBorderRadius || 'round')
   const [localRightNavPlugins, setLocalRightNavPlugins] = useState<RightNavPluginButton[]>(rightNavButtons || [])
   const [expandedRightNavItem, setExpandedRightNavItem] = useState<'staging' | number | null>(null)
 
@@ -127,7 +133,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
   const { data: pluginsData, isLoading: pluginsLoading } = useQuery({
     queryKey: ['plugins'],
     queryFn: () => listPlugins({ page: 1, limit: 100 }),
-    enabled: activeDialogTab === 'sidebar' || activeDialogTab === 'rightnav',
+    enabled: activeDialogTab === 'sidebar' || activeDialogTab === 'actions',
   })
 
   // Update local tabs when dialog opens or tabs change
@@ -137,6 +143,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
       setLocalSidebarPlugin(sidebarPlugin || null)
       setLocalStagingConfig(stagingConfig || {})
       setLocalTabsVariant(tabsVariant || 'tab')
+      setLocalTabsBorderRadius(tabsBorderRadius || 'round')
       setLocalRightNavPlugins(rightNavButtons || [])
       setActiveDialogTab('tabs')
       setEditingIndex(null)
@@ -148,7 +155,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
       setShowRightNavPluginPicker(false)
       setRightNavSearchTerm('')
     }
-  }, [open, tabs, sidebarPlugin, stagingConfig, tabsVariant, rightNavButtons])
+  }, [open, tabs, sidebarPlugin, stagingConfig, tabsVariant, tabsBorderRadius, rightNavButtons])
 
   // Get icon for builtin tabs
   const getBuiltinIcon = (key?: string) => {
@@ -232,6 +239,8 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
       const sidebarChanged = localSidebarPlugin !== (sidebarPlugin || null)
       // Determine if tabs variant changed
       const variantChanged = localTabsVariant !== (tabsVariant || 'tab')
+      // Determine if border radius changed
+      const borderRadiusChanged = localTabsBorderRadius !== (tabsBorderRadius || 'round')
       // Merge staging config into right nav buttons (staging is always first item)
       const mergedRightNav: RightNavPluginButton[] = [
         { builtin: 'staging' as const, ...localStagingConfig },
@@ -248,6 +257,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
         sidebarChanged ? localSidebarPlugin : undefined,
         variantChanged ? (localTabsVariant !== 'tab' ? localTabsVariant : null) : undefined,
         rightNavChanged ? (mergedRightNav.length ? mergedRightNav : null) : undefined,
+        borderRadiusChanged ? (localTabsBorderRadius !== 'round' ? localTabsBorderRadius : null) : undefined,
       )
       onOpenChange(false)
     } catch (error) {
@@ -262,6 +272,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
     setLocalSidebarPlugin(sidebarPlugin || null)
     setLocalStagingConfig(stagingConfig || {})
     setLocalTabsVariant(tabsVariant || 'tab')
+    setLocalTabsBorderRadius(tabsBorderRadius || 'round')
     setLocalRightNavPlugins(rightNavButtons || [])
     setEditingIndex(null)
     setEditingLabel('')
@@ -311,7 +322,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
               }`}
           >
             <TbPuzzle className="w-4 h-4" />
-            Prototype Tabs
+            Tab Bar
           </button>
           <button
             onClick={() => setActiveDialogTab('style')}
@@ -321,17 +332,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
               }`}
           >
             <TbEye className="w-4 h-4" />
-            Tab Style
-          </button>
-          <button
-            onClick={() => setActiveDialogTab('rightnav')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeDialogTab === 'rightnav'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-          >
-            <TbListCheck className="w-4 h-4" />
-            Right Nav
+            Appearance
           </button>
           <button
             onClick={() => setActiveDialogTab('sidebar')}
@@ -341,16 +342,26 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
               }`}
           >
             <TbLayoutSidebar className="w-4 h-4" />
-            Left Sidebar
+            Sidebar Panel
+          </button>
+          <button
+            onClick={() => setActiveDialogTab('actions')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeDialogTab === 'actions'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+          >
+            <TbListCheck className="w-4 h-4" />
+            Action Buttons
           </button>
         </div>
 
         <div className="flex flex-col gap-4 py-4 overflow-y-auto flex-1">
-          {/* Left Sidebar Plugin Tab */}
+          {/* Sidebar Panel Tab */}
           {activeDialogTab === 'sidebar' && (
             <div className="flex flex-col gap-3">
               <p className="text-sm text-muted-foreground">
-                Set a plugin to display in a resizable left sidebar, visible across all tabs. Only one plugin can be assigned.
+                Select a plugin to display in a collapsible panel on the left side of the prototype view.
               </p>
 
               {localSidebarPlugin && !showSidebarPluginPicker ? (
@@ -471,11 +482,11 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
             </div>
           )}
 
-          {/* Right Nav Tab */}
-          {activeDialogTab === 'rightnav' && (
+          {/* Action Buttons Tab */}
+          {activeDialogTab === 'actions' && (
             <div className="flex flex-col gap-3">
               <p className="text-sm text-muted-foreground">
-                Configure buttons shown in the right navigation area.
+                Configure buttons displayed on the right side of the tab bar, including the Staging button and plugin shortcuts.
               </p>
 
               <div className="flex flex-col gap-2">
@@ -565,7 +576,10 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
                       {/* Preview */}
                       <div className="flex items-center gap-3">
                         <Label className="text-xs w-20 shrink-0 text-foreground">Preview</Label>
-                        <div className="flex items-center h-10 border border-dashed border-border rounded px-4 bg-accent/20 gap-2">
+                        <div className="relative flex items-center min-h-12 border-2 border-dashed border-muted-foreground/30 rounded-lg px-4 py-3 bg-muted/50 gap-2">
+                          <span className="absolute -top-2.5 left-3 px-1.5 text-[10px] font-medium text-muted-foreground bg-background rounded">
+                            Preview
+                          </span>
                           <StagingTabButtonPreview stagingConfig={localStagingConfig} />
                         </div>
                       </div>
@@ -719,9 +733,12 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
             </div>
           )}
 
-          {/* Prototype Tabs Tab */}
+          {/* Tab Bar Tab */}
           {activeDialogTab === 'tabs' && (
             <>
+              <p className="text-sm text-muted-foreground mb-2">
+                Configure which tabs appear in the prototype tab bar, their order, labels, and visibility.
+              </p>
               {localTabs.length > 0 ? (
                 <DragDropContext onDragEnd={handleDragEnd}>
                   <Droppable droppableId="custom-tabs" renderClone={(provided, snapshot, rubric) => {
@@ -933,14 +950,14 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
             </>
           )}
 
-          {/* Tab Style Panel */}
+          {/* Appearance Tab */}
           {activeDialogTab === 'style' && (
             <div className="flex flex-col gap-5">
               <p className="text-sm text-muted-foreground">
-                Choose the visual style applied to all prototype tab buttons.
+                Choose the visual style for all tab bar buttons.
               </p>
               <div className="gap-3 grid grid-cols-[auto_1fr]">
-                <Label className="text-xs w-20 shrink-0 text-foreground mt-1">Tab Style</Label>
+                <Label className="text-xs w-20 shrink-0 text-foreground mt-1">Style</Label>
                 <div className="flex flex-col gap-3 flex-1">
                   <div className="flex flex-wrap gap-2">
                     {(['tab', 'primary', 'outline', 'ghost'] as const).map((v) => (
@@ -958,24 +975,55 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
                     ))}
                   </div>
                 </div>
+
+                {/* Border Radius */}
+                <Label className="text-xs w-20 shrink-0 text-foreground mt-1">Corners</Label>
+                <div className="flex flex-col gap-3 flex-1">
+                  <div className="flex flex-wrap gap-2">
+                    {([
+                      { value: 'none', label: 'Square' },
+                      { value: 'round', label: 'Round' },
+                      { value: 'full', label: 'Pill' },
+                    ] as const).map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setLocalTabsBorderRadius(opt.value)}
+                        className={`px-3 py-1 text-xs rounded border transition-colors ${localTabsBorderRadius === opt.value
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-background text-foreground border-border hover:bg-accent'
+                          }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Preview */}
                 <Label className="text-xs w-20 shrink-0 text-foreground mt-1">Preview</Label>
 
-                <div className="flex items-center h-10 border border-dashed border-border rounded px-3 bg-accent/20 gap-1">
+                <div className="relative flex items-center min-h-12 border-2 border-dashed border-muted-foreground/30 rounded-lg px-4 py-3 bg-muted/50 gap-1">
+                  <span className="absolute -top-2.5 left-3 px-1.5 text-[10px] font-medium text-muted-foreground bg-background rounded">
+                    Preview
+                  </span>
                   {(['Overview', 'Code', 'Plugin'] as const).map((lbl, i) => {
                     const isActive = i === 0
-                    const base = 'flex items-center text-xs font-semibold px-2.5 py-1 transition-colors'
+                    const base = 'flex items-center text-xs font-semibold px-2.5 py-1 transition-colors pointer-events-none'
+                    const radiusClass = localTabsBorderRadius === 'none' ? 'rounded-none'
+                      : localTabsBorderRadius === 'full' ? 'rounded-full'
+                      : 'rounded-md'
                     let cls = ''
                     if (localTabsVariant === 'primary') {
-                      cls = isActive ? `${base} bg-primary text-primary-foreground rounded-md` : `${base} text-muted-foreground hover:bg-accent rounded-md`
+                      cls = isActive ? `${base} bg-primary text-primary-foreground ${radiusClass}` : `${base} text-muted-foreground ${radiusClass}`
                     } else if (localTabsVariant === 'outline') {
-                      cls = isActive ? `${base} border border-primary text-primary rounded-md` : `${base} border border-transparent text-muted-foreground hover:bg-accent rounded-md`
+                      cls = isActive ? `${base} border border-primary text-primary ${radiusClass}` : `${base} border border-transparent text-muted-foreground ${radiusClass}`
                     } else if (localTabsVariant === 'ghost') {
-                      cls = isActive ? `${base} bg-accent text-foreground rounded-md` : `${base} text-muted-foreground rounded-md`
+                      cls = isActive ? `${base} bg-accent text-foreground ${radiusClass}` : `${base} text-muted-foreground ${radiusClass}`
                     } else {
                       cls = isActive ? `${base} border-b-2 border-primary text-primary h-full` : `${base} border-b-2 border-transparent text-muted-foreground h-full`
                     }
-                    return <button key={lbl} className={cls}>{lbl}</button>
+                    return <span key={lbl} className={cls}>{lbl}</span>
                   })}
                 </div>
               </div>
