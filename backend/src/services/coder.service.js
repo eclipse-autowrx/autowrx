@@ -62,7 +62,7 @@ const getHeadersWithToken = (sessionToken) => {
 };
 
 const TOKEN_LIFETIME_MS = 24 * 60 * 60 * 1000; // 24h
-const TOKEN_LIFETIME_DURATION = '24h';
+const TOKEN_LIFETIME_SECONDS = Math.floor(TOKEN_LIFETIME_MS / 1000);
 const TOKEN_REFRESH_SAFETY_MS = 5 * 60 * 1000; // refresh if expiring within 5m
 // Bump when token generation policy changes so cached tokens are rotated automatically.
 const TOKEN_POLICY_VERSION = 'v2';
@@ -76,10 +76,11 @@ const TOKEN_POLICY_VERSION = 'v2';
  * @param {import('mongoose').Document & {coder_username?: string, coder_scoped_token?: string, coder_scoped_token_expires_at?: Date, coder_scoped_token_allow?: string, save: Function}} user
  * @param {Object} [options]
  * @param {string} [options.workspaceId] - If provided, restrict token allow-list to this workspace.
+ * @param {string} [options.coderUserId] - Preferred Coder user UUID for path targeting.
  * @returns {Promise<string>} scoped token
  */
 const getOrCreateUserScopedToken = async (user, options = {}) => {
-  const { workspaceId } = options;
+  const { workspaceId, coderUserId } = options;
   if (!user?.coder_username) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Coder user not found. Prepare workspace first.');
   }
@@ -93,7 +94,7 @@ const getOrCreateUserScopedToken = async (user, options = {}) => {
     return user.coder_scoped_token;
   }
 
-  const token = await generateSessionToken(user.coder_username, { workspaceId });
+  const token = await generateSessionToken(user.coder_username, { workspaceId, coderUserId });
   if (!token) {
     throw new ApiError(httpStatus.SERVICE_UNAVAILABLE, 'Failed to generate Coder user-scoped token');
   }
@@ -301,85 +302,61 @@ const ensureUserExists = async (userId, username, email) => {
  * @param {string} coderUsername - Coder username
  * @param {Object} [options]
  * @param {string} [options.workspaceId] - Restrict token to a single workspace
+ * @param {string} [options.coderUserId] - Preferred Coder user UUID for endpoint path
  * @returns {Promise<string|null>} Session token or null if not available
  */
 const generateSessionToken = async (coderUsername, options = {}) => {
-  const { workspaceId } = options;
-  const allowList = workspaceId ? [`workspace:${workspaceId}`] : undefined;
-
-  const tokenEndpoints = [
-    {
-      url: `${getCoderApiBase()}/users/${coderUsername}/tokens`,
-      body: {
-        name: `autowrx-session-${Date.now()}`,
-        lifetime: TOKEN_LIFETIME_DURATION,
-        ...(allowList ? { allow: allowList } : {}),
-      },
-    },
-    {
-      // Backward-compatible endpoint on older/newer Coder variants.
-      url: `${getCoderApiBase()}/users/${coderUsername}/keys/tokens`,
-      body: {
-        token_name: `autowrx-session-${Date.now()}`,
-        lifetime: TOKEN_LIFETIME_DURATION,
-        ...(allowList ? { allow: allowList } : {}),
-      },
-    },
-    {
-      // Some deployments expose /keys directly for API key creation.
-      url: `${getCoderApiBase()}/users/${coderUsername}/keys`,
-      body: {
-        token_name: `autowrx-session-${Date.now()}`,
-        lifetime: TOKEN_LIFETIME_DURATION,
-        ...(allowList ? { allow: allowList } : {}),
-      },
-    },
-  ];
+  const { workspaceId, coderUserId } = options;
+  const allowList = workspaceId ? [{ type: 'workspace', id: workspaceId }] : undefined;
+  const userPathId = encodeURIComponent(coderUserId || coderUsername);
 
   try {
-    for (const endpoint of tokenEndpoints) {
-      try {
-        const response = await axios.post(endpoint.url, endpoint.body, { headers: getAdminHeaders() });
-        const token = response.data?.key || response.data?.token || response.data?.id || response.data;
-        if (!token) {
-          logger.warn(`Token creation succeeded via ${endpoint.url} but no token was returned for user: ${coderUsername}`);
-          return null;
-        }
-        logger.info(
-          `Generated user-scoped Coder session token for user: ${coderUsername} via ${endpoint.url}${workspaceId ? ` (allow: workspace:${workspaceId})` : ''}`,
-        );
-        return typeof token === 'string' ? token : JSON.stringify(token);
-      } catch (endpointError) {
-        if (endpointError.response?.status === 404) {
-          logger.warn(`Token endpoint unavailable (404): ${endpoint.url}`);
-          continue;
-        }
-        logger.warn(
-          `Token endpoint failed (${endpointError.response?.status || endpointError.code || 'unknown'}): ${endpoint.url}`,
-        );
-        continue;
-      }
+    // Coder Users API: POST /users/{user}/keys/tokens
+    const url = `${getCoderApiBase()}/users/${userPathId}/keys/tokens`;
+    const strictBody = {
+      token_name: `autowrx-session-${Date.now()}`,
+      lifetime: TOKEN_LIFETIME_SECONDS,
+      scope: 'all',
+      scopes: ['all'],
+      ...(allowList ? { allow_list: allowList } : {}),
+    };
+
+    let response;
+    try {
+      response = await axios.post(url, strictBody, { headers: getAdminHeaders() });
+    } catch (strictError) {
+      logger.warn(
+        `Strict token payload failed for ${coderUsername} (${strictError.response?.status || strictError.code || 'unknown'}), retrying minimal payload`,
+      );
+      const minimalBody = {
+        token_name: `autowrx-session-${Date.now()}`,
+        scope: 'all',
+      };
+      response = await axios.post(url, minimalBody, { headers: getAdminHeaders() });
     }
 
-    logger.warn(`No supported token endpoint is available for user: ${coderUsername}`);
-    return null;
+    const token = response.data?.key;
+    if (!token) {
+      logger.warn(`Token creation succeeded via ${url} but no token was returned for user: ${coderUsername}`);
+      return null;
+    }
+
+    logger.info(
+      `Generated user-scoped Coder session token for user: ${coderUsername} via ${url}${workspaceId ? ` (allow: workspace:${workspaceId})` : ''}`,
+    );
+    return token;
   } catch (error) {
     logger.error(`Failed to generate Coder session token: ${error.message}`);
     if (error.response) {
       logger.error(`Token creation error - Status: ${error.response.status}`);
       logger.error(`Error details: ${JSON.stringify(error.response.data)}`);
-
-      // For other errors, log but don't fail - token is optional
-      if (error.response.status >= 500) {
-        logger.warn(`Token generation failed but continuing without token`);
-        return null;
-      }
+      throw new ApiError(
+        error.response.status || httpStatus.BAD_GATEWAY,
+        `Coder token API failed: ${error.response.data?.message || error.message || JSON.stringify(error.response.data)}`,
+      );
     }
 
-    // For non-404 errors, return null instead of throwing
-    // The workspace URL can still be used without authentication
-    logger.warn(`Token generation unavailable, continuing without token`);
-    return null;
+    throw new ApiError(httpStatus.BAD_GATEWAY, `Coder token API failed: ${error.message}`);
   }
 };
 

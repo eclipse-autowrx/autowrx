@@ -17,55 +17,20 @@ import {
 } from 'react'
 import { Spinner } from '@/components/atoms/spinner'
 import { retry } from '@/lib/retry'
-import {
-  getWorkspaceUrl,
-  prepareWorkspace,
-  getWorkspaceStatus,
-  getWorkspaceLogs,
-  WorkspaceInfo,
-  WorkspaceStatus,
-  WorkspaceAgentLog,
-} from '@/services/coder.service'
-import CoderWorkspaceStatus from '@/components/molecules/CoderWorkspaceStatus'
 import { useParams } from 'react-router-dom'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { PERMISSIONS } from '@/data/permission'
+import { prepareWorkspace, WorkspaceInfo } from '@/services/coder.service'
 import useModelStore from '@/stores/modelStore'
+import useAuthStore from '@/stores/authStore'
 import { Prototype } from '@/types/model.type'
 import { shallow } from 'zustand/shallow'
-import useCoderWorkspaceStore from '@/stores/coderWorkspaceStore'
+import config from '@/configs/config'
 
 const PrototypeTabCodeApiPanel = lazy(() =>
   retry(() => import('./PrototypeTabCodeApiPanel')),
 )
-
-/** Poll interval while waiting for workspace / logs (was 3s; faster feedback for tab open). */
-const WORKSPACE_POLL_INTERVAL_MS = 1000
-
-/** Background refresh when workspace already shown (lighter load on API). */
-const WORKSPACE_POLL_INTERVAL_IDLE_MS = 5000
-
-/**
- * Re-fetch workspace URL/token on this interval while the iframe is shown (idle poll).
- * Backend only rotates the Coder token when the API is called near expiry; without this,
- * the iframe keeps stale query-param tokens and Coder returns 401 ("session expired").
- *
- * Coder's in-iframe browser session can expire sooner than the API token TTL.
- * We refresh credentials periodically and let iframe reload only when src changes.
- */
-const CREDENTIAL_REFRESH_INTERVAL_MS = 5 * 60 * 1000
-
-/** Merge server workspace payload with prior state so we keep folderPath / appUrl if the API omits them. */
-const mergeWorkspaceInfo = (
-  prev: WorkspaceInfo | null | undefined,
-  next: WorkspaceInfo,
-): WorkspaceInfo => ({
-  ...next,
-  folderPath: next.folderPath ?? prev?.folderPath ?? null,
-  appUrl: next.appUrl || prev?.appUrl || '',
-  sessionToken: next.sessionToken ?? prev?.sessionToken ?? null,
-})
 
 interface PrototypeTabVSCodeProps {
   isActive?: boolean
@@ -81,51 +46,12 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
   )
   const { data: model } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
-  const cachedEntry = useCoderWorkspaceStore((state) =>
-    prototype_id ? state.byPrototypeId[prototype_id] : undefined,
-  )
-  const upsertCacheEntry = useCoderWorkspaceStore((state) => state.upsertEntry)
-
-  // Coder workspace state
-  const [workspaceInfo, setWorkspaceInfo] = useState<WorkspaceInfo | null>(null)
-  const [workspaceStatus, setWorkspaceStatus] =
-    useState<WorkspaceStatus | null>(null)
-  const [workspaceLogs, setWorkspaceLogs] = useState<WorkspaceAgentLog[]>([])
-  const [isWorkspaceReadyFromLogs, setIsWorkspaceReadyFromLogs] =
-    useState(false)
-  const [workspaceError, setWorkspaceError] = useState<string | null>(null)
-  const [isLoadingWorkspace, setIsLoadingWorkspace] = useState(true)
-  // Keep iframe src stable across tab switches to prevent reload flicker.
-  const [stableIframeSrc, setStableIframeSrc] = useState<string | null>(null)
-  const workspacePollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+  const accessToken = useAuthStore((state) => state.access?.token)
+  const [prepareResponse, setPrepareResponse] = useState<WorkspaceInfo | null>(
     null,
   )
-  const lastLogIdRef = useRef<number | null>(null)
-  const workspaceInfoRef = useRef<WorkspaceInfo | null>(null)
-  const workspaceLogsRef = useRef<WorkspaceAgentLog[]>([])
-  const pollCancelledRef = useRef(false)
-  /** Bumps on every effect run so in-flight prepare/poll logic from a previous run is ignored. */
-  const loadEffectEpochRef = useRef(0)
-  /** When cache hydrate could not refresh credentials, idle poll should retry getWorkspaceUrl. */
-  const workspaceCredentialsNeedRetryRef = useRef(false)
-  /** Last successful getWorkspaceUrl for iframe auth; scoped by prototype so tab switches do not mix TTL. */
-  const credentialRefreshMetaRef = useRef<{
-    prototypeId: string
-    at: number
-  } | null>(null)
-
-  useEffect(() => {
-    workspaceInfoRef.current = workspaceInfo
-  }, [workspaceInfo])
-
-  useEffect(() => {
-    workspaceLogsRef.current = workspaceLogs
-  }, [workspaceLogs])
-
-  // New prototype/workspace route => allow a new iframe source to be established.
-  useEffect(() => {
-    setStableIframeSrc(null)
-  }, [prototype_id])
+  const [watchEvents, setWatchEvents] = useState<any[]>([])
+  const [logEvents, setLogEvents] = useState<any[]>([])
 
   // Resize state
   const [rightPanelWidth, setRightPanelWidth] = useState<number | null>(null) // Will be calculated based on container
@@ -135,22 +61,151 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
   const containerRef = useRef<HTMLDivElement>(null)
   const startXRef = useRef(0)
   const startWidthRef = useRef(0)
-  const iframeRef = useRef<HTMLIFrameElement>(null)
+  const watchSocketRef = useRef<WebSocket | null>(null)
+  const logsSocketRef = useRef<WebSocket | null>(null)
+  const workspaceAgentIdRef = useRef<string | null>(null)
 
-  const buildCoderIframeSrc = useCallback((info: WorkspaceInfo) => {
-    const url = new URL(info.appUrl)
-    const folder = info.folderPath || '/home/coder/prototypes'
-    url.searchParams.set('folder', folder)
+  // Step 1: prepare Coder workspace for this prototype (no polling/cache).
+  useEffect(() => {
+    if (!isActive) return
+    if (!prototype_id || !isAuthorized || !accessToken) return
 
-    // When Coder is embedded in an iframe, reusing browser cookies is brittle.
-    // Attach the per-user token so the iframe can authenticate directly.
-    if (info.sessionToken) {
-      url.searchParams.set('token', info.sessionToken)
-      url.searchParams.set('coder_session_token', info.sessionToken)
+    let cancelled = false
+    let logsWsOpened = false
+
+    const closeSockets = () => {
+      if (watchSocketRef.current) {
+        watchSocketRef.current.close()
+        watchSocketRef.current = null
+      }
+      if (logsSocketRef.current) {
+        logsSocketRef.current.close()
+        logsSocketRef.current = null
+      }
     }
 
-    return url.toString()
-  }, [])
+    const toWsBase = (baseUrl: string) => {
+      if (baseUrl.startsWith('https://')) return baseUrl.replace('https://', 'wss://')
+      if (baseUrl.startsWith('http://')) return baseUrl.replace('http://', 'ws://')
+      return `${window.location.protocol === 'https:' ? 'wss://' : 'ws://'}${window.location.host}`
+    }
+
+    const appendEvent = (setter: React.Dispatch<React.SetStateAction<any[]>>, event: any) => {
+      setter((prev) => {
+        const next = [...prev, event]
+        return next.length > 200 ? next.slice(next.length - 200) : next
+      })
+    }
+
+    const extractAgentId = (value: any): string | null => {
+      if (!value || typeof value !== 'object') return null
+      if (typeof value.id === 'string' && value.id.length > 10) {
+        if (Array.isArray(value.apps) || typeof value.api_version === 'string') {
+          return value.id
+        }
+      }
+      for (const key of Object.keys(value)) {
+        const nested = extractAgentId((value as Record<string, any>)[key])
+        if (nested) return nested
+      }
+      return null
+    }
+
+    const openLogsWs = (workspaceAgentId: string) => {
+      if (logsWsOpened) return
+      logsWsOpened = true
+      workspaceAgentIdRef.current = workspaceAgentId
+
+      const wsBase = toWsBase(config.serverBaseUrl)
+      const logsUrl = `${wsBase}/${config.serverVersion}/system/coder/workspaceagents/${workspaceAgentId}/logs?access_token=${encodeURIComponent(accessToken)}&follow=true&format=json`
+      const logsWs = new WebSocket(logsUrl)
+      logsSocketRef.current = logsWs
+
+      logsWs.onopen = () => {
+        appendEvent(setLogEvents, { type: 'socket', event: 'open' })
+      }
+
+      logsWs.onmessage = (event) => {
+        try {
+          const parsed = JSON.parse(String(event.data))
+          appendEvent(setLogEvents, parsed)
+        } catch {
+          appendEvent(setLogEvents, { raw: String(event.data) })
+        }
+      }
+
+      logsWs.onerror = () => {
+        appendEvent(setLogEvents, { type: 'socket', event: 'error' })
+      }
+
+      logsWs.onclose = (event) => {
+        appendEvent(setLogEvents, {
+          type: 'socket',
+          event: 'close',
+          code: event.code,
+          reason: event.reason,
+        })
+      }
+    }
+
+    const run = async () => {
+      try {
+        setWatchEvents([])
+        setLogEvents([])
+        workspaceAgentIdRef.current = null
+
+        const response = await prepareWorkspace(prototype_id)
+        if (cancelled) return
+        setPrepareResponse(response)
+
+        const wsBase = toWsBase(config.serverBaseUrl)
+        const watchUrl = `${wsBase}/${config.serverVersion}/system/coder/workspace/${prototype_id}/watch-ws?access_token=${encodeURIComponent(accessToken)}`
+        const watchWs = new WebSocket(watchUrl)
+        watchSocketRef.current = watchWs
+
+        watchWs.onopen = () => {
+          appendEvent(setWatchEvents, { type: 'socket', event: 'open' })
+        }
+
+        watchWs.onmessage = (event) => {
+          try {
+            const parsed = JSON.parse(String(event.data))
+            appendEvent(setWatchEvents, parsed)
+            const maybeAgentId = extractAgentId(parsed)
+            if (maybeAgentId) {
+              openLogsWs(maybeAgentId)
+            }
+          } catch {
+            const raw = String(event.data)
+            appendEvent(setWatchEvents, { raw })
+          }
+        }
+
+        watchWs.onerror = () => {
+          appendEvent(setWatchEvents, { type: 'socket', event: 'error' })
+        }
+
+        watchWs.onclose = (event) => {
+          appendEvent(setWatchEvents, {
+            type: 'socket',
+            event: 'close',
+            code: event.code,
+            reason: event.reason,
+          })
+        }
+      } catch {
+        if (cancelled) return
+        setPrepareResponse(null)
+      }
+    }
+
+    void run()
+
+    return () => {
+      cancelled = true
+      closeSockets()
+    }
+  }, [prototype_id, isActive, isAuthorized, accessToken])
 
   // Calculate initial width based on container size with 6:4 ratio (60% editor, 40% API panel)
   // Guard against hidden/inactive tabs where measured width can be 0.
@@ -173,364 +228,6 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
       window.removeEventListener('resize', calculateInitialWidth)
     }
   }, [isActive])
-
-  // Poll workspace status + logs until logs indicate readiness
-  const startWorkspacePolling = useCallback(
-    (prototypeId: string, options?: { idle?: boolean }) => {
-      const pollIntervalMs = options?.idle
-        ? WORKSPACE_POLL_INTERVAL_IDLE_MS
-        : WORKSPACE_POLL_INTERVAL_MS
-
-      if (workspacePollIntervalRef.current) {
-        clearInterval(workspacePollIntervalRef.current)
-        workspacePollIntervalRef.current = null
-      }
-
-      let pollInFlight = false
-      const isIdlePoll = !!options?.idle
-      const runPoll = async () => {
-        if (pollCancelledRef.current || pollInFlight) return
-        pollInFlight = true
-        try {
-          const status = await getWorkspaceStatus(prototypeId)
-          if (pollCancelledRef.current) return
-          setWorkspaceStatus(status)
-
-          let readyFromLogs = false
-          if (status.exists) {
-            try {
-              const logs = await getWorkspaceLogs(prototypeId, {
-                after: lastLogIdRef.current ?? undefined,
-                format: 'json',
-              })
-
-              let merged: WorkspaceAgentLog[] = workspaceLogsRef.current
-              if (Array.isArray(logs) && logs.length > 0) {
-                const typedLogs = logs as WorkspaceAgentLog[]
-                merged =
-                  lastLogIdRef.current == null
-                    ? typedLogs
-                    : [...workspaceLogsRef.current, ...typedLogs]
-                if (merged.length > 0) {
-                  lastLogIdRef.current =
-                    merged[merged.length - 1]?.id ?? lastLogIdRef.current
-                }
-                setWorkspaceLogs(merged)
-                workspaceLogsRef.current = merged
-              }
-
-              readyFromLogs = merged.some(
-                (log) =>
-                  typeof log.output === 'string' &&
-                  log.output.includes('Setup complete.'),
-              )
-              if (readyFromLogs) {
-                setIsWorkspaceReadyFromLogs(true)
-              }
-            } catch {
-              // Ignore log fetching errors, keep polling status/timings
-            }
-          }
-
-          if (status.exists && status.status !== 'failed') {
-            setWorkspaceError((prev) => (prev ? null : prev))
-          }
-
-          const ready = status.status === 'running' && readyFromLogs
-
-          if (ready) {
-            try {
-              const refInfo = workspaceInfoRef.current
-              const meta = credentialRefreshMetaRef.current
-              const credentialsIdleStale =
-                isIdlePoll &&
-                meta?.prototypeId === prototypeId &&
-                Date.now() - meta.at >= CREDENTIAL_REFRESH_INTERVAL_MS
-              const needsCredentialRefresh =
-                !isIdlePoll ||
-                !refInfo?.appUrl ||
-                !refInfo?.sessionToken ||
-                workspaceCredentialsNeedRetryRef.current ||
-                credentialsIdleStale
-              // Hot poll: always fetch so sessionToken matches server (fixes stale cached tokens).
-              // Idle poll: refresh periodically so Coder tokens are rotated before expiry (avoids 401 in iframe).
-              if (needsCredentialRefresh) {
-                const fresh = await getWorkspaceUrl(prototypeId)
-                if (pollCancelledRef.current) return
-                workspaceCredentialsNeedRetryRef.current = false
-                credentialRefreshMetaRef.current = {
-                  prototypeId,
-                  at: Date.now(),
-                }
-                const merged = mergeWorkspaceInfo(workspaceInfoRef.current, fresh)
-                workspaceInfoRef.current = merged
-                setWorkspaceInfo(merged)
-                // keep iframe stable unless URL/token truly changes
-              }
-              setIsLoadingWorkspace(false)
-              setWorkspaceError(null)
-              // Stop the fast poll only; keep (or start) idle polling for status/logs + token rotation.
-              if (!isIdlePoll) {
-                if (workspacePollIntervalRef.current) {
-                  clearInterval(workspacePollIntervalRef.current)
-                  workspacePollIntervalRef.current = null
-                }
-                startWorkspacePolling(prototypeId, { idle: true })
-              }
-            } catch {
-              // If URL resolution fails, keep polling; iframe won't render until appUrl is set
-            }
-          } else if (status.status === 'failed') {
-            console.error('[PrototypeTabVSCode] Workspace failed to start')
-            setWorkspaceError('Workspace failed to start. Please try again.')
-            setIsLoadingWorkspace(false)
-            if (workspacePollIntervalRef.current) {
-              clearInterval(workspacePollIntervalRef.current)
-              workspacePollIntervalRef.current = null
-            }
-          } else if (status.status === 'canceled') {
-            setWorkspaceError('Workspace creation was canceled')
-            setIsLoadingWorkspace(false)
-            if (workspacePollIntervalRef.current) {
-              clearInterval(workspacePollIntervalRef.current)
-              workspacePollIntervalRef.current = null
-            }
-          }
-        } catch (error: any) {
-          if (error.response?.status === 404) {
-            console.error('[PrototypeTabVSCode] Workspace not found during poll')
-            setWorkspaceError('Workspace not found')
-            setIsLoadingWorkspace(false)
-            if (workspacePollIntervalRef.current) {
-              clearInterval(workspacePollIntervalRef.current)
-              workspacePollIntervalRef.current = null
-            }
-          }
-        } finally {
-          pollInFlight = false
-        }
-      }
-
-      void runPoll()
-      workspacePollIntervalRef.current = setInterval(
-        () => void runPoll(),
-        pollIntervalMs,
-      )
-    },
-    [],
-  )
-
-  // Load Coder workspace
-  useEffect(() => {
-    const epoch = ++loadEffectEpochRef.current
-
-    if (!prototype_id) {
-      setIsLoadingWorkspace(false)
-      setWorkspaceError('Prototype ID is required')
-      return
-    }
-
-    if (!isActive) {
-      // Keep state for instant resume, but stop background polling when tab is hidden
-      pollCancelledRef.current = true
-      if (workspacePollIntervalRef.current) {
-        clearInterval(workspacePollIntervalRef.current)
-        workspacePollIntervalRef.current = null
-      }
-      setIsLoadingWorkspace(false)
-      return
-    }
-
-    if (!isAuthorized) {
-      setIsLoadingWorkspace(false)
-      setWorkspaceError('You do not have permission to access this workspace')
-      return
-    }
-
-    pollCancelledRef.current = false
-
-    const loadWorkspace = async () => {
-      try {
-        const canUseCache =
-          !!cachedEntry?.workspaceInfo?.appUrl &&
-          cachedEntry?.workspaceStatus?.status === 'running' &&
-          cachedEntry?.isWorkspaceReadyFromLogs
-
-        if (canUseCache) {
-          if (epoch !== loadEffectEpochRef.current) return
-
-          setWorkspaceStatus(cachedEntry.workspaceStatus)
-          const cachedLogs = cachedEntry.workspaceLogs || []
-          setWorkspaceLogs(cachedLogs)
-          workspaceLogsRef.current = cachedLogs
-          setIsWorkspaceReadyFromLogs(true)
-          setWorkspaceError(null)
-          lastLogIdRef.current = cachedEntry.workspaceLogs?.at(-1)?.id ?? null
-
-          // Keep iframe visible while refreshing credentials in background.
-          setIsLoadingWorkspace(false)
-          const cachedInfo = cachedEntry.workspaceInfo
-          const refreshMeta = credentialRefreshMetaRef.current
-          const shouldRefreshCachedCredentials =
-            !cachedInfo?.appUrl ||
-            !cachedInfo?.sessionToken ||
-            workspaceCredentialsNeedRetryRef.current ||
-            refreshMeta?.prototypeId !== prototype_id ||
-            !refreshMeta?.at ||
-            Date.now() - refreshMeta.at >= CREDENTIAL_REFRESH_INTERVAL_MS
-
-          if (shouldRefreshCachedCredentials) {
-            try {
-              const fresh = await getWorkspaceUrl(prototype_id)
-              if (epoch !== loadEffectEpochRef.current) return
-              if (pollCancelledRef.current) return
-              workspaceCredentialsNeedRetryRef.current = false
-              credentialRefreshMetaRef.current = {
-                prototypeId: prototype_id,
-                at: Date.now(),
-              }
-              const merged = mergeWorkspaceInfo(cachedInfo, fresh)
-              workspaceInfoRef.current = merged
-              setWorkspaceInfo(merged)
-            } catch (refreshErr) {
-              console.warn(
-                '[PrototypeTabVSCode] Token/workspace refresh failed, using cache:',
-                refreshErr,
-              )
-              if (epoch !== loadEffectEpochRef.current) return
-              workspaceCredentialsNeedRetryRef.current = true
-              setWorkspaceInfo(cachedInfo)
-              workspaceInfoRef.current = cachedInfo
-            }
-          } else {
-            // Avoid rotating session token on every tab switch; keep iframe src stable.
-            setWorkspaceInfo(cachedInfo)
-            workspaceInfoRef.current = cachedInfo
-          }
-
-          // Keep polling in background to refresh status/logs silently (lighter interval)
-          startWorkspacePolling(prototype_id, { idle: true })
-          return
-        }
-
-        workspaceCredentialsNeedRetryRef.current = false
-        setIsLoadingWorkspace(true)
-        setWorkspaceError(null)
-        setWorkspaceLogs([])
-        workspaceLogsRef.current = []
-        setIsWorkspaceReadyFromLogs(false)
-        lastLogIdRef.current = null
-
-        // Always prepare workspace first (idempotent: creates folder, seeds code, reuses existing workspace)
-        try {
-          const prepared = await prepareWorkspace(prototype_id)
-          if (epoch !== loadEffectEpochRef.current) return
-          setWorkspaceStatus({
-            exists: true,
-            workspaceId: prepared.workspaceId,
-            status: prepared.status,
-          })
-          const prevInfo = workspaceInfoRef.current
-          const preparedInfo: WorkspaceInfo = {
-            workspaceId: prepared.workspaceId,
-            workspaceName: prepared.workspaceName,
-            status: prepared.status,
-            repoUrl: prepared.repoUrl ?? null,
-            folderPath: prepared.folderPath ?? prevInfo?.folderPath,
-            sessionToken: prepared.sessionToken ?? prevInfo?.sessionToken,
-            appUrl: prepared.appUrl || prevInfo?.appUrl || '',
-          }
-          workspaceInfoRef.current = preparedInfo
-          setWorkspaceInfo(preparedInfo)
-        } catch (prepareError: any) {
-          if (prepareError.response?.status !== 409) {
-            console.error(
-              '[PrototypeTabVSCode] Failed to prepare workspace:',
-              prepareError,
-            )
-            setWorkspaceError(
-              prepareError.message || 'Failed to prepare workspace',
-            )
-            setIsLoadingWorkspace(false)
-            return
-          }
-        }
-
-        if (epoch !== loadEffectEpochRef.current) return
-
-        // Start polling for workspace readiness (immediate first poll + 1s cadence)
-        startWorkspacePolling(prototype_id)
-      } catch (error: any) {
-        if (epoch !== loadEffectEpochRef.current) return
-        console.error('[PrototypeTabVSCode] Failed to load workspace:', error)
-        setWorkspaceError(error.message || 'Failed to load workspace')
-        setIsLoadingWorkspace(false)
-      }
-    }
-
-    loadWorkspace()
-
-    return () => {
-      pollCancelledRef.current = true
-      if (workspacePollIntervalRef.current) {
-        clearInterval(workspacePollIntervalRef.current)
-        workspacePollIntervalRef.current = null
-      }
-    }
-  }, [
-    prototype_id,
-    isAuthorized,
-    isActive,
-    startWorkspacePolling,
-    // cachedEntry omitted on purpose: updates would re-run prepare; effect run already sees latest store snapshot.
-  ])
-
-  // Persist workspace state across tab switches (route unmount/remount)
-  useEffect(() => {
-    if (!prototype_id) return
-    upsertCacheEntry(prototype_id, {
-      workspaceInfo,
-      workspaceStatus,
-      workspaceLogs,
-      isWorkspaceReadyFromLogs,
-    })
-  }, [
-    prototype_id,
-    workspaceInfo,
-    workspaceStatus,
-    workspaceLogs,
-    isWorkspaceReadyFromLogs,
-    upsertCacheEntry,
-  ])
-
-  // Coder iframe sessions can expire while our backend token is still valid; refresh + remount when the user returns to the tab.
-  useEffect(() => {
-    if (!prototype_id || !isAuthorized || !isActive) return
-
-    const onVisibility = () => {
-      if (document.visibilityState !== 'visible') return
-      if (!workspaceInfoRef.current?.appUrl) return
-
-      void (async () => {
-        try {
-          const fresh = await getWorkspaceUrl(prototype_id)
-          if (pollCancelledRef.current) return
-          credentialRefreshMetaRef.current = {
-            prototypeId: prototype_id,
-            at: Date.now(),
-          }
-          const merged = mergeWorkspaceInfo(workspaceInfoRef.current, fresh)
-          workspaceInfoRef.current = merged
-          setWorkspaceInfo(merged)
-        } catch {
-          // ignore — idle poll will retry
-        }
-      })()
-    }
-
-    document.addEventListener('visibilitychange', onVisibility)
-    return () => document.removeEventListener('visibilitychange', onVisibility)
-  }, [prototype_id, isAuthorized, isActive])
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
@@ -607,56 +304,30 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
     setIsResizing(false)
   }, [isApiPanelCollapsed])
 
-  // Always render the component, even if prototype isn't loaded yet
-  // The workspace loading depends on prototype_id from URL, not prototype from store
-  const shouldShowIframe =
-    !isLoadingWorkspace &&
-    !!workspaceInfo?.appUrl &&
-    workspaceStatus?.status === 'running' &&
-    isWorkspaceReadyFromLogs
-
-  // Keep iframe URL in sync when the server rotates the token or app URL changes.
-  // We only set state when the built URL string actually changes so tab switches
-  // do not reload the iframe, but token refresh (idle poll / visibility) does.
-  useEffect(() => {
-    if (!shouldShowIframe || !workspaceInfo?.appUrl) return
-    const nextSrc = buildCoderIframeSrc(workspaceInfo)
-    setStableIframeSrc((prev) => (prev === nextSrc ? prev : nextSrc))
-  }, [shouldShowIframe, workspaceInfo, buildCoderIframeSrc])
-
   return (
     <div
       ref={containerRef}
       className="flex h-[calc(100%-0px)] w-full p-2 bg-gray-100"
     >
-      <div
-        className="flex h-full flex-1 min-w-0 flex-col border-r bg-white rounded-md"
-        style={{ marginRight: '0px' }}
-      >
-        {!shouldShowIframe ? (
-          <CoderWorkspaceStatus
-            status={workspaceStatus || { exists: false, status: 'not_created' }}
-            error={workspaceError}
-            logs={workspaceLogs}
-          />
-        ) : workspaceInfo?.appUrl ? (
-          <>
-            <iframe
-              ref={iframeRef}
-              key={stableIframeSrc || buildCoderIframeSrc(workspaceInfo)}
-              src={stableIframeSrc || buildCoderIframeSrc(workspaceInfo)}
-              className="w-full h-full border-0"
-              style={{ pointerEvents: isResizing ? 'none' : 'auto' }}
-              allow="clipboard-read; clipboard-write;"
-              title="Coder Workspace"
-            />
-          </>
-        ) : (
-          <CoderWorkspaceStatus
-            status={workspaceStatus || { exists: false, status: 'not_created' }}
-            error="Workspace URL not available"
-          />
-        )}
+      <div className="flex h-full flex-1 min-w-0 flex-col border-r bg-white rounded-md p-3">
+        <div className="text-xs font-semibold text-gray-700 mb-2">
+          Prepare response
+        </div>
+        <pre className="text-xs text-gray-700 whitespace-pre-wrap break-words mb-3">
+          {JSON.stringify(prepareResponse, null, 2)}
+        </pre>
+        <div className="text-xs font-semibold text-gray-700 mb-2">
+          watch-ws events
+        </div>
+        <pre className="text-xs text-gray-700 whitespace-pre-wrap break-words mb-3">
+          {JSON.stringify(watchEvents, null, 2)}
+        </pre>
+        <div className="text-xs font-semibold text-gray-700 mb-2">
+          logs-ws events
+        </div>
+        <pre className="text-xs text-gray-700 whitespace-pre-wrap break-words">
+          {JSON.stringify(logEvents, null, 2)}
+        </pre>
       </div>
       {!isApiPanelCollapsed && (
         // Resize handle (hide while collapsed to avoid weird interactions).
@@ -669,8 +340,9 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
         >
           <div className="w-full h-full flex items-center justify-center">
             <div
-              className={`w-0.5 h-8 bg-gray-400 transition-opacity ${isResizing ? 'opacity-100' : 'opacity-0 hover:opacity-60'
-                }`}
+              className={`w-0.5 h-8 bg-gray-400 transition-opacity ${
+                isResizing ? 'opacity-100' : 'opacity-0 hover:opacity-60'
+              }`}
             />
           </div>
         </div>
@@ -695,7 +367,6 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
           <PrototypeTabCodeApiPanel
             code={prototype?.code || ''}
             onCollapsedChange={setIsApiPanelCollapsed}
-            enableWorkspacePolling={isActive}
           />
         </Suspense>
       </div>

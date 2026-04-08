@@ -203,68 +203,59 @@ const seedPrototypeFiles = (folderPath, prototype, uid, gid) => {
  */
 const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
   try {
-    // 1. Get prototype and model data
-    const prototype = await Prototype.findById(prototypeId).populate('model_id');
-    if (!prototype) {
-      throw new ApiError(httpStatus.NOT_FOUND, 'Prototype not found');
-    }
+    // 1. Fetch data concurrently to save time
+    const [prototype, user, coderCfg] = await Promise.all([
+      Prototype.findById(prototypeId).populate('model_id'),
+      User.findById(userId),
+      coderConfig.getCoderConfig({ forceRefresh: true }),
+    ]);
 
-    const model = await Model.findById(prototype.model_id);
-    if (!model) {
-      throw new ApiError(httpStatus.NOT_FOUND, 'Model not found');
-    }
+    // Validation Guard Clauses
+    if (!prototype) throw new ApiError(httpStatus.NOT_FOUND, 'Prototype not found');
+    if (!prototype.model_id) throw new ApiError(httpStatus.NOT_FOUND, 'Model not found');
+    if (!user) throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+    if (!coderCfg.enabled) throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
 
-    const user = await User.findById(userId);
-    if (!user) {
-      throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
-    }
-
-    // Coder integration settings (stored in DB, not in .env)
-    const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
-    if (!coderCfg.enabled) {
-      throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
-    }
-    const prototypesPath = coderCfg.prototypesPath;
-
-    // 2. Ensure Coder user exists
-    const normalizedUserId = normalizeIdForName(userId);
-    const coderUsername = user.coder_username || `user-${normalizedUserId || Date.now().toString(36)}`;
+    // 2. Normalize Coder User
     if (!user.coder_username) {
-      user.coder_username = coderUsername;
+      const normalizedId = normalizeIdForName(userId);
+      user.coder_username = `user-${normalizedId || Date.now().toString(36)}`;
       await user.save();
     }
 
-    const coderUser = await coderService.ensureUserExists(userId, coderUsername, user.email);
-    // Mint (or reuse) a user-scoped token. Admin key is only used inside this helper.
-    // Use an unrestricted token first (needed before workspaceId exists).
-    const userScopedToken = await coderService.getOrCreateUserScopedToken(user);
+    const coderUser = await coderService.ensureUserExists(userId, user.coder_username, user.email);
 
-    // 3. Prepare prototype folder on host (per-user dir, prototype name as subfolder)
-    const userHostPath = path.join(prototypesPath, userId.toString());
+    // Get initial token (unrestricted)
+    const userScopedToken = await coderService.getOrCreateUserScopedToken(user, {
+      coderUserId: coderUser.id,
+    });
+
+    // 3. Setup Filesystem
     const prototypeFolderName = sanitizePrototypeFolderName(prototype.name);
+    const userHostPath = path.join(coderCfg.prototypesPath, userId.toString());
     const prototypeFolderHost = path.join(userHostPath, prototypeFolderName);
 
     try {
       fs.mkdirSync(prototypeFolderHost, { recursive: true });
       setOwnershipAndPermissionsRecursive(userHostPath, PROTOTYPES_LINUX_UID, PROTOTYPES_LINUX_GID);
-      logger.info(`Ensured prototype folder exists: ${prototypeFolderHost}`);
-    } catch (mkdirErr) {
-      logger.warn(`Could not create prototype folder ${prototypeFolderHost}: ${mkdirErr.message}`);
+
+      // Seed files and re-apply permissions
+      seedPrototypeFiles(prototypeFolderHost, prototype, PROTOTYPES_LINUX_UID, PROTOTYPES_LINUX_GID);
+      setOwnershipAndPermissionsRecursive(prototypeFolderHost, PROTOTYPES_LINUX_UID, PROTOTYPES_LINUX_GID);
+    } catch (fsErr) {
+      logger.warn(`Filesystem prep warning for ${prototypeFolderHost}: ${fsErr.message}`);
     }
 
-    // 4. Seed initial code files (only if folder is empty)
-    seedPrototypeFiles(prototypeFolderHost, prototype, PROTOTYPES_LINUX_UID, PROTOTYPES_LINUX_GID);
-    setOwnershipAndPermissionsRecursive(prototypeFolderHost, PROTOTYPES_LINUX_UID, PROTOTYPES_LINUX_GID);
-
-    // 5. Get or create ONE workspace per user (reuse across prototypes)
+    // 4. Handle Workspace (Reuse or Create)
     const workspaceName = coderService.sanitizeWorkspaceName(userId);
-    const templateId = await coderService.getTemplateId('docker-template');
+    let workspace = null;
 
-    let workspace = user.coder_workspace_id
-      ? await coderService.getWorkspaceStatus(user.coder_workspace_id, userScopedToken).catch(() => null)
-      : null;
+    if (user.coder_workspace_id) {
+      workspace = await coderService.getWorkspaceStatus(user.coder_workspace_id, userScopedToken).catch(() => null);
+    }
 
     if (!workspace) {
+      const templateId = await coderService.getTemplateId('docker-template');
       workspace = await coderService.getOrCreateWorkspace(
         coderUser.id,
         workspaceName,
@@ -280,59 +271,31 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
       await user.save();
     }
 
-    // Now that we have a workspace, mint (or reuse) an allow-listed token restricted to this workspace.
-    const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, { workspaceId: workspace.id });
+    // 5. Secure Session (Workspace-scoped token)
+    const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, {
+      workspaceId: workspace.id,
+      coderUserId: coderUser.id,
+    });
 
-    // 6. Start workspace if stopped
-    const currentStatus = workspace.latest_build?.status;
-    if (currentStatus !== 'running') {
-      const updatedWorkspace = await coderService.startWorkspace(workspace.id, workspaceScopedToken);
-      workspace = updatedWorkspace;
-
-      if (workspace.latest_build?.status === 'starting') {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-      }
+    // 6. Ensure Workspace is running
+    let status = workspace.latest_build?.status;
+    if (status !== 'running') {
+      workspace = await coderService.startWorkspace(workspace.id, workspaceScopedToken);
+      status = workspace.latest_build?.status;
     }
 
-    // 7. Get workspace app URL
-    let appUrl = null;
-    try {
-      appUrl = await coderService.getWorkspaceAppUrl(workspace.id, 'code-server', 5, 2000, workspaceScopedToken);
-    } catch (error) {
-      if (error instanceof ApiError && error.statusCode === httpStatus.NOT_FOUND) {
-        logger.warn(
-          `Workspace app URL not ready yet for workspace ${workspace.id}: ${error.message}. ` +
-            'Continuing without app URL so the frontend can poll until it is available.',
-        );
-        appUrl = null;
-      } else {
-        throw error;
-      }
-    }
-
-    // 8. Generate session token for user
-    // Return the workspace-scoped token (allow-listed) for embedding/agent log access.
-    const sessionToken = workspaceScopedToken;
-
-    // Container path: user host path is mounted at /home/coder/prototypes
-    const folderPath = `/home/coder/prototypes/${prototypeFolderName}`;
-
-    logger.info(`Workspace prepared for prototype ${prototypeId}: ${workspace.id}, folder: ${folderPath}`);
+    logger.info(`Workspace ready | User: ${userId} | Proto: ${prototypeId} | Folder: ${prototypeFolderName}`);
 
     return {
       workspaceId: workspace.id,
       workspaceName: workspace.name,
-      status: workspace.latest_build?.status || 'unknown',
-      appUrl,
-      sessionToken,
-      repoUrl: null,
-      folderPath,
+      status: status || 'unknown',
+      sessionToken: workspaceScopedToken,
+      folderPath: `/home/coder/prototypes/${prototypeFolderName}`,
     };
   } catch (error) {
-    logger.error(`Failed to prepare workspace for prototype: ${error.message}`);
-    if (error instanceof ApiError) {
-      throw error;
-    }
+    logger.error(`Workspace Prep Failed: ${error.message}`);
+    if (error instanceof ApiError) throw error;
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, `Failed to prepare workspace: ${error.message}`);
   }
 };
