@@ -110,7 +110,7 @@ const DaDashboard = () => {
 
   useEffect(() => {
     if (!hasTemplateDecision && templatesData?.results?.length && prototype && mode === MODE_RUN) {
-      const defaultTemplate = templatesData.results.find((t: DashboardTemplate) => t.visibility === 'default')
+      const defaultTemplate = templatesData.results.find((t: DashboardTemplate) => t.is_default)
       if (defaultTemplate) handleApplyTemplate(defaultTemplate)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -245,7 +245,7 @@ const DaDashboard = () => {
         }
       }
       if (selectedSignals?.length && (!widget.options?.apis || widget.options.apis.length === 0)) {
-        if (!widget.options || !widget.options?.apis?.length) widget.options = {}
+        if (!widget.options) widget.options = {}
         widget.options.apis = [...selectedSignals]
       }
     })

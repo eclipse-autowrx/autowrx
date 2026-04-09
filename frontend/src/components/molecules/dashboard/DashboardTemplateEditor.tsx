@@ -21,13 +21,15 @@ const DEFAULT_WIDGET_CONFIG = JSON.stringify({ autorun: false, widgets: [] }, nu
 interface FormState {
     name: string
     description: string
-    visibility: 'public' | 'private' | 'default'
+    visibility: 'public' | 'private'
+    is_default: boolean
 }
 
 const emptyForm: FormState = {
     name: '',
     description: '',
     visibility: 'public',
+    is_default: false,
 }
 
 export interface DashboardTemplateEditorProps {
@@ -60,6 +62,7 @@ export default function DashboardTemplateEditor({
                 name: editData.name || '',
                 description: editData.description || '',
                 visibility: (editData.visibility as FormState['visibility']) || 'public',
+                is_default: editData.is_default || false,
             })
             setWidgetConfig(
                 editData.widget_config
@@ -78,12 +81,13 @@ export default function DashboardTemplateEditor({
             try {
                 parsedConfig = JSON.parse(widgetConfig)
             } catch {
-                parsedConfig = { autorun: true, widgets: [] }
+                parsedConfig = { autorun: false, widgets: [] }
             }
             const payload = {
                 name: form.name,
                 description: form.description,
                 visibility: form.visibility,
+                is_default: form.is_default,
                 widget_config: parsedConfig,
             }
             if (isEdit) return updateDashboardTemplate(editId!, payload)
@@ -142,9 +146,9 @@ export default function DashboardTemplateEditor({
                     <input
                         type="checkbox"
                         id="is-default-dashboard-template"
-                        checked={form.visibility === 'default'}
+                        checked={form.is_default}
                         onChange={(e) =>
-                            setForm((f) => ({ ...f, visibility: e.target.checked ? 'default' : 'public' }))
+                            setForm((f) => ({ ...f, is_default: e.target.checked }))
                         }
                         className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
                     />

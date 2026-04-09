@@ -72,7 +72,7 @@ export default function DashboardTemplateManager() {
                             <h3 className="text-base font-semibold text-foreground truncate">
                                 {t.name}
                             </h3>
-                            {t.visibility === 'default' && (
+                            {t.is_default && (
                                 <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide bg-primary text-primary-foreground rounded px-1.5 py-0.5">
                                     Default
                                 </span>
@@ -85,14 +85,14 @@ export default function DashboardTemplateManager() {
                         )}
                         <div className="mt-2 flex items-center justify-between">
                             <span
-                                className={`text-xs px-2 py-0.5 rounded-full font-medium ${t.visibility === 'default'
+                                className={`text-xs px-2 py-0.5 rounded-full font-medium ${t.is_default
                                     ? 'bg-primary/10 text-primary'
                                     : t.visibility === 'public'
                                         ? 'bg-green-100 text-green-700'
                                         : 'bg-gray-100 text-gray-600'
                                     }`}
                             >
-                                {t.visibility}
+                                {t.is_default ? 'default' : t.visibility}
                             </span>
                             <div className="flex gap-1">
                                 <Button

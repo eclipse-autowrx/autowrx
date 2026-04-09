@@ -175,7 +175,7 @@ const DaDashboardWidgetEditor = ({
         )
         delete options.iconURL
         delete options.url
-      } catch (e) {}
+      } catch (e) { }
       const selectedSignals = prototype?.extend?.selected_signals as string[] | undefined
       if (selectedSignals?.length && (!options.apis || options.apis.length === 0)) {
         options.apis = [...selectedSignals]
@@ -302,7 +302,7 @@ const DaDashboardWidgetEditor = ({
                 setCode={(e) => {
                   setOptionStr(e)
                 }}
-                onBlur={() => {}}
+                onBlur={() => { }}
               />
             </div>
 
@@ -351,12 +351,12 @@ const DaDashboardWidgetEditor = ({
               let newOption = {} as any
               try {
                 newOption = JSON.parse(optionStr)
-              } catch (err) {}
+              } catch (err) { }
 
               let widget = {} as any
               try {
                 widget = JSON.parse(selectedWidget)
-              } catch (err) {}
+              } catch (err) { }
 
               // Check if this is a built-in widget (has a non-empty path)
               const isBuiltInWidget = widget.path && widget.path.trim() !== ''
@@ -456,7 +456,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
       }
 
       const selectedSignals = prototype?.extend?.selected_signals as string[] | undefined
-      if (selectedSignals?.length && Array.isArray(options.apis)) {
+      if (selectedSignals?.length && (!options.apis || options.apis.length === 0)) {
         options.apis = [...selectedSignals]
       }
 
@@ -579,7 +579,7 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
           if (a.weight > b.weight) return 1
           return 0
         })
-      } catch (e) {}
+      } catch (e) { }
     }
 
     setRenderWidgets(widgets)
