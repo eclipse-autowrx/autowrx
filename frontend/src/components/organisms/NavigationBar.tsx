@@ -28,7 +28,7 @@ import {
 } from 'react-icons/tb'
 import usePermissionHook from '@/hooks/usePermissionHook.ts'
 import { PERMISSIONS } from '@/const/permission.ts'
-// import DaGlobalSearch from '../molecules/DaGlobalSearch'
+import DaGlobalSearch from '../molecules/DaGlobalSearch'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 // import useCurrentModel from '@/hooks/useCurrentModel'
 import { IoIosHelpBuoy } from 'react-icons/io'
@@ -177,15 +177,15 @@ const NavigationBar = ({ }) => {
 
       {user && (
         <div className="flex items-center shrink-0">
-          {/* <DaGlobalSearch>
-            <DaButton
-              variant="outline-nocolor"
+          <DaGlobalSearch>
+            <Button
+              variant="outline"
               className="w-[140px] flex items-center justify-start! border-gray-300! shadow-lg"
             >
               <TbZoom className="size-5 mr-2" />
               Search
-            </DaButton>
-          </DaGlobalSearch>{' '} */}
+            </Button>
+          </DaGlobalSearch>{' '}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
