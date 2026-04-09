@@ -289,6 +289,7 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
     return {
       workspaceId: workspace.id,
       workspaceName: workspace.name,
+      workspaceBuildId: workspace?.latest_build?.id || null,
       status: status || 'unknown',
       sessionToken: workspaceScopedToken,
       folderPath: `/home/coder/prototypes/${prototypeFolderName}`,

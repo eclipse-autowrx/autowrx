@@ -63,7 +63,6 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
   const startWidthRef = useRef(0)
   const watchSocketRef = useRef<WebSocket | null>(null)
   const logsSocketRef = useRef<WebSocket | null>(null)
-  const workspaceAgentIdRef = useRef<string | null>(null)
 
   // Step 1: prepare Coder workspace for this prototype (no polling/cache).
   useEffect(() => {
@@ -97,27 +96,20 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
       })
     }
 
-    const extractAgentId = (value: any): string | null => {
-      if (!value || typeof value !== 'object') return null
-      if (typeof value.id === 'string' && value.id.length > 10) {
-        if (Array.isArray(value.apps) || typeof value.api_version === 'string') {
-          return value.id
-        }
-      }
-      for (const key of Object.keys(value)) {
-        const nested = extractAgentId((value as Record<string, any>)[key])
-        if (nested) return nested
-      }
-      return null
-    }
-
-    const openLogsWs = (workspaceAgentId: string) => {
+    const openLogsWs = (workspaceBuildId: string | null | undefined) => {
       if (logsWsOpened) return
+      if (!workspaceBuildId) {
+        appendEvent(setLogEvents, {
+          type: 'socket',
+          event: 'skipped',
+          reason: 'missing workspaceBuildId',
+        })
+        return
+      }
       logsWsOpened = true
-      workspaceAgentIdRef.current = workspaceAgentId
 
       const wsBase = toWsBase(config.serverBaseUrl)
-      const logsUrl = `${wsBase}/${config.serverVersion}/system/coder/workspaceagents/${workspaceAgentId}/logs?access_token=${encodeURIComponent(accessToken)}&follow=true&format=json`
+      const logsUrl = `${wsBase}/${config.serverVersion}/system/coder/workspacebuilds/${workspaceBuildId}/logs?access_token=${encodeURIComponent(accessToken)}&follow=true&after=-1`
       const logsWs = new WebSocket(logsUrl)
       logsSocketRef.current = logsWs
 
@@ -152,13 +144,16 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
       try {
         setWatchEvents([])
         setLogEvents([])
-        workspaceAgentIdRef.current = null
 
         const response = await prepareWorkspace(prototype_id)
         if (cancelled) return
         setPrepareResponse(response)
 
         const wsBase = toWsBase(config.serverBaseUrl)
+
+        // Open logs immediately in parallel with watch, using workspaceBuildId from prepare response.
+        openLogsWs(response.workspaceBuildId)
+
         const watchUrl = `${wsBase}/${config.serverVersion}/system/coder/workspace/${prototype_id}/watch-ws?access_token=${encodeURIComponent(accessToken)}`
         const watchWs = new WebSocket(watchUrl)
         watchSocketRef.current = watchWs
@@ -171,10 +166,6 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
           try {
             const parsed = JSON.parse(String(event.data))
             appendEvent(setWatchEvents, parsed)
-            const maybeAgentId = extractAgentId(parsed)
-            if (maybeAgentId) {
-              openLogsWs(maybeAgentId)
-            }
           } catch {
             const raw = String(event.data)
             appendEvent(setWatchEvents, { raw })

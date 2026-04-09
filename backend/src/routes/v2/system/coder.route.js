@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -14,9 +14,7 @@ const { coderValidation } = require('../../../validations');
 
 const router = express.Router();
 
-router
-  .route('/workspace/:prototypeId')
-  .get(auth(), validate(coderValidation.getWorkspace), coderController.getWorkspace);
+router.route('/workspace/:prototypeId').get(auth(), validate(coderValidation.getWorkspace), coderController.getWorkspace);
 
 router
   .route('/workspace/:prototypeId/prepare')

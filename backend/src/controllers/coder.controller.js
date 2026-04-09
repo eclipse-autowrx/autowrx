@@ -43,6 +43,7 @@ const getWorkspace = catchAsync(async (req, res) => {
   res.json({
     workspaceId: workspaceInfo.workspaceId,
     workspaceName: workspaceInfo.workspaceName,
+    workspaceBuildId: workspaceInfo.workspaceBuildId,
     status: workspaceInfo.status,
     sessionToken: workspaceInfo.sessionToken,
     folderPath: workspaceInfo.folderPath,
@@ -78,6 +79,7 @@ const prepareWorkspace = catchAsync(async (req, res) => {
   res.json({
     workspaceId: workspaceInfo.workspaceId,
     workspaceName: workspaceInfo.workspaceName,
+    workspaceBuildId: workspaceInfo.workspaceBuildId,
     status: workspaceInfo.status,
     sessionToken: workspaceInfo.sessionToken,
     folderPath: workspaceInfo.folderPath,

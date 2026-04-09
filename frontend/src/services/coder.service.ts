@@ -11,6 +11,7 @@ import { serverAxios } from './base'
 export interface WorkspaceInfo {
   workspaceId: string
   workspaceName: string
+  workspaceBuildId?: string | null
   status: string
   appUrl: string
   sessionToken?: string | null

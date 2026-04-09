@@ -85,6 +85,13 @@ const matchLogsWs = (coderPath) => {
   return { workspaceAgentId: m[1] };
 };
 
+const matchWorkspaceBuildLogsWs = (coderPath) => {
+  // /workspacebuilds/:workspaceBuildId/logs
+  const m = coderPath.match(/^\/workspacebuilds\/([^/]+)\/logs\/?$/);
+  if (!m) return null;
+  return { workspaceBuildId: m[1] };
+};
+
 const proxyBidirectional = ({ downstream, upstream }) => {
   const closeBoth = (reason) => {
     try {
@@ -151,8 +158,9 @@ const init = (httpServer) => {
 
       const watchMatch = matchWatchWs(coderPath);
       const logsMatch = matchLogsWs(coderPath);
+      const workspaceBuildLogsMatch = matchWorkspaceBuildLogsWs(coderPath);
 
-      if (!watchMatch && !logsMatch) {
+      if (!watchMatch && !logsMatch && !workspaceBuildLogsMatch) {
         request.reject(404, 'Not found');
         return;
       }
@@ -193,6 +201,39 @@ const init = (httpServer) => {
         return;
       }
 
+      if (workspaceBuildLogsMatch) {
+        const { workspaceBuildId } = workspaceBuildLogsMatch;
+        if (!user.coder_workspace_id) {
+          throw new ApiError(httpStatus.NOT_FOUND, 'Workspace not found. Prepare workspace first.');
+        }
+
+        const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, {
+          workspaceId: user.coder_workspace_id,
+        });
+
+        const workspace = await coderService.getWorkspaceStatus(user.coder_workspace_id, workspaceScopedToken);
+        const expectedWorkspaceBuildId = workspace?.latest_build?.id;
+        if (!expectedWorkspaceBuildId || String(workspaceBuildId) !== String(expectedWorkspaceBuildId)) {
+          throw new ApiError(httpStatus.FORBIDDEN, 'You do not have permission to access this workspace build logs');
+        }
+
+        const upstreamSearch = new URLSearchParams(rawSearch);
+        if (!upstreamSearch.has('follow')) upstreamSearch.set('follow', 'true');
+        if (!upstreamSearch.has('after')) upstreamSearch.set('after', '-1');
+
+        const upstreamUrl = `${getCoderApiBase()}/workspacebuilds/${workspaceBuildId}/logs?${upstreamSearch.toString()}`;
+        const upstream = await connectUpstream({
+          url: upstreamUrl,
+          headers: {
+            'Coder-Session-Token': workspaceScopedToken,
+          },
+        });
+
+        const downstream = request.accept(null, request.origin);
+        proxyBidirectional({ downstream, upstream });
+        return;
+      }
+
       if (logsMatch) {
         const { workspaceAgentId } = logsMatch;
         if (!user.coder_workspace_id) {
@@ -210,7 +251,6 @@ const init = (httpServer) => {
           throw new ApiError(httpStatus.FORBIDDEN, 'You do not have permission to access this workspace agent logs');
         }
 
-        // Ensure follow=true by default for WS log streaming.
         const upstreamSearch = new URLSearchParams(rawSearch);
         if (!upstreamSearch.has('follow')) upstreamSearch.set('follow', 'true');
 
