@@ -14,6 +14,8 @@ import { Button } from '@/components/atoms/button'
 import CodeEditor from '@/components/molecules/CodeEditor'
 import { searchWidget, loadWidgetReviews } from '@/services/widget.service'
 import { DaImage } from '@/components/atoms/DaImage'
+import useModelStore from '@/stores/modelStore'
+import { Prototype } from '@/types/model.type'
 
 interface DaWidgetListProps {
   renderWidgets: any[]
@@ -26,6 +28,7 @@ const DaWidgetList: FC<DaWidgetListProps> = ({
   activeWidgetState: [activeWidget, setActiveWidget],
   activeTab,
 }) => {
+  const prototype = useModelStore((state) => state.prototype as Prototype)
   const [searchText, setSearchText] = useState<string>('')
   const [optionsStr, setOptionStr] = useState<string>('')
   const [widgetReviews, setWidgetReviews] = useState<any[]>([])
@@ -72,11 +75,15 @@ const DaWidgetList: FC<DaWidgetListProps> = ({
     if (activeWidget && activeWidget.options) {
       let options = JSON.parse(JSON.stringify(activeWidget.options))
       delete options.url
+      const selectedSignals = prototype?.extend?.selected_signals as string[] | undefined
+      if (selectedSignals?.length && Array.isArray(options.apis)) {
+        options.apis = [...selectedSignals]
+      }
       setOptionStr(JSON.stringify(options, null, 4))
     } else {
       setOptionStr('{}')
     }
-  }, [activeWidget])
+  }, [activeWidget, prototype?.extend?.selected_signals])
 
   return (
     <div className="flex w-full h-full space-x-2">

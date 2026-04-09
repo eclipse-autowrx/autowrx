@@ -176,6 +176,10 @@ const DaDashboardWidgetEditor = ({
         delete options.iconURL
         delete options.url
       } catch (e) {}
+      const selectedSignals = prototype?.extend?.selected_signals as string[] | undefined
+      if (selectedSignals?.length && (!options.apis || options.apis.length === 0)) {
+        options.apis = [...selectedSignals]
+      }
       setOptionStr(JSON.stringify(options, null, 4))
     }
   }, [selectedWidget])
@@ -449,6 +453,11 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
         console.error('Error parsing options:', e)
         // Fallback to activeWidget.options or empty object
         options = activeWidget.options ? JSON.parse(JSON.stringify(activeWidget.options)) : {}
+      }
+
+      const selectedSignals = prototype?.extend?.selected_signals as string[] | undefined
+      if (selectedSignals?.length && Array.isArray(options.apis)) {
+        options.apis = [...selectedSignals]
       }
 
       if (activeTab === 'market') {

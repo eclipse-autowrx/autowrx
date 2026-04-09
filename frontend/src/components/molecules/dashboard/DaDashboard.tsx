@@ -231,18 +231,22 @@ const DaDashboard = () => {
     //
     processWidgetItems(widgetItems)
     setWidgetItems(widgetItems)
-  }, [prototype?.widget_config])
+  }, [prototype?.widget_config, prototype?.extend?.selected_signals])
 
   const processWidgetItems = (widgetItems: any[]) => {
     if (!widgetItems) return
+    const selectedSignals = prototype?.extend?.selected_signals as string[] | undefined
     widgetItems.forEach((widget) => {
       if (!widget?.url) {
         if (widget.options?.url) {
           widget.url = widget.options.url
         } else if (widget.path) {
-          // For built-in widgets, use the static path
           widget.url = widget.path
         }
+      }
+      if (selectedSignals?.length && (!widget.options?.apis || widget.options.apis.length === 0)) {
+        if (!widget.options || !widget.options?.apis?.length) widget.options = {}
+        widget.options.apis = [...selectedSignals]
       }
     })
   }
