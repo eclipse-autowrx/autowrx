@@ -277,10 +277,8 @@ const DaDashboard = () => {
   }
 
   const handleSave = async () => {
-    const hasTemplate = !!activeTemplateId
-    if ((pendingChanges || hasTemplate) && prototype?.id) {
+    if (prototype?.id) {
       try {
-        // Clear dashboard_template_id since user manually edited the dashboard
         const newExtend = { ...(prototype?.extend ?? {}), dashboard_template_id: null }
         await updatePrototypeService(prototype.id, {
           widget_config: prototype.widget_config,
