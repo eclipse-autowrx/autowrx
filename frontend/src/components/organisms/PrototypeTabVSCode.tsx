@@ -27,6 +27,7 @@ import useAuthStore from '@/stores/authStore'
 import { Prototype } from '@/types/model.type'
 import { shallow } from 'zustand/shallow'
 import config from '@/configs/config'
+import CoderWorkspaceStatus from '@/components/molecules/CoderWorkspaceStatus'
 
 const PrototypeTabCodeApiPanel = lazy(() =>
   retry(() => import('./PrototypeTabCodeApiPanel')),
@@ -50,6 +51,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
   const [prepareResponse, setPrepareResponse] = useState<WorkspaceInfo | null>(
     null,
   )
+  const [prepareError, setPrepareError] = useState<string | null>(null)
   const [watchEvents, setWatchEvents] = useState<any[]>([])
   const [logEvents, setLogEvents] = useState<any[]>([])
 
@@ -142,6 +144,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
 
     const run = async () => {
       try {
+        setPrepareError(null)
         setWatchEvents([])
         setLogEvents([])
 
@@ -184,9 +187,14 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
             reason: event.reason,
           })
         }
-      } catch {
+      } catch (error: any) {
         if (cancelled) return
         setPrepareResponse(null)
+        const message =
+          error?.response?.data?.message ||
+          error?.message ||
+          'Failed to prepare workspace'
+        setPrepareError(String(message))
       }
     }
 
@@ -301,24 +309,13 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
       className="flex h-[calc(100%-0px)] w-full p-2 bg-gray-100"
     >
       <div className="flex h-full flex-1 min-w-0 flex-col border-r bg-white rounded-md p-3">
-        <div className="text-xs font-semibold text-gray-700 mb-2">
-          Prepare response
-        </div>
-        <pre className="text-xs text-gray-700 whitespace-pre-wrap break-words mb-3">
-          {JSON.stringify(prepareResponse, null, 2)}
-        </pre>
-        <div className="text-xs font-semibold text-gray-700 mb-2">
-          watch-ws events
-        </div>
-        <pre className="text-xs text-gray-700 whitespace-pre-wrap break-words mb-3">
-          {JSON.stringify(watchEvents, null, 2)}
-        </pre>
-        <div className="text-xs font-semibold text-gray-700 mb-2">
-          logs-ws events
-        </div>
-        <pre className="text-xs text-gray-700 whitespace-pre-wrap break-words">
-          {JSON.stringify(logEvents, null, 2)}
-        </pre>
+        <CoderWorkspaceStatus
+          prepareResponse={prepareResponse}
+          prepareError={prepareError}
+          watchEvents={watchEvents}
+          logEvents={logEvents}
+          className="min-h-0 flex-1 overflow-y-auto"
+        />
       </div>
       {!isApiPanelCollapsed && (
         // Resize handle (hide while collapsed to avoid weird interactions).
