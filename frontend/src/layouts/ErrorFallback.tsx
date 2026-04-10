@@ -9,27 +9,26 @@
 import { Button } from '@/components/atoms/button'
 import { getWithExpiry, setWithExpiry } from '@/lib/storage.ts'
 import { useEffect } from 'react'
+import { FallbackProps } from 'react-error-boundary'
 import { TbExclamationCircle } from 'react-icons/tb'
 
-type ErrorFallbackProps = {
-  error: Error
-}
+const ErrorFallback = ({ error }: FallbackProps) => {
+  const errorMessage = error instanceof Error ? error.message : String(error)
 
-const ErrorFallback = ({ error }: ErrorFallbackProps) => {
   useEffect(() => {
     const chunkFailedMessage = /Loading chunk [\d]+ failed/
     if (
-      error?.message &&
-      (chunkFailedMessage.test(error.message) ||
-        error.message.includes('Failed to fetch dynamically imported module') ||
-        error.message.includes('Importing a module script failed'))
+      errorMessage &&
+      (chunkFailedMessage.test(errorMessage) ||
+        errorMessage.includes('Failed to fetch dynamically imported module') ||
+        errorMessage.includes('Importing a module script failed'))
     ) {
       if (!getWithExpiry('chunk_failed')) {
         setWithExpiry('chunk_failed', true, 3000)
         window.location.href = window.location.href
       }
     }
-  }, [error])
+  }, [errorMessage])
 
   return (
     <div className="h-screen w-screen flex">
@@ -38,10 +37,10 @@ const ErrorFallback = ({ error }: ErrorFallbackProps) => {
         <p className="text-xl font-semibold mt-3">Oops! Something went wrong.</p>
         {(!import.meta?.env?.MODE ||
           import.meta?.env?.MODE === 'development') && (
-          <p className="mt-1 text-sm max-w-[min(800px,calc(100vw-80px))] max-h-[min(600px,calc(100vh-200px))] overflow-y-auto">
-            {error?.message}
-          </p>
-        )}
+            <p className="mt-1 text-sm max-w-[min(800px,calc(100vw-80px))] max-h-[min(600px,calc(100vh-200px))] overflow-y-auto">
+              {errorMessage}
+            </p>
+          )}
         <Button
           size="sm"
           className="mt-3"
