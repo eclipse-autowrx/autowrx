@@ -11,6 +11,7 @@ const crypto = require('crypto');
 const httpStatus = require('http-status');
 const logger = require('../config/logger');
 const ApiError = require('../utils/ApiError');
+/* eslint-disable no-use-before-define */
 
 const coderConfig = require('../utils/coderConfig');
 
@@ -66,6 +67,10 @@ const TOKEN_LIFETIME_SECONDS = Math.floor(TOKEN_LIFETIME_MS / 1000);
 const TOKEN_REFRESH_SAFETY_MS = 5 * 60 * 1000; // refresh if expiring within 5m
 // Bump when token generation policy changes so cached tokens are rotated automatically.
 const TOKEN_POLICY_VERSION = 'v2';
+const delay = (ms) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 
 /**
  * Get (and cache) a user-scoped token for Coder API calls.
@@ -99,9 +104,11 @@ const getOrCreateUserScopedToken = async (user, options = {}) => {
     throw new ApiError(httpStatus.SERVICE_UNAVAILABLE, 'Failed to generate Coder user-scoped token');
   }
 
-  user.coder_scoped_token = token;
-  user.coder_scoped_token_expires_at = new Date(Date.now() + TOKEN_LIFETIME_MS);
-  user.coder_scoped_token_allow = desiredAllow;
+  user.set({
+    coder_scoped_token: token,
+    coder_scoped_token_expires_at: new Date(Date.now() + TOKEN_LIFETIME_MS),
+    coder_scoped_token_allow: desiredAllow,
+  });
   await user.save();
 
   return token;
@@ -305,7 +312,7 @@ const ensureUserExists = async (userId, username, email) => {
  * @param {string} [options.coderUserId] - Preferred Coder user UUID for endpoint path
  * @returns {Promise<string|null>} Session token or null if not available
  */
-const generateSessionToken = async (coderUsername, options = {}) => {
+async function generateSessionToken(coderUsername, options = {}) {
   const { workspaceId, coderUserId } = options;
   const allowList = workspaceId ? [{ type: 'workspace', id: workspaceId }] : undefined;
   const userPathId = encodeURIComponent(coderUserId || coderUsername);
@@ -358,7 +365,7 @@ const generateSessionToken = async (coderUsername, options = {}) => {
 
     throw new ApiError(httpStatus.BAD_GATEWAY, `Coder token API failed: ${error.message}`);
   }
-};
+}
 
 /**
  * Get or create workspace for a user and prototype
@@ -366,20 +373,10 @@ const generateSessionToken = async (coderUsername, options = {}) => {
  * @param {string} workspaceName - Workspace name (e.g., "prototype-{prototypeId}")
  * @param {string} templateId - Coder template ID
  * @param {string} prototypesHostPath - Host path for prototypes folder (bind-mount)
- * @param {string} githubToken - Optional GitHub token (currently unused)
- * @param {string} gitRepoUrl - Git repository URL (currently unused)
  * @param {string} sessionToken - User-scoped token used for user operations
  * @returns {Promise<Object>} Workspace object
  */
-const getOrCreateWorkspace = async (
-  coderUserId,
-  workspaceName,
-  templateId,
-  prototypesHostPath,
-  _githubToken = null, // Reserved for future template parameters.
-  _gitRepoUrl = null, // Reserved for future template parameters.
-  sessionToken = null,
-) => {
+const getOrCreateWorkspace = async (coderUserId, workspaceName, templateId, prototypesHostPath, sessionToken = null) => {
   try {
     // Check if workspace exists
     const workspacesResponse = await axios.get(`${getCoderApiBase()}/workspaces`, {
@@ -412,14 +409,6 @@ const getOrCreateWorkspace = async (
         value: prototypesHostPath || coderConfig.getCoderConfigSync().prototypesPath || '/var/lib/autowrx/prototypes',
       },
     ];
-
-    // Optional git parameters are intentionally not used in current flow.
-    // if (gitRepoUrl) {
-    //   richParameterValues.push({ name: 'git_repo', value: gitRepoUrl });
-    // }
-    // if (githubToken) {
-    //   richParameterValues.push({ name: 'github_token', value: githubToken });
-    // }
 
     // Create workspace as the user (token-based), per Coder REST API docs.
     // Prefer /users/me/workspaces so we don't need admin org membership endpoints here.
@@ -538,7 +527,7 @@ const startWorkspace = async (workspaceId, sessionToken = null) => {
     if (error.response?.status === 409) {
       logger.info(`Coder workspace ${workspaceId} build is already active, fetching status...`);
       // Return current workspace status instead of erroring
-      return await getWorkspaceStatus(workspaceId, sessionToken);
+      return getWorkspaceStatus(workspaceId, sessionToken);
     }
 
     logger.error(`Failed to start Coder workspace: ${error.message}`);
@@ -553,13 +542,109 @@ const startWorkspace = async (workspaceId, sessionToken = null) => {
   }
 };
 
+/** Build statuses where the workspace is not safe to issue another start yet */
+const BUILD_STATUSES_BLOCKING_START = new Set(['running', 'starting', 'stopping']);
+
+/**
+ * Poll until latest build is no longer in a transitional "busy" state (after stop, before start).
+ * @param {string} workspaceId
+ * @param {string|null} sessionToken
+ * @param {{ maxAttempts?: number, delayMs?: number }} [options]
+ * @returns {Promise<Object>} Last fetched workspace
+ */
+const waitUntilWorkspaceBuildAllowsStart = async (workspaceId, sessionToken = null, options = {}) => {
+  const maxAttempts = options.maxAttempts ?? 45;
+  const delayMs = options.delayMs ?? 2000;
+  const poll = async (attempt) => {
+    const ws = await getWorkspaceStatus(workspaceId, sessionToken);
+    const s = ws.latest_build?.status;
+    if (!BUILD_STATUSES_BLOCKING_START.has(s) || attempt >= maxAttempts) {
+      return ws;
+    }
+    await delay(delayMs);
+    return poll(attempt + 1);
+  };
+  return poll(1);
+};
+
+/**
+ * Stop a running workspace (no-op if not running).
+ * @param {string} workspaceId
+ * @param {string|null} sessionToken
+ * @returns {Promise<Object>} Build response or current workspace
+ */
+const stopWorkspace = async (workspaceId, sessionToken = null) => {
+  try {
+    const workspace = await getWorkspaceStatus(workspaceId, sessionToken);
+    const buildStatus = workspace.latest_build?.status;
+
+    if (!workspace.latest_build || buildStatus !== 'running') {
+      logger.info(`Coder workspace ${workspaceId} stop skipped (build status: ${buildStatus ?? 'none'})`);
+      return workspace;
+    }
+
+    const response = await axios.post(
+      `${getCoderApiBase()}/workspaces/${workspaceId}/builds`,
+      { transition: 'stop' },
+      { headers: getHeadersWithToken(sessionToken) },
+    );
+    logger.info(`Stop requested for Coder workspace: ${workspaceId}`);
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 409) {
+      logger.info(`Coder workspace ${workspaceId} stop conflict, fetching status...`);
+      return getWorkspaceStatus(workspaceId, sessionToken);
+    }
+    logger.error(`Failed to stop Coder workspace: ${error.message}`);
+    if (error.response) {
+      logger.error(`Stop workspace error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`);
+      throw new ApiError(
+        error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
+        `Coder API error: ${error.response.data?.message || error.message}`,
+      );
+    }
+    throw error;
+  }
+};
+
+/**
+ * If Coder reports the workspace build as running but the agent is not connected (or workspace health is false),
+ * request stop then start once. Handles zombie state after the container was removed while the API still said "running".
+ * @param {string} workspaceId
+ * @param {string|null} sessionToken
+ * @returns {Promise<Object>} Fresh workspace from GET after recovery attempt
+ */
+const restoreUnhealthyRunningWorkspace = async (workspaceId, sessionToken = null) => {
+  const workspace = await getWorkspaceStatus(workspaceId, sessionToken);
+  const buildStatus = workspace.latest_build?.status;
+  if (buildStatus !== 'running') {
+    return workspace;
+  }
+
+  const agent = pickFirstWorkspaceAgent(workspace);
+  const agentUnhealthy = !agent || agent.status !== 'connected';
+  const healthUnhealthy = workspace.health && workspace.health.healthy === false;
+  if (!agentUnhealthy && !healthUnhealthy) {
+    return workspace;
+  }
+
+  logger.warn(
+    `Coder workspace ${workspaceId} reports running but agent/health is unhealthy (agent=${agent?.status ?? 'none'}, workspace_health=${workspace.health?.healthy}). Requesting stop/start recovery.`,
+  );
+
+  await stopWorkspace(workspaceId, sessionToken);
+  await waitUntilWorkspaceBuildAllowsStart(workspaceId, sessionToken);
+  await startWorkspace(workspaceId, sessionToken);
+  return getWorkspaceStatus(workspaceId, sessionToken);
+};
+
 /**
  * Get workspace status
  * @param {string} workspaceId - Workspace ID
  * @param {string} sessionToken - User-scoped token used for user operations
  * @returns {Promise<Object>} Workspace object with status
  */
-const getWorkspaceStatus = async (workspaceId, sessionToken = null) => {
+async function getWorkspaceStatus(workspaceId, sessionToken = null) {
   try {
     const response = await axios.get(`${getCoderApiBase()}/workspaces/${workspaceId}`, {
       headers: getHeadersWithToken(sessionToken),
@@ -576,14 +661,14 @@ const getWorkspaceStatus = async (workspaceId, sessionToken = null) => {
     }
     throw error;
   }
-};
+}
 
 /**
  * First agent on a workspace (Coder populates this after resources are provisioned).
  * @param {Object} workspace - Workspace object from Coder API
  * @returns {Object|null} Agent object or null while build is still starting
  */
-const pickFirstWorkspaceAgent = (workspace) => {
+function pickFirstWorkspaceAgent(workspace) {
   if (workspace.latest_build?.resources?.[0]?.agents?.[0]) {
     return workspace.latest_build.resources[0].agents[0];
   }
@@ -594,21 +679,19 @@ const pickFirstWorkspaceAgent = (workspace) => {
     return workspace.agents[0];
   }
   if (workspace.latest_build?.resources) {
-    for (const resource of workspace.latest_build.resources) {
-      if (resource.agents?.length) {
-        return resource.agents[0];
-      }
+    const withAgents = workspace.latest_build.resources.find((resource) => resource.agents?.length);
+    if (withAgents) {
+      return withAgents.agents[0];
     }
   }
   if (workspace.resources) {
-    for (const resource of workspace.resources) {
-      if (resource.agents?.length) {
-        return resource.agents[0];
-      }
+    const withAgents = workspace.resources.find((resource) => resource.agents?.length);
+    if (withAgents) {
+      return withAgents.agents[0];
     }
   }
   return null;
-};
+}
 
 /**
  * Get workspace build timings
@@ -644,8 +727,14 @@ const getWorkspaceTimings = async (workspaceId, sessionToken = null) => {
  * @param {number} retryDelay - Delay between retries in ms (default: 2000)
  * @returns {Promise<string>} App URL
  */
-const getWorkspaceAppUrl = async (workspaceId, appSlug = 'code-server', maxRetries = 5, retryDelay = 2000, sessionToken) => {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+const getWorkspaceAppUrl = async (
+  workspaceId,
+  appSlug = 'code-server',
+  maxRetries = 5,
+  retryDelay = 2000,
+  sessionToken = null,
+) => {
+  const attemptFetch = async (attempt) => {
     try {
       const workspace = await getWorkspaceStatus(workspaceId, sessionToken);
 
@@ -674,8 +763,8 @@ const getWorkspaceAppUrl = async (workspaceId, appSlug = 'code-server', maxRetri
       if (!agent?.id) {
         if (attempt < maxRetries) {
           logger.info(`Agent not found yet (attempt ${attempt}/${maxRetries}), waiting ${retryDelay}ms...`);
-          await new Promise((resolve) => setTimeout(resolve, retryDelay));
-          continue;
+          await delay(retryDelay);
+          return attemptFetch(attempt + 1);
         }
 
         // Log full workspace structure for debugging
@@ -690,8 +779,8 @@ const getWorkspaceAppUrl = async (workspaceId, appSlug = 'code-server', maxRetri
         const app = apps.find((a) => a.slug === appSlug);
         if (!app && attempt < maxRetries) {
           logger.info(`App ${appSlug} not found yet (attempt ${attempt}/${maxRetries}), waiting ${retryDelay}ms...`);
-          await new Promise((resolve) => setTimeout(resolve, retryDelay));
-          continue;
+          await delay(retryDelay);
+          return attemptFetch(attempt + 1);
         }
       }
 
@@ -715,8 +804,8 @@ const getWorkspaceAppUrl = async (workspaceId, appSlug = 'code-server', maxRetri
         // If it's a NOT_FOUND error and we have retries left, continue
         if (error.statusCode === httpStatus.NOT_FOUND) {
           logger.info(`Workspace agent/app not found (attempt ${attempt}/${maxRetries}), retrying...`);
-          await new Promise((resolve) => setTimeout(resolve, retryDelay));
-          continue;
+          await delay(retryDelay);
+          return attemptFetch(attempt + 1);
         }
       }
 
@@ -729,10 +818,9 @@ const getWorkspaceAppUrl = async (workspaceId, appSlug = 'code-server', maxRetri
         throw error;
       }
     }
-  }
-
-  // Should never reach here, but just in case
-  throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to get workspace app URL after all retries');
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to get workspace app URL after all retries');
+  };
+  return attemptFetch(1);
 };
 
 /**
@@ -744,7 +832,7 @@ const getWorkspaceAppUrl = async (workspaceId, appSlug = 'code-server', maxRetri
  * @returns {Promise<string>} Workspace agent ID
  */
 const getWorkspaceAgentId = async (workspaceId, sessionToken, maxRetries = 5, retryDelay = 2000) => {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+  const attemptFetch = async (attempt) => {
     const workspace = await getWorkspaceStatus(workspaceId, sessionToken);
     const agent = pickFirstWorkspaceAgent(workspace);
 
@@ -757,8 +845,8 @@ const getWorkspaceAgentId = async (workspaceId, sessionToken, maxRetries = 5, re
       logger.info(
         `Workspace agent not ready for ${workspaceId} (attempt ${attempt}/${maxRetries}, build=${buildStatus}), waiting ${retryDelay}ms...`,
       );
-      await new Promise((resolve) => setTimeout(resolve, retryDelay));
-      continue;
+      await delay(retryDelay);
+      return attemptFetch(attempt + 1);
     }
 
     logger.error(
@@ -768,7 +856,8 @@ const getWorkspaceAgentId = async (workspaceId, sessionToken, maxRetries = 5, re
       httpStatus.SERVICE_UNAVAILABLE,
       'Workspace agent not available yet. The workspace may still be starting; try again shortly.',
     );
-  }
+  };
+  return attemptFetch(1);
 };
 
 /**
@@ -844,14 +933,17 @@ const getTemplateId = async (templateName = 'docker-template') => {
  * @param {number} [options.before] - Before log id
  * @param {number} [options.after] - After log id
  * @param {boolean} [options.follow] - Follow log stream
- * @param {boolean} [options.no_compression] - Disable compression for WebSocket connection
+ * @param {boolean} [options.noCompression] - Disable compression for WebSocket connection
+ * @param {boolean} [options.no_compression] - Backward-compatible alias for noCompression
  * @param {string} [options.format] - 'json' (default) or 'text'
  * @param {string} [sessionToken] - Optional user-scoped token. If omitted, admin token is used.
  * @returns {Promise<any>} Logs array or text, depending on format
  */
 const getWorkspaceAgentLogs = async (workspaceAgentId, options = {}, sessionToken = null) => {
   try {
-    const { before, after, follow, no_compression, format } = options;
+    const { before, after, follow, noCompression, format } = options;
+    const noCompressionLegacy = options.no_compression;
+    const noCompressionParam = noCompression !== undefined ? noCompression : noCompressionLegacy;
 
     const response = await axios.get(`${getCoderApiBase()}/workspaceagents/${workspaceAgentId}/logs`, {
       headers: sessionToken ? getHeadersWithToken(sessionToken) : getAdminHeaders(),
@@ -859,7 +951,7 @@ const getWorkspaceAgentLogs = async (workspaceAgentId, options = {}, sessionToke
         ...(before !== undefined && { before }),
         ...(after !== undefined && { after }),
         ...(follow !== undefined && { follow }),
-        ...(no_compression !== undefined && { no_compression }),
+        ...(noCompressionParam !== undefined && { no_compression: noCompressionParam }),
         ...(format && { format }),
       },
     });
@@ -903,6 +995,8 @@ module.exports = {
   getOrCreateUserScopedToken,
   getOrCreateWorkspace,
   startWorkspace,
+  stopWorkspace,
+  restoreUnhealthyRunningWorkspace,
   getWorkspaceStatus,
   getWorkspaceAppUrl,
   getTemplateId,

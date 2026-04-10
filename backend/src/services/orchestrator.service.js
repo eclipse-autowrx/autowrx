@@ -10,55 +10,16 @@ const fs = require('fs');
 const path = require('path');
 const httpStatus = require('http-status');
 const coderService = require('./coder.service');
-const { Prototype, Model, User } = require('../models');
+const { Prototype, User } = require('../models');
 const logger = require('../config/logger');
 const ApiError = require('../utils/ApiError');
 const coderConfig = require('../utils/coderConfig');
-
-// Host/container UID mismatch is common in local deployments. We keep
-// permissive modes so the workspace user can write without manual chmod.
-const PROTOTYPES_DIR_MODE = 0o777;
-const PROTOTYPES_FILE_MODE = 0o666;
-const PROTOTYPES_LINUX_UID = 1000;
-const PROTOTYPES_LINUX_GID = 1000;
+/* eslint-disable security/detect-non-literal-fs-filename */
 
 const normalizeIdForName = (value) =>
   String(value || '')
     .toLowerCase()
     .replace(/[^a-z0-9]/g, '');
-
-const chmodSafe = (targetPath, mode) => {
-  try {
-    fs.chmodSync(targetPath, mode);
-  } catch (err) {
-    logger.warn(`chmod failed for ${targetPath}: ${err.message}`);
-  }
-};
-
-const chownSafe = (targetPath, uid, gid) => {
-  try {
-    fs.chownSync(targetPath, uid, gid);
-  } catch (err) {
-    logger.warn(`chown failed for ${targetPath} -> ${uid}:${gid}: ${err.message}`);
-  }
-};
-
-const setOwnershipAndPermissionsRecursive = (rootPath, uid, gid) => {
-  try {
-    const stat = fs.lstatSync(rootPath);
-    if (stat.isDirectory()) {
-      chownSafe(rootPath, uid, gid);
-      chmodSafe(rootPath, PROTOTYPES_DIR_MODE);
-      const entries = fs.readdirSync(rootPath);
-      entries.forEach((entry) => setOwnershipAndPermissionsRecursive(path.join(rootPath, entry), uid, gid));
-      return;
-    }
-    chownSafe(rootPath, uid, gid);
-    chmodSafe(rootPath, PROTOTYPES_FILE_MODE);
-  } catch (err) {
-    logger.warn(`Failed to set ownership/permissions recursively for ${rootPath}: ${err.message}`);
-  }
-};
 
 const looksLikeFileTree = (value) => {
   if (!Array.isArray(value)) return false;
@@ -69,26 +30,25 @@ const looksLikeFileTree = (value) => {
 };
 
 const flattenFileTree = (items, basePath = '') => {
-  const files = [];
-  for (const item of items) {
-    if (!item || typeof item !== 'object') continue;
+  return items.reduce((acc, item) => {
+    if (!item || typeof item !== 'object') return acc;
+
     const name = typeof item.name === 'string' ? item.name : '';
-    if (!name) continue;
+    if (!name) return acc;
 
     const currentPath = basePath ? `${basePath}/${name}` : name;
-
     if (item.type === 'folder') {
       const children = Array.isArray(item.items) ? item.items : [];
-      files.push(...flattenFileTree(children, currentPath));
-      continue;
+      return acc.concat(flattenFileTree(children, currentPath));
     }
 
     if (item.type === 'file') {
       const content = typeof item.content === 'string' ? item.content : '';
-      files.push({ path: currentPath, content });
+      return acc.concat([{ path: currentPath, content }]);
     }
-  }
-  return files;
+
+    return acc;
+  }, []);
 };
 
 const buildInitialRepoContentFromPrototype = (prototype) => {
@@ -159,10 +119,8 @@ const sanitizePrototypeFolderName = (name) => {
  * Seed initial code files into a prototype folder (only if folder is empty)
  * @param {string} folderPath - Host folder path
  * @param {Object} prototype - Prototype document
- * @param {number} uid - Linux UID used by workspace container user
- * @param {number} gid - Linux GID used by workspace container user
  */
-const seedPrototypeFiles = (folderPath, prototype, uid, gid) => {
+const seedPrototypeFiles = (folderPath, prototype) => {
   try {
     const existingFiles = fs.readdirSync(folderPath);
     if (existingFiles.length > 0) {
@@ -175,8 +133,6 @@ const seedPrototypeFiles = (folderPath, prototype, uid, gid) => {
     if (content.readme) {
       const readmePath = path.join(folderPath, 'README.md');
       fs.writeFileSync(readmePath, content.readme);
-      chownSafe(readmePath, uid, gid);
-      chmodSafe(readmePath, PROTOTYPES_FILE_MODE);
     }
 
     if (content.files && content.files.length > 0) {
@@ -184,9 +140,6 @@ const seedPrototypeFiles = (folderPath, prototype, uid, gid) => {
         const filePath = path.join(folderPath, file.path);
         fs.mkdirSync(path.dirname(filePath), { recursive: true });
         fs.writeFileSync(filePath, file.content);
-        setOwnershipAndPermissionsRecursive(path.dirname(filePath), uid, gid);
-        chownSafe(filePath, uid, gid);
-        chmodSafe(filePath, PROTOTYPES_FILE_MODE);
       });
       logger.info(`Seeded ${content.files.length} file(s) into ${folderPath}`);
     }
@@ -237,11 +190,7 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
 
     try {
       fs.mkdirSync(prototypeFolderHost, { recursive: true });
-      setOwnershipAndPermissionsRecursive(userHostPath, PROTOTYPES_LINUX_UID, PROTOTYPES_LINUX_GID);
-
-      // Seed files and re-apply permissions
-      seedPrototypeFiles(prototypeFolderHost, prototype, PROTOTYPES_LINUX_UID, PROTOTYPES_LINUX_GID);
-      setOwnershipAndPermissionsRecursive(prototypeFolderHost, PROTOTYPES_LINUX_UID, PROTOTYPES_LINUX_GID);
+      seedPrototypeFiles(prototypeFolderHost, prototype);
     } catch (fsErr) {
       logger.warn(`Filesystem prep warning for ${prototypeFolderHost}: ${fsErr.message}`);
     }
@@ -261,8 +210,6 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
         workspaceName,
         templateId,
         userHostPath,
-        null,
-        null,
         userScopedToken,
       );
 
@@ -283,6 +230,10 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
       workspace = await coderService.startWorkspace(workspace.id, workspaceScopedToken);
       status = workspace.latest_build?.status;
     }
+
+    // 6b. Coder can keep latest_build "running" after the container/agent is gone; stop+start once to recover
+    workspace = await coderService.restoreUnhealthyRunningWorkspace(workspace.id, workspaceScopedToken);
+    status = workspace.latest_build?.status;
 
     logger.info(`Workspace ready | User: ${userId} | Proto: ${prototypeId} | Folder: ${prototypeFolderName}`);
 
@@ -307,7 +258,7 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
  * @param {string} prototypeId - Prototype ID
  * @returns {Promise<Object>} Workspace status
  */
-const getWorkspaceStatus = async (userId, prototypeId) => {
+const getWorkspaceStatus = async (userId) => {
   try {
     const user = await User.findById(userId);
     if (!user) {
@@ -350,7 +301,7 @@ const getWorkspaceStatus = async (userId, prototypeId) => {
  * @param {string} prototypeId - Prototype ID
  * @returns {Promise<Object>} Workspace build timings
  */
-const getWorkspaceTimings = async (userId, prototypeId) => {
+const getWorkspaceTimings = async (userId) => {
   try {
     const user = await User.findById(userId);
     if (!user?.coder_workspace_id) {
@@ -406,6 +357,19 @@ const RUN_KIND_COMMANDS = {
   'cpp-main': 'g++ -o main -Iinclude src/*.cpp && ./main 2>&1 | tee .autowrx_out',
 };
 
+const resolveRunCommand = (runKind) => {
+  switch (runKind) {
+    case 'python-main':
+      return RUN_KIND_COMMANDS['python-main'];
+    case 'c-main':
+      return RUN_KIND_COMMANDS['c-main'];
+    case 'cpp-main':
+      return RUN_KIND_COMMANDS['cpp-main'];
+    default:
+      return null;
+  }
+};
+
 /**
  * Derive run kind from prototype.language (authoritative metadata).
  * @param {import('mongoose').Document} prototype
@@ -428,7 +392,7 @@ const resolveRunKindFromPrototype = (prototype) => {
  * @param {string} runKind - key in RUN_KIND_COMMANDS
  */
 const triggerRunForPrototype = async (userId, prototype, runKind) => {
-  const safeCommand = RUN_KIND_COMMANDS[runKind];
+  const safeCommand = resolveRunCommand(runKind);
   if (!safeCommand) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid run kind');
   }
@@ -438,7 +402,7 @@ const triggerRunForPrototype = async (userId, prototype, runKind) => {
     throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
   }
 
-  const prototypesPath = coderCfg.prototypesPath;
+  const { prototypesPath } = coderCfg;
   if (!prototypesPath) {
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Prototypes path is not configured');
   }
@@ -451,8 +415,6 @@ const triggerRunForPrototype = async (userId, prototype, runKind) => {
   try {
     fs.mkdirSync(prototypeFolderHost, { recursive: true });
     fs.writeFileSync(triggerFilePath, safeCommand, 'utf8');
-    chownSafe(triggerFilePath, PROTOTYPES_LINUX_UID, PROTOTYPES_LINUX_GID);
-    chmodSafe(triggerFilePath, PROTOTYPES_FILE_MODE);
     logger.info(`Wrote Coder trigger file for prototype ${prototype.id}: ${triggerFilePath}`);
   } catch (err) {
     logger.error(`Failed to write trigger file ${triggerFilePath}: ${err.message}`);
@@ -472,7 +434,7 @@ const getRunOutputForPrototype = async (userId, prototype) => {
     throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
   }
 
-  const prototypesPath = coderCfg.prototypesPath;
+  const { prototypesPath } = coderCfg;
   if (!prototypesPath) {
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Prototypes path is not configured');
   }
