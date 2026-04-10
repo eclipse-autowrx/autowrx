@@ -1,36 +1,18 @@
 services:
-  coder-init:
-    image: alpine:3.23.3
-    user: "0:0"
-    volumes:
-      - coder_data:/home/coder/.config
-    command: >
-      sh -c "
-      mkdir -p /home/coder/.config &&
-      chown -R 1000:1000 /home/coder/.config &&
-      find /home/coder/.config -type d -exec chmod 700 {} \; 2>/dev/null || true &&
-      find /home/coder/.config -type f -exec chmod 600 {} \; 2>/dev/null || true &&
-      chmod 755 /home/coder 2>/dev/null || true &&
-      chmod 700 /home/coder/.config
-      "
-    restart: "no"
-
   coder:
-    image: ghcr.io/coder/coder:v2.31.5
+    image: ghcr.io/coder/coder:v2.31.9
     container_name: coder
-    depends_on:
-      - coder-init
     environment:
       - CODER_ACCESS_URL=http://localhost:7080
       - CODER_HTTP_ADDRESS=0.0.0.0:7080
       - CODER_BROWSER_ONLY=true
-    # Run as root so we can fix docker.sock permissions, then drop to coder user
     user: "0:0"
     entrypoint:
       - /bin/sh
       - -c
       - |
-        # Fix Docker socket permissions so Terraform provisioner can access it
+        mkdir -p /home/coder/.config
+        chown -R coder:coder /home/coder/.config
         if [ -S /var/run/docker.sock ]; then
           chmod 666 /var/run/docker.sock
         fi

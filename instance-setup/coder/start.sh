@@ -25,6 +25,8 @@ cat template.tar | docker exec -i coder /opt/coder templates push docker-templat
 
 echo "Warming up Docker cache for better UX..."
 docker build -t autowrx-workspace:1 ./my-template-dir/workspace-image
+echo "Starting and removing dummy container to warm runtime cache..."
+docker run --rm --name autowrx-workspace-cache-warmup --entrypoint /bin/true autowrx-workspace:1
 
 rm -f ./workspace-image/autowrx-runner.vsix
 rm -rf ./my-template-dir template.tar
