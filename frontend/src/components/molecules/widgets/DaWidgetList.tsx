@@ -14,6 +14,8 @@ import { Button } from '@/components/atoms/button'
 import CodeEditor from '@/components/molecules/CodeEditor'
 import { searchWidget, loadWidgetReviews } from '@/services/widget.service'
 import { DaImage } from '@/components/atoms/DaImage'
+import useModelStore from '@/stores/modelStore'
+import { Prototype } from '@/types/model.type'
 
 interface DaWidgetListProps {
   renderWidgets: any[]
@@ -26,6 +28,7 @@ const DaWidgetList: FC<DaWidgetListProps> = ({
   activeWidgetState: [activeWidget, setActiveWidget],
   activeTab,
 }) => {
+  const prototype = useModelStore((state) => state.prototype as Prototype)
   const [searchText, setSearchText] = useState<string>('')
   const [optionsStr, setOptionStr] = useState<string>('')
   const [widgetReviews, setWidgetReviews] = useState<any[]>([])
@@ -72,11 +75,15 @@ const DaWidgetList: FC<DaWidgetListProps> = ({
     if (activeWidget && activeWidget.options) {
       let options = JSON.parse(JSON.stringify(activeWidget.options))
       delete options.url
+      const selectedSignals = prototype?.extend?.selected_signals as string[] | undefined
+      if (selectedSignals?.length && (!options.apis || options.apis.length === 0)) {
+        options.apis = [...selectedSignals]
+      }
       setOptionStr(JSON.stringify(options, null, 4))
     } else {
       setOptionStr('{}')
     }
-  }, [activeWidget])
+  }, [activeWidget, prototype?.extend?.selected_signals])
 
   return (
     <div className="flex w-full h-full space-x-2">
@@ -105,13 +112,12 @@ const DaWidgetList: FC<DaWidgetListProps> = ({
                     onClick={() => {
                       fetchWidgetDetails(widget)
                     }}
-                    className={`flex h-[120px] rounded px-1 py-1 mr-2 cursor-pointer border hover:border-gray-400 ${
-                      activeWidget &&
-                      activeWidget.plugin === widget.plugin &&
-                      activeWidget.id === widget.id
+                    className={`flex h-[120px] rounded px-1 py-1 mr-2 cursor-pointer border hover:border-gray-400 ${activeWidget &&
+                        activeWidget.plugin === widget.plugin &&
+                        activeWidget.id === widget.id
                         ? 'border-primary'
                         : ''
-                    }`}
+                      }`}
                   >
                     <div className="aspect-square grid place-items-center min-w-[100px]">
                       {!widget.icon && (
@@ -184,7 +190,7 @@ const DaWidgetList: FC<DaWidgetListProps> = ({
                   editable={true}
                   setCode={setOptionStr}
                   language="json"
-                  onBlur={() => {}}
+                  onBlur={() => { }}
                 />
               </div>
               {activeTab === 'market' &&

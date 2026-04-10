@@ -7,7 +7,7 @@ const catchAsync = require('../utils/catchAsync');
 const { dashboardTemplateService } = require('../services');
 
 const list = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['name']);
+  const filter = pick(req.query, ['name', 'visibility', 'is_default']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
   const result = await dashboardTemplateService.query(filter, options);
   res.send(result);

@@ -9,6 +9,7 @@ export interface DashboardTemplate {
   description?: string
   image?: string
   visibility: 'public' | 'private'
+  is_default?: boolean
   widget_config?: any
   createdAt: string
   updatedAt: string
@@ -22,13 +23,19 @@ export interface Paged<T> {
   totalResults: number
 }
 
-export const listDashboardTemplates = (params?: any): Promise<Paged<DashboardTemplate>> =>
+export const listDashboardTemplates = (
+  params?: any,
+): Promise<Paged<DashboardTemplate>> =>
   serverAxios.get('/system/dashboard-template', { params }).then((r) => r.data)
 
-export const getDashboardTemplateById = (id: string): Promise<DashboardTemplate> =>
+export const getDashboardTemplateById = (
+  id: string,
+): Promise<DashboardTemplate> =>
   serverAxios.get(`/system/dashboard-template/${id}`).then((r) => r.data)
 
-export const createDashboardTemplate = (data: Partial<DashboardTemplate>): Promise<DashboardTemplate> =>
+export const createDashboardTemplate = (
+  data: Partial<DashboardTemplate>,
+): Promise<DashboardTemplate> =>
   serverAxios.post('/system/dashboard-template', data).then((r) => r.data)
 
 export const updateDashboardTemplate = (
