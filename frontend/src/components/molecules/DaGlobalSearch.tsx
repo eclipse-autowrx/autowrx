@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useState, ReactElement } from 'react'
+import React, { useState, ReactElement, useEffect, useMemo } from 'react'
 import DaDialog from './DaDialog'
 import { DaText } from '../atoms/DaText'
 import { DaInput } from '../atoms/DaInput'
@@ -29,6 +29,8 @@ interface SearchResult {
   parent?: { model_id: string }
 }
 
+const FILTER_CATEGORIES = { Type: ['Prototypes', 'Models'] }
+
 const DaGlobalSearch = ({ children }: DaGlobalSearchProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const navigate = useNavigate()
@@ -37,7 +39,8 @@ const DaGlobalSearch = ({ children }: DaGlobalSearchProps) => {
     'Models',
   ])
   const [searchTerm, setSearchTerm] = useState('')
-  const [filteredResults, setFilteredResults] = useState<SearchResult[]>([])
+  const [prototypeResults, setPrototypeResults] = useState<SearchResult[]>([])
+  const [modelResults, setModelResults] = useState<SearchResult[]>([])
   const [hasSearched, setHasSearched] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
 
@@ -45,9 +48,10 @@ const DaGlobalSearch = ({ children }: DaGlobalSearchProps) => {
     setSelectedFilters(selectedOptions)
   }
 
-  const handleSearchChange = (searchTerm: string) => {
-    setSearchTerm(searchTerm)
-    setFilteredResults([])
+  const handleSearchChange = (term: string) => {
+    setSearchTerm(term)
+    setPrototypeResults([])
+    setModelResults([])
     setHasSearched(false)
   }
 
@@ -57,45 +61,28 @@ const DaGlobalSearch = ({ children }: DaGlobalSearchProps) => {
     setIsSearching(true)
     const searchResults = await searchService(searchTerm)
 
-    const prototypes = searchResults.top10prototypes
-    const models = searchResults.top10models
+    const prototypes = searchResults.top10prototypes ?? []
+    const models = searchResults.top10models ?? []
 
-    if (prototypes && models) {
-      let results: SearchResult[] = []
+    const mappedPrototypes: SearchResult[] = prototypes.map((p: Prototype) => ({
+      id: p.id,
+      name: p.name,
+      image_file: p.image_file,
+      type: 'Prototype' as const,
+      parent: { model_id: p.model_id },
+    }))
 
-      if (selectedFilters.includes('Prototypes')) {
-        const filteredPrototypes: SearchResult[] = prototypes
-          .filter((prototype: Prototype) =>
-            prototype.name.toLowerCase().includes(searchTerm.toLowerCase()),
-          )
-          .map((prototype: Prototype) => ({
-            id: prototype.id,
-            name: prototype.name,
-            image_file: prototype.image_file,
-            type: 'Prototype' as const,
-            parent: { model_id: prototype.model_id },
-          }))
-        results = [...results, ...filteredPrototypes]
-      }
+    const mappedModels: SearchResult[] = models.map((m: ModelLite) => ({
+      id: m.id,
+      name: m.name,
+      image_file: m.model_home_image_file,
+      type: 'Model' as const,
+    }))
 
-      if (selectedFilters.includes('Models')) {
-        const filteredModels: SearchResult[] = models
-          .filter((model: ModelLite) =>
-            model.name.toLowerCase().includes(searchTerm.toLowerCase()),
-          )
-          .map((model: ModelLite) => ({
-            id: model.id,
-            name: model.name,
-            image_file: model.model_home_image_file,
-            type: 'Model' as const,
-          }))
-        results = [...results, ...filteredModels]
-      }
-
-      setFilteredResults(results)
-      setHasSearched(true)
-      setIsSearching(false)
-    }
+    setPrototypeResults(mappedPrototypes)
+    setModelResults(mappedModels)
+    setHasSearched(true)
+    setIsSearching(false)
   }
 
   const handleResultClick = (result: SearchResult) => {
@@ -113,10 +100,33 @@ const DaGlobalSearch = ({ children }: DaGlobalSearchProps) => {
     setIsOpen(open)
     if (!open) {
       setSearchTerm('')
-      setFilteredResults([])
+      setPrototypeResults([])
+      setModelResults([])
       setHasSearched(false)
     }
   }
+
+  useEffect(() => {
+    if (searchTerm.length === 0) return
+    const timer = setTimeout(() => performSearch(), 300)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  const visibleResults = useMemo(() => {
+    const results: SearchResult[] = []
+    if (selectedFilters.includes('Prototypes')) results.push(...prototypeResults)
+    if (selectedFilters.includes('Models')) results.push(...modelResults)
+    return results
+  }, [selectedFilters, prototypeResults, modelResults])
+
+  const resultSummary = useMemo(() => {
+    const parts: string[] = []
+    if (selectedFilters.includes('Prototypes'))
+      parts.push(`Prototype: ${prototypeResults.length} ${prototypeResults.length === 1 ? 'result' : 'results'}`)
+    if (selectedFilters.includes('Models'))
+      parts.push(`Model: ${modelResults.length} ${modelResults.length === 1 ? 'result' : 'results'}`)
+    return parts.join(', ')
+  }, [selectedFilters, prototypeResults, modelResults])
 
   return (
     <DaDialog
@@ -134,12 +144,9 @@ const DaGlobalSearch = ({ children }: DaGlobalSearchProps) => {
             iconBefore={true}
             value={searchTerm}
             onChange={(e) => handleSearchChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') performSearch()
-            }}
           />
           <DaFilter
-            categories={{ Type: ['Prototypes', 'Models'] }}
+            categories={FILTER_CATEGORIES}
             onChange={handleFilterChange}
           />
         </div>
@@ -151,38 +158,18 @@ const DaGlobalSearch = ({ children }: DaGlobalSearchProps) => {
           </div>
         ) : (
           <div>
-            {searchTerm.length === 0 && (
-              <DaText variant="small-bold" className="flex justify-center mt-6">
-                Type something and press enter to search
-              </DaText>
-            )}
-            {searchTerm.length > 0 && !hasSearched && (
-              <DaText variant="small-bold" className="flex justify-center mt-6">
-                Press enter to search
-              </DaText>
-            )}
-            {hasSearched && filteredResults.length === 0 && (
+            {hasSearched && visibleResults.length === 0 && (
               <DaText variant="small-bold" className="flex justify-center mt-6">
                 No results found
               </DaText>
             )}
 
-            {filteredResults.length > 0 && (
+            {hasSearched && visibleResults.length > 0 && (
               <div className="flex flex-col space-y-1 max-h-[50vh] overflow-y-auto mt-4">
                 <DaText variant="small" className="mb-2">
-                  Search{' '}
-                  <DaText variant="small-bold">'{searchTerm}'</DaText> for{' '}
-                  <DaText variant="small-bold">
-                    {selectedFilters
-                      .map((filter) => filter.slice(0, -1))
-                      .join(', ')}
-                  </DaText>
-                  :{' '}
-                  {filteredResults.length > 0
-                    ? `${filteredResults.length} ${filteredResults.length > 1 ? 'results' : 'result'}`
-                    : null}
+                  {resultSummary}
                 </DaText>
-                {filteredResults.map((result) => (
+                {visibleResults.map((result) => (
                   <div
                     key={result.id}
                     className="flex items-center p-2 mr-2 cursor-pointer hover:bg-da-primary-100 border border-da-gray-light rounded-lg hover:border-da-primary-500"
