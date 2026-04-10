@@ -10,6 +10,7 @@ import {
   FC,
   useEffect,
   useState,
+  useMemo,
   lazy,
   Suspense,
   useRef,
@@ -70,10 +71,16 @@ interface PrototypeTabVSCodeProps {
   isActive?: boolean
 }
 
+const getLatestWorkspaceFromWatchEvents = (events: any[]) => {
+  const latest = [...events]
+    .reverse()
+    .find((event) => event?.type === 'data' && event?.data)
+  return latest?.data ?? null
+}
+
 const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
   isActive = true,
 }) => {
-  const LOGS_CLOSED_KEY_PREFIX = 'coder.logs.closed.'
   const { prototype_id } = useParams<{ prototype_id: string }>()
   const [prototype] = useModelStore(
     (state) => [state.prototype as Prototype],
@@ -86,12 +93,12 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
     null,
   )
   const [prepareError, setPrepareError] = useState<string | null>(null)
-  const [logsCloseCompleted, setLogsCloseCompleted] = useState(false)
   const [workspaceAppUrl, setWorkspaceAppUrl] = useState<string | null>(null)
   const [isIframeLoading, setIsIframeLoading] = useState(false)
   const [iframeLoadError, setIframeLoadError] = useState<string | null>(null)
   const [watchEvents, setWatchEvents] = useState<any[]>([])
   const [logEvents, setLogEvents] = useState<any[]>([])
+  const lastResolvedBuildIdRef = useRef<string | null>(null)
 
   // Resize state
   const [rightPanelWidth, setRightPanelWidth] = useState<number | null>(null) // Will be calculated based on container
@@ -111,10 +118,6 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
 
     let cancelled = false
     let logsWsOpened = false
-    let currentBuildId: string | null = null
-
-    const logsClosedStorageKey = (workspaceBuildId: string) =>
-      `${LOGS_CLOSED_KEY_PREFIX}${workspaceBuildId}`
 
     const closeSockets = () => {
       if (watchSocketRef.current) {
@@ -151,7 +154,6 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
         return
       }
       logsWsOpened = true
-      currentBuildId = String(workspaceBuildId)
 
       const wsBase = toWsBase(config.serverBaseUrl)
       const logsUrl = `${wsBase}/${config.serverVersion}/system/coder/workspacebuilds/${workspaceBuildId}/logs?access_token=${encodeURIComponent(accessToken)}&follow=true&after=-1`
@@ -176,14 +178,6 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
       }
 
       logsWs.onclose = (event) => {
-        if (event.code === 1000 && event.reason === 'upstream closed' && currentBuildId) {
-          try {
-            localStorage.setItem(logsClosedStorageKey(currentBuildId), 'true')
-          } catch {
-            // ignore storage errors
-          }
-          setLogsCloseCompleted(true)
-        }
         appendEvent(setLogEvents, {
           type: 'socket',
           event: 'close',
@@ -196,7 +190,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
     const run = async () => {
       try {
         setPrepareError(null)
-        setLogsCloseCompleted(false)
+        lastResolvedBuildIdRef.current = null
         setWorkspaceAppUrl(null)
         setIframeLoadError(null)
         setIsIframeLoading(false)
@@ -206,16 +200,6 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
         const response = await prepareWorkspace(prototype_id)
         if (cancelled) return
         setPrepareResponse(response)
-        currentBuildId = response.workspaceBuildId ? String(response.workspaceBuildId) : null
-        if (currentBuildId) {
-          try {
-            setLogsCloseCompleted(
-              localStorage.getItem(logsClosedStorageKey(currentBuildId)) === 'true',
-            )
-          } catch {
-            setLogsCloseCompleted(false)
-          }
-        }
 
         const wsBase = toWsBase(config.serverBaseUrl)
 
@@ -271,10 +255,32 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
     }
   }, [prototype_id, isActive, isAuthorized, accessToken])
 
-  // Step 2: when logs stream completes, resolve app URL and show iframe.
+  const latestWorkspaceFromWatch = useMemo(
+    () => getLatestWorkspaceFromWatchEvents(watchEvents),
+    [watchEvents],
+  )
+
+  const watchBuildSnapshot = useMemo(() => {
+    const latestBuild = latestWorkspaceFromWatch?.latest_build
+    const jobStatus = latestBuild?.job?.status ?? null
+    const buildStatus = latestBuild?.status ?? null
+    const buildId = latestBuild?.id ? String(latestBuild.id) : null
+    const agents =
+      latestBuild?.resources?.flatMap((resource: any) => resource?.agents ?? []) ?? []
+    const hasConnectedAgent = agents.some((agent: any) => agent?.status === 'connected')
+    const isReady =
+      jobStatus === 'succeeded' &&
+      (hasConnectedAgent || buildStatus === 'running')
+    const isFailed = jobStatus === 'failed' || jobStatus === 'canceled'
+    const failureMessage = latestBuild?.job?.error || null
+    return { buildId, isReady, isFailed, failureMessage }
+  }, [latestWorkspaceFromWatch])
+
+  // Step 2: when watch stream says build is ready, resolve app URL and show iframe.
   useEffect(() => {
     if (!isActive) return
-    if (!prototype_id || !logsCloseCompleted) return
+    if (!prototype_id || !watchBuildSnapshot.isReady || !watchBuildSnapshot.buildId) return
+    if (lastResolvedBuildIdRef.current === watchBuildSnapshot.buildId) return
 
     let cancelled = false
 
@@ -297,6 +303,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
             workspace.sessionToken,
           ),
         )
+        lastResolvedBuildIdRef.current = watchBuildSnapshot.buildId
       } catch (error: any) {
         if (cancelled) return
         const message =
@@ -315,7 +322,15 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
     return () => {
       cancelled = true
     }
-  }, [prototype_id, isActive, logsCloseCompleted])
+  }, [prototype_id, isActive, watchBuildSnapshot])
+
+  useEffect(() => {
+    if (!watchBuildSnapshot.isFailed) return
+    const message =
+      watchBuildSnapshot.failureMessage ||
+      'Workspace build failed'
+    setPrepareError((prev) => prev || message)
+  }, [watchBuildSnapshot])
 
   // Calculate initial width based on container size with 6:4 ratio (60% editor, 40% API panel)
   // Guard against hidden/inactive tabs where measured width can be 0.
@@ -444,7 +459,6 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
         ) : (
           <CoderWorkspaceStatus
             prepareResponse={prepareResponse}
-            logsCloseCompleted={logsCloseCompleted}
             prepareError={prepareError}
             watchEvents={watchEvents}
             logEvents={logEvents}
