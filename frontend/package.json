@@ -41,7 +41,7 @@
     "@tanstack/react-virtual": "^3.13.23",
     "@xyflow/react": "^12.10.2",
     "ajv": "^8.18.0",
-    "axios": "^1.7.1",
+    "axios": "^1.15.0",
     "chart.js": "^4.4.3",
     "chartjs-plugin-datalabels": "^2.2.0",
     "class-variance-authority": "^0.7.1",
