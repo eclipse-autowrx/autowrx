@@ -40,6 +40,15 @@ const getWorkspace = catchAsync(async (req, res) => {
   // Prepare workspace (creates if needed)
   const workspaceInfo = await orchestratorService.prepareWorkspaceForPrototype(userId, prototypeId);
 
+  // Browser-reachable code-server URL (Coder proxy path); used by VS Code iframe after build completes.
+  const appUrl = await coderService.getWorkspaceAppUrl(
+    workspaceInfo.workspaceId,
+    'code-server',
+    5,
+    2000,
+    workspaceInfo.sessionToken,
+  );
+
   res.json({
     workspaceId: workspaceInfo.workspaceId,
     workspaceName: workspaceInfo.workspaceName,
@@ -47,6 +56,7 @@ const getWorkspace = catchAsync(async (req, res) => {
     status: workspaceInfo.status,
     sessionToken: workspaceInfo.sessionToken,
     folderPath: workspaceInfo.folderPath,
+    appUrl,
   });
 });
 

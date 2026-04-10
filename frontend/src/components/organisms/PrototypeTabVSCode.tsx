@@ -37,6 +37,35 @@ const PrototypeTabCodeApiPanel = lazy(() =>
   retry(() => import('./PrototypeTabCodeApiPanel')),
 )
 
+/** Path-based Coder apps need session in the URL; see instance-setup/coder/coder-integration-flow.md */
+const buildCoderWorkspaceIframeSrc = (
+  appUrl: string,
+  folderPath?: string | null,
+  sessionToken?: string | null,
+): string => {
+  let url: URL
+  try {
+    url = new URL(appUrl)
+  } catch {
+    const params = new URLSearchParams()
+    if (folderPath) params.set('folder', folderPath)
+    if (sessionToken) {
+      params.set('coder_session_token', sessionToken)
+      params.set('token', sessionToken)
+    }
+    const q = params.toString()
+    if (!q) return appUrl
+    const sep = appUrl.includes('?') ? '&' : '?'
+    return `${appUrl}${sep}${q}`
+  }
+  if (folderPath) url.searchParams.set('folder', folderPath)
+  if (sessionToken) {
+    url.searchParams.set('coder_session_token', sessionToken)
+    url.searchParams.set('token', sessionToken)
+  }
+  return url.toString()
+}
+
 interface PrototypeTabVSCodeProps {
   isActive?: boolean
 }
@@ -258,7 +287,16 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
         if (!workspace?.appUrl) {
           throw new Error('Workspace is ready but app URL is missing')
         }
-        setWorkspaceAppUrl(workspace.appUrl)
+        if (!workspace.sessionToken) {
+          throw new Error('Workspace session token is missing')
+        }
+        setWorkspaceAppUrl(
+          buildCoderWorkspaceIframeSrc(
+            workspace.appUrl,
+            workspace.folderPath,
+            workspace.sessionToken,
+          ),
+        )
       } catch (error: any) {
         if (cancelled) return
         const message =
