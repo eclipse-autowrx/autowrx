@@ -28,7 +28,7 @@ import {
 } from 'react-icons/tb'
 import usePermissionHook from '@/hooks/usePermissionHook.ts'
 import { PERMISSIONS } from '@/const/permission.ts'
-// import DaGlobalSearch from '../molecules/DaGlobalSearch'
+import DaGlobalSearch from '../molecules/DaGlobalSearch'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 // import useCurrentModel from '@/hooks/useCurrentModel'
 import { IoIosHelpBuoy } from 'react-icons/io'
@@ -140,29 +140,62 @@ const NavigationBar = ({ }) => {
       {/* Navigation Bar Actions */}
       {navBarActions && Array.isArray(navBarActions) && navBarActions.length > 0 && (
         <div className="mr-2 flex items-center gap-2">
-          {navBarActions.map((action: any, index: number) => (
-            <a
-              key={index}
-              href={action.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium hover:bg-[var(--header-hover-bg)] transition-colors"
-              style={{ '--header-hover-bg': '#dbe4ee' } as CSSProperties}
-              title={action.label}
-            >
-              {action.icon && (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: DOMPurify.sanitize(action.icon, {
-                      USE_PROFILES: { svg: true, svgFilters: true }
-                    })
-                  }}
-                  className="w-6 h-6 flex items-center justify-center"
+          {navBarActions.map((action: any, index: number) => {
+            const actionType = action.type || 'link'
+
+            if (actionType === 'search') {
+              return (
+                <DaGlobalSearch
+                  key={index}
+                  trigger={
+                    <Button
+                      variant="outline"
+                      className="w-[250px] h-10 flex items-center justify-start gap-0 border-gray-300 shadow-lg cursor-pointer text-muted-foreground text-base bg-white hover:bg-gray-100"
+                      title={action.placeholder || action.label || 'Search'}
+                    >
+                      {action.icon ? (
+                        <div
+                          dangerouslySetInnerHTML={{
+                            __html: DOMPurify.sanitize(action.icon, {
+                              USE_PROFILES: { svg: true, svgFilters: true }
+                            })
+                          }}
+                          className="size-5 mr-2 flex items-center justify-center"
+                        />
+                      ) : (
+                        <TbZoom className="size-5 mr-2" />
+                      )}
+                      {action.placeholder || action.label || 'Search'}
+                    </Button>
+                  }
                 />
-              )}
-              {action.label && <span className="ml-1">{action.label}</span>}
-            </a>
-          ))}
+              )
+            }
+
+            return (
+              <a
+                key={index}
+                href={action.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium hover:bg-[var(--header-hover-bg)] transition-colors"
+                style={{ '--header-hover-bg': '#dbe4ee' } as CSSProperties}
+                title={action.label}
+              >
+                {action.icon && (
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: DOMPurify.sanitize(action.icon, {
+                        USE_PROFILES: { svg: true, svgFilters: true }
+                      })
+                    }}
+                    className="w-6 h-6 flex items-center justify-center"
+                  />
+                )}
+                {action.label && <span className="ml-1">{action.label}</span>}
+              </a>
+            )
+          })}
         </div>
       )}
 
@@ -177,15 +210,6 @@ const NavigationBar = ({ }) => {
 
       {user && (
         <div className="flex items-center shrink-0">
-          {/* <DaGlobalSearch>
-            <DaButton
-              variant="outline-nocolor"
-              className="w-[140px] flex items-center justify-start! border-gray-300! shadow-lg"
-            >
-              <TbZoom className="size-5 mr-2" />
-              Search
-            </DaButton>
-          </DaGlobalSearch>{' '} */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
