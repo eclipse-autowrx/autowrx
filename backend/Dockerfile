@@ -1,6 +1,6 @@
 # Stage 1: Build Frontend using build-frontend.sh script
 # Use BUILDPLATFORM for frontend builder since it produces architecture-agnostic static files
-FROM --platform=$BUILDPLATFORM node:20-alpine AS frontend-builder
+FROM --platform=$BUILDPLATFORM node:22-alpine AS frontend-builder
 WORKDIR /app
 
 # Install bash (needed for build script)
@@ -23,7 +23,7 @@ COPY build-frontend.sh ./
 RUN chmod +x build-frontend.sh && ./build-frontend.sh
 
 # Stage 2: Build Backend (only backend code, no frontend source)
-FROM node:20-alpine
+FROM node:22-alpine
 
 # Install Python and build tools needed for native dependencies (bufferutil, utf-8-validate)
 RUN apk add --no-cache python3 make g++
