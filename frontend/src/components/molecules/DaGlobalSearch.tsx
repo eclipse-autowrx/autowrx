@@ -20,7 +20,7 @@ import { Spinner } from '@/components/atoms/spinner'
 import { TbSearch, TbSortDescending } from 'react-icons/tb'
 import { useNavigate } from 'react-router-dom'
 import { searchService } from '@/services/search.service'
-import { useToast } from '@/components/molecules/toaster/use-toast'
+import { toast } from 'react-toastify'
 import type { Prototype, ModelLite } from '@/types/model.type'
 
 interface DaGlobalSearchProps {
@@ -44,7 +44,6 @@ const FILTER_OPTIONS: { category: string; options: FilterType[] }[] = [
 const DaGlobalSearch = ({ trigger }: DaGlobalSearchProps) => {
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
-  const { toast } = useToast()
   const [selectedFilters, setSelectedFilters] = useState<FilterType[]>([
     'Prototypes',
     'Models',
@@ -124,7 +123,7 @@ const DaGlobalSearch = ({ trigger }: DaGlobalSearchProps) => {
       }
       setHasSearched(true)
     } catch {
-      toast({ title: 'Search failed', description: 'Please try again later.', variant: 'destructive' })
+      toast.error('Search failed. Please try again later.')
     } finally {
       setIsSearching(false)
     }
@@ -150,6 +149,7 @@ const DaGlobalSearch = ({ trigger }: DaGlobalSearchProps) => {
           setFilteredResults([])
           setHasSearched(false)
           setFilterOpen(false)
+          setSelectedFilters(['Prototypes', 'Models'])
         }
         setOpen(v)
       }}
@@ -169,6 +169,7 @@ const DaGlobalSearch = ({ trigger }: DaGlobalSearchProps) => {
             <div className="relative mr-2 w-full">
               <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
+                autoFocus
                 placeholder="Search..."
                 className="pl-9"
                 value={searchTerm}
@@ -255,9 +256,7 @@ const DaGlobalSearch = ({ trigger }: DaGlobalSearchProps) => {
                         .join(', ')}{' '}
                     </span>
                     :{' '}
-                    {filteredResults.length > 0
-                      ? `${filteredResults.length} ${filteredResults.length > 1 ? 'results' : 'result'}`
-                      : null}
+                    {`${filteredResults.length} ${filteredResults.length > 1 ? 'results' : 'result'}`}
                   </p>
                   {filteredResults.map((result) => (
                     <div
