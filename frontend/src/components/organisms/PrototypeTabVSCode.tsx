@@ -21,7 +21,11 @@ import { useParams } from 'react-router-dom'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { PERMISSIONS } from '@/data/permission'
-import { prepareWorkspace, WorkspaceInfo } from '@/services/coder.service'
+import {
+  getWorkspaceUrl,
+  prepareWorkspace,
+  WorkspaceInfo,
+} from '@/services/coder.service'
 import useModelStore from '@/stores/modelStore'
 import useAuthStore from '@/stores/authStore'
 import { Prototype } from '@/types/model.type'
@@ -40,6 +44,7 @@ interface PrototypeTabVSCodeProps {
 const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
   isActive = true,
 }) => {
+  const LOGS_CLOSED_KEY_PREFIX = 'coder.logs.closed.'
   const { prototype_id } = useParams<{ prototype_id: string }>()
   const [prototype] = useModelStore(
     (state) => [state.prototype as Prototype],
@@ -52,6 +57,10 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
     null,
   )
   const [prepareError, setPrepareError] = useState<string | null>(null)
+  const [logsCloseCompleted, setLogsCloseCompleted] = useState(false)
+  const [workspaceAppUrl, setWorkspaceAppUrl] = useState<string | null>(null)
+  const [isIframeLoading, setIsIframeLoading] = useState(false)
+  const [iframeLoadError, setIframeLoadError] = useState<string | null>(null)
   const [watchEvents, setWatchEvents] = useState<any[]>([])
   const [logEvents, setLogEvents] = useState<any[]>([])
 
@@ -73,6 +82,10 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
 
     let cancelled = false
     let logsWsOpened = false
+    let currentBuildId: string | null = null
+
+    const logsClosedStorageKey = (workspaceBuildId: string) =>
+      `${LOGS_CLOSED_KEY_PREFIX}${workspaceBuildId}`
 
     const closeSockets = () => {
       if (watchSocketRef.current) {
@@ -109,6 +122,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
         return
       }
       logsWsOpened = true
+      currentBuildId = String(workspaceBuildId)
 
       const wsBase = toWsBase(config.serverBaseUrl)
       const logsUrl = `${wsBase}/${config.serverVersion}/system/coder/workspacebuilds/${workspaceBuildId}/logs?access_token=${encodeURIComponent(accessToken)}&follow=true&after=-1`
@@ -133,6 +147,14 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
       }
 
       logsWs.onclose = (event) => {
+        if (event.code === 1000 && event.reason === 'upstream closed' && currentBuildId) {
+          try {
+            localStorage.setItem(logsClosedStorageKey(currentBuildId), 'true')
+          } catch {
+            // ignore storage errors
+          }
+          setLogsCloseCompleted(true)
+        }
         appendEvent(setLogEvents, {
           type: 'socket',
           event: 'close',
@@ -145,12 +167,26 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
     const run = async () => {
       try {
         setPrepareError(null)
+        setLogsCloseCompleted(false)
+        setWorkspaceAppUrl(null)
+        setIframeLoadError(null)
+        setIsIframeLoading(false)
         setWatchEvents([])
         setLogEvents([])
 
         const response = await prepareWorkspace(prototype_id)
         if (cancelled) return
         setPrepareResponse(response)
+        currentBuildId = response.workspaceBuildId ? String(response.workspaceBuildId) : null
+        if (currentBuildId) {
+          try {
+            setLogsCloseCompleted(
+              localStorage.getItem(logsClosedStorageKey(currentBuildId)) === 'true',
+            )
+          } catch {
+            setLogsCloseCompleted(false)
+          }
+        }
 
         const wsBase = toWsBase(config.serverBaseUrl)
 
@@ -205,6 +241,43 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
       closeSockets()
     }
   }, [prototype_id, isActive, isAuthorized, accessToken])
+
+  // Step 2: when logs stream completes, resolve app URL and show iframe.
+  useEffect(() => {
+    if (!isActive) return
+    if (!prototype_id || !logsCloseCompleted) return
+
+    let cancelled = false
+
+    const run = async () => {
+      try {
+        setIframeLoadError(null)
+        setIsIframeLoading(true)
+        const workspace = await getWorkspaceUrl(prototype_id)
+        if (cancelled) return
+        if (!workspace?.appUrl) {
+          throw new Error('Workspace is ready but app URL is missing')
+        }
+        setWorkspaceAppUrl(workspace.appUrl)
+      } catch (error: any) {
+        if (cancelled) return
+        const message =
+          error?.response?.data?.message ||
+          error?.message ||
+          'Failed to open workspace iframe'
+        setIframeLoadError(String(message))
+        setPrepareError((prev) => prev || String(message))
+        setWorkspaceAppUrl(null)
+        setIsIframeLoading(false)
+      }
+    }
+
+    void run()
+
+    return () => {
+      cancelled = true
+    }
+  }, [prototype_id, isActive, logsCloseCompleted])
 
   // Calculate initial width based on container size with 6:4 ratio (60% editor, 40% API panel)
   // Guard against hidden/inactive tabs where measured width can be 0.
@@ -309,13 +382,37 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
       className="flex h-[calc(100%-0px)] w-full p-2 bg-gray-100"
     >
       <div className="flex h-full flex-1 min-w-0 flex-col border-r bg-white rounded-md p-3">
-        <CoderWorkspaceStatus
-          prepareResponse={prepareResponse}
-          prepareError={prepareError}
-          watchEvents={watchEvents}
-          logEvents={logEvents}
-          className="min-h-0 flex-1 overflow-y-auto"
-        />
+        {workspaceAppUrl && !iframeLoadError ? (
+          <div className="relative h-full w-full overflow-hidden rounded-md border border-border bg-background">
+            <iframe
+              src={workspaceAppUrl}
+              title="Coder Workspace"
+              className="h-full w-full border-0"
+              allow="clipboard-read; clipboard-write"
+              onLoad={() => setIsIframeLoading(false)}
+              onError={() => {
+                setIsIframeLoading(false)
+                const message = 'Failed to load workspace iframe'
+                setIframeLoadError(message)
+                setPrepareError((prev) => prev || message)
+              }}
+            />
+            {isIframeLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/70">
+                <Spinner />
+              </div>
+            )}
+          </div>
+        ) : (
+          <CoderWorkspaceStatus
+            prepareResponse={prepareResponse}
+            logsCloseCompleted={logsCloseCompleted}
+            prepareError={prepareError}
+            watchEvents={watchEvents}
+            logEvents={logEvents}
+            className="min-h-0 flex-1 overflow-y-auto"
+          />
+        )}
       </div>
       {!isApiPanelCollapsed && (
         // Resize handle (hide while collapsed to avoid weird interactions).

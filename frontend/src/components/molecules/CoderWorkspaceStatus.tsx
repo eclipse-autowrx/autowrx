@@ -7,6 +7,7 @@ import { useToast } from '@/components/molecules/toaster/use-toast'
 
 interface CoderWorkspaceStatusProps {
   prepareResponse: WorkspaceInfo | null
+  logsCloseCompleted?: boolean
   prepareError?: string | null
   watchEvents: any[]
   logEvents: any[]
@@ -31,6 +32,7 @@ const CHECKPOINTS = [
 
 const CoderWorkspaceStatus = ({
   prepareResponse,
+  logsCloseCompleted = false,
   prepareError,
   watchEvents,
   logEvents,
@@ -88,8 +90,14 @@ const CoderWorkspaceStatus = ({
       .filter((line) => Boolean(line.text))
     const derivedErrorLines: Array<{ text: string; isError: boolean }> = []
 
-    const hasBuildSucceeded =
-      jobStatus === 'succeeded' || (buildStatus === 'running' && mainAgent?.status === 'connected')
+    const hasCloseCompleteEvent = logEvents.some(
+      (event) =>
+        event?.type === 'socket' &&
+        event?.event === 'close' &&
+        event?.code === 1000 &&
+        event?.reason === 'upstream closed',
+    )
+    const hasBuildSucceeded = logsCloseCompleted || hasCloseCompleteEvent
     const hasBuildFailed = jobStatus === 'failed' || jobStatus === 'canceled'
     const hasErrorLog = logEvents.some(
       (event) =>
@@ -194,7 +202,7 @@ const CoderWorkspaceStatus = ({
       activeCheckpointIndex,
       failureReason,
     }
-  }, [prepareResponse, prepareError, watchEvents, logEvents])
+  }, [prepareResponse, logsCloseCompleted, prepareError, watchEvents, logEvents])
 
   useEffect(() => {
     if (!model.failureReason) return
