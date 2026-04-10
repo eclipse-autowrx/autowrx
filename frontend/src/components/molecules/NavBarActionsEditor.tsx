@@ -185,7 +185,17 @@ const NavBarActionsEditor: React.FC<NavBarActionsEditorProps> = ({ value, onChan
               <Label className="text-sm mb-1">Type</Label>
               <Select
                 value={action.type || 'link'}
-                onValueChange={(val) => handleUpdateAction(index, 'type', val)}
+                onValueChange={(val) => {
+                  const updatedActions = [...actions]
+                  updatedActions[index] = {
+                    ...updatedActions[index],
+                    type: val as NavBarActionType,
+                    ...(val === 'search' ? { url: '', label: '' } : {}),
+                    ...(val === 'link' ? { placeholder: '' } : {}),
+                  }
+                  setActions(updatedActions)
+                  onChange(updatedActions)
+                }}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue />

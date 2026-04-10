@@ -150,7 +150,7 @@ const NavigationBar = ({ }) => {
                   trigger={
                     <Button
                       variant="outline"
-                      className="w-[250px] h-10 flex items-center justify-start gap-0 border-gray-300 shadow-lg cursor-pointer text-muted-foreground text-base bg-white hover:bg-gray-100"
+                      className="w-[250px] min-w-0 h-10 flex items-center justify-start gap-0 border-gray-300 shadow-lg cursor-pointer text-muted-foreground text-base bg-white hover:bg-gray-100"
                       title={action.placeholder || action.label || 'Search'}
                     >
                       {action.icon ? (

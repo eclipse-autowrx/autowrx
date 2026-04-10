@@ -20,6 +20,7 @@ import { Spinner } from '@/components/atoms/spinner'
 import { TbSearch, TbSortDescending } from 'react-icons/tb'
 import { useNavigate } from 'react-router-dom'
 import { searchService } from '@/services/search.service'
+import { useToast } from '@/components/molecules/toaster/use-toast'
 import type { Prototype, ModelLite } from '@/types/model.type'
 
 interface DaGlobalSearchProps {
@@ -43,6 +44,7 @@ const FILTER_OPTIONS: { category: string; options: FilterType[] }[] = [
 const DaGlobalSearch = ({ trigger }: DaGlobalSearchProps) => {
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
+  const { toast } = useToast()
   const [selectedFilters, setSelectedFilters] = useState<FilterType[]>([
     'Prototypes',
     'Models',
@@ -95,9 +97,6 @@ const DaGlobalSearch = ({ trigger }: DaGlobalSearchProps) => {
 
         if (selectedFilters.includes('Prototypes')) {
           const filteredPrototypes: SearchResult[] = prototypes
-            .filter((prototype: Prototype) =>
-              prototype.name.toLowerCase().includes(searchTerm.toLowerCase()),
-            )
             .map((prototype: Prototype) => ({
               id: prototype.id,
               name: prototype.name,
@@ -110,9 +109,6 @@ const DaGlobalSearch = ({ trigger }: DaGlobalSearchProps) => {
 
         if (selectedFilters.includes('Models')) {
           const filteredModels: SearchResult[] = models
-            .filter((model: ModelLite) =>
-              model.name.toLowerCase().includes(searchTerm.toLowerCase()),
-            )
             .map((model: ModelLite) => ({
               id: model.id,
               name: model.name,
@@ -123,8 +119,12 @@ const DaGlobalSearch = ({ trigger }: DaGlobalSearchProps) => {
         }
 
         setFilteredResults(results)
-        setHasSearched(true)
+      } else {
+        setFilteredResults([])
       }
+      setHasSearched(true)
+    } catch {
+      toast({ title: 'Search failed', description: 'Please try again later.', variant: 'destructive' })
     } finally {
       setIsSearching(false)
     }
@@ -142,7 +142,18 @@ const DaGlobalSearch = ({ trigger }: DaGlobalSearchProps) => {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) {
+          setSearchTerm('')
+          setFilteredResults([])
+          setHasSearched(false)
+          setFilterOpen(false)
+        }
+        setOpen(v)
+      }}
+    >
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent
         className="w-[70vw] lg:w-[35vw] h-[70vh] max-w-none flex flex-col border-none p-5 rounded-[10px]"
@@ -255,9 +266,14 @@ const DaGlobalSearch = ({ trigger }: DaGlobalSearchProps) => {
                       onClick={() => handleResultClick(result)}
                     >
                       <img
-                        src={result.image_file}
+                        src={result.image_file || (result.type === 'Prototype' ? '/imgs/default_prototype_cover.jpg' : '/imgs/default-model-image.png')}
                         alt={result.name}
                         className="w-16 h-16 mr-4 object-cover rounded-md"
+                        onError={(e) => {
+                          e.currentTarget.src = result.type === 'Prototype'
+                            ? '/imgs/default_prototype_cover.jpg'
+                            : '/imgs/default-model-image.png'
+                        }}
                       />
                       <div className="flex flex-col">
                         <span className="text-sm font-semibold">
