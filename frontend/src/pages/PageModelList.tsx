@@ -10,7 +10,13 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { HiPlus } from 'react-icons/hi'
-import { TbLoader, TbPackageExport, TbRefresh, TbSearch } from 'react-icons/tb'
+import {
+  TbCar,
+  TbLoader,
+  TbPackageExport,
+  TbRefresh,
+  TbSearch,
+} from 'react-icons/tb'
 import DaDialog from '@/components/molecules/DaDialog'
 import FormCreateModel from '@/components/molecules/forms/FormCreateModel'
 import DaImportFile from '@/components/atoms/DaImportFile'
@@ -263,7 +269,7 @@ const PageModelList = () => {
             ))}
           </div>
         ) : (
-          tabItems.filter((tab) => tab.count > 0 || isLoading).map((tab) => (
+          tabItems.map((tab) => (
             <DaTabItem
               key={tab.value}
               active={activeSection === tab.value}
@@ -304,7 +310,11 @@ const PageModelList = () => {
               <>
                 <div className="pt-6 pb-2 flex items-center justify-between">
                   <p className="text-sm text-primary">
-                    Select a vehicle model to start
+                    {!isLoading && totalResults === 0
+                      ? user
+                        ? 'Your workspace has no vehicle models yet'
+                        : 'No public vehicle models are available yet'
+                      : 'Select a vehicle model to start'}
                   </p>
                   {user && (
                     <div className="flex items-center gap-2">
@@ -344,6 +354,14 @@ const PageModelList = () => {
                     </div>
                   )}
                 </div>
+                {!error && !isLoading && totalResults === 0 && (
+                  <ModelListEmptyState
+                    isLoggedIn={!!user}
+                    isImporting={isImporting}
+                    onOpenCreate={() => setCreateDialogOpen(true)}
+                    onImportZip={handleImportModelZip}
+                  />
+                )}
                 {user && (filterModels(ownedModels).length > 0 || isLoading) && (
                   <ModelSection
                     title="My Models"
@@ -398,6 +416,70 @@ const PageModelList = () => {
 }
 
 export default PageModelList
+
+type ModelListEmptyStateProps = {
+  isLoggedIn: boolean
+  isImporting: boolean
+  onOpenCreate: () => void
+  onImportZip: (file: File) => void
+}
+
+const ModelListEmptyState = ({
+  isLoggedIn,
+  isImporting,
+  onOpenCreate,
+  onImportZip,
+}: ModelListEmptyStateProps) => {
+  return (
+    <div
+      className="flex flex-1 flex-col items-center justify-center gap-4 py-16 px-4 min-h-[min(420px,55vh)]"
+      data-id="model-list-empty-state"
+    >
+      <TbCar
+        className="h-14 w-14 text-muted-foreground/50"
+        aria-hidden
+      />
+      <div className="flex flex-col items-center gap-2 text-center max-w-md">
+        <h2 className="text-lg font-semibold text-primary">
+          {isLoggedIn
+            ? 'No vehicle models yet'
+            : 'Nothing to browse here yet'}
+        </h2>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          {isLoggedIn
+            ? 'Create a new model or import one from a ZIP file to get started. You can also check the Public tab when shared models are published.'
+            : 'There are no public vehicle models to show. Sign in from the toolbar to create or import your own models.'}
+        </p>
+      </div>
+      {isLoggedIn && (
+        <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={onOpenCreate}
+            data-id="btn-empty-state-create"
+          >
+            <HiPlus className="mr-1 text-lg" />
+            Create New Model
+          </Button>
+          {!isImporting ? (
+            <DaImportFile accept=".zip" onFileChange={onImportZip}>
+              <Button variant="outline" size="sm" data-id="btn-empty-state-import">
+                <TbPackageExport className="mr-1 text-lg" />
+                Import Model
+              </Button>
+            </DaImportFile>
+          ) : (
+            <p className="flex items-center text-sm text-muted-foreground">
+              <TbLoader className="animate-spin text-lg mr-2" />
+              Importing model …
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
 
 type ModelSectionProps = {
   title: string
