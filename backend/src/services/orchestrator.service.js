@@ -16,10 +16,42 @@ const ApiError = require('../utils/ApiError');
 const coderConfig = require('../utils/coderConfig');
 /* eslint-disable security/detect-non-literal-fs-filename */
 
+const WORKSPACE_UID = Number(process.env.CODER_WORKSPACE_UID || 1000);
+const WORKSPACE_GID = Number(process.env.CODER_WORKSPACE_GID || 1000);
+
 const normalizeIdForName = (value) =>
   String(value || '')
     .toLowerCase()
     .replace(/[^a-z0-9]/g, '');
+
+const ensureHostFolderPermissions = (folderPath) => {
+  let chownApplied = false;
+  try {
+    fs.chownSync(folderPath, WORKSPACE_UID, WORKSPACE_GID);
+    chownApplied = true;
+  } catch (err) {
+    logger.warn(`chown failed for ${folderPath}: ${err.message}`);
+  }
+
+  try {
+    fs.chmodSync(folderPath, 0o775);
+  } catch (err) {
+    logger.warn(`chmod 775 failed for ${folderPath}: ${err.message}`);
+  }
+
+  // If ownership could not be aligned to workspace uid/gid, force world-writable fallback.
+  // This prevents bind-mount uid mismatch from breaking compilation in workspace.
+  try {
+    const st = fs.statSync(folderPath);
+    const ownerMatchesWorkspace = st.uid === WORKSPACE_UID && st.gid === WORKSPACE_GID;
+    if (!chownApplied || !ownerMatchesWorkspace) {
+      fs.chmodSync(folderPath, 0o777);
+      logger.warn(`Applied chmod 777 fallback for ${folderPath} (uid=${st.uid}, gid=${st.gid})`);
+    }
+  } catch (err) {
+    logger.warn(`permission fallback check failed for ${folderPath}: ${err.message}`);
+  }
+};
 
 const looksLikeFileTree = (value) => {
   if (!Array.isArray(value)) return false;
@@ -189,8 +221,12 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
     const prototypeFolderHost = path.join(userHostPath, prototypeFolderName);
 
     try {
+      fs.mkdirSync(userHostPath, { recursive: true });
       fs.mkdirSync(prototypeFolderHost, { recursive: true });
+      ensureHostFolderPermissions(userHostPath);
+      ensureHostFolderPermissions(prototypeFolderHost);
       seedPrototypeFiles(prototypeFolderHost, prototype);
+      ensureHostFolderPermissions(prototypeFolderHost);
     } catch (fsErr) {
       logger.warn(`Filesystem prep warning for ${prototypeFolderHost}: ${fsErr.message}`);
     }
