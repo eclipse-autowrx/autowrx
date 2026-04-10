@@ -85,6 +85,13 @@ const PublicConfigSection: React.FC = () => {
         .filter((config) => predefinedKeys.has(config.key))
         .sort((a, b) => (predefinedOrder.get(a.key) ?? 999) - (predefinedOrder.get(b.key) ?? 999))
 
+      const currentFilterConfigKey = filteredConfigs.map(config => config.key)
+
+      for (const defaultConfig of PREDEFINED_SITE_CONFIGS) {
+        if (!currentFilterConfigKey.includes(defaultConfig.key)) {
+          filteredConfigs.push(defaultConfig)
+        }
+      }
       // Load nav bar actions
       const navBarActionsConfig = allConfigs.find((config) => config.key === 'NAV_BAR_ACTIONS')
       if (navBarActionsConfig && navBarActionsConfig.value !== null && navBarActionsConfig.value !== undefined) {
