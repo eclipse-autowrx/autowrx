@@ -14,6 +14,19 @@ const ApiError = require('../utils/ApiError');
 const { Prototype, User } = require('../models');
 const coderConfig = require('../utils/coderConfig');
 
+const sanitizePrototypeFolderName = (name) => {
+  if (!name || typeof name !== 'string') return 'unnamed-prototype';
+  const sanitized = name
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9\-_]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 64);
+  return sanitized || 'unnamed-prototype';
+};
+
 /**
  * Get workspace URL and session token for a prototype
  */
@@ -37,27 +50,36 @@ const getWorkspace = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.FORBIDDEN, 'You do not have permission to access this prototype');
   }
 
-  // Prepare workspace (creates if needed)
-  const workspaceInfo = await orchestratorService.prepareWorkspaceForPrototype(userId, prototypeId);
+  // Read existing prepared workspace only (avoid prepare side-effects/races here).
+  const user = await User.findById(userId);
+  if (!user?.coder_workspace_id) {
+    throw new ApiError(httpStatus.CONFLICT, 'Workspace is not prepared yet. Call prepare endpoint first.');
+  }
+
+  const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, {
+    workspaceId: user.coder_workspace_id,
+  });
+  const workspace = await coderService.getWorkspaceStatus(user.coder_workspace_id, workspaceScopedToken);
+  const prototypeFolderName = sanitizePrototypeFolderName(prototype.name);
 
   // Browser-reachable code-server URL (Coder proxy path); used by VS Code iframe after build completes.
   const appUrl = await coderService.getWorkspaceAppUrl(
-    workspaceInfo.workspaceId,
+    user.coder_workspace_id,
     'code-server',
     5,
     2000,
-    workspaceInfo.sessionToken,
+    workspaceScopedToken,
   );
 
-  await coderService.waitUntilCoderAppProxyReady(appUrl, workspaceInfo.sessionToken);
+  await coderService.waitUntilCoderAppProxyReady(appUrl, workspaceScopedToken);
 
   res.json({
-    workspaceId: workspaceInfo.workspaceId,
-    workspaceName: workspaceInfo.workspaceName,
-    workspaceBuildId: workspaceInfo.workspaceBuildId,
-    status: workspaceInfo.status,
-    sessionToken: workspaceInfo.sessionToken,
-    folderPath: workspaceInfo.folderPath,
+    workspaceId: workspace.id,
+    workspaceName: workspace.name,
+    workspaceBuildId: workspace?.latest_build?.id || null,
+    status: workspace?.latest_build?.status || workspace?.status || 'unknown',
+    sessionToken: workspaceScopedToken,
+    folderPath: `/home/coder/prototypes/${prototypeFolderName}`,
     appUrl,
   });
 });

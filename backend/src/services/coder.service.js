@@ -90,6 +90,17 @@ const getOrCreateUserScopedToken = async (user, options = {}) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'Coder user not found. Prepare workspace first.');
   }
 
+  // Global tokens are used for bootstrap/list/create calls before a workspace id exists.
+  // Do not persist them on User because they can race and overwrite a valid workspace-scoped
+  // token, which then makes iframe/query-token auth appear flaky.
+  if (!workspaceId) {
+    const bootstrapToken = await generateSessionToken(user.coder_username, { coderUserId });
+    if (!bootstrapToken) {
+      throw new ApiError(httpStatus.SERVICE_UNAVAILABLE, 'Failed to generate Coder user-scoped token');
+    }
+    return bootstrapToken;
+  }
+
   const desiredAllow = workspaceId ? `${TOKEN_POLICY_VERSION}|workspace:${workspaceId}` : `${TOKEN_POLICY_VERSION}|global`;
   const expiresAt = user.coder_scoped_token_expires_at ? new Date(user.coder_scoped_token_expires_at).getTime() : 0;
   const stillValid = user.coder_scoped_token && expiresAt > Date.now() + TOKEN_REFRESH_SAFETY_MS;
