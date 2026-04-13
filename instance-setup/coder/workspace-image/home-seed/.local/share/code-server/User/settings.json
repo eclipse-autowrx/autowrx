@@ -42,6 +42,7 @@
 
   "git.autofetch": false,
   "search.followSymlinks": false,
+  "files.autoSave": "onFocusChange",
   "files.watcherExclude": {
     "**/.git/objects/**": true,
     "**/.git/subtree-cache/**": true,

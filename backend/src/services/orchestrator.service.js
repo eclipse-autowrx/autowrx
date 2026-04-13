@@ -25,31 +25,50 @@ const normalizeIdForName = (value) =>
     .replace(/[^a-z0-9]/g, '');
 
 const ensureHostFolderPermissions = (folderPath) => {
-  let chownApplied = false;
   try {
     fs.chownSync(folderPath, WORKSPACE_UID, WORKSPACE_GID);
-    chownApplied = true;
   } catch (err) {
     logger.warn(`chown failed for ${folderPath}: ${err.message}`);
   }
 
   try {
-    fs.chmodSync(folderPath, 0o775);
+    fs.chmodSync(folderPath, 0o777);
   } catch (err) {
-    logger.warn(`chmod 775 failed for ${folderPath}: ${err.message}`);
+    logger.warn(`chmod 777 failed for ${folderPath}: ${err.message}`);
   }
+};
 
-  // If ownership could not be aligned to workspace uid/gid, force world-writable fallback.
-  // This prevents bind-mount uid mismatch from breaking compilation in workspace.
-  try {
-    const st = fs.statSync(folderPath);
-    const ownerMatchesWorkspace = st.uid === WORKSPACE_UID && st.gid === WORKSPACE_GID;
-    if (!chownApplied || !ownerMatchesWorkspace) {
-      fs.chmodSync(folderPath, 0o777);
-      logger.warn(`Applied chmod 777 fallback for ${folderPath} (uid=${st.uid}, gid=${st.gid})`);
+/**
+ * Recursively align bind-mounted prototype trees with the Coder workspace user (uid/gid)
+ * and force permissive modes so code-server can read/write seeded files (backend may run as root).
+ * @param {string} rootPath - Host path under PROTOTYPES_PATH (single prototype folder)
+ */
+const ensureHostPrototypeTreePermissions = (rootPath) => {
+  const walk = (entryPath) => {
+    try {
+      try {
+        fs.chownSync(entryPath, WORKSPACE_UID, WORKSPACE_GID);
+      } catch (err) {
+        logger.warn(`chown failed for ${entryPath}: ${err.message}`);
+      }
+      try {
+        fs.chmodSync(entryPath, 0o777);
+      } catch (err) {
+        logger.warn(`chmod 777 failed for ${entryPath}: ${err.message}`);
+      }
+      const st = fs.statSync(entryPath);
+      if (!st.isDirectory()) return;
+      fs.readdirSync(entryPath).forEach((name) => {
+        walk(path.join(entryPath, name));
+      });
+    } catch (err) {
+      logger.warn(`prototype tree permission walk failed for ${entryPath}: ${err.message}`);
     }
+  };
+  try {
+    if (fs.existsSync(rootPath)) walk(rootPath);
   } catch (err) {
-    logger.warn(`permission fallback check failed for ${folderPath}: ${err.message}`);
+    logger.warn(`ensureHostPrototypeTreePermissions failed for ${rootPath}: ${err.message}`);
   }
 };
 
@@ -226,7 +245,7 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
       ensureHostFolderPermissions(userHostPath);
       ensureHostFolderPermissions(prototypeFolderHost);
       seedPrototypeFiles(prototypeFolderHost, prototype);
-      ensureHostFolderPermissions(prototypeFolderHost);
+      ensureHostPrototypeTreePermissions(prototypeFolderHost);
     } catch (fsErr) {
       logger.warn(`Filesystem prep warning for ${prototypeFolderHost}: ${fsErr.message}`);
     }
@@ -451,6 +470,7 @@ const triggerRunForPrototype = async (userId, prototype, runKind) => {
   try {
     fs.mkdirSync(prototypeFolderHost, { recursive: true });
     fs.writeFileSync(triggerFilePath, safeCommand, 'utf8');
+    ensureHostPrototypeTreePermissions(prototypeFolderHost);
     logger.info(`Wrote Coder trigger file for prototype ${prototype.id}: ${triggerFilePath}`);
   } catch (err) {
     logger.error(`Failed to write trigger file ${triggerFilePath}: ${err.message}`);
