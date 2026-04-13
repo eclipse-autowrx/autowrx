@@ -107,9 +107,14 @@ const listTextFilesRecursively = (rootPath) => {
   return files;
 };
 
-const readPrototypeCodeFromPrototypesPath = (userId, prototypeName) => {
+const readPrototypeCodeFromPrototypesPath = (userId, modelId, prototypeName) => {
   const prototypesRoot = coderConfig.getCoderConfigSync().prototypesPath || '/var/lib/autowrx/prototypes';
-  const prototypeFolder = path.join(prototypesRoot, String(userId), sanitizePrototypeFolderName(prototypeName));
+  const prototypeFolder = path.join(
+    prototypesRoot,
+    String(userId),
+    String(modelId || ''),
+    sanitizePrototypeFolderName(prototypeName),
+  );
 
   if (!fs.existsSync(prototypeFolder)) {
     return {
@@ -447,7 +452,7 @@ const listPopularPrototypes = async () => {
 const getPrototypeUsedApisFromWorkspace = async (id, userId) => {
   const prototype = await getPrototypeById(id, userId);
   const modelId = prototype.model_id?._id || prototype.model_id?.id || prototype.model_id;
-  const codeData = readPrototypeCodeFromPrototypesPath(userId, prototype.name);
+  const codeData = readPrototypeCodeFromPrototypesPath(userId, prototype.model_id, prototype.name);
 
   const cvi = await apiService.computeVSSApi(modelId);
   const apiList = apiService.parseCvi(cvi);

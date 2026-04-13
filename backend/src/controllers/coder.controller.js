@@ -27,6 +27,8 @@ const sanitizePrototypeFolderName = (name) => {
   return sanitized || 'unnamed-prototype';
 };
 
+const getPrototypeModelId = (prototype) => String(prototype?.model_id?._id || prototype?.model_id || '');
+
 /**
  * Get workspace URL and session token for a prototype
  */
@@ -57,7 +59,7 @@ const getWorkspace = catchAsync(async (req, res) => {
 
   const iframeSessionToken = await coderService.getOrCreateUserScopedToken(user, { workspaceId });
   const workspace = await coderService.getWorkspaceStatus(workspaceId, iframeSessionToken);
-  const prototypeFolderName = sanitizePrototypeFolderName(prototype.name);
+  const prototypeFolderPath = `${getPrototypeModelId(prototype)}/${sanitizePrototypeFolderName(prototype.name)}`;
 
   const appUrl = await coderService.getWorkspaceAppUrl(
     workspaceId,
@@ -75,7 +77,7 @@ const getWorkspace = catchAsync(async (req, res) => {
     workspaceBuildId: workspace?.latest_build?.id || null,
     status: workspace?.latest_build?.status || workspace?.status || 'unknown',
     sessionToken: iframeSessionToken,
-    folderPath: `/home/coder/prototypes/${prototypeFolderName}`,
+    folderPath: `/home/coder/prototypes/${prototypeFolderPath}`,
     appUrl,
   });
 });

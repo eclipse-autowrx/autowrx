@@ -167,6 +167,11 @@ const sanitizePrototypeFolderName = (name) => {
   return sanitized || 'unnamed-prototype';
 };
 
+const getPrototypeModelId = (prototype) => String(prototype?.model_id?._id || prototype?.model_id || '');
+
+const getPrototypeFolderRelativePath = (prototype) =>
+  path.join(getPrototypeModelId(prototype), sanitizePrototypeFolderName(prototype?.name));
+
 /**
  * Seed initial code files into a prototype folder (only if folder is empty)
  * @param {string} folderPath - Host folder path
@@ -236,9 +241,9 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
     });
 
     // 3. Setup Filesystem
-    const prototypeFolderName = sanitizePrototypeFolderName(prototype.name);
+    const prototypeFolderRelativePath = getPrototypeFolderRelativePath(prototype);
     const userHostPath = path.join(coderCfg.prototypesPath, userId.toString());
-    const prototypeFolderHost = path.join(userHostPath, prototypeFolderName);
+    const prototypeFolderHost = path.join(userHostPath, prototypeFolderRelativePath);
 
     try {
       fs.mkdirSync(userHostPath, { recursive: true });
@@ -303,7 +308,7 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
     workspace = await coderService.restoreUnhealthyRunningWorkspace(workspace.id, workspaceScopedToken);
     status = workspace.latest_build?.status;
 
-    logger.info(`Workspace ready | User: ${userId} | Proto: ${prototypeId} | Folder: ${prototypeFolderName}`);
+    logger.info(`Workspace ready | User: ${userId} | Proto: ${prototypeId} | Folder: ${prototypeFolderRelativePath}`);
 
     return {
       workspaceId: workspace.id,
@@ -311,7 +316,7 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
       workspaceBuildId: workspace?.latest_build?.id || null,
       status: status || 'unknown',
       sessionToken: workspaceScopedToken,
-      folderPath: `/home/coder/prototypes/${prototypeFolderName}`,
+      folderPath: `/home/coder/prototypes/${prototypeFolderRelativePath}`,
     };
   } catch (error) {
     logger.error(`Workspace Prep Failed: ${error.message}`);
@@ -478,9 +483,9 @@ const triggerRunForPrototype = async (userId, prototype, runKind) => {
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Prototypes path is not configured');
   }
 
-  const prototypeFolderName = sanitizePrototypeFolderName(prototype.name);
+  const prototypeFolderRelativePath = getPrototypeFolderRelativePath(prototype);
   const userHostPath = path.join(prototypesPath, userId.toString());
-  const prototypeFolderHost = path.join(userHostPath, prototypeFolderName);
+  const prototypeFolderHost = path.join(userHostPath, prototypeFolderRelativePath);
   const triggerFilePath = path.join(prototypeFolderHost, '.autowrx_run');
 
   try {
@@ -511,9 +516,9 @@ const getRunOutputForPrototype = async (userId, prototype) => {
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Prototypes path is not configured');
   }
 
-  const prototypeFolderName = sanitizePrototypeFolderName(prototype.name);
+  const prototypeFolderRelativePath = getPrototypeFolderRelativePath(prototype);
   const userHostPath = path.join(prototypesPath, userId.toString());
-  const prototypeFolderHost = path.join(userHostPath, prototypeFolderName);
+  const prototypeFolderHost = path.join(userHostPath, prototypeFolderRelativePath);
   const outPath = path.join(prototypeFolderHost, '.autowrx_out');
 
   if (!fs.existsSync(outPath)) {
