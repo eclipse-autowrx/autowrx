@@ -13,7 +13,8 @@ const dashboardTemplateSchema = mongoose.Schema(
   {
     name: { type: String, required: true, trim: true, maxlength: 255 },
     description: { type: String, trim: true },
-    visibility: { type: String, enum: ['public', 'private'], default: 'public' },
+    visibility: { type: String, enum: ['public', 'private'], default: 'public', index: true },
+    is_default: { type: Boolean, default: false },
     widget_config: { type: mongoose.SchemaTypes.Mixed },
     created_by: { type: mongoose.SchemaTypes.ObjectId, ref: 'User', required: true },
     updated_by: { type: mongoose.SchemaTypes.ObjectId, ref: 'User', required: true },
