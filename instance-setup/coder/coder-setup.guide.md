@@ -21,7 +21,7 @@ What **`start.sh`** does (see script for exact commands):
 1. Starts Coder with **`coder-docker-compose.yml`** (default UI/API port **7080**).
 2. Runs **first-user login** for the Coder CLI inside the `coder` container (default admin user/password are in the script).
 3. Builds **`autowrx-runner.vsix`** from **`autowrx-runner/`** and copies **`docker-template.tf`** + **`workspace-image/`** into a temp dir, then **`coder templates push docker-template`** from a tar stream.
-4. **`docker build -t autowrx-workspace:1`** on the workspace image context (warms cache).
+4. **`docker build -t autowrx-workspace:debian`** on the workspace image context (warms cache).
 5. Creates a CLI token **`auto-token`** (7d lifetime) — use this or create another token in Coder UI / CLI for AutoWRX.
 
 ## Wire AutoWRX to Coder

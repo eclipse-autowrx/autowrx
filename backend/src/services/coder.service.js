@@ -824,6 +824,90 @@ const getWorkspaceAppUrl = async (
 };
 
 /**
+ * Query params Coder expects for path-based workspace apps (matches frontend iframe URL).
+ * @param {string} appUrl
+ * @param {string} sessionToken
+ * @returns {string}
+ */
+const appendCoderSessionToAppUrl = (appUrl, sessionToken) => {
+  if (!appUrl || !sessionToken) {
+    return appUrl;
+  }
+  const addParam = (base, key, value) => {
+    const sep = base.includes('?') ? '&' : '?';
+    return `${base}${sep}${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+  };
+  let out = addParam(appUrl, 'coder_session_token', sessionToken);
+  out = addParam(out, 'token', sessionToken);
+  return out;
+};
+
+const isProxyGatewayFailure = (status) => status === 502 || status === 503 || status === 504;
+
+/**
+ * Poll the Coder app reverse-proxy until code-server is accepting traffic (avoids first-load 502).
+ * Root cause class: code-server listening on 127.0.0.1 only or slow start — see coder/coder#12790, #12292.
+ *
+ * @param {string} appUrl
+ * @param {string} sessionToken
+ * @param {Object} [opts]
+ * @param {number} [opts.maxAttempts]
+ * @param {number} [opts.delayMs]
+ * @param {number} [opts.timeoutMs]
+ * @returns {Promise<void>}
+ */
+const waitUntilCoderAppProxyReady = async (appUrl, sessionToken, opts = {}) => {
+  const maxAttempts = opts.maxAttempts ?? 25;
+  const delayMs = opts.delayMs ?? 1200;
+  const timeoutMs = opts.timeoutMs ?? 8000;
+  const url = appendCoderSessionToAppUrl(appUrl, sessionToken);
+
+  const probeAttempt = async (attempt) => {
+    try {
+      const res = await axios.get(url, {
+        timeout: timeoutMs,
+        maxRedirects: 7,
+        validateStatus: () => true,
+        maxContentLength: 262144,
+        maxBodyLength: 262144,
+        headers: { Accept: '*/*' },
+      });
+      const st = res.status;
+      if (st === 401 || st === 403) {
+        throw new ApiError(
+          httpStatus.UNAUTHORIZED,
+          'Coder rejected the session while opening the VS Code app. Try preparing the workspace again.',
+        );
+      }
+      if (st >= 200 && st < 500 && !isProxyGatewayFailure(st)) {
+        logger.info(`Coder VS Code app proxy ready (HTTP ${st}) after ${attempt} attempt(s)`);
+        return;
+      }
+      logger.info(`Coder VS Code app proxy not ready (HTTP ${st}), attempt ${attempt}/${maxAttempts}; waiting ${delayMs}ms`);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        throw err;
+      }
+      logger.info(
+        `Coder VS Code app proxy probe error (${err.message}), attempt ${attempt}/${maxAttempts}; waiting ${delayMs}ms`,
+      );
+    }
+
+    if (attempt >= maxAttempts) {
+      throw new ApiError(
+        httpStatus.BAD_GATEWAY,
+        'VS Code is still starting or unreachable through Coder (proxy keeps returning errors). Try again in a few seconds.',
+      );
+    }
+
+    await delay(delayMs);
+    await probeAttempt(attempt + 1);
+  };
+
+  await probeAttempt(1);
+};
+
+/**
  * Get the first workspace agent ID for a workspace
  * @param {string} workspaceId - Workspace ID
  * @param {string} sessionToken - User-scoped token
@@ -999,6 +1083,7 @@ module.exports = {
   restoreUnhealthyRunningWorkspace,
   getWorkspaceStatus,
   getWorkspaceAppUrl,
+  waitUntilCoderAppProxyReady,
   getTemplateId,
   sanitizeWorkspaceName,
   getWorkspaceTimings,

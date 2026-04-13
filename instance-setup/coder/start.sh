@@ -24,9 +24,9 @@ echo "Creating Coder Template..."
 cat template.tar | docker exec -i coder /opt/coder templates push docker-template -d - --yes
 
 echo "Warming up Docker cache for better UX..."
-docker build -t autowrx-workspace:1 ./my-template-dir/workspace-image
+docker build -t autowrx-workspace:debian ./my-template-dir/workspace-image
 echo "Starting and removing dummy container to warm runtime cache..."
-docker run --rm --name autowrx-workspace-cache-warmup --entrypoint /bin/true autowrx-workspace:1
+docker run --rm --name autowrx-workspace-cache-warmup --entrypoint /bin/true autowrx-workspace:debian
 
 rm -f ./workspace-image/autowrx-runner.vsix
 rm -rf ./my-template-dir template.tar

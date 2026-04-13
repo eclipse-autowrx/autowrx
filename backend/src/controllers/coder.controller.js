@@ -49,6 +49,8 @@ const getWorkspace = catchAsync(async (req, res) => {
     workspaceInfo.sessionToken,
   );
 
+  await coderService.waitUntilCoderAppProxyReady(appUrl, workspaceInfo.sessionToken);
+
   res.json({
     workspaceId: workspaceInfo.workspaceId,
     workspaceName: workspaceInfo.workspaceName,
