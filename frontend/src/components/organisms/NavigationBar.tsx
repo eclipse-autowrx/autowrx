@@ -25,6 +25,7 @@ import {
   TbMenu2,
   TbPalette,
   TbApps,
+  TbFileCode,
 } from 'react-icons/tb'
 import usePermissionHook from '@/hooks/usePermissionHook.ts'
 import { PERMISSIONS } from '@/const/permission.ts'
@@ -273,6 +274,14 @@ const NavigationBar = ({ }) => {
                       className="flex items-center gap-2 cursor-pointer"
                     >
                       <TbBuildingWarehouse className="text-base" /> Dashboard Templates
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link
+                      to="/admin/project-templates"
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <TbFileCode className="text-base" /> Project Templates
                     </Link>
                   </DropdownMenuItem>
                 </>

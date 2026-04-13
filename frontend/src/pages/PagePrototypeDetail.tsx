@@ -20,6 +20,7 @@ import {
   TbLayoutSidebar,
 } from 'react-icons/tb'
 import { GiSaveArrow } from "react-icons/gi";
+import { TbFileCode } from 'react-icons/tb'
 import { saveRecentPrototype } from '@/services/prototype.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import useCurrentModel from '@/hooks/useCurrentModel'
@@ -55,6 +56,7 @@ import StagingTabButton from '@/components/organisms/StagingTabButton'
 import { useSiteConfig } from '@/utils/siteConfig'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
+import { createProjectTemplate } from '@/services/projectTemplate.service'
 
 interface ViewPrototypeProps {
   display?: 'tree' | 'list'
@@ -82,10 +84,13 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
   const [openManageAddonsDialog, setOpenManageAddonsDialog] = useState(false)
   const [openTemplateForm, setOpenTemplateForm] = useState(false)
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
-  const [hasWritePermission] = usePermissionHook([
-    PERMISSIONS.WRITE_MODEL,
-    model?.id,
-  ])
+  const [hasWritePermission, isAdmin] = usePermissionHook(
+    [PERMISSIONS.WRITE_MODEL, model?.id],
+    [PERMISSIONS.MANAGE_USERS],
+  )
+  const [openSaveProjectTemplate, setOpenSaveProjectTemplate] = useState(false)
+  const [projectTemplateName, setProjectTemplateName] = useState('')
+  const [savingProjectTemplate, setSavingProjectTemplate] = useState(false)
   const allowNonAdminAddonConfig = useSiteConfig(
     'ALLOW_NON_ADMIN_ADDON_CONFIG',
     true,
@@ -205,6 +210,27 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
 
   const canConfigurePrototypeAddons =
     (isModelOwner || hasWritePermission) && !!allowNonAdminAddonConfig
+
+  const handleSaveProjectTemplate = async () => {
+    if (!projectTemplateName.trim() || !prototype) return
+    setSavingProjectTemplate(true)
+    try {
+      const data = JSON.stringify({
+        language: prototype.language || 'python',
+        code: prototype.code || '',
+        widget_config: prototype.widget_config,
+        customer_journey: prototype.customer_journey,
+      })
+      await createProjectTemplate({ name: projectTemplateName.trim(), data })
+      toast.success('Project template saved')
+      setOpenSaveProjectTemplate(false)
+      setProjectTemplateName('')
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || e.message || 'Failed to save template')
+    } finally {
+      setSavingProjectTemplate(false)
+    }
+  }
 
   // Callback for plugins to navigate to a specific prototype tab
   const handleSetActiveTab = useCallback((targetTab: string, targetPluginSlug?: string) => {
@@ -411,6 +437,17 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
                   <GiSaveArrow className="w-5 h-5" />
                   Save Solution as Template
                 </DropdownMenuItem>
+                {isAdmin && (
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setMoreMenuOpen(false)
+                      setOpenSaveProjectTemplate(true)
+                    }}
+                  >
+                    <TbFileCode className="w-5 h-5" />
+                    Save Project as Template
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           )}
@@ -502,6 +539,49 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
           }}
           initialData={templateInitialData}
         />
+      </DaDialog>
+
+      {/* Save Project as Template Dialog */}
+      <DaDialog
+        open={openSaveProjectTemplate}
+        onOpenChange={(v) => {
+          setOpenSaveProjectTemplate(v)
+          if (!v) setProjectTemplateName('')
+        }}
+        className="w-[440px]"
+      >
+        <div className="p-6 space-y-4">
+          <h2 className="text-lg font-semibold">Create Template</h2>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Name *</label>
+            <input
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              placeholder="Template name"
+              value={projectTemplateName}
+              onChange={(e) => setProjectTemplateName(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setOpenSaveProjectTemplate(false)
+                setProjectTemplateName('')
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              disabled={!projectTemplateName.trim() || savingProjectTemplate}
+              onClick={handleSaveProjectTemplate}
+            >
+              {savingProjectTemplate ? 'Saving…' : 'Save'}
+            </Button>
+          </div>
+        </div>
       </DaDialog>
     </div>
   ) : (
