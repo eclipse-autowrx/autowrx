@@ -15,6 +15,18 @@ const ApiError = require('../utils/ApiError');
 
 const coderConfig = require('../utils/coderConfig');
 
+const extractCollection = (payload, key) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.[key])) return payload[key];
+  return [];
+};
+
+const toCoderApiError = (error, fallbackStatus, fallbackPrefix = 'Coder API error') => {
+  const status = error?.response?.status || fallbackStatus;
+  const message = error?.response?.data?.message || error?.message || JSON.stringify(error?.response?.data || {});
+  return new ApiError(status, `${fallbackPrefix}: ${message}`);
+};
+
 const getCoderApiBase = () => {
   const coderCfg = coderConfig.getCoderConfigSync();
   if (!coderCfg.enabled) {
@@ -62,23 +74,21 @@ const getHeadersWithToken = (sessionToken) => {
   };
 };
 
-const TOKEN_LIFETIME_MS = 24 * 60 * 60 * 1000; // 24h
-const TOKEN_LIFETIME_SECONDS = Math.floor(TOKEN_LIFETIME_MS / 1000);
-const TOKEN_REFRESH_SAFETY_MS = 5 * 60 * 1000; // refresh if expiring within 5m
-// Bump when token generation policy changes so cached tokens are rotated automatically.
-const TOKEN_POLICY_VERSION = 'v2';
+const TOKEN_LIFETIME_DURATION = '168h'; // 7d
 const delay = (ms) =>
   new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
 
 /**
- * Get (and cache) a user-scoped token for Coder API calls.
+ * Generate a user-scoped token for Coder API calls.
  *
  * Admin API key is only used here to mint a safer token. All subsequent
  * workspace operations should use the returned token via getHeadersWithToken().
  *
- * @param {import('mongoose').Document & {coder_username?: string, coder_scoped_token?: string, coder_scoped_token_expires_at?: Date, coder_scoped_token_allow?: string, save: Function}} user
+ * Note: intentionally no DB caching/refresh bookkeeping to keep token flow simple.
+ *
+ * @param {import('mongoose').Document & {coder_username?: string}} user
  * @param {Object} [options]
  * @param {string} [options.workspaceId] - If provided, restrict token allow-list to this workspace.
  * @param {string} [options.coderUserId] - Preferred Coder user UUID for path targeting.
@@ -90,37 +100,10 @@ const getOrCreateUserScopedToken = async (user, options = {}) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'Coder user not found. Prepare workspace first.');
   }
 
-  // Global tokens are used for bootstrap/list/create calls before a workspace id exists.
-  // Do not persist them on User because they can race and overwrite a valid workspace-scoped
-  // token, which then makes iframe/query-token auth appear flaky.
-  if (!workspaceId) {
-    const bootstrapToken = await generateSessionToken(user.coder_username, { coderUserId });
-    if (!bootstrapToken) {
-      throw new ApiError(httpStatus.SERVICE_UNAVAILABLE, 'Failed to generate Coder user-scoped token');
-    }
-    return bootstrapToken;
-  }
-
-  const desiredAllow = workspaceId ? `${TOKEN_POLICY_VERSION}|workspace:${workspaceId}` : `${TOKEN_POLICY_VERSION}|global`;
-  const expiresAt = user.coder_scoped_token_expires_at ? new Date(user.coder_scoped_token_expires_at).getTime() : 0;
-  const stillValid = user.coder_scoped_token && expiresAt > Date.now() + TOKEN_REFRESH_SAFETY_MS;
-  const allowMatches = String(user.coder_scoped_token_allow || '') === desiredAllow;
-
-  if (stillValid && allowMatches) {
-    return user.coder_scoped_token;
-  }
-
   const token = await generateSessionToken(user.coder_username, { workspaceId, coderUserId });
   if (!token) {
     throw new ApiError(httpStatus.SERVICE_UNAVAILABLE, 'Failed to generate Coder user-scoped token');
   }
-
-  user.set({
-    coder_scoped_token: token,
-    coder_scoped_token_expires_at: new Date(Date.now() + TOKEN_LIFETIME_MS),
-    coder_scoped_token_allow: desiredAllow,
-  });
-  await user.save();
 
   return token;
 };
@@ -136,13 +119,7 @@ const getOrCreateDefaultOrganization = async () => {
       headers: getAdminHeaders(),
     });
 
-    // Handle both response formats: array directly or wrapped in 'organizations' property
-    let organizations = [];
-    if (Array.isArray(orgsResponse.data)) {
-      organizations = orgsResponse.data;
-    } else if (orgsResponse.data?.organizations && Array.isArray(orgsResponse.data.organizations)) {
-      organizations = orgsResponse.data.organizations;
-    }
+    const organizations = extractCollection(orgsResponse.data, 'organizations');
 
     logger.info(`Found ${organizations.length} organization(s) in Coder`);
     if (organizations.length > 0) {
@@ -181,7 +158,7 @@ const getOrCreateDefaultOrganization = async () => {
           headers: getAdminHeaders(),
         });
 
-        const users = Array.isArray(usersResponse.data) ? usersResponse.data : usersResponse.data?.users || [];
+        const users = extractCollection(usersResponse.data, 'users');
 
         // Find the first user with organization_ids
         const userWithOrg = users.find((u) => u.organization_ids && u.organization_ids.length > 0);
@@ -298,10 +275,7 @@ const ensureUserExists = async (userId, username, email) => {
       })}`,
     );
     if (error.response) {
-      throw new ApiError(
-        error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
-        `Coder API error: ${error.response.data?.message || error.message || JSON.stringify(error.response.data)}`,
-      );
+      throw toCoderApiError(error, httpStatus.INTERNAL_SERVER_ERROR);
     }
     if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
       throw new ApiError(
@@ -333,9 +307,8 @@ async function generateSessionToken(coderUsername, options = {}) {
     const url = `${getCoderApiBase()}/users/${userPathId}/keys/tokens`;
     const strictBody = {
       token_name: `autowrx-session-${Date.now()}`,
-      lifetime: TOKEN_LIFETIME_SECONDS,
+      lifetime: TOKEN_LIFETIME_DURATION,
       scope: 'all',
-      scopes: ['all'],
       ...(allowList ? { allow_list: allowList } : {}),
     };
 
@@ -346,11 +319,23 @@ async function generateSessionToken(coderUsername, options = {}) {
       logger.warn(
         `Strict token payload failed for ${coderUsername} (${strictError.response?.status || strictError.code || 'unknown'}), retrying minimal payload`,
       );
-      const minimalBody = {
+      // Some Coder versions reject allow-list/scope combinations, but still accept explicit lifetime.
+      const lifetimeBody = {
         token_name: `autowrx-session-${Date.now()}`,
-        scope: 'all',
+        lifetime: TOKEN_LIFETIME_DURATION,
       };
-      response = await axios.post(url, minimalBody, { headers: getAdminHeaders() });
+      try {
+        response = await axios.post(url, lifetimeBody, { headers: getAdminHeaders() });
+      } catch (lifetimeError) {
+        logger.warn(
+          `Lifetime token payload failed for ${coderUsername} (${lifetimeError.response?.status || lifetimeError.code || 'unknown'}), retrying minimal payload`,
+        );
+        const minimalBody = {
+          token_name: `autowrx-session-${Date.now()}`,
+          scope: 'all',
+        };
+        response = await axios.post(url, minimalBody, { headers: getAdminHeaders() });
+      }
     }
 
     const token = response.data?.key;
@@ -368,10 +353,7 @@ async function generateSessionToken(coderUsername, options = {}) {
     if (error.response) {
       logger.error(`Token creation error - Status: ${error.response.status}`);
       logger.error(`Error details: ${JSON.stringify(error.response.data)}`);
-      throw new ApiError(
-        error.response.status || httpStatus.BAD_GATEWAY,
-        `Coder token API failed: ${error.response.data?.message || error.message || JSON.stringify(error.response.data)}`,
-      );
+      throw toCoderApiError(error, httpStatus.BAD_GATEWAY, 'Coder token API failed');
     }
 
     throw new ApiError(httpStatus.BAD_GATEWAY, `Coder token API failed: ${error.message}`);
@@ -395,13 +377,7 @@ const getOrCreateWorkspace = async (coderUserId, workspaceName, templateId, prot
       params: { q: workspaceName },
     });
 
-    // Handle both response formats: array directly or wrapped in 'workspaces' property
-    let workspaces = [];
-    if (Array.isArray(workspacesResponse.data)) {
-      workspaces = workspacesResponse.data;
-    } else if (workspacesResponse.data?.workspaces && Array.isArray(workspacesResponse.data.workspaces)) {
-      workspaces = workspacesResponse.data.workspaces;
-    }
+    const workspaces = extractCollection(workspacesResponse.data, 'workspaces');
 
     const existingWorkspace = workspaces.find((w) => {
       const ownerId = w.owner_id || w.owner?.id || w.owner;
@@ -467,12 +443,7 @@ const getOrCreateWorkspace = async (coderUserId, workspaceName, templateId, prot
             params: { q: workspaceName },
           });
 
-          let retryWorkspaces = [];
-          if (Array.isArray(retryResponse.data)) {
-            retryWorkspaces = retryResponse.data;
-          } else if (retryResponse.data?.workspaces && Array.isArray(retryResponse.data.workspaces)) {
-            retryWorkspaces = retryResponse.data.workspaces;
-          }
+          const retryWorkspaces = extractCollection(retryResponse.data, 'workspaces');
 
           const existingWorkspace = retryWorkspaces.find((w) => {
             const ownerId = w.owner_id || w.owner?.id || w.owner;
@@ -491,10 +462,7 @@ const getOrCreateWorkspace = async (coderUserId, workspaceName, templateId, prot
         }
       }
 
-      throw new ApiError(
-        error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
-        `Coder API error: ${error.response.data?.message || error.message || JSON.stringify(error.response.data)}`,
-      );
+      throw toCoderApiError(error, httpStatus.INTERNAL_SERVER_ERROR);
     }
     throw error;
   }
@@ -997,13 +965,7 @@ const getTemplateId = async (templateName = 'docker-template') => {
       headers: getAdminHeaders(),
     });
 
-    // Handle both response formats: array directly or wrapped in 'templates' property
-    let templates = [];
-    if (Array.isArray(response.data)) {
-      templates = response.data;
-    } else if (response.data?.templates && Array.isArray(response.data.templates)) {
-      templates = response.data.templates;
-    }
+    const templates = extractCollection(response.data, 'templates');
 
     logger.debug(`Found ${templates.length} template(s) in Coder`);
 
@@ -1065,10 +1027,7 @@ const getWorkspaceAgentLogs = async (workspaceAgentId, options = {}, sessionToke
       logger.error(
         `Workspace agent logs error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`,
       );
-      throw new ApiError(
-        error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
-        `Coder API error: ${error.response.data?.message || error.message || JSON.stringify(error.response.data)}`,
-      );
+      throw toCoderApiError(error, httpStatus.INTERNAL_SERVER_ERROR);
     }
     if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
       throw new ApiError(

@@ -39,4 +39,4 @@ rm -f ./workspace-image/autowrx-runner.vsix
 rm -rf ./my-template-dir template.tar
 
 echo "Creating Token..."
-docker exec -it coder /opt/coder tokens create --name "auto-token" --lifetime "7d"
+docker exec -it coder /opt/coder tokens create --name "auto-token" --lifetime 168h
