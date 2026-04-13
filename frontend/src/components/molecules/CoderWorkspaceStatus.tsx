@@ -19,6 +19,7 @@ const STAGE_PROGRESS_MAP: Record<string, number> = {
   'Planning Infrastructure': 55,
   'Starting workspace': 80,
   'Cleaning Up': 95,
+  'Loading VS Code': 98,
 }
 
 const CHECKPOINTS = [
@@ -27,6 +28,7 @@ const CHECKPOINTS = [
   'Planning Infrastructure',
   'Starting workspace',
   'Cleaning Up',
+  'Loading VS Code',
 ] as const
 
 const CoderWorkspaceStatus = ({
@@ -92,6 +94,13 @@ const CoderWorkspaceStatus = ({
     const hasBuildSucceeded =
       jobStatus === 'succeeded' &&
       (hasConnectedAgent || buildStatus === 'running')
+    const isAgentConnectingAfterBuild =
+      jobStatus === 'succeeded' &&
+      !hasConnectedAgent &&
+      buildStatus === 'running'
+    const effectiveStage = isAgentConnectingAfterBuild
+      ? 'Loading VS Code'
+      : latestStage
     const hasBuildFailed = jobStatus === 'failed' || jobStatus === 'canceled'
     const hasErrorLog = logEvents.some(
       (event) =>
@@ -144,8 +153,8 @@ const CoderWorkspaceStatus = ({
     }
 
     let progress = 5
-    if (latestStage && STAGE_PROGRESS_MAP[latestStage]) {
-      progress = STAGE_PROGRESS_MAP[latestStage]
+    if (effectiveStage && STAGE_PROGRESS_MAP[effectiveStage]) {
+      progress = STAGE_PROGRESS_MAP[effectiveStage]
     } else if (watchSocketState === 'open' || logsSocketState === 'open') {
       progress = 12
     }
@@ -173,13 +182,13 @@ const CoderWorkspaceStatus = ({
           : 'Workspace is starting'
 
     const subtitleText =
-      latestStage ??
+      effectiveStage ??
       (watchSocketState !== 'open' || logsSocketState !== 'open'
         ? 'Connecting realtime channels...'
         : 'Waiting for first build updates...')
 
-    const activeCheckpointIndex = latestStage
-      ? CHECKPOINTS.indexOf(latestStage as (typeof CHECKPOINTS)[number])
+    const activeCheckpointIndex = effectiveStage
+      ? CHECKPOINTS.indexOf(effectiveStage as (typeof CHECKPOINTS)[number])
       : -1
 
     return {
@@ -230,9 +239,9 @@ const CoderWorkspaceStatus = ({
       </div>
 
       <div className="mb-4">
-        <div className="relative px-6 pt-1">
-          <div className="absolute left-6 right-6 top-4 h-0.5 bg-primary/30" />
-          <div className="absolute left-6 right-6 top-4 h-0.5">
+        <div className="relative px-3 pt-1">
+          <div className="absolute left-3 right-3 top-4 h-0.5 bg-primary/30" />
+          <div className="absolute left-3 right-3 top-4 h-0.5">
             <div
               className={cn(
                 'h-full transition-all duration-500',
@@ -260,7 +269,14 @@ const CoderWorkspaceStatus = ({
             return (
               <div
                 key={checkpoint}
-                className="absolute top-0 flex -translate-x-1/2 flex-col items-center gap-1"
+                className={cn(
+                  'absolute top-0 flex flex-col items-center gap-1',
+                  index === 0
+                    ? 'translate-x-0'
+                    : index === CHECKPOINTS.length - 1
+                      ? '-translate-x-full'
+                      : '-translate-x-1/2',
+                )}
                 style={{
                   left: `${(index / (CHECKPOINTS.length - 1)) * 100}%`,
                 }}

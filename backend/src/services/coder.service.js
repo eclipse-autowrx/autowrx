@@ -849,11 +849,11 @@ const appendCoderSessionToAppUrl = (appUrl, sessionToken) => {
     return `${base}${sep}${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
   };
   let out = addParam(appUrl, 'coder_session_token', sessionToken);
-  out = addParam(out, 'token', sessionToken);
   return out;
 };
 
 const isProxyGatewayFailure = (status) => status === 502 || status === 503 || status === 504;
+const isProxyAppNotReady = (status) => status === 404 || status === 425 || isProxyGatewayFailure(status);
 
 /**
  * Poll the Coder app reverse-proxy until code-server is accepting traffic (avoids first-load 502).
@@ -890,9 +890,16 @@ const waitUntilCoderAppProxyReady = async (appUrl, sessionToken, opts = {}) => {
           'Coder rejected the session while opening the VS Code app. Try preparing the workspace again.',
         );
       }
-      if (st >= 200 && st < 500 && !isProxyGatewayFailure(st)) {
+      // Treat 404 from app proxy as "not ready yet" (common while agent is still connecting).
+      if (st >= 200 && st < 400) {
         logger.info(`Coder VS Code app proxy ready (HTTP ${st}) after ${attempt} attempt(s)`);
         return;
+      }
+      if (st >= 400 && st < 500 && !isProxyAppNotReady(st)) {
+        throw new ApiError(
+          httpStatus.BAD_GATEWAY,
+          `Coder app returned HTTP ${st} while opening VS Code. Please retry prepare/open.`,
+        );
       }
       logger.info(`Coder VS Code app proxy not ready (HTTP ${st}), attempt ${attempt}/${maxAttempts}; waiting ${delayMs}ms`);
     } catch (err) {
