@@ -39,7 +39,6 @@ const getWorkspace = catchAsync(async (req, res) => {
   const { prototypeId } = req.params;
   const userId = req.user.id;
 
-  // Check if user has permission to view the prototype
   const prototype = await Prototype.findById(prototypeId);
   if (!prototype) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Prototype not found');
@@ -50,35 +49,31 @@ const getWorkspace = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.FORBIDDEN, 'You do not have permission to access this prototype');
   }
 
-  // Read existing prepared workspace only (avoid prepare side-effects/races here).
   const user = await User.findById(userId);
   if (!user?.coder_workspace_id) {
     throw new ApiError(httpStatus.CONFLICT, 'Workspace is not prepared yet. Call prepare endpoint first.');
   }
 
-  const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, {
-    workspaceId: user.coder_workspace_id,
-  });
-  const workspace = await coderService.getWorkspaceStatus(user.coder_workspace_id, workspaceScopedToken);
+  const iframeSessionToken = await coderService.getOrCreateUserScopedToken(user, {});
+  const workspace = await coderService.getWorkspaceStatus(user.coder_workspace_id, iframeSessionToken);
   const prototypeFolderName = sanitizePrototypeFolderName(prototype.name);
 
-  // Browser-reachable code-server URL (Coder proxy path); used by VS Code iframe after build completes.
   const appUrl = await coderService.getWorkspaceAppUrl(
     user.coder_workspace_id,
     'code-server',
     5,
     2000,
-    workspaceScopedToken,
+    iframeSessionToken,
   );
 
-  await coderService.waitUntilCoderAppProxyReady(appUrl, workspaceScopedToken);
+  await coderService.waitUntilCoderAppProxyReady(appUrl, iframeSessionToken);
 
   res.json({
     workspaceId: workspace.id,
     workspaceName: workspace.name,
     workspaceBuildId: workspace?.latest_build?.id || null,
     status: workspace?.latest_build?.status || workspace?.status || 'unknown',
-    sessionToken: workspaceScopedToken,
+    sessionToken: iframeSessionToken,
     folderPath: `/home/coder/prototypes/${prototypeFolderName}`,
     appUrl,
   });
