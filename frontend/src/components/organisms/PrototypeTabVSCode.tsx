@@ -113,7 +113,6 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
 
   // Step 1: prepare Coder workspace for this prototype (no polling/cache).
   useEffect(() => {
-    if (!isActive) return
     if (!prototype_id || !isAuthorized || !accessToken) return
 
     let cancelled = false
@@ -253,7 +252,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
       cancelled = true
       closeSockets()
     }
-  }, [prototype_id, isActive, isAuthorized, accessToken])
+  }, [prototype_id, isAuthorized, accessToken])
 
   const latestWorkspaceFromWatch = useMemo(
     () => getLatestWorkspaceFromWatchEvents(watchEvents),
@@ -278,7 +277,6 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
 
   // Step 2: when watch stream says build is ready, resolve app URL and show iframe.
   useEffect(() => {
-    if (!isActive) return
     if (!prototype_id || !watchBuildSnapshot.isReady || !watchBuildSnapshot.buildId) return
     if (lastResolvedBuildIdRef.current === watchBuildSnapshot.buildId) return
 
@@ -322,7 +320,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
     return () => {
       cancelled = true
     }
-  }, [prototype_id, isActive, watchBuildSnapshot])
+  }, [prototype_id, watchBuildSnapshot])
 
   useEffect(() => {
     if (!watchBuildSnapshot.isFailed) return
