@@ -1,5 +1,12 @@
 #!/bin/bash
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR"
+
+if ! bash "${SCRIPT_DIR}/populate-terraform-mirror.sh"; then
+  echo "Warning: populate-terraform-mirror.sh failed (network/Docker?). Coder will download providers from the registry during builds."
+fi
+
 docker compose -f coder-docker-compose.yml up -d
 
 echo "Waiting for Coder Server to start..."
@@ -14,7 +21,7 @@ echo "Preparing Template files..."
 rm -rf ./my-template-dir template.tar
 
 mkdir -p ./my-template-dir
-cp docker-template.tf ./my-template-dir/
+cp docker-template.tf .terraform.lock.hcl ./my-template-dir/
 (cd autowrx-runner && yarn vsix -- -o ../workspace-image/autowrx-runner.vsix)
 cp -rL workspace-image ./my-template-dir/
 

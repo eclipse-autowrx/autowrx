@@ -429,18 +429,34 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
     setIsResizing(false)
   }, [isApiPanelCollapsed])
 
+  const showIframe = Boolean(workspaceAppUrl && !iframeLoadError)
+
   return (
     <div
       ref={containerRef}
-      className="flex h-[calc(100%-0px)] w-full p-2 bg-gray-100"
+      className="relative flex h-[calc(100%-0px)] w-full min-h-0 flex-1 p-2 bg-gray-100"
     >
-      <div className="flex h-full flex-1 min-w-0 flex-col border-r bg-white rounded-md p-3">
-        {workspaceAppUrl && !iframeLoadError ? (
-          <div className="relative h-full w-full overflow-hidden rounded-md border border-border bg-background">
+      {/* Iframe steals pointer events; cover the splitter while dragging so resize keeps working */}
+      {isResizing && (
+        <div
+          className="absolute inset-0 z-[200] cursor-col-resize"
+          style={{ touchAction: 'none' }}
+          aria-hidden
+        />
+      )}
+      <div
+        className={
+          showIframe
+            ? 'flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden border-r bg-white rounded-md'
+            : 'flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden border-r bg-white rounded-md p-3'
+        }
+      >
+        {showIframe ? (
+          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
             <iframe
-              src={workspaceAppUrl}
+              src={workspaceAppUrl!}
               title="Coder Workspace"
-              className="h-full w-full border-0"
+              className="min-h-0 flex-1 border-0"
               allow="clipboard-read; clipboard-write"
               onLoad={() => setIsIframeLoading(false)}
               onError={() => {
@@ -467,17 +483,16 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
         )}
       </div>
       {!isApiPanelCollapsed && (
-        // Resize handle (hide while collapsed to avoid weird interactions).
+        // Match PrototypeTabCode: invisible track; thin grip only on hover / while dragging
         <div
           ref={resizeRef}
-          className="w-1 bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors cursor-col-resize shrink-0"
+          className="mx-0.5 w-1 shrink-0 cursor-col-resize bg-transparent transition-colors hover:bg-blue-500 hover:bg-opacity-50"
           onMouseDown={handleMouseDown}
           title="Drag to resize"
-          style={{ margin: '2px' }}
         >
-          <div className="w-full h-full flex items-center justify-center">
+          <div className="flex h-full w-full items-center justify-center">
             <div
-              className={`w-0.5 h-8 bg-gray-400 transition-opacity ${
+              className={`h-8 w-0.5 bg-gray-400 transition-opacity ${
                 isResizing ? 'opacity-100' : 'opacity-0 hover:opacity-60'
               }`}
             />
@@ -485,7 +500,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
         </div>
       )}
       <div
-        className="flex h-full flex-col bg-white rounded-md shrink-0 transition-[width] duration-200 ease-in-out"
+        className="flex h-full min-h-0 shrink-0 flex-col rounded-md bg-white transition-all duration-200 ease-in-out"
         style={{
           width: isApiPanelCollapsed
             ? '48px'

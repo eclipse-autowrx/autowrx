@@ -1,0 +1,3 @@
+# Local Terraform provider mirror (~28MB); run ./populate-terraform-mirror.sh
+terraform-provider-mirror/
+.mirror-work/
