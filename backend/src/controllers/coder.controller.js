@@ -8,7 +8,7 @@
 
 const httpStatus = require('http-status');
 const catchAsync = require('../utils/catchAsync');
-const { orchestratorService, permissionService, coderService } = require('../services');
+const { orchestratorService, permissionService, coderService, workspaceBindingService } = require('../services');
 const { PERMISSIONS } = require('../config/roles');
 const ApiError = require('../utils/ApiError');
 const { Prototype, User } = require('../models');
@@ -50,16 +50,17 @@ const getWorkspace = catchAsync(async (req, res) => {
   }
 
   const user = await User.findById(userId);
-  if (!user?.coder_workspace_id) {
+  const workspaceId = await workspaceBindingService.getWorkspaceIdForUser(user);
+  if (!workspaceId) {
     throw new ApiError(httpStatus.CONFLICT, 'Workspace is not prepared yet. Call prepare endpoint first.');
   }
 
-  const iframeSessionToken = await coderService.getOrCreateUserScopedToken(user, {});
-  const workspace = await coderService.getWorkspaceStatus(user.coder_workspace_id, iframeSessionToken);
+  const iframeSessionToken = await coderService.getOrCreateUserScopedToken(user, { workspaceId });
+  const workspace = await coderService.getWorkspaceStatus(workspaceId, iframeSessionToken);
   const prototypeFolderName = sanitizePrototypeFolderName(prototype.name);
 
   const appUrl = await coderService.getWorkspaceAppUrl(
-    user.coder_workspace_id,
+    workspaceId,
     'code-server',
     5,
     2000,
@@ -185,12 +186,13 @@ const getWorkspaceAgentLogs = catchAsync(async (req, res) => {
   const { before, after, follow, no_compression, format } = req.query;
 
   const user = await User.findById(userId);
-  if (!user?.coder_workspace_id || !user?.coder_username) {
+  const workspaceId = await workspaceBindingService.getWorkspaceIdForUser(user);
+  if (!workspaceId || !user?.coder_username) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Workspace not found. Prepare workspace first.');
   }
 
-  const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, { workspaceId: user.coder_workspace_id });
-  const expectedWorkspaceAgentId = await coderService.getWorkspaceAgentId(user.coder_workspace_id, workspaceScopedToken);
+  const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, { workspaceId });
+  const expectedWorkspaceAgentId = await coderService.getWorkspaceAgentId(workspaceId, workspaceScopedToken);
   if (String(workspaceAgentId) !== String(expectedWorkspaceAgentId)) {
     throw new ApiError(httpStatus.FORBIDDEN, 'You do not have permission to access this workspace agent logs');
   }

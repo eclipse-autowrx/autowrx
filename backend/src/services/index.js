@@ -32,4 +32,5 @@ module.exports.customApiSchemaService = require('./customApiSchema.service');
 module.exports.customApiSetService = require('./customApiSet.service');
 module.exports.coderService = require('./coder.service');
 module.exports.orchestratorService = require('./orchestrator.service');
+module.exports.workspaceBindingService = require('./workspaceBinding.service');
 // Inventory services removed

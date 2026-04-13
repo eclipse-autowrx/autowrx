@@ -10,6 +10,7 @@ const fs = require('fs');
 const path = require('path');
 const httpStatus = require('http-status');
 const coderService = require('./coder.service');
+const workspaceBindingService = require('./workspaceBinding.service');
 const { Prototype, User } = require('../models');
 const logger = require('../config/logger');
 const ApiError = require('../utils/ApiError');
@@ -254,8 +255,10 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
     const workspaceName = coderService.sanitizeWorkspaceName(userId);
     let workspace = null;
 
-    if (user.coder_workspace_id) {
-      workspace = await coderService.getWorkspaceStatus(user.coder_workspace_id, userScopedToken).catch(() => null);
+    const workspaceBinding = await workspaceBindingService.getBindingByUser(userId);
+    const mappedWorkspaceId = workspaceBinding?.workspace_id || user.coder_workspace_id || null;
+    if (mappedWorkspaceId) {
+      workspace = await coderService.getWorkspaceStatus(mappedWorkspaceId, userScopedToken).catch(() => null);
     }
 
     if (!workspace) {
@@ -265,6 +268,7 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
         workspaceName,
         templateId,
         userHostPath,
+        userHostPath,
         userScopedToken,
       );
 
@@ -272,6 +276,15 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
       user.coder_workspace_name = workspaceName;
       await user.save();
     }
+
+    await workspaceBindingService.upsertBinding({
+      userId,
+      coderUserId: coderUser.id,
+      workspaceId: workspace.id,
+      workspaceName,
+      prototypesHostPath: userHostPath,
+      templateName: 'docker-template',
+    });
 
     // 5. Secure Session (Workspace-scoped token)
     const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, {
@@ -320,7 +333,8 @@ const getWorkspaceStatus = async (userId) => {
       throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
     }
 
-    if (!user.coder_workspace_id) {
+    const workspaceId = await workspaceBindingService.getWorkspaceIdForUser(user);
+    if (!workspaceId) {
       return {
         exists: false,
         status: 'not_created',
@@ -328,9 +342,9 @@ const getWorkspaceStatus = async (userId) => {
     }
 
     const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, {
-      workspaceId: user.coder_workspace_id,
+      workspaceId,
     });
-    const workspace = await coderService.getWorkspaceStatus(user.coder_workspace_id, workspaceScopedToken);
+    const workspace = await coderService.getWorkspaceStatus(workspaceId, workspaceScopedToken);
 
     return {
       exists: true,
@@ -359,14 +373,15 @@ const getWorkspaceStatus = async (userId) => {
 const getWorkspaceTimings = async (userId) => {
   try {
     const user = await User.findById(userId);
-    if (!user?.coder_workspace_id) {
+    const workspaceId = await workspaceBindingService.getWorkspaceIdForUser(user);
+    if (!workspaceId) {
       throw new ApiError(httpStatus.NOT_FOUND, 'Workspace not found. Create and start the workspace first.');
     }
 
     const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, {
-      workspaceId: user.coder_workspace_id,
+      workspaceId,
     });
-    const timings = await coderService.getWorkspaceTimings(user.coder_workspace_id, workspaceScopedToken);
+    const timings = await coderService.getWorkspaceTimings(workspaceId, workspaceScopedToken);
     return timings;
   } catch (error) {
     logger.error(`Failed to get workspace timings: ${error.message}`);
@@ -387,13 +402,14 @@ const getWorkspaceTimings = async (userId) => {
 const getWorkspaceLogs = async (userId, prototypeId, options = {}) => {
   try {
     const user = await User.findById(userId);
-    if (!user?.coder_workspace_id) {
+    const workspaceId = await workspaceBindingService.getWorkspaceIdForUser(user);
+    if (!workspaceId) {
       throw new ApiError(httpStatus.NOT_FOUND, 'Workspace not found. Create and start the workspace first.');
     }
     const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, {
-      workspaceId: user.coder_workspace_id,
+      workspaceId,
     });
-    const logs = await coderService.getWorkspaceLogsByWorkspaceId(user.coder_workspace_id, options, workspaceScopedToken);
+    const logs = await coderService.getWorkspaceLogsByWorkspaceId(workspaceId, options, workspaceScopedToken);
     return logs;
   } catch (error) {
     logger.error(`Failed to get workspace logs: ${error.message}`);

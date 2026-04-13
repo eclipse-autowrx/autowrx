@@ -92,7 +92,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
   )
   const [prepareError, setPrepareError] = useState<string | null>(null)
   const [workspaceAppUrl, setWorkspaceAppUrl] = useState<string | null>(null)
-  const [isIframeLoading, setIsIframeLoading] = useState(false)
+  const [isIframeLoaded, setIsIframeLoaded] = useState(false)
   const [iframeLoadError, setIframeLoadError] = useState<string | null>(null)
   const [watchEvents, setWatchEvents] = useState<any[]>([])
   const [logEvents, setLogEvents] = useState<any[]>([])
@@ -196,8 +196,8 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
         setPrepareError(null)
         lastResolvedBuildIdRef.current = null
         setWorkspaceAppUrl(null)
+        setIsIframeLoaded(false)
         setIframeLoadError(null)
-        setIsIframeLoading(false)
         setWatchEvents([])
         setLogEvents([])
 
@@ -289,7 +289,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
     const run = async () => {
       try {
         setIframeLoadError(null)
-        setIsIframeLoading(true)
+        setIsIframeLoaded(false)
         const workspace = await getWorkspaceUrl(prototype_id)
         if (cancelled) return
         if (!workspace?.appUrl) {
@@ -315,7 +315,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
         setIframeLoadError(String(message))
         setPrepareError((prev) => prev || String(message))
         setWorkspaceAppUrl(null)
-        setIsIframeLoading(false)
+        setIsIframeLoaded(false)
       }
     }
 
@@ -432,7 +432,8 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
     setIsResizing(false)
   }, [isApiPanelCollapsed])
 
-  const showIframe = Boolean(workspaceAppUrl && !iframeLoadError)
+  const shouldMountIframe = Boolean(workspaceAppUrl && !iframeLoadError)
+  const showIframe = shouldMountIframe && isIframeLoaded
 
   return (
     <div
@@ -454,30 +455,34 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
             : 'flex h-full min-h-0 min-w-0 flex-1 flex-col border-r bg-white rounded-md'
         }
       >
-        {showIframe ? (
-          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+        {shouldMountIframe && (
+          <div
+            className={
+              showIframe
+                ? 'relative flex min-h-0 flex-1 flex-col overflow-hidden'
+                : 'absolute inset-0 opacity-0 pointer-events-none'
+            }
+            aria-hidden={!showIframe}
+          >
             <iframe
               src={workspaceAppUrl!}
               title="Coder Workspace"
               className="min-h-0 flex-1 border-0"
               allow="clipboard-read; clipboard-write"
-              onLoad={() => setIsIframeLoading(false)}
+              onLoad={() => {
+                setIsIframeLoaded(true)
+              }}
               onError={() => {
-                setIsIframeLoading(false)
+                setIsIframeLoaded(false)
                 const message = 'Failed to load workspace iframe'
                 setIframeLoadError(message)
                 setPrepareError((prev) => prev || message)
               }}
             />
-            {isIframeLoading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-background/70">
-                <Spinner />
-              </div>
-            )}
           </div>
-        ) : (
+        )}
+        {!showIframe && (
           <CoderWorkspaceStatus
-            prepareResponse={prepareResponse}
             prepareError={prepareError}
             watchEvents={watchEvents}
             logEvents={logEvents}

@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { XIcon, CheckIcon } from 'lucide-react'
 import { Spinner } from '@/components/atoms/spinner'
-import { WorkspaceInfo } from '@/services/coder.service'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 
 interface CoderWorkspaceStatusProps {
-  prepareResponse: WorkspaceInfo | null
   prepareError?: string | null
   watchEvents: any[]
   logEvents: any[]
@@ -32,7 +30,6 @@ const CHECKPOINTS = [
 ] as const
 
 const CoderWorkspaceStatus = ({
-  prepareResponse,
   prepareError,
   watchEvents,
   logEvents,
@@ -69,8 +66,6 @@ const CoderWorkspaceStatus = ({
 
     const agents =
       latestBuild?.resources?.flatMap((resource: any) => resource?.agents ?? []) ?? []
-    const mainAgent = agents[0] ?? null
-
     const stageEvents = logEvents.filter(
       (event) => event?.stage && event?.type !== 'socket',
     )
@@ -181,31 +176,19 @@ const CoderWorkspaceStatus = ({
           ? 'Workspace startup failed'
           : 'Workspace is starting'
 
-    const subtitleText =
-      effectiveStage ??
-      (watchSocketState !== 'open' || logsSocketState !== 'open'
-        ? 'Connecting realtime channels...'
-        : 'Waiting for first build updates...')
-
     const activeCheckpointIndex = effectiveStage
       ? CHECKPOINTS.indexOf(effectiveStage as (typeof CHECKPOINTS)[number])
       : -1
 
     return {
-      watchSocketState,
-      logsSocketState,
-      jobStatus,
-      buildStatus,
-      mainAgent,
       allLogLines: [...derivedErrorLines, ...allLogLines],
       progress,
       phase,
       titleText,
-      subtitleText,
       activeCheckpointIndex,
       failureReason,
     }
-  }, [prepareResponse, prepareError, watchEvents, logEvents])
+  }, [prepareError, watchEvents, logEvents])
 
   useEffect(() => {
     if (!model.failureReason) return

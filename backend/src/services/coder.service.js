@@ -8,6 +8,7 @@
 
 const axios = require('axios');
 const crypto = require('crypto');
+const path = require('path');
 const httpStatus = require('http-status');
 const logger = require('../config/logger');
 const ApiError = require('../utils/ApiError');
@@ -45,6 +46,22 @@ const normalizeIdForName = (value) =>
   String(value || '')
     .toLowerCase()
     .replace(/[^a-z0-9]/g, '');
+
+const assertUserScopedPrototypePath = (prototypesHostPath, expectedUserHostPath) => {
+  const rawInput = String(prototypesHostPath || '').trim();
+  const rawExpected = String(expectedUserHostPath || '').trim();
+  if (!rawInput || !rawExpected) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid prototypes host path for workspace provisioning');
+  }
+  const resolvedInput = path.resolve(rawInput);
+  const resolvedExpected = path.resolve(rawExpected);
+  if (resolvedInput !== resolvedExpected) {
+    throw new ApiError(
+      httpStatus.FORBIDDEN,
+      `Invalid prototypes host path. Expected user-scoped path "${resolvedExpected}"`,
+    );
+  }
+};
 
 /**
  * Get Coder API headers with admin token
@@ -369,8 +386,17 @@ async function generateSessionToken(coderUsername, options = {}) {
  * @param {string} sessionToken - User-scoped token used for user operations
  * @returns {Promise<Object>} Workspace object
  */
-const getOrCreateWorkspace = async (coderUserId, workspaceName, templateId, prototypesHostPath, sessionToken = null) => {
+const getOrCreateWorkspace = async (
+  coderUserId,
+  workspaceName,
+  templateId,
+  prototypesHostPath,
+  expectedUserHostPath,
+  sessionToken = null,
+) => {
   try {
+    assertUserScopedPrototypePath(prototypesHostPath, expectedUserHostPath);
+
     // Check if workspace exists
     const workspacesResponse = await axios.get(`${getCoderApiBase()}/workspaces`, {
       headers: getHeadersWithToken(sessionToken),
@@ -1067,4 +1093,5 @@ module.exports = {
   getWorkspaceAgentLogs,
   getWorkspaceAgentId,
   getWorkspaceLogsByWorkspaceId,
+  assertUserScopedPrototypePath,
 };

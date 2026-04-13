@@ -19,6 +19,7 @@ const coderConfig = require('../utils/coderConfig');
 const { User, Prototype } = require('../models');
 const permissionService = require('../services/permission.service');
 const coderService = require('../services/coder.service');
+const workspaceBindingService = require('../services/workspaceBinding.service');
 const { PERMISSIONS } = require('./roles');
 
 const getCoderApiBase = () => {
@@ -170,6 +171,7 @@ const init = (httpServer) => {
       if (!user) {
         throw new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate');
       }
+      const workspaceId = await workspaceBindingService.getWorkspaceIdForUser(user);
 
       if (watchMatch) {
         const { prototypeId } = watchMatch;
@@ -181,14 +183,14 @@ const init = (httpServer) => {
         if (!hasPermission) {
           throw new ApiError(httpStatus.FORBIDDEN, 'You do not have permission to access this prototype');
         }
-        if (!user.coder_workspace_id) {
+        if (!workspaceId) {
           throw new ApiError(httpStatus.NOT_FOUND, 'Workspace not found. Prepare workspace first.');
         }
 
         const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, {
-          workspaceId: user.coder_workspace_id,
+          workspaceId,
         });
-        const upstreamUrl = `${getCoderApiBase()}/workspaces/${user.coder_workspace_id}/watch-ws`;
+        const upstreamUrl = `${getCoderApiBase()}/workspaces/${workspaceId}/watch-ws`;
         const upstream = await connectUpstream({
           url: upstreamUrl,
           headers: {
@@ -203,15 +205,15 @@ const init = (httpServer) => {
 
       if (workspaceBuildLogsMatch) {
         const { workspaceBuildId } = workspaceBuildLogsMatch;
-        if (!user.coder_workspace_id) {
+        if (!workspaceId) {
           throw new ApiError(httpStatus.NOT_FOUND, 'Workspace not found. Prepare workspace first.');
         }
 
         const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, {
-          workspaceId: user.coder_workspace_id,
+          workspaceId,
         });
 
-        const workspace = await coderService.getWorkspaceStatus(user.coder_workspace_id, workspaceScopedToken);
+        const workspace = await coderService.getWorkspaceStatus(workspaceId, workspaceScopedToken);
         const expectedWorkspaceBuildId = workspace?.latest_build?.id;
         if (!expectedWorkspaceBuildId || String(workspaceBuildId) !== String(expectedWorkspaceBuildId)) {
           throw new ApiError(httpStatus.FORBIDDEN, 'You do not have permission to access this workspace build logs');
@@ -236,15 +238,15 @@ const init = (httpServer) => {
 
       if (logsMatch) {
         const { workspaceAgentId } = logsMatch;
-        if (!user.coder_workspace_id) {
+        if (!workspaceId) {
           throw new ApiError(httpStatus.NOT_FOUND, 'Workspace not found. Prepare workspace first.');
         }
 
         const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, {
-          workspaceId: user.coder_workspace_id,
+          workspaceId,
         });
         const expectedWorkspaceAgentId = await coderService.getWorkspaceAgentId(
-          user.coder_workspace_id,
+          workspaceId,
           workspaceScopedToken,
         );
         if (String(workspaceAgentId) !== String(expectedWorkspaceAgentId)) {
