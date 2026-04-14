@@ -17,7 +17,7 @@ import FormForgotPassword from './forms/FormForgotPassword.tsx'
 import useAuthStore from '@/stores/authStore.ts'
 
 const DaNavUser = () => {
-  const { openLoginDialog, setOpenLoginDialog } = useAuthStore()
+  const { openLoginDialog, setOpenLoginDialog, authBootstrapped } = useAuthStore()
   const [authType, setAuthType] = useState<'sign-in' | 'register' | 'forgot'>(
     'sign-in',
   )
@@ -29,7 +29,7 @@ const DaNavUser = () => {
   }
 
   const { data: user, isLoading, isFetching } = useSelfProfileQuery()
-  const isResolvingAuth = !user && (isLoading || isFetching)
+  const isResolvingAuth = !authBootstrapped || (!user && (isLoading || isFetching))
 
   return (
     <div className="flex w-full justify-end">

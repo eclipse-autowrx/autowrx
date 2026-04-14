@@ -42,6 +42,7 @@ import { useSiteConfig } from '@/utils/siteConfig'
 import { Button } from '../atoms/button'
 import { Wrench } from 'lucide-react'
 import DOMPurify from 'dompurify'
+import useAuthStore from '@/stores/authStore'
 
 const SimpleSwitch = ({
   checked,
@@ -68,7 +69,8 @@ const SimpleSwitch = ({
 
 const NavigationBar = ({ }) => {
   const { data: user, isLoading, isFetching } = useSelfProfileQuery()
-  const isResolvingAuth = !user && (isLoading || isFetching)
+  const authBootstrapped = useAuthStore((state) => state.authBootstrapped)
+  const isResolvingAuth = !authBootstrapped || (!user && (isLoading || isFetching))
   // const { data: model } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
   const [learningMode, setIsLearningMode] = useState(false)

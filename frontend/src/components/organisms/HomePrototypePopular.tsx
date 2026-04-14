@@ -40,8 +40,8 @@ const HomePrototypePopular = ({
   const [selectedPrototype, setSelectedPrototype] = useState<Prototype | null>(
     null,
   )
-  const { setOpenLoginDialog } = useAuthStore()
-  const isResolvingAuth = !user && (isLoading || isFetching)
+  const { setOpenLoginDialog, authBootstrapped } = useAuthStore()
+  const isResolvingAuth = !authBootstrapped || (!user && (isLoading || isFetching))
 
   useEffect(() => {
     const fetchProposalPrototypes = async () => {

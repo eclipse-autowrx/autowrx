@@ -37,10 +37,12 @@ const useAuthStore = createWithEqualityFn<AuthState & Actions>()(
       set((state) => {
         state.access = access
         state.user = user
+        state.authBootstrapped = true
       }),
     setAccess: (access) =>
       set((state) => {
         state.access = access
+        state.authBootstrapped = true
       }),
     logOut: () =>
       set((state) => {
