@@ -28,12 +28,15 @@ const DaNavUser = () => {
     )
   }
 
-  const { data: user } = useSelfProfileQuery()
+  const { data: user, isLoading, isFetching } = useSelfProfileQuery()
+  const isResolvingAuth = !user && (isLoading || isFetching)
 
   return (
     <div className="flex w-full justify-end">
       {user ? (
         <DaUserMenu user={user} />
+      ) : isResolvingAuth ? (
+        <div className="h-9 w-20" />
       ) : (
         <Button
           variant="outline"
