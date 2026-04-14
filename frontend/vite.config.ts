@@ -66,6 +66,27 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/coder': {
+        target: 'http://localhost:7080',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+        rewriteWsOrigin: true,
+        rewrite: (path) => path.replace(/^\/coder/, ''),
+      },
+      '^/@(?!vite|react-refresh|fs|id|hmr)': {
+        target: 'http://localhost:7080',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+        rewriteWsOrigin: true,
+      },
+      '/api': {
+        target: 'http://localhost:7080',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+      },
     },
   },
 })

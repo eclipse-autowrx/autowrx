@@ -38,15 +38,28 @@ const PrototypeTabCodeApiPanel = lazy(() =>
   retry(() => import('./PrototypeTabCodeApiPanel')),
 )
 
-/** Path-based Coder apps need session in the URL; see instance-setup/coder/coder-integration-flow.md */
+/**
+ * Use a same-origin iframe URL (proxied by Vite dev server or backend reverse proxy)
+ * so browser cookies are first-party and reliably attached.
+ */
+const toSameOriginCoderPath = (appUrl: string): string => {
+  try {
+    const url = new URL(appUrl)
+    return `/coder${url.pathname}${url.search}${url.hash}`
+  } catch {
+    return appUrl
+  }
+}
+
 const buildCoderWorkspaceIframeSrc = (
   appUrl: string,
   folderPath?: string | null,
   sessionToken?: string | null,
 ): string => {
+  const basePath = toSameOriginCoderPath(appUrl)
   let url: URL
   try {
-    url = new URL(appUrl)
+    url = new URL(basePath, window.location.origin)
   } catch {
     const params = new URLSearchParams()
     if (folderPath) params.set('folder', folderPath)
@@ -54,33 +67,39 @@ const buildCoderWorkspaceIframeSrc = (
       params.set('coder_session_token', sessionToken)
     }
     const q = params.toString()
-    if (!q) return appUrl
-    const sep = appUrl.includes('?') ? '&' : '?'
-    return `${appUrl}${sep}${q}`
+    if (!q) return basePath
+    const sep = basePath.includes('?') ? '&' : '?'
+    return `${basePath}${sep}${q}`
   }
   if (folderPath) url.searchParams.set('folder', folderPath)
   if (sessionToken) {
     url.searchParams.set('coder_session_token', sessionToken)
   }
-  return url.toString()
+  return `${url.pathname}${url.search}${url.hash}`
 }
 
 /**
- * Bootstrap Coder root session first so cookie is scoped at "/" before loading app path.
+ * Bootstrap session on the same app path, then switch to token-less URL.
  */
 const buildCoderSessionBootstrapUrl = (
   appUrl: string,
+  folderPath?: string | null,
   sessionToken?: string | null,
 ): string => {
-  if (!sessionToken) return appUrl
-  try {
-    const app = new URL(appUrl)
-    const bootstrap = new URL('/', app.origin)
-    bootstrap.searchParams.set('coder_session_token', sessionToken)
-    return bootstrap.toString()
-  } catch {
-    return appUrl
-  }
+  if (!sessionToken) return buildCoderWorkspaceIframeSrc(appUrl, folderPath, null)
+  const params = new URLSearchParams()
+  params.set('coder_session_token', sessionToken)
+  return `/coder/?${params.toString()}`
+}
+
+/**
+ * Dev fallback: seed Coder session cookie on current origin before loading iframe.
+ * This avoids relying solely on upstream Set-Cookie behavior through local proxies.
+ */
+const seedCoderSessionCookie = (sessionToken?: string | null) => {
+  if (!sessionToken) return
+  const secure = window.location.protocol === 'https:' ? '; Secure' : ''
+  document.cookie = `coder_session_token=${encodeURIComponent(sessionToken)}; Path=/; SameSite=Lax${secure}`
 }
 
 interface PrototypeTabVSCodeProps {
@@ -231,6 +250,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
         if (cancelled) return
         setPrepareResponse(response)
         coderSessionTokenRef.current = response.sessionToken || null
+        seedCoderSessionCookie(response.sessionToken)
 
         const wsBase = toWsBase(config.serverBaseUrl)
         const wsSessionParam = coderSessionTokenRef.current
@@ -329,6 +349,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
           throw new Error('Workspace session token is missing')
         }
         coderSessionTokenRef.current = workspace.sessionToken
+        seedCoderSessionCookie(workspace.sessionToken)
         const appSrc = buildCoderWorkspaceIframeSrc(
           workspace.appUrl,
           workspace.folderPath,
@@ -338,7 +359,11 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
           pendingIframeAppSrcRef.current = appSrc
           isBootstrappingIframeSessionRef.current = true
           setWorkspaceAppUrl(
-            buildCoderSessionBootstrapUrl(workspace.appUrl, workspace.sessionToken),
+            buildCoderSessionBootstrapUrl(
+              workspace.appUrl,
+              workspace.folderPath,
+              workspace.sessionToken,
+            ),
           )
         } else {
           pendingIframeAppSrcRef.current = null
