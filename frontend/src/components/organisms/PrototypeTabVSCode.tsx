@@ -335,6 +335,20 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
     setPrepareError((prev) => prev || message)
   }, [hasActivatedOnce, watchBuildSnapshot])
 
+  // The watch stream is only needed until VS Code iframe is ready.
+  useEffect(() => {
+    if (!isIframeLoaded) return
+    const watchWs = watchSocketRef.current
+    if (!watchWs) return
+    if (
+      watchWs.readyState === WebSocket.OPEN ||
+      watchWs.readyState === WebSocket.CONNECTING
+    ) {
+      watchWs.close(1000, 'iframe loaded')
+    }
+    watchSocketRef.current = null
+  }, [isIframeLoaded])
+
   // Calculate initial width based on container size with 6:4 ratio (60% editor, 40% API panel)
   // Guard against hidden/inactive tabs where measured width can be 0.
   useEffect(() => {
