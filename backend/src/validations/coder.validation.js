@@ -21,38 +21,6 @@ const prepareWorkspace = {
   }),
 };
 
-const getWorkspaceStatus = {
-  params: Joi.object().keys({
-    prototypeId: Joi.string().custom(objectId).required(),
-  }),
-};
-
-const getWorkspaceAgentLogs = {
-  params: Joi.object().keys({
-    workspaceAgentId: Joi.string().required(),
-  }),
-  query: Joi.object().keys({
-    before: Joi.number().integer(),
-    after: Joi.number().integer(),
-    follow: Joi.boolean(),
-    no_compression: Joi.boolean(),
-    format: Joi.string().valid('json', 'text'),
-  }),
-};
-
-const getWorkspaceLogs = {
-  params: Joi.object().keys({
-    prototypeId: Joi.string().custom(objectId).required(),
-  }),
-  query: Joi.object().keys({
-    before: Joi.number().integer(),
-    after: Joi.number().integer(),
-    follow: Joi.boolean(),
-    no_compression: Joi.boolean(),
-    format: Joi.string().valid('json', 'text'),
-  }),
-};
-
 const triggerRun = {
   params: Joi.object().keys({
     prototypeId: Joi.string().custom(objectId).required(),
@@ -71,9 +39,6 @@ const getRunOutput = {
 module.exports = {
   getWorkspace,
   prepareWorkspace,
-  getWorkspaceStatus,
-  getWorkspaceAgentLogs,
-  getWorkspaceLogs,
   triggerRun,
   getRunOutput,
 };

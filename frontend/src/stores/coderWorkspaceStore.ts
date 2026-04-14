@@ -1,15 +1,26 @@
 import { createWithEqualityFn } from 'zustand/traditional'
-import type {
-  WorkspaceAgentLog,
-  WorkspaceInfo,
-  WorkspaceStatus,
-} from '@/services/coder.service'
+import type { WorkspaceInfo } from '@/services/coder.service'
+
+type WorkspaceStatusSnapshot = {
+  exists: boolean
+  workspaceId?: string
+  status?: string
+  transition?: string
+}
+
+type WorkspaceAgentLogEntry = {
+  created_at?: string
+  id?: number
+  level?: 'debug' | 'error' | 'info' | 'trace' | 'warn'
+  output?: string
+  source_id?: string
+}
 
 export type CoderWorkspaceCacheEntry = {
   prototypeId: string
   workspaceInfo: WorkspaceInfo | null
-  workspaceStatus: WorkspaceStatus | null
-  workspaceLogs: WorkspaceAgentLog[]
+  workspaceStatus: WorkspaceStatusSnapshot | null
+  workspaceLogs: WorkspaceAgentLogEntry[]
   isWorkspaceReadyFromLogs: boolean
   lastUpdatedAt: number
 }

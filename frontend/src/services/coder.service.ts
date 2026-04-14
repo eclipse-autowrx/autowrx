@@ -20,21 +20,6 @@ export interface WorkspaceInfo {
   folderPath?: string | null
 }
 
-export interface WorkspaceStatus {
-  exists: boolean
-  workspaceId?: string
-  status?: string
-  transition?: string
-}
-
-export interface WorkspaceAgentLog {
-  created_at?: string
-  id?: number
-  level?: 'debug' | 'error' | 'info' | 'trace' | 'warn'
-  output?: string
-  source_id?: string
-}
-
 /**
  * Get workspace URL and session token for a prototype
  */
@@ -48,28 +33,6 @@ export const getWorkspaceUrl = async (prototypeId: string): Promise<WorkspaceInf
  */
 export const prepareWorkspace = async (prototypeId: string): Promise<WorkspaceInfo> => {
   const response = await serverAxios.post<WorkspaceInfo>(`/system/coder/workspace/${prototypeId}/prepare`)
-  return response.data
-}
-
-/**
- * Get workspace status
- */
-export const getWorkspaceStatus = async (prototypeId: string): Promise<WorkspaceStatus> => {
-  const response = await serverAxios.get<WorkspaceStatus>(`/system/coder/workspace/${prototypeId}/status`)
-  return response.data
-}
-
-/**
- * Get logs for a workspace (by prototype)
- */
-export const getWorkspaceLogs = async (
-  prototypeId: string,
-  params?: { before?: number; after?: number; format?: 'json' | 'text' },
-): Promise<WorkspaceAgentLog[] | string> => {
-  const response = await serverAxios.get<WorkspaceAgentLog[] | string>(
-    `/system/coder/workspace/${prototypeId}/logs`,
-    { params },
-  )
   return response.data
 }
 

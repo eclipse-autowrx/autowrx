@@ -305,86 +305,6 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
   }
 };
 
-/**
- * Get workspace status for a prototype
- * @param {string} userId - User ID
- * @param {string} prototypeId - Prototype ID
- * @returns {Promise<Object>} Workspace status
- */
-const getWorkspaceStatus = async (userId, prototypeId) => {
-  try {
-    const prototype = await Prototype.findById(prototypeId).select('model_id');
-    if (!prototype) {
-      throw new ApiError(httpStatus.NOT_FOUND, 'Prototype not found');
-    }
-    const hasPermission = await permissionService.hasPermission(userId, PERMISSIONS.READ_MODEL, prototype.model_id);
-    if (!hasPermission) {
-      throw new ApiError(httpStatus.FORBIDDEN, 'You do not have permission to access this prototype');
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
-    }
-
-    const workspaceId = await workspaceBindingService.getWorkspaceIdForUser(user);
-    if (!workspaceId) {
-      return {
-        exists: false,
-        status: 'not_created',
-      };
-    }
-
-    const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, {
-      workspaceId,
-    });
-    const workspace = await coderService.getWorkspaceStatus(workspaceId, workspaceScopedToken);
-
-    return {
-      exists: true,
-      workspaceId: workspace.id,
-      status: workspace.latest_build?.status || 'unknown',
-      transition: workspace.latest_build?.transition || null,
-    };
-  } catch (error) {
-    if (error instanceof ApiError && error.statusCode === 404) {
-      return { exists: false, status: 'not_created' };
-    }
-    logger.error(`Failed to get workspace status: ${error.message}`);
-    if (error instanceof ApiError) {
-      throw error;
-    }
-    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, `Failed to get workspace status: ${error.message}`);
-  }
-};
-
-/**
- * Get workspace logs for a prototype (by resolving its workspace and agent)
- * @param {string} userId - User ID
- * @param {Object} options - Log query options (before, after, follow, no_compression, format)
- * @returns {Promise<any>} Workspace agent logs
- */
-const getWorkspaceLogs = async (userId, options = {}) => {
-  try {
-    const user = await User.findById(userId);
-    const workspaceId = await workspaceBindingService.getWorkspaceIdForUser(user);
-    if (!workspaceId) {
-      throw new ApiError(httpStatus.NOT_FOUND, 'Workspace not found. Create and start the workspace first.');
-    }
-    const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, {
-      workspaceId,
-    });
-    const logs = await coderService.getWorkspaceLogsByWorkspaceId(workspaceId, options, workspaceScopedToken);
-    return logs;
-  } catch (error) {
-    logger.error(`Failed to get workspace logs: ${error.message}`);
-    if (error instanceof ApiError) {
-      throw error;
-    }
-    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, `Failed to get workspace logs: ${error.message}`);
-  }
-};
-
 /** Server-side only: maps client runKind to shell command (never accept raw command from client). */
 const RUN_KIND_COMMANDS = {
   // -u: unbuffered stdout so tee sees lines immediately; tee copies to terminal and .autowrx_out
@@ -502,8 +422,6 @@ const getRunOutputForPrototype = async (userId, prototype) => {
 
 module.exports = {
   prepareWorkspaceForPrototype,
-  getWorkspaceStatus,
-  getWorkspaceLogs,
   triggerRunForPrototype,
   getRunOutputForPrototype,
   resolveRunKindFromPrototype,

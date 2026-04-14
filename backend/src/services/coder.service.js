@@ -989,67 +989,6 @@ const getTemplateId = async (templateName = 'docker-template') => {
   }
 };
 
-/**
- * Get logs for a workspace agent
- * Wraps Coder API: GET /api/v2/workspaceagents/{workspaceagent}/logs
- * @param {string} workspaceAgentId - Workspace agent ID (UUID)
- * @param {Object} [options] - Query options
- * @param {number} [options.before] - Before log id
- * @param {number} [options.after] - After log id
- * @param {boolean} [options.follow] - Follow log stream
- * @param {boolean} [options.noCompression] - Disable compression for WebSocket connection
- * @param {boolean} [options.no_compression] - Backward-compatible alias for noCompression
- * @param {string} [options.format] - 'json' (default) or 'text'
- * @param {string} [sessionToken] - Optional user-scoped token. If omitted, admin token is used.
- * @returns {Promise<any>} Logs array or text, depending on format
- */
-const getWorkspaceAgentLogs = async (workspaceAgentId, options = {}, sessionToken = null) => {
-  try {
-    const { before, after, follow, noCompression, format } = options;
-    const noCompressionLegacy = options.no_compression;
-    const noCompressionParam = noCompression !== undefined ? noCompression : noCompressionLegacy;
-
-    const response = await axios.get(`${getCoderApiBase()}/workspaceagents/${workspaceAgentId}/logs`, {
-      headers: sessionToken ? getHeadersWithToken(sessionToken) : getAdminHeaders(),
-      params: {
-        ...(before !== undefined && { before }),
-        ...(after !== undefined && { after }),
-        ...(follow !== undefined && { follow }),
-        ...(noCompressionParam !== undefined && { no_compression: noCompressionParam }),
-        ...(format && { format }),
-      },
-    });
-
-    return response.data;
-  } catch (error) {
-    logger.error(`Failed to get workspace agent logs: ${error.message}`);
-    if (error.response) {
-      logger.error(
-        `Workspace agent logs error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`,
-      );
-      throw toCoderApiError(error, httpStatus.INTERNAL_SERVER_ERROR);
-    }
-    if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
-      throw new ApiError(
-        httpStatus.SERVICE_UNAVAILABLE,
-        `Cannot connect to Coder at ${coderConfig.getCoderConfigSync().coderUrl}. Is Coder running?`,
-      );
-    }
-    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, `Coder service error: ${error.message}`);
-  }
-};
-
-/**
- * Get logs for the first agent of a workspace
- * @param {string} workspaceId - Workspace ID
- * @param {Object} [options] - Query options (same as getWorkspaceAgentLogs)
- * @returns {Promise<any>} Logs array or text, depending on format
- */
-const getWorkspaceLogsByWorkspaceId = async (workspaceId, options = {}, sessionToken = null) => {
-  const agentId = await getWorkspaceAgentId(workspaceId, sessionToken);
-  return getWorkspaceAgentLogs(agentId, options, sessionToken);
-};
-
 module.exports = {
   ensureUserExists,
   generateSessionToken,
@@ -1063,8 +1002,6 @@ module.exports = {
   waitUntilCoderAppProxyReady,
   getTemplateId,
   sanitizeWorkspaceName,
-  getWorkspaceAgentLogs,
   getWorkspaceAgentId,
-  getWorkspaceLogsByWorkspaceId,
   assertUserScopedPrototypePath,
 };

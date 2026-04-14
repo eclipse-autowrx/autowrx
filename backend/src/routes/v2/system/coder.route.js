@@ -28,16 +28,4 @@ router
   .route('/workspace/:prototypeId/run-output')
   .get(auth(), validate(coderValidation.getRunOutput), coderController.getRunOutput);
 
-router
-  .route('/workspace/:prototypeId/status')
-  .get(auth(), validate(coderValidation.getWorkspaceStatus), coderController.getWorkspaceStatus);
-
-router
-  .route('/workspace/:prototypeId/logs')
-  .get(auth(), validate(coderValidation.getWorkspaceLogs), coderController.getWorkspaceLogs);
-
-router
-  .route('/workspaceagents/:workspaceAgentId/logs')
-  .get(auth(), validate(coderValidation.getWorkspaceAgentLogs), coderController.getWorkspaceAgentLogs);
-
 module.exports = router;
