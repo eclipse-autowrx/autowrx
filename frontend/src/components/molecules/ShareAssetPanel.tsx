@@ -11,7 +11,7 @@ import { useAssets } from '@/hooks/useAssets'
 import { Button } from "@/components/atoms/button"
 import AccessInvitation from "@/components/organisms/AccessInvitation.tsx"
 import { InvitedUser } from "@/types/user.type"
-import UserList from "@/components/molecules/UserList"
+import DaUserList from "@/components/molecules/DaUserList"
 import { User } from "@/types/user.type"
 import { TbUserPlus } from "react-icons/tb"
 
@@ -46,13 +46,11 @@ const ShareAssetPanel = ({ asset, onDone, onCancel }: iPropShareAssetPanel) => {
         let items = [] as any
         try {
             let data = await getAssetById(asset.id)
-            // console.log('listAllUserForAsset', data)
             if (data && data.readAccessUsers) {
                 items = data.readAccessUsers
-                // console.log(`data.readAccessUsers`, data.readAccessUsers)
             }
         } catch (e) {
-            console.log(`Error on listAllUserForAsset`, e)
+            console.error(`Error on listAllUserForAsset`, e)
         }
         setInvitedUsers(items)
     }
@@ -74,7 +72,7 @@ const ShareAssetPanel = ({ asset, onDone, onCancel }: iPropShareAssetPanel) => {
                 </Button>
             </span>
             <div className="min-h-[200px] max-h-[400px] overflow-auto">
-                { (invitedUsers && invitedUsers.length) && <UserList users={invitedUsers as User[]} 
+                { (invitedUsers && invitedUsers.length) && <DaUserList users={invitedUsers as User[]} 
                     onRemoveUser={async (userId: string, userName?: string) => {
                     if(!confirm(`Confirm stop share asset to user ${userName||''}?`)) return
                     try {
@@ -82,7 +80,7 @@ const ShareAssetPanel = ({ asset, onDone, onCancel }: iPropShareAssetPanel) => {
                         await (new Promise((resolve) => setTimeout(resolve, 500)))
                         await getAssetInfo()
                     } catch(err) {
-                        console.log(`Error on removeUserFromShareList`, err)
+                        console.error(`Error on removeUserFromShareList`, err)
                     }
                 }} />
                 }
@@ -105,22 +103,18 @@ const ShareAssetPanel = ({ asset, onDone, onCancel }: iPropShareAssetPanel) => {
                             await (new Promise((resolve) => setTimeout(resolve, 500)))
                             await getAssetInfo()
                         } catch (err) {
-                            console.log(`Error on shareMyAsset`, err)
+                            console.error(`Error on shareMyAsset`, err)
                         }
                     }}
-                    onInviteSuccess={(role) => {
-                        // console.log("onInviteSuccess ", role)
-                    }}
+                    onInviteSuccess={() => {}}
                     onRemoveUserAccess={async (user: InvitedUser) => {
-                        // handle  remove users
-                        // console.log("onRemoveUserAccess user", user)
                         if(!confirm(`Confirm stop share asset to user ${user.name||''}?`)) return
                         try {
                             await removeUserFromShareList(asset.id, user.id, 'read_asset')
                             await (new Promise((resolve) => setTimeout(resolve, 500)))
                             await getAssetInfo()
                         } catch(err) {
-                            console.log(`Error on removeUserFromShareList`, err)
+                            console.error(`Error on removeUserFromShareList`, err)
                         }
                     }}
                 />

@@ -21,7 +21,7 @@ import DaTabItem from '../atoms/DaTabItem'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { addLog } from '@/services/log.service'
 import AccessInvitation from '../organisms/AccessInvitation'
-import UserList from './UserList'
+import DaUserList from './DaUserList'
 
 interface ContributorListProps {
   className?: string
@@ -102,10 +102,10 @@ const DaContributorList = ({ className, canEdit = true }: ContributorListProps) 
       name: `User ${currentUser.email} delete user permission from ${model.name}`,
       description: `User ${currentUser.email} delete user permission from ${model.name}: Delete user ${userId} from role ${role}`,
       type: 'delete-permission',
-      create_by: currentUser.id!,
+      create_by: currentUser.id ?? '',
       ref_id: model.id,
       ref_type: 'model',
-    })
+    }).catch(console.error)
   }
 
   const handleInviteUsers = async (users: InvitedUser[], role: string) => {
@@ -121,10 +121,10 @@ const DaContributorList = ({ className, canEdit = true }: ContributorListProps) 
       name: `User ${currentUser.email} update permission of model ${model.name}`,
       description: `User ${currentUser.email} update permission of model ${model.name}: Add users ${users.map((u) => u.id).join(',')} as ${role}`,
       type: 'add-permission',
-      create_by: currentUser.id!,
+      create_by: currentUser.id ?? '',
       ref_id: model.id,
       ref_type: 'model',
-    })
+    }).catch(console.error)
   }
 
   const handleRemoveUserAccess = async (user: InvitedUser) => {
@@ -167,7 +167,6 @@ const DaContributorList = ({ className, canEdit = true }: ContributorListProps) 
             onClick={() => setActiveTab('members')}
             active={activeTab === 'members'}
           >
-            {' '}
             Reader ({model.members?.length ?? 0})
           </DaTabItem>
         </div>
@@ -183,27 +182,21 @@ const DaContributorList = ({ className, canEdit = true }: ContributorListProps) 
         )}
       </div>
       <div className="flex h-full flex-col overflow-y-auto pr-2">
-        {activeTab === 'contributors' ? (
-          <>
-            {' '}
-            {model.contributors && (
-              <UserList
+        {activeTab === 'contributors'
+          ? model.contributors && (
+              <DaUserList
                 users={model.contributors}
                 onRemoveUser={canEdit ? onRemoveUser : undefined}
+                maskEmails
               />
-            )}
-          </>
-        ) : (
-          <>
-            {' '}
-            {model.members && (
-              <UserList
+            )
+          : model.members && (
+              <DaUserList
                 users={model.members}
                 onRemoveUser={canEdit ? onRemoveUser : undefined}
+                maskEmails
               />
             )}
-          </>
-        )}
       </div>
 
       {canEdit && (

@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { TbTrash } from 'react-icons/tb'
 import { User } from '@/types/user.type'
 import { Avatar, AvatarFallback, AvatarImage } from '../atoms/avatar'
@@ -14,10 +14,16 @@ import { Button } from '../atoms/button'
 
 interface UserListProps {
   users: User[]
-  onRemoveUser?: (userId: string) => void
+  onRemoveUser?: (userId: string, userName?: string) => void
+  maskEmails?: boolean
 }
 
-const UserList = ({ users, onRemoveUser }: UserListProps) => {
+const maskEmail = (email: string): string => {
+  if (!email || email.length <= 6) return email
+  return '******' + email.slice(6)
+}
+
+const DaUserList = ({ users, onRemoveUser, maskEmails }: UserListProps) => {
   const [hoveredUserId, setHoveredUserId] = useState<string | null>(null)
 
   return (
@@ -37,16 +43,21 @@ const UserList = ({ users, onRemoveUser }: UserListProps) => {
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
-              <p className="text-sm font-medium text-foreground">{user.name}</p>
-              <p className="text-xs text-muted-foreground">{user.email}</p>
+              <p className="text-sm font-medium text-foreground">
+                {user.name}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {maskEmails ? maskEmail(user.email || '') : user.email}
+              </p>
             </div>
           </div>
           {onRemoveUser && hoveredUserId === user.id && (
             <Button
               variant="ghost"
               size="icon-sm"
-              onClick={() => onRemoveUser(user.id)}
+              onClick={() => onRemoveUser(user.id, user.name)}
               className="text-destructive hover:text-destructive"
+              aria-label={`Remove ${user.name || 'user'}`}
             >
               <TbTrash className="size-4" />
             </Button>
@@ -57,4 +68,4 @@ const UserList = ({ users, onRemoveUser }: UserListProps) => {
   )
 }
 
-export default UserList
+export default DaUserList
