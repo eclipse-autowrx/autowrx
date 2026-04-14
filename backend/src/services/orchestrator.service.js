@@ -11,10 +11,12 @@ const path = require('path');
 const httpStatus = require('http-status');
 const coderService = require('./coder.service');
 const workspaceBindingService = require('./workspaceBinding.service');
+const permissionService = require('./permission.service');
 const { Prototype, User } = require('../models');
 const logger = require('../config/logger');
 const ApiError = require('../utils/ApiError');
 const coderConfig = require('../utils/coderConfig');
+const { PERMISSIONS } = require('../config/roles');
 const { getPrototypeFolderRelativePath } = require('../utils/prototypePath');
 /* eslint-disable security/detect-non-literal-fs-filename */
 
@@ -309,8 +311,17 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
  * @param {string} prototypeId - Prototype ID
  * @returns {Promise<Object>} Workspace status
  */
-const getWorkspaceStatus = async (userId) => {
+const getWorkspaceStatus = async (userId, prototypeId) => {
   try {
+    const prototype = await Prototype.findById(prototypeId).select('model_id');
+    if (!prototype) {
+      throw new ApiError(httpStatus.NOT_FOUND, 'Prototype not found');
+    }
+    const hasPermission = await permissionService.hasPermission(userId, PERMISSIONS.READ_MODEL, prototype.model_id);
+    if (!hasPermission) {
+      throw new ApiError(httpStatus.FORBIDDEN, 'You do not have permission to access this prototype');
+    }
+
     const user = await User.findById(userId);
     if (!user) {
       throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
@@ -348,41 +359,12 @@ const getWorkspaceStatus = async (userId) => {
 };
 
 /**
- * Get workspace timings for a prototype
- * @param {string} userId - User ID
- * @param {string} prototypeId - Prototype ID
- * @returns {Promise<Object>} Workspace build timings
- */
-const getWorkspaceTimings = async (userId) => {
-  try {
-    const user = await User.findById(userId);
-    const workspaceId = await workspaceBindingService.getWorkspaceIdForUser(user);
-    if (!workspaceId) {
-      throw new ApiError(httpStatus.NOT_FOUND, 'Workspace not found. Create and start the workspace first.');
-    }
-
-    const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, {
-      workspaceId,
-    });
-    const timings = await coderService.getWorkspaceTimings(workspaceId, workspaceScopedToken);
-    return timings;
-  } catch (error) {
-    logger.error(`Failed to get workspace timings: ${error.message}`);
-    if (error instanceof ApiError) {
-      throw error;
-    }
-    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, `Failed to get workspace timings: ${error.message}`);
-  }
-};
-
-/**
  * Get workspace logs for a prototype (by resolving its workspace and agent)
  * @param {string} userId - User ID
- * @param {string} prototypeId - Prototype ID
  * @param {Object} options - Log query options (before, after, follow, no_compression, format)
  * @returns {Promise<any>} Workspace agent logs
  */
-const getWorkspaceLogs = async (userId, prototypeId, options = {}) => {
+const getWorkspaceLogs = async (userId, options = {}) => {
   try {
     const user = await User.findById(userId);
     const workspaceId = await workspaceBindingService.getWorkspaceIdForUser(user);
@@ -521,7 +503,6 @@ const getRunOutputForPrototype = async (userId, prototype) => {
 module.exports = {
   prepareWorkspaceForPrototype,
   getWorkspaceStatus,
-  getWorkspaceTimings,
   getWorkspaceLogs,
   triggerRunForPrototype,
   getRunOutputForPrototype,

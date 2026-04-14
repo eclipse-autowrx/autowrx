@@ -266,6 +266,7 @@ const init = (httpServer) => {
 
         const downstream = request.accept(null, request.origin);
         proxyBidirectional({ downstream, upstream });
+        return;
       }
     } catch (err) {
       const status = err?.statusCode || err?.status || 500;

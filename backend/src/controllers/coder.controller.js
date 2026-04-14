@@ -133,34 +133,6 @@ const getWorkspaceStatus = catchAsync(async (req, res) => {
 });
 
 /**
- * Get workspace timings
- */
-const getWorkspaceTimings = catchAsync(async (req, res) => {
-  const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
-  if (!coderCfg.enabled) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
-  }
-
-  const { prototypeId } = req.params;
-  const userId = req.user.id;
-
-  // Check if user has permission to view the prototype
-  const prototype = await Prototype.findById(prototypeId);
-  if (!prototype) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Prototype not found');
-  }
-
-  const hasPermission = await permissionService.hasPermission(userId, PERMISSIONS.READ_MODEL, prototype.model_id);
-  if (!hasPermission) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'You do not have permission to access this prototype');
-  }
-
-  const timings = await orchestratorService.getWorkspaceTimings(userId, prototypeId);
-
-  res.json(timings);
-});
-
-/**
  * Get logs for a Coder workspace agent
  */
 const getWorkspaceAgentLogs = catchAsync(async (req, res) => {
@@ -224,7 +196,7 @@ const getWorkspaceLogs = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.FORBIDDEN, 'You do not have permission to access this prototype');
   }
 
-  const logs = await orchestratorService.getWorkspaceLogs(userId, prototypeId, {
+  const logs = await orchestratorService.getWorkspaceLogs(userId, {
     before,
     after,
     follow,
@@ -293,7 +265,6 @@ module.exports = {
   getWorkspace,
   prepareWorkspace,
   getWorkspaceStatus,
-  getWorkspaceTimings,
   getWorkspaceAgentLogs,
   getWorkspaceLogs,
   triggerRun,

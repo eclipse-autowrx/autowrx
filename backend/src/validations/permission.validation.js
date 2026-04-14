@@ -51,6 +51,7 @@ const removeRoleFromUser = {
   query: Joi.object().keys({
     user: Joi.string().required().custom(objectId),
     role: Joi.string().required().custom(objectId),
+    ref: Joi.string(),
   }),
 };
 

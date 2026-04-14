@@ -27,12 +27,6 @@ const getWorkspaceStatus = {
   }),
 };
 
-const getWorkspaceTimings = {
-  params: Joi.object().keys({
-    prototypeId: Joi.string().custom(objectId).required(),
-  }),
-};
-
 const getWorkspaceAgentLogs = {
   params: Joi.object().keys({
     workspaceAgentId: Joi.string().required(),
@@ -78,7 +72,6 @@ module.exports = {
   getWorkspace,
   prepareWorkspace,
   getWorkspaceStatus,
-  getWorkspaceTimings,
   getWorkspaceAgentLogs,
   getWorkspaceLogs,
   triggerRun,

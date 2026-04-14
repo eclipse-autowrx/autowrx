@@ -22,7 +22,6 @@ Base path (with default frontend client): **`/v2/system/coder`** (see `backend/s
 | `GET` | `/workspace/:prototypeId` | Same orchestration as prepare (full `prepareWorkspaceForPrototype`); used to refresh **app URL + session token** for the iframe. |
 | `GET` | `/workspace/:prototypeId/status` | Workspace build status for the current user’s Coder workspace. |
 | `GET` | `/workspace/:prototypeId/logs` | Agent logs; supports `after`, `before`, `format=json\|text`, etc. |
-| `GET` | `/workspace/:prototypeId/timings` | Build timing details. |
 | `POST` | `/workspace/:prototypeId/trigger-run` | Body: `{ runKind }`. Writes `.autowrx_run` on the host prototype folder (see Run phase). |
 | `GET` | `/workspace/:prototypeId/run-output` | Returns `{ content, mtimeMs }` for `.autowrx_out` (allowlisted runs use `tee`). Used by the dashboard Output panel on the VS Code tab (~700ms polling). |
 | `GET` | `/workspaceagents/:workspaceAgentId/logs` | Stricter agent log access (validates agent id vs user workspace). |

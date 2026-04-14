@@ -33,10 +33,6 @@ router
   .get(auth(), validate(coderValidation.getWorkspaceStatus), coderController.getWorkspaceStatus);
 
 router
-  .route('/workspace/:prototypeId/timings')
-  .get(auth(), validate(coderValidation.getWorkspaceTimings), coderController.getWorkspaceTimings);
-
-router
   .route('/workspace/:prototypeId/logs')
   .get(auth(), validate(coderValidation.getWorkspaceLogs), coderController.getWorkspaceLogs);
 
