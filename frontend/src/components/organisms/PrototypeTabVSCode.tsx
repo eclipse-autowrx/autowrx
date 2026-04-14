@@ -65,6 +65,24 @@ const buildCoderWorkspaceIframeSrc = (
   return url.toString()
 }
 
+/**
+ * Bootstrap Coder root session first so cookie is scoped at "/" before loading app path.
+ */
+const buildCoderSessionBootstrapUrl = (
+  appUrl: string,
+  sessionToken?: string | null,
+): string => {
+  if (!sessionToken) return appUrl
+  try {
+    const app = new URL(appUrl)
+    const bootstrap = new URL('/', app.origin)
+    bootstrap.searchParams.set('coder_session_token', sessionToken)
+    return bootstrap.toString()
+  } catch {
+    return appUrl
+  }
+}
+
 interface PrototypeTabVSCodeProps {
   isActive?: boolean
 }
@@ -110,6 +128,8 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
   const watchSocketRef = useRef<WebSocket | null>(null)
   const logsSocketRef = useRef<WebSocket | null>(null)
   const coderSessionTokenRef = useRef<string | null>(null)
+  const pendingIframeAppSrcRef = useRef<string | null>(null)
+  const isBootstrappingIframeSessionRef = useRef(false)
 
   useEffect(() => {
     if (isActive && !hasActivatedOnce) {
@@ -202,6 +222,8 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
         setWorkspaceAppUrl(null)
         setIsIframeLoaded(false)
         setIframeLoadError(null)
+        pendingIframeAppSrcRef.current = null
+        isBootstrappingIframeSessionRef.current = false
         setWatchEvents([])
         setLogEvents([])
 
@@ -307,13 +329,22 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
           throw new Error('Workspace session token is missing')
         }
         coderSessionTokenRef.current = workspace.sessionToken
-        setWorkspaceAppUrl(
-          buildCoderWorkspaceIframeSrc(
-            workspace.appUrl,
-            workspace.folderPath,
-            workspace.sessionToken,
-          ),
+        const appSrc = buildCoderWorkspaceIframeSrc(
+          workspace.appUrl,
+          workspace.folderPath,
+          workspace.sessionToken,
         )
+        if (workspace.sessionToken) {
+          pendingIframeAppSrcRef.current = appSrc
+          isBootstrappingIframeSessionRef.current = true
+          setWorkspaceAppUrl(
+            buildCoderSessionBootstrapUrl(workspace.appUrl, workspace.sessionToken),
+          )
+        } else {
+          pendingIframeAppSrcRef.current = null
+          isBootstrappingIframeSessionRef.current = false
+          setWorkspaceAppUrl(appSrc)
+        }
         lastResolvedBuildIdRef.current = watchBuildSnapshot.buildId
       } catch (error: any) {
         if (cancelled) return
@@ -493,6 +524,13 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
               className="min-h-0 flex-1 border-0"
               allow="clipboard-read; clipboard-write"
               onLoad={() => {
+                if (isBootstrappingIframeSessionRef.current && pendingIframeAppSrcRef.current) {
+                  const appSrc = pendingIframeAppSrcRef.current
+                  pendingIframeAppSrcRef.current = null
+                  isBootstrappingIframeSessionRef.current = false
+                  setWorkspaceAppUrl(appSrc)
+                  return
+                }
                 setIsIframeLoaded(true)
               }}
               onError={() => {
