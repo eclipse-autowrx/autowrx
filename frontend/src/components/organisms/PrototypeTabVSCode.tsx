@@ -109,6 +109,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
   const startWidthRef = useRef(0)
   const watchSocketRef = useRef<WebSocket | null>(null)
   const logsSocketRef = useRef<WebSocket | null>(null)
+  const coderSessionTokenRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (isActive && !hasActivatedOnce) {
@@ -160,7 +161,10 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
       logsWsOpened = true
 
       const wsBase = toWsBase(config.serverBaseUrl)
-      const logsUrl = `${wsBase}/${config.serverVersion}/system/coder/workspacebuilds/${workspaceBuildId}/logs?access_token=${encodeURIComponent(accessToken)}&follow=true&after=-1`
+      const tokenParam = coderSessionTokenRef.current
+        ? `&coder_session_token=${encodeURIComponent(coderSessionTokenRef.current)}`
+        : ''
+      const logsUrl = `${wsBase}/${config.serverVersion}/system/coder/workspacebuilds/${workspaceBuildId}/logs?access_token=${encodeURIComponent(accessToken)}&follow=true&after=-1${tokenParam}`
       const logsWs = new WebSocket(logsUrl)
       logsSocketRef.current = logsWs
 
@@ -204,13 +208,17 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
         const response = await prepareWorkspace(prototype_id)
         if (cancelled) return
         setPrepareResponse(response)
+        coderSessionTokenRef.current = response.sessionToken || null
 
         const wsBase = toWsBase(config.serverBaseUrl)
+        const wsSessionParam = coderSessionTokenRef.current
+          ? `&coder_session_token=${encodeURIComponent(coderSessionTokenRef.current)}`
+          : ''
 
         // Open logs immediately in parallel with watch, using workspaceBuildId from prepare response.
         openLogsWs(response.workspaceBuildId)
 
-        const watchUrl = `${wsBase}/${config.serverVersion}/system/coder/workspace/${prototype_id}/watch-ws?access_token=${encodeURIComponent(accessToken)}`
+        const watchUrl = `${wsBase}/${config.serverVersion}/system/coder/workspace/${prototype_id}/watch-ws?access_token=${encodeURIComponent(accessToken)}${wsSessionParam}`
         const watchWs = new WebSocket(watchUrl)
         watchSocketRef.current = watchWs
 
@@ -290,7 +298,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
       try {
         setIframeLoadError(null)
         setIsIframeLoaded(false)
-        const workspace = await getWorkspaceUrl(prototype_id)
+        const workspace = await getWorkspaceUrl(prototype_id, coderSessionTokenRef.current)
         if (cancelled) return
         if (!workspace?.appUrl) {
           throw new Error('Workspace is ready but app URL is missing')
@@ -298,6 +306,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
         if (!workspace.sessionToken) {
           throw new Error('Workspace session token is missing')
         }
+        coderSessionTokenRef.current = workspace.sessionToken
         setWorkspaceAppUrl(
           buildCoderWorkspaceIframeSrc(
             workspace.appUrl,

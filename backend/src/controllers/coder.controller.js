@@ -43,7 +43,9 @@ const getWorkspace = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.CONFLICT, 'Workspace is not prepared yet. Call prepare endpoint first.');
   }
 
-  const iframeSessionToken = await coderService.getOrCreateUserScopedToken(user, { workspaceId });
+  const requestedSessionToken = typeof req.query?.sessionToken === 'string' ? req.query.sessionToken.trim() : '';
+  const iframeSessionToken =
+    requestedSessionToken || (await coderService.getOrCreateUserScopedToken(user, { workspaceId }));
   const workspace = await coderService.getWorkspaceStatus(workspaceId, iframeSessionToken);
   const prototypeFolderPath = `${getPrototypeModelId(prototype)}/${sanitizePrototypeFolderName(prototype.name)}`;
 

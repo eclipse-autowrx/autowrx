@@ -271,11 +271,8 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
       templateName: 'docker-template',
     });
 
-    // 5. Secure Session (Workspace-scoped token)
-    const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, {
-      workspaceId: workspace.id,
-      coderUserId: coderUser.id,
-    });
+    // Reuse the same user token for the whole tab-open flow to avoid minting multiple times.
+    const workspaceScopedToken = userScopedToken;
 
     // 6. Ensure Workspace is running
     let status = workspace.latest_build?.status;

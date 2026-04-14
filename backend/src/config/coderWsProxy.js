@@ -141,6 +141,16 @@ const connectUpstream = async ({ url, headers }) => {
   });
 };
 
+const resolveWorkspaceSessionToken = async ({ searchParams, user, workspaceId }) => {
+  const requestedToken = typeof searchParams?.coder_session_token === 'string'
+    ? searchParams.coder_session_token.trim()
+    : '';
+  if (requestedToken) {
+    return requestedToken;
+  }
+  return coderService.getOrCreateUserScopedToken(user, { workspaceId });
+};
+
 const init = (httpServer) => {
   const wsServer = new WebSocketServer({
     httpServer,
@@ -187,7 +197,9 @@ const init = (httpServer) => {
           throw new ApiError(httpStatus.NOT_FOUND, 'Workspace not found. Prepare workspace first.');
         }
 
-        const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, {
+        const workspaceScopedToken = await resolveWorkspaceSessionToken({
+          searchParams,
+          user,
           workspaceId,
         });
         const upstreamUrl = `${getCoderApiBase()}/workspaces/${workspaceId}/watch-ws`;
@@ -209,7 +221,9 @@ const init = (httpServer) => {
           throw new ApiError(httpStatus.NOT_FOUND, 'Workspace not found. Prepare workspace first.');
         }
 
-        const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, {
+        const workspaceScopedToken = await resolveWorkspaceSessionToken({
+          searchParams,
+          user,
           workspaceId,
         });
 
@@ -242,7 +256,9 @@ const init = (httpServer) => {
           throw new ApiError(httpStatus.NOT_FOUND, 'Workspace not found. Prepare workspace first.');
         }
 
-        const workspaceScopedToken = await coderService.getOrCreateUserScopedToken(user, {
+        const workspaceScopedToken = await resolveWorkspaceSessionToken({
+          searchParams,
+          user,
           workspaceId,
         });
         const expectedWorkspaceAgentId = await coderService.getWorkspaceAgentId(

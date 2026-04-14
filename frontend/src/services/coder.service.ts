@@ -23,8 +23,13 @@ export interface WorkspaceInfo {
 /**
  * Get workspace URL and session token for a prototype
  */
-export const getWorkspaceUrl = async (prototypeId: string): Promise<WorkspaceInfo> => {
-  const response = await serverAxios.get<WorkspaceInfo>(`/system/coder/workspace/${prototypeId}`)
+export const getWorkspaceUrl = async (
+  prototypeId: string,
+  sessionToken?: string | null,
+): Promise<WorkspaceInfo> => {
+  const response = await serverAxios.get<WorkspaceInfo>(`/system/coder/workspace/${prototypeId}`, {
+    params: sessionToken ? { sessionToken } : undefined,
+  })
   return response.data
 }
 
