@@ -14,22 +14,16 @@ export interface WorkspaceInfo {
   workspaceBuildId?: string | null
   status: string
   appUrl: string
-  sessionToken?: string | null
   repoUrl: string | null
   /** Container path for prototype folder (mount from host) */
   folderPath?: string | null
 }
 
 /**
- * Get workspace URL and session token for a prototype
+ * Get workspace URL for a prototype
  */
-export const getWorkspaceUrl = async (
-  prototypeId: string,
-  sessionToken?: string | null,
-): Promise<WorkspaceInfo> => {
-  const response = await serverAxios.get<WorkspaceInfo>(`/system/coder/workspace/${prototypeId}`, {
-    params: sessionToken ? { sessionToken } : undefined,
-  })
+export const getWorkspaceUrl = async (prototypeId: string): Promise<WorkspaceInfo> => {
+  const response = await serverAxios.get<WorkspaceInfo>(`/system/coder/workspace/${prototypeId}`)
   return response.data
 }
 

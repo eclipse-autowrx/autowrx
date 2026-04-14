@@ -93,6 +93,22 @@ const matchWorkspaceBuildLogsWs = (coderPath) => {
   return { workspaceBuildId: m[1] };
 };
 
+const parseCookieHeader = (cookieHeader = '') => {
+  return String(cookieHeader)
+    .split(';')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .reduce((acc, pair) => {
+      const idx = pair.indexOf('=');
+      if (idx <= 0) return acc;
+      const key = pair.slice(0, idx).trim();
+      const value = pair.slice(idx + 1).trim();
+      if (!key) return acc;
+      acc[key] = decodeURIComponent(value);
+      return acc;
+    }, {});
+};
+
 const proxyBidirectional = ({ downstream, upstream }) => {
   const closeBoth = (reason) => {
     try {
@@ -141,12 +157,18 @@ const connectUpstream = async ({ url, headers }) => {
   });
 };
 
-const resolveWorkspaceSessionToken = async ({ searchParams, user, workspaceId }) => {
+const resolveWorkspaceSessionToken = async ({ searchParams, request, user, workspaceId }) => {
   const requestedToken = typeof searchParams?.coder_session_token === 'string'
     ? searchParams.coder_session_token.trim()
     : '';
   if (requestedToken) {
     return requestedToken;
+  }
+  const cookieHeader = request?.httpRequest?.headers?.cookie || '';
+  const cookies = parseCookieHeader(cookieHeader);
+  const cookieToken = typeof cookies.coder_session_token === 'string' ? cookies.coder_session_token.trim() : '';
+  if (cookieToken) {
+    return cookieToken;
   }
   return coderService.getOrCreateUserScopedToken(user, { workspaceId });
 };
@@ -199,6 +221,7 @@ const init = (httpServer) => {
 
         const workspaceScopedToken = await resolveWorkspaceSessionToken({
           searchParams,
+          request,
           user,
           workspaceId,
         });
@@ -223,6 +246,7 @@ const init = (httpServer) => {
 
         const workspaceScopedToken = await resolveWorkspaceSessionToken({
           searchParams,
+          request,
           user,
           workspaceId,
         });
@@ -258,6 +282,7 @@ const init = (httpServer) => {
 
         const workspaceScopedToken = await resolveWorkspaceSessionToken({
           searchParams,
+          request,
           user,
           workspaceId,
         });

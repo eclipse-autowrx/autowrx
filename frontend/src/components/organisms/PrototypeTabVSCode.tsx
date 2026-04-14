@@ -54,7 +54,6 @@ const toSameOriginCoderPath = (appUrl: string): string => {
 const buildCoderWorkspaceIframeSrc = (
   appUrl: string,
   folderPath?: string | null,
-  sessionToken?: string | null,
 ): string => {
   const basePath = toSameOriginCoderPath(appUrl)
   let url: URL
@@ -63,43 +62,13 @@ const buildCoderWorkspaceIframeSrc = (
   } catch {
     const params = new URLSearchParams()
     if (folderPath) params.set('folder', folderPath)
-    if (sessionToken) {
-      params.set('coder_session_token', sessionToken)
-    }
     const q = params.toString()
     if (!q) return basePath
     const sep = basePath.includes('?') ? '&' : '?'
     return `${basePath}${sep}${q}`
   }
   if (folderPath) url.searchParams.set('folder', folderPath)
-  if (sessionToken) {
-    url.searchParams.set('coder_session_token', sessionToken)
-  }
   return `${url.pathname}${url.search}${url.hash}`
-}
-
-/**
- * Bootstrap session on the same app path, then switch to token-less URL.
- */
-const buildCoderSessionBootstrapUrl = (
-  appUrl: string,
-  folderPath?: string | null,
-  sessionToken?: string | null,
-): string => {
-  if (!sessionToken) return buildCoderWorkspaceIframeSrc(appUrl, folderPath, null)
-  const params = new URLSearchParams()
-  params.set('coder_session_token', sessionToken)
-  return `/coder/?${params.toString()}`
-}
-
-/**
- * Dev fallback: seed Coder session cookie on current origin before loading iframe.
- * This avoids relying solely on upstream Set-Cookie behavior through local proxies.
- */
-const seedCoderSessionCookie = (sessionToken?: string | null) => {
-  if (!sessionToken) return
-  const secure = window.location.protocol === 'https:' ? '; Secure' : ''
-  document.cookie = `coder_session_token=${encodeURIComponent(sessionToken)}; Path=/; SameSite=Lax${secure}`
 }
 
 interface PrototypeTabVSCodeProps {
@@ -124,9 +93,6 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
   const { data: model } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
   const accessToken = useAuthStore((state) => state.access?.token)
-  const [prepareResponse, setPrepareResponse] = useState<WorkspaceInfo | null>(
-    null,
-  )
   const [prepareError, setPrepareError] = useState<string | null>(null)
   const [workspaceAppUrl, setWorkspaceAppUrl] = useState<string | null>(null)
   const [isIframeLoaded, setIsIframeLoaded] = useState(false)
@@ -146,9 +112,6 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
   const startWidthRef = useRef(0)
   const watchSocketRef = useRef<WebSocket | null>(null)
   const logsSocketRef = useRef<WebSocket | null>(null)
-  const coderSessionTokenRef = useRef<string | null>(null)
-  const pendingIframeAppSrcRef = useRef<string | null>(null)
-  const isBootstrappingIframeSessionRef = useRef(false)
 
   useEffect(() => {
     if (isActive && !hasActivatedOnce) {
@@ -200,10 +163,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
       logsWsOpened = true
 
       const wsBase = toWsBase(config.serverBaseUrl)
-      const tokenParam = coderSessionTokenRef.current
-        ? `&coder_session_token=${encodeURIComponent(coderSessionTokenRef.current)}`
-        : ''
-      const logsUrl = `${wsBase}/${config.serverVersion}/system/coder/workspacebuilds/${workspaceBuildId}/logs?access_token=${encodeURIComponent(accessToken)}&follow=true&after=-1${tokenParam}`
+      const logsUrl = `${wsBase}/${config.serverVersion}/system/coder/workspacebuilds/${workspaceBuildId}/logs?access_token=${encodeURIComponent(accessToken)}&follow=true&after=-1`
       const logsWs = new WebSocket(logsUrl)
       logsSocketRef.current = logsWs
 
@@ -241,26 +201,18 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
         setWorkspaceAppUrl(null)
         setIsIframeLoaded(false)
         setIframeLoadError(null)
-        pendingIframeAppSrcRef.current = null
-        isBootstrappingIframeSessionRef.current = false
         setWatchEvents([])
         setLogEvents([])
 
         const response = await prepareWorkspace(prototype_id)
         if (cancelled) return
-        setPrepareResponse(response)
-        coderSessionTokenRef.current = response.sessionToken || null
-        seedCoderSessionCookie(response.sessionToken)
 
         const wsBase = toWsBase(config.serverBaseUrl)
-        const wsSessionParam = coderSessionTokenRef.current
-          ? `&coder_session_token=${encodeURIComponent(coderSessionTokenRef.current)}`
-          : ''
 
         // Open logs immediately in parallel with watch, using workspaceBuildId from prepare response.
         openLogsWs(response.workspaceBuildId)
 
-        const watchUrl = `${wsBase}/${config.serverVersion}/system/coder/workspace/${prototype_id}/watch-ws?access_token=${encodeURIComponent(accessToken)}${wsSessionParam}`
+        const watchUrl = `${wsBase}/${config.serverVersion}/system/coder/workspace/${prototype_id}/watch-ws?access_token=${encodeURIComponent(accessToken)}`
         const watchWs = new WebSocket(watchUrl)
         watchSocketRef.current = watchWs
 
@@ -292,7 +244,6 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
         }
       } catch (error: any) {
         if (cancelled) return
-        setPrepareResponse(null)
         const message =
           error?.response?.data?.message ||
           error?.message ||
@@ -340,36 +291,16 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
       try {
         setIframeLoadError(null)
         setIsIframeLoaded(false)
-        const workspace = await getWorkspaceUrl(prototype_id, coderSessionTokenRef.current)
+        const workspace = await getWorkspaceUrl(prototype_id)
         if (cancelled) return
         if (!workspace?.appUrl) {
           throw new Error('Workspace is ready but app URL is missing')
         }
-        if (!workspace.sessionToken) {
-          throw new Error('Workspace session token is missing')
-        }
-        coderSessionTokenRef.current = workspace.sessionToken
-        seedCoderSessionCookie(workspace.sessionToken)
         const appSrc = buildCoderWorkspaceIframeSrc(
           workspace.appUrl,
           workspace.folderPath,
-          workspace.sessionToken,
         )
-        if (workspace.sessionToken) {
-          pendingIframeAppSrcRef.current = appSrc
-          isBootstrappingIframeSessionRef.current = true
-          setWorkspaceAppUrl(
-            buildCoderSessionBootstrapUrl(
-              workspace.appUrl,
-              workspace.folderPath,
-              workspace.sessionToken,
-            ),
-          )
-        } else {
-          pendingIframeAppSrcRef.current = null
-          isBootstrappingIframeSessionRef.current = false
-          setWorkspaceAppUrl(appSrc)
-        }
+        setWorkspaceAppUrl(appSrc)
         lastResolvedBuildIdRef.current = watchBuildSnapshot.buildId
       } catch (error: any) {
         if (cancelled) return
@@ -548,16 +479,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
               title="Coder Workspace"
               className="min-h-0 flex-1 border-0"
               allow="clipboard-read; clipboard-write"
-              onLoad={() => {
-                if (isBootstrappingIframeSessionRef.current && pendingIframeAppSrcRef.current) {
-                  const appSrc = pendingIframeAppSrcRef.current
-                  pendingIframeAppSrcRef.current = null
-                  isBootstrappingIframeSessionRef.current = false
-                  setWorkspaceAppUrl(appSrc)
-                  return
-                }
-                setIsIframeLoaded(true)
-              }}
+              onLoad={() => setIsIframeLoaded(true)}
               onError={() => {
                 setIsIframeLoaded(false)
                 const message = 'Failed to load workspace iframe'

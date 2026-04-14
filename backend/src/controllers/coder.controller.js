@@ -15,6 +15,26 @@ const { Prototype, User } = require('../models');
 const coderConfig = require('../utils/coderConfig');
 const { sanitizePrototypeFolderName, getPrototypeModelId } = require('../utils/prototypePath');
 
+const CODER_SESSION_COOKIE = 'coder_session_token';
+const CODER_SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+const isSecureRequest = (req) => {
+  if (req.secure) return true;
+  const forwardedProto = String(req.headers['x-forwarded-proto'] || '').toLowerCase();
+  return forwardedProto.includes('https');
+};
+
+const setCoderSessionCookie = (req, res, sessionToken) => {
+  if (!sessionToken) return;
+  res.cookie(CODER_SESSION_COOKIE, sessionToken, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: isSecureRequest(req),
+    path: '/',
+    maxAge: CODER_SESSION_MAX_AGE_MS,
+  });
+};
+
 /**
  * Get workspace URL and session token for a prototype
  */
@@ -58,13 +78,13 @@ const getWorkspace = catchAsync(async (req, res) => {
   );
 
   await coderService.waitUntilCoderAppProxyReady(appUrl, iframeSessionToken);
+  setCoderSessionCookie(req, res, iframeSessionToken);
 
   res.json({
     workspaceId: workspace.id,
     workspaceName: workspace.name,
     workspaceBuildId: workspace?.latest_build?.id || null,
     status: workspace?.latest_build?.status || workspace?.status || 'unknown',
-    sessionToken: iframeSessionToken,
     folderPath: `/home/coder/prototypes/${prototypeFolderPath}`,
     appUrl,
   });
@@ -95,13 +115,13 @@ const prepareWorkspace = catchAsync(async (req, res) => {
 
   // Prepare workspace
   const workspaceInfo = await orchestratorService.prepareWorkspaceForPrototype(userId, prototypeId);
+  setCoderSessionCookie(req, res, workspaceInfo.sessionToken);
 
   res.json({
     workspaceId: workspaceInfo.workspaceId,
     workspaceName: workspaceInfo.workspaceName,
     workspaceBuildId: workspaceInfo.workspaceBuildId,
     status: workspaceInfo.status,
-    sessionToken: workspaceInfo.sessionToken,
     folderPath: workspaceInfo.folderPath,
   });
 });
