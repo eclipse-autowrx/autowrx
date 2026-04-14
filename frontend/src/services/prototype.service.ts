@@ -120,7 +120,6 @@ export const countCodeExecution = async (prototypeId: string) => {
 }
 
 export type PrototypeUsedApisWorkspaceResponse = {
-  code: string
   folderPath: string
   source: string
   usedApiNames: string[]

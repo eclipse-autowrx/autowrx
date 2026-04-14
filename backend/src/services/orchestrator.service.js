@@ -15,6 +15,7 @@ const { Prototype, User } = require('../models');
 const logger = require('../config/logger');
 const ApiError = require('../utils/ApiError');
 const coderConfig = require('../utils/coderConfig');
+const { getPrototypeFolderRelativePath } = require('../utils/prototypePath');
 /* eslint-disable security/detect-non-literal-fs-filename */
 
 const WORKSPACE_UID = Number(process.env.CODER_WORKSPACE_UID || 1000);
@@ -148,29 +149,6 @@ const buildInitialRepoContentFromPrototype = (prototype) => {
 
   return {};
 };
-
-/**
- * Sanitize prototype name for use as folder name
- * @param {string} name - Prototype name
- * @returns {string} Sanitized folder name
- */
-const sanitizePrototypeFolderName = (name) => {
-  if (!name || typeof name !== 'string') return 'unnamed-prototype';
-  const sanitized = name
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9\-_]/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 64);
-  return sanitized || 'unnamed-prototype';
-};
-
-const getPrototypeModelId = (prototype) => String(prototype?.model_id?._id || prototype?.model_id || '');
-
-const getPrototypeFolderRelativePath = (prototype) =>
-  path.join(getPrototypeModelId(prototype), sanitizePrototypeFolderName(prototype?.name));
 
 /**
  * Seed initial code files into a prototype folder (only if folder is empty)

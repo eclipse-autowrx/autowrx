@@ -368,7 +368,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
     refetchInterval: enableWorkspacePolling ? 3000 : false,
   })
 
-  const analyzedCode = workspaceUsedApisQuery.data?.code ?? code ?? ''
+  const analyzedCode = code ?? ''
 
   useEffect(() => {
     if (!activeModelApis || activeModelApis.length === 0) {
