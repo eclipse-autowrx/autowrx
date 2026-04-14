@@ -16,6 +16,7 @@ type AuthState = {
   access?: Token | null
   user: any
   openLoginDialog: boolean
+  authBootstrapped: boolean
 }
 
 type Actions = {
@@ -23,6 +24,7 @@ type Actions = {
   setUser: (user: any, access: any) => void
   logOut: () => void
   setOpenLoginDialog: (isOpen: boolean) => void
+  setAuthBootstrapped: (bootstrapped: boolean) => void
 }
 
 const useAuthStore = createWithEqualityFn<AuthState & Actions>()(
@@ -30,6 +32,7 @@ const useAuthStore = createWithEqualityFn<AuthState & Actions>()(
     access: undefined,
     user: undefined,
     openLoginDialog: false,
+    authBootstrapped: false,
     setUser: (user, access) =>
       set((state) => {
         state.access = access
@@ -52,6 +55,10 @@ const useAuthStore = createWithEqualityFn<AuthState & Actions>()(
     setOpenLoginDialog: (isOpen) =>
       set((state) => {
         state.openLoginDialog = isOpen
+      }),
+    setAuthBootstrapped: (bootstrapped) =>
+      set((state) => {
+        state.authBootstrapped = bootstrapped
       }),
   })),
 )
