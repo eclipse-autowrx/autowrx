@@ -24,8 +24,8 @@ const HomeHeroSection = ({
   return (
     <>
       <div className="flex col-span-12 relative min-h-[400px] max-h-[400px] w-full justify-between z-10 overflow-hidden">
-        {/* Gradient overlay - primary to secondary */}
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r z-10 from-primary/70 to-secondary/90"></div>
+        {/* Gradient overlay - full opacity to match the navigation bar gradient */}
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r z-10 from-primary to-secondary"></div>
 
         {image && (
           <img
