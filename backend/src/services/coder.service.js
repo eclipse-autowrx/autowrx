@@ -903,18 +903,23 @@ const getWorkspaceAgentId = async (workspaceId, sessionToken, maxRetries = 5, re
 };
 
 /**
- * Sanitize workspace name for Coder (one workspace per user)
+ * Sanitize workspace name for Coder (one workspace per user per kind)
  * Coder requirements:
  * - 1-32 characters
  * - Only letters, numbers, and hyphens
  * - Must start and end with letter or number
  * @param {string} userId - User ID
+ * @param {string} workspaceKind - language bucket (python/cpp)
  * @returns {string} Sanitized workspace name
  */
-const sanitizeWorkspaceName = (userId) => {
+const sanitizeWorkspaceName = (userId, workspaceKind = 'python') => {
   const normalizedId = normalizeIdForName(userId);
   const idPart = normalizedId.length <= 29 ? normalizedId : `${normalizedId.slice(0, 14)}${normalizedId.slice(-15)}`;
-  const name = `ws-${idPart}`;
+  const normalizedKind = String(workspaceKind || 'python')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '') || 'python';
+  const suffix = normalizedKind === 'cpp' ? 'cpp' : 'py';
+  const name = `ws-${idPart}-${suffix}`;
 
   const sanitized = name
     .toLowerCase()
@@ -931,7 +936,7 @@ const sanitizeWorkspaceName = (userId) => {
  * @param {string} templateName - Template name
  * @returns {Promise<string>} Template ID
  */
-const getTemplateId = async (templateName = 'docker-template') => {
+const getTemplateId = async (templateName = 'docker-template-python') => {
   try {
     const response = await axios.get(`${getCoderApiBase()}/templates`, {
       headers: getAdminHeaders(),

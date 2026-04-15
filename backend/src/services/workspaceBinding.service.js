@@ -8,29 +8,26 @@
 
 const path = require('path');
 const { UserWorkspace } = require('../models');
+const { WORKSPACE_KINDS } = require('../utils/workspaceKind');
 
 const normalizePath = (p) => path.resolve(String(p || ''));
+const normalizeWorkspaceKind = (workspaceKind) =>
+  workspaceKind === WORKSPACE_KINDS.CPP ? WORKSPACE_KINDS.CPP : WORKSPACE_KINDS.PYTHON;
 
-const getBindingByUser = async (userId) => {
+const getBindingByUser = async (userId, workspaceKind = WORKSPACE_KINDS.PYTHON) => {
   if (!userId) return null;
-  return UserWorkspace.findOne({ user_id: userId });
+  return UserWorkspace.findOne({
+    user_id: userId,
+    workspace_kind: normalizeWorkspaceKind(workspaceKind),
+  });
 };
 
-const getWorkspaceIdForUser = async (user) => {
+const getWorkspaceIdForUser = async (user, workspaceKind = WORKSPACE_KINDS.PYTHON) => {
   if (!user) return null;
-  const binding = await getBindingByUser(user.id || user._id);
+  const kind = normalizeWorkspaceKind(workspaceKind);
+  const binding = await getBindingByUser(user.id || user._id, kind);
   if (binding?.workspace_id) {
     return binding.workspace_id;
-  }
-  // Legacy fallback: read the old user fields and persist a canonical binding.
-  if (user.coder_workspace_id) {
-    await upsertBinding({
-      userId: user.id || user._id,
-      workspaceId: user.coder_workspace_id,
-      workspaceName: user.coder_workspace_name || null,
-      templateName: 'docker-template',
-    });
-    return user.coder_workspace_id;
   }
   return null;
 };
@@ -41,10 +38,12 @@ const upsertBinding = async ({
   workspaceId,
   workspaceName,
   prototypesHostPath,
-  templateName = 'docker-template',
+  templateName = 'docker-template-python',
+  workspaceKind = WORKSPACE_KINDS.PYTHON,
 }) => {
+  const kind = normalizeWorkspaceKind(workspaceKind);
   return UserWorkspace.findOneAndUpdate(
-    { user_id: userId },
+    { user_id: userId, workspace_kind: kind },
     {
       $set: {
         coder_user_id: coderUserId || null,
@@ -53,9 +52,6 @@ const upsertBinding = async ({
         prototypes_host_path: prototypesHostPath ? normalizePath(prototypesHostPath) : null,
         template_name: templateName,
         status: 'active',
-      },
-      $setOnInsert: {
-        user_id: userId,
       },
     },
     { upsert: true, new: true }

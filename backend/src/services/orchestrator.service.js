@@ -18,6 +18,10 @@ const ApiError = require('../utils/ApiError');
 const coderConfig = require('../utils/coderConfig');
 const { PERMISSIONS } = require('../config/roles');
 const { getPrototypeFolderRelativePath } = require('../utils/prototypePath');
+const {
+  resolveWorkspaceKindFromPrototype,
+  getTemplateNameForWorkspaceKind,
+} = require('../utils/workspaceKind');
 /* eslint-disable security/detect-non-literal-fs-filename */
 
 const normalizeIdForName = (value) =>
@@ -226,17 +230,19 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
     }
 
     // 4. Handle Workspace (Reuse or Create)
-    const workspaceName = coderService.sanitizeWorkspaceName(userId);
+    const workspaceKind = resolveWorkspaceKindFromPrototype(prototype);
+    const workspaceName = coderService.sanitizeWorkspaceName(userId, workspaceKind);
+    const templateName = getTemplateNameForWorkspaceKind(workspaceKind);
     let workspace = null;
 
-    const workspaceBinding = await workspaceBindingService.getBindingByUser(userId);
-    const mappedWorkspaceId = workspaceBinding?.workspace_id || user.coder_workspace_id || null;
+    const workspaceBinding = await workspaceBindingService.getBindingByUser(userId, workspaceKind);
+    const mappedWorkspaceId = workspaceBinding?.workspace_id || null;
     if (mappedWorkspaceId) {
       workspace = await coderService.getWorkspaceStatus(mappedWorkspaceId, userScopedToken).catch(() => null);
     }
 
     if (!workspace) {
-      const templateId = await coderService.getTemplateId('docker-template');
+      const templateId = await coderService.getTemplateId(templateName);
       workspace = await coderService.getOrCreateWorkspace(
         coderUser.id,
         workspaceName,
@@ -245,10 +251,6 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
         userHostPath,
         userScopedToken,
       );
-
-      user.coder_workspace_id = workspace.id;
-      user.coder_workspace_name = workspaceName;
-      await user.save();
     }
 
     await workspaceBindingService.upsertBinding({
@@ -257,7 +259,8 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
       workspaceId: workspace.id,
       workspaceName,
       prototypesHostPath: userHostPath,
-      templateName: 'docker-template',
+      templateName,
+      workspaceKind,
     });
 
     // Reuse the same user token for the whole tab-open flow to avoid minting multiple times.
