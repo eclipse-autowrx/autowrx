@@ -96,6 +96,15 @@ const flattenFileTree = (items, basePath = '') => {
   }, []);
 };
 
+const getMainFileNameByLanguage = (language) => {
+  const lang = String(language || '')
+    .trim()
+    .toLowerCase();
+  if (lang === 'python' || lang === 'py') return 'main.py';
+  if (lang === 'rust' || lang === 'rs') return 'main.rs';
+  return 'main.txt';
+};
+
 const buildInitialRepoContentFromPrototype = (prototype) => {
   const code = typeof prototype?.code === 'string' ? prototype.code : '';
 
@@ -127,7 +136,7 @@ const buildInitialRepoContentFromPrototype = (prototype) => {
 
   // Single-file templates: store raw code. Seed a minimal project.
   if (code.trim().length > 0) {
-    const mainFileByLanguage = prototype?.language === 'python' ? 'main.py' : 'main.txt';
+    const mainFileByLanguage = getMainFileNameByLanguage(prototype?.language);
     return {
       readme: `# ${prototype?.name || 'Prototype'}\n\nGenerated from single-file template.\n`,
       files: [
@@ -300,6 +309,7 @@ const RUN_KIND_COMMANDS = {
   'python-main': 'python3 -u main.py 2>&1 | tee .autowrx_out',
   'c-main': 'gcc main.c -o main && ./main 2>&1 | tee .autowrx_out',
   'cpp-main': 'g++ -o main -Iinclude src/*.cpp && ./main 2>&1 | tee .autowrx_out',
+  'rust-main': 'cargo run 2>&1 | tee .autowrx_out',
 };
 
 const resolveRunCommand = (runKind) => {
@@ -310,6 +320,8 @@ const resolveRunCommand = (runKind) => {
       return RUN_KIND_COMMANDS['c-main'];
     case 'cpp-main':
       return RUN_KIND_COMMANDS['cpp-main'];
+    case 'rust-main':
+      return RUN_KIND_COMMANDS['rust-main'];
     default:
       return null;
   }
@@ -318,7 +330,7 @@ const resolveRunCommand = (runKind) => {
 /**
  * Derive run kind from prototype.language (authoritative metadata).
  * @param {import('mongoose').Document} prototype
- * @returns {'python-main'|'c-main'|'cpp-main'}
+ * @returns {'python-main'|'c-main'|'cpp-main'|'rust-main'}
  */
 const resolveRunKindFromPrototype = (prototype) => {
   const lang = String(prototype?.language ?? '')
@@ -326,6 +338,7 @@ const resolveRunKindFromPrototype = (prototype) => {
     .toLowerCase();
   if (lang === 'cpp' || lang === 'c++') return 'cpp-main';
   if (lang === 'c') return 'c-main';
+  if (lang === 'rust' || lang === 'rs') return 'rust-main';
   return 'python-main';
 };
 

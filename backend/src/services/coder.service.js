@@ -909,7 +909,7 @@ const getWorkspaceAgentId = async (workspaceId, sessionToken, maxRetries = 5, re
  * - Only letters, numbers, and hyphens
  * - Must start and end with letter or number
  * @param {string} userId - User ID
- * @param {string} workspaceKind - language bucket (python/cpp)
+ * @param {string} workspaceKind - language bucket (python/cpp/rust)
  * @returns {string} Sanitized workspace name
  */
 const sanitizeWorkspaceName = (userId, workspaceKind = 'python') => {
@@ -918,7 +918,7 @@ const sanitizeWorkspaceName = (userId, workspaceKind = 'python') => {
   const normalizedKind = String(workspaceKind || 'python')
     .toLowerCase()
     .replace(/[^a-z0-9]/g, '') || 'python';
-  const suffix = normalizedKind === 'cpp' ? 'cpp' : 'py';
+  const suffix = normalizedKind === 'cpp' ? 'cpp' : normalizedKind === 'rust' ? 'rs' : 'py';
   const name = `ws-${idPart}-${suffix}`;
 
   const sanitized = name

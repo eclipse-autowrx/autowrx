@@ -1,0 +1,33 @@
+FROM codercom/code-server:4.115.0-debian
+
+USER root
+
+RUN set -eux; \
+  apt-get update -qq; \
+  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+  build-essential pkg-config libssl-dev \
+  curl \
+  rsync ca-certificates; \
+  apt-get clean; \
+  rm -rf /var/lib/apt/lists/*
+
+COPY home-seed/ /opt/autowrx-home-seed/
+RUN chown -R coder:coder /opt/autowrx-home-seed
+
+USER coder
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable
+
+RUN curl -fsSL https://opencode.ai/install | bash
+
+ENV PATH="/home/coder/.cargo/bin:/home/coder/.local/bin:${PATH}"
+
+COPY --chown=coder:coder extensions.base.txt /tmp/extensions.base.txt
+RUN set -eux; \
+  while IFS= read -r ext || [ -n "$ext" ]; do \
+  case "$ext" in ""|\#*) continue ;; esac; \
+  code-server --install-extension "$ext" || echo "Warning: failed to install extension: $ext"; \
+  done < /tmp/extensions.base.txt
+
+COPY --chown=coder:coder autowrx-runner.vsix /tmp/autowrx-runner.vsix
+RUN code-server --install-extension /tmp/autowrx-runner.vsix && rm /tmp/autowrx-runner.vsix

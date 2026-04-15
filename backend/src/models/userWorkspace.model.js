@@ -21,7 +21,7 @@ const userWorkspaceSchema = new mongoose.Schema(
       type: String,
       trim: true,
       required: true,
-      enum: ['python', 'cpp'],
+      enum: ['python', 'cpp', 'rust'],
       default: 'python',
       index: true,
     },

@@ -1,6 +1,6 @@
 # Coder setup (local / instance)
 
-How to run Coder with the AutoWRX language-specific templates (**docker-template-python** / **docker-template-cpp**), build workspace images (including the **autowrx-runner** VSIX), and connect AutoWRX via **site config**.
+How to run Coder with the AutoWRX language-specific templates (**docker-template-python** / **docker-template-cpp** / **docker-template-rust**), build workspace images (including the **autowrx-runner** VSIX), and connect AutoWRX via **site config**.
 
 ## Prerequisites
 
@@ -31,8 +31,8 @@ What **`start.sh`** does (see script for exact commands):
 1. Runs **`populate-terraform-mirror.sh`** (skips if mirror already present).
 2. Starts Coder with **`coder-docker-compose.yml`** (default UI/API port **7080**).
 3. Runs **first-user login** for the Coder CLI inside the `coder` container (default admin user/password are in the script).
-4. Builds **`autowrx-runner.vsix`**, builds both images (`autowrx-workspace-python:debian`, `autowrx-workspace-cpp:debian`), and pushes both templates (`docker-template-python`, `docker-template-cpp`) from generated tar streams.
-5. Warms runtime cache for both language images.
+4. Builds **`autowrx-runner.vsix`**, builds all images (`autowrx-workspace-python:debian`, `autowrx-workspace-cpp:debian`, `autowrx-workspace-rust:debian`), and pushes all templates (`docker-template-python`, `docker-template-cpp`, `docker-template-rust`) from generated tar streams.
+5. Warms runtime cache for all language images.
 6. Creates a CLI token **`auto-token`** (7d lifetime) — use this or create another token in Coder UI / CLI for AutoWRX.
 
 ## Wire AutoWRX to Coder
@@ -56,7 +56,7 @@ Coder settings are stored as **site** configuration in the database (not `.env`)
 ## Workspace image
 
 - **Dockerfiles:** `instance-setup/coder/workspace-image/Dockerfile.python` and `instance-setup/coder/workspace-image/Dockerfile.cpp`.
-- **Terraform:** `instance-setup/coder/docker-template.tf` — base manifest used to generate language-specific templates (`docker-template-python`, `docker-template-cpp`) with Docker provider on **`unix:///var/run/docker.sock`**, bind-mount of **`prototypes_host_path`**, and code-server-based workspace.
+- **Terraform:** `instance-setup/coder/docker-template.tf` — base manifest used to generate language-specific templates (`docker-template-python`, `docker-template-cpp`, `docker-template-rust`) with Docker provider on **`unix:///var/run/docker.sock`**, bind-mount of **`prototypes_host_path`**, and code-server-based workspace.
 - Optional Git parameters in the template are **commented out**; the live flow uses the **prototypes folder mount** only.
 
 ## Run button inside embedded VS Code

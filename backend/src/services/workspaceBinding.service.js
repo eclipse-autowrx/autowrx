@@ -12,7 +12,11 @@ const { WORKSPACE_KINDS } = require('../utils/workspaceKind');
 
 const normalizePath = (p) => path.resolve(String(p || ''));
 const normalizeWorkspaceKind = (workspaceKind) =>
-  workspaceKind === WORKSPACE_KINDS.CPP ? WORKSPACE_KINDS.CPP : WORKSPACE_KINDS.PYTHON;
+  workspaceKind === WORKSPACE_KINDS.CPP
+    ? WORKSPACE_KINDS.CPP
+    : workspaceKind === WORKSPACE_KINDS.RUST
+      ? WORKSPACE_KINDS.RUST
+      : WORKSPACE_KINDS.PYTHON;
 
 const getBindingByUser = async (userId, workspaceKind = WORKSPACE_KINDS.PYTHON) => {
   if (!userId) return null;

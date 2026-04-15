@@ -9,6 +9,7 @@
 const WORKSPACE_KINDS = {
   PYTHON: 'python',
   CPP: 'cpp',
+  RUST: 'rust',
 };
 
 const resolveWorkspaceKindFromLanguage = (language) => {
@@ -18,7 +19,10 @@ const resolveWorkspaceKindFromLanguage = (language) => {
   if (lang === 'c' || lang === 'cpp' || lang === 'c++') {
     return WORKSPACE_KINDS.CPP;
   }
-  // Includes rust and any other unknown language for now.
+  if (lang === 'rust' || lang === 'rs') {
+    return WORKSPACE_KINDS.RUST;
+  }
+  // Any unknown language falls back to python workspace.
   return WORKSPACE_KINDS.PYTHON;
 };
 
@@ -28,7 +32,9 @@ const resolveWorkspaceKindFromPrototype = (prototype) =>
 const getTemplateNameForWorkspaceKind = (workspaceKind) =>
   workspaceKind === WORKSPACE_KINDS.CPP
     ? 'docker-template-cpp'
-    : 'docker-template-python';
+    : workspaceKind === WORKSPACE_KINDS.RUST
+      ? 'docker-template-rust'
+      : 'docker-template-python';
 
 module.exports = {
   WORKSPACE_KINDS,
