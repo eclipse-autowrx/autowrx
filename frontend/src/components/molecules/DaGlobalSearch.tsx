@@ -170,7 +170,7 @@ const DaGlobalSearch = ({ trigger }: DaGlobalSearchProps) => {
               <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
                 autoFocus
-                placeholder="Search..."
+                placeholder="Search Model or Prototype"
                 className="pl-9"
                 value={searchTerm}
                 onChange={(e) => handleSearchChange(e.target.value)}
