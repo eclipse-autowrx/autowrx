@@ -215,14 +215,6 @@ const prototypeSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    coder_workspace_id: {
-      type: String,
-      trim: true,
-    },
-    coder_workspace_name: {
-      type: String,
-      trim: true,
-    },
   },
   {
     timestamps: true,

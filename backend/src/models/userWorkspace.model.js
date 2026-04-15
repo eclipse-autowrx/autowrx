@@ -15,7 +15,14 @@ const userWorkspaceSchema = new mongoose.Schema(
       type: mongoose.SchemaTypes.ObjectId,
       ref: 'User',
       required: true,
-      unique: true,
+      index: true,
+    },
+    workspace_kind: {
+      type: String,
+      trim: true,
+      required: true,
+      enum: ['python', 'cpp'],
+      default: 'python',
       index: true,
     },
     coder_user_id: {
@@ -36,7 +43,7 @@ const userWorkspaceSchema = new mongoose.Schema(
     template_name: {
       type: String,
       trim: true,
-      default: 'docker-template',
+      default: 'docker-template-python',
     },
     prototypes_host_path: {
       type: String,
@@ -53,6 +60,7 @@ const userWorkspaceSchema = new mongoose.Schema(
 );
 
 userWorkspaceSchema.plugin(toJSON);
+userWorkspaceSchema.index({ user_id: 1, workspace_kind: 1 }, { unique: true });
 
 const UserWorkspace = mongoose.model('UserWorkspace', userWorkspaceSchema);
 

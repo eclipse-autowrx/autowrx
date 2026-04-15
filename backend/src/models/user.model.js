@@ -79,14 +79,6 @@ const userSchema = mongoose.Schema(
       type: String,
       trim: true,
     },
-    coder_workspace_id: {
-      type: String,
-      trim: true,
-    },
-    coder_workspace_name: {
-      type: String,
-      trim: true,
-    },
     // Cached Coder user-scoped API token (created via admin key, used for user operations).
     // We store it to avoid creating a new token on every request.
     coder_scoped_token: {
