@@ -21,7 +21,7 @@ import {
 } from '@/types/discussion.type'
 import { isAxiosError } from 'axios'
 import { FormEvent, useEffect, useState } from 'react'
-import { TbLoader, TbX } from 'react-icons/tb'
+import { TbLoader } from 'react-icons/tb'
 
 const initialState = {
   content: '',
@@ -127,7 +127,7 @@ const FormCreateDiscussion = ({
   }
 
   useEffect(() => {
-    if (updatingData) setData(updatingData)
+    if (updatingData) setData({ content: updatingData.content })
   }, [updatingData])
 
   return (
@@ -161,7 +161,7 @@ const FormCreateDiscussion = ({
           </Button>
         )}
         <Button
-          disabled={loading}
+          disabled={loading || !data.content.trim()}
           type="submit"
           className="w-fit px-4"
           size="sm"
