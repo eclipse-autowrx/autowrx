@@ -42,6 +42,7 @@ import { useSiteConfig } from '@/utils/siteConfig'
 import { Button } from '../atoms/button'
 import { Wrench } from 'lucide-react'
 import DOMPurify from 'dompurify'
+import useAuthStore from '@/stores/authStore'
 
 const SimpleSwitch = ({
   checked,
@@ -67,7 +68,9 @@ const SimpleSwitch = ({
 )
 
 const NavigationBar = ({ }) => {
-  const { data: user } = useSelfProfileQuery()
+  const { data: user, isLoading, isFetching } = useSelfProfileQuery()
+  const authBootstrapped = useAuthStore((state) => state.authBootstrapped)
+  const isResolvingAuth = !authBootstrapped || (!user && (isLoading || isFetching))
   // const { data: model } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
   const [learningMode, setIsLearningMode] = useState(false)
@@ -147,7 +150,7 @@ const NavigationBar = ({ }) => {
           <SimpleSwitch
             checked={learningMode}
             onChange={(v) => {
-              if (v && !user) {
+              if (v && (!user || isResolvingAuth)) {
                 alert('Please Sign in to use learning mode')
                 return
               }
@@ -228,7 +231,7 @@ const NavigationBar = ({ }) => {
         </Link>
       )} */}
 
-      {user && (
+      {!isResolvingAuth && user && (
         <div className="flex items-center shrink-0">
           {toolsMenuItems.length > 0 && (
             <DropdownMenu>
@@ -285,7 +288,7 @@ const NavigationBar = ({ }) => {
       )}
 
       {learningMode && <LearningIntegration requestClose={() => setIsLearningMode(false)} />}
-      {!user && <div className="shrink-0"><DaNavUser /></div>}
+      {(isResolvingAuth || !user) && <div className="shrink-0"><DaNavUser /></div>}
     </header>
   )
 }

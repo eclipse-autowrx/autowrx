@@ -15,6 +15,8 @@ import { isAxiosError } from 'axios'
 import { useState } from 'react'
 import { usePolicy } from '@/hooks/useInstanceCfg'
 import { addLog } from '@/services/log.service'
+import { useQueryClient } from '@tanstack/react-query'
+import useAuthStore from '@/stores/authStore'
 
 interface FormRegisterProps {
   setAuthType: (type: 'sign-in' | 'register' | 'forgot') => void
@@ -23,6 +25,11 @@ interface FormRegisterProps {
 const FormRegister = ({ setAuthType }: FormRegisterProps) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
+  const queryClient = useQueryClient()
+  const [setUser, setOpenLoginDialog] = useAuthStore((state) => [
+    state.setUser,
+    state.setOpenLoginDialog,
+  ])
 
   const policy_url = usePolicy()
 
@@ -61,10 +68,14 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
       }
 
       // Register
-      await registerService(name, email, password)
+      const authResponse = await registerService(name, email, password)
+      if (authResponse?.user && authResponse?.tokens?.access) {
+        setUser(authResponse.user, authResponse.tokens.access)
+        queryClient.setQueryData(['getSelf'], authResponse.user)
+      }
+
+      setOpenLoginDialog(false)
       setError('')
-      // eslint-disable-next-line no-self-assign
-      window.location.href = window.location.href
     } catch (error) {
       if (isAxiosError(error)) {
         setError(error.response?.data.message || 'Something went wrong')

@@ -7,30 +7,56 @@
 // SPDX-License-Identifier: MIT
 
 import {
+  QueryCache,
   QueryClient,
   QueryClientProvider,
-  QueryCache,
 } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import { isAxiosError } from 'axios'
-import { useCallback, useRef, useState } from 'react'
+import axios, { isAxiosError } from 'axios'
+import { useState } from 'react'
+import config from '@/configs/config'
 import useAuthStore from '@/stores/authStore'
-import { AuthToken } from '@/types/token.type'
-import { serverAxios } from '@/services/base'
 import { shallow } from 'zustand/shallow'
-import { useNavigate } from 'react-router-dom'
 
 type QueryProviderProps = {
   children: React.ReactNode
 }
 
-const QueryProvider = ({ children }: QueryProviderProps) => {
-  const refreshingToken = useRef(false)
-  const navigate = useNavigate()
+const refreshAxios = axios.create({
+  baseURL: `${config.serverBaseUrl}/${config.serverVersion}`,
+  withCredentials: true,
+})
 
+let isRefreshing = false
+
+const QueryProvider = ({ children }: QueryProviderProps) => {
+  const [setAccess, logOut] = useAuthStore(
+    (state) => [state.setAccess, state.logOut],
+    shallow,
+  )
   const [queryClient] = useState(
     () =>
       new QueryClient({
+        queryCache: new QueryCache({
+          onError: async (error, query) => {
+            if (isAxiosError(error) && error?.response?.status === 401) {
+              if (isRefreshing) return
+
+              isRefreshing = true
+              try {
+                const res = await refreshAxios.post('/auth/refresh-tokens', {})
+                if (res.data?.access?.token) {
+                  setAccess(res.data.access)
+                  query.invalidate()
+                }
+              } catch {
+                logOut()
+              } finally {
+                isRefreshing = false
+              }
+            }
+          },
+        }),
         defaultOptions: {
           queries: {
             staleTime: 30000,
@@ -43,42 +69,8 @@ const QueryProvider = ({ children }: QueryProviderProps) => {
             },
           },
         },
-        queryCache: new QueryCache({
-          onError: async (error, query) => {
-            if (isAxiosError(error) && error?.response?.status === 401) {
-              try {
-                await refreshAuthToken()
-                queryClient.invalidateQueries({ queryKey: query.queryKey })
-              } catch (error) {
-                console.error('Error refreshing token', error)
-              }
-            }
-          },
-        }),
       }),
   )
-  const [setAccess, logOut] = useAuthStore(
-    (state) => [state.setAccess, state.logOut],
-    shallow,
-  )
-
-  const refreshAuthToken = useCallback(async () => {
-    if (refreshingToken.current) {
-      return
-    }
-
-    try {
-      refreshingToken.current = true
-
-      const response = await serverAxios.post<AuthToken>('/auth/refresh-tokens')
-      setAccess(response.data.access)
-    } catch (error) {
-      logOut()
-      throw error
-    } finally {
-      refreshingToken.current = false
-    }
-  }, [logOut, setAccess])
 
   return (
     <QueryClientProvider client={queryClient}>
