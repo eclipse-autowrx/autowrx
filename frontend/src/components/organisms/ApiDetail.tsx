@@ -319,9 +319,9 @@ const ApiDetail = ({
         />
       </div>
       {!forceSimpleMode && model && model.id && (
-        <div ref={discussionsRef} className="flex h-full">
+        <div ref={discussionsRef} className="flex w-full h-full">
           <DaDiscussions
-            className="h-full min-w-[0px] pb-2"
+            className="h-full min-w-[0px] w-full pb-2"
             refId={`${model.id}-${apiDetails.name}`}
             refType="api"
           />
