@@ -51,6 +51,7 @@ import { Input } from '../atoms/input'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import useListModelPrototypes from '@/hooks/useListModelPrototypes'
 import PrototypeTabStaging from '@/components/organisms/PrototypeTabStaging'
+import { useToast } from '@/components/molecules/toaster/use-toast'
 
 interface DaPrototypeItemProps {
   prototype?: Prototype
@@ -61,6 +62,8 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
   const { data: user } = useSelfProfileQuery()
   const enableContextMenu = useSiteConfig('PROTOTYPE_ITEM_MENU_CONTEXT', false)
   const { data: model } = useCurrentModel()
+  const { toast } = useToast()
+  const isOwner = user?.id === prototype?.created_by?.id
   const { data: existingPrototypes, refetch: refetchModelPrototypes } =
     useListModelPrototypes(model?.id || '')
   const navigate = useNavigate()
@@ -122,6 +125,11 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
       setRenameOpen(false)
     } catch (error) {
       console.error('Failed to rename prototype:', error)
+      toast({
+        description: 'Failed to rename prototype. Please try again.',
+        variant: 'destructive',
+        duration: 4000,
+      })
     } finally {
       setIsSaving(false)
     }
@@ -243,9 +251,28 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
           </div>
         </div>
         <div className="flex items-center w-full space-y-0">
-          <p className="text-base font-semibold line-clamp-1 text-foreground prototype-grid-item-name">
-            {prototype?.name ?? ''}
-          </p>
+          {isOwner ? (
+            <button
+              type="button"
+              className="flex items-center gap-1 min-w-0 text-left cursor-pointer group/rename"
+              onClick={(e) => {
+                e.stopPropagation()
+                e.preventDefault()
+                setNewName(prototype?.name ?? '')
+                setRenameOpen(true)
+              }}
+              aria-label="Rename prototype"
+            >
+              <span className="text-base font-semibold line-clamp-1 text-foreground prototype-grid-item-name">
+                {prototype?.name ?? ''}
+              </span>
+              <TbEdit className="size-4 shrink-0 opacity-0 group-hover:opacity-100 group-hover/rename:opacity-100 pointer-coarse:opacity-100 transition-opacity text-muted-foreground" />
+            </button>
+          ) : (
+            <p className="text-base font-semibold line-clamp-1 text-foreground prototype-grid-item-name">
+              {prototype?.name ?? ''}
+            </p>
+          )}
           <div className="grow"></div>
           {Number(prototype?.executed_turns ?? 0) > 1 && (
             <DaTooltip
@@ -271,7 +298,7 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
 
   const isAnyDialogOpen = renameOpen || deleteOpen || deployOpen
 
-  if (!enableContextMenu || !user) {
+  if (!user) {
     return cardContent
   }
 
@@ -283,71 +310,75 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
         }
       }}
     >
-      <ContextMenu>
-        <ContextMenuTrigger asChild>{cardContent}</ContextMenuTrigger>
+      {enableContextMenu ? (
+        <ContextMenu>
+          <ContextMenuTrigger asChild>{cardContent}</ContextMenuTrigger>
 
-        <ContextMenuContent
-          className="w-52"
-          onClick={(e) => e.stopPropagation()}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <ContextMenuItem
-            className="cursor-pointer"
-            onSelect={() => {
-              runAfterMenuClose(() => {
-                setNewName(prototype?.name ?? '')
-                setRenameOpen(true)
-              })
-            }}
+          <ContextMenuContent
+            className="w-52"
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
           >
-            <TbEdit className="mr-2 size-4" />
-            Rename
-          </ContextMenuItem>
-          <ContextMenuItem
-            className="cursor-pointer p-0!"
-            onSelect={(e) => e.preventDefault()}
-          >
-            <DaImportFile
-              onFileChange={handleImageFileChange}
-              accept=".png,.jpg,.jpeg,.gif,.webp"
-              className="flex w-full items-center px-2 py-1.5 text-sm cursor-pointer"
+            <ContextMenuItem
+              className="cursor-pointer"
+              onSelect={() => {
+                runAfterMenuClose(() => {
+                  setNewName(prototype?.name ?? '')
+                  setRenameOpen(true)
+                })
+              }}
             >
-              <TbPhotoEdit className="mr-2 size-4" />
-              Update Image
-            </DaImportFile>
-          </ContextMenuItem>
-          <ContextMenuSeparator />
-          <ContextMenuItem
-            className="cursor-pointer"
-            onSelect={() => runAfterMenuClose(() => setDeployOpen(true))}
-          >
-            <TbCloudDown className="mr-2 size-4" />
-            Deploy
-          </ContextMenuItem>
-          <ContextMenuItem
-            className="cursor-pointer"
-            onSelect={() =>
-              runAfterMenuClose(() => {
-                if (prototype) {
-                  downloadPrototypeZip(prototype)
-                }
-              })
-            }
-          >
-            <TbDownload className="mr-2 size-4" />
-            Export Prototype
-          </ContextMenuItem>
-          <ContextMenuItem
-            className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
-            onSelect={() => runAfterMenuClose(() => setDeleteOpen(true))}
-          >
-            <TbTrashX className="mr-2 size-4" />
-            Delete Prototype
-          </ContextMenuItem>
-        </ContextMenuContent>
-      </ContextMenu>
+              <TbEdit className="mr-2 size-4" />
+              Rename
+            </ContextMenuItem>
+            <ContextMenuItem
+              className="cursor-pointer p-0!"
+              onSelect={(e) => e.preventDefault()}
+            >
+              <DaImportFile
+                onFileChange={handleImageFileChange}
+                accept=".png,.jpg,.jpeg,.gif,.webp"
+                className="flex w-full items-center px-2 py-1.5 text-sm cursor-pointer"
+              >
+                <TbPhotoEdit className="mr-2 size-4" />
+                Update Image
+              </DaImportFile>
+            </ContextMenuItem>
+            <ContextMenuSeparator />
+            <ContextMenuItem
+              className="cursor-pointer"
+              onSelect={() => runAfterMenuClose(() => setDeployOpen(true))}
+            >
+              <TbCloudDown className="mr-2 size-4" />
+              Deploy
+            </ContextMenuItem>
+            <ContextMenuItem
+              className="cursor-pointer"
+              onSelect={() =>
+                runAfterMenuClose(() => {
+                  if (prototype) {
+                    downloadPrototypeZip(prototype)
+                  }
+                })
+              }
+            >
+              <TbDownload className="mr-2 size-4" />
+              Export Prototype
+            </ContextMenuItem>
+            <ContextMenuItem
+              className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+              onSelect={() => runAfterMenuClose(() => setDeleteOpen(true))}
+            >
+              <TbTrashX className="mr-2 size-4" />
+              Delete Prototype
+            </ContextMenuItem>
+          </ContextMenuContent>
+        </ContextMenu>
+      ) : (
+        cardContent
+      )}
 
-      {/* Rename dialog */}
+      {/* Rename dialog — available via both pencil icon and context menu */}
       <DaDialog
         open={renameOpen}
         onOpenChange={withClickSuppression(setRenameOpen)}
@@ -391,28 +422,32 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
         </div>
       </DaDialog>
 
-      {/* Deploy / Staging dialog */}
-      <DaDialog
-        open={deployOpen}
-        onOpenChange={withClickSuppression(setDeployOpen)}
-        dialogTitle={`Deploy - ${prototype?.name ?? 'Prototype'}`}
-        className="max-w-[95vw] w-[1200px]"
-      >
-        <div className="flex overflow-y-auto max-h-[80vh]">
-          {prototype && <PrototypeTabStaging prototype={prototype} />}
-        </div>
-      </DaDialog>
+      {enableContextMenu && (
+        <>
+          {/* Deploy / Staging dialog */}
+          <DaDialog
+            open={deployOpen}
+            onOpenChange={withClickSuppression(setDeployOpen)}
+            dialogTitle={`Deploy - ${prototype?.name ?? 'Prototype'}`}
+            className="max-w-[95vw] w-[1200px]"
+          >
+            <div className="flex overflow-y-auto max-h-[80vh]">
+              {prototype && <PrototypeTabStaging prototype={prototype} />}
+            </div>
+          </DaDialog>
 
-      {/* Delete confirm dialog */}
-      <DaConfirmPopup
-        onConfirm={handleDelete}
-        title="Delete Prototype"
-        label="This action cannot be undone and will delete all prototype data. Please proceed with caution."
-        confirmText={prototype?.name}
-        state={[deleteOpen, withClickSuppression(setDeleteOpen)]}
-      >
-        <span />
-      </DaConfirmPopup>
+          {/* Delete confirm dialog */}
+          <DaConfirmPopup
+            onConfirm={handleDelete}
+            title="Delete Prototype"
+            label="This action cannot be undone and will delete all prototype data. Please proceed with caution."
+            confirmText={prototype?.name}
+            state={[deleteOpen, withClickSuppression(setDeleteOpen)]}
+          >
+            <span />
+          </DaConfirmPopup>
+        </>
+      )}
     </div>
   )
 }
