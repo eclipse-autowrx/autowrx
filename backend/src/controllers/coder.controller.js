@@ -14,6 +14,7 @@ const ApiError = require('../utils/ApiError');
 const { Prototype, User } = require('../models');
 const coderConfig = require('../utils/coderConfig');
 const { sanitizePrototypeFolderName, getPrototypeModelId } = require('../utils/prototypePath');
+const { resolveWorkspaceKindFromPrototype } = require('../utils/workspaceKind');
 
 const CODER_SESSION_COOKIE = 'coder_session_token';
 const CODER_SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -58,7 +59,8 @@ const getWorkspace = catchAsync(async (req, res) => {
   }
 
   const user = await User.findById(userId);
-  const workspaceId = await workspaceBindingService.getWorkspaceIdForUser(user);
+  const workspaceKind = resolveWorkspaceKindFromPrototype(prototype);
+  const workspaceId = await workspaceBindingService.getWorkspaceIdForUser(user, workspaceKind);
   if (!workspaceId) {
     throw new ApiError(httpStatus.CONFLICT, 'Workspace is not prepared yet. Call prepare endpoint first.');
   }

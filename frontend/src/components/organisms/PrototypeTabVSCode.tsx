@@ -163,7 +163,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
       logsWsOpened = true
 
       const wsBase = toWsBase(config.serverBaseUrl)
-      const logsUrl = `${wsBase}/${config.serverVersion}/system/coder/workspacebuilds/${workspaceBuildId}/logs?access_token=${encodeURIComponent(accessToken)}&follow=true&after=-1`
+      const logsUrl = `${wsBase}/${config.serverVersion}/system/coder/workspacebuilds/${workspaceBuildId}/logs?access_token=${encodeURIComponent(accessToken)}&follow=true&after=-1&prototype_id=${encodeURIComponent(prototype_id || '')}`
       const logsWs = new WebSocket(logsUrl)
       logsSocketRef.current = logsWs
 

@@ -21,6 +21,7 @@ const permissionService = require('../services/permission.service');
 const coderService = require('../services/coder.service');
 const workspaceBindingService = require('../services/workspaceBinding.service');
 const { PERMISSIONS } = require('./roles');
+const { resolveWorkspaceKindFromPrototype } = require('../utils/workspaceKind');
 
 const getCoderApiBase = () => {
   const coderCfg = coderConfig.getCoderConfigSync();
@@ -39,6 +40,20 @@ const parseUrl = (rawUrl) => {
   const u = new URL(rawUrl, 'http://localhost');
   const params = Object.fromEntries(u.searchParams.entries());
   return { pathname: u.pathname, searchParams: params, rawSearch: u.search || '' };
+};
+
+const resolveWorkspaceIdForPrototype = async (user, prototypeId) => {
+  if (!prototypeId) return null;
+  const prototype = await Prototype.findById(prototypeId);
+  if (!prototype) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Prototype not found');
+  }
+  const hasPermission = await permissionService.hasPermission(user.id, PERMISSIONS.READ_MODEL, prototype.model_id);
+  if (!hasPermission) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'You do not have permission to access this prototype');
+  }
+  const workspaceKind = resolveWorkspaceKindFromPrototype(prototype);
+  return workspaceBindingService.getWorkspaceIdForUser(user, workspaceKind);
 };
 
 const authenticateWsUser = async (searchParams) => {
@@ -203,18 +218,9 @@ const init = (httpServer) => {
       if (!user) {
         throw new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate');
       }
-      const workspaceId = await workspaceBindingService.getWorkspaceIdForUser(user);
-
       if (watchMatch) {
         const { prototypeId } = watchMatch;
-        const prototype = await Prototype.findById(prototypeId);
-        if (!prototype) {
-          throw new ApiError(httpStatus.NOT_FOUND, 'Prototype not found');
-        }
-        const hasPermission = await permissionService.hasPermission(user.id, PERMISSIONS.READ_MODEL, prototype.model_id);
-        if (!hasPermission) {
-          throw new ApiError(httpStatus.FORBIDDEN, 'You do not have permission to access this prototype');
-        }
+        const workspaceId = await resolveWorkspaceIdForPrototype(user, prototypeId);
         if (!workspaceId) {
           throw new ApiError(httpStatus.NOT_FOUND, 'Workspace not found. Prepare workspace first.');
         }
@@ -240,9 +246,10 @@ const init = (httpServer) => {
 
       if (workspaceBuildLogsMatch) {
         const { workspaceBuildId } = workspaceBuildLogsMatch;
-        if (!workspaceId) {
-          throw new ApiError(httpStatus.NOT_FOUND, 'Workspace not found. Prepare workspace first.');
-        }
+        const workspaceId =
+          (await resolveWorkspaceIdForPrototype(user, searchParams.prototype_id)) ||
+          (await workspaceBindingService.getWorkspaceIdForUser(user));
+        if (!workspaceId) throw new ApiError(httpStatus.NOT_FOUND, 'Workspace not found. Prepare workspace first.');
 
         const workspaceScopedToken = await resolveWorkspaceSessionToken({
           searchParams,
@@ -276,6 +283,9 @@ const init = (httpServer) => {
 
       if (logsMatch) {
         const { workspaceAgentId } = logsMatch;
+        const workspaceId =
+          (await resolveWorkspaceIdForPrototype(user, searchParams.prototype_id)) ||
+          (await workspaceBindingService.getWorkspaceIdForUser(user));
         if (!workspaceId) {
           throw new ApiError(httpStatus.NOT_FOUND, 'Workspace not found. Prepare workspace first.');
         }
