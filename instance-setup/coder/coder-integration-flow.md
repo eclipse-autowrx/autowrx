@@ -7,9 +7,9 @@ Runtime behavior for the VS Code tab, Coder workspace APIs, and the dashboard **
 - **User** — opens a prototype and uses the VS Code tab or Run while that tab is active.
 - **Frontend** — `PrototypeTabVSCode`, `DaRuntimeControl`, `coder.service.ts`; stores last-known workspace state in `coderWorkspaceStore` (Zustand) to resume faster when switching tabs.
 - **Backend** — `coder.controller.js`, `orchestrator.service.js`, `coder.service.js`; enforces `VSCODE_ENABLE`, `READ_MODEL`, and calls Coder’s HTTP API (`/api/v2`).
-- **MongoDB** — users (e.g. `coder_username`, `coder_workspace_id`), prototypes, models.
+- **MongoDB** — users (e.g. `coder_username`), prototypes, models, and per-language user workspace bindings.
 - **Host filesystem** — `PROTOTYPES_PATH/{userId}/{prototypeFolder}`; seeded when empty; same tree is bind-mounted into the workspace (container path under `/home/coder/prototypes/...`).
-- **Coder** — template `docker-template`, one workspace per AutoWRX user (reused across prototypes), app slug `code-server`.
+- **Coder** — templates `docker-template-python` and `docker-template-cpp`; one workspace per AutoWRX user per language-kind, app slug `code-server`.
 - **Workspace container** — code-server + **autowrx-runner** extension (watches `.autowrx_run` for Run-from-dashboard).
 
 ## HTTP API (authenticated)
@@ -50,8 +50,8 @@ Rough order inside `prepareWorkspaceForPrototype` (shared by **prepare** and **G
 1. **Coder user** — ensure/find user; persist `coder_username` on first use.
 2. **Tokens** — user-scoped (and workspace-scoped after a workspace exists) Coder API tokens; admin key is used only inside server-side helpers.
 3. **Host folder** — `PROTOTYPES_PATH/{userId}/{sanitizedPrototypeFolder}`; create if needed; **seed** from prototype if directory is empty.
-4. **Template** — resolve template id for **`docker-template`**; create workspace with rich parameter **`prototypes_host_path`** (must align with `PROTOTYPES_PATH`).
-5. **One workspace per user** — reuse `user.coder_workspace_id` when valid; otherwise create and save id on the user document.
+4. **Template** — resolve template id from prototype language (`cpp` -> `docker-template-cpp`, fallback -> `docker-template-python`); create workspace with rich parameter **`prototypes_host_path`** (must align with `PROTOTYPES_PATH`).
+5. **One workspace per user per language-kind** — reuse by `(user_id, workspace_kind)` binding when valid; otherwise create and save binding.
 6. **Start** — start workspace if not **running**; resolve **code-server** `appUrl` when available (may still be pending right after start).
 7. **Response fields** — `workspaceId`, `workspaceName`, `status`, `appUrl`, `sessionToken`, `repoUrl` (currently unused / null in this flow), **`folderPath`** (container path to open, e.g. under `/home/coder/prototypes/...`).
 

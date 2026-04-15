@@ -18,25 +18,34 @@ docker exec -it coder /opt/coder login http://localhost:7080 \
   --first-user-trial=false
 
 echo "Preparing Template files..."
-rm -rf ./my-template-dir template.tar
-
-mkdir -p ./my-template-dir
-cp docker-template.tf .terraform.lock.hcl ./my-template-dir/
 (cd autowrx-runner && yarn vsix -- -o ../workspace-image/autowrx-runner.vsix)
-cp -rL workspace-image ./my-template-dir/
+rm -rf ./my-template-dir template-python.tar template-cpp.tar
 
-tar -cf template.tar -C ./my-template-dir .
+mkdir -p ./my-template-dir/python ./my-template-dir/cpp
+cp .terraform.lock.hcl ./my-template-dir/python/
+cp .terraform.lock.hcl ./my-template-dir/cpp/
 
-echo "Creating Coder Template..."
-cat template.tar | docker exec -i coder /opt/coder templates push docker-template -d - --yes
+echo "Building language-specific workspace images..."
+docker build -f ./workspace-image/Dockerfile.python -t autowrx-workspace-python:debian ./workspace-image
+docker build -f ./workspace-image/Dockerfile.cpp -t autowrx-workspace-cpp:debian ./workspace-image
 
-echo "Warming up Docker cache for better UX..."
-docker build -t autowrx-workspace:debian ./my-template-dir/workspace-image
-echo "Starting and removing dummy container to warm runtime cache..."
-docker run --rm --name autowrx-workspace-cache-warmup --entrypoint /bin/true autowrx-workspace:debian
+echo "Preparing language-specific template manifests..."
+sed 's/autowrx-workspace:debian/autowrx-workspace-python:debian/g' docker-template.tf > ./my-template-dir/python/docker-template.tf
+sed 's/autowrx-workspace:debian/autowrx-workspace-cpp:debian/g' docker-template.tf > ./my-template-dir/cpp/docker-template.tf
+
+tar -cf template-python.tar -C ./my-template-dir/python .
+tar -cf template-cpp.tar -C ./my-template-dir/cpp .
+
+echo "Creating Coder templates..."
+cat template-python.tar | docker exec -i coder /opt/coder templates push docker-template-python -d - --yes
+cat template-cpp.tar | docker exec -i coder /opt/coder templates push docker-template-cpp -d - --yes
+
+echo "Warming up Docker runtime cache..."
+docker run --rm --name autowrx-workspace-python-cache-warmup --entrypoint /bin/true autowrx-workspace-python:debian
+docker run --rm --name autowrx-workspace-cpp-cache-warmup --entrypoint /bin/true autowrx-workspace-cpp:debian
 
 rm -f ./workspace-image/autowrx-runner.vsix
-rm -rf ./my-template-dir template.tar
+rm -rf ./my-template-dir template-python.tar template-cpp.tar
 
 echo "Creating Token..."
 docker exec -it coder /opt/coder tokens create --name "auto-token" --lifetime 168h

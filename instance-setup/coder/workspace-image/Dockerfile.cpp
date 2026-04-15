@@ -6,15 +6,10 @@ RUN set -eux; \
   apt-get update -qq; \
   DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
   build-essential gcc g++ cmake \
-  python3 python3-pip \
-  git curl wget vim nano \
+  curl \
   rsync ca-certificates; \
   apt-get clean; \
   rm -rf /var/lib/apt/lists/*
-
-COPY requirements.base.txt /tmp/requirements.base.txt
-RUN set -eux; \
-  pip3 install --no-cache-dir --break-system-packages -r /tmp/requirements.base.txt
 
 COPY home-seed/ /opt/autowrx-home-seed/
 RUN chown -R coder:coder /opt/autowrx-home-seed
