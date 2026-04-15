@@ -76,12 +76,6 @@ int main() {
 
 export const SAMPLE_PROJECTS: SampleProject[] = [
   {
-    label: "Python Single File",
-    language: "python",
-    description: "Python single file",
-    data: DEFAULT_PYTHON_APP,
-  },
-  {
     label: "Python Multiple Files (Beta)",
     language: "python",
     description: "A simple Python project with multiple files demonstrating basic structure",
