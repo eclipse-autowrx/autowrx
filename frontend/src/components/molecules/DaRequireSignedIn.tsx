@@ -19,12 +19,16 @@ interface DaRequireSignedInProps {
 }
 
 const DaRequireSignedIn = ({ children, message }: DaRequireSignedInProps) => {
-  const { data: user } = useSelfProfileQuery()
+  const { data: user, isLoading, isFetching } = useSelfProfileQuery()
   const { authConfigs } = useAuthConfigs()
-  const { openLoginDialog, setOpenLoginDialog } = useAuthStore()
+  const { openLoginDialog, setOpenLoginDialog, authBootstrapped } = useAuthStore()
   const [openRemindDialog, setOpenRemindDialog] = useState(false)
+  const isResolvingAuth = !authBootstrapped || (!user && (isLoading || isFetching))
 
   const handleClick = () => {
+    if (isResolvingAuth) {
+      return
+    }
     // Show login dialog if not signed in and public viewing is disabled
     if (!user && !authConfigs.PUBLIC_VIEWING) {
       setOpenRemindDialog(true)
@@ -35,7 +39,10 @@ const DaRequireSignedIn = ({ children, message }: DaRequireSignedInProps) => {
     <>
       {!user ? (
         <>
-          <div onClick={handleClick} className="cursor-pointer">
+          <div
+            onClick={handleClick}
+            className={isResolvingAuth ? 'cursor-default' : 'cursor-pointer'}
+          >
             {children}
           </div>
           <DaDialog open={openRemindDialog} onOpenChange={setOpenRemindDialog}>
