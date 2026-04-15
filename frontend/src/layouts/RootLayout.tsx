@@ -6,19 +6,19 @@
 //
 // SPDX-License-Identifier: MIT
 
-import useSelfProfileQuery from '@/hooks/useSelfProfile.ts'
 import { Link, Outlet } from 'react-router-dom'
 import { Toaster } from '@/components/molecules/toaster/toaster'
-import { Suspense, lazy, useEffect, useMemo } from 'react'
+import { Suspense, useEffect, useMemo, useRef } from 'react'
 import DaBreadcrumbBar from '@/components/molecules/DaBreadcrumbBar'
 import { useLocation } from 'react-router-dom'
 import config from '@/configs/config'
 import routesConfig from '@/configs/routes'
 import { RouteConfig } from '@/types/common.type.ts'
-import { retry } from '@/lib/retry.ts'
 import useGlobalStore from '@/stores/globalStore.ts'
 import ActiveObjectManagement from '@/components/organisms/ActiveObjectManagement.tsx'
 import packageInfo from '@/../package.json'
+import axios from 'axios'
+import useAuthStore from '@/stores/authStore.ts'
 
 // const ActiveObjectManagement = lazy(() =>
 //   retry(() => import('@/components/organisms/ActiveObjectManagement')),
@@ -61,7 +61,41 @@ const RootLayout = () => {
   //   console.log(`isChatShowed`, isChatShowed)
   // }, [isChatShowed])
 
-  const { data: currentUser } = useSelfProfileQuery()
+  const bootstrappingRef = useRef(false)
+  const [authBootstrapped, setAuthBootstrapped, setAccess] = useAuthStore((state) => [
+    state.authBootstrapped,
+    state.setAuthBootstrapped,
+    state.setAccess,
+  ])
+
+  useEffect(() => {
+    if (authBootstrapped || bootstrappingRef.current) {
+      return
+    }
+
+    bootstrappingRef.current = true
+
+    const refreshAxios = axios.create({
+      baseURL: `${config.serverBaseUrl}/${config.serverVersion}`,
+      withCredentials: true,
+    })
+
+    refreshAxios
+      .post('/auth/refresh-tokens', {})
+      .then((res) => {
+        const access = res?.data?.access
+        if (access?.token) {
+          setAccess(access)
+        }
+      })
+      .catch(() => {
+        // No refresh cookie or refresh rejected; treat as signed out.
+      })
+      .finally(() => {
+        setAuthBootstrapped(true)
+        bootstrappingRef.current = false
+      })
+  }, [authBootstrapped, setAccess, setAuthBootstrapped])
   const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
   const privacyPolicyUrl = useSiteConfig('PRIVACY_POLICY_URL', '')
 

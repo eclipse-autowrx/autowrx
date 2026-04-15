@@ -8,9 +8,19 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { getSelfService } from '@/services/user.service.ts'
+import useAuthStore from '@/stores/authStore.ts'
 
 const useSelfProfileQuery = () => {
-  return useQuery({ queryKey: ['getSelf'], queryFn: getSelfService })
+  const [authBootstrapped, accessToken] = useAuthStore((state) => [
+    state.authBootstrapped,
+    state.access?.token,
+  ])
+
+  return useQuery({
+    queryKey: ['getSelf'],
+    queryFn: getSelfService,
+    enabled: authBootstrapped && !!accessToken,
+  })
 }
 
 export default useSelfProfileQuery

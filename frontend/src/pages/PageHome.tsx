@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { HomePartners } from '@/components/organisms/HomePartners'
 import HomeHeroSection from '@/components/organisms/HomeHeroSection'
 import HomeFeatureList from '@/components/organisms/HomeFeatureList'
@@ -17,10 +18,21 @@ import HomeNews from '@/components/organisms/HomeNews'
 import { configManagementService } from '@/services/configManagement.service'
 import { Spinner } from '@/components/atoms/spinner'
 import HomeFooterSection from '@/components/organisms/HomeFooterSection'
+import DaDialog from '@/components/molecules/DaDialog'
+import FormCreateModel from '@/components/molecules/forms/FormCreateModel'
 
 const PageHome = () => {
   const [homeElements, setHomeElements] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const createModelParam = searchParams.get('create-model')
+  const [openCreateModelDialog, setOpenCreateModelDialog] = useState(false)
+
+  useEffect(() => {
+    if (createModelParam !== null) {
+      setOpenCreateModelDialog(true)
+    }
+  }, [createModelParam])
 
   useEffect(() => {
     const loadHomeConfig = async () => {
@@ -81,6 +93,20 @@ const PageHome = () => {
         if (!Component) return null
         return <Component key={index} {...element} />
       })}
+
+      <DaDialog
+        open={openCreateModelDialog}
+        onOpenChange={(v) => {
+          setOpenCreateModelDialog(v)
+          if (!v) {
+            searchParams.delete('create-model')
+            setSearchParams(searchParams, { replace: true })
+          }
+        }}
+        className="w-115 max-w-[calc(100vw-40px)]"
+      >
+        <FormCreateModel />
+      </DaDialog>
     </div>
   )
 }
