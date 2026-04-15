@@ -107,6 +107,7 @@ const FormCreateModel = () => {
 
   const handleChange = (name: keyof typeof data, value: string) => {
     setData((prev) => ({ ...prev, [name]: value }))
+    setError('')
   }
 
   const handleVSSChange = (version: string) => {
@@ -140,10 +141,12 @@ const FormCreateModel = () => {
         body.model_home_image_file = defaultModelImage
       }
       const modelId = await createModelService(body)
-      const createdDisplayName = body.name
-      // Clear name before cache updates so duplicate check cannot flash against the new row
+      const createdName = body.name
+      // Clear input before cache updates so duplicate check cannot flash against the new row
       setData(initialState)
+      setDebouncedName('')
       setSelectedTemplateId(null)
+
       await queryClient.invalidateQueries({
         queryKey: ['modelsList', currentUser.id],
       })
@@ -162,7 +165,7 @@ const FormCreateModel = () => {
         description: (
           <p className="flex items-center text-base font-medium">
             <TbCircleCheckFilled className="mr-2 h-5 w-5 text-green-500" />
-            Model "{createdDisplayName}" created successfully
+            Model "{createdName}" created successfully
           </p>
         ),
         duration: 3000,
