@@ -58,7 +58,7 @@ const initialState = {
   prototypeName: '',
   modelName: '',
   language: SAMPLE_PROJECTS[0].language || '',
-  code: SAMPLE_PROJECTS[0].data || '',
+  code: JSON.stringify(SAMPLE_PROJECTS[0].data),
   cvi: JSON.stringify(CVI),
   mainApi: 'Vehicle',
 }
@@ -171,8 +171,6 @@ const FormCreatePrototype = ({
   const { toast } = useToast()
 
   const { data: currentUser } = useSelfProfileQuery()
-
-  const [projectTemplate, setProjectTemplate] = useState<string>('')
 
   const [debouncedPrototypeName, setDebouncedPrototypeName] = useState('')
   useEffect(() => {
