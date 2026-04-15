@@ -316,44 +316,16 @@ const ensureUserExists = async (userId, username, email) => {
  */
 async function generateSessionToken(coderUsername, options = {}) {
   const { workspaceId, coderUserId } = options;
-  const allowList = workspaceId ? [{ type: 'workspace', id: workspaceId }] : undefined;
   const userPathId = encodeURIComponent(coderUserId || coderUsername);
 
   try {
     // Coder Users API: POST /users/{user}/keys/tokens
     const url = `${getCoderApiBase()}/users/${userPathId}/keys/tokens`;
-    const strictBody = {
+    const minimalBody = {
       token_name: `autowrx-session-${Date.now()}`,
-      lifetime: TOKEN_LIFETIME_DURATION,
       scope: 'all',
-      ...(allowList ? { allow_list: allowList } : {}),
     };
-
-    let response;
-    try {
-      response = await axios.post(url, strictBody, { headers: getAdminHeaders() });
-    } catch (strictError) {
-      logger.warn(
-        `Strict token payload failed for ${coderUsername} (${strictError.response?.status || strictError.code || 'unknown'}), retrying minimal payload`,
-      );
-      // Some Coder versions reject allow-list/scope combinations, but still accept explicit lifetime.
-      const lifetimeBody = {
-        token_name: `autowrx-session-${Date.now()}`,
-        lifetime: TOKEN_LIFETIME_DURATION,
-      };
-      try {
-        response = await axios.post(url, lifetimeBody, { headers: getAdminHeaders() });
-      } catch (lifetimeError) {
-        logger.warn(
-          `Lifetime token payload failed for ${coderUsername} (${lifetimeError.response?.status || lifetimeError.code || 'unknown'}), retrying minimal payload`,
-        );
-        const minimalBody = {
-          token_name: `autowrx-session-${Date.now()}`,
-          scope: 'all',
-        };
-        response = await axios.post(url, minimalBody, { headers: getAdminHeaders() });
-      }
-    }
+    const response = await axios.post(url, minimalBody, { headers: getAdminHeaders() });
 
     const token = response.data?.key;
     if (!token) {
@@ -362,7 +334,7 @@ async function generateSessionToken(coderUsername, options = {}) {
     }
 
     logger.info(
-      `Generated user-scoped Coder session token for user: ${coderUsername} via ${url}${workspaceId ? ` (allow: workspace:${workspaceId})` : ''}`,
+      `Generated user-scoped Coder session token for user: ${coderUsername} via ${url}`,
     );
     return token;
   } catch (error) {

@@ -20,21 +20,12 @@ const { PERMISSIONS } = require('../config/roles');
 const { getPrototypeFolderRelativePath } = require('../utils/prototypePath');
 /* eslint-disable security/detect-non-literal-fs-filename */
 
-const WORKSPACE_UID = Number(process.env.CODER_WORKSPACE_UID || 1000);
-const WORKSPACE_GID = Number(process.env.CODER_WORKSPACE_GID || 1000);
-
 const normalizeIdForName = (value) =>
   String(value || '')
     .toLowerCase()
     .replace(/[^a-z0-9]/g, '');
 
 const ensureHostFolderPermissions = (folderPath) => {
-  try {
-    fs.chownSync(folderPath, WORKSPACE_UID, WORKSPACE_GID);
-  } catch (err) {
-    logger.warn(`chown failed for ${folderPath}: ${err.message}`);
-  }
-
   try {
     fs.chmodSync(folderPath, 0o777);
   } catch (err) {
@@ -50,11 +41,6 @@ const ensureHostFolderPermissions = (folderPath) => {
 const ensureHostPrototypeTreePermissions = (rootPath) => {
   const walk = (entryPath) => {
     try {
-      try {
-        fs.chownSync(entryPath, WORKSPACE_UID, WORKSPACE_GID);
-      } catch (err) {
-        logger.warn(`chown failed for ${entryPath}: ${err.message}`);
-      }
       try {
         fs.chmodSync(entryPath, 0o777);
       } catch (err) {
@@ -170,13 +156,16 @@ const seedPrototypeFiles = (folderPath, prototype) => {
     if (content.readme) {
       const readmePath = path.join(folderPath, 'README.md');
       fs.writeFileSync(readmePath, content.readme);
+      ensureHostFolderPermissions(readmePath);
     }
 
     if (content.files && content.files.length > 0) {
       content.files.forEach((file) => {
         const filePath = path.join(folderPath, file.path);
-        fs.mkdirSync(path.dirname(filePath), { recursive: true });
+        fs.mkdirSync(path.dirname(filePath), { recursive: true, mode: 0o777 });
+        ensureHostFolderPermissions(path.dirname(filePath));
         fs.writeFileSync(filePath, file.content);
+        ensureHostFolderPermissions(filePath);
       });
       logger.info(`Seeded ${content.files.length} file(s) into ${folderPath}`);
     }
@@ -226,8 +215,8 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
     const prototypeFolderHost = path.join(userHostPath, prototypeFolderRelativePath);
 
     try {
-      fs.mkdirSync(userHostPath, { recursive: true });
-      fs.mkdirSync(prototypeFolderHost, { recursive: true });
+      fs.mkdirSync(userHostPath, { recursive: true, mode: 0o777 });
+      fs.mkdirSync(prototypeFolderHost, { recursive: true, mode: 0o777 });
       ensureHostFolderPermissions(userHostPath);
       ensureHostFolderPermissions(prototypeFolderHost);
       seedPrototypeFiles(prototypeFolderHost, prototype);
@@ -366,8 +355,10 @@ const triggerRunForPrototype = async (userId, prototype, runKind) => {
   const triggerFilePath = path.join(prototypeFolderHost, '.autowrx_run');
 
   try {
-    fs.mkdirSync(prototypeFolderHost, { recursive: true });
+    fs.mkdirSync(prototypeFolderHost, { recursive: true, mode: 0o777 });
+    ensureHostFolderPermissions(prototypeFolderHost);
     fs.writeFileSync(triggerFilePath, safeCommand, 'utf8');
+    ensureHostFolderPermissions(triggerFilePath);
     ensureHostPrototypeTreePermissions(prototypeFolderHost);
     logger.info(`Wrote Coder trigger file for prototype ${prototype.id}: ${triggerFilePath}`);
   } catch (err) {
