@@ -228,6 +228,7 @@ const FormCreateModel = () => {
             message="A model with this name already exists"
             suggestedName={suggestedName}
             onApplySuggestion={(name) => handleChange('name', name)}
+            className="text-sm text-secondary mt-2"
           />
         )}
       </div>
