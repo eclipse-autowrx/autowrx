@@ -22,11 +22,14 @@ type QueryProviderProps = {
   children: React.ReactNode
 }
 
+const refreshAxios = axios.create({
+  baseURL: `${config.serverBaseUrl}/${config.serverVersion}`,
+  withCredentials: true,
+})
+
+let isRefreshing = false
+
 const QueryProvider = ({ children }: QueryProviderProps) => {
-  const refreshAxios = axios.create({
-    baseURL: `${config.serverBaseUrl}/${config.serverVersion}`,
-    withCredentials: true,
-  })
   const [setAccess, logOut] = useAuthStore(
     (state) => [state.setAccess, state.logOut],
     shallow,
@@ -37,6 +40,9 @@ const QueryProvider = ({ children }: QueryProviderProps) => {
         queryCache: new QueryCache({
           onError: async (error, query) => {
             if (isAxiosError(error) && error?.response?.status === 401) {
+              if (isRefreshing) return
+
+              isRefreshing = true
               try {
                 const res = await refreshAxios.post('/auth/refresh-tokens', {})
                 if (res.data?.access?.token) {
@@ -45,6 +51,8 @@ const QueryProvider = ({ children }: QueryProviderProps) => {
                 }
               } catch {
                 logOut()
+              } finally {
+                isRefreshing = false
               }
             }
           },

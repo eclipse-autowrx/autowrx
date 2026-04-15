@@ -57,7 +57,7 @@ const FormSignIn = ({ setAuthType }: FormSignInProps) => {
         e.currentTarget.email.value,
         e.currentTarget.password.value,
       ]
-      const authResponse: any = await loginService(email, password)
+      const authResponse = await loginService(email, password)
 
       if (authResponse?.user && authResponse?.tokens?.access) {
         setUser(authResponse.user, authResponse.tokens.access)

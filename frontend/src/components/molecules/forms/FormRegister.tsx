@@ -68,7 +68,7 @@ const FormRegister = ({ setAuthType }: FormRegisterProps) => {
       }
 
       // Register
-      const authResponse: any = await registerService(name, email, password)
+      const authResponse = await registerService(name, email, password)
       if (authResponse?.user && authResponse?.tokens?.access) {
         setUser(authResponse.user, authResponse.tokens.access)
         queryClient.setQueryData(['getSelf'], authResponse.user)
