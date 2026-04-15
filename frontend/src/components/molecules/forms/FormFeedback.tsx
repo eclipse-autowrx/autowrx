@@ -10,6 +10,7 @@ import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
 import DaStarsRating from '@/components/atoms/DaStarsRating'
+import DaTooltip from '@/components/molecules/DaTooltip'
 import { FormEvent, useState } from 'react'
 import { TbLoader } from 'react-icons/tb'
 import { createFeedback } from '@/services/feedback.service'
@@ -45,8 +46,23 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
   const [error, setError] = useState<string>('')
   const [data, setData] = useState(initialState)
 
+  const isFormComplete = (formData: typeof initialState) =>
+    !!(
+      formData.interviewee &&
+      formData.organization &&
+      formData.needsAddressed &&
+      formData.relevance &&
+      formData.easeOfUse
+    )
+
+  const isFormValid = isFormComplete(data)
+
   const handleChange = (name: keyof typeof data, value: string | number) => {
-    setData((prev) => ({ ...prev, [name]: value }))
+    const newData = { ...data, [name]: value }
+    setData(newData)
+    if (error && isFormComplete(newData)) {
+      setError('')
+    }
   }
 
   const { data: user } = useSelfProfileQuery()
@@ -207,10 +223,24 @@ const FeedbackForm = ({ onClose }: FeedbackFormProps) => {
       </div>
 
       <div className="px-4">
-        <Button disabled={loading} type="submit" className="w-full mt-8">
-          {loading && <TbLoader className="animate-spin text-lg mr-2" />}
-          Submit
-        </Button>
+        <DaTooltip
+          tooltipMessage={
+            !isFormValid ? 'Please fill in all the required fields' : undefined
+          }
+          side="top"
+          tooltipDelay={200}
+        >
+          <span className="w-full mt-8 block">
+            <Button
+              disabled={loading || !isFormValid}
+              type="submit"
+              className="w-full"
+            >
+              {loading && <TbLoader className="animate-spin text-lg mr-2" />}
+              Submit
+            </Button>
+          </span>
+        </DaTooltip>
       </div>
     </form>
   )

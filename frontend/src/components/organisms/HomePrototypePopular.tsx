@@ -28,7 +28,7 @@ const HomePrototypePopular = ({
   requiredLogin,
   title,
 }: HomePrototypePopularProps) => {
-  const { data: user } = useSelfProfileQuery()
+  const { data: user, isLoading, isFetching } = useSelfProfileQuery()
   const { authConfigs } = useAuthConfigs()
   const [popularPrototypes, setPopularPrototypes] = useState<
     Prototype[] | undefined
@@ -40,7 +40,8 @@ const HomePrototypePopular = ({
   const [selectedPrototype, setSelectedPrototype] = useState<Prototype | null>(
     null,
   )
-  const { setOpenLoginDialog } = useAuthStore()
+  const { setOpenLoginDialog, authBootstrapped } = useAuthStore()
+  const isResolvingAuth = !authBootstrapped || (!user && (isLoading || isFetching))
 
   useEffect(() => {
     const fetchProposalPrototypes = async () => {
@@ -48,9 +49,9 @@ const HomePrototypePopular = ({
       setPopularPrototypes(popularPrototypes)
     }
     fetchProposalPrototypes()
-  }, [user])
+  }, [user?.id])
 
-  if (requiredLogin && !user) {
+  if (requiredLogin && !user && !isResolvingAuth) {
     return null
   }
 

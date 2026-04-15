@@ -177,7 +177,7 @@ const PagePrototypeLibrary = () => {
                   <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                   <Input
                     type="text"
-                    placeholder="Search"
+                    placeholder="Search prototypes"
                     className="w-full h-8 pl-10 text-sm shadow"
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
@@ -192,7 +192,7 @@ const PagePrototypeLibrary = () => {
                   {activeTab === 'list' ? (
                     <>
                       <TbChartScatter className="w-5 h-5" />
-                      Portfolio
+                      Portfolio View
                     </>
                   ) : (
                     <>
@@ -207,7 +207,7 @@ const PagePrototypeLibrary = () => {
                   className="w-fit mr-0 h-8 shadow px-2 text-sm"
                   singleSelect={true}
                   defaultValue={selectedFilters}
-                  label="Sort"
+                  label="Sort By"
                 />
                 <div
                   className={cn(
@@ -222,7 +222,7 @@ const PagePrototypeLibrary = () => {
                     onClick={() => setIsOpenImportDialog(true)}
                   >
                     <TbFileImport className="w-5 h-5" />
-                    Import
+                    Import Prototype
                   </Button>
                   <DaDialog
                     open={open}
@@ -235,7 +235,7 @@ const PagePrototypeLibrary = () => {
                         className="flex ml-2"
                       >
                         <TbPlus className="w-5 h-5" />
-                        Create
+                        Create New Prototype
                       </Button>
                     }
                   >

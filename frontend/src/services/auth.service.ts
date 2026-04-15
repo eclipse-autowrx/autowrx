@@ -9,7 +9,10 @@
 import { AuthToken } from '@/types/token.type'
 import { serverAxios } from './base'
 
-export const loginService = async (email: string, password: string) => {
+export const loginService = async (
+  email: string,
+  password: string,
+): Promise<AuthToken> => {
   return (await serverAxios.post<AuthToken>('/auth/login', { email, password }))
     .data
 }
@@ -21,7 +24,13 @@ export const registerService = async (
   imageFileUrl?: string,
   provider: string = 'Email',
 ): Promise<AuthToken> => {
-  const registrationData: any = {
+  const registrationData: {
+    name: string
+    email: string
+    password: string
+    provider: string
+    image_file?: string
+  } = {
     name,
     email,
     password,

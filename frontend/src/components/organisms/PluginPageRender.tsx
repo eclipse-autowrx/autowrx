@@ -12,6 +12,10 @@ import { toast } from 'react-toastify'
 import { Spinner } from '@/components/atoms/spinner'
 import { getPluginById, getPluginBySlug } from '@/services/plugin.service'
 import { updateModelService, getComputedAPIs, getApiDetailService, replaceAPIsService } from '@/services/model.service'
+import config from '@/configs/config'
+import { io } from 'socket.io-client'
+import { listAssetsService, createAssetService, updateAssetService, deleteAssetService, shareMyAsset, removeUserFromShareList, getAssetById } from '@/services/asset.service'
+import { searchUserByEmailService } from '@/services/search.service'
 import { updatePrototypeService } from '@/services/prototype.service'
 import { listVSSVersionsService } from '@/services/api.service'
 import { uploadFileService } from '@/services/upload.service'
@@ -250,6 +254,86 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
     }
   }, [model_id])
 
+  // Asset operations
+  const handleListAssets = useCallback(async (params?: { type?: string | string[]; name?: string }) => {
+    try {
+      return await listAssetsService(params)
+    } catch (err: any) {
+      const errorMsg = err?.message || 'Failed to list assets'
+      toast.error(errorMsg)
+      throw err
+    }
+  }, [])
+
+  const handleUpdateAsset = useCallback(async (assetId: string, payload: { name?: string; type?: string; data?: string }) => {
+    try {
+      return await updateAssetService(assetId, payload)
+    } catch (err: any) {
+      const errorMsg = err?.message || 'Failed to update asset'
+      toast.error(errorMsg)
+      throw err
+    }
+  }, [])
+
+  const handleCreateAsset = useCallback(async (payload: { name: string; type: string; data?: string }) => {
+    try {
+      return await createAssetService({ name: payload.name, type: payload.type, data: payload.data ?? '' })
+    } catch (err: any) {
+      const errorMsg = err?.message || 'Failed to create asset'
+      toast.error(errorMsg)
+      throw err
+    }
+  }, [])
+
+  const handleDeleteAsset = useCallback(async (assetId: string): Promise<void> => {
+    try {
+      await deleteAssetService(assetId)
+    } catch (err: any) {
+      const errorMsg = err?.message || 'Failed to delete asset'
+      toast.error(errorMsg)
+      throw err
+    }
+  }, [])
+
+  const handleSearchUserByEmail = useCallback(async (email: string) => {
+    try {
+      return await searchUserByEmailService(email)
+    } catch {
+      return null
+    }
+  }, [])
+
+  const handleGetAssetUsers = useCallback(async (assetId: string) => {
+    try {
+      const asset = await getAssetById(assetId)
+      return asset?.readAccessUsers ?? []
+    } catch (err: any) {
+      const errorMsg = err?.message || 'Failed to load asset users'
+      toast.error(errorMsg)
+      throw err
+    }
+  }, [])
+
+  const handleShareAsset = useCallback(async (assetId: string, userId: string): Promise<void> => {
+    try {
+      await shareMyAsset(assetId, { userId, role: 'read_asset' })
+    } catch (err: any) {
+      const errorMsg = err?.message || 'Failed to share asset'
+      toast.error(errorMsg)
+      throw err
+    }
+  }, [])
+
+  const handleRemoveAssetAccess = useCallback(async (assetId: string, userId: string): Promise<void> => {
+    try {
+      await removeUserFromShareList(assetId, userId, 'read_asset')
+    } catch (err: any) {
+      const errorMsg = err?.message || 'Failed to remove asset access'
+      toast.error(errorMsg)
+      throw err
+    }
+  }, [])
+
   // File operations
   const handleUploadFile = useCallback(async (file: File): Promise<{ url: string }> => {
     try {
@@ -261,6 +345,175 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
       throw err
     }
   }, [])
+
+  // Kit / Runtime operations
+  const SIGNAL_CONFIG_PATH = config.runtime?.signalConfigPath || '/app/remote_access/signal-config.json'
+  const VSS_PATH = config.runtime?.vssPath || '/app/remote_access/vss.json'
+  const KIT_SERVER_URL = config.runtime?.url || 'https://kit.digitalauto.tech'
+
+  const handleFetchSignalMapping = useCallback((kitName: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const socket = io(KIT_SERVER_URL)
+      const kitId = kitName.toLowerCase()
+      let settled = false
+
+      const finish = (fn: () => void) => {
+        if (settled) return
+        settled = true
+        socket.disconnect()
+        fn()
+      }
+
+      const timeout = setTimeout(() => {
+        finish(() => reject(new Error('Timeout: no response from device within 10 seconds')))
+      }, 10000)
+
+      socket.on('connect', () => {
+        socket.emit('register_client', { username: 'plugin', user_id: 'plugin', domain: 'domain' })
+        socket.emit('messageToKit', { cmd: 'read_file', to_kit_id: kitId, data: SIGNAL_CONFIG_PATH })
+      })
+
+      socket.on('messageToKit-kitReply', (payload: any) => {
+        if (payload?.cmd === 'read_file') {
+          clearTimeout(timeout)
+          finish(() => resolve(payload.data?.content || ''))
+        }
+      })
+
+      socket.on('connect_error', (err: Error) => {
+        clearTimeout(timeout)
+        finish(() => reject(new Error(`Connection failed: ${err.message}`)))
+      })
+    })
+  }, [KIT_SERVER_URL])
+
+  const handleFetchVss = useCallback((kitName: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const socket = io(KIT_SERVER_URL)
+      const kitId = kitName.toLowerCase()
+      let settled = false
+
+      const finish = (fn: () => void) => {
+        if (settled) return
+        settled = true
+        socket.disconnect()
+        fn()
+      }
+
+      const timeout = setTimeout(() => {
+        finish(() => reject(new Error('Timeout: no response from device within 10 seconds')))
+      }, 10000)
+
+      socket.on('connect', () => {
+        socket.emit('register_client', { username: 'plugin', user_id: 'plugin', domain: 'domain' })
+        socket.emit('messageToKit', { cmd: 'read_file', to_kit_id: kitId, data: VSS_PATH })
+      })
+
+      socket.on('messageToKit-kitReply', (payload: any) => {
+        if (payload?.cmd === 'read_file') {
+          clearTimeout(timeout)
+          finish(() => resolve(payload.data?.content || ''))
+        }
+      })
+
+      socket.on('connect_error', (err: Error) => {
+        clearTimeout(timeout)
+        finish(() => reject(new Error(`Connection failed: ${err.message}`)))
+      })
+    })
+  }, [KIT_SERVER_URL])
+
+  const handleReplaceVss = useCallback((kitName: string, vssContent: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const socket = io(KIT_SERVER_URL)
+      const kitId = kitName.toLowerCase()
+      let settled = false
+
+      const finish = (fn: () => void) => {
+        if (settled) return
+        settled = true
+        socket.disconnect()
+        fn()
+      }
+
+      socket.on('connect', () => {
+        socket.emit('register_client', { username: 'plugin', user_id: 'plugin', domain: 'domain' })
+        socket.emit('messageToKit', {
+          cmd: 'write_file',
+          to_kit_id: kitId,
+          data: { path: VSS_PATH, content: vssContent },
+        })
+        setTimeout(() => {
+          socket.emit('messageToKit', {
+            cmd: 'generate_vehicle_model',
+            to_kit_id: kitId,
+            data: vssContent,
+          })
+          finish(() => resolve())
+        }, 3000)
+      })
+
+      socket.on('connect_error', (err: Error) => {
+        finish(() => reject(new Error(`Connection failed: ${err.message}`)))
+      })
+    })
+  }, [KIT_SERVER_URL])
+
+  const handleReplaceSignalMapping = useCallback(async (kitName: string, fileContent: string): Promise<void> => {
+    if (!model_id) throw new Error('No model available for VSS upload')
+
+    return new Promise((resolve, reject) => {
+      const socket = io(KIT_SERVER_URL)
+      const kitId = kitName.toLowerCase()
+      let settled = false
+
+      const finish = (fn: () => void) => {
+        if (settled) return
+        settled = true
+        socket.disconnect()
+        fn()
+      }
+
+      socket.on('connect', async () => {
+        try {
+          socket.emit('register_client', { username: 'plugin', user_id: 'plugin', domain: 'domain' })
+
+          // 1. Write signal mapping
+          socket.emit('messageToKit', {
+            cmd: 'write_file',
+            to_kit_id: kitId,
+            data: { path: SIGNAL_CONFIG_PATH, content: fileContent },
+          })
+
+          // 2. Fetch current model's VSS and write it
+          const vssData = await getComputedAPIs(model_id)
+          const vssJson = JSON.stringify(vssData)
+
+          socket.emit('messageToKit', {
+            cmd: 'write_file',
+            to_kit_id: kitId,
+            data: { path: VSS_PATH, content: vssJson },
+          })
+
+          // 3. Trigger vehicle model rebuild after 3s (mirrors original implementation)
+          setTimeout(() => {
+            socket.emit('messageToKit', {
+              cmd: 'generate_vehicle_model',
+              to_kit_id: kitId,
+              data: vssJson,
+            })
+            finish(() => resolve())
+          }, 3000)
+        } catch (err: any) {
+          finish(() => reject(err))
+        }
+      })
+
+      socket.on('connect_error', (err: Error) => {
+        finish(() => reject(new Error(`Connection failed: ${err.message}`)))
+      })
+    })
+  }, [model_id, KIT_SERVER_URL])
 
   const pluginAPI: PluginAPI = {
     // Model & Prototype updates
@@ -287,8 +540,24 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
     getWishlistApi: model_id ? handleGetWishlistApi : undefined,
     listWishlistApis: model_id ? handleListWishlistApis : undefined,
 
+    // Asset operations
+    listAssets: handleListAssets,
+    createAsset: handleCreateAsset,
+    updateAsset: handleUpdateAsset,
+    deleteAsset: handleDeleteAsset,
+    searchUserByEmail: handleSearchUserByEmail,
+    getAssetUsers: handleGetAssetUsers,
+    shareAsset: handleShareAsset,
+    removeAssetAccess: handleRemoveAssetAccess,
+
     // File operations
     uploadFile: handleUploadFile,
+
+    // Kit / Runtime operations
+    fetchSignalMapping: handleFetchSignalMapping,
+    replaceSignalMapping: model_id ? handleReplaceSignalMapping : undefined,
+    fetchVss: handleFetchVss,
+    replaceVss: handleReplaceVss,
   }
 
   // Fetch public site configs only — never expose secrets to plugins
