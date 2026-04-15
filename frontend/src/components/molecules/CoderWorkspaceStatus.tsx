@@ -268,7 +268,7 @@ const CoderWorkspaceStatus = ({
                   className={cn(
                     'relative z-10 flex h-6 w-6 items-center justify-center rounded-full border',
                     model.phase === 'failed' && 'border-red-500 bg-red-50',
-                    isDone && model.phase !== 'failed' && 'border-primary bg-background',
+                    isDone && model.phase !== 'failed' && 'border-primary bg-primary',
                     isActive && 'border-primary bg-background',
                     isFuture && 'border-primary/40 bg-background',
                   )}
@@ -276,7 +276,7 @@ const CoderWorkspaceStatus = ({
                   {model.phase === 'failed' ? (
                     <XIcon className="h-4 w-4 text-red-500" />
                   ) : isDone ? (
-                    <CheckIcon className="h-4 w-4 text-primary" />
+                    <CheckIcon className="h-4 w-4 text-white" />
                   ) : isActive ? (
                     <Spinner size={12} />
                   ) : (
