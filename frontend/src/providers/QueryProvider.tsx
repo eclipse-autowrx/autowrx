@@ -7,12 +7,14 @@
 // SPDX-License-Identifier: MIT
 
 import {
+  QueryCache,
   QueryClient,
   QueryClientProvider,
 } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import { isAxiosError } from 'axios'
+import axios, { isAxiosError } from 'axios'
 import { useState } from 'react'
+import config from '@/configs/config'
 import useAuthStore from '@/stores/authStore'
 import { shallow } from 'zustand/shallow'
 
@@ -21,9 +23,32 @@ type QueryProviderProps = {
 }
 
 const QueryProvider = ({ children }: QueryProviderProps) => {
+  const refreshAxios = axios.create({
+    baseURL: `${config.serverBaseUrl}/${config.serverVersion}`,
+    withCredentials: true,
+  })
+  const [setAccess, logOut] = useAuthStore(
+    (state) => [state.setAccess, state.logOut],
+    shallow,
+  )
   const [queryClient] = useState(
     () =>
       new QueryClient({
+        queryCache: new QueryCache({
+          onError: async (error, query) => {
+            if (isAxiosError(error) && error?.response?.status === 401) {
+              try {
+                const res = await refreshAxios.post('/auth/refresh-tokens', {})
+                if (res.data?.access?.token) {
+                  setAccess(res.data.access)
+                  query.invalidate()
+                }
+              } catch {
+                logOut()
+              }
+            }
+          },
+        }),
         defaultOptions: {
           queries: {
             staleTime: 30000,
@@ -37,10 +62,6 @@ const QueryProvider = ({ children }: QueryProviderProps) => {
           },
         },
       }),
-  )
-  const [logOut] = useAuthStore(
-    (state) => [state.logOut],
-    shallow,
   )
 
   return (
