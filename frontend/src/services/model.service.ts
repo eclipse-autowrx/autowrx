@@ -13,9 +13,11 @@ import { VehicleAPI } from '@/types/api.type'
 
 export const listModelsLite = async (
   params?: Record<string, unknown>,
+  options?: { maxResults?: number },
 ): Promise<List<ModelLite>> => {
   let page = 1
   const limit = 10
+  const maxResults = options?.maxResults ?? Infinity
   let allResults: ModelLite[] = []
   let totalPages = 1
 
@@ -42,7 +44,11 @@ export const listModelsLite = async (
     allResults = [...allResults, ...response.data.results]
     totalPages = response.data.totalPages
     page++
-  } while (page <= totalPages)
+  } while (page <= totalPages && allResults.length < maxResults)
+
+  if (allResults.length > maxResults) {
+    allResults = allResults.slice(0, maxResults)
+  }
 
   return {
     results: allResults,

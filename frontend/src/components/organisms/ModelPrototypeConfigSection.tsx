@@ -28,14 +28,16 @@ import {
     upsertConfigFromHistory,
 } from '@/utils/siteConfigAdmin'
 
-type PrototypeSubTab = 'config' | 'history'
-const PROTOTYPE_HISTORY_SECTION = 'prototype' as SiteConfigHistorySection
+const CATEGORY = 'model_prototype'
 
-const PrototypeConfigSection: React.FC = () => {
+type SubTab = 'config' | 'history'
+const HISTORY_SECTION: SiteConfigHistorySection = CATEGORY
+
+const ModelPrototypeConfigSection: React.FC = () => {
     const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
     const [configs, setConfigs] = useState<Config[]>([])
     const [isLoading, setIsLoading] = useState(false)
-    const [subTab, setSubTab] = useState<PrototypeSubTab>('config')
+    const [subTab, setSubTab] = useState<SubTab>('config')
     const { toast } = useToast()
 
     useEffect(() => {
@@ -48,23 +50,21 @@ const PrototypeConfigSection: React.FC = () => {
         try {
             setIsLoading(true)
 
-            const predefinedPrototypeConfigs = PREDEFINED_SITE_CONFIGS.filter(
-                (config) => config.category === 'prototype',
+            const predefinedConfigs = PREDEFINED_SITE_CONFIGS.filter(
+                (config) => config.category === CATEGORY,
             )
 
-            // Get existing Prototype configs from DB
             const res = await configManagementService.getConfigs({
                 secret: false,
                 scope: 'site',
-                category: 'prototype',
+                category: CATEGORY,
                 limit: 100,
             })
 
             const existingConfigs = res.results || []
             const existingKeys = new Set(existingConfigs.map((config) => config.key))
 
-            // Find missing predefined Prototype configs and create them
-            const missingConfigs = predefinedPrototypeConfigs.filter(
+            const missingConfigs = predefinedConfigs.filter(
                 (config) => !existingKeys.has(config.key),
             )
 
@@ -76,7 +76,7 @@ const PrototypeConfigSection: React.FC = () => {
                 const updatedRes = await configManagementService.getConfigs({
                     secret: false,
                     scope: 'site',
-                    category: 'prototype',
+                    category: CATEGORY,
                     limit: 100,
                 })
 
@@ -88,7 +88,7 @@ const PrototypeConfigSection: React.FC = () => {
             toast({
                 title: 'Load failed',
                 description:
-                    err instanceof Error ? err.message : 'Failed to load Prototype configs',
+                    err instanceof Error ? err.message : 'Failed to load Model & Prototype configs',
                 variant: 'destructive',
             })
         } finally {
@@ -99,7 +99,7 @@ const PrototypeConfigSection: React.FC = () => {
     const handleFactoryReset = async () => {
         if (
             !window.confirm(
-                'Restore all Prototype configs to default values? This will reset Prototype settings to their defaults.',
+                'Restore all Model & Prototype configs to default values? This will reset these settings to their defaults.',
             )
         ) {
             return
@@ -108,34 +108,32 @@ const PrototypeConfigSection: React.FC = () => {
         try {
             setIsLoading(true)
 
-            const predefinedPrototypeConfigs = PREDEFINED_SITE_CONFIGS.filter(
-                (config) => config.category === 'prototype',
+            const predefinedConfigs = PREDEFINED_SITE_CONFIGS.filter(
+                (config) => config.category === CATEGORY,
             )
 
-            // Delete all Prototype configs
             const allConfigs = await configManagementService.getConfigs({
                 secret: false,
                 scope: 'site',
-                category: 'prototype',
+                category: CATEGORY,
                 limit: 100,
             })
 
             const { failed } = await deleteConfigsById(allConfigs.results || [])
             failed.forEach((f) =>
-                console.warn('Failed to delete Prototype config', f.key, f.reason),
+                console.warn('Failed to delete config', f.key, f.reason),
             )
 
-            // Recreate defaults
-            if (predefinedPrototypeConfigs.length > 0) {
+            if (predefinedConfigs.length > 0) {
                 await configManagementService.bulkUpsertConfigs({
-                    configs: predefinedPrototypeConfigs,
+                    configs: predefinedConfigs,
                 })
             }
 
             toast({
                 title: 'Restored',
                 description:
-                    'Prototype configs restored to default values. Reloading page...',
+                    'Model & Prototype configs restored to default values. Reloading page...',
             })
 
             reloadSoon()
@@ -145,7 +143,7 @@ const PrototypeConfigSection: React.FC = () => {
                 description:
                     err instanceof Error
                         ? err.message
-                        : 'Failed to reset Prototype configs',
+                        : 'Failed to reset Model & Prototype configs',
                 variant: 'destructive',
             })
             setIsLoading(false)
@@ -158,7 +156,7 @@ const PrototypeConfigSection: React.FC = () => {
             const { valueBefore, targetValue } = await upsertConfigFromHistory({
                 entry,
                 scope: 'site',
-                category: 'prototype',
+                category: CATEGORY,
             })
 
             pushSiteConfigEdit({
@@ -166,7 +164,7 @@ const PrototypeConfigSection: React.FC = () => {
                 valueBefore,
                 valueAfter: targetValue,
                 valueType: entry.valueType,
-                section: 'prototype',
+                section: CATEGORY,
             })
 
             toast({
@@ -181,7 +179,7 @@ const PrototypeConfigSection: React.FC = () => {
                 description:
                     err instanceof Error
                         ? err.message
-                        : 'Failed to restore Prototype configuration',
+                        : 'Failed to restore configuration',
                 variant: 'destructive',
             })
             setIsLoading(false)
@@ -193,10 +191,10 @@ const PrototypeConfigSection: React.FC = () => {
             <div className="px-6 py-4 border-b border-border flex items-center justify-between">
                 <div className="flex flex-col">
                     <h2 className="text-lg font-semibold text-foreground">
-                        Prototype Configuration
+                        Model & Prototype Configuration
                     </h2>
                     <p className="text-sm text-muted-foreground mt-1">
-                        Configure Prototype-specific behavior and feature visibility
+                        Configure Model and Prototype behavior, defaults, and access control
                     </p>
                 </div>
                 <Button
@@ -243,7 +241,7 @@ const PrototypeConfigSection: React.FC = () => {
                 ) : subTab === 'history' ? (
                     <div className="px-0">
                         <SiteConfigEditHistory
-                            section={PROTOTYPE_HISTORY_SECTION}
+                            section={HISTORY_SECTION}
                             onRestoreEntry={handleRestoreHistoryEntry}
                         />
                     </div>
@@ -254,7 +252,7 @@ const PrototypeConfigSection: React.FC = () => {
                         onDelete={() => { }}
                         isLoading={isLoading}
                         onUpdated={loadConfigs}
-                        historySection={PROTOTYPE_HISTORY_SECTION}
+                        historySection={HISTORY_SECTION}
                     />
                 )}
             </div>
@@ -262,4 +260,4 @@ const PrototypeConfigSection: React.FC = () => {
     )
 }
 
-export default PrototypeConfigSection
+export default ModelPrototypeConfigSection

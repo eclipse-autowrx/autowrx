@@ -18,7 +18,7 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import {
   PREDEFINED_SITE_CONFIGS,
   PREDEFINED_GENAI_CONFIG_KEYS,
-  PREDEFINED_PROTOTYPE_CONFIG_KEYS,
+  PREDEFINED_MODEL_PROTOTYPE_CONFIG_KEYS,
   PREDEFINED_PRIVACY_CONFIG_KEYS,
 } from '@/pages/SiteConfigManagement'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
@@ -47,11 +47,11 @@ const PublicConfigSection: React.FC = () => {
 
   const isGenAIKey = (key: string) =>
     PREDEFINED_GENAI_CONFIG_KEYS.includes(key)
-  const isPrototypeKey = (key: string) =>
-    PREDEFINED_PROTOTYPE_CONFIG_KEYS.includes(key)
+  const isModelPrototypeKey = (key: string) =>
+    PREDEFINED_MODEL_PROTOTYPE_CONFIG_KEYS.includes(key)
   const isPrivacyKey = (key: string) =>
     PREDEFINED_PRIVACY_CONFIG_KEYS.includes(key)
-  const isSpecialSectionKey = (key: string) => isGenAIKey(key) || isPrototypeKey(key) || isPrivacyKey(key)
+  const isSpecialSectionKey = (key: string) => isGenAIKey(key) || isModelPrototypeKey(key) || isPrivacyKey(key)
 
   useEffect(() => {
     if (selfLoading || !self) return

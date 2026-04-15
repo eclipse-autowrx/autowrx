@@ -30,6 +30,7 @@ import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
 import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
 import { addLog } from '@/services/log.service'
 import { createModelService, listModelsLite } from '@/services/model.service'
+import { useSiteConfig } from '@/utils/siteConfig'
 import { listModelTemplates } from '@/services/modelTemplate.service'
 import { createPrototypeService } from '@/services/prototype.service'
 import { ModelLite, Prototype } from '@/types/model.type'
@@ -68,6 +69,7 @@ const FormNewPrototype = ({
     const navigate = useNavigate()
     const { toast } = useToast()
     const { data: currentUser, isLoading: isCurrentUserLoading } = useSelfProfileQuery()
+    const publicModelWriteAccess = useSiteConfig('PUBLIC_MODEL_WRITE_ACCESS', false) as boolean
 
     const { data: ownedModelsData, isLoading: isFetchingOwnedModels } = useQuery({
         queryKey: ['listModelLiteOwned', currentUser?.id],
@@ -81,16 +83,23 @@ const FormNewPrototype = ({
         enabled: !!currentUser?.id,
     })
 
+    const { data: publicModelsData, isLoading: isFetchingPublicModels } = useQuery({
+        queryKey: ['listModelLitePublic'],
+        queryFn: () => listModelsLite({ visibility: 'public' }, { maxResults: 200 }),
+        enabled: !!publicModelWriteAccess && !!currentUser?.id,
+    })
+
     const allModels = useMemo(() => {
         const owned = ownedModelsData?.results ?? []
         const contributed = contributedModelsData?.results ?? []
+        const publicModels = publicModelWriteAccess ? (publicModelsData?.results ?? []) : []
         const byId = new Map<string, ModelLite>()
-            ;[...owned, ...contributed].forEach((model) => byId.set(model.id, model))
+            ;[...owned, ...contributed, ...publicModels].forEach((model) => byId.set(model.id, model))
         return { results: Array.from(byId.values()) }
-    }, [ownedModelsData?.results, contributedModelsData?.results])
+    }, [ownedModelsData?.results, contributedModelsData?.results, publicModelsData?.results, publicModelWriteAccess])
 
     const isFetchingModels =
-        isCurrentUserLoading || isFetchingOwnedModels || isFetchingContributedModels
+        isCurrentUserLoading || isFetchingOwnedModels || isFetchingContributedModels || (publicModelWriteAccess && isFetchingPublicModels)
 
     const [prototypeName, setPrototypeName] = useState('')
     const [selectedModelId, setSelectedModelId] = useState<string>('')

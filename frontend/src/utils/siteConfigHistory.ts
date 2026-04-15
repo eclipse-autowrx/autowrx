@@ -8,6 +8,12 @@
 const HISTORY_KEY_PREFIX = 'site-config-edit-history-'
 const MAX_HISTORY_PER_SECTION = 5
 
+// One-time migration map: old section key → new section key.
+// getSiteConfigEditHistory will merge and clean up old keys automatically.
+const SECTION_MIGRATIONS: Record<string, string> = {
+  prototype: 'model_prototype',
+}
+
 export interface SiteConfigEditEntry {
   key: string
   valueBefore?: unknown
@@ -22,13 +28,33 @@ function storageKey(section: string): string {
   return HISTORY_KEY_PREFIX + section
 }
 
-// Get the 5 most recent edit entries for a given section (tab).
+// Get the most recent edit entries for a given section (tab).
+// Automatically migrates entries from any renamed predecessor section.
 export function getSiteConfigEditHistory(section: string): SiteConfigEditEntry[] {
   try {
     const raw = localStorage.getItem(storageKey(section))
-    if (!raw) return []
-    const parsed = JSON.parse(raw) as SiteConfigEditEntry[]
-    return Array.isArray(parsed) ? parsed : []
+    let entries: SiteConfigEditEntry[] = []
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) entries = parsed
+    }
+
+    const oldSection = Object.entries(SECTION_MIGRATIONS).find(([, v]) => v === section)?.[0]
+    if (oldSection) {
+      const oldRaw = localStorage.getItem(storageKey(oldSection))
+      if (oldRaw) {
+        const oldParsed = JSON.parse(oldRaw)
+        if (Array.isArray(oldParsed) && oldParsed.length > 0) {
+          entries = [...entries, ...oldParsed]
+            .sort((a, b) => b.timestamp - a.timestamp)
+            .slice(0, MAX_HISTORY_PER_SECTION)
+          localStorage.setItem(storageKey(section), JSON.stringify(entries))
+          localStorage.removeItem(storageKey(oldSection))
+        }
+      }
+    }
+
+    return entries
   } catch {
     return []
   }

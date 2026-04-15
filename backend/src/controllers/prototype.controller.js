@@ -14,11 +14,28 @@ const { PERMISSIONS } = require('../config/roles');
 const ApiError = require('../utils/ApiError');
 const FeedbackPrototypeDecorator = require('../decorators/FeedbackPrototypeDecorator');
 const FeedbackPrototypeListDecorator = require('../decorators/FeedbackPrototypeListDecorator');
+const { Model } = require('../models');
+const siteConfigUtil = require('../utils/siteConfig');
+
+/**
+ * Throws FORBIDDEN unless the user has WRITE_MODEL permission on the given model,
+ * or PUBLIC_MODEL_WRITE_ACCESS is enabled and the model is public.
+ */
+const assertCanWriteToModel = async (userId, modelId) => {
+  const hasWritePermission = await permissionService.hasPermission(userId, PERMISSIONS.WRITE_MODEL, modelId);
+  if (hasWritePermission) return;
+
+  const publicWriteAccess = await siteConfigUtil.getConfig('PUBLIC_MODEL_WRITE_ACCESS', false);
+  if (publicWriteAccess) {
+    const model = await Model.findById(modelId).select('visibility');
+    if (model?.visibility === 'public') return;
+  }
+
+  throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
+};
 
 const createPrototype = catchAsync(async (req, res) => {
-  if (!(await permissionService.hasPermission(req.user.id, PERMISSIONS.WRITE_MODEL, req.body.model_id))) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
-  }
+  await assertCanWriteToModel(req.user.id, req.body.model_id);
   const prototypeId = await prototypeService.createPrototype(req.user.id, req.body);
   res.status(201).send(prototypeId);
 });
@@ -29,9 +46,8 @@ const bulkCreatePrototypes = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.BAD_REQUEST, 'All prototypes must belong to the same model');
   }
 
-  if (!(await permissionService.hasPermission(req.user.id, PERMISSIONS.WRITE_MODEL, modelIds.values().next().value))) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
-  }
+  const targetModelId = modelIds.values().next().value;
+  await assertCanWriteToModel(req.user.id, targetModelId);
 
   const prototypeIds = await prototypeService.bulkCreatePrototypes(req.user.id, req.body);
   res.status(201).send(prototypeIds);

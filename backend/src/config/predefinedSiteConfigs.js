@@ -28,6 +28,7 @@ const PREDEFINED_SITE_CONFIGS = [
     secret: false,
     valueType: 'image_url',
     description: 'Default image used when creating a new model.',
+    category: 'model_prototype',
   },
   {
     key: 'DEFAULT_PROTOTYPE_IMAGE',
@@ -36,6 +37,7 @@ const PREDEFINED_SITE_CONFIGS = [
     secret: false,
     valueType: 'image_url',
     description: 'Default cover image used when creating a new prototype.',
+    category: 'model_prototype',
   },
   {
     key: 'SITE_TITLE',
@@ -101,7 +103,7 @@ const PREDEFINED_SITE_CONFIGS = [
     secret: false,
     valueType: 'boolean',
     description: 'Show or hide the API panel on the Prototype Code tab.',
-    category: 'prototype',
+    category: 'model_prototype',
   },
   {
     key: 'SHOW_CODE_DIFF',
@@ -195,7 +197,7 @@ const PREDEFINED_SITE_CONFIGS = [
     secret: false,
     valueType: 'boolean',
     description: 'Enable or disable the context menu on prototype items.',
-    category: 'prototype',
+    category: 'model_prototype',
   },
   {
     key: 'ALLOW_NON_ADMIN_ADDON_CONFIG',
@@ -204,7 +206,16 @@ const PREDEFINED_SITE_CONFIGS = [
     secret: false,
     valueType: 'boolean',
     description: 'Allow non-admin model owners to add/manage addon tabs.',
-    category: 'prototype',
+    category: 'model_prototype',
+  },
+  {
+    key: 'PUBLIC_MODEL_WRITE_ACCESS',
+    scope: 'site',
+    value: false,
+    secret: false,
+    valueType: 'boolean',
+    description: 'Allow authenticated users to create prototypes on public models they do not own. When disabled, public models are read-only for non-owners.',
+    category: 'model_prototype',
   },
   {
     key: 'GRADIENT_HEADER',
