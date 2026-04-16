@@ -1,3 +1,7 @@
+### SSL Certs
+**/certs/*.crt
+**/certs/*.key
+
 ### Node / Monorepo
 node_modules/
 **/node_modules/
@@ -105,3 +109,10 @@ backend/static/builtin-widgets/3d-car/models/acme_lite.glb
 
 plans/
 instance-setup/data/
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+
+# Nginx local configs
+instance-setup/nginx/

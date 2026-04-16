@@ -16,7 +16,7 @@ services:
     # platform: linux/amd64  # Commented out for local testing on non-AMD64 machines
     container_name: ${NAME:-prod}-autowrx
     build:
-      context: .
+      context: ../
       dockerfile: ./backend/Dockerfile
     image: ghcr.io/eclipse-autowrx/autowrx/autowrx:latest
     ports:
