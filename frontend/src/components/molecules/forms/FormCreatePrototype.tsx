@@ -204,14 +204,6 @@ const FormCreatePrototype = ({
     }
   }, [templateOptions])
 
-  useEffect(() => {
-    if (templateOptions.length && !projectTemplate) {
-      const first = templateOptions[0]
-      setProjectTemplate(first.label)
-      setData((prev) => ({ ...prev, code: first.code, language: first.language }))
-    }
-  }, [templateOptions])
-
   const [debouncedPrototypeName, setDebouncedPrototypeName] = useState('')
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedPrototypeName(data.prototypeName), 300)

@@ -37,6 +37,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/atoms/dropdown-menu'
 import { Button } from '@/components/atoms/button'
+import { Input } from '@/components/atoms/input'
 import AddonSelect from '@/components/molecules/AddonSelect'
 import { Plugin } from '@/services/plugin.service'
 import { updateModelService } from '@/services/model.service'
@@ -554,8 +555,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
           <h2 className="text-lg font-semibold">Create Template</h2>
           <div className="space-y-2">
             <label className="text-sm font-medium">Name *</label>
-            <input
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            <Input
               placeholder="Template name"
               value={projectTemplateName}
               onChange={(e) => setProjectTemplateName(e.target.value)}
