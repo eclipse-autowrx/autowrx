@@ -65,7 +65,7 @@ const ModelDetailLayout = () => {
     'ALLOW_NON_ADMIN_ADDON_CONFIG',
     true,
   )
-  const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
+
   // Update store when model is fetched
   useEffect(() => {
     if (fetchedModel && fetchedModel.id) {
@@ -86,8 +86,6 @@ const ModelDetailLayout = () => {
     )
   }, [user, model])
 
-  const canConfigureModelAddons =
-    (isModelOwner && !!allowNonAdminAddonConfig)
 
   // Helper to get model tabs in TabConfig format
   const getModelTabs = (): TabConfig[] => {
@@ -173,7 +171,7 @@ const ModelDetailLayout = () => {
 
   // Use actual model loading state
   const isLoading = isModelLoading || !model
-  const canManageModelUI = isModelOwner || hasWritePermission
+  const canManageModelUI = (isModelOwner || hasWritePermission) && !!allowNonAdminAddonConfig
 
   const skeleton = JSON.parse(model?.skeleton || '{}')
   const numberOfNodes = skeleton?.nodes?.length || 0
@@ -231,10 +229,6 @@ const ModelDetailLayout = () => {
     <div className="flex flex-col w-full h-full rounded-md bg-muted">
       <div
         className="flex min-h-[52px] border-b border-muted-foreground/50 bg-background"
-        style={gradientHeader ? {
-          background: 'linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%)',
-          color: 'var(--primary-foreground)',
-        } : undefined}
       >
         <div className="flex w-fit">
           {model ? (
@@ -252,7 +246,6 @@ const ModelDetailLayout = () => {
                   }
                   key={index}
                   dataId={intro.dataId}
-                  customTextColor={gradientHeader ? 'var(--primary-foreground)' : undefined}
                 >
                   {intro.title}
                   {intro.count !== null && (
@@ -264,7 +257,6 @@ const ModelDetailLayout = () => {
               ))}
               <CustomModelTabs
                 customTabs={model?.custom_template?.model_tabs}
-                customTextColor={gradientHeader ? 'var(--primary-foreground)' : undefined}
               />
             </>
           ) : (

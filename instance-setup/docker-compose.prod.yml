@@ -32,18 +32,12 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS}
       ADMIN_EMAILS: ${ADMIN_EMAILS}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
-      CODER_URL: ${CODER_URL:-http://host.docker.internal:7080}
-      CODER_EXTERNAL_URL: ${CODER_EXTERNAL_URL:-${CODER_URL}}
-      CODER_ADMIN_API_KEY: ${CODER_ADMIN_API_KEY}
-      PROTOTYPES_PATH: ${PROTOTYPES_PATH:-/var/lib/autowrx/prototypes}
-      PROTOTYPES_LINUX_UID: ${PROTOTYPES_LINUX_UID:-1000}
-      PROTOTYPES_LINUX_GID: ${PROTOTYPES_LINUX_GID:-1000}
+      GENAI_URL: ${GENAI_URL:-}
+      KIT_SERVER_URL: ${KIT_SERVER_URL:-}
     volumes:
       - '${UPLOAD_PATH_HOST:-./data/upload}:/usr/src/playground-be/static/uploads'
       - '${PLUGIN_PATH_HOST:-./data/plugin}:/usr/src/playground-be/static/plugin'
-      - '${PROTOTYPES_PATH:-/var/lib/autowrx/prototypes}:${PROTOTYPES_PATH:-/var/lib/autowrx/prototypes}'
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - '${GLOBAL_CSS_PATH_HOST:-./data/global.css}:/usr/src/playground-be/static/global.css'
     depends_on:
       autowrx-db:
         condition: service_healthy

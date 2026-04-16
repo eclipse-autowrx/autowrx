@@ -48,9 +48,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/atoms/dropdown-menu'
 import DaDialog from '@/components/molecules/DaDialog'
+import { useSiteConfig } from '@/utils/siteConfig'
 
 const DaDashboard = () => {
   const { data: model } = useCurrentModel()
+  const logoUrl = useSiteConfig('SITE_LOGO_WIDE', '/imgs/logo-wide.png')
+  const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
   const [
     prototype,
     setActivePrototype,
@@ -97,15 +100,22 @@ const DaDashboard = () => {
     try { return JSON.parse(prototype.widget_config) } catch { return undefined }
   }
 
-  // Derive the currently applied template ID from prototype.extend
-  let activeTemplateId: string | undefined = prototype?.extend?.dashboard_template_id ?? undefined
-  // If no template is applied, auto-apply the first available template
+  // Derive the currently applied template ID from prototype.extend.
+  // The key may be: absent (never set → auto-apply eligible), null (user saved custom config), or a string (template applied).
+  // Using `in` to distinguish "key never set" from "key set to null" — optional chaining alone can't tell them apart
+  // because (null)?.dashboard_template_id also yields undefined.
+  const extendObj = prototype?.extend
+  const hasTemplateDecision =
+    extendObj != null && typeof extendObj === 'object' && 'dashboard_template_id' in extendObj
+  const activeTemplateId = extendObj?.dashboard_template_id as string | null | undefined
+
   useEffect(() => {
-    if (!activeTemplateId && templatesData?.results?.length && prototype && mode === MODE_RUN) {
-      handleApplyTemplate(templatesData.results[0])
+    if (!hasTemplateDecision && templatesData?.results?.length && prototype && mode === MODE_RUN) {
+      const defaultTemplate = templatesData.results.find((t: DashboardTemplate) => t.is_default)
+      if (defaultTemplate) handleApplyTemplate(defaultTemplate)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTemplateId, templatesData, prototype, mode])
+  }, [hasTemplateDecision, templatesData, prototype, mode])
 
   const closeSaveDialog = () => {
     setShowSaveDialog(false)
@@ -176,13 +186,13 @@ const DaDashboard = () => {
           extend: newExtend,
         })
         setPrototypeHasUnsavedChanges(false)
-        toast.success(`Template "${template.name}" applied`)
       } catch (error) {
         console.error('Error applying template:', error)
         toast.error('Failed to save template to prototype')
       }
     }
   }
+
 
   useEffect(() => {
     if (prototypeHasUnsavedChanges && prototype?.id) {
@@ -222,18 +232,22 @@ const DaDashboard = () => {
     //
     processWidgetItems(widgetItems)
     setWidgetItems(widgetItems)
-  }, [prototype?.widget_config])
+  }, [prototype?.widget_config, prototype?.extend?.selected_signals])
 
   const processWidgetItems = (widgetItems: any[]) => {
     if (!widgetItems) return
+    const selectedSignals = prototype?.extend?.selected_signals as string[] | undefined
     widgetItems.forEach((widget) => {
       if (!widget?.url) {
         if (widget.options?.url) {
           widget.url = widget.options.url
         } else if (widget.path) {
-          // For built-in widgets, use the static path
           widget.url = widget.path
         }
+      }
+      if (selectedSignals?.length && (!widget.options?.apis || widget.options.apis.length === 0)) {
+        if (!widget.options) widget.options = {}
+        widget.options.apis = [...selectedSignals]
       }
     })
   }
@@ -264,10 +278,8 @@ const DaDashboard = () => {
   }
 
   const handleSave = async () => {
-    const hasTemplate = !!activeTemplateId
-    if ((pendingChanges || hasTemplate) && prototype?.id) {
+    if (prototype?.id) {
       try {
-        // Clear dashboard_template_id since user manually edited the dashboard
         const newExtend = { ...(prototype?.extend ?? {}), dashboard_template_id: null }
         await updatePrototypeService(prototype.id, {
           widget_config: prototype.widget_config,
@@ -301,13 +313,29 @@ const DaDashboard = () => {
     <div className="w-full h-full relative border bg-white">
       <div
         className={cn(
-          'absolute z-10 left-0 px-2 top-0 flex gap-1 w-full py-1 shadow-xl bg-white items-center',
+          'absolute z-10 left-0 px-2 top-0 flex gap-1 w-full py-1 shadow-xl items-center',
           showPrototypeDashboardFullScreen && 'h-[56px]',
+          showPrototypeDashboardFullScreen && gradientHeader ? '' : 'bg-white',
         )}
+        style={
+          showPrototypeDashboardFullScreen && gradientHeader
+            ? {
+                background: 'linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%)',
+                color: 'var(--primary-foreground)',
+              }
+            : undefined
+        }
       >
         {showPrototypeDashboardFullScreen && (
           <Link to="/" className="w-fit h-[56px] flex items-center px-2">
-            <DaImage src="/imgs/logo-wide.png" className="object-contain" />
+            <DaImage
+              src={logoUrl}
+              className="object-contain"
+              style={{
+                height: '28px',
+                filter: gradientHeader ? 'brightness(0) invert(1)' : undefined,
+              }}
+            />
           </Link>
         )}
         {isAuthorized && (
@@ -321,7 +349,7 @@ const DaDashboard = () => {
                       <TbPalette className="size-4" />
                       {activeTemplateId && templatesData?.results?.find((t) => t.id === activeTemplateId)
                         ? templatesData.results.find((t) => t.id === activeTemplateId)!.name
-                        : 'Templates'}
+                        : ''}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-64 max-h-64 overflow-y-auto">

@@ -18,10 +18,20 @@ import EmailConfigSection from '@/components/organisms/EmailConfigSection'
 import StagingConfigSection from '@/components/organisms/StagingConfigSection'
 import GenAIConfigSection from '@/components/organisms/GenAIConfigSection'
 import PrototypeConfigSection from '../components/organisms/PrototypeConfigSection'
+import VscodeConfigSection from '../components/organisms/VscodeConfigSection'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
+import PrivacyPolicySection from '../components/organisms/PrivacyPolicySection'
 
 // Keys that should be excluded from the site-config page
 // These keys are managed in their own dedicated pages
-export const EXCLUDED_FROM_SITE_CONFIG_KEYS = ['STAGING_FRAME', 'STANDARD_STAGE', 'EMAIL_CONFIG']
+export const EXCLUDED_FROM_SITE_CONFIG_KEYS = [
+  'STAGING_FRAME',
+  'STANDARD_STAGE',
+  'EMAIL_CONFIG',
+  // Managed in VSCode / Coder configuration tab
+  'CODER_ADMIN_API_KEY',
+]
 
 export const PREDEFINED_SITE_CONFIGS: any[] = [
   {
@@ -48,6 +58,23 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     description: 'Default cover image used when creating a new prototype.',
   },
   {
+    key: 'ABOUT_LINK',
+    scope: 'site',
+    value: '',
+    secret: false,
+    valueType: 'string',
+    description:
+      'URL displayed as a link next to the site logo (e.g. https://www.digital.auto/). Leave empty to hide.',
+  },
+  {
+    key: 'ABOUT_LINK_TEXT',
+    scope: 'site',
+    value: 'About',
+    secret: false,
+    valueType: 'string',
+    description: 'Display text for the About link next to the site logo.',
+  },
+  {
     key: 'SITE_TITLE',
     scope: 'site',
     value: 'Playground | digital.auto',
@@ -69,6 +96,15 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     valueType: 'string',
   },
   {
+    key: 'PRIVACY_POLICY_CONTENT',
+    scope: 'site',
+    value: '',
+    secret: false,
+    valueType: 'string',
+    description: 'Markdown content for the Privacy Policy page displayed at /privacy-policy.',
+    category: 'privacy',
+  },
+  {
     key: 'TERMS_OF_SERVICE_URL',
     scope: 'site',
     value: '/terms-of-service',
@@ -88,7 +124,8 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     value: '{}',
     secret: false,
     valueType: 'string',
-    description: 'Custom JSON options passed to the Socket.IO client when connecting to the runtime server. Example: {"transports":["websocket"],"reconnectionAttempts":5}. Leave empty to use default Socket.IO options.',
+    description:
+      'Custom JSON options passed to the Socket.IO client when connecting to the runtime server. Example: {"transports":["websocket"],"reconnectionAttempts":5}. Leave empty to use default Socket.IO options.',
   },
   {
     key: 'SHOW_CODE_API_PANEL',
@@ -105,7 +142,8 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     value: false,
     secret: false,
     valueType: 'boolean',
-    description: 'Enable the code diff feature on the Prototype Code tab. When enabled, a "Show Diff" button appears after AI or plugin code generation, allowing users to compare the new code with the previous version.',
+    description:
+      'Enable the code diff feature on the Prototype Code tab. When enabled, a "Show Diff" button appears after AI or plugin code generation, allowing users to compare the new code with the previous version.',
     category: 'genai',
   },
   {
@@ -171,6 +209,15 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     category: 'genai',
   },
   {
+    key: 'USER_ASSET_TYPES',
+    scope: 'site',
+    value: ['CLOUD_RUNTIME', 'HARDWARE_KIT', 'GENAI-PYTHON'],
+    secret: false,
+    valueType: 'array',
+    description: 'Asset types users can create and manage on the My Assets page.',
+    category: 'general',
+  },
+  {
     key: 'GENAI_MARKETPLACE_URL',
     scope: 'site',
     value: 'https://store-be.digitalauto.tech',
@@ -209,14 +256,63 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     description:
       'Apply a primary-to-secondary gradient to the main header and secondary navigation bar.',
   },
+  // VSCode / Coder integration settings (managed in VSCode config tab)
+  {
+    key: 'VSCODE_ENABLE',
+    scope: 'site',
+    value: false,
+    secret: false,
+    valueType: 'boolean',
+    description:
+      'Enable VS Code / Coder workspace integration (show VS Code tab)',
+    category: 'vscode',
+  },
+  {
+    key: 'CODER_URL',
+    scope: 'site',
+    value: 'http://localhost:7080',
+    secret: false,
+    valueType: 'string',
+    description: 'Coder instance URL',
+    category: 'vscode',
+  },
+  {
+    key: 'CODER_ADMIN_API_KEY',
+    scope: 'site',
+    value: '',
+    secret: true,
+    valueType: 'string',
+    description: 'Coder admin API token for impersonation',
+    category: 'vscode',
+  },
+  {
+    key: 'PROTOTYPES_PATH',
+    scope: 'site',
+    value: '/var/lib/autowrx/prototypes',
+    secret: false,
+    valueType: 'string',
+    description:
+      'Host path for prototypes folder (bind-mount into Coder workspace)',
+    category: 'vscode',
+  },
 ]
 
-export const PREDEFINED_GENAI_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(
-  (config) => config.category === 'genai',
-).map((config) => config.key)
+export const PREDEFINED_GENAI_CONFIG_KEYS: string[] =
+  PREDEFINED_SITE_CONFIGS.filter((config) => config.category === 'genai').map(
+    (config) => config.key,
+  )
 
-export const PREDEFINED_PROTOTYPE_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(
-  (config) => config.category === 'prototype',
+export const PREDEFINED_PROTOTYPE_CONFIG_KEYS: string[] =
+  PREDEFINED_SITE_CONFIGS.filter(
+    (config) => config.category === 'prototype',
+  ).map((config) => config.key)
+
+export const PREDEFINED_VSCODE_CONFIG_KEYS: string[] =
+  PREDEFINED_SITE_CONFIGS.filter((config) => config.category === 'vscode').map(
+    (config) => config.key,
+  )
+export const PREDEFINED_PRIVACY_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(
+  (config) => config.category === 'privacy',
 ).map((config) => config.key)
 
 export const PREDEFINED_AUTH_CONFIGS: any[] = [
@@ -227,7 +323,8 @@ export const PREDEFINED_AUTH_CONFIGS: any[] = [
     secret: false,
     valueType: 'boolean',
     category: 'auth',
-    description: 'Allow unauthenticated users to view models, prototypes, and other content',
+    description:
+      'Allow unauthenticated users to view models, prototypes, and other content',
   },
   {
     key: 'SELF_REGISTRATION',
@@ -236,7 +333,8 @@ export const PREDEFINED_AUTH_CONFIGS: any[] = [
     secret: false,
     valueType: 'boolean',
     category: 'auth',
-    description: 'Allow users to create their own accounts via the registration page',
+    description:
+      'Allow users to create their own accounts via the registration page',
   },
   {
     key: 'SSO_AUTO_REGISTRATION',
@@ -245,7 +343,8 @@ export const PREDEFINED_AUTH_CONFIGS: any[] = [
     secret: false,
     valueType: 'boolean',
     category: 'auth',
-    description: 'Automatically create accounts for users logging in via SSO (e.g., Microsoft, GitHub)',
+    description:
+      'Automatically create accounts for users logging in via SSO (e.g., Microsoft, GitHub)',
   },
   {
     key: 'PASSWORD_MANAGEMENT',
@@ -260,6 +359,7 @@ export const PREDEFINED_AUTH_CONFIGS: any[] = [
 
 const SiteConfigManagement: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
 
   // Get initial section from URL or default to 'public'
   type SectionTab =
@@ -272,7 +372,9 @@ const SiteConfigManagement: React.FC = () => {
     | 'email'
     | 'staging'
     | 'prototype'
+    | 'vscode'
     | 'genai'
+    | 'privacy'
   const validSections: SectionTab[] = [
     'public',
     'style',
@@ -283,7 +385,9 @@ const SiteConfigManagement: React.FC = () => {
     'email',
     'staging',
     'prototype',
+    'vscode',
     'genai',
+    'privacy',
   ]
 
   const getSectionFromUrl = (): SectionTab => {
@@ -294,9 +398,7 @@ const SiteConfigManagement: React.FC = () => {
     return 'public'
   }
 
-  const [activeTab, setActiveTab] = useState<SectionTab>(
-    getSectionFromUrl(),
-  )
+  const [activeTab, setActiveTab] = useState<SectionTab>(getSectionFromUrl())
 
   // Update URL when activeTab changes
   useEffect(() => {
@@ -305,6 +407,21 @@ const SiteConfigManagement: React.FC = () => {
 
   const handleTabChange = (tab: SectionTab) => {
     setActiveTab(tab)
+  }
+
+  if (!isAuthorized) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold text-foreground">
+            Access denied
+          </h1>
+          <p className="mt-2 text-base text-muted-foreground">
+            You do not have permission to manage site configurations.
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -333,93 +450,122 @@ const SiteConfigManagement: React.FC = () => {
               <nav className="p-2">
                 <button
                   onClick={() => handleTabChange('public')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'public'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'public'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
                 >
                   Public Config
                 </button>
                 <button
                   onClick={() => handleTabChange('home')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'home'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'home'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
                 >
                   Home Config
                 </button>
                 <button
                   onClick={() => handleTabChange('style')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'style'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'style'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
                 >
                   Site Style (CSS)
                 </button>
                 <button
                   onClick={() => handleTabChange('auth')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'auth'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'auth'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
                 >
                   Auth Config
                 </button>
                 <button
                   onClick={() => handleTabChange('prototype')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'prototype'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'prototype'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
                 >
                   Prototype Config
                 </button>
                 <button
+                  onClick={() => handleTabChange('vscode')}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'vscode'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
+                >
+                  VSCode Config
+                </button>
+                <button
                   onClick={() => handleTabChange('genai')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'genai'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'genai'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
                 >
                   GenAI / ProtoPilot
                 </button>
                 <button
                   onClick={() => handleTabChange('sso')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'sso'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'sso'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
                 >
                   SSO Config
                 </button>
                 <button
                   onClick={() => handleTabChange('email')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'email'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'email'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
                 >
                   Email Config
                 </button>
                 <button
                   onClick={() => handleTabChange('secrets')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'secrets'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'secrets'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
                 >
                   Secret Config
                 </button>
                 <button
                   onClick={() => handleTabChange('staging')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'staging'
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'staging'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
+                >
+                  Standard Staging Frame
+                </button>
+                <button
+                  onClick={() => handleTabChange('privacy')}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'privacy'
                     ? 'bg-primary text-primary-foreground'
                     : 'text-foreground hover:bg-muted'
                     }`}
                 >
-                  Standard Staging Frame
+                  Privacy Policy
                 </button>
               </nav>
             </div>
@@ -438,7 +584,9 @@ const SiteConfigManagement: React.FC = () => {
               {activeTab === 'email' && <EmailConfigSection />}
               {activeTab === 'secrets' && <SecretConfigSection />}
               {activeTab === 'prototype' && <PrototypeConfigSection />}
+              {activeTab === 'vscode' && <VscodeConfigSection />}
               {activeTab === 'genai' && <GenAIConfigSection />}
+              {activeTab === 'privacy' && <PrivacyPolicySection />}
             </div>
           </div>
         </div>

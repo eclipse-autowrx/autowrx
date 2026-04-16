@@ -22,4 +22,5 @@ module.exports.ModelTemplate = require('./modelTemplate.model');
 module.exports.DashboardTemplate = require('./dashboardTemplate.model');
 module.exports.CustomApiSchema = require('./customApiSchema.model');
 module.exports.CustomApiSet = require('./customApiSet.model');
+module.exports.UserWorkspace = require('./userWorkspace.model');
 // Inventory models removed

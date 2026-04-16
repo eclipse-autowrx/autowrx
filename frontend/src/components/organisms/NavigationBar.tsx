@@ -19,16 +19,15 @@ import {
   TbUsers,
   TbZoom,
   TbStack2,
+  TbFolders,
   TbBuildingWarehouse,
-  TbCar,
   TbSettings,
-  TbMenu2,
   TbPalette,
   TbApps,
 } from 'react-icons/tb'
 import usePermissionHook from '@/hooks/usePermissionHook.ts'
 import { PERMISSIONS } from '@/const/permission.ts'
-// import DaGlobalSearch from '../molecules/DaGlobalSearch'
+import DaGlobalSearch from '../molecules/DaGlobalSearch'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 // import useCurrentModel from '@/hooks/useCurrentModel'
 import { IoIosHelpBuoy } from 'react-icons/io'
@@ -42,6 +41,7 @@ import { useSiteConfig } from '@/utils/siteConfig'
 import { Button } from '../atoms/button'
 import { Wrench } from 'lucide-react'
 import DOMPurify from 'dompurify'
+import useAuthStore from '@/stores/authStore'
 
 const SimpleSwitch = ({
   checked,
@@ -67,7 +67,9 @@ const SimpleSwitch = ({
 )
 
 const NavigationBar = ({ }) => {
-  const { data: user } = useSelfProfileQuery()
+  const { data: user, isLoading, isFetching } = useSelfProfileQuery()
+  const authBootstrapped = useAuthStore((state) => state.authBootstrapped)
+  const isResolvingAuth = !authBootstrapped || (!user && (isLoading || isFetching))
   // const { data: model } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
   const [learningMode, setIsLearningMode] = useState(false)
@@ -76,6 +78,27 @@ const NavigationBar = ({ }) => {
   const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
   const enableLearningMode = useSiteConfig('ENABLE_LEARNING_MODE', false)
   const navBarActions = useSiteConfig('NAV_BAR_ACTIONS', [])
+  const allowNonAdminAddonConfig = useSiteConfig(
+    'ALLOW_NON_ADMIN_ADDON_CONFIG',
+    true,
+  )
+  const toolsMenuItems = useMemo(() => {
+    if (isAuthorized) {
+      return [
+        { to: '/manage-users', icon: TbUsers, label: 'Manage Users' },
+        { to: '/manage-features', icon: TbStack2, label: 'Manage Features' },
+        { to: '/admin/site-config', icon: TbSettings, label: 'Site Config' },
+        { to: '/admin/plugins', icon: TbApps, label: 'Plugins' },
+        { to: '/admin/templates', icon: TbPalette, label: 'Templates' },
+        { to: '/admin/dashboard-templates', icon: TbBuildingWarehouse, label: 'Dashboard Templates' },
+        { to: '/manage-workspaces', icon: TbFolders, label: 'Manage Workspaces' },
+      ]
+    }
+    if (allowNonAdminAddonConfig) {
+      return [{ to: '/me/plugins', icon: TbApps, label: 'Plugins' }]
+    }
+    return []
+  }, [isAuthorized, allowNonAdminAddonConfig])
 
   const headerBackground = gradientHeader
     ? 'linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%)'
@@ -92,7 +115,7 @@ const NavigationBar = ({ }) => {
 
   return (
     <header
-      className={`flex items-center w-full py-1 px-3 ${gradientHeader ? '' : 'border-2'}`}
+      className={`flex items-center w-full py-1.5 px-4 ${gradientHeader ? '' : 'border-2'}`}
       style={{
         background: headerBackground,
         color: headerTextColor,
@@ -127,7 +150,7 @@ const NavigationBar = ({ }) => {
           <SimpleSwitch
             checked={learningMode}
             onChange={(v) => {
-              if (v && !user) {
+              if (v && (!user || isResolvingAuth)) {
                 alert('Please Sign in to use learning mode')
                 return
               }
@@ -140,29 +163,62 @@ const NavigationBar = ({ }) => {
       {/* Navigation Bar Actions */}
       {navBarActions && Array.isArray(navBarActions) && navBarActions.length > 0 && (
         <div className="mr-2 flex items-center gap-2">
-          {navBarActions.map((action: any, index: number) => (
-            <a
-              key={index}
-              href={action.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium hover:bg-[var(--header-hover-bg)] transition-colors"
-              style={{ '--header-hover-bg': '#dbe4ee' } as CSSProperties}
-              title={action.label}
-            >
-              {action.icon && (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: DOMPurify.sanitize(action.icon, {
-                      USE_PROFILES: { svg: true, svgFilters: true }
-                    })
-                  }}
-                  className="w-6 h-6 flex items-center justify-center"
+          {navBarActions.map((action: any, index: number) => {
+            const actionType = action.type || 'link'
+
+            if (actionType === 'search') {
+              return (
+                <DaGlobalSearch
+                  key={index}
+                  trigger={
+                    <Button
+                      variant="outline"
+                      className="w-[250px] min-w-0 h-10 flex items-center justify-start gap-0 border-gray-300 shadow-lg cursor-pointer text-muted-foreground text-base bg-white hover:bg-gray-100"
+                      title={action.placeholder || action.label || 'Search'}
+                    >
+                      {action.icon ? (
+                        <div
+                          dangerouslySetInnerHTML={{
+                            __html: DOMPurify.sanitize(action.icon, {
+                              USE_PROFILES: { svg: true, svgFilters: true }
+                            })
+                          }}
+                          className="size-5 mr-2 flex items-center justify-center"
+                        />
+                      ) : (
+                        <TbZoom className="size-5 mr-2" />
+                      )}
+                      {action.placeholder || action.label || 'Search'}
+                    </Button>
+                  }
                 />
-              )}
-              {action.label && <span className="ml-1">{action.label}</span>}
-            </a>
-          ))}
+              )
+            }
+
+            return (
+              <a
+                key={index}
+                href={action.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium hover:bg-[var(--header-hover-bg)] transition-colors"
+                style={{ '--header-hover-bg': '#dbe4ee' } as CSSProperties}
+                title={action.label}
+              >
+                {action.icon && (
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: DOMPurify.sanitize(action.icon, {
+                        USE_PROFILES: { svg: true, svgFilters: true }
+                      })
+                    }}
+                    className="w-6 h-6 flex items-center justify-center"
+                  />
+                )}
+                {action.label && <span className="ml-1">{action.label}</span>}
+              </a>
+            )
+          })}
         </div>
       )}
 
@@ -175,95 +231,37 @@ const NavigationBar = ({ }) => {
         </Link>
       )} */}
 
-      {user && (
+      {!isResolvingAuth && user && (
         <div className="flex items-center shrink-0">
-          {/* <DaGlobalSearch>
-            <DaButton
-              variant="outline-nocolor"
-              className="w-[140px] flex items-center justify-start! border-gray-300! shadow-lg"
-            >
-              <TbZoom className="size-5 mr-2" />
-              Search
-            </DaButton>
-          </DaGlobalSearch>{' '} */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="hover:bg-[var(--header-hover-bg)]"
-                style={{ '--header-hover-bg': '#dbe4ee' } as CSSProperties}
+          {toolsMenuItems.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="hover:bg-[var(--header-hover-bg)]"
+                  style={{ '--header-hover-bg': '#dbe4ee' } as CSSProperties}
+                >
+                  <Wrench />
+                  {isAuthorized ? 'Admin Tools' : 'Tools'}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-52 text-sm font-medium"
               >
-                <Wrench />
-                {isAuthorized ? 'Admin Tools' : 'Tools'}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="w-52 text-sm font-medium"
-            >
-              {isAuthorized ? (
-                <>
-                  <DropdownMenuItem asChild>
+                {toolsMenuItems.map((item) => (
+                  <DropdownMenuItem key={item.to} asChild>
                     <Link
-                      to="/manage-users"
+                      to={item.to}
                       className="flex items-center gap-2 cursor-pointer"
                     >
-                      <TbUsers className="text-base" /> Manage Users
+                      <item.icon className="text-base" /> {item.label}
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link
-                      to="/manage-features"
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <TbStack2 className="text-base" /> Manage Features
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link
-                      to="/admin/site-config"
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <TbSettings className="text-base" /> Site Config
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link
-                      to="/admin/plugins"
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <TbApps className="text-base" /> Plugins
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link
-                      to="/admin/templates"
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <TbPalette className="text-base" /> Templates
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link
-                      to="/admin/dashboard-templates"
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <TbBuildingWarehouse className="text-base" /> Dashboard Templates
-                    </Link>
-                  </DropdownMenuItem>
-                </>
-              ) : (
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/me/plugins"
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <TbApps className="text-base" /> Plugins
-                  </Link>
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           {/* {model ? (
             <Link to={`/model/${model.id}`}>
               <DaButton variant="plain">
@@ -290,7 +288,7 @@ const NavigationBar = ({ }) => {
       )}
 
       {learningMode && <LearningIntegration requestClose={() => setIsLearningMode(false)} />}
-      {!user && <div className="shrink-0"><DaNavUser /></div>}
+      {(isResolvingAuth || !user) && <div className="shrink-0"><DaNavUser /></div>}
     </header>
   )
 }

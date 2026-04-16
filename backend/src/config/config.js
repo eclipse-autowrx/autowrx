@@ -57,6 +57,8 @@ const envVarsSchema = Joi.object()
     STRICT_AUTH: Joi.boolean().description('Strict auth'),
     // GenAI service
     GENAI_URL: Joi.string().description('GenAI service url'),
+    // Kit server
+    KIT_SERVER_URL: Joi.string().description('Kit server url'),
     // Admin emails
     ADMIN_EMAILS: Joi.string().description('Admin emails'),
     ADMIN_PASSWORD: Joi.string().description('Admin password'),
@@ -64,19 +66,6 @@ const envVarsSchema = Joi.object()
     LOGS_MAX_SIZE: Joi.number().default(100).description('Max size of change logs in megabytes'),
     // File upload settings
     MAX_IMAGE_DIMENSION: Joi.number().default(1024).description('Maximum image dimension in pixels'),
-    // Coder integration
-    CODER_URL: Joi.string().default('http://localhost:7080').description('Coder instance URL (internal, for backend API calls)'),
-    CODER_EXTERNAL_URL: Joi.string().default('').description('Coder external URL (for frontend iframe). Falls back to CODER_URL if not set.'),
-    CODER_ADMIN_API_KEY: Joi.string().description('Coder admin API token for impersonation'),
-    // Prototypes folder path (host path for bind-mount)
-    PROTOTYPES_PATH: Joi.string().default('/var/lib/autowrx/prototypes').description('Host path for prototypes folder (bind-mount into Coder workspace)'),
-    PROTOTYPES_LINUX_UID: Joi.number().integer().min(0).default(1000).description('Linux UID used by workspace container user for prototype folder ownership'),
-    PROTOTYPES_LINUX_GID: Joi.number().integer().min(0).default(1000).description('Linux GID used by workspace container user for prototype folder ownership'),
-    // Gitea integration (DISABLED - kept for reference)
-    GITEA_URL: Joi.string().default('http://localhost:3000').description('Gitea instance URL'),
-    GITEA_ADMIN_USERNAME: Joi.string().default('gitea-admin').description('Gitea admin username'),
-    GITEA_ADMIN_PASSWORD: Joi.string().description('Gitea admin password'),
-    GITEA_ADMIN_TOKEN: Joi.string().description('Gitea admin API token (optional, preferred over password)'),
   })
   .unknown();
 
@@ -170,6 +159,7 @@ const config = {
   services: {
     log: {
       port: envVars.LOG_PORT || 9600,
+      url: envVars.LOG_URL,
     },
     cache: {
       url: envVars.CACHE_URL,
@@ -184,6 +174,9 @@ const config = {
     },
     genAI: {
       url: envVars.GENAI_URL,
+    },
+    kitServer: {
+      url: envVars.KIT_SERVER_URL,
     },
   },
   openai: {
@@ -202,22 +195,6 @@ const config = {
   logsMaxSize: envVars.LOGS_MAX_SIZE,
   fileUpload: {
     maxImageDimension: envVars.MAX_IMAGE_DIMENSION,
-  },
-  coder: {
-    url: envVars.CODER_URL,
-    externalUrl: envVars.CODER_EXTERNAL_URL || envVars.CODER_URL,
-    adminApiKey: envVars.CODER_ADMIN_API_KEY,
-  },
-  prototypes: {
-    path: envVars.PROTOTYPES_PATH,
-    linuxUid: envVars.PROTOTYPES_LINUX_UID,
-    linuxGid: envVars.PROTOTYPES_LINUX_GID,
-  },
-  gitea: {
-    url: envVars.GITEA_URL,
-    adminUsername: envVars.GITEA_ADMIN_USERNAME,
-    adminPassword: envVars.GITEA_ADMIN_PASSWORD,
-    adminToken: envVars.GITEA_ADMIN_TOKEN,
   },
 };
 

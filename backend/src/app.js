@@ -42,21 +42,22 @@ app.use(cookies());
 
 // set security HTTP headers
 if (config.env === 'development') {
-  // More permissive CSP for development
+  // Permissive CSP for development — mirrors production
   app.use(
     helmet({
       contentSecurityPolicy: {
         directives: {
-          defaultSrc: ["'self'", 'http://localhost:3210', 'https://localhost:3210'],
-          scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'http://localhost:3210', 'https://localhost:3210'],
-          scriptSrcElem: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'http://localhost:3210', 'https://localhost:3210'],
-          styleSrc: ["'self'", "'unsafe-inline'", 'http://localhost:3210', 'https://localhost:3210', 'https:'],
-          imgSrc: ["'self'", 'data:', 'http://localhost:3210', 'https://localhost:3210', 'https:'],
-          connectSrc: ["'self'", 'ws:', 'wss:', 'http://localhost:3210', 'https://localhost:3210'],
-          fontSrc: ["'self'", 'https:', 'data:', 'http://localhost:3210', 'https://localhost:3210'],
+          defaultSrc: ['*'],
+          scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", '*'],
+          scriptSrcElem: ["'self'", "'unsafe-inline'", "'unsafe-eval'", '*'],
+          styleSrc: ["'self'", "'unsafe-inline'", '*'],
+          imgSrc: ['*', 'data:', 'blob:'],
+          connectSrc: ['*', 'ws:', 'wss:'],
+          fontSrc: ['*', 'data:'],
           objectSrc: ["'none'"],
-          mediaSrc: ["'self'", 'http://localhost:3210', 'https://localhost:3210'],
-          frameSrc: ["'self'"],
+          mediaSrc: ['*'],
+          frameSrc: ['*'],
+          workerSrc: ["'self'", 'blob:', '*'],
           upgradeInsecureRequests: null, // Disable upgrade to HTTPS in development
         },
       },
@@ -184,6 +185,19 @@ app.get('/vss/:version/:filename', (req, res, next) => {
 
 // Setup proxy to other services
 setupProxy(app);
+
+// Proxy to internal kit-server (docker-compose service)
+if (config.services.kitServer.url) {
+  app.use(
+    '/kit-server',
+    createProxyMiddleware({
+      target: config.services.kitServer.url,
+      changeOrigin: true,
+      ws: true,
+      pathRewrite: { '^/kit-server': '' },
+    })
+  );
+}
 
 // Development proxy to frontend
 if (config.env === 'development') {

@@ -822,6 +822,52 @@ const bulkUpsertSiteConfigs = async (configs, userId) => {
   return SiteConfig.find({ key: { $in: configs.map(c => c.key) } });
 };
 
+/**
+ * Seed predefined site configs on server startup.
+ * Uses $setOnInsert to only insert keys that don't exist — never overwrites admin-customized values.
+ * @param {Array} predefinedConfigs - Array of predefined config objects
+ * @returns {Promise<void>}
+ */
+const seedPredefinedSiteConfigs = async (predefinedConfigs, systemUserId) => {
+  if (!predefinedConfigs || predefinedConfigs.length === 0) return;
+
+  try {
+    const operations = predefinedConfigs.map((config) => ({
+      updateOne: {
+        filter: { key: config.key, scope: config.scope || 'site' },
+        update: {
+          $setOnInsert: {
+            key: config.key,
+            scope: config.scope || 'site',
+            value: config.value !== undefined ? config.value : null,
+            valueType: config.valueType || 'string',
+            secret: config.secret !== undefined ? config.secret : false,
+            description: config.description || '',
+            category: config.category || 'general',
+            created_by: systemUserId,
+            updated_by: systemUserId,
+          },
+        },
+        upsert: true,
+      },
+    }));
+
+    await SiteConfig.bulkWrite(operations, { ordered: false });
+
+    // Backfill created_by/updated_by for configs seeded before this fix
+    if (systemUserId) {
+      await SiteConfig.updateMany(
+        { scope: 'site', $or: [{ created_by: { $exists: false } }, { created_by: null }] },
+        { $set: { created_by: systemUserId, updated_by: systemUserId } }
+      );
+    }
+
+    console.log(`[SiteConfig] Seeded ${predefinedConfigs.length} predefined configs (skipped existing).`);
+  } catch (error) {
+    console.error('[SiteConfig] Failed to seed predefined configs:', error.message);
+  }
+};
+
 module.exports = {
   createSiteConfig,
   querySiteConfigs,
@@ -839,4 +885,5 @@ module.exports = {
   deleteSiteConfigById,
   deleteSiteConfigByKey,
   bulkUpsertSiteConfigs,
+  seedPredefinedSiteConfigs,
 };

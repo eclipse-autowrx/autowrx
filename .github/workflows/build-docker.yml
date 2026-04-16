@@ -36,14 +36,28 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.inputs.branch || github.ref }}
 
+      - name: Update package.json version
+        shell: bash
+        run: |
+          # Extract version from git tag (e.g., v1.2.3 -> 1.2.3)
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          # Check if VERSION is valid (not empty and matches semver pattern)
+          if [[ -z "$VERSION" ]] || [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            VERSION="3.1.0"
+            echo "No valid version tag found, using fallback version: $VERSION"
+          else
+            echo "Using version from tag: $VERSION"
+          fi
+          # Update version in package.json
+          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" ./backend/package.json
+          echo "Updated package.json version to $VERSION"
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
-        with:
-          platforms: arm64
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -87,11 +101,11 @@ jobs:
           fi
 
       - name: Build and push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./backend/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: ${{ steps.should_push.outputs.push == 'true' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -152,7 +166,7 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Extract tag name
         id: tag

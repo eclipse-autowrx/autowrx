@@ -7,11 +7,8 @@
 // SPDX-License-Identifier: MIT
 
 const permissionService = require('../services/permission.service');
-const { permissionSyncService } = require('../services');
 const catchAsync = require('../utils/catchAsync');
 const pick = require('../utils/pick');
-const logger = require('../config/logger');
-const { Role } = require('../models');
 
 const hasPermission = catchAsync(async (req, res) => {
   const filter = pick(req.query, ['permissions']);
@@ -31,16 +28,6 @@ const getPermissions = catchAsync(async (req, res) => {
 const assignRoleToUser = catchAsync(async (req, res) => {
   const { user, role, ref } = req.body;
   const userRole = await permissionService.assignRoleToUser(user, role, ref);
-  
-  // Sync to Gitea if ref is a model ID
-  if (ref) {
-    const roleDoc = await Role.findById(role);
-    const roleRef = roleDoc?.ref || roleDoc?.name;
-    permissionSyncService.syncUserPermissionToGitea(user, ref, roleRef).catch((error) => {
-      logger.error(`Failed to sync user permission to Gitea: ${error.message}`);
-    });
-  }
-  
   res.status(201).json(userRole);
 });
 
@@ -67,15 +54,7 @@ const getRoles = catchAsync(async (req, res) => {
 
 const removeRoleFromUser = catchAsync(async (req, res) => {
   const { user, role, ref } = req.query;
-  await permissionService.removeRoleFromUser(user, role);
-  
-  // Remove from Gitea if ref is a model ID
-  if (ref) {
-    permissionSyncService.removeUserPermissionFromGitea(user, ref).catch((error) => {
-      logger.error(`Failed to remove user permission from Gitea: ${error.message}`);
-    });
-  }
-  
+  await permissionService.removeRoleFromUser(user, role, ref);
   res.status(204).send();
 });
 

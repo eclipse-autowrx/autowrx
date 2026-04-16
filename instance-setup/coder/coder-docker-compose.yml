@@ -1,0 +1,59 @@
+services:
+  coder:
+    image: ghcr.io/coder/coder:v2.31.9
+    container_name: coder
+    environment:
+      - CODER_ACCESS_URL=http://localhost:7080
+      - CODER_HTTP_ADDRESS=0.0.0.0:7080
+      - CODER_BROWSER_ONLY=true
+      - TF_PLUGIN_CACHE_DIR=/var/cache/terraform-plugins
+    user: "0:0"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        mkdir -p /home/coder/.config
+        chown -R coder:coder /home/coder/.config
+        mkdir -p /var/cache/terraform-plugins
+        chown -R coder:coder /var/cache/terraform-plugins
+        # When ./terraform-provider-mirror is populated (populate-terraform-mirror.sh), skip registry downloads during workspace builds.
+        if [ -f /var/terraform-mirror/registry.terraform.io/coder/coder/terraform-provider-coder_2.15.0_linux_amd64.zip ] \
+          && [ -f /var/terraform-mirror/registry.terraform.io/kreuzwerker/docker/terraform-provider-docker_4.0.0_linux_amd64.zip ]; then
+          printf '%s\n' \
+            'provider_installation {' \
+            '  filesystem_mirror {' \
+            '    path = "/var/terraform-mirror"' \
+            '  }' \
+            '  direct {' \
+            '    exclude = ["registry.terraform.io/*/*"]' \
+            '  }' \
+            '}' > /home/coder/.terraformrc
+          chown coder:coder /home/coder/.terraformrc
+        fi
+        if [ -S /var/run/docker.sock ]; then
+          chmod 666 /var/run/docker.sock
+        fi
+        if [ -f /home/coder/.terraformrc ]; then
+          exec su coder -c 'export TF_CLI_CONFIG_FILE=/home/coder/.terraformrc; export TF_PLUGIN_CACHE_DIR=/var/cache/terraform-plugins; exec /opt/coder server --dangerous-allow-path-app-sharing --dangerous-allow-path-app-site-owner-access'
+        else
+          exec su coder -c 'export TF_PLUGIN_CACHE_DIR=/var/cache/terraform-plugins; exec /opt/coder server --dangerous-allow-path-app-sharing --dangerous-allow-path-app-site-owner-access'
+        fi
+    ports:
+      - "7080:7080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - coder_data:/home/coder/.config
+      - coder_terraform_plugins:/var/cache/terraform-plugins
+      - ./terraform-provider-mirror:/var/terraform-mirror:ro
+    restart: unless-stopped
+    networks:
+      - coder_network
+
+volumes:
+  coder_data:
+  coder_terraform_plugins:
+
+networks:
+  coder_network:
+    name: coder_network
+    driver: bridge

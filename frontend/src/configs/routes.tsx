@@ -12,10 +12,12 @@ import SuspenseProvider from '@/providers/SuspenseProvider'
 import { RouteConfig } from '@/types/common.type.ts'
 import PageUserProfile from '@/pages/PageUserProfile.tsx'
 import PageMyAssets from '@/pages/PageMyAssets.tsx'
+import PageMyWorkspaces from '@/pages/PageMyWorkspaces.tsx'
 import PageHealth from '@/pages/PageHealth.tsx'
 import PageNotFound from '@/pages/PageNotFound.tsx'
 import PageTest from '@/pages/PageTest.tsx'
 import SiteConfigManagement from '@/pages/SiteConfigManagement.tsx'
+import PagePrivacyPolicy from '@/pages/PagePrivacyPolicy.tsx'
 import PluginList from '@/pages/PluginList.tsx'
 import PluginManagement from '@/pages/PluginManagement.tsx'
 import TemplateManager from '@/pages/TemplateManager.tsx'
@@ -33,6 +35,7 @@ import PagePrototypePlugin from '@/pages/PagePrototypePlugin.tsx'
 import PageModelPlugin from '@/pages/PageModelPlugin.tsx'
 import PageManageUsers from '@/pages/PageManageUsers.tsx'
 import PageManageFeatures from '@/pages/PageManageFeatures.tsx'
+import PageManageWorkspaces from '@/pages/PageManageWorkspaces.tsx'
 import PageNewPrototypeDetail from '@/pages/PageNewPrototypeDetail.tsx'
 // import PageAuthSuccess from '@/pages/PageAuthSuccess.ts'
 import { retry } from '@/lib/retry.ts'
@@ -144,6 +147,19 @@ const routesConfig: RouteConfig[] = [
             ],
           },
           {
+            path: '/my-workspaces',
+            children: [
+              {
+                index: true,
+                element: (
+                  <SuspenseProvider>
+                    <PageMyWorkspaces />
+                  </SuspenseProvider>
+                ),
+              },
+            ],
+          },
+          {
             path: '/health',
             children: [
               {
@@ -190,6 +206,19 @@ const routesConfig: RouteConfig[] = [
                 element: (
                   <SuspenseProvider>
                     <PageManageFeatures />
+                  </SuspenseProvider>
+                ),
+              },
+            ],
+          },
+          {
+            path: '/manage-workspaces',
+            children: [
+              {
+                index: true,
+                element: (
+                  <SuspenseProvider>
+                    <PageManageWorkspaces />
                   </SuspenseProvider>
                 ),
               },
@@ -469,19 +498,19 @@ const routesConfig: RouteConfig[] = [
       //     },
       //   ],
       // },
-      // {
-      //   path: '/privacy-policy',
-      //   children: [
-      //     {
-      //       index: true,
-      //       element: (
-      //         <SuspenseProvider>
-      //           <PagePrivacyPolicy />
-      //         </SuspenseProvider>
-      //       ),
-      //     },
-      //   ],
-      // },
+      {
+        path: '/privacy-policy',
+        children: [
+          {
+            index: true,
+            element: (
+              <SuspenseProvider>
+                <PagePrivacyPolicy />
+              </SuspenseProvider>
+            ),
+          },
+        ],
+      },
       // {
       //   path: '/auth/:provider/success',
       //   element: <PageAuthSuccess />,

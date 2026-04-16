@@ -1,0 +1,7 @@
+# Optional override: mount custom builtin-widgets from host
+# Usage:
+#   docker compose -f docker-compose.prod.yml -f docker-compose.widgets.yml --env-file .env.prod up -d
+services:
+  autowrx:
+    volumes:
+      - '${BUILTIN_WIDGETS_PATH_HOST:-./data/builtin-widgets}:/usr/src/playground-be/static/builtin-widgets'

@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { Button } from '@/components/atoms/button'
+import { cn } from '@/lib/utils'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
 import {
@@ -17,6 +18,8 @@ import {
   SelectValue,
 } from '@/components/atoms/select'
 import { CVI } from '@/data/CVI'
+import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
+import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
 import { createModelService } from '@/services/model.service'
 import { ModelCreate } from '@/types/model.type'
 import { isAxiosError } from 'axios'
@@ -29,9 +32,12 @@ import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import useListVSSVersions from '@/hooks/useListVSSVersions'
 import DaFileUploadButton from '@/components/atoms/DaFileUploadButton'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { listModelTemplates } from '@/services/modelTemplate.service'
-import { getConfig } from '@/utils/siteConfig'
+import { getConfig, useSiteConfig } from '@/utils/siteConfig'
+
+const getCreatedById = (createdBy: any): string =>
+  typeof createdBy === 'object' ? createdBy?.id ?? '' : createdBy ?? ''
 
 type ModelData = {
   cvi: string
@@ -49,17 +55,35 @@ const initialState: ModelData = {
 }
 
 const FormCreateModel = () => {
+  const queryClient = useQueryClient()
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
 
   const [error, setError] = useState<string>('')
   const [data, setData] = useState(initialState)
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
-  const { refetch: refetchModelLite } = useListModelLite()
+  const { data: modelList } = useListModelLite()
   const { data: versions } = useListVSSVersions()
   const { toast } = useToast()
 
   const { data: currentUser } = useSelfProfileQuery()
+  const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
+
+  const ownedModelNames = useMemo(
+    () =>
+      modelList?.results
+        ?.filter((m) => getCreatedById(m.created_by) === currentUser?.id)
+        .map((m) => m.name) ?? [],
+    [modelList, currentUser],
+  )
+
+  const [debouncedName, setDebouncedName] = useState('')
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedName(data.name), 300)
+    return () => clearTimeout(timer)
+  }, [data.name])
+
+  const { isDuplicate: isDuplicateName, suggestedName } = useDuplicateNameCheck(debouncedName, ownedModelNames)
 
   // Fetch templates
   const { data: templatesData } = useQuery({
@@ -83,6 +107,7 @@ const FormCreateModel = () => {
 
   const handleChange = (name: keyof typeof data, value: string) => {
     setData((prev) => ({ ...prev, [name]: value }))
+    setError('')
   }
 
   const handleVSSChange = (version: string) => {
@@ -116,7 +141,16 @@ const FormCreateModel = () => {
         body.model_home_image_file = defaultModelImage
       }
       const modelId = await createModelService(body)
-      await refetchModelLite()
+      const createdName = body.name
+      // Clear input before cache updates so duplicate check cannot flash against the new row
+      setData(initialState)
+      setDebouncedName('')
+      setSelectedTemplateId(null)
+
+      await queryClient.invalidateQueries({
+        queryKey: ['modelsList', currentUser.id],
+      })
+      await queryClient.invalidateQueries({ queryKey: ['listModelLite'] })
       addLog({
         name: `New model '${body.name}' with visibility: ${body.visibility}`,
         description: `New model '${body.name}' was created by ${currentUser.email || currentUser.name || currentUser.id} version ${'a'}`,
@@ -131,14 +165,12 @@ const FormCreateModel = () => {
         description: (
           <p className="flex items-center text-base font-medium">
             <TbCircleCheckFilled className="mr-2 h-5 w-5 text-green-500" />
-            Model "{data.name}" created successfully
+            Model "{createdName}" created successfully
           </p>
         ),
         duration: 3000,
       })
       navigate(`/model/${modelId}`)
-      setData(initialState)
-      setSelectedTemplateId(null)
     } catch (error) {
       if (isAxiosError(error)) {
         setError(error.response?.data?.message || 'Something went wrong')
@@ -194,11 +226,19 @@ const FormCreateModel = () => {
           placeholder="Model name"
           data-id="form-create-model-input-name"
         />
+        {isDuplicateName && (
+          <DaDuplicateNameHint
+            message="A model with this name already exists"
+            suggestedName={suggestedName}
+            onApplySuggestion={(name) => handleChange('name', name)}
+            className="text-sm text-secondary mt-2"
+          />
+        )}
       </div>
 
       <div className="mt-4" />
 
-      <p className="text-base font-medium">Signal *</p>
+      <p className="text-base font-medium text-primary">Signal *</p>
       <div className="border mt-1 rounded-lg p-2">
         <div className="flex items-stretch gap-2">
           {!data.api_data_url && (
@@ -281,9 +321,9 @@ const FormCreateModel = () => {
       {error && <p className="text-sm mt-2 text-destructive">{error}</p>}
       {/* Action */}
       <Button
-        disabled={loading || uploading}
+        disabled={loading || uploading || !data.name.trim() || isDuplicateName}
         type="submit"
-        className="mt-8 w-full"
+        className={cn('mt-8 w-full', gradientHeader && 'bg-gradient-to-r from-primary to-secondary border-0')}
         data-id="form-create-model-btn-submit"
       >
         {loading && <TbLoader className="mr-2 animate-spin text-lg" />}

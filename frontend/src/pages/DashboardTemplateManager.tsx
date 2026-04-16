@@ -1,141 +1,17 @@
 // Copyright (c) 2025 Eclipse Foundation.
 // SPDX-License-Identifier: MIT
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
     listDashboardTemplates,
-    createDashboardTemplate,
-    updateDashboardTemplate,
     deleteDashboardTemplate,
-    getDashboardTemplateById,
     type DashboardTemplate,
 } from '@/services/dashboardTemplate.service'
 import { Button } from '@/components/atoms/button'
-import { Input } from '@/components/atoms/input'
-import { Textarea } from '@/components/atoms/textarea'
-import { Label } from '@/components/atoms/label'
-import DaDialog from '@/components/molecules/DaDialog'
+import DashboardTemplateEditor from '@/components/molecules/dashboard/DashboardTemplateEditor'
 import { TbPencil, TbTrash, TbLayoutDashboard } from 'react-icons/tb'
 import { toast } from 'react-toastify'
-
-interface FormState {
-    name: string
-    description: string
-}
-
-const emptyForm: FormState = {
-    name: '',
-    description: '',
-}
-
-function DashboardTemplateForm({
-    open,
-    onOpenChange,
-    editId,
-    onSuccess,
-}: {
-    open: boolean
-    onOpenChange: (v: boolean) => void
-    editId?: string
-    onSuccess: () => void
-}) {
-    const qc = useQueryClient()
-    const isEdit = !!editId
-    const [form, setForm] = useState<FormState>(emptyForm)
-
-    const { data: editData } = useQuery({
-        queryKey: ['dashboard-template-edit', editId],
-        queryFn: () => getDashboardTemplateById(editId!),
-        enabled: isEdit && open,
-    })
-
-    useEffect(() => {
-        if (editData) {
-            setForm({
-                name: editData.name || '',
-                description: editData.description || '',
-            })
-        } else if (!open) {
-            setForm(emptyForm)
-        }
-    }, [editData, open])
-
-    const save = useMutation({
-        mutationFn: async () => {
-            const payload = {
-                name: form.name,
-                description: form.description,
-            }
-            if (isEdit) return updateDashboardTemplate(editId!, payload)
-            return createDashboardTemplate(payload)
-        },
-        onSuccess: () => {
-            toast.success(isEdit ? 'Template updated' : 'Template created')
-            qc.invalidateQueries({ queryKey: ['dashboard-templates'] })
-            onOpenChange(false)
-            onSuccess()
-        },
-        onError: (e: any) =>
-            toast.error(e?.response?.data?.message || e.message || 'Save failed'),
-    })
-
-    return (
-        <DaDialog
-            open={open}
-            onOpenChange={(v) => {
-                if (!v) setForm(emptyForm)
-                onOpenChange(v)
-            }}
-            className="w-[680px] max-w-[calc(100vw-80px)]"
-        >
-            <div className="p-6 space-y-4">
-                <h2 className="text-lg font-semibold">
-                    {isEdit ? 'Edit Dashboard Template' : 'New Dashboard Template'}
-                </h2>
-
-                <div className="space-y-2">
-                    <Label>Name *</Label>
-                    <Input
-                        value={form.name}
-                        onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                        placeholder="Template name"
-                    />
-                </div>
-
-                <div className="space-y-2">
-                    <Label>Description</Label>
-                    <Textarea
-                        value={form.description}
-                        onChange={(e) =>
-                            setForm((f) => ({ ...f, description: e.target.value }))
-                        }
-                        placeholder="Short description"
-                        rows={2}
-                    />
-                </div>
-
-                <div className="flex justify-end gap-2 pt-2">
-                    <Button
-                        variant="outline"
-                        onClick={() => {
-                            setForm(emptyForm)
-                            onOpenChange(false)
-                        }}
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        onClick={() => save.mutate()}
-                        disabled={!form.name.trim() || save.isPending}
-                    >
-                        {save.isPending ? 'Saving…' : isEdit ? 'Update' : 'Create'}
-                    </Button>
-                </div>
-            </div>
-        </DaDialog>
-    )
-}
 
 export default function DashboardTemplateManager() {
     const qc = useQueryClient()
@@ -192,9 +68,16 @@ export default function DashboardTemplateManager() {
                                 <TbLayoutDashboard className="size-10 text-muted-foreground" />
                             )}
                         </div>
-                        <h3 className="text-base font-semibold text-foreground mt-3 truncate">
-                            {t.name}
-                        </h3>
+                        <div className="flex items-center gap-2 mt-3">
+                            <h3 className="text-base font-semibold text-foreground truncate">
+                                {t.name}
+                            </h3>
+                            {t.is_default && (
+                                <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide bg-primary text-primary-foreground rounded px-1.5 py-0.5">
+                                    Default
+                                </span>
+                            )}
+                        </div>
                         {t.description && (
                             <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                                 {t.description}
@@ -202,12 +85,14 @@ export default function DashboardTemplateManager() {
                         )}
                         <div className="mt-2 flex items-center justify-between">
                             <span
-                                className={`text-xs px-2 py-0.5 rounded-full font-medium ${t.visibility === 'public'
-                                    ? 'bg-green-100 text-green-700'
-                                    : 'bg-gray-100 text-gray-600'
+                                className={`text-xs px-2 py-0.5 rounded-full font-medium ${t.is_default
+                                    ? 'bg-primary/10 text-primary'
+                                    : t.visibility === 'public'
+                                        ? 'bg-green-100 text-green-700'
+                                        : 'bg-gray-100 text-gray-600'
                                     }`}
                             >
-                                {t.visibility}
+                                {t.is_default ? 'default' : t.visibility}
                             </span>
                             <div className="flex gap-1">
                                 <Button
@@ -248,7 +133,7 @@ export default function DashboardTemplateManager() {
                 )}
             </div>
 
-            <DashboardTemplateForm
+            <DashboardTemplateEditor
                 open={openForm}
                 onOpenChange={(v) => {
                     setOpenForm(v)

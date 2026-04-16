@@ -7,6 +7,8 @@ const { objectId } = require('./custom.validation');
 const list = {
   query: Joi.object().keys({
     name: Joi.string(),
+    visibility: Joi.string().valid('public', 'private'),
+    is_default: Joi.boolean(),
     sortBy: Joi.string(),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),
@@ -22,7 +24,8 @@ const create = {
     name: Joi.string().required().max(255),
     description: Joi.string().allow(''),
     image: Joi.string().allow(''),
-    visibility: Joi.string().valid('public', 'private'),
+    visibility: Joi.string().valid('public', 'private').default('public'),
+    is_default: Joi.boolean().default(false),
     widget_config: Joi.any(),
   }),
 };
@@ -35,6 +38,7 @@ const update = {
       description: Joi.string().allow(''),
       image: Joi.string().allow(''),
       visibility: Joi.string().valid('public', 'private'),
+      is_default: Joi.boolean(),
       widget_config: Joi.any(),
     })
     .min(1),

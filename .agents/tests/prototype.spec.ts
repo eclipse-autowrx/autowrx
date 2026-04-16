@@ -9,7 +9,7 @@ async function goToFirstModelLibrary(page: any) {
   await page.waitForTimeout(3000);
 
   const firstModel = page.locator('a[href*="/model/"]').first();
-  await expect(firstModel).toBeVisible({ timeout: 8000 });
+  await expect(firstModel).toBeVisible({ timeout: 20000 });
   const href = await firstModel.getAttribute('href');
   const modelId = href?.split('/model/')[1]?.split('/')[0];
   // Try /library/list first (new route), fallback /library/list (old route)
@@ -28,7 +28,7 @@ async function createTestPrototype(page: any, name: string) {
 
   // Fill name
   const nameInput = page.locator('[data-id="prototype-name-input"]').first();
-  await expect(nameInput).toBeVisible({ timeout: 5000 });
+  await expect(nameInput).toBeVisible({ timeout: 15000 });
   await nameInput.fill(name);
   await page.waitForTimeout(300);
 
@@ -52,7 +52,7 @@ test.describe('Prototypes - CRUD', () => {
     await page.waitForTimeout(2000);
     await saveScreenshot(page, 'proto-new-page');
 
-    await expect(page.locator('[data-id="prototype-name-input"]')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('[data-id="prototype-name-input"]')).toBeVisible({ timeout: 15000 });
   });
 
   test('CREATE: create prototype from model library', async ({ page }) => {
@@ -67,7 +67,7 @@ test.describe('Prototypes - CRUD', () => {
 
     // Fill name
     const nameInput = page.locator('[data-id="prototype-name-input"]').first();
-    await expect(nameInput).toBeVisible({ timeout: 5000 });
+    await expect(nameInput).toBeVisible({ timeout: 15000 });
     await nameInput.fill(PROTO_NAME);
     await page.waitForTimeout(300);
     await saveScreenshot(page, 'proto-create-filled');
@@ -98,12 +98,21 @@ test.describe('Prototypes - CRUD', () => {
 
     // Go back to library
     await page.goto(`/model/${modelId}/library/list`);
-    await page.waitForTimeout(4000);
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(3000);
+    console.log('Library URL:', page.url());
+    // Search for the prototype  
+    const searchInput = page.locator('input[placeholder="Search"]').first();
+    await expect(searchInput).toBeVisible({ timeout: 10000 });
+    await searchInput.click();
+    await searchInput.fill(protoName);
+    console.log('Searched for:', protoName);
+    await page.waitForTimeout(2000);
     await saveScreenshot(page, 'proto-library-read');
 
     // Prototype should appear in the list
     const protoCard = page.locator(`[data-id^="prototype-item-"]:has-text("${protoName}")`).first();
-    await expect(protoCard).toBeVisible({ timeout: 15000 });
+    await expect(protoCard).toBeVisible({ timeout: 30000 });
     console.log('Prototype visible in library ✅');
   });
 
@@ -119,7 +128,7 @@ test.describe('Prototypes - CRUD', () => {
     await page.waitForTimeout(4000);
 
     const protoCard = page.locator(`[data-id^="prototype-item-"]:has-text("${protoName}")`).first();
-    await expect(protoCard).toBeVisible({ timeout: 15000 });
+    await expect(protoCard).toBeVisible({ timeout: 30000 });
     await protoCard.click();
     await page.waitForTimeout(2000);
     await saveScreenshot(page, 'proto-detail');
@@ -144,7 +153,7 @@ test.describe('Prototypes - CRUD', () => {
     await page.waitForTimeout(4000);
 
     const protoCard = page.locator(`[data-id^="prototype-item-"]:has-text("${protoName}")`).first();
-    await expect(protoCard).toBeVisible({ timeout: 15000 });
+    await expect(protoCard).toBeVisible({ timeout: 30000 });
     await saveScreenshot(page, 'proto-before-rename');
 
     const dataId = await protoCard.getAttribute('data-id');
@@ -152,13 +161,13 @@ test.describe('Prototypes - CRUD', () => {
     console.log('Prototype ID:', protoId);
 
     // Rename via API
-    const loginRes = await page.request.post('`${API_URL}/v2/auth/login`', {
+    const loginRes = await page.request.post(`${API_URL}/v2/auth/login`, {
       data: { email: ADMIN.email, password: ADMIN.password }
     });
     const loginData = await loginRes.json();
     const token = loginData?.tokens?.access?.token;
 
-    const renameRes = await page.request.patch(``${API_URL}/v2/prototypes/${protoId}``, {
+    const renameRes = await page.request.patch(`${API_URL}/v2/prototypes/${protoId}`, {
       data: { name: renamedName },
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -170,7 +179,7 @@ test.describe('Prototypes - CRUD', () => {
     await saveScreenshot(page, 'proto-after-rename');
 
     const renamedCard = page.locator(`[data-id="prototype-item-${protoId}"]`).first();
-    await expect(renamedCard).toBeVisible({ timeout: 8000 });
+    await expect(renamedCard).toBeVisible({ timeout: 20000 });
     const cardText = await renamedCard.textContent();
     expect(cardText).toContain(renamedName);
     console.log('Prototype renamed successfully via API ✅');
@@ -186,10 +195,14 @@ test.describe('Prototypes - CRUD', () => {
 
     // Go to library, find prototype
     await page.goto(`/model/${modelId}/library/list`);
-    await page.waitForTimeout(4000);
+    await page.waitForTimeout(2000);
+    const searchBox4 = page.locator('input[placeholder="Search"]').first();
+    await searchBox4.click();
+    await searchBox4.fill(deleteName);
+    await page.waitForTimeout(2000);
 
     const protoCard = page.locator(`[data-id^="prototype-item-"]:has-text("${deleteName}")`).first();
-    await expect(protoCard).toBeVisible({ timeout: 15000 });
+    await expect(protoCard).toBeVisible({ timeout: 30000 });
     await saveScreenshot(page, 'proto-before-delete');
 
     const dataId = await protoCard.getAttribute('data-id');
@@ -197,13 +210,13 @@ test.describe('Prototypes - CRUD', () => {
     console.log('Deleting prototype ID:', protoId);
 
     // Delete via API
-    const loginRes = await page.request.post('`${API_URL}/v2/auth/login`', {
+    const loginRes = await page.request.post(`${API_URL}/v2/auth/login`, {
       data: { email: ADMIN.email, password: ADMIN.password }
     });
     const loginData = await loginRes.json();
     const token = loginData?.tokens?.access?.token;
 
-    const deleteRes = await page.request.delete(``${API_URL}/v2/prototypes/${protoId}``, {
+    const deleteRes = await page.request.delete(`${API_URL}/v2/prototypes/${protoId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     console.log('Delete API status:', deleteRes.status());

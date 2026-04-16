@@ -7,10 +7,11 @@
 // SPDX-License-Identifier: MIT
 
 import { User } from '@/types/user.type.ts'
-import { TbCube, TbLogout, TbUser } from 'react-icons/tb'
-import { BsBox } from 'react-icons/bs'
+import { TbCube, TbFolders, TbLogout, TbUser } from 'react-icons/tb'
 import { Button } from '@/components/atoms/button'
 import useAuthStore from '@/stores/authStore'
+import usePermissionHook from '@/hooks/usePermissionHook.ts'
+import { PERMISSIONS } from '@/const/permission.ts'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +26,7 @@ interface DaUserDropdownProps {
 
 const DaUserMenu = ({ user }: DaUserDropdownProps) => {
   const logOut = useAuthStore((state) => state.logOut)
+  const [isAdmin] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
 
   const handleLogout = async () => {
     try {
@@ -55,7 +57,7 @@ const DaUserMenu = ({ user }: DaUserDropdownProps) => {
               to="/profile"
               className="flex items-center gap-2 cursor-pointer"
             >
-              <TbUser /> User Profile
+              <TbUser className="text-base shrink-0" /> User Profile
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
@@ -63,11 +65,21 @@ const DaUserMenu = ({ user }: DaUserDropdownProps) => {
               to="/my-assets"
               className="flex items-center gap-2 cursor-pointer"
             >
-              <TbCube /> My Assets
+              <TbCube className="text-base shrink-0" /> My Assets
             </Link>
           </DropdownMenuItem>
+          {!isAdmin && (
+            <DropdownMenuItem asChild>
+              <Link
+                to="/my-workspaces"
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                <TbFolders className="text-base shrink-0" /> My Workspaces
+              </Link>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
-            <TbLogout /> Logout
+            <TbLogout className="text-base shrink-0" /> Logout
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

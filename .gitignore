@@ -10,7 +10,6 @@ node_modules/
 
 **/stats.html
 
-data/
 
 ### Logs
 logs
@@ -109,6 +108,7 @@ temp/
 backend/static/builtin-widgets/3d-car/models/acme_lite.glb
 
 plans/
+instance-setup/data/
 
 # Terraform
 .terraform/

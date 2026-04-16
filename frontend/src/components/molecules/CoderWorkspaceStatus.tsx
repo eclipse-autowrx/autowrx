@@ -1,240 +1,322 @@
-// Copyright (c) 2025 Eclipse Foundation.
-//
-// This program and the accompanying materials are made available under the
-// terms of the MIT License which is available at
-// https://opensource.org/licenses/MIT.
-//
-// SPDX-License-Identifier: MIT
-
-import { FC } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
+import { XIcon, CheckIcon } from 'lucide-react'
 import { Spinner } from '@/components/atoms/spinner'
-import { WorkspaceAgentLog, WorkspaceStatus, WorkspaceTimings } from '@/services/coder.service'
+import { cn } from '@/lib/utils'
+import { useToast } from '@/components/molecules/toaster/use-toast'
 
 interface CoderWorkspaceStatusProps {
-  status: WorkspaceStatus
-  error?: string | null
-  timings?: WorkspaceTimings | null
-  logs?: WorkspaceAgentLog[]
+  prepareError?: string | null
+  watchEvents: any[]
+  logEvents: any[]
+  className?: string
 }
 
-const CoderWorkspaceStatus: FC<CoderWorkspaceStatusProps> = ({
-  status,
-  error,
-  timings,
-  logs,
-}) => {
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full gap-4 p-8">
-        <div className="text-red-500 text-center">
-          <p className="font-semibold mb-2">Failed to load workspace</p>
-          <p className="text-sm">{error}</p>
-        </div>
-      </div>
+const STAGE_PROGRESS_MAP: Record<string, number> = {
+  'Setting up': 10,
+  'Initializing Terraform Directory': 30,
+  'Planning Infrastructure': 55,
+  'Starting workspace': 80,
+  'Cleaning Up': 95,
+  'Loading VS Code': 98,
+}
+
+const CHECKPOINTS = [
+  'Setting up',
+  'Initializing Terraform Directory',
+  'Planning Infrastructure',
+  'Starting workspace',
+  'Cleaning Up',
+  'Loading VS Code',
+] as const
+
+const CoderWorkspaceStatus = ({
+  prepareError,
+  watchEvents,
+  logEvents,
+  className,
+}: CoderWorkspaceStatusProps) => {
+  const { toast } = useToast()
+  const lastErrorToastRef = useRef<string | null>(null)
+  const logsContainerRef = useRef<HTMLDivElement | null>(null)
+
+  const model = useMemo(() => {
+    const watchSocketEvents = watchEvents.filter(
+      (event) => event?.type === 'socket' && typeof event?.event === 'string',
     )
-  }
-
-  if (!status.exists) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full gap-4 p-8">
-        <Spinner className="w-8 h-8" />
-        <p className="text-muted-foreground">Loading workspace...</p>
-      </div>
+    const logsSocketEvents = logEvents.filter(
+      (event) => event?.type === 'socket' && typeof event?.event === 'string',
     )
-  }
 
-  const statusMessages: Record<string, string> = {
-    pending: 'Preparing workspace...',
-    starting: 'Workspace is starting...',
-    running: 'Workspace is starting...',
-    stopping: 'Stopping workspace...',
-    stopped: 'Workspace is stopped',
-    failed: 'Workspace failed to start',
-    canceling: 'Canceling workspace...',
-    canceled: 'Workspace loading canceled',
-    unknown: 'Checking workspace status...',
-    not_created: 'Loading workspace...',
-  }
+    const watchSocketState = watchSocketEvents.at(-1)?.event ?? 'pending'
+    const logsSocketState = logsSocketEvents.at(-1)?.event ?? 'pending'
+    const watchCloseEvent = [...watchSocketEvents]
+      .reverse()
+      .find((event) => event?.event === 'close')
+    const logsCloseEvent = [...logsSocketEvents]
+      .reverse()
+      .find((event) => event?.event === 'close')
 
-  const statusMessage =
-    statusMessages[status.status || 'unknown'] || 'Checking workspace status...'
+    const latestWorkspace = watchEvents
+      .filter((event) => event?.type === 'data' && event?.data)
+      .at(-1)?.data
 
-  const isReady = status.status === 'running'
-  const isError = status.status === 'failed' || status.status === 'canceled'
-  const isInProgress =
-    status.status === 'pending' ||
-    status.status === 'starting' ||
-    status.status === 'not_created'
+    const latestBuild = latestWorkspace?.latest_build
+    const jobStatus = latestBuild?.job?.status ?? null
+    const buildStatus = latestBuild?.status ?? null
 
-  const scriptTimings = Array.isArray((timings as any)?.agent_script_timings)
-    ? ((timings as any).agent_script_timings as { display_name?: string; status?: string }[])
-    : []
-  const isCodeServerReady = scriptTimings.some(
-    (t) => t.display_name === 'code-server' && t.status === 'ok',
-  )
-  const showTopSpinner = !isError && (!isReady || (isReady && !isCodeServerReady))
-  const hasLiveLogs = Array.isArray(logs) && logs.length > 0
-  const showLoadingSection = !hasLiveLogs || isError
+    const agents =
+      latestBuild?.resources?.flatMap((resource: any) => resource?.agents ?? []) ?? []
+    const stageEvents = logEvents.filter(
+      (event) => event?.stage && event?.type !== 'socket',
+    )
+    const latestStage = stageEvents.at(-1)?.stage ?? null
+    const allLogLines = logEvents
+      .filter((event) => event?.type !== 'socket')
+      .map((event) => {
+        const stage = event?.stage ? `[${event.stage}] ` : ''
+        const output = typeof event?.output === 'string' ? event.output : ''
+        const fallback = output || event?.message || ''
+        const line = `${stage}${fallback}`.trim()
+        const isError =
+          event?.log_level === 'error' ||
+          (typeof event?.output === 'string' && event.output.toLowerCase().includes('error'))
+        return { text: line, isError }
+      })
+      .filter((line) => Boolean(line.text))
+    const derivedErrorLines: Array<{ text: string; isError: boolean }> = []
+
+    const hasConnectedAgent = agents.some((agent: any) => agent?.status === 'connected')
+    const hasBuildSucceeded =
+      jobStatus === 'succeeded' &&
+      (hasConnectedAgent || buildStatus === 'running')
+    const isAgentConnectingAfterBuild =
+      jobStatus === 'succeeded' &&
+      !hasConnectedAgent &&
+      buildStatus === 'running'
+    const effectiveStage = isAgentConnectingAfterBuild
+      ? 'Loading VS Code'
+      : latestStage
+    const hasBuildFailed = jobStatus === 'failed' || jobStatus === 'canceled'
+    const hasErrorLog = logEvents.some(
+      (event) =>
+        event?.type !== 'socket' &&
+        (event?.log_level === 'error' ||
+          (typeof event?.output === 'string' &&
+            event.output.toLowerCase().includes('error'))),
+    )
+    const hasSocketError =
+      watchSocketState === 'error' ||
+      logsSocketState === 'error' ||
+      (watchCloseEvent && watchCloseEvent.code !== 1000) ||
+      (logsCloseEvent &&
+        logsCloseEvent.code !== 1000 &&
+        logsCloseEvent.reason !== 'upstream closed')
+
+    if (prepareError) {
+      derivedErrorLines.push({
+        text: `[ERROR] Prepare workspace failed: ${prepareError}`,
+        isError: true,
+      })
+    }
+    if (hasBuildFailed) {
+      derivedErrorLines.push({
+        text: `[ERROR] Build job status: ${jobStatus}`,
+        isError: true,
+      })
+    }
+    if (watchSocketState === 'error') {
+      derivedErrorLines.push({ text: '[ERROR] watch-ws connection error', isError: true })
+    }
+    if (logsSocketState === 'error') {
+      derivedErrorLines.push({ text: '[ERROR] logs-ws connection error', isError: true })
+    }
+    if (watchCloseEvent && watchCloseEvent.code !== 1000) {
+      derivedErrorLines.push({
+        text: `[ERROR] watch-ws closed unexpectedly (code=${watchCloseEvent.code}${watchCloseEvent.reason ? `, reason=${watchCloseEvent.reason}` : ''})`,
+        isError: true,
+      })
+    }
+    if (
+      logsCloseEvent &&
+      logsCloseEvent.code !== 1000 &&
+      logsCloseEvent.reason !== 'upstream closed'
+    ) {
+      derivedErrorLines.push({
+        text: `[ERROR] logs-ws closed unexpectedly (code=${logsCloseEvent.code}${logsCloseEvent.reason ? `, reason=${logsCloseEvent.reason}` : ''})`,
+        isError: true,
+      })
+    }
+
+    let progress = 5
+    if (effectiveStage && STAGE_PROGRESS_MAP[effectiveStage]) {
+      progress = STAGE_PROGRESS_MAP[effectiveStage]
+    } else if (watchSocketState === 'open' || logsSocketState === 'open') {
+      progress = 12
+    }
+    if (hasBuildSucceeded) progress = 100
+    if (hasBuildFailed) progress = Math.max(progress, 95)
+
+    const failureReason =
+      prepareError ||
+      (hasBuildFailed ? `Build job ${jobStatus}` : null) ||
+      (hasErrorLog ? 'Error found in build logs' : null) ||
+      (hasSocketError ? 'Realtime connection lost while workspace is starting' : null) ||
+      (logsSocketState === 'skipped' ? 'Missing workspace build id for logs stream' : null)
+
+    const phase = failureReason
+      ? 'failed'
+      : hasBuildSucceeded
+        ? 'ready'
+        : 'starting'
+
+    const titleText =
+      phase === 'ready'
+        ? 'Workspace is ready'
+        : phase === 'failed'
+          ? 'Workspace startup failed'
+          : 'Workspace is starting'
+
+    const activeCheckpointIndex = effectiveStage
+      ? CHECKPOINTS.indexOf(effectiveStage as (typeof CHECKPOINTS)[number])
+      : -1
+
+    return {
+      allLogLines: [...derivedErrorLines, ...allLogLines],
+      progress,
+      phase,
+      titleText,
+      activeCheckpointIndex,
+      failureReason,
+    }
+  }, [prepareError, watchEvents, logEvents])
+
+  useEffect(() => {
+    if (!model.failureReason) return
+    if (lastErrorToastRef.current === model.failureReason) return
+
+    toast({
+      title: 'Workspace startup failed',
+      description: model.failureReason,
+      variant: 'destructive',
+    })
+    lastErrorToastRef.current = model.failureReason
+  }, [model.failureReason, toast])
+
+  useEffect(() => {
+    const container = logsContainerRef.current
+    if (!container) return
+    container.scrollTop = container.scrollHeight
+  }, [model.allLogLines.length])
 
   return (
-    <div className="flex flex-col min-h-screen gap-6 p-6 max-w-5xl mx-auto">
-      {showLoadingSection && (
-        <div className="flex flex-1 flex-col items-center justify-center gap-4">
-          {showTopSpinner && <Spinner className="w-8 h-8" />}
-          {isError && <div className="text-red-500 text-4xl mb-2">⚠️</div>}
-          <p
-            className={`text-center text-lg font-medium ${isError ? 'text-red-500' : isReady ? 'text-primary' : 'text-muted-foreground'}`}
-          >
-            {statusMessage}
-          </p>
-          {isInProgress && (
-            <p className="text-sm text-muted-foreground text-center max-w-md">
-              This may take a few minutes. The workspace is being loaded and
-              configured...
-            </p>
-          )}
-          {isError && status.status === 'failed' && (
-            <p className="text-sm text-muted-foreground text-center max-w-md">
-              The workspace failed to start. Please try refreshing the page or
-              contact support if the issue persists.
-            </p>
-          )}
-        </div>
+    <div
+      className={cn(
+        'flex h-full min-h-0 flex-col p-3',
+        className,
       )}
+    >
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div>
+          <div className="text-sm font-semibold text-foreground">{model.titleText}</div>
+        </div>
+      </div>
 
-      {timings && (
-        <div className="mt-1 text-xs text-muted-foreground max-w-3xl text-left space-y-3 mx-auto w-full">
-          {/* Provisioner timings (unique stages only) */}
-          {Array.isArray((timings as any).provisioner_timings) &&
-            (timings as any).provisioner_timings.length > 0 && (
-              <div>
-                <p className="font-semibold text-[11px] mb-1">
-                  Provisioning stages
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  {Array.from(
-                    new Set(
-                      (timings as any).provisioner_timings
-                        .map((t: { stage?: string }) => t?.stage)
-                        .filter(Boolean),
-                    ),
-                  ).map((stage: any, idx: number) => (
-                    <span
-                      key={`prov-${idx}-${stage}`}
-                      className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase tracking-wide"
-                    >
-                      {stage}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
+      <div className="mb-4">
+        <div className="relative px-3 pt-1">
+          <div className="absolute left-3 right-3 top-4 h-0.5 bg-primary/30" />
+          <div className="absolute left-3 right-3 top-4 h-0.5">
+            <div
+              className={cn(
+                'h-full transition-all duration-500',
+                model.phase === 'failed' ? 'bg-red-500' : 'bg-primary',
+              )}
+              style={{ width: `${model.progress}%` }}
+            />
+          </div>
+          <div className="relative h-10 w-full">
+          {CHECKPOINTS.map((checkpoint, index) => {
+            const isDone =
+              model.phase === 'ready' ||
+              (model.activeCheckpointIndex >= 0 &&
+                index < model.activeCheckpointIndex)
+            const isActive =
+              model.phase === 'starting' &&
+              ((model.activeCheckpointIndex >= 0 &&
+                index === model.activeCheckpointIndex) ||
+                (model.activeCheckpointIndex < 0 && index === 0))
+            const isFuture =
+              model.phase === 'starting' &&
+              model.activeCheckpointIndex >= 0 &&
+              index > model.activeCheckpointIndex
 
-          {/* Agent script timings - display_name + status */}
-          {Array.isArray((timings as any).agent_script_timings) &&
-            (timings as any).agent_script_timings.length > 0 && (
-              <div>
-                <p className="font-semibold text-[11px] mb-1">Agent scripts</p>
-                <div className="flex flex-col gap-1">
-                  {(timings as any).agent_script_timings.map(
-                    (
-                      t: {
-                        display_name?: string
-                        status?: string
-                      },
-                      idx: number,
-                    ) =>
-                      t?.display_name && (
-                        <div
-                          key={`script-${idx}-${t.display_name}`}
-                          className="flex items-center justify-between rounded-md bg-muted/40 px-2 py-1"
-                        >
-                          <span className="text-[11px] font-medium">
-                            {t.display_name}
-                          </span>
-                          <span
-                            className={`text-[10px] uppercase tracking-wide ${
-                              t.status === 'ok'
-                                ? 'text-emerald-600'
-                                : 'text-amber-600'
-                            }`}
-                          >
-                            {t.status || 'pending'}
-                          </span>
-                        </div>
-                      ),
+            return (
+              <div
+                key={checkpoint}
+                className={cn(
+                  'absolute top-0 flex flex-col items-center gap-1',
+                  index === 0
+                    ? 'translate-x-0'
+                    : index === CHECKPOINTS.length - 1
+                      ? '-translate-x-full'
+                      : '-translate-x-1/2',
+                )}
+                style={{
+                  left: `${(index / (CHECKPOINTS.length - 1)) * 100}%`,
+                }}
+              >
+                <div
+                  className={cn(
+                    'relative z-10 flex h-6 w-6 items-center justify-center rounded-full border',
+                    model.phase === 'failed' && 'border-red-500 bg-red-50',
+                    isDone && model.phase !== 'failed' && 'border-primary bg-primary',
+                    isActive && 'border-primary bg-background',
+                    isFuture && 'border-primary/40 bg-background',
+                  )}
+                >
+                  {model.phase === 'failed' ? (
+                    <XIcon className="h-4 w-4 text-red-500" />
+                  ) : isDone ? (
+                    <CheckIcon className="h-4 w-4 text-white" />
+                  ) : isActive ? (
+                    <Spinner size={12} />
+                  ) : (
+                    <div className="h-1.5 w-1.5 rounded-full bg-primary/50" />
                   )}
                 </div>
-              </div>
-            )}
-
-          {/* Agent connection timings - stage only */}
-          {Array.isArray((timings as any).agent_connection_timings) &&
-            (timings as any).agent_connection_timings.length > 0 && (
-              <div>
-                <p className="font-semibold text-[11px] mb-1">
-                  Agent connection
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  {(timings as any).agent_connection_timings.map(
-                    (t: { stage?: string }, idx: number) =>
-                      t?.stage && (
-                        <span
-                          key={`conn-${idx}-${t.stage}`}
-                          className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase tracking-wide"
-                        >
-                          {t.stage}
-                        </span>
-                      ),
-                  )}
+                <div className="whitespace-nowrap text-center text-[10px] leading-3 text-muted-foreground">
+                  {checkpoint}
                 </div>
               </div>
-            )}
-        </div>
-      )}
-      {hasLiveLogs && (
-        <div className="mt-4 w-full max-w-4xl mx-auto flex-1 min-h-0">
-          <p className="text-[11px] font-semibold text-muted-foreground mb-2 uppercase tracking-wide">
-            Live logs
-          </p>
-          <div className="h-full max-h-[28rem] rounded-md bg-muted text-xs font-mono text-foreground overflow-y-auto border border-border/40 shadow-sm">
-            <pre className="p-3 whitespace-pre-wrap">
-              {logs.map((log, idx) => {
-                const time = log.created_at
-                  ? new Date(log.created_at).toISOString()
-                  : ''
-                const level = log.level ? log.level.toUpperCase() : ''
-                const prefixParts = [time, level].filter(Boolean)
-                const prefix = prefixParts.length > 0 ? `[${prefixParts.join(' ')}] ` : ''
-                const output = (log.output || '').replace(/\u001b\[[0-9;]*m/g, '')
-
-                return (
-                  <div key={`${log.id ?? idx}-${idx}`}>
-                    {output
-                      .split('\n')
-                      .filter((line) => line.trim().length > 0)
-                      .map((line, lineIdx) => (
-                        <div
-                          key={`${log.id ?? idx}-${lineIdx}`}
-                          className={
-                            line.includes(
-                              'Setup complete.',
-                            )
-                              ? 'text-emerald-300'
-                              : ''
-                          }
-                        >
-                          {prefix}
-                          {line}
-                        </div>
-                      ))}
-                  </div>
-                )
-              })}
-            </pre>
+            )
+          })}
           </div>
         </div>
-      )}
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col rounded-md border border-border bg-muted/20">
+        <div className="border-b border-border px-2 py-1 text-[11px] text-muted-foreground">
+          Build logs
+        </div>
+        <div ref={logsContainerRef} className="min-h-0 flex-1 overflow-y-auto p-2">
+          {model.allLogLines.length > 0 ? (
+            <div className="space-y-0.5 text-[11px] leading-5">
+              {model.allLogLines.map((line, index) => (
+                <div
+                  key={`${index}-${line.text.slice(0, 24)}`}
+                  className={cn(
+                    'whitespace-pre-wrap break-words',
+                    line.isError ? 'text-red-600' : 'text-foreground',
+                  )}
+                >
+                  {line.text}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-[11px] leading-5 text-foreground">Waiting for logs...</div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

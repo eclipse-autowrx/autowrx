@@ -1,0 +1,41 @@
+{
+  "name": "autowrx-runner",
+  "displayName": "AutoWRX Runner",
+  "description": "",
+  "publisher": "autowrx",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.110.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "workspaceContains:**/.autowrx_run",
+    "onStartupFinished"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "autowrx-runner.triggerFromWeb",
+        "title": "Trigger from Website"
+      }
+    ]
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "yarn run lint",
+    "test": "vscode-test",
+    "vsix": "vsce package --allow-missing-repository --skip-license"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "3.7.1",
+    "@types/vscode": "^1.110.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "eslint": "^9.39.3",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2"
+  }
+}

@@ -11,13 +11,24 @@ import { Button } from '../atoms/button'
 import { Input } from '../atoms/input'
 import { Textarea } from '../atoms/textarea'
 import { Label } from '../atoms/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../atoms/select'
 import { Trash2, Plus, MoveUp, MoveDown } from 'lucide-react'
 import DOMPurify from 'dompurify'
 
+export type NavBarActionType = 'link' | 'search'
+
 export interface NavBarAction {
+  type?: NavBarActionType
   label: string
   icon: string // SVG string
   url: string
+  placeholder?: string
 }
 
 interface NavBarActionsEditorProps {
@@ -36,6 +47,7 @@ const NavBarActionsEditor: React.FC<NavBarActionsEditorProps> = ({ value, onChan
 
   const handleAddAction = () => {
     const newAction: NavBarAction = {
+      type: 'link',
       label: '',
       icon: '',
       url: '',
@@ -92,27 +104,32 @@ const NavBarActionsEditor: React.FC<NavBarActionsEditorProps> = ({ value, onChan
               </Button>
             </div>
             <div className="flex items-center gap-2 flex-wrap p-2 bg-muted rounded-md border border-border">
-              {actions.map((action, index) => (
-                <a
-                  key={index}
-                  href={action.url || '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium hover:bg-background transition-colors"
-                >
-                  {action.icon && (
-                    <div
-                      dangerouslySetInnerHTML={{ 
-                        __html: DOMPurify.sanitize(action.icon, { 
-                          USE_PROFILES: { svg: true, svgFilters: true }
-                        }) 
-                      }}
-                      className="w-6 h-6 flex items-center justify-center"
-                    />
-                  )}
-                  {action.label && <span className="ml-1">{action.label}</span>}
-                </a>
-              ))}
+              {actions.map((action, index) => {
+                const actionType = action.type || 'link'
+                return (
+                  <span
+                    key={index}
+                    className="flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium hover:bg-background transition-colors cursor-default"
+                    title={actionType === 'search' ? 'Global Search' : action.url || ''}
+                  >
+                    {action.icon && (
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: DOMPurify.sanitize(action.icon, {
+                            USE_PROFILES: { svg: true, svgFilters: true }
+                          })
+                        }}
+                        className="w-6 h-6 flex items-center justify-center"
+                      />
+                    )}
+                    {actionType === 'search' ? (
+                      <span className="ml-1">{action.placeholder || 'Search'} <span className="text-xs text-muted-foreground">(search)</span></span>
+                    ) : (
+                      action.label && <span className="ml-1">{action.label}</span>
+                    )}
+                  </span>
+                )
+              })}
             </div>
           </div>
         ) : (
@@ -164,24 +181,65 @@ const NavBarActionsEditor: React.FC<NavBarActionsEditorProps> = ({ value, onChan
           </div>
 
           <div className='flex items-center gap-2'>
-
-            <div className="w-40">
-              <Label className="text-sm mb-1">Label</Label>
-              <Input
-                type="text"
-                value={action.label}
-                onChange={(e) => handleUpdateAction(index, 'label', e.target.value)}
-              />
+            <div className="w-32">
+              <Label className="text-sm mb-1">Type</Label>
+              <Select
+                value={action.type || 'link'}
+                onValueChange={(val) => {
+                  const updatedActions = [...actions]
+                  updatedActions[index] = {
+                    ...updatedActions[index],
+                    type: val as NavBarActionType,
+                    ...(val === 'search' ? { url: '', label: '' } : {}),
+                    ...(val === 'link' ? { placeholder: '' } : {}),
+                  }
+                  setActions(updatedActions)
+                  onChange(updatedActions)
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="link">Link</SelectItem>
+                  <SelectItem value="search">Search</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div className='flex-1'>  
-              <Label className="text-sm mb-1">URL</Label>
-              <Input
-                type="url"
-                value={action.url}
-                onChange={(e) => handleUpdateAction(index, 'url', e.target.value)}
-              />
-            </div>
+            {(action.type || 'link') === 'link' && (
+              <div className="w-40">
+                <Label className="text-sm mb-1">Label</Label>
+                <Input
+                  type="text"
+                  value={action.label}
+                  onChange={(e) => handleUpdateAction(index, 'label', e.target.value)}
+                />
+              </div>
+            )}
+
+            {(action.type || 'link') === 'search' && (
+              <div className="w-40">
+                <Label className="text-sm mb-1">Placeholder</Label>
+                <Input
+                  type="text"
+                  value={action.placeholder ?? ''}
+                  placeholder="Search"
+                  onChange={(e) => handleUpdateAction(index, 'placeholder', e.target.value)}
+                />
+              </div>
+            )}
+
+            {(action.type || 'link') === 'link' && (
+              <div className='flex-1'>
+                <Label className="text-sm mb-1">URL</Label>
+                <Input
+                  type="url"
+                  value={action.url}
+                  onChange={(e) => handleUpdateAction(index, 'url', e.target.value)}
+                />
+              </div>
+            )}
           </div>
 
           <div>

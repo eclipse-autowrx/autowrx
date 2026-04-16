@@ -1,0 +1,64 @@
+{
+  "telemetry.telemetryLevel": "off",
+  "update.mode": "none",
+  "extensions.autoUpdate": false,
+  "extensions.autoCheckUpdates": false,
+  "extensions.ignoreRecommendations": true,
+  "workbench.enableExperiments": false,
+  "security.workspace.trust.enabled": false,
+
+  "workbench.startupEditor": "none",
+  "workbench.tips.enabled": false,
+  "workbench.welcomePage.walkthroughs.openOnInstall": false,
+  "workbench.editor.limit.enabled": true,
+  "workbench.editor.limit.value": 5,
+  "breadcrumbs.enabled": false,
+  "explorer.decorations.colors": false,
+  "explorer.decorations.badges": false,
+
+  "editor.minimap.enabled": false,
+  "editor.renderWhitespace": "none",
+  "editor.cursorBlinking": "solid",
+  "editor.matchBrackets": "never",
+  "editor.cursorSmoothCaretAnimation": "off",
+  "editor.smoothScrolling": false,
+  "editor.codeLens": false,
+  "editor.inlayHints.enabled": "off",
+  "editor.wordBasedSuggestions": "matchingDocuments",
+  "workbench.list.smoothScrolling": false,
+  "workbench.reduceMotion": "on",
+
+  "chat.disableAIFeatures": true,
+  "js/ts.validate.enabled": false,
+  "js/ts.suggest.enabled": false,
+  "typescript.disableAutomaticTypeAcquisition": true,
+  "php.validate.enable": false,
+  "php.suggest.basic": false,
+  "css.validate": false,
+  "html.validate.scripts": false,
+  "html.validate.styles": false,
+  "json.validate.enable": false,
+  "markdown.validate.enabled": false,
+
+  "git.autofetch": false,
+  "search.followSymlinks": false,
+  "files.autoSave": "onFocusChange",
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/.venv/**": true
+  },
+  "search.exclude": {
+    "**/.git": true,
+    "**/.venv": true,
+    "**/node_modules": true,
+    "**/bower_components": true,
+    "**/*.code-search": true
+  },
+  "files.exclude": {
+    "**/.autowrx_out": true,
+    "**/.autowrx_run": true,
+    "**/.autowrx_cargo_run.lock": true
+  }
+}

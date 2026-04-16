@@ -106,10 +106,6 @@ const modelSchema = new mongoose.Schema(
       ref: 'CustomApiSet',
       default: [],
     },
-    gitea_org_name: {
-      type: String,
-      trim: true,
-    },
   },
   {
     timestamps: true,

@@ -263,7 +263,7 @@ const PageModelList = () => {
             ))}
           </div>
         ) : (
-          tabItems.map((tab) => (
+          tabItems.filter((tab) => tab.count > 0 || isLoading).map((tab) => (
             <DaTabItem
               key={tab.value}
               active={activeSection === tab.value}
@@ -303,7 +303,7 @@ const PageModelList = () => {
             {!error && (
               <>
                 <div className="pt-6 pb-2 flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-primary">
                     Select a vehicle model to start
                   </p>
                   {user && (
@@ -344,70 +344,32 @@ const PageModelList = () => {
                     </div>
                   )}
                 </div>
-
-                {user && (
+                {user && (filterModels(ownedModels).length > 0 || isLoading) && (
                   <ModelSection
                     title="My Models"
                     models={filterModels(ownedModels)}
                     isLoading={isLoading && ownedModels.length === 0}
-                    emptyText={
-                      searchQuery.trim()
-                        ? 'No models match your search.'
-                        : 'No models found. Please create a new model.'
-                    }
-                    emptyAction={
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => setCreateDialogOpen(true)}
-                        data-id="btn-empty-create-model"
-                      >
-                        <HiPlus className="mr-1 text-lg" />
-                        Create your first model
-                      </Button>
-                    }
-                    headerExtras={
-                      <div className="flex flex-col w-80 items-end gap-2">
-                        <div className="relative w-full max-w-sm">
-                          <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            type="text"
-                            placeholder="Search models..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-9"
-                            data-id="model-search-input"
-                          />
-                        </div>
-                      </div>
-                    }
+                    emptyText=""
                     sectionRef={myModelsRef}
                   />
                 )}
 
-                {user && (
+                {user && (filterModels(contributedModels).length > 0 || isLoading) && (
                   <ModelSection
                     title="My Contributions"
                     models={filterModels(contributedModels)}
                     isLoading={isLoading && contributedModels.length === 0}
-                    emptyText={
-                      searchQuery.trim()
-                        ? 'No models match your search.'
-                        : 'No contributions found.'
-                    }
+                    emptyText=""
                     sectionRef={myContribRef}
                   />
                 )}
 
+                {(filterModels(publicReleasedModels).length > 0 || isLoading) && (
                 <ModelSection
                   title="Public"
                   models={filterModels(publicReleasedModels)}
                   isLoading={isLoading && publicReleasedModels.length === 0}
-                  emptyText={
-                    searchQuery.trim()
-                      ? 'No models match your search.'
-                      : 'No public models found.'
-                  }
+                  emptyText=""
                   headerExtras={
                     !user ? (
                       <div className="relative w-full max-w-sm">
@@ -425,6 +387,7 @@ const PageModelList = () => {
                   }
                   sectionRef={publicRef}
                 />
+                )}
               </>
             )}
           </div>

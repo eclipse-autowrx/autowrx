@@ -26,6 +26,8 @@ import { SAMPLE_PROJECTS } from '@/data/sampleProjects'
 import useListModelPrototypes from '@/hooks/useListModelPrototypes'
 import useListVSSVersions from '@/hooks/useListVSSVersions'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
+import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
 import { addLog } from '@/services/log.service'
 import { createModelService, listModelsLite } from '@/services/model.service'
 import { listModelTemplates } from '@/services/modelTemplate.service'
@@ -53,8 +55,6 @@ interface FormNewPrototypeProps {
     onSuccess?: (modelId: string, prototypeId: string, prototypeName: string) => void
 }
 
-const DUPLICATE_NAME_ERROR =
-    'A prototype with this name already exists. Please choose a different name.'
 
 const FormNewPrototype = ({
     onClose,
@@ -147,26 +147,34 @@ const FormNewPrototype = ({
         }
     }, [allModels, isFetchingModels]) // eslint-disable-line react-hooks/exhaustive-deps
 
-    // Check for duplicate prototype name
+    const existingPrototypeNames = useMemo(
+        () => (!isCreatingNewModel && selectedModelId ? fetchedPrototypes?.map((p: Prototype) => p.name) ?? [] : []),
+        [fetchedPrototypes, isCreatingNewModel, selectedModelId],
+    )
+
+    const { isDuplicate: isDuplicatePrototypeName, suggestedName: suggestedPrototypeName } =
+        useDuplicateNameCheck(prototypeName, existingPrototypeNames)
+
+    const ownedModelNames = useMemo(
+        () => ownedModelsData?.results?.map((m) => m.name) ?? [],
+        [ownedModelsData],
+    )
+
+    const [debouncedModelName, setDebouncedModelName] = useState('')
     useEffect(() => {
-        if (fetchedPrototypes && selectedModelId && prototypeName) {
-            const nameExists = fetchedPrototypes.some(
-                (p: Prototype) => p.name.toLowerCase() === prototypeName.toLowerCase(),
-            )
-            if (nameExists) {
-                setError(DUPLICATE_NAME_ERROR)
-            } else if (error === DUPLICATE_NAME_ERROR) {
-                setError('')
-            }
-        }
-    }, [fetchedPrototypes, prototypeName, selectedModelId])
+        const timer = setTimeout(() => setDebouncedModelName(newModelName), 300)
+        return () => clearTimeout(timer)
+    }, [newModelName])
+
+    const { isDuplicate: isDuplicateModelName, suggestedName: suggestedModelName } =
+        useDuplicateNameCheck(debouncedModelName, ownedModelNames)
 
     const disabled =
         loading ||
         uploading ||
         !prototypeName.trim() ||
-        (isCreatingNewModel ? !newModelName.trim() : !selectedModelId) ||
-        !!error
+        (isCreatingNewModel ? !newModelName.trim() || isDuplicateModelName : !selectedModelId) ||
+        isDuplicatePrototypeName
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -270,6 +278,7 @@ const FormNewPrototype = ({
                     label="Model"
                     wrapperClassName="mt-4"
                     onValueChange={(value) => {
+                        setError('')
                         if (value === 'new') {
                             setIsCreatingNewModel(true)
                             setSelectedModelId('new')
@@ -296,15 +305,28 @@ const FormNewPrototype = ({
                     <DaInput
                         name="newModelName"
                         value={newModelName}
-                        onChange={(e) => setNewModelName(e.target.value)}
+                        onChange={(e) => {
+                            setNewModelName(e.target.value)
+                            setError('')
+                        }}
                         placeholder="Model name"
                         label="Model Name *"
                         inputClassName="bg-white"
                     />
+                    {isDuplicateModelName && (
+                        <DaDuplicateNameHint
+                            message="A model with this name already exists"
+                            suggestedName={suggestedModelName}
+                            onApplySuggestion={(name) => {
+                                setNewModelName(name)
+                                setError('')
+                            }}
+                        />
+                    )}
 
                     {/* Signal */}
                     <div>
-                        <Label className="text-sm font-medium">Signal *</Label>
+                        <Label className="text-sm font-medium text-primary">Signal *</Label>
                         <div className="border rounded-lg p-2 mt-1">
                             <div className="flex items-stretch gap-2">
                                 {!newModelApiDataUrl && (
@@ -437,7 +459,18 @@ const FormNewPrototype = ({
                 </DaText>
             </div>
 
-            {error && (
+            {isDuplicatePrototypeName && (
+                <DaDuplicateNameHint
+                    message="A prototype with this name already exists"
+                    suggestedName={suggestedPrototypeName}
+                    onApplySuggestion={(name) => {
+                        setPrototypeName(name)
+                        setError('')
+                    }}
+                />
+            )}
+
+            {error && !isDuplicatePrototypeName && (
                 <DaText variant="small" className="mt-4 text-red-500">
                     {error}
                 </DaText>

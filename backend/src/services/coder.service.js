@@ -7,25 +7,123 @@
 // SPDX-License-Identifier: MIT
 
 const axios = require('axios');
+const crypto = require('crypto');
+const path = require('path');
 const httpStatus = require('http-status');
-const config = require('../config/config');
 const logger = require('../config/logger');
 const ApiError = require('../utils/ApiError');
+/* eslint-disable no-use-before-define */
 
-const CODER_API_BASE = `${config.coder.url}/api/v2`;
+const coderConfig = require('../utils/coderConfig');
+
+const extractCollection = (payload, key) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.[key])) return payload[key];
+  return [];
+};
+
+const toCoderApiError = (error, fallbackStatus, fallbackPrefix = 'Coder API error') => {
+  const status = error?.response?.status || fallbackStatus;
+  const message = error?.response?.data?.message || error?.message || JSON.stringify(error?.response?.data || {});
+  return new ApiError(status, `${fallbackPrefix}: ${message}`);
+};
+
+const getCoderApiBase = () => {
+  const coderCfg = coderConfig.getCoderConfigSync();
+  if (!coderCfg.enabled) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
+  }
+
+  const base = String(coderCfg.coderUrl || '').replace(/\/$/, '');
+  if (!base) {
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'CODER_URL is not configured');
+  }
+
+  return `${base}/api/v2`;
+};
 
 const normalizeIdForName = (value) =>
   String(value || '')
     .toLowerCase()
     .replace(/[^a-z0-9]/g, '');
 
+const assertUserScopedPrototypePath = (prototypesHostPath, expectedUserHostPath) => {
+  const rawInput = String(prototypesHostPath || '').trim();
+  const rawExpected = String(expectedUserHostPath || '').trim();
+  if (!rawInput || !rawExpected) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid prototypes host path for workspace provisioning');
+  }
+  const resolvedInput = path.resolve(rawInput);
+  const resolvedExpected = path.resolve(rawExpected);
+  if (resolvedInput !== resolvedExpected) {
+    throw new ApiError(
+      httpStatus.FORBIDDEN,
+      `Invalid prototypes host path. Expected user-scoped path "${resolvedExpected}"`,
+    );
+  }
+};
+
 /**
  * Get Coder API headers with admin token
  */
-const getAdminHeaders = () => ({
-  'Coder-Session-Token': config.coder.adminApiKey,
-  'Content-Type': 'application/json',
-});
+const getAdminHeaders = () => {
+  const coderCfg = coderConfig.getCoderConfigSync();
+  if (!coderCfg.enabled) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
+  }
+  if (!coderCfg.adminApiKey) {
+    throw new ApiError(httpStatus.SERVICE_UNAVAILABLE, 'CODER_ADMIN_API_KEY is not configured');
+  }
+
+  return {
+    'Coder-Session-Token': coderCfg.adminApiKey,
+    'Content-Type': 'application/json',
+  };
+};
+
+const getHeadersWithToken = (sessionToken) => {
+  if (!sessionToken) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Missing Coder session token');
+  }
+  return {
+    'Coder-Session-Token': sessionToken,
+    'Content-Type': 'application/json',
+  };
+};
+
+const TOKEN_LIFETIME_DURATION = '168h'; // 7d
+const delay = (ms) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
+/**
+ * Generate a user-scoped token for Coder API calls.
+ *
+ * Admin API key is only used here to mint a safer token. All subsequent
+ * workspace operations should use the returned token via getHeadersWithToken().
+ *
+ * Note: intentionally no DB caching/refresh bookkeeping to keep token flow simple.
+ *
+ * @param {import('mongoose').Document & {coder_username?: string}} user
+ * @param {Object} [options]
+ * @param {string} [options.workspaceId] - If provided, restrict token allow-list to this workspace.
+ * @param {string} [options.coderUserId] - Preferred Coder user UUID for path targeting.
+ * @returns {Promise<string>} scoped token
+ */
+const getOrCreateUserScopedToken = async (user, options = {}) => {
+  const { workspaceId, coderUserId } = options;
+  if (!user?.coder_username) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Coder user not found. Prepare workspace first.');
+  }
+
+  const token = await generateSessionToken(user.coder_username, { workspaceId, coderUserId });
+  if (!token) {
+    throw new ApiError(httpStatus.SERVICE_UNAVAILABLE, 'Failed to generate Coder user-scoped token');
+  }
+
+  return token;
+};
 
 /**
  * Get default organization (Coder Community Edition only supports one default org)
@@ -34,17 +132,11 @@ const getAdminHeaders = () => ({
 const getOrCreateDefaultOrganization = async () => {
   try {
     // Get all organizations
-    const orgsResponse = await axios.get(`${CODER_API_BASE}/organizations`, {
+    const orgsResponse = await axios.get(`${getCoderApiBase()}/organizations`, {
       headers: getAdminHeaders(),
     });
 
-    // Handle both response formats: array directly or wrapped in 'organizations' property
-    let organizations = [];
-    if (Array.isArray(orgsResponse.data)) {
-      organizations = orgsResponse.data;
-    } else if (orgsResponse.data?.organizations && Array.isArray(orgsResponse.data.organizations)) {
-      organizations = orgsResponse.data.organizations;
-    }
+    const organizations = extractCollection(orgsResponse.data, 'organizations');
 
     logger.info(`Found ${organizations.length} organization(s) in Coder`);
     if (organizations.length > 0) {
@@ -79,11 +171,11 @@ const getOrCreateDefaultOrganization = async () => {
       logger.warn(`No organizations found via organizations endpoint, trying to get from admin user...`);
       try {
         // Get the admin user to find their organization
-        const usersResponse = await axios.get(`${CODER_API_BASE}/users`, {
+        const usersResponse = await axios.get(`${getCoderApiBase()}/users`, {
           headers: getAdminHeaders(),
         });
 
-        const users = Array.isArray(usersResponse.data) ? usersResponse.data : usersResponse.data?.users || [];
+        const users = extractCollection(usersResponse.data, 'users');
 
         // Find the first user with organization_ids
         const userWithOrg = users.find((u) => u.organization_ids && u.organization_ids.length > 0);
@@ -121,7 +213,7 @@ const getOrCreateDefaultOrganization = async () => {
  * Generate random password for Coder users (they won't use it)
  */
 const generateRandomPassword = () => {
-  return `pwd_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+  return `pwd_${crypto.randomBytes(24).toString('base64url')}`;
 };
 
 /**
@@ -137,7 +229,7 @@ const ensureUserIsActive = async (user) => {
   }
 
   try {
-    await axios.put(`${CODER_API_BASE}/users/${user.id}/status/activate`, {}, { headers: getAdminHeaders() });
+    await axios.put(`${getCoderApiBase()}/users/${user.id}/status/activate`, {}, { headers: getAdminHeaders() });
     logger.info(`Activated Coder user: ${user.username} (${user.id}) from status ${user.status}`);
     return { ...user, status: 'active' };
   } catch (error) {
@@ -156,7 +248,7 @@ const ensureUserIsActive = async (user) => {
 const ensureUserExists = async (userId, username, email) => {
   try {
     // Check if user exists
-    const usersResponse = await axios.get(`${CODER_API_BASE}/users`, {
+    const usersResponse = await axios.get(`${getCoderApiBase()}/users`, {
       headers: getAdminHeaders(),
       params: { q: username },
     });
@@ -174,7 +266,7 @@ const ensureUserExists = async (userId, username, email) => {
 
     // Create new user with organization
     const createResponse = await axios.post(
-      `${CODER_API_BASE}/users`,
+      `${getCoderApiBase()}/users`,
       {
         email,
         username,
@@ -219,15 +311,12 @@ const ensureUserExists = async (userId, username, email) => {
       })}`,
     );
     if (error.response) {
-      throw new ApiError(
-        error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
-        `Coder API error: ${error.response.data?.message || error.message || JSON.stringify(error.response.data)}`,
-      );
+      throw toCoderApiError(error, httpStatus.INTERNAL_SERVER_ERROR);
     }
     if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
       throw new ApiError(
         httpStatus.SERVICE_UNAVAILABLE,
-        `Cannot connect to Coder at ${config.coder.url}. Is Coder running?`,
+        `Cannot connect to Coder at ${coderConfig.getCoderConfigSync().coderUrl}. Is Coder running?`,
       );
     }
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, `Coder service error: ${error.message}`);
@@ -235,88 +324,49 @@ const ensureUserExists = async (userId, username, email) => {
 };
 
 /**
- * Generate a session token for a user (impersonation)
+ * Generate a user-scoped session token with optional allow-list restrictions.
  * Note: Token generation may not be available in all Coder versions.
  * For iframe embedding, the workspace URL can be used directly without a token.
  * @param {string} coderUsername - Coder username
+ * @param {Object} [options]
+ * @param {string} [options.workspaceId] - Restrict token to a single workspace
+ * @param {string} [options.coderUserId] - Preferred Coder user UUID for endpoint path
  * @returns {Promise<string|null>} Session token or null if not available
  */
-const generateSessionToken = async (coderUsername) => {
-  const tokenEndpoints = [
-    {
-      url: `${CODER_API_BASE}/users/${coderUsername}/tokens`,
-      body: {
-        name: `autowrx-session-${Date.now()}`,
-        lifetime: 86400000, // 24 hours in milliseconds
-        scope: 'workspace:*', // Full workspace access
-      },
-    },
-    {
-      // Backward-compatible endpoint on older/newer Coder variants.
-      url: `${CODER_API_BASE}/users/${coderUsername}/keys/tokens`,
-      body: {
-        token_name: `autowrx-session-${Date.now()}`,
-        lifetime: 86400000,
-        scope: 'workspace:*',
-      },
-    },
-    {
-      // Some deployments expose /keys directly for API key creation.
-      url: `${CODER_API_BASE}/users/${coderUsername}/keys`,
-      body: {
-        token_name: `autowrx-session-${Date.now()}`,
-        lifetime: 86400000,
-        scope: 'workspace:*',
-      },
-    },
-  ];
+async function generateSessionToken(coderUsername, options = {}) {
+  const { workspaceId, coderUserId } = options;
+  const userPathId = encodeURIComponent(coderUserId || coderUsername);
 
   try {
-    for (const endpoint of tokenEndpoints) {
-      try {
-        const response = await axios.post(endpoint.url, endpoint.body, { headers: getAdminHeaders() });
-        const token = response.data?.key || response.data?.token || response.data?.id || response.data;
-        if (!token) {
-          logger.warn(
-            `Token creation succeeded via ${endpoint.url} but no token was returned for user: ${coderUsername}`,
-          );
-          return null;
-        }
-        logger.info(`Generated Coder session token for user: ${coderUsername} via ${endpoint.url}`);
-        return typeof token === 'string' ? token : JSON.stringify(token);
-      } catch (endpointError) {
-        if (endpointError.response?.status === 404) {
-          logger.warn(`Token endpoint unavailable (404): ${endpoint.url}`);
-          continue;
-        }
-        logger.warn(
-          `Token endpoint failed (${endpointError.response?.status || endpointError.code || 'unknown'}): ${endpoint.url}`,
-        );
-        continue;
-      }
+    // Coder Users API: POST /users/{user}/keys/tokens
+    const url = `${getCoderApiBase()}/users/${userPathId}/keys/tokens`;
+    const minimalBody = {
+      token_name: `autowrx-session-${Date.now()}`,
+      scope: 'all',
+    };
+    const response = await axios.post(url, minimalBody, { headers: getAdminHeaders() });
+
+    const token = response.data?.key;
+    if (!token) {
+      logger.warn(`Token creation succeeded via ${url} but no token was returned for user: ${coderUsername}`);
+      return null;
     }
 
-    logger.warn(`No supported token endpoint is available for user: ${coderUsername}`);
-    return null;
+    logger.info(
+      `Generated user-scoped Coder session token for user: ${coderUsername} via ${url}`,
+    );
+    return token;
   } catch (error) {
     logger.error(`Failed to generate Coder session token: ${error.message}`);
     if (error.response) {
       logger.error(`Token creation error - Status: ${error.response.status}`);
       logger.error(`Error details: ${JSON.stringify(error.response.data)}`);
-
-      // For other errors, log but don't fail - token is optional
-      if (error.response.status >= 500) {
-        logger.warn(`Token generation failed but continuing without token`);
-        return null;
-      }
+      throw toCoderApiError(error, httpStatus.BAD_GATEWAY, 'Coder token API failed');
     }
 
-    // For non-404 errors, return null instead of throwing
-    // The workspace URL can still be used without authentication
-    logger.warn(`Token generation unavailable, continuing without token`);
-    return null;
+    throw new ApiError(httpStatus.BAD_GATEWAY, `Coder token API failed: ${error.message}`);
   }
-};
+}
 
 /**
  * Get or create workspace for a user and prototype
@@ -324,8 +374,7 @@ const generateSessionToken = async (coderUsername) => {
  * @param {string} workspaceName - Workspace name (e.g., "prototype-{prototypeId}")
  * @param {string} templateId - Coder template ID
  * @param {string} prototypesHostPath - Host path for prototypes folder (bind-mount)
- * @param {string} githubToken - Optional GitHub token (DISABLED - Gitea disabled)
- * @param {string} gitRepoUrl - Git repository URL (DISABLED - Gitea disabled)
+ * @param {string} sessionToken - User-scoped token used for user operations
  * @returns {Promise<Object>} Workspace object
  */
 const getOrCreateWorkspace = async (
@@ -333,26 +382,19 @@ const getOrCreateWorkspace = async (
   workspaceName,
   templateId,
   prototypesHostPath,
-  _githubToken = null, // DISABLED - Gitea disabled
-  _gitRepoUrl = null, // DISABLED - Gitea disabled
+  expectedUserHostPath,
+  sessionToken = null,
 ) => {
   try {
-    // Get organization ID (required for API v2)
-    const organizationId = await getOrCreateDefaultOrganization();
+    assertUserScopedPrototypePath(prototypesHostPath, expectedUserHostPath);
 
     // Check if workspace exists
-    const workspacesResponse = await axios.get(`${CODER_API_BASE}/workspaces`, {
-      headers: getAdminHeaders(),
+    const workspacesResponse = await axios.get(`${getCoderApiBase()}/workspaces`, {
+      headers: getHeadersWithToken(sessionToken),
       params: { q: workspaceName },
     });
 
-    // Handle both response formats: array directly or wrapped in 'workspaces' property
-    let workspaces = [];
-    if (Array.isArray(workspacesResponse.data)) {
-      workspaces = workspacesResponse.data;
-    } else if (workspacesResponse.data?.workspaces && Array.isArray(workspacesResponse.data.workspaces)) {
-      workspaces = workspacesResponse.data.workspaces;
-    }
+    const workspaces = extractCollection(workspacesResponse.data, 'workspaces');
 
     const existingWorkspace = workspaces.find((w) => {
       const ownerId = w.owner_id || w.owner?.id || w.owner;
@@ -368,30 +410,23 @@ const getOrCreateWorkspace = async (
     const richParameterValues = [
       {
         name: 'prototypes_host_path',
-        value: prototypesHostPath || config.prototypes?.path || '/var/lib/autowrx/prototypes',
+        value: prototypesHostPath || coderConfig.getCoderConfigSync().prototypesPath || '/var/lib/autowrx/prototypes',
       },
     ];
 
-    // DISABLED - Gitea disabled
-    // if (gitRepoUrl) {
-    //   richParameterValues.push({ name: 'git_repo', value: gitRepoUrl });
-    // }
-    // if (githubToken) {
-    //   richParameterValues.push({ name: 'github_token', value: githubToken });
-    // }
-
-    // Use the correct API v2 endpoint format: /organizations/{organization}/members/{user}/workspaces
+    // Create workspace as the user (token-based), per Coder REST API docs.
+    // Prefer /users/me/workspaces so we don't need admin org membership endpoints here.
     const createResponse = await axios.post(
-      `${CODER_API_BASE}/organizations/${organizationId}/members/${coderUserId}/workspaces`,
+      `${getCoderApiBase()}/users/me/workspaces`,
       {
         template_id: templateId,
         name: workspaceName,
         rich_parameter_values: richParameterValues,
       },
-      { headers: getAdminHeaders() },
+      { headers: getHeadersWithToken(sessionToken) },
     );
 
-    logger.info(`Created Coder workspace: ${workspaceName} in organization ${organizationId}`);
+    logger.info(`Created Coder workspace: ${workspaceName} as user ${coderUserId}`);
     return createResponse.data;
   } catch (error) {
     logger.error(`Failed to get or create Coder workspace: ${error.message}`);
@@ -420,17 +455,12 @@ const getOrCreateWorkspace = async (
         );
         try {
           // Re-query workspaces and return the existing one if found
-          const retryResponse = await axios.get(`${CODER_API_BASE}/workspaces`, {
+          const retryResponse = await axios.get(`${getCoderApiBase()}/workspaces`, {
             headers: getAdminHeaders(),
             params: { q: workspaceName },
           });
 
-          let retryWorkspaces = [];
-          if (Array.isArray(retryResponse.data)) {
-            retryWorkspaces = retryResponse.data;
-          } else if (retryResponse.data?.workspaces && Array.isArray(retryResponse.data.workspaces)) {
-            retryWorkspaces = retryResponse.data.workspaces;
-          }
+          const retryWorkspaces = extractCollection(retryResponse.data, 'workspaces');
 
           const existingWorkspace = retryWorkspaces.find((w) => {
             const ownerId = w.owner_id || w.owner?.id || w.owner;
@@ -449,10 +479,7 @@ const getOrCreateWorkspace = async (
         }
       }
 
-      throw new ApiError(
-        error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
-        `Coder API error: ${error.response.data?.message || error.message || JSON.stringify(error.response.data)}`,
-      );
+      throw toCoderApiError(error, httpStatus.INTERNAL_SERVER_ERROR);
     }
     throw error;
   }
@@ -461,12 +488,13 @@ const getOrCreateWorkspace = async (
 /**
  * Start a stopped workspace
  * @param {string} workspaceId - Workspace ID
+ * @param {string} sessionToken - User-scoped token used for user operations
  * @returns {Promise<Object>} Build object or workspace status
  */
-const startWorkspace = async (workspaceId) => {
+const startWorkspace = async (workspaceId, sessionToken = null) => {
   try {
     // First check current workspace status
-    const workspace = await getWorkspaceStatus(workspaceId);
+    const workspace = await getWorkspaceStatus(workspaceId, sessionToken);
     const buildStatus = workspace.latest_build?.status;
 
     // If already running, return workspace status
@@ -483,9 +511,9 @@ const startWorkspace = async (workspaceId) => {
 
     // Start the workspace
     const response = await axios.post(
-      `${CODER_API_BASE}/workspaces/${workspaceId}/builds`,
+      `${getCoderApiBase()}/workspaces/${workspaceId}/builds`,
       { transition: 'start' },
-      { headers: getAdminHeaders() },
+      { headers: getHeadersWithToken(sessionToken) },
     );
 
     logger.info(`Started Coder workspace: ${workspaceId}`);
@@ -495,7 +523,7 @@ const startWorkspace = async (workspaceId) => {
     if (error.response?.status === 409) {
       logger.info(`Coder workspace ${workspaceId} build is already active, fetching status...`);
       // Return current workspace status instead of erroring
-      return await getWorkspaceStatus(workspaceId);
+      return getWorkspaceStatus(workspaceId, sessionToken);
     }
 
     logger.error(`Failed to start Coder workspace: ${error.message}`);
@@ -510,15 +538,280 @@ const startWorkspace = async (workspaceId) => {
   }
 };
 
+/** Build statuses where the workspace is not safe to issue another start yet */
+const BUILD_STATUSES_BLOCKING_START = new Set(['running', 'starting', 'stopping']);
+
+/**
+ * Poll until latest build is no longer in a transitional "busy" state (after stop, before start).
+ * @param {string} workspaceId
+ * @param {string|null} sessionToken
+ * @param {{ maxAttempts?: number, delayMs?: number }} [options]
+ * @returns {Promise<Object>} Last fetched workspace
+ */
+const waitUntilWorkspaceBuildAllowsStart = async (workspaceId, sessionToken = null, options = {}) => {
+  const maxAttempts = options.maxAttempts ?? 45;
+  const delayMs = options.delayMs ?? 2000;
+  const poll = async (attempt) => {
+    const ws = await getWorkspaceStatus(workspaceId, sessionToken);
+    const s = ws.latest_build?.status;
+    if (!BUILD_STATUSES_BLOCKING_START.has(s) || attempt >= maxAttempts) {
+      return ws;
+    }
+    await delay(delayMs);
+    return poll(attempt + 1);
+  };
+  return poll(1);
+};
+
+/**
+ * Stop a running workspace (no-op if not running).
+ * @param {string} workspaceId
+ * @param {string|null} sessionToken
+ * @returns {Promise<Object>} Build response or current workspace
+ */
+const stopWorkspace = async (workspaceId, sessionToken = null) => {
+  try {
+    const workspace = await getWorkspaceStatus(workspaceId, sessionToken);
+    const buildStatus = workspace.latest_build?.status;
+
+    if (!workspace.latest_build || buildStatus !== 'running') {
+      logger.info(`Coder workspace ${workspaceId} stop skipped (build status: ${buildStatus ?? 'none'})`);
+      return workspace;
+    }
+
+    const response = await axios.post(
+      `${getCoderApiBase()}/workspaces/${workspaceId}/builds`,
+      { transition: 'stop' },
+      { headers: getHeadersWithToken(sessionToken) },
+    );
+    logger.info(`Stop requested for Coder workspace: ${workspaceId}`);
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 409) {
+      logger.info(`Coder workspace ${workspaceId} stop conflict, fetching status...`);
+      return getWorkspaceStatus(workspaceId, sessionToken);
+    }
+    logger.error(`Failed to stop Coder workspace: ${error.message}`);
+    if (error.response) {
+      logger.error(`Stop workspace error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`);
+      throw new ApiError(
+        error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
+        `Coder API error: ${error.response.data?.message || error.message}`,
+      );
+    }
+    throw error;
+  }
+};
+
+/**
+ * List workspaces visible to the current user session.
+ * @param {string|null} sessionToken
+ * @returns {Promise<Array>} Workspace list
+ */
+const listMyWorkspaces = async (sessionToken = null) => {
+  const headers = getHeadersWithToken(sessionToken);
+  const requestUserScopedList = () =>
+    axios.get(`${getCoderApiBase()}/users/me/workspaces`, { headers });
+  const requestOwnerFilteredList = () =>
+    axios.get(`${getCoderApiBase()}/workspaces`, {
+      headers,
+      params: { q: 'owner:me' },
+    });
+
+  try {
+    const response = await requestUserScopedList();
+    return extractCollection(response.data, 'workspaces');
+  } catch (error) {
+    const status = error?.response?.status;
+    if (status !== httpStatus.METHOD_NOT_ALLOWED && status !== httpStatus.NOT_FOUND) {
+      logger.error(`Failed to list Coder workspaces: ${error.message}`);
+      if (error.response) {
+        logger.error(`List workspace error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`);
+        throw new ApiError(
+          error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
+          `Coder API error: ${error.response.data?.message || error.message}`,
+        );
+      }
+      throw error;
+    }
+  }
+
+  try {
+    const fallbackResponse = await requestOwnerFilteredList();
+    return extractCollection(fallbackResponse.data, 'workspaces');
+  } catch (error) {
+    logger.error(`Failed to list Coder workspaces (fallback): ${error.message}`);
+    if (error.response) {
+      logger.error(`List workspace fallback error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`);
+      throw new ApiError(
+        error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
+        `Coder API error: ${error.response.data?.message || error.message}`,
+      );
+    }
+    throw error;
+  }
+};
+
+/**
+ * Delete a workspace by issuing a delete transition build.
+ * @param {string} workspaceId
+ * @param {string|null} sessionToken
+ * @returns {Promise<Object>} Build response or current workspace
+ */
+const deleteWorkspace = async (workspaceId, sessionToken = null) => {
+  try {
+    const response = await axios.post(
+      `${getCoderApiBase()}/workspaces/${workspaceId}/builds`,
+      { transition: 'delete' },
+      { headers: getHeadersWithToken(sessionToken) },
+    );
+    logger.info(`Delete requested for Coder workspace: ${workspaceId}`);
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 409) {
+      logger.info(`Coder workspace ${workspaceId} delete conflict, fetching status...`);
+      return getWorkspaceStatus(workspaceId, sessionToken);
+    }
+    logger.error(`Failed to delete Coder workspace: ${error.message}`);
+    if (error.response) {
+      logger.error(`Delete workspace error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`);
+      throw new ApiError(
+        error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
+        `Coder API error: ${error.response.data?.message || error.message}`,
+      );
+    }
+    throw error;
+  }
+};
+
+/**
+ * List all workspaces for admin management.
+ * @returns {Promise<Array>}
+ */
+const listAllWorkspacesAdmin = async () => {
+  try {
+    const response = await axios.get(`${getCoderApiBase()}/workspaces`, {
+      headers: getAdminHeaders(),
+      params: { limit: 200 },
+    });
+    return extractCollection(response.data, 'workspaces');
+  } catch (error) {
+    logger.error(`Failed to list all Coder workspaces: ${error.message}`);
+    if (error.response) {
+      logger.error(`Admin list workspace error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`);
+      throw new ApiError(
+        error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
+        `Coder API error: ${error.response.data?.message || error.message}`,
+      );
+    }
+    throw error;
+  }
+};
+
+/**
+ * Start workspace as admin.
+ * @param {string} workspaceId
+ * @returns {Promise<Object>}
+ */
+const startWorkspaceAsAdmin = async (workspaceId) => {
+  try {
+    const response = await axios.post(
+      `${getCoderApiBase()}/workspaces/${workspaceId}/builds`,
+      { transition: 'start' },
+      { headers: getAdminHeaders() },
+    );
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 409) {
+      return getWorkspaceStatus(workspaceId, coderConfig.getCoderConfigSync().adminApiKey);
+    }
+    throw toCoderApiError(error, httpStatus.INTERNAL_SERVER_ERROR);
+  }
+};
+
+/**
+ * Stop workspace as admin.
+ * @param {string} workspaceId
+ * @returns {Promise<Object>}
+ */
+const stopWorkspaceAsAdmin = async (workspaceId) => {
+  try {
+    const response = await axios.post(
+      `${getCoderApiBase()}/workspaces/${workspaceId}/builds`,
+      { transition: 'stop' },
+      { headers: getAdminHeaders() },
+    );
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 409) {
+      return getWorkspaceStatus(workspaceId, coderConfig.getCoderConfigSync().adminApiKey);
+    }
+    throw toCoderApiError(error, httpStatus.INTERNAL_SERVER_ERROR);
+  }
+};
+
+/**
+ * Delete workspace as admin.
+ * @param {string} workspaceId
+ * @returns {Promise<Object>}
+ */
+const deleteWorkspaceAsAdmin = async (workspaceId) => {
+  try {
+    const response = await axios.post(
+      `${getCoderApiBase()}/workspaces/${workspaceId}/builds`,
+      { transition: 'delete' },
+      { headers: getAdminHeaders() },
+    );
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 409) {
+      return getWorkspaceStatus(workspaceId, coderConfig.getCoderConfigSync().adminApiKey);
+    }
+    throw toCoderApiError(error, httpStatus.INTERNAL_SERVER_ERROR);
+  }
+};
+
+/**
+ * If Coder reports the workspace build as running but the agent is not connected (or workspace health is false),
+ * request stop then start once. Handles zombie state after the container was removed while the API still said "running".
+ * @param {string} workspaceId
+ * @param {string|null} sessionToken
+ * @returns {Promise<Object>} Fresh workspace from GET after recovery attempt
+ */
+const restoreUnhealthyRunningWorkspace = async (workspaceId, sessionToken = null) => {
+  const workspace = await getWorkspaceStatus(workspaceId, sessionToken);
+  const buildStatus = workspace.latest_build?.status;
+  if (buildStatus !== 'running') {
+    return workspace;
+  }
+
+  const agent = pickFirstWorkspaceAgent(workspace);
+  const agentUnhealthy = !agent || agent.status !== 'connected';
+  const healthUnhealthy = workspace.health && workspace.health.healthy === false;
+  if (!agentUnhealthy && !healthUnhealthy) {
+    return workspace;
+  }
+
+  logger.warn(
+    `Coder workspace ${workspaceId} reports running but agent/health is unhealthy (agent=${agent?.status ?? 'none'}, workspace_health=${workspace.health?.healthy}). Requesting stop/start recovery.`,
+  );
+
+  await stopWorkspace(workspaceId, sessionToken);
+  await waitUntilWorkspaceBuildAllowsStart(workspaceId, sessionToken);
+  await startWorkspace(workspaceId, sessionToken);
+  return getWorkspaceStatus(workspaceId, sessionToken);
+};
+
 /**
  * Get workspace status
  * @param {string} workspaceId - Workspace ID
+ * @param {string} sessionToken - User-scoped token used for user operations
  * @returns {Promise<Object>} Workspace object with status
  */
-const getWorkspaceStatus = async (workspaceId) => {
+async function getWorkspaceStatus(workspaceId, sessionToken = null) {
   try {
-    const response = await axios.get(`${CODER_API_BASE}/workspaces/${workspaceId}`, {
-      headers: getAdminHeaders(),
+    const response = await axios.get(`${getCoderApiBase()}/workspaces/${workspaceId}`, {
+      headers: getHeadersWithToken(sessionToken),
     });
 
     return response.data;
@@ -532,32 +825,37 @@ const getWorkspaceStatus = async (workspaceId) => {
     }
     throw error;
   }
-};
+}
 
 /**
- * Get workspace build timings
- * @param {string} workspaceId - Workspace ID
- * @returns {Promise<Object>} Workspace build timings
+ * First agent on a workspace (Coder populates this after resources are provisioned).
+ * @param {Object} workspace - Workspace object from Coder API
+ * @returns {Object|null} Agent object or null while build is still starting
  */
-const getWorkspaceTimings = async (workspaceId) => {
-  try {
-    // Coder API: GET /api/v2/workspaces/{workspace}/timings
-    const response = await axios.get(`${CODER_API_BASE}/workspaces/${workspaceId}/timings`, {
-      headers: getAdminHeaders(),
-    });
-
-    return response.data;
-  } catch (error) {
-    logger.error(`Failed to get Coder workspace timings: ${error.message}`);
-    if (error.response) {
-      throw new ApiError(
-        error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
-        `Coder API error: ${error.response.data?.message || error.message}`,
-      );
-    }
-    throw error;
+function pickFirstWorkspaceAgent(workspace) {
+  if (workspace.latest_build?.resources?.[0]?.agents?.[0]) {
+    return workspace.latest_build.resources[0].agents[0];
   }
-};
+  if (workspace.resources?.[0]?.agents?.[0]) {
+    return workspace.resources[0].agents[0];
+  }
+  if (workspace.agents?.[0]) {
+    return workspace.agents[0];
+  }
+  if (workspace.latest_build?.resources) {
+    const withAgents = workspace.latest_build.resources.find((resource) => resource.agents?.length);
+    if (withAgents) {
+      return withAgents.agents[0];
+    }
+  }
+  if (workspace.resources) {
+    const withAgents = workspace.resources.find((resource) => resource.agents?.length);
+    if (withAgents) {
+      return withAgents.agents[0];
+    }
+  }
+  return null;
+}
 
 /**
  * Get workspace app URL for iframe embedding
@@ -567,10 +865,16 @@ const getWorkspaceTimings = async (workspaceId) => {
  * @param {number} retryDelay - Delay between retries in ms (default: 2000)
  * @returns {Promise<string>} App URL
  */
-const getWorkspaceAppUrl = async (workspaceId, appSlug = 'code-server', maxRetries = 5, retryDelay = 2000) => {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+const getWorkspaceAppUrl = async (
+  workspaceId,
+  appSlug = 'code-server',
+  maxRetries = 5,
+  retryDelay = 2000,
+  sessionToken = null,
+) => {
+  const attemptFetch = async (attempt) => {
     try {
-      const workspace = await getWorkspaceStatus(workspaceId);
+      const workspace = await getWorkspaceStatus(workspaceId, sessionToken);
 
       // Log workspace structure for debugging
       if (attempt === 1) {
@@ -591,51 +895,14 @@ const getWorkspaceAppUrl = async (workspaceId, appSlug = 'code-server', maxRetri
         );
       }
 
-      // Try multiple ways to find the agent
-      let agent = null;
-      let apps = null;
+      const agent = pickFirstWorkspaceAgent(workspace);
+      const apps = agent?.apps;
 
-      // Method 1: latest_build.resources[0].agents[0]
-      if (workspace.latest_build?.resources?.[0]?.agents?.[0]) {
-        agent = workspace.latest_build.resources[0].agents[0];
-        apps = agent.apps;
-      }
-      // Method 2: resources[0].agents[0] (direct on workspace)
-      else if (workspace.resources?.[0]?.agents?.[0]) {
-        agent = workspace.resources[0].agents[0];
-        apps = agent.apps;
-      }
-      // Method 3: agents[0] (direct on workspace)
-      else if (workspace.agents?.[0]) {
-        agent = workspace.agents[0];
-        apps = agent.apps;
-      }
-      // Method 4: Search through all resources
-      else if (workspace.latest_build?.resources) {
-        for (const resource of workspace.latest_build.resources) {
-          if (resource.agents && resource.agents.length > 0) {
-            agent = resource.agents[0];
-            apps = agent.apps;
-            break;
-          }
-        }
-      }
-      // Method 5: Search through workspace resources
-      else if (workspace.resources) {
-        for (const resource of workspace.resources) {
-          if (resource.agents && resource.agents.length > 0) {
-            agent = resource.agents[0];
-            apps = agent.apps;
-            break;
-          }
-        }
-      }
-
-      if (!agent) {
+      if (!agent?.id) {
         if (attempt < maxRetries) {
           logger.info(`Agent not found yet (attempt ${attempt}/${maxRetries}), waiting ${retryDelay}ms...`);
-          await new Promise((resolve) => setTimeout(resolve, retryDelay));
-          continue;
+          await delay(retryDelay);
+          return attemptFetch(attempt + 1);
         }
 
         // Log full workspace structure for debugging
@@ -650,8 +917,8 @@ const getWorkspaceAppUrl = async (workspaceId, appSlug = 'code-server', maxRetri
         const app = apps.find((a) => a.slug === appSlug);
         if (!app && attempt < maxRetries) {
           logger.info(`App ${appSlug} not found yet (attempt ${attempt}/${maxRetries}), waiting ${retryDelay}ms...`);
-          await new Promise((resolve) => setTimeout(resolve, retryDelay));
-          continue;
+          await delay(retryDelay);
+          return attemptFetch(attempt + 1);
         }
       }
 
@@ -667,7 +934,7 @@ const getWorkspaceAppUrl = async (workspaceId, appSlug = 'code-server', maxRetri
         );
       }
 
-      const url = `${config.coder.externalUrl}/@${username}/${workspaceName}.${agentName}/apps/${appSlug}/`;
+      const url = `${coderConfig.getCoderConfigSync().coderUrl}/@${username}/${workspaceName}.${agentName}/apps/${appSlug}/`;
       logger.info(`Constructed workspace app URL: ${url}`);
       return url;
     } catch (error) {
@@ -675,8 +942,8 @@ const getWorkspaceAppUrl = async (workspaceId, appSlug = 'code-server', maxRetri
         // If it's a NOT_FOUND error and we have retries left, continue
         if (error.statusCode === httpStatus.NOT_FOUND) {
           logger.info(`Workspace agent/app not found (attempt ${attempt}/${maxRetries}), retrying...`);
-          await new Promise((resolve) => setTimeout(resolve, retryDelay));
-          continue;
+          await delay(retryDelay);
+          return attemptFetch(attempt + 1);
         }
       }
 
@@ -689,75 +956,157 @@ const getWorkspaceAppUrl = async (workspaceId, appSlug = 'code-server', maxRetri
         throw error;
       }
     }
-  }
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to get workspace app URL after all retries');
+  };
+  return attemptFetch(1);
+};
 
-  // Should never reach here, but just in case
-  throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to get workspace app URL after all retries');
+/**
+ * Query params Coder expects for path-based workspace apps (matches frontend iframe URL).
+ * @param {string} appUrl
+ * @param {string} sessionToken
+ * @returns {string}
+ */
+const appendCoderSessionToAppUrl = (appUrl, sessionToken) => {
+  if (!appUrl || !sessionToken) {
+    return appUrl;
+  }
+  const addParam = (base, key, value) => {
+    const sep = base.includes('?') ? '&' : '?';
+    return `${base}${sep}${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+  };
+  let out = addParam(appUrl, 'coder_session_token', sessionToken);
+  return out;
+};
+
+const isProxyGatewayFailure = (status) => status === 502 || status === 503 || status === 504;
+const isProxyAppNotReady = (status) => status === 404 || status === 425 || isProxyGatewayFailure(status);
+
+/**
+ * Poll the Coder app reverse-proxy until code-server is accepting traffic (avoids first-load 502).
+ * Root cause class: code-server listening on 127.0.0.1 only or slow start — see coder/coder#12790, #12292.
+ *
+ * @param {string} appUrl
+ * @param {string} sessionToken
+ * @param {Object} [opts]
+ * @param {number} [opts.maxAttempts]
+ * @param {number} [opts.delayMs]
+ * @param {number} [opts.timeoutMs]
+ * @returns {Promise<void>}
+ */
+const waitUntilCoderAppProxyReady = async (appUrl, sessionToken, opts = {}) => {
+  const maxAttempts = opts.maxAttempts ?? 25;
+  const delayMs = opts.delayMs ?? 1200;
+  const timeoutMs = opts.timeoutMs ?? 8000;
+  const url = appendCoderSessionToAppUrl(appUrl, sessionToken);
+
+  const probeAttempt = async (attempt) => {
+    try {
+      const res = await axios.get(url, {
+        timeout: timeoutMs,
+        maxRedirects: 7,
+        validateStatus: () => true,
+        maxContentLength: 262144,
+        maxBodyLength: 262144,
+        headers: { Accept: '*/*' },
+      });
+      const st = res.status;
+      if (st === 401 || st === 403) {
+        throw new ApiError(
+          httpStatus.UNAUTHORIZED,
+          'Coder rejected the session while opening the VS Code app. Try preparing the workspace again.',
+        );
+      }
+      // Treat 404 from app proxy as "not ready yet" (common while agent is still connecting).
+      if (st >= 200 && st < 400) {
+        logger.info(`Coder VS Code app proxy ready (HTTP ${st}) after ${attempt} attempt(s)`);
+        return;
+      }
+      if (st >= 400 && st < 500 && !isProxyAppNotReady(st)) {
+        throw new ApiError(
+          httpStatus.BAD_GATEWAY,
+          `Coder app returned HTTP ${st} while opening VS Code. Please retry prepare/open.`,
+        );
+      }
+      logger.info(`Coder VS Code app proxy not ready (HTTP ${st}), attempt ${attempt}/${maxAttempts}; waiting ${delayMs}ms`);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        throw err;
+      }
+      logger.info(
+        `Coder VS Code app proxy probe error (${err.message}), attempt ${attempt}/${maxAttempts}; waiting ${delayMs}ms`,
+      );
+    }
+
+    if (attempt >= maxAttempts) {
+      throw new ApiError(
+        httpStatus.BAD_GATEWAY,
+        'VS Code is still starting or unreachable through Coder (proxy keeps returning errors). Try again in a few seconds.',
+      );
+    }
+
+    await delay(delayMs);
+    await probeAttempt(attempt + 1);
+  };
+
+  await probeAttempt(1);
 };
 
 /**
  * Get the first workspace agent ID for a workspace
  * @param {string} workspaceId - Workspace ID
+ * @param {string} sessionToken - User-scoped token
+ * @param {number} [maxRetries=5] - Poll while build is still provisioning agents
+ * @param {number} [retryDelay=2000] - Ms between polls (aligned with getWorkspaceAppUrl)
  * @returns {Promise<string>} Workspace agent ID
  */
-const getWorkspaceAgentId = async (workspaceId) => {
-  const workspace = await getWorkspaceStatus(workspaceId);
+const getWorkspaceAgentId = async (workspaceId, sessionToken, maxRetries = 5, retryDelay = 2000) => {
+  const attemptFetch = async (attempt) => {
+    const workspace = await getWorkspaceStatus(workspaceId, sessionToken);
+    const agent = pickFirstWorkspaceAgent(workspace);
 
-  // Try multiple ways to find the agent, same as getWorkspaceAppUrl
-  let agent = null;
-
-  // Method 1: latest_build.resources[0].agents[0]
-  if (workspace.latest_build?.resources?.[0]?.agents?.[0]) {
-    agent = workspace.latest_build.resources[0].agents[0];
-  }
-  // Method 2: resources[0].agents[0] (direct on workspace)
-  else if (workspace.resources?.[0]?.agents?.[0]) {
-    agent = workspace.resources[0].agents[0];
-  }
-  // Method 3: agents[0] (direct on workspace)
-  else if (workspace.agents?.[0]) {
-    agent = workspace.agents[0];
-  }
-  // Method 4: Search through all resources in latest_build
-  else if (workspace.latest_build?.resources) {
-    for (const resource of workspace.latest_build.resources) {
-      if (resource.agents && resource.agents.length > 0) {
-        agent = resource.agents[0];
-        break;
-      }
+    if (agent?.id) {
+      return agent.id;
     }
-  }
-  // Method 5: Search through workspace resources
-  else if (workspace.resources) {
-    for (const resource of workspace.resources) {
-      if (resource.agents && resource.agents.length > 0) {
-        agent = resource.agents[0];
-        break;
-      }
+
+    if (attempt < maxRetries) {
+      const buildStatus = workspace.latest_build?.status ?? 'unknown';
+      logger.info(
+        `Workspace agent not ready for ${workspaceId} (attempt ${attempt}/${maxRetries}, build=${buildStatus}), waiting ${retryDelay}ms...`,
+      );
+      await delay(retryDelay);
+      return attemptFetch(attempt + 1);
     }
-  }
 
-  if (!agent || !agent.id) {
-    logger.error(`Workspace agent not found for workspace ${workspaceId}. Workspace: ${JSON.stringify(workspace, null, 2)}`);
-    throw new ApiError(httpStatus.NOT_FOUND, 'Workspace agent not found for this workspace');
-  }
-
-  return agent.id;
+    logger.error(
+      `Workspace agent not found for workspace ${workspaceId} after ${maxRetries} attempts. Workspace: ${JSON.stringify(workspace, null, 2)}`,
+    );
+    throw new ApiError(
+      httpStatus.SERVICE_UNAVAILABLE,
+      'Workspace agent not available yet. The workspace may still be starting; try again shortly.',
+    );
+  };
+  return attemptFetch(1);
 };
 
 /**
- * Sanitize workspace name for Coder (one workspace per user)
+ * Sanitize workspace name for Coder (one workspace per user per kind)
  * Coder requirements:
  * - 1-32 characters
  * - Only letters, numbers, and hyphens
  * - Must start and end with letter or number
  * @param {string} userId - User ID
+ * @param {string} workspaceKind - language bucket (python/cpp/rust)
  * @returns {string} Sanitized workspace name
  */
-const sanitizeWorkspaceName = (userId) => {
+const sanitizeWorkspaceName = (userId, workspaceKind = 'python') => {
   const normalizedId = normalizeIdForName(userId);
   const idPart = normalizedId.length <= 29 ? normalizedId : `${normalizedId.slice(0, 14)}${normalizedId.slice(-15)}`;
-  const name = `ws-${idPart}`;
+  const normalizedKind = String(workspaceKind || 'python')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '') || 'python';
+  const suffix = normalizedKind === 'cpp' ? 'cpp' : normalizedKind === 'rust' ? 'rs' : 'py';
+  const name = `ws-${idPart}-${suffix}`;
 
   const sanitized = name
     .toLowerCase()
@@ -774,19 +1123,13 @@ const sanitizeWorkspaceName = (userId) => {
  * @param {string} templateName - Template name
  * @returns {Promise<string>} Template ID
  */
-const getTemplateId = async (templateName = 'docker-template') => {
+const getTemplateId = async (templateName = 'docker-template-python') => {
   try {
-    const response = await axios.get(`${CODER_API_BASE}/templates`, {
+    const response = await axios.get(`${getCoderApiBase()}/templates`, {
       headers: getAdminHeaders(),
     });
 
-    // Handle both response formats: array directly or wrapped in 'templates' property
-    let templates = [];
-    if (Array.isArray(response.data)) {
-      templates = response.data;
-    } else if (response.data?.templates && Array.isArray(response.data.templates)) {
-      templates = response.data.templates;
-    }
+    const templates = extractCollection(response.data, 'templates');
 
     logger.debug(`Found ${templates.length} template(s) in Coder`);
 
@@ -810,77 +1153,25 @@ const getTemplateId = async (templateName = 'docker-template') => {
   }
 };
 
-/**
- * Get logs for a workspace agent
- * Wraps Coder API: GET /api/v2/workspaceagents/{workspaceagent}/logs
- * @param {string} workspaceAgentId - Workspace agent ID (UUID)
- * @param {Object} [options] - Query options
- * @param {number} [options.before] - Before log id
- * @param {number} [options.after] - After log id
- * @param {boolean} [options.follow] - Follow log stream
- * @param {boolean} [options.no_compression] - Disable compression for WebSocket connection
- * @param {string} [options.format] - 'json' (default) or 'text'
- * @returns {Promise<any>} Logs array or text, depending on format
- */
-const getWorkspaceAgentLogs = async (workspaceAgentId, options = {}) => {
-  try {
-    const { before, after, follow, no_compression, format } = options;
-
-    const response = await axios.get(`${CODER_API_BASE}/workspaceagents/${workspaceAgentId}/logs`, {
-      headers: getAdminHeaders(),
-      params: {
-        ...(before !== undefined && { before }),
-        ...(after !== undefined && { after }),
-        ...(follow !== undefined && { follow }),
-        ...(no_compression !== undefined && { no_compression }),
-        ...(format && { format }),
-      },
-    });
-
-    return response.data;
-  } catch (error) {
-    logger.error(`Failed to get workspace agent logs: ${error.message}`);
-    if (error.response) {
-      logger.error(
-        `Workspace agent logs error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`,
-      );
-      throw new ApiError(
-        error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
-        `Coder API error: ${error.response.data?.message || error.message || JSON.stringify(error.response.data)}`,
-      );
-    }
-    if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
-      throw new ApiError(
-        httpStatus.SERVICE_UNAVAILABLE,
-        `Cannot connect to Coder at ${config.coder.url}. Is Coder running?`,
-      );
-    }
-    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, `Coder service error: ${error.message}`);
-  }
-};
-
-/**
- * Get logs for the first agent of a workspace
- * @param {string} workspaceId - Workspace ID
- * @param {Object} [options] - Query options (same as getWorkspaceAgentLogs)
- * @returns {Promise<any>} Logs array or text, depending on format
- */
-const getWorkspaceLogsByWorkspaceId = async (workspaceId, options = {}) => {
-  const agentId = await getWorkspaceAgentId(workspaceId);
-  return getWorkspaceAgentLogs(agentId, options);
-};
-
 module.exports = {
   ensureUserExists,
   generateSessionToken,
+  getOrCreateUserScopedToken,
   getOrCreateWorkspace,
   startWorkspace,
+  stopWorkspace,
+  listAllWorkspacesAdmin,
+  startWorkspaceAsAdmin,
+  stopWorkspaceAsAdmin,
+  deleteWorkspaceAsAdmin,
+  listMyWorkspaces,
+  deleteWorkspace,
+  restoreUnhealthyRunningWorkspace,
   getWorkspaceStatus,
   getWorkspaceAppUrl,
+  waitUntilCoderAppProxyReady,
   getTemplateId,
   sanitizeWorkspaceName,
-  getWorkspaceTimings,
-  getWorkspaceAgentLogs,
   getWorkspaceAgentId,
-  getWorkspaceLogsByWorkspaceId,
+  assertUserScopedPrototypePath,
 };

@@ -10,8 +10,6 @@ const { createProxyMiddleware, fixRequestBody } = require('http-proxy-middleware
 const express = require('express');
 const config = require('../../../config/config');
 const { proxyHandler } = require('../../../config/proxyHandler');
-const { checkPermission } = require('../../../middlewares/permission');
-const { PERMISSIONS } = require('../../../config/roles');
 const auth = require('../../../middlewares/auth');
 
 const {
@@ -20,7 +18,7 @@ const {
 
 const router = express.Router();
 
-router.use(auth(), checkPermission(PERMISSIONS.GENERATIVE_AI));
+router.use(auth());
 
 const proxyMiddleware = genAI.url
   ? createProxyMiddleware({

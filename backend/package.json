@@ -62,7 +62,6 @@
     "express": "^4.21.1",
     "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^7.0.0",
-    "firebase-admin": "^12.1.0",
     "helmet": "^8.0.0",
     "http-proxy-middleware": "^3.0.0",
     "http-status": "^1.7.4",
