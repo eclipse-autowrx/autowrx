@@ -51,7 +51,7 @@ import { Input } from '../atoms/input'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import useListModelPrototypes from '@/hooks/useListModelPrototypes'
 import PrototypeTabStaging from '@/components/organisms/PrototypeTabStaging'
-import { toast } from 'react-toastify'
+import { useToast } from '@/components/molecules/toaster/use-toast'
 
 interface DaPrototypeItemProps {
   prototype?: Prototype
@@ -65,6 +65,7 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
   const { data: existingPrototypes, refetch: refetchModelPrototypes } =
     useListModelPrototypes(model?.id || '')
   const navigate = useNavigate()
+  const { toast } = useToast()
 
   const isOwner =
     !!user &&
@@ -376,9 +377,11 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
         <div
           onContextMenu={(e) => {
             e.preventDefault()
-            toast.info(
-              `You do not have permission to edit "${prototype?.name ?? 'this prototype'}".`,
-            )
+            toast({
+              title: 'Permission denied',
+              description: `You do not have permission to edit "${prototype?.name ?? 'this prototype'}".`,
+              duration: 3000,
+            })
           }}
         >
           {cardContent}
