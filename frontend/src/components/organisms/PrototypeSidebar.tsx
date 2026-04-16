@@ -8,6 +8,7 @@
 
 import { FC, useState, useRef, useCallback, useEffect } from 'react'
 import PagePrototypePlugin from '@/pages/PagePrototypePlugin'
+import { useSystemUI } from '@/hooks/useSystemUI'
 
 interface PrototypeSidebarProps {
   pluginSlug: string
@@ -24,6 +25,7 @@ const PrototypeSidebar: FC<PrototypeSidebarProps> = ({
   minWidthPx = 200,
   onSetActiveTab,
 }) => {
+  const { showPrototypeDashboardFullScreen } = useSystemUI()
   const [width, setWidth] = useState<number | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const sidebarRef = useRef<HTMLDivElement>(null)
@@ -112,8 +114,8 @@ const PrototypeSidebar: FC<PrototypeSidebarProps> = ({
       </div>
 
       {/* Resize divider + pill-shaped drag thumb */}
-      {!isCollapsed && (
-        <div className="relative flex items-center justify-center w-[3px] bg-border shrink-0">
+      {!isCollapsed && !showPrototypeDashboardFullScreen && (
+        <div className="group/resizer relative flex items-center justify-center w-[3px] bg-border shrink-0 transition-colors hover:bg-primary">
           {/* Invisible wide touch target covering the full height */}
           <div
             className="absolute inset-y-0 -left-2 -right-2 z-10 cursor-col-resize touch-none"
@@ -122,12 +124,12 @@ const PrototypeSidebar: FC<PrototypeSidebarProps> = ({
           />
           {/* Visible pill thumb — large enough for touch (24x56px) */}
           <div
-            className="absolute z-20 flex flex-col items-center justify-center gap-1 w-6 h-14 rounded-full border border-border bg-background shadow-md cursor-col-resize touch-none hover:bg-accent active:bg-accent"
+            className="absolute z-20 flex flex-col items-center justify-center gap-1 w-6 h-14 rounded-full border border-border bg-background shadow-md cursor-col-resize touch-none transition-colors group-hover/resizer:border-primary group-hover/resizer:bg-background"
             onMouseDown={handleMouseDown}
             onTouchStart={handleTouchStart}
           >
-            <span className="block w-[2px] h-3 rounded-full bg-muted-foreground/50" />
-            <span className="block w-[2px] h-3 rounded-full bg-muted-foreground/50" />
+            <span className="block w-[2px] h-3 rounded-full bg-muted-foreground/50 transition-colors group-hover/resizer:bg-primary" />
+            <span className="block w-[2px] h-3 rounded-full bg-muted-foreground/50 transition-colors group-hover/resizer:bg-primary" />
           </div>
         </div>
       )}
