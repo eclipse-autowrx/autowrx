@@ -8,6 +8,7 @@
 
 import { FC, useState, useRef, useCallback, useEffect } from 'react'
 import PagePrototypePlugin from '@/pages/PagePrototypePlugin'
+import { useSystemUI } from '@/hooks/useSystemUI'
 
 interface PrototypeSidebarProps {
   pluginSlug: string
@@ -24,6 +25,7 @@ const PrototypeSidebar: FC<PrototypeSidebarProps> = ({
   minWidthPx = 200,
   onSetActiveTab,
 }) => {
+  const { showPrototypeDashboardFullScreen } = useSystemUI()
   const [width, setWidth] = useState<number | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const sidebarRef = useRef<HTMLDivElement>(null)
@@ -112,7 +114,7 @@ const PrototypeSidebar: FC<PrototypeSidebarProps> = ({
       </div>
 
       {/* Resize divider + pill-shaped drag thumb */}
-      {!isCollapsed && (
+      {!isCollapsed && !showPrototypeDashboardFullScreen && (
         <div className="relative flex items-center justify-center w-[3px] bg-border shrink-0">
           {/* Invisible wide touch target covering the full height */}
           <div
