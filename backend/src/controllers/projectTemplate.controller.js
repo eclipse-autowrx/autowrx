@@ -7,7 +7,7 @@ const catchAsync = require('../utils/catchAsync');
 const { projectTemplateService } = require('../services');
 
 const list = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['name', 'language']);
+  const filter = pick(req.query, ['name']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
   const result = await projectTemplateService.query(filter, options);
   res.send(result);

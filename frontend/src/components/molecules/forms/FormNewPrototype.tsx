@@ -64,7 +64,7 @@ const FormNewPrototype = ({
     const { toast } = useToast()
     const { data: currentUser, isLoading: isCurrentUserLoading } = useSelfProfileQuery()
 
-    const { data: projectTemplatesData } = useQuery({
+    const { data: projectTemplatesData, isLoading: isLoadingTemplates } = useQuery({
         queryKey: ['project-templates-list'],
         queryFn: () => listProjectTemplates({ limit: 100, page: 1 }),
     })
@@ -181,6 +181,7 @@ const FormNewPrototype = ({
     const disabled =
         loading ||
         uploading ||
+        isLoadingTemplates ||
         !prototypeName.trim() ||
         (isCreatingNewModel ? !newModelName.trim() || isDuplicateModelName : !selectedModelId) ||
         isDuplicatePrototypeName

@@ -15,6 +15,7 @@ import { Input } from '@/components/atoms/input'
 import { Textarea } from '@/components/atoms/textarea'
 import { Label } from '@/components/atoms/label'
 import DaDialog from '@/components/molecules/DaDialog'
+import DaConfirmPopup from '@/components/molecules/DaConfirmPopup'
 import { TbPencil, TbTrash, TbFileCode } from 'react-icons/tb'
 import { toast } from 'react-toastify'
 
@@ -143,6 +144,8 @@ export default function ProjectTemplateManager() {
   const qc = useQueryClient()
   const [editId, setEditId] = useState<string | undefined>(undefined)
   const [openForm, setOpenForm] = useState(false)
+  const [deleteId, setDeleteId] = useState<string | undefined>(undefined)
+  const [openConfirm, setOpenConfirm] = useState(false)
 
   const { data } = useQuery({
     queryKey: ['project-templates'],
@@ -199,8 +202,8 @@ export default function ProjectTemplateManager() {
                 size="icon"
                 onClick={(e) => {
                   e.stopPropagation()
-                  if (!confirm('Delete this project template?')) return
-                  del.mutate(t.id)
+                  setDeleteId(t.id)
+                  setOpenConfirm(true)
                 }}
               >
                 <TbTrash className="text-base" />
@@ -229,6 +232,18 @@ export default function ProjectTemplateManager() {
           onSuccess={() => {}}
         />
       )}
+
+      <DaConfirmPopup
+        title="Delete Project Template"
+        label="This will permanently delete the project template. This action cannot be undone."
+        state={[openConfirm, setOpenConfirm]}
+        onConfirm={() => {
+          if (deleteId) del.mutate(deleteId)
+          setDeleteId(undefined)
+        }}
+      >
+        <></>
+      </DaConfirmPopup>
     </div>
   )
 }

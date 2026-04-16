@@ -172,7 +172,7 @@ const FormCreatePrototype = ({
 
   const { data: currentUser } = useSelfProfileQuery()
 
-  const { data: remoteTemplatesData } = useQuery({
+  const { data: remoteTemplatesData, isLoading: isLoadingTemplates } = useQuery({
     queryKey: ['project-templates-list'],
     queryFn: () => listProjectTemplates({ limit: 100, page: 1 }),
   })
@@ -202,7 +202,7 @@ const FormCreatePrototype = ({
       setProjectTemplate(first.label)
       setData((prev) => ({ ...prev, code: first.code, language: first.language }))
     }
-  }, [templateOptions])
+  }, [templateOptions, projectTemplate])
 
   const [debouncedPrototypeName, setDebouncedPrototypeName] = useState('')
   useEffect(() => {
@@ -494,6 +494,12 @@ const FormCreatePrototype = ({
 
       <div className="flex flex-col mt-4">
         <Label className="mb-2">Project Template *</Label>
+        {isLoadingTemplates ? (
+          <p className="flex items-center text-sm text-muted-foreground h-9">
+            <Spinner className="mr-1 h-4 w-4" />
+            Loading templates...
+          </p>
+        ) : (
         <Select
           value={projectTemplate}
           onValueChange={(v: string) => {
@@ -511,6 +517,7 @@ const FormCreatePrototype = ({
             ))}
           </SelectContent>
         </Select>
+        )}
       </div>
 
       <Button

@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { FC, useCallback, useEffect, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { configManagementService } from '@/services/configManagement.service'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
@@ -89,6 +90,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
     [PERMISSIONS.WRITE_MODEL, model?.id],
     [PERMISSIONS.MANAGE_USERS],
   )
+  const queryClient = useQueryClient()
   const [openSaveProjectTemplate, setOpenSaveProjectTemplate] = useState(false)
   const [projectTemplateName, setProjectTemplateName] = useState('')
   const [savingProjectTemplate, setSavingProjectTemplate] = useState(false)
@@ -223,6 +225,8 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
         customer_journey: prototype.customer_journey,
       })
       await createProjectTemplate({ name: projectTemplateName.trim(), data })
+      await queryClient.invalidateQueries({ queryKey: ['project-templates'] })
+      await queryClient.invalidateQueries({ queryKey: ['project-templates-list'] })
       toast.success('Project template saved')
       setOpenSaveProjectTemplate(false)
       setProjectTemplateName('')

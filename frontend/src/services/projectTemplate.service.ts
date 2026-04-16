@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { serverAxios } from '@/services/base'
+import { List } from '@/types/common.type'
 
 export interface ProjectTemplate {
   id: string
@@ -13,15 +14,14 @@ export interface ProjectTemplate {
   updatedAt: string
 }
 
-export interface Paged<T> {
-  results: T[]
-  page: number
-  limit: number
-  totalPages: number
-  totalResults: number
+export interface ListProjectTemplatesParams {
+  name?: string
+  limit?: number
+  page?: number
+  sortBy?: string
 }
 
-export const listProjectTemplates = (params?: any): Promise<Paged<ProjectTemplate>> =>
+export const listProjectTemplates = (params?: ListProjectTemplatesParams): Promise<List<ProjectTemplate>> =>
   serverAxios.get('/system/project-template', { params }).then((r) => r.data)
 
 export const getProjectTemplateById = (id: string): Promise<ProjectTemplate> =>
