@@ -9,19 +9,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/atoms/button'
 import { Spinner } from '@/components/atoms/spinner'
-import { useToast } from '@/components/molecules/toaster/use-toast'
 import DaConfirmPopup from '@/components/molecules/DaConfirmPopup'
 import { useCoderWorkspaces } from '@/hooks/useCoderWorkspaces'
 import { MyWorkspace } from '@/services/coder.service'
-import { TbExternalLink, TbTrash } from 'react-icons/tb'
+import { TbTrash } from 'react-icons/tb'
 
 const normalizeStatus = (status?: string) => String(status || 'unknown').toLowerCase()
 
 const PageMyWorkspaces = () => {
-  const { useFetchMyWorkspaces, startWorkspace, stopWorkspace, deleteWorkspace } = useCoderWorkspaces()
+  const { useFetchMyWorkspaces, deleteWorkspace } = useCoderWorkspaces()
   const { data: workspaces = [], isLoading, isRefetching, refetch } = useFetchMyWorkspaces()
-  const { toast } = useToast()
-  const [workspaceToStop, setWorkspaceToStop] = useState<MyWorkspace | null>(null)
   const [workspaceToDelete, setWorkspaceToDelete] = useState<MyWorkspace | null>(null)
 
   const rows = useMemo(() => {
@@ -43,18 +40,6 @@ const PageMyWorkspaces = () => {
       window.clearInterval(intervalId)
     }
   }, [rows, refetch])
-
-  const handleOpenWorkspace = (workspace: MyWorkspace) => {
-    if (!workspace.openPath) {
-      toast({
-        title: 'Cannot open workspace',
-        description: 'Open URL is not available yet for this workspace.',
-        duration: 2500,
-      })
-      return
-    }
-    window.open(workspace.openPath, '_blank', 'noopener,noreferrer')
-  }
 
   return (
     <div className="flex w-full h-full bg-slate-200 p-2">
@@ -96,9 +81,6 @@ const PageMyWorkspaces = () => {
               {!isLoading && rows.length > 0 && (
                 <div className="overflow-auto h-full">
                   {rows.map((workspace) => {
-                    const status = normalizeStatus(workspace.status)
-                    const showStart = status === 'stopped'
-                    const isStartStopPending = startWorkspace.isPending || stopWorkspace.isPending
                     return (
                     <div
                       key={workspace.id}
@@ -113,29 +95,6 @@ const PageMyWorkspaces = () => {
                         </span>
                       </div>
                       <div className="w-[320px] min-w-[320px] flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleOpenWorkspace(workspace)}
-                          disabled={isRefetching || !workspace.openPath}
-                        >
-                          <TbExternalLink className="w-4 h-4 mr-1" />
-                          Open URL
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={isStartStopPending}
-                          onClick={() => {
-                            if (showStart) {
-                              void startWorkspace.mutateAsync(workspace.id)
-                              return
-                            }
-                            setWorkspaceToStop(workspace)
-                          }}
-                        >
-                          {showStart ? 'Start' : 'Stop'}
-                        </Button>
                         <Button
                           variant="destructive"
                           size="sm"
@@ -155,18 +114,6 @@ const PageMyWorkspaces = () => {
           </div>
         </div>
       </div>
-      <DaConfirmPopup
-        state={[Boolean(workspaceToStop), (open) => !open && setWorkspaceToStop(null)]}
-        title="Stop workspace"
-        label={`Are you sure you want to stop the workspace "${workspaceToStop?.name || ''}"? This will terminate all running processes and disconnect any active sessions.`}
-        onConfirm={async () => {
-          if (!workspaceToStop?.id) return
-          await stopWorkspace.mutateAsync(workspaceToStop.id)
-          setWorkspaceToStop(null)
-        }}
-      >
-        <span />
-      </DaConfirmPopup>
       <DaConfirmPopup
         state={[Boolean(workspaceToDelete), (open) => !open && setWorkspaceToDelete(null)]}
         title="Delete workspace"
