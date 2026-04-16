@@ -585,6 +585,87 @@ const stopWorkspace = async (workspaceId, sessionToken = null) => {
 };
 
 /**
+ * List workspaces visible to the current user session.
+ * @param {string|null} sessionToken
+ * @returns {Promise<Array>} Workspace list
+ */
+const listMyWorkspaces = async (sessionToken = null) => {
+  const headers = getHeadersWithToken(sessionToken);
+  const requestUserScopedList = () =>
+    axios.get(`${getCoderApiBase()}/users/me/workspaces`, { headers });
+  const requestOwnerFilteredList = () =>
+    axios.get(`${getCoderApiBase()}/workspaces`, {
+      headers,
+      params: { q: 'owner:me' },
+    });
+
+  try {
+    const response = await requestUserScopedList();
+    return extractCollection(response.data, 'workspaces');
+  } catch (error) {
+    const status = error?.response?.status;
+    if (status !== httpStatus.METHOD_NOT_ALLOWED && status !== httpStatus.NOT_FOUND) {
+      logger.error(`Failed to list Coder workspaces: ${error.message}`);
+      if (error.response) {
+        logger.error(`List workspace error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`);
+        throw new ApiError(
+          error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
+          `Coder API error: ${error.response.data?.message || error.message}`,
+        );
+      }
+      throw error;
+    }
+  }
+
+  try {
+    const fallbackResponse = await requestOwnerFilteredList();
+    return extractCollection(fallbackResponse.data, 'workspaces');
+  } catch (error) {
+    logger.error(`Failed to list Coder workspaces (fallback): ${error.message}`);
+    if (error.response) {
+      logger.error(`List workspace fallback error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`);
+      throw new ApiError(
+        error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
+        `Coder API error: ${error.response.data?.message || error.message}`,
+      );
+    }
+    throw error;
+  }
+};
+
+/**
+ * Delete a workspace by issuing a delete transition build.
+ * @param {string} workspaceId
+ * @param {string|null} sessionToken
+ * @returns {Promise<Object>} Build response or current workspace
+ */
+const deleteWorkspace = async (workspaceId, sessionToken = null) => {
+  try {
+    const response = await axios.post(
+      `${getCoderApiBase()}/workspaces/${workspaceId}/builds`,
+      { transition: 'delete' },
+      { headers: getHeadersWithToken(sessionToken) },
+    );
+    logger.info(`Delete requested for Coder workspace: ${workspaceId}`);
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 409) {
+      logger.info(`Coder workspace ${workspaceId} delete conflict, fetching status...`);
+      return getWorkspaceStatus(workspaceId, sessionToken);
+    }
+    logger.error(`Failed to delete Coder workspace: ${error.message}`);
+    if (error.response) {
+      logger.error(`Delete workspace error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`);
+      throw new ApiError(
+        error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
+        `Coder API error: ${error.response.data?.message || error.message}`,
+      );
+    }
+    throw error;
+  }
+};
+
+/**
  * If Coder reports the workspace build as running but the agent is not connected (or workspace health is false),
  * request stop then start once. Handles zombie state after the container was removed while the API still said "running".
  * @param {string} workspaceId
@@ -973,6 +1054,8 @@ module.exports = {
   getOrCreateWorkspace,
   startWorkspace,
   stopWorkspace,
+  listMyWorkspaces,
+  deleteWorkspace,
   restoreUnhealthyRunningWorkspace,
   getWorkspaceStatus,
   getWorkspaceAppUrl,

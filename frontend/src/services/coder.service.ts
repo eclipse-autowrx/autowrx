@@ -19,6 +19,14 @@ export interface WorkspaceInfo {
   folderPath?: string | null
 }
 
+export interface MyWorkspace {
+  id: string
+  name: string
+  ownerName?: string | null
+  status?: string
+  openPath?: string | null
+}
+
 /**
  * Get workspace URL for a prototype
  */
@@ -56,4 +64,21 @@ export const getWorkspaceRunOutput = async (
     `/system/coder/workspace/${prototypeId}/run-output`,
   )
   return response.data
+}
+
+export const listMyWorkspaces = async (): Promise<MyWorkspace[]> => {
+  const response = await serverAxios.get<{ workspaces: MyWorkspace[] }>('/system/coder/workspaces/me')
+  return response.data?.workspaces || []
+}
+
+export const stopMyWorkspace = async (workspaceId: string): Promise<void> => {
+  await serverAxios.post(`/system/coder/workspaces/${workspaceId}/stop`, {})
+}
+
+export const startMyWorkspace = async (workspaceId: string): Promise<void> => {
+  await serverAxios.post(`/system/coder/workspaces/${workspaceId}/start`, {})
+}
+
+export const deleteMyWorkspace = async (workspaceId: string): Promise<void> => {
+  await serverAxios.delete(`/system/coder/workspaces/${workspaceId}`)
 }

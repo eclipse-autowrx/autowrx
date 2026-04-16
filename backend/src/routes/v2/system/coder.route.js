@@ -28,4 +28,20 @@ router
   .route('/workspace/:prototypeId/run-output')
   .get(auth(), validate(coderValidation.getRunOutput), coderController.getRunOutput);
 
+router
+  .route('/workspaces/me')
+  .get(auth(), coderController.listMyWorkspaces);
+
+router
+  .route('/workspaces/:workspaceId/start')
+  .post(auth(), validate(coderValidation.manageWorkspaceById), coderController.startMyWorkspace);
+
+router
+  .route('/workspaces/:workspaceId/stop')
+  .post(auth(), validate(coderValidation.manageWorkspaceById), coderController.stopMyWorkspace);
+
+router
+  .route('/workspaces/:workspaceId')
+  .delete(auth(), validate(coderValidation.manageWorkspaceById), coderController.deleteMyWorkspace);
+
 module.exports = router;

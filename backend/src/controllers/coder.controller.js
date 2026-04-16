@@ -52,6 +52,19 @@ const resolveCoderSessionToken = async (req, user, workspaceId) => {
   return coderService.getOrCreateUserScopedToken(user, { workspaceId });
 };
 
+const toSameOriginCoderPath = (rawUrl) => {
+  if (!rawUrl) return null;
+  try {
+    const parsed = new URL(rawUrl);
+    return `/coder${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    if (String(rawUrl).startsWith('/')) {
+      return `/coder${rawUrl}`;
+    }
+    return null;
+  }
+};
+
 /**
  * Get workspace URL and session token for a prototype
  */
@@ -196,9 +209,121 @@ const getRunOutput = catchAsync(async (req, res) => {
   res.json(payload);
 });
 
+/**
+ * List workspaces for current user.
+ */
+const listMyWorkspaces = catchAsync(async (req, res) => {
+  const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
+  if (!coderCfg.enabled) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
+  }
+
+  const user = await User.findById(req.user.id);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+  const sessionToken = await resolveCoderSessionToken(req, user, null);
+  setCoderSessionCookie(req, res, sessionToken);
+
+  const workspaces = await coderService.listMyWorkspaces(sessionToken);
+  const mappedWorkspaces = await Promise.all(workspaces.map(async (workspace) => {
+    let appUrl = null;
+    try {
+      appUrl = await coderService.getWorkspaceAppUrl(
+        workspace.id,
+        'code-server',
+        1,
+        0,
+        sessionToken,
+      );
+    } catch {
+      appUrl =
+        workspace?.latest_app_status?.uri ||
+        workspace?.latest_app_status?.url ||
+        null;
+    }
+
+    return {
+      id: workspace.id,
+      name: workspace.name,
+      ownerName: workspace.owner_name || null,
+      status: workspace?.latest_build?.status || workspace?.status || 'unknown',
+      openPath: toSameOriginCoderPath(appUrl),
+    };
+  }));
+  res.json({ workspaces: mappedWorkspaces });
+});
+
+/**
+ * Stop workspace by ID.
+ */
+const stopMyWorkspace = catchAsync(async (req, res) => {
+  const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
+  if (!coderCfg.enabled) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
+  }
+
+  const user = await User.findById(req.user.id);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+  const { workspaceId } = req.params;
+  const sessionToken = await resolveCoderSessionToken(req, user, workspaceId);
+  setCoderSessionCookie(req, res, sessionToken);
+
+  const payload = await coderService.stopWorkspace(workspaceId, sessionToken);
+  res.json(payload);
+});
+
+/**
+ * Start workspace by ID.
+ */
+const startMyWorkspace = catchAsync(async (req, res) => {
+  const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
+  if (!coderCfg.enabled) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
+  }
+
+  const user = await User.findById(req.user.id);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+  const { workspaceId } = req.params;
+  const sessionToken = await resolveCoderSessionToken(req, user, workspaceId);
+  setCoderSessionCookie(req, res, sessionToken);
+
+  const payload = await coderService.startWorkspace(workspaceId, sessionToken);
+  res.json(payload);
+});
+
+/**
+ * Delete workspace by ID.
+ */
+const deleteMyWorkspace = catchAsync(async (req, res) => {
+  const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
+  if (!coderCfg.enabled) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
+  }
+
+  const user = await User.findById(req.user.id);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+  const { workspaceId } = req.params;
+  const sessionToken = await resolveCoderSessionToken(req, user, workspaceId);
+  setCoderSessionCookie(req, res, sessionToken);
+
+  const payload = await coderService.deleteWorkspace(workspaceId, sessionToken);
+  res.json(payload);
+});
+
 module.exports = {
   getWorkspace,
   prepareWorkspace,
   triggerRun,
   getRunOutput,
+  listMyWorkspaces,
+  startMyWorkspace,
+  stopMyWorkspace,
+  deleteMyWorkspace,
 };

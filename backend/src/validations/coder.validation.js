@@ -36,9 +36,16 @@ const getRunOutput = {
   }),
 };
 
+const manageWorkspaceById = {
+  params: Joi.object().keys({
+    workspaceId: Joi.string().guid({ version: ['uuidv4', 'uuidv5'] }).required(),
+  }),
+};
+
 module.exports = {
   getWorkspace,
   prepareWorkspace,
   triggerRun,
   getRunOutput,
+  manageWorkspaceById,
 };

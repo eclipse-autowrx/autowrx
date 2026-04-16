@@ -71,7 +71,7 @@ const DaUserMenu = ({ user }: DaUserDropdownProps) => {
           {!isAdmin && (
             <DropdownMenuItem asChild>
               <Link
-                to="/model"
+                to="/my-workspaces"
                 className="flex items-center gap-2 cursor-pointer"
               >
                 <TbFolders className="text-base shrink-0" /> My Workspaces
