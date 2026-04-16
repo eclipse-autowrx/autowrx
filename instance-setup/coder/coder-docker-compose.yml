@@ -3,7 +3,7 @@ services:
     image: ghcr.io/coder/coder:v2.31.9
     container_name: coder
     environment:
-      - CODER_ACCESS_URL=http://localhost:7080
+      - CODER_ACCESS_URL=${CODER_ACCESS_URL:-http://localhost:7080}
       - CODER_HTTP_ADDRESS=0.0.0.0:7080
       - CODER_BROWSER_ONLY=true
       - TF_PLUGIN_CACHE_DIR=/var/cache/terraform-plugins

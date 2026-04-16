@@ -1,3 +1,9 @@
 # Local Terraform provider mirror (~28MB); run ./populate-terraform-mirror.sh
 terraform-provider-mirror/
 .mirror-work/
+
+# Build artifact from autowrx-runner/; produced and cleaned up by start.sh.
+workspace-image/autowrx-runner.vsix
+
+# Local Coder env overrides (CODER_ACCESS_URL, etc.)
+.env
