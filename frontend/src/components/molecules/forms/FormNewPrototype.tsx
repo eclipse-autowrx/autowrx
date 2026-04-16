@@ -164,13 +164,26 @@ const FormNewPrototype = ({
     const { isDuplicate: isDuplicatePrototypeName, suggestedName: suggestedPrototypeName } =
         useDuplicateNameCheck(prototypeName, existingPrototypeNames)
 
+    const ownedModelNames = useMemo(
+        () => ownedModelsData?.results?.map((m) => m.name) ?? [],
+        [ownedModelsData],
+    )
+
+    const [debouncedModelName, setDebouncedModelName] = useState('')
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedModelName(newModelName), 300)
+        return () => clearTimeout(timer)
+    }, [newModelName])
+
+    const { isDuplicate: isDuplicateModelName, suggestedName: suggestedModelName } =
+        useDuplicateNameCheck(debouncedModelName, ownedModelNames)
+
     const disabled =
         loading ||
         uploading ||
         !prototypeName.trim() ||
-        (isCreatingNewModel ? !newModelName.trim() : !selectedModelId) ||
-        isDuplicatePrototypeName ||
-        !!error
+        (isCreatingNewModel ? !newModelName.trim() || isDuplicateModelName : !selectedModelId) ||
+        isDuplicatePrototypeName
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -274,6 +287,7 @@ const FormNewPrototype = ({
                     label="Model"
                     wrapperClassName="mt-4"
                     onValueChange={(value) => {
+                        setError('')
                         if (value === 'new') {
                             setIsCreatingNewModel(true)
                             setSelectedModelId('new')
@@ -300,11 +314,24 @@ const FormNewPrototype = ({
                     <DaInput
                         name="newModelName"
                         value={newModelName}
-                        onChange={(e) => setNewModelName(e.target.value)}
+                        onChange={(e) => {
+                            setNewModelName(e.target.value)
+                            setError('')
+                        }}
                         placeholder="Model name"
                         label="Model Name *"
                         inputClassName="bg-white"
                     />
+                    {isDuplicateModelName && (
+                        <DaDuplicateNameHint
+                            message="A model with this name already exists"
+                            suggestedName={suggestedModelName}
+                            onApplySuggestion={(name) => {
+                                setNewModelName(name)
+                                setError('')
+                            }}
+                        />
+                    )}
 
                     {/* Signal */}
                     <div>

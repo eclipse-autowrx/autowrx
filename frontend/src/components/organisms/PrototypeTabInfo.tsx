@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { Prototype } from '../../types/model.type'
 import { DaImage } from '../atoms/DaImage'
 import { Button } from '../atoms/button'
@@ -46,6 +46,8 @@ import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { toast } from 'react-toastify'
 import { isAxiosError } from 'axios'
+import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
+import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
 
 interface PrototypeTabInfoProps {
   prototype: Prototype
@@ -60,9 +62,17 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
   const [isEditing, setIsEditing] = useState(false)
   const [localPrototype, setLocalPrototype] = useState(prototype)
   const { data: model } = useCurrentModel()
-  const { refetch: refetchModelPrototypes } = useListModelPrototypes(
+  const { data: modelPrototypes, refetch: refetchModelPrototypes } = useListModelPrototypes(
     model?.id || '',
   )
+
+  const existingPrototypeNames = useMemo(
+    () => modelPrototypes?.filter((p: Prototype) => p.id !== prototype.id).map((p: Prototype) => p.name) ?? [],
+    [modelPrototypes, prototype.id],
+  )
+
+  const { isDuplicate: isDuplicatePrototypeName, suggestedName: suggestedPrototypeName } =
+    useDuplicateNameCheck(localPrototype.name, existingPrototypeNames)
   const { refetch: refetchCurrentPrototype } = useCurrentPrototype()
   const navigate = useNavigate()
   const [isAuthorized, isAdmin] = usePermissionHook(
@@ -232,7 +242,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                   <Button variant="outline" onClick={handleCancel} size="sm">
                     Cancel
                   </Button>
-                  <Button onClick={handleSave} size="sm" disabled={isSaving}>
+                  <Button onClick={handleSave} size="sm" disabled={isSaving || isDuplicatePrototypeName}>
                     {isSaving ? 'Saving...' : 'Save'}
                   </Button>
                 </div>
@@ -373,7 +383,15 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                       onChange={(e) => handleChange('name', e.target.value)}
                       className={error ? 'border-secondary' : ''}
                     />
-                    {error && <p className="mt-2 text-sm text-secondary">{error}</p>}
+                    {isDuplicatePrototypeName && (
+                      <DaDuplicateNameHint
+                        message={`The prototype name '${localPrototype.name}' is already in use for model '${model?.name}'`}
+                        suggestedName={suggestedPrototypeName}
+                        onApplySuggestion={(name) => handleChange('name', name)}
+                        className="text-sm text-secondary mt-2"
+                      />
+                    )}
+                    {error && !isDuplicatePrototypeName && <p className="mt-2 text-sm text-secondary">{error}</p>}
                   </div>
                   <div className="flex flex-col gap-2">
                     <Label htmlFor="problem">Problem</Label>

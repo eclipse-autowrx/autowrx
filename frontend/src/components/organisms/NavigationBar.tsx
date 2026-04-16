@@ -43,6 +43,7 @@ import { useSiteConfig } from '@/utils/siteConfig'
 import { Button } from '../atoms/button'
 import { Wrench } from 'lucide-react'
 import DOMPurify from 'dompurify'
+import useAuthStore from '@/stores/authStore'
 
 const SimpleSwitch = ({
   checked,
@@ -68,7 +69,9 @@ const SimpleSwitch = ({
 )
 
 const NavigationBar = ({ }) => {
-  const { data: user } = useSelfProfileQuery()
+  const { data: user, isLoading, isFetching } = useSelfProfileQuery()
+  const authBootstrapped = useAuthStore((state) => state.authBootstrapped)
+  const isResolvingAuth = !authBootstrapped || (!user && (isLoading || isFetching))
   // const { data: model } = useCurrentModel()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
   const [learningMode, setIsLearningMode] = useState(false)
@@ -77,6 +80,26 @@ const NavigationBar = ({ }) => {
   const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
   const enableLearningMode = useSiteConfig('ENABLE_LEARNING_MODE', false)
   const navBarActions = useSiteConfig('NAV_BAR_ACTIONS', [])
+  const allowNonAdminAddonConfig = useSiteConfig(
+    'ALLOW_NON_ADMIN_ADDON_CONFIG',
+    true,
+  )
+  const toolsMenuItems = useMemo(() => {
+    if (isAuthorized) {
+      return [
+        { to: '/manage-users', icon: TbUsers, label: 'Manage Users' },
+        { to: '/manage-features', icon: TbStack2, label: 'Manage Features' },
+        { to: '/admin/site-config', icon: TbSettings, label: 'Site Config' },
+        { to: '/admin/plugins', icon: TbApps, label: 'Plugins' },
+        { to: '/admin/templates', icon: TbPalette, label: 'Templates' },
+        { to: '/admin/dashboard-templates', icon: TbBuildingWarehouse, label: 'Dashboard Templates' },
+      ]
+    }
+    if (allowNonAdminAddonConfig) {
+      return [{ to: '/me/plugins', icon: TbApps, label: 'Plugins' }]
+    }
+    return []
+  }, [isAuthorized, allowNonAdminAddonConfig])
 
   const headerBackground = gradientHeader
     ? 'linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%)'
@@ -128,7 +151,7 @@ const NavigationBar = ({ }) => {
           <SimpleSwitch
             checked={learningMode}
             onChange={(v) => {
-              if (v && !user) {
+              if (v && (!user || isResolvingAuth)) {
                 alert('Please Sign in to use learning mode')
                 return
               }
@@ -209,71 +232,31 @@ const NavigationBar = ({ }) => {
         </Link>
       )} */}
 
-      {user && (
+      {!isResolvingAuth && user && (
         <div className="flex items-center shrink-0">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="hover:bg-[var(--header-hover-bg)]"
-                style={{ '--header-hover-bg': '#dbe4ee' } as CSSProperties}
+          {toolsMenuItems.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="hover:bg-[var(--header-hover-bg)]"
+                  style={{ '--header-hover-bg': '#dbe4ee' } as CSSProperties}
+                >
+                  <Wrench />
+                  {isAuthorized ? 'Admin Tools' : 'Tools'}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-52 text-sm font-medium"
               >
-                <Wrench />
-                {isAuthorized ? 'Admin Tools' : 'Tools'}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="w-52 text-sm font-medium"
-            >
-              {isAuthorized ? (
-                <>
-                  <DropdownMenuItem asChild>
+                {toolsMenuItems.map((item) => (
+                  <DropdownMenuItem key={item.to} asChild>
                     <Link
-                      to="/manage-users"
+                      to={item.to}
                       className="flex items-center gap-2 cursor-pointer"
                     >
-                      <TbUsers className="text-base" /> Manage Users
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link
-                      to="/manage-features"
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <TbStack2 className="text-base" /> Manage Features
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link
-                      to="/admin/site-config"
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <TbSettings className="text-base" /> Site Config
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link
-                      to="/admin/plugins"
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <TbApps className="text-base" /> Plugins
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link
-                      to="/admin/templates"
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <TbPalette className="text-base" /> Templates
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link
-                      to="/admin/dashboard-templates"
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <TbBuildingWarehouse className="text-base" /> Dashboard Templates
+                      <item.icon className="text-base" /> {item.label}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
@@ -294,9 +277,10 @@ const NavigationBar = ({ }) => {
                     <TbApps className="text-base" /> Plugins
                   </Link>
                 </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           {/* {model ? (
             <Link to={`/model/${model.id}`}>
               <DaButton variant="plain">
@@ -323,7 +307,7 @@ const NavigationBar = ({ }) => {
       )}
 
       {learningMode && <LearningIntegration requestClose={() => setIsLearningMode(false)} />}
-      {!user && <div className="shrink-0"><DaNavUser /></div>}
+      {(isResolvingAuth || !user) && <div className="shrink-0"><DaNavUser /></div>}
     </header>
   )
 }

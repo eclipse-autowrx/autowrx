@@ -30,9 +30,10 @@ import {
   SelectValue,
 } from '@/components/atoms/select'
 import { Model, ModelLite, ModelCreate } from '@/types/model.type'
+import { useQuery } from '@tanstack/react-query'
 import { Spinner } from '@/components/atoms/spinner'
 import { CVI } from '@/data/CVI'
-import { createModelService } from '@/services/model.service'
+import { createModelService, listModelsLite } from '@/services/model.service'
 import { cn } from '@/lib/utils'
 import default_journey from '@/data/default_journey'
 import { getConfig, useSiteConfig } from '@/utils/siteConfig'
@@ -218,8 +219,29 @@ const FormCreatePrototype = ({
   const { isDuplicate: isDuplicatePrototypeName, suggestedName: suggestedPrototypeName } =
     useDuplicateNameCheck(debouncedPrototypeName, existingPrototypeNames)
 
+  const { data: ownedModelsData } = useQuery({
+    queryKey: ['listModelLiteOwned', currentUser?.id],
+    queryFn: () => listModelsLite({ created_by: currentUser!.id }),
+    enabled: !!currentUser?.id && !localModel,
+  })
+
+  const ownedModelNames = useMemo(
+    () => ownedModelsData?.results?.map((m) => m.name) ?? [],
+    [ownedModelsData],
+  )
+
+  const [debouncedModelName, setDebouncedModelName] = useState('')
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedModelName(data.modelName), 300)
+    return () => clearTimeout(timer)
+  }, [data.modelName])
+
+  const { isDuplicate: isDuplicateModelName, suggestedName: suggestedModelName } =
+    useDuplicateNameCheck(debouncedModelName, ownedModelNames)
+
   const handleChange = (name: keyof typeof data, value: string | number) => {
     setData((prev) => ({ ...prev, [name]: value }))
+    setError('')
   }
 
   const onTemplateChange = (v: string) => {
@@ -367,7 +389,7 @@ const FormCreatePrototype = ({
   }, [contributionModels, isFetchingModelContribution, currentModel])
 
   useEffect(() => {
-    if (loading || (!localModel && !data.modelName) || !data.prototypeName || isDuplicatePrototypeName) {
+    if (loading || (!localModel && !data.modelName) || !data.prototypeName || isDuplicatePrototypeName || (!localModel && isDuplicateModelName)) {
       setDisabled(true)
     } else setDisabled(false)
     if (onPrototypeChange) {
@@ -385,7 +407,7 @@ const FormCreatePrototype = ({
         })
       }
     }
-  }, [loading, localModel, data.modelName, data.prototypeName, isDuplicatePrototypeName])
+  }, [loading, localModel, data.modelName, data.prototypeName, isDuplicatePrototypeName, isDuplicateModelName])
 
   return (
     <form
@@ -403,6 +425,7 @@ const FormCreatePrototype = ({
             <Select
               defaultValue={localModel.id}
               onValueChange={(e: string) => {
+                setError('')
                 const selectedModel = contributionModels.results.find(
                   (model: ModelLite) => model.id === e,
                 )
@@ -438,6 +461,13 @@ const FormCreatePrototype = ({
               placeholder="Model name"
               className="bg-background"
             />
+            {isDuplicateModelName && (
+              <DaDuplicateNameHint
+                message="A model with this name already exists"
+                suggestedName={suggestedModelName}
+                onApplySuggestion={(name) => handleChange('modelName', name)}
+              />
+            )}
           </div>
         ))}
 
@@ -452,13 +482,14 @@ const FormCreatePrototype = ({
         />
         {isDuplicatePrototypeName && (
           <DaDuplicateNameHint
-            message="A prototype with this name already exists"
+            message={`The prototype name '${data.prototypeName}' is already in use for model '${localModel?.name ?? data.modelName}'`}
             suggestedName={suggestedPrototypeName}
             onApplySuggestion={(name) => handleChange('prototypeName', name)}
+            className="text-sm text-secondary mt-2"
           />
         )}
         {error && !isDuplicatePrototypeName && (
-          <p className="mt-2 text-sm text-destructive">{error}</p>
+          <p className="mt-2 text-sm text-secondary">{error}</p>
         )}
       </div>
 

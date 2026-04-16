@@ -107,6 +107,7 @@ const FormCreateModel = () => {
 
   const handleChange = (name: keyof typeof data, value: string) => {
     setData((prev) => ({ ...prev, [name]: value }))
+    setError('')
   }
 
   const handleVSSChange = (version: string) => {
@@ -140,8 +141,25 @@ const FormCreateModel = () => {
         body.model_home_image_file = defaultModelImage
       }
       const modelId = await createModelService(body)
-      await refetchModelLite()
-      await queryClient.invalidateQueries({
+      const createdName = data.name
+      setData(initialState)
+      setDebouncedName('')
+      setSelectedTemplateId(null)
+
+      toast({
+        title: ``,
+        description: (
+          <p className="flex items-center text-base font-medium">
+            <TbCircleCheckFilled className="mr-2 h-5 w-5 text-green-500" />
+            Model "{createdName}" created successfully
+          </p>
+        ),
+        duration: 3000,
+      })
+      navigate(`/model/${modelId}`)
+
+      refetchModelLite()
+      queryClient.invalidateQueries({
         queryKey: ['modelsList', currentUser.id],
       })
       addLog({
@@ -152,20 +170,6 @@ const FormCreateModel = () => {
         ref_id: modelId,
         ref_type: 'model',
       })
-
-      toast({
-        title: ``,
-        description: (
-          <p className="flex items-center text-base font-medium">
-            <TbCircleCheckFilled className="mr-2 h-5 w-5 text-green-500" />
-            Model "{data.name}" created successfully
-          </p>
-        ),
-        duration: 3000,
-      })
-      navigate(`/model/${modelId}`)
-      setData(initialState)
-      setSelectedTemplateId(null)
     } catch (error) {
       if (isAxiosError(error)) {
         setError(error.response?.data?.message || 'Something went wrong')
@@ -226,6 +230,7 @@ const FormCreateModel = () => {
             message="A model with this name already exists"
             suggestedName={suggestedName}
             onApplySuggestion={(name) => handleChange('name', name)}
+            className="text-sm text-secondary mt-2"
           />
         )}
       </div>
