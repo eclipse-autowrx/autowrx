@@ -37,6 +37,22 @@ const setCoderSessionCookie = (req, res, sessionToken) => {
 };
 
 /**
+ * Token for Coder API calls and for the `coder_session_token` cookie (same-origin `/coder` proxy).
+ * Order: explicit query (tests/legacy) → cookie from prepare → mint scoped token.
+ */
+const resolveCoderSessionToken = async (req, user, workspaceId) => {
+  const fromQuery = typeof req.query?.sessionToken === 'string' ? req.query.sessionToken.trim() : '';
+  if (fromQuery) return fromQuery;
+
+  const fromCookie = typeof req.cookies?.[CODER_SESSION_COOKIE] === 'string'
+    ? req.cookies[CODER_SESSION_COOKIE].trim()
+    : '';
+  if (fromCookie) return fromCookie;
+
+  return coderService.getOrCreateUserScopedToken(user, { workspaceId });
+};
+
+/**
  * Get workspace URL and session token for a prototype
  */
 const getWorkspace = catchAsync(async (req, res) => {
@@ -65,10 +81,8 @@ const getWorkspace = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.CONFLICT, 'Workspace is not prepared yet. Call prepare endpoint first.');
   }
 
-  const requestedSessionToken = typeof req.query?.sessionToken === 'string' ? req.query.sessionToken.trim() : '';
-  const iframeSessionToken =
-    requestedSessionToken || (await coderService.getOrCreateUserScopedToken(user, { workspaceId }));
-  const workspace = await coderService.getWorkspaceStatus(workspaceId, iframeSessionToken);
+  const sessionToken = await resolveCoderSessionToken(req, user, workspaceId);
+  const workspace = await coderService.getWorkspaceStatus(workspaceId, sessionToken);
   const prototypeFolderPath = `${getPrototypeModelId(prototype)}/${sanitizePrototypeFolderName(prototype.name)}`;
 
   const appUrl = await coderService.getWorkspaceAppUrl(
@@ -76,11 +90,11 @@ const getWorkspace = catchAsync(async (req, res) => {
     'code-server',
     5,
     2000,
-    iframeSessionToken,
+    sessionToken,
   );
 
-  await coderService.waitUntilCoderAppProxyReady(appUrl, iframeSessionToken);
-  setCoderSessionCookie(req, res, iframeSessionToken);
+  await coderService.waitUntilCoderAppProxyReady(appUrl, sessionToken);
+  setCoderSessionCookie(req, res, sessionToken);
 
   res.json({
     workspaceId: workspace.id,
