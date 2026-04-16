@@ -9,8 +9,10 @@
 const express = require('express');
 const auth = require('../../../middlewares/auth');
 const validate = require('../../../middlewares/validate');
+const { checkPermission } = require('../../../middlewares/permission');
 const coderController = require('../../../controllers/coder.controller');
 const { coderValidation } = require('../../../validations');
+const { PERMISSIONS } = require('../../../config/roles');
 
 const router = express.Router();
 
@@ -33,6 +35,10 @@ router
   .get(auth(), coderController.listMyWorkspaces);
 
 router
+  .route('/workspaces/admin')
+  .get(auth(), checkPermission(PERMISSIONS.ADMIN), coderController.listAdminWorkspaces);
+
+router
   .route('/workspaces/:workspaceId/start')
   .post(auth(), validate(coderValidation.manageWorkspaceById), coderController.startMyWorkspace);
 
@@ -43,5 +49,32 @@ router
 router
   .route('/workspaces/:workspaceId')
   .delete(auth(), validate(coderValidation.manageWorkspaceById), coderController.deleteMyWorkspace);
+
+router
+  .route('/workspaces/admin/:workspaceId/start')
+  .post(
+    auth(),
+    checkPermission(PERMISSIONS.ADMIN),
+    validate(coderValidation.manageWorkspaceById),
+    coderController.startAdminWorkspace,
+  );
+
+router
+  .route('/workspaces/admin/:workspaceId/stop')
+  .post(
+    auth(),
+    checkPermission(PERMISSIONS.ADMIN),
+    validate(coderValidation.manageWorkspaceById),
+    coderController.stopAdminWorkspace,
+  );
+
+router
+  .route('/workspaces/admin/:workspaceId')
+  .delete(
+    auth(),
+    checkPermission(PERMISSIONS.ADMIN),
+    validate(coderValidation.manageWorkspaceById),
+    coderController.deleteAdminWorkspace,
+  );
 
 module.exports = router;

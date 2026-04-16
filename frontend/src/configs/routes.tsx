@@ -35,6 +35,7 @@ import PagePrototypePlugin from '@/pages/PagePrototypePlugin.tsx'
 import PageModelPlugin from '@/pages/PageModelPlugin.tsx'
 import PageManageUsers from '@/pages/PageManageUsers.tsx'
 import PageManageFeatures from '@/pages/PageManageFeatures.tsx'
+import PageManageWorkspaces from '@/pages/PageManageWorkspaces.tsx'
 import PageNewPrototypeDetail from '@/pages/PageNewPrototypeDetail.tsx'
 // import PageAuthSuccess from '@/pages/PageAuthSuccess.ts'
 import { retry } from '@/lib/retry.ts'
@@ -205,6 +206,19 @@ const routesConfig: RouteConfig[] = [
                 element: (
                   <SuspenseProvider>
                     <PageManageFeatures />
+                  </SuspenseProvider>
+                ),
+              },
+            ],
+          },
+          {
+            path: '/manage-workspaces',
+            children: [
+              {
+                index: true,
+                element: (
+                  <SuspenseProvider>
+                    <PageManageWorkspaces />
                   </SuspenseProvider>
                 ),
               },

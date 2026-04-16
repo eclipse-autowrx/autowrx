@@ -666,6 +666,93 @@ const deleteWorkspace = async (workspaceId, sessionToken = null) => {
 };
 
 /**
+ * List all workspaces for admin management.
+ * @returns {Promise<Array>}
+ */
+const listAllWorkspacesAdmin = async () => {
+  try {
+    const response = await axios.get(`${getCoderApiBase()}/workspaces`, {
+      headers: getAdminHeaders(),
+      params: { limit: 200 },
+    });
+    return extractCollection(response.data, 'workspaces');
+  } catch (error) {
+    logger.error(`Failed to list all Coder workspaces: ${error.message}`);
+    if (error.response) {
+      logger.error(`Admin list workspace error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`);
+      throw new ApiError(
+        error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
+        `Coder API error: ${error.response.data?.message || error.message}`,
+      );
+    }
+    throw error;
+  }
+};
+
+/**
+ * Start workspace as admin.
+ * @param {string} workspaceId
+ * @returns {Promise<Object>}
+ */
+const startWorkspaceAsAdmin = async (workspaceId) => {
+  try {
+    const response = await axios.post(
+      `${getCoderApiBase()}/workspaces/${workspaceId}/builds`,
+      { transition: 'start' },
+      { headers: getAdminHeaders() },
+    );
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 409) {
+      return getWorkspaceStatus(workspaceId, coderConfig.getCoderConfigSync().adminApiKey);
+    }
+    throw toCoderApiError(error, httpStatus.INTERNAL_SERVER_ERROR);
+  }
+};
+
+/**
+ * Stop workspace as admin.
+ * @param {string} workspaceId
+ * @returns {Promise<Object>}
+ */
+const stopWorkspaceAsAdmin = async (workspaceId) => {
+  try {
+    const response = await axios.post(
+      `${getCoderApiBase()}/workspaces/${workspaceId}/builds`,
+      { transition: 'stop' },
+      { headers: getAdminHeaders() },
+    );
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 409) {
+      return getWorkspaceStatus(workspaceId, coderConfig.getCoderConfigSync().adminApiKey);
+    }
+    throw toCoderApiError(error, httpStatus.INTERNAL_SERVER_ERROR);
+  }
+};
+
+/**
+ * Delete workspace as admin.
+ * @param {string} workspaceId
+ * @returns {Promise<Object>}
+ */
+const deleteWorkspaceAsAdmin = async (workspaceId) => {
+  try {
+    const response = await axios.post(
+      `${getCoderApiBase()}/workspaces/${workspaceId}/builds`,
+      { transition: 'delete' },
+      { headers: getAdminHeaders() },
+    );
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 409) {
+      return getWorkspaceStatus(workspaceId, coderConfig.getCoderConfigSync().adminApiKey);
+    }
+    throw toCoderApiError(error, httpStatus.INTERNAL_SERVER_ERROR);
+  }
+};
+
+/**
  * If Coder reports the workspace build as running but the agent is not connected (or workspace health is false),
  * request stop then start once. Handles zombie state after the container was removed while the API still said "running".
  * @param {string} workspaceId
@@ -1054,6 +1141,10 @@ module.exports = {
   getOrCreateWorkspace,
   startWorkspace,
   stopWorkspace,
+  listAllWorkspacesAdmin,
+  startWorkspaceAsAdmin,
+  stopWorkspaceAsAdmin,
+  deleteWorkspaceAsAdmin,
   listMyWorkspaces,
   deleteWorkspace,
   restoreUnhealthyRunningWorkspace,

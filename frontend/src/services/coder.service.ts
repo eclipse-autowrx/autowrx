@@ -82,3 +82,20 @@ export const startMyWorkspace = async (workspaceId: string): Promise<void> => {
 export const deleteMyWorkspace = async (workspaceId: string): Promise<void> => {
   await serverAxios.delete(`/system/coder/workspaces/${workspaceId}`)
 }
+
+export const listAdminWorkspaces = async (): Promise<MyWorkspace[]> => {
+  const response = await serverAxios.get<{ workspaces: MyWorkspace[] }>('/system/coder/workspaces/admin')
+  return response.data?.workspaces || []
+}
+
+export const startAdminWorkspace = async (workspaceId: string): Promise<void> => {
+  await serverAxios.post(`/system/coder/workspaces/admin/${workspaceId}/start`, {})
+}
+
+export const stopAdminWorkspace = async (workspaceId: string): Promise<void> => {
+  await serverAxios.post(`/system/coder/workspaces/admin/${workspaceId}/stop`, {})
+}
+
+export const deleteAdminWorkspace = async (workspaceId: string): Promise<void> => {
+  await serverAxios.delete(`/system/coder/workspaces/admin/${workspaceId}`)
+}

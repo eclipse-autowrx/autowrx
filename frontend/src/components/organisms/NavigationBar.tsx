@@ -19,10 +19,9 @@ import {
   TbUsers,
   TbZoom,
   TbStack2,
+  TbFolders,
   TbBuildingWarehouse,
-  TbCar,
   TbSettings,
-  TbMenu2,
   TbPalette,
   TbApps,
 } from 'react-icons/tb'
@@ -92,6 +91,7 @@ const NavigationBar = ({ }) => {
         { to: '/admin/plugins', icon: TbApps, label: 'Plugins' },
         { to: '/admin/templates', icon: TbPalette, label: 'Templates' },
         { to: '/admin/dashboard-templates', icon: TbBuildingWarehouse, label: 'Dashboard Templates' },
+        { to: '/manage-workspaces', icon: TbFolders, label: 'Manage Workspaces' },
       ]
     }
     if (allowNonAdminAddonConfig) {

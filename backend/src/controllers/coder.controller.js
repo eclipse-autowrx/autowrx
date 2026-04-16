@@ -65,6 +65,34 @@ const toSameOriginCoderPath = (rawUrl) => {
   }
 };
 
+const mapWorkspacesForResponse = async (workspaces, sessionToken) => {
+  return Promise.all(workspaces.map(async (workspace) => {
+    let appUrl = null;
+    try {
+      appUrl = await coderService.getWorkspaceAppUrl(
+        workspace.id,
+        'code-server',
+        1,
+        0,
+        sessionToken,
+      );
+    } catch {
+      appUrl =
+        workspace?.latest_app_status?.uri ||
+        workspace?.latest_app_status?.url ||
+        null;
+    }
+
+    return {
+      id: workspace.id,
+      name: workspace.name,
+      ownerName: workspace.owner_name || null,
+      status: workspace?.latest_build?.status || workspace?.status || 'unknown',
+      openPath: toSameOriginCoderPath(appUrl),
+    };
+  }));
+};
+
 /**
  * Get workspace URL and session token for a prototype
  */
@@ -226,31 +254,21 @@ const listMyWorkspaces = catchAsync(async (req, res) => {
   setCoderSessionCookie(req, res, sessionToken);
 
   const workspaces = await coderService.listMyWorkspaces(sessionToken);
-  const mappedWorkspaces = await Promise.all(workspaces.map(async (workspace) => {
-    let appUrl = null;
-    try {
-      appUrl = await coderService.getWorkspaceAppUrl(
-        workspace.id,
-        'code-server',
-        1,
-        0,
-        sessionToken,
-      );
-    } catch {
-      appUrl =
-        workspace?.latest_app_status?.uri ||
-        workspace?.latest_app_status?.url ||
-        null;
-    }
+  const mappedWorkspaces = await mapWorkspacesForResponse(workspaces, sessionToken);
+  res.json({ workspaces: mappedWorkspaces });
+});
 
-    return {
-      id: workspace.id,
-      name: workspace.name,
-      ownerName: workspace.owner_name || null,
-      status: workspace?.latest_build?.status || workspace?.status || 'unknown',
-      openPath: toSameOriginCoderPath(appUrl),
-    };
-  }));
+/**
+ * List all workspaces for admins.
+ */
+const listAdminWorkspaces = catchAsync(async (req, res) => {
+  const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
+  if (!coderCfg.enabled) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
+  }
+
+  const workspaces = await coderService.listAllWorkspacesAdmin();
+  const mappedWorkspaces = await mapWorkspacesForResponse(workspaces, coderCfg.adminApiKey);
   res.json({ workspaces: mappedWorkspaces });
 });
 
@@ -317,13 +335,47 @@ const deleteMyWorkspace = catchAsync(async (req, res) => {
   res.json(payload);
 });
 
+const startAdminWorkspace = catchAsync(async (req, res) => {
+  const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
+  if (!coderCfg.enabled) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
+  }
+  const { workspaceId } = req.params;
+  const payload = await coderService.startWorkspaceAsAdmin(workspaceId);
+  res.json(payload);
+});
+
+const stopAdminWorkspace = catchAsync(async (req, res) => {
+  const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
+  if (!coderCfg.enabled) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
+  }
+  const { workspaceId } = req.params;
+  const payload = await coderService.stopWorkspaceAsAdmin(workspaceId);
+  res.json(payload);
+});
+
+const deleteAdminWorkspace = catchAsync(async (req, res) => {
+  const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
+  if (!coderCfg.enabled) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
+  }
+  const { workspaceId } = req.params;
+  const payload = await coderService.deleteWorkspaceAsAdmin(workspaceId);
+  res.json(payload);
+});
+
 module.exports = {
   getWorkspace,
   prepareWorkspace,
   triggerRun,
   getRunOutput,
   listMyWorkspaces,
+  listAdminWorkspaces,
   startMyWorkspace,
   stopMyWorkspace,
   deleteMyWorkspace,
+  startAdminWorkspace,
+  stopAdminWorkspace,
+  deleteAdminWorkspace,
 };
