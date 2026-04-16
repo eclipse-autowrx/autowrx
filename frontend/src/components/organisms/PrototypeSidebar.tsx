@@ -115,7 +115,7 @@ const PrototypeSidebar: FC<PrototypeSidebarProps> = ({
 
       {/* Resize divider + pill-shaped drag thumb */}
       {!isCollapsed && !showPrototypeDashboardFullScreen && (
-        <div className="relative flex items-center justify-center w-[3px] bg-border shrink-0">
+        <div className="group/resizer relative flex items-center justify-center w-[3px] bg-border shrink-0 transition-colors hover:bg-primary">
           {/* Invisible wide touch target covering the full height */}
           <div
             className="absolute inset-y-0 -left-2 -right-2 z-10 cursor-col-resize touch-none"
@@ -124,12 +124,12 @@ const PrototypeSidebar: FC<PrototypeSidebarProps> = ({
           />
           {/* Visible pill thumb — large enough for touch (24x56px) */}
           <div
-            className="absolute z-20 flex flex-col items-center justify-center gap-1 w-6 h-14 rounded-full border border-border bg-background shadow-md cursor-col-resize touch-none hover:bg-accent active:bg-accent"
+            className="absolute z-20 flex flex-col items-center justify-center gap-1 w-6 h-14 rounded-full border border-border bg-background shadow-md cursor-col-resize touch-none transition-colors group-hover/resizer:border-primary group-hover/resizer:bg-background"
             onMouseDown={handleMouseDown}
             onTouchStart={handleTouchStart}
           >
-            <span className="block w-[2px] h-3 rounded-full bg-muted-foreground/50" />
-            <span className="block w-[2px] h-3 rounded-full bg-muted-foreground/50" />
+            <span className="block w-[2px] h-3 rounded-full bg-muted-foreground/50 transition-colors group-hover/resizer:bg-primary" />
+            <span className="block w-[2px] h-3 rounded-full bg-muted-foreground/50 transition-colors group-hover/resizer:bg-primary" />
           </div>
         </div>
       )}
