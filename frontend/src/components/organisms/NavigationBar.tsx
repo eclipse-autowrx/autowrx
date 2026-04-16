@@ -93,6 +93,7 @@ const NavigationBar = ({ }) => {
         { to: '/admin/plugins', icon: TbApps, label: 'Plugins' },
         { to: '/admin/templates', icon: TbPalette, label: 'Templates' },
         { to: '/admin/dashboard-templates', icon: TbBuildingWarehouse, label: 'Dashboard Templates' },
+        { to: '/admin/project-templates', icon: TbFileCode, label: 'Project Templates' },
       ]
     }
     if (allowNonAdminAddonConfig) {
@@ -259,24 +260,6 @@ const NavigationBar = ({ }) => {
                       <item.icon className="text-base" /> {item.label}
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link
-                      to="/admin/project-templates"
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <TbFileCode className="text-base" /> Project Templates
-                    </Link>
-                  </DropdownMenuItem>
-                </>
-              ) : (
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/me/plugins"
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <TbApps className="text-base" /> Plugins
-                  </Link>
-                </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>

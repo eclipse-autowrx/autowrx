@@ -37,7 +37,6 @@ import { createModelService, listModelsLite } from '@/services/model.service'
 import { cn } from '@/lib/utils'
 import default_journey from '@/data/default_journey'
 import { getConfig, useSiteConfig } from '@/utils/siteConfig'
-import { useQuery } from '@tanstack/react-query'
 import { listProjectTemplates, ProjectTemplate } from '@/services/projectTemplate.service'
 
 interface FormCreatePrototypeProps {
