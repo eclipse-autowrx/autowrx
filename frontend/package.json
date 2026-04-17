@@ -107,7 +107,7 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "husky": "^9.1.1",
     "postcss": "^8.5.9",
-    "prettier": "^3.8.2",
+    "prettier": "^3.8.3",
     "prettier-plugin-tailwindcss": "^0.7.1",
     "rollup-plugin-visualizer": "^7.0.1",
     "simple-zustand-devtools": "^1.1.0",
