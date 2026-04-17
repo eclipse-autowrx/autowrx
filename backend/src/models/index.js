@@ -20,6 +20,7 @@ module.exports.SiteConfig = require('./siteConfig.model');
 module.exports.Plugin = require('./plugin.model');
 module.exports.ModelTemplate = require('./modelTemplate.model');
 module.exports.DashboardTemplate = require('./dashboardTemplate.model');
+module.exports.ProjectTemplate = require('./projectTemplate.model');
 module.exports.CustomApiSchema = require('./customApiSchema.model');
 module.exports.CustomApiSet = require('./customApiSet.model');
 // Inventory models removed

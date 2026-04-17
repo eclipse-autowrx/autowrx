@@ -14,7 +14,9 @@ const initializeRoles = require('./scripts/initializeRoles');
 const { init } = require('./config/socket');
 const { setupScheduledCheck, assignAdmins, convertLogsCap } = require('./scripts');
 const { seedPredefinedSiteConfigs } = require('./services/siteConfig.service');
+const { seedProjectTemplates } = require('./services/projectTemplate.service');
 const PREDEFINED_SITE_CONFIGS = require('./config/predefinedSiteConfigs');
+const PREDEFINED_PROJECT_TEMPLATES = require('./config/predefinedProjectTemplates');
 
 // console.log('>>>>>>>>>>>>> mongo_url', config.mongoose.url);
 // console.log('>>>>>>>>>>>>> config', config);
@@ -29,7 +31,10 @@ mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
   convertLogsCap();
   initializeRoles()
     .then(() => assignAdmins())
-    .then((adminUserId) => seedPredefinedSiteConfigs(PREDEFINED_SITE_CONFIGS, adminUserId));
+    .then((adminUserId) => {
+      seedPredefinedSiteConfigs(PREDEFINED_SITE_CONFIGS, adminUserId);
+      seedProjectTemplates(PREDEFINED_PROJECT_TEMPLATES, adminUserId);
+    });
   // config.port is loaded from the PORT environment variable, defaulting to 8080 (see backend/src/config/config.js).
   server = app.listen(config.port, () => {
     logger.info(`Listening to port ${config.port}`);

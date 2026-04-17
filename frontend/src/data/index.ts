@@ -6,9 +6,6 @@
 //
 // SPDX-License-Identifier: MIT
 
-// Export sample projects
-export { SAMPLE_PROJECTS, type SampleProject } from './sampleProjects';
-
 // Export other data modules
 export * from './builtinWidgets';
 export * from './customAPI';
