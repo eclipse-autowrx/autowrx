@@ -115,7 +115,7 @@ const PrototypeSidebar: FC<PrototypeSidebarProps> = ({
 
       {/* Resize divider + pill-shaped drag thumb */}
       {!isCollapsed && !showPrototypeDashboardFullScreen && (
-        <div className="group/resizer relative flex items-center justify-center w-[3px] bg-border shrink-0 transition-colors hover:bg-primary">
+        <div className="group/resizer relative z-10 flex items-center justify-center w-[3px] bg-border shrink-0 transition-colors hover:bg-primary">
           {/* Invisible wide touch target covering the full height */}
           <div
             className="absolute inset-y-0 -left-2 -right-2 z-10 cursor-col-resize touch-none"
@@ -132,6 +132,10 @@ const PrototypeSidebar: FC<PrototypeSidebarProps> = ({
             <span className="block w-[2px] h-3 rounded-full bg-muted-foreground/50 transition-colors group-hover/resizer:bg-primary" />
           </div>
         </div>
+      )}
+
+      {isDragging && (
+        <div className="fixed inset-0 z-[9999] cursor-col-resize" />
       )}
     </div>
   )
