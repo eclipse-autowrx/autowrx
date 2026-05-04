@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from '../atoms/select'
 import { Trash2, Plus, MoveUp, MoveDown } from 'lucide-react'
+import { TbZoom } from 'react-icons/tb'
 import DOMPurify from 'dompurify'
 
 export type NavBarActionType = 'link' | 'search'
@@ -106,11 +107,36 @@ const NavBarActionsEditor: React.FC<NavBarActionsEditorProps> = ({ value, onChan
             <div className="flex items-center gap-2 flex-wrap p-2 bg-muted rounded-md border border-border">
               {actions.map((action, index) => {
                 const actionType = action.type || 'link'
+
+                if (actionType === 'search') {
+                  return (
+                    <div
+                      key={index}
+                      className="w-[250px] min-w-0 h-10 flex items-center justify-start gap-0 border border-gray-300 shadow-lg text-muted-foreground text-base bg-white rounded-md px-3 cursor-default"
+                      title={action.placeholder || action.label || 'Search'}
+                    >
+                      {action.icon ? (
+                        <div
+                          dangerouslySetInnerHTML={{
+                            __html: DOMPurify.sanitize(action.icon, {
+                              USE_PROFILES: { svg: true, svgFilters: true }
+                            })
+                          }}
+                          className="size-5 mr-2 flex items-center justify-center"
+                        />
+                      ) : (
+                        <TbZoom className="size-5 mr-2" />
+                      )}
+                      {action.placeholder || action.label || 'Search'}
+                    </div>
+                  )
+                }
+
                 return (
                   <span
                     key={index}
-                    className="flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium hover:bg-background transition-colors cursor-default"
-                    title={actionType === 'search' ? 'Global Search' : action.url || ''}
+                    className="flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium cursor-default"
+                    title={action.url || ''}
                   >
                     {action.icon && (
                       <div
@@ -122,11 +148,7 @@ const NavBarActionsEditor: React.FC<NavBarActionsEditorProps> = ({ value, onChan
                         className="w-6 h-6 flex items-center justify-center"
                       />
                     )}
-                    {actionType === 'search' ? (
-                      <span className="ml-1">{action.placeholder || 'Search'} <span className="text-xs text-muted-foreground">(search)</span></span>
-                    ) : (
-                      action.label && <span className="ml-1">{action.label}</span>
-                    )}
+                    {action.label && <span className="ml-1">{action.label}</span>}
                   </span>
                 )
               })}
@@ -244,20 +266,23 @@ const NavBarActionsEditor: React.FC<NavBarActionsEditorProps> = ({ value, onChan
 
           <div>
             <Label className="text-sm mb-1">
-              Icon SVG (paste SVG code) 
-            {/* SVG Preview */}
-            <span className="inline-block align-middle ml-2">
-              {action.icon?.trim() ? (
-                <span
-                  className="w-6 h-6 inline-flex justify-center items-center"
-                  // eslint-disable-next-line react/no-danger
-                  dangerouslySetInnerHTML={{ __html: action.icon }}
-                  aria-label="SVG icon preview"
-                />
-              ) : (
-                <span className="w-6 h-6 inline-flex items-center justify-center text-muted-foreground">—</span>
-              )}
-            </span>
+              Icon SVG (paste SVG code)
+              {/* SVG Preview */}
+              <span className="inline-block align-middle ml-2">
+                {action.icon?.trim() ? (
+                  <span
+                    className="w-6 h-6 inline-flex justify-center items-center"
+                    dangerouslySetInnerHTML={{
+                      __html: DOMPurify.sanitize(action.icon, {
+                        USE_PROFILES: { svg: true, svgFilters: true },
+                      }),
+                    }}
+                    aria-label="SVG icon preview"
+                  />
+                ) : (
+                  <span className="w-6 h-6 inline-flex items-center justify-center text-muted-foreground">—</span>
+                )}
+              </span>
             </Label>
             <Textarea
               value={action.icon}
