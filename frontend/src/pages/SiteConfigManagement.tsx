@@ -288,11 +288,30 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
   {
     key: 'PROTOTYPES_PATH',
     scope: 'site',
-    value: '/var/lib/autowrx/prototypes',
+    value: '/opt/autowrx/prototypes',
     secret: false,
     valueType: 'string',
     description:
       'Host path for prototypes folder (bind-mount into Coder workspace)',
+    category: 'vscode',
+  },
+  {
+    key: 'REDIS_URL',
+    scope: 'site',
+    value: 'redis://localhost:6379',
+    secret: false,
+    valueType: 'string',
+    description: 'Redis URL used by VSCode workspace runtime state storage.',
+    category: 'vscode',
+  },
+  {
+    key: 'CODER_WORKSPACE_TTL_SECONDS',
+    scope: 'site',
+    value: 3600,
+    secret: false,
+    valueType: 'number',
+    description:
+      'Default workspace TTL in seconds (minimum 60, e.g. 3600 = 1 hour).',
     category: 'vscode',
   },
 ]

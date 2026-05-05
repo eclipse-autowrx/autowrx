@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/atoms/button'
 import { Spinner } from '@/components/atoms/spinner'
 import { useToast } from '@/components/molecules/toaster/use-toast'
@@ -16,6 +16,7 @@ import { MyWorkspace } from '@/services/coder.service'
 import { TbExternalLink, TbTrash } from 'react-icons/tb'
 
 const normalizeStatus = (status?: string) => String(status || 'unknown').toLowerCase()
+const PAGE_SIZE = 25
 
 const PageManageWorkspaces = () => {
   const { useFetchAdminWorkspaces, startWorkspace, stopWorkspace, deleteWorkspace } = useAdminCoderWorkspaces()
@@ -23,10 +24,30 @@ const PageManageWorkspaces = () => {
   const { toast } = useToast()
   const [workspaceToStop, setWorkspaceToStop] = useState<MyWorkspace | null>(null)
   const [workspaceToDelete, setWorkspaceToDelete] = useState<MyWorkspace | null>(null)
+  const [searchValue, setSearchValue] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
 
   const rows = useMemo(() => {
     return [...workspaces].sort((a, b) => a.name.localeCompare(b.name))
   }, [workspaces])
+
+  const filteredRows = useMemo(() => {
+    const query = searchValue.trim().toLowerCase()
+    return rows.filter((workspace) => {
+      const status = normalizeStatus(workspace.status)
+      const owner = String(workspace.ownerEmail || workspace.ownerName || '').toLowerCase()
+      const name = String(workspace.name || '').toLowerCase()
+      const matchesStatus = statusFilter === 'all' || status === statusFilter
+      const matchesSearch = !query || name.includes(query) || owner.includes(query)
+      return matchesStatus && matchesSearch
+    })
+  }, [rows, searchValue, statusFilter])
+
+  const visibleRows = useMemo(() => {
+    return filteredRows.slice(0, visibleCount)
+  }, [filteredRows, visibleCount])
 
   useEffect(() => {
     const hasTransitionalWorkspace = rows.some((workspace) => {
@@ -44,11 +65,39 @@ const PageManageWorkspaces = () => {
     }
   }, [rows, refetch])
 
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE)
+  }, [searchValue, statusFilter])
+
+  useEffect(() => {
+    if (visibleCount > filteredRows.length && filteredRows.length > 0) {
+      setVisibleCount(filteredRows.length)
+    }
+  }, [visibleCount, filteredRows.length])
+
+  useEffect(() => {
+    const node = loadMoreRef.current
+    if (!node) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0]
+        if (!entry?.isIntersecting) return
+        setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, filteredRows.length))
+      },
+      { rootMargin: '200px 0px' },
+    )
+
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [filteredRows.length])
+
   const handleOpenWorkspace = (workspace: MyWorkspace) => {
-    if (!workspace.openPath) {
+    const status = normalizeStatus(workspace.status)
+    if (status !== 'running' || !workspace.openPath) {
       toast({
         title: 'Cannot open workspace',
-        description: 'Open URL is not available yet for this workspace.',
+        description: 'Open URL is available only when the workspace is running.',
         duration: 2500,
       })
       return
@@ -71,6 +120,33 @@ const PageManageWorkspaces = () => {
             </div>
 
             <div className="mt-4 w-full px-4">
+              <div className="flex w-full items-center justify-between gap-3 py-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    className="h-9 w-[280px] rounded-md border border-input bg-background px-3 text-sm"
+                    placeholder="Search workspace or owner"
+                    value={searchValue}
+                    onChange={(event) => setSearchValue(event.target.value)}
+                  />
+                  <select
+                    className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                    value={statusFilter}
+                    onChange={(event) => setStatusFilter(event.target.value)}
+                  >
+                    <option value="all">All status</option>
+                    <option value="running">running</option>
+                    <option value="stopped">stopped</option>
+                    <option value="starting">starting</option>
+                    <option value="stopping">stopping</option>
+                    <option value="deleting">deleting</option>
+                    <option value="failed">failed</option>
+                    <option value="unknown">unknown</option>
+                  </select>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Showing {visibleRows.length} of {filteredRows.length}
+                </div>
+              </div>
               <div className="flex w-full items-center text-muted-foreground font-semibold text-sm py-2 border-b border-muted-foreground">
                 <div className="grow">Workspace</div>
                 <div className="w-[220px] min-w-[220px]">Owner</div>
@@ -85,17 +161,18 @@ const PageManageWorkspaces = () => {
                 </div>
               )}
 
-              {!isLoading && rows.length === 0 && (
+              {!isLoading && filteredRows.length === 0 && (
                 <div className="w-full py-6 italic text-slate-500 text-center">
                   No workspaces found.
                 </div>
               )}
 
-              {!isLoading && rows.length > 0 && (
+              {!isLoading && filteredRows.length > 0 && (
                 <div className="overflow-auto h-full">
-                  {rows.map((workspace) => {
+                  {visibleRows.map((workspace) => {
                     const status = normalizeStatus(workspace.status)
                     const showStart = status === 'stopped'
+                    const canOpenWorkspace = status === 'running' && Boolean(workspace.openPath)
                     const isStartStopPending = startWorkspace.isPending || stopWorkspace.isPending
                     return (
                       <div
@@ -106,7 +183,7 @@ const PageManageWorkspaces = () => {
                           <div className="font-medium">{workspace.name}</div>
                         </div>
                         <div className="w-[220px] min-w-[220px] text-xs text-muted-foreground">
-                          {workspace.ownerName || '-'}
+                          {workspace.ownerEmail || workspace.ownerName || '-'}
                         </div>
                         <div className="w-[140px] min-w-[140px]">
                           <span className="text-xs font-medium text-muted-foreground font-mono">
@@ -118,7 +195,7 @@ const PageManageWorkspaces = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => handleOpenWorkspace(workspace)}
-                            disabled={isRefetching || !workspace.openPath}
+                            disabled={isRefetching || !canOpenWorkspace}
                           >
                             <TbExternalLink className="w-4 h-4 mr-1" />
                             Open URL
@@ -150,6 +227,11 @@ const PageManageWorkspaces = () => {
                       </div>
                     )
                   })}
+                </div>
+              )}
+              {!isLoading && filteredRows.length > 0 && (
+                <div ref={loadMoreRef} className="flex items-center justify-center py-3 text-xs text-muted-foreground">
+                  {visibleRows.length < filteredRows.length ? 'Loading more workspaces...' : 'All workspaces loaded'}
                 </div>
               )}
             </div>

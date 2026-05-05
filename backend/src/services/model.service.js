@@ -573,6 +573,7 @@ const deleteModelById = async (id, actionOwner) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'Model not found');
   }
 
+  prototypeService.cleanupModelWorkspaceFolders(id);
   model.action_owner = actionOwner;
   await model.deleteOne();
   await prototypeService.deleteMany({ model_id: id }, actionOwner);

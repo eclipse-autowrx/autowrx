@@ -95,6 +95,15 @@ const PREDEFINED_SITE_CONFIGS = [
     description: 'Custom JSON options passed to the Socket.IO client when connecting to the runtime server.',
   },
   {
+    key: 'REDIS_URL',
+    scope: 'site',
+    value: 'redis://localhost:6379',
+    secret: false,
+    valueType: 'string',
+    description: 'Redis URL used by VSCode workspace runtime state (key-value storage).',
+    category: 'vscode',
+  },
+  {
     key: 'SHOW_CODE_API_PANEL',
     scope: 'site',
     value: true,

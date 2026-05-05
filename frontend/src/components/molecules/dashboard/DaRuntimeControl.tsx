@@ -30,6 +30,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/atoms/dropdown-menu'
+import { getComputedAPIs } from '@/services/model.service'
 import RuntimeAssetManager from '@/components/organisms/RuntimeAssetManager'
 import DaDialog from '@/components/molecules/DaDialog'
 import { countCodeExecution } from '@/services/prototype.service'
@@ -38,8 +39,6 @@ import DaMockManager from './DaMockManager'
 import PrototypeVarsWatch from './PrototypeVarsWatch'
 import DaRemoteCompileRust from '../remote-compiler/DaRemoteCompileRust'
 import { useSystemUI } from '@/hooks/useSystemUI'
-import { useParams } from 'react-router-dom'
-import { triggerWorkspaceRun, getWorkspaceRunOutput } from '@/services/coder.service'
 
 const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
 
@@ -55,10 +54,6 @@ const AlwaysScrollToBottom = () => {
 }
 
 const DaRuntimeControl: FC = () => {
-  const { tab, prototype_id: routePrototypeId } = useParams<{
-    tab?: string
-    prototype_id?: string
-  }>()
   const { data: currentUser } = useSelfProfileQuery()
   const [prototype, activeModelApis] = useModelStore(
     (state) => [state.prototype as Prototype, state.activeModelApis],
@@ -105,16 +100,13 @@ const DaRuntimeControl: FC = () => {
   const [curRuntimeInfo, setCurRuntimeInfo] = useState<any>(null)
   const [code, setCode] = useState<string>('')
   const [usedApis, setUsedApis] = useState<any[]>([])
+  const [requestContent, setRequestContent] = useState<string>('')
+  const [requestMode, setRequestMode] = useState<string>('')
   const [showRtDialog, setShowRtDialog] = useState<boolean>(false)
   const [runningAppsOnRt, setRunningAppsOnRt] = useState<any[]>([])
   const [listenerOnRt, setListenerOnRt] = useState<any[]>([])
   const [isAdvantageMode, setIsAdvantageMode] = useState<number>(-5)
   const rustCompilerRef = useRef<any>()
-  /** Last `.autowrx_out` mtime from server (for clear-until-new-run). */
-  const vscodeRunOutputMtimeRef = useRef(0)
-  /** When set, hide run output until server file `mtimeMs` is greater than this. */
-  const vscodeRunOutputClearBaselineRef = useRef<number | null>(null)
-  const [vscodeRunOutput, setVscodeRunOutput] = useState('')
 
   useEffect(() => {
     localStorage.setItem('customKitServer', customKitServer.trim())
@@ -174,19 +166,6 @@ const DaRuntimeControl: FC = () => {
     setUsedApis(apis)
   }, [code, activeModelApis, prototype?.widget_config])
 
-  /** Kit traffic fills `log`; Coder extension run fills `vscodeRunOutput` — merge when both exist. */
-  const outputPanelText = useMemo(() => {
-    const placeholder =
-      'No output yet. Click Run to start the prototype.'
-    const kitEmpty = !String(log ?? '').trim()
-    const wsEmpty = !String(vscodeRunOutput ?? '').trim()
-    if (kitEmpty && wsEmpty) return placeholder
-    if (!kitEmpty && !wsEmpty) {
-      return `— Runtime (kit) —\n${log}\n\n— Workspace terminal (.autowrx_out) —\n${vscodeRunOutput}`
-    }
-    return kitEmpty ? vscodeRunOutput : log
-  }, [log, vscodeRunOutput])
-
   const handleRun = () => {
     setIsRunning(true)
     setActiveTab('output')
@@ -241,19 +220,6 @@ const DaRuntimeControl: FC = () => {
     })
   }
 
-  /** Run inside Coder workspace (`.autowrx_run` → extension). Lower Run always uses this. */
-  const handleCoderWorkspaceRun = () => {
-    const id = prototype?.id ?? routePrototypeId
-    if (!id) return
-    setActiveTab('output')
-    void triggerWorkspaceRun(id).catch((error) => {
-      console.error('[DaRuntimeControl] Coder trigger-run failed:', error)
-    })
-  }
-
-  const kitRunDisabled =
-    tab === 'vscode' ? !activeRtId || isRunning : isRunning
-
   const appendLog = (content: string) => {
     if (!content) return
     setLog((prevLog) => prevLog + content)
@@ -261,43 +227,7 @@ const DaRuntimeControl: FC = () => {
 
   const handleClearLog = () => {
     setLog('')
-    setVscodeRunOutput('')
-    vscodeRunOutputClearBaselineRef.current = vscodeRunOutputMtimeRef.current
   }
-
-  const prototypeIdForCoder =
-    prototype?.id ?? routePrototypeId ?? ''
-
-  useEffect(() => {
-    if (!isExpand || activeTab !== 'output') return
-    if (!prototypeIdForCoder || !isAuthorized) return
-
-    let cancelled = false
-    const poll = async () => {
-      try {
-        const data = await getWorkspaceRunOutput(prototypeIdForCoder)
-        if (cancelled) return
-        vscodeRunOutputMtimeRef.current = data.mtimeMs
-        const baseline = vscodeRunOutputClearBaselineRef.current
-        if (baseline !== null && data.mtimeMs <= baseline) {
-          return
-        }
-        vscodeRunOutputClearBaselineRef.current = null
-        setVscodeRunOutput((prev) =>
-          prev === data.content ? prev : data.content,
-        )
-      } catch {
-        /* keep last good output */
-      }
-    }
-
-    void poll()
-    const id = window.setInterval(() => void poll(), 100)
-    return () => {
-      cancelled = true
-      window.clearInterval(id)
-    }
-  }, [isExpand, activeTab, prototypeIdForCoder, isAuthorized])
 
   const writeSignalValue = (obj: any) => {
     if (!obj) return
@@ -455,8 +385,8 @@ const DaRuntimeControl: FC = () => {
         </div>
       </DaDialog>
 
-      {/* Runtime Controls Header — hidden on all prototype tabs (VS Code uses workspace run below). */}
-      <div className="hidden" aria-hidden>
+      {/* Runtime Controls Header */}
+      <div className={cn('px-1 flex items-center', !isExpand && 'hidden')}>
         {useRuntime && (
           <>
             <label
@@ -544,23 +474,21 @@ const DaRuntimeControl: FC = () => {
         </DropdownMenu>
       </div>
 
-      {/* Play/Stop Controls — hidden on all tabs; kit run UI not used here. */}
-      <div className="hidden" aria-hidden>
-        {(activeRtId || tab === 'vscode') && (
+      {/* Play/Stop Controls */}
+      <div className={cn('flex px-1', !isExpand && 'flex-col')}>
+        {activeRtId && (
           <>
             <button
               data-id="btn-run-prototype"
-              disabled={kitRunDisabled}
+              disabled={isRunning}
               onClick={handleRun}
               className="mt-1 flex items-center justify-center rounded border p-2 font-semibold text-sm"
               style={{
-                color: !kitRunDisabled
-                  ? 'hsl(0, 0%, 100%)'
-                  : 'hsl(215, 16%, 47%)',
+                color: isRunning ? 'hsl(215, 16%, 47%)' : 'hsl(0, 0%, 100%)',
                 borderColor: 'hsl(215, 16%, 47%)',
               }}
               onMouseEnter={(e) => {
-                if (!kitRunDisabled) {
+                if (!isRunning) {
                   e.currentTarget.style.backgroundColor = 'hsl(215, 16%, 47%)'
                 }
               }}
@@ -570,54 +498,47 @@ const DaRuntimeControl: FC = () => {
             >
               <TbPlayerPlayFilled className="w-4 h-4" />
             </button>
-            {activeRtId && (
-              <>
-                <button
-                  data-id="btn-stop-prototype"
-                  disabled={!isRunning}
-                  onClick={handleStop}
-                  className={cn(
-                    'mt-1 flex items-center justify-center rounded border p-2 font-semibold text-sm',
-                    isExpand && 'mx-2',
-                  )}
-                  style={{
-                    color: !isRunning
-                      ? 'hsl(215, 16%, 47%)'
-                      : 'hsl(0, 0%, 100%)',
-                    borderColor: 'hsl(215, 16%, 47%)',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (isRunning) {
-                      e.currentTarget.style.backgroundColor =
-                        'hsl(215, 16%, 47%)'
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                  }}
-                >
-                  <TbPlayerStopFilled className="w-4 h-4" />
-                </button>
+            <button
+              data-id="btn-stop-prototype"
+              disabled={!isRunning}
+              onClick={handleStop}
+              className={cn(
+                'mt-1 flex items-center justify-center rounded border p-2 font-semibold text-sm',
+                isExpand && 'mx-2',
+              )}
+              style={{
+                color: !isRunning ? 'hsl(215, 16%, 47%)' : 'hsl(0, 0%, 100%)',
+                borderColor: 'hsl(215, 16%, 47%)',
+              }}
+              onMouseEnter={(e) => {
+                if (isRunning) {
+                  e.currentTarget.style.backgroundColor = 'hsl(215, 16%, 47%)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent'
+              }}
+            >
+              <TbPlayerStopFilled className="w-4 h-4" />
+            </button>
 
-                {prototype?.language === 'rust' && (
-                  <DaRemoteCompileRust
-                    ref={rustCompilerRef}
-                    onResponse={(log, isDone, status, appName) => {
-                      appendLog(log)
-                      if (isDone) {
-                        if (status === 'compile-done' && appName) {
-                          if (runTimeRef.current) {
-                            runTimeRef.current?.runBinApp(appName)
-                          }
-                          if (runTimeRef1.current) {
-                            runTimeRef1.current?.runBinApp(appName)
-                          }
-                        }
+            {prototype?.language === 'rust' && (
+              <DaRemoteCompileRust
+                ref={rustCompilerRef}
+                onResponse={(log, isDone, status, appName) => {
+                  appendLog(log)
+                  if (isDone) {
+                    if (status === 'compile-done' && appName) {
+                      if (runTimeRef.current) {
+                        runTimeRef.current?.runBinApp(appName)
                       }
-                    }}
-                  />
-                )}
-              </>
+                      if (runTimeRef1.current) {
+                        runTimeRef1.current?.runBinApp(appName)
+                      }
+                    }
+                  }
+                }}
+              />
             )}
           </>
         )}
@@ -651,6 +572,129 @@ const DaRuntimeControl: FC = () => {
             {activeTab === 'output' && (
               <div className="h-full flex flex-col">
                 <div
+                  className="shrink flex items-center"
+                  style={{ backgroundColor: 'hsl(217, 13%, 32%)' }}
+                >
+                  {requestMode && (
+                    <div className="flex items-center">
+                      <Input
+                        className="grow text-xs w-[260px]"
+                        style={{ color: 'hsl(0, 0%, 0%)' }}
+                        value={requestContent}
+                        onChange={(e) => {
+                          setRequestContent(e.target.value)
+                        }}
+                      />
+                      <div
+                        className={`ml-2 mr-2 px-2 py-1 rounded text-xs ${requestContent.trim()
+                          ? 'text-yellow-400 font-semibold cursor-pointer hover:underline'
+                          : 'text-gray-400 font-thin'
+                          }`}
+                        onClick={() => {
+                          if (!requestContent.trim()) return
+                          if (runTimeRef.current) {
+                            runTimeRef.current?.requestInstallLib(
+                              requestContent,
+                            )
+                          }
+                          if (runTimeRef1.current) {
+                            runTimeRef1.current?.requestInstallLib(
+                              requestContent,
+                            )
+                          }
+                          setRequestMode('')
+                          setRequestContent('')
+                        }}
+                      >
+                        Request Install
+                      </div>
+                      <div
+                        className="px-2 py-1 rounded cursor-pointer hover:underline text-yellow-400 font-semibold text-xs"
+                        onClick={() => {
+                          setRequestMode('')
+                          setRequestContent('')
+                        }}
+                      >
+                        Cancel
+                      </div>
+                    </div>
+                  )}
+                  <div className="grow"></div>
+                  {!requestMode && (
+                    <div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <div
+                            className="text-sm cursor-pointer px-2 py-0.5 hover:underline"
+                            style={{ color: 'hsl(0, 0%, 100%)' }}
+                          >
+                            Send Request
+                          </div>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              if (runTimeRef.current) {
+                                runTimeRef.current?.listPythonLibs()
+                              }
+                              if (runTimeRef1.current) {
+                                runTimeRef1.current?.listPythonLibs()
+                              }
+                            }}
+                          >
+                            <div className="flex w-full items-center">
+                              List All Python Libraries
+                            </div>
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setRequestContent('libname')
+                              setRequestMode('pip-install')
+                            }}
+                          >
+                            <div className="flex w-full items-center">
+                              Install New Python Library: pip install libname
+                            </div>
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem
+                            onClick={async () => {
+                              if (!model) return
+                              const vssJson = await getComputedAPIs(model.id)
+                              if (runTimeRef.current) {
+                                runTimeRef.current?.builldVehicleModel(vssJson)
+                              }
+                              if (runTimeRef1.current) {
+                                runTimeRef1.current?.builldVehicleModel(vssJson)
+                              }
+                            }}
+                          >
+                            <div className="flex w-full items-center">
+                              Rebuild Vehicle Model base on current Vehicle API
+                            </div>
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem
+                            onClick={() => {
+                              if (runTimeRef.current) {
+                                runTimeRef.current?.revertToDefaultVehicleModel()
+                              }
+                              if (runTimeRef1.current) {
+                                runTimeRef1.current?.revertToDefaultVehicleModel()
+                              }
+                            }}
+                          >
+                            <div className="flex w-full items-center">
+                              Revert to default Vehicle Model
+                            </div>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  )}
+                </div>
+                <div
                   data-id="current-log"
                   className="flex-1 overflow-y-auto whitespace-pre-wrap rounded bg-black px-2 py-1 text-xs"
                   style={{
@@ -658,7 +702,7 @@ const DaRuntimeControl: FC = () => {
                     color: 'hsl(0, 0%, 100%)',
                   }}
                 >
-                  {outputPanelText}
+                  {log || 'No output yet. Click Run to start the prototype.'}
                   <AlwaysScrollToBottom />
                 </div>
               </div>
@@ -740,65 +784,7 @@ const DaRuntimeControl: FC = () => {
         )}
       </div>
 
-      <div className="mt-auto flex w-full flex-col">
-        <div
-          className={cn(
-            'flex flex-col items-stretch gap-1 px-1 pb-2',
-            isExpand && 'flex-row items-center justify-start gap-2',
-          )}
-        >
-          <button
-            type="button"
-            data-id="btn-run-prototype-sidebar-lower"
-            disabled={!prototypeIdForCoder}
-            onClick={handleCoderWorkspaceRun}
-            className="flex items-center justify-center rounded border p-2 font-semibold text-sm"
-            style={{
-              color: prototypeIdForCoder
-                ? 'hsl(0, 0%, 100%)'
-                : 'hsl(215, 16%, 47%)',
-              borderColor: 'hsl(215, 16%, 47%)',
-            }}
-            onMouseEnter={(e) => {
-              if (prototypeIdForCoder) {
-                e.currentTarget.style.backgroundColor = 'hsl(215, 16%, 47%)'
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent'
-            }}
-          >
-            <TbPlayerPlayFilled className="h-4 w-4" />
-          </button>
-          {activeRtId && (
-            <button
-              type="button"
-              data-id="btn-stop-prototype-sidebar-lower"
-              disabled={!isRunning}
-              onClick={handleStop}
-              className="flex items-center justify-center rounded border p-2 font-semibold text-sm"
-              style={{
-                color: !isRunning
-                  ? 'hsl(215, 16%, 47%)'
-                  : 'hsl(0, 0%, 100%)',
-                borderColor: 'hsl(215, 16%, 47%)',
-              }}
-              onMouseEnter={(e) => {
-                if (isRunning) {
-                  e.currentTarget.style.backgroundColor =
-                    'hsl(215, 16%, 47%)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-              }}
-            >
-              <TbPlayerStopFilled className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-
-        <div className="flex">
+      <div className="flex mt-auto">
         <Button
           variant="ghost"
           data-id="btn-expand-runtime-control"
@@ -965,7 +951,6 @@ const DaRuntimeControl: FC = () => {
             )}
           </>
         )}
-        </div>
       </div>
     </div>
   )

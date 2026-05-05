@@ -2,448 +2,45 @@
 //
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
-// https://opensource.org/licenses/MIT.
+// https://opensource.org/licenses/MIT
 //
 // SPDX-License-Identifier: MIT
 
-import {
-  FC,
-  useEffect,
-  useState,
-  useMemo,
-  lazy,
-  Suspense,
-  useRef,
-  useCallback,
-} from 'react'
+import { FC, Suspense, lazy } from 'react'
 import { Spinner } from '@/components/atoms/spinner'
 import { retry } from '@/lib/retry'
-import { useParams } from 'react-router-dom'
-import usePermissionHook from '@/hooks/usePermissionHook'
-import useCurrentModel from '@/hooks/useCurrentModel'
-import { PERMISSIONS } from '@/data/permission'
-import {
-  getWorkspaceUrl,
-  prepareWorkspace,
-  WorkspaceInfo,
-} from '@/services/coder.service'
-import useModelStore from '@/stores/modelStore'
-import useAuthStore from '@/stores/authStore'
-import { Prototype } from '@/types/model.type'
-import { shallow } from 'zustand/shallow'
-import config from '@/configs/config'
 import CoderWorkspaceStatus from '@/components/molecules/CoderWorkspaceStatus'
+import usePrototypeTabVSCodeViewModel from '@/hooks/usePrototypeTabVSCodeViewModel'
 
 const PrototypeTabCodeApiPanel = lazy(() =>
   retry(() => import('./PrototypeTabCodeApiPanel')),
 )
 
-/**
- * Use a same-origin iframe URL (proxied by Vite dev server or backend reverse proxy)
- * so browser cookies are first-party and reliably attached.
- */
-const toSameOriginCoderPath = (appUrl: string): string => {
-  try {
-    const url = new URL(appUrl)
-    return `/coder${url.pathname}${url.search}${url.hash}`
-  } catch {
-    return appUrl
-  }
-}
-
-const buildCoderWorkspaceIframeSrc = (
-  appUrl: string,
-  folderPath?: string | null,
-): string => {
-  const basePath = toSameOriginCoderPath(appUrl)
-  let url: URL
-  try {
-    url = new URL(basePath, window.location.origin)
-  } catch {
-    const params = new URLSearchParams()
-    if (folderPath) params.set('folder', folderPath)
-    const q = params.toString()
-    if (!q) return basePath
-    const sep = basePath.includes('?') ? '&' : '?'
-    return `${basePath}${sep}${q}`
-  }
-  if (folderPath) url.searchParams.set('folder', folderPath)
-  return `${url.pathname}${url.search}${url.hash}`
-}
-
 interface PrototypeTabVSCodeProps {
   isActive?: boolean
 }
 
-const getLatestWorkspaceFromWatchEvents = (events: any[]) => {
-  const latest = [...events]
-    .reverse()
-    .find((event) => event?.type === 'data' && event?.data)
-  return latest?.data ?? null
-}
+const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({ isActive = false }) => {
+  const {
+    containerRef,
+    resizeRef,
+    isResizing,
+    handleMouseDown,
+    isApiPanelCollapsed,
+    setIsApiPanelCollapsed,
+    rightPanelWidthStyle,
+    prototypeCode,
 
-const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
-  isActive = false,
-}) => {
-  const { prototype_id } = useParams<{ prototype_id: string }>()
-  const [prototype] = useModelStore(
-    (state) => [state.prototype as Prototype],
-    shallow,
-  )
-  const { data: model } = useCurrentModel()
-  const [isAuthorized] = usePermissionHook([PERMISSIONS.READ_MODEL, model?.id])
-  const accessToken = useAuthStore((state) => state.access?.token)
-  const [prepareError, setPrepareError] = useState<string | null>(null)
-  const [workspaceAppUrl, setWorkspaceAppUrl] = useState<string | null>(null)
-  const [isIframeLoaded, setIsIframeLoaded] = useState(false)
-  const [iframeLoadError, setIframeLoadError] = useState<string | null>(null)
-  const [watchEvents, setWatchEvents] = useState<any[]>([])
-  const [logEvents, setLogEvents] = useState<any[]>([])
-  const [hasActivatedOnce, setHasActivatedOnce] = useState(false)
-  const lastResolvedBuildIdRef = useRef<string | null>(null)
+    prepareError,
+    watchEvents,
+    logEvents,
 
-  // Resize state
-  const [rightPanelWidth, setRightPanelWidth] = useState<number | null>(null) // Will be calculated based on container
-  const [isResizing, setIsResizing] = useState(false)
-  const [isApiPanelCollapsed, setIsApiPanelCollapsed] = useState(false)
-  const resizeRef = useRef<HTMLDivElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const startXRef = useRef(0)
-  const startWidthRef = useRef(0)
-  const watchSocketRef = useRef<WebSocket | null>(null)
-  const logsSocketRef = useRef<WebSocket | null>(null)
-
-  useEffect(() => {
-    if (isActive && !hasActivatedOnce) {
-      setHasActivatedOnce(true)
-    }
-  }, [isActive, hasActivatedOnce])
-
-  // Step 1: prepare Coder workspace for this prototype (no polling/cache).
-  useEffect(() => {
-    if (!hasActivatedOnce || !prototype_id || !isAuthorized || !accessToken) return
-
-    let cancelled = false
-    let logsWsOpened = false
-
-    const closeSockets = () => {
-      if (watchSocketRef.current) {
-        watchSocketRef.current.close()
-        watchSocketRef.current = null
-      }
-      if (logsSocketRef.current) {
-        logsSocketRef.current.close()
-        logsSocketRef.current = null
-      }
-    }
-
-    const toWsBase = (baseUrl: string) => {
-      if (baseUrl.startsWith('https://')) return baseUrl.replace('https://', 'wss://')
-      if (baseUrl.startsWith('http://')) return baseUrl.replace('http://', 'ws://')
-      return `${window.location.protocol === 'https:' ? 'wss://' : 'ws://'}${window.location.host}`
-    }
-
-    const appendEvent = (setter: React.Dispatch<React.SetStateAction<any[]>>, event: any) => {
-      setter((prev) => {
-        const next = [...prev, event]
-        return next.length > 200 ? next.slice(next.length - 200) : next
-      })
-    }
-
-    const openLogsWs = (workspaceBuildId: string | null | undefined) => {
-      if (logsWsOpened) return
-      if (!workspaceBuildId) {
-        appendEvent(setLogEvents, {
-          type: 'socket',
-          event: 'skipped',
-          reason: 'missing workspaceBuildId',
-        })
-        return
-      }
-      logsWsOpened = true
-
-      const wsBase = toWsBase(config.serverBaseUrl)
-      const logsUrl = `${wsBase}/${config.serverVersion}/system/coder/workspacebuilds/${workspaceBuildId}/logs?access_token=${encodeURIComponent(accessToken)}&follow=true&after=-1&prototype_id=${encodeURIComponent(prototype_id || '')}`
-      const logsWs = new WebSocket(logsUrl)
-      logsSocketRef.current = logsWs
-
-      logsWs.onopen = () => {
-        appendEvent(setLogEvents, { type: 'socket', event: 'open' })
-      }
-
-      logsWs.onmessage = (event) => {
-        try {
-          const parsed = JSON.parse(String(event.data))
-          appendEvent(setLogEvents, parsed)
-        } catch {
-          appendEvent(setLogEvents, { raw: String(event.data) })
-        }
-      }
-
-      logsWs.onerror = () => {
-        appendEvent(setLogEvents, { type: 'socket', event: 'error' })
-      }
-
-      logsWs.onclose = (event) => {
-        appendEvent(setLogEvents, {
-          type: 'socket',
-          event: 'close',
-          code: event.code,
-          reason: event.reason,
-        })
-      }
-    }
-
-    const run = async () => {
-      try {
-        setPrepareError(null)
-        lastResolvedBuildIdRef.current = null
-        setWorkspaceAppUrl(null)
-        setIsIframeLoaded(false)
-        setIframeLoadError(null)
-        setWatchEvents([])
-        setLogEvents([])
-
-        const response = await prepareWorkspace(prototype_id)
-        if (cancelled) return
-
-        const wsBase = toWsBase(config.serverBaseUrl)
-
-        // Open logs immediately in parallel with watch, using workspaceBuildId from prepare response.
-        openLogsWs(response.workspaceBuildId)
-
-        const watchUrl = `${wsBase}/${config.serverVersion}/system/coder/workspace/${prototype_id}/watch-ws?access_token=${encodeURIComponent(accessToken)}`
-        const watchWs = new WebSocket(watchUrl)
-        watchSocketRef.current = watchWs
-
-        watchWs.onopen = () => {
-          appendEvent(setWatchEvents, { type: 'socket', event: 'open' })
-        }
-
-        watchWs.onmessage = (event) => {
-          try {
-            const parsed = JSON.parse(String(event.data))
-            appendEvent(setWatchEvents, parsed)
-          } catch {
-            const raw = String(event.data)
-            appendEvent(setWatchEvents, { raw })
-          }
-        }
-
-        watchWs.onerror = () => {
-          appendEvent(setWatchEvents, { type: 'socket', event: 'error' })
-        }
-
-        watchWs.onclose = (event) => {
-          appendEvent(setWatchEvents, {
-            type: 'socket',
-            event: 'close',
-            code: event.code,
-            reason: event.reason,
-          })
-        }
-      } catch (error: any) {
-        if (cancelled) return
-        const message =
-          error?.response?.data?.message ||
-          error?.message ||
-          'Failed to prepare workspace'
-        setPrepareError(String(message))
-      }
-    }
-
-    void run()
-
-    return () => {
-      cancelled = true
-      closeSockets()
-    }
-  }, [hasActivatedOnce, prototype_id, isAuthorized, accessToken])
-
-  const latestWorkspaceFromWatch = useMemo(
-    () => getLatestWorkspaceFromWatchEvents(watchEvents),
-    [watchEvents],
-  )
-
-  const watchBuildSnapshot = useMemo(() => {
-    const latestBuild = latestWorkspaceFromWatch?.latest_build
-    const jobStatus = latestBuild?.job?.status ?? null
-    const buildId = latestBuild?.id ? String(latestBuild.id) : null
-    const agents =
-      latestBuild?.resources?.flatMap((resource: any) => resource?.agents ?? []) ?? []
-    const hasConnectedAgent = agents.some((agent: any) => agent?.status === 'connected')
-    const isReady =
-      jobStatus === 'succeeded' &&
-      hasConnectedAgent
-    const isFailed = jobStatus === 'failed' || jobStatus === 'canceled'
-    const failureMessage = latestBuild?.job?.error || null
-    return { buildId, isReady, isFailed, failureMessage }
-  }, [latestWorkspaceFromWatch])
-
-  // Step 2: when watch stream says build is ready, resolve app URL and show iframe.
-  useEffect(() => {
-    if (!hasActivatedOnce || !prototype_id || !watchBuildSnapshot.isReady || !watchBuildSnapshot.buildId) return
-    if (lastResolvedBuildIdRef.current === watchBuildSnapshot.buildId) return
-
-    let cancelled = false
-
-    const run = async () => {
-      try {
-        setIframeLoadError(null)
-        setIsIframeLoaded(false)
-        const workspace = await getWorkspaceUrl(prototype_id)
-        if (cancelled) return
-        if (!workspace?.appUrl) {
-          throw new Error('Workspace is ready but app URL is missing')
-        }
-        const appSrc = buildCoderWorkspaceIframeSrc(
-          workspace.appUrl,
-          workspace.folderPath,
-        )
-        setWorkspaceAppUrl(appSrc)
-        lastResolvedBuildIdRef.current = watchBuildSnapshot.buildId
-      } catch (error: any) {
-        if (cancelled) return
-        const message =
-          error?.response?.data?.message ||
-          error?.message ||
-          'Failed to open workspace iframe'
-        setIframeLoadError(String(message))
-        setPrepareError((prev) => prev || String(message))
-        setWorkspaceAppUrl(null)
-        setIsIframeLoaded(false)
-      }
-    }
-
-    void run()
-
-    return () => {
-      cancelled = true
-    }
-  }, [hasActivatedOnce, prototype_id, watchBuildSnapshot])
-
-  useEffect(() => {
-    if (!hasActivatedOnce) return
-    if (!watchBuildSnapshot.isFailed) return
-    const message =
-      watchBuildSnapshot.failureMessage ||
-      'Workspace build failed'
-    setPrepareError((prev) => prev || message)
-  }, [hasActivatedOnce, watchBuildSnapshot])
-
-  // The watch stream is only needed until VS Code iframe is ready.
-  useEffect(() => {
-    if (!isIframeLoaded) return
-    const watchWs = watchSocketRef.current
-    if (!watchWs) return
-    if (
-      watchWs.readyState === WebSocket.OPEN ||
-      watchWs.readyState === WebSocket.CONNECTING
-    ) {
-      watchWs.close(1000, 'iframe loaded')
-    }
-    watchSocketRef.current = null
-  }, [isIframeLoaded])
-
-  // Calculate initial width based on container size with 6:4 ratio (60% editor, 40% API panel)
-  // Guard against hidden/inactive tabs where measured width can be 0.
-  useEffect(() => {
-    const calculateInitialWidth = () => {
-      if (containerRef.current) {
-        const containerWidth = containerRef.current.offsetWidth
-        if (containerWidth <= 0) return
-        const calculatedWidth = containerWidth * 0.4
-        setRightPanelWidth(calculatedWidth)
-      }
-    }
-
-    // Defer one frame so layout can settle when switching tabs.
-    const rafId = window.requestAnimationFrame(calculateInitialWidth)
-
-    window.addEventListener('resize', calculateInitialWidth)
-    return () => {
-      window.cancelAnimationFrame(rafId)
-      window.removeEventListener('resize', calculateInitialWidth)
-    }
-  }, [isActive])
-
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault()
-      startXRef.current = e.clientX
-      if (rightPanelWidth !== null) {
-        startWidthRef.current = rightPanelWidth
-      } else if (containerRef.current) {
-        startWidthRef.current = containerRef.current.offsetWidth * 0.4
-      } else {
-        startWidthRef.current = 0
-      }
-      // Disable transitions during resize for instant feedback
-      const leftPanel = resizeRef.current?.previousElementSibling as HTMLElement
-      const rightPanel = resizeRef.current?.nextElementSibling as HTMLElement
-      if (leftPanel) leftPanel.style.transition = 'none'
-      if (rightPanel) rightPanel.style.transition = 'none'
-      setIsResizing(true)
-    },
-    [rightPanelWidth],
-  )
-
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
-      if (!isResizing || !containerRef.current) return
-
-      const containerWidth = containerRef.current.offsetWidth
-      const minWidth = containerWidth * 0.2
-      const maxWidth = containerWidth * 0.6
-      const deltaX = e.clientX - startXRef.current
-      // Dragging left (negative deltaX) increases width, dragging right (positive deltaX) decreases width
-      const newWidth = Math.min(
-        Math.max(startWidthRef.current - deltaX, minWidth),
-        maxWidth,
-      )
-      setRightPanelWidth(newWidth)
-    },
-    [isResizing],
-  )
-
-  const handleMouseUp = useCallback(() => {
-    setIsResizing(false)
-    // Re-enable transitions after resize
-    const leftPanel = resizeRef.current?.previousElementSibling as HTMLElement
-    const rightPanel = resizeRef.current?.nextElementSibling as HTMLElement
-    if (leftPanel) leftPanel.style.transition = ''
-    if (rightPanel) rightPanel.style.transition = ''
-  }, [])
-
-  useEffect(() => {
-    if (isResizing) {
-      document.addEventListener('mousemove', handleMouseMove)
-      document.addEventListener('mouseup', handleMouseUp)
-      document.body.style.cursor = 'col-resize'
-      document.body.style.userSelect = 'none'
-    } else {
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
-      document.body.style.cursor = ''
-      document.body.style.userSelect = ''
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
-      document.body.style.cursor = ''
-      document.body.style.userSelect = ''
-    }
-  }, [isResizing, handleMouseMove, handleMouseUp])
-
-  // If user collapses the panel, stop any ongoing resize interaction.
-  useEffect(() => {
-    if (!isApiPanelCollapsed) return
-    setIsResizing(false)
-  }, [isApiPanelCollapsed])
-
-  const shouldMountIframe = Boolean(workspaceAppUrl && !iframeLoadError)
-  const showIframe = shouldMountIframe && isIframeLoaded
+    shouldMountIframe,
+    showIframe,
+    workspaceAppUrl,
+    handleIframeLoad,
+    handleIframeError,
+  } = usePrototypeTabVSCodeViewModel(isActive)
 
   return (
     <div
@@ -458,6 +55,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
           aria-hidden
         />
       )}
+
       <div
         className={
           showIframe
@@ -479,16 +77,12 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
               title="Coder Workspace"
               className="min-h-0 flex-1 border-0"
               allow="clipboard-read; clipboard-write"
-              onLoad={() => setIsIframeLoaded(true)}
-              onError={() => {
-                setIsIframeLoaded(false)
-                const message = 'Failed to load workspace iframe'
-                setIframeLoadError(message)
-                setPrepareError((prev) => prev || message)
-              }}
+              onLoad={handleIframeLoad}
+              onError={handleIframeError}
             />
           </div>
         )}
+
         {!showIframe && (
           <CoderWorkspaceStatus
             prepareError={prepareError}
@@ -498,6 +92,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
           />
         )}
       </div>
+
       {!isApiPanelCollapsed && (
         // Match PrototypeTabCode: invisible track; thin grip only on hover / while dragging
         <div
@@ -508,21 +103,17 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
         >
           <div className="flex h-full w-full items-center justify-center">
             <div
-              className={`h-8 w-0.5 bg-gray-400 transition-opacity ${isResizing ? 'opacity-100' : 'opacity-0 hover:opacity-60'
-                }`}
+              className={`h-8 w-0.5 bg-gray-400 transition-opacity ${
+                isResizing ? 'opacity-100' : 'opacity-0 hover:opacity-60'
+              }`}
             />
           </div>
         </div>
       )}
+
       <div
         className="flex h-full min-h-0 shrink-0 flex-col rounded-md bg-white transition-all duration-200 ease-in-out"
-        style={{
-          width: isApiPanelCollapsed
-            ? '48px'
-            : rightPanelWidth !== null
-              ? `${rightPanelWidth}px`
-              : '40%',
-        }}
+        style={{ width: rightPanelWidthStyle }}
       >
         <Suspense
           fallback={
@@ -532,7 +123,7 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
           }
         >
           <PrototypeTabCodeApiPanel
-            code={prototype?.code || ''}
+            code={prototypeCode}
             onCollapsedChange={setIsApiPanelCollapsed}
           />
         </Suspense>
@@ -542,3 +133,4 @@ const PrototypeTabVSCode: FC<PrototypeTabVSCodeProps> = ({
 }
 
 export default PrototypeTabVSCode
+

@@ -4,8 +4,18 @@ VS Code / code-server extension for Coder workspaces: runs commands from the Aut
 
 ## Behavior
 
-- Watches **`.autowrx_run`** in the workspace. When the file is created or updated, its text is executed as a shell command in **AutoWRX Console**, then the file is cleared.
-- Command **`autowrx-runner.triggerFromWeb`** (*Trigger from Website*) runs the same default as the backend allowlist: `python3 -u main.py 2>&1 | tee .autowrx_out` (stdout/stderr in terminal and in `.autowrx_out`).
+- Connects to backend WebSocket channel (`/v2/system/coder/runner/ws`) and listens for run commands.
+- Executes commands inside the workspace through the extension process (not from backend spawn), then streams `stdout/stderr` back over WebSocket.
+- Supports `run.stdin` messages for interactive programs (`input()` etc.).
+- Command **`autowrx-runner.triggerFromWeb`** remains available for local/manual smoke tests.
+
+## Required Environment Variables
+
+- `CODER_WORKSPACE_ID`: Workspace ID to bind this extension runner session.
+- `AUTOWRX_RUNNER_WS_URL` (optional): WebSocket base URL for backend (default `ws://127.0.0.1:3200/v2/system/coder/runner/ws`).
+- `AUTOWRX_RUNNER_KEY` (optional): Shared key if backend enforces runner authentication.
+
+In the provided Coder template (`instance-setup/coder/docker-template.tf`), `CODER_WORKSPACE_ID` and `AUTOWRX_RUNNER_WS_URL` are injected into the workspace container environment automatically.
 
 ## Build
 

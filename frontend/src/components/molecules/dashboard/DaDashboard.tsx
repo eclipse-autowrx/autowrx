@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, ComponentType } from 'react'
 import DaDashboardGrid from './DaDashboardGrid'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
@@ -50,7 +50,11 @@ import {
 import DaDialog from '@/components/molecules/DaDialog'
 import { useSiteConfig } from '@/utils/siteConfig'
 
-const DaDashboard = () => {
+interface DaDashboardProps {
+  GridComponent?: ComponentType<{ widgetItems: any[] }>
+}
+
+const DaDashboard = ({ GridComponent = DaDashboardGrid }: DaDashboardProps) => {
   const { data: model } = useCurrentModel()
   const logoUrl = useSiteConfig('SITE_LOGO_WIDE', '/imgs/logo-wide.png')
   const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
@@ -479,7 +483,7 @@ const DaDashboard = () => {
         >
           {mode == MODE_RUN && (
             <div className="flex w-full h-full px-1 pb-1">
-              <DaDashboardGrid widgetItems={widgetItems} />
+              <GridComponent widgetItems={widgetItems} />
             </div>
           )}
           {mode == MODE_EDIT && (

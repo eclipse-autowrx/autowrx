@@ -1,4 +1,16 @@
 services:
+  redis:
+    image: redis:8.4.2-alpine
+    container_name: coder_redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - coder_redis_data:/data
+    restart: unless-stopped
+    networks:
+      - coder_network
+
   coder:
     image: ghcr.io/coder/coder:v2.31.9
     container_name: coder
@@ -34,9 +46,9 @@ services:
           chmod 666 /var/run/docker.sock
         fi
         if [ -f /home/coder/.terraformrc ]; then
-          exec su coder -c 'export TF_CLI_CONFIG_FILE=/home/coder/.terraformrc; export TF_PLUGIN_CACHE_DIR=/var/cache/terraform-plugins; exec /opt/coder server --dangerous-allow-path-app-sharing --dangerous-allow-path-app-site-owner-access'
+          exec su coder -c 'export TF_CLI_CONFIG_FILE=/home/coder/.terraformrc; export TF_PLUGIN_CACHE_DIR=/var/cache/terraform-plugins; exec /opt/coder server'
         else
-          exec su coder -c 'export TF_PLUGIN_CACHE_DIR=/var/cache/terraform-plugins; exec /opt/coder server --dangerous-allow-path-app-sharing --dangerous-allow-path-app-site-owner-access'
+          exec su coder -c 'export TF_PLUGIN_CACHE_DIR=/var/cache/terraform-plugins; exec /opt/coder server'
         fi
     ports:
       - "7080:7080"
@@ -52,6 +64,7 @@ services:
 volumes:
   coder_data:
   coder_terraform_plugins:
+  coder_redis_data:
 
 networks:
   coder_network:

@@ -11,13 +11,12 @@ const path = require('path');
 const httpStatus = require('http-status');
 const coderService = require('./coder.service');
 const workspaceBindingService = require('./workspaceBinding.service');
-const permissionService = require('./permission.service');
 const { Prototype, User } = require('../models');
 const logger = require('../config/logger');
 const ApiError = require('../utils/ApiError');
 const coderConfig = require('../utils/coderConfig');
-const { PERMISSIONS } = require('../config/roles');
 const { getPrototypeFolderRelativePath } = require('../utils/prototypePath');
+const workspaceRunWsHub = require('./workspaceRunWsHub.service');
 const {
   resolveWorkspaceKindFromPrototype,
   getTemplateNameForWorkspaceKind,
@@ -28,6 +27,7 @@ const normalizeIdForName = (value) =>
   String(value || '')
     .toLowerCase()
     .replace(/[^a-z0-9]/g, '');
+const inFlightPrepareByUserAndKind = new Map();
 
 const ensureHostFolderPermissions = (folderPath) => {
   try {
@@ -193,7 +193,7 @@ const seedPrototypeFiles = (folderPath, prototype) => {
  * @param {string} prototypeId - Prototype ID
  * @returns {Promise<Object>} Workspace info with URL and session token
  */
-const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
+const prepareWorkspaceForPrototypeUnsafe = async (userId, prototypeId) => {
   try {
     // 1. Fetch data concurrently to save time
     const [prototype, user, coderCfg] = await Promise.all([
@@ -272,18 +272,31 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
       workspaceKind,
     });
 
+    const workspaceId = workspace.id;
+
     // Reuse the same user token for the whole tab-open flow to avoid minting multiple times.
     const workspaceScopedToken = userScopedToken;
+    const workspaceTtlSeconds = Number(coderCfg.workspaceTtlSeconds);
+    const workspaceTtlMs =
+      Number.isFinite(workspaceTtlSeconds) && workspaceTtlSeconds >= 0
+        ? Math.floor(workspaceTtlSeconds * 1000)
+        : 0;
+    try {
+      await coderService.updateWorkspaceTtl(workspaceId, workspaceTtlMs, workspaceScopedToken);
+    } catch (ttlErr) {
+      logger.warn(`Workspace TTL update failed for ${workspaceId}: ${ttlErr.message}`);
+    }
 
     // 6. Ensure Workspace is running
     let status = workspace.latest_build?.status;
     if (status !== 'running') {
-      workspace = await coderService.startWorkspace(workspace.id, workspaceScopedToken);
-      status = workspace.latest_build?.status;
+      await coderService.startWorkspace(workspaceId, workspaceScopedToken);
+      workspace = await coderService.getWorkspaceStatus(workspaceId, workspaceScopedToken);
+      status = workspace?.latest_build?.status;
     }
 
     // 6b. Coder can keep latest_build "running" after the container/agent is gone; stop+start once to recover
-    workspace = await coderService.restoreUnhealthyRunningWorkspace(workspace.id, workspaceScopedToken);
+    workspace = await coderService.restoreUnhealthyRunningWorkspace(workspaceId, workspaceScopedToken);
     status = workspace.latest_build?.status;
 
     logger.info(`Workspace ready | User: ${userId} | Proto: ${prototypeId} | Folder: ${prototypeFolderRelativePath}`);
@@ -303,13 +316,37 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
   }
 };
 
+const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
+  const prototypeForLock = await Prototype.findById(prototypeId).select('language');
+  if (!prototypeForLock) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Prototype not found');
+  }
+  const workspaceKind = resolveWorkspaceKindFromPrototype(prototypeForLock);
+  const prepareKey = `${String(userId)}:${String(workspaceKind)}`;
+
+  const inFlight = inFlightPrepareByUserAndKind.get(prepareKey);
+  if (inFlight) {
+    logger.info(`Joining in-flight workspace prepare for key=${prepareKey}`);
+    return inFlight;
+  }
+
+  const task = prepareWorkspaceForPrototypeUnsafe(userId, prototypeId);
+  inFlightPrepareByUserAndKind.set(prepareKey, task);
+  try {
+    return await task;
+  } finally {
+    if (inFlightPrepareByUserAndKind.get(prepareKey) === task) {
+      inFlightPrepareByUserAndKind.delete(prepareKey);
+    }
+  }
+};
+
 /** Server-side only: maps client runKind to shell command (never accept raw command from client). */
 const RUN_KIND_COMMANDS = {
-  // -u: unbuffered stdout so tee sees lines immediately; tee copies to terminal and .autowrx_out
-  'python-main': 'python3 -u main.py 2>&1 | tee .autowrx_out',
-  'c-main': 'gcc main.c -o main && ./main 2>&1 | tee .autowrx_out',
-  'cpp-main': 'g++ -o main -Iinclude src/*.cpp && ./main 2>&1 | tee .autowrx_out',
-  'rust-main': 'cargo run 2>&1 | tee .autowrx_out',
+  'python-main': 'python3 -u main.py',
+  'c-main': 'gcc main.c -o main && ./main',
+  'cpp-main': 'g++ -o main -Iinclude src/*.cpp && ./main',
+  'rust-main': 'cargo run',
 };
 
 const resolveRunCommand = (runKind) => {
@@ -342,9 +379,14 @@ const resolveRunKindFromPrototype = (prototype) => {
   return 'python-main';
 };
 
+const buildRunCommandForPrototype = (prototype) => {
+  const runKind = resolveRunKindFromPrototype(prototype);
+  const command = resolveRunCommand(runKind);
+  return { runKind, command };
+};
+
 /**
- * Write `.autowrx_run` on the host prototypes volume so the VS Code extension in the
- * Coder workspace (same mount) can pick it up via FileSystemWatcher.
+ * Send run command to workspace runner over WebSocket hub.
  * @param {string} userId
  * @param {import('mongoose').Document} prototype - Prototype document (already authorized)
  * @param {string} runKind - key in RUN_KIND_COMMANDS
@@ -360,73 +402,35 @@ const triggerRunForPrototype = async (userId, prototype, runKind) => {
     throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
   }
 
-  const { prototypesPath } = coderCfg;
-  if (!prototypesPath) {
-    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Prototypes path is not configured');
+  const workspaceKind = resolveWorkspaceKindFromPrototype(prototype);
+  const user = await User.findById(userId);
+  const workspaceId = await workspaceBindingService.getWorkspaceIdForUser(user, workspaceKind);
+  if (!workspaceId) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Workspace not found. Prepare workspace first.');
   }
 
-  const prototypeFolderRelativePath = getPrototypeFolderRelativePath(prototype);
-  const userHostPath = path.join(prototypesPath, userId.toString());
-  const prototypeFolderHost = path.join(userHostPath, prototypeFolderRelativePath);
-  const triggerFilePath = path.join(prototypeFolderHost, '.autowrx_run');
+  const sent = workspaceRunWsHub.sendToRunners(workspaceId, {
+    type: 'run.start',
+    workspaceId: String(workspaceId),
+    prototypeId: String(prototype.id),
+    runKind,
+    command: safeCommand,
+    at: new Date().toISOString(),
+  });
 
-  try {
-    fs.mkdirSync(prototypeFolderHost, { recursive: true, mode: 0o777 });
-    ensureHostFolderPermissions(prototypeFolderHost);
-    fs.writeFileSync(triggerFilePath, safeCommand, 'utf8');
-    ensureHostFolderPermissions(triggerFilePath);
-    ensureHostPrototypeTreePermissions(prototypeFolderHost);
-    logger.info(`Wrote Coder trigger file for prototype ${prototype.id}: ${triggerFilePath}`);
-  } catch (err) {
-    logger.error(`Failed to write trigger file ${triggerFilePath}: ${err.message}`);
-    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, `Failed to write run trigger: ${err.message}`);
-  }
-};
-
-const MAX_RUN_OUTPUT_BYTES = 512 * 1024;
-
-/**
- * Read `.autowrx_out` from the host prototypes folder (same bind-mount as the Coder workspace).
- * @returns {{ content: string, mtimeMs: number }}
- */
-const getRunOutputForPrototype = async (userId, prototype) => {
-  const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
-  if (!coderCfg.enabled) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
+  if (!sent) {
+    throw new ApiError(
+      httpStatus.SERVICE_UNAVAILABLE,
+      'AutoWRX Runner extension is not connected for this workspace',
+    );
   }
 
-  const { prototypesPath } = coderCfg;
-  if (!prototypesPath) {
-    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Prototypes path is not configured');
-  }
-
-  const prototypeFolderRelativePath = getPrototypeFolderRelativePath(prototype);
-  const userHostPath = path.join(prototypesPath, userId.toString());
-  const prototypeFolderHost = path.join(userHostPath, prototypeFolderRelativePath);
-  const outPath = path.join(prototypeFolderHost, '.autowrx_out');
-
-  if (!fs.existsSync(outPath)) {
-    return { content: '', mtimeMs: 0 };
-  }
-
-  const stat = fs.statSync(outPath);
-  const buf = fs.readFileSync(outPath);
-  let body = buf;
-  let prefix = '';
-  if (buf.length > MAX_RUN_OUTPUT_BYTES) {
-    body = buf.subarray(buf.length - MAX_RUN_OUTPUT_BYTES);
-    prefix = '…(truncated, showing last 512 KiB)\n';
-  }
-
-  return {
-    content: prefix + body.toString('utf8'),
-    mtimeMs: stat.mtimeMs,
-  };
+  logger.info(`Sent run.start to runner(s) for workspace=${workspaceId}, prototype=${prototype.id}`);
 };
 
 module.exports = {
   prepareWorkspaceForPrototype,
   triggerRunForPrototype,
-  getRunOutputForPrototype,
   resolveRunKindFromPrototype,
+  buildRunCommandForPrototype,
 };

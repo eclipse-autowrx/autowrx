@@ -25,4 +25,5 @@ module.exports.pluginValidation = require('./plugin.validation');
 module.exports.modelTemplateValidation = require('./modelTemplate.validation');
 module.exports.coderValidation = require('./coder.validation');
 module.exports.dashboardTemplateValidation = require('./dashboardTemplate.validation');
+module.exports.projectTemplateValidation = require('./projectTemplate.validation');
 // Inventory validations removed

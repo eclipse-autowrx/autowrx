@@ -22,6 +22,8 @@ const coderService = require('../services/coder.service');
 const workspaceBindingService = require('../services/workspaceBinding.service');
 const { PERMISSIONS } = require('./roles');
 const { resolveWorkspaceKindFromPrototype } = require('../utils/workspaceKind');
+const workspaceRunWsHub = require('../services/workspaceRunWsHub.service');
+const workspaceRuntimeStateService = require('../services/workspaceRuntimeState.service');
 
 const getCoderApiBase = () => {
   const coderCfg = coderConfig.getCoderConfigSync();
@@ -106,6 +108,20 @@ const matchWorkspaceBuildLogsWs = (coderPath) => {
   const m = coderPath.match(/^\/workspacebuilds\/([^/]+)\/logs\/?$/);
   if (!m) return null;
   return { workspaceBuildId: m[1] };
+};
+
+const matchRunWs = (coderPath) => {
+  // /workspace/:prototypeId/run-ws
+  const m = coderPath.match(/^\/workspace\/([^/]+)\/run-ws\/?$/);
+  if (!m) return null;
+  return { prototypeId: m[1] };
+};
+
+const matchRunnerWs = (coderPath) => {
+  // /runner/ws
+  const m = coderPath.match(/^\/runner\/ws\/?$/);
+  if (!m) return null;
+  return {};
 };
 
 const parseCookieHeader = (cookieHeader = '') => {
@@ -207,9 +223,37 @@ const init = (httpServer) => {
       const watchMatch = matchWatchWs(coderPath);
       const logsMatch = matchLogsWs(coderPath);
       const workspaceBuildLogsMatch = matchWorkspaceBuildLogsWs(coderPath);
+      const runWsMatch = matchRunWs(coderPath);
+      const runnerWsMatch = matchRunnerWs(coderPath);
 
-      if (!watchMatch && !logsMatch && !workspaceBuildLogsMatch) {
+      if (!watchMatch && !logsMatch && !workspaceBuildLogsMatch && !runWsMatch && !runnerWsMatch) {
         request.reject(404, 'Not found');
+        return;
+      }
+
+      if (runnerWsMatch) {
+        const runnerKeyFromQuery = typeof searchParams.runner_key === 'string' ? searchParams.runner_key.trim() : '';
+        const runnerKeyFromEnv = String(process.env.AUTOWRX_RUNNER_KEY || '').trim();
+        if (runnerKeyFromEnv && runnerKeyFromQuery !== runnerKeyFromEnv) {
+          throw new ApiError(httpStatus.UNAUTHORIZED, 'Invalid runner key');
+        }
+        const workspaceId = typeof searchParams.workspace_id === 'string' ? searchParams.workspace_id.trim() : '';
+        if (!workspaceId) {
+          throw new ApiError(httpStatus.BAD_REQUEST, 'workspace_id is required');
+        }
+        const downstream = request.accept(null, request.origin);
+        workspaceRunWsHub.registerRunner(workspaceId, downstream);
+        downstream.on('message', (msg) => {
+          try {
+            const raw = msg.type === 'utf8' ? msg.utf8Data : null;
+            if (!raw) return;
+            const payload = JSON.parse(raw);
+            workspaceRunWsHub.broadcastToWeb(workspaceId, payload);
+            void workspaceRuntimeStateService.ingestRunnerPayload(workspaceId, payload);
+          } catch (error) {
+            logger.warn(`[workspace-run-ws] runner message parse failed: ${error?.message || error}`);
+          }
+        });
         return;
       }
 
@@ -241,6 +285,35 @@ const init = (httpServer) => {
 
         const downstream = request.accept(null, request.origin);
         proxyBidirectional({ downstream, upstream });
+        return;
+      }
+
+      if (runWsMatch) {
+        const { prototypeId } = runWsMatch;
+        const workspaceId = await resolveWorkspaceIdForPrototype(user, prototypeId);
+        if (!workspaceId) {
+          throw new ApiError(httpStatus.NOT_FOUND, 'Workspace not found. Prepare workspace first.');
+        }
+        const downstream = request.accept(null, request.origin);
+        workspaceRunWsHub.registerWeb(workspaceId, downstream);
+        downstream.on('message', (msg) => {
+          try {
+            const raw = msg.type === 'utf8' ? msg.utf8Data : null;
+            if (!raw) return;
+            const payload = JSON.parse(raw);
+            if (!payload || typeof payload !== 'object') return;
+            const allowedClientTypes = new Set(['run.stdin', 'run.stop']);
+            if (!allowedClientTypes.has(payload.type)) return;
+            workspaceRunWsHub.sendToRunners(workspaceId, {
+              ...payload,
+              workspaceId: String(workspaceId),
+              prototypeId: String(prototypeId),
+              at: new Date().toISOString(),
+            });
+          } catch (error) {
+            logger.warn(`[workspace-run-ws] web message parse failed: ${error?.message || error}`);
+          }
+        });
         return;
       }
 

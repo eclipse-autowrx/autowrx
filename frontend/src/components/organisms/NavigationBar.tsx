@@ -24,6 +24,7 @@ import {
   TbSettings,
   TbPalette,
   TbApps,
+  TbFileCode,
 } from 'react-icons/tb'
 import usePermissionHook from '@/hooks/usePermissionHook.ts'
 import { PERMISSIONS } from '@/const/permission.ts'
@@ -92,6 +93,7 @@ const NavigationBar = ({ }) => {
         { to: '/admin/templates', icon: TbPalette, label: 'Templates' },
         { to: '/admin/dashboard-templates', icon: TbBuildingWarehouse, label: 'Dashboard Templates' },
         { to: '/manage-workspaces', icon: TbFolders, label: 'Manage Workspaces' },
+        { to: '/admin/project-templates', icon: TbFileCode, label: 'Project Templates' },
       ]
     }
     if (allowNonAdminAddonConfig) {

@@ -23,8 +23,17 @@ const extractCollection = (payload, key) => {
 };
 
 const toCoderApiError = (error, fallbackStatus, fallbackPrefix = 'Coder API error') => {
-  const status = error?.response?.status || fallbackStatus;
+  const upstreamStatus = error?.response?.status || fallbackStatus;
   const message = error?.response?.data?.message || error?.message || JSON.stringify(error?.response?.data || {});
+
+  // Coder may return 401/403 when CODER_ADMIN_API_KEY is invalid or expired. Forwarding those
+  // status codes to the browser makes the AutoWRX axios layer treat them as a stale *user*
+  // session and repeatedly hit /auth/refresh-tokens while the real fault is server-to-Coder auth.
+  let status = upstreamStatus;
+  if (upstreamStatus === httpStatus.UNAUTHORIZED || upstreamStatus === httpStatus.FORBIDDEN) {
+    status = httpStatus.BAD_GATEWAY;
+  }
+
   return new ApiError(status, `${fallbackPrefix}: ${message}`);
 };
 
@@ -46,6 +55,15 @@ const normalizeIdForName = (value) =>
   String(value || '')
     .toLowerCase()
     .replace(/[^a-z0-9]/g, '');
+
+const extractWorkspaceOwnerUsername = (workspace) => {
+  const rawOwner = workspace?.owner;
+  const ownerFromObject =
+    rawOwner && typeof rawOwner === 'object'
+      ? (rawOwner.username || rawOwner.name || rawOwner.id)
+      : null;
+  return String(workspace?.owner_name || ownerFromObject || workspace?.owner_id || rawOwner || '').trim();
+};
 
 const assertUserScopedPrototypePath = (prototypesHostPath, expectedUserHostPath) => {
   const rawInput = String(prototypesHostPath || '').trim();
@@ -92,18 +110,54 @@ const getHeadersWithToken = (sessionToken) => {
 };
 
 const TOKEN_LIFETIME_DURATION = '168h'; // 7d
+const TOKEN_REUSE_BUFFER_MS = 5 * 60 * 1000;
+const TOKEN_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
 const delay = (ms) =>
   new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+const TRANSIENT_HTTP_STATUSES = new Set([httpStatus.TOO_MANY_REQUESTS, 502, 503, 504]);
+const TRANSIENT_NETWORK_CODES = new Set(['ETIMEDOUT', 'ECONNRESET', 'ECONNABORTED', 'EAI_AGAIN']);
+
+const isTransientCoderError = (error) => {
+  const status = error?.response?.status;
+  if (TRANSIENT_HTTP_STATUSES.has(status)) return true;
+  const code = String(error?.code || '').toUpperCase();
+  return TRANSIENT_NETWORK_CODES.has(code);
+};
+
+const withTransientRetry = async (fn, options = {}) => {
+  const maxAttempts = options.maxAttempts ?? 3;
+  const baseDelayMs = options.baseDelayMs ?? 250;
+  let attempt = 1;
+  while (true) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (attempt >= maxAttempts || !isTransientCoderError(error)) {
+        throw error;
+      }
+      const waitMs = baseDelayMs * 2 ** (attempt - 1);
+      logger.warn(`Transient Coder API error, retrying attempt ${attempt + 1}/${maxAttempts} after ${waitMs}ms: ${error.message}`);
+      await delay(waitMs);
+      attempt += 1;
+    }
+  }
+};
+
+const resolveWorkspaceTtlMsFromConfig = () => {
+  const ttlSeconds = Number(coderConfig.getCoderConfigSync().workspaceTtlSeconds);
+  if (!Number.isFinite(ttlSeconds) || ttlSeconds < 0) {
+    return 0;
+  }
+  return Math.floor(ttlSeconds * 1000);
+};
 
 /**
  * Generate a user-scoped token for Coder API calls.
  *
  * Admin API key is only used here to mint a safer token. All subsequent
  * workspace operations should use the returned token via getHeadersWithToken().
- *
- * Note: intentionally no DB caching/refresh bookkeeping to keep token flow simple.
  *
  * @param {import('mongoose').Document & {coder_username?: string}} user
  * @param {Object} [options]
@@ -117,10 +171,29 @@ const getOrCreateUserScopedToken = async (user, options = {}) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'Coder user not found. Prepare workspace first.');
   }
 
+  const now = Date.now();
+  const tokenExpiresAtMs = user?.coder_scoped_token_expires_at
+    ? new Date(user.coder_scoped_token_expires_at).getTime()
+    : 0;
+  if (
+    typeof user.coder_scoped_token === 'string' &&
+    user.coder_scoped_token.trim() &&
+    Number.isFinite(tokenExpiresAtMs) &&
+    tokenExpiresAtMs > now + TOKEN_REUSE_BUFFER_MS
+  ) {
+    return user.coder_scoped_token.trim();
+  }
+
   const token = await generateSessionToken(user.coder_username, { workspaceId, coderUserId });
   if (!token) {
     throw new ApiError(httpStatus.SERVICE_UNAVAILABLE, 'Failed to generate Coder user-scoped token');
   }
+
+  const nextExpiresAt = new Date(Date.now() + TOKEN_LIFETIME_MS);
+  user.coder_scoped_token = token;
+  user.coder_scoped_token_expires_at = nextExpiresAt;
+  user.coder_scoped_token_allow = workspaceId ? `workspace:${workspaceId}` : 'all';
+  await user.save();
 
   return token;
 };
@@ -285,7 +358,7 @@ const ensureUserExists = async (userId, username, email) => {
     if (error.response?.status === 409) {
       logger.info(`Coder user creation conflict for ${username}, fetching existing user by email...`);
       try {
-        const usersResponse = await axios.get(`${CODER_API_BASE}/users`, {
+        const usersResponse = await axios.get(`${getCoderApiBase()}/users`, {
           headers: getAdminHeaders(),
           params: { q: email },
         });
@@ -406,11 +479,16 @@ const getOrCreateWorkspace = async (
       return existingWorkspace;
     }
 
-    // Create new workspace - pass prototypes_host_path from config
+    const coderCfg = coderConfig.getCoderConfigSync();
+    // Create new workspace - pass Coder template rich parameters from site config.
     const richParameterValues = [
       {
         name: 'prototypes_host_path',
-        value: prototypesHostPath || coderConfig.getCoderConfigSync().prototypesPath || '/var/lib/autowrx/prototypes',
+        value: prototypesHostPath || coderCfg.prototypesPath || '/opt/autowrx/prototypes',
+      },
+      {
+        name: 'redis_url',
+        value: coderCfg.redisUrl || '',
       },
     ];
 
@@ -422,6 +500,7 @@ const getOrCreateWorkspace = async (
         template_id: templateId,
         name: workspaceName,
         rich_parameter_values: richParameterValues,
+        ttl_ms: resolveWorkspaceTtlMsFromConfig(),
       },
       { headers: getHeadersWithToken(sessionToken) },
     );
@@ -480,6 +559,32 @@ const getOrCreateWorkspace = async (
       }
 
       throw toCoderApiError(error, httpStatus.INTERNAL_SERVER_ERROR);
+    }
+    throw error;
+  }
+};
+
+/**
+ * Update workspace TTL using Coder native endpoint.
+ * @param {string} workspaceId
+ * @param {number} ttlMs
+ * @param {string|null} sessionToken
+ * @returns {Promise<Object>}
+ */
+const updateWorkspaceTtl = async (workspaceId, ttlMs, sessionToken = null) => {
+  const safeTtlMs = Number.isFinite(Number(ttlMs)) ? Math.max(0, Math.floor(Number(ttlMs))) : 0;
+  try {
+    const response = await axios.put(
+      `${getCoderApiBase()}/workspaces/${workspaceId}/ttl`,
+      { ttl_ms: safeTtlMs },
+      { headers: getHeadersWithToken(sessionToken) },
+    );
+    logger.info(`Updated Coder workspace TTL: ${workspaceId} -> ${safeTtlMs}ms`);
+    return response.data;
+  } catch (error) {
+    logger.warn(`Failed to update Coder workspace TTL for ${workspaceId}: ${error.message}`);
+    if (error.response) {
+      logger.warn(`Update TTL error status=${error.response.status}, data=${JSON.stringify(error.response.data)}`);
     }
     throw error;
   }
@@ -690,11 +795,30 @@ const deleteWorkspace = async (workspaceId, sessionToken = null) => {
  */
 const listAllWorkspacesAdmin = async () => {
   try {
-    const response = await axios.get(`${getCoderApiBase()}/workspaces`, {
-      headers: getAdminHeaders(),
-      params: { limit: 200 },
-    });
-    return extractCollection(response.data, 'workspaces');
+    const headers = getAdminHeaders();
+    const pageSize = 200;
+    const all = [];
+    let offset = 0;
+
+    // Coder API can paginate workspace lists; fetch all pages for admin management views.
+    while (true) {
+      const response = await withTransientRetry(
+        () =>
+          axios.get(`${getCoderApiBase()}/workspaces`, {
+            headers,
+            params: { limit: pageSize, offset },
+          }),
+        { maxAttempts: 3, baseDelayMs: 300 }
+      );
+      const page = extractCollection(response.data, 'workspaces');
+      all.push(...page);
+      if (page.length < pageSize) {
+        break;
+      }
+      offset += pageSize;
+    }
+
+    return all;
   } catch (error) {
     logger.error(`Failed to list all Coder workspaces: ${error.message}`);
     if (error.response) {
@@ -810,9 +934,13 @@ const restoreUnhealthyRunningWorkspace = async (workspaceId, sessionToken = null
  */
 async function getWorkspaceStatus(workspaceId, sessionToken = null) {
   try {
-    const response = await axios.get(`${getCoderApiBase()}/workspaces/${workspaceId}`, {
-      headers: getHeadersWithToken(sessionToken),
-    });
+    const response = await withTransientRetry(
+      () =>
+        axios.get(`${getCoderApiBase()}/workspaces/${workspaceId}`, {
+          headers: getHeadersWithToken(sessionToken),
+        }),
+      { maxAttempts: 3, baseDelayMs: 250 }
+    );
 
     return response.data;
   } catch (error) {
@@ -923,7 +1051,7 @@ const getWorkspaceAppUrl = async (
       }
 
       // Construct URL (we can construct it even if app isn't in the response yet)
-      const username = workspace.owner_name || workspace.owner || workspace.owner_id;
+      const username = extractWorkspaceOwnerUsername(workspace);
       const workspaceName = workspace.name;
       const agentName = agent.name || 'main';
 
@@ -1174,4 +1302,5 @@ module.exports = {
   sanitizeWorkspaceName,
   getWorkspaceAgentId,
   assertUserScopedPrototypePath,
+  updateWorkspaceTtl,
 };

@@ -23,6 +23,8 @@ provider "docker" {
 
 provider "coder" {}
 
+# Workspace scheduling (default autostop/activity bump) is configured at template metadata level
+# via `coder templates edit` (see instance-setup/coder/start.sh), not inside this Terraform file.
 data "coder_provisioner" "me" {}
 data "coder_workspace" "me" {}
 data "coder_workspace_owner" "me" {}
@@ -31,7 +33,7 @@ data "coder_parameter" "prototypes_host_path" {
   name         = "prototypes_host_path"
   display_name = "Prototypes Host Path"
   description  = "Host path mounted to /home/coder/prototypes (must match AutoWRX PROTOTYPES_PATH layout)."
-  default      = "/var/lib/autowrx/prototypes"
+  default      = "/opt/autowrx/prototypes"
   mutable      = true
 }
 
@@ -151,6 +153,8 @@ resource "docker_container" "workspace" {
   env = [
     "CODER_AGENT_TOKEN=${coder_agent.main.token}",
     "CODER_AGENT_URL=http://coder:7080/",
+    "CODER_WORKSPACE_ID=${data.coder_workspace.me.id}",
+    "AUTOWRX_RUNNER_WS_URL=ws://host.docker.internal:3200/v2/system/coder/runner/ws",
   ]
 
   host {

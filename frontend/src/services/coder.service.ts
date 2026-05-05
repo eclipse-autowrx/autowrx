@@ -23,6 +23,7 @@ export interface MyWorkspace {
   id: string
   name: string
   ownerName?: string | null
+  ownerEmail?: string | null
   status?: string
   openPath?: string | null
 }
@@ -43,25 +44,24 @@ export const prepareWorkspace = async (prototypeId: string): Promise<WorkspaceIn
   return response.data
 }
 
-/**
- * Write `.autowrx_run` on the server prototypes volume; VS Code extension picks it up via file watcher.
- * Run command is chosen on the server from `prototype.language`.
- */
+/** Trigger run request to AutoWRX Runner over workspace WebSocket hub. */
 export const triggerWorkspaceRun = async (prototypeId: string): Promise<void> => {
   await serverAxios.post(`/system/coder/workspace/${prototypeId}/trigger-run`, {})
 }
 
-/** Body of `.autowrx_out` on the prototypes volume (`mtimeMs` for cheap change detection). */
-export interface WorkspaceRunOutput {
-  content: string
-  mtimeMs: number
+export interface WorkspaceRuntimeStateSnapshot {
+  apisValue: Record<string, unknown>
+  traceVars: Record<string, unknown>
+  appLog: string
+  status: string
+  updatedAt: string
 }
 
-export const getWorkspaceRunOutput = async (
+export const getWorkspaceRuntimeState = async (
   prototypeId: string,
-): Promise<WorkspaceRunOutput> => {
-  const response = await serverAxios.get<WorkspaceRunOutput>(
-    `/system/coder/workspace/${prototypeId}/run-output`,
+): Promise<WorkspaceRuntimeStateSnapshot> => {
+  const response = await serverAxios.get<WorkspaceRuntimeStateSnapshot>(
+    `/system/coder/workspace/${prototypeId}/runtime-state`,
   )
   return response.data
 }

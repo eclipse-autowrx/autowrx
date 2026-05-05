@@ -24,6 +24,8 @@ import DatePicker from '../atoms/DatePicker'
 import { Label } from '../atoms/label'
 import { LuTrash2 } from 'react-icons/lu'
 
+const WORKSPACE_TTL_SECONDS_KEY = 'CODER_WORKSPACE_TTL_SECONDS'
+
 export type SiteConfigHistorySection =
   | 'public'
   | 'home'
@@ -102,11 +104,15 @@ const ConfigList: React.FC<ConfigListProps> = ({
     setEditValue(null)
   }
 
-  const parseEditedValue = (value: any, valueType: Config['valueType']) => {
+  const parseEditedValue = (value: any, config: Config) => {
+    const { valueType, key } = config
     if (valueType === 'number') {
       const num = typeof value === 'number' ? value : parseFloat(String(value))
       if (Number.isNaN(num)) {
         throw new Error('Please enter a valid number')
+      }
+      if (key === WORKSPACE_TTL_SECONDS_KEY && num < 60) {
+        throw new Error('Workspace TTL must be at least 60 seconds')
       }
       return num
     }
@@ -155,7 +161,7 @@ const ConfigList: React.FC<ConfigListProps> = ({
         return
       }
 
-      const newValue = parseEditedValue(candidate, config.valueType)
+      const newValue = parseEditedValue(candidate, config)
       if (config.id) {
         await configManagementService.updateConfigById(config.id, {
           value: newValue,
@@ -367,6 +373,7 @@ const ConfigList: React.FC<ConfigListProps> = ({
                         type="number"
                         className="w-full text-sm"
                         value={editValue ?? ''}
+                        min={config.key === WORKSPACE_TTL_SECONDS_KEY ? 60 : undefined}
                         onChange={(e) => setEditValue(e.target.value)}
                       />
                     )}

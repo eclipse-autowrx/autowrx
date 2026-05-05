@@ -13,11 +13,36 @@ const { PERMISSIONS } = require('../config/roles');
 const ApiError = require('../utils/ApiError');
 const { Prototype, User } = require('../models');
 const coderConfig = require('../utils/coderConfig');
+const logger = require('../config/logger');
 const { sanitizePrototypeFolderName, getPrototypeModelId } = require('../utils/prototypePath');
 const { resolveWorkspaceKindFromPrototype } = require('../utils/workspaceKind');
+const workspaceRuntimeStateService = require('../services/workspaceRuntimeState.service');
 
 const CODER_SESSION_COOKIE = 'coder_session_token';
 const CODER_SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+const WORKSPACE_PREPARE_TIMEOUT_MS = 2 * 60 * 1000;
+const WORKSPACE_OPEN_TIMEOUT_MS = 90 * 1000;
+
+const getRequestId = (req) =>
+  String(req.id || req.headers['x-request-id'] || req.headers['x-correlation-id'] || `coder-${Date.now()}`);
+
+const logCoderOperation = (op, payload) => {
+  logger.info(`[coder-op] ${op} | ${JSON.stringify(payload)}`);
+};
+
+const withTimeout = async (promise, timeoutMs, timeoutMessage) => {
+  let timeoutId;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new ApiError(httpStatus.GATEWAY_TIMEOUT, timeoutMessage));
+    }, timeoutMs);
+  });
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+};
 
 const isSecureRequest = (req) => {
   if (req.secure) return true;
@@ -65,38 +90,67 @@ const toSameOriginCoderPath = (rawUrl) => {
   }
 };
 
-const mapWorkspacesForResponse = async (workspaces, sessionToken) => {
-  return Promise.all(workspaces.map(async (workspace) => {
-    let appUrl = null;
-    try {
-      appUrl = await coderService.getWorkspaceAppUrl(
-        workspace.id,
-        'code-server',
-        1,
-        0,
-        sessionToken,
-      );
-    } catch {
-      appUrl =
-        workspace?.latest_app_status?.uri ||
-        workspace?.latest_app_status?.url ||
-        null;
+const extractWorkspaceOwnerUsername = (workspace) =>
+  String(workspace?.owner_name || workspace?.owner?.username || workspace?.owner || '').trim();
+
+const extractWorkspaceAgentName = (workspace) => {
+  const latestBuildResources = Array.isArray(workspace?.latest_build?.resources) ? workspace.latest_build.resources : [];
+  for (const resource of latestBuildResources) {
+    const firstAgentName = resource?.agents?.[0]?.name;
+    if (firstAgentName) {
+      return String(firstAgentName).trim();
     }
+  }
+  const resources = Array.isArray(workspace?.resources) ? workspace.resources : [];
+  for (const resource of resources) {
+    const firstAgentName = resource?.agents?.[0]?.name;
+    if (firstAgentName) {
+      return String(firstAgentName).trim();
+    }
+  }
+  return 'main';
+};
+
+const resolveWorkspaceAppUrl = (workspace) => {
+  const directUrl = workspace?.latest_app_status?.uri || workspace?.latest_app_status?.url;
+  if (directUrl) {
+    return directUrl;
+  }
+
+  const coderUrl = String(coderConfig.getCoderConfigSync().coderUrl || '').replace(/\/$/, '');
+  const ownerName = extractWorkspaceOwnerUsername(workspace);
+  const workspaceName = String(workspace?.name || '').trim();
+  const agentName = extractWorkspaceAgentName(workspace);
+  if (!coderUrl || !ownerName || !workspaceName || !agentName) {
+    return null;
+  }
+
+  return `${coderUrl}/@${ownerName}/${workspaceName}.${agentName}/apps/code-server/`;
+};
+
+const mapWorkspacesForResponse = (workspaces, ownerEmailByCoderUsername = new Map()) => {
+  return workspaces.map((workspace) => {
+    const appUrl = resolveWorkspaceAppUrl(workspace);
+    const ownerUsername = extractWorkspaceOwnerUsername(workspace);
+    const ownerEmail = ownerEmailByCoderUsername.get(ownerUsername) || null;
 
     return {
       id: workspace.id,
       name: workspace.name,
-      ownerName: workspace.owner_name || null,
+      ownerName: ownerEmail || workspace.owner_name || null,
+      ownerEmail,
       status: workspace?.latest_build?.status || workspace?.status || 'unknown',
       openPath: toSameOriginCoderPath(appUrl),
     };
-  }));
+  });
 };
 
 /**
  * Get workspace URL and session token for a prototype
  */
 const getWorkspace = catchAsync(async (req, res) => {
+  const requestId = getRequestId(req);
+  const startedAt = Date.now();
   const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
   if (!coderCfg.enabled) {
     throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
@@ -123,19 +177,39 @@ const getWorkspace = catchAsync(async (req, res) => {
   }
 
   const sessionToken = await resolveCoderSessionToken(req, user, workspaceId);
-  const workspace = await coderService.getWorkspaceStatus(workspaceId, sessionToken);
+  const workspace = await withTimeout(
+    coderService.getWorkspaceStatus(workspaceId, sessionToken),
+    WORKSPACE_OPEN_TIMEOUT_MS,
+    'Fetching workspace status timed out. Please retry in a few seconds.',
+  );
   const prototypeFolderPath = `${getPrototypeModelId(prototype)}/${sanitizePrototypeFolderName(prototype.name)}`;
 
-  const appUrl = await coderService.getWorkspaceAppUrl(
-    workspaceId,
-    'code-server',
-    5,
-    2000,
-    sessionToken,
+  const appUrl = await withTimeout(
+    coderService.getWorkspaceAppUrl(
+      workspaceId,
+      'code-server',
+      5,
+      2000,
+      sessionToken,
+    ),
+    WORKSPACE_OPEN_TIMEOUT_MS,
+    'Resolving workspace app URL timed out. Please retry in a few seconds.',
   );
 
-  await coderService.waitUntilCoderAppProxyReady(appUrl, sessionToken);
+  await withTimeout(
+    coderService.waitUntilCoderAppProxyReady(appUrl, sessionToken),
+    WORKSPACE_OPEN_TIMEOUT_MS,
+    'Workspace app proxy is taking too long to become ready. Please retry shortly.',
+  );
   setCoderSessionCookie(req, res, sessionToken);
+
+  logCoderOperation('getWorkspace.success', {
+    requestId,
+    userId: String(userId),
+    prototypeId: String(prototypeId),
+    workspaceId: String(workspaceId),
+    durationMs: Date.now() - startedAt,
+  });
 
   res.json({
     workspaceId: workspace.id,
@@ -151,6 +225,8 @@ const getWorkspace = catchAsync(async (req, res) => {
  * Prepare workspace (create if needed)
  */
 const prepareWorkspace = catchAsync(async (req, res) => {
+  const requestId = getRequestId(req);
+  const startedAt = Date.now();
   const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
   if (!coderCfg.enabled) {
     throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
@@ -171,8 +247,20 @@ const prepareWorkspace = catchAsync(async (req, res) => {
   }
 
   // Prepare workspace
-  const workspaceInfo = await orchestratorService.prepareWorkspaceForPrototype(userId, prototypeId);
+  const workspaceInfo = await withTimeout(
+    orchestratorService.prepareWorkspaceForPrototype(userId, prototypeId),
+    WORKSPACE_PREPARE_TIMEOUT_MS,
+    'Preparing workspace timed out. Please retry shortly.',
+  );
   setCoderSessionCookie(req, res, workspaceInfo.sessionToken);
+
+  logCoderOperation('prepareWorkspace.success', {
+    requestId,
+    userId: String(userId),
+    prototypeId: String(prototypeId),
+    workspaceId: String(workspaceInfo.workspaceId),
+    durationMs: Date.now() - startedAt,
+  });
 
   res.json({
     workspaceId: workspaceInfo.workspaceId,
@@ -184,7 +272,7 @@ const prepareWorkspace = catchAsync(async (req, res) => {
 });
 
 /**
- * Write `.autowrx_run` on the host prototypes volume for the VS Code extension (file watcher).
+ * Send run request to AutoWRX Runner extension over WebSocket broker.
  */
 const triggerRun = catchAsync(async (req, res) => {
   const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
@@ -208,13 +296,10 @@ const triggerRun = catchAsync(async (req, res) => {
   const runKind = orchestratorService.resolveRunKindFromPrototype(prototype);
   await orchestratorService.triggerRunForPrototype(userId, prototype, runKind);
 
-  res.status(httpStatus.OK).json({ message: 'Run request written to workspace' });
+  res.status(httpStatus.OK).json({ message: 'Run request sent to workspace runner' });
 });
 
-/**
- * Read `.autowrx_out` from the prototypes volume (updated by `tee` in allowlisted run commands).
- */
-const getRunOutput = catchAsync(async (req, res) => {
+const getRuntimeState = catchAsync(async (req, res) => {
   const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
   if (!coderCfg.enabled) {
     throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
@@ -233,7 +318,14 @@ const getRunOutput = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.FORBIDDEN, 'You do not have permission to access this prototype');
   }
 
-  const payload = await orchestratorService.getRunOutputForPrototype(userId, prototype);
+  const user = await User.findById(userId);
+  const workspaceKind = resolveWorkspaceKindFromPrototype(prototype);
+  const workspaceId = await workspaceBindingService.getWorkspaceIdForUser(user, workspaceKind);
+  if (!workspaceId) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Workspace not found. Prepare workspace first.');
+  }
+
+  const payload = await workspaceRuntimeStateService.getRuntimeStateSnapshot(workspaceId);
   res.json(payload);
 });
 
@@ -241,6 +333,8 @@ const getRunOutput = catchAsync(async (req, res) => {
  * List workspaces for current user.
  */
 const listMyWorkspaces = catchAsync(async (req, res) => {
+  const requestId = getRequestId(req);
+  const startedAt = Date.now();
   const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
   if (!coderCfg.enabled) {
     throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
@@ -254,7 +348,13 @@ const listMyWorkspaces = catchAsync(async (req, res) => {
   setCoderSessionCookie(req, res, sessionToken);
 
   const workspaces = await coderService.listMyWorkspaces(sessionToken);
-  const mappedWorkspaces = await mapWorkspacesForResponse(workspaces, sessionToken);
+  const mappedWorkspaces = mapWorkspacesForResponse(workspaces);
+  logCoderOperation('listMyWorkspaces.success', {
+    requestId,
+    userId: String(req.user.id),
+    count: mappedWorkspaces.length,
+    durationMs: Date.now() - startedAt,
+  });
   res.json({ workspaces: mappedWorkspaces });
 });
 
@@ -262,13 +362,31 @@ const listMyWorkspaces = catchAsync(async (req, res) => {
  * List all workspaces for admins.
  */
 const listAdminWorkspaces = catchAsync(async (req, res) => {
+  const requestId = getRequestId(req);
+  const startedAt = Date.now();
   const coderCfg = await coderConfig.getCoderConfig({ forceRefresh: true });
   if (!coderCfg.enabled) {
     throw new ApiError(httpStatus.FORBIDDEN, 'VSCode integration is disabled');
   }
 
   const workspaces = await coderService.listAllWorkspacesAdmin();
-  const mappedWorkspaces = await mapWorkspacesForResponse(workspaces, coderCfg.adminApiKey);
+  const ownerUsernames = [...new Set(workspaces.map(extractWorkspaceOwnerUsername).filter(Boolean))];
+  const users = ownerUsernames.length > 0
+    ? await User.find({ coder_username: { $in: ownerUsernames } })
+      .select('coder_username email')
+      .lean()
+    : [];
+  const ownerEmailByCoderUsername = new Map(
+    users.map((user) => [String(user.coder_username || '').trim(), user.email || null]),
+  );
+
+  const mappedWorkspaces = mapWorkspacesForResponse(workspaces, ownerEmailByCoderUsername);
+  logCoderOperation('listAdminWorkspaces.success', {
+    requestId,
+    adminUserId: String(req.user.id),
+    count: mappedWorkspaces.length,
+    durationMs: Date.now() - startedAt,
+  });
   res.json({ workspaces: mappedWorkspaces });
 });
 
@@ -332,6 +450,7 @@ const deleteMyWorkspace = catchAsync(async (req, res) => {
   setCoderSessionCookie(req, res, sessionToken);
 
   const payload = await coderService.deleteWorkspace(workspaceId, sessionToken);
+  await workspaceBindingService.markBindingStaleForUserWorkspace(user.id, workspaceId);
   res.json(payload);
 });
 
@@ -362,6 +481,7 @@ const deleteAdminWorkspace = catchAsync(async (req, res) => {
   }
   const { workspaceId } = req.params;
   const payload = await coderService.deleteWorkspaceAsAdmin(workspaceId);
+  await workspaceBindingService.markBindingStaleByWorkspaceId(workspaceId);
   res.json(payload);
 });
 
@@ -369,7 +489,7 @@ module.exports = {
   getWorkspace,
   prepareWorkspace,
   triggerRun,
-  getRunOutput,
+  getRuntimeState,
   listMyWorkspaces,
   listAdminWorkspaces,
   startMyWorkspace,

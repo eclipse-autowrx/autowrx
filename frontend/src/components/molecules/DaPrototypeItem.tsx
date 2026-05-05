@@ -51,6 +51,7 @@ import { Input } from '../atoms/input'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import useListModelPrototypes from '@/hooks/useListModelPrototypes'
 import PrototypeTabStaging from '@/components/organisms/PrototypeTabStaging'
+import { useToast } from '@/components/molecules/toaster/use-toast'
 
 interface DaPrototypeItemProps {
   prototype?: Prototype
@@ -64,6 +65,12 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
   const { data: existingPrototypes, refetch: refetchModelPrototypes } =
     useListModelPrototypes(model?.id || '')
   const navigate = useNavigate()
+  const { toast } = useToast()
+
+  const isOwner =
+    !!user &&
+    (user.id === prototype?.created_by?.id ||
+      user.id === model?.created_by?.id)
 
   // Rename state
   const [renameOpen, setRenameOpen] = useState(false)
@@ -213,7 +220,7 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
                 </div>
               )}
               <div className="grow"></div>
-              {user && !enableContextMenu && (
+              {user && !isOwner && (
                 <div className="flex w-fit justify-end items-center gap-2 ml-2">
                   <DaTooltip tooltipMessage="View Code" tooltipDelay={300}>
                     <Link
@@ -243,7 +250,7 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
           </div>
         </div>
         <div className="flex items-center w-full space-y-0">
-          {user ? (
+          {isOwner ? (
             <button
               type="button"
               className="flex items-center gap-1 min-w-0 text-left cursor-pointer group/rename"
@@ -302,7 +309,7 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
         }
       }}
     >
-      {enableContextMenu ? (
+      {enableContextMenu && isOwner ? (
         <ContextMenu>
           <ContextMenuTrigger asChild>{cardContent}</ContextMenuTrigger>
 
@@ -366,6 +373,19 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
             </ContextMenuItem>
           </ContextMenuContent>
         </ContextMenu>
+      ) : enableContextMenu ? (
+        <div
+          onContextMenu={(e) => {
+            e.preventDefault()
+            toast({
+              title: 'Permission denied',
+              description: `You do not have permission to edit "${prototype?.name ?? 'this prototype'}".`,
+              duration: 3000,
+            })
+          }}
+        >
+          {cardContent}
+        </div>
       ) : (
         cardContent
       )}
@@ -414,7 +434,7 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
         </div>
       </DaDialog>
 
-      {enableContextMenu && (
+      {enableContextMenu && isOwner && (
         <>
           {/* Deploy / Staging dialog */}
           <DaDialog

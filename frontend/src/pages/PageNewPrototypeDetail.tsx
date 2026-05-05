@@ -32,7 +32,7 @@ import DaDialog from '@/components/molecules/DaDialog'
 import PrototypeTabCode from '@/components/organisms/PrototypeTabCode'
 import PrototypeTabDashboard from '@/components/organisms/PrototypeTabDashboard'
 import PrototypeTabFeedback from '@/components/organisms/PrototypeTabFeedback'
-import DaRuntimeControl from '@/components/molecules/dashboard/DaRuntimeControl'
+import DaWorkspaceRuntimeControl from '@/components/molecules/dashboard/DaWorkspaceRuntimeControl'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -650,7 +650,7 @@ const PageNewPrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
                                 (!newFlowActiveBuiltinKey || newFlowActiveBuiltinKey === 'overview') &&
                                 hasPrototype && <PrototypeTabInfo prototype={newFlowPrototype!} />}
                         </div>
-                        {newFlowShowRt && <DaRuntimeControl />}
+                        {newFlowShowRt && <DaWorkspaceRuntimeControl />}
                     </div>
                 </div>
 

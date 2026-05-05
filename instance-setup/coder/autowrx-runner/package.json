@@ -11,7 +11,6 @@
     "Other"
   ],
   "activationEvents": [
-    "workspaceContains:**/.autowrx_run",
     "onStartupFinished"
   ],
   "main": "./extension.js",
@@ -28,6 +27,9 @@
     "pretest": "yarn run lint",
     "test": "vscode-test",
     "vsix": "vsce package --allow-missing-repository --skip-license"
+  },
+  "dependencies": {
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@vscode/vsce": "3.7.1",

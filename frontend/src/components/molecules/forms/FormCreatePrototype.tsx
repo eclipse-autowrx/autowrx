@@ -36,8 +36,8 @@ import { CVI } from '@/data/CVI'
 import { createModelService, listModelsLite } from '@/services/model.service'
 import { cn } from '@/lib/utils'
 import default_journey from '@/data/default_journey'
-import { SAMPLE_PROJECTS } from '@/data/sampleProjects'
 import { getConfig, useSiteConfig } from '@/utils/siteConfig'
+import { listProjectTemplates, ProjectTemplate } from '@/services/projectTemplate.service'
 
 interface FormCreatePrototypeProps {
   onClose?: () => void
@@ -57,8 +57,8 @@ interface FormCreatePrototypeProps {
 const initialState = {
   prototypeName: '',
   modelName: '',
-  language: SAMPLE_PROJECTS[0].language || '',
-  code: JSON.stringify(SAMPLE_PROJECTS[0].data),
+  language: '',
+  code: '',
   cvi: JSON.stringify(CVI),
   mainApi: 'Vehicle',
 }
@@ -172,6 +172,47 @@ const FormCreatePrototype = ({
 
   const { data: currentUser } = useSelfProfileQuery()
 
+  const { data: remoteTemplatesData, isLoading: isLoadingTemplates } = useQuery({
+    queryKey: ['project-templates-list'],
+    queryFn: () => listProjectTemplates({ limit: 100, page: 1 }),
+  })
+
+  type TemplateOption = {
+    label: string
+    language: string
+    code: string
+    widget_config?: string
+    customer_journey?: string
+  }
+
+  const templateOptions = useMemo((): TemplateOption[] => {
+    if (!remoteTemplatesData?.results?.length) return []
+    return remoteTemplatesData.results.map((t: ProjectTemplate) => {
+      let parsed: Record<string, any> = {}
+      try {
+        parsed = JSON.parse(t.data)
+      } catch {
+        // invalid JSON, use empty
+      }
+      return {
+        label: t.name,
+        language: parsed.language || '',
+        code: parsed.code || '',
+        widget_config: parsed.widget_config,
+        customer_journey: parsed.customer_journey,
+      }
+    })
+  }, [remoteTemplatesData])
+
+  const [projectTemplate, setProjectTemplate] = useState<string>('')
+
+  useEffect(() => {
+    if (templateOptions.length && !projectTemplate) {
+      const first = templateOptions[0]
+      setProjectTemplate(first.label)
+      setData((prev) => ({ ...prev, code: first.code, language: first.language }))
+    }
+  }, [templateOptions, projectTemplate])
   const [debouncedPrototypeName, setDebouncedPrototypeName] = useState('')
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedPrototypeName(data.prototypeName), 300)
@@ -212,18 +253,10 @@ const FormCreatePrototype = ({
   }
 
   const onTemplateChange = (v: string) => {
-    const template = SAMPLE_PROJECTS.find((project) => project.label === v)
-    let code = ''
-    let language = ''
+    const template = templateOptions.find((t) => t.label === v)
     if (template) {
-      if (typeof template.data === 'string') {
-        code = template.data
-        language = template.language
-      } else {
-        code = JSON.stringify(template.data)
-        language = template.language
-      }
-      setData((prev) => ({ ...prev, code: code, language: language }))
+      setData((prev) => ({ ...prev, code: template.code, language: template.language }))
+      setProjectTemplate(v)
     }
   }
 
@@ -266,6 +299,8 @@ const FormCreatePrototype = ({
         '/imgs/default_prototype_cover.jpg',
       )
 
+      const selectedTemplate = templateOptions.find((t) => t.label === projectTemplate)
+
       const body = {
         model_id: modelId,
         name: data.prototypeName,
@@ -274,7 +309,9 @@ const FormCreatePrototype = ({
         apis: { VSC: [], VSS: [] },
         code: data.code,
         complexity_level: 3,
-        customer_journey: default_journey,
+        customer_journey: selectedTemplate?.customer_journey !== undefined
+          ? selectedTemplate.customer_journey
+          : default_journey,
         description: {
           problem: '',
           says_who: '',
@@ -285,7 +322,7 @@ const FormCreatePrototype = ({
         skeleton: '{}',
         tags: [],
         widget_config:
-          widget_config || getDefaultDashboardCfg(data.language) || '[]',
+          widget_config || selectedTemplate?.widget_config || getDefaultDashboardCfg(data.language) || '[]',
         autorun: true,
       }
 
@@ -466,23 +503,30 @@ const FormCreatePrototype = ({
 
       <div className="flex flex-col mt-4">
         <Label className="mb-2">Project Template *</Label>
+        {isLoadingTemplates ? (
+          <p className="flex items-center text-sm text-muted-foreground h-9">
+            <Spinner className="mr-1 h-4 w-4" />
+            Loading templates...
+          </p>
+        ) : (
         <Select
-          defaultValue={SAMPLE_PROJECTS[0].label}
+          value={projectTemplate}
           onValueChange={(v: string) => {
             onTemplateChange(v)
           }}
         >
           <SelectTrigger data-id="prototype-language-select" className="w-full">
-            <SelectValue />
+            <SelectValue placeholder="Select a template" />
           </SelectTrigger>
           <SelectContent>
-            {SAMPLE_PROJECTS.map((project) => (
-              <SelectItem key={project.label} value={project.label}>
-                {project.label}
+            {templateOptions.map((t) => (
+              <SelectItem key={t.label} value={t.label}>
+                {t.label}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+        )}
       </div>
 
       <Button

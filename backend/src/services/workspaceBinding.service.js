@@ -62,8 +62,44 @@ const upsertBinding = async ({
   );
 };
 
+const markBindingStaleByWorkspaceId = async (workspaceId) => {
+  if (!workspaceId) return null;
+  return UserWorkspace.findOneAndUpdate(
+    { workspace_id: workspaceId },
+    {
+      $set: {
+        status: 'stale',
+      },
+      $unset: {
+        workspace_id: '',
+        workspace_name: '',
+      },
+    },
+    { new: true }
+  );
+};
+
+const markBindingStaleForUserWorkspace = async (userId, workspaceId) => {
+  if (!userId || !workspaceId) return null;
+  return UserWorkspace.findOneAndUpdate(
+    { user_id: userId, workspace_id: workspaceId },
+    {
+      $set: {
+        status: 'stale',
+      },
+      $unset: {
+        workspace_id: '',
+        workspace_name: '',
+      },
+    },
+    { new: true }
+  );
+};
+
 module.exports = {
   getBindingByUser,
   getWorkspaceIdForUser,
   upsertBinding,
+  markBindingStaleByWorkspaceId,
+  markBindingStaleForUserWorkspace,
 };

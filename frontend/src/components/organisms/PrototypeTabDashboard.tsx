@@ -7,7 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import { FC } from 'react'
-import DaDashboard from '../molecules/dashboard/DaDashboard'
+import DaWorkspaceDashboard from '../molecules/dashboard/DaWorkspaceDashboard'
 import { cn } from '@/lib/utils'
 import { useSystemUI } from '@/hooks/useSystemUI'
 
@@ -22,7 +22,7 @@ const PrototypeTabDashboard: FC = ({}) => {
           'fixed top-0 left-0 w-screen h-screen',
       )}
     >
-      <DaDashboard />
+      <DaWorkspaceDashboard />
     </div>
   )
 }
