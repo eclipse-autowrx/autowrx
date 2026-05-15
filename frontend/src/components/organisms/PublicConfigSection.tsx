@@ -66,32 +66,68 @@ const PublicConfigSection: React.FC = () => {
     try {
       setIsLoading(true)
 
-      // BE seeds all predefined configs on startup — just fetch and render
+      // Get existing configs from BE
       const res = await configManagementService.getConfigs({
         secret: false,
         scope: 'site',
         limit: 100,
       })
 
-      const allConfigs = res.results || []
+      let allConfigs = res.results || []
+      const existingKeys = new Set(allConfigs.map((c) => c.key))
 
-      // Filter to only show predefined public configs (excluding NAV_BAR_ACTIONS and section-specific keys)
-      const predefinedKeys = new Set(
-        PREDEFINED_SITE_CONFIGS.map((c) => c.key).filter(
-          (key) => !isSpecialSectionKey(key) && key !== 'NAV_BAR_ACTIONS',
-        ),
+      // Identify predefined public configs (not in special sections)
+      const predefinedPublicConfigs = PREDEFINED_SITE_CONFIGS.filter(
+        (c) => !isSpecialSectionKey(c.key),
+      )
+
+      // Find and create missing predefined public configs (self-healing)
+      const missingConfigs = predefinedPublicConfigs.filter(
+        (c) => !existingKeys.has(c.key),
+      )
+
+      if (missingConfigs.length > 0) {
+        await configManagementService.bulkUpsertConfigs({
+          configs: missingConfigs,
+        })
+        // Re-fetch after healing
+        const updatedRes = await configManagementService.getConfigs({
+          secret: false,
+          scope: 'site',
+          limit: 100,
+        })
+        allConfigs = updatedRes.results || []
+      }
+
+      // Filter to only show general public configs for the main list (excluding NAV_BAR_ACTIONS)
+      const generalPredefinedKeys = new Set(
+        predefinedPublicConfigs
+          .map((c) => c.key)
+          .filter((key) => key !== 'NAV_BAR_ACTIONS'),
       )
       const predefinedOrder = new Map(
         PREDEFINED_SITE_CONFIGS.map((c, i) => [c.key, i]),
       )
       const filteredConfigs = allConfigs
-        .filter((config) => predefinedKeys.has(config.key))
-        .sort((a, b) => (predefinedOrder.get(a.key) ?? 999) - (predefinedOrder.get(b.key) ?? 999))
+        .filter((config) => generalPredefinedKeys.has(config.key))
+        .sort(
+          (a, b) =>
+            (predefinedOrder.get(a.key) ?? 999) -
+            (predefinedOrder.get(b.key) ?? 999),
+        )
 
       // Load nav bar actions
-      const navBarActionsConfig = allConfigs.find((config) => config.key === 'NAV_BAR_ACTIONS')
-      if (navBarActionsConfig && navBarActionsConfig.value !== null && navBarActionsConfig.value !== undefined) {
-        const actions = Array.isArray(navBarActionsConfig.value) ? navBarActionsConfig.value as NavBarAction[] : []
+      const navBarActionsConfig = allConfigs.find(
+        (config) => config.key === 'NAV_BAR_ACTIONS',
+      )
+      if (
+        navBarActionsConfig &&
+        navBarActionsConfig.value !== null &&
+        navBarActionsConfig.value !== undefined
+      ) {
+        const actions = Array.isArray(navBarActionsConfig.value)
+          ? (navBarActionsConfig.value as NavBarAction[])
+          : []
         setNavBarActions(actions)
         setOriginalNavBarActions(JSON.parse(JSON.stringify(actions)))
       } else {
@@ -227,26 +263,16 @@ const PublicConfigSection: React.FC = () => {
 
     try {
       setIsLoading(true)
-      // Only delete public configs (predefined non‑GenAI, non‑privacy keys + NAV_BAR_ACTIONS), not other sections
-      const publicKeys = new Set([
-        ...PREDEFINED_SITE_CONFIGS
-          .map((c) => c.key)
-          .filter((key) => !isSpecialSectionKey(key)),
-        'NAV_BAR_ACTIONS',
-      ])
-
-      const allConfigs = await configManagementService.getConfigs({
-        secret: false,
-        scope: 'site',
-        limit: 100,
-      })
-
-      // Delete only public configs
-      const publicConfigs = (allConfigs.results || []).filter((c) =>
-        publicKeys.has(c.key),
+      
+      const predefinedPublicConfigs = PREDEFINED_SITE_CONFIGS.filter(
+        (c) => !isSpecialSectionKey(c.key),
       )
-      const { failed } = await deleteConfigsById(publicConfigs)
-      failed.forEach((f) => console.warn('Failed to delete config', f.key, f))
+
+      // Instead of deleting and hoping for BE re-seed (which only happens on startup),
+      // we bulk upsert the defaults directly.
+      await configManagementService.bulkUpsertConfigs({
+        configs: predefinedPublicConfigs,
+      })
 
       toast({ title: 'Restored', description: 'Public configs restored to default values. Reloading page...' })
 

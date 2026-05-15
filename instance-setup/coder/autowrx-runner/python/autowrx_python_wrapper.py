@@ -122,24 +122,26 @@ class VarsEmitter:
             pass
 
     def emit(self, frame: FrameType) -> None:
-        filename = os.path.abspath(frame.f_code.co_filename or "")
-        if filename != self.script_path:
-            return
-
-        raw_locals = frame.f_locals or {}
+        # Only collect globals for the 'outermost' variables
+        raw_globals = frame.f_globals or {}
         vars_payload: Dict[str, Any] = {}
-        for name, value in raw_locals.items():
-            if name.startswith("__"):
-                continue
-            if self.allowed_var_names is not None and name not in self.allowed_var_names:
-                continue
-            vars_payload[name] = sanitize_value(value)
+        
+        # If we have a list of allowed top-level names, only emit those.
+        if self.allowed_var_names is not None:
+            for name in self.allowed_var_names:
+                if name in raw_globals:
+                    vars_payload[name] = sanitize_value(raw_globals[name])
+        else:
+            # Fallback (should not happen with collect_top_level_assigned_names)
+            for name, value in raw_globals.items():
+                if not name.startswith("__"):
+                    vars_payload[name] = sanitize_value(value)
 
         payload = {
             "type": "vars.snapshot",
             "vars": vars_payload,
             "frame": {
-                "file": filename,
+                "file": os.path.abspath(frame.f_code.co_filename or ""),
                 "line": int(getattr(frame, "f_lineno", 0) or 0),
                 "function": str(frame.f_code.co_name or ""),
             },

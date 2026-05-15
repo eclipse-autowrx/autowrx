@@ -34,6 +34,7 @@ interface ProjectEditorProps {
   onChange: (data: string) => void
   onSave?: (data: string) => Promise<void>
   prototypeName?: string
+  prototypeId?: string
 }
 
 /** Collect all file paths from root-level fsData (used when syncing from data prop). */
@@ -49,18 +50,28 @@ function collectAllFilePathsFromRoot(rootItems: FileSystemItem[]): Set<string> {
   rootItems.forEach((rootItem) => {
     if (rootItem.type === 'folder') {
       // Use '' for root folder so paths match FileTree (e.g. "utils/bar" not "root/utils/bar")
-      const basePath = rootItem.name === 'root' ? '' : (rootItem.name || '')
+      const basePath = rootItem.name === 'root' ? '' : rootItem.name || ''
       walk(rootItem.items, basePath)
     }
   })
   return out
 }
 
+import {
+  getPrototypeWorkspaceTreeService,
+  getPrototypeFileContentService,
+  savePrototypeFileContentService,
+  createPrototypeFolderService,
+  deletePrototypeFileSystemItemService,
+  renamePrototypeFileSystemItemService,
+} from '@/services/prototype.service'
+
 const ProjectEditor: React.FC<ProjectEditorProps> = ({
   data,
   onChange,
   onSave,
   prototypeName,
+  prototypeId,
 }) => {
   const [fsData, setFsData] = useState<FileSystemItem[]>(() => {
     try {
@@ -103,6 +114,8 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
   } | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [isLoadingTree, setIsLoadingTree] = useState(false)
+  const [loadingFiles, setLoadingFiles] = useState<Set<string>>(new Set())
   const resizeRef = useRef<HTMLDivElement>(null)
   const startXRef = useRef(0)
   const startWidthRef = useRef(0)
@@ -126,7 +139,9 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     unsavedFilesRef.current = unsavedFiles
   }, [unsavedFiles])
 
-  const validateFileName = (name: string): { valid: boolean; error?: string } => {
+  const validateFileName = (
+    name: string,
+  ): { valid: boolean; error?: string } => {
     if (!name || name.trim() === '') {
       return { valid: false, error: 'Name cannot be empty' }
     }
@@ -135,7 +150,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     if (invalidChars.test(name)) {
       return {
         valid: false,
-        error: 'Name cannot contain: : * ? " < > |'
+        error: 'Name cannot contain: : * ? " < > |',
       }
     }
 
@@ -143,14 +158,39 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
       return { valid: false, error: 'Name cannot start or end with spaces' }
     }
 
-    const reservedNames = ['CON', 'PRN', 'AUX', 'NUL', 'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9', 'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9']
+    const reservedNames = [
+      'CON',
+      'PRN',
+      'AUX',
+      'NUL',
+      'COM1',
+      'COM2',
+      'COM3',
+      'COM4',
+      'COM5',
+      'COM6',
+      'COM7',
+      'COM8',
+      'COM9',
+      'LPT1',
+      'LPT2',
+      'LPT3',
+      'LPT4',
+      'LPT5',
+      'LPT6',
+      'LPT7',
+      'LPT8',
+      'LPT9',
+    ]
     if (reservedNames.includes(name.toUpperCase())) {
-      return { valid: false, error: 'This is a reserved name and cannot be used' }
+      return {
+        valid: false,
+        error: 'This is a reserved name and cannot be used',
+      }
     }
 
     return { valid: true }
   }
-
 
   // Handle file content changes
   const handleContentChange = useCallback(
@@ -224,7 +264,8 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
 
       // Use refs to get latest values
       const latestPendingChanges = pendingChangesRef.current
-      if (!latestPendingChanges.has(filePath)) return currentFsData || fsDataRef.current
+      if (!latestPendingChanges.has(filePath))
+        return currentFsData || fsDataRef.current
 
       const newContent = latestPendingChanges.get(filePath)!
 
@@ -277,14 +318,19 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
         return next
       })
 
-      // Persist to database
+      // Persist to file system if prototypeId is present
+      if (prototypeId) {
+        await savePrototypeFileContentService(prototypeId, filePath, newContent)
+      }
+
+      // Sync with DB if onSave is provided (legacy/metadata backup)
       if (onSave) {
         await onSave(JSON.stringify(updatedData))
       }
 
       return updatedData
     },
-    [activeFile, onSave],
+    [activeFile, onSave, prototypeId],
   )
 
   // Save all files
@@ -292,66 +338,67 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     setIsSaving(true)
     setSaveError(null)
     try {
-      // Get the latest fsData from ref (most current available)
-      let baseFsData = fsDataRef.current
       const latestPendingChanges = pendingChangesRef.current
+      const latestFsData = fsDataRef.current
 
-      // Helper: get pending content by full path or by short name (path can be stored either way)
-      const getPendingContent = (itemPath: string, shortName: string): string | undefined =>
-        latestPendingChanges.get(itemPath) ?? latestPendingChanges.get(shortName)
+      if (prototypeId) {
+        // Save each unsaved file individually to the disk
+        const savePromises = Array.from(latestPendingChanges.entries()).map(
+          ([path, content]) =>
+            savePrototypeFileContentService(prototypeId, path, content),
+        )
+        await Promise.all(savePromises)
+      }
 
-      // Helper function to apply pending changes to file system data
-      const applyPendingChanges = (
-        items: FileSystemItem[],
-        basePath: string = '',
-      ): FileSystemItem[] => {
-        return items.map((item) => {
-          if (item.type === 'file') {
-            const itemPath = basePath ? `${basePath}/${item.name}` : item.name
-            const pendingContent = getPendingContent(itemPath, item.name)
-            if (pendingContent !== undefined) {
+      // Sync with DB if onSave is provided (legacy or metadata backup)
+      if (onSave) {
+        // Apply all pending changes to the structure to get full JSON
+        const applyPendingChanges = (
+          items: FileSystemItem[],
+          basePath: string = '',
+        ): FileSystemItem[] => {
+          return items.map((item) => {
+            if (item.type === 'file') {
+              const itemPath = basePath ? `${basePath}/${item.name}` : item.name
+              const pendingContent =
+                latestPendingChanges.get(itemPath) ??
+                latestPendingChanges.get(item.name)
+              if (pendingContent !== undefined) {
+                return { ...item, content: pendingContent }
+              }
+              return item
+            }
+            if (item.type === 'folder') {
+              const folderPath = basePath
+                ? `${basePath}/${item.name}`
+                : item.name
               return {
                 ...item,
-                content: pendingContent,
+                items: applyPendingChanges(item.items, folderPath),
               }
             }
             return item
-          }
-          if (item.type === 'folder') {
-            const folderPath = basePath ? `${basePath}/${item.name}` : item.name
+          })
+        }
+
+        const updatedFsData = latestFsData.map((rootItem) => {
+          if (rootItem.type === 'folder') {
+            const basePath = rootItem.name === 'root' ? '' : rootItem.name || ''
             return {
-              ...item,
-              items: applyPendingChanges(item.items, folderPath),
+              ...rootItem,
+              items: applyPendingChanges(rootItem.items, basePath),
             }
           }
-          return item
+          return rootItem
         })
-      }
 
-      // Apply pending changes at root level (fsData is array of root folders/files)
-      // Use '' for root folder so paths match pendingChanges keys (e.g. "utils/bar" not "root/utils/bar")
-      const updatedFsData = baseFsData.map((rootItem) => {
-        if (rootItem.type === 'folder') {
-          const basePath = rootItem.name === 'root' ? '' : (rootItem.name || '')
-          return {
-            ...rootItem,
-            items: applyPendingChanges(rootItem.items, basePath),
-          }
-        }
-        return rootItem
-      })
-
-      // Build the data to save (with all pending changes applied)
-      const dataToSave = JSON.stringify(updatedFsData)
-
-      // Call parent's onSave first; only clear unsaved state after it succeeds
-      if (onSave) {
-        await onSave(dataToSave)
-        // Persist succeeded — clear pending/unsaved and update fsData
-        setPendingChanges(new Map())
-        setUnsavedFiles(new Set())
+        await onSave(JSON.stringify(updatedFsData))
         setFsData(updatedFsData)
       }
+
+      // Clear pending state
+      setPendingChanges(new Map())
+      setUnsavedFiles(new Set())
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to save files'
@@ -360,7 +407,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     } finally {
       setIsSaving(false)
     }
-  }, [onSave])
+  }, [onSave, prototypeId])
 
   // Add keyboard shortcuts for save operations
   useEffect(() => {
@@ -379,76 +426,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
             setIsSaving(true)
             setSaveError(null)
             try {
-              // Get latest values from refs
-              const filePath = activeFile.path || activeFile.name
-              let latestFsData = fsDataRef.current
-              const latestPendingChanges = pendingChangesRef.current
-
-              // Check if this file has pending changes
-              if (latestPendingChanges.has(filePath)) {
-                const newContent = latestPendingChanges.get(filePath)!
-
-                // Update file system data with the pending change
-                const updateFileInData = (
-                  items: FileSystemItem[],
-                  currentPath: string = '',
-                ): FileSystemItem[] => {
-                  return items.map((item) => {
-                    if (item.type === 'file') {
-                      const itemPath = currentPath
-                        ? `${currentPath}/${item.name}`
-                        : item.name
-                      if (itemPath === filePath) {
-                        return { ...item, content: newContent }
-                      }
-                    } else if (item.type === 'folder') {
-                      const folderPath = currentPath
-                        ? `${currentPath}/${item.name}`
-                        : item.name
-                      return {
-                        ...item,
-                        items: updateFileInData(item.items, folderPath),
-                      }
-                    }
-                    return item
-                  })
-                }
-
-                // Process the root folder correctly - latestFsData is an array with root as first element
-                latestFsData = latestFsData.map((rootItem) => {
-                  if (rootItem.type === 'folder') {
-                    return {
-                      ...rootItem,
-                      items: updateFileInData(rootItem.items, ''),
-                    }
-                  }
-                  return rootItem
-                })
-
-                // Clear pending changes for this file
-                setPendingChanges((prev) => {
-                  const next = new Map(prev)
-                  next.delete(filePath)
-                  return next
-                })
-
-                setUnsavedFiles((prev) => {
-                  const next = new Set(prev)
-                  next.delete(filePath)
-                  return next
-                })
-
-                // Update state with the latest data
-                setFsData(latestFsData)
-              }
-
-              // Build the data to save with all updates applied
-              const dataToSave = JSON.stringify(latestFsData)
-              console.log('Ctrl+S: Saving current file with data:', dataToSave)
-
-              if (onSave) {
-                await onSave(dataToSave)
-              }
+              await saveFile()
             } catch (error) {
               const errorMessage =
                 error instanceof Error ? error.message : 'Failed to save file'
@@ -516,6 +494,22 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
 
   // Sync data prop changes from parent (e.g. load from server, another tab saved)
   useEffect(() => {
+    if (prototypeId) {
+      const loadTree = async () => {
+        setIsLoadingTree(true)
+        try {
+          const tree = await getPrototypeWorkspaceTreeService(prototypeId)
+          setFsData(tree)
+        } catch (error) {
+          console.error('Failed to load workspace tree:', error)
+        } finally {
+          setIsLoadingTree(false)
+        }
+      }
+      loadTree()
+      return
+    }
+
     try {
       if (!data || data.trim() === '') {
         setFsData([{ type: 'folder', name: 'root', items: [] }])
@@ -538,17 +532,21 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
 
       // Reconcile open tabs and active file: only keep paths that still exist in new data
       const validPaths = collectAllFilePathsFromRoot(parsed)
-      setOpenFiles((prev) => prev.filter((f) => validPaths.has(f.path || f.name)))
+      setOpenFiles((prev) =>
+        prev.filter((f) => validPaths.has(f.path || f.name)),
+      )
       setActiveFile((prev) => {
         if (!prev) return null
         if (validPaths.has(prev.path || prev.name)) return prev
-        const remaining = openFiles.filter((f) => validPaths.has(f.path || f.name))
+        const remaining = openFiles.filter((f) =>
+          validPaths.has(f.path || f.name),
+        )
         return remaining[0] || null
       })
     } catch {
       // Invalid JSON, keep current state
     }
-  }, [data])
+  }, [data, prototypeId])
 
   const toggleCollapse = useCallback(() => {
     setIsCollapsed((prev) => !prev)
@@ -614,16 +612,42 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     }
   }, [isResizing, handleMouseMove, handleMouseUp])
 
-  const handleFileSelect = (file: File) => {
+  const handleFileSelect = async (file: File) => {
     // Ensure the file has a proper path
     const filePath = getItemPath(file) || file.path || file.name
-    const fileWithPath = { ...file, path: filePath }
 
     // Check if file with this path is already open (not just by name)
-    if (!openFiles.find((f) => getItemPath(f, f.path) === filePath)) {
-      setOpenFiles([...openFiles, fileWithPath])
+    const existingFile = openFiles.find((f) => (f.path || f.name) === filePath)
+
+    if (existingFile) {
+      setActiveFile(existingFile)
+      return
     }
-    setActiveFile(fileWithPath)
+
+    let fileToOpen = { ...file, path: filePath }
+
+    // If no content and we have prototypeId, fetch it on-demand
+    if ((!fileToOpen.content || fileToOpen.content === '') && prototypeId) {
+      setLoadingFiles((prev) => new Set(prev).add(filePath))
+      try {
+        const content = await getPrototypeFileContentService(
+          prototypeId,
+          filePath,
+        )
+        fileToOpen.content = content
+      } catch (error) {
+        console.error('Failed to load file content:', error)
+      } finally {
+        setLoadingFiles((prev) => {
+          const next = new Set(prev)
+          next.delete(filePath)
+          return next
+        })
+      }
+    }
+
+    setOpenFiles([...openFiles, fileToOpen])
+    setActiveFile(fileToOpen)
   }
 
   const handleCloseFile = (file: File) => {
@@ -682,12 +706,16 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
       ): FileSystemItem[] => {
         return items.map((item) => {
           if (item.type === 'file') {
-            const itemPath = currentPath ? `${currentPath}/${item.name}` : item.name
+            const itemPath = currentPath
+              ? `${currentPath}/${item.name}`
+              : item.name
             if (itemPath === filePath) {
               return { ...item, content: newContent }
             }
           } else if (item.type === 'folder') {
-            const folderPath = currentPath ? `${currentPath}/${item.name}` : item.name
+            const folderPath = currentPath
+              ? `${currentPath}/${item.name}`
+              : item.name
             return { ...item, items: updateFileInData(item.items, folderPath) }
           }
           return item
@@ -754,11 +782,19 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     })
   }
 
-
   const handleDeleteConfirm = () => {
     if (!deleteConfirmDialog) return
 
     const { item, itemPath } = deleteConfirmDialog
+
+    if (prototypeId) {
+      deletePrototypeFileSystemItemService(prototypeId, itemPath).catch(
+        (err) => {
+          console.error('Failed to delete item on server:', err)
+          setErrorDialog({ message: 'Failed to delete item on server.' })
+        },
+      )
+    }
 
     setFsData((prevFsData) => {
       // Helper function to collect all file paths in a folder (recursive)
@@ -871,97 +907,111 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     setDeleteConfirmDialog(null)
   }
 
-  const deleteItemDirectly = useCallback((item: FileSystemItem, itemPath: string) => {
-    // Helper to collect all file paths in a folder (recursive)
-    const collectFilePaths = (
-      items: FileSystemItem[],
-      basePath: string = '',
-    ): string[] => {
-      const filePaths: string[] = []
-      items.forEach((entry) => {
-        const currentPath = basePath ? `${basePath}/${entry.name}` : entry.name
-        if (entry.type === 'file') {
-          filePaths.push(currentPath)
-        } else if (entry.type === 'folder') {
-          filePaths.push(...collectFilePaths(entry.items, currentPath))
-        }
-      })
-      return filePaths
-    }
-
-    // Compute which paths will be deleted (outside setState updater)
-    const filePathsToDelete: string[] = []
-    if (itemPath) {
-      filePathsToDelete.push(itemPath)
-      if (item.type === 'folder') {
-        filePathsToDelete.push(...collectFilePaths(item.items, itemPath))
-      }
-    } else {
-      if (item.type === 'file') {
-        filePathsToDelete.push(item.name)
-      } else if (item.type === 'folder') {
-        filePathsToDelete.push(...collectFilePaths(item.items))
-      }
-    }
-
-    // Update open files and active file outside setFsData (avoid setState inside updater)
-    const newOpenFiles = openFiles.filter((openFile) => {
-      const openFilePath = openFile.path || openFile.name
-      return !filePathsToDelete.includes(openFilePath)
-    })
-    setOpenFiles(newOpenFiles)
-
-    setActiveFile((prev) => {
-      if (!prev) return null
-      const activeFilePath = prev.path || prev.name
-      if (filePathsToDelete.includes(activeFilePath)) {
-        return newOpenFiles[0] || null
-      }
-      return prev
-    })
-
-    setPendingChanges((prev) => {
-      const next = new Map(prev)
-      filePathsToDelete.forEach((path) => next.delete(path))
-      return next
-    })
-
-    setUnsavedFiles((prev) => {
-      const next = new Set(prev)
-      filePathsToDelete.forEach((path) => next.delete(path))
-      return next
-    })
-
-    // setFsData updater: only compute and return new state (pure)
-    setFsData((prevFsData) => {
-      const deleteItem = (
+  const deleteItemDirectly = useCallback(
+    (item: FileSystemItem, itemPath: string) => {
+      // Helper to collect all file paths in a folder (recursive)
+      const collectFilePaths = (
         items: FileSystemItem[],
         basePath: string = '',
-      ): FileSystemItem[] =>
-        items
-          .filter((i) => {
-            const currentPath = basePath ? `${basePath}/${i.name}` : i.name
-            return !filePathsToDelete.includes(currentPath)
-          })
-          .map((i) => {
-            const currentPath = basePath ? `${basePath}/${i.name}` : i.name
-            if (i.type === 'folder') {
-              return { ...i, items: deleteItem(i.items, currentPath) }
-            }
-            return i
-          })
-
-      return prevFsData.map((rootItem) => {
-        if (rootItem.type === 'folder') {
-          return {
-            ...rootItem,
-            items: deleteItem(rootItem.items, ''),
+      ): string[] => {
+        const filePaths: string[] = []
+        items.forEach((entry) => {
+          const currentPath = basePath
+            ? `${basePath}/${entry.name}`
+            : entry.name
+          if (entry.type === 'file') {
+            filePaths.push(currentPath)
+          } else if (entry.type === 'folder') {
+            filePaths.push(...collectFilePaths(entry.items, currentPath))
           }
+        })
+        return filePaths
+      }
+
+      // Compute which paths will be deleted (outside setState updater)
+      const filePathsToDelete: string[] = []
+      if (itemPath) {
+        filePathsToDelete.push(itemPath)
+        if (item.type === 'folder') {
+          filePathsToDelete.push(...collectFilePaths(item.items, itemPath))
         }
-        return rootItem
+      } else {
+        if (item.type === 'file') {
+          filePathsToDelete.push(item.name)
+        } else if (item.type === 'folder') {
+          filePathsToDelete.push(...collectFilePaths(item.items))
+        }
+      }
+
+      // Update open files and active file outside setFsData (avoid setState inside updater)
+      const newOpenFiles = openFiles.filter((openFile) => {
+        const openFilePath = openFile.path || openFile.name
+        return !filePathsToDelete.includes(openFilePath)
       })
-    })
-  }, [openFiles])
+      setOpenFiles(newOpenFiles)
+
+      setActiveFile((prev) => {
+        if (!prev) return null
+        const activeFilePath = prev.path || prev.name
+        if (filePathsToDelete.includes(activeFilePath)) {
+          return newOpenFiles[0] || null
+        }
+        return prev
+      })
+
+      setPendingChanges((prev) => {
+        const next = new Map(prev)
+        filePathsToDelete.forEach((path) => next.delete(path))
+        return next
+      })
+
+      setUnsavedFiles((prev) => {
+        const next = new Set(prev)
+        filePathsToDelete.forEach((path) => next.delete(path))
+        return next
+      })
+
+      if (prototypeId) {
+        deletePrototypeFileSystemItemService(prototypeId, itemPath).catch(
+          (err) => {
+            console.error('Failed to delete item on server:', err)
+            setErrorDialog({ message: 'Failed to delete item on server.' })
+          },
+        )
+      }
+
+      // setFsData updater: only compute and return new state (pure)
+      setFsData((prevFsData) => {
+        const deleteItem = (
+          items: FileSystemItem[],
+          basePath: string = '',
+        ): FileSystemItem[] =>
+          items
+            .filter((i) => {
+              const currentPath = basePath ? `${basePath}/${i.name}` : i.name
+              return !filePathsToDelete.includes(currentPath)
+            })
+            .map((i) => {
+              const currentPath = basePath ? `${basePath}/${i.name}` : i.name
+              if (i.type === 'folder') {
+                return { ...i, items: deleteItem(i.items, currentPath) }
+              }
+              return i
+            })
+
+        return prevFsData.map((rootItem) => {
+          if (rootItem.type === 'folder') {
+            return {
+              ...rootItem,
+              items: deleteItem(rootItem.items, ''),
+            }
+          }
+          return rootItem
+        })
+      })
+    },
+    [openFiles],
+  )
 
   const handleRenameItem = (
     item: FileSystemItem,
@@ -972,6 +1022,17 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     const pathParts = itemPath.split('/')
     pathParts[pathParts.length - 1] = newName
     const newPath = pathParts.join('/')
+
+    if (prototypeId) {
+      renamePrototypeFileSystemItemService(
+        prototypeId,
+        itemPath,
+        newPath,
+      ).catch((err) => {
+        console.error('Failed to rename item on server:', err)
+        setErrorDialog({ message: 'Failed to rename item on server.' })
+      })
+    }
 
     const renameItem = (
       items: FileSystemItem[],
@@ -1019,7 +1080,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
           return { ...f, path: newPath + '/' + suffix }
         }
         return f
-      })
+      }),
     )
 
     // Update active file the same way
@@ -1043,7 +1104,8 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
       if (item.type === 'folder') {
         const rekey: [string, string][] = []
         next.forEach((_, key) => {
-          if (key.startsWith(prefix)) rekey.push([key, newPath + '/' + key.slice(prefix.length)])
+          if (key.startsWith(prefix))
+            rekey.push([key, newPath + '/' + key.slice(prefix.length)])
         })
         rekey.forEach(([oldKey, newKey]) => {
           next.set(newKey, next.get(oldKey)!)
@@ -1079,12 +1141,23 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     sourcePath: string,
     targetFolder: Folder,
   ) => {
-    const targetPath = targetFolder.path || targetFolder.name
-
     // Prevent moving item into itself or its children
     if (sourcePath === targetPath || targetPath.startsWith(sourcePath + '/')) {
       console.log('Cannot move item into itself or its children')
       return
+    }
+
+    const newPath = `${targetPath === 'root' || targetPath === '' ? '' : targetPath + '/'}${item.name}`
+
+    if (prototypeId) {
+      renamePrototypeFileSystemItemService(
+        prototypeId,
+        sourcePath,
+        newPath,
+      ).catch((err) => {
+        console.error('Failed to move item on server:', err)
+        setErrorDialog({ message: 'Failed to move item on server.' })
+      })
     }
 
     // Atomic move: delete from source and add to target in a single operation
@@ -1216,11 +1289,14 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     // If item is a file, check for duplicates before adding
     if (item.type === 'file') {
       const existingFile = targetFolder.items.find(
-        (i) => i.type === 'file' && i.name.toLowerCase() === item.name.toLowerCase()
+        (i) =>
+          i.type === 'file' && i.name.toLowerCase() === item.name.toLowerCase(),
       )
       if (existingFile) {
         // File already exists, show error
-        setErrorDialog({ message: `A file named "${item.name}" already exists in this location.` })
+        setErrorDialog({
+          message: `A file named "${item.name}" already exists in this location.`,
+        })
         return targetFolder
       }
       return {
@@ -1231,7 +1307,8 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
 
     // If item is a folder, check if folder with same name exists
     const existingFolder = targetFolder.items.find(
-      (i) => i.type === 'folder' && i.name.toLowerCase() === item.name.toLowerCase()
+      (i) =>
+        i.type === 'folder' && i.name.toLowerCase() === item.name.toLowerCase(),
     ) as Folder | undefined
 
     if (existingFolder) {
@@ -1242,10 +1319,14 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
         // Check if child item already exists
         if (childItem.type === 'file') {
           const existingChildFile = mergedFolder.items.find(
-            (i) => i.type === 'file' && i.name.toLowerCase() === childItem.name.toLowerCase()
+            (i) =>
+              i.type === 'file' &&
+              i.name.toLowerCase() === childItem.name.toLowerCase(),
           )
           if (existingChildFile) {
-            setErrorDialog({ message: `A file named "${childItem.name}" already exists in "${existingFolder.name}".` })
+            setErrorDialog({
+              message: `A file named "${childItem.name}" already exists in "${existingFolder.name}".`,
+            })
             continue // Skip this file
           }
         }
@@ -1256,7 +1337,10 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
       return {
         ...targetFolder,
         items: targetFolder.items.map((i) => {
-          if (i.type === 'folder' && i.name.toLowerCase() === item.name.toLowerCase()) {
+          if (
+            i.type === 'folder' &&
+            i.name.toLowerCase() === item.name.toLowerCase()
+          ) {
             return mergedFolder
           }
           return i
@@ -1296,7 +1380,7 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
         // Check if name contains path separator
         if (name.includes('/')) {
           // Split into parts and create nested structure
-          const parts = name.split('/').filter(p => p.trim())
+          const parts = name.split('/').filter((p) => p.trim())
 
           if (parts.length === 0) {
             setCreatingAtRoot(null)
@@ -1308,7 +1392,9 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
           for (const part of parts) {
             const partValidation = validateFileName(part)
             if (!partValidation.valid) {
-              setErrorDialog({ message: `Invalid name in path: ${partValidation.error}` })
+              setErrorDialog({
+                message: `Invalid name in path: ${partValidation.error}`,
+              })
               return
             }
           }
@@ -1317,6 +1403,25 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
           let currentItem: FileSystemItem
           let actualFile: File | null = null // Keep reference to the actual file
 
+          if (prototypeId) {
+            if (creatingAtRoot.type === 'file') {
+              savePrototypeFileContentService(prototypeId, name, '').catch(
+                (err) => {
+                  console.error('Failed to create file on server:', err)
+                  setErrorDialog({
+                    message: 'Failed to create file on server.',
+                  })
+                },
+              )
+            } else {
+              createPrototypeFolderService(prototypeId, name).catch((err) => {
+                console.error('Failed to create folder on server:', err)
+                setErrorDialog({
+                  message: 'Failed to create folder on server.',
+                })
+              })
+            }
+          }
 
           if (creatingAtRoot.type === 'file') {
             const fileName = parts.pop()!
@@ -1324,13 +1429,25 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
             currentItem = actualFile
 
             for (let i = parts.length - 1; i >= 0; i--) {
-              currentItem = { type: 'folder', name: parts[i], items: [currentItem] }
+              currentItem = {
+                type: 'folder',
+                name: parts[i],
+                items: [currentItem],
+              }
             }
           } else {
-            currentItem = { type: 'folder', name: parts[parts.length - 1], items: [] }
+            currentItem = {
+              type: 'folder',
+              name: parts[parts.length - 1],
+              items: [],
+            }
 
             for (let i = parts.length - 2; i >= 0; i--) {
-              currentItem = { type: 'folder', name: parts[i], items: [currentItem] }
+              currentItem = {
+                type: 'folder',
+                name: parts[i],
+                items: [currentItem],
+              }
             }
           }
 
@@ -1348,10 +1465,12 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                 const findFileByPath = (
                   folder: Folder,
                   targetPath: string,
-                  currentPath: string = ''
+                  currentPath: string = '',
                 ): File | null => {
                   for (const item of folder.items) {
-                    const itemPath = currentPath ? `${currentPath}/${item.name}` : item.name
+                    const itemPath = currentPath
+                      ? `${currentPath}/${item.name}`
+                      : item.name
 
                     if (item.type === 'file' && itemPath === targetPath) {
                       return { ...item, path: itemPath } as File
@@ -1366,9 +1485,10 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                 }
 
                 // Calculate the full path of the file
-                const filePath = parts.length > 0
-                  ? `${parts.join('/')}/${actualFile.name}`
-                  : actualFile.name
+                const filePath =
+                  parts.length > 0
+                    ? `${parts.join('/')}/${actualFile.name}`
+                    : actualFile.name
 
                 // Find the file in merged structure
                 const foundFile = findFileByPath(mergedRoot, filePath)
@@ -1380,7 +1500,9 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                     // Check if file is already in openFiles by path
                     setOpenFiles((prev) => {
                       const filePath = foundFile.path || foundFile.name
-                      const exists = prev.some((f) => (f.path || f.name) === filePath)
+                      const exists = prev.some(
+                        (f) => (f.path || f.name) === filePath,
+                      )
                       if (!exists) {
                         return [...prev, foundFile]
                       }
@@ -1402,10 +1524,12 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
               const findFileInFolder = (
                 folder: Folder,
                 fileName: string,
-                currentPath: string = ''
+                currentPath: string = '',
               ): File | null => {
                 for (const item of folder.items) {
-                  const itemPath = currentPath ? `${currentPath}/${item.name}` : item.name
+                  const itemPath = currentPath
+                    ? `${currentPath}/${item.name}`
+                    : item.name
                   if (item.type === 'file' && item.name === fileName) {
                     return { ...item, path: itemPath } as File
                   }
@@ -1422,7 +1546,13 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                 const foundFile = findFileInFolder(root, actualFile.name)
                 if (foundFile) {
                   setActiveFile(foundFile)
-                  if (!openFiles.find((f) => (f.path || f.name) === (foundFile.path || foundFile.name))) {
+                  if (
+                    !openFiles.find(
+                      (f) =>
+                        (f.path || f.name) ===
+                        (foundFile.path || foundFile.name),
+                    )
+                  ) {
                     setOpenFiles((prev) => [...prev, foundFile])
                   }
                 }
@@ -1449,6 +1579,26 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
             creatingAtRoot.type === 'file'
               ? { type: 'file', name, content: '' }
               : { type: 'folder', name, items: [] }
+
+          if (prototypeId) {
+            if (creatingAtRoot.type === 'file') {
+              savePrototypeFileContentService(prototypeId, name, '').catch(
+                (err) => {
+                  console.error('Failed to create file on server:', err)
+                  setErrorDialog({
+                    message: 'Failed to create file on server.',
+                  })
+                },
+              )
+            } else {
+              createPrototypeFolderService(prototypeId, name).catch((err) => {
+                console.error('Failed to create folder on server:', err)
+                setErrorDialog({
+                  message: 'Failed to create folder on server.',
+                })
+              })
+            }
+          }
 
           setFsData((prevFsData) => {
             const newFsData = [...prevFsData]
@@ -1508,28 +1658,45 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
 
   const handleAddItem = (parent: Folder, item: FileSystemItem) => {
     console.log('handleAddItem: Adding item to parent', { parent, item })
-  
+
+    const itemPath = `${parent.path === 'root' || !parent.path ? '' : parent.path + '/'}${item.name}`
+
+    if (prototypeId) {
+      if (item.type === 'file') {
+        savePrototypeFileContentService(prototypeId, itemPath, '').catch(
+          (err) => {
+            console.error('Failed to create file on server:', err)
+            setErrorDialog({ message: 'Failed to create file on server.' })
+          },
+        )
+      } else {
+        createPrototypeFolderService(prototypeId, itemPath).catch((err) => {
+          console.error('Failed to create folder on server:', err)
+          setErrorDialog({ message: 'Failed to create folder on server.' })
+        })
+      }
+    }
+
     setFsData((prevFsData) => {
       const [root, ...rest] = prevFsData
       if (!root || root.type !== 'folder') {
         return prevFsData
       }
-  
+
       if (parent.name === 'root' || parent.path === 'root' || !parent.path) {
         const mergedRoot = mergeItemIntoFolder(root, item)
         return [mergedRoot, ...rest]
       }
-  
+
       const addItem = (
         items: FileSystemItem[],
         currentPath: string = '',
       ): FileSystemItem[] => {
         return items.map((i) => {
           const itemPath = currentPath ? `${currentPath}/${i.name}` : i.name
-  
-          const isTargetFolder =
-            i.type === 'folder' && itemPath === parent.path
-  
+
+          const isTargetFolder = i.type === 'folder' && itemPath === parent.path
+
           if (isTargetFolder) {
             const itemWithPath = {
               ...item,
@@ -1537,20 +1704,20 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
             }
             return { ...i, items: [...i.items, itemWithPath] }
           }
-  
+
           if (i.type === 'folder') {
             return { ...i, items: addItem(i.items, itemPath) }
           }
-  
+
           return i
         })
       }
-  
+
       const updatedRoot: Folder = {
         ...root,
         items: addItem(root.items, ''),
       }
-  
+
       return [updatedRoot, ...rest]
     })
   }
@@ -1562,7 +1729,10 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     let dataToExport = fsDataRef.current
     const latestPendingChanges = pendingChangesRef.current
 
-    const getPendingContentExport = (itemPath: string, shortName: string): string | undefined =>
+    const getPendingContentExport = (
+      itemPath: string,
+      shortName: string,
+    ): string | undefined =>
       latestPendingChanges.get(itemPath) ?? latestPendingChanges.get(shortName)
 
     // Apply pending changes to the data before exporting
@@ -1648,7 +1818,8 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     const reader = new FileReader()
     reader.onload = (event) => {
       const zip = new JSZip()
-      zip.loadAsync(event.target?.result as ArrayBuffer)
+      zip
+        .loadAsync(event.target?.result as ArrayBuffer)
         .then((zip) => {
           const folders: { [key: string]: Folder } = {}
 
@@ -1731,14 +1902,16 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
             .catch((error) => {
               console.error('Error processing zip file:', error)
               setErrorDialog({
-                message: 'Failed to import project. Please check if the file is a valid ZIP archive.',
+                message:
+                  'Failed to import project. Please check if the file is a valid ZIP archive.',
               })
             })
         })
         .catch((error) => {
           console.error('Error loading zip file:', error)
           setErrorDialog({
-            message: 'Failed to load ZIP file. Please check if the file is a valid ZIP archive.',
+            message:
+              'Failed to load ZIP file. Please check if the file is a valid ZIP archive.',
           })
         })
     }
@@ -1852,9 +2025,12 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
     setImportConfirmDialog(true)
   }
 
-  const findUniqueFileName = (baseName: string, targetFolder: Folder): string => {
+  const findUniqueFileName = (
+    baseName: string,
+    targetFolder: Folder,
+  ): string => {
     const existingNames = new Set(
-      targetFolder.items.map((item) => item.name.toLowerCase())
+      targetFolder.items.map((item) => item.name.toLowerCase()),
     )
 
     if (!existingNames.has(baseName.toLowerCase())) {
@@ -1941,7 +2117,10 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
       >
         {isCollapsed ? (
           // Collapsed view - thin column with just expand button
-          <button onClick={toggleCollapse} className="flex flex-col w-full h-full hover:bg-gray-100">
+          <button
+            onClick={toggleCollapse}
+            className="flex flex-col w-full h-full hover:bg-gray-100"
+          >
             <div className="flex items-center justify-center py-2 border-b border-gray-200 bg-gray-100">
               <div
                 title="Expand Panel"
@@ -2018,7 +2197,12 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto overflow-x-hidden">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden relative">
+              {isLoadingTree && (
+                <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                </div>
+              )}
               {/* Inline creation input at root level */}
               {creatingAtRoot && (
                 <div className="flex items-center py-px px-2 text-gray-700 text-[13px] border-b border-gray-100">
@@ -2048,7 +2232,10 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
                         } else {
                           const form = e.currentTarget.closest('form')
                           if (form) {
-                            const submitEvent = new Event('submit', { bubbles: true, cancelable: true })
+                            const submitEvent = new Event('submit', {
+                              bubbles: true,
+                              cancelable: true,
+                            })
                             form.dispatchEvent(submitEvent)
                           }
                         }
@@ -2080,8 +2267,9 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
         {!isCollapsed && (
           <div
             ref={resizeRef}
-            className={`absolute top-0 right-0 w-1 h-full cursor-col-resize bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors ${isResizing ? 'bg-blue-500 bg-opacity-50' : ''
-              }`}
+            className={`absolute top-0 right-0 w-1 h-full cursor-col-resize bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors ${
+              isResizing ? 'bg-blue-500 bg-opacity-50' : ''
+            }`}
             onMouseDown={handleMouseDown}
             title="Drag to resize"
           >
@@ -2093,7 +2281,15 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
           </div>
         )}
       </div>
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 relative">
+        {(loadingFiles.size > 0 || isSaving) && (
+          <div className="absolute inset-0 bg-white/30 flex flex-col items-center justify-center z-50 backdrop-blur-[1px]">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+            <span className="text-gray-700 font-medium">
+              {isSaving ? 'Saving changes...' : 'Loading file content...'}
+            </span>
+          </div>
+        )}
         <EditorComponent
           file={activeFile}
           openFiles={openFiles}
@@ -2137,7 +2333,10 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
             <h2 className="text-lg font-semibold mb-2">Unsaved Changes</h2>
             <p className="text-gray-600 mb-4">
               Do you want to save the changes you made to{' '}
-              <span className="font-semibold">"{closeConfirmDialog.file.name}"</span>?
+              <span className="font-semibold">
+                "{closeConfirmDialog.file.name}"
+              </span>
+              ?
             </p>
             <p className="text-gray-500 text-sm mb-4">
               Your changes will be lost if you don't save them.
@@ -2173,11 +2372,15 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
             <h2 className="text-lg font-semibold mb-2">Delete Item</h2>
             <p className="text-gray-600 mb-4">
               Are you sure you want to delete{' '}
-              <span className="font-semibold">"{deleteConfirmDialog.itemName}"</span>?
+              <span className="font-semibold">
+                "{deleteConfirmDialog.itemName}"
+              </span>
+              ?
             </p>
             {deleteConfirmDialog.item.type === 'folder' && (
               <p className="text-red-600 text-sm mb-4">
-                This will delete the folder and all its contents. This action cannot be undone.
+                This will delete the folder and all its contents. This action
+                cannot be undone.
               </p>
             )}
             <div className="flex justify-end space-x-3">
@@ -2204,7 +2407,8 @@ const ProjectEditor: React.FC<ProjectEditorProps> = ({
           <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
             <h2 className="text-lg font-semibold mb-2">Import Project</h2>
             <p className="text-gray-600 mb-4">
-              Are you sure you want to import a new project? This will replace the current project and any unsaved changes will be lost.
+              Are you sure you want to import a new project? This will replace
+              the current project and any unsaved changes will be lost.
             </p>
             <div className="flex justify-end space-x-3">
               <button

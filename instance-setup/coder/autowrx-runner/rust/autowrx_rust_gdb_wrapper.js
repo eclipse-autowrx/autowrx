@@ -3,16 +3,16 @@
 // Rust wrapper based on the existing C++ GDB-MI wrapper.
 // It snapshots vars from Rust user frames and supports 2-way set_value.
 
-const fs = require('fs');
-const path = require('path');
-const readline = require('readline');
-const { spawn } = require('child_process');
+const fs = require("fs");
+const path = require("path");
+const readline = require("readline");
+const { spawn } = require("child_process");
 
 function parseArgs(argv) {
   const out = {};
   for (let i = 0; i < argv.length; i += 1) {
     const key = argv[i];
-    if (!key.startsWith('--')) continue;
+    if (!key.startsWith("--")) continue;
     const value = argv[i + 1];
     out[key.slice(2)] = value;
     i += 1;
@@ -21,10 +21,10 @@ function parseArgs(argv) {
 }
 
 function parsePrimitive(value) {
-  const text = String(value || '').trim();
-  if (text === 'true') return true;
-  if (text === 'false') return false;
-  if (text === 'null' || text === 'nil' || text === 'none') return null;
+  const text = String(value || "").trim();
+  if (text === "true") return true;
+  if (text === "false") return false;
+  if (text === "null" || text === "nil" || text === "none") return null;
   if (/^-?\d+$/.test(text)) return Number.parseInt(text, 10);
   if (/^-?\d+\.\d+$/.test(text)) return Number.parseFloat(text);
   return text;
@@ -33,18 +33,21 @@ function parsePrimitive(value) {
 function collectWatchNamesFromRustSource(cwd) {
   const out = [];
   const candidatePaths = [
-    path.join(cwd || process.cwd(), 'src', 'main.rs'),
-    path.join(cwd || process.cwd(), 'src', 'lib.rs'),
+    path.join(cwd || process.cwd(), "main.rs"),
+    path.join(cwd || process.cwd(), "src", "main.rs"),
+    path.join(cwd || process.cwd(), "src", "lib.rs"),
   ];
 
   for (const sourcePath of candidatePaths) {
     try {
-      const content = fs.readFileSync(sourcePath, 'utf8');
-      // Grab `let <ident> = ...;` or `let mut <ident> = ...;`
-      const re = /\blet\s+(?:mut\s+)?([A-Za-z_]\w*)\s*(?::[^=]+)?\s*=\s*/g;
+      if (!fs.existsSync(sourcePath)) continue;
+      const content = fs.readFileSync(sourcePath, "utf8");
+      // Match 'let' for locals and 'static' for globals
+      const re =
+        /^\s*(?:let|static)\s+(?:mut\s+)?([A-Za-z_]\w*)\s*(?::[^=]+)?\s*(?:=)/gm;
       let m = re.exec(content);
       while (m) {
-        const name = String(m[1] || '').trim();
+        const name = String(m[1] || "").trim();
         if (name && !out.includes(name)) out.push(name);
         m = re.exec(content);
       }
@@ -56,59 +59,57 @@ function collectWatchNamesFromRustSource(cwd) {
 }
 
 function toGdbValue(value) {
-  if (value === true) return 'true';
-  if (value === false) return 'false';
-  if (value === null || value === undefined) return '0';
-  if (typeof value === 'number') return String(value);
+  if (value === true) return "true";
+  if (value === false) return "false";
+  if (value === null || value === undefined) return "0";
+  if (typeof value === "number") return String(value);
   // For strings, let GDB parse quoted strings.
-  if (typeof value === 'string') return JSON.stringify(value);
+  if (typeof value === "string") return JSON.stringify(value);
   return JSON.stringify(String(value));
 }
 
 function parseFrame(doneLine) {
-  const fileMatch = doneLine.match(/fullname="([^"]+)"/) || doneLine.match(/file="([^"]+)"/);
+  const fileMatch =
+    doneLine.match(/fullname="([^"]+)"/) || doneLine.match(/file="([^"]+)"/);
   const lineMatch = doneLine.match(/line="(\d+)"/);
   const fnMatch = doneLine.match(/func="([^"]+)"/);
   return {
-    file: fileMatch ? fileMatch[1] : '',
+    file: fileMatch ? fileMatch[1] : "",
     line: lineMatch ? Number.parseInt(lineMatch[1], 10) : 0,
-    function: fnMatch ? fnMatch[1] : '',
+    function: fnMatch ? fnMatch[1] : "",
   };
 }
 
-function parseVariables(doneLine) {
-  const vars = {};
-  const tupleRe = /\{([^{}]*)\}/g;
-  let tuple = tupleRe.exec(doneLine);
-  while (tuple) {
-    const block = tuple[1];
-    const nameMatch = block.match(/name="((?:[^"\\]|\\.)*)"/);
-    const valueMatch = block.match(/value="((?:[^"\\]|\\.)*)"/);
-    const name = nameMatch ? nameMatch[1].replace(/\\"/g, '"') : '';
-    if (name && !name.startsWith('__') && valueMatch) {
-      const rawValue = valueMatch[1].replace(/\\"/g, '"');
-      vars[name] = parsePrimitive(rawValue);
-    }
-    tuple = tupleRe.exec(doneLine);
-  }
-  return vars;
-}
 
-function isRustProjectSourcePath(filePath) {
+function isRustProjectSourcePath(filePath, cwd) {
   if (!filePath) return false;
-  const p = String(filePath);
+  const p = path.resolve(String(filePath));
+  const projectRoot = path.resolve(cwd || process.cwd());
 
-  if (p.startsWith('/lib/') || p.startsWith('/usr/lib/') || p.startsWith('/usr/include/')) return false;
+  if (
+    p.startsWith("/lib/") ||
+    p.startsWith("/usr/lib/") ||
+    p.startsWith("/usr/include/")
+  )
+    return false;
 
-  if (p.includes('/rustc/') || p.includes('library/std/src') || p.includes('/checkout/')) return false;
+  if (
+    p.includes("/rustc/") ||
+    p.includes("library/std/src") ||
+    p.includes("/checkout/")
+  )
+    return false;
 
-  if (p.includes('/src/main.rs') || p.endsWith('/src/main.rs')) return true;
-  if (p.includes('/src/lib.rs') || p.includes('/src/')) return true;
+  // If it's inside our current working directory, it's likely a project file
+  if (p.startsWith(projectRoot)) return true;
+
+  if (p.includes("/src/main.rs") || p.endsWith("/src/main.rs")) return true;
+  if (p.includes("/src/lib.rs") || p.includes("/src/")) return true;
 
   return false;
 }
 
-function parseFirstRustFrameLevel(doneLine) {
+function parseFirstRustFrameLevel(doneLine, cwd) {
   const frameTupleRe = /frame=\{([^{}]*)\}/g;
   let tuple = frameTupleRe.exec(doneLine);
 
@@ -120,22 +121,10 @@ function parseFirstRustFrameLevel(doneLine) {
       continue;
     }
     const level = Number.parseInt(levelMatch[1], 10);
-    const fullMatch = block.match(/fullname="([^"]+)"/) || block.match(/file="([^"]+)"/);
-    const file = fullMatch ? fullMatch[1] : '';
-    if (isRustProjectSourcePath(file)) return level;
-    tuple = frameTupleRe.exec(doneLine);
-  }
-
-  tuple = frameTupleRe.exec(doneLine);
-  while (tuple) {
-    const block = tuple[1];
-    const levelMatch = block.match(/level="(\d+)"/);
-    const fullMatch = block.match(/fullname="([^"]+)"/) || block.match(/file="([^"]+)"/);
-    const file = fullMatch ? fullMatch[1] : '';
-
-    if (levelMatch && file && !file.startsWith('/lib/') && !file.includes('/rustc/')) {
-      return Number.parseInt(levelMatch[1], 10);
-    }
+    const fullMatch =
+      block.match(/fullname="([^"]+)"/) || block.match(/file="([^"]+)"/);
+    const file = fullMatch ? fullMatch[1] : "";
+    if (isRustProjectSourcePath(file, cwd)) return level;
     tuple = frameTupleRe.exec(doneLine);
   }
 
@@ -144,7 +133,7 @@ function parseFirstRustFrameLevel(doneLine) {
 }
 
 function parseDoneValue(doneLine) {
-  const m = String(doneLine || '').match(/value="((?:[^"\\]|\\.)*)"/);
+  const m = String(doneLine || "").match(/value="((?:[^"\\]|\\.)*)"/);
   if (!m) return undefined;
   return parsePrimitive(m[1].replace(/\\"/g, '"'));
 }
@@ -152,17 +141,17 @@ function parseDoneValue(doneLine) {
 function isSpam(text) {
   if (!text) return true;
   const t = text.toLowerCase();
-  if (t.includes('program received signal')) return true;
-  if (t.includes('sigint')) return true;
-  if (t.includes('signal        stop')) return true;
-  if (t.includes('libc.so')) return true;
-  if (t.includes('thread debugging using')) return true;
-  if (t.includes('using host libthread_db')) return true;
-  if (t.includes('in ?? ()')) return true;
-  if (t.includes('x86_64-linux-gnu')) return true;
-  if (t.includes('missing auto-load script')) return true;
-  if (t.includes('.debug_gdb_scripts')) return true;
-  if (t.includes('auto-load python-scripts')) return true;
+  if (t.includes("program received signal")) return true;
+  if (t.includes("sigint")) return true;
+  if (t.includes("signal        stop")) return true;
+  if (t.includes("libc.so")) return true;
+  if (t.includes("thread debugging using")) return true;
+  if (t.includes("using host libthread_db")) return true;
+  if (t.includes("in ?? ()")) return true;
+  if (t.includes("x86_64-linux-gnu")) return true;
+  if (t.includes("missing auto-load script")) return true;
+  if (t.includes(".debug_gdb_scripts")) return true;
+  if (t.includes("auto-load python-scripts")) return true;
   return false;
 }
 
@@ -175,7 +164,10 @@ class GdbWrapper {
     this.token = 1;
     this.pending = new Map();
     this.controlQueue = [];
-    this.stream = fs.createWriteStream(this.varsPipePath, { flags: 'a', encoding: 'utf8' });
+    this.stream = fs.createWriteStream(this.varsPipePath, {
+      flags: "a",
+      encoding: "utf8",
+    });
 
     this.running = false;
     this.stopped = false;
@@ -184,21 +176,21 @@ class GdbWrapper {
 
     this.watchNames = collectWatchNamesFromRustSource(this.cwd);
 
-    this.miStreamBuffer = '';
+    this.miStreamBuffer = "";
   }
 
   start() {
     this.startControlReader();
-    this.gdb = spawn('gdb', ['--interpreter=mi2', '--quiet', '--nx'], {
+    this.gdb = spawn("gdb", ["--interpreter=mi2", "--quiet", "--nx"], {
       cwd: this.cwd,
-      stdio: ['pipe', 'pipe', 'pipe'],
+      stdio: ["pipe", "pipe", "pipe"],
     });
 
     const stdoutRl = readline.createInterface({ input: this.gdb.stdout });
-    stdoutRl.on('line', (line) => this.onGdbLine(String(line || '').trim()));
-    this.gdb.stderr.on('data', () => { });
+    stdoutRl.on("line", (line) => this.onGdbLine(String(line || "").trim()));
+    this.gdb.stderr.on("data", () => {});
 
-    this.gdb.on('exit', () => {
+    this.gdb.on("exit", () => {
       this.cleanup();
       process.exit(0);
     });
@@ -211,22 +203,24 @@ class GdbWrapper {
 
   startControlReader() {
     const reopen = () => {
-      const controlStream = fs.createReadStream(this.controlPipePath, { encoding: 'utf8' });
+      const controlStream = fs.createReadStream(this.controlPipePath, {
+        encoding: "utf8",
+      });
       const rl = readline.createInterface({ input: controlStream });
-      rl.on('line', (line) => {
-        const text = String(line || '').trim();
+      rl.on("line", (line) => {
+        const text = String(line || "").trim();
         if (!text) return;
         try {
           const payload = JSON.parse(text);
-          if (payload && payload.type === 'set_value' && payload.name) {
+          if (payload && payload.type === "set_value" && payload.name) {
             this.controlQueue.push(payload);
           }
         } catch {
           // ignore
         }
       });
-      rl.on('close', () => setTimeout(reopen, 10));
-      rl.on('error', () => setTimeout(reopen, 200));
+      rl.on("close", () => setTimeout(reopen, 10));
+      rl.on("error", () => setTimeout(reopen, 200));
     };
     reopen();
   }
@@ -246,20 +240,20 @@ class GdbWrapper {
     const miMatch = line.match(/^[~@&]"((?:[^"\\]|\\.)*)"$/);
     if (miMatch) {
       const decodedChunk = miMatch[1]
-        .replace(/\\n/g, '\n')
-        .replace(/\\t/g, '\t')
+        .replace(/\\n/g, "\n")
+        .replace(/\\t/g, "\t")
         .replace(/\\"/g, '"')
-        .replace(/\\\\/g, '\\');
+        .replace(/\\\\/g, "\\");
 
       this.miStreamBuffer += decodedChunk;
 
       let nlIdx;
-      while ((nlIdx = this.miStreamBuffer.indexOf('\n')) !== -1) {
+      while ((nlIdx = this.miStreamBuffer.indexOf("\n")) !== -1) {
         const completeLine = this.miStreamBuffer.slice(0, nlIdx);
         this.miStreamBuffer = this.miStreamBuffer.slice(nlIdx + 1);
 
-        if (!isSpam(completeLine) && completeLine.trim() !== '') {
-          process.stdout.write(completeLine + '\n');
+        if (!isSpam(completeLine) && completeLine.trim() !== "") {
+          process.stdout.write(completeLine + "\n");
         }
       }
       return;
@@ -271,15 +265,18 @@ class GdbWrapper {
       const pending = this.pending.get(token);
       if (!pending) return;
       this.pending.delete(token);
-      if (payload.startsWith('error')) pending.reject(new Error(payload));
+      if (payload.startsWith("error")) pending.reject(new Error(payload));
       else pending.resolve(`^${payload}`);
       return;
     }
 
-    if (line.startsWith('*stopped')) {
+    if (line.startsWith("*stopped")) {
       this.running = false;
       this.stopped = true;
-      if (line.includes('reason="exited-normally"') || line.includes('reason="exited-signalled"')) {
+      if (
+        line.includes('reason="exited-normally"') ||
+        line.includes('reason="exited-signalled"')
+      ) {
         this.cleanup();
         process.exit(0);
       }
@@ -290,34 +287,34 @@ class GdbWrapper {
       return;
     }
 
-    if (line.startsWith('*running')) {
+    if (line.startsWith("*running")) {
       this.running = true;
       this.stopped = false;
       return;
     }
 
-    if (!line.match(/^[~@&^*=+]/) && !line.startsWith('(gdb)')) {
+    if (!line.match(/^[~@&^*=+]/) && !line.startsWith("(gdb)")) {
       if (isSpam(line)) return;
-      if (line.trim() === '') return;
-      process.stdout.write(line + '\n');
+      if (line.trim() === "") return;
+      process.stdout.write(line + "\n");
     }
   }
 
   async bootstrap() {
-    await this.send('-gdb-set pagination off');
-    await this.send('-gdb-set confirm off');
-    await this.send('-gdb-set mi-async on');
-    await this.send('-gdb-set disable-randomization off');
+    await this.send("-gdb-set pagination off");
+    await this.send("-gdb-set confirm off");
+    await this.send("-gdb-set mi-async on");
+    await this.send("-gdb-set disable-randomization off");
 
     await this.send(`-file-exec-and-symbols "${this.programPath}"`);
-    await this.send('-exec-run');
+    await this.send("-exec-run");
     this.running = true;
 
     this.tickTimer = setInterval(async () => {
       if (!this.running || this.stopped || this.waitingInterrupt) return;
       this.waitingInterrupt = true;
       try {
-        await this.send('-exec-interrupt');
+        await this.send("-exec-interrupt");
       } catch {
         // ignore
       } finally {
@@ -328,28 +325,25 @@ class GdbWrapper {
 
   async onStopped() {
     try {
-      const framesResp = await this.send('-stack-list-frames');
-      const level = parseFirstRustFrameLevel(framesResp);
+      const framesResp = await this.send("-stack-list-frames");
+      const level = parseFirstRustFrameLevel(framesResp, this.cwd);
       await this.send(`-stack-select-frame ${level}`);
     } catch {
       // ignore
     }
 
-    let frameResp = await this.send('-stack-info-frame');
+    let frameResp = await this.send("-stack-info-frame");
     const frame = parseFrame(frameResp);
 
-    let varsResp = '';
-    try {
-      varsResp = await this.send('-stack-list-variables --all-values');
-    } catch {
-      varsResp = await this.send('-stack-list-variables --simple-values');
-    }
-    const vars = parseVariables(varsResp);
+    const vars = {};
 
-    if (Object.keys(vars).length === 0 && this.watchNames.length > 0) {
+    // For Rust, we now strictly only watch top-level variables found in source
+    if (this.watchNames.length > 0) {
       for (const name of this.watchNames) {
         try {
-          const valueResp = await this.send(`-data-evaluate-expression ${name}`);
+          const valueResp = await this.send(
+            `-data-evaluate-expression ${name}`,
+          );
           const value = parseDoneValue(valueResp);
           if (value !== undefined) vars[name] = value;
         } catch {
@@ -360,7 +354,7 @@ class GdbWrapper {
 
     while (this.controlQueue.length > 0) {
       const cmd = this.controlQueue.shift();
-      const name = String(cmd.name || '').trim();
+      const name = String(cmd.name || "").trim();
       if (!name) continue;
       const valueExpr = toGdbValue(cmd.value);
       try {
@@ -372,13 +366,13 @@ class GdbWrapper {
     }
 
     const payload = {
-      type: 'vars.snapshot',
+      type: "vars.snapshot",
       vars,
       frame,
     };
     this.stream.write(`${JSON.stringify(payload)}\n`);
 
-    await this.send('-exec-continue');
+    await this.send("-exec-continue");
     this.running = true;
     this.stopped = false;
   }
@@ -394,7 +388,7 @@ class GdbWrapper {
       // ignore
     }
     try {
-      this.gdb?.kill('SIGTERM');
+      this.gdb?.kill("SIGTERM");
     } catch {
       // ignore
     }
@@ -402,11 +396,13 @@ class GdbWrapper {
 }
 
 const args = parseArgs(process.argv.slice(2));
-const programPath = String(args.program || '').trim();
-const varsPipePath = String(args['vars-pipe'] || '').trim();
-const controlPipePath = String(args['control-pipe'] || '').trim();
+const programPath = String(args.program || "").trim();
+const varsPipePath = String(args["vars-pipe"] || "").trim();
+const controlPipePath = String(args["control-pipe"] || "").trim();
 if (!programPath || !varsPipePath || !controlPipePath) {
-  process.stderr.write('usage: autowrx_rust_gdb_wrapper.js --program <path> --vars-pipe <path> --control-pipe <path>\n');
+  process.stderr.write(
+    "usage: autowrx_rust_gdb_wrapper.js --program <path> --vars-pipe <path> --control-pipe <path>\n",
+  );
   process.exit(2);
 }
 

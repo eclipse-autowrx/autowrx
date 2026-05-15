@@ -8,6 +8,7 @@
 
 import React, { FC, useState } from 'react'
 import useWorkspaceRuntimeStore from '@/stores/workspaceRuntimeStore'
+import useRuntimeStore from '@/stores/runtimeStore'
 import { shallow } from 'zustand/shallow'
 import { Input } from '@/components/atoms/input'
 
@@ -60,8 +61,17 @@ const DaWorkspaceApisWatch: FC<DaWorkspaceApisWatchProps> = ({requestWriteSignal
         shallow,
     )
 
+    const [apisValueLegacy] = useRuntimeStore(
+        (state) => [
+            state.apisValue as any
+        ],
+        shallow,
+    )
+
+    const mergedApisValue = { ...apisValueLegacy, ...apisValue }
+
     return <div className="w-full mt-2">
-        { apisValue && Object.keys(apisValue).map((key: string) => <div key={key} className={`px-1 flex items-center border mb-1`}
+        { mergedApisValue && Object.keys(mergedApisValue).map((key: string) => <div key={key} className={`px-1 flex items-center border mb-1`}
             style={{
                 borderColor: 'hsl(215, 16%, 47%)',
                 color: 'hsl(0, 0%, 100%)',
@@ -71,7 +81,7 @@ const DaWorkspaceApisWatch: FC<DaWorkspaceApisWatchProps> = ({requestWriteSignal
             <div className='w-16 px-1 py-0.5 text-right border rounded text-xs' style={{
                 borderColor: 'hsl(215, 16%, 47%)',
                 color: 'hsl(0, 0%, 100%)',
-            }}>{String(apisValue[key]) || 'null'}</div>
+            }}>{String(mergedApisValue[key]) || 'null'}</div>
             <ApiInput onEnter={(value:string) => {
                 // console.log("onEntered", value)
                 let sendValue = null

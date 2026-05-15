@@ -100,6 +100,36 @@ const listPopularPrototypes = catchAsync(async (req, res) => {
   res.send(prototypes);
 });
 
+const getPrototypeWorkspaceTree = catchAsync(async (req, res) => {
+  const tree = await prototypeService.getPrototypeWorkspaceTree(req.params.id, req.user.id);
+  res.send(tree);
+});
+
+const getPrototypeFileContent = catchAsync(async (req, res) => {
+  const content = await prototypeService.getPrototypeFileContent(req.params.id, req.query.path, req.user.id);
+  res.send({ content });
+});
+
+const savePrototypeFileContent = catchAsync(async (req, res) => {
+  const result = await prototypeService.savePrototypeFileContent(req.params.id, req.body.path, req.body.content, req.user.id);
+  res.send(result);
+});
+
+const createPrototypeFolder = catchAsync(async (req, res) => {
+  const result = await prototypeService.createPrototypeFolder(req.params.id, req.body.path, req.user.id);
+  res.send(result);
+});
+
+const deletePrototypeFileSystemItem = catchAsync(async (req, res) => {
+  const result = await prototypeService.deletePrototypeFileSystemItem(req.params.id, req.query.path, req.user.id);
+  res.send(result);
+});
+
+const renamePrototypeFileSystemItem = catchAsync(async (req, res) => {
+  const result = await prototypeService.renamePrototypeFileSystemItem(req.params.id, req.body.oldPath, req.body.newPath, req.user.id);
+  res.send(result);
+});
+
 module.exports = {
   createPrototype,
   listPrototypes,
@@ -111,4 +141,10 @@ module.exports = {
   executeCode,
   bulkCreatePrototypes,
   getUsedApisFromWorkspace,
+  getPrototypeWorkspaceTree,
+  getPrototypeFileContent,
+  savePrototypeFileContent,
+  createPrototypeFolder,
+  deletePrototypeFileSystemItem,
+  renamePrototypeFileSystemItem,
 };

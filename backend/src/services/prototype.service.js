@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Eclipse Foundation.
-// 
+//
 // This program and the accompanying materials are made available under the
 // terms of the MIT License which is available at
 // https://opensource.org/licenses/MIT.
@@ -57,6 +57,26 @@ const ALLOWED_TEXT_EXTENSIONS = new Set([
   '.xml',
   '.html',
   '.css',
+  '.md',
+  '.txt',
+  '.csv',
+  '.log',
+  '.makefile',
+  '.cmake',
+  'makefile',
+  'cmakelists.txt',
+  'dockerfile',
+  '.dockerignore',
+  '.gitignore',
+  '.prettierrc',
+  '.eslintrc',
+  '.editorconfig',
+  '.bashrc',
+  '.profile',
+  '.bash_profile',
+  '.cfg',
+  '.conf',
+  '.cmake.in',
 ]);
 const MAX_FILE_SIZE_BYTES = 1024 * 1024; // 1MB/file
 const MAX_TOTAL_BYTES = 5 * 1024 * 1024; // 5MB total scan budget
@@ -218,6 +238,210 @@ const listTextFilesRecursively = (rootPath) => {
   return files;
 };
 
+const buildFileSystemTree = (rootPath, currentPath = '') => {
+  const absolutePath = path.join(rootPath, currentPath);
+  const stats = fs.statSync(absolutePath);
+
+  const name = path.basename(absolutePath);
+  const relativePath = currentPath || name;
+
+  if (stats.isDirectory()) {
+    const children = fs.readdirSync(absolutePath);
+    const items = children
+      .filter((child) => !IGNORED_DIRS.has(child))
+      .map((child) => buildFileSystemTree(rootPath, path.join(currentPath, child)))
+      .filter((item) => item !== null);
+
+    return {
+      type: 'folder',
+      name: name === 'root' || currentPath === '' ? 'root' : name,
+      path: currentPath,
+      items,
+    };
+  }
+
+  if (stats.isFile()) {
+    // Skip sensitive files for security
+    if (shouldSkipSensitiveFile(name)) return null;
+
+    return {
+      type: 'file',
+      name,
+      path: currentPath,
+      content: '', // Do not load content for the tree
+    };
+  }
+
+  return null;
+};
+
+const getPrototypeWorkspaceTree = async (id, userId) => {
+  const prototype = await getPrototypeById(id, userId);
+  const modelId = prototype.model_id?._id || prototype.model_id?.id || prototype.model_id;
+  const prototypesRoot = coderConfig.getCoderConfigSync().prototypesPath || '/opt/autowrx/prototypes';
+  const prototypeFolder = path.join(
+    prototypesRoot,
+    String(userId),
+    String(modelId || ''),
+    sanitizePrototypeFolderName(prototype.name),
+  );
+
+  if (!fs.existsSync(prototypeFolder)) {
+    return [{ type: 'folder', name: 'root', items: [], path: '' }];
+  }
+
+  const tree = buildFileSystemTree(prototypeFolder);
+  return [tree];
+};
+
+const getPrototypeFileContent = async (id, filePath, userId) => {
+  const prototype = await getPrototypeById(id, userId);
+  const modelId = prototype.model_id?._id || prototype.model_id?.id || prototype.model_id;
+  const prototypesRoot = coderConfig.getCoderConfigSync().prototypesPath || '/opt/autowrx/prototypes';
+  const prototypeFolder = path.join(
+    prototypesRoot,
+    String(userId),
+    String(modelId || ''),
+    sanitizePrototypeFolderName(prototype.name),
+  );
+
+  const fullPath = path.join(prototypeFolder, filePath);
+
+  // Security check: ensure path is within prototype folder
+  const resolvedTarget = path.resolve(fullPath);
+  const resolvedRoot = path.resolve(prototypeFolder);
+  if (!resolvedTarget.startsWith(resolvedRoot)) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden access');
+  }
+
+  if (!fs.existsSync(fullPath)) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'File not found');
+  }
+
+  const content = fs.readFileSync(fullPath, 'utf8');
+  return content;
+};
+
+const savePrototypeFileContent = async (id, filePath, content, userId) => {
+  const prototype = await getPrototypeById(id, userId);
+  const modelId = prototype.model_id?._id || prototype.model_id?.id || prototype.model_id;
+  const prototypesRoot = coderConfig.getCoderConfigSync().prototypesPath || '/opt/autowrx/prototypes';
+  const prototypeFolder = path.join(
+    prototypesRoot,
+    String(userId),
+    String(modelId || ''),
+    sanitizePrototypeFolderName(prototype.name),
+  );
+
+  const fullPath = path.join(prototypeFolder, filePath);
+
+  // Security check: ensure path is within prototype folder
+  const resolvedTarget = path.resolve(fullPath);
+  const resolvedRoot = path.resolve(prototypeFolder);
+  if (!resolvedTarget.startsWith(resolvedRoot)) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden access');
+  }
+
+  // Ensure directory exists
+  const dir = path.dirname(fullPath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
+  fs.writeFileSync(fullPath, content, 'utf8');
+  return { success: true };
+};
+
+const createPrototypeFolder = async (id, folderPath, userId) => {
+  const prototype = await getPrototypeById(id, userId);
+  const modelId = prototype.model_id?._id || prototype.model_id?.id || prototype.model_id;
+  const prototypesRoot = coderConfig.getCoderConfigSync().prototypesPath || '/opt/autowrx/prototypes';
+  const prototypeFolder = path.join(
+    prototypesRoot,
+    String(userId),
+    String(modelId || ''),
+    sanitizePrototypeFolderName(prototype.name),
+  );
+
+  const fullPath = path.join(prototypeFolder, folderPath);
+
+  // Security check
+  const resolvedTarget = path.resolve(fullPath);
+  const resolvedRoot = path.resolve(prototypeFolder);
+  if (!resolvedTarget.startsWith(resolvedRoot)) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden access');
+  }
+
+  if (!fs.existsSync(fullPath)) {
+    fs.mkdirSync(fullPath, { recursive: true });
+  }
+  return { success: true };
+};
+
+const deletePrototypeFileSystemItem = async (id, itemPath, userId) => {
+  const prototype = await getPrototypeById(id, userId);
+  const modelId = prototype.model_id?._id || prototype.model_id?.id || prototype.model_id;
+  const prototypesRoot = coderConfig.getCoderConfigSync().prototypesPath || '/opt/autowrx/prototypes';
+  const prototypeFolder = path.join(
+    prototypesRoot,
+    String(userId),
+    String(modelId || ''),
+    sanitizePrototypeFolderName(prototype.name),
+  );
+
+  const fullPath = path.join(prototypeFolder, itemPath);
+
+  // Security check
+  const resolvedTarget = path.resolve(fullPath);
+  const resolvedRoot = path.resolve(prototypeFolder);
+  if (!resolvedTarget.startsWith(resolvedRoot)) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden access');
+  }
+
+  if (fs.existsSync(fullPath)) {
+    const stats = fs.statSync(fullPath);
+    if (stats.isDirectory()) {
+      fs.rmSync(fullPath, { recursive: true, force: true });
+    } else {
+      fs.unlinkSync(fullPath);
+    }
+  }
+  return { success: true };
+};
+
+const renamePrototypeFileSystemItem = async (id, oldPath, newPath, userId) => {
+  const prototype = await getPrototypeById(id, userId);
+  const modelId = prototype.model_id?._id || prototype.model_id?.id || prototype.model_id;
+  const prototypesRoot = coderConfig.getCoderConfigSync().prototypesPath || '/opt/autowrx/prototypes';
+  const prototypeFolder = path.join(
+    prototypesRoot,
+    String(userId),
+    String(modelId || ''),
+    sanitizePrototypeFolderName(prototype.name),
+  );
+
+  const fullOldPath = path.join(prototypeFolder, oldPath);
+  const fullNewPath = path.join(prototypeFolder, newPath);
+
+  // Security check
+  const resolvedOldTarget = path.resolve(fullOldPath);
+  const resolvedNewTarget = path.resolve(fullNewPath);
+  const resolvedRoot = path.resolve(prototypeFolder);
+  if (!resolvedOldTarget.startsWith(resolvedRoot) || !resolvedNewTarget.startsWith(resolvedRoot)) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden access');
+  }
+
+  if (fs.existsSync(fullOldPath)) {
+    // Ensure parent directory of new path exists
+    const newDir = path.dirname(fullNewPath);
+    if (!fs.existsSync(newDir)) {
+      fs.mkdirSync(newDir, { recursive: true });
+    }
+    fs.renameSync(fullOldPath, fullNewPath);
+  }
+  return { success: true };
+};
+
 const readPrototypeCodeFromPrototypesPath = (userId, modelId, prototypeName) => {
   const prototypesRoot = coderConfig.getCoderConfigSync().prototypesPath || '/opt/autowrx/prototypes';
   const prototypeFolder = path.join(
@@ -266,7 +490,7 @@ const readPrototypeCodeFromPrototypesPath = (userId, modelId, prototypeName) => 
 };
 
 /**
- * Generate up to 1 available prototype name suggestion for a model.  
+ * Generate up to 1 available prototype name suggestion for a model.
  * @param {string} modelId
  * @param {string} baseName
  * @returns {Promise<string[]>}
@@ -297,7 +521,7 @@ const throwDuplicateNameError = async (modelId, prototypeName, userId) => {
   const suggestions = await getSuggestedNames(modelId, baseName);
   throw new ApiError(
     httpStatus.BAD_REQUEST,
-    `The prototype name '${prototypeName}' is already in use for model '${model.name}'. Please choose another name like: ${suggestions.join(', ')}.`
+    `The prototype name '${prototypeName}' is already in use for model '${model.name}'. Please choose another name like: ${suggestions.join(', ')}.`,
   );
 };
 
@@ -354,7 +578,7 @@ const bulkCreatePrototypes = async (userId, prototypes) => {
     prototypes.map((prototype) => ({
       ...prototype,
       created_by: userId,
-    }))
+    })),
   );
   return data.map((item) => item._id);
 };
@@ -591,7 +815,7 @@ const deleteMany = async (filter, actionOwner) => {
       cleanupPrototypeWorkspaceFolders(prototype.model_id, prototype.name);
       prototype.action_owner = actionOwner;
       await prototype.deleteOne();
-    })
+    }),
   );
 };
 
@@ -607,3 +831,9 @@ module.exports.bulkCreatePrototypes = bulkCreatePrototypes;
 module.exports.deleteMany = deleteMany;
 module.exports.getPrototypeUsedApisFromWorkspace = getPrototypeUsedApisFromWorkspace;
 module.exports.cleanupModelWorkspaceFolders = cleanupModelWorkspaceFolders;
+module.exports.getPrototypeWorkspaceTree = getPrototypeWorkspaceTree;
+module.exports.getPrototypeFileContent = getPrototypeFileContent;
+module.exports.savePrototypeFileContent = savePrototypeFileContent;
+module.exports.createPrototypeFolder = createPrototypeFolder;
+module.exports.deletePrototypeFileSystemItem = deletePrototypeFileSystemItem;
+module.exports.renamePrototypeFileSystemItem = renamePrototypeFileSystemItem;

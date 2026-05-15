@@ -412,6 +412,7 @@ const PrototypeTabCode: FC = () => {
             >
               <ProjectEditor
                 data={code || ''}
+                prototypeId={prototype_id}
                 prototypeName={prototype.name}
                 onChange={(data: string) => {
                   setCode(data)

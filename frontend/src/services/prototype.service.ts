@@ -134,3 +134,61 @@ export const getPrototypeUsedApisFromWorkspaceService = async (
     )
   ).data
 }
+
+export const getPrototypeWorkspaceTreeService = async (
+  prototypeId: string,
+): Promise<any> => {
+  return (await serverAxios.get(`/prototypes/${prototypeId}/workspace-tree`))
+    .data
+}
+
+export const getPrototypeFileContentService = async (
+  prototypeId: string,
+  filePath: string,
+): Promise<string> => {
+  const response = await serverAxios.get<{ content: string }>(
+    `/prototypes/${prototypeId}/files`,
+    { params: { path: filePath } },
+  )
+  return response.data.content
+}
+
+export const savePrototypeFileContentService = async (
+  prototypeId: string,
+  filePath: string,
+  content: string,
+): Promise<void> => {
+  await serverAxios.post(`/prototypes/${prototypeId}/files`, {
+    path: filePath,
+    content: content,
+  })
+}
+
+export const createPrototypeFolderService = async (
+  prototypeId: string,
+  folderPath: string,
+): Promise<void> => {
+  await serverAxios.post(`/prototypes/${prototypeId}/folders`, {
+    path: folderPath,
+  })
+}
+
+export const deletePrototypeFileSystemItemService = async (
+  prototypeId: string,
+  itemPath: string,
+): Promise<void> => {
+  await serverAxios.delete(`/prototypes/${prototypeId}/files`, {
+    params: { path: itemPath },
+  })
+}
+
+export const renamePrototypeFileSystemItemService = async (
+  prototypeId: string,
+  oldPath: string,
+  newPath: string,
+): Promise<void> => {
+  await serverAxios.patch(`/prototypes/${prototypeId}/files`, {
+    oldPath,
+    newPath,
+  })
+}

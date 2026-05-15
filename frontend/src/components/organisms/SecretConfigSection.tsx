@@ -15,7 +15,7 @@ import { useToast } from '@/components/molecules/toaster/use-toast'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/atoms/dialog'
 import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
-import { EXCLUDED_FROM_SITE_CONFIG_KEYS } from '@/pages/SiteConfigManagement'
+import { EXCLUDED_FROM_SITE_CONFIG_KEYS, PREDEFINED_SITE_CONFIGS } from '@/pages/SiteConfigManagement'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 
 const SecretConfigSection: React.FC = () => {
@@ -35,16 +35,43 @@ const SecretConfigSection: React.FC = () => {
   const loadConfigs = async () => {
     try {
       setIsLoading(true)
+
+      // Get existing secret configs from BE
       const res = await configManagementService.getConfigs({ secret: true })
+      let allSecretConfigs = res.results || []
+      const existingKeys = new Set(allSecretConfigs.map((c) => c.key))
+
+      // Identify predefined secret configs
+      const predefinedSecretConfigs = PREDEFINED_SITE_CONFIGS.filter(
+        (c) => c.secret === true,
+      )
+
+      // Find and create missing predefined secret configs (self-healing)
+      const missingConfigs = predefinedSecretConfigs.filter(
+        (c) => !existingKeys.has(c.key),
+      )
+
+      if (missingConfigs.length > 0) {
+        await configManagementService.bulkUpsertConfigs({
+          configs: missingConfigs,
+        })
+        // Re-fetch after healing
+        const updatedRes = await configManagementService.getConfigs({
+          secret: true,
+        })
+        allSecretConfigs = updatedRes.results || []
+      }
+
       // Filter out keys that should be excluded from site-config page
-      const filteredConfigs = (res.results || []).filter(
-        config => !EXCLUDED_FROM_SITE_CONFIG_KEYS.includes(config.key)
+      const filteredConfigs = allSecretConfigs.filter(
+        (config) => !EXCLUDED_FROM_SITE_CONFIG_KEYS.includes(config.key),
       )
       setConfigs(filteredConfigs)
     } catch (err) {
       toast({
         title: 'Load failed',
-        description: err instanceof Error ? err.message : 'Failed to load secret configs',
+        description:
+          err instanceof Error ? err.message : 'Failed to load secret configs',
         variant: 'destructive',
       })
     } finally {
@@ -119,26 +146,19 @@ const SecretConfigSection: React.FC = () => {
   }
 
   const handleFactoryReset = async () => {
-    if (!window.confirm('Restore all secret configs to default values? This cannot be undone.')) return
+    if (!window.confirm('Restore all secret configs to default values? This will overwrite your current settings.')) return
 
     try {
       setIsLoading(true)
-      // Delete all secret configs
-      const allConfigs = await configManagementService.getConfigs({
-        secret: true,
-        scope: 'site',
-        limit: 100,
-      })
+      
+      const predefinedSecretConfigs = PREDEFINED_SITE_CONFIGS.filter(
+        (c) => c.secret === true,
+      )
 
-      for (const config of allConfigs.results || []) {
-        try {
-          if (config.id) {
-            await configManagementService.deleteConfigById(config.id)
-          }
-        } catch (e) {
-          console.warn('Failed to delete config', config.key, e)
-        }
-      }
+      // Bulk upsert the defaults directly
+      await configManagementService.bulkUpsertConfigs({
+        configs: predefinedSecretConfigs,
+      })
 
       toast({ title: 'Restored', description: 'Secret configs restored to default values. Reloading page...' })
 

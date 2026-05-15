@@ -59,9 +59,7 @@ const normalizeIdForName = (value) =>
 const extractWorkspaceOwnerUsername = (workspace) => {
   const rawOwner = workspace?.owner;
   const ownerFromObject =
-    rawOwner && typeof rawOwner === 'object'
-      ? (rawOwner.username || rawOwner.name || rawOwner.id)
-      : null;
+    rawOwner && typeof rawOwner === 'object' ? rawOwner.username || rawOwner.name || rawOwner.id : null;
   return String(workspace?.owner_name || ownerFromObject || workspace?.owner_id || rawOwner || '').trim();
 };
 
@@ -155,7 +153,9 @@ const withTransientRetry = async (fn, options = {}) => {
         throw error;
       }
       const waitMs = baseDelayMs * 2 ** (attempt - 1);
-      logger.warn(`Transient Coder API error, retrying attempt ${attempt + 1}/${maxAttempts} after ${waitMs}ms: ${error.message}`);
+      logger.warn(
+        `Transient Coder API error, retrying attempt ${attempt + 1}/${maxAttempts} after ${waitMs}ms: ${error.message}`,
+      );
       await delay(waitMs);
       attempt += 1;
     }
@@ -189,9 +189,7 @@ const getOrCreateUserScopedToken = async (user, options = {}) => {
   }
 
   const now = Date.now();
-  const tokenExpiresAtMs = user?.coder_scoped_token_expires_at
-    ? new Date(user.coder_scoped_token_expires_at).getTime()
-    : 0;
+  const tokenExpiresAtMs = user?.coder_scoped_token_expires_at ? new Date(user.coder_scoped_token_expires_at).getTime() : 0;
   if (
     typeof user.coder_scoped_token === 'string' &&
     user.coder_scoped_token.trim() &&
@@ -203,9 +201,7 @@ const getOrCreateUserScopedToken = async (user, options = {}) => {
     if (isValid) {
       return cachedToken;
     }
-    logger.warn(
-      `Cached Coder scoped token is no longer valid for user ${user.coder_username}; regenerating.`,
-    );
+    logger.warn(`Cached Coder scoped token is no longer valid for user ${user.coder_username}; regenerating.`);
   }
 
   const token = await generateSessionToken(user.coder_username, { workspaceId, coderUserId });
@@ -449,9 +445,7 @@ async function generateSessionToken(coderUsername, options = {}) {
       return null;
     }
 
-    logger.info(
-      `Generated user-scoped Coder session token for user: ${coderUsername} via ${url}`,
-    );
+    logger.info(`Generated user-scoped Coder session token for user: ${coderUsername} via ${url}`);
     return token;
   } catch (error) {
     logger.error(`Failed to generate Coder session token: ${error.message}`);
@@ -509,6 +503,10 @@ const getOrCreateWorkspace = async (
       {
         name: 'prototypes_host_path',
         value: prototypesHostPath || coderCfg.prototypesPath || '/opt/autowrx/prototypes',
+      },
+      {
+        name: 'autowrx_runner_ws_url',
+        value: coderCfg.runnerWsUrl,
       },
     ];
 
@@ -735,8 +733,7 @@ const stopWorkspace = async (workspaceId, sessionToken = null) => {
  */
 const listMyWorkspaces = async (sessionToken = null) => {
   const headers = getHeadersWithToken(sessionToken);
-  const requestUserScopedList = () =>
-    axios.get(`${getCoderApiBase()}/users/me/workspaces`, { headers });
+  const requestUserScopedList = () => axios.get(`${getCoderApiBase()}/users/me/workspaces`, { headers });
   const requestOwnerFilteredList = () =>
     axios.get(`${getCoderApiBase()}/workspaces`, {
       headers,
@@ -751,7 +748,9 @@ const listMyWorkspaces = async (sessionToken = null) => {
     if (status !== httpStatus.METHOD_NOT_ALLOWED && status !== httpStatus.NOT_FOUND) {
       logger.error(`Failed to list Coder workspaces: ${error.message}`);
       if (error.response) {
-        logger.error(`List workspace error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`);
+        logger.error(
+          `List workspace error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`,
+        );
         throw new ApiError(
           error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
           `Coder API error: ${error.response.data?.message || error.message}`,
@@ -767,7 +766,9 @@ const listMyWorkspaces = async (sessionToken = null) => {
   } catch (error) {
     logger.error(`Failed to list Coder workspaces (fallback): ${error.message}`);
     if (error.response) {
-      logger.error(`List workspace fallback error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`);
+      logger.error(
+        `List workspace fallback error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`,
+      );
       throw new ApiError(
         error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
         `Coder API error: ${error.response.data?.message || error.message}`,
@@ -799,7 +800,9 @@ const deleteWorkspace = async (workspaceId, sessionToken = null) => {
     }
     logger.error(`Failed to delete Coder workspace: ${error.message}`);
     if (error.response) {
-      logger.error(`Delete workspace error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`);
+      logger.error(
+        `Delete workspace error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`,
+      );
       throw new ApiError(
         error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
         `Coder API error: ${error.response.data?.message || error.message}`,
@@ -828,7 +831,7 @@ const listAllWorkspacesAdmin = async () => {
             headers,
             params: { limit: pageSize, offset },
           }),
-        { maxAttempts: 3, baseDelayMs: 300 }
+        { maxAttempts: 3, baseDelayMs: 300 },
       );
       const page = extractCollection(response.data, 'workspaces');
       all.push(...page);
@@ -842,7 +845,9 @@ const listAllWorkspacesAdmin = async () => {
   } catch (error) {
     logger.error(`Failed to list all Coder workspaces: ${error.message}`);
     if (error.response) {
-      logger.error(`Admin list workspace error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`);
+      logger.error(
+        `Admin list workspace error - Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`,
+      );
       throw new ApiError(
         error.response.status || httpStatus.INTERNAL_SERVER_ERROR,
         `Coder API error: ${error.response.data?.message || error.message}`,
@@ -959,7 +964,7 @@ async function getWorkspaceStatus(workspaceId, sessionToken = null) {
         axios.get(`${getCoderApiBase()}/workspaces/${workspaceId}`, {
           headers: getHeadersWithToken(sessionToken),
         }),
-      { maxAttempts: 3, baseDelayMs: 250 }
+      { maxAttempts: 3, baseDelayMs: 250 },
     );
 
     return response.data;
@@ -1250,9 +1255,10 @@ const getWorkspaceAgentId = async (workspaceId, sessionToken, maxRetries = 5, re
 const sanitizeWorkspaceName = (userId, workspaceKind = 'python') => {
   const normalizedId = normalizeIdForName(userId);
   const idPart = normalizedId.length <= 29 ? normalizedId : `${normalizedId.slice(0, 14)}${normalizedId.slice(-15)}`;
-  const normalizedKind = String(workspaceKind || 'python')
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, '') || 'python';
+  const normalizedKind =
+    String(workspaceKind || 'python')
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '') || 'python';
   const suffix = normalizedKind === 'cpp' ? 'cpp' : normalizedKind === 'rust' ? 'rs' : 'py';
   const name = `ws-${idPart}-${suffix}`;
 

@@ -8,6 +8,7 @@
 
 import { FC, useEffect, useState, useRef, useMemo } from 'react'
 import useWorkspaceRuntimeStore from '@/stores/workspaceRuntimeStore'
+import useRuntimeStore from '@/stores/runtimeStore'
 import { WidgetConfig } from '@/types/widget.type'
 import DaDialog from '@/components/molecules/DaDialog'
 import useCurrentModelApi from '@/hooks/useCurrentModelApi'
@@ -152,11 +153,21 @@ const DaWorkspaceDashboardGrid: FC<DaWorkspaceDashboardGridProps> = ({
     state.appLog,
   ])
 
+  const [apisValueLegacy, traceVarsLegacy] = useRuntimeStore((state) => [
+    state.apisValue,
+    state.traceVars,
+  ])
+
   const [allVars, setAllVars] = useState<any>({})
 
   useEffect(() => {
-    setAllVars({ ...traceVars, ...apisValue })
-  }, [traceVars, apisValue])
+    setAllVars({
+      ...traceVarsLegacy,
+      ...apisValueLegacy,
+      ...traceVars,
+      ...apisValue,
+    })
+  }, [traceVars, apisValue, traceVarsLegacy, apisValueLegacy])
 
   useEffect(() => {
     const onMessageFromIframe = (event: MessageEvent) => {

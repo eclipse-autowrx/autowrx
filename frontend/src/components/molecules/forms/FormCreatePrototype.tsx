@@ -37,7 +37,10 @@ import { createModelService, listModelsLite } from '@/services/model.service'
 import { cn } from '@/lib/utils'
 import default_journey from '@/data/default_journey'
 import { getConfig, useSiteConfig } from '@/utils/siteConfig'
-import { listProjectTemplates, ProjectTemplate } from '@/services/projectTemplate.service'
+import {
+  listProjectTemplates,
+  ProjectTemplate,
+} from '@/services/projectTemplate.service'
 
 interface FormCreatePrototypeProps {
   onClose?: () => void
@@ -172,10 +175,12 @@ const FormCreatePrototype = ({
 
   const { data: currentUser } = useSelfProfileQuery()
 
-  const { data: remoteTemplatesData, isLoading: isLoadingTemplates } = useQuery({
-    queryKey: ['project-templates-list'],
-    queryFn: () => listProjectTemplates({ limit: 100, page: 1 }),
-  })
+  const { data: remoteTemplatesData, isLoading: isLoadingTemplates } = useQuery(
+    {
+      queryKey: ['project-templates-list'],
+      queryFn: () => listProjectTemplates({ limit: 100, page: 1 }),
+    },
+  )
 
   type TemplateOption = {
     label: string
@@ -210,22 +215,32 @@ const FormCreatePrototype = ({
     if (templateOptions.length && !projectTemplate) {
       const first = templateOptions[0]
       setProjectTemplate(first.label)
-      setData((prev) => ({ ...prev, code: first.code, language: first.language }))
+      setData((prev) => ({
+        ...prev,
+        code: first.code,
+        language: first.language,
+      }))
     }
   }, [templateOptions, projectTemplate])
   const [debouncedPrototypeName, setDebouncedPrototypeName] = useState('')
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedPrototypeName(data.prototypeName), 300)
+    const timer = setTimeout(
+      () => setDebouncedPrototypeName(data.prototypeName),
+      300,
+    )
     return () => clearTimeout(timer)
   }, [data.prototypeName])
 
   const existingPrototypeNames = useMemo(
-    () => (localModel ? existingPrototypes?.map((p: any) => p.name) ?? [] : []),
+    () =>
+      localModel ? (existingPrototypes?.map((p: any) => p.name) ?? []) : [],
     [existingPrototypes, localModel],
   )
 
-  const { isDuplicate: isDuplicatePrototypeName, suggestedName: suggestedPrototypeName } =
-    useDuplicateNameCheck(debouncedPrototypeName, existingPrototypeNames)
+  const {
+    isDuplicate: isDuplicatePrototypeName,
+    suggestedName: suggestedPrototypeName,
+  } = useDuplicateNameCheck(debouncedPrototypeName, existingPrototypeNames)
 
   const { data: ownedModelsData } = useQuery({
     queryKey: ['listModelLiteOwned', currentUser?.id],
@@ -244,8 +259,10 @@ const FormCreatePrototype = ({
     return () => clearTimeout(timer)
   }, [data.modelName])
 
-  const { isDuplicate: isDuplicateModelName, suggestedName: suggestedModelName } =
-    useDuplicateNameCheck(debouncedModelName, ownedModelNames)
+  const {
+    isDuplicate: isDuplicateModelName,
+    suggestedName: suggestedModelName,
+  } = useDuplicateNameCheck(debouncedModelName, ownedModelNames)
 
   const handleChange = (name: keyof typeof data, value: string | number) => {
     setData((prev) => ({ ...prev, [name]: value }))
@@ -255,13 +272,16 @@ const FormCreatePrototype = ({
   const onTemplateChange = (v: string) => {
     const template = templateOptions.find((t) => t.label === v)
     if (template) {
-      setData((prev) => ({ ...prev, code: template.code, language: template.language }))
+      setData((prev) => ({
+        ...prev,
+        code: template.code,
+        language: template.language,
+      }))
       setProjectTemplate(v)
     }
   }
 
   const getDefaultDashboardCfg = (lang: string) => {
-    if (lang == 'rust') return `{"autorun": false, "widgets": [] }`
     return DEFAULT_DASHBOARD_CFG
   }
 
@@ -299,7 +319,9 @@ const FormCreatePrototype = ({
         '/imgs/default_prototype_cover.jpg',
       )
 
-      const selectedTemplate = templateOptions.find((t) => t.label === projectTemplate)
+      const selectedTemplate = templateOptions.find(
+        (t) => t.label === projectTemplate,
+      )
 
       const body = {
         model_id: modelId,
@@ -309,20 +331,25 @@ const FormCreatePrototype = ({
         apis: { VSC: [], VSS: [] },
         code: data.code,
         complexity_level: 3,
-        customer_journey: selectedTemplate?.customer_journey !== undefined
-          ? selectedTemplate.customer_journey
-          : default_journey,
+        customer_journey:
+          selectedTemplate?.customer_journey !== undefined
+            ? selectedTemplate.customer_journey
+            : default_journey,
         description: {
           problem: '',
           says_who: '',
           solution: '',
           status: '',
         },
-        image_file: defaultPrototypeImage || '/imgs/default_prototype_cover.jpg',
+        image_file:
+          defaultPrototypeImage || '/imgs/default_prototype_cover.jpg',
         skeleton: '{}',
         tags: [],
         widget_config:
-          widget_config || selectedTemplate?.widget_config || getDefaultDashboardCfg(data.language) || '[]',
+          widget_config ||
+          selectedTemplate?.widget_config ||
+          getDefaultDashboardCfg(data.language) ||
+          '[]',
         autorun: true,
       }
 
@@ -397,7 +424,13 @@ const FormCreatePrototype = ({
   }, [contributionModels, isFetchingModelContribution, currentModel])
 
   useEffect(() => {
-    if (loading || (!localModel && !data.modelName) || !data.prototypeName || isDuplicatePrototypeName || (!localModel && isDuplicateModelName)) {
+    if (
+      loading ||
+      (!localModel && !data.modelName) ||
+      !data.prototypeName ||
+      isDuplicatePrototypeName ||
+      (!localModel && isDuplicateModelName)
+    ) {
       setDisabled(true)
     } else setDisabled(false)
     if (onPrototypeChange) {
@@ -415,13 +448,17 @@ const FormCreatePrototype = ({
         })
       }
     }
-  }, [loading, localModel, data.modelName, data.prototypeName, isDuplicatePrototypeName, isDuplicateModelName])
+  }, [
+    loading,
+    localModel,
+    data.modelName,
+    data.prototypeName,
+    isDuplicatePrototypeName,
+    isDuplicateModelName,
+  ])
 
   return (
-    <form
-      onSubmit={createNewPrototype}
-      className="flex flex-col bg-background"
-    >
+    <form onSubmit={createNewPrototype} className="flex flex-col bg-background">
       <h2 className="text-lg font-semibold text-primary">
         {title ?? 'New Prototype'}
       </h2>
@@ -509,23 +546,26 @@ const FormCreatePrototype = ({
             Loading templates...
           </p>
         ) : (
-        <Select
-          value={projectTemplate}
-          onValueChange={(v: string) => {
-            onTemplateChange(v)
-          }}
-        >
-          <SelectTrigger data-id="prototype-language-select" className="w-full">
-            <SelectValue placeholder="Select a template" />
-          </SelectTrigger>
-          <SelectContent>
-            {templateOptions.map((t) => (
-              <SelectItem key={t.label} value={t.label}>
-                {t.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          <Select
+            value={projectTemplate}
+            onValueChange={(v: string) => {
+              onTemplateChange(v)
+            }}
+          >
+            <SelectTrigger
+              data-id="prototype-language-select"
+              className="w-full"
+            >
+              <SelectValue placeholder="Select a template" />
+            </SelectTrigger>
+            <SelectContent>
+              {templateOptions.map((t) => (
+                <SelectItem key={t.label} value={t.label}>
+                  {t.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         )}
       </div>
 
@@ -533,7 +573,12 @@ const FormCreatePrototype = ({
         disabled={disabled}
         type="submit"
         data-id="btn-create-prototype"
-        className={cn('mt-8 w-full', hideCreateButton && 'hidden', gradientHeader && 'bg-gradient-to-r from-primary to-secondary border-0')}
+        className={cn(
+          'mt-8 w-full',
+          hideCreateButton && 'hidden',
+          gradientHeader &&
+            'bg-gradient-to-r from-primary to-secondary border-0',
+        )}
       >
         {loading && <TbLoader className="mr-2 animate-spin text-lg" />}
         {buttonText ?? 'Create Prototype'}

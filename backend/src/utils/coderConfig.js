@@ -8,6 +8,7 @@ const KEYS = {
   coderAdminApiKey: 'CODER_ADMIN_API_KEY',
   prototypesPath: 'PROTOTYPES_PATH',
   workspaceTtlSeconds: 'CODER_WORKSPACE_TTL_SECONDS',
+  runnerWsUrl: 'AUTOWRX_RUNNER_WS_URL',
 };
 
 // Hard-coded defaults (NO .env reading for Coder integration)
@@ -17,6 +18,7 @@ const DEFAULTS = {
   adminApiKey: '',
   prototypesPath: '/opt/autowrx/prototypes',
   workspaceTtlSeconds: 3600,
+  runnerWsUrl: 'ws://host.docker.internal:3200/v2/system/coder/runner/ws',
 };
 
 let cached = { ...DEFAULTS };
@@ -35,6 +37,7 @@ const normalizeConfig = (values) => {
   const safeWorkspaceTtlSeconds = Number.isFinite(workspaceTtlSeconds)
     ? Math.max(60, Math.floor(workspaceTtlSeconds))
     : DEFAULTS.workspaceTtlSeconds;
+  const runnerWsUrl = values[KEYS.runnerWsUrl] ?? DEFAULTS.runnerWsUrl;
 
   return {
     enabled: Boolean(enabled),
@@ -42,6 +45,7 @@ const normalizeConfig = (values) => {
     adminApiKey: String(adminApiKey),
     prototypesPath: String(prototypesPath),
     workspaceTtlSeconds: safeWorkspaceTtlSeconds,
+    runnerWsUrl: String(runnerWsUrl),
   };
 };
 

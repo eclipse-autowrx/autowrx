@@ -17,10 +17,7 @@ const ApiError = require('../utils/ApiError');
 const coderConfig = require('../utils/coderConfig');
 const { getPrototypeFolderRelativePath } = require('../utils/prototypePath');
 const workspaceRunWsHub = require('./workspaceRunWsHub.service');
-const {
-  resolveWorkspaceKindFromPrototype,
-  getTemplateNameForWorkspaceKind,
-} = require('../utils/workspaceKind');
+const { resolveWorkspaceKindFromPrototype, getTemplateNameForWorkspaceKind } = require('../utils/workspaceKind');
 /* eslint-disable security/detect-non-literal-fs-filename */
 
 const normalizeIdForName = (value) =>
@@ -278,9 +275,7 @@ const prepareWorkspaceForPrototypeUnsafe = async (userId, prototypeId) => {
     const workspaceScopedToken = userScopedToken;
     const workspaceTtlSeconds = Number(coderCfg.workspaceTtlSeconds);
     const workspaceTtlMs =
-      Number.isFinite(workspaceTtlSeconds) && workspaceTtlSeconds >= 0
-        ? Math.floor(workspaceTtlSeconds * 1000)
-        : 0;
+      Number.isFinite(workspaceTtlSeconds) && workspaceTtlSeconds >= 0 ? Math.floor(workspaceTtlSeconds * 1000) : 0;
     try {
       await coderService.updateWorkspaceTtl(workspaceId, workspaceTtlMs, workspaceScopedToken);
     } catch (ttlErr) {
@@ -344,7 +339,8 @@ const prepareWorkspaceForPrototype = async (userId, prototypeId) => {
 /** Server-side only: maps client runKind to shell command (never accept raw command from client). */
 const RUN_KIND_COMMANDS = {
   'python-main': 'python3 -u main.py',
-  'cpp-main': 'g++ -g -O0 -o main -Iinclude src/*.cpp && ./main',
+  'cpp-main':
+    "g++ -g -O0 -std=c++17 -pthread $(find . -type f \\( -name \"*.pb.h\" -o -name \"*.grpc.pb.h\" \\) | sed 's|/[^/]*$||' | sed 's|^\\./||' | awk -F'/kuksa/' '{print $1}' | sort -u | sed 's|^|-I./|') $(find . \\( -name \"*.cpp\" -o -name \"*.cc\" \\)) -o main $(pkg-config --cflags --libs protobuf grpc++ 2>/dev/null) && ./main",
   'rust-main': 'cargo run',
 };
 
@@ -418,10 +414,7 @@ const triggerRunForPrototype = async (userId, prototype, runKind) => {
   });
 
   if (!sent) {
-    throw new ApiError(
-      httpStatus.SERVICE_UNAVAILABLE,
-      'AutoWRX Runner extension is not connected for this workspace',
-    );
+    throw new ApiError(httpStatus.SERVICE_UNAVAILABLE, 'AutoWRX Runner extension is not connected for this workspace');
   }
 
   logger.info(`Sent run.start to runner(s) for workspace=${workspaceId}, prototype=${prototype.id}`);

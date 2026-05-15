@@ -101,7 +101,8 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     value: '',
     secret: false,
     valueType: 'string',
-    description: 'Markdown content for the Privacy Policy page displayed at /privacy-policy.',
+    description:
+      'Markdown content for the Privacy Policy page displayed at /privacy-policy.',
     category: 'privacy',
   },
   {
@@ -214,7 +215,8 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     value: ['CLOUD_RUNTIME', 'HARDWARE_KIT', 'GENAI-PYTHON'],
     secret: false,
     valueType: 'array',
-    description: 'Asset types users can create and manage on the My Assets page.',
+    description:
+      'Asset types users can create and manage on the My Assets page.',
     category: 'general',
   },
   {
@@ -305,6 +307,15 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
       'Default workspace TTL in seconds (minimum 60, e.g. 3600 = 1 hour).',
     category: 'vscode',
   },
+  {
+    key: 'AUTOWRX_RUNNER_WS_URL',
+    scope: 'site',
+    value: 'ws://host.docker.internal:3200/v2/system/coder/runner/ws',
+    secret: false,
+    valueType: 'string',
+    description: 'WebSocket URL for the AutoWrx Runner.',
+    category: 'vscode',
+  },
 ]
 
 export const PREDEFINED_GENAI_CONFIG_KEYS: string[] =
@@ -321,9 +332,10 @@ export const PREDEFINED_VSCODE_CONFIG_KEYS: string[] =
   PREDEFINED_SITE_CONFIGS.filter((config) => config.category === 'vscode').map(
     (config) => config.key,
   )
-export const PREDEFINED_PRIVACY_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(
-  (config) => config.category === 'privacy',
-).map((config) => config.key)
+export const PREDEFINED_PRIVACY_CONFIG_KEYS: string[] =
+  PREDEFINED_SITE_CONFIGS.filter((config) => config.category === 'privacy').map(
+    (config) => config.key,
+  )
 
 export const PREDEFINED_AUTH_CONFIGS: any[] = [
   {
@@ -570,10 +582,11 @@ const SiteConfigManagement: React.FC = () => {
                 </button>
                 <button
                   onClick={() => handleTabChange('privacy')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'privacy'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'privacy'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
                 >
                   Privacy Policy
                 </button>

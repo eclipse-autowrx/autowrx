@@ -66,4 +66,14 @@ router
   .route('/:id/used-apis')
   .get(auth(), validate(prototypeValidation.getUsedApisFromWorkspace), prototypeController.getUsedApisFromWorkspace);
 
+router.route('/:id/workspace-tree').get(auth(), prototypeController.getPrototypeWorkspaceTree);
+router
+  .route('/:id/files')
+  .get(auth(), prototypeController.getPrototypeFileContent)
+  .post(auth(), prototypeController.savePrototypeFileContent)
+  .delete(auth(), prototypeController.deletePrototypeFileSystemItem)
+  .patch(auth(), prototypeController.renamePrototypeFileSystemItem);
+
+router.route('/:id/folders').post(auth(), prototypeController.createPrototypeFolder);
+
 module.exports = router;

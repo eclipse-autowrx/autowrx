@@ -7,6 +7,9 @@ RUN set -eux; \
   DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
   build-essential gcc g++ cmake gdb \
   curl \
+  protobuf-compiler libprotobuf-dev \
+  libgrpc++-dev protobuf-compiler-grpc \
+  pkg-config libabsl-dev \
   rsync ca-certificates; \
   apt-get clean; \
   rm -rf /var/lib/apt/lists/*

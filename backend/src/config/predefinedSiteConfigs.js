@@ -222,6 +222,15 @@ const PREDEFINED_SITE_CONFIGS = [
     valueType: 'boolean',
     description: 'Allow unauthenticated users to view public content.',
   },
+  {
+    key: 'AUTOWRX_RUNNER_WS_URL',
+    scope: 'site',
+    value: 'ws://host.docker.internal:3200/v2/system/coder/runner/ws',
+    secret: false,
+    valueType: 'string',
+    description: 'WebSocket URL for the AutoWrx Runner.',
+    category: 'vscode',
+  },
 ];
 
 module.exports = PREDEFINED_SITE_CONFIGS;

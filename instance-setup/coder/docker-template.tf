@@ -37,6 +37,14 @@ data "coder_parameter" "prototypes_host_path" {
   mutable      = true
 }
 
+data "coder_parameter" "autowrx_runner_ws_url" {
+  name         = "autowrx_runner_ws_url"
+  display_name = "AutoWRX Runner WS URL"
+  description  = "WebSocket URL for AutoWRX Runner"
+  default      = "ws://host.docker.internal:3200/v2/system/coder/runner/ws"
+  mutable      = true
+}
+
 resource "coder_agent" "main" {
   arch = data.coder_provisioner.me.arch
   os   = "linux"
@@ -154,7 +162,7 @@ resource "docker_container" "workspace" {
     "CODER_AGENT_TOKEN=${coder_agent.main.token}",
     "CODER_AGENT_URL=http://coder:7080/",
     "CODER_WORKSPACE_ID=${data.coder_workspace.me.id}",
-    "AUTOWRX_RUNNER_WS_URL=ws://host.docker.internal:3200/v2/system/coder/runner/ws",
+    "AUTOWRX_RUNNER_WS_URL=${data.coder_parameter.autowrx_runner_ws_url.value}",
   ]
 
   host {

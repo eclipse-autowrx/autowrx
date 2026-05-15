@@ -67,7 +67,9 @@ const notifyWidgetIframes = (data: unknown) => {
   })
 }
 
-export default function useWorkspaceRuntimeControl() {
+export default function useWorkspaceRuntimeControl(options?: {
+  onLegacyWrite?: (obj: Record<string, unknown>) => void
+}) {
   const { prototype_id: routePrototypeId } = useParams<{
     prototype_id?: string
   }>()
@@ -153,16 +155,25 @@ export default function useWorkspaceRuntimeControl() {
       const entries = Object.entries(obj)
       if (entries.length === 0) return
       entries.forEach(([api, value]) => {
-        const runtimeVarName = toRuntimeVarName(api)
-        if (!runtimeVarName) return
-        void sendRunWsMessage({
-          type: 'run.set_value',
-          data: { api: runtimeVarName, value },
-        })
+        const isVar = api.startsWith('vars.')
+        if (isVar) {
+          const runtimeVarName = toRuntimeVarName(api)
+          if (!runtimeVarName) return
+          void sendRunWsMessage({
+            type: 'run.set_value',
+            data: { api: runtimeVarName, value },
+          })
+          // Optimistic update for vars only
+          writeSignalValue({ [api]: value })
+        } else {
+          // Legacy signal (Vehicle.*)
+          if (options?.onLegacyWrite) {
+            options.onLegacyWrite({ [api]: value })
+          }
+        }
       })
-      writeSignalValue(obj)
     },
-    [sendRunWsMessage, writeSignalValue],
+    [options, sendRunWsMessage, writeSignalValue],
   )
 
   const clearOutput = useCallback(() => {
@@ -459,6 +470,7 @@ export default function useWorkspaceRuntimeControl() {
     canSendStdin,
     runDisabledReason,
     clearOutput,
+    appendRuntimeText,
     handleRun,
     submitStdinLine,
     stopRun,
