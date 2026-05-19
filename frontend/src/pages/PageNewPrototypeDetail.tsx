@@ -550,54 +550,6 @@ const PageNewPrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
                                 active={newFlowActiveBuiltinKey === 'staging'}
                                 title={hasPrototype ? 'View staging' : 'Create a prototype to enable staging'}
                             />
-                            {/* {isModelOwner && (
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-[52px] w-12 rounded-none hover:bg-accent"
-                                        >
-                                            <TbDotsVertical className="w-5 h-5" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuItem
-                                            onSelect={() => setOpenManageAddonsDialog(true)}
-                                        >
-                                            <TbSettings className="w-5 h-5" />
-                                            Customize Layout...
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem
-                                            onSelect={() => {
-                                                // Capture current model.custom_template data at the moment of click
-                                                if (model) {
-                                                    // Normalize prototype_tabs to full TabConfig format (resolves old-format entries
-                                                    // where builtin tabs were stored as { label, plugin: "" } without type/key).
-                                                    const normalizedPrototypeTabs = getTabConfig(model.custom_template?.prototype_tabs)
-                                                    const initialData = {
-                                                        name: model.name || '',
-                                                        description: '',
-                                                        image: model.model_home_image_file || '',
-                                                        visibility: model.visibility || 'public',
-                                                        config: {
-                                                            ...model.custom_template,
-                                                            prototype_tabs: normalizedPrototypeTabs,
-                                                        },
-                                                        model_tabs: model.custom_template?.model_tabs || [],
-                                                        prototype_tabs: normalizedPrototypeTabs,
-                                                    }
-                                                    setTemplateInitialData(initialData)
-                                                }
-                                                setOpenTemplateForm(true)
-                                            }}
-                                        >
-                                            <GiSaveArrow className="w-5 h-5" />
-                                            Save Solution as Template
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            )} */}
                         </div>
                     </div>
 

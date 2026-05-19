@@ -6,65 +6,70 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { FC, useCallback, useEffect, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
-import { configManagementService } from '@/services/configManagement.service'
-import useModelStore from '@/stores/modelStore'
-import { Prototype } from '@/types/model.type'
-import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
-import { Spinner } from '@/components/atoms/spinner'
-import {
-  TbDotsVertical,
-  TbPlus,
-  TbListCheck,
-  TbSettings,
-  TbLayoutSidebar,
-} from 'react-icons/tb'
-import { GiSaveArrow } from "react-icons/gi";
-import { TbFileCode } from 'react-icons/tb'
-import { saveRecentPrototype } from '@/services/prototype.service'
-import useSelfProfileQuery from '@/hooks/useSelfProfile'
-import useCurrentModel from '@/hooks/useCurrentModel'
-import useCurrentPrototype from '@/hooks/useCurrentPrototype'
-import DaDialog from '@/components/molecules/DaDialog'
-import PrototypeTabCode from '@/components/organisms/PrototypeTabCode'
-import PrototypeTabDashboard from '@/components/organisms/PrototypeTabDashboard'
-import PrototypeTabFeedback from '@/components/organisms/PrototypeTabFeedback'
-import DaRuntimeControl from '@/components/molecules/dashboard/DaRuntimeControl'
+import { Button } from '@/components/atoms/button'
+import { Dialog, DialogContent } from '@/components/atoms/dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/atoms/dropdown-menu'
-import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
+import { Spinner } from '@/components/atoms/spinner'
 import AddonSelect from '@/components/molecules/AddonSelect'
-import { Plugin } from '@/services/plugin.service'
-import { updateModelService } from '@/services/model.service'
-import { toast } from 'react-toastify'
-import { Dialog, DialogContent } from '@/components/atoms/dialog'
-import PagePrototypePlugin from '@/pages/PagePrototypePlugin'
-import CustomTabEditor, { TabConfig, StagingConfig, RightNavPluginButton, TabsBorderRadius } from '@/components/organisms/CustomTabEditor'
-import PrototypeTabInfo from '../components/organisms/PrototypeTabInfo'
-import TemplateForm from '@/components/organisms/TemplateForm'
+import DaDialog from '@/components/molecules/DaDialog'
+import DaRuntimeControl from '@/components/molecules/dashboard/DaRuntimeControl'
+import PrototypeRightActionButtons from '@/components/molecules/PrototypeRightActionButtons'
+import PrototypeTabs, {
+  getTabConfig,
+} from '@/components/molecules/PrototypeTabs'
+import CustomTabEditor, {
+  RightNavPluginButton,
+  StagingConfig,
+  TabConfig,
+  TabsBorderRadius,
+} from '@/components/organisms/CustomTabEditor'
+import PrototypeSidebar from '@/components/organisms/PrototypeSidebar'
+import PrototypeTabCode from '@/components/organisms/PrototypeTabCode'
+import PrototypeTabDashboard from '@/components/organisms/PrototypeTabDashboard'
+import PrototypeTabFeedback from '@/components/organisms/PrototypeTabFeedback'
+import PrototypeTabInfo from '@/components/organisms/PrototypeTabInfo'
 import PrototypeTabJourney from '@/components/organisms/PrototypeTabJourney'
 import PrototypeTabStaging from '@/components/organisms/PrototypeTabStaging'
-import PrototypeTabs, { getTabConfig } from '@/components/molecules/PrototypeTabs'
-import DaTabItem from '@/components/atoms/DaTabItem'
-import usePluginPreloader from '@/hooks/usePluginPreloader'
-import PrototypeSidebar from '@/components/organisms/PrototypeSidebar'
-import StagingTabButton from '@/components/organisms/StagingTabButton'
-import { useSiteConfig } from '@/utils/siteConfig'
-import usePermissionHook from '@/hooks/usePermissionHook'
+import TemplateForm from '@/components/organisms/TemplateForm'
 import { PERMISSIONS } from '@/data/permission'
+import useCurrentModel from '@/hooks/useCurrentModel'
+import useCurrentPrototype from '@/hooks/useCurrentPrototype'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import usePluginPreloader from '@/hooks/usePluginPreloader'
+import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import PagePrototypePlugin from '@/pages/PagePrototypePlugin'
+import { configManagementService } from '@/services/configManagement.service'
+import { updateModelService } from '@/services/model.service'
+import { Plugin } from '@/services/plugin.service'
 import { createProjectTemplate } from '@/services/projectTemplate.service'
+import { saveRecentPrototype } from '@/services/prototype.service'
+import useModelStore from '@/stores/modelStore'
+import { Prototype } from '@/types/model.type'
+import { useSiteConfig } from '@/utils/siteConfig'
+import { useQueryClient } from '@tanstack/react-query'
+import { FC, useCallback, useEffect, useState } from 'react'
+import { GiSaveArrow } from 'react-icons/gi'
+import {
+  TbDotsVertical,
+  TbFileCode,
+  TbLayoutSidebar,
+  TbPlus,
+  TbSettings,
+} from 'react-icons/tb'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { toast } from 'react-toastify'
 
 interface ViewPrototypeProps {
   display?: 'tree' | 'list'
 }
 
-const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
+const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
   const { model_id, prototype_id, tab } = useParams()
   const [searchParams] = useSearchParams()
   const pluginId = searchParams.get('plugid')
@@ -79,7 +84,6 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
   ])
   const [isDefaultTab, setIsDefaultTab] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [openStagingDialog, setOpenStagingDialog] = useState(false)
   const [showRt, setShowRt] = useState(false)
   const [isModelOwner, setIsModelOwner] = useState(false)
   const [openAddonDialog, setOpenAddonDialog] = useState(false)
@@ -98,15 +102,18 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
     'ALLOW_NON_ADMIN_ADDON_CONFIG',
     true,
   )
-  const [templateInitialData, setTemplateInitialData] = useState<{
-    name?: string
-    description?: string
-    image?: string
-    visibility?: string
-    config?: any
-    model_tabs?: Array<{ label: string; plugin: string }>
-    prototype_tabs?: TabConfig[]
-  } | undefined>(undefined)
+  const [templateInitialData, setTemplateInitialData] = useState<
+    | {
+        name?: string
+        description?: string
+        image?: string
+        visibility?: string
+        config?: any
+        model_tabs?: Array<{ label: string; plugin: string }>
+        prototype_tabs?: TabConfig[]
+      }
+    | undefined
+  >(undefined)
 
   // Load staging config to extract plugins for preloading
   const [stagingPlugins, setStagingPlugins] = useState<Plugin[]>([])
@@ -115,7 +122,8 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
   useEffect(() => {
     const loadStagingPlugins = async () => {
       try {
-        const stagingConfig = await configManagementService.getPublicConfig(STAGING_FRAME_KEY)
+        const stagingConfig =
+          await configManagementService.getPublicConfig(STAGING_FRAME_KEY)
         if (stagingConfig?.value?.stages) {
           // Extract all plugins from all stages
           const allPlugins: Plugin[] = []
@@ -139,23 +147,32 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
   const prototypeTabs = getTabConfig(model?.custom_template?.prototype_tabs)
 
   // Extract sidebar plugin slug
-  const sidebarPlugin: string | undefined = model?.custom_template?.prototype_sidebar_plugin || undefined
+  const sidebarPlugin: string | undefined =
+    model?.custom_template?.prototype_sidebar_plugin || undefined
 
   // Extract global tab style variant
-  const tabsVariant: string | undefined = model?.custom_template?.prototype_tabs_variant || undefined
+  const tabsVariant: string | undefined =
+    model?.custom_template?.prototype_tabs_variant || undefined
 
   // Extract global tab border radius
-  const tabsBorderRadius: TabsBorderRadius | undefined = model?.custom_template?.prototype_tabs_border_radius || undefined
+  const tabsBorderRadius: TabsBorderRadius | undefined =
+    model?.custom_template?.prototype_tabs_border_radius || undefined
 
   // Extract staging tab config from prototype_right_nav_buttons
-  const _rightNavRaw: RightNavPluginButton[] = model?.custom_template?.prototype_right_nav_buttons || []
-  const _stagingNavItem = _rightNavRaw.find(b => b.builtin === 'staging')
+  const _rightNavRaw: RightNavPluginButton[] =
+    model?.custom_template?.prototype_right_nav_buttons || []
+  const _stagingNavItem = _rightNavRaw.find((b) => b.builtin === 'staging')
   const stagingConfig: StagingConfig = _stagingNavItem
-    ? { label: _stagingNavItem.label, iconSvg: _stagingNavItem.iconSvg, hideIcon: _stagingNavItem.hideIcon, variant: _stagingNavItem.variant }
+    ? {
+        label: _stagingNavItem.label,
+        iconSvg: _stagingNavItem.iconSvg,
+        hideIcon: _stagingNavItem.hideIcon,
+        variant: _stagingNavItem.variant,
+        corners: _stagingNavItem.corners,
+      }
     : {}
 
-  // Extract right nav plugin buttons (exclude the built-in staging item)
-  const rightNavButtons: RightNavPluginButton[] = _rightNavRaw.filter(b => b.builtin !== 'staging')
+  const rightNavButtons: RightNavPluginButton[] = _rightNavRaw
 
   // Preload plugin JavaScript files
   usePluginPreloader({
@@ -175,8 +192,11 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
   useEffect(() => {
     if (!tab || tab === 'view') {
       // Only show overview content if overview is actually the first visible tab
-      const firstVisible = prototypeTabs.find(t => !t.hidden)
-      setIsDefaultTab(!firstVisible || (firstVisible.type === 'builtin' && firstVisible.key === 'overview'))
+      const firstVisible = prototypeTabs.find((t) => !t.hidden)
+      setIsDefaultTab(
+        !firstVisible ||
+          (firstVisible.type === 'builtin' && firstVisible.key === 'overview'),
+      )
     } else {
       setIsDefaultTab(false)
     }
@@ -185,16 +205,24 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
 
   // Auto-navigate to first visible tab when arriving on the default (no-tab / view) route
   useEffect(() => {
-    if ((!tab || tab === 'view') && model_id && prototype_id && prototypeTabs.length > 0) {
-      const firstVisible = prototypeTabs.find(t => !t.hidden)
+    if (
+      (!tab || tab === 'view') &&
+      model_id &&
+      prototype_id &&
+      prototypeTabs.length > 0
+    ) {
+      const firstVisible = prototypeTabs.find((t) => !t.hidden)
       if (!firstVisible) return
       // overview maps to /view — already there, nothing to do
-      if (firstVisible.type === 'builtin' && firstVisible.key === 'overview') return
+      if (firstVisible.type === 'builtin' && firstVisible.key === 'overview')
+        return
       const base = `/model/${model_id}/library/prototype/${prototype_id}`
       if (firstVisible.type === 'builtin' && firstVisible.key) {
         navigate(`${base}/${firstVisible.key}`, { replace: true })
       } else if (firstVisible.type === 'custom' && firstVisible.plugin) {
-        navigate(`${base}/plug?plugid=${firstVisible.plugin}`, { replace: true })
+        navigate(`${base}/plug?plugid=${firstVisible.plugin}`, {
+          replace: true,
+        })
       }
     }
   }, [tab, prototypeTabs, model_id, prototype_id, navigate])
@@ -207,7 +235,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
 
   useEffect(() => {
     setIsModelOwner(
-      !!(user && model?.created_by && user.id === model.created_by.id)
+      !!(user && model?.created_by && user.id === model.created_by.id),
     )
   }, [user, model])
 
@@ -226,27 +254,34 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
       })
       await createProjectTemplate({ name: projectTemplateName.trim(), data })
       await queryClient.invalidateQueries({ queryKey: ['project-templates'] })
-      await queryClient.invalidateQueries({ queryKey: ['project-templates-list'] })
+      await queryClient.invalidateQueries({
+        queryKey: ['project-templates-list'],
+      })
       toast.success('Project template saved')
       setOpenSaveProjectTemplate(false)
       setProjectTemplateName('')
     } catch (e: any) {
-      toast.error(e?.response?.data?.message || e.message || 'Failed to save template')
+      toast.error(
+        e?.response?.data?.message || e.message || 'Failed to save template',
+      )
     } finally {
       setSavingProjectTemplate(false)
     }
   }
 
   // Callback for plugins to navigate to a specific prototype tab
-  const handleSetActiveTab = useCallback((targetTab: string, targetPluginSlug?: string) => {
-    if (!model_id || !prototype_id) return
-    const base = `/model/${model_id}/library/prototype/${prototype_id}`
-    if (targetTab === 'plug' && targetPluginSlug) {
-      navigate(`${base}/plug?plugid=${targetPluginSlug}`)
-    } else {
-      navigate(`${base}/${targetTab}`)
-    }
-  }, [model_id, prototype_id, navigate])
+  const handleSetActiveTab = useCallback(
+    (targetTab: string, targetPluginSlug?: string) => {
+      if (!model_id || !prototype_id) return
+      const base = `/model/${model_id}/library/prototype/${prototype_id}`
+      if (targetTab === 'plug' && targetPluginSlug) {
+        navigate(`${base}/plug?plugid=${targetPluginSlug}`)
+      } else {
+        navigate(`${base}/${targetTab}`)
+      }
+    },
+    [model_id, prototype_id, navigate],
+  )
 
   const handleAddonSelect = async (plugin: Plugin, label: string) => {
     if (!model_id || !model) {
@@ -260,7 +295,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
 
       // Check if plugin already exists
       const pluginExists = currentTabs.some(
-        (tab: TabConfig) => tab.type === 'custom' && tab.plugin === plugin.slug
+        (tab: TabConfig) => tab.type === 'custom' && tab.plugin === plugin.slug,
       )
 
       if (pluginExists) {
@@ -297,7 +332,13 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
     }
   }
 
-  const handleSaveCustomTabs = async (updatedTabs: TabConfig[], updatedSidebarPlugin?: string | null, updatedTabsVariant?: string | null, updatedRightNavButtons?: RightNavPluginButton[] | null, updatedTabsBorderRadius?: TabsBorderRadius | null) => {
+  const handleSaveCustomTabs = async (
+    updatedTabs: TabConfig[],
+    updatedSidebarPlugin?: string | null,
+    updatedTabsVariant?: string | null,
+    updatedRightNavButtons?: RightNavPluginButton[] | null,
+    updatedTabsBorderRadius?: TabsBorderRadius | null,
+  ) => {
     if (!model_id || !model) {
       toast.error('Model not found')
       return
@@ -321,7 +362,8 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
 
       // Update border radius: null means remove (revert to default), string means set, undefined means no change
       if (updatedTabsBorderRadius !== undefined) {
-        updates.prototype_tabs_border_radius = updatedTabsBorderRadius ?? undefined
+        updates.prototype_tabs_border_radius =
+          updatedTabsBorderRadius ?? undefined
       }
 
       // Update right nav buttons: null means remove, array means set, undefined means no change
@@ -345,7 +387,11 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
     <div className="flex w-full h-full relative">
       {/* Left sidebar plugin - full height, outside tab area */}
       {sidebarPlugin && (
-        <PrototypeSidebar pluginSlug={sidebarPlugin} isCollapsed={sidebarCollapsed} onSetActiveTab={handleSetActiveTab} />
+        <PrototypeSidebar
+          pluginSlug={sidebarPlugin}
+          isCollapsed={sidebarCollapsed}
+          onSetActiveTab={handleSetActiveTab}
+        />
       )}
 
       {/* Right side: tab bar + content */}
@@ -381,12 +427,8 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
             </div>
           )}
           <div className="grow"></div>
-          {/* Staging tab - right side, before three dots */}
-          <StagingTabButton
-            model_id={model_id}
-            prototype_id={prototype_id}
-            stagingConfig={stagingConfig}
-            tab={tab}
+          <PrototypeRightActionButtons
+            tabs={model?.custom_template?.prototype_right_nav_buttons || []}
           />
           {canConfigurePrototypeAddons && (
             <DropdownMenu open={moreMenuOpen} onOpenChange={setMoreMenuOpen}>
@@ -416,7 +458,9 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
                     if (model) {
                       // Normalize prototype_tabs to full TabConfig format (resolves old-format entries
                       // where builtin tabs were stored as { label, plugin: "" } without type/key).
-                      const normalizedPrototypeTabs = getTabConfig(model.custom_template?.prototype_tabs)
+                      const normalizedPrototypeTabs = getTabConfig(
+                        model.custom_template?.prototype_tabs,
+                      )
                       const initialData = {
                         name: model.name || '',
                         description: '',
@@ -429,11 +473,14 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
                         model_tabs: model.custom_template?.model_tabs || [],
                         prototype_tabs: normalizedPrototypeTabs,
                       }
-                      console.log('[PagePrototypeDetail] Setting templateInitialData:', {
-                        model,
-                        custom_template: model.custom_template,
-                        initialData,
-                      })
+                      console.log(
+                        '[PagePrototypeDetail] Setting templateInitialData:',
+                        {
+                          model,
+                          custom_template: model.custom_template,
+                          initialData,
+                        },
+                      )
                       setTemplateInitialData(initialData)
                     }
                     setOpenTemplateForm(true)
@@ -464,9 +511,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
             style={{ right: showRt ? '3.5rem' : '0' }}
             className="absolute left-0 bottom-0 top-0 grow h-full z-0"
           >
-            {isDefaultTab && (
-              <PrototypeTabInfo prototype={prototype} />
-            )}
+            {isDefaultTab && <PrototypeTabInfo prototype={prototype} />}
             {tab == 'journey' && <PrototypeTabJourney prototype={prototype} />}
             {tab == 'code' && <PrototypeTabCode />}
             {tab == 'dashboard' && <PrototypeTabDashboard />}
@@ -476,8 +521,9 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
             {/* Render ALL plugin components unconditionally - they stay mounted and cached */}
             {/* Only show the one that matches current tab and pluginId */}
             {prototypeTabs
-              .filter((tabConfig): tabConfig is TabConfig & { plugin: string } =>
-                tabConfig.type === 'custom' && !!tabConfig.plugin
+              .filter(
+                (tabConfig): tabConfig is TabConfig & { plugin: string } =>
+                  tabConfig.type === 'custom' && !!tabConfig.plugin,
               )
               .map((tabConfig) => {
                 // Show only if we're on the 'plug' tab AND this plugin matches the pluginId
@@ -487,18 +533,26 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
                     key={tabConfig.plugin}
                     className={isActive ? 'w-full h-full' : 'hidden'}
                   >
-                    <PagePrototypePlugin pluginSlug={tabConfig.plugin} onSetActiveTab={handleSetActiveTab} />
+                    <PagePrototypePlugin
+                      pluginSlug={tabConfig.plugin}
+                      onSetActiveTab={handleSetActiveTab}
+                    />
                   </div>
                 )
               })}
 
             {/* Fallback: if no plugin tabs configured but plugid in URL, render single instance */}
             {/* (for backward compatibility or direct navigation) */}
-            {tab === 'plug' && pluginId &&
-              prototypeTabs.filter(t => t.type === 'custom' && t.plugin === pluginId).length === 0 && (
-                <PagePrototypePlugin pluginSlug={pluginId} onSetActiveTab={handleSetActiveTab} />
-              )
-            }
+            {tab === 'plug' &&
+              pluginId &&
+              prototypeTabs.filter(
+                (t) => t.type === 'custom' && t.plugin === pluginId,
+              ).length === 0 && (
+                <PagePrototypePlugin
+                  pluginSlug={pluginId}
+                  onSetActiveTab={handleSetActiveTab}
+                />
+              )}
           </div>
           {showRt && <DaRuntimeControl />}
         </div>
