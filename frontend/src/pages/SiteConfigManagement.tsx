@@ -39,6 +39,7 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     secret: false,
     valueType: 'image_url',
     description: 'Default image used when creating a new model.',
+    category: 'model_prototype',
   },
   {
     key: 'DEFAULT_PROTOTYPE_IMAGE',
@@ -47,6 +48,7 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     secret: false,
     valueType: 'image_url',
     description: 'Default cover image used when creating a new prototype.',
+    category: 'model_prototype',
   },
   {
     key: 'SITE_TITLE',
@@ -107,7 +109,7 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     secret: false,
     valueType: 'boolean',
     description: 'Show or hide the API panel on the Prototype Code tab.',
-    category: 'prototype',
+    category: 'model_prototype',
   },
   {
     key: 'SHOW_CODE_DIFF',
@@ -207,7 +209,7 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     valueType: 'boolean',
     description:
       'Enable or disable the context menu on prototype items in the prototype list. When enabled, right-clicking on a prototype will show a menu context.',
-    category: 'prototype',
+    category: 'model_prototype',
   },
   {
     key: 'ALLOW_NON_ADMIN_ADDON_CONFIG',
@@ -217,7 +219,7 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
     valueType: 'boolean',
     description:
       'Allow non-admin model owners to add/manage addon tabs on model and prototype detail pages. Admin users can always configure addon tabs regardless of this setting.',
-    category: 'prototype',
+    category: 'model_prototype',
   },
   {
     key: 'GRADIENT_HEADER',
@@ -239,7 +241,7 @@ export const PREDEFINED_PRIVACY_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.
 ).map((config) => config.key)
 
 export const PREDEFINED_PROTOTYPE_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(
-  (config) => config.category === 'prototype',
+  (config) => config.category === 'model_prototype',
 ).map((config) => config.key)
 
 export const PREDEFINED_AUTH_CONFIGS: any[] = [
@@ -294,7 +296,7 @@ const SiteConfigManagement: React.FC = () => {
     | 'sso'
     | 'email'
     | 'staging'
-    | 'prototype'
+    | 'model_prototype'
     | 'genai'
     | 'privacy'
   const validSections: SectionTab[] = [
@@ -306,7 +308,7 @@ const SiteConfigManagement: React.FC = () => {
     'sso',
     'email',
     'staging',
-    'prototype',
+    'model_prototype',
     'genai',
     'privacy',
   ]
@@ -393,13 +395,13 @@ const SiteConfigManagement: React.FC = () => {
                   Auth Config
                 </button>
                 <button
-                  onClick={() => handleTabChange('prototype')}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'prototype'
+                  onClick={() => handleTabChange('model_prototype')}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'model_prototype'
                     ? 'bg-primary text-primary-foreground'
                     : 'text-foreground hover:bg-muted'
                     }`}
                 >
-                  Prototype Config
+                  Model & Prototype
                 </button>
                 <button
                   onClick={() => handleTabChange('genai')}
@@ -471,7 +473,7 @@ const SiteConfigManagement: React.FC = () => {
               {activeTab === 'style' && <SiteStyleSection />}
               {activeTab === 'email' && <EmailConfigSection />}
               {activeTab === 'secrets' && <SecretConfigSection />}
-              {activeTab === 'prototype' && <PrototypeConfigSection />}
+              {activeTab === 'model_prototype' && <PrototypeConfigSection />}
               {activeTab === 'genai' && <GenAIConfigSection />}
               {activeTab === 'privacy' && <PrivacyPolicySection />}
             </div>

@@ -29,7 +29,7 @@ import {
 } from '@/utils/siteConfigAdmin'
 
 type PrototypeSubTab = 'config' | 'history'
-const PROTOTYPE_HISTORY_SECTION = 'prototype' as SiteConfigHistorySection
+const PROTOTYPE_HISTORY_SECTION = 'model_prototype' as SiteConfigHistorySection
 
 const PrototypeConfigSection: React.FC = () => {
     const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
@@ -49,14 +49,14 @@ const PrototypeConfigSection: React.FC = () => {
             setIsLoading(true)
 
             const predefinedPrototypeConfigs = PREDEFINED_SITE_CONFIGS.filter(
-                (config) => config.category === 'prototype',
+                (config) => config.category === 'model_prototype',
             )
 
             // Get existing Prototype configs from DB
             const res = await configManagementService.getConfigs({
                 secret: false,
                 scope: 'site',
-                category: 'prototype',
+                category: 'model_prototype',
                 limit: 100,
             })
 
@@ -76,7 +76,7 @@ const PrototypeConfigSection: React.FC = () => {
                 const updatedRes = await configManagementService.getConfigs({
                     secret: false,
                     scope: 'site',
-                    category: 'prototype',
+                    category: 'model_prototype',
                     limit: 100,
                 })
 
@@ -88,7 +88,7 @@ const PrototypeConfigSection: React.FC = () => {
             toast({
                 title: 'Load failed',
                 description:
-                    err instanceof Error ? err.message : 'Failed to load Prototype configs',
+                    err instanceof Error ? err.message : 'Failed to load Model & Prototype configs',
                 variant: 'destructive',
             })
         } finally {
@@ -99,7 +99,7 @@ const PrototypeConfigSection: React.FC = () => {
     const handleFactoryReset = async () => {
         if (
             !window.confirm(
-                'Restore all Prototype configs to default values? This will reset Prototype settings to their defaults.',
+                'Restore all Model & Prototype configs to default values? This will reset Model & Prototype settings to their defaults.',
             )
         ) {
             return
@@ -109,14 +109,14 @@ const PrototypeConfigSection: React.FC = () => {
             setIsLoading(true)
 
             const predefinedPrototypeConfigs = PREDEFINED_SITE_CONFIGS.filter(
-                (config) => config.category === 'prototype',
+                (config) => config.category === 'model_prototype',
             )
 
             // Delete all Prototype configs
             const allConfigs = await configManagementService.getConfigs({
                 secret: false,
                 scope: 'site',
-                category: 'prototype',
+                category: 'model_prototype',
                 limit: 100,
             })
 
@@ -135,7 +135,7 @@ const PrototypeConfigSection: React.FC = () => {
             toast({
                 title: 'Restored',
                 description:
-                    'Prototype configs restored to default values. Reloading page...',
+                    'Model & Prototype configs restored to default values. Reloading page...',
             })
 
             reloadSoon()
@@ -145,7 +145,7 @@ const PrototypeConfigSection: React.FC = () => {
                 description:
                     err instanceof Error
                         ? err.message
-                        : 'Failed to reset Prototype configs',
+                        : 'Failed to reset Model & Prototype configs',
                 variant: 'destructive',
             })
             setIsLoading(false)
@@ -158,7 +158,7 @@ const PrototypeConfigSection: React.FC = () => {
             const { valueBefore, targetValue } = await upsertConfigFromHistory({
                 entry,
                 scope: 'site',
-                category: 'prototype',
+                category: 'model_prototype',
             })
 
             pushSiteConfigEdit({
@@ -166,7 +166,7 @@ const PrototypeConfigSection: React.FC = () => {
                 valueBefore,
                 valueAfter: targetValue,
                 valueType: entry.valueType,
-                section: 'prototype',
+                section: 'model_prototype',
             })
 
             toast({
@@ -181,7 +181,7 @@ const PrototypeConfigSection: React.FC = () => {
                 description:
                     err instanceof Error
                         ? err.message
-                        : 'Failed to restore Prototype configuration',
+                        : 'Failed to restore Model & Prototype configuration',
                 variant: 'destructive',
             })
             setIsLoading(false)
@@ -193,10 +193,10 @@ const PrototypeConfigSection: React.FC = () => {
             <div className="px-6 py-4 border-b border-border flex items-center justify-between">
                 <div className="flex flex-col">
                     <h2 className="text-lg font-semibold text-foreground">
-                        Prototype Configuration
+                        Model & Prototype Configuration
                     </h2>
                     <p className="text-sm text-muted-foreground mt-1">
-                        Configure Prototype-specific behavior and feature visibility
+                        Configure Model & Prototype behavior and feature visibility
                     </p>
                 </div>
                 <Button

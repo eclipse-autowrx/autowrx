@@ -33,7 +33,7 @@ export type SiteConfigHistorySection =
   | 'style'
   | 'secrets'
   | 'staging'
-  | 'prototype'
+  | 'model_prototype'
   | 'genai'
 
 interface ConfigListProps {
