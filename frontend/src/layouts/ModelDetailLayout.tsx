@@ -206,8 +206,11 @@ const ModelDetailLayout = () => {
       content:
         'Browse, explore and enhance the catalogue of Connected Vehicle Interfaces',
       path: 'api',
-      subs: ['/model/:model_id/api', '/model/:model_id/api/:api'],
-      count: vehicleApiCount,
+      subs: [
+        '/model/:model_id/api',
+        '/model/:model_id/api/:api',
+        '/model/:model_id/api/:source/:api',
+      ],      count: vehicleApiCount,
       dataId: 'tab-model-api',
     },
     {
