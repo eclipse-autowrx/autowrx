@@ -352,6 +352,12 @@ export interface PluginPageProps {
   data?: any
 
   /**
+   * Whether the plugin data is editable by the current user
+   * Controlled by WRITE_MODEL permission on the host side
+   */
+  editable?: boolean
+
+  /**
    * Plugin configuration settings
    */
   config?: {

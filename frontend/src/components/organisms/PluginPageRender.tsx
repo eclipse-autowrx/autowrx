@@ -28,6 +28,8 @@ import {
 } from '@/services/extendedApis.service'
 import useRuntimeStore from '@/stores/runtimeStore'
 import { configManagementService } from '@/services/configManagement.service'
+import usePermissionHook from '@/hooks/usePermissionHook'
+import { PERMISSIONS } from '@/data/permission'
 import type { PluginAPI } from '@/types/plugin.types'
 import type { Model, Prototype } from '@/types/model.type'
 import type { CVI, VehicleAPI, VSSRelease, ExtendedApi, ExtendedApiCreate, ExtendedApiRet } from '@/types/api.type'
@@ -67,6 +69,8 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
   // Extract IDs from data
   const model_id = data?.model?.id
   const prototype_id = data?.prototype?.id
+
+  const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model_id])
 
   // Access runtime store for API values
   const { apisValue, setActiveApis } = useRuntimeStore()
@@ -1033,6 +1037,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
         <div key={`plugin-${plugin_id}-${loadedPluginName}`} className="w-full h-full">
           <PluginComponent
             data={data}
+            editable={isAuthorized}
             config={pluginConfig}
             api={pluginAPI}
           />
