@@ -13,7 +13,7 @@ AutoWRX is part of the [digital.auto](https://digital.auto) ecosystem and serves
 - **Showcase** customer journeys and feature demos
 - **Migrate** prototypes to production automotive runtimes
 
-## Architecture
+### Architecture
 
 AutoWRX follows a **Core vs. Plugin** philosophy:
 
