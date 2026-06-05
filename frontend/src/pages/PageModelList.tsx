@@ -19,6 +19,7 @@ import { createModelService } from '@/services/model.service'
 import { createPrototypeService } from '@/services/prototype.service'
 import { ModelCreate, ModelLite, Prototype } from '@/types/model.type'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import useAuthStore from '@/stores/authStore'
 import { addLog } from '@/services/log.service'
 import { useNavigate } from 'react-router-dom'
 import DaTabItem from '@/components/atoms/DaTabItem'
@@ -27,13 +28,15 @@ import { Skeleton } from '@/components/atoms/skeleton'
 import DaModelItem from '@/components/molecules/DaModelItem'
 import { Link } from 'react-router-dom'
 import useListAllModels from '@/hooks/useListAllModel'
+import { TbLock } from 'react-icons/tb'
 
 type ModelTab = 'myModel' | 'myContribution' | 'public'
 
 const PageModelList = () => {
   const navigate = useNavigate()
   const [isImporting, setIsImporting] = useState(false)
-  const { data: user } = useSelfProfileQuery()
+  const { data: user, isLoading: isUserLoading } = useSelfProfileQuery()
+  const { authBootstrapped, setOpenLoginDialog } = useAuthStore()
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -252,6 +255,39 @@ const PageModelList = () => {
     targets.forEach((t) => t.el && observer.observe(t.el))
     return () => observer.disconnect()
   }, [user])
+
+  // Auth gate: when the user is not signed in, show a friendly message
+  // instead of the model list and offer a button to open the global login dialog.
+  // We wait for `authBootstrapped` so we don't flash this gate while the
+  // initial token refresh is still in flight.
+  if (authBootstrapped && !isUserLoading && !user) {
+    return (
+      <div className="flex flex-col items-center justify-center w-full min-h-[60vh] px-6 text-center">
+        <div className="flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+          <TbLock className="w-8 h-8 text-primary" />
+        </div>
+        <h2 className="text-2xl font-semibold text-foreground">
+          Sign in required
+        </h2>
+        <p className="mt-2 max-w-md text-sm text-muted-foreground">
+          You need to be signed in to browse and manage Vehicle Models.
+          Please sign in to continue.
+        </p>
+        <div className="flex gap-3 mt-6">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => setOpenLoginDialog(true)}
+          >
+            Sign In
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => navigate('/')}>
+            Back to Home
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col w-full h-full relative">

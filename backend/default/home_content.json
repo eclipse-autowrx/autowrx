@@ -3,7 +3,24 @@
     "type": "hero",
     "title": "Welcome to digital.auto playground for virtual exploration",
     "description": "To support shift-level testing for software-defined vehicle (SDV) applications, we have created the digital.auto playground. This is a cloud-based, rapid prototyping environment for new, SDV-enabled features. The prototypes are built against real-world vehicle APIs and can be seamlessly migrated to automotive runtimes, such as Eclipse Velocitas. The playground is open and free to use.",
-    "image": "/imgs/autowrx-bg.jpg"
+    "image": "/imgs/autowrx-bg.jpg",
+    "minHeight": "400px",
+    "maxHeight": "400px",
+    "imageObjectFit": "cover",
+    "imagePosition": "center",
+    "imageWidth": "100%",
+    "imageHeight": "100%",
+    "imageAlign": "center",
+    "overlay": {
+      "enabled": true,
+      "direction": "to-r",
+      "fromColor": "var(--primary)",
+      "fromOpacity": 70,
+      "toColor": "var(--secondary)",
+      "toOpacity": 90
+    },
+    "textPosition": "right",
+    "textColor": "white"
   },
   {
     "type": "feature-list",
