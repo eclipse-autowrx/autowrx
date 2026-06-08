@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import config from '@/configs/config'
+import { useSiteConfig } from '@/utils/siteConfig'
 import { useEffect, useRef, useState } from 'react'
 import {
     TbDownload,
@@ -201,6 +202,7 @@ const FormHardwareKitManager = ({
     const [edgeConfig, setEdgeConfig] = useState<any>(null)
     const [edgeVss, setEdgeVss] = useState<any>(null)
     const runTimeRef = useRef<any>()
+    const runtimeServerUrl = useSiteConfig('RUNTIME_SERVER_URL')
 
     const CONFIG_PATH = '/app/remote_access/signal-config.json'
     const VSS_PATH = '/app/remote_access/vss.json'
@@ -242,8 +244,9 @@ const FormHardwareKitManager = ({
                 <DaRuntimeConnector
                     isDeployMode={true}
                     targetPrefix={['Kit-', 'PilotCar-']}
-                    kitServerUrl={config?.runtime?.url}
+                    kitServerUrl={runtimeServerUrl}
                     ref={runTimeRef}
+                    forceKitId={kitName}
                     usedAPIs={[]}
                     onActiveRtChanged={() => { }}
                     onLoadedMockSignals={() => { }}

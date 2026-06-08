@@ -31,6 +31,7 @@ interface KitConnectProps {
   hideLabel?: boolean
   targetPrefix: string | string[]
   usedAPIs: string[]
+  forceKitId?: string
   onActiveRtChanged?: (newActiveKitId: string | undefined) => void
   onLoadedMockSignals?: (signals: []) => void
   onNewLog?: (log: string) => void
@@ -50,6 +51,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       kitServerUrl,
       socketIoConfig,
       usedAPIs,
+      forceKitId,
       onActiveRtChanged,
       onLoadedMockSignals,
       onNewLog,
@@ -72,6 +74,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     const { useFetchAssets } = useAssets()
     const { data: assets } = useFetchAssets()
     const [renderRuntimes, setRenderRuntimes] = useState<Runtime[]>([])
+    const [hasLoadedKitList, setHasLoadedKitList] = useState(false)
 
     useImperativeHandle(ref, () => {
       return {
@@ -311,6 +314,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     }, [activeRtId])
 
     useEffect(() => {
+      console.log('Kit server URL:', kitServerUrl)
       if (!kitServerUrl) return
       setSocketIo(io(kitServerUrl, socketIoConfig || {}))
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -357,6 +361,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     }, [activeRtId])
 
     const onConnected = () => {
+      setHasLoadedKitList(false)
       registerClient()
       setTimeout(() => {
         if (activeRtId) {
@@ -385,15 +390,24 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     const onDisconnect = () => { }
 
     const onGetAllKitData = (data: any) => {
+      setHasLoadedKitList(false)
       const getLastPart = (kit_id: string) => {
         const parts = kit_id.split('-')
         return parts[parts.length - 1]
       }
+     
+      // If forceKitId is set, include all runtimes (even offline) so we can show their status
+      // Otherwise, filter for online runtimes only
       let kits = [...data].filter((kit: any) => {
-        return kit.is_online
+        return forceKitId ? true : kit.is_online
       })
 
+
       let sortedKits = kits.filter((rt) => {
+        // If forceKitId is set, bypass prefix filter and include all runtimes
+        if (forceKitId) {
+          return true
+        }
         const kitIdLower = rt.kit_id.toLowerCase()
         if (Array.isArray(targetPrefix)) {
           return targetPrefix.some(prefix => kitIdLower.startsWith(prefix.toLowerCase()))
@@ -602,6 +616,42 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       if (onRuntimeInfoReceived) {
         onRuntimeInfoReceived(payload.data)
       }
+    }
+
+    if (forceKitId) {
+      let statusIcon = '🟡'
+      let statusText = 'Connecting...'
+
+      // First check if socket is connected and kit list is loaded
+      if (!socketio?.connected || !hasLoadedKitList) {
+        statusIcon = '🟡'
+        statusText = 'Connecting...'
+      } else {
+        // Socket is connected and kit list is loaded, now check the specific runtime
+        const rt = allRuntimes.find(
+          (r: Runtime) => r.kit_id.toLowerCase() === forceKitId.toLowerCase(),
+        )
+        if (!rt) {
+          // Runtime not found in the list at all
+          statusIcon = '⚪'
+          statusText = 'Unreachable'
+        } else if (!rt.is_online) {
+          // Runtime found but is offline
+          statusIcon = '🔴'
+          statusText = 'Disconnected'
+        } else {
+          // Runtime found and is online
+          statusIcon = '🟢'
+          statusText = 'Connected'
+        }
+      }
+
+      return (
+        <div className="flex items-center text-xs gap-1.5">
+          <span>{statusIcon}</span>
+          <span>{statusText}</span>
+        </div>
+      )
     }
 
     return (

@@ -34,6 +34,7 @@ import type { PluginAPI } from '@/types/plugin.types'
 import type { Model, Prototype } from '@/types/model.type'
 import type { CVI, VehicleAPI, VSSRelease, ExtendedApi, ExtendedApiCreate, ExtendedApiRet } from '@/types/api.type'
 import type { List } from '@/types/common.type'
+import { useSiteConfig } from '@/utils/siteConfig'
 
 interface PluginPageRenderProps {
   plugin_id: string
@@ -65,6 +66,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
   const [loadedPluginName, setLoadedPluginName] = useState<string | null>(null)
   const [siteConfigs, setSiteConfigs] = useState<{ public: Record<string, any> }>({ public: {} })
   const [pluginMetaConfig, setPluginMetaConfig] = useState<Record<string, any>>({})
+  const runtimeServerUrl = useSiteConfig('RUNTIME_SERVER_URL', config?.runtime?.url)
 
   // Extract IDs from data
   const model_id = data?.model?.id
@@ -353,8 +355,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
   // Kit / Runtime operations
   const SIGNAL_CONFIG_PATH = config.runtime?.signalConfigPath || '/app/remote_access/signal-config.json'
   const VSS_PATH = config.runtime?.vssPath || '/app/remote_access/vss.json'
-  const KIT_SERVER_URL = config.runtime?.url || 'https://kit.digitalauto.tech'
-
+  const KIT_SERVER_URL = runtimeServerUrl || config.runtime?.url || 'https://kit.digitalauto.teaaach'
   const handleFetchSignalMapping = useCallback((kitName: string): Promise<string> => {
     return new Promise((resolve, reject) => {
       const socket = io(KIT_SERVER_URL)

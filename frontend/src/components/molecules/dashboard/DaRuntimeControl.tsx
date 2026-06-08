@@ -40,8 +40,6 @@ import PrototypeVarsWatch from './PrototypeVarsWatch'
 import DaRemoteCompileRust from '../remote-compiler/DaRemoteCompileRust'
 import { useSystemUI } from '@/hooks/useSystemUI'
 
-const DEFAULT_KIT_SERVER = 'https://kit.digitalauto.tech'
-
 const AlwaysScrollToBottom = () => {
   const elementRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
