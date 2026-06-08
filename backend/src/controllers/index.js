@@ -24,4 +24,5 @@ module.exports.dashboardTemplateController = require('./dashboardTemplate.contro
 module.exports.projectTemplateController = require('./projectTemplate.controller');
 module.exports.customApiSchemaController = require('./customApiSchema.controller');
 module.exports.customApiSetController = require('./customApiSet.controller');
+module.exports.aaosController = require('./aaos.controller');
 // Inventory controllers removed
