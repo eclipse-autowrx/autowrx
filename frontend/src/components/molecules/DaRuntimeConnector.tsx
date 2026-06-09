@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { forwardRef, useState, useEffect, useImperativeHandle } from 'react'
+import { forwardRef, useState, useEffect, useImperativeHandle, useRef, useMemo } from 'react'
 import useRuntimeStore from '@/stores/runtimeStore'
 import { shallow } from 'zustand/shallow'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
@@ -14,6 +14,7 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { useAssets } from '@/hooks/useAssets'
 
 import { io } from 'socket.io-client'
+import { useSiteConfig } from '@/utils/siteConfig'
 
 export interface Runtime {
   desc: string
@@ -68,13 +69,49 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     const [allRuntimes, setAllRuntimes] = useState<any>([])
     const [ticker, setTicker] = useState(0)
 
+    const socketioRef = useRef<any>(null)
+    const activeRtIdRef = useRef<string | undefined>('')
+    const forceKitIdRef = useRef<string | undefined>(forceKitId)
+    const wasDisconnectedRef = useRef<boolean>(false)
+    const hasLoadedKitListRef = useRef<boolean>(false)
+    socketioRef.current = socketio
+    activeRtIdRef.current = activeRtId
+    forceKitIdRef.current = forceKitId
+
     const [rawApisPackage, setRawApisPackage] = useState<any>(null)
     const { data: prototype } = useCurrentPrototype()
     const { data: currentUser } = useSelfProfileQuery()
     const { useFetchAssets } = useAssets()
     const { data: assets } = useFetchAssets()
+
+    // Read RUNTIME_SERVER_CONFIG from site config as fallback for socketIoConfig
+    const runtimeServerConfigRaw = useSiteConfig('RUNTIME_SERVER_CONFIG', '')
+    const siteConfigSocketIoConfig = useMemo(() => {
+      if (!runtimeServerConfigRaw) return {}
+      try {
+        const parsed =
+          typeof runtimeServerConfigRaw === 'string'
+            ? JSON.parse(runtimeServerConfigRaw)
+            : runtimeServerConfigRaw
+        return typeof parsed === 'object' && parsed !== null ? parsed : {}
+      } catch {
+        return {}
+      }
+    }, [runtimeServerConfigRaw])
+
+    // Use prop socketIoConfig, fallback to site config
+    const effectiveSocketIoConfig = useMemo(() => {
+      return socketIoConfig || siteConfigSocketIoConfig || {}
+    }, [socketIoConfig, siteConfigSocketIoConfig])
+
     const [renderRuntimes, setRenderRuntimes] = useState<Runtime[]>([])
     const [hasLoadedKitList, setHasLoadedKitList] = useState(false)
+    hasLoadedKitListRef.current = hasLoadedKitList
+    const [kitListRequestTime, setKitListRequestTime] = useState<number | null>(null)
+    const [kitListRequestTimeout, setKitListRequestTimeout] = useState(false)
+    const [socketConnectionTimeout, setSocketConnectionTimeout] = useState(false)
+    const kitListTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+    const socketConnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
     useImperativeHandle(ref, () => {
       return {
@@ -316,9 +353,28 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     useEffect(() => {
       console.log('Kit server URL:', kitServerUrl)
       if (!kitServerUrl) return
-      setSocketIo(io(kitServerUrl, socketIoConfig || {}))
+
+      console.log('[DaRuntimeConnector] Connecting to:', kitServerUrl, 'with config:', effectiveSocketIoConfig)
+
+      // Reset timeout flags when starting a new connection
+      if (forceKitId) {
+        setSocketConnectionTimeout(false)
+        setKitListRequestTimeout(false)
+
+        // Set socket connection timeout (if not connected within 10 seconds, mark as unreachable)
+        if (socketConnectTimeoutRef.current) {
+          clearTimeout(socketConnectTimeoutRef.current)
+        }
+        socketConnectTimeoutRef.current = setTimeout(() => {
+          console.warn('[DaRuntimeConnector] Socket connection timeout (10s) - kit-manager server unreachable')
+          setSocketConnectionTimeout(true)
+        }, 10000)
+      }
+
+      setSocketIo(io(kitServerUrl, effectiveSocketIoConfig))
+      // Only re-create socket if kitServerUrl changes, not if config changes
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [kitServerUrl, JSON.stringify(socketIoConfig)])
+    }, [kitServerUrl])
 
     useEffect(() => {
       if (!socketio) return
@@ -361,13 +417,50 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
     }, [activeRtId])
 
     const onConnected = () => {
-      setHasLoadedKitList(false)
+      // Clear socket connection timeout since we successfully connected
+      if (socketConnectTimeoutRef.current) {
+        clearTimeout(socketConnectTimeoutRef.current)
+        socketConnectTimeoutRef.current = null
+      }
+      setSocketConnectionTimeout(false)
+      console.log('[DaRuntimeConnector] Socket connected successfully')
+
       registerClient()
       setTimeout(() => {
-        if (activeRtId) {
-          socketio?.emit('messageToKit', {
-            cmd: 'list-all-kits',
-          })
+        if (activeRtIdRef.current || forceKitIdRef.current) {
+          const needsRefresh = wasDisconnectedRef.current
+          const alreadyHaveList = hasLoadedKitListRef.current
+          console.log('[DaRuntimeConnector] On connect - alreadyHaveList:', alreadyHaveList, ', needsRefresh:', needsRefresh)
+
+          // Only request kit list if we don't have it yet or we just disconnected
+          if (!alreadyHaveList || needsRefresh) {
+            console.log('[DaRuntimeConnector] Requesting kit list (alreadyHaveList:', alreadyHaveList, ', wasDisconnected:', needsRefresh, ')')
+            setHasLoadedKitList(false)
+            setKitListRequestTimeout(false)
+            const now = Date.now()
+            setKitListRequestTime(now)
+            console.log('[DaRuntimeConnector] Sending list-all-kits request at', new Date(now).toISOString())
+
+            // Clear any existing timeout
+            if (kitListTimeoutRef.current) {
+              clearTimeout(kitListTimeoutRef.current)
+            }
+
+            // Set timeout: if no response in 8 seconds, mark as timeout
+            kitListTimeoutRef.current = setTimeout(() => {
+              console.warn('[DaRuntimeConnector] list-all-kits request timeout (8s) - kit-manager may be unreachable')
+              setKitListRequestTimeout(true)
+            }, 8000)
+
+            socketio?.emit('messageToKit', {
+              cmd: 'list-all-kits',
+            })
+
+            // Reset disconnect flag after requesting
+            wasDisconnectedRef.current = false
+          } else {
+            console.log('[DaRuntimeConnector] Already have kit list, not requesting again')
+          }
         }
       }, 1000)
       if (usedAPIs) {
@@ -387,10 +480,35 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       socketio?.emit('unregister_client', {})
     }
 
-    const onDisconnect = () => { }
+    const onDisconnect = (reason?: string) => {
+      console.log('[DaRuntimeConnector] Socket disconnected - reason:', reason)
+      wasDisconnectedRef.current = true
+      if (forceKitId) {
+        console.log('[DaRuntimeConnector] Socket disconnected with forceKitId, will refresh kit list on reconnect')
+      }
+    }
 
     const onGetAllKitData = (data: any) => {
-      setHasLoadedKitList(false)
+      const receivedTime = Date.now()
+      const requestDuration = kitListRequestTime ? receivedTime - kitListRequestTime : 'N/A'
+      console.log('[DaRuntimeConnector] list-all-kits-result received in', requestDuration, 'ms:', data)
+      if (forceKitId) {
+        const kitIds = data.map((k: any) => k.kit_id)
+        console.log('[DaRuntimeConnector] Available kit IDs:', kitIds)
+        console.log('[DaRuntimeConnector] Looking for forceKitId:', forceKitId)
+        const found = data.find((k: any) => k.kit_id.toLowerCase() === forceKitId.toLowerCase())
+        console.log('[DaRuntimeConnector] Kit found:', found ? 'YES' : 'NO', found)
+      }
+
+      // Clear the timeout since we got a response
+      if (kitListTimeoutRef.current) {
+        clearTimeout(kitListTimeoutRef.current)
+        kitListTimeoutRef.current = null
+      }
+
+      setHasLoadedKitList(true)
+      hasLoadedKitListRef.current = true
+      setKitListRequestTimeout(false)
       const getLastPart = (kit_id: string) => {
         const parts = kit_id.split('-')
         return parts[parts.length - 1]
@@ -622,12 +740,26 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       let statusIcon = '🟡'
       let statusText = 'Connecting...'
 
-      // First check if socket is connected and kit list is loaded
-      if (!socketio?.connected || !hasLoadedKitList) {
+      // Check if socket connection timed out (socket itself couldn't connect)
+      if (socketConnectionTimeout) {
+        statusIcon = '⚪'
+        statusText = 'Unreachable'
+        console.log(`[${new Date().toISOString()}] [DaRuntimeConnector] Socket connection timed out - showing Unreachable status`)
+      }
+      // Check if kit list request timed out (kit-manager unreachable)
+      else if (kitListRequestTimeout) {
+        statusIcon = '⚪'
+        statusText = 'Unreachable'
+        console.log(`[${new Date().toISOString()}] [DaRuntimeConnector] Kit list request timed out - showing Unreachable status`)
+      }
+      // Check if socket is connected and kit list is loaded
+      else if (!socketio?.connected || !hasLoadedKitList) {
         statusIcon = '🟡'
         statusText = 'Connecting...'
+        console.log(`[${new Date().toISOString()}] [DaRuntimeConnector] Waiting for kit list - socketConnected:`, socketio?.connected, 'hasLoadedKitList:', hasLoadedKitList)
       } else {
         // Socket is connected and kit list is loaded, now check the specific runtime
+        console.log('[DaRuntimeConnector] Checking for runtime:', forceKitId, 'in', allRuntimes.length, 'runtimes:', allRuntimes.map((r: Runtime) => r.kit_id))
         const rt = allRuntimes.find(
           (r: Runtime) => r.kit_id.toLowerCase() === forceKitId.toLowerCase(),
         )
@@ -635,16 +767,26 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
           // Runtime not found in the list at all
           statusIcon = '⚪'
           statusText = 'Unreachable'
+          console.log('[DaRuntimeConnector] Runtime NOT FOUND - showing Unreachable for forceKitId:', forceKitId)
         } else if (!rt.is_online) {
           // Runtime found but is offline
           statusIcon = '🔴'
           statusText = 'Disconnected'
+          console.log('[DaRuntimeConnector] Runtime found but offline - showing Disconnected:', rt.kit_id)
         } else {
           // Runtime found and is online
           statusIcon = '🟢'
           statusText = 'Connected'
+          console.log('[DaRuntimeConnector] Runtime found and online - showing Connected:', rt.kit_id)
         }
       }
+
+      // Debug: Log state changes when forceKitId is set
+      useEffect(() => {
+        if (forceKitId) {
+          console.log(`[${new Date().toISOString()}] [DaRuntimeConnector] State update - socketConnected: ${socketio?.connected}, hasLoadedKitList: ${hasLoadedKitList}, socketTimeout: ${socketConnectionTimeout}, kitListTimeout: ${kitListRequestTimeout}, allRuntimes: ${allRuntimes.length}`)
+        }
+      }, [forceKitId, socketio?.connected, hasLoadedKitList, socketConnectionTimeout, kitListRequestTimeout, allRuntimes.length])
 
       return (
         <div className="flex items-center text-xs gap-1.5">
@@ -653,6 +795,20 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         </div>
       )
     }
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+      return () => {
+        if (kitListTimeoutRef.current) {
+          clearTimeout(kitListTimeoutRef.current)
+          kitListTimeoutRef.current = null
+        }
+        if (socketConnectTimeoutRef.current) {
+          clearTimeout(socketConnectTimeoutRef.current)
+          socketConnectTimeoutRef.current = null
+        }
+      }
+    }, [])
 
     return (
       <div>
