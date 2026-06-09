@@ -12,35 +12,25 @@ const config = require('./config/config');
 const logger = require('./config/logger');
 const initializeRoles = require('./scripts/initializeRoles');
 const { init } = require('./config/socket');
+const { aaosService } = require('./services');
 const { setupScheduledCheck, assignAdmins, convertLogsCap } = require('./scripts');
-const { seedPredefinedSiteConfigs } = require('./services/siteConfig.service');
-const { seedProjectTemplates } = require('./services/projectTemplate.service');
-const PREDEFINED_SITE_CONFIGS = require('./config/predefinedSiteConfigs');
-const PREDEFINED_PROJECT_TEMPLATES = require('./config/predefinedProjectTemplates');
+const { seedBrands, seedModelFeatures } = require('./scripts');
 
 // console.log('>>>>>>>>>>>>> mongo_url', config.mongoose.url);
 // console.log('>>>>>>>>>>>>> config', config);
 
-let server;
-mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
-  logger.info('Connected to MongoDB ');
-  logger.info(`🚀 Backend running in ${config.env.toUpperCase()} mode`);
-  logger.info(`📊 CORS Origins: ${config.cors.origins ? 'Custom function' : 'Default'}`);
-  logger.info(`🍪 Cookie Config: secure=${config.jwt.cookie.options.secure}, sameSite=${config.jwt.cookie.options.sameSite}, httpOnly=${config.jwt.cookie.options.httpOnly}`);
-
-  convertLogsCap();
-  initializeRoles()
-    .then(() => assignAdmins())
-    .then((adminUserId) => {
-      seedPredefinedSiteConfigs(PREDEFINED_SITE_CONFIGS, adminUserId);
-      seedProjectTemplates(PREDEFINED_PROJECT_TEMPLATES, adminUserId);
-    });
-  // config.port is loaded from the PORT environment variable, defaulting to 8080 (see backend/src/config/config.js).
-  server = app.listen(config.port, () => {
-    logger.info(`Listening to port ${config.port}`);
-  });
-  init(server);
-});
+async function ensureDataSeeded() {
+  try {
+    // Always run seeding to ensure all brands, models, and features are present
+    logger.info('Running data seeding to ensure all brands and models are available...');
+    await seedBrands();
+    await seedModelFeatures();
+    logger.info('Data seeding complete.');
+  } catch (err) {
+    logger.error('Error running data seed:', err);
+    throw err;
+  }
+}
 
 const exitHandler = () => {
   if (server) {
@@ -57,6 +47,27 @@ const unexpectedErrorHandler = (error) => {
   logger.error(error);
   exitHandler();
 };
+
+let server;
+mongoose.connect(config.mongoose.url, config.mongoose.options).then(async () => {
+  logger.info('Connected to MongoDB ');
+  logger.info(`🚀 Backend running in ${config.env.toUpperCase()} mode`);
+  logger.info(`📊 CORS Origins: ${config.cors.origins ? 'Custom function' : 'Default'}`);
+  logger.info(`🍪 Cookie Config: secure=${config.jwt.cookie.options.secure}, sameSite=${config.jwt.cookie.options.sameSite}, httpOnly=${config.jwt.cookie.options.httpOnly}`);
+
+  convertLogsCap();
+  await initializeRoles();
+  await assignAdmins();
+  await ensureDataSeeded();
+
+  // config.port is loaded from the PORT environment variable, defaulting to 8080 (see backend/src/config/config.js).
+  server = app.listen(config.port, () => {
+    logger.info(`Listening to port ${config.port}`);
+  });
+  init(server);
+  // Attach AAOS WebSocket server to the same HTTP server (path: /aaos-ws)
+  aaosService.initWebSocket(server);
+}).catch(unexpectedErrorHandler);
 
 process.on('uncaughtException', unexpectedErrorHandler);
 process.on('unhandledRejection', unexpectedErrorHandler);
