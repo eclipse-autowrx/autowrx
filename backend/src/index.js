@@ -20,6 +20,11 @@ const { seedBrands, seedModelFeatures } = require('./scripts');
 // console.log('>>>>>>>>>>>>> config', config);
 
 async function ensureDataSeeded() {
+  if (typeof seedBrands !== 'function' || typeof seedModelFeatures !== 'function') {
+    logger.warn('Data seeding scripts are not available. Skipping seed step.');
+    return;
+  }
+
   try {
     // Always run seeding to ensure all brands, models, and features are present
     logger.info('Running data seeding to ensure all brands and models are available...');
