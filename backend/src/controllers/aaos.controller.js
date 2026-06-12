@@ -8,7 +8,7 @@
 // Full AAOS flow:
 //   Plugin
 //     → POST /v2/aaos/request
-//     → Rust service (http://127.0.0.1:8080/config)
+//     → configured Rust service
 //     → POST /v2/aaos/response
 //     → WebSocket broadcast  (ws://localhost:3201/aaos-ws)
 //     → Plugin update
@@ -22,7 +22,7 @@ const { aaosService } = require('../services');
  * POST /v2/aaos/request
  *
  * Accept any JSON payload from a frontend plugin, log it, forward it to the
- * Rust bridge service at http://127.0.0.1:8080/config, and return the Rust
+ * configured Rust bridge service, and return the Rust
  * service response to the caller.
  *
  * Example request body:
@@ -42,6 +42,10 @@ const postRequest = catchAsync(async (req, res) => {
   try {
     rustData = await aaosService.forwardToRust(payload);
   } catch (err) {
+    if (err instanceof ApiError) {
+      throw err;
+    }
+
     // Surface Rust service errors as meaningful HTTP responses.
     if (err.response) {
       // Rust service replied with a non-2xx status — forward it.

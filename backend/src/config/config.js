@@ -15,7 +15,7 @@ dotenv.config({ path: path.join(__dirname, '../../.env') });
 const envVarsSchema = Joi.object()
   .keys({
     NODE_ENV: Joi.string().valid('production', 'development', 'test').required(),
-    PORT: Joi.number().default(3200),
+    PORT: Joi.number().default(3201),
     MONGODB_URL: Joi.string().default('mongodb://localhost:27017/autowrx').required().description('Mongo DB url'),
     CORS_ORIGINS: Joi.string().default('localhost:\\d+,127\\.0\\.0\\.1:\\d+').description('Allowed CORS origins (comma-separated regex patterns)'),
     // JWT
@@ -59,6 +59,12 @@ const envVarsSchema = Joi.object()
     GENAI_URL: Joi.string().description('GenAI service url'),
     // Kit server
     KIT_SERVER_URL: Joi.string().description('Kit server url'),
+    // AAOS bridge
+    AAOS_RUST_SERVICE_URL: Joi.string().default('http://127.0.0.1:8080/config').description('AAOS Rust bridge service URL'),
+    AAOS_OPERATION: Joi.string().default('enable_event').description('AAOS Rust operation'),
+    AAOS_SUBSCRIBE_METHOD_ID: Joi.number().integer().min(0).max(0xffff).default(0x0010).description('SOME/IP subscribe method ID'),
+    AAOS_TTL_MS: Joi.number().integer().min(1).default(1000).description('AAOS subscription TTL in milliseconds'),
+    AAOS_REQUEST_TIMEOUT_MS: Joi.number().integer().min(1).default(10000).description('AAOS Rust request timeout in milliseconds'),
     // Admin emails
     ADMIN_EMAILS: Joi.string().description('Admin emails'),
     ADMIN_PASSWORD: Joi.string().description('Admin password'),
@@ -130,8 +136,8 @@ const config = {
         try {
           allowedOrigins.push(new RegExp(`^http://${pattern}$`));
           allowedOrigins.push(new RegExp(`^https://${pattern}$`));
-        } catch (e) {
-          console.error(`Invalid CORS origin pattern: ${pattern}`, e);
+        } catch {
+          // Ignore invalid CORS patterns instead of failing startup.
         }
       });
 
@@ -141,7 +147,6 @@ const config = {
       if (isAllowed) {
         callback(null, true);
       } else {
-        console.log(`CORS blocked origin: ${origin}`);
         callback(new Error('Not allowed by CORS'));
       }
     },
@@ -180,6 +185,13 @@ const config = {
     log: {
       url: envVars.LOG_URL,
     },
+  },
+  aaos: {
+    rustServiceUrl: envVars.AAOS_RUST_SERVICE_URL,
+    operation: envVars.AAOS_OPERATION,
+    subscribeMethodId: envVars.AAOS_SUBSCRIBE_METHOD_ID,
+    ttlMs: envVars.AAOS_TTL_MS,
+    requestTimeoutMs: envVars.AAOS_REQUEST_TIMEOUT_MS,
   },
   openai: {
     apiKey: envVars.OPENAI_API_KEY,

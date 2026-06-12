@@ -10,6 +10,7 @@ const { SiteConfig } = require('../models');
 const { encrypt, decrypt } = require('../utils/encryption');
 const ApiError = require('../utils/ApiError');
 const httpStatus = require('http-status');
+const logger = require('../config/logger');
 
 const SSO_PROVIDERS_KEY = 'SSO_PROVIDERS';
 
@@ -26,15 +27,15 @@ const getSSOProviders = async (includeSecrets = false) => {
       scope: 'site' 
     });
     
-    console.log('SSO Config retrieved:', config ? `Found with ${config.value?.length || 0} providers` : 'Not found');
+    logger.debug('SSO config retrieved: %s', config ? `Found with ${config.value?.length || 0} providers` : 'Not found');
     
     if (!config || !config.value) {
-      console.log('No SSO providers config found in database');
+      logger.debug('No SSO providers config found in database');
       return [];
     }
     
     const providers = Array.isArray(config.value) ? config.value : [];
-    console.log(`Total providers: ${providers.length}, Enabled: ${providers.filter(p => p.enabled).length}`);
+    logger.debug('Total SSO providers: %d, enabled: %d', providers.length, providers.filter(p => p.enabled).length);
     
     if (includeSecrets) {
       return decryptProviderSecrets(providers);
@@ -46,7 +47,7 @@ const getSSOProviders = async (includeSecrets = false) => {
       return publicProvider;
     });
   } catch (error) {
-    console.error('Error fetching SSO providers:', error);
+    logger.error('Error fetching SSO providers: %s', error.message);
     return [];
   }
 };
@@ -122,7 +123,7 @@ const decryptProviderSecrets = (providers) => {
           clientSecret: decrypt(provider.clientSecret),
         };
       } catch (error) {
-        console.error(`Failed to decrypt secret for provider ${provider.id}:`, error);
+        logger.error('Failed to decrypt secret for provider %s: %s', provider.id, error.message);
         return provider;
       }
     }
@@ -137,4 +138,3 @@ module.exports = {
   encryptProviderSecrets,
   decryptProviderSecrets,
 };
-

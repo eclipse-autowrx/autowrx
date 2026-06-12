@@ -5,7 +5,7 @@ export const ADMIN = {
   password: process.env.ADMIN_PASSWORD!,
 };
 
-export const API_URL = process.env.API_URL || process.env.BASE_URL?.replace(':3210', ':3200') || '';
+export const API_URL = process.env.API_URL || process.env.BASE_URL?.replace(':3210', ':3201') || '';
 
 export const TEST_USER = {
   email: 'testuser@autowrx.test',

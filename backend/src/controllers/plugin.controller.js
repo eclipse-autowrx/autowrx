@@ -13,6 +13,7 @@ const path = require('path');
 const { spawn } = require('child_process');
 const catchAsync = require('../utils/catchAsync');
 const { pluginService } = require('../services');
+const logger = require('../config/logger');
 const pick = require('../utils/pick');
 const ApiError = require('../utils/ApiError');
 
@@ -151,8 +152,7 @@ const uploadInternalPlugin = catchAsync(async (req, res) => {
     // eslint-disable-next-line security/detect-non-literal-fs-filename
     fs.unlinkSync(req.file.path);
   } catch (e) {
-    // eslint-disable-next-line no-console
-    console.error(e);
+    logger.warn('Failed to remove uploaded plugin temp file: %s', e.message);
   }
 
   // Try to detect entry file (index.js preferred, fallback index.html)

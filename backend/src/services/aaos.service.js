@@ -7,7 +7,7 @@
 //
 //   Plugin
 //     → POST /v2/aaos/request
-//     → Rust service (http://127.0.0.1:8080/config)  [forwarded by this service]
+//     → configured Rust service  [forwarded by this service]
 //     → POST /v2/aaos/response                        [called by Rust service]
 //     → WebSocket broadcast  (ws://localhost:3201/aaos-ws)
 //     → Plugin update
@@ -17,8 +17,11 @@
 
 const axios = require('axios');
 const http = require('http');
+const httpStatus = require('http-status');
 const WebSocket = require('ws');
+const config = require('../config/config');
 const logger = require('../config/logger');
+const ApiError = require('../utils/ApiError');
 
 // Disable keep-alive so each request to the Rust service uses a fresh TCP connection.
 // Rust services (e.g. Actix-web) often close connections after responding, which causes
@@ -27,7 +30,10 @@ const logger = require('../config/logger');
 const _rustAgent = new http.Agent({ keepAlive: false });
 
 // ─── Configuration ─────────────────────────────────────────────────────────────
-const RUST_SERVICE_URL = 'http://127.0.0.1:8080/config';
+const UINT16_MAX = 0xffff;
+const HEX_FIELD_PATTERN = /^(?:0x)?[0-9a-f]+$/i;
+const MAX_NETWORK_PAYLOAD_BYTES = 1024 * 1024;
+const { rustServiceUrl, operation, subscribeMethodId, ttlMs, requestTimeoutMs } = config.aaos;
 
 // ─── In-memory store ───────────────────────────────────────────────────────────
 // Replaced on every new request/response. Resets on server restart.
@@ -37,6 +43,89 @@ let _latestResponse = null;
 // Populated once initWebSocket() is called from index.js after the HTTP server starts.
 const _clients = new Set();
 let _wss = null;
+
+const failValidation = (message) => {
+  logger.warn('[AAOS] Aborting AAOS processing: %s', message);
+  throw new ApiError(httpStatus.BAD_REQUEST, message);
+};
+
+const assertPlainObject = (value, fieldName) => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    failValidation(`Invalid AAOS payload: ${fieldName} must be a JSON object`);
+  }
+};
+
+const stringifyNetworkPayload = (payload, fieldName) => {
+  let serialized;
+  try {
+    serialized = JSON.stringify(payload);
+  } catch (err) {
+    failValidation(`Invalid AAOS payload: ${fieldName} must be JSON serializable`);
+  }
+
+  if (typeof serialized !== 'string') {
+    failValidation(`Invalid AAOS payload: ${fieldName} must be JSON serializable`);
+  }
+
+  if (Buffer.byteLength(serialized, 'utf8') > MAX_NETWORK_PAYLOAD_BYTES) {
+    failValidation(`Invalid AAOS payload: ${fieldName} exceeds maximum size`);
+  }
+
+  return serialized;
+};
+
+const parseRequiredHexUint16 = (value, fieldName) => {
+  if (typeof value !== 'string' || value.trim() === '') {
+    failValidation(`Invalid SOME/IP payload: ${fieldName} is required and must be a hex string`);
+  }
+
+  const trimmed = value.trim();
+  if (!HEX_FIELD_PATTERN.test(trimmed)) {
+    failValidation(`Invalid SOME/IP payload: ${fieldName} must be a valid hex string`);
+  }
+
+  const parsed = Number.parseInt(trimmed, 16);
+  if (!Number.isSafeInteger(parsed) || parsed < 0 || parsed > UINT16_MAX) {
+    failValidation(`Invalid SOME/IP payload: ${fieldName} must be a 16-bit unsigned integer`);
+  }
+
+  return parsed;
+};
+
+const validateRustPayload = (rustPayload) => {
+  assertPlainObject(rustPayload, 'rustPayload');
+
+  Object.entries(rustPayload).forEach(([fieldName, value]) => {
+    if (typeof value === 'number' && (!Number.isSafeInteger(value) || value < 0)) {
+      failValidation(`Invalid Rust payload: ${fieldName} must be a non-negative safe integer`);
+    }
+  });
+
+  if (rustPayload.operation !== operation) {
+    failValidation(`Invalid Rust payload: operation must be ${operation}`);
+  }
+};
+
+const validateRustResponse = (response) => {
+  if (!response || typeof response !== 'object') {
+    failValidation('Invalid Rust response: response must be an object');
+  }
+
+  if (!Number.isInteger(response.status) || response.status < 200 || response.status > 299) {
+    failValidation('Invalid Rust response: status must be a 2xx integer');
+  }
+
+  assertPlainObject(response.data, 'Rust response data');
+  stringifyNetworkPayload(response.data, 'Rust response data');
+};
+
+const getPayloadSummary = (payload) => {
+  const keys = Object.keys(payload);
+  return {
+    keys,
+    sizeBytes: Buffer.byteLength(JSON.stringify(payload), 'utf8'),
+  };
+};
 
 /**
  * Attach a WebSocket.Server to the existing Express HTTP server.
@@ -69,7 +158,7 @@ const initWebSocket = (httpServer) => {
 };
 
 /**
- * Forward a plugin request payload to the Rust service at RUST_SERVICE_URL.
+ * Forward a plugin request payload to the configured Rust service.
  *
  * Plugin sends SOME/IP identifiers as hex strings:
  *   { signalName, mode, someip: { serviceId, instanceId, methodId, operationId, eventGroupId } }
@@ -78,55 +167,63 @@ const initWebSocket = (httpServer) => {
  *   service_id  ← someip.serviceId
  *   instance_id ← someip.instanceId
  *   event_id    ← someip.operationId   (SOME/IP operation → event to subscribe to)
- *   method_id   ← someip.methodId      (explicit method, e.g. 0x0010)
+ *   method_id   ← configured subscribe method ID
  *
  * Working curl reference:
  *   {"service_id":16640,"instance_id":4096,"event_id":33808,"method_id":16,...}
  */
 const forwardToRust = async (payload) => {
-  logger.info(
-    'PLUGIN PAYLOAD:\n%s',
-    JSON.stringify(payload, null, 2)
-  );
+  assertPlainObject(payload, 'request body');
+  stringifyNetworkPayload(payload, 'request body');
 
-  const { serviceId, instanceId, operationId } = payload.someip || {};
+  assertPlainObject(payload.someip, 'someip');
+
+  const { serviceId, instanceId, operationId } = payload.someip;
+  const parsedOperationId = parseRequiredHexUint16(operationId, 'someip.operationId');
+  const payloadSummary = getPayloadSummary(payload);
 
   const rustPayload = {
-    service_id:  parseInt(serviceId, 16),
-    instance_id: parseInt(instanceId, 16),
-    event_id:    parseInt(operationId, 16), // operationId (e.g. 0x8410 → 33808)
-    method_id:   16,                        // fixed SOME/IP enable_event subscribe method (0x0010)
-    operation: 'enable_event',
-    ttl_ms: 1000,
+    service_id:  parseRequiredHexUint16(serviceId, 'someip.serviceId'),
+    instance_id: parseRequiredHexUint16(instanceId, 'someip.instanceId'),
+    event_id:    parsedOperationId,
+    method_id:   subscribeMethodId,
+    operation,
+    ttl_ms: ttlMs,
   };
 
-  logger.info(
-    'RUST PAYLOAD:\n%s',
-    JSON.stringify(rustPayload, null, 2)
-  );
+  validateRustPayload(rustPayload);
 
-  // Validate — NaN means a field was missing or malformed in the plugin payload
-  const nanFields = Object.entries(rustPayload)
-    .filter(([k, v]) => typeof v === 'number' && isNaN(v))
-    .map(([k]) => k);
-  if (nanFields.length > 0) {
-    logger.warn('[AAOS] NaN values in Rust payload for fields: %s — check PLUGIN PAYLOAD above', nanFields.join(', '));
-  }
+  logger.info(
+    '[AAOS] Forwarding request to Rust service. keys=%s sizeBytes=%d serviceId=%s instanceId=%s operationId=%s',
+    payloadSummary.keys.join(','),
+    payloadSummary.sizeBytes,
+    serviceId,
+    instanceId,
+    operationId
+  );
+  logger.debug('[AAOS] Rust payload: %s', JSON.stringify(rustPayload));
 
   try {
-    const response = await axios.post(RUST_SERVICE_URL, rustPayload, {
+    const response = await axios.post(rustServiceUrl, rustPayload, {
       headers: { 'Content-Type': 'application/json' },
-      timeout: 10000,
+      timeout: requestTimeoutMs,
       httpAgent: _rustAgent,
     });
-    logger.info('[AAOS] %s responded with status %d', RUST_SERVICE_URL, response.status);
-    logger.info('RESPONSE DATA:\n%s', JSON.stringify(response.data, null, 2));
+    validateRustResponse(response);
+    logger.info('[AAOS] Rust service responded with status %d', response.status);
+    logger.debug('[AAOS] Rust response data: %s', JSON.stringify(response.data));
     return response.data;
   } catch (err) {
-    console.error('AXIOS CODE:', err.code);
-    console.error('AXIOS MESSAGE:', err.message);
-    console.error('AXIOS STATUS:', err.response?.status);
-    console.error('AXIOS DATA:', err.response?.data);
+    if (err instanceof ApiError) {
+      throw err;
+    }
+    logger.error(
+      '[AAOS] Rust request failed. code=%s message=%s status=%s',
+      err.code,
+      err.message,
+      err.response?.status
+    );
+    logger.debug('[AAOS] Rust error response data: %s', JSON.stringify(err.response?.data));
     throw err;
   }
 };
@@ -138,16 +235,25 @@ const forwardToRust = async (payload) => {
  * @param {object} payload - Any JSON payload from the Rust service.
  */
 const storeResponseAndBroadcast = (payload) => {
+  assertPlainObject(payload, 'response body');
+  stringifyNetworkPayload(payload, 'response body');
+
   _latestResponse = { payload, timestamp: new Date().toISOString() };
-  logger.info('[AAOS] Response stored: %s', JSON.stringify(payload));
+  const payloadSummary = getPayloadSummary(payload);
+  logger.info('[AAOS] Response stored. keys=%s sizeBytes=%d', payloadSummary.keys.join(','), payloadSummary.sizeBytes);
 
   // Broadcast to all connected WebSocket clients.
   const message = JSON.stringify({ event: 'aaos:response', data: _latestResponse });
   let sent = 0;
   _clients.forEach((ws) => {
     if (ws.readyState === WebSocket.OPEN) {
-      ws.send(message);
-      sent++;
+      try {
+        ws.send(message);
+        sent++;
+      } catch (err) {
+        logger.error('[AAOS-WS] Failed to send response to client: %s', err.message);
+        _clients.delete(ws);
+      }
     }
   });
   logger.info('[AAOS-WS] Broadcasted response to %d / %d clients', sent, _clients.size);

@@ -423,7 +423,7 @@ JWT_COOKIE_DOMAIN=your-domain.com  # Production only
 ```typescript
 // configs/config.ts
 const config = {
-  serverBaseUrl: import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3200',
+  serverBaseUrl: import.meta.env.VITE_SERVER_BASE_URL || 'http://localhost:3201',
   serverVersion: import.meta.env.VITE_SERVER_VERSION || 'v2',
 }
 ```

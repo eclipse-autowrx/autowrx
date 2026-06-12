@@ -20,10 +20,10 @@ services:
       dockerfile: ./backend/Dockerfile
     image: ghcr.io/eclipse-autowrx/autowrx/autowrx:latest
     ports:
-      - "${FRONTEND_PORT:-3200}:3200"
+      - "${FRONTEND_PORT:-3201}:3201"
     environment:
       NODE_ENV: ${NODE_ENV:-production}
-      PORT: ${PORT:-3200}
+      PORT: ${PORT:-3201}
       # Always use port 27017 for internal Docker network communication
       # MONGODB_PORT (27010) is only for external host access
       MONGODB_URL: mongodb://autowrx-db:27017/${MONGODB_DATABASE:-autowrx}

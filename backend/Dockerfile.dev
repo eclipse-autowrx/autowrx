@@ -29,9 +29,8 @@ COPY --chown=node:node backend/ .
 
 USER node
 
-EXPOSE 3200
+EXPOSE 3201
 
-ENV PORT=3200
+ENV PORT=3201
 
 CMD ["yarn", "dev"]
-
