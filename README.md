@@ -10,6 +10,7 @@ AutoWRX is part of the [digital.auto](https://digital.auto) ecosystem and serves
 - **Build and test** connected vehicle app prototypes in the browser using Python, C++, or Rust
 - **Visualize** real-time signal data from vehicle runtimes
 - **Connect** to KUKSA Data Broker and other automotive services
+- **Bridge** frontend plugins to AAOS/Rust runtime services through backend APIs
 - **Showcase** customer journeys and feature demos
 - **Migrate** prototypes to production automotive runtimes
 
@@ -57,7 +58,7 @@ Quick overview:
 1. Set up MongoDB (Docker or remote)
 2. Configure backend and frontend environment variables
 3. Install dependencies and start both services
-4. Access the application at `http://localhost:3200`
+4. Access the application at `http://localhost:3201`
 
 ### For Deployment
 
@@ -68,6 +69,7 @@ If you want to deploy AutoWRX to production, see the **[Instance Setup Guide](in
 - **Vehicle API Catalogue**: Browse, explore, and enhance connected vehicle interfaces
 - **Prototyping**: Build and test SDV applications using Python and Vehicle API
 - **Real-time Visualization**: Monitor vehicle signal data in real-time
+- **AAOS Bridge**: Forward plugin SOME/IP subscription requests to a configurable Rust bridge service
 - **Plugin System**: Extensible architecture with dynamic plugin loading
 - **User Feedback**: Collect and evaluate feedback to prioritize development
 - **Containerized Execution**: Run prototype code in isolated environments

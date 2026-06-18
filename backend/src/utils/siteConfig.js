@@ -8,6 +8,7 @@
 
 const { siteConfigService } = require('../services');
 const config = require('../config/config');
+const logger = require('../config/logger');
 
 // Cache for site configs to avoid repeated database calls
 let configCache = new Map();
@@ -30,7 +31,7 @@ const getConfig = async (key, defaultValue = null) => {
     const value = await siteConfigService.getSiteConfigValue(key);
     return value !== null ? value : defaultValue;
   } catch (error) {
-    console.warn(`Failed to get site config for key "${key}":`, error.message);
+    logger.warn('Failed to get site config for key "%s": %s', key, error.message);
     return defaultValue;
   }
 };
@@ -44,7 +45,7 @@ const getConfigs = async (keys) => {
   try {
     return await siteConfigService.getSiteConfigValues(keys);
   } catch (error) {
-    console.warn('Failed to get site configs:', error.message);
+    logger.warn('Failed to get site configs: %s', error.message);
     return {};
   }
 };
@@ -71,7 +72,7 @@ const getPublicConfigs = async (forceRefresh = false) => {
     
     return configs;
   } catch (error) {
-    console.warn('Failed to get public site configs:', error.message);
+    logger.warn('Failed to get public site configs: %s', error.message);
     return configCache.get('public') || {};
   }
 };
@@ -98,7 +99,7 @@ const getAllConfigs = async (forceRefresh = false) => {
     
     return configs;
   } catch (error) {
-    console.warn('Failed to get all site configs:', error.message);
+    logger.warn('Failed to get all site configs: %s', error.message);
     return configCache.get('all') || {};
   }
 };
@@ -153,7 +154,7 @@ const getAuthConfig = async (key) => {
   const validKeys = ['PUBLIC_VIEWING', 'SELF_REGISTRATION', 'SSO_AUTO_REGISTRATION', 'PASSWORD_MANAGEMENT'];
   
   if (!validKeys.includes(key)) {
-    console.warn(`Invalid auth config key: ${key}. Valid keys are: ${validKeys.join(', ')}`);
+    logger.warn('Invalid auth config key: %s. Valid keys are: %s', key, validKeys.join(', '));
     return false;
   }
 
@@ -175,10 +176,10 @@ const getAuthConfig = async (key) => {
     const strictAuth = config.strictAuth !== undefined ? config.strictAuth : true;
     const fallbackValue = !strictAuth; // Invert: false strict = true open
     
-    console.info(`Auth config "${key}" not found in database, using STRICT_AUTH fallback: ${fallbackValue}`);
+    logger.info('Auth config "%s" not found in database, using STRICT_AUTH fallback: %s', key, fallbackValue);
     return fallbackValue;
   } catch (error) {
-    console.warn(`Failed to get auth config "${key}":`, error.message);
+    logger.warn('Failed to get auth config "%s": %s', key, error.message);
     // On error, default to closed/secure mode
     return false;
   }
@@ -194,7 +195,7 @@ const getAuthConfigSync = (key, defaultValue = false) => {
   const validKeys = ['PUBLIC_VIEWING', 'SELF_REGISTRATION', 'SSO_AUTO_REGISTRATION', 'PASSWORD_MANAGEMENT'];
   
   if (!validKeys.includes(key)) {
-    console.warn(`Invalid auth config key: ${key}`);
+    logger.warn('Invalid auth config key: %s', key);
     return defaultValue;
   }
 

@@ -16,7 +16,7 @@ This guide will help you set up and run the AutoWRX project in **development mod
 
 AutoWRX consists of two separate services that run in parallel during development:
 
-- **Backend**: Node.js/Express API server (port 3200)
+- **Backend**: Node.js/Express API server (port 3201)
 - **Frontend**: React/Vite development server (port 3210)
 
 ### Important: Development vs. Deployment
@@ -98,7 +98,7 @@ yarn install
 cp .env.example .env
 
 # The default .env should work for local development
-# VITE_SERVER_BASE_URL=http://localhost:3200
+# VITE_SERVER_BASE_URL=http://localhost:3201
 # VITE_SERVER_VERSION=v2
 ```
 
@@ -129,7 +129,7 @@ The backend uses `backend/.env` for configuration. Key variables:
 ```bash
 # Environment
 NODE_ENV=development
-PORT=3200
+PORT=3201
 
 # Database
 MONGODB_URL=mongodb://localhost:27017/autowrx
@@ -159,7 +159,7 @@ The frontend uses `frontend/.env` for configuration. Key variables:
 
 ```bash
 # Backend API URL
-VITE_SERVER_BASE_URL=http://localhost:3200
+VITE_SERVER_BASE_URL=http://localhost:3201
 
 # API Version
 VITE_SERVER_VERSION=v2
@@ -219,14 +219,14 @@ In development, the backend and frontend run as separate services with a proxy c
 │                    Browser                              │
 └─────────────────────────────────────────────────────────┘
                           │
-                          │ http://localhost:3200
+                          │ http://localhost:3201
                           │
         ┌─────────────────┴─────────────────┐
         │                                   │
         ▼                                   ▼
 ┌──────────────┐                    ┌──────────────┐
 │   Backend    │                    │   Frontend   │
-│  (Port 3200) │◄──────────────────►│  (Port 3210) │
+│  (Port 3201) │◄──────────────────►│  (Port 3210) │
 └──────────────┘                    └──────────────┘
         │                                   │
         │                                   │
@@ -249,7 +249,7 @@ In development, the backend and frontend run as separate services with a proxy c
 ### Request Flow
 
 1. **API Requests** (`/v2/*`, `/static/*`, `/imgs/*`, `/d/*`):
-   - Frontend proxies these to Backend (port 3200)
+   - Frontend proxies these to Backend (port 3201)
    - Backend handles the request and returns the response
 
 2. **Frontend Routes** (everything else):
@@ -257,7 +257,7 @@ In development, the backend and frontend run as separate services with a proxy c
    - Frontend serves the React application
 
 3. **Unified Access**:
-   - You can access the full application at `http://localhost:3200`
+   - You can access the full application at `http://localhost:3201`
    - The backend automatically proxies frontend requests
 
 ### Why This Setup?
@@ -265,13 +265,13 @@ In development, the backend and frontend run as separate services with a proxy c
 - **Hot Reload**: Both services support hot-reload for fast development
 - **Independent Development**: Frontend and backend can be developed separately
 - **Easy Debugging**: You can debug each service independently
-- **Production-like**: The unified access point (`localhost:3200`) mimics production behavior
+- **Production-like**: The unified access point (`localhost:3201`) mimics production behavior
 
 ## Access Points
 
 Once both services are running, you can access:
 
-- **Unified Application**: http://localhost:3200
+- **Unified Application**: http://localhost:3201
   - This is the main entry point
   - Backend proxies frontend requests automatically
 
@@ -279,11 +279,11 @@ Once both services are running, you can access:
   - Direct access to the Vite dev server
   - Useful for frontend-only development
 
-- **Backend API Only**: http://localhost:3200/v2
+- **Backend API Only**: http://localhost:3201/v2
   - Direct API access
   - Useful for testing API endpoints
 
-- **API Documentation**: http://localhost:3200/api-docs
+- **API Documentation**: http://localhost:3201/api-docs
   - Swagger/OpenAPI documentation (if enabled)
 
 ## Troubleshooting
@@ -304,12 +304,12 @@ Once both services are running, you can access:
    ```
 4. For remote MongoDB, check network connectivity and credentials
 
-**Issue:** `Port 3200 already in use`
+**Issue:** `Port 3201 already in use`
 
 **Solutions:**
 1. Find what's using the port:
    ```bash
-   lsof -i :3200
+    lsof -i :3201
    ```
 2. Stop the conflicting process, or change `PORT` in `backend/.env`
 
@@ -327,8 +327,8 @@ Once both services are running, you can access:
 **Issue:** `Cannot connect to backend API`
 
 **Solutions:**
-1. Ensure backend is running on port 3200
-2. Check `VITE_SERVER_BASE_URL` in `frontend/.env` is `http://localhost:3200`
+1. Ensure backend is running on port 3201
+2. Check `VITE_SERVER_BASE_URL` in `frontend/.env` is `http://localhost:3201`
 3. Check browser console for CORS errors (may need to adjust `CORS_ORIGINS` in backend)
 
 ### MongoDB Issues

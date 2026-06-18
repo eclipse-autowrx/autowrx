@@ -8,6 +8,7 @@
 
 const crypto = require('crypto');
 const config = require('../config/config');
+const logger = require('../config/logger');
 
 const ALGORITHM = 'aes-256-cbc';
 const ENCRYPTION_KEY = crypto.createHash('sha256').update(config.jwt.secret).digest();
@@ -30,7 +31,7 @@ const encrypt = (text) => {
     // Return IV and encrypted data separated by colon
     return `${iv.toString('hex')}:${encrypted}`;
   } catch (error) {
-    console.error('Encryption error:', error);
+    logger.error('Encryption error: %s', error.message);
     throw new Error('Failed to encrypt data');
   }
 };
@@ -58,7 +59,7 @@ const decrypt = (encryptedText) => {
     
     return decrypted;
   } catch (error) {
-    console.error('Decryption error:', error);
+    logger.error('Decryption error: %s', error.message);
     throw new Error('Failed to decrypt data');
   }
 };
@@ -67,4 +68,3 @@ module.exports = {
   encrypt,
   decrypt,
 };
-

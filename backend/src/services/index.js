@@ -31,4 +31,5 @@ module.exports.dashboardTemplateService = require('./dashboardTemplate.service')
 module.exports.projectTemplateService = require('./projectTemplate.service');
 module.exports.customApiSchemaService = require('./customApiSchema.service');
 module.exports.customApiSetService = require('./customApiSet.service');
+module.exports.aaosService = require('./aaos.service');
 // Inventory services removed

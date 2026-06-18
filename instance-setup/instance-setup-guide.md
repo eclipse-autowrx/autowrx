@@ -53,7 +53,7 @@ nano .env.prod  # or use your preferred editor
 NAME=autowrx
 
 # Port mapping
-FRONTEND_PORT=3200
+FRONTEND_PORT=3201
 
 # Security - CHANGE THESE!
 JWT_SECRET=your-secure-random-secret-here

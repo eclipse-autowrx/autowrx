@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 const { Model } = require('mongoose');
+const logger = require('../config/logger');
 
 /**
  * Helper function to safely retrieve a value from a nested object path.
@@ -148,7 +149,7 @@ class ParsedJsonPropertiesMongooseDecorator {
       } else {
         // The value at the path exists but is not a string. It doesn't need JSON parsing.
         // Log a warning.
-        console.warn(`Skipping field path "${field}": Value is not a string (type: ${typeof fieldData}).`);
+        logger.warn('Skipping field path "%s": Value is not a string (type: %s).', field, typeof fieldData);
       }
     } // End loop through fields
 

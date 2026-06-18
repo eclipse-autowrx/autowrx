@@ -15,6 +15,7 @@ const compression = require('compression');
 const passport = require('passport');
 const httpStatus = require('http-status');
 const config = require('./config/config');
+const logger = require('./config/logger');
 const morgan = require('./config/morgan');
 const { jwtStrategy } = require('./config/passport');
 const routesV2 = require('./routes/v2');
@@ -148,11 +149,11 @@ app.get('/vss/:version/:filename', (req, res, next) => {
   
   const filePath = path.join(__dirname, `../data/${version}.json`);
   
-  console.log(`[VSS Route] Requested: ${req.path}, Version: ${version}, Filename: ${filename}, File: ${filePath}, Exists: ${fs.existsSync(filePath)}`);
+  logger.debug('[VSS Route] Requested: %s, Version: %s, Filename: %s, File: %s', req.path, version, filename, filePath);
   
   // Check if file exists
   if (!fs.existsSync(filePath)) {
-    console.log(`[VSS Route] File not found: ${filePath}`);
+    logger.warn('[VSS Route] File not found: %s', filePath);
     return res.status(404).json({ error: `VSS version ${version} not found` });
   }
   
@@ -160,12 +161,12 @@ app.get('/vss/:version/:filename', (req, res, next) => {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=3600'); // 1 hour cache
   
-  console.log(`[VSS Route] Serving file: ${filePath}`);
+  logger.debug('[VSS Route] Serving file: %s', filePath);
   
   // Send the file
   res.sendFile(filePath, (err) => {
     if (err) {
-      console.error(`[VSS Route] Error sending file:`, err);
+      logger.error('[VSS Route] Error sending file: %s', err.message);
       next(err);
     }
   });
@@ -195,7 +196,7 @@ if (config.env === 'development') {
     changeOrigin: true,
     ws: true,
     onError: (err, req, res) => {
-      console.log('Frontend proxy error:', err.message);
+      logger.warn('Frontend proxy error: %s', err.message);
       res.status(503).send('Frontend service unavailable');
     }
   }));
@@ -236,7 +237,7 @@ if (config.env === 'development') {
         }
       } catch (err) {
         // Silently fail if setting headers fails - Express will use default
-        console.error('Error setting headers for static file:', err.message);
+        logger.warn('Error setting headers for static file: %s', err.message);
       }
     }
   }));
@@ -290,13 +291,5 @@ app.use(errorConverter);
 
 // handle error
 app.use(errorHandler);
-
-// Test function
-// (async () => {
-//   try {
-//   } catch (error) {
-//     console.log(error);
-//   }
-// })();
 
 module.exports = app;
