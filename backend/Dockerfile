@@ -50,9 +50,8 @@ COPY --from=frontend-builder --chown=node:node /app/backend/static/frontend-dist
 
 USER node
 
-EXPOSE 3200
+EXPOSE 3201
 
-ENV PORT=3200
+ENV PORT=3201
 
 CMD ["yarn", "prod:test"]
-

@@ -200,7 +200,7 @@ const callMsGraph = async (accessToken, providerId = null) => {
       userPhotoUrl = URL.createObjectURL(blob);
     })
     .catch((error) => {
-      console.error('Error fetching user photo:', error);
+      logger.warn('Error fetching user photo: %s', error.message);
     });
 
   return { ...userData, userPhotoUrl, providerId };

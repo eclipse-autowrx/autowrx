@@ -32,37 +32,37 @@ export default defineConfig({
   server: {
     proxy: {
       '/v2': {
-        target: 'http://localhost:3200',
+        target: 'http://localhost:3201',
         changeOrigin: true,
         secure: false,
       },
       '/d': {
-        target: 'http://localhost:3200',
+        target: 'http://localhost:3201',
         changeOrigin: true,
         secure: false,
       },
       '/static': {
-        target: 'http://localhost:3200',
+        target: 'http://localhost:3201',
         changeOrigin: true,
         secure: false,
       },
       '/plugin': {
-        target: 'http://localhost:3200',
+        target: 'http://localhost:3201',
         changeOrigin: true,
         secure: false,
       },
       '/images': {
-        target: 'http://localhost:3200',
+        target: 'http://localhost:3201',
         changeOrigin: true,
         secure: false,
       },
       '/builtin-widgets': {
-        target: 'http://localhost:3200',
+        target: 'http://localhost:3201',
         changeOrigin: true,
         secure: false,
       },
       '/vss': {
-        target: 'http://localhost:3200',
+        target: 'http://localhost:3201',
         changeOrigin: true,
         secure: false,
       },

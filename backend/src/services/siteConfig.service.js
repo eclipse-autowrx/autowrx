@@ -13,6 +13,7 @@ const fs = require('fs');
 const path = require('path');
 const ssoService = require('./sso.service');
 const { encrypt, decrypt } = require('../utils/encryption');
+const logger = require('../config/logger');
 
 /**
  * Encrypt sensitive fields in EMAIL_CONFIG value before storage.
@@ -317,7 +318,7 @@ const loadDefaultConfigValue = (key) => {
 
   try {
     if (!fs.existsSync(defaultFilePath)) {
-      console.warn(`Default file not found for config key "${key}" at path: ${defaultFilePath}`);
+      logger.warn('Default file not found for config key "%s" at path: %s', key, defaultFilePath);
       return null;
     }
 
@@ -331,7 +332,7 @@ const loadDefaultConfigValue = (key) => {
       isDefault: true, // Flag to indicate this is a default value
     };
   } catch (error) {
-    console.error(`Error loading default config file for key "${key}":`, error.message);
+    logger.error('Error loading default config file for key "%s": %s', key, error.message);
     return null;
   }
 };
@@ -862,9 +863,9 @@ const seedPredefinedSiteConfigs = async (predefinedConfigs, systemUserId) => {
       );
     }
 
-    console.log(`[SiteConfig] Seeded ${predefinedConfigs.length} predefined configs (skipped existing).`);
+    logger.info('[SiteConfig] Seeded %d predefined configs (skipped existing).', predefinedConfigs.length);
   } catch (error) {
-    console.error('[SiteConfig] Failed to seed predefined configs:', error.message);
+    logger.error('[SiteConfig] Failed to seed predefined configs: %s', error.message);
   }
 };
 

@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 const { getAuthConfig } = require('../utils/siteConfig');
+const logger = require('../config/logger');
 
 /**
  * Middleware to preload authentication configs and make them available in req.authConfig
@@ -32,7 +33,7 @@ const loadAuthConfigs = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error('Failed to load auth configs:', error);
+    logger.error('Failed to load auth configs: %s', error.message);
     // On error, use secure defaults (all false)
     req.authConfig = {
       PUBLIC_VIEWING: false,
@@ -45,4 +46,3 @@ const loadAuthConfigs = async (req, res, next) => {
 };
 
 module.exports = loadAuthConfigs;
-
