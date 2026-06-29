@@ -709,6 +709,20 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       }
     }
 
+    // Cleanup timeout on unmount
+    useEffect(() => {
+      return () => {
+        if (kitListTimeoutRef.current) {
+          clearTimeout(kitListTimeoutRef.current)
+          kitListTimeoutRef.current = null
+        }
+        if (socketConnectTimeoutRef.current) {
+          clearTimeout(socketConnectTimeoutRef.current)
+          socketConnectTimeoutRef.current = null
+        }
+      }
+    }, [])
+
     if (forceKitId) {
       let statusIcon = '🟡'
       let statusText = 'Connecting...'
@@ -754,20 +768,6 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         </div>
       )
     }
-
-    // Cleanup timeout on unmount
-    useEffect(() => {
-      return () => {
-        if (kitListTimeoutRef.current) {
-          clearTimeout(kitListTimeoutRef.current)
-          kitListTimeoutRef.current = null
-        }
-        if (socketConnectTimeoutRef.current) {
-          clearTimeout(socketConnectTimeoutRef.current)
-          socketConnectTimeoutRef.current = null
-        }
-      }
-    }, [])
 
     return (
       <div>
