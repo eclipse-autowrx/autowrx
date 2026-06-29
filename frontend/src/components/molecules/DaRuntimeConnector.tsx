@@ -369,7 +369,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       setSocketIo(io(kitServerUrl, effectiveSocketIoConfig))
       // Only re-create socket if kitServerUrl changes, not if config changes
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [kitServerUrl])
+    }, [kitServerUrl, JSON.stringify(socketIoConfig)])
 
     useEffect(() => {
       if (!socketio) return
