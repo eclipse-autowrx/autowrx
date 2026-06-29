@@ -355,7 +355,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
   // Kit / Runtime operations
   const SIGNAL_CONFIG_PATH = config.runtime?.signalConfigPath || '/app/remote_access/signal-config.json'
   const VSS_PATH = config.runtime?.vssPath || '/app/remote_access/vss.json'
-  const KIT_SERVER_URL = runtimeServerUrl || config.runtime?.url || 'https://kit.digitalauto.teaaach'
+  const KIT_SERVER_URL = runtimeServerUrl || config.runtime?.url || 'https://kit.digitalauto.tech'
   const handleFetchSignalMapping = useCallback((kitName: string): Promise<string> => {
     return new Promise((resolve, reject) => {
       const socket = io(KIT_SERVER_URL)
