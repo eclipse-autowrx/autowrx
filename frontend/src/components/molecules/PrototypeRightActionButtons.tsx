@@ -6,8 +6,14 @@ import { renderTabIcon } from '@/lib/tabUtils'
 import { cn } from '@/lib/utils'
 import { useNavigate, useParams } from 'react-router-dom'
 
+const DEFAULT_STAGING_TAB: TabConfig = {
+  builtin: 'staging',
+  label: 'Staging',
+  type: 'builtin',
+}
+
 export interface PrototypeRightActionButtonProps {
-  tabs: TabConfig[]
+  tabs?: TabConfig[]
   onClick?: (tabConfig: TabConfig) => void
 }
 
@@ -83,10 +89,18 @@ const PrototypeRightActionButtons = ({
 }: PrototypeRightActionButtonProps) => {
   const { model_id, prototype_id } = useParams()
   const navigate = useNavigate()
-  const visibleTabs = tabs.filter((t) => !t.hidden)
+  const rawTabs = tabs ?? []
+  const visibleTabs = rawTabs.filter((t) => !t.hidden)
+  const hasStagingEntry = rawTabs.some((t) => t.builtin === 'staging')
+  const displayTabs =
+    tabs === undefined
+      ? [DEFAULT_STAGING_TAB]
+      : hasStagingEntry
+        ? visibleTabs
+        : [DEFAULT_STAGING_TAB, ...visibleTabs]
   return (
     <div className="flex items-center gap-2">
-      {visibleTabs.map((tabConfig) => {
+      {displayTabs.map((tabConfig) => {
         return (
           <PrototypeRightActionButton
             key={`right-actions-btn-${JSON.stringify(tabConfig)}`}

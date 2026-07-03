@@ -74,7 +74,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
   const pluginId = searchParams.get('plugid')
   const navigate = useNavigate()
   const { data: user } = useSelfProfileQuery()
-  const { data: model } = useCurrentModel()
+  const { data: model, isLoading: isModelLoading } = useCurrentModel()
   const { data: fetchedPrototype, isLoading: isPrototypeLoading } =
     useCurrentPrototype()
   const [prototype, setActivePrototype] = useModelStore((state) => [
@@ -415,7 +415,11 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           <div className="grow"></div>
           <PrototypeRightAction
             prototype={prototype}
-            actions={model?.custom_template?.prototype_right_nav_buttons || []}
+            actions={
+              isModelLoading
+                ? undefined
+                : (model?.custom_template?.prototype_right_nav_buttons ?? [])
+            }
           />
           {canConfigurePrototypeAddons && (
             <DropdownMenu open={moreMenuOpen} onOpenChange={setMoreMenuOpen}>

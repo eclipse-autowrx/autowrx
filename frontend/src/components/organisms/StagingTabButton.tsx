@@ -25,7 +25,7 @@ const StagingTabButton = ({
   const stagingIcon = stagingConfig.hideIcon ? null : stagingConfig.iconSvg ? (
     renderTabIcon({ iconSvg: stagingConfig.iconSvg }, null)
   ) : (
-    <span className="size-5 mr-2">
+    <span className="size-5 mr-2 grid place-items-center">
       <TbListCheck />
     </span>
   )

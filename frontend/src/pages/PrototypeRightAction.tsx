@@ -8,7 +8,7 @@ import { useState } from 'react'
 
 export interface PrototypeRightActionProps {
   prototype: Prototype
-  actions: TabConfig[]
+  actions?: TabConfig[]
 }
 
 const PrototypeRightAction = ({
@@ -18,7 +18,7 @@ const PrototypeRightAction = ({
   const [openDialog, setOpenDialog] = useState('')
   return (
     <>
-      {actions.map((action) => {
+      {actions?.map((action) => {
         if (action.openMode === 'page') return null
         const dialogKey = JSON.stringify(action)
         return (

@@ -44,6 +44,7 @@ import {
   StagingConfig,
   RightNavPluginButton,
   TabsBorderRadius,
+  ensureStagingRightNavButton,
 } from '@/components/organisms/CustomTabEditor'
 import DOMPurify from 'dompurify'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
@@ -169,19 +170,20 @@ export default function TemplateForm({
         ? cfg.prototype_right_nav_buttons
         : []
       const stagingItem = rightNavRaw.find((b) => b.builtin === 'staging')
-      if (stagingItem) {
-        setPrototypeStagingConfig({
-          label: stagingItem.label,
-          iconSvg: stagingItem.iconSvg,
-          hideIcon: stagingItem.hideIcon,
-          variant: stagingItem.variant,
-          hidden: stagingItem.hidden,
-          corners: stagingItem.corners,
-        })
-      } else {
-        setPrototypeStagingConfig({})
-      }
-      setPrototypeRightNavButtons(rightNavRaw)
+      const stagingItemConfig: StagingConfig = stagingItem
+        ? {
+            label: stagingItem.label,
+            iconSvg: stagingItem.iconSvg,
+            hideIcon: stagingItem.hideIcon,
+            variant: stagingItem.variant,
+            hidden: stagingItem.hidden,
+            corners: stagingItem.corners,
+          }
+        : {}
+      setPrototypeStagingConfig(stagingItemConfig)
+      setPrototypeRightNavButtons(
+        ensureStagingRightNavButton(rightNavRaw, stagingItemConfig),
+      )
     } else {
       setForm({
         name: '',
@@ -193,7 +195,7 @@ export default function TemplateForm({
       setModelTabs([])
       setPrototypeTabs([])
       setPrototypeStagingConfig({})
-      setPrototypeRightNavButtons([])
+      setPrototypeRightNavButtons(ensureStagingRightNavButton([]))
       setPrototypeTabsVariant('tab')
       setPrototypeTabsBorderRadius('round')
       setLocalSidebarPlugin(null)
@@ -219,7 +221,7 @@ export default function TemplateForm({
         setModelTabs([])
         setPrototypeTabs([])
         setPrototypeStagingConfig({})
-        setPrototypeRightNavButtons([])
+        setPrototypeRightNavButtons(ensureStagingRightNavButton([]))
         setPrototypeTabsBorderRadius('round')
         setLocalSidebarPlugin(null)
       }
@@ -269,7 +271,21 @@ export default function TemplateForm({
       )
         ? fullConfig.prototype_right_nav_buttons
         : []
-      setPrototypeRightNavButtons(rightNavRaw2)
+      const stagingItem2 = rightNavRaw2.find((b) => b.builtin === 'staging')
+      const stagingItemConfig2: StagingConfig = stagingItem2
+        ? {
+            label: stagingItem2.label,
+            iconSvg: stagingItem2.iconSvg,
+            hideIcon: stagingItem2.hideIcon,
+            variant: stagingItem2.variant,
+            hidden: stagingItem2.hidden,
+            corners: stagingItem2.corners,
+          }
+        : {}
+      setPrototypeStagingConfig(stagingItemConfig2)
+      setPrototypeRightNavButtons(
+        ensureStagingRightNavButton(rightNavRaw2, stagingItemConfig2),
+      )
     }
   }, [open, isCreate, initialData])
 

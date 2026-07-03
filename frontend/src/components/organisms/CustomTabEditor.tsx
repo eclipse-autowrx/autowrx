@@ -88,6 +88,30 @@ export interface RightNavPluginButton {
   corners?: 'none' | 'round' | 'full'
 }
 
+export const DEFAULT_STAGING_RIGHT_NAV_BUTTON: RightNavPluginButton = {
+  builtin: 'staging',
+  label: 'Staging',
+}
+
+export function ensureStagingRightNavButton(
+  buttons: RightNavPluginButton[] = [],
+  stagingConfig?: StagingConfig,
+): RightNavPluginButton[] {
+  if (buttons.some((b) => b.builtin === 'staging')) return buttons
+  return [
+    {
+      ...DEFAULT_STAGING_RIGHT_NAV_BUTTON,
+      label: stagingConfig?.label || DEFAULT_STAGING_RIGHT_NAV_BUTTON.label,
+      iconSvg: stagingConfig?.iconSvg,
+      hideIcon: stagingConfig?.hideIcon,
+      variant: stagingConfig?.variant,
+      corners: stagingConfig?.corners,
+      hidden: stagingConfig?.hidden,
+    },
+    ...buttons,
+  ]
+}
+
 export type TabsBorderRadius = 'none' | 'round' | 'full'
 
 interface CustomTabEditorProps {
@@ -140,7 +164,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
     useState<TabsBorderRadius>(tabsBorderRadius || 'round')
   const [localRightNavPlugins, setLocalRightNavPlugins] = useState<
     RightNavPluginButton[]
-  >(rightNavButtons || [])
+  >(() => ensureStagingRightNavButton(rightNavButtons, stagingConfig))
   // Sidebar plugin state
   const [localSidebarPlugin, setLocalSidebarPlugin] = useState<string | null>(
     sidebarPlugin || null,
@@ -162,7 +186,9 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
       setLocalSidebarPlugin(sidebarPlugin || null)
       setLocalTabsVariant(tabsVariant || 'tab')
       setLocalTabsBorderRadius(tabsBorderRadius || 'round')
-      setLocalRightNavPlugins(rightNavButtons || [])
+      setLocalRightNavPlugins(
+        ensureStagingRightNavButton(rightNavButtons, stagingConfig),
+      )
       setActiveDialogTab('tabs')
       setEditingIndex(null)
       setEditingLabel('')
@@ -263,9 +289,10 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
       const borderRadiusChanged =
         localTabsBorderRadius !== (tabsBorderRadius || 'round')
       const mergedRightNav: RightNavPluginButton[] = [...localRightNavPlugins]
-      const originalRightNav: RightNavPluginButton[] = [
-        ...(rightNavButtons || []),
-      ]
+      const originalRightNav = ensureStagingRightNavButton(
+        rightNavButtons,
+        stagingConfig,
+      )
       const rightNavChanged =
         JSON.stringify(localRightNavPlugins) !==
         JSON.stringify(originalRightNav)
@@ -301,7 +328,9 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
     setLocalSidebarPlugin(sidebarPlugin || null)
     setLocalTabsVariant(tabsVariant || 'tab')
     setLocalTabsBorderRadius(tabsBorderRadius || 'round')
-    setLocalRightNavPlugins(rightNavButtons || [])
+    setLocalRightNavPlugins(
+      ensureStagingRightNavButton(rightNavButtons, stagingConfig),
+    )
     setEditingIndex(null)
     setEditingLabel('')
     setEditingIconSvg('')
