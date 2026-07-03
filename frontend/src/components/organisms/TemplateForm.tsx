@@ -39,6 +39,7 @@ import {
 import { MdOutlineDoubleArrow } from 'react-icons/md'
 import { toast } from 'react-toastify'
 import { listPlugins, type Plugin } from '@/services/plugin.service'
+import { getTabConfig } from '@/components/molecules/PrototypeTabs'
 import {
   TabConfig,
   StagingConfig,
@@ -53,21 +54,6 @@ import {
   Droppable,
   DropResult,
 } from '@hello-pangea/dnd'
-
-// Template-safe normalizer: preserves full TabConfig without injecting default builtin tabs.
-// Used only inside TemplateForm so that the saved template contains exactly what was configured,
-// and builtin tabs that are not explicitly listed are NOT auto-added on the new model.
-const normalizeTabsForTemplate = (tabs?: any[]): TabConfig[] => {
-  if (!tabs || tabs.length === 0) return []
-  // Already new format (has 'type' field) — return as-is
-  if ('type' in tabs[0]) return tabs as TabConfig[]
-  // Old format ({ label, plugin }): convert to custom type only, no builtin defaults
-  return tabs.map((tab) => ({
-    type: 'custom' as const,
-    label: tab.label || '',
-    plugin: tab.plugin || '',
-  }))
-}
 
 type Props = {
   templateId?: string
@@ -154,11 +140,7 @@ export default function TemplateForm({
             }))
           : [],
       )
-      setPrototypeTabs(
-        Array.isArray(cfg.prototype_tabs)
-          ? normalizeTabsForTemplate(cfg.prototype_tabs)
-          : [],
-      )
+      setPrototypeTabs(getTabConfig(cfg.prototype_tabs))
       setPrototypeTabsVariant(cfg.prototype_tabs_variant || 'tab')
       setPrototypeTabsBorderRadius(cfg.prototype_tabs_border_radius || 'round')
       setLocalSidebarPlugin(cfg.prototype_sidebar_plugin || null)
@@ -191,7 +173,7 @@ export default function TemplateForm({
         config: {},
       })
       setModelTabs([])
-      setPrototypeTabs([])
+      setPrototypeTabs(getTabConfig([]))
       setPrototypeStagingConfig({})
       setPrototypeRightNavButtons([])
       setPrototypeTabsVariant('tab')
@@ -217,7 +199,7 @@ export default function TemplateForm({
           config: {},
         })
         setModelTabs([])
-        setPrototypeTabs([])
+        setPrototypeTabs(getTabConfig([]))
         setPrototypeStagingConfig({})
         setPrototypeRightNavButtons([])
         setPrototypeTabsBorderRadius('round')
@@ -257,7 +239,7 @@ export default function TemplateForm({
         })),
       )
       // Preserve full TabConfig structure (type, key, hidden) without adding default builtin tabs
-      setPrototypeTabs(normalizeTabsForTemplate(prototypeTabsFromConfig))
+      setPrototypeTabs(getTabConfig(prototypeTabsFromConfig))
       setPrototypeTabsVariant(fullConfig.prototype_tabs_variant || 'tab')
       setPrototypeTabsBorderRadius(
         fullConfig.prototype_tabs_border_radius || 'round',

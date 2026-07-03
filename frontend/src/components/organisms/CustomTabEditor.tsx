@@ -55,7 +55,7 @@ export interface CustomTab {
 
 export interface TabConfig {
   type: 'builtin' | 'custom'
-  key?: string // For builtin: 'overview' | 'journey' | 'code' | 'dashboard'
+  key?: string // For builtin: 'overview' | 'journey' | 'code' | 'dashboard' | 'feedback'
   label: string
   plugin?: string // For custom tabs only
   hidden?: boolean // If true, tab is hidden

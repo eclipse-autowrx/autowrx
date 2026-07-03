@@ -29,13 +29,31 @@ interface PrototypeTabsProps {
 
 
 // Default builtin tabs
-const DEFAULT_BUILTIN_TABS: TabConfig[] = [
+export const DEFAULT_BUILTIN_TABS: TabConfig[] = [
   { type: 'builtin', key: 'overview', label: 'Overview' },
   { type: 'builtin', key: 'journey', label: 'Customer Journey' },
   { type: 'builtin', key: 'code', label: 'SDV Code' },
   { type: 'builtin', key: 'dashboard', label: 'Dashboard' },
   { type: 'builtin', key: 'feedback', label: 'Feedback' },
 ]
+
+export function ensureDefaultBuiltinTabs(tabs: TabConfig[]): TabConfig[] {
+  const customTabs = tabs.filter((t) => t.type === 'custom')
+  const existingBuiltins = tabs.filter((t) => t.type === 'builtin')
+  const existingByKey = new Map(existingBuiltins.map((b) => [b.key, b]))
+
+  const mergedBuiltins = DEFAULT_BUILTIN_TABS.map(
+    (defaultTab) => existingByKey.get(defaultTab.key) ?? defaultTab,
+  )
+
+  const allPresent =
+    existingBuiltins.length === DEFAULT_BUILTIN_TABS.length &&
+    DEFAULT_BUILTIN_TABS.every((d) => existingByKey.has(d.key))
+
+  if (allPresent) return tabs
+
+  return [...mergedBuiltins, ...customTabs]
+}
 
 // Migration helper: convert old format to new format
 export const migrateTabConfig = (oldTabs?: Array<{ label: string; plugin: string }>): TabConfig[] => {
@@ -46,7 +64,7 @@ export const migrateTabConfig = (oldTabs?: Array<{ label: string; plugin: string
   // Check if it's already in new format (has 'type' property)
   const firstTab = oldTabs[0] as any
   if (firstTab && 'type' in firstTab) {
-    return oldTabs as TabConfig[]
+    return ensureDefaultBuiltinTabs(oldTabs as TabConfig[])
   }
 
   // Old format: prepend default builtin tabs.
