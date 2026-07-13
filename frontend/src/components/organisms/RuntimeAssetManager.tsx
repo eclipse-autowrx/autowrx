@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { useState, useEffect } from "react"
+import { useState, useMemo } from "react"
 import { useAssets } from '@/hooks/useAssets'
 import { IoClose } from "react-icons/io5";
 import { TbTrash, TbShare } from "react-icons/tb"
@@ -22,16 +22,15 @@ interface iPropRuntimeAssetManager {
 }
 
 const RuntimeAssetManager = ({ onClose, onCancel }: iPropRuntimeAssetManager) => {
-    const [myRuntimes, setMyRuntimes] = useState<any[]>([])
-    const { useFetchAssets, deleteAsset, createAsset, updateAsset } = useAssets()
+    const { useFetchAssets, deleteAsset, createAsset } = useAssets()
     const { data: assets, isLoading, refetch } = useFetchAssets()
+    const myRuntimes = useMemo(
+        () => assets?.filter((a: any) => a.type === 'CLOUD_RUNTIME') ?? [],
+        [assets],
+    )
     const [activeAsset, setActiveAsset] = useState<any>()
     const [newRtName, setNewRtName] = useState<string>("Runtime-")
     const [shareDialogOpen, setShareDialogOpen] = useState<boolean>(false)
-
-    useEffect(() => {
-        setMyRuntimes(assets?.filter((a: any) => a.type == 'CLOUD_RUNTIME') || [])
-    }, [assets])
 
     return <div className="w-full min-h-[400px] px-2 py-1">
         <div className="flex items-center">
@@ -107,15 +106,15 @@ const RuntimeAssetManager = ({ onClose, onCancel }: iPropRuntimeAssetManager) =>
                         <div className="w-[200px] min-w-[100px]">Actions</div>
                     </div>
 
-                    {(!assets || assets.length == 0) && (
+                    {myRuntimes.length === 0 && (
                         <div className="w-full py-4 italic text-muted-foreground text-center">
-                            You have no asset
+                            You have no cloud runtime
                         </div>
                     )}
 
-                    {assets && assets.length > 0 && assets.map((asset: any, aIndex: number) => (
+                    {myRuntimes.map((asset: any) => (
                         <div 
-                            key={aIndex}
+                            key={asset.id}
                             className="flex w-full items-center text-foreground font-normal text-md 
                             py-4 border-b border-border"
                         >
