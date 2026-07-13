@@ -415,10 +415,10 @@ const PageMyAssets = () => {
   }, [activeTab, assets])
 
   return (
-    <div className="flex w-full h-full bg-slate-200 p-2">
-      <div className="flex w-full h-full justify-center bg-white rounded-xl ">
-        <div className="flex flex-col w-full max-w-[70vw] xl:max-w-[60vw] 2xl:max-w-[50vw]">
-          <div className="flex flex-col items-center container mt-6 w-full">
+    <div className="flex w-full h-full min-h-0 bg-slate-200 p-2">
+      <div className="flex flex-col w-full h-full min-h-0 bg-white rounded-xl ">
+        <div className="flex flex-col h-full min-h-0 w-full max-w-[70vw] xl:max-w-[60vw] 2xl:max-w-[50vw] mx-auto">
+          <div className="flex flex-col flex-1 min-h-0 items-center container mt-6 w-full pb-4">
             <div className="flex w-full justify-between">
               <h1 className="text-xl font-semibold text-foreground">
                 My Assets
@@ -530,7 +530,7 @@ const PageMyAssets = () => {
                   })()}
                 </div>
 
-                <div className="mt-2 w-full px-4">
+                <div className="mt-2 w-full px-4 flex flex-col flex-1 min-h-0">
                   <div
                     className="flex w-full items-center text-muted-foreground font-semibold text-sm
                                         py-1 border-b border-muted-foreground"
@@ -540,7 +540,7 @@ const PageMyAssets = () => {
                     <div className="w-[220px] min-w-[220px]">Actions</div>
                   </div>
 
-                  <div className="overflow-auto h-full">
+                  <div className="flex-1 min-h-0 overflow-y-auto">
                     {(!assets || assets.length == 0) && (
                       <div className="w-full py-4 italic text-slate-500 text-center">
                         You have no asset
