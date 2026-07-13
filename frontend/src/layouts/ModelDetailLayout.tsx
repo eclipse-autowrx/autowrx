@@ -14,7 +14,6 @@ import { matchRoutes, Outlet, useLocation } from 'react-router-dom'
 import { Skeleton } from '@/components/atoms/skeleton'
 import { Spinner } from '@/components/atoms/spinner'
 import useListModelPrototypes from '@/hooks/useListModelPrototypes'
-import { shallow } from 'zustand/shallow'
 import useLastAccessedModel from '@/hooks/useLastAccessedModel'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { Button } from '@/components/atoms/button'
@@ -29,10 +28,15 @@ import DaDialog from '@/components/molecules/DaDialog'
 import { TbPlus, TbDotsVertical, TbSettings } from 'react-icons/tb'
 import { GiSaveArrow } from 'react-icons/gi'
 import AddonSelect from '@/components/molecules/AddonSelect'
-import CustomModelTabs from '@/components/molecules/CustomModelTabs'
 import CustomTabEditor, { TabConfig } from '@/components/organisms/CustomTabEditor'
 import TemplateForm from '@/components/organisms/TemplateForm'
 import { getTabConfig } from '@/components/molecules/PrototypeTabs'
+import {
+  getModelBuiltinTabCount,
+  getModelTabConfig,
+  MODEL_BUILTIN_TAB_ROUTES,
+  sanitizeModelTabsForSave,
+} from '@/lib/modelTabUtils'
 import { Plugin } from '@/services/plugin.service'
 import { updateModelService } from '@/services/model.service'
 import { toast } from 'react-toastify'
@@ -52,10 +56,6 @@ const ModelDetailLayout = () => {
   const { data: fetchedPrototypes } = useListModelPrototypes(
     model ? model.id : '',
   )
-  const [activeModelApis] = useModelStore(
-    (state) => [state.activeModelApis],
-    shallow,
-  )
 
   const { setLastAccessedModel } = useLastAccessedModel()
 
@@ -70,7 +70,7 @@ const ModelDetailLayout = () => {
         image?: string
         visibility?: string
         config?: any
-        model_tabs?: Array<{ label: string; plugin: string }>
+        model_tabs?: TabConfig[]
         prototype_tabs?: TabConfig[]
       }
     | undefined
@@ -104,20 +104,7 @@ const ModelDetailLayout = () => {
   }, [user, model])
 
 
-  // Helper to get model tabs in TabConfig format
-  const getModelTabs = (): TabConfig[] => {
-    const tabs = model?.custom_template?.model_tabs || []
-    // If tabs already have 'type' field, they're in new format
-    if (tabs.length > 0 && 'type' in tabs[0]) {
-      return tabs as TabConfig[]
-    }
-    // Convert old format to new (all model tabs are custom)
-    return tabs.map((tab: any) => ({
-      type: 'custom' as const,
-      label: tab.label,
-      plugin: tab.plugin,
-    }))
-  }
+  const modelTabConfigs = getModelTabConfig(model?.custom_template?.model_tabs)
 
   // Handler for adding a new addon
   const handleAddonSelect = async (plugin: Plugin, label: string) => {
@@ -127,7 +114,7 @@ const ModelDetailLayout = () => {
     }
 
     try {
-      const currentTabs = getModelTabs()
+      const currentTabs = getModelTabConfig(model?.custom_template?.model_tabs)
 
       const pluginExists = currentTabs.some(
         (tab: TabConfig) => tab.type === 'custom' && tab.plugin === plugin.slug
@@ -150,7 +137,7 @@ const ModelDetailLayout = () => {
       await updateModelService(model.id, {
         custom_template: {
           ...model.custom_template,
-          model_tabs: updatedTabs,
+          model_tabs: sanitizeModelTabsForSave(updatedTabs),
         },
       })
 
@@ -174,7 +161,7 @@ const ModelDetailLayout = () => {
       await updateModelService(model.id, {
         custom_template: {
           ...model.custom_template,
-          model_tabs: updatedTabs,
+          model_tabs: sanitizeModelTabsForSave(updatedTabs),
         },
       })
 
@@ -190,10 +177,7 @@ const ModelDetailLayout = () => {
   const isLoading = isModelLoading || !model
   const canManageModelUI = (isModelOwner || hasWritePermission) && !!allowNonAdminAddonConfig
 
-  const skeleton = JSON.parse(model?.skeleton || '{}')
-  const numberOfNodes = skeleton?.nodes?.length || 0
   const numberOfPrototypes = fetchedPrototypes?.length || 0
-  const numberOfApis = activeModelApis?.length || 0
 
   // Count API sets: 1 for COVESA + number of custom_api_sets
   const customApiSetCount = (model?.custom_api_sets || []).length
@@ -201,49 +185,56 @@ const ModelDetailLayout = () => {
   // Hide count if 0 or 1
   const vehicleApiCount = totalApiSetCount > 1 ? totalApiSetCount : null
 
-  const cardIntro = [
-    {
-      title: `Overview`,
-      content: 'General information of the vehicle model',
-      path: 'overview',
-      subs: ['/model/:model_id'],
-      count: null, // No count for Overview
-      dataId: 'tab-model-overview',
-    },
-    // {
-    //   title: `Architecture`,
-    //   content: 'Provide the big picture of the vehicle model',
-    //   path: 'architecture',
-    //   subs: ['/model/:model_id/architecture'],
-    //   count: numberOfNodes,
-    //   dataId: 'tab-model-architecture',
-    // },
-    {
-      title: `Vehicle API`,
-      content:
-        'Browse, explore and enhance the catalogue of Connected Vehicle Interfaces',
-      path: 'api',
-      subs: [
-        '/model/:model_id/api',
-        '/model/:model_id/api/:api',
-        '/model/:model_id/api/:source/:api',
-      ],      count: vehicleApiCount,
-      dataId: 'tab-model-api',
-    },
-    {
-      title: `Prototype Library`,
-      content:
-        'Build up, evaluate and prioritize your portfolio of connected vehicle applications',
-      path: 'library/list',
-      subs: [
-        '/model/:model_id/library',
-        '/model/:model_id/library/:tab',
-        '/model/:model_id/library/:tab/:prototype_id',
-      ],
-      count: numberOfPrototypes,
-      dataId: 'tab-model-library',
-    },
-  ]
+  const tabCounts = { vehicleApiCount, numberOfPrototypes }
+
+  const renderModelTab = (tab: TabConfig, index: number) => {
+    if (tab.hidden) return null
+
+    if (tab.type === 'builtin' && tab.key) {
+      const route = MODEL_BUILTIN_TAB_ROUTES[tab.key]
+      if (!route) return null
+
+      const count = getModelBuiltinTabCount(tab.key, tabCounts)
+
+      return (
+        <DaTabItem
+          key={`builtin-${tab.key}-${index}`}
+          to={`/model/${model!.id}/${route.path === 'overview' ? '' : route.path}`}
+          active={
+            !!matchRoutes(
+              route.subs.map((sub) => ({ path: sub })),
+              location.pathname,
+            )?.at(0)
+          }
+          dataId={route.dataId}
+        >
+          {tab.label}
+          {count !== null && (
+            <div className="flex min-w-5 px-1.5 py-0.5 items-center justify-center text-xs ml-1 bg-gray-200 rounded-md">
+              {count}
+            </div>
+          )}
+        </DaTabItem>
+      )
+    }
+
+    if (tab.type === 'custom' && tab.plugin) {
+      return (
+        <DaTabItem
+          key={`custom-${tab.plugin}-${index}`}
+          active={
+            location.pathname.includes('/plugin') &&
+            location.search.includes(`plugid=${tab.plugin}`)
+          }
+          to={`/model/${model!.id}/plugin?plugid=${tab.plugin}`}
+        >
+          {tab.label}
+        </DaTabItem>
+      )
+    }
+
+    return null
+  }
 
   return (
     <div className="flex flex-col w-full h-full rounded-md bg-muted">
@@ -253,35 +244,11 @@ const ModelDetailLayout = () => {
         <div className="flex w-fit">
           {model ? (
             <>
-              {cardIntro.map((intro, index) => (
-                <DaTabItem
-                  to={`/model/${model.id}/${intro.path === 'overview' ? '' : intro.path}`}
-                  active={
-                    !!matchRoutes(
-                      intro.subs.map((sub) => ({
-                        path: sub,
-                      })),
-                      location.pathname,
-                    )?.at(0)
-                  }
-                  key={index}
-                  dataId={intro.dataId}
-                >
-                  {intro.title}
-                  {intro.count !== null && (
-                    <div className="flex min-w-5 px-1.5 py-0.5 items-center justify-center text-xs ml-1 bg-gray-200 rounded-md">
-                      {intro.count}
-                    </div>
-                  )}
-                </DaTabItem>
-              ))}
-              <CustomModelTabs
-                customTabs={model?.custom_template?.model_tabs}
-              />
+              {modelTabConfigs.map((tab, index) => renderModelTab(tab, index))}
             </>
           ) : (
             <div className="flex items-center h-full space-x-6 px-4">
-              {cardIntro.map((_, index) => (
+              {[0, 1, 2].map((index) => (
                 <Skeleton key={index} className="w-[100px] h-6" />
               ))}
             </div>
@@ -317,13 +284,14 @@ const ModelDetailLayout = () => {
                   setMoreMenuOpen(false)
                   if (model) {
                     const normalizedPrototypeTabs = getTabConfig(model.custom_template?.prototype_tabs)
+                    const normalizedModelTabs = getModelTabConfig(model.custom_template?.model_tabs)
                     setTemplateInitialData({
                       name: model.name || '',
                       description: '',
                       image: model.model_home_image_file || '',
                       visibility: model.visibility || 'public',
                       config: { ...model.custom_template, prototype_tabs: normalizedPrototypeTabs },
-                      model_tabs: model.custom_template?.model_tabs || [],
+                      model_tabs: normalizedModelTabs,
                       prototype_tabs: normalizedPrototypeTabs,
                     })
                   }
@@ -376,12 +344,13 @@ const ModelDetailLayout = () => {
 
       {/* Custom Tab Editor Dialog */}
       <CustomTabEditor
+        mode="model"
         open={openManageAddonsDialog}
         onOpenChange={setOpenManageAddonsDialog}
-        tabs={getModelTabs()}
+        tabs={modelTabConfigs}
         onSave={handleSaveCustomTabs}
         title="Manage Model Tabs"
-        description="Edit labels, reorder, hide/show, and remove custom model tabs"
+        description="Reorder tabs, edit labels, and manage custom plugin tabs"
       />
 
       {/* Save Model as Template Dialog */}

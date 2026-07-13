@@ -14,6 +14,9 @@ import { Spinner } from '@/components/atoms/spinner'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import DaImportFile from '@/components/atoms/DaImportFile'
 import ActionButtonsTab from '@/components/organisms/ActionButtonsTab'
+import ModelTabListEditor, {
+  ModelTabListEditorHandle,
+} from '@/components/molecules/ModelTabListEditor'
 // No direct JSON editor; we provide structured editors for config
 import { uploadFileService } from '@/services/upload.service'
 import {
@@ -46,6 +49,11 @@ import {
   TabsBorderRadius,
   ensureStagingRightNavButton,
 } from '@/components/organisms/CustomTabEditor'
+import {
+  getModelTabConfig,
+  hasIncompleteModelTabs,
+  sanitizeModelTabsForSave,
+} from '@/lib/modelTabUtils'
 import DOMPurify from 'dompurify'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import {
@@ -80,7 +88,7 @@ type Props = {
     image?: string
     visibility?: string
     config?: any // Full custom_template object
-    model_tabs?: Array<{ label: string; plugin: string }>
+    model_tabs?: TabConfig[]
     prototype_tabs?: TabConfig[]
   }
 }
@@ -104,7 +112,7 @@ export default function TemplateForm({
       templateId
         ? getModelTemplateById(templateId)
         : Promise.resolve(undefined),
-    enabled: !isCreate && !!templateId,
+    enabled: !isCreate && !!templateId && !!open,
   })
 
   const [form, setForm] = useState<Partial<ModelTemplate>>({
@@ -114,9 +122,8 @@ export default function TemplateForm({
     visibility: 'public',
     config: {},
   })
-  const [modelTabs, setModelTabs] = useState<
-    Array<{ label: string; plugin: string }>
-  >([])
+  const [modelTabs, setModelTabs] = useState<TabConfig[]>([])
+  const modelTabListRef = useRef<ModelTabListEditorHandle>(null)
   const [prototypeTabs, setPrototypeTabs] = useState<TabConfig[]>([])
   const [prototypeStagingConfig, setPrototypeStagingConfig] =
     useState<StagingConfig>({})
@@ -147,14 +154,9 @@ export default function TemplateForm({
     if (initial) {
       setForm(initial)
       const cfg: any = initial.config || {}
-      setModelTabs(
-        Array.isArray(cfg.model_tabs)
-          ? cfg.model_tabs.map((x: any) => ({
-              label: x.label || '',
-              plugin: x.plugin || '',
-            }))
-          : [],
-      )
+      // Model tabs use getModelTabConfig so empty/missing config shows the 3
+      // built-in defaults in the editor (unlike prototype tabs above).
+      setModelTabs(getModelTabConfig(cfg.model_tabs))
       setPrototypeTabs(
         Array.isArray(cfg.prototype_tabs)
           ? normalizeTabsForTemplate(cfg.prototype_tabs)
@@ -192,7 +194,7 @@ export default function TemplateForm({
         visibility: 'public',
         config: {},
       })
-      setModelTabs([])
+      setModelTabs(getModelTabConfig([]))
       setPrototypeTabs([])
       setPrototypeStagingConfig({})
       setPrototypeRightNavButtons(ensureStagingRightNavButton([]))
@@ -235,9 +237,11 @@ export default function TemplateForm({
       const fullConfig = initialData.config || {}
 
       // Extract tabs directly from config (custom_template) - this is the source of truth
-      const modelTabsFromConfig = Array.isArray(fullConfig.model_tabs)
-        ? fullConfig.model_tabs
-        : []
+      const modelTabsFromConfig = Array.isArray(initialData.model_tabs)
+        ? initialData.model_tabs
+        : Array.isArray(fullConfig.model_tabs)
+          ? fullConfig.model_tabs
+          : []
       const prototypeTabsFromConfig = Array.isArray(fullConfig.prototype_tabs)
         ? fullConfig.prototype_tabs
         : []
@@ -252,12 +256,8 @@ export default function TemplateForm({
           'public',
         config: fullConfig, // Preserve entire custom_template structure
       })
-      setModelTabs(
-        modelTabsFromConfig.map((x: any) => ({
-          label: x.label || '',
-          plugin: x.plugin || '',
-        })),
-      )
+      // Prefill with full runtime tab config (built-ins + custom, order preserved).
+      setModelTabs(getModelTabConfig(modelTabsFromConfig))
       // Preserve full TabConfig structure (type, key, hidden) without adding default builtin tabs
       setPrototypeTabs(normalizeTabsForTemplate(prototypeTabsFromConfig))
       setPrototypeTabsVariant(fullConfig.prototype_tabs_variant || 'tab')
@@ -294,6 +294,19 @@ export default function TemplateForm({
 
   const save = useMutation({
     mutationFn: async () => {
+      const flushedTabs = modelTabListRef.current?.flushPendingEdit()
+      if (flushedTabs === null) {
+        throw new Error(
+          'All custom tabs must have a plugin and label before saving.',
+        )
+      }
+      const tabsToSave = flushedTabs ?? modelTabs
+      if (hasIncompleteModelTabs(tabsToSave)) {
+        throw new Error(
+          'All custom tabs must have a plugin and label before saving.',
+        )
+      }
+
       const payload = {
         name: form.name,
         description: form.description,
@@ -301,7 +314,7 @@ export default function TemplateForm({
         visibility: form.visibility || 'public',
         config: {
           ...(form.config || {}),
-          model_tabs: [...modelTabs],
+          model_tabs: sanitizeModelTabsForSave(tabsToSave),
           prototype_tabs: [...prototypeTabs],
           prototype_tabs_variant:
             prototypeTabsVariant !== 'tab' ? prototypeTabsVariant : null,
@@ -317,9 +330,13 @@ export default function TemplateForm({
       if (!templateId) throw new Error('Missing id')
       return updateModelTemplate(templateId, payload)
     },
-    onSuccess: () => {
+    onSuccess: (saved) => {
       toast.success('Template saved')
       qc.invalidateQueries({ queryKey: ['model-templates'] })
+      if (saved?.id) {
+        qc.setQueryData(['model-template', saved.id], saved)
+        qc.invalidateQueries({ queryKey: ['model-template', saved.id] })
+      }
       onClose()
     },
     onError: (e: any) =>
@@ -547,79 +564,14 @@ export default function TemplateForm({
             )}
 
             {activeTab === 'model' && (
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-semibold text-foreground">
-                    Model Tabs
-                  </span>
-                  <Button
-                    size="sm"
-                    onClick={() =>
-                      setModelTabs((t) => [...t, { label: '', plugin: '' }])
-                    }
-                  >
-                    Add Item
-                  </Button>
-                </div>
-                {modelTabs.length === 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    No items. Click Add Item.
-                  </p>
-                )}
-                {modelTabs.map((it, idx) => (
-                  <div key={idx} className="flex flex-wrap gap-3 items-center">
-                    <div className="flex-1 min-w-[180px]">
-                      <Input
-                        placeholder="Label"
-                        value={it.label}
-                        onChange={(e) => {
-                          const v = e.target.value
-                          setModelTabs((arr) =>
-                            arr.map((x, i) =>
-                              i === idx ? { ...x, label: v } : x,
-                            ),
-                          )
-                        }}
-                      />
-                    </div>
-                    <div className="col-span-6">
-                      <DaSelect
-                        value={it.plugin || '__none__'}
-                        onValueChange={(v) => {
-                          setModelTabs((arr) =>
-                            arr.map((x, i) =>
-                              i === idx
-                                ? { ...x, plugin: v === '__none__' ? '' : v }
-                                : x,
-                            ),
-                          )
-                        }}
-                        className="h-9 text-sm"
-                      >
-                        <DaSelectItem value="__none__">
-                          Select plugin
-                        </DaSelectItem>
-                        {pluginData?.results?.map((p: Plugin) => (
-                          <DaSelectItem key={p.id} value={p.id}>
-                            {p.name}
-                          </DaSelectItem>
-                        ))}
-                      </DaSelect>
-                    </div>
-                    <div className="flex justify-end">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() =>
-                          setModelTabs((arr) => arr.filter((_, i) => i !== idx))
-                        }
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <ModelTabListEditor
+                key={open ? 'modeltablisteditor-open' : 'modeltablisteditor-closed'}
+                ref={modelTabListRef}
+                tabs={modelTabs}
+                onTabsChange={setModelTabs}
+                plugins={pluginData?.results}
+                pluginsLoading={!pluginData}
+              />
             )}
 
             {activeTab === 'prototype' && (
