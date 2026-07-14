@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   listProjectTemplates,
   getProjectTemplateById,
+  createProjectTemplate,
   updateProjectTemplate,
   deleteProjectTemplate,
   type ProjectTemplate,
@@ -19,6 +20,17 @@ import DaConfirmPopup from '@/components/molecules/DaConfirmPopup'
 import { TbPencil, TbTrash, TbFileCode } from 'react-icons/tb'
 import { toast } from 'react-toastify'
 
+const DEFAULT_TEMPLATE_DATA = JSON.stringify(
+  {
+    language: 'python',
+    code: '',
+    widget_config: '{"autorun": false, "widgets": []}',
+    customer_journey: ' ',
+  },
+  null,
+  2,
+)
+
 function ProjectTemplateEditForm({
   open,
   onOpenChange,
@@ -27,17 +39,18 @@ function ProjectTemplateEditForm({
 }: {
   open: boolean
   onOpenChange: (v: boolean) => void
-  editId: string
+  editId?: string
   onSuccess: () => void
 }) {
   const qc = useQueryClient()
+  const isEdit = !!editId
   const [name, setName] = useState('')
   const [data, setData] = useState('')
 
   const { data: editData } = useQuery({
     queryKey: ['project-template-edit', editId],
-    queryFn: () => getProjectTemplateById(editId),
-    enabled: !!editId && open,
+    queryFn: () => getProjectTemplateById(editId!),
+    enabled: isEdit && open,
   })
 
   useEffect(() => {
@@ -48,19 +61,25 @@ function ProjectTemplateEditForm({
       } catch {
         setData(editData.data || '')
       }
+    } else if (open && !isEdit) {
+      setName('')
+      setData(DEFAULT_TEMPLATE_DATA)
     } else if (!open) {
       setName('')
       setData('')
     }
-  }, [editData, open])
+  }, [editData, open, isEdit])
 
   const save = useMutation({
     mutationFn: async () => {
       JSON.parse(data) // validate JSON
-      return updateProjectTemplate(editId, { name, data })
+      if (isEdit) {
+        return updateProjectTemplate(editId!, { name, data })
+      }
+      return createProjectTemplate({ name, data })
     },
     onSuccess: () => {
-      toast.success('Template updated')
+      toast.success(isEdit ? 'Template updated' : 'Template created')
       qc.invalidateQueries({ queryKey: ['project-templates'] })
       qc.invalidateQueries({ queryKey: ['project-templates-list'] })
       onOpenChange(false)
@@ -86,7 +105,7 @@ function ProjectTemplateEditForm({
         onOpenChange(v)
       }}
       className="w-[680px] max-w-[calc(100vw-80px)]"
-      dialogTitle="Edit Project Template"
+      dialogTitle={isEdit ? 'Edit Project Template' : 'Create Project Template'}
       footer={
         <>
           <Button
@@ -103,7 +122,7 @@ function ProjectTemplateEditForm({
             onClick={() => save.mutate()}
             disabled={!name.trim() || !data.trim() || save.isPending}
           >
-            {save.isPending ? 'Saving…' : 'Update'}
+            {save.isPending ? 'Saving…' : isEdit ? 'Update' : 'Create'}
           </Button>
         </>
       }
@@ -167,6 +186,14 @@ export default function ProjectTemplateManager() {
     <div className="p-6">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-xl font-semibold">Project Templates</h1>
+        <Button
+          onClick={() => {
+            setEditId(undefined)
+            setOpenForm(true)
+          }}
+        >
+          New Template
+        </Button>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -221,17 +248,15 @@ export default function ProjectTemplateManager() {
         )}
       </div>
 
-      {editId && (
-        <ProjectTemplateEditForm
-          open={openForm}
-          onOpenChange={(v) => {
-            setOpenForm(v)
-            if (!v) setEditId(undefined)
-          }}
-          editId={editId}
-          onSuccess={() => {}}
-        />
-      )}
+      <ProjectTemplateEditForm
+        open={openForm}
+        onOpenChange={(v) => {
+          setOpenForm(v)
+          if (!v) setEditId(undefined)
+        }}
+        editId={editId}
+        onSuccess={() => {}}
+      />
 
       <DaConfirmPopup
         title="Delete Project Template"
