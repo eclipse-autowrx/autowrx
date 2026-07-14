@@ -97,7 +97,7 @@ const FormCreatePrototype = ({
 
   const { data: remoteTemplatesData, isLoading: isLoadingTemplates } = useQuery({
     queryKey: ['project-templates-list'],
-    queryFn: () => listProjectTemplates({ limit: 100, page: 1 }),
+    queryFn: () => listProjectTemplates({ limit: 100, page: 1, visibility: 'public' }),
   })
 
   const templateOptions = useMemo(
@@ -197,16 +197,17 @@ const FormCreatePrototype = ({
       )
 
       const selectedTemplate = templateOptions.find((t) => t.id === selectedTemplateId)
+      const language = data.language || selectedTemplate?.language || 'python'
 
       const body = {
         model_id: modelId,
         name: data.prototypeName,
-        language: data.language,
+        language,
         state: 'development',
         apis: { VSC: [], VSS: [] },
         code: data.code,
         complexity_level: 3,
-        customer_journey: selectedTemplate?.customer_journey !== undefined
+        customer_journey: selectedTemplate?.customer_journey?.trim()
           ? selectedTemplate.customer_journey
           : default_journey,
         description: {
@@ -219,7 +220,7 @@ const FormCreatePrototype = ({
         skeleton: '{}',
         tags: [],
         widget_config:
-          widget_config || selectedTemplate?.widget_config || getDefaultDashboardCfg(data.language) || '[]',
+          widget_config || selectedTemplate?.widget_config || getDefaultDashboardCfg(language) || '[]',
         autorun: true,
       }
 

@@ -69,6 +69,10 @@ const removeById = async (id) => {
  */
 const seedProjectTemplates = async (predefinedTemplates, systemUserId) => {
   if (!predefinedTemplates || predefinedTemplates.length === 0) return;
+  if (!systemUserId) {
+    logger.warn('Skipping project template seed: no system user available');
+    return;
+  }
 
   try {
     const operations = predefinedTemplates.map((tpl) => ({

@@ -14,10 +14,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/atoms/dropdown-menu'
-import { Input } from '@/components/atoms/input'
 import { Spinner } from '@/components/atoms/spinner'
 import AddonSelect from '@/components/molecules/AddonSelect'
 import DaDialog from '@/components/molecules/DaDialog'
+import ProjectTemplateMetadataFields from '@/components/molecules/project/ProjectTemplateMetadataFields'
 import DaRuntimeControl from '@/components/molecules/dashboard/DaRuntimeControl'
 import PrototypeRightActionButtons from '@/components/molecules/PrototypeRightActionButtons'
 import PrototypeTabs, {
@@ -52,7 +52,11 @@ import { saveRecentPrototype } from '@/services/prototype.service'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
 import { useSiteConfig } from '@/utils/siteConfig'
-import { getProjectTemplateErrorMessage } from '@/utils/projectTemplate'
+import {
+  getProjectTemplateErrorMessage,
+  invalidateProjectTemplateQueries,
+  serializeProjectTemplateData,
+} from '@/utils/projectTemplate'
 import { useQueryClient } from '@tanstack/react-query'
 import { FC, useCallback, useEffect, useState } from 'react'
 import {
@@ -96,6 +100,10 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
   const queryClient = useQueryClient()
   const [openSaveProjectTemplate, setOpenSaveProjectTemplate] = useState(false)
   const [projectTemplateName, setProjectTemplateName] = useState('')
+  const [projectTemplateDescription, setProjectTemplateDescription] = useState('')
+  const [projectTemplateVisibility, setProjectTemplateVisibility] = useState<
+    'public' | 'private'
+  >('public')
   const [savingProjectTemplate, setSavingProjectTemplate] = useState(false)
   const allowNonAdminAddonConfig = useSiteConfig(
     'ALLOW_NON_ADMIN_ADDON_CONFIG',
@@ -233,20 +241,24 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
     if (!projectTemplateName.trim() || !prototype) return
     setSavingProjectTemplate(true)
     try {
-      const data = JSON.stringify({
+      const data = serializeProjectTemplateData({
         language: prototype.language || 'python',
         code: prototype.code || '',
         widget_config: prototype.widget_config,
         customer_journey: prototype.customer_journey,
       })
-      await createProjectTemplate({ name: projectTemplateName.trim(), data })
-      await queryClient.invalidateQueries({ queryKey: ['project-templates'] })
-      await queryClient.invalidateQueries({
-        queryKey: ['project-templates-list'],
+      await createProjectTemplate({
+        name: projectTemplateName.trim(),
+        description: projectTemplateDescription.trim() || undefined,
+        visibility: projectTemplateVisibility,
+        data,
       })
+      invalidateProjectTemplateQueries(queryClient)
       toast.success('Project template saved')
       setOpenSaveProjectTemplate(false)
       setProjectTemplateName('')
+      setProjectTemplateDescription('')
+      setProjectTemplateVisibility('public')
     } catch (e: any) {
       toast.error(getProjectTemplateErrorMessage(e, 'Failed to save template'))
     } finally {
@@ -542,7 +554,11 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
         open={openSaveProjectTemplate}
         onOpenChange={(v) => {
           setOpenSaveProjectTemplate(v)
-          if (!v) setProjectTemplateName('')
+          if (!v) {
+            setProjectTemplateName('')
+            setProjectTemplateDescription('')
+            setProjectTemplateVisibility('public')
+          }
         }}
         className="w-110"
         dialogTitle="Create Template"
@@ -554,6 +570,8 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
               onClick={() => {
                 setOpenSaveProjectTemplate(false)
                 setProjectTemplateName('')
+                setProjectTemplateDescription('')
+                setProjectTemplateVisibility('public')
               }}
             >
               Cancel
@@ -568,15 +586,17 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
           </>
         }
       >
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Name *</label>
-          <Input
-            placeholder="Template name"
-            value={projectTemplateName}
-            onChange={(e) => setProjectTemplateName(e.target.value)}
-            autoFocus
-          />
-        </div>
+        <ProjectTemplateMetadataFields
+          layout="stacked"
+          nameAutoFocus
+          descriptionRows={2}
+          name={projectTemplateName}
+          description={projectTemplateDescription}
+          visibility={projectTemplateVisibility}
+          onNameChange={setProjectTemplateName}
+          onDescriptionChange={setProjectTemplateDescription}
+          onVisibilityChange={setProjectTemplateVisibility}
+        />
       </DaDialog>
     </div>
   ) : (

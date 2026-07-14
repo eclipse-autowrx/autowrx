@@ -71,7 +71,7 @@ const FormNewPrototype = ({
 
     const { data: projectTemplatesData, isLoading: isLoadingTemplates } = useQuery({
         queryKey: ['project-templates-list'],
-        queryFn: () => listProjectTemplates({ limit: 100, page: 1 }),
+        queryFn: () => listProjectTemplates({ limit: 100, page: 1, visibility: 'public' }),
     })
 
     const templateOptions = useMemo(
@@ -229,7 +229,7 @@ const FormNewPrototype = ({
                 apis: { VSC: [], VSS: [] },
                 code: code ?? selectedTemplate?.code ?? '',
                 complexity_level: 3,
-                customer_journey: selectedTemplate?.customer_journey !== undefined
+                customer_journey: selectedTemplate?.customer_journey?.trim()
                     ? selectedTemplate.customer_journey
                     : default_journey,
                 description: { problem: '', says_who: '', solution: '', status: '' },
