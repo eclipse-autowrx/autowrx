@@ -52,6 +52,7 @@ import { saveRecentPrototype } from '@/services/prototype.service'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
 import { useSiteConfig } from '@/utils/siteConfig'
+import { getProjectTemplateErrorMessage } from '@/utils/projectTemplate'
 import { useQueryClient } from '@tanstack/react-query'
 import { FC, useCallback, useEffect, useState } from 'react'
 import {
@@ -247,9 +248,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
       setOpenSaveProjectTemplate(false)
       setProjectTemplateName('')
     } catch (e: any) {
-      toast.error(
-        e?.response?.data?.message || e.message || 'Failed to save template',
-      )
+      toast.error(getProjectTemplateErrorMessage(e, 'Failed to save template'))
     } finally {
       setSavingProjectTemplate(false)
     }
@@ -421,7 +420,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
                 : (model?.custom_template?.prototype_right_nav_buttons ?? [])
             }
           />
-          {canConfigurePrototypeAddons && (
+          {(canConfigurePrototypeAddons || isAdmin) && (
             <DropdownMenu open={moreMenuOpen} onOpenChange={setMoreMenuOpen}>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -433,24 +432,28 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => {
-                    setMoreMenuOpen(false)
-                    setOpenManageAddonsDialog(true)
-                  }}
-                >
-                  <TbSettings className="w-5 h-5" />
-                  Customize Layout...
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setMoreMenuOpen(false)
-                    setOpenSaveProjectTemplate(true)
-                  }}
-                >
-                  <TbFileCode className="w-5 h-5" />
-                  Save Prototype as Template
-                </DropdownMenuItem>
+                {canConfigurePrototypeAddons && (
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setMoreMenuOpen(false)
+                      setOpenManageAddonsDialog(true)
+                    }}
+                  >
+                    <TbSettings className="w-5 h-5" />
+                    Customize Layout...
+                  </DropdownMenuItem>
+                )}
+                {isAdmin && (
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setMoreMenuOpen(false)
+                      setOpenSaveProjectTemplate(true)
+                    }}
+                  >
+                    <TbFileCode className="w-5 h-5" />
+                    Save Prototype as Template
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           )}

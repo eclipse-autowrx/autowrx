@@ -37,7 +37,11 @@ import { createModelService, listModelsLite } from '@/services/model.service'
 import { cn } from '@/lib/utils'
 import default_journey from '@/data/default_journey'
 import { getConfig, useSiteConfig } from '@/utils/siteConfig'
-import { listProjectTemplates, ProjectTemplate } from '@/services/projectTemplate.service'
+import { listProjectTemplates } from '@/services/projectTemplate.service'
+import {
+  getDefaultDashboardCfg,
+  parseProjectTemplates,
+} from '@/utils/projectTemplate'
 
 interface FormCreatePrototypeProps {
   onClose?: () => void
@@ -62,87 +66,6 @@ const initialState = {
   cvi: JSON.stringify(CVI),
   mainApi: 'Vehicle',
 }
-
-const DEFAULT_DASHBOARD_CFG = `{
-  "autorun": false,
-  "widgets": [
-    {
-      "plugin": "Builtin",
-      "widget": "Embedded-Widget",
-      "options": {
-        "api": "Vehicle.Body.Lights.Beam.Low.IsOn",
-        "defaultImgUrl": "https://bestudio.digitalauto.tech/project/Ml2Sc9TYoOHc/light_off.png",
-        "displayExactMatch": true,
-        "valueMaps": [
-          {
-            "value": true,
-            "imgUrl": "https://bestudio.digitalauto.tech/project/Ml2Sc9TYoOHc/light_on.png"
-          },
-          {
-            "value": false,
-            "imgUrl": "https://bestudio.digitalauto.tech/project/Ml2Sc9TYoOHc/light_off.png"
-          }
-        ],
-        "url": "https://store-be.digitalauto.tech/data/store-be/Image%20by%20Signal%20value/latest/index/index.html",
-        "iconURL": "https://upload.digitalauto.tech/data/store-be/3c3685b3-0b58-4f75-820e-9af0180cf3f0.png"
-      },
-      "boxes": [
-        2,
-        3,
-        7,
-        8
-      ],
-      "path": ""
-    },
-    {
-      "plugin": "Builtin",
-      "widget": "Embedded-Widget",
-      "options": {
-        "url": "https://store-be.digitalauto.tech/data/store-be/Terminal/latest/terminal/index.html",
-        "iconURL": "https://upload.digitalauto.tech/data/store-be/e991ea29-5fbf-42e9-9d3d-cceae23600f0.png"
-      },
-      "boxes": [
-        1,
-        6
-      ],
-      "path": ""
-    },
-    {
-      "plugin": "Builtin",
-      "widget": "Embedded-Widget",
-      "options": {
-        "api": "Vehicle.Body.Lights.Beam.Low.IsOn",
-        "lineColor": "#005072",
-        "dataUpdateInterval": "1000",
-        "maxDataPoints": "30",
-        "url": "https://store-be.digitalauto.tech/data/store-be/Chart%20Signal%20Widget/latest/index/index.html",
-        "iconURL": "https://upload.digitalauto.tech/data/store-be/f25ceb29-b9e8-470e-897a-4d843e16a0cf.png"
-      },
-      "boxes": [
-        4,
-        5
-      ],
-      "path": ""
-    },
-    {
-      "plugin": "Builtin",
-      "widget": "Embedded-Widget",
-      "options": {
-        "apis": [
-          "Vehicle.Body.Lights.Beam.Low.IsOn"
-        ],
-        "vss_json": "https://bewebstudio.digitalauto.tech/data/projects/sHQtNwric0H7/vss_rel_4.0.json",
-        "url": "https://store-be.digitalauto.tech/data/store-be/Signal%20List%20Settable/latest/table-settable/index.html",
-        "iconURL": "https://upload.digitalauto.tech/data/store-be/dccabc84-2128-4e5d-9e68-bc20333441c4.png"
-      },
-      "boxes": [
-        9,
-        10
-      ],
-      "path": ""
-    }
-  ]
-}`
 
 const FormCreatePrototype = ({
   onClose,
@@ -177,32 +100,20 @@ const FormCreatePrototype = ({
     queryFn: () => listProjectTemplates({ limit: 100, page: 1 }),
   })
 
-  type TemplateOption = { label: string; language: string; code: string; widget_config?: string; customer_journey?: string }
+  const templateOptions = useMemo(
+    () => parseProjectTemplates(remoteTemplatesData?.results ?? []),
+    [remoteTemplatesData],
+  )
 
-  const templateOptions = useMemo((): TemplateOption[] => {
-    if (!remoteTemplatesData?.results?.length) return []
-    return remoteTemplatesData.results.map((t: ProjectTemplate) => {
-      let parsed: Record<string, any> = {}
-      try { parsed = JSON.parse(t.data) } catch { /* invalid JSON, use empty */ }
-      return {
-        label: t.name,
-        language: parsed.language || '',
-        code: parsed.code || '',
-        widget_config: parsed.widget_config,
-        customer_journey: parsed.customer_journey,
-      }
-    })
-  }, [remoteTemplatesData])
-
-  const [projectTemplate, setProjectTemplate] = useState<string>('')
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('')
 
   useEffect(() => {
-    if (templateOptions.length && !projectTemplate) {
+    if (templateOptions.length && !selectedTemplateId) {
       const first = templateOptions[0]
-      setProjectTemplate(first.label)
+      setSelectedTemplateId(first.id)
       setData((prev) => ({ ...prev, code: first.code, language: first.language }))
     }
-  }, [templateOptions, projectTemplate])
+  }, [templateOptions, selectedTemplateId])
 
   const [debouncedPrototypeName, setDebouncedPrototypeName] = useState('')
   useEffect(() => {
@@ -243,17 +154,12 @@ const FormCreatePrototype = ({
     setError('')
   }
 
-  const onTemplateChange = (v: string) => {
-    const template = templateOptions.find((t) => t.label === v)
+  const onTemplateChange = (templateId: string) => {
+    const template = templateOptions.find((t) => t.id === templateId)
     if (template) {
       setData((prev) => ({ ...prev, code: template.code, language: template.language }))
-      setProjectTemplate(v)
+      setSelectedTemplateId(templateId)
     }
-  }
-
-  const getDefaultDashboardCfg = (lang: string) => {
-    if (lang == 'rust') return `{"autorun": false, "widgets": [] }`
-    return DEFAULT_DASHBOARD_CFG
   }
 
   const createNewPrototype = async (e: FormEvent<HTMLFormElement>) => {
@@ -290,7 +196,7 @@ const FormCreatePrototype = ({
         '/imgs/default_prototype_cover.jpg',
       )
 
-      const selectedTemplate = templateOptions.find((t) => t.label === projectTemplate)
+      const selectedTemplate = templateOptions.find((t) => t.id === selectedTemplateId)
 
       const body = {
         model_id: modelId,
@@ -388,7 +294,15 @@ const FormCreatePrototype = ({
   }, [contributionModels, isFetchingModelContribution, currentModel])
 
   useEffect(() => {
-    if (loading || (!localModel && !data.modelName) || !data.prototypeName || isDuplicatePrototypeName || (!localModel && isDuplicateModelName)) {
+    if (
+      loading ||
+      isLoadingTemplates ||
+      (templateOptions.length > 0 && !selectedTemplateId) ||
+      (!localModel && !data.modelName) ||
+      !data.prototypeName ||
+      isDuplicatePrototypeName ||
+      (!localModel && isDuplicateModelName)
+    ) {
       setDisabled(true)
     } else setDisabled(false)
     if (onPrototypeChange) {
@@ -406,7 +320,16 @@ const FormCreatePrototype = ({
         })
       }
     }
-  }, [loading, localModel, data.modelName, data.prototypeName, isDuplicatePrototypeName, isDuplicateModelName])
+  }, [
+    loading,
+    isLoadingTemplates,
+    selectedTemplateId,
+    localModel,
+    data.modelName,
+    data.prototypeName,
+    isDuplicatePrototypeName,
+    isDuplicateModelName,
+  ])
 
   return (
     <form
@@ -488,33 +411,35 @@ const FormCreatePrototype = ({
         )}
       </div>
 
-      <div className="flex flex-col mt-4">
-        <Label className="mb-2">Project Template *</Label>
-        {isLoadingTemplates ? (
-          <p className="flex items-center text-sm text-muted-foreground h-9">
-            <Spinner className="mr-1 h-4 w-4" />
-            Loading templates...
-          </p>
-        ) : (
-        <Select
-          value={projectTemplate}
-          onValueChange={(v: string) => {
-            onTemplateChange(v)
-          }}
-        >
-          <SelectTrigger data-id="prototype-language-select" className="w-full">
-            <SelectValue placeholder="Select a template" />
-          </SelectTrigger>
-          <SelectContent>
-            {templateOptions.map((t) => (
-              <SelectItem key={t.label} value={t.label}>
-                {t.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        )}
-      </div>
+      {(isLoadingTemplates || templateOptions.length > 0) && (
+        <div className="flex flex-col mt-4">
+          <Label className="mb-2">Project Template *</Label>
+          {isLoadingTemplates ? (
+            <p className="flex items-center text-sm text-muted-foreground h-9">
+              <Spinner className="mr-1 h-4 w-4" />
+              Loading templates...
+            </p>
+          ) : (
+            <Select
+              value={selectedTemplateId}
+              onValueChange={(v: string) => {
+                onTemplateChange(v)
+              }}
+            >
+              <SelectTrigger data-id="project-template-select" className="w-full">
+                <SelectValue placeholder="Select a template" />
+              </SelectTrigger>
+              <SelectContent>
+                {templateOptions.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+      )}
 
       <Button
         disabled={disabled}

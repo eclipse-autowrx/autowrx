@@ -19,6 +19,7 @@ import DaDialog from '@/components/molecules/DaDialog'
 import DaConfirmPopup from '@/components/molecules/DaConfirmPopup'
 import { TbPencil, TbTrash, TbFileCode } from 'react-icons/tb'
 import { toast } from 'react-toastify'
+import { getProjectTemplateErrorMessage } from '@/utils/projectTemplate'
 
 const DEFAULT_TEMPLATE_DATA = JSON.stringify(
   {
@@ -89,7 +90,7 @@ function ProjectTemplateEditForm({
       if (e instanceof SyntaxError) {
         toast.error('Invalid JSON format in data field')
       } else {
-        toast.error(e?.response?.data?.message || e.message || 'Save failed')
+        toast.error(getProjectTemplateErrorMessage(e, 'Save failed'))
       }
     },
   })
