@@ -9,9 +9,8 @@
 import Editor from '@monaco-editor/react'
 import clsx from 'clsx'
 import { Spinner } from '../atoms/spinner'
-import { useEffect, useImperativeHandle, useRef, forwardRef } from 'react'
+import { useEffect, useImperativeHandle, useRef, forwardRef, useState } from 'react'
 import { useMonaco } from '@monaco-editor/react'
-import { useState } from 'react'
 
 export interface CodeEditorProps {
   code: string
@@ -95,7 +94,7 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function CodeEd
   }, [monaco])
 
   return (
-    <div className={clsx('flex flex-col h-full w-full overflow-hidden')}>
+    <div className={clsx('flex flex-col h-full w-full')}>
       {show && (
         <Editor
           key={language}
