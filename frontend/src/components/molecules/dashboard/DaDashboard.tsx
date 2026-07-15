@@ -76,6 +76,12 @@ const DaDashboard = () => {
     setShowPrototypeDashboardFullScreen,
   } = useSystemUI()
 
+  useEffect(() => {
+    return () => {
+      setShowPrototypeDashboardFullScreen(false)
+    }
+  }, [setShowPrototypeDashboardFullScreen])
+
   const originalWidgetConfigRef = useRef<string>('')
   const [pendingChanges, setPendingChanges] = useState(false)
   const { refetch } = useGetPrototype(prototype?.id || '')

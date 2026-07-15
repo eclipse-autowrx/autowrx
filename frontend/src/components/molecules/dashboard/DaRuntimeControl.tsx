@@ -300,10 +300,10 @@ const DaRuntimeControl: FC = () => {
     <div
       data-id="runtime-control-panel"
       className={cn(
-        'bottom-0 right-0 z-10 flex flex-col px-1 py-1',
+        'right-0 z-10 flex flex-col px-1 py-1',
         showPrototypeDashboardFullScreen
-          ? 'fixed top-[58px]'
-          : 'absolute top-0',
+          ? 'fixed top-[58px] bottom-[22.55px]'
+          : 'absolute top-0 bottom-0',
         isExpand ? 'w-[500px]' : 'w-14',
       )}
       style={{
