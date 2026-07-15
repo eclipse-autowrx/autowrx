@@ -7,9 +7,13 @@
 // SPDX-License-Identifier: MIT
 
 import { Button } from '@/components/atoms/button'
+import {
+  Dialog,
+  DialogContent,
+} from '@/components/atoms/dialog'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
-import { Spinner } from '@/components/atoms/spinner'
+import AddonSelect from '@/components/molecules/AddonSelect'
 import { TabConfig } from '@/components/organisms/CustomTabEditor'
 import { Plugin } from '@/services/plugin.service'
 import {
@@ -24,19 +28,21 @@ import {
   TbGripVertical,
   TbPencil,
   TbPlus,
-  TbSearch,
   TbTrash,
   TbX,
 } from 'react-icons/tb'
+import { toast } from 'react-toastify'
 
 interface ModelTabListEditorProps {
   tabs: TabConfig[]
   onTabsChange: (tabs: TabConfig[]) => void
-  plugins: Plugin[] | undefined
-  pluginsLoading: boolean
   description?: string
   showHeader?: boolean
-  onEditingChange?: (isEditing: boolean) => void
+  /**
+   * When provided, Add/Change Plugin calls this instead of opening an internal
+   * dialog (so parents can render AddonSelect as a sibling Dialog).
+   */
+  onRequestAddonSelect?: (changingPluginIndex: number | null) => void
 }
 
 export interface ModelTabListEditorHandle {
@@ -46,13 +52,85 @@ export interface ModelTabListEditorHandle {
 const DEFAULT_DESCRIPTION =
   'Configure custom tabs on the model detail page, each linked to a plugin addon.'
 
-const isIncompleteTabEdit = (
-  index: number | null,
-  tabList: TabConfig[],
-): boolean => {
-  if (index === null) return false
-  const tab = tabList[index]
-  return tab.type === 'custom' && !tab.plugin
+export function getModelTabExcludedSlugs(
+  tabs: TabConfig[],
+  changingPluginIndex: number | null,
+): string[] {
+  return tabs
+    .filter(
+      (tab, i) =>
+        i !== changingPluginIndex &&
+        tab.type === 'custom' &&
+        !!tab.plugin,
+    )
+    .map((tab) => tab.plugin as string)
+}
+
+export function applyModelTabAddonSelect(
+  tabs: TabConfig[],
+  plugin: Plugin,
+  label: string,
+  changingPluginIndex: number | null,
+): TabConfig[] | 'duplicate' {
+  const pluginExists = tabs.some(
+    (tab, i) =>
+      i !== changingPluginIndex &&
+      tab.type === 'custom' &&
+      tab.plugin === plugin.slug,
+  )
+  if (pluginExists) return 'duplicate'
+
+  if (changingPluginIndex !== null) {
+    const updatedTabs = [...tabs]
+    updatedTabs[changingPluginIndex] = {
+      ...updatedTabs[changingPluginIndex],
+      type: 'custom',
+      plugin: plugin.slug,
+    }
+    return updatedTabs
+  }
+
+  return [
+    ...tabs,
+    { type: 'custom' as const, label, plugin: plugin.slug },
+  ]
+}
+
+export interface ModelTabAddonSelectDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  tabs: TabConfig[]
+  changingPluginIndex: number | null
+  onSelect: (plugin: Plugin, label: string) => void
+}
+
+export function ModelTabAddonSelectDialog({
+  open,
+  onOpenChange,
+  tabs,
+  changingPluginIndex,
+  onSelect,
+}: ModelTabAddonSelectDialogProps) {
+  const isChanging = changingPluginIndex !== null
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl p-0">
+        <AddonSelect
+          onSelect={onSelect}
+          onCancel={() => onOpenChange(false)}
+          description={
+            isChanging
+              ? 'Choose an addon to replace the current one'
+              : 'Choose an addon to add to your model tabs'
+          }
+          confirmLabel={isChanging ? 'Save' : 'Add to Tabs'}
+          skipLabelStep={isChanging}
+          excludedSlugs={getModelTabExcludedSlugs(tabs, changingPluginIndex)}
+        />
+      </DialogContent>
+    </Dialog>
+  )
 }
 
 const ModelTabListEditor = forwardRef<
@@ -63,39 +141,35 @@ const ModelTabListEditor = forwardRef<
     {
       tabs,
       onTabsChange,
-      plugins,
-      pluginsLoading,
       description = DEFAULT_DESCRIPTION,
       showHeader = true,
-      onEditingChange,
+      onRequestAddonSelect,
     },
     ref,
   ) => {
     const [editingIndex, setEditingIndex] = useState<number | null>(null)
     const [editingLabel, setEditingLabel] = useState('')
-    const [pluginSearchTerm, setPluginSearchTerm] = useState('')
     const [changingPluginIndex, setChangingPluginIndex] = useState<
       number | null
     >(null)
+    const [openAddonSelect, setOpenAddonSelect] = useState(false)
 
-    const notifyEditingChange = (index: number | null) => {
-      onEditingChange?.(isIncompleteTabEdit(index, tabs))
-    }
+    const usesExternalAddonSelect = !!onRequestAddonSelect
 
     const clearEditState = () => {
       setEditingIndex(null)
       setEditingLabel('')
-      setPluginSearchTerm('')
+    }
+
+    const closeAddonSelect = () => {
+      setOpenAddonSelect(false)
       setChangingPluginIndex(null)
-      onEditingChange?.(false)
     }
 
     useImperativeHandle(ref, () => ({
       flushPendingEdit: (): TabConfig[] | null => {
         if (editingIndex === null) return tabs
 
-        const tab = tabs[editingIndex]
-        if (tab.type === 'custom' && !tab.plugin) return null
         if (!editingLabel.trim()) return null
 
         const updatedTabs = [...tabs]
@@ -125,15 +199,10 @@ const ModelTabListEditor = forwardRef<
     const handleStartEdit = (index: number) => {
       setEditingIndex(index)
       setEditingLabel(tabs[index].label)
-      setPluginSearchTerm('')
-      setChangingPluginIndex(null)
-      notifyEditingChange(index)
     }
 
     const handleSaveEdit = () => {
       if (editingIndex === null || !editingLabel.trim()) return
-      const tab = tabs[editingIndex]
-      if (tab.type === 'custom' && !tab.plugin) return
 
       const updatedTabs = [...tabs]
       updatedTabs[editingIndex] = {
@@ -145,24 +214,7 @@ const ModelTabListEditor = forwardRef<
     }
 
     const handleCancelEdit = () => {
-      if (editingIndex !== null) {
-        const tab = tabs[editingIndex]
-        if (tab.type === 'custom' && !tab.plugin) {
-          onTabsChange(tabs.filter((_, i) => i !== editingIndex))
-        }
-      }
       clearEditState()
-    }
-
-    const handleCancelPluginPicker = () => {
-      if (editingIndex === null) return
-      const tab = tabs[editingIndex]
-      if (tab.type === 'custom' && !tab.plugin) {
-        handleCancelEdit()
-        return
-      }
-      setChangingPluginIndex(null)
-      setPluginSearchTerm('')
     }
 
     const handleRemove = (index: number) => {
@@ -174,134 +226,45 @@ const ModelTabListEditor = forwardRef<
       }
     }
 
-    const handleSelectPlugin = (index: number, plugin: Plugin) => {
-      const pluginExists = tabs.some(
-        (tab, i) =>
-          i !== index && tab.type === 'custom' && tab.plugin === plugin.slug,
-      )
-      if (pluginExists) return
-
-      const newLabel = plugin.name
-      const updatedTabs = [...tabs]
-      updatedTabs[index] = {
-        ...updatedTabs[index],
-        type: 'custom',
-        plugin: plugin.slug,
-        label: newLabel,
+    const openAddonSelectFor = (index: number | null) => {
+      if (usesExternalAddonSelect) {
+        onRequestAddonSelect?.(index)
+        return
       }
-      onTabsChange(updatedTabs)
-      setEditingLabel(newLabel)
-      setPluginSearchTerm('')
-      setChangingPluginIndex(null)
-      notifyEditingChange(index)
+      setChangingPluginIndex(index)
+      setOpenAddonSelect(true)
     }
 
     const handleAddItem = () => {
-      const updatedTabs = [
-        ...tabs,
-        { type: 'custom' as const, label: '', plugin: '' },
-      ]
-      onTabsChange(updatedTabs)
-      const newIndex = updatedTabs.length - 1
-      setEditingIndex(newIndex)
-      setEditingLabel('')
-      setPluginSearchTerm('')
-      setChangingPluginIndex(null)
-      onEditingChange?.(true)
+      openAddonSelectFor(null)
     }
 
-    const filteredPlugins =
-      plugins?.filter(
-        (plugin) =>
-          plugin.name.toLowerCase().includes(pluginSearchTerm.toLowerCase()) ||
-          plugin.slug?.toLowerCase().includes(pluginSearchTerm.toLowerCase()) ||
-          plugin.description
-            ?.toLowerCase()
-            .includes(pluginSearchTerm.toLowerCase()),
-      ) ?? []
+    const handleChangePlugin = (index: number) => {
+      openAddonSelectFor(index)
+    }
 
-    const renderPluginPicker = (index: number) => (
-      <div className="flex flex-col gap-2 border border-border rounded p-3 mt-2">
-        <div className="relative">
-          <TbSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Search plugins..."
-            value={pluginSearchTerm}
-            onChange={(e) => setPluginSearchTerm(e.target.value)}
-            className="pl-10 text-sm"
-            autoFocus
-          />
-        </div>
-        <div className="flex flex-col max-h-48 overflow-y-auto">
-          {pluginsLoading ? (
-            <div className="flex items-center justify-center p-4">
-              <Spinner size={20} />
-            </div>
-          ) : filteredPlugins.length === 0 ? (
-            <p className="text-xs text-muted-foreground p-4 text-center">
-              {pluginSearchTerm ? 'No plugins found' : 'No plugins available'}
-            </p>
-          ) : (
-            filteredPlugins.map((plugin) => {
-              const alreadyAdded = tabs.some(
-                (tab, i) =>
-                  i !== index &&
-                  tab.type === 'custom' &&
-                  tab.plugin === plugin.slug,
-              )
-              const isSelected =
-                tabs[index]?.type === 'custom' &&
-                tabs[index]?.plugin === plugin.slug
-              return (
-                <button
-                  key={plugin.id}
-                  type="button"
-                  disabled={alreadyAdded}
-                  aria-selected={isSelected}
-                  onClick={() => handleSelectPlugin(index, plugin)}
-                  className={`flex items-center gap-3 p-2 hover:bg-accent rounded transition-colors text-left cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-                    isSelected ? 'bg-accent' : ''
-                  }`}
-                >
-                  {plugin.image ? (
-                    <img
-                      src={plugin.image}
-                      alt={plugin.name}
-                      className="w-8 h-8 rounded object-cover shrink-0"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded bg-muted flex items-center justify-center shrink-0">
-                      <span className="text-xs text-muted-foreground">
-                        {plugin.name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">
-                      {plugin.name}
-                      {alreadyAdded && (
-                        <span className="ml-2 text-xs text-muted-foreground">
-                          (added)
-                        </span>
-                      )}
-                    </p>
-                    <p className="text-xs text-muted-foreground font-mono truncate">
-                      {plugin.slug}
-                    </p>
-                  </div>
-                </button>
-              )
-            })
-          )}
-        </div>
-        <div className="flex justify-end">
-          <Button variant="ghost" size="sm" onClick={handleCancelPluginPicker}>
-            Cancel
-          </Button>
-        </div>
-      </div>
-    )
+    const handleAddonSelect = (plugin: Plugin, label: string) => {
+      const result = applyModelTabAddonSelect(
+        tabs,
+        plugin,
+        label,
+        changingPluginIndex,
+      )
+      if (result === 'duplicate') {
+        toast.info('This addon is already added to model tabs')
+        return
+      }
+      onTabsChange(result)
+      closeAddonSelect()
+    }
+
+    const handleAddonSelectOpenChange = (open: boolean) => {
+      if (!open) {
+        closeAddonSelect()
+        return
+      }
+      setOpenAddonSelect(true)
+    }
 
     return (
       <div className="flex flex-col gap-4">
@@ -352,10 +315,6 @@ const ModelTabListEditor = forwardRef<
                   {tabs.map((tab, index) => {
                     const draggableId = getDraggableId(tab, index)
                     const isEditing = editingIndex === index
-                    const showPluginPicker =
-                      isEditing &&
-                      tab.type === 'custom' &&
-                      (!tab.plugin || changingPluginIndex === index)
 
                     return (
                       <Draggable
@@ -399,26 +358,24 @@ const ModelTabListEditor = forwardRef<
                                           handleCancelEdit()
                                       }}
                                       className="text-sm"
-                                      autoFocus={changingPluginIndex !== index}
+                                      autoFocus
                                     />
                                     {tab.type === 'custom' && tab.plugin && (
                                       <div className="flex items-center gap-2">
                                         <p className="text-xs text-muted-foreground font-mono">
                                           plugin: {tab.plugin}
                                         </p>
-                                        {changingPluginIndex !== index && (
-                                          <Button
-                                            type="button"
-                                            variant="link"
-                                            size="sm"
-                                            className="h-auto p-0 text-xs"
-                                            onClick={() =>
-                                              setChangingPluginIndex(index)
-                                            }
-                                          >
-                                            Change plugin
-                                          </Button>
-                                        )}
+                                        <Button
+                                          type="button"
+                                          variant="link"
+                                          size="sm"
+                                          className="h-auto p-0 text-xs"
+                                          onClick={() =>
+                                            handleChangePlugin(index)
+                                          }
+                                        >
+                                          Change plugin
+                                        </Button>
                                       </div>
                                     )}
                                   </div>
@@ -451,9 +408,7 @@ const ModelTabListEditor = forwardRef<
                                       size="icon"
                                       onClick={handleSaveEdit}
                                       className="h-8 w-8"
-                                      disabled={
-                                        tab.type === 'custom' && !tab.plugin
-                                      }
+                                      disabled={!editingLabel.trim()}
                                     >
                                       <TbCheck className="w-4 h-4 text-green-600" />
                                     </Button>
@@ -490,7 +445,6 @@ const ModelTabListEditor = forwardRef<
                                 )}
                               </div>
                             </div>
-                            {showPluginPicker && renderPluginPicker(index)}
                           </div>
                         )}
                       </Draggable>
@@ -519,6 +473,16 @@ const ModelTabListEditor = forwardRef<
             <TbPlus className="w-4 h-4 mr-2" />
             Add Item
           </Button>
+        )}
+
+        {!usesExternalAddonSelect && (
+          <ModelTabAddonSelectDialog
+            open={openAddonSelect}
+            onOpenChange={handleAddonSelectOpenChange}
+            tabs={tabs}
+            changingPluginIndex={changingPluginIndex}
+            onSelect={handleAddonSelect}
+          />
         )}
       </div>
     )

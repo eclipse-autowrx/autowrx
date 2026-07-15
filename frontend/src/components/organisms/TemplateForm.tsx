@@ -15,6 +15,8 @@ import DaTabItem from '@/components/atoms/DaTabItem'
 import DaImportFile from '@/components/atoms/DaImportFile'
 import ActionButtonsTab from '@/components/organisms/ActionButtonsTab'
 import ModelTabListEditor, {
+  applyModelTabAddonSelect,
+  ModelTabAddonSelectDialog,
   ModelTabListEditorHandle,
 } from '@/components/molecules/ModelTabListEditor'
 // No direct JSON editor; we provide structured editors for config
@@ -124,6 +126,10 @@ export default function TemplateForm({
   })
   const [modelTabs, setModelTabs] = useState<TabConfig[]>([])
   const modelTabListRef = useRef<ModelTabListEditorHandle>(null)
+  const [addonSelectOpen, setAddonSelectOpen] = useState(false)
+  const [changingPluginIndex, setChangingPluginIndex] = useState<number | null>(
+    null,
+  )
   const [prototypeTabs, setPrototypeTabs] = useState<TabConfig[]>([])
   const [prototypeStagingConfig, setPrototypeStagingConfig] =
     useState<StagingConfig>({})
@@ -145,10 +151,6 @@ export default function TemplateForm({
   const [editingTabIndex, setEditingTabIndex] = useState<number | null>(null)
   const [editingTabLabel, setEditingTabLabel] = useState('')
   const [editingTabIconSvg, setEditingTabIconSvg] = useState('')
-  const { data: pluginData } = useQuery({
-    queryKey: ['plugins-for-template'],
-    queryFn: () => listPlugins({ limit: 1000, page: 1 }),
-  })
 
   useEffect(() => {
     if (initial) {
@@ -211,6 +213,8 @@ export default function TemplateForm({
 
     if (open && !wasOpen && isCreate) {
       setActiveTab('meta')
+      setAddonSelectOpen(false)
+      setChangingPluginIndex(null)
       // If no initialData, reset to empty form
       if (!initialData) {
         setForm({
@@ -435,7 +439,29 @@ export default function TemplateForm({
           .includes(sidebarSearchTerm.toLowerCase()),
     ) ?? []
 
+  const handleRequestAddonSelect = (index: number | null) => {
+    setChangingPluginIndex(index)
+    setAddonSelectOpen(true)
+  }
+
+  const handleModelAddonSelect = (plugin: Plugin, label: string) => {
+    const result = applyModelTabAddonSelect(
+      modelTabs,
+      plugin,
+      label,
+      changingPluginIndex,
+    )
+    if (result === 'duplicate') {
+      toast.info('This addon is already added to model tabs')
+      return
+    }
+    setModelTabs(result)
+    setAddonSelectOpen(false)
+    setChangingPluginIndex(null)
+  }
+
   return (
+    <>
     <div className="flex flex-col w-full h-full overflow-auto">
       <div className="flex border-b border-input">
         <DaTabItem
@@ -569,8 +595,7 @@ export default function TemplateForm({
                 ref={modelTabListRef}
                 tabs={modelTabs}
                 onTabsChange={setModelTabs}
-                plugins={pluginData?.results}
-                pluginsLoading={!pluginData}
+                onRequestAddonSelect={handleRequestAddonSelect}
               />
             )}
 
@@ -1069,5 +1094,16 @@ export default function TemplateForm({
         )}
       </div>
     </div>
+    <ModelTabAddonSelectDialog
+      open={addonSelectOpen}
+      onOpenChange={(nextOpen) => {
+        setAddonSelectOpen(nextOpen)
+        if (!nextOpen) setChangingPluginIndex(null)
+      }}
+      tabs={modelTabs}
+      changingPluginIndex={changingPluginIndex}
+      onSelect={handleModelAddonSelect}
+    />
+    </>
   )
 }

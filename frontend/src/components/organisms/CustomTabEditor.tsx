@@ -19,13 +19,15 @@ import { Label } from '@/components/atoms/label'
 import { Spinner } from '@/components/atoms/spinner'
 import ActionButtonsTab from '@/components/organisms/ActionButtonsTab'
 import ModelTabListEditor, {
+  applyModelTabAddonSelect,
+  ModelTabAddonSelectDialog,
   ModelTabListEditorHandle,
 } from '@/components/molecules/ModelTabListEditor'
 import {
   hasIncompleteModelTabs,
   sanitizeModelTabsForSave,
 } from '@/lib/modelTabUtils'
-import { listPlugins } from '@/services/plugin.service'
+import { listPlugins, type Plugin } from '@/services/plugin.service'
 import {
   DragDropContext,
   Draggable,
@@ -163,6 +165,10 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
   const isModelMode = mode === 'model'
   const [localTabs, setLocalTabs] = useState<TabConfig[]>(tabs)
   const modelTabListRef = useRef<ModelTabListEditorHandle>(null)
+  const [addonSelectOpen, setAddonSelectOpen] = useState(false)
+  const [changingPluginIndex, setChangingPluginIndex] = useState<number | null>(
+    null,
+  )
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const [editingLabel, setEditingLabel] = useState<string>('')
   const [editingIconSvg, setEditingIconSvg] = useState<string>('')
@@ -191,9 +197,7 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
     queryFn: () => listPlugins({ page: 1, limit: 100 }),
     enabled:
       open &&
-      (activeDialogTab === 'sidebar' ||
-        activeDialogTab === 'actions' ||
-        isModelMode),
+      (activeDialogTab === 'sidebar' || activeDialogTab === 'actions'),
   })
 
   // Update local tabs when dialog opens or tabs change
@@ -212,6 +216,8 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
       setEditingIconSvg('')
       setShowSidebarPluginPicker(false)
       setSidebarSearchTerm('')
+      setAddonSelectOpen(false)
+      setChangingPluginIndex(null)
     }
   }, [
     open,
@@ -381,7 +387,30 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
     setEditingLabel('')
     setEditingIconSvg('')
     setShowSidebarPluginPicker(false)
+    setAddonSelectOpen(false)
+    setChangingPluginIndex(null)
     onOpenChange(false)
+  }
+
+  const handleRequestAddonSelect = (index: number | null) => {
+    setChangingPluginIndex(index)
+    setAddonSelectOpen(true)
+  }
+
+  const handleModelAddonSelect = (plugin: Plugin, label: string) => {
+    const result = applyModelTabAddonSelect(
+      localTabs,
+      plugin,
+      label,
+      changingPluginIndex,
+    )
+    if (result === 'duplicate') {
+      toast.info('This addon is already added to model tabs')
+      return
+    }
+    setLocalTabs(result)
+    setAddonSelectOpen(false)
+    setChangingPluginIndex(null)
   }
 
   // Get the selected sidebar plugin details
@@ -638,32 +667,36 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
   )
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className={
-          isModelMode
-            ? 'max-w-2xl flex flex-col'
-            : 'max-w-2xl h-[80vh] flex flex-col'
-        }
-      >
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent
+          className={
+            isModelMode
+              ? 'max-w-2xl flex flex-col'
+              : 'max-w-2xl h-[80vh] flex flex-col'
+          }
+        >
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+            <DialogDescription>{description}</DialogDescription>
+          </DialogHeader>
 
-        {isModelMode ? (
-          <div className="py-4">
-            <ModelTabListEditor
-              key={open ? 'modeltablisteditor-open' : 'modeltablisteditor-closed'}
-              ref={modelTabListRef}
-              tabs={localTabs}
-              onTabsChange={setLocalTabs}
-              plugins={pluginsData?.results}
-              pluginsLoading={pluginsLoading}
-              showHeader={false}
-            />
-          </div>
-        ) : (
+          {isModelMode ? (
+            <div className="py-4">
+              <ModelTabListEditor
+                key={
+                  open
+                    ? 'modeltablisteditor-open'
+                    : 'modeltablisteditor-closed'
+                }
+                ref={modelTabListRef}
+                tabs={localTabs}
+                onTabsChange={setLocalTabs}
+                showHeader={false}
+                onRequestAddonSelect={handleRequestAddonSelect}
+              />
+            </div>
+          ) : (
           <>
         {/* Internal Tab Switcher */}
         <div className="flex border-b border-border -mx-6 px-6">
@@ -966,17 +999,31 @@ const CustomTabEditor: FC<CustomTabEditorProps> = ({
           </>
         )}
 
-        {/* Footer Actions */}
-        <div className="flex items-center justify-end gap-2 pt-4 border-t border-border">
-          <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? 'Saving...' : 'Save Changes'}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+          {/* Footer Actions */}
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-border">
+            <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {isModelMode && (
+        <ModelTabAddonSelectDialog
+          open={addonSelectOpen}
+          onOpenChange={(nextOpen) => {
+            setAddonSelectOpen(nextOpen)
+            if (!nextOpen) setChangingPluginIndex(null)
+          }}
+          tabs={localTabs}
+          changingPluginIndex={changingPluginIndex}
+          onSelect={handleModelAddonSelect}
+        />
+      )}
+    </>
   )
 }
 
