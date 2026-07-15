@@ -17,10 +17,12 @@ import DaImportFile from '@/components/atoms/DaImportFile'
 import { zipToModel } from '@/lib/zipUtils'
 import { createModelService } from '@/services/model.service'
 import { createPrototypeService } from '@/services/prototype.service'
+import { uploadFileService } from '@/services/upload.service'
 import { ModelCreate, ModelLite, Prototype } from '@/types/model.type'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import useAuthStore from '@/stores/authStore'
 import { addLog } from '@/services/log.service'
+import { getConfig } from '@/utils/siteConfig'
 import { useNavigate } from 'react-router-dom'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import DaSkeletonGrid from '@/components/molecules/DaSkeletonGrid'
@@ -112,19 +114,36 @@ const PageModelList = () => {
     async (importedModel: any) => {
       if (!importedModel?.model) return
       try {
+        let modelHomeImageUrl: string | undefined
+        if (importedModel.modelHomeImageFile instanceof File) {
+          const { url } = await uploadFileService(
+            importedModel.modelHomeImageFile,
+          )
+          modelHomeImageUrl = url
+        }
+        if (!modelHomeImageUrl) {
+          modelHomeImageUrl = await getConfig(
+            'DEFAULT_MODEL_IMAGE',
+            'site',
+            undefined,
+            '/imgs/default-model-image.png',
+          )
+        }
+
         const newModel: ModelCreate = {
           custom_apis: importedModel.model.custom_apis
             ? JSON.stringify(importedModel.model.custom_apis)
             : 'Empty',
           cvi: importedModel.model.cvi,
           main_api: importedModel.model.main_api || 'Vehicle',
-          model_home_image_file:
-            importedModel.model.model_home_image_file ||
-            '/ref/E-Car_Full_Vehicle.png',
+          model_home_image_file: modelHomeImageUrl,
           model_files: importedModel.model.model_files || {},
           name: importedModel.model.name || 'New Imported Model',
           extended_apis: importedModel.model.extended_apis || [],
-          api_version: importedModel.model.api_version || 'v4.1',
+          api_version:
+            importedModel.model.api_version !== undefined
+              ? importedModel.model.api_version
+              : 'v4.1',
           visibility: 'private',
         }
 

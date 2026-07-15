@@ -12,7 +12,7 @@ import { saveAs } from 'file-saver'
 import { Model, Prototype } from '@/types/model.type'
 // import { getPlugins }
 import { listModelPrototypes } from '@/services/prototype.service'
-import { CVI_v4_1 } from '@/data/CVI_v4.1'
+import { getComputedAPIs } from '@/services/model.service'
 import {
   getExtendedApi,
   listExtendedApis,
@@ -180,11 +180,11 @@ export const downloadModelZip = async (model: Model) => {
 
   try {
     const extended_apis = (await listExtendedApis(model.id))?.results || []
+    const computedApis = await getComputedAPIs(model.id)
 
     const zip = new JSZip()
     const zipFilename = `model_${removeSpecialCharacters(model.name)}.zip`
-    // Deprecated
-    zip.file('vss.json', JSON.stringify(JSON.parse(CVI_v4_1), null, 4)) // Using default CVI while waiting for new CVI api
+    zip.file('vss.json', JSON.stringify(computedApis, null, 4))
     zip.file('custom_api.json', JSON.stringify(model.custom_apis, null, 4))
 
     zip.file('extended_apis.json', JSON.stringify(extended_apis, null, 4))
@@ -229,10 +229,10 @@ export const zipToModel = async (file: File) => {
     model_home_image_file: '',
     visibility: '',
     extended_apis: [],
-    api_version: 'v4.1',
   }
   let plugins: any[] = []
   let prototypes: any[] = []
+  let modelHomeImageFile: File | undefined
 
   try {
     const zipFile = await zip.loadAsync(file)
@@ -241,6 +241,10 @@ export const zipToModel = async (file: File) => {
       (await zipFile.file('metadata.json')?.async('string')) || '{}',
     )
     Object.assign(model, metadata)
+    // Preserve explicit null (custom models); only default for legacy ZIPs missing the field
+    if (!('api_version' in metadata)) {
+      model.api_version = 'v4.1'
+    }
     model.model_files = JSON.parse(metadata.model_files || '{}')
 
     model.cvi = (await zipFile.file('vss.json')?.async('string')) || '{}'
@@ -250,6 +254,14 @@ export const zipToModel = async (file: File) => {
     model.extended_apis = JSON.parse(
       (await zipFile.file('extended_apis.json')?.async('string')) || '[]',
     )
+
+    const homeImageEntry = zipFile.file('model_home_image_file.png')
+    if (homeImageEntry) {
+      const blob = await homeImageEntry.async('blob')
+      modelHomeImageFile = new File([blob], 'model_home_image_file.png', {
+        type: 'image/png',
+      })
+    }
 
     const prototypesStr =
       (await zipFile.file('prototypes.json')?.async('string')) || '[]'
@@ -271,7 +283,7 @@ export const zipToModel = async (file: File) => {
   } catch (err) {
     return null
   }
-  return { model, plugins, prototypes }
+  return { model, plugins, prototypes, modelHomeImageFile }
 }
 
 export const downloadPrototypeZip = async (prototype: Prototype) => {
