@@ -215,7 +215,9 @@ export const downloadModelZip = async (model: Model) => {
 
     const content = await zip.generateAsync({ type: 'blob' })
     saveAs(content, zipFilename)
-  } catch (err) { }
+  } catch (err) {
+    throw err
+  }
 }
 
 export const zipToModel = async (file: File) => {

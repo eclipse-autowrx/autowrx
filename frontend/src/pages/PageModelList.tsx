@@ -23,6 +23,7 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import useAuthStore from '@/stores/authStore'
 import { addLog } from '@/services/log.service'
 import { getConfig } from '@/utils/siteConfig'
+import { useToast } from '@/components/molecules/toaster/use-toast'
 import { useNavigate } from 'react-router-dom'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import DaSkeletonGrid from '@/components/molecules/DaSkeletonGrid'
@@ -37,6 +38,7 @@ type ModelTab = 'myModel' | 'myContribution' | 'public'
 
 const PageModelList = () => {
   const navigate = useNavigate()
+  const { toast } = useToast()
   const [isImporting, setIsImporting] = useState(false)
   const { data: user, isLoading: isUserLoading } = useSelfProfileQuery()
   const { authBootstrapped, setOpenLoginDialog } = useAuthStore()
@@ -114,12 +116,27 @@ const PageModelList = () => {
     async (importedModel: any) => {
       if (!importedModel?.model) return
       try {
+        // Prefer zip-embedded image, then metadata URL, then site default
         let modelHomeImageUrl: string | undefined
         if (importedModel.modelHomeImageFile instanceof File) {
-          const { url } = await uploadFileService(
-            importedModel.modelHomeImageFile,
-          )
-          modelHomeImageUrl = url
+          try {
+            const { url } = await uploadFileService(
+              importedModel.modelHomeImageFile,
+            )
+            modelHomeImageUrl = url
+          } catch (uploadErr) {
+            console.error('Failed to upload model home image:', uploadErr)
+          }
+        }
+        if (!modelHomeImageUrl) {
+          const metadataImage = importedModel.model.model_home_image_file
+          if (
+            typeof metadataImage === 'string' &&
+            metadataImage.trim() &&
+            !metadataImage.startsWith('/ref/')
+          ) {
+            modelHomeImageUrl = metadataImage
+          }
         }
         if (!modelHomeImageUrl) {
           modelHomeImageUrl = await getConfig(
@@ -130,6 +147,8 @@ const PageModelList = () => {
           )
         }
 
+        // Backend create ignores `cvi`; APIs are rebuilt from api_version +
+        // extended_apis. `cvi` is kept for API compatibility / archive payload.
         const newModel: ModelCreate = {
           custom_apis: importedModel.model.custom_apis
             ? JSON.stringify(importedModel.model.custom_apis)
@@ -140,11 +159,11 @@ const PageModelList = () => {
           model_files: importedModel.model.model_files || {},
           name: importedModel.model.name || 'New Imported Model',
           extended_apis: importedModel.model.extended_apis || [],
-          api_version:
-            importedModel.model.api_version !== undefined
-              ? importedModel.model.api_version
-              : 'v4.1',
           visibility: 'private',
+          // Omit when null (custom model) so create validation accepts it
+          ...(importedModel.model.api_version != null
+            ? { api_version: importedModel.model.api_version }
+            : {}),
         }
 
         const createdModel = await createModelService(newModel)
@@ -189,11 +208,17 @@ const PageModelList = () => {
         navigate(`/model/${createdModel}`)
       } catch (err) {
         console.error('Error creating model from zip: ', err)
+        toast({
+          title: 'Import failed',
+          description:
+            'Could not create the model from this zip. Check the file and try again.',
+          variant: 'destructive',
+        })
       } finally {
         setIsImporting(false)
       }
     },
-    [user, refetch, navigate, queryClient],
+    [user, refetch, navigate, queryClient, toast],
   )
 
   const handleImportModelZip = useCallback(
@@ -202,9 +227,15 @@ const PageModelList = () => {
       if (model) {
         setIsImporting(true)
         await createNewModel(model)
+      } else {
+        toast({
+          title: 'Import failed',
+          description: 'Invalid or unreadable model zip file.',
+          variant: 'destructive',
+        })
       }
     },
-    [createNewModel],
+    [createNewModel, toast],
   )
 
   const tabItems = useMemo(() => {

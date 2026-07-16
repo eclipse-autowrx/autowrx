@@ -49,6 +49,7 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { listModelsLite } from '@/services/model.service'
 import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
 import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
+import { useToast } from '@/components/molecules/toaster/use-toast'
 
 const getCreatedById = (createdBy: any): string =>
   typeof createdBy === 'object' ? createdBy?.id ?? '' : createdBy ?? ''
@@ -155,6 +156,7 @@ const DaStateControl: React.FC<{
 
 const PageModelDetail = () => {
   const [model] = useModelStore((state) => [state.model as Model])
+  const { toast } = useToast()
   const [imageError, setImageError] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -338,6 +340,12 @@ const PageModelDetail = () => {
                   await downloadModelZip(model)
                 } catch (e) {
                   console.error(e)
+                  toast({
+                    title: 'Export failed',
+                    description:
+                      'Could not export this model. Please try again.',
+                    variant: 'destructive',
+                  })
                 }
                 setIsExporting(false)
               }}
