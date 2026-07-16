@@ -27,6 +27,7 @@ import { Spinner } from '@/components/atoms/spinner'
 import { VscChevronLeft, VscChevronRight } from 'react-icons/vsc'
 import { ArrowLeftFromLine, CopyMinus } from 'lucide-react'
 import { TbLayoutSidebar, TbLayoutSidebarRight, TbLayoutSidebarRightFilled } from 'react-icons/tb'
+import { useCustomApiSetsEnabled } from '@/hooks/useCustomApiSetsEnabled'
 
 interface ApiCodeBlockProps {
   content: string
@@ -167,6 +168,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   >('used-signals')
   const [isCollapsed, setIsCollapsed] = useState(false)
   const { data: model } = useCurrentModel()
+  const customApiSetsEnabled = useCustomApiSetsEnabled()
 
   // Horizontal tab scrolling state
   const scrollContainerRef = React.useRef<HTMLDivElement | null>(null)
@@ -223,8 +225,9 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
     onCollapsedChange?.(isCollapsed)
   }, [isCollapsed, onCollapsedChange])
 
-  // Get CustomApiSet IDs from model
+  // Get CustomApiSet IDs from model (empty when feature disabled)
   const customApiSetIds = useMemo(() => {
+    if (!customApiSetsEnabled) return []
     return (model?.custom_api_sets || []).map((id: any) => {
       if (typeof id === 'string') return id
       if (id && typeof id === 'object' && 'toString' in id) return id.toString()
@@ -232,7 +235,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
     }).filter((id: any): id is string =>
       !!id && typeof id === 'string' && id !== '[object Object]' && id !== 'undefined' && id !== 'null'
     )
-  }, [model?.custom_api_sets])
+  }, [model?.custom_api_sets, customApiSetsEnabled])
 
   // Recalculate scroll buttons whenever tab set changes
   useEffect(() => {
@@ -275,14 +278,17 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   }, [])
 
   // Determine if current tab is a CustomApiSet tab
-  const isCustomApiSetTab = tab.startsWith('custom-api-set-')
-  const activeCustomApiSetId = isCustomApiSetTab ? tab.replace('custom-api-set-', '') : null
+  const isCustomApiSetTab =
+    customApiSetsEnabled && tab.startsWith('custom-api-set-')
+  const activeCustomApiSetId = isCustomApiSetTab
+    ? tab.replace('custom-api-set-', '')
+    : null
 
   // Fetch active CustomApiSet data
   const { data: activeCustomApiSet, isLoading: isLoadingSet } = useQuery({
     queryKey: ['custom-api-set', activeCustomApiSetId],
     queryFn: () => getCustomApiSetById(activeCustomApiSetId!),
-    enabled: !!activeCustomApiSetId,
+    enabled: customApiSetsEnabled && !!activeCustomApiSetId,
   })
 
   // Extract custom_api_schema ID from set
@@ -296,11 +302,19 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   const { data: activeCustomApiSchema, isLoading: isLoadingSchema } = useQuery({
     queryKey: ['custom-api-schema', customApiSchemaId],
     queryFn: () => getCustomApiSchemaById(customApiSchemaId!),
-    enabled: !!customApiSchemaId,
+    enabled: customApiSetsEnabled && !!customApiSchemaId,
   })
 
   // State for selected API item in CustomApiSet view
   const [selectedCustomApiItemId, setSelectedCustomApiItemId] = useState<string | null>(null)
+
+  // Fall back from custom-api-set tabs when the feature is disabled
+  useEffect(() => {
+    if (!customApiSetsEnabled && tab.startsWith('custom-api-set-')) {
+      setTab('used-signals')
+      setSelectedCustomApiItemId(null)
+    }
+  }, [customApiSetsEnabled, tab])
 
   const customApiItems = activeCustomApiSet?.data?.items || []
   const selectedCustomApiItem = selectedCustomApiItemId
@@ -379,12 +393,17 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
       )
       return sets
     },
-    enabled: customApiSetIds.length > 0,
+    enabled: customApiSetsEnabled && customApiSetIds.length > 0,
   })
 
   // Check for used CustomApiSet APIs in code
   useEffect(() => {
-    if (!code || !customApiSetQueries.data || customApiSetQueries.data.length === 0) {
+    if (
+      !customApiSetsEnabled ||
+      !code ||
+      !customApiSetQueries.data ||
+      customApiSetQueries.data.length === 0
+    ) {
       setUsedCustomApiItems(new Map())
       return
     }
@@ -410,7 +429,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
     })
 
     setUsedCustomApiItems(usedItemsMap)
-  }, [code, customApiSetQueries.data])
+  }, [code, customApiSetQueries.data, customApiSetsEnabled])
 
   const onApiClicked = (api: any) => {
     if (!api) return
@@ -536,7 +555,8 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
                   </DaTabItem>
                 )}
                 {/* CustomApiSet tabs */}
-                {customApiSetIds.map((setId) => {
+                {customApiSetsEnabled &&
+                  customApiSetIds.map((setId) => {
                   const tabId = `custom-api-set-${setId}`
                   return (
                     <CustomApiSetTab
@@ -594,7 +614,8 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
                     ))}
 
                   {/* CustomApiSet sections */}
-                  {Array.from(usedCustomApiItems.entries()).map(([setId, items]) => {
+                  {customApiSetsEnabled &&
+                    Array.from(usedCustomApiItems.entries()).map(([setId, items]) => {
                     const set = customApiSetQueries.data?.find((s) => s.id === setId)
                     const setName = set?.name || setId
 

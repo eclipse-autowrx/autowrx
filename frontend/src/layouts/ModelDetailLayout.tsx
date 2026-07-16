@@ -195,12 +195,6 @@ const ModelDetailLayout = () => {
   const numberOfPrototypes = fetchedPrototypes?.length || 0
   const numberOfApis = activeModelApis?.length || 0
 
-  // Count API sets: 1 for COVESA + number of custom_api_sets
-  const customApiSetCount = (model?.custom_api_sets || []).length
-  const totalApiSetCount = 1 + customApiSetCount // 1 for COVESA
-  // Hide count if 0 or 1
-  const vehicleApiCount = totalApiSetCount > 1 ? totalApiSetCount : null
-
   const cardIntro = [
     {
       title: `Overview`,
@@ -227,7 +221,8 @@ const ModelDetailLayout = () => {
         '/model/:model_id/api',
         '/model/:model_id/api/:api',
         '/model/:model_id/api/:source/:api',
-      ],      count: vehicleApiCount,
+      ],
+      count: numberOfApis > 0 ? numberOfApis : null,
       dataId: 'tab-model-api',
     },
     {
