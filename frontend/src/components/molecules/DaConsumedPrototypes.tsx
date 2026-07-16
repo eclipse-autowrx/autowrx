@@ -14,6 +14,7 @@ import { Button } from '@/components/atoms/button'
 import { TbChevronDown } from 'react-icons/tb'
 import clsx from 'clsx'
 import { Spinner } from '@/components/atoms/spinner'
+import { useDefaultPrototypeImage } from '@/utils/siteConfig'
 
 type DaRelatedPrototypesProps = {
   signal?: string
@@ -22,6 +23,7 @@ type DaRelatedPrototypesProps = {
 const DaRelatedPrototypes = ({ signal }: DaRelatedPrototypesProps) => {
   const [expanded, setExpanded] = useState(false)
   const { data: prototypes, isLoading } = useSearchPrototypesBySignal(signal)
+  const defaultPrototypeImage = useDefaultPrototypeImage()
 
   const truncatedPrototypes = prototypes?.slice(
     0,
@@ -60,10 +62,14 @@ const DaRelatedPrototypes = ({ signal }: DaRelatedPrototypesProps) => {
                 key={prototype.id}
                 className="border rounded-md p-2 cursor-pointer hover:border-primary relative"
               >
-                <DaImage
-                  src={prototype.image_file}
-                  className="w-full aspect-video object-cover rounded-md"
-                />
+                <div className="relative w-full aspect-video overflow-hidden rounded-md bg-muted">
+                  <DaImage
+                    src={prototype.image_file}
+                    fallbackSrc={defaultPrototypeImage}
+                    alt={prototype.name}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                </div>
                 <div className="text-sm font-medium mt-1 block w-full truncate">
                   {prototype.name}
                 </div>

@@ -48,6 +48,7 @@ import { toast } from 'react-toastify'
 import { isAxiosError } from 'axios'
 import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
 import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
+import { useDefaultPrototypeImage } from '@/utils/siteConfig'
 
 interface PrototypeTabInfoProps {
   prototype: Prototype
@@ -61,6 +62,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false)
   const [localPrototype, setLocalPrototype] = useState(prototype)
+  const defaultPrototypeImage = useDefaultPrototypeImage()
   const { data: model } = useCurrentModel()
   const { data: modelPrototypes, refetch: refetchModelPrototypes } = useListModelPrototypes(
     model?.id || '',
@@ -336,16 +338,15 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
           {/* Content */}
           <div className="flex w-full gap-6">
             {/* Image */}
-            <div className="flex-1 h-fit relative">
-              <DaImage
-                src={
-                  localPrototype.image_file
-                    ? localPrototype.image_file
-                    : '/imgs/default_prototype_cover.jpg'
-                }
-                className="w-full object-cover max-h-[400px] aspect-video rounded-xl border shadow"
-                alt={localPrototype.name}
-              />
+            <div className="flex-1 relative">
+              <div className="relative w-full aspect-video max-h-[400px] overflow-hidden rounded-xl border shadow bg-muted">
+                <DaImage
+                  src={localPrototype.image_file}
+                  fallbackSrc={defaultPrototypeImage}
+                  className="absolute inset-0 h-full w-full object-cover"
+                  alt={localPrototype.name}
+                />
+              </div>
               {isAuthorized && (
                 <DaImportFile
                   onFileChange={handlePrototypeImageChange}

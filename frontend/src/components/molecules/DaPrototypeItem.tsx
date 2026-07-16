@@ -29,7 +29,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../atoms/avatar'
 import { Link, useNavigate } from 'react-router-dom'
 import DaTooltip from './DaTooltip'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
-import { useSiteConfig } from '@/utils/siteConfig'
+import { useSiteConfig, useDefaultPrototypeImage } from '@/utils/siteConfig'
 import {
   ContextMenu,
   ContextMenuContent,
@@ -61,6 +61,7 @@ interface DaPrototypeItemProps {
 const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
   const { data: user } = useSelfProfileQuery()
   const enableContextMenu = useSiteConfig('PROTOTYPE_ITEM_MENU_CONTEXT', false)
+  const defaultPrototypeImage = useDefaultPrototypeImage()
   const { data: model } = useCurrentModel()
   const { data: existingPrototypes, refetch: refetchModelPrototypes } =
     useListModelPrototypes(model?.id || '')
@@ -186,20 +187,17 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
       id={prototype?.id ?? ''}
     >
       <div className="flex flex-col items-center space-y-1 text-muted-foreground overflow-hidden">
-        <div className="flex w-full h-full relative overflow-hidden rounded-lg">
+        <div className="relative w-full aspect-video overflow-hidden rounded-lg shadow border bg-muted">
           {(isUploading || isDeleting) && (
             <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-black/40">
               <TbLoader className="size-6 animate-spin text-white" />
             </div>
           )}
           <DaImage
-            src={
-              prototype?.image_file
-                ? prototype.image_file
-                : '/imgs/default_prototype_cover.jpg'
-            }
+            src={prototype?.image_file}
+            fallbackSrc={defaultPrototypeImage}
             alt="Image"
-            className="w-full h-full rounded-lg aspect-video object-cover shadow border"
+            className="absolute inset-0 h-full w-full object-cover"
           />
           <div className="absolute bottom-0 w-full h-[30px] blur-xl bg-black/80 transition-opacity duration-200 ease-in-out opacity-0 group-hover:opacity-100"></div>
           <div className="absolute bottom-0 w-full h-[50px] transition-opacity duration-200 ease-in-out opacity-0 group-hover:opacity-100">
