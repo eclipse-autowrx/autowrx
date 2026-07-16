@@ -23,7 +23,7 @@ export type ModelLite = {
   created_by: string
   tags?: Tag[]
   state?: 'draft' | 'released' | 'blocked'
-  api_version?: string
+  api_version?: string | null
   stats?: {
     apis: {
       total: { count: number }
@@ -45,7 +45,7 @@ export type ModelLite = {
 export type Model = {
   id: string
   custom_apis?: any[]
-  api_version?: string
+  api_version?: string | null
   main_api: string
   model_home_image_file?: string
   detail_image_file?: string

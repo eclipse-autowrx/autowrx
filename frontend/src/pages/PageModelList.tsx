@@ -36,6 +36,14 @@ import { useAuthConfigs } from '@/hooks/useAuthConfigs'
 
 type ModelTab = 'myModel' | 'myContribution' | 'public'
 
+const stripExtendedApisForImport = (apis: unknown[]) =>
+  apis.map((api) => {
+    if (!api || typeof api !== 'object') return api
+    const { id, _id, model, created_at, updated_at, ...rest } =
+      api as Record<string, unknown>
+    return rest
+  })
+
 const PageModelList = () => {
   const navigate = useNavigate()
   const { toast } = useToast()
@@ -158,12 +166,11 @@ const PageModelList = () => {
           model_home_image_file: modelHomeImageUrl,
           model_files: importedModel.model.model_files || {},
           name: importedModel.model.name || 'New Imported Model',
-          extended_apis: importedModel.model.extended_apis || [],
+          extended_apis: stripExtendedApisForImport(
+            importedModel.model.extended_apis || [],
+          ),
           visibility: 'private',
-          // Omit when null (custom model) so create validation accepts it
-          ...(importedModel.model.api_version != null
-            ? { api_version: importedModel.model.api_version }
-            : {}),
+          api_version: importedModel.model.api_version ?? null,
         }
 
         const createdModel = await createModelService(newModel)

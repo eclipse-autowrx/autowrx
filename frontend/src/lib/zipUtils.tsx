@@ -178,46 +178,42 @@ const downloadAllPrototypeInModel = async (model: Model, zip: JSZip) => {
 export const downloadModelZip = async (model: Model) => {
   if (!model) return
 
-  try {
-    const extended_apis = (await listExtendedApis(model.id))?.results || []
-    const computedApis = await getComputedAPIs(model.id)
+  const extended_apis = (await listExtendedApis(model.id))?.results || []
+  const computedApis = await getComputedAPIs(model.id)
 
-    const zip = new JSZip()
-    const zipFilename = `model_${removeSpecialCharacters(model.name)}.zip`
-    zip.file('vss.json', JSON.stringify(computedApis, null, 4))
-    zip.file('custom_api.json', JSON.stringify(model.custom_apis, null, 4))
+  const zip = new JSZip()
+  const zipFilename = `model_${removeSpecialCharacters(model.name)}.zip`
+  zip.file('vss.json', JSON.stringify(computedApis, null, 4))
+  zip.file('custom_api.json', JSON.stringify(model.custom_apis, null, 4))
 
-    zip.file('extended_apis.json', JSON.stringify(extended_apis, null, 4))
-    zip.file(
-      'metadata.json',
-      JSON.stringify(
-        {
-          name: model.name,
-          model_files: JSON.stringify(model.model_files, null, 4),
-          main_api: model.main_api,
-          model_home_image_file: model.model_home_image_file,
-          visibility: model.visibility,
-          api_version: model.api_version,
-        },
-        null,
-        4,
-      ),
+  zip.file('extended_apis.json', JSON.stringify(extended_apis, null, 4))
+  zip.file(
+    'metadata.json',
+    JSON.stringify(
+      {
+        name: model.name,
+        model_files: JSON.stringify(model.model_files, null, 4),
+        main_api: model.main_api,
+        model_home_image_file: model.model_home_image_file,
+        visibility: model.visibility,
+        api_version: model.api_version ?? null,
+      },
+      null,
+      4,
+    ),
+  )
+  if (model.model_home_image_file) {
+    await getImgFile(
+      zip,
+      model.model_home_image_file,
+      'model_home_image_file.png',
     )
-    if (model.model_home_image_file) {
-      await getImgFile(
-        zip,
-        model.model_home_image_file,
-        'model_home_image_file.png',
-      )
-    }
-    // await downloadAllPluginInModel(model, zip)
-    await downloadAllPrototypeInModel(model, zip)
-
-    const content = await zip.generateAsync({ type: 'blob' })
-    saveAs(content, zipFilename)
-  } catch (err) {
-    throw err
   }
+  // await downloadAllPluginInModel(model, zip)
+  await downloadAllPrototypeInModel(model, zip)
+
+  const content = await zip.generateAsync({ type: 'blob' })
+  saveAs(content, zipFilename)
 }
 
 export const zipToModel = async (file: File) => {
