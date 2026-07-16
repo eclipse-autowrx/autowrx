@@ -15,7 +15,7 @@ import { listModelPrototypes } from '@/services/prototype.service'
 import { getComputedAPIs } from '@/services/model.service'
 import {
   getExtendedApi,
-  listExtendedApis,
+  listAllExtendedApis,
 } from '@/services/extendedApis.service'
 
 import { convertCode } from '@/services/convert_code.service'
@@ -178,7 +178,7 @@ const downloadAllPrototypeInModel = async (model: Model, zip: JSZip) => {
 export const downloadModelZip = async (model: Model) => {
   if (!model) return
 
-  const extended_apis = (await listExtendedApis(model.id))?.results || []
+  const extended_apis = await listAllExtendedApis(model.id)
   const computedApis = await getComputedAPIs(model.id)
 
   const zip = new JSZip()
@@ -196,7 +196,10 @@ export const downloadModelZip = async (model: Model) => {
         main_api: model.main_api,
         model_home_image_file: model.model_home_image_file,
         visibility: model.visibility,
-        api_version: model.api_version ?? null,
+        api_version:
+          typeof model.api_version === 'string' && model.api_version.trim()
+            ? model.api_version.trim()
+            : null,
       },
       null,
       4,
@@ -242,6 +245,11 @@ export const zipToModel = async (file: File) => {
     // Preserve explicit null (custom models); only default for legacy ZIPs missing the field
     if (!('api_version' in metadata)) {
       model.api_version = 'v4.1'
+    } else if (
+      model.api_version == null ||
+      (typeof model.api_version === 'string' && !model.api_version.trim())
+    ) {
+      model.api_version = null
     }
     model.model_files = JSON.parse(metadata.model_files || '{}')
 

@@ -39,10 +39,18 @@ type ModelTab = 'myModel' | 'myContribution' | 'public'
 const stripExtendedApisForImport = (apis: unknown[]) =>
   apis.map((api) => {
     if (!api || typeof api !== 'object') return api
-    const { id, _id, model, created_at, updated_at, ...rest } =
+    const { id, _id, model, created_at, updated_at, __v, ...rest } =
       api as Record<string, unknown>
     return rest
   })
+
+/** Empty string / whitespace → null (custom model); preserve explicit null. */
+const normalizeApiVersion = (value: unknown): string | null => {
+  if (value == null) return null
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed || null
+}
 
 const PageModelList = () => {
   const navigate = useNavigate()
@@ -155,34 +163,54 @@ const PageModelList = () => {
           )
         }
 
-        // Backend create ignores `cvi`; APIs are rebuilt from api_version +
-        // extended_apis. `cvi` is kept for API compatibility / archive payload.
+        const modelName = importedModel.model.name || 'New Imported Model'
+        const apiVersion = normalizeApiVersion(
+          importedModel.model.api_version,
+        )
         const newModel: ModelCreate = {
-          custom_apis: importedModel.model.custom_apis
-            ? JSON.stringify(importedModel.model.custom_apis)
-            : 'Empty',
-          cvi: importedModel.model.cvi,
           main_api: importedModel.model.main_api || 'Vehicle',
           model_home_image_file: modelHomeImageUrl,
           model_files: importedModel.model.model_files || {},
-          name: importedModel.model.name || 'New Imported Model',
-          extended_apis: stripExtendedApisForImport(
-            importedModel.model.extended_apis || [],
-          ),
+          name: modelName,
           visibility: 'private',
-          api_version: importedModel.model.api_version ?? null,
         }
 
-        const createdModel = await createModelService(newModel)
+        if (apiVersion == null) {
+          // Custom VSS: re-upload exported tree via api_data_url (same as
+          // FormCreateModel upload). Backend processApiDataUrl rebuilds
+          // extended_apis; do not send truncated zip extended_apis.
+          const cvi =
+            typeof importedModel.model.cvi === 'string'
+              ? importedModel.model.cvi
+              : JSON.stringify(importedModel.model.cvi ?? {})
+          const vssFile = new File([cvi], 'vss.json', {
+            type: 'application/json',
+          })
+          const { url } = await uploadFileService(vssFile)
+          newModel.api_data_url = url
+          newModel.api_version = null
+        } else {
+          // COVESA: base tree from api_version; wishlist from extended_apis.
+          newModel.custom_apis = importedModel.model.custom_apis
+            ? JSON.stringify(importedModel.model.custom_apis)
+            : 'Empty'
+          newModel.cvi = importedModel.model.cvi
+          newModel.extended_apis = stripExtendedApisForImport(
+            importedModel.model.extended_apis || [],
+          )
+          newModel.api_version = apiVersion
+        }
+
+        const createdModelId = await createModelService(newModel)
 
         addLog({
-          name: `New model '${createdModel.name}' with visibility: ${createdModel.visibility}`,
-          description: `New model '${createdModel.name}' was created by ${
+          name: `New model '${modelName}' with visibility: private`,
+          description: `New model '${modelName}' was created by ${
             user?.email || user?.name || user?.id
           }`,
           type: 'new-model',
           create_by: user?.id!,
-          ref_id: createdModel.id,
+          ref_id: createdModelId,
           ref_type: 'model',
         })
 
@@ -197,7 +225,7 @@ const PageModelList = () => {
                 description: proto.description,
                 tags: proto.tags || [],
                 image_file: proto.image_file,
-                model_id: createdModel,
+                model_id: createdModelId,
                 name: proto.name,
                 complexity_level: proto.complexity_level || '3',
                 customer_journey: proto.customer_journey || '{}',
@@ -212,7 +240,7 @@ const PageModelList = () => {
         queryClient.invalidateQueries({
           queryKey: ['modelsList', user?.id ?? 'anonymous'],
         })
-        navigate(`/model/${createdModel}`)
+        navigate(`/model/${createdModelId}`)
       } catch (err) {
         console.error('Error creating model from zip: ', err)
         toast({

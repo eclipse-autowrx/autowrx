@@ -55,8 +55,32 @@ export const deleteExtendedApi = async (id: string) => {
   return (await serverAxios.delete(`/extendedApis/${id}`)).data
 }
 
-export const listExtendedApis = async (model_id: string) => {
+export const listExtendedApis = async (
+  model_id: string,
+  params?: { page?: number; limit?: number },
+) => {
   return (
-    await serverAxios.get<List<ExtendedApi>>(`/extendedApis?model=${model_id}`)
+    await serverAxios.get<List<ExtendedApi>>(`/extendedApis`, {
+      params: {
+        model: model_id,
+        page: params?.page,
+        limit: params?.limit,
+      },
+    })
   ).data
+}
+
+/** Fetch every extended API for a model (paginates until all pages loaded). */
+export const listAllExtendedApis = async (
+  model_id: string,
+): Promise<ExtendedApi[]> => {
+  const pageSize = 500
+  const first = await listExtendedApis(model_id, { page: 1, limit: pageSize })
+  const all = [...(first.results || [])]
+  const totalPages = first.totalPages || 1
+  for (let page = 2; page <= totalPages; page++) {
+    const next = await listExtendedApis(model_id, { page, limit: pageSize })
+    all.push(...(next.results || []))
+  }
+  return all
 }
