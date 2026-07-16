@@ -30,7 +30,7 @@ The `Page Content` area is where the dynamic rendering of components takes place
 
 Pages are not built with hardcoded layouts. Instead, they are composed of a series of dynamic components defined in a configuration object. This allows for incredible flexibility in layout design.
 
-> For a deep dive into the technical implementation, see the **[Dynamic Components Architecture](./component-design/dynamic-components.md)**.
+> For a deep dive into the technical implementation, see the **[Dynamic Components Architecture](../reference/component-design/dynamic-components.md)**.
 
 ### Row-Based Layout Example (`HomePage`)
 

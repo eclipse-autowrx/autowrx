@@ -3,10 +3,10 @@
 This document provides a reference implementation for a standard "Organism" level component, the `Banner`. It is designed to be used within our **Dynamic Component Architecture**.
 
 > **Relevant Principles:**
-> *   [Clarity & Maintainability](./../principle.md#1-clarity-and-maintainability)
-> *   [SOLID Principles](./../principle.md#2-solid-principles)
-> *   [Styling Architecture](./../style.md)
-> *   [Dynamic Component Architecture](./../component-design/dynamic-components.md)
+> *   [Clarity & Maintainability](../principles/principle.md#1-clarity-and-maintainability)
+> *   [SOLID Principles](../principles/principle.md#2-solid-principles)
+> *   [Styling Architecture](../principles/style.md)
+> *   [Dynamic Component Architecture](../reference/component-design/dynamic-components.md)
 
 ---
 

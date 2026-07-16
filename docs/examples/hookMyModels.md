@@ -5,8 +5,8 @@ This document provides a reference implementation for a custom React hook respon
 This hook is used by the [**Sample Models Page**](./pageModels.md).
 
 > **Relevant Principles:**
-> *   [Clarity & Maintainability](./../principle.md#1-clarity-and-maintainability)
-> *   [Single Responsibility Principle](./../principle.md#2-solid-principles)
+> *   [Clarity & Maintainability](../principles/principle.md#1-clarity-and-maintainability)
+> *   [Single Responsibility Principle](../principles/principle.md#2-solid-principles)
 
 ---
 

@@ -5,9 +5,9 @@ This document provides a reference implementation for an "Organism" level compon
 Most importantly, it demonstrates the principle of **composition**, showing how a higher-level Organism is built by consuming a more generic, lower-level "Molecule" component (`StandardGrid`).
 
 > **Relevant Principles:**
-> *   [Component Granularity (Atoms, Molecules, Organisms)](./../layout.md#component-granularity-atoms-molecules-organisms)
-> *   [Clarity & Maintainability](./../principle.md#1-clarity-and-maintainability)
-> *   [Single Responsibility Principle](./../principle.md#2-solid-principles)
+> *   [Component Granularity (Atoms, Molecules, Organisms)](../principles/layout.md#component-granularity-atoms-molecules-organisms)
+> *   [Clarity & Maintainability](../principles/principle.md#1-clarity-and-maintainability)
+> *   [Single Responsibility Principle](../principles/principle.md#2-solid-principles)
 
 ---
 

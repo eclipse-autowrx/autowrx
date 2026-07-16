@@ -34,9 +34,9 @@ This project serves as the backend for the playground, offering endpoints for:
 
 ### Running the Application
 
-- **Development Mode**: See the [Development Guide](../development-guide.md) in the project root for local development setup (recommended: run services directly, not in Docker).
+- **Development Mode**: See the [Development Guide](../docs/getting-started/development-guide.md) in the project root for local development setup (recommended: run services directly, not in Docker).
 
-- **Production Mode**: See the [Instance Setup Guide](../instance-setup/) in the `instance-setup/` directory for production deployment using Docker Compose.
+- **Production Mode**: See the [Instance Setup Guide](../instance-setup) in the `instance-setup/` directory for production deployment using Docker Compose.
 
 ###
 

@@ -3,9 +3,9 @@
 This document provides a reference implementation for a page that is dynamically composed of other components. It demonstrates how pages act as simple composers, delegating all rendering logic to the **Dynamic Component Architecture**.
 
 > **Relevant Principles:**
-> *   [Clarity & Maintainability](./../principle.md#1-clarity-and-maintainability)
-> *   [SOLID Principles](./../principle.md#2-solid-principles)
-> *   [Dynamic Component Architecture](./../component-design/dynamic-components.md)
+> *   [Clarity & Maintainability](../principles/principle.md#1-clarity-and-maintainability)
+> *   [SOLID Principles](../principles/principle.md#2-solid-principles)
+> *   [Dynamic Component Architecture](../reference/component-design/dynamic-components.md)
 
 ---
 
