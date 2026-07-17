@@ -202,12 +202,22 @@ const PagePrototypeLibrary = () => {
                   )}
                 </Button>
                 <DaFilter
-                  categories={{ 'Sort By': ['Newest', 'Oldest', 'Name A-Z', 'Rating'] }}
+                  categories={{
+                    'Sort By': [
+                      'Last view',
+                      'First view',
+                      'Newest',
+                      'Oldest',
+                      'Name A-Z',
+                      'Name Z-A',
+                      'Rating',
+                    ],
+                  }}
                   onChange={handleFilterChange}
                   className="w-fit mr-0 h-8 shadow px-2 text-sm"
                   singleSelect={true}
                   defaultValue={selectedFilters}
-                  label="Sort By"
+                  label={selectedFilters.length > 0 ? selectedFilters[0] : 'Newest'}
                 />
                 <div
                   className={cn(
