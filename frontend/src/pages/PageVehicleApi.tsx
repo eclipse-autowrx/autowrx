@@ -732,20 +732,19 @@ const PageVehicleApi = () => {
   return (
     <div className="w-full h-full flex flex-col">
       {/* Tab Bar */}
-      <div className="flex min-h-[52px] border-b border-muted-foreground/50 bg-background shrink-0">
-        <div className="flex w-fit">
-          <ModelApiTabs
-            customApiSetIds={validSetIds}
-            onAddInstance={
-              customApiSetsEnabled ? () => setIsPickerOpen(true) : undefined
-            }
-            isModelOwner={hasWritePermission && customApiSetsEnabled}
-            covesaApiCount={covesaApiCount}
-            enableCustomApiSets={customApiSetsEnabled}
-          />
+      {customApiSetsEnabled && (
+        <div className="flex min-h-[52px] border-b border-muted-foreground/50 bg-background shrink-0">
+          <div className="flex w-fit">
+            <ModelApiTabs
+              customApiSetIds={validSetIds}
+              onAddInstance={() => setIsPickerOpen(true)}
+              isModelOwner={hasWritePermission}
+              covesaApiCount={covesaApiCount}
+            />
+          </div>
+          <div className="grow"></div>
         </div>
-        <div className="grow"></div>
-      </div>
+      )}
 
       {/* Content Area */}
       <div className="flex-1 min-h-0 overflow-hidden">

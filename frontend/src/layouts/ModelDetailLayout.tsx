@@ -82,6 +82,10 @@ const ModelDetailLayout = () => {
     'ALLOW_NON_ADMIN_ADDON_CONFIG',
     true,
   )
+  const disableCustomApiSets = useSiteConfig(
+    'DISABLE_CUSTOM_API_SETS',
+    false,
+  )
 
   // Update store when model is fetched
   useEffect(() => {
@@ -194,6 +198,15 @@ const ModelDetailLayout = () => {
   const numberOfNodes = skeleton?.nodes?.length || 0
   const numberOfPrototypes = fetchedPrototypes?.length || 0
   const numberOfApis = activeModelApis?.length || 0
+  const customApiSetCount = (model?.custom_api_sets || []).length
+  const totalApiSetCount = 1 + customApiSetCount
+  const vehicleApiCount = disableCustomApiSets
+    ? numberOfApis > 0
+      ? numberOfApis
+      : null
+    : totalApiSetCount > 1
+      ? totalApiSetCount
+      : null
 
   const cardIntro = [
     {
@@ -222,7 +235,7 @@ const ModelDetailLayout = () => {
         '/model/:model_id/api/:api',
         '/model/:model_id/api/:source/:api',
       ],
-      count: numberOfApis > 0 ? numberOfApis : null,
+      count: vehicleApiCount,
       dataId: 'tab-model-api',
     },
     {
