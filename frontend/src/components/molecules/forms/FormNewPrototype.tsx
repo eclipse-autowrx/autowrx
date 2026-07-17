@@ -312,27 +312,29 @@ const FormNewPrototype = ({
             {isCreatingNewModel && (
                 <div className="mt-4 flex flex-col gap-3 border rounded-lg p-3">
                     {/* Model Name */}
-                    <DaInput
-                        name="newModelName"
-                        value={newModelName}
-                        onChange={(e) => {
+                    <div>
+                        <DaInput
+                            name="newModelName"
+                            value={newModelName}
+                            onChange={(e) => {
                             setNewModelName(e.target.value)
                             setError('')
-                        }}
-                        placeholder="Model name"
-                        label="Model Name *"
-                        inputClassName="bg-white"
-                    />
-                    {isDuplicateModelName && (
-                        <DaDuplicateNameHint
-                            message="A model with this name already exists"
-                            suggestedName={suggestedModelName}
-                            onApplySuggestion={(name) => {
+                            }}
+                            placeholder="Model name"
+                            label="Model Name *"
+                            inputClassName="bg-white"
+                        />
+                        {isDuplicateModelName && (
+                            <DaDuplicateNameHint
+                                message="A model with this name already exists"
+                                suggestedName={suggestedModelName}
+                                onApplySuggestion={(name) => {
                                 setNewModelName(name)
                                 setError('')
-                            }}
-                        />
-                    )}
+                                }}
+                            />
+                        )}
+                    </div>
 
                     {/* Signal */}
                     <div>
@@ -457,6 +459,16 @@ const FormNewPrototype = ({
                 className="mt-4"
                 data-id="prototype-name-input"
             />
+            {isDuplicatePrototypeName && (
+                <DaDuplicateNameHint
+                    message="A prototype with this name already exists"
+                    suggestedName={suggestedPrototypeName}
+                    onApplySuggestion={(name) => {
+                        setPrototypeName(name)
+                        setError('')
+                    }}
+                />
+            )}
 
             <div className="mt-4 select-none">
                 <DaCheckbox
@@ -469,16 +481,6 @@ const FormNewPrototype = ({
                 </DaText>
             </div>
 
-            {isDuplicatePrototypeName && (
-                <DaDuplicateNameHint
-                    message="A prototype with this name already exists"
-                    suggestedName={suggestedPrototypeName}
-                    onApplySuggestion={(name) => {
-                        setPrototypeName(name)
-                        setError('')
-                    }}
-                />
-            )}
 
             {error && !isDuplicatePrototypeName && (
                 <DaText variant="small" className="mt-4 text-red-500">

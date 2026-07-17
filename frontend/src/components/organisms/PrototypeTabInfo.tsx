@@ -388,7 +388,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                         message={`The prototype name '${localPrototype.name}' is already in use for model '${model?.name}'`}
                         suggestedName={suggestedPrototypeName}
                         onApplySuggestion={(name) => handleChange('name', name)}
-                        className="text-sm text-secondary mt-2"
+                        className="mt-2"
                       />
                     )}
                     {error && !isDuplicatePrototypeName && <p className="mt-2 text-sm text-secondary">{error}</p>}
