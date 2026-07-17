@@ -29,7 +29,7 @@ The `CORS_ORIGINS` variable accepts comma-separated regex patterns. The system a
 | `JWT_REFRESH_EXPIRATION_DAYS`   | Refresh token expiration (days)         | `30`    |
 | `JWT_COOKIE_NAME`               | JWT cookie name                         | `token` |
 | `JWT_COOKIE_DOMAIN`             | JWT cookie domain (production only)     | -       |
-| `ADMIN_EMAILS`                  | Admin email addresses (comma-separated) | -       |
+| `ADMIN_EMAILS`                  | Admin emails (comma- or semicolon-separated) | -       |
 | `ADMIN_PASSWORD`                | Auto-provisioned admin password         | -       |
 | `GITHUB_CLIENT_ID`              | GitHub OAuth client ID                  | -       |
 | `GITHUB_CLIENT_SECRET`          | GitHub OAuth client secret              | -       |

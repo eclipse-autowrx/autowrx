@@ -106,7 +106,7 @@ The API is available under the `/v2` prefix. Key endpoints include:
 | `EMAIL_ENDPOINT_URL`                    | Endpoint URL for the email service (default: Brevo)                                       | No       | None                                  | `email_api_endpoint_url`                      |
 | `GITHUB_CLIENT_ID`                      | Client ID for GitHub OAuth authentication                                                 | No       | None                                  | `github_client_id`                            |
 | `GITHUB_CLIENT_SECRET`                  | Client secret for GitHub OAuth authentication                                             | No       | None                                  | `github_client_secret`                        |
-| `ADMIN_EMAILS`                          | Comma-separated list of admin email addresses. Use for auto provisioning admin users.     | No       | None                                  | `admin1@example.com,admin2@example.com`       |
+| `ADMIN_EMAILS`                          | Comma- or semicolon-separated list of admin emails. Use for auto provisioning admin users. | No       | None                                  | `admin1@example.com;admin2@example.com`       |
 | `ADMIN_PASSWORD`                        | Password for admin access                                                                 | No       | None                                  | `admin_password`                              |
 | `LOGS_MAX_SIZE`                         | Maximum size of change logs in megabytes                                                  | No       | `100`                                 | `100`                                         |
 
