@@ -293,5 +293,14 @@ export const useSiteConfig = (
   return value
 }
 
+export const useDefaultModelImage = () =>
+  useSiteConfig('DEFAULT_MODEL_IMAGE', DEFAULT_SITE_CONFIGS.DEFAULT_MODEL_IMAGE)
+
+export const useDefaultPrototypeImage = () =>
+  useSiteConfig(
+    'DEFAULT_PROTOTYPE_IMAGE',
+    DEFAULT_SITE_CONFIGS.DEFAULT_PROTOTYPE_IMAGE,
+  )
+
 // Import React hooks (you might need to adjust the import based on your React version)
 import { useState, useEffect } from 'react'
