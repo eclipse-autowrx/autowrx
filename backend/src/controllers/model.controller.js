@@ -100,7 +100,7 @@ const createModel = catchAsync(async (req, res) => {
         extended_apis.map((api) =>
           extendedApiService.createExtendedApi({
             ...api,
-            model: model._id,
+            model,
             isWishlist: api.isWishlist || false,
           }),
         ),
@@ -123,7 +123,7 @@ const createModel = catchAsync(async (req, res) => {
         await Promise.all(
           apis.map((api) =>
             extendedApiService.createExtendedApi({
-              model: model._id,
+              model,
               apiName: api.name || api.apiName || 'Vehicle',
               description: api.description || '',
               skeleton: api.skeleton || '{}',
