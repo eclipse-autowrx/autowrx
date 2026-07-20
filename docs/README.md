@@ -69,8 +69,7 @@ How-to material for building on the platform.
     [Deployment](./guides/plugin/06-deployment.md)
 - [Custom API System](./guides/custom-api-system.md) — model-specific API catalogs
 - [Plugin API Possibilities](./guides/plugin-api-possibilities.md) — what the plugin API can do
-- [Deployment](./guides/deployment/README.md) — production deployment
-  ([server polling](./guides/deployment/SERVER-POLLING.md))
+- [Deployment](./guides/deployment/README.md) — production deployment (instance-setup)
 
 ---
 

@@ -8,7 +8,7 @@
 | `NAME`          | Environment name for container naming (dev, prod)               | -                                             |
 | `PORT`         | Application port                                                | `8080`                                        |
 | `MONGODB_URL`  | MongoDB connection URL                                          | `mongodb://playground-db:27017/playground-be` |
-| `CORS_ORIGINS` | Allowed CORS origins (comma-separated regex patterns). See [CORS Configuration Guide](../../../CORS_CONFIGURATION.md) for details | `localhost:\\d+,127\\.0\\.0\\.1:\\d+`         |
+| `CORS_ORIGINS` | Allowed CORS origins (comma-separated regex patterns). See [CORS Configuration Guide](../../../docs/reference/cors.md) for details | `localhost:\\d+,127\\.0\\.0\\.1:\\d+`         |
 
 ### CORS_ORIGINS Examples
 
@@ -18,7 +18,7 @@ The `CORS_ORIGINS` variable accepts comma-separated regex patterns. The system a
 - **With Domain**: `localhost:\\d+,127\\.0\\.0\\.1:\\d+,yourdomain\\.com,.*\\.yourdomain\\.com`
 - **Production Only**: `yourdomain\\.com,.*\\.yourdomain\\.com`
 
-**Important**: Remember to escape dots with `\\.` and use `\\d+` for any port number. See the [CORS Configuration Guide](../../../CORS_CONFIGURATION.md) for complete documentation.
+**Important**: Remember to escape dots with `\\.` and use `\\d+` for any port number. See the [CORS Configuration Guide](../../../docs/reference/cors.md) for complete documentation.
 
 ## Authentication & Security
 
@@ -47,8 +47,6 @@ The `CORS_ORIGINS` variable accepts comma-separated regex patterns. The system a
 | Variable                      | Description             | Default                |
 | ----------------------------- | ----------------------- | ---------------------- |
 | `DB_CONTAINER_NAME`           | Database container name | `${NAME}-playground-db` |
-| `KONG_PROXY_PORT`             | Kong API gateway port   | `9800`                 |
-| `KONG_NGINX_WORKER_PROCESSES` | Kong Nginx workers      | `auto`                 |
 | `LOGS_MAX_SIZE`               | Maximum log size (MB)   | `100`                  |
 
 **Note:** For development (`NODE_ENV=development`), JWT access tokens have extended expiration times for convenience.

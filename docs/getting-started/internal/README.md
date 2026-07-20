@@ -48,8 +48,10 @@ Pushing the tag triggers the workflow, which:
    (month-rolling), and `latest`.
 3. Creates a **GitHub Release** with the `instance-setup/` assets attached.
 
-Deploy a release by pointing `IMAGE_TAG` in the target's `.env.stack` at the tag
-(e.g. `IMAGE_TAG=v2026.07.16`) and restarting the stack.
+Deploy a release with the `instance-setup/` compose stack: it tracks `:latest`
+by default (`docker compose … pull autowrx && … up -d`); to pin a version, edit
+the `image:` tag in `docker-compose.prod.yml` to the date tag (e.g.
+`…/autowrx:v2026.07.16`). See the [Deployment guide](../../guides/deployment/README.md).
 
 > **ECA on maintainer merges:** external contributors must pass the `eclipsefdn/eca`
 > check (see [Contributing](../contributing.md)). Maintainers merging on their

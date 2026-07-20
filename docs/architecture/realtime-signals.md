@@ -23,8 +23,8 @@ flowchart LR
     KIT["Kit-manager server (external)<br/>default kit.digitalauto.tech"]
     RT["Vehicle runtime / kit<br/>(runs python/rust/cpp against VSS)"]
 
-    B <-->|OAuth push only| BE
-    B <-->|signals + run/deploy commands| KIT
+    B <-->|"OAuth push only"| BE
+    B <-->|"signals + run/deploy commands"| KIT
     KIT <--> RT
 ```
 
