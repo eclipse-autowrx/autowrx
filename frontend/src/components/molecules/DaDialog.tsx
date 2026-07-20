@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -51,7 +51,6 @@ const DaDialog = ({
 
   const handleOpenChange = (newOpenState: boolean) => {
     if (disabled && newOpenState) return
-    if (isOpen && !newOpenState && preventOutsideClose) return
     if (onOpenChange) {
       onOpenChange(newOpenState)
     } else {
@@ -59,13 +58,15 @@ const DaDialog = ({
     }
   }
 
+  const wasOpenRef = useRef(isOpen)
   useEffect(() => {
-    if (!isOpen && onClose) {
+    if (wasOpenRef.current && !isOpen && onClose) {
       onClose()
     }
+    wasOpenRef.current = isOpen
   }, [isOpen, onClose])
 
-  const canClose = !preventOutsideClose && showCloseButton
+  const canClose = showCloseButton
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -80,8 +81,23 @@ const DaDialog = ({
         className={cn('p-0 flex flex-col gap-0 overflow-hidden', className)}
         showCloseButton={false}
         onOpenAutoFocus={(e) => e.preventDefault()}
-        onPointerDownOutside={(e) => { if (preventOutsideClose) e.preventDefault() }}
-        onEscapeKeyDown={(e) => { if (preventOutsideClose) e.preventDefault() }}
+        onPointerDownOutside={(e) => {
+          const target = e.target as HTMLElement | null
+          const selectStillOpen = !!document.querySelector(
+            '[data-radix-select-content][data-state="open"]',
+          )
+          const isSelectSurface = !!target?.closest(
+            '[data-radix-select-content], [data-radix-select-viewport]',
+          )
+          if (selectStillOpen || isSelectSurface) {
+            e.preventDefault()
+            return
+          }
+          if (preventOutsideClose) e.preventDefault()
+        }}
+        onEscapeKeyDown={(e) => {
+          if (preventOutsideClose) e.preventDefault()
+        }}
         aria-describedby={undefined}
       >
         {dialogTitle || description ? (

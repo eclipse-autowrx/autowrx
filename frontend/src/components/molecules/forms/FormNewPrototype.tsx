@@ -47,6 +47,8 @@ interface FormNewPrototypeProps {
     title?: string
     buttonText?: string
     onModelChange?: (modelId: string | null) => void
+    /** Fired when creating a new model so the parent can preview the selected template layout. */
+    onTemplatePreviewChange?: (config: Record<string, any> | null) => void
     onSuccess?: (modelId: string, prototypeId: string, prototypeName: string) => void
 }
 
@@ -58,6 +60,7 @@ const FormNewPrototype = ({
     title,
     buttonText,
     onModelChange,
+    onTemplatePreviewChange,
     onSuccess,
 }: FormNewPrototypeProps) => {
     const navigate = useNavigate()
@@ -113,10 +116,11 @@ const FormNewPrototype = ({
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
 
-    // Keep a stable ref to onModelChange so the initialization effect below
-    // doesn't re-run just because the parent passed a new inline function reference.
+    // Keep stable refs so initialization effects don't re-run on parent re-renders.
     const onModelChangeRef = useRef(onModelChange)
     useEffect(() => { onModelChangeRef.current = onModelChange })
+    const onTemplatePreviewChangeRef = useRef(onTemplatePreviewChange)
+    useEffect(() => { onTemplatePreviewChangeRef.current = onTemplatePreviewChange })
 
     const { data: vssVersions } = useListVSSVersions()
     const { data: templatesData } = useQuery({
@@ -137,6 +141,19 @@ const FormNewPrototype = ({
         }
     }, [defaultTemplate]) // eslint-disable-line react-hooks/exhaustive-deps
 
+    // Preview the selected (or default) template layout while creating a new model.
+    useEffect(() => {
+        if (!isCreatingNewModel) {
+            onTemplatePreviewChangeRef.current?.(null)
+            return
+        }
+        const selected =
+            templatesData?.results?.find((t) => t.id === newModelTemplateId) ??
+            defaultTemplate ??
+            null
+        onTemplatePreviewChangeRef.current?.(selected?.config ?? null)
+    }, [isCreatingNewModel, newModelTemplateId, templatesData, defaultTemplate])
+
     const { data: fetchedPrototypes } = useListModelPrototypes(
         isCreatingNewModel ? '' : selectedModelId,
     )
@@ -149,6 +166,7 @@ const FormNewPrototype = ({
             const last = allModels.results[allModels.results.length - 1]
             setSelectedModelId(last.id)
             onModelChangeRef.current?.(last.id)
+            onTemplatePreviewChangeRef.current?.(null)
         } else if (allModels && !isFetchingModels && allModels.results.length === 0) {
             setIsCreatingNewModel(true)
             setSelectedModelId('new')
@@ -293,10 +311,12 @@ const FormNewPrototype = ({
                             setIsCreatingNewModel(true)
                             setSelectedModelId('new')
                             onModelChange?.(null)
+                            // Template preview is applied by the create-mode effect once templates load.
                         } else {
                             setIsCreatingNewModel(false)
                             setSelectedModelId(value)
                             onModelChange?.(value)
+                            onTemplatePreviewChange?.(null)
                         }
                     }}
                 >
