@@ -25,8 +25,8 @@ import CustomAPIList from '@/components/organisms/CustomAPIList'
 import CustomAPIView from '@/components/organisms/CustomAPIView'
 import { Spinner } from '@/components/atoms/spinner'
 import { VscChevronLeft, VscChevronRight } from 'react-icons/vsc'
-import { ArrowLeftFromLine, CopyMinus } from 'lucide-react'
-import { TbLayoutSidebar, TbLayoutSidebarRight, TbLayoutSidebarRightFilled } from 'react-icons/tb'
+import { TbLayoutSidebarRight, TbLayoutSidebarRightFilled } from 'react-icons/tb'
+import { filterAndCompareVehicleApis } from '@/lib/vehicleApiUtils'
 
 interface ApiCodeBlockProps {
   content: string
@@ -361,13 +361,12 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
       setUseApis([])
       return
     }
-    let useList: any[] = []
-    activeModelApis.forEach((item: any) => {
-      if (code.includes(item.shortName)) {
-        useList.push(item)
-      }
-    })
-    setUseApis(useList)
+
+    const { apisInModel } = filterAndCompareVehicleApis(code, activeModelApis)
+    const apiNamesInModel = new Set(apisInModel)
+    setUseApis(
+      activeModelApis.filter((item: any) => apiNamesInModel.has(item.name)),
+    )
   }, [code, activeModelApis])
 
   // Fetch all CustomApiSets for "Used APIs" tab

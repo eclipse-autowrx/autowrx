@@ -13,6 +13,7 @@ import useCurrentModel from '@/hooks/useCurrentModel'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import { Spinner } from '@/components/atoms/spinner'
 import useModelStore from '@/stores/modelStore'
+import { filterAndCompareVehicleApis } from '@/lib/vehicleApiUtils'
 
 interface PagePrototypePluginProps {
   pluginSlug?: string // If provided, use this instead of reading from URL
@@ -37,11 +38,14 @@ const PagePrototypePlugin: FC<PagePrototypePluginProps> = ({ pluginSlug, onSetAc
     let useV2CList: any[] = []
 
     if (code && activeModelApis && activeModelApis.length > 0) {
-      activeModelApis.forEach((item: any) => {
-        if (code.includes(item.shortName)) {
-          useList.push(item)
-        }
-      })
+      const { apisInModel } = filterAndCompareVehicleApis(
+        code,
+        activeModelApis,
+      )
+      const apiNamesInModel = new Set(apisInModel)
+      useList = activeModelApis.filter((item: any) =>
+        apiNamesInModel.has(item.name),
+      )
     }
 
     if (code && activeModelV2CApis && activeModelV2CApis.length > 0) {
