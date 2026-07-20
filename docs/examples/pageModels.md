@@ -5,8 +5,8 @@ This document provides a reference implementation for a built-in, fixed-function
 It demonstrates how to build a clear and maintainable page by composing self-contained, high-level "Organism" components.
 
 > **Relevant Principles:**
-> *   [Clarity & Maintainability](./../principle.md#1-clarity-and-maintainability)
-> *   [SOLID Principles](./../principle.md#2-solid-principles)
+> *   [Clarity & Maintainability](../principles/principle.md#1-clarity-and-maintainability)
+> *   [SOLID Principles](../principles/principle.md#2-solid-principles)
 
 ---
 

@@ -28,7 +28,7 @@ AutoWRX consists of two separate services that run in parallel during developmen
 - This allows for hot-reload, debugging, and faster iteration
 
 **For Deployment:**
-- See the [Instance Setup Guide](instance-setup/) in the `instance-setup/` directory
+- See the [Instance Setup Guide](../../instance-setup) in the `instance-setup/` directory
 
 ## Prerequisites
 
@@ -378,18 +378,18 @@ Once both services are running, you can access:
 
 ## Next Steps
 
-- Read the [Project Structure Documentation](docs/project-structure.md)
-- Explore the [API Documentation](backend/docs/)
-- Check out the [Plugin Development Guide](docs/plugin/README.md)
-- Review the [Deployment Guide](docs/deployment/README.md) for production setup
+- Read the [Project Structure Documentation](../principles/project-structure.md)
+- Explore the [API Documentation](../../backend/docs)
+- Check out the [Plugin Development Guide](../guides/plugin/README.md)
+- Review the [Deployment Guide](../guides/deployment/README.md) for production setup
 
 ## Getting Help
 
 - Check existing documentation in the `docs/` directory
-- Review the [Instance Setup Guide](instance-setup/) for deployment questions
+- Review the [Instance Setup Guide](../../instance-setup) for deployment questions
 - Check GitHub issues for known problems
 - Review backend and frontend README files for service-specific information
 
 ---
 
-**Note:** This guide is for **development** only. For production deployment, see the [Instance Setup Guide](instance-setup/) in the `instance-setup/` directory.
+**Note:** This guide is for **development** only. For production deployment, see the [Instance Setup Guide](../../instance-setup) in the `instance-setup/` directory.

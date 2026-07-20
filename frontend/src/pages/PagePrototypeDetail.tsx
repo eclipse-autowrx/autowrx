@@ -52,6 +52,7 @@ import { saveRecentPrototype } from '@/services/prototype.service'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
 import { useSiteConfig } from '@/utils/siteConfig'
+import { recordPrototypeLastViewed } from '@/utils/prototypeLastViewed'
 import { useQueryClient } from '@tanstack/react-query'
 import { FC, useCallback, useEffect, useState } from 'react'
 import {
@@ -174,6 +175,12 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
       setActivePrototype(fetchedPrototype)
     }
   }, [fetchedPrototype, setActivePrototype])
+
+  useEffect(() => {
+    if (fetchedPrototype?.id) {
+      recordPrototypeLastViewed(fetchedPrototype.id)
+    }
+  }, [fetchedPrototype?.id])
 
   useEffect(() => {
     if (!tab || tab === 'view') {

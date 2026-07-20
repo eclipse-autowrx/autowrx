@@ -480,7 +480,7 @@ const FormCreatePrototype = ({
             message={`The prototype name '${data.prototypeName}' is already in use for model '${localModel?.name ?? data.modelName}'`}
             suggestedName={suggestedPrototypeName}
             onApplySuggestion={(name) => handleChange('prototypeName', name)}
-            className="text-sm text-secondary mt-2"
+            className="mt-2"
           />
         )}
         {error && !isDuplicatePrototypeName && (

@@ -192,7 +192,10 @@ const config = {
   sso: {
     msGraphMeEndpoint: 'https://graph.microsoft.com/v1.0/me',
   },
-  adminEmails: envVars.ADMIN_EMAILS?.split(',') || [],
+  adminEmails:
+    envVars.ADMIN_EMAILS?.split(/[;,]/)
+      .map((email) => email.trim())
+      .filter(Boolean) || [],
   adminPassword: envVars.ADMIN_PASSWORD,
   logsMaxSize: envVars.LOGS_MAX_SIZE,
   fileUpload: {

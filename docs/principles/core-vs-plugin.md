@@ -6,7 +6,7 @@ Our goal is to maintain a **lean and stable core** that provides essential, univ
 
 The technical foundation for this on the frontend is our **Dynamic Component Architecture**. Plugins can provide their own components, which are then seamlessly integrated into the application's UI based on a user's or administrator's configuration.
 
-For a detailed explanation of how this is achieved technically, please see the [Dynamic Components Architecture](./component-design/dymanic-components.md) document.
+For a detailed explanation of how this is achieved technically, please see the [Dynamic Components Architecture](../reference/component-design/dynamic-components.md) document.
 
 ### Plugin Integration Methods
 

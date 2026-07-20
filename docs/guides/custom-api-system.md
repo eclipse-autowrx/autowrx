@@ -712,7 +712,7 @@ When viewing a model's API page:
 
 ## Related Documentation
 
-- [Model Plugin Page](./MODEL_PLUGIN_PAGE.md)
+- [Plugin System (architecture)](../architecture/plugin-system.md)
 - [Plugin Architecture](./plugin/02-architecture.md)
 - [API Reference](./plugin/04-api-reference.md)
 
