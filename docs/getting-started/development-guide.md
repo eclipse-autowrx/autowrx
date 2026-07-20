@@ -32,7 +32,7 @@ AutoWRX consists of two separate services that run in parallel during developmen
 
 ## Prerequisites
 
-- **Node.js** 18+ and npm (or yarn)
+- **Node.js 18+** (CI/Docker use Node 22) and **Yarn** (the repo uses Yarn 1.x)
 - **Docker** (optional, for running MongoDB locally)
 - **Git** (to clone the repository)
 
@@ -53,16 +53,16 @@ You have two options:
 
 ```bash
 # Start MongoDB container
-docker run --name autowrx-mongo -p 27017:27017 -d mongo:4.4.6-bionic
+docker run --name autowrx-mongodb -p 27017:27017 -d mongo:4.4.6-bionic
 
 # To stop MongoDB later:
-# docker stop autowrx-mongo
+# docker stop autowrx-mongodb
 
 # To start it again:
-# docker start autowrx-mongo
+# docker start autowrx-mongodb
 
 # To remove the container (data will be lost):
-# docker rm -f autowrx-mongo
+# docker rm -f autowrx-mongodb
 ```
 
 #### Option B: Remote MongoDB
@@ -182,19 +182,19 @@ The MongoDB container will:
 docker ps | grep mongo
 
 # View MongoDB logs
-docker logs autowrx-mongo
+docker logs autowrx-mongodb
 
 # Connect to MongoDB shell
-docker exec -it autowrx-mongo mongo
+docker exec -it autowrx-mongodb mongo
 
 # Stop MongoDB
-docker stop autowrx-mongo
+docker stop autowrx-mongodb
 
 # Start MongoDB
-docker start autowrx-mongo
+docker start autowrx-mongodb
 
 # Remove MongoDB (⚠️ deletes all data)
-docker rm -f autowrx-mongo
+docker rm -f autowrx-mongodb
 ```
 
 #### Using Remote MongoDB
@@ -212,79 +212,59 @@ If you're using a remote MongoDB (e.g., MongoDB Atlas, or a team server):
 
 ### How Development Mode Works
 
-In development, the backend and frontend run as separate services with a proxy configuration:
+In development the backend and frontend run as two separate processes. You open
+the app through the **frontend** (Vite) dev server on `:3210`, which proxies API
+calls to the backend on `:3200`. The backend does **not** serve the frontend in
+dev — that only happens in production.
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    Browser                              │
-└─────────────────────────────────────────────────────────┘
-                          │
-                          │ http://localhost:3200
+                     Browser  →  http://localhost:3210
                           │
         ┌─────────────────┴─────────────────┐
-        │                                   │
+        │  Vite proxies /v2, /d, /static,   │
+        │  /plugin, /images, /builtin-      │
+        │  widgets, /vss  →  Backend        │
         ▼                                   ▼
 ┌──────────────┐                    ┌──────────────┐
-│   Backend    │                    │   Frontend   │
-│  (Port 3200) │◄──────────────────►│  (Port 3210) │
+│   Frontend   │                    │   Backend    │
+│  (Port 3210) │                    │  (Port 3200) │
 └──────────────┘                    └──────────────┘
-        │                                   │
-        │                                   │
-        ▼                                   │
-┌──────────────┐                           │
-│   MongoDB    │                           │
-│  (Port 27017)│                           │
-└──────────────┘                           │
                                            │
-        ┌──────────────────────────────────┘
-        │
-        │ Proxies /v2/*, /static/*, /imgs/*, /d/*
-        │ to Backend
-        │
-        │ Proxies all other requests to Frontend
-        │
-        ▼
+                                           ▼
+                                    ┌──────────────┐
+                                    │   MongoDB    │
+                                    │  (Port 27017)│
+                                    └──────────────┘
 ```
 
 ### Request Flow
 
-1. **API Requests** (`/v2/*`, `/static/*`, `/imgs/*`, `/d/*`):
-   - Frontend proxies these to Backend (port 3200)
-   - Backend handles the request and returns the response
-
-2. **Frontend Routes** (everything else):
-   - Backend proxies these to Frontend (port 3210)
-   - Frontend serves the React application
-
-3. **Unified Access**:
-   - You can access the full application at `http://localhost:3200`
-   - The backend automatically proxies frontend requests
+1. **App pages & assets** (`/`, routes, Vite HMR): served by the Vite dev server
+   on `:3210`.
+2. **API requests** (`/v2`, `/d`, `/static`, `/plugin`, `/images`,
+   `/builtin-widgets`, `/vss`): Vite proxies these to the backend on `:3200`,
+   which handles them and returns the response.
+3. **Unified `:3200` is production-only**: when the backend serves the built
+   frontend (`backend/static/frontend-dist`), `:3200` is the single entry point.
+   In dev the backend only proxies the bare root `/`; every other route
+   redirects to `:3210`, so use `:3210` while developing.
 
 ### Why This Setup?
 
-- **Hot Reload**: Both services support hot-reload for fast development
-- **Independent Development**: Frontend and backend can be developed separately
-- **Easy Debugging**: You can debug each service independently
-- **Production-like**: The unified access point (`localhost:3200`) mimics production behavior
+- **Hot Reload**: both services hot-reload for fast iteration.
+- **Independent Development**: frontend and backend can be developed separately.
+- **Easy Debugging**: you can debug each service independently.
 
 ## Access Points
 
-Once both services are running, you can access:
+Once both services are running:
 
-- **Unified Application**: http://localhost:3200
-  - This is the main entry point
-  - Backend proxies frontend requests automatically
-
-- **Frontend Only**: http://localhost:3210
-  - Direct access to the Vite dev server
-  - Useful for frontend-only development
-
-- **Backend API Only**: http://localhost:3200/v2
-  - Direct API access
-  - Useful for testing API endpoints
-
-- **API Documentation**: http://localhost:3200/api-docs
-  - Swagger/OpenAPI documentation (if enabled)
+- **Application (dev)**: http://localhost:3210 — the Vite dev server; open the
+  app here while developing.
+- **Backend API**: http://localhost:3200/v2 — direct API access for testing
+  endpoints.
+- **Unified app (production only)**: http://localhost:3200 — when the backend
+  serves the built frontend (production/Docker). Not used during local dev.
 
 ## Troubleshooting
 
@@ -300,7 +280,7 @@ Once both services are running, you can access:
 2. Verify `MONGODB_URL` in `backend/.env` matches your MongoDB setup
 3. For Docker MongoDB, ensure the container is running:
    ```bash
-   docker start autowrx-mongo
+   docker start autowrx-mongodb
    ```
 4. For remote MongoDB, check network connectivity and credentials
 
@@ -342,15 +322,15 @@ Once both services are running, you can access:
    ```
 2. Remove the old container and create a new one:
    ```bash
-   docker rm -f autowrx-mongo
-   docker run --name autowrx-mongo -p 27017:27017 -d mongo:4.4.6-bionic
+   docker rm -f autowrx-mongodb
+   docker run --name autowrx-mongodb -p 27017:27017 -d mongo:4.4.6-bionic
    ```
 
 **Issue:** `Connection refused to MongoDB`
 
 **Solutions:**
 1. Ensure MongoDB container is running: `docker ps`
-2. Check MongoDB logs: `docker logs autowrx-mongo`
+2. Check MongoDB logs: `docker logs autowrx-mongodb`
 3. Verify `MONGODB_URL` in `backend/.env` uses `localhost` (not `127.0.0.1` or container name)
 
 ### General Issues

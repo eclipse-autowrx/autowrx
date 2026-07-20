@@ -11,7 +11,7 @@ frontend (:3210)**. Target time: ~10 minutes.
 
 ## Prerequisites
 
-- **Node.js 18+** and **Yarn** (the repo uses Yarn 1.x)
+- **Node.js 18+** (CI/Docker use Node 22) and **Yarn** (the repo uses Yarn 1.x)
 - **Docker** (simplest way to run MongoDB) — or a local MongoDB
 - **Git**
 
@@ -40,10 +40,10 @@ default in the dev `.env`).
 
 ```bash
 cd backend
+cp .env.example .env      # create your dev config (PORT, MONGODB_URL, admin creds, …)
 yarn install
-# ensure a .env exists (see development-guide.md for the full list);
-# key dev values: PORT=3200, MONGODB_URL=mongodb://localhost:27017/autowrx,
-#                 STRICT_AUTH=false, ADMIN_EMAILS=..., ADMIN_PASSWORD=...
+# to enable self-registration & public viewing, add this line to .env:
+#   STRICT_AUTH=false
 yarn dev
 ```
 
@@ -52,7 +52,8 @@ predefined site configs and project templates, and listens on **:3200**. You
 should see `Connected to MongoDB` and `Listening to port 3200`.
 
 > `STRICT_AUTH=false` opens the auth feature flags (public viewing,
-> self-registration) so you can browse without friction while developing. See
+> self-registration) so you can browse without friction while developing. It is
+> **not** set in `.env.example`, so add it to your `.env` to turn it on. See
 > [Auth & Security](../architecture/auth-security.md#5-site-auth-configs-feature-gates).
 
 ## 4. Frontend → http://localhost:3210
@@ -71,7 +72,8 @@ Vite serves the app on **:3210** and proxies API calls to the backend.
 
 Go to **http://localhost:3210**. Sign in with the admin credentials from the
 backend `.env` (`ADMIN_EMAILS` / `ADMIN_PASSWORD`), or register a new user
-(self-registration is on when `STRICT_AUTH=false`).
+(self-registration works once you add `STRICT_AUTH=false` to `backend/.env` —
+it is off by default because `.env.example` does not set it).
 
 ---
 
