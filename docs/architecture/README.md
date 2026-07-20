@@ -41,10 +41,10 @@ flowchart LR
     KIT["Kit-manager server<br/>(external, e.g. kit.digitalauto.tech)<br/>→ vehicle runtimes / kits"]
     PL["Plugins<br/>(dynamic-URL JS bundle)"]
 
-    User -->|HTTPS / REST| FE
-    FE -->|REST /v2, cookies (JWT)| BE
-    FE <-->|Socket.IO: live signals| KIT
-    FE <-->|Socket.IO: OAuth push| BE
+    User -->|"HTTPS / REST"| FE
+    FE -->|"REST /v2, cookies (JWT)"| BE
+    FE <-->|"Socket.IO: live signals"| KIT
+    FE <-->|"Socket.IO: OAuth push"| BE
     BE --> DB
     FE -. loads UI components .-> PL
     BE -. stores / serves internal .-> PL
