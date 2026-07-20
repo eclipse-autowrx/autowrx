@@ -306,6 +306,7 @@ const DaPrototypeItem = ({ prototype, className }: DaPrototypeItemProps) => {
           e.stopPropagation()
         }
       }}
+      className='size-full'
     >
       {enableContextMenu && isOwner ? (
         <ContextMenu>
