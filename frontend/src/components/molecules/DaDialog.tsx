@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -59,10 +59,12 @@ const DaDialog = ({
     }
   }
 
+  const wasOpenRef = useRef(isOpen)
   useEffect(() => {
-    if (!isOpen && onClose) {
+    if (wasOpenRef.current && !isOpen && onClose) {
       onClose()
     }
+    wasOpenRef.current = isOpen
   }, [isOpen, onClose])
 
   const canClose = !preventOutsideClose && showCloseButton
