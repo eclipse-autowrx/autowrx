@@ -33,6 +33,9 @@ import { Link } from 'react-router-dom'
 import useListAllModels from '@/hooks/useListAllModel'
 import { TbLock } from 'react-icons/tb'
 import { useAuthConfigs } from '@/hooks/useAuthConfigs'
+import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
+import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
+import { isAxiosError } from 'axios'
 
 type ModelTab = 'myModel' | 'myContribution' | 'public'
 
@@ -56,6 +59,10 @@ const PageModelList = () => {
   const navigate = useNavigate()
   const { toast } = useToast()
   const [isImporting, setIsImporting] = useState(false)
+  const [pendingImport, setPendingImport] = useState<any | null>(null)
+  const [importNameDialogOpen, setImportNameDialogOpen] = useState(false)
+  const [importModelName, setImportModelName] = useState('')
+  const [importNameError, setImportNameError] = useState('')
   const { data: user, isLoading: isUserLoading } = useSelfProfileQuery()
   const { authBootstrapped, setOpenLoginDialog } = useAuthStore()
   const { authConfigs } = useAuthConfigs()
@@ -87,6 +94,16 @@ const PageModelList = () => {
     },
     [searchQuery],
   )
+
+  const ownedModelNames = useMemo(
+    () => ownedModels.map((model) => model.name).filter(Boolean),
+    [ownedModels],
+  )
+
+  const {
+    isDuplicate: isDuplicateImportModelName,
+    suggestedName: suggestedImportModelName,
+  } = useDuplicateNameCheck(importModelName, ownedModelNames)
 
   useEffect(() => {
     if (!user) setActiveSection('public')
@@ -128,8 +145,26 @@ const PageModelList = () => {
     [scrollToSection],
   )
 
+  const resetImportNameDialog = useCallback(() => {
+    setPendingImport(null)
+    setImportModelName('')
+    setImportNameError('')
+    setImportNameDialogOpen(false)
+  }, [])
+
+  const openImportNameDialog = useCallback(
+    (importedModel: any, preferredName?: string, errorMessage?: string) => {
+      const originalName = importedModel?.model?.name || 'New Imported Model'
+      setPendingImport(importedModel)
+      setImportModelName(preferredName?.trim() || originalName)
+      setImportNameError(errorMessage || '')
+      setImportNameDialogOpen(true)
+    },
+    [],
+  )
+
   const createNewModel = useCallback(
-    async (importedModel: any) => {
+    async (importedModel: any, overrideName?: string) => {
       if (!importedModel?.model) return
       try {
         // Prefer zip-embedded image, then metadata URL, then site default
@@ -163,7 +198,10 @@ const PageModelList = () => {
           )
         }
 
-        const modelName = importedModel.model.name || 'New Imported Model'
+        const modelName =
+          overrideName?.trim() ||
+          importedModel.model.name ||
+          'New Imported Model'
         const apiVersion = normalizeApiVersion(
           importedModel.model.api_version,
         )
@@ -240,9 +278,20 @@ const PageModelList = () => {
         queryClient.invalidateQueries({
           queryKey: ['modelsList', user?.id ?? 'anonymous'],
         })
+        resetImportNameDialog()
         navigate(`/model/${createdModelId}`)
       } catch (err) {
         console.error('Error creating model from zip: ', err)
+        if (isAxiosError(err) && err.response?.status === 409) {
+          openImportNameDialog(
+            importedModel,
+            overrideName?.trim() ||
+              importedModel.model?.name ||
+              'New Imported Model',
+            err.response.data?.message || 'A model with this name already exists',
+          )
+          return
+        }
         toast({
           title: 'Import failed',
           description:
@@ -253,13 +302,52 @@ const PageModelList = () => {
         setIsImporting(false)
       }
     },
-    [user, refetch, navigate, queryClient, toast],
+    [user, refetch, navigate, queryClient, toast, openImportNameDialog, resetImportNameDialog],
   )
+
+  const handleConfirmImportName = useCallback(async () => {
+    if (!pendingImport || !importModelName.trim() || isDuplicateImportModelName) {
+      return
+    }
+    setImportNameError('')
+    setIsImporting(true)
+    await createNewModel(pendingImport, importModelName.trim())
+  }, [
+    pendingImport,
+    importModelName,
+    isDuplicateImportModelName,
+    createNewModel,
+  ])
 
   const handleImportModelZip = useCallback(
     async (file: File) => {
       const model = await zipToModel(file)
       if (model) {
+        const proposedName = model.model?.name || 'New Imported Model'
+        const duplicate = ownedModelNames.some(
+          (name) => name.toLowerCase() === proposedName.toLowerCase(),
+        )
+        if (duplicate) {
+          const existing = new Set(ownedModelNames.map((name) => name.toLowerCase()))
+          let suggestedName = proposedName
+          if (existing.has(proposedName.toLowerCase())) {
+            const match = proposedName.match(/^(.*?)_(\d+)$/)
+            const base = match ? match[1] : proposedName
+            let counter = match ? parseInt(match[2], 10) + 1 : 1
+            suggestedName = `${base}_${counter}`
+            while (existing.has(suggestedName.toLowerCase())) {
+              counter++
+              suggestedName = `${base}_${counter}`
+            }
+          }
+          openImportNameDialog(
+            model,
+            proposedName,
+            'A model with this name already exists',
+          )
+          return
+        }
+
         setIsImporting(true)
         await createNewModel(model)
       } else {
@@ -270,7 +358,7 @@ const PageModelList = () => {
         })
       }
     },
-    [createNewModel, toast],
+    [createNewModel, toast, ownedModelNames, openImportNameDialog],
   )
 
   const tabItems = useMemo(() => {
@@ -464,6 +552,68 @@ const PageModelList = () => {
                         }
                       >
                         <FormCreateModel />
+                      </DaDialog>
+
+                      <DaDialog
+                        open={importNameDialogOpen}
+                        onOpenChange={(open) => {
+                          if (!open) resetImportNameDialog()
+                        }}
+                        dialogTitle="Import model - Choose a name"
+                        description="Please choose a name for the imported model."
+                        
+                      >
+                        <div className="flex flex-col gap-4">
+                          <div>
+                            <Input
+                              value={importModelName}
+                              onChange={(e) => {
+                                setImportModelName(e.target.value)
+                                setImportNameError('')
+                              }}
+                              onKeyDown={(e) =>
+                                e.key === 'Enter' && void handleConfirmImportName()
+                              }
+                              placeholder="Model name"
+                            />
+                            {(importNameError || isDuplicateImportModelName) && (
+                              <DaDuplicateNameHint
+                                message={
+                                  importNameError ||
+                                  'A model with this name already exists'
+                                }
+                                suggestedName={suggestedImportModelName}
+                                onApplySuggestion={(name) => {
+                                  setImportModelName(name)
+                                  setImportNameError('')
+                                }}
+                              />
+                            )}
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={resetImportNameDialog}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => void handleConfirmImportName()}
+                              disabled={
+                                isImporting ||
+                                !importModelName.trim() ||
+                                isDuplicateImportModelName
+                              }
+                            >
+                              {isImporting ? (
+                                <TbLoader className="mr-1 text-lg animate-spin" />
+                              ) : null}
+                              Import
+                            </Button>
+                          </div>
+                        </div>
                       </DaDialog>
                     </div>
                   )}
