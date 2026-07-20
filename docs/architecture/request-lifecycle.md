@@ -50,9 +50,10 @@ What each layer contributes:
    refresh cookie (`withCredentials`).
 4. **Backend pipeline** — `auth({ optional: PUBLIC_VIEWING }) → validate →
    controller → service → Mongoose`. Public models are readable without a token;
-   private ones 401/403.
-5. **Serialization** — the `toJSON` plugin renames `_id → id` and strips private
-   fields.
+   private ones 401/403. (`optional` may be a boolean or a function of `req`,
+   e.g. `(req) => req.authConfig.PUBLIC_VIEWING`.)
+5. **Serialization** — the `toJSON` plugin renames `_id → id`, strips private
+   fields, and remaps timestamps (`createdAt → created_at`, drops `updatedAt`).
 6. **Client state bridge** — `ModelDetailLayout` copies the query result into
    `modelStore`, which derives the supported API sets from the CVI so the rest of
    the workspace shares one source of truth.
