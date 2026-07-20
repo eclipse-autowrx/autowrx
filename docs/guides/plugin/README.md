@@ -85,7 +85,7 @@ await api.createWishlistApi({
 ## Support & Resources
 
 - **Sample Plugin**: Check `backend/static/plugin/sample-tsx` for a working example
-- **API Possibilities**: See `PLUGIN_API_POSSIBILITIES.md` for future features
+- **API Possibilities**: See `../plugin-api-possibilities.md` for future features
 - **Type Definitions**: Located in `frontend/src/types/plugin.types.ts`
 
 ## Next Steps

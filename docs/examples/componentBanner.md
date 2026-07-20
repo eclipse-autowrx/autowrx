@@ -1,65 +1,41 @@
-# Sample Component: The Banner
+# Sample Component: an Organism (`HomeHeroSection`)
 
-This document provides a reference implementation for a standard "Organism" level component, the `Banner`. It is designed to be used within our **Dynamic Component Architecture**.
+A reference for a real **Organism**-level component. Organisms are full feature
+sections composed from molecules and atoms (see
+[Dynamic / config-driven UI](../reference/component-design/dynamic-components.md)
+and [../architecture/frontend.md](../architecture/frontend.md)).
+
+**File:** `frontend/src/components/organisms/HomeHeroSection.tsx`
+
+Project components are `Da`-prefixed; lowercase files are shadcn/Radix
+primitives. A component is a plain React function with a typed props contract:
+
+```typescript
+type HomeHeroSectionProps = {
+  title?: string
+  description?: string
+  image?: string
+  minHeight?: string
+  maxHeight?: string
+  imageObjectFit?: 'cover' | 'contain' | 'fill' | 'none'
+  imagePosition?: string
+  imageWidth?: string
+  imageHeight?: string
+  imageAlign?: 'left' | 'center' | 'right' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
+  overlay?: OverlayConfig
+  textPosition?: 'left' | 'right' | 'center'
+  textColor?: string
+  children?: React.ReactNode
+}
+
+const HomeHeroSection = ({ title, description, image, children, ...rest }: HomeHeroSectionProps) => {
+  // ...renders an image + heading/description + children using atoms/molecules
+}
+export default HomeHeroSection
+```
+
+It is consumed by `PageHome.tsx`, which selects it from the home config via the
+`hero` case in `getComponent` (see [pageHome.md](./pageHome.md)).
 
 > **Relevant Principles:**
 > *   [Clarity & Maintainability](../principles/principle.md#1-clarity-and-maintainability)
-> *   [SOLID Principles](../principles/principle.md#2-solid-principles)
-> *   [Styling Architecture](../principles/style.md)
-> *   [Dynamic Component Architecture](../reference/component-design/dynamic-components.md)
-
----
-
-### File: `src/components/organisms/Banner.js`
-
-```jsx
-import React from 'react';
-
-// The schema defines the component's API for validation, tooling, and AI.
-// It adheres to the Interface Segregation Principle by being specific.
-export const schema = {
-  option: {
-    align: { type: 'enum', values: ['left', 'center', 'right'], default: 'left', required: false },
-    fullWidth: { type: 'boolean', default: true, required: false }
-  },
-  data: {
-    title: { type: 'string', required: true },
-    subtitle: { type: 'string', required: false },
-    backgroundImageUrl: { type: 'string', required: false }
-  }
-};
-
-// This is a pure "presentational" component. It has no internal logic
-// beyond rendering its props. This adheres to the Single Responsibility Principle.
-const Banner = ({ option, data }) => {
-  const styles = {
-    textAlign: option?.align || 'left',
-    width: option?.fullWidth ? '100%' : 'auto',
-    backgroundImage: data?.backgroundImageUrl ? `url(${data.backgroundImageUrl})` : 'none',
-    // Adheres to Styling Architecture by consuming core theme variables
-    color: 'var(--var-text-primary)',
-    backgroundColor: 'var(--var-color-secondary)',
-    borderRadius: 'var(--var-border-radius)',
-    padding: '4rem 2rem'
-  };
-
-  return (
-    <div style={styles} className="banner-organism">
-      <h1>{data?.title}</h1>
-      {data?.subtitle && <p>{data.subtitle}</p>}
-    </div>
-  );
-};
-
-export default Banner;
-
-```
-
-### How It Adheres to Our Principles
-
-1.  **Single Responsibility Principle:** The component's only responsibility is to render a banner based on the props it receives. It does not fetch its own data.
-2.  **Open/Closed Principle:** This component is designed to be registered. The system can be extended with new components like this one without ever modifying the core renderer.
-3.  **Interface Segregation:** The `option` and `data` props are clearly defined and specific to what the `Banner` needs. We don't pass in a massive, unrelated object.
-4.  **Dynamic Component Contract:** It perfectly follows the contract by accepting `option` and `data` and exporting a `schema`.
-5.  **Styling:** It correctly uses CSS variables (`--da--color-primary`, etc.) for theming, ensuring it will adapt to any theme applied by an administrator.
-

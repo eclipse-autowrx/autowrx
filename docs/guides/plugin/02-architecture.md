@@ -184,7 +184,7 @@ window.DAPlugins['page-plugin'] = {
 Host polls for registration:
 
 ```typescript
-const maxAttempts = 50  // 5 seconds
+const maxAttempts = 150  // 15 seconds (polls every 100ms)
 while (attempts < maxAttempts) {
   const obj = window.DAPlugins?.['page-plugin']
   if (obj) return obj

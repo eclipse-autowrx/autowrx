@@ -80,13 +80,13 @@ The following list breaks down the platform's features into `Core` and `[Plugin]
 - /                                 HomePage
 - /privacy                          PrivacyPage
 - /user/profile                     UserProfilePage
-- /user/asset                       USerAssetPage
-- /admin/manage-user                UserManagerPage
+- /my-assets                        UserAssetPage
+- /admin/manage-users               UserManagerPage
 - /admin/site-config                SiteConfigPage
-- /models                           ModelsPage
-- /models/:mid                      ModelPage
-- /models/:mid/prototypes           PrototypesPage
-- /models/:mid/prototypes/:pid      PrototypePage
+- /model                            PageModelList
+- /model/:model_id                  PageModelDetail
+- /model/:model_id/library          PagePrototypeLibrary
+- /model/:model_id/library/prototype/:prototype_id   PagePrototypeDetail
 ...
 ```
     

@@ -723,5 +723,5 @@ Now you can:
 
 - **Sample Plugin**: `backend/static/plugin/sample-tsx`
 - **Type Definitions**: `frontend/src/types/plugin.types.ts`
-- **API Possibilities**: `PLUGIN_API_POSSIBILITIES.md`
+- **API Possibilities**: `../plugin-api-possibilities.md`
 - **VSS Specification**: https://covesa.github.io/vehicle_signal_specification/

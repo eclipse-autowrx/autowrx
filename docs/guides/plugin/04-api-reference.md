@@ -11,6 +11,8 @@ Complete reference documentation for all Plugin API methods available to plugins
 - [Navigation](#navigation)
 - [Wishlist API Operations](#wishlist-api-operations)
 - [File Operations](#file-operations)
+- [Asset Operations](#asset-operations)
+- [Kit / Runtime Operations](#kit--runtime-operations)
 - [Type Definitions](#type-definitions)
 - [Error Handling](#error-handling)
 
@@ -18,7 +20,11 @@ Complete reference documentation for all Plugin API methods available to plugins
 
 ## API Overview
 
-The Plugin API provides **14 methods** across 5 categories:
+The Plugin API exposes **28 methods** across 8 categories: Model & Prototype,
+Vehicle API (read/write), Navigation, Wishlist, File, **Asset**, and
+**Kit/Runtime**. All methods are optional on the `api` object — check for
+existence before calling. The TypeScript source of truth is
+`frontend/src/types/plugin.types.ts`.
 
 ```typescript
 interface PluginAPI {
@@ -51,6 +57,22 @@ interface PluginAPI {
 
   // File Operations (1 method)
   uploadFile?: (file: File) => Promise<{ url: string }>;
+
+  // Asset Operations (8 methods)
+  listAssets?: (params?: { type?: string; name?: string }) => Promise<Asset[]>;
+  createAsset?: (payload: { name: string; type: string; data?: string }) => Promise<Asset>;
+  updateAsset?: (assetId: string, payload: { name?: string; type?: string; data?: string }) => Promise<Asset>;
+  deleteAsset?: (assetId: string) => Promise<void>;
+  searchUserByEmail?: (email: string) => Promise<{ id: string; name: string; email?: string; image_file?: string } | null>;
+  getAssetUsers?: (assetId: string) => Promise<Array<{ id: string; name: string; email?: string; image_file?: string; forbid_remove?: boolean }>>;
+  shareAsset?: (assetId: string, userId: string) => Promise<void>;
+  removeAssetAccess?: (assetId: string, userId: string) => Promise<void>;
+
+  // Kit/Runtime Operations (4 methods)
+  fetchSignalMapping?: (kitName: string) => Promise<string>;
+  replaceSignalMapping?: (kitName: string, fileContent: string) => Promise<void>;
+  fetchVss?: (kitName: string) => Promise<string>;
+  replaceVss?: (kitName: string, vssContent: string) => Promise<void>;
 }
 ```
 
@@ -1009,6 +1031,102 @@ try {
 
 ---
 
+## Asset Operations
+
+Manage user assets (hardware kits, cloud runtimes, GenAI configs, …) and their
+sharing. A plugin can list/create/update/delete assets, find users by email,
+and grant or revoke access.
+
+### listAssets
+```typescript
+api.listAssets?: (params?: { type?: string; name?: string }) => Promise<Asset[]>
+```
+List assets owned by or shared with the current user, optionally filtered by
+`type` (e.g. `'HARDWARE_KIT'`, `'CLOUD_RUNTIME'`) or `name`.
+
+### createAsset
+```typescript
+api.createAsset?: (payload: { name: string; type: string; data?: string }) => Promise<Asset>
+```
+Create a new asset.
+
+### updateAsset
+```typescript
+api.updateAsset?: (assetId: string, payload: { name?: string; type?: string; data?: string }) => Promise<Asset>
+```
+Update an existing asset by id.
+
+### deleteAsset
+```typescript
+api.deleteAsset?: (assetId: string) => Promise<void>
+```
+Delete an asset by id.
+
+### searchUserByEmail
+```typescript
+api.searchUserByEmail?: (email: string) => Promise<{ id: string; name: string; email?: string; image_file?: string } | null>
+```
+Look up a user by email (returns `null` if not found) — used to resolve a user
+before sharing an asset.
+
+### getAssetUsers
+```typescript
+api.getAssetUsers?: (assetId: string) => Promise<Array<{ id: string; name: string; email?: string; image_file?: string; forbid_remove?: boolean }>>
+```
+List the users who have access to an asset.
+
+### shareAsset
+```typescript
+api.shareAsset?: (assetId: string, userId: string) => Promise<void>
+```
+Grant a user read access to an asset.
+
+### removeAssetAccess
+```typescript
+api.removeAssetAccess?: (assetId: string, userId: string) => Promise<void>
+```
+Revoke a user's access to an asset.
+
+Example — share an asset with a user looked up by email:
+```typescript
+const user = await api.searchUserByEmail?.('teammate@example.com')
+if (user) await api.shareAsset?.(assetId, user.id)
+```
+
+---
+
+## Kit / Runtime Operations
+
+Read and replace the signal-mapping and VSS files on a connected hardware
+kit/runtime. Each call targets a kit by name; the `replace*` calls rebuild the
+vehicle model on the kit.
+
+### fetchSignalMapping
+```typescript
+api.fetchSignalMapping?: (kitName: string) => Promise<string>
+```
+Fetch the kit's `signal-config.json` contents.
+
+### replaceSignalMapping
+```typescript
+api.replaceSignalMapping?: (kitName: string, fileContent: string) => Promise<void>
+```
+Replace the kit's signal mapping and rebuild the vehicle model.
+
+### fetchVss
+```typescript
+api.fetchVss?: (kitName: string) => Promise<string>
+```
+Fetch the kit's `vss.json` contents.
+
+### replaceVss
+```typescript
+api.replaceVss?: (kitName: string, vssContent: string) => Promise<void>
+```
+Replace the kit's VSS file and trigger a vehicle model rebuild.
+
+---
+
 ## Type Definitions
 
 ### Complete PluginAPI Interface
@@ -1051,6 +1169,25 @@ export interface PluginAPI {
   deleteWishlistApi?: (id: string) => Promise<void>;
   getWishlistApi?: (name: string, model_id?: string) => Promise<ExtendedApi>;
   listWishlistApis?: (model_id?: string) => Promise<List<ExtendedApi>>;
+
+  // File Operations
+  uploadFile?: (file: File) => Promise<{ url: string }>;
+
+  // Asset Operations
+  listAssets?: (params?: { type?: string; name?: string }) => Promise<Asset[]>;
+  createAsset?: (payload: { name: string; type: string; data?: string }) => Promise<Asset>;
+  updateAsset?: (assetId: string, payload: { name?: string; type?: string; data?: string }) => Promise<Asset>;
+  deleteAsset?: (assetId: string) => Promise<void>;
+  searchUserByEmail?: (email: string) => Promise<{ id: string; name: string; email?: string; image_file?: string } | null>;
+  getAssetUsers?: (assetId: string) => Promise<Array<{ id: string; name: string; email?: string; image_file?: string; forbid_remove?: boolean }>>;
+  shareAsset?: (assetId: string, userId: string) => Promise<void>;
+  removeAssetAccess?: (assetId: string, userId: string) => Promise<void>;
+
+  // Kit/Runtime Operations
+  fetchSignalMapping?: (kitName: string) => Promise<string>;
+  replaceSignalMapping?: (kitName: string, fileContent: string) => Promise<void>;
+  fetchVss?: (kitName: string) => Promise<string>;
+  replaceVss?: (kitName: string, vssContent: string) => Promise<void>;
 }
 ```
 
@@ -1063,6 +1200,7 @@ interface PluginPageProps {
     prototype?: Prototype;
     [key: string]: any;
   };
+  editable?: boolean; // whether the current user may edit (host WRITE_MODEL permission)
   config?: {
     plugin_id?: string;
     [key: string]: any;

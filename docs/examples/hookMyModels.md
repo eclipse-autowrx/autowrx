@@ -1,63 +1,38 @@
-# Sample Hook: `useMyModels`
+# Sample Hook: `useCurrentModel` (TanStack Query)
 
-This document provides a reference implementation for a custom React hook responsible for fetching data. It demonstrates how we encapsulate data-fetching and state management logic, keeping our components clean and focused on their primary responsibility: rendering the UI.
+A reference for a real data hook. Hooks under `frontend/src/hooks/` wrap
+`@tanstack/react-query` (`useQuery`/`useMutation`) around a service function —
+**not** `useState`/`useEffect`. See [../architecture/frontend.md](../architecture/frontend.md).
+
+**File:** `frontend/src/hooks/useCurrentModel.ts`
+
+```typescript
+import { useQuery } from '@tanstack/react-query'
+import { useParams, useSearchParams } from 'react-router-dom'
+import { Model } from '@/types/model.type'
+import { getModel } from '@/services/model.service'
+
+const useCurrentModel = () => {
+  const { model_id: pathModelId } = useParams<{ model_id: string }>()
+  const [searchParams] = useSearchParams()
+  const model_id = pathModelId || searchParams.get('model_id') || undefined
+
+  return useQuery<Model>({
+    queryKey: ['model', model_id],
+    queryFn: () => getModel(model_id!),
+    enabled: !!model_id,
+  })
+}
+
+export default useCurrentModel
+```
+
+The pattern: a stable **query key** (here `['model', model_id]`), a `queryFn`
+that calls a `services/*.service` function, and `enabled` to gate the request
+until the id is known. The hook returns `{ data, isLoading, error, ... }`.
+
+For an authenticated-profile example with the same shape, see
+`useSelfProfile.ts` (`enabled: authBootstrapped && !!accessToken`). The models
+list uses `useListAllModels` (`useInfiniteQuery` for paginated fetching).
 
 This hook is used by the [**Sample Models Page**](./pageModels.md).
-
-> **Relevant Principles:**
-> *   [Clarity & Maintainability](../principles/principle.md#1-clarity-and-maintainability)
-> *   [Single Responsibility Principle](../principles/principle.md#2-solid-principles)
-
----
-
-### File: `src/hooks/useMyModels.js`
-
-This hook has a single job: to fetch the current user's models from the API, manage the loading and error states of that request, and return the final data.
-
-```jsx
-import { useState, useEffect } from 'react';
-import { api } from '../services/api'; // A fictional API service
-
-/**
- * A custom hook to fetch the models created by the current user.
- * It handles the entire lifecycle of the data request: loading, success, and error.
- * @returns {{ data: any[], isLoading: boolean, error: any }}
- */
-export const useMyModels = () => {
-  const [data, setData] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    // A self-invoking async function to fetch data
-    (async () => {
-      try {
-        setIsLoading(true);
-        const response = await api.get('/models/my-models');
-        setData(response.data);
-        setError(null);
-      } catch (err) {
-        setError(err);
-        setData([]);
-      } finally {
-        setIsLoading(false);
-      }
-    })();
-  }, []); // The empty dependency array ensures this runs once on mount
-
-  // The hook returns an object with a clear interface, making it easy
-  // for the consuming component to know the state of the request.
-  return { data, isLoading, error };
-};
-```
-*Note: In a real-world application, we would likely use a more robust data-fetching library like `react-query` or `swr`, but the principle of encapsulating logic in a hook remains the same.*
-
----
-
-### How It Adheres to Our Principles
-
-1.  **Single Responsibility Principle (SRP):** This is a perfect example of SRP. The hook's one and only responsibility is to fetch the user's models. It doesn't know or care about how this data will be displayed. This makes it highly reusable—any component that needs the user's models can now get them by calling `useMyModels()`.
-
-2.  **Clarity and Maintainability:** The logic for fetching these models is now in one, easy-to-find place. If the API endpoint changes or we need to add more complex logic (like caching), we only have to modify this single file. The components that use this hook, like the `ModelsPage`, remain completely unchanged.
-
-3.  **Separation of Concerns:** This approach creates a clean separation between the "view" (the component) and the "logic" (the hook). The component is concerned with *what* to display, while the hook is concerned with *how* to get it.
