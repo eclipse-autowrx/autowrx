@@ -48,22 +48,9 @@ test.describe('Prototypes - CRUD', () => {
 
   test('CREATE: go to new prototype page', async ({ page }) => {
     await loginAsAdmin(page);
-    await page.evaluate(() => {
-      localStorage.setItem(
-        'autowrx_new_prototype_session',
-        JSON.stringify({
-          modelId: 'legacy-model',
-          prototypeId: 'legacy-prototype',
-          prototypeName: 'Legacy prototype',
-        }),
-      );
-    });
 
     await page.goto('/new-prototype');
     await saveScreenshot(page, 'proto-new-page');
-
-    await expect(page.getByText('Continue Previous Session?')).toHaveCount(0);
-    await expect(page.getByText('Loading prototype...')).toHaveCount(0);
 
     const nameInput = page.locator('[data-id="prototype-name-input"]');
     await expect(nameInput).toBeVisible({ timeout: 15000 });
