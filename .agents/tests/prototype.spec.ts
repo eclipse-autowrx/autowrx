@@ -48,11 +48,24 @@ test.describe('Prototypes - CRUD', () => {
 
   test('CREATE: go to new prototype page', async ({ page }) => {
     await loginAsAdmin(page);
+
     await page.goto('/new-prototype');
-    await page.waitForTimeout(2000);
     await saveScreenshot(page, 'proto-new-page');
 
-    await expect(page.locator('[data-id="prototype-name-input"]')).toBeVisible({ timeout: 15000 });
+    const nameInput = page.locator('[data-id="prototype-name-input"]');
+    await expect(nameInput).toBeVisible({ timeout: 15000 });
+    await expect.poll(
+      () => new URL(page.url()).searchParams.get('model_id'),
+      { timeout: 15000 },
+    ).toBeTruthy();
+    await nameInput.fill(`NewPage_${Date.now()}`);
+
+    await page.getByRole('button', { name: 'Confirm' }).click();
+    await page.waitForURL(
+      /\/model\/[^/]+\/library\/prototype\/[^/?]+(?:\/[^?]+)?(?:\?.*)?$/,
+      { timeout: 30000 },
+    );
+    expect(new URL(page.url()).pathname).not.toBe('/new-prototype');
   });
 
   test('CREATE: create prototype from model library', async ({ page }) => {
