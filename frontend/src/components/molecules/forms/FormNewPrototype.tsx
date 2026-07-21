@@ -23,6 +23,7 @@ import {
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import default_journey from '@/data/default_journey'
 import { listProjectTemplates } from '@/services/projectTemplate.service'
+import useCurrentModel from '@/hooks/useCurrentModel'
 import useListModelPrototypes from '@/hooks/useListModelPrototypes'
 import useListVSSVersions from '@/hooks/useListVSSVersions'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
@@ -37,7 +38,7 @@ import { useQuery } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { TbLoader } from 'react-icons/tb'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 
 interface FormNewPrototypeProps {
@@ -52,6 +53,10 @@ interface FormNewPrototypeProps {
     onSuccess?: (modelId: string, prototypeId: string, prototypeName: string) => void
 }
 
+type ModelSelection =
+    | { type: 'existing'; modelId: string }
+    | { type: 'new' }
+
 
 const FormNewPrototype = ({
     onClose,
@@ -64,8 +69,11 @@ const FormNewPrototype = ({
     onSuccess,
 }: FormNewPrototypeProps) => {
     const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
     const { toast } = useToast()
     const { data: currentUser, isLoading: isCurrentUserLoading } = useSelfProfileQuery()
+    const { data: urlModel, isLoading: isUrlModelLoading } = useCurrentModel()
+    const urlParamModelId = searchParams.get('model_id')
 
     const { data: projectTemplatesData, isLoading: isLoadingTemplates } = useQuery({
         queryKey: ['project-templates-list'],
@@ -104,9 +112,41 @@ const FormNewPrototype = ({
     const isFetchingModels =
         isCurrentUserLoading || isFetchingOwnedModels || isFetchingContributedModels
 
+    const resolvedDefaultSelection = useMemo((): ModelSelection | null => {
+        if (isFetchingModels) return null
+
+        const models = allModels.results
+
+        if (urlParamModelId) {
+            const urlMatch = models.find((m) => m.id === urlParamModelId)
+            if (urlMatch) return { type: 'existing', modelId: urlMatch.id }
+            if (isUrlModelLoading) return null
+            if (urlModel) return { type: 'existing', modelId: urlModel.id }
+        }
+
+        if (models.length > 0) {
+            return { type: 'existing', modelId: models[models.length - 1].id }
+        }
+
+        if (!urlParamModelId) return { type: 'new' }
+
+        return null
+    }, [
+        isFetchingModels,
+        allModels.results,
+        urlParamModelId,
+        isUrlModelLoading,
+        urlModel,
+    ])
+
+    const [userSelection, setUserSelection] = useState<ModelSelection | null>(null)
+    const activeSelection = userSelection ?? resolvedDefaultSelection
+    const isModelSelectorReady = activeSelection !== null
+    const isCreatingNewModel = activeSelection?.type === 'new'
+    const selectedModelId =
+        activeSelection?.type === 'existing' ? activeSelection.modelId : ''
+
     const [prototypeName, setPrototypeName] = useState('')
-    const [selectedModelId, setSelectedModelId] = useState<string>('')
-    const [isCreatingNewModel, setIsCreatingNewModel] = useState(false)
     const [newModelName, setNewModelName] = useState('')
     const [newModelApiVersion, setNewModelApiVersion] = useState('v4.1')
     const [newModelApiDataUrl, setNewModelApiDataUrl] = useState<string | undefined>(undefined)
@@ -121,6 +161,7 @@ const FormNewPrototype = ({
     useEffect(() => { onModelChangeRef.current = onModelChange })
     const onTemplatePreviewChangeRef = useRef(onTemplatePreviewChange)
     useEffect(() => { onTemplatePreviewChangeRef.current = onTemplatePreviewChange })
+    const hasInitialized = useRef(false)
 
     const { data: vssVersions } = useListVSSVersions()
     const { data: templatesData } = useQuery({
@@ -158,21 +199,20 @@ const FormNewPrototype = ({
         isCreatingNewModel ? '' : selectedModelId,
     )
 
-    // Set default to last model once models are loaded.
-    // Use onModelChangeRef so this effect doesn't re-run when the parent re-renders
-    // with a new inline function reference (which would reset the user's selection).
+    // Sync URL when defaulting to last model or create-new (skip when URL already has model_id).
     useEffect(() => {
-        if (allModels && !isFetchingModels && allModels.results.length > 0) {
-            const last = allModels.results[allModels.results.length - 1]
-            setSelectedModelId(last.id)
-            onModelChangeRef.current?.(last.id)
-            onTemplatePreviewChangeRef.current?.(null)
-        } else if (allModels && !isFetchingModels && allModels.results.length === 0) {
-            setIsCreatingNewModel(true)
-            setSelectedModelId('new')
-            onModelChangeRef.current?.(null)
+        if (hasInitialized.current || !resolvedDefaultSelection) return
+
+        if (!urlParamModelId) {
+            if (resolvedDefaultSelection.type === 'new') {
+                onModelChangeRef.current?.(null)
+            } else {
+                onModelChangeRef.current?.(resolvedDefaultSelection.modelId)
+                onTemplatePreviewChangeRef.current?.(null)
+            }
         }
-    }, [allModels, isFetchingModels]) // eslint-disable-line react-hooks/exhaustive-deps
+        hasInitialized.current = true
+    }, [resolvedDefaultSelection, urlParamModelId])
 
     const existingPrototypeNames = useMemo(
         () => (!isCreatingNewModel && selectedModelId ? fetchedPrototypes?.map((p: Prototype) => p.name) ?? [] : []),
@@ -265,8 +305,7 @@ const FormNewPrototype = ({
             if (onSuccess) {
                 onSuccess(modelId, response.id, prototypeName.trim())
             } else {
-                if (onClose) onClose()
-                await navigate(`/model/${modelId}/library/prototype/${response.id}`)
+                navigate(`/model/${modelId}/library/prototype/${response.id}`)
             }
         } catch (err) {
             if (isAxiosError(err)) {
@@ -281,7 +320,23 @@ const FormNewPrototype = ({
         }
     }
 
-    const modelList = allModels.results
+    const modelList = useMemo(() => {
+        const models = allModels.results
+        if (urlModel && !models.some((m) => m.id === urlModel.id)) {
+            return [
+                ...models,
+                {
+                    id: urlModel.id,
+                    name: urlModel.name,
+                    visibility: urlModel.visibility,
+                    model_home_image_file: urlModel.model_home_image_file || '',
+                    created_by: urlModel.created_by?.id || '',
+                    tags: urlModel.tags,
+                },
+            ]
+        }
+        return models
+    }, [allModels.results, urlModel])
 
     return (
         <form
@@ -293,7 +348,7 @@ const FormNewPrototype = ({
             </DaText>
 
             {/* Model selector */}
-            {isFetchingModels ? (
+            {!isModelSelectorReady ? (
                 <div className="mt-4">
                     <DaText variant="regular-medium">Model</DaText>
                     <div className="flex h-10 border px-2 rounded-md shadow-sm mt-2 items-center">
@@ -308,13 +363,11 @@ const FormNewPrototype = ({
                     onValueChange={(value) => {
                         setError('')
                         if (value === 'new') {
-                            setIsCreatingNewModel(true)
-                            setSelectedModelId('new')
+                            setUserSelection({ type: 'new' })
                             onModelChange?.(null)
                             // Template preview is applied by the create-mode effect once templates load.
                         } else {
-                            setIsCreatingNewModel(false)
-                            setSelectedModelId(value)
+                            setUserSelection({ type: 'existing', modelId: value })
                             onModelChange?.(value)
                             onTemplatePreviewChange?.(null)
                         }

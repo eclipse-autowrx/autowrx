@@ -24,6 +24,7 @@ import PluginPageRender from '@/components/organisms/PluginPageRender'
 import PrototypeSidebar from '@/components/organisms/PrototypeSidebar'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import useAuthStore from '@/stores/authStore'
 import useModelStore from '@/stores/modelStore'
 import { TbLayoutSidebar } from 'react-icons/tb'
 
@@ -36,9 +37,30 @@ const NewPrototypeLayout: FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const isCreateModelMode = searchParams.get('create-model') !== null
   const navigate = useNavigate()
-  const { data: user, isLoading: isUserLoading } = useSelfProfileQuery()
+  const authBootstrapped = useAuthStore((state) => state.authBootstrapped)
+  const {
+    data: user,
+    isLoading: isUserLoading,
+    isFetching: isUserFetching,
+  } = useSelfProfileQuery()
   const { data: model } = useCurrentModel()
   const setActiveModel = useModelStore((state) => state.setActiveModel)
+  const isResolvingAuth =
+    !authBootstrapped || (!user && (isUserLoading || isUserFetching))
+  const urlParamModelId = searchParams.get('model_id')
+
+  const handleLeavePage = useCallback(() => {
+    const historyIdx = window.history.state?.idx
+    if (typeof historyIdx === 'number' && historyIdx > 0) {
+      navigate(-1)
+      return
+    }
+    if (urlParamModelId) {
+      navigate(`/model/${urlParamModelId}/library/list`)
+      return
+    }
+    navigate('/')
+  }, [navigate, urlParamModelId])
 
   const [openNewPrototypeDialog, setOpenNewPrototypeDialog] = useState(
     !isCreateModelMode,
@@ -53,10 +75,10 @@ const NewPrototypeLayout: FC = () => {
   > | null>(null)
 
   useEffect(() => {
-    if (!isUserLoading && !user) {
+    if (!isResolvingAuth && !user) {
       navigate('/')
     }
-  }, [isUserLoading, user, navigate])
+  }, [isResolvingAuth, user, navigate])
 
   useEffect(() => {
     if (model) {
@@ -198,7 +220,7 @@ const NewPrototypeLayout: FC = () => {
         open={openNewPrototypeDialog}
         preventOutsideClose
         onOpenChange={setOpenNewPrototypeDialog}
-        onClose={() => navigate('/')}
+        onClose={handleLeavePage}
         className="w-115 max-w-[calc(100vw-40px)] max-h-[90vh] overflow-auto"
       >
         <FormNewPrototype
@@ -213,7 +235,7 @@ const NewPrototypeLayout: FC = () => {
         open={openCreateModelDialog}
         onOpenChange={(open) => {
           setOpenCreateModelDialog(open)
-          if (!open) navigate('/')
+          if (!open) handleLeavePage()
         }}
         dialogTitle="Create New Model"
         className="w-115 max-w-[calc(100vw-40px)]"
