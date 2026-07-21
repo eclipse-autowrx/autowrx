@@ -3,6 +3,13 @@
 ## Overview
 The application uses Helmet.js to set Content Security Policy headers that control which resources can be loaded by the browser. This helps prevent XSS attacks and other security vulnerabilities.
 
+> ⚠️ **The shipped CSP is more permissive than documented below.** The current
+> `backend/src/app.js` sets an effectively **wildcard** policy in both dev and
+> production (`defaultSrc ['*']`, `scriptSrc`/`connectSrc` including `'*'`). The
+> directives in this file describe the *intended/target* policy, not what is
+> live. See [../architecture/auth-security.md](../architecture/auth-security.md)
+> (§6) for what is actually shipped.
+
 ## Location
 CSP configuration is in `backend/src/app.js` (lines 43-79)
 

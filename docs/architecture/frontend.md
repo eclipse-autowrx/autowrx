@@ -19,8 +19,8 @@ shadcn/Radix-style primitives.
 | Layer | Path | Count | Role | Examples |
 |---|---|---|---|---|
 | **Atoms** | `components/atoms/` | ~44 | Primitives & small wrappers | `button.tsx`, `dialog.tsx`, `DaText.tsx`, `DaInput.tsx`, `DaTabItem.tsx`, `DaStarsRating.tsx`, `JsonEditor.tsx` |
-| **Molecules** | `components/molecules/` | ~63 | Compositions of atoms with light logic | `DaNavUser.tsx`, `PrototypeTabs.tsx`, `DaRuntimeConnector.tsx`, `DynamicSchemaForm.tsx`, + subfolders |
-| **Organisms** | `components/organisms/` | ~65 | Full feature sections | `NavigationBar.tsx`, `HomeHeroSection.tsx`, `PrototypeTabCode.tsx`, `PluginPageRender.tsx`, `UsersManagement.tsx` |
+| **Molecules** | `components/molecules/` | ~95 | Compositions of atoms with light logic | `DaNavUser.tsx`, `PrototypeTabs.tsx`, `DaRuntimeConnector.tsx`, `DynamicSchemaForm.tsx`, + subfolders |
+| **Organisms** | `components/organisms/` | ~63 | Full feature sections | `NavigationBar.tsx`, `HomeHeroSection.tsx`, `PrototypeTabCode.tsx`, `PluginPageRender.tsx`, `UsersManagement.tsx` |
 
 Molecules also group into feature subfolders: `forms/` (e.g. `FormCreateModel`,
 `FormSignIn`), `dashboard/` (`DaDashboard`, `DaDashboardGrid`,

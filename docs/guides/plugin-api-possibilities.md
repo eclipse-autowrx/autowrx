@@ -2,6 +2,12 @@
 
 This document outlines the **current limited Plugin API** and future possibilities for expansion.
 
+> ℹ️ **Partially outdated.** Several capabilities listed below as "future" are
+> **already implemented** — notably asset operations and kit/runtime operations
+> (signal mapping, VSS read/replace), file upload, and tab navigation. Treat the
+> "future possibilities" sections as a wishlist and cross-check against
+> `frontend/src/types/plugin.types.ts` and [plugin/04-api-reference](./plugin/04-api-reference.md).
+
 ---
 
 ## 🎯 Current Implementation (Limited Scope)

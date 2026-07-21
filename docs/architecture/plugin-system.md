@@ -75,7 +75,7 @@ sequenceDiagram
 
     Host->>API: getPluginBySlug(id) → { url, config }
     Host->>Win: expose window.React / ReactDOM / require-shim
-    Host->>Win: inject <script src=url> (module, classic fallback)
+    Host->>Win: inject script tag (src=url, module first, classic fallback)
     Plugin->>Win: window.DAPlugins['page-plugin'] = { components.Page, mount?, unmount? }
     Host->>Win: poll up to 15s for registration (cache per slug)
     Host->>Plugin: render <Page data editable config api />

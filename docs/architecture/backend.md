@@ -14,7 +14,7 @@ Runs on **`:3200`** in development (`yarn dev`, nodemon). See
 ## 1. Bootstrap & global middleware
 
 `src/index.js` connects Mongoose, runs startup scripts
-(`initializeRoles → assignAdmins → seedPredefinedSiteConfigs / seedProjectTemplates`),
+(`convertLogsCap → initializeRoles → assignAdmins → seedPredefinedSiteConfigs / seedProjectTemplates`),
 starts the HTTP server, initializes Socket.IO, and registers global
 `uncaughtException` / `unhandledRejection` handlers.
 

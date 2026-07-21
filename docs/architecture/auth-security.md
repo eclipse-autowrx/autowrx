@@ -12,7 +12,7 @@ the gap is flagged.
 
 | Token | Where it lives | Lifetime (default) | Persisted? |
 |---|---|---|---|
-| **Access** | Frontend **memory** (`authStore.access`), sent as `Authorization: Bearer` | 30 min (in **dev** the unit is overridden to *days*) | No |
+| **Access** | Frontend **memory** (`authStore.access`), sent as `Authorization: Bearer` | 30 min (production); in **dev** the unit is overridden to *days*, so it is 30 days | No |
 | **Refresh** | **HttpOnly cookie** (`JWT_COOKIE_NAME`, default `token`) | 30 days | Yes — `tokens` collection |
 | Reset-password / verify-email | — | 10 min | Yes — `tokens` collection |
 
@@ -187,8 +187,10 @@ back to the `STRICT_AUTH` env — `STRICT_AUTH=false` opens all flags,
   mitigation. *(Flagged for follow-up — tightening the real CSP is worth a
   dedicated task.)*
 - **`express-mongo-sanitize`** strips `$`/`.` keys (Mongo operator injection).
-- Body parsers capped at 50 MB; `authLimiter` rate-limits auth routes
-  (20 req / 15 min); central `errorConverter` + `errorHandler`.
+- Body parsers capped at 50 MB; central `errorConverter` + `errorHandler`.
+  > Note: an `authLimiter` (20 req / 15 min) is *defined* in
+  > `middlewares/rateLimiter.js` but is **not currently applied to any route**,
+  > so auth endpoints are effectively unrate-limited (see "Known gaps").
 
 ---
 
@@ -201,6 +203,9 @@ Called out honestly so newcomers don't assume more hardening than exists:
   [plugin-system.md](./plugin-system.md)) — iframe isolation is future work.
 - The **internal-plugin upload** route's admin permission check is currently
   commented out.
+- **Auth routes are not rate-limited** — `authLimiter` is defined in
+  `middlewares/rateLimiter.js` but not applied to any route (§6), so login /
+  register / etc. have no brute-force throttling.
 - Permission constants are duplicated on the frontend (§4).
 
 ---
