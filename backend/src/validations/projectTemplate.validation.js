@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: MIT
 
 const Joi = require('joi');
-const { objectId } = require('./custom.validation');
+const { objectId, jsonString } = require('./custom.validation');
 
 const list = {
   query: Joi.object().keys({
     name: Joi.string(),
+    visibility: Joi.string().valid('public', 'private'),
     sortBy: Joi.string(),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),
@@ -21,7 +22,7 @@ const create = {
   body: Joi.object().keys({
     name: Joi.string().required().max(255),
     description: Joi.string().allow(''),
-    data: Joi.string().required(),
+    data: Joi.string().required().custom(jsonString),
     visibility: Joi.string().valid('public', 'private'),
   }),
 };
@@ -32,7 +33,7 @@ const update = {
     .keys({
       name: Joi.string().max(255),
       description: Joi.string().allow(''),
-      data: Joi.string(),
+      data: Joi.string().custom(jsonString),
       visibility: Joi.string().valid('public', 'private'),
     })
     .min(1),
