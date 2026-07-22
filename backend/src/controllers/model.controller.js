@@ -14,8 +14,9 @@ const ApiError = require('../utils/ApiError');
 const { PERMISSIONS } = require('../config/roles');
 const logger = require('../config/logger');
 const ModelTemplate = require('../models/modelTemplate.model');
-const { Model } = require('../models');
+const { Model, ExtendedApi } = require('../models');
 const config = require('../config/config');
+const syncService = require('../sync');
 
 const listAllModels = catchAsync(async (req, res) => {
   const options = pick(req.query, ['fields']);
@@ -90,55 +91,89 @@ const createModel = catchAsync(async (req, res) => {
     }
   }
 
-  const model = await modelService.createModel(req.user.id, {
-    ...reqBody,
-  });
+  const modelId = await syncService.runWithSkipSync(async () => {
+    const createdModelId = await modelService.createModel(req.user.id, {
+      ...reqBody,
+    });
 
-  try {
-    if (extended_apis) {
-      await Promise.all(
-        extended_apis.map((api) =>
-          extendedApiService.createExtendedApi({
-            ...api,
-            model: model._id,
-            isWishlist: api.isWishlist || false,
-          }),
-        ),
-      );
-    }
-  } catch (error) {
-    logger.warn(`Error in creating model (creating extended_apis): ${error}`);
-  }
-
-  try {
-    if (custom_apis) {
-      let apis = custom_apis;
-      try {
-        apis = JSON.parse(custom_apis);
-      } catch (error) {
-        // Do nothing
-      }
-
-      if (Array.isArray(apis)) {
+    try {
+      if (extended_apis) {
         await Promise.all(
-          apis.map((api) =>
+          extended_apis.map((api) =>
             extendedApiService.createExtendedApi({
-              model: model._id,
-              apiName: api.name || api.apiName || 'Vehicle',
-              description: api.description || '',
-              skeleton: api.skeleton || '{}',
-              tags: api.tags || [],
-              type: api.type || 'branch',
-              datatype: api.datatype || (api.type !== 'branch' ? 'string' : null),
+              ...api,
+              model: createdModelId,
               isWishlist: api.isWishlist || false,
-              unit: api.unit,
             }),
           ),
         );
       }
+    } catch (error) {
+      logger.warn(`Error in creating model (creating extended_apis): ${error}`);
     }
-  } catch (error) {
-    logger.warn(`Error in creating model (creating extended_apis): ${error}`);
+
+    try {
+      if (custom_apis) {
+        let apis = custom_apis;
+        try {
+          apis = JSON.parse(custom_apis);
+        } catch (error) {
+          // Do nothing
+        }
+
+        if (Array.isArray(apis)) {
+          await Promise.all(
+            apis.map((api) =>
+              extendedApiService.createExtendedApi({
+                model: createdModelId,
+                apiName: api.name || api.apiName || 'Vehicle',
+                description: api.description || '',
+                skeleton: api.skeleton || '{}',
+                tags: api.tags || [],
+                type: api.type || 'branch',
+                datatype: api.datatype || (api.type !== 'branch' ? 'string' : null),
+                isWishlist: api.isWishlist || false,
+                unit: api.unit,
+              }),
+            ),
+          );
+        }
+      }
+    } catch (error) {
+      logger.warn(`Error in creating model (creating extended_apis): ${error}`);
+    }
+
+    return createdModelId;
+  });
+
+  const model = await Model.findById(modelId);
+  if (!model) {
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Model not found after create');
+  }
+
+  const hasExtendedApis = Boolean(extended_apis || custom_apis);
+  const modelSnapshot = model.toObject();
+
+  if (hasExtendedApis) {
+    const extendedApisAfter = await ExtendedApi.find({ model: modelId }).lean();
+    await syncService.triggerSync({
+      action: 'BULK_REPLACE',
+      resourceType: 'ExtendedApi',
+      resourceId: String(modelId),
+      modelId: String(modelId),
+      document: { model: modelSnapshot, extendedApis: extendedApisAfter },
+      changes: { previousModel: null, previousExtendedApis: [] },
+      userId: req.user?.id,
+    });
+  } else {
+    await syncService.triggerSync({
+      action: 'CREATE',
+      resourceType: 'Model',
+      resourceId: String(modelId),
+      modelId: String(modelId),
+      document: modelSnapshot,
+      userId: req.user?.id,
+    });
   }
 
   res.status(httpStatus.CREATED).send(model);
@@ -362,18 +397,36 @@ const replaceApi = catchAsync(async (req, res) => {
     }
   }
 
-  await modelService.updateModelById(modelId, updateBody, req.user?.id);
-  await extendedApiService.deleteExtendedApisByModelId(modelId);
+  const modelBefore = await Model.findById(modelId).lean();
+  const extendedApisBefore = await ExtendedApi.find({ model: modelId }).lean();
 
-  await Promise.all(
-    (extended_apis || []).map((api) =>
-      extendedApiService.createExtendedApi({
-        ...api,
-        model: modelId,
-        isWishlist: api.isWishlist || false,
-      }),
-    ),
-  );
+  await syncService.runWithSkipSync(async () => {
+    await modelService.updateModelById(modelId, updateBody, req.user?.id);
+    await extendedApiService.deleteExtendedApisByModelId(modelId);
+
+    await Promise.all(
+      (extended_apis || []).map((api) =>
+        extendedApiService.createExtendedApi({
+          ...api,
+          model: modelId,
+          isWishlist: api.isWishlist || false,
+        }),
+      ),
+    );
+  });
+
+  const modelAfter = await Model.findById(modelId).lean();
+  const extendedApisAfter = await ExtendedApi.find({ model: modelId }).lean();
+
+  await syncService.triggerSync({
+    action: 'BULK_REPLACE',
+    resourceType: 'ExtendedApi',
+    resourceId: modelId,
+    modelId,
+    document: { model: modelAfter, extendedApis: extendedApisAfter },
+    changes: { previousModel: modelBefore, previousExtendedApis: extendedApisBefore },
+    userId: req.user?.id,
+  });
 
   res.status(httpStatus.OK).send();
 });

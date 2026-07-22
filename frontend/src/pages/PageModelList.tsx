@@ -128,16 +128,16 @@ const PageModelList = () => {
           visibility: 'private',
         }
 
-        const createdModel = await createModelService(newModel)
+        const modelId = await createModelService(newModel)
 
         addLog({
-          name: `New model '${createdModel.name}' with visibility: ${createdModel.visibility}`,
-          description: `New model '${createdModel.name}' was created by ${
+          name: `New model '${newModel.name}' with visibility: ${newModel.visibility}`,
+          description: `New model '${newModel.name}' was created by ${
             user?.email || user?.name || user?.id
           }`,
           type: 'new-model',
           create_by: user?.id!,
-          ref_id: createdModel.id,
+          ref_id: modelId,
           ref_type: 'model',
         })
 
@@ -152,7 +152,7 @@ const PageModelList = () => {
                 description: proto.description,
                 tags: proto.tags || [],
                 image_file: proto.image_file,
-                model_id: createdModel,
+                model_id: modelId,
                 name: proto.name,
                 complexity_level: proto.complexity_level || '3',
                 customer_journey: proto.customer_journey || '{}',
@@ -167,7 +167,7 @@ const PageModelList = () => {
         queryClient.invalidateQueries({
           queryKey: ['modelsList', user?.id ?? 'anonymous'],
         })
-        navigate(`/model/${createdModel}`)
+        navigate(`/model/${modelId}`)
       } catch (err) {
         console.error('Error creating model from zip: ', err)
       } finally {

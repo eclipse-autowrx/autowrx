@@ -8,6 +8,7 @@
 
 import config from '@/configs/config.ts'
 import useAuthStore from '@/stores/authStore.ts'
+import { isMutatingRequest, showSyncWarningToast } from '@/utils/syncWarning.ts'
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
 
 export const serverAxios = axios.create({
@@ -62,7 +63,13 @@ serverAxios.interceptors.request.use(
 
 // Response interceptor to handle 401 errors and refresh tokens
 serverAxios.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const syncWarning = response.headers['x-sync-warning']
+    if (syncWarning && isMutatingRequest(response.config.method)) {
+      showSyncWarningToast(typeof syncWarning === 'string' ? syncWarning : String(syncWarning))
+    }
+    return response
+  },
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
 
