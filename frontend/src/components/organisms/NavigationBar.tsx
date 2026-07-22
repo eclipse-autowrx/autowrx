@@ -91,9 +91,9 @@ const NavigationBar = ({ }) => {
         { to: '/manage-features', icon: TbStack2, label: 'Manage Features' },
         { to: '/admin/site-config', icon: TbSettings, label: 'Site Config' },
         { to: '/admin/plugins', icon: TbApps, label: 'Plugins' },
-        { to: '/admin/templates', icon: TbPalette, label: 'Templates' },
+        { to: '/admin/templates', icon: TbPalette, label: 'Model Templates' },
         { to: '/admin/dashboard-templates', icon: TbBuildingWarehouse, label: 'Dashboard Templates' },
-        { to: '/admin/project-templates', icon: TbFileCode, label: 'Project Templates' },
+        { to: '/admin/project-templates', icon: TbFileCode, label: 'Prototype Templates' },
       ]
     }
     if (allowNonAdminAddonConfig) {

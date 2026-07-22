@@ -131,7 +131,7 @@ const PageNewPrototypeDetail: FC<ViewPrototypeProps> = ({ }) => {
         image?: string
         visibility?: string
         config?: any
-        model_tabs?: Array<{ label: string; plugin: string }>
+        model_tabs?: TabConfig[]
         prototype_tabs?: TabConfig[]
     } | undefined>(undefined)
 

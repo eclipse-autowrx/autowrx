@@ -34,9 +34,9 @@ This project serves as the backend for the playground, offering endpoints for:
 
 ### Running the Application
 
-- **Development Mode**: See the [Development Guide](../development-guide.md) in the project root for local development setup (recommended: run services directly, not in Docker).
+- **Development Mode**: See the [Development Guide](../docs/getting-started/development-guide.md) in the project root for local development setup (recommended: run services directly, not in Docker).
 
-- **Production Mode**: See the [Instance Setup Guide](../instance-setup/) in the `instance-setup/` directory for production deployment using Docker Compose.
+- **Production Mode**: See the [Instance Setup Guide](../instance-setup) in the `instance-setup/` directory for production deployment using Docker Compose.
 
 ###
 
@@ -85,8 +85,6 @@ The API is available under the `/v2` prefix. Key endpoints include:
 | --------------------------------------- | ----------------------------------------------------------------------------------------- | -------- | ------------------------------------- | --------------------------------------------- |
 | `NAME`                                   | Environment type for the application (e.g., prod, dev, test). Is used for container names | Yes      | None                                  | `dev`                                         |
 | `PORT`                                  | Port on which the application runs                                                        | No       | 8080                                  | `8080`                                        |
-| `KONG_PROXY_PORT`                       | Port for Kong proxy service                                                               | Yes      | None                                  | `9800`                                        |
-| `KONG_NGINX_WORKER_PROCESSES`           | Number of Nginx worker processes for Kong                                                 | No       | auto                                  | `2`                                           |
 | `MONGODB_URL`                           | MongoDB connection URL                                                                    | Yes      | None                                  | `mongodb://playground-db:27017/playground-be` |
 | `DB_CONTAINER_NAME`                     | Name of the database container                                                            | Yes      | None                                  | `${NAME}-playground-db`                        |
 | `CORS_ORIGIN`                           | Regex for allowed CORS origins                                                            | No       | `localhost:\\d+,127\\.0\\.0\\.1:\\d+` | `localhost:\\d+,127\\.0\\.0\\.1:\\d+`         |                                                          | Yes      | None                                  | `https://<your_domain>/api/upload`            |
@@ -106,7 +104,7 @@ The API is available under the `/v2` prefix. Key endpoints include:
 | `EMAIL_ENDPOINT_URL`                    | Endpoint URL for the email service (default: Brevo)                                       | No       | None                                  | `email_api_endpoint_url`                      |
 | `GITHUB_CLIENT_ID`                      | Client ID for GitHub OAuth authentication                                                 | No       | None                                  | `github_client_id`                            |
 | `GITHUB_CLIENT_SECRET`                  | Client secret for GitHub OAuth authentication                                             | No       | None                                  | `github_client_secret`                        |
-| `ADMIN_EMAILS`                          | Comma-separated list of admin email addresses. Use for auto provisioning admin users.     | No       | None                                  | `admin1@example.com,admin2@example.com`       |
+| `ADMIN_EMAILS`                          | Comma- or semicolon-separated list of admin emails. Use for auto provisioning admin users. | No       | None                                  | `admin1@example.com;admin2@example.com`       |
 | `ADMIN_PASSWORD`                        | Password for admin access                                                                 | No       | None                                  | `admin_password`                              |
 | `LOGS_MAX_SIZE`                         | Maximum size of change logs in megabytes                                                  | No       | `100`                                 | `100`                                         |
 

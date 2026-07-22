@@ -141,6 +141,28 @@ select[aria-hidden='true'][tabindex='-1'] {
   transition: width 0.3s ease-in-out;
 }
 
+
+body .workbench-hover-container {
+  z-index: 10000;
+  overflow: visible;
+}
+
+body:has(.monaco-editor .find-widget.visible) .workbench-hover-container {
+  pointer-events: none !important;
+}
+
+body:has(.monaco-editor .find-widget.visible) .workbench-hover-container,
+body:has(.monaco-editor .find-widget.visible) .workbench-hover-container .hover-row,
+body:has(.monaco-editor .find-widget.visible) .workbench-hover-container .hover-contents,
+body:has(.monaco-editor .find-widget.visible) .workbench-hover-container .action-container,
+body:has(.monaco-editor .find-widget.visible) .workbench-hover-container .actions-container {
+  display: flex !important;
+  flex-flow: row nowrap !important;
+  gap: 6px !important;
+  align-items: center !important;
+  white-space: nowrap !important;
+}
+
 /* Animations */
 @keyframes slideOut {
   from {

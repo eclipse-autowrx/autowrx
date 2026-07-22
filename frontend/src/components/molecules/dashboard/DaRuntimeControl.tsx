@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { FC, useEffect, useMemo, useRef, useState } from 'react'
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { TbPlayerPlayFilled, TbPlayerStopFilled, TbSettings } from 'react-icons/tb'
@@ -276,6 +276,32 @@ const DaRuntimeControl: FC = () => {
     }
   }, [])
 
+  const runtimeRefreshTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
+
+  const scheduleRuntimeReconnect = useCallback((delayMs = 500) => {
+    setUseRuntime(false)
+    if (runtimeRefreshTimeoutRef.current) {
+      clearTimeout(runtimeRefreshTimeoutRef.current)
+    }
+    runtimeRefreshTimeoutRef.current = setTimeout(() => {
+      setUseRuntime(true)
+      runtimeRefreshTimeoutRef.current = undefined
+    }, delayMs)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (runtimeRefreshTimeoutRef.current) {
+        clearTimeout(runtimeRefreshTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  const refreshRuntimeConnector = useCallback(
+    () => scheduleRuntimeReconnect(500),
+    [scheduleRuntimeReconnect],
+  )
+
   const getTimeSpanAsString = (from: number) => {
     const now = Date.now()
     const diff = now - from * 1000
@@ -300,10 +326,10 @@ const DaRuntimeControl: FC = () => {
     <div
       data-id="runtime-control-panel"
       className={cn(
-        'bottom-0 right-0 z-10 flex flex-col px-1 py-1',
+        'right-0 z-10 flex flex-col px-1 py-1',
         showPrototypeDashboardFullScreen
-          ? 'fixed top-[58px]'
-          : 'absolute top-0',
+          ? 'fixed top-[58px] bottom-[22.55px]'
+          : 'absolute top-0 bottom-0',
         isExpand ? 'w-[500px]' : 'w-14',
       )}
       style={{
@@ -314,22 +340,15 @@ const DaRuntimeControl: FC = () => {
       <DaDialog
         open={showRtDialog}
         onOpenChange={setShowRtDialog}
+        onClose={refreshRuntimeConnector}
         trigger={<span></span>}
         className="w-[800px] max-w-[90vw]"
         showCloseButton={false}
         contentContainerClassName="p-0"
       >
         <RuntimeAssetManager
-          onClose={() => {
-            setShowRtDialog(false)
-            setUseRuntime(false)
-            setTimeout(() => {
-              setUseRuntime(true)
-            }, 500)
-          }}
-          onCancel={() => {
-            setShowRtDialog(false)
-          }}
+          open={showRtDialog}
+          onClose={() => setShowRtDialog(false)}
         />
       </DaDialog>
 
@@ -358,10 +377,7 @@ const DaRuntimeControl: FC = () => {
                 localStorage.setItem('customKitServer', newServer)
                 setCustomKitServer(newServer)
                 setShowConfigDialog(false)
-                setUseRuntime(false)
-                setTimeout(() => {
-                  setUseRuntime(true)
-                }, 100)
+                scheduleRuntimeReconnect(100)
               }}
             >
               Save
