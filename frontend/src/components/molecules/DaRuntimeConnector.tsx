@@ -324,7 +324,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
 
     const readFile = (filePath: string) => {
       socketio?.emit('messageToKit', {
-        cmd: 'read_file',
+        cmd: 'read-file',
         to_kit_id: activeRtId,
         data: filePath,
       })
@@ -332,7 +332,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
 
     const writeFile = (filePath: string, fileContent: string) => {
       socketio?.emit('messageToKit', {
-        cmd: 'write_file',
+        cmd: 'write-file',
         to_kit_id: activeRtId,
         data: { path: filePath, content: fileContent },
       })
@@ -615,7 +615,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         onRuntimeStateResponse(payload)
       }
 
-      if (payload.cmd === 'read_file' && onReadFileResponse) {
+      if (payload.cmd === 'read-file' && onReadFileResponse) {
         onReadFileResponse(payload.data?.path || '', payload.data?.content || '')
       }
     }
