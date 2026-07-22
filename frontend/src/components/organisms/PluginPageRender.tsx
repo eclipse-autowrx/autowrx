@@ -359,7 +359,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
   const handleFetchSignalMapping = useCallback((kitName: string): Promise<string> => {
     return new Promise((resolve, reject) => {
       const socket = io(KIT_SERVER_URL)
-      const kitId = kitName.toLowerCase()
+      const kitId = kitName
       let settled = false
 
       const finish = (fn: () => void) => {
@@ -395,7 +395,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
   const handleFetchVss = useCallback((kitName: string): Promise<string> => {
     return new Promise((resolve, reject) => {
       const socket = io(KIT_SERVER_URL)
-      const kitId = kitName.toLowerCase()
+      const kitId = kitName
       let settled = false
 
       const finish = (fn: () => void) => {
@@ -431,7 +431,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
   const handleReplaceVss = useCallback((kitName: string, vssContent: string): Promise<void> => {
     return new Promise((resolve, reject) => {
       const socket = io(KIT_SERVER_URL)
-      const kitId = kitName.toLowerCase()
+      const kitId = kitName
       let settled = false
 
       const finish = (fn: () => void) => {
@@ -469,7 +469,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
 
     return new Promise((resolve, reject) => {
       const socket = io(KIT_SERVER_URL)
-      const kitId = kitName.toLowerCase()
+      const kitId = kitName
       let settled = false
 
       const finish = (fn: () => void) => {
