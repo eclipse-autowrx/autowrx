@@ -49,6 +49,7 @@ import DaWidgetList from '@/components/molecules/widgets/DaWidgetList'
 import useListMarketplaceWidgets from '@/hooks/useListMarketplaceWidgets'
 import { Input } from '@/components/atoms/input'
 import ModelApiList from '@/components/organisms/ModelApiList'
+import { getUsedVehicleApiNames, getUsedVehicleApis, applySyncWithCodeToOptions } from '@/hooks/useUsedVehicleApisFromCode'
 
 // Parse CVI once at module level — used as fallback API list when no model is loaded (e.g. template manager)
 let _defaultApis: VehicleApi[] | null = null
@@ -176,13 +177,14 @@ const DaDashboardWidgetEditor = ({
         delete options.iconURL
         delete options.url
       } catch (e) { }
-      const selectedSignals = prototype?.extend?.selected_signals as string[] | undefined
-      if (selectedSignals?.length && (!options.apis || options.apis.length === 0)) {
-        options.apis = [...selectedSignals]
-      }
+      const usedApiNames = getUsedVehicleApiNames(
+        localPrototype.code,
+        activeModelApis,
+      )
+      applySyncWithCodeToOptions(options, usedApiNames)
       setOptionStr(JSON.stringify(options, null, 4))
     }
-  }, [selectedWidget])
+  }, [selectedWidget, localPrototype.code, activeModelApis])
 
   useEffect(() => {
     if (isWizard) {
@@ -198,15 +200,10 @@ const DaDashboardWidgetEditor = ({
       !activeModelApis ||
       activeModelApis.length === 0
     ) {
+      setUsedAPIs([])
       return
     }
-    let newUsedAPIsList = [] as string[]
-    activeModelApis.forEach((item) => {
-      if (localPrototype.code && localPrototype.code.includes(item.shortName)) {
-        newUsedAPIsList.push(item)
-      }
-    })
-    setUsedAPIs(newUsedAPIsList)
+    setUsedAPIs(getUsedVehicleApis(localPrototype.code, activeModelApis))
   }, [localPrototype.code, activeModelApis])
 
   const copyAllSignals = () => {
@@ -398,8 +395,8 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
   popupState,
   targetSelectionCells,
 }) => {
-  const [prototype] = useModelStore(
-    (state: any) => [state.prototype as Prototype],
+  const [prototype, activeModelApis] = useModelStore(
+    (state: any) => [state.prototype as Prototype, state.activeModelApis],
     shallow,
   )
   const { data: user } = useSelfProfileQuery()
@@ -454,10 +451,14 @@ const DaWidgetLibrary: FC<DaWidgetLibraryProp> = ({
         options = activeWidget.options ? JSON.parse(JSON.stringify(activeWidget.options)) : {}
       }
 
-      const selectedSignals = prototype?.extend?.selected_signals as string[] | undefined
-      if (selectedSignals?.length && (!options.apis || options.apis.length === 0)) {
-        options.apis = [...selectedSignals]
+      const usedApiNames = getUsedVehicleApiNames(
+        prototype?.code,
+        activeModelApis,
+      )
+      if (activeWidget.plugin === 'Builtin') {
+        options.syncWithCode = true
       }
+      applySyncWithCodeToOptions(options, usedApiNames)
 
       if (activeTab === 'market') {
         options['iconURL'] = activeWidget.icon

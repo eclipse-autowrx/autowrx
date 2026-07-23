@@ -39,6 +39,7 @@ import DaMockManager from './DaMockManager'
 import PrototypeVarsWatch from './PrototypeVarsWatch'
 import DaRemoteCompileRust from '../remote-compiler/DaRemoteCompileRust'
 import { useSystemUI } from '@/hooks/useSystemUI'
+import { getUsedVehicleApiNames } from '@/hooks/useUsedVehicleApisFromCode'
 
 const AlwaysScrollToBottom = () => {
   const elementRef = useRef<HTMLDivElement>(null)
@@ -150,18 +151,20 @@ const DaRuntimeControl: FC = () => {
       return
     }
     let dashboardCfg = prototype?.widget_config || ''
-    let apis: any[] = []
+    const apis = new Set<string>(
+      getUsedVehicleApiNames(code, activeModelApis),
+    )
     activeModelApis.forEach((item: any) => {
       if (item.shortName) {
         if (
           code.includes(item.shortName) ||
           dashboardCfg.includes(item.shortName)
         ) {
-          apis.push(item.name)
+          apis.add(item.name)
         }
       }
     })
-    setUsedApis(apis)
+    setUsedApis(Array.from(apis))
   }, [code, activeModelApis, prototype?.widget_config])
 
   const handleRun = () => {
