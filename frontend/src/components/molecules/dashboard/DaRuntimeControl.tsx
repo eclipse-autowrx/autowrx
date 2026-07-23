@@ -39,6 +39,7 @@ import DaMockManager from './DaMockManager'
 import PrototypeVarsWatch from './PrototypeVarsWatch'
 import DaRemoteCompileRust from '../remote-compiler/DaRemoteCompileRust'
 import { useSystemUI } from '@/hooks/useSystemUI'
+import { useUsedVehicleApis } from '@/hooks/useUsedVehicleApis'
 
 const AlwaysScrollToBottom = () => {
   const elementRef = useRef<HTMLDivElement>(null)
@@ -53,8 +54,8 @@ const AlwaysScrollToBottom = () => {
 
 const DaRuntimeControl: FC = () => {
   const { data: currentUser } = useSelfProfileQuery()
-  const [prototype, activeModelApis] = useModelStore(
-    (state) => [state.prototype as Prototype, state.activeModelApis],
+  const [prototype] = useModelStore(
+    (state) => [state.prototype as Prototype],
     shallow,
   )
   const { data: model } = useCurrentModel()
@@ -97,7 +98,11 @@ const DaRuntimeControl: FC = () => {
   const [mockSignals, setMockSignals] = useState<any[]>([])
   const [curRuntimeInfo, setCurRuntimeInfo] = useState<any>(null)
   const [code, setCode] = useState<string>('')
-  const [usedApis, setUsedApis] = useState<any[]>([])
+  const usedApiObjects = useUsedVehicleApis(code)
+  const usedApis = useMemo(
+    () => usedApiObjects.map((api) => api.name),
+    [usedApiObjects],
+  )
   const [requestContent, setRequestContent] = useState<string>('')
   const [requestMode, setRequestMode] = useState<string>('')
   const [showRtDialog, setShowRtDialog] = useState<boolean>(false)
@@ -143,26 +148,6 @@ const DaRuntimeControl: FC = () => {
       setCode('')
     }
   }, [prototype?.code, prototype?.id])
-
-  useEffect(() => {
-    if (!code || !activeModelApis || activeModelApis.length === 0) {
-      setUsedApis([])
-      return
-    }
-    let dashboardCfg = prototype?.widget_config || ''
-    let apis: any[] = []
-    activeModelApis.forEach((item: any) => {
-      if (item.shortName) {
-        if (
-          code.includes(item.shortName) ||
-          dashboardCfg.includes(item.shortName)
-        ) {
-          apis.push(item.name)
-        }
-      }
-    })
-    setUsedApis(apis)
-  }, [code, activeModelApis, prototype?.widget_config])
 
   const handleRun = () => {
     setIsRunning(true)
@@ -725,6 +710,7 @@ const DaRuntimeControl: FC = () => {
 
             {activeTab === 'apis' && (
               <DaApisWatch
+                usedAPIs={usedApis}
                 requestWriteSignalValue={(obj: any) => {
                   writeSignalValue(obj)
                 }}
