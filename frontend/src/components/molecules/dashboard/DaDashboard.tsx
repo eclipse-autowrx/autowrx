@@ -49,6 +49,23 @@ import {
 } from '@/components/atoms/dropdown-menu'
 import DaDialog from '@/components/molecules/DaDialog'
 import { useSiteConfig } from '@/utils/siteConfig'
+import { getUsedVehicleApiNames, applySyncWithCodeToOptions } from '@/hooks/useUsedVehicleApisFromCode'
+
+const processWidgetItems = (widgetItems: any[], usedApiNames: string[]) => {
+  if (!widgetItems) return
+  widgetItems.forEach((widget) => {
+    if (!widget?.url) {
+      if (widget.options?.url) {
+        widget.url = widget.options.url
+      } else if (widget.path) {
+        widget.url = widget.path
+      }
+    }
+    if (widget.options) {
+      applySyncWithCodeToOptions(widget.options, usedApiNames)
+    }
+  })
+}
 
 const DaDashboard = () => {
   const { data: model } = useCurrentModel()
@@ -59,11 +76,13 @@ const DaDashboard = () => {
     setActivePrototype,
     prototypeHasUnsavedChanges,
     setPrototypeHasUnsavedChanges,
+    activeModelApis,
   ] = useModelStore((state) => [
     state.prototype as Prototype,
     state.setActivePrototype,
     state.prototypeHasUnsavedChanges,
     state.setPrototypeHasUnsavedChanges,
+    state.activeModelApis,
   ])
   const [widgetItems, setWidgetItems] = useState<any>([])
   const [mode, setMode] = useState<string>(MODE_RUN)
@@ -235,28 +254,14 @@ const DaDashboard = () => {
         console.error('Error parsing widget config', err)
       }
     }
-    //
-    processWidgetItems(widgetItems)
-    setWidgetItems(widgetItems)
-  }, [prototype?.widget_config, prototype?.extend?.selected_signals])
+    const usedApiNames = getUsedVehicleApiNames(
+      prototype?.code,
+      activeModelApis,
+    )
 
-  const processWidgetItems = (widgetItems: any[]) => {
-    if (!widgetItems) return
-    const selectedSignals = prototype?.extend?.selected_signals as string[] | undefined
-    widgetItems.forEach((widget) => {
-      if (!widget?.url) {
-        if (widget.options?.url) {
-          widget.url = widget.options.url
-        } else if (widget.path) {
-          widget.url = widget.path
-        }
-      }
-      if (selectedSignals?.length && (!widget.options?.apis || widget.options.apis.length === 0)) {
-        if (!widget.options) widget.options = {}
-        widget.options.apis = [...selectedSignals]
-      }
-    })
-  }
+    processWidgetItems(widgetItems, usedApiNames)
+    setWidgetItems(widgetItems)
+  }, [prototype?.widget_config, prototype?.code, activeModelApis])
 
   const handleEnterEditMode = () => {
     originalWidgetConfigRef.current = prototype?.widget_config || ''
