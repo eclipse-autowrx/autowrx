@@ -213,11 +213,10 @@ const PrototypeTabCode: FC = () => {
     let dataToSave: string | undefined
     if (codeToSave !== undefined) {
       // Explicit save from editor (Save All or Ctrl+S) — always persist, do not skip
-      if (!codeToSave) return
       dataToSave = codeToSave
     } else {
       // Periodic auto-save — skip if unchanged
-      if (!code || code === savedCode) return
+      if (code === undefined || code === savedCode) return
       dataToSave = code
     }
 

@@ -19,7 +19,6 @@ import { Spinner } from '@/components/atoms/spinner'
 import AddonSelect from '@/components/molecules/AddonSelect'
 import DaDialog from '@/components/molecules/DaDialog'
 import DaRuntimeControl from '@/components/molecules/dashboard/DaRuntimeControl'
-import PrototypeRightActionButtons from '@/components/molecules/PrototypeRightActionButtons'
 import PrototypeTabs, {
   getTabConfig,
 } from '@/components/molecules/PrototypeTabs'
@@ -42,6 +41,7 @@ import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import usePluginPreloader from '@/hooks/usePluginPreloader'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { hasPrototypeCode } from '@/lib/prototypeCodeUtils'
 import PagePrototypePlugin from '@/pages/PagePrototypePlugin'
 import PrototypeRightAction from '@/pages/PrototypeRightAction'
 import { configManagementService } from '@/services/configManagement.service'
@@ -219,6 +219,22 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
       }
     }
   }, [tab, prototypeTabs, model_id, prototype_id, navigate])
+
+  useEffect(() => {
+    if (
+      tab === 'staging' &&
+      model_id &&
+      prototype_id &&
+      !isPrototypeLoading &&
+      prototype &&
+      !hasPrototypeCode(prototype.code)
+    ) {
+      navigate(
+        `/model/${model_id}/library/prototype/${prototype_id}/code`,
+        { replace: true },
+      )
+    }
+  }, [tab, model_id, prototype_id, prototype, isPrototypeLoading, navigate])
 
   useEffect(() => {
     if (user && prototype && tab) {
@@ -474,7 +490,9 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
             {tab == 'code' && <PrototypeTabCode />}
             {tab == 'dashboard' && <PrototypeTabDashboard />}
             {tab == 'feedback' && <PrototypeTabFeedback />}
-            {tab == 'staging' && <PrototypeTabStaging prototype={prototype} />}
+            {tab == 'staging' && hasPrototypeCode(prototype?.code) && (
+              <PrototypeTabStaging prototype={prototype} />
+            )}
 
             {/* Render ALL plugin components unconditionally - they stay mounted and cached */}
             {/* Only show the one that matches current tab and pluginId */}

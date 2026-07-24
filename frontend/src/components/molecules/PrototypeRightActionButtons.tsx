@@ -15,17 +15,21 @@ const DEFAULT_STAGING_TAB: TabConfig = {
 export interface PrototypeRightActionButtonProps {
   tabs?: TabConfig[]
   onClick?: (tabConfig: TabConfig) => void
+  stagingDisabled?: boolean
+  stagingDisabledTitle?: string
 }
 
 export const PrototypeRightActionButton = ({
   config,
   disabled,
+  title,
   onClick,
 }: {
   config: TabConfig & {
     iconElement?: React.ReactNode
   }
   disabled?: boolean
+  title?: string
   onClick?: () => void
 }) => {
   const icon = !config.hideIcon
@@ -48,6 +52,7 @@ export const PrototypeRightActionButton = ({
           corners: config.corners,
         }}
         disabled={disabled}
+        title={title}
         onClick={onClick}
       />
     )
@@ -86,6 +91,8 @@ export const PrototypeRightActionButton = ({
 const PrototypeRightActionButtons = ({
   tabs,
   onClick,
+  stagingDisabled,
+  stagingDisabledTitle,
 }: PrototypeRightActionButtonProps) => {
   const { model_id, prototype_id } = useParams()
   const navigate = useNavigate()
@@ -101,13 +108,18 @@ const PrototypeRightActionButtons = ({
   return (
     <div className="flex items-center gap-2">
       {displayTabs.map((tabConfig) => {
+        const isStaging = tabConfig.builtin === 'staging'
         return (
           <PrototypeRightActionButton
             key={`right-actions-btn-${JSON.stringify(tabConfig)}`}
             config={tabConfig}
+            disabled={isStaging ? stagingDisabled : undefined}
+            title={isStaging ? stagingDisabledTitle : undefined}
             onClick={
               tabConfig.openMode === 'dialog'
-                ? () => onClick?.(tabConfig)
+                ? stagingDisabled && isStaging
+                  ? undefined
+                  : () => onClick?.(tabConfig)
                 : tabConfig.type === 'builtin' || tabConfig.builtin
                   ? undefined
                   : () =>
