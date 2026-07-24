@@ -69,7 +69,7 @@
     "react-konva": "18.2.10",
     "react-markdown": "^10.1.0",
     "react-rating": "^2.0.5",
-    "react-router-dom": "^6.23.1",
+    "react-router-dom": "^6.30.4",
     "react-syntax-highlighter": "^16.1.1",
     "react-toastify": "^11.1.0",
     "remark-gfm": "^4.0.1",
