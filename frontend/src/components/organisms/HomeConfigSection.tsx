@@ -15,6 +15,7 @@ import CodeEditor, { CodeEditorHandle } from '@/components/molecules/CodeEditor'
 import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
+import { reloadSoon, restoreConfigsFromSnapshot } from '@/utils/siteConfigAdmin'
 import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
 import type { SiteConfigEditEntry } from '@/utils/siteConfigHistory'
 import { HomePartners } from '@/components/organisms/HomePartners'
@@ -216,6 +217,33 @@ const HomeConfigSection: React.FC = () => {
     setHomeSubTab('edit')
   }
 
+  const handleFactoryReset = async () => {
+    if (
+      !window.confirm(
+        'Restore home configuration to the deployment snapshot? This will overwrite your current home layout.',
+      )
+    ) {
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      await restoreConfigsFromSnapshot({ keys: ['CFG_HOME_CONTENT'] })
+      toast({
+        title: 'Restored',
+        description: 'Home configuration restored from deployment snapshot. Reloading page...',
+      })
+      reloadSoon()
+    } catch (err) {
+      toast({
+        title: 'Reset failed',
+        description: err instanceof Error ? err.message : 'Failed to reset home configuration',
+        variant: 'destructive',
+      })
+      setIsLoading(false)
+    }
+  }
+
   const handlePreviewEditSave = async () => {
     const newCss = JSON.stringify(previewEditOrder, null, 2)
     setHomeConfig(newCss)
@@ -382,6 +410,14 @@ const HomeConfigSection: React.FC = () => {
               </Button>
             </>
           )}
+          <Button
+            onClick={handleFactoryReset}
+            variant="outline"
+            size="sm"
+            disabled={isLoading || savingHome}
+          >
+            Restore default
+          </Button>
           <Button
             size="sm"
             onClick={() => (homeSubTab === 'edit' ? handlePreviewEditSave() : handleSave())}
