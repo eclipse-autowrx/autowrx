@@ -29,6 +29,7 @@ import {
 import useRuntimeStore from '@/stores/runtimeStore'
 import { configManagementService } from '@/services/configManagement.service'
 import usePermissionHook from '@/hooks/usePermissionHook'
+import useCanEditPrototype from '@/hooks/useCanEditPrototype'
 import { PERMISSIONS } from '@/data/permission'
 import type { PluginAPI } from '@/types/plugin.types'
 import type { Model, Prototype } from '@/types/model.type'
@@ -73,6 +74,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
   const prototype_id = data?.prototype?.id
 
   const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model_id])
+  const canEditPrototype = useCanEditPrototype(data?.prototype)
 
   // Access runtime store for API values
   const { apisValue, setActiveApis } = useRuntimeStore()
@@ -1038,7 +1040,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
         <div key={`plugin-${plugin_id}-${loadedPluginName}`} className="w-full h-full">
           <PluginComponent
             data={data}
-            editable={isAuthorized}
+            editable={canEditPrototype}
             config={pluginConfig}
             api={pluginAPI}
           />
