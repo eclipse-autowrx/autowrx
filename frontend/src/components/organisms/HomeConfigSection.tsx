@@ -17,54 +17,10 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
 import type { SiteConfigEditEntry } from '@/utils/siteConfigHistory'
-import { HomePartners } from '@/components/organisms/HomePartners'
-import HomeHeroSection from '@/components/organisms/HomeHeroSection'
-import HomeFeatureList from '@/components/organisms/HomeFeatureList'
-import HomeButtonList from '@/components/organisms/HomeButtonList'
-import HomePrototypeRecent from '@/components/organisms/HomePrototypeRecent'
-import HomePrototypePopular from '@/components/organisms/HomePrototypePopular'
-import HomeNews from '@/components/organisms/HomeNews'
-import HomeFooterSection from '@/components/organisms/HomeFooterSection'
+import { getHomeComponent, getBlockTypeLabel } from '@/utils/homeComponentMap'
 import { TbGripVertical, TbPencil, TbX, TbCheck, TbTrash } from 'react-icons/tb'
 
 type HomeSubTab = 'raw' | 'edit' | 'preview' | 'history'
-
-function getBlockTypeLabel(type: string): string {
-  const labels: Record<string, string> = {
-    hero: 'Hero',
-    'feature-list': 'Feature list',
-    'button-list': 'Button list',
-    news: 'News',
-    recent: 'Recent prototypes',
-    popular: 'Popular prototypes',
-    'partner-list': 'Partners',
-    'home-footer': 'Footer',
-  }
-  return labels[type] ?? type
-}
-
-function getHomeComponent(elementType: string) {
-  switch (elementType) {
-    case 'hero':
-      return HomeHeroSection
-    case 'feature-list':
-      return HomeFeatureList
-    case 'button-list':
-      return HomeButtonList
-    case 'news':
-      return HomeNews
-    case 'recent':
-      return HomePrototypeRecent
-    case 'popular':
-      return HomePrototypePopular
-    case 'partner-list':
-      return HomePartners
-    case 'home-footer':
-      return HomeFooterSection
-    default:
-      return null
-  }
-}
 
 const ScaledBlock: React.FC<{ scale: number; pageWidth: number; children: React.ReactNode }> = ({
   scale,
