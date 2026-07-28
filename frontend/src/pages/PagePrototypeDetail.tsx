@@ -512,7 +512,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
                 />
               )}
           </div>
-          {showRt && <DaRuntimeControl />}
+          <DaRuntimeControl className={showRt ? undefined : 'hidden'} />
         </div>
       </div>
 
