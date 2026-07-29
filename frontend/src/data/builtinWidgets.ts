@@ -32,10 +32,8 @@ const BUILT_IN_WIDGETS = [
     path: '/builtin-widgets/chart-signals/index.html',
     desc: 'Visualize multiple signals in one chart',
     options: {
-      apis: [
-        'Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed',
-        'Vehicle.Cabin.HVAC.Station.Row1.Passenger.FanSpeed',
-      ],
+      syncWithCode: true,
+      apis: [],
       dataUpdateInterval: 1000,
       maxDataPoints: 60,
       iconURL: '/builtin-widgets/chart-signals/chart-signals.png',
@@ -50,10 +48,8 @@ const BUILT_IN_WIDGETS = [
     path: '/builtin-widgets/signal-list-settable/index.html',
     desc: 'Display and modify multiple vehicle signals',
     options: {
-      apis: [
-        'Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed',
-        'Vehicle.Cabin.HVAC.Station.Row1.Passenger.FanSpeed',
-      ],
+      syncWithCode: true,
+      apis: [],
       iconURL: '/builtin-widgets/signal-list-settable/signal-list-settable.png',
     },
   },
