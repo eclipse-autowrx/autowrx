@@ -36,6 +36,7 @@ import { cn } from '@/lib/utils'
 import CustomDialog from '@/components/molecules/CustomDialog'
 import DaFileUpload from '@/components/atoms/DaFileUpload'
 import FormCreatePrototype from '@/components/molecules/forms/FormCreatePrototype'
+import { useSiteConfig } from '@/utils/siteConfig'
 
 const PagePrototypeLibrary = () => {
   const [activeTab, setActiveTab] = useState<'list' | 'portfolio'>('list')
@@ -47,6 +48,7 @@ const PagePrototypeLibrary = () => {
   const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model_id])
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
+  const enableNewPrototypePage = useSiteConfig('ENABLE_NEW_PROTOTYPE_PAGE', false)
   const [selectedFilters, setSelectedFilters] = useState<string[]>(() =>
     JSON.parse(
       localStorage.getItem('prototypeLibrary-selectedFilter') || '["Newest"]',
@@ -202,12 +204,22 @@ const PagePrototypeLibrary = () => {
                   )}
                 </Button>
                 <DaFilter
-                  categories={{ 'Sort By': ['Newest', 'Oldest', 'Name A-Z', 'Rating'] }}
+                  categories={{
+                    'Sort By': [
+                      'Last view',
+                      'First view',
+                      'Newest',
+                      'Oldest',
+                      'Name A-Z',
+                      'Name Z-A',
+                      'Rating',
+                    ],
+                  }}
                   onChange={handleFilterChange}
                   className="w-fit mr-0 h-8 shadow px-2 text-sm"
                   singleSelect={true}
                   defaultValue={selectedFilters}
-                  label="Sort By"
+                  label={selectedFilters.length > 0 ? selectedFilters[0] : 'Newest'}
                 />
                 <div
                   className={cn(
@@ -224,24 +236,39 @@ const PagePrototypeLibrary = () => {
                     <TbFileImport className="w-5 h-5" />
                     Import Prototype
                   </Button>
-                  <DaDialog
-                    open={open}
-                    onOpenChange={setOpen}
-                    dialogTitle="New Prototype"
-                    trigger={
-                      <Button
-                        data-id="btn-create-new-prototype"
-                        variant="default"
-                        size="sm"
-                        className="flex ml-2"
-                      >
-                        <TbPlus className="w-5 h-5" />
-                        Create New Prototype
-                      </Button>
-                    }
-                  >
-                    <FormCreatePrototype onClose={() => setOpen(false)} />
-                  </DaDialog>
+                  {enableNewPrototypePage ? (
+                    <Button
+                      data-id="btn-create-new-prototype"
+                      variant="default"
+                      size="sm"
+                      className="flex ml-2"
+                      onClick={() =>
+                        navigate(`/new-prototype?model_id=${model_id}`)
+                      }
+                    >
+                      <TbPlus className="w-5 h-5" />
+                      Create New Prototype
+                    </Button>
+                  ) : (
+                    <DaDialog
+                      open={open}
+                      onOpenChange={setOpen}
+                      dialogTitle="New Prototype"
+                      trigger={
+                        <Button
+                          data-id="btn-create-new-prototype"
+                          variant="default"
+                          size="sm"
+                          className="flex ml-2"
+                        >
+                          <TbPlus className="w-5 h-5" />
+                          Create New Prototype
+                        </Button>
+                      }
+                    >
+                      <FormCreatePrototype onClose={() => setOpen(false)} />
+                    </DaDialog>
+                  )}
                 </div>
               </div>
             </div>

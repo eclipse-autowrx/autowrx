@@ -148,17 +148,17 @@ jobs:
               echo "Custom tagged image is available:"
               echo "  ghcr.io/${{ env.IMAGE_PREFIX }}/autowrx:${{ github.event.inputs.custom_tag }}"
               echo ""
-              echo "You can now use this image in production by updating .env.stack:"
-              echo "IMAGE_TAG=${{ github.event.inputs.custom_tag }}"
+              echo "Use it in production by pinning the image tag in instance-setup/docker-compose.prod.yml:"
+              echo "  image: ghcr.io/${{ env.IMAGE_PREFIX }}/autowrx:${{ github.event.inputs.custom_tag }}"
             elif [[ "${{ github.ref_type }}" == "tag" ]]; then
               echo "Tagged image is available:"
               echo "  ghcr.io/${{ env.IMAGE_PREFIX }}/autowrx:${{ github.ref_name }}"
               echo ""
-              echo "You can now use this image in production by updating .env.stack:"
-              echo "IMAGE_TAG=${{ github.ref_name }}"
+              echo "Use it in production by pinning the image tag in instance-setup/docker-compose.prod.yml:"
+              echo "  image: ghcr.io/${{ env.IMAGE_PREFIX }}/autowrx:${{ github.ref_name }}"
             else
-              echo "You can now test this image by updating .env.stack:"
-              echo "IMAGE_TAG=test-${GITHUB_SHA:0:7}"
+              echo "Test this image by pinning it in instance-setup/docker-compose.prod.yml:"
+              echo "  image: ghcr.io/${{ env.IMAGE_PREFIX }}/autowrx:test-${GITHUB_SHA:0:7}"
             fi
           else
             echo "Image was built but not pushed (test only)"

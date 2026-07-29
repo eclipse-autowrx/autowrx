@@ -12,6 +12,7 @@ import { useSiteConfig } from '@/utils/siteConfig'
 import { TbTrash, TbPencil, TbShare, TbPlus, TbDeviceDesktopCog } from 'react-icons/tb'
 import FormHardwareKitManager from '@/components/organisms/FormHardwareKitManager'
 import DaDialog from '@/components/molecules/DaDialog'
+import DaConfirmPopup from '@/components/molecules/DaConfirmPopup'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import {
@@ -386,10 +387,15 @@ const EditAssetDialog = ({ asset, onDone, onCancel }: iPropEditAssetDialog) => {
 const PageMyAssets = () => {
   const { useFetchAssets, deleteAsset } = useAssets()
   const { data: assets, isLoading } = useFetchAssets()
+  const { toast } = useToast()
   const [activeAsset, setActiveAsset] = useState<any>()
+  const [assetToDelete, setAssetToDelete] = useState<any>()
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const editDialogState = useState<boolean>(false)
   const shareDialogState = useState<boolean>(false)
   const kitManagerDialogState = useState<boolean>(false)
+  const isDeleting = deleteAsset.isPending
+  const actionsDisabled = isDeleting || confirmDeleteOpen
 
   const enabledAssetTypes = useSiteConfig('USER_ASSET_TYPES', ['CLOUD_RUNTIME', 'HARDWARE_KIT', 'GENAI-PYTHON']) as string[]
   const visibleAssetTypes = ASSET_TYPES.filter(
@@ -413,6 +419,40 @@ const PageMyAssets = () => {
       tmpAssets.filter((asset: any) => asset.type === activeTab),
     )
   }, [activeTab, assets])
+
+  useEffect(() => {
+    if (!confirmDeleteOpen) {
+      setAssetToDelete(undefined)
+    }
+  }, [confirmDeleteOpen])
+
+  const handleDeleteAsset = async () => {
+    if (!assetToDelete?.id) {
+      throw new Error('No asset selected for deletion')
+    }
+
+    const deletedName = assetToDelete.name
+    try {
+      await deleteAsset.mutateAsync(assetToDelete.id)
+      toast({
+        title: 'Asset removed',
+        description: `"${deletedName}" was removed from your assets.`,
+        duration: 3000,
+      })
+    } catch (err) {
+      console.error('Error deleting asset:', err)
+      toast({
+        title: 'Failed to remove asset',
+        description: (
+          <span className="text-sm text-red-500">
+            Could not remove the asset. Please try again.
+          </span>
+        ),
+        duration: 3000,
+      })
+      throw err
+    }
+  }
 
   return (
     <div className="flex w-full h-full min-h-0 bg-slate-200 p-2">
@@ -485,6 +525,21 @@ const PageMyAssets = () => {
                 }}
               />
             </DaDialog>
+
+            <DaConfirmPopup
+              title="Remove asset"
+              label={
+                assetToDelete?.type === 'CLOUD_RUNTIME'
+                  ? `Remove "${assetToDelete.name}" from your assets? This will not delete the runtime on the server.`
+                  : `Remove "${assetToDelete?.name ?? ''}" from your assets? This action cannot be undone.`
+              }
+              confirmLabel="Remove"
+              confirmingLabel="Removing..."
+              onConfirm={handleDeleteAsset}
+              state={[confirmDeleteOpen, setConfirmDeleteOpen]}
+            >
+              <span />
+            </DaConfirmPopup>
 
             {isLoading && (
               <div className="w-full flex py-4 justify-center items-center">
@@ -562,7 +617,7 @@ const PageMyAssets = () => {
                           <div className="w-[220px] min-w-[220px] flex space-x-4">
                             {asset.type === 'HARDWARE_KIT' && (
                               <TbDeviceDesktopCog
-                                className="text-muted-foreground cursor-pointer hover:opacity-60"
+                                className={`text-muted-foreground hover:opacity-60 ${actionsDisabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : 'cursor-pointer'}`}
                                 size={22}
                                 onClick={() => {
                                   setActiveAsset(
@@ -573,7 +628,7 @@ const PageMyAssets = () => {
                               />
                             )}
                             <TbPencil
-                              className="text-muted-foreground cursor-pointer hover:opacity-60"
+                              className={`text-muted-foreground hover:opacity-60 ${actionsDisabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : 'cursor-pointer'}`}
                               size={22}
                               onClick={() => {
                                 setActiveAsset(
@@ -583,7 +638,7 @@ const PageMyAssets = () => {
                               }}
                             />
                             <TbShare
-                              className="text-muted-foreground cursor-pointer hover:opacity-60"
+                              className={`text-muted-foreground hover:opacity-60 ${actionsDisabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : 'cursor-pointer'}`}
                               size={22}
                               onClick={() => {
                                 setActiveAsset(
@@ -593,18 +648,11 @@ const PageMyAssets = () => {
                               }}
                             />
                             <TbTrash
-                              className="text-red-500 cursor-pointer hover:opacity-60"
+                              className={`text-red-500 hover:opacity-60 ${actionsDisabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : 'cursor-pointer'}`}
                               size={22}
-                              onClick={async () => {
-                                if (
-                                  !confirm(
-                                    `Confirm delete asset '${asset.name}'?`,
-                                  ) ||
-                                  !asset.id
-                                ) {
-                                  return
-                                }
-                                await deleteAsset.mutateAsync(asset.id)
+                              onClick={() => {
+                                setAssetToDelete(asset)
+                                setConfirmDeleteOpen(true)
                               }}
                             />
                           </div>

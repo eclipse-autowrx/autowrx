@@ -11,6 +11,7 @@ const { Prototype } = require('../models');
 const ApiError = require('../utils/ApiError');
 const permissionService = require('./permission.service');
 const { PERMISSIONS } = require('../config/roles');
+const { stateTypes } = require('../config/enums');
 const { default: axios, isAxiosError } = require('axios');
 const config = require('../config/config');
 const logger = require('../config/logger');
@@ -132,12 +133,31 @@ const bulkCreatePrototypes = async (userId, prototypes) => {
  * @returns {Promise<QueryResult>}
  */
 const queryPrototypes = async (filter, options) => {
+  const defaultSort = 'editors_choice:desc,createdAt:asc';
+  const requestedSort = options?.sortBy;
+  const requestedParts = requestedSort
+    ? requestedSort
+        .split(',')
+        .map((part) => part.trim())
+        .filter(Boolean)
+    : [];
+  const nameSort = requestedParts.find((part) => part.startsWith('name:'));
+
+  const resolvedSort = nameSort
+    ? [
+        nameSort,
+        ...defaultSort.split(','),
+        ...requestedParts.filter((part) => part !== nameSort),
+      ].join(',')
+    : requestedSort
+      ? [defaultSort, requestedSort].join(',')
+      : defaultSort;
+
   const prototypes = await Prototype.paginate(filter, {
     ...options,
-    // Default sort by editors_choice and createdAt
-    sortBy: options?.sortBy
-      ? ['editors_choice:desc,createdAt:asc', options.sortBy].join(',')
-      : 'editors_choice:desc,createdAt:asc',
+    // Default sort by editors_choice and createdAt, except name sort is promoted
+    // to primary to support correct alphabetical paging.
+    sortBy: resolvedSort,
   });
   return prototypes;
 };
@@ -307,7 +327,7 @@ const listPopularPrototypes = async () => {
   ).map((model) => String(model._id));
   return Prototype.find({
     model_id: { $in: publicModelIds },
-    state: 'Released',
+    state: stateTypes.RELEASED,
   })
     .sort({ executed_turns: -1 })
     .limit(8)

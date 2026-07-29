@@ -11,11 +11,29 @@ import React, { HTMLAttributes } from 'react'
 interface DaImageProps extends HTMLAttributes<HTMLImageElement> {
   src?: string | undefined
   alt?: string | undefined
+  /** Shown when `src` is missing, or when the image fails to load. */
+  fallbackSrc?: string | undefined
 }
 
 const DaImage = React.forwardRef<HTMLImageElement, DaImageProps>(
-  ({ className, src, alt, ...props }, ref) => {
-    return <img ref={ref} src={src || ''} alt={alt} {...props} className={className} />
+  ({ className, src, alt, fallbackSrc, onError, ...props }, ref) => {
+    return (
+      <img
+        ref={ref}
+        src={src || fallbackSrc || ''}
+        alt={alt}
+        {...props}
+        className={className}
+        onError={(e) => {
+          const img = e.currentTarget
+          if (fallbackSrc && !img.dataset.fallbackApplied) {
+            img.dataset.fallbackApplied = 'true'
+            img.src = fallbackSrc
+          }
+          onError?.(e)
+        }}
+      />
+    )
   },
 )
 

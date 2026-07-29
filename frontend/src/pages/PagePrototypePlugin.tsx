@@ -13,6 +13,7 @@ import useCurrentModel from '@/hooks/useCurrentModel'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import { Spinner } from '@/components/atoms/spinner'
 import useModelStore from '@/stores/modelStore'
+import { useUsedVehicleApis } from '@/hooks/useUsedVehicleApis'
 
 interface PagePrototypePluginProps {
   pluginSlug?: string // If provided, use this instead of reading from URL
@@ -26,37 +27,19 @@ const PagePrototypePlugin: FC<PagePrototypePluginProps> = ({ pluginSlug, onSetAc
   // Use pluginSlug prop if provided, otherwise fall back to URL param (for backward compatibility)
   const pluginId = pluginSlug || searchParams.get('plugid')
 
-  const [activeModelApis, activeModelV2CApis] = useModelStore((state) => [
-    state.activeModelApis,
+  const [activeModelV2CApis] = useModelStore((state) => [
     state.activeModelV2CApis,
   ])
 
-  const { useApis, usedV2CApis } = useMemo(() => {
+  const useApis = useUsedVehicleApis(prototype?.code || '')
+
+  const usedV2CApis = useMemo(() => {
     const code = prototype?.code || ''
-    let useList: any[] = []
-    let useV2CList: any[] = []
-
-    if (code && activeModelApis && activeModelApis.length > 0) {
-      activeModelApis.forEach((item: any) => {
-        if (code.includes(item.shortName)) {
-          useList.push(item)
-        }
-      })
+    if (!code || !activeModelV2CApis || activeModelV2CApis.length === 0) {
+      return []
     }
-
-    if (code && activeModelV2CApis && activeModelV2CApis.length > 0) {
-      activeModelV2CApis.forEach((item: any) => {
-        if (code.includes(item.path)) {
-          useV2CList.push(item)
-        }
-      })
-    }
-
-    return {
-      useApis: useList,
-      usedV2CApis: useV2CList,
-    }
-  }, [prototype?.code, activeModelApis, activeModelV2CApis])
+    return activeModelV2CApis.filter((item: any) => code.includes(item.path))
+  }, [prototype?.code, activeModelV2CApis])
 
   const prototypeWithApis = useMemo(() => {
     if (!prototype) return null

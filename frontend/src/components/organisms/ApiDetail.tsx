@@ -272,7 +272,7 @@ const ApiDetail = ({
           </DaConfirmPopup>
           <div
             className={cn(
-              'hidden h-8 items-center rounded-md px-2 xl:flex',
+              'h-8 items-center rounded-md px-2 xl:flex',
               bgClass,
             )}
           >

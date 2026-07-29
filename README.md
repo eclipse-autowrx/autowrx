@@ -1,97 +1,88 @@
 # AutoWRX
 
-AutoWRX is a cloud-based, rapid prototyping environment for software-defined vehicle (SDV) applications. It provides a platform for building and testing new SDV-enabled features against real-world vehicle APIs, with seamless migration to automotive runtimes like Eclipse Velocitas.
+AutoWRX is a cloud-based, rapid-prototyping environment for software-defined
+vehicle (SDV) applications. It lets developers build and test SDV features
+against real-world vehicle APIs in the browser, with seamless migration to
+automotive runtimes like Eclipse Velocitas. It is part of the
+[digital.auto](https://digital.auto) ecosystem.
 
-## Overview
-
-AutoWRX is part of the [digital.auto](https://digital.auto) ecosystem and serves as a playground for virtual exploration of connected vehicle applications. The platform enables developers to:
+The platform lets developers:
 
 - **Browse and explore** vehicle API catalogs
-- **Build and test** connected vehicle app prototypes in the browser using Python, C++, or Rust
+- **Build and test** prototypes in the browser using Python, C++, or Rust
 - **Visualize** real-time signal data from vehicle runtimes
 - **Connect** to KUKSA Data Broker and other automotive services
 - **Showcase** customer journeys and feature demos
 - **Migrate** prototypes to production automotive runtimes
 
-### Architecture
+---
 
-AutoWRX follows a **Core vs. Plugin** philosophy:
+## 📚 Documentation
 
-- **The Core**: Provides essential, universal functionality (authentication, basic page rendering) as a stable foundation
-- **Plugins**: Most features are designed as optional plugins, keeping the base platform lean and allowing for flexibility and customization
+**All documentation lives in [`docs/`](docs/README.md).** Start there:
 
-The platform uses a dynamic component architecture that enables plugin-provided UI components to be seamlessly rendered within the core application, making the entire UI configuration-driven.
+- **New here? → [Getting Started](docs/getting-started/README.md)** — concepts,
+  local setup, codebase tour, and how to contribute.
+- **How it's built → [Architecture](docs/architecture/README.md)** — a
+  comprehensive, code-verified deep-dive.
+- **Full index → [docs/README.md](docs/README.md)** — everything, organized.
 
-## Project Structure
+---
 
-This is a monorepo containing:
+## Quick start
 
-- **`backend/`** - Node.js/Express API server with MongoDB
-  - RESTful API for authentication, models, prototypes, APIs, and more
-  - Plugin management and dynamic component support
-  - See [backend/README.md](backend/README.md) for details
+Run the full stack locally (details in
+[Local Development](docs/getting-started/local-development.md)):
 
-- **`frontend/`** - React/Vite application
-  - Dashboard interface for vehicle signal visualization
-  - Prototype execution and debugging
-  - Plugin-based UI architecture
-  - See [frontend/README.md](frontend/README.md) for details
+```bash
+# 1. MongoDB (Docker)
+docker run -d --name autowrx-mongodb -p 27017:27017 \
+  -v autowrx-dev-dbdata:/data/db mongo:4.4.6-bionic
 
-- **`docs/`** - Comprehensive documentation
-  - Development guides
-  - Plugin development documentation
-  - Architecture and design principles
-  - Deployment guides
+# 2. Backend  → http://localhost:3200
+cd backend && yarn install && yarn dev
 
-- **`instance-setup/`** - Production deployment configuration
-  - Docker Compose setup for production
-  - Environment configuration examples
+# 3. Frontend → http://localhost:3210   (new terminal)
+cd frontend && yarn install && yarn dev
+```
 
-## Getting Started
+Open the app at **http://localhost:3210**.
 
-### For Developers
+---
 
-If you want to set up AutoWRX for local development, see the **[Development Guide](development-guide.md)** for step-by-step instructions.
+## Project structure
 
-Quick overview:
-1. Set up MongoDB (Docker or remote)
-2. Configure backend and frontend environment variables
-3. Install dependencies and start both services
-4. Access the application at `http://localhost:3200`
+This is a monorepo:
 
-### For Deployment
+- **`frontend/`** — React / Vite / TypeScript SPA
+  ([details](frontend/README.md) · [architecture](docs/architecture/frontend.md))
+- **`backend/`** — Node.js / Express API + MongoDB
+  ([details](backend/README.md) · [architecture](docs/architecture/backend.md))
+- **`docs/`** — documentation ([index](docs/README.md))
+- **`instance-setup/`** — production docker-compose + guides
+- **`.github/workflows/`** — CI: docker build/release, dev-stage deploy
 
-If you want to deploy AutoWRX to production, see the **[Instance Setup Guide](instance-setup/)** for deployment instructions.
+The backend also serves the built frontend in production, so the two ship as one
+image.
 
-## Features
+---
 
-- **Vehicle API Catalogue**: Browse, explore, and enhance connected vehicle interfaces
-- **Prototyping**: Build and test SDV applications using Python and Vehicle API
-- **Real-time Visualization**: Monitor vehicle signal data in real-time
-- **Plugin System**: Extensible architecture with dynamic plugin loading
-- **User Feedback**: Collect and evaluate feedback to prioritize development
-- **Containerized Execution**: Run prototype code in isolated environments
+## Technology stack
 
-## Documentation
+- **Frontend**: React, TypeScript, Vite, Tailwind CSS, TanStack Query, Zustand
+- **Backend**: Node.js, Express, MongoDB, Mongoose, Passport (JWT), Socket.IO
+- **Infrastructure**: Docker, Docker Compose
 
-- **[Development Guide](development-guide.md)** - Local development setup
-- **[Plugin Development](docs/plugin/README.md)** - Creating and developing plugins
-- **[Project Structure](docs/project-structure.md)** - Codebase organization
-- **[Architecture Concepts](docs/concept.md)** - Core vs. Plugin philosophy
-- **[Deployment Guide](docs/deployment/README.md)** - Production deployment
-
-## Technology Stack
-
-- **Backend**: Node.js, Express, MongoDB, Mongoose
-- **Frontend**: React, TypeScript, Vite, Tailwind CSS
-- **Database**: MongoDB
-- **Containerization**: Docker, Docker Compose
+---
 
 ## Contributing
 
-This project is part of the open-source [digital.auto](https://digital.auto) initiative. Contributions are welcome!
+Contributions are welcome. AutoWRX is an Eclipse Foundation project — please read
+the **[Contributing guide](docs/getting-started/contributing.md)** first, which
+covers the required **Eclipse Contributor Agreement (ECA)**, the branch/PR flow,
+and how to verify your change locally.
 
-Please review the documentation in the `docs/` directory and follow the project's coding standards and guidelines.
+---
 
 ## License
 
@@ -99,16 +90,15 @@ Please review the documentation in the `docs/` directory and follow the project'
 
 Copyright (c) 2025 Eclipse Foundation.
 
-This program and the accompanying materials are made available under the terms of the MIT License which is available at https://opensource.org/licenses/MIT.
+This program and the accompanying materials are made available under the terms of
+the MIT License which is available at <https://opensource.org/licenses/MIT>.
 
 SPDX-License-Identifier: MIT
 
-## Links
-
-- [digital.auto](https://digital.auto) - Main project website
-- [Documentation](https://docs.digital.auto) - Official documentation
-- [Eclipse Velocitas](https://eclipse.dev/velocitas) - Automotive runtime platform
-
 ---
 
-**Note**: For development setup, see [development-guide.md](development-guide.md). For production deployment, see [instance-setup/](instance-setup/).
+## Links
+
+- [digital.auto](https://digital.auto) — main project website
+- [Official documentation](https://docs.digital.auto)
+- [Eclipse Velocitas](https://eclipse.dev/velocitas) — automotive runtime platform

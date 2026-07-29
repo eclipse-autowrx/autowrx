@@ -8,7 +8,6 @@
 
 import React, { FC, useState, useEffect, useMemo } from 'react'
 import DaDialog from '@/components/molecules/DaDialog'
-import { shallow } from 'zustand/shallow'
 import useModelStore from '@/stores/modelStore'
 import { DaApiListItem } from '@/components/molecules/DaApiList'
 import ModelApiList from '@/components/organisms/ModelApiList'
@@ -25,9 +24,9 @@ import CustomAPIList from '@/components/organisms/CustomAPIList'
 import CustomAPIView from '@/components/organisms/CustomAPIView'
 import { Spinner } from '@/components/atoms/spinner'
 import { VscChevronLeft, VscChevronRight } from 'react-icons/vsc'
-import { ArrowLeftFromLine, CopyMinus } from 'lucide-react'
-import { TbLayoutSidebar, TbLayoutSidebarRight, TbLayoutSidebarRightFilled } from 'react-icons/tb'
+import { TbLayoutSidebarRight, TbLayoutSidebarRightFilled } from 'react-icons/tb'
 import { useCustomApiSetsEnabled } from '@/hooks/useCustomApiSetsEnabled'
+import { useUsedVehicleApis } from '@/hooks/useUsedVehicleApis'
 
 interface ApiCodeBlockProps {
   content: string
@@ -358,33 +357,13 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
     // }
   }, [model])
 
-  const [activeModelApis] = useModelStore(
-    (state) => [state.activeModelApis],
-    shallow,
-  )
-
-  const [useApis, setUseApis] = useState<any[]>([])
+  const useApis = useUsedVehicleApis(code)
   const [usedCustomApiItems, setUsedCustomApiItems] = useState<Map<string, any[]>>(new Map()) // Map of setId -> used items
   const [activeApi, setActiveApi] = useState<any>()
   const [popupApi, setPopupApi] = useState<boolean>(false)
   const [activeService, setActiveService] = useState<any>(null)
   const [activeV2CApi, setActiveV2CApi] = useState<any>(null)
 
-  useEffect(() => {
-    if (!code || !activeModelApis || activeModelApis.length === 0) {
-      setUseApis([])
-      return
-    }
-    let useList: any[] = []
-    activeModelApis.forEach((item: any) => {
-      if (code.includes(item.shortName)) {
-        useList.push(item)
-      }
-    })
-    setUseApis(useList)
-  }, [code, activeModelApis])
-
-  // Fetch all CustomApiSets for "Used APIs" tab
   const customApiSetQueries = useQuery({
     queryKey: ['custom-api-sets', customApiSetIds.join(',')],
     queryFn: async () => {

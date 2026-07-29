@@ -25,9 +25,25 @@ import DeletePluginDialog from '@/components/organisms/DeletePluginDialog'
 interface AddonSelectProps {
   onSelect: (plugin: Plugin, label: string) => void
   onCancel?: () => void
+  description?: string
+  confirmLabel?: string
+  /** When true, selecting a plugin calls onSelect immediately without the label step */
+  skipLabelStep?: boolean
+  /** Plugin slugs that cannot be selected (already used) */
+  excludedSlugs?: string[]
 }
 
-const AddonSelect: FC<AddonSelectProps> = ({ onSelect, onCancel }) => {
+const DEFAULT_DESCRIPTION =
+  'Choose an addon to add to your prototype tabs'
+
+const AddonSelect: FC<AddonSelectProps> = ({
+  onSelect,
+  onCancel,
+  description = DEFAULT_DESCRIPTION,
+  confirmLabel = 'Add to Tabs',
+  skipLabelStep = false,
+  excludedSlugs = [],
+}) => {
   const qc = useQueryClient()
   const [activeTab, setActiveTab] = useState<'system' | 'mine'>('system')
   const [searchTerm, setSearchTerm] = useState('')
@@ -61,7 +77,15 @@ const AddonSelect: FC<AddonSelectProps> = ({ onSelect, onCancel }) => {
     setFilteredPlugins(filtered)
   }, [activeQuery.data, searchTerm, activeTab])
 
+  const isExcluded = (plugin: Plugin) =>
+    !!plugin.slug && excludedSlugs.includes(plugin.slug)
+
   const handlePluginClick = (plugin: Plugin) => {
+    if (isExcluded(plugin)) return
+    if (skipLabelStep) {
+      onSelect(plugin, plugin.name)
+      return
+    }
     setSelectedPlugin(plugin)
     setLabelName(plugin.name) // Pre-fill with plugin name
   }
@@ -181,7 +205,7 @@ const AddonSelect: FC<AddonSelectProps> = ({ onSelect, onCancel }) => {
             onClick={handleConfirm}
             disabled={!labelName.trim()}
           >
-            Add to Tabs
+            {confirmLabel}
           </Button>
         </div>
       </div>
@@ -193,9 +217,7 @@ const AddonSelect: FC<AddonSelectProps> = ({ onSelect, onCancel }) => {
       {/* Header */}
       <div className="flex flex-col gap-0.5 px-6 py-4 border-b border-border">
         <h2 className="text-base font-semibold text-primary">Select an Addon</h2>
-        <p className="text-sm text-muted-foreground">
-          Choose an addon to add to your prototype tabs
-        </p>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </div>
 
       {/* Tabs */}
@@ -275,15 +297,20 @@ const AddonSelect: FC<AddonSelectProps> = ({ onSelect, onCancel }) => {
             </p>
           </div>
         ) : (
-          filteredPlugins.map((plugin) => (
+          filteredPlugins.map((plugin) => {
+            const alreadyAdded = isExcluded(plugin)
+            return (
             <div
               key={plugin.id}
-              className="flex items-start gap-4 p-4 border-b border-border cursor-pointer"
+              className={`flex items-start gap-4 p-4 border-b border-border ${
+                alreadyAdded ? 'opacity-50' : ''
+              }`}
             >
               <button
                 type="button"
                 onClick={() => handlePluginClick(plugin)}
-                className="flex items-start gap-4 flex-1 min-w-0 text-left cursor-pointer"
+                disabled={alreadyAdded}
+                className="flex items-start gap-4 flex-1 min-w-0 text-left cursor-pointer disabled:cursor-not-allowed"
               >
                 {/* Plugin Image */}
                 {plugin.image ? (
@@ -304,6 +331,11 @@ const AddonSelect: FC<AddonSelectProps> = ({ onSelect, onCancel }) => {
                 <div className="flex flex-col gap-1 flex-1 min-w-0">
                   <h3 className="text-sm font-medium text-foreground truncate">
                     {plugin.name}
+                    {alreadyAdded && (
+                      <span className="ml-2 text-xs text-muted-foreground font-normal">
+                        (added)
+                      </span>
+                    )}
                   </h3>
                   {plugin.description && (
                     <p className="text-xs text-muted-foreground line-clamp-2">
@@ -349,7 +381,8 @@ const AddonSelect: FC<AddonSelectProps> = ({ onSelect, onCancel }) => {
                 </div>
               )}
             </div>
-          ))
+            )
+          })
         )
         )}
       </div>

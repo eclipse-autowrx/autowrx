@@ -16,12 +16,14 @@ import {
 } from '@/components/atoms/dialog'
 import { Input } from '@/components/atoms/input'
 import { Button } from '@/components/atoms/button'
+import { DaImage } from '@/components/atoms/DaImage'
 import { Spinner } from '@/components/atoms/spinner'
 import { TbSearch, TbSortDescending } from 'react-icons/tb'
 import { useNavigate } from 'react-router-dom'
 import { searchService } from '@/services/search.service'
 import { toast } from 'react-toastify'
 import type { Prototype, ModelLite } from '@/types/model.type'
+import { useDefaultModelImage, useDefaultPrototypeImage } from '@/utils/siteConfig'
 
 interface DaGlobalSearchProps {
   trigger: ReactNode
@@ -48,6 +50,8 @@ const DaGlobalSearch = ({ trigger }: DaGlobalSearchProps) => {
     'Prototypes',
     'Models',
   ])
+  const defaultModelImage = useDefaultModelImage()
+  const defaultPrototypeImage = useDefaultPrototypeImage()
   const [searchTerm, setSearchTerm] = useState('')
   const [filteredResults, setFilteredResults] = useState<SearchResult[]>([])
   const [hasSearched, setHasSearched] = useState(false)
@@ -264,15 +268,15 @@ const DaGlobalSearch = ({ trigger }: DaGlobalSearchProps) => {
                       className="flex items-center p-2 mr-2 cursor-pointer hover:bg-muted border border-border rounded-lg hover:border-primary transition-colors"
                       onClick={() => handleResultClick(result)}
                     >
-                      <img
-                        src={result.image_file || (result.type === 'Prototype' ? '/imgs/default_prototype_cover.jpg' : '/imgs/default-model-image.png')}
+                      <DaImage
+                        src={result.image_file}
+                        fallbackSrc={
+                          result.type === 'Prototype'
+                            ? defaultPrototypeImage
+                            : defaultModelImage
+                        }
                         alt={result.name}
-                        className="w-16 h-16 mr-4 object-cover rounded-md"
-                        onError={(e) => {
-                          e.currentTarget.src = result.type === 'Prototype'
-                            ? '/imgs/default_prototype_cover.jpg'
-                            : '/imgs/default-model-image.png'
-                        }}
+                        className="w-16 h-16 mr-4 object-cover rounded-md shrink-0"
                       />
                       <div className="flex flex-col">
                         <span className="text-sm font-semibold">

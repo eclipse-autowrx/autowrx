@@ -26,7 +26,7 @@ If you don’t want to clone the repo, you can download the instance setup files
 wget https://github.com/eclipse-autowrx/autowrx/releases/latest/download/docker-compose.prod.yml
 
 # Option B: download the full instance-setup package from the latest release (recommended)
-# NOTE: Replace TAG below if you want to pin to a specific version (e.g., TAG=v3.0.0)
+# NOTE: Replace TAG below if you want to pin to a specific version (e.g., TAG=v2026.06.30)
 TAG=latest
 wget https://github.com/eclipse-autowrx/autowrx/releases/download/${TAG}/instance-setup-${TAG}.tar.gz
 tar -xzf instance-setup-${TAG}.tar.gz
@@ -191,4 +191,4 @@ See `.env.prod.sample` for all available configuration options:
 
 ---
 
-**Note:** For development setup, see the [Development Guide](../development-guide.md) in the project root.
+**Note:** For development setup, see the [Development Guide](../docs/getting-started/development-guide.md) in the project root.

@@ -7,17 +7,18 @@
 // SPDX-License-Identifier: MIT
 
 import * as React from 'react'
-import { ModelLite } from '@/types/model.type'
-import { getModelStatsByIds } from '@/services/model.service'
+import { TbAffiliate, TbCode, TbUsers } from 'react-icons/tb'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/atoms/tooltip'
-import { Link } from 'react-router-dom'
-import { TbAffiliate, TbCode, TbUsers } from 'react-icons/tb'
+import { DaImage } from '@/components/atoms/DaImage'
 import { cn } from '@/lib/utils'
+import { getModelStatsByIds } from '@/services/model.service'
+import { ModelLite } from '@/types/model.type'
+import { useDefaultModelImage } from '@/utils/siteConfig'
 
 interface DaModelItemProps {
   model: Partial<ModelLite>
@@ -116,6 +117,7 @@ const enqueueModelStats = (id: string) => {
 const DaModelItem = React.memo(({ model, className }: DaModelItemProps) => {
   const rootRef = React.useRef<HTMLDivElement | null>(null)
   const modelId = model?.id
+  const defaultModelImage = useDefaultModelImage()
 
   const [lazyStats, setLazyStats] = React.useState<ModelStats | undefined>(model?.stats)
 
@@ -182,16 +184,12 @@ const DaModelItem = React.memo(({ model, className }: DaModelItemProps) => {
       id={model?.id ?? ''}
     >
       <div className="flex flex-col items-center space-y-1 text-muted-foreground overflow-hidden">
-        <div className="flex w-full h-full relative overflow-hidden rounded-lg">
-          <img
-            src={
-              model?.model_home_image_file
-                ? model.model_home_image_file
-                : '/imgs/default_prototype_cover.jpg'
-            }
+        <div className="relative w-full aspect-video overflow-hidden rounded-lg shadow border bg-muted">
+          <DaImage
+            src={model?.model_home_image_file}
+            fallbackSrc={defaultModelImage}
             alt={model?.name || 'Model image'}
-            className="w-full h-full rounded-lg aspect-video object-cover shadow border"
-            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover"
           />
           <div className="absolute bottom-0 w-full h-[30px] p-[1px] blur-xl bg-black/80 transition-opacity duration-200 ease-in-out opacity-0 group-hover:opacity-100"></div>
           <div className="absolute bottom-0 w-full h-[50px] p-[1px] transition-opacity duration-200 ease-in-out opacity-0 group-hover:opacity-100">

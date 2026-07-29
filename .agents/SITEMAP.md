@@ -117,14 +117,14 @@
 ---
 
 ## ✨ New Prototype `/new-prototype`
-**Page:** `PageNewPrototypeDetail.tsx`
+**Page:** `NewPrototypeLayout.tsx` → navigates to `PagePrototypeDetail.tsx` after create
 **Description:** Quick-start page to create a prototype without a model context.
 
 | Feature | Description | Test Status |
 |---------|-------------|-------------|
 | Page loads | Form renders | ✅ `prototype.spec.ts` |
 | Name input visible | Prototype name field | ✅ `prototype.spec.ts` |
-| Create flow | Fill form and submit | ❌ |
+| Create flow | Fill form, submit, and open prototype detail | ✅ `prototype.spec.ts` |
 
 ---
 

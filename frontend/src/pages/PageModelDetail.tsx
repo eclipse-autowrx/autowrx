@@ -13,6 +13,7 @@ import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
 import { Spinner } from '@/components/atoms/spinner'
 import DaImportFile from '@/components/atoms/DaImportFile'
+import { DaImage } from '@/components/atoms/DaImage'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,7 +49,9 @@ import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { listModelsLite } from '@/services/model.service'
 import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
+import { useDefaultModelImage } from '@/utils/siteConfig'
 import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
+import { useToast } from '@/components/molecules/toaster/use-toast'
 
 const getCreatedById = (createdBy: any): string =>
   typeof createdBy === 'object' ? createdBy?.id ?? '' : createdBy ?? ''
@@ -155,12 +158,14 @@ const DaStateControl: React.FC<{
 
 const PageModelDetail = () => {
   const [model] = useModelStore((state) => [state.model as Model])
+  const { toast } = useToast()
   const [imageError, setImageError] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isEditingName, setIsEditingName] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
+  const defaultModelImage = useDefaultModelImage()
 
   const [newName, setNewName] = useState(model?.name ?? '')
   const [nameError, setNameError] = useState('')
@@ -273,7 +278,7 @@ const PageModelDetail = () => {
                       message="A model with this name already exists"
                       suggestedName={suggestedName}
                       onApplySuggestion={(name) => { setNewName(name); setNameError('') }}
-                      className="text-sm text-secondary mt-2"
+                      className="mt-2"
                     />
                   )}
                   {nameError && !isDuplicateName && (
@@ -338,6 +343,12 @@ const PageModelDetail = () => {
                   await downloadModelZip(model)
                 } catch (e) {
                   console.error(e)
+                  toast({
+                    title: 'Export failed',
+                    description:
+                      'Could not export this model. Please try again.',
+                    variant: 'destructive',
+                  })
                 }
                 setIsExporting(false)
               }}
@@ -431,11 +442,12 @@ const PageModelDetail = () => {
       <div className="flex">
         <div className="grid gap-4 grid-cols-12 w-full overflow-auto">
           <div className="col-span-6 flex flex-col overflow-y-auto">
-            <div className="flex w-full relative overflow-hidden">
-              <img
-                className="w-full object-cover max-h-[500px] aspect-video rounded-lg border"
+            <div className="relative w-full aspect-video max-h-[500px] overflow-hidden rounded-lg border bg-muted">
+              <DaImage
                 src={model.model_home_image_file}
+                fallbackSrc={defaultModelImage}
                 alt={model.name}
+                className="absolute inset-0 h-full w-full object-cover"
               />
               {isAuthorized && (
                 <DaImportFile

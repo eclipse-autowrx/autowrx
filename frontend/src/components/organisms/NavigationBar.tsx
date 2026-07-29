@@ -44,6 +44,11 @@ import { Button } from '../atoms/button'
 import { Wrench } from 'lucide-react'
 import DOMPurify from 'dompurify'
 import useAuthStore from '@/stores/authStore'
+import {
+  partitionNavBarActions,
+  getNavBarActionOpenTarget,
+  type NavBarAction,
+} from '@/components/molecules/NavBarActionsEditor'
 
 const SimpleSwitch = ({
   checked,
@@ -80,6 +85,10 @@ const NavigationBar = ({ }) => {
   const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
   const enableLearningMode = useSiteConfig('ENABLE_LEARNING_MODE', false)
   const navBarActions = useSiteConfig('NAV_BAR_ACTIONS', [])
+  const { left: leftNavBarActions, right: rightNavBarActions } = useMemo(
+    () => partitionNavBarActions(Array.isArray(navBarActions) ? navBarActions : []),
+    [navBarActions],
+  )
   const allowNonAdminAddonConfig = useSiteConfig(
     'ALLOW_NON_ADMIN_ADDON_CONFIG',
     true,
@@ -91,9 +100,9 @@ const NavigationBar = ({ }) => {
         { to: '/manage-features', icon: TbStack2, label: 'Manage Features' },
         { to: '/admin/site-config', icon: TbSettings, label: 'Site Config' },
         { to: '/admin/plugins', icon: TbApps, label: 'Plugins' },
-        { to: '/admin/templates', icon: TbPalette, label: 'Templates' },
+        { to: '/admin/templates', icon: TbPalette, label: 'Model Templates' },
         { to: '/admin/dashboard-templates', icon: TbBuildingWarehouse, label: 'Dashboard Templates' },
-        { to: '/admin/project-templates', icon: TbFileCode, label: 'Project Templates' },
+        { to: '/admin/project-templates', icon: TbFileCode, label: 'Prototype Templates' },
       ]
     }
     if (allowNonAdminAddonConfig) {
@@ -114,6 +123,65 @@ const NavigationBar = ({ }) => {
   }, [siteTitle])
 
   // const { lastAccessedModel } = useLastAccessedModel()
+
+  const renderNavBarAction = (action: NavBarAction, index: number) => {
+    const actionType = action.type || 'link'
+
+    if (actionType === 'search') {
+      return (
+        <DaGlobalSearch
+          key={index}
+          trigger={
+            <button
+              type="button"
+              className={`h-9 w-9 flex items-center justify-center cursor-pointer rounded-md transition-colors ${
+                gradientHeader ? 'hover:bg-white/20' : 'hover:bg-[#dbe4ee]'
+              }`}
+              title={action.placeholder || action.label || 'Search'}
+            >
+              {action.icon ? (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(action.icon, {
+                      USE_PROFILES: { svg: true, svgFilters: true }
+                    })
+                  }}
+                  className="size-5 flex items-center justify-center"
+                />
+              ) : (
+                <TbZoom className="size-5" />
+              )}
+            </button>
+          }
+        />
+      )
+    }
+
+    const openTarget = getNavBarActionOpenTarget(action)
+
+    return (
+      <a
+        key={index}
+        href={action.url}
+        target={openTarget}
+        {...(openTarget === '_blank' ? { rel: 'noopener noreferrer' } : {})}
+        className="flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium"
+        title={action.label}
+      >
+        {action.icon && (
+          <div
+            dangerouslySetInnerHTML={{
+              __html: DOMPurify.sanitize(action.icon, {
+                USE_PROFILES: { svg: true, svgFilters: true }
+              })
+            }}
+            className="w-6 h-6 flex items-center justify-center"
+          />
+        )}
+        {action.label && <span className="ml-1">{action.label}</span>}
+      </a>
+    )
+  }
 
   return (
     <header
@@ -144,6 +212,12 @@ const NavigationBar = ({ }) => {
         </div>
       )}
 
+      {leftNavBarActions.length > 0 && (
+        <div className="ml-4 flex items-center gap-2 shrink-0">
+          {leftNavBarActions.map(renderNavBarAction)}
+        </div>
+      )}
+
       <div className="flex-1 min-w-0"></div>
 
       {enableLearningMode && (
@@ -162,65 +236,9 @@ const NavigationBar = ({ }) => {
         </div>
       )}
 
-      {/* Navigation Bar Actions */}
-      {navBarActions && Array.isArray(navBarActions) && navBarActions.length > 0 && (
+      {rightNavBarActions.length > 0 && (
         <div className="mr-2 flex items-center gap-2">
-          {navBarActions.map((action: any, index: number) => {
-            const actionType = action.type || 'link'
-
-            if (actionType === 'search') {
-              return (
-                <DaGlobalSearch
-                  key={index}
-                  trigger={
-                    <Button
-                      variant="outline"
-                      className="w-[250px] min-w-0 h-10 flex items-center justify-start gap-0 border-gray-300 shadow-lg cursor-pointer text-muted-foreground text-base bg-white hover:bg-gray-100"
-                      title={action.placeholder || action.label || 'Search'}
-                    >
-                      {action.icon ? (
-                        <div
-                          dangerouslySetInnerHTML={{
-                            __html: DOMPurify.sanitize(action.icon, {
-                              USE_PROFILES: { svg: true, svgFilters: true }
-                            })
-                          }}
-                          className="size-5 mr-2 flex items-center justify-center"
-                        />
-                      ) : (
-                        <TbZoom className="size-5 mr-2" />
-                      )}
-                      {action.placeholder || action.label || 'Search'}
-                    </Button>
-                  }
-                />
-              )
-            }
-
-            return (
-              <a
-                key={index}
-                href={action.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium hover:bg-[var(--header-hover-bg)] transition-colors"
-                style={{ '--header-hover-bg': '#dbe4ee' } as CSSProperties}
-                title={action.label}
-              >
-                {action.icon && (
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: DOMPurify.sanitize(action.icon, {
-                        USE_PROFILES: { svg: true, svgFilters: true }
-                      })
-                    }}
-                    className="w-6 h-6 flex items-center justify-center"
-                  />
-                )}
-                {action.label && <span className="ml-1">{action.label}</span>}
-              </a>
-            )
-          })}
+          {rightNavBarActions.map(renderNavBarAction)}
         </div>
       )}
 

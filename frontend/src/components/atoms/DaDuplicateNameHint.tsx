@@ -21,7 +21,7 @@ const DaDuplicateNameHint = ({
   onApplySuggestion,
   className,
 }: DaDuplicateNameHintProps) => (
-  <p className={cn('text-xs text-destructive mt-1', className)}>
+  <p className={cn('text-sm text-destructive mt-1', className)}>
     {message}
     {suggestedName && (
       <>. Please choose another name like:{' '}
