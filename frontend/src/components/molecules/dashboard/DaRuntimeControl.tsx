@@ -114,6 +114,7 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
   const [listenerOnRt, setListenerOnRt] = useState<any[]>([])
   const [isAdvantageMode, setIsAdvantageMode] = useState<number>(-5)
   const rustCompilerRef = useRef<any>()
+  
 
   useEffect(() => {
     localStorage.setItem('customKitServer', customKitServer.trim())
@@ -152,26 +153,6 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
       setCode('')
     }
   }, [prototype?.code, prototype?.id])
-
-  useEffect(() => {
-    if (!code || !activeModelApis || activeModelApis.length === 0) {
-      setUsedApis([])
-      return
-    }
-    let dashboardCfg = prototype?.widget_config || ''
-    let apis: any[] = []
-    activeModelApis.forEach((item: any) => {
-      if (item.shortName) {
-        if (
-          code.includes(item.shortName) ||
-          dashboardCfg.includes(item.shortName)
-        ) {
-          apis.push(item.name)
-        }
-      }
-    })
-    setUsedApis(apis)
-  }, [code, activeModelApis, prototype?.widget_config])
 
   const handleRun = () => {
     setIsRunning(true)
