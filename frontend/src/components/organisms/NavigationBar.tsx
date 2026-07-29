@@ -36,7 +36,7 @@ import { IoIosHelpBuoy } from 'react-icons/io'
 import config from '@/configs/config'
 import LearningIntegration from './LearningIntegration'
 
-import { useState, useEffect, useMemo, type CSSProperties } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 
 // import useLastAccessedModel from '@/hooks/useLastAccessedModel'
 import { useSiteConfig } from '@/utils/siteConfig'
@@ -128,9 +128,7 @@ const NavigationBar = ({ }) => {
           trigger={
             <button
               type="button"
-              className={`h-9 w-9 flex items-center justify-center cursor-pointer rounded-md transition-colors ${
-                gradientHeader ? 'hover:bg-white/20' : 'hover:bg-[#dbe4ee]'
-              }`}
+              className="da-primary-nav-action h-9 w-9 flex items-center justify-center cursor-pointer rounded-md transition-colors"
               title={action.placeholder || action.label || 'Search'}
             >
               {action.icon ? (
@@ -159,7 +157,7 @@ const NavigationBar = ({ }) => {
         href={action.url}
         target={openTarget}
         {...(openTarget === '_blank' ? { rel: 'noopener noreferrer' } : {})}
-        className="flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium"
+        className="da-primary-nav-action flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium transition-colors"
         title={action.label}
       >
         {action.icon && (
@@ -247,8 +245,7 @@ const NavigationBar = ({ }) => {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="hover:bg-[var(--header-hover-bg)]"
-                  style={{ '--header-hover-bg': '#dbe4ee' } as CSSProperties}
+                  className="da-primary-nav-action"
                 >
                   <Wrench />
                   {isAuthorized ? 'Admin Tools' : 'Tools'}
