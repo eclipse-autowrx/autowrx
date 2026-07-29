@@ -21,7 +21,7 @@ import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import { useQueryClient } from '@tanstack/react-query'
 import { useToast } from '@/components/molecules/toaster/use-toast'
-import { useCustomApiSetsEnabled } from '@/hooks/useCustomApiSetsEnabled'
+import { useSiteConfig } from '@/utils/siteConfig'
 
 // Default V2C API list from JSON files (Swagger-compatible structure)
 const DEFAULT_V2C = [
@@ -644,7 +644,7 @@ const PageVehicleApi = () => {
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const [isPickerOpen, setIsPickerOpen] = useState(false)
-  const customApiSetsEnabled = useCustomApiSetsEnabled()
+  const customApiSetsEnabled = !useSiteConfig('DISABLE_CUSTOM_API_SETS', false)
 
   const { data: model, refetch: refetchModel } = useCurrentModel()
   const [hasWritePermission] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model_id])

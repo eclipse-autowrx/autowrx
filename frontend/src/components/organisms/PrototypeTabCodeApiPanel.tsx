@@ -25,8 +25,8 @@ import CustomAPIView from '@/components/organisms/CustomAPIView'
 import { Spinner } from '@/components/atoms/spinner'
 import { VscChevronLeft, VscChevronRight } from 'react-icons/vsc'
 import { TbLayoutSidebarRight, TbLayoutSidebarRightFilled } from 'react-icons/tb'
-import { useCustomApiSetsEnabled } from '@/hooks/useCustomApiSetsEnabled'
 import { useUsedVehicleApis } from '@/hooks/useUsedVehicleApis'
+import { useSiteConfig } from '@/utils/siteConfig'
 
 interface ApiCodeBlockProps {
   content: string
@@ -167,7 +167,7 @@ const PrototypeTabCodeApiPanel: FC<PrototypeTabCodeApiPanelProps> = ({
   >('used-signals')
   const [isCollapsed, setIsCollapsed] = useState(false)
   const { data: model } = useCurrentModel()
-  const customApiSetsEnabled = useCustomApiSetsEnabled()
+  const customApiSetsEnabled = !useSiteConfig('DISABLE_CUSTOM_API_SETS', false)
 
   // Horizontal tab scrolling state
   const scrollContainerRef = React.useRef<HTMLDivElement | null>(null)

@@ -14,14 +14,14 @@ import CustomApiSetSection from '@/components/organisms/CustomApiSetSection'
 import DeployPluginSection from '@/components/organisms/DeployPluginSection'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
-import { useCustomApiSetsEnabled } from '@/hooks/useCustomApiSetsEnabled'
+import { useSiteConfig } from '@/utils/siteConfig'
 
 type PluginSection = 'prototype' | 'vehicle-api-schema' | 'vehicle-api' | 'deploy'
 
 const PluginManagement: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.MANAGE_USERS])
-  const customApiSetsEnabled = useCustomApiSetsEnabled()
+  const customApiSetsEnabled = !useSiteConfig('DISABLE_CUSTOM_API_SETS', false)
 
   // Get initial section from URL or default to 'prototype'
   const getSectionFromUrl = (): PluginSection => {
