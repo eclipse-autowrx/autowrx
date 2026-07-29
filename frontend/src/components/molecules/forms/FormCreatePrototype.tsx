@@ -36,7 +36,7 @@ import { CVI } from '@/data/CVI'
 import { createModelService, listModelsLite } from '@/services/model.service'
 import { cn } from '@/lib/utils'
 import default_journey from '@/data/default_journey'
-import { getConfig, useSiteConfig } from '@/utils/siteConfig'
+import { getConfig } from '@/utils/siteConfig'
 import { listProjectTemplates, ProjectTemplate } from '@/services/projectTemplate.service'
 
 interface FormCreatePrototypeProps {
@@ -158,7 +158,6 @@ const FormCreatePrototype = ({
   const [error, setError] = useState<string>('')
   const [data, setData] = useState(initialState)
   const [disabled, setDisabled] = disabledState ?? useState(false)
-  const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
 
   const { data: currentModel } = useCurrentModel()
   const { data: contributionModels, isLoading: isFetchingModelContribution } =
@@ -520,7 +519,7 @@ const FormCreatePrototype = ({
         disabled={disabled}
         type="submit"
         data-id="btn-create-prototype"
-        className={cn('mt-8 w-full', hideCreateButton && 'hidden', gradientHeader && 'bg-gradient-to-r from-primary to-secondary border-0')}
+        className={cn('mt-8 w-full da-form-create-prototype-submit', hideCreateButton && 'hidden')}
       >
         {loading && <TbLoader className="mr-2 animate-spin text-lg" />}
         {buttonText ?? 'Create Prototype'}

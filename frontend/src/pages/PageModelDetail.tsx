@@ -249,7 +249,7 @@ const PageModelDetail = () => {
 
   if (!model || !model.id) {
     return (
-      <div className="h-full w-full p-4 bg-background rounded-lg flex items-center justify-center">
+      <div className="h-full w-full p-4 bg-background da-page-model-detail rounded-lg flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Spinner size={32} />
           <p className="text-base text-muted-foreground">Loading model...</p>
@@ -259,7 +259,7 @@ const PageModelDetail = () => {
   }
 
   return (
-    <div className="flex flex-col bg-background p-4 h-full rounded-md overflow-auto">
+    <div className="flex flex-col bg-background da-page-model-detail p-4 h-full rounded-md overflow-auto">
       <div className="flex h-fit pb-3">
         <div className="flex w-full justify-between items-center">
           <div className="flex items-center">

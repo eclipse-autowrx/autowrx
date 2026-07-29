@@ -187,7 +187,8 @@ The full plugin story — backend records, integration methods, lifecycle — is
 - Base font **Manrope** (plus the `non.geist` font package); a second
   `functional.css` is imported in `main.tsx`.
 - `utils/siteConfig.ts` supplies runtime theming defaults (`SITE_THEME_COLOR`,
-  logos, `GRADIENT_HEADER`) so an admin can re-skin the instance.
+  logos). Regional backgrounds are themed via stable `da-*` hook classes in
+  instance `global.css` (see [style.md](../principles/style.md#regional-background-hooks)).
 
 ---
 
