@@ -17,10 +17,13 @@ import DaImportFile from '@/components/atoms/DaImportFile'
 import { zipToModel } from '@/lib/zipUtils'
 import { createModelService } from '@/services/model.service'
 import { createPrototypeService } from '@/services/prototype.service'
+import { uploadFileService } from '@/services/upload.service'
 import { ModelCreate, ModelLite, Prototype } from '@/types/model.type'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import useAuthStore from '@/stores/authStore'
 import { addLog } from '@/services/log.service'
+import { getConfig } from '@/utils/siteConfig'
+import { useToast } from '@/components/molecules/toaster/use-toast'
 import { useNavigate } from 'react-router-dom'
 import DaTabItem from '@/components/atoms/DaTabItem'
 import DaSkeletonGrid from '@/components/molecules/DaSkeletonGrid'
@@ -30,12 +33,36 @@ import { Link } from 'react-router-dom'
 import useListAllModels from '@/hooks/useListAllModel'
 import { TbLock } from 'react-icons/tb'
 import { useAuthConfigs } from '@/hooks/useAuthConfigs'
+import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
+import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
+import { isAxiosError } from 'axios'
 
 type ModelTab = 'myModel' | 'myContribution' | 'public'
 
+const stripExtendedApisForImport = (apis: unknown[]) =>
+  apis.map((api) => {
+    if (!api || typeof api !== 'object') return api
+    const { id, _id, model, created_at, updated_at, __v, ...rest } =
+      api as Record<string, unknown>
+    return rest
+  })
+
+/** Empty string / whitespace → null (custom model); preserve explicit null. */
+const normalizeApiVersion = (value: unknown): string | null => {
+  if (value == null) return null
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed || null
+}
+
 const PageModelList = () => {
   const navigate = useNavigate()
+  const { toast } = useToast()
   const [isImporting, setIsImporting] = useState(false)
+  const [pendingImport, setPendingImport] = useState<any | null>(null)
+  const [importNameDialogOpen, setImportNameDialogOpen] = useState(false)
+  const [importModelName, setImportModelName] = useState('')
+  const [importNameError, setImportNameError] = useState('')
   const { data: user, isLoading: isUserLoading } = useSelfProfileQuery()
   const { authBootstrapped, setOpenLoginDialog } = useAuthStore()
   const { authConfigs } = useAuthConfigs()
@@ -67,6 +94,16 @@ const PageModelList = () => {
     },
     [searchQuery],
   )
+
+  const ownedModelNames = useMemo(
+    () => ownedModels.map((model) => model.name).filter(Boolean),
+    [ownedModels],
+  )
+
+  const {
+    isDuplicate: isDuplicateImportModelName,
+    suggestedName: suggestedImportModelName,
+  } = useDuplicateNameCheck(importModelName, ownedModelNames)
 
   useEffect(() => {
     if (!user) setActiveSection('public')
@@ -108,36 +145,110 @@ const PageModelList = () => {
     [scrollToSection],
   )
 
+  const resetImportNameDialog = useCallback(() => {
+    setPendingImport(null)
+    setImportModelName('')
+    setImportNameError('')
+    setImportNameDialogOpen(false)
+  }, [])
+
+  const openImportNameDialog = useCallback(
+    (importedModel: any, preferredName?: string, errorMessage?: string) => {
+      const originalName = importedModel?.model?.name || 'New Imported Model'
+      setPendingImport(importedModel)
+      setImportModelName(preferredName?.trim() || originalName)
+      setImportNameError(errorMessage || '')
+      setImportNameDialogOpen(true)
+    },
+    [],
+  )
+
   const createNewModel = useCallback(
-    async (importedModel: any) => {
+    async (importedModel: any, overrideName?: string) => {
       if (!importedModel?.model) return
       try {
+        // Prefer zip-embedded image, then metadata URL, then site default
+        let modelHomeImageUrl: string | undefined
+        if (importedModel.modelHomeImageFile instanceof File) {
+          try {
+            const { url } = await uploadFileService(
+              importedModel.modelHomeImageFile,
+            )
+            modelHomeImageUrl = url
+          } catch (uploadErr) {
+            console.error('Failed to upload model home image:', uploadErr)
+          }
+        }
+        if (!modelHomeImageUrl) {
+          const metadataImage = importedModel.model.model_home_image_file
+          if (
+            typeof metadataImage === 'string' &&
+            metadataImage.trim() &&
+            !metadataImage.startsWith('/ref/')
+          ) {
+            modelHomeImageUrl = metadataImage
+          }
+        }
+        if (!modelHomeImageUrl) {
+          modelHomeImageUrl = await getConfig(
+            'DEFAULT_MODEL_IMAGE',
+            'site',
+            undefined,
+            '/imgs/default-model-image.png',
+          )
+        }
+
+        const modelName =
+          overrideName?.trim() ||
+          importedModel.model.name ||
+          'New Imported Model'
+        const apiVersion = normalizeApiVersion(
+          importedModel.model.api_version,
+        )
         const newModel: ModelCreate = {
-          custom_apis: importedModel.model.custom_apis
-            ? JSON.stringify(importedModel.model.custom_apis)
-            : 'Empty',
-          cvi: importedModel.model.cvi,
           main_api: importedModel.model.main_api || 'Vehicle',
-          model_home_image_file:
-            importedModel.model.model_home_image_file ||
-            '/ref/E-Car_Full_Vehicle.png',
+          model_home_image_file: modelHomeImageUrl,
           model_files: importedModel.model.model_files || {},
-          name: importedModel.model.name || 'New Imported Model',
-          extended_apis: importedModel.model.extended_apis || [],
-          api_version: importedModel.model.api_version || 'v4.1',
+          name: modelName,
           visibility: 'private',
         }
 
-        const createdModel = await createModelService(newModel)
+        if (apiVersion == null) {
+          // Custom VSS: re-upload exported tree via api_data_url (same as
+          // FormCreateModel upload). Backend processApiDataUrl rebuilds
+          // extended_apis; do not send truncated zip extended_apis.
+          const cvi =
+            typeof importedModel.model.cvi === 'string'
+              ? importedModel.model.cvi
+              : JSON.stringify(importedModel.model.cvi ?? {})
+          const vssFile = new File([cvi], 'vss.json', {
+            type: 'application/json',
+          })
+          const { url } = await uploadFileService(vssFile)
+          newModel.api_data_url = url
+          newModel.api_version = null
+        } else {
+          // COVESA: base tree from api_version; wishlist from extended_apis.
+          newModel.custom_apis = importedModel.model.custom_apis
+            ? JSON.stringify(importedModel.model.custom_apis)
+            : 'Empty'
+          newModel.cvi = importedModel.model.cvi
+          newModel.extended_apis = stripExtendedApisForImport(
+            importedModel.model.extended_apis || [],
+          )
+          newModel.api_version = apiVersion
+        }
+
+        const createdModelId = await createModelService(newModel)
 
         addLog({
-          name: `New model '${createdModel.name}' with visibility: ${createdModel.visibility}`,
-          description: `New model '${createdModel.name}' was created by ${
+          name: `New model '${modelName}' with visibility: private`,
+          description: `New model '${modelName}' was created by ${
             user?.email || user?.name || user?.id
           }`,
           type: 'new-model',
           create_by: user?.id!,
-          ref_id: createdModel.id,
+          ref_id: createdModelId,
           ref_type: 'model',
         })
 
@@ -152,7 +263,7 @@ const PageModelList = () => {
                 description: proto.description,
                 tags: proto.tags || [],
                 image_file: proto.image_file,
-                model_id: createdModel,
+                model_id: createdModelId,
                 name: proto.name,
                 complexity_level: proto.complexity_level || '3',
                 customer_journey: proto.customer_journey || '{}',
@@ -167,25 +278,87 @@ const PageModelList = () => {
         queryClient.invalidateQueries({
           queryKey: ['modelsList', user?.id ?? 'anonymous'],
         })
-        navigate(`/model/${createdModel}`)
+        resetImportNameDialog()
+        navigate(`/model/${createdModelId}`)
       } catch (err) {
         console.error('Error creating model from zip: ', err)
+        if (isAxiosError(err) && err.response?.status === 409) {
+          openImportNameDialog(
+            importedModel,
+            overrideName?.trim() ||
+              importedModel.model?.name ||
+              'New Imported Model',
+            err.response.data?.message || 'A model with this name already exists',
+          )
+          return
+        }
+        toast({
+          title: 'Import failed',
+          description:
+            'Could not create the model from this zip. Check the file and try again.',
+          variant: 'destructive',
+        })
       } finally {
         setIsImporting(false)
       }
     },
-    [user, refetch, navigate, queryClient],
+    [user, refetch, navigate, queryClient, toast, openImportNameDialog, resetImportNameDialog],
   )
+
+  const handleConfirmImportName = useCallback(async () => {
+    if (!pendingImport || !importModelName.trim() || isDuplicateImportModelName) {
+      return
+    }
+    setImportNameError('')
+    setIsImporting(true)
+    await createNewModel(pendingImport, importModelName.trim())
+  }, [
+    pendingImport,
+    importModelName,
+    isDuplicateImportModelName,
+    createNewModel,
+  ])
 
   const handleImportModelZip = useCallback(
     async (file: File) => {
       const model = await zipToModel(file)
       if (model) {
+        const proposedName = model.model?.name || 'New Imported Model'
+        const duplicate = ownedModelNames.some(
+          (name) => name.toLowerCase() === proposedName.toLowerCase(),
+        )
+        if (duplicate) {
+          const existing = new Set(ownedModelNames.map((name) => name.toLowerCase()))
+          let suggestedName = proposedName
+          if (existing.has(proposedName.toLowerCase())) {
+            const match = proposedName.match(/^(.*?)_(\d+)$/)
+            const base = match ? match[1] : proposedName
+            let counter = match ? parseInt(match[2], 10) + 1 : 1
+            suggestedName = `${base}_${counter}`
+            while (existing.has(suggestedName.toLowerCase())) {
+              counter++
+              suggestedName = `${base}_${counter}`
+            }
+          }
+          openImportNameDialog(
+            model,
+            proposedName,
+            'A model with this name already exists',
+          )
+          return
+        }
+
         setIsImporting(true)
         await createNewModel(model)
+      } else {
+        toast({
+          title: 'Import failed',
+          description: 'Invalid or unreadable model zip file.',
+          variant: 'destructive',
+        })
       }
     },
-    [createNewModel],
+    [createNewModel, toast, ownedModelNames, openImportNameDialog],
   )
 
   const tabItems = useMemo(() => {
@@ -379,6 +552,68 @@ const PageModelList = () => {
                         }
                       >
                         <FormCreateModel />
+                      </DaDialog>
+
+                      <DaDialog
+                        open={importNameDialogOpen}
+                        onOpenChange={(open) => {
+                          if (!open) resetImportNameDialog()
+                        }}
+                        dialogTitle="Import model - Choose a name"
+                        description="Please choose a name for the imported model."
+                        
+                      >
+                        <div className="flex flex-col gap-4">
+                          <div>
+                            <Input
+                              value={importModelName}
+                              onChange={(e) => {
+                                setImportModelName(e.target.value)
+                                setImportNameError('')
+                              }}
+                              onKeyDown={(e) =>
+                                e.key === 'Enter' && void handleConfirmImportName()
+                              }
+                              placeholder="Model name"
+                            />
+                            {(importNameError || isDuplicateImportModelName) && (
+                              <DaDuplicateNameHint
+                                message={
+                                  importNameError ||
+                                  'A model with this name already exists'
+                                }
+                                suggestedName={suggestedImportModelName}
+                                onApplySuggestion={(name) => {
+                                  setImportModelName(name)
+                                  setImportNameError('')
+                                }}
+                              />
+                            )}
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={resetImportNameDialog}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => void handleConfirmImportName()}
+                              disabled={
+                                isImporting ||
+                                !importModelName.trim() ||
+                                isDuplicateImportModelName
+                              }
+                            >
+                              {isImporting ? (
+                                <TbLoader className="mr-1 text-lg animate-spin" />
+                              ) : null}
+                              Import
+                            </Button>
+                          </div>
+                        </div>
                       </DaDialog>
                     </div>
                   )}

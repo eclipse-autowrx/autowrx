@@ -23,8 +23,8 @@ import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 import type { SiteConfigEditEntry } from '@/utils/siteConfigHistory'
 
 import {
-    deleteConfigsById,
     reloadSoon,
+    restoreConfigsFromSnapshot,
     upsertConfigFromHistory,
 } from '@/utils/siteConfigAdmin'
 
@@ -99,7 +99,7 @@ const PrototypeConfigSection: React.FC = () => {
     const handleFactoryReset = async () => {
         if (
             !window.confirm(
-                'Restore all Model & Prototype configs to default values? This will reset Model & Prototype settings to their defaults.',
+                'Restore all Model & Prototype configs to the deployment snapshot? This will reset Model & Prototype settings to their deployed values.',
             )
         ) {
             return
@@ -108,34 +108,12 @@ const PrototypeConfigSection: React.FC = () => {
         try {
             setIsLoading(true)
 
-            const predefinedPrototypeConfigs = PREDEFINED_SITE_CONFIGS.filter(
-                (config) => config.category === 'model_prototype',
-            )
-
-            // Delete all Prototype configs
-            const allConfigs = await configManagementService.getConfigs({
-                secret: false,
-                scope: 'site',
-                category: 'model_prototype',
-                limit: 100,
-            })
-
-            const { failed } = await deleteConfigsById(allConfigs.results || [])
-            failed.forEach((f) =>
-                console.warn('Failed to delete Prototype config', f.key, f.reason),
-            )
-
-            // Recreate defaults
-            if (predefinedPrototypeConfigs.length > 0) {
-                await configManagementService.bulkUpsertConfigs({
-                    configs: predefinedPrototypeConfigs,
-                })
-            }
+            await restoreConfigsFromSnapshot({ categories: ['model_prototype'] })
 
             toast({
                 title: 'Restored',
                 description:
-                    'Model & Prototype configs restored to default values. Reloading page...',
+                    'Model & Prototype configs restored from deployment snapshot. Reloading page...',
             })
 
             reloadSoon()
