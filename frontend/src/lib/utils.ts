@@ -13,23 +13,6 @@ export const debounce = (func: (...args: any[]) => void, wait: number) => {
   }
 }
 
-export function maskEmail(email: string): string {
-  if (!email || !email.includes('@')) {
-    return email
-  }
-
-  const [username, domain] = email.split('@')
-
-  if (username.length <= 2) {
-    return `${username[0]}***@${domain}`
-  }
-
-  const visibleChars = Math.min(3, Math.floor(username.length / 3))
-  const maskedUsername = username.substring(0, visibleChars) + '***'
-
-  return `${maskedUsername}@${domain}`
-}
-
 export const parseCvi = (cvi: any) => {
   const traverse = (node: any, prefix: string = 'Vehicle'): any[] => {
     let result: any[] = []

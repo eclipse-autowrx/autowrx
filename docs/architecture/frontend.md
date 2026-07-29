@@ -150,7 +150,7 @@ family, `search`, `upload`, `discussion`, `feedback`, `sso`, `github`, `log`.
 
 Plugin-provided UI is loaded at runtime by
 **`organisms/PluginPageRender.tsx`** (used by `PageModelPlugin`,
-`PagePrototypePlugin`, `PageNewPrototypeDetail`, `PrototypeTabStaging`). Outline:
+`PagePrototypePlugin`, `PagePrototypeDetail`, `NewPrototypeLayout`, `PrototypeTabStaging`). Outline:
 
 1. **Fetch metadata** — `getPluginBySlug(id)` → the plugin's remote script `url`
    + `config`.

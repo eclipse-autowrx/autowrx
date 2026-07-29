@@ -58,6 +58,12 @@ router.post('/bulk-upsert',
   siteConfigController.bulkUpsertSiteConfigs
 );
 
+// Restore configs from deployment snapshot
+router.post('/restore-snapshot',
+  validate(siteConfigValidation.restoreSiteConfigSnapshot),
+  siteConfigController.restoreSiteConfigSnapshot
+);
+
 // Global CSS admin endpoints
 router.get('/global-css', siteConfigController.getGlobalCss);
 router.put('/global-css', siteConfigController.updateGlobalCss);

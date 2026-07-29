@@ -17,6 +17,7 @@ import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { EXCLUDED_FROM_SITE_CONFIG_KEYS } from '@/pages/SiteConfigManagement'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
+import { reloadSoon, restoreConfigsFromSnapshot } from '@/utils/siteConfigAdmin'
 
 const SecretConfigSection: React.FC = () => {
   const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
@@ -119,33 +120,16 @@ const SecretConfigSection: React.FC = () => {
   }
 
   const handleFactoryReset = async () => {
-    if (!window.confirm('Restore all secret configs to default values? This cannot be undone.')) return
+    if (!window.confirm('Restore all secret configs to the deployment snapshot? This will overwrite your current secret values.')) return
 
     try {
       setIsLoading(true)
-      // Delete all secret configs
-      const allConfigs = await configManagementService.getConfigs({
-        secret: true,
-        scope: 'site',
-        limit: 100,
-      })
 
-      for (const config of allConfigs.results || []) {
-        try {
-          if (config.id) {
-            await configManagementService.deleteConfigById(config.id)
-          }
-        } catch (e) {
-          console.warn('Failed to delete config', config.key, e)
-        }
-      }
+      await restoreConfigsFromSnapshot({ secret: true })
 
-      toast({ title: 'Restored', description: 'Secret configs restored to default values. Reloading page...' })
+      toast({ title: 'Restored', description: 'Secret configs restored from deployment snapshot. Reloading page...' })
 
-      // Reload page to show changes immediately
-      setTimeout(() => {
-        window.location.href = window.location.href
-      }, 800)
+      reloadSoon()
     } catch (err) {
       toast({
         title: 'Reset failed',
