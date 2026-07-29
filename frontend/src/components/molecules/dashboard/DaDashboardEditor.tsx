@@ -1120,7 +1120,7 @@ const DaDashboardEditor = ({
   }
 
   return (
-    <div className="flex w-full flex-col h-full items-center justify-start p-0">
+    <div className="flex w-full flex-col h-full items-center justify-start p-0 flex-1">
       <div
         className={cn(
           'grid w-full grid-cols-5 grow grid-rows-2 border border-gray-300',
