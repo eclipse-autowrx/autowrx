@@ -9,6 +9,7 @@
 const httpStatus = require('http-status');
 const { userService } = require('.');
 const prototypeService = require('./prototype.service');
+const extendedApiService = require('./extendedApi.service');
 const apiService = require('./api.service');
 const permissionService = require('./permission.service');
 const fileService = require('./file.service');
@@ -573,6 +574,7 @@ const deleteModelById = async (id, actionOwner) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'Model not found');
   }
 
+  await extendedApiService.deleteExtendedApisByModelId(id);
   model.action_owner = actionOwner;
   await model.deleteOne();
   await prototypeService.deleteMany({ model_id: id }, actionOwner);

@@ -16,6 +16,7 @@ import { searchWidget, loadWidgetReviews } from '@/services/widget.service'
 import { DaImage } from '@/components/atoms/DaImage'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
+import { getUsedVehicleApiNames, applySyncWithCodeToOptions } from '@/hooks/useUsedVehicleApisFromCode'
 
 interface DaWidgetListProps {
   renderWidgets: any[]
@@ -29,6 +30,7 @@ const DaWidgetList: FC<DaWidgetListProps> = ({
   activeTab,
 }) => {
   const prototype = useModelStore((state) => state.prototype as Prototype)
+  const activeModelApis = useModelStore((state) => state.activeModelApis)
   const [searchText, setSearchText] = useState<string>('')
   const [optionsStr, setOptionStr] = useState<string>('')
   const [widgetReviews, setWidgetReviews] = useState<any[]>([])
@@ -75,15 +77,16 @@ const DaWidgetList: FC<DaWidgetListProps> = ({
     if (activeWidget && activeWidget.options) {
       let options = JSON.parse(JSON.stringify(activeWidget.options))
       delete options.url
-      const selectedSignals = prototype?.extend?.selected_signals as string[] | undefined
-      if (selectedSignals?.length && (!options.apis || options.apis.length === 0)) {
-        options.apis = [...selectedSignals]
-      }
+      const usedApiNames = getUsedVehicleApiNames(
+        prototype?.code,
+        activeModelApis,
+      )
+      applySyncWithCodeToOptions(options, usedApiNames)
       setOptionStr(JSON.stringify(options, null, 4))
     } else {
       setOptionStr('{}')
     }
-  }, [activeWidget, prototype?.extend?.selected_signals])
+  }, [activeWidget, prototype?.code, activeModelApis])
 
   return (
     <div className="flex w-full h-full space-x-2">
