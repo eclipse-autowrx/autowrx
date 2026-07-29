@@ -16,6 +16,7 @@ export interface ProjectTemplate {
 
 export interface ListProjectTemplatesParams {
   name?: string
+  visibility?: 'public' | 'private'
   limit?: number
   page?: number
   sortBy?: string

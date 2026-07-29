@@ -6,7 +6,35 @@ const { ProjectTemplate } = require('../models');
 const ApiError = require('../utils/ApiError');
 const logger = require('../config/logger');
 
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const DUPLICATE_NAME_MESSAGE = 'A project template with this name already exists';
+
+const normalizeName = (name) => {
+  const normalized = typeof name === 'string' ? name.trim() : '';
+  if (!normalized) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Name is required');
+  }
+  return normalized;
+};
+
+const assertUniqueName = async (name, excludeId) => {
+  const normalized = normalizeName(name);
+  const filter = {
+    name: { $regex: `^${escapeRegex(normalized)}$`, $options: 'i' },
+  };
+  if (excludeId) {
+    filter._id = { $ne: excludeId };
+  }
+  const existing = await ProjectTemplate.findOne(filter);
+  if (existing) {
+    throw new ApiError(httpStatus.CONFLICT, DUPLICATE_NAME_MESSAGE);
+  }
+};
+
 const create = async (body) => {
+  body.name = normalizeName(body.name);
+  await assertUniqueName(body.name);
   return ProjectTemplate.create(body);
 };
 
@@ -19,6 +47,10 @@ const getById = async (id) => ProjectTemplate.findById(id);
 const updateById = async (id, updateBody) => {
   const doc = await getById(id);
   if (!doc) throw new ApiError(httpStatus.NOT_FOUND, 'ProjectTemplate not found');
+  if (updateBody.name) {
+    updateBody.name = normalizeName(updateBody.name);
+    await assertUniqueName(updateBody.name, id);
+  }
   Object.assign(doc, updateBody);
   await doc.save();
   return doc;
@@ -37,6 +69,10 @@ const removeById = async (id) => {
  */
 const seedProjectTemplates = async (predefinedTemplates, systemUserId) => {
   if (!predefinedTemplates || predefinedTemplates.length === 0) return;
+  if (!systemUserId) {
+    logger.warn('Skipping project template seed: no system user available');
+    return;
+  }
 
   try {
     const operations = predefinedTemplates.map((tpl) => ({

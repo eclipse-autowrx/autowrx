@@ -13,6 +13,7 @@ import { DaInput } from '@/components/atoms/DaInput'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import { DaText } from '@/components/atoms/DaText'
 import { Label } from '@/components/atoms/label'
+import { Spinner } from '@/components/atoms/spinner'
 import {
     Select,
     SelectContent,
@@ -23,6 +24,10 @@ import {
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import default_journey from '@/data/default_journey'
 import { listProjectTemplates } from '@/services/projectTemplate.service'
+import {
+    getDefaultDashboardCfg,
+    parseProjectTemplates,
+} from '@/utils/projectTemplate'
 import useListModelPrototypes from '@/hooks/useListModelPrototypes'
 import useListVSSVersions from '@/hooks/useListVSSVersions'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
@@ -66,17 +71,21 @@ const FormNewPrototype = ({
 
     const { data: projectTemplatesData, isLoading: isLoadingTemplates } = useQuery({
         queryKey: ['project-templates-list'],
-        queryFn: () => listProjectTemplates({ limit: 100, page: 1 }),
+        queryFn: () => listProjectTemplates({ limit: 100, page: 1, visibility: 'public' }),
     })
 
-    const firstTemplate = useMemo(() => {
-        const t = projectTemplatesData?.results?.[0]
-        if (!t) return { language: 'python', code: '' }
-        try {
-            const parsed = JSON.parse(t.data)
-            return { language: parsed.language || 'python', code: parsed.code || '' }
-        } catch { return { language: 'python', code: '' } }
-    }, [projectTemplatesData])
+    const templateOptions = useMemo(
+        () => parseProjectTemplates(projectTemplatesData?.results ?? []),
+        [projectTemplatesData],
+    )
+
+    const [selectedTemplateId, setSelectedTemplateId] = useState<string>('')
+
+    useEffect(() => {
+        if (templateOptions.length && !selectedTemplateId) {
+            setSelectedTemplateId(templateOptions[0].id)
+        }
+    }, [templateOptions, selectedTemplateId])
 
     const { data: ownedModelsData, isLoading: isFetchingOwnedModels } = useQuery({
         queryKey: ['listModelLiteOwned', currentUser?.id],
@@ -182,6 +191,7 @@ const FormNewPrototype = ({
         loading ||
         uploading ||
         isLoadingTemplates ||
+        (templateOptions.length > 0 && !selectedTemplateId) ||
         !prototypeName.trim() ||
         (isCreatingNewModel ? !newModelName.trim() || isDuplicateModelName : !selectedModelId) ||
         isDuplicatePrototypeName
@@ -209,20 +219,27 @@ const FormNewPrototype = ({
                 modelId = selectedModelId
             }
 
+            const selectedTemplate = templateOptions.find((t) => t.id === selectedTemplateId)
+
             const body = {
                 model_id: modelId,
                 name: prototypeName.trim(),
-                language: firstTemplate.language,
+                language: selectedTemplate?.language ?? 'python',
                 state: 'development',
                 apis: { VSC: [], VSS: [] },
-                code: code ?? firstTemplate.code,
+                code: code ?? selectedTemplate?.code ?? '',
                 complexity_level: 3,
-                customer_journey: default_journey,
+                customer_journey: selectedTemplate?.customer_journey?.trim()
+                    ? selectedTemplate.customer_journey
+                    : default_journey,
                 description: { problem: '', says_who: '', solution: '', status: '' },
                 image_file: '/imgs/default_prototype_cover.jpg',
                 skeleton: '{}',
                 tags: [],
-                widget_config: widget_config ?? '[]',
+                widget_config: widget_config
+                    ?? selectedTemplate?.widget_config
+                    ?? getDefaultDashboardCfg(selectedTemplate?.language ?? 'python')
+                    ?? '[]',
                 autorun: true,
                 extend: { signal_exploration: signalExploration },
             }
@@ -468,6 +485,34 @@ const FormNewPrototype = ({
                         setError('')
                     }}
                 />
+            )}
+
+            {(isLoadingTemplates || templateOptions.length > 0) && (
+                <div className="flex flex-col mt-4">
+                    <Label className="mb-2">Project Template *</Label>
+                    {isLoadingTemplates ? (
+                        <p className="flex items-center text-sm text-muted-foreground h-9">
+                            <Spinner className="mr-1 h-4 w-4" />
+                            Loading templates...
+                        </p>
+                    ) : (
+                        <Select
+                            value={selectedTemplateId}
+                            onValueChange={setSelectedTemplateId}
+                        >
+                            <SelectTrigger data-id="project-template-select" className="w-full">
+                                <SelectValue placeholder="Select a template" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {templateOptions.map((t) => (
+                                    <SelectItem key={t.id} value={t.id}>
+                                        {t.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
+                </div>
             )}
 
             <div className="mt-4 select-none">
