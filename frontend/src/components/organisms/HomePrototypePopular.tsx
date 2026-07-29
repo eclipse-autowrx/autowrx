@@ -6,11 +6,11 @@
 //
 // SPDX-License-Identifier: MIT
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Prototype } from '@/types/model.type'
-import { listPopularPrototypes } from '@/services/prototype.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
+import { usePopularPrototypes } from '@/hooks/usePrototypeQueries'
 import { TbChevronDown, TbChevronRight } from 'react-icons/tb'
 import { Button } from '../atoms/button'
 import DaDialog from '../molecules/DaDialog'
@@ -30,9 +30,7 @@ const HomePrototypePopular = ({
 }: HomePrototypePopularProps) => {
   const { data: user, isLoading, isFetching } = useSelfProfileQuery()
   const { authConfigs } = useAuthConfigs()
-  const [popularPrototypes, setPopularPrototypes] = useState<
-    Prototype[] | undefined
-  >(undefined)
+  const { data: popularPrototypes } = usePopularPrototypes()
   const [showMore, setShowMore] = useState(false)
   const navigate = useNavigate()
 
@@ -43,14 +41,6 @@ const HomePrototypePopular = ({
   const { setOpenLoginDialog, authBootstrapped } = useAuthStore()
   const isResolvingAuth = !authBootstrapped || (!user && (isLoading || isFetching))
 
-  useEffect(() => {
-    const fetchProposalPrototypes = async () => {
-      const popularPrototypes = await listPopularPrototypes()
-      setPopularPrototypes(popularPrototypes)
-    }
-    fetchProposalPrototypes()
-  }, [user?.id])
-
   if (requiredLogin && !user && !isResolvingAuth) {
     return null
   }
@@ -60,7 +50,6 @@ const HomePrototypePopular = ({
   }
 
   const handlePrototypeClick = (prototype: Prototype) => {
-    // Allow navigation if public viewing enabled OR user is logged in
     if (authConfigs.PUBLIC_VIEWING || user) {
       navigate(
         `/model/${prototype.model_id}/library/prototype/${prototype.id}/view`,
@@ -105,9 +94,9 @@ const HomePrototypePopular = ({
         <div className="mt-2 w-full grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {popularPrototypes
             .slice(0, showMore ? popularPrototypes.length : 4)
-            .map((prototype, pIndex) => (
+            .map((prototype) => (
               <div
-                key={pIndex}
+                key={prototype.id}
                 onClick={() => handlePrototypeClick(prototype)}
                 className="cursor-pointer"
               >
@@ -131,7 +120,6 @@ const HomePrototypePopular = ({
         </div>
       )}
 
-      {/* Popup Dialog */}
       <DaDialog
         open={openRemindDialog}
         onOpenChange={setOpenRemindDialog}

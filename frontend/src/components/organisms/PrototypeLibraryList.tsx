@@ -8,7 +8,7 @@
 
 import { useState, useEffect } from 'react'
 import { Prototype } from '@/types/model.type'
-import useListModelPrototypes from '@/hooks/useListModelPrototypes'
+import { useListModelPrototypes } from '@/hooks/usePrototypeQueries'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { useParams, useNavigate } from 'react-router-dom'
 import { DaPrototypeItem } from '../molecules/DaPrototypeItem'

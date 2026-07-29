@@ -23,7 +23,7 @@ import {
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import default_journey from '@/data/default_journey'
 import { listProjectTemplates } from '@/services/projectTemplate.service'
-import useListModelPrototypes from '@/hooks/useListModelPrototypes'
+import { useListModelPrototypes } from '@/hooks/usePrototypeQueries'
 import useListVSSVersions from '@/hooks/useListVSSVersions'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'

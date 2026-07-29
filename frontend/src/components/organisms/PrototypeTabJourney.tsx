@@ -15,7 +15,7 @@ import {
 } from 'react-icons/tb'
 import DaTableEditor from '../molecules/DaCustomerJourneyTable'
 import useCurrentModel from '@/hooks/useCurrentModel'
-import useListModelPrototypes from '@/hooks/useListModelPrototypes'
+import { useListModelPrototypes } from '@/hooks/usePrototypeQueries'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
