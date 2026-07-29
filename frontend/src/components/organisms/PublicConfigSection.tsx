@@ -26,8 +26,8 @@ import NavBarActionsEditor, { NavBarAction } from '@/components/molecules/NavBar
 import SiteConfigEditHistory from '@/components/molecules/SiteConfigEditHistory'
 import type { SiteConfigEditEntry } from '@/utils/siteConfigHistory'
 import {
-  deleteConfigsById,
   reloadSoon,
+  restoreConfigsFromSnapshot,
   upsertConfigFromHistory,
 } from '@/utils/siteConfigAdmin'
 
@@ -220,32 +220,17 @@ const PublicConfigSection: React.FC = () => {
   }
 
   const handleFactoryReset = async () => {
-    if (!window.confirm('Restore all public configs to default values? This will overwrite your current settings.')) return
+    if (!window.confirm('Restore all public configs to the deployment snapshot? This will overwrite your current settings.')) return
 
     try {
       setIsLoading(true)
-      // Only delete public configs (predefined non‑GenAI, non‑privacy keys + NAV_BAR_ACTIONS), not other sections
-      const publicKeys = new Set([
-        ...PREDEFINED_SITE_CONFIGS
-          .map((c) => c.key)
-          .filter((key) => !isGenAIKey(key) && !isPrivacyKey(key)),
-        'NAV_BAR_ACTIONS',
-      ])
+      const publicKeys = PREDEFINED_SITE_CONFIGS.filter(
+        (config) => !isSpecialSectionKey(config.key),
+      ).map((config) => config.key)
 
-      const allConfigs = await configManagementService.getConfigs({
-        secret: false,
-        scope: 'site',
-        limit: 100,
-      })
+      await restoreConfigsFromSnapshot({ keys: publicKeys })
 
-      // Delete only public configs
-      const publicConfigs = (allConfigs.results || []).filter((c) =>
-        publicKeys.has(c.key),
-      )
-      const { failed } = await deleteConfigsById(publicConfigs)
-      failed.forEach((f) => console.warn('Failed to delete config', f.key, f))
-
-      toast({ title: 'Restored', description: 'Public configs restored to default values. Reloading page...' })
+      toast({ title: 'Restored', description: 'Public configs restored from deployment snapshot. Reloading page...' })
 
       // Reload page to show changes immediately
       reloadSoon()
@@ -369,7 +354,7 @@ const PublicConfigSection: React.FC = () => {
                   Navigation Bar Actions
                 </h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Configure custom action buttons with icons and links for the navigation bar
+                  Configure custom action buttons for the left and right sides of the navigation bar
                 </p>
               </div>
               <div className="p-6">

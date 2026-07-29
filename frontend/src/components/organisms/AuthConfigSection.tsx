@@ -16,6 +16,7 @@ import { Spinner } from '@/components/atoms/spinner'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { PREDEFINED_AUTH_CONFIGS } from '@/pages/SiteConfigManagement'
 import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
+import { reloadSoon, restoreConfigsFromSnapshot } from '@/utils/siteConfigAdmin'
 
 const AuthConfigSection: React.FC = () => {
   const { data: self, isLoading: selfLoading } = useSelfProfileQuery()
@@ -117,7 +118,7 @@ const AuthConfigSection: React.FC = () => {
   const handleFactoryReset = async () => {
     if (
       !window.confirm(
-        'Restore all auth configs to default values? This will reset authentication settings to their default open mode (all enabled).'
+        'Restore all auth configs to the deployment snapshot? This will reset authentication settings to their deployed values.'
       )
     )
       return
@@ -125,33 +126,14 @@ const AuthConfigSection: React.FC = () => {
     try {
       setIsLoading(true)
 
-      // Delete all auth configs
-      const allConfigs = await configManagementService.getConfigs({
-        secret: false,
-        scope: 'site',
-        category: 'auth',
-        limit: 100,
+      await restoreConfigsFromSnapshot({ categories: ['auth'] })
+
+      toast({
+        title: 'Restored',
+        description: 'Auth configs restored from deployment snapshot. Reloading page...',
       })
 
-      for (const config of allConfigs.results || []) {
-        try {
-          if (config.id) {
-            await configManagementService.deleteConfigById(config.id)
-          }
-        } catch (e) {
-          console.warn('Failed to delete config', config.key, e)
-        }
-      }
-
-      toast({ 
-        title: 'Restored', 
-        description: 'Auth configs restored to default values. Reloading page...' 
-      })
-      
-      // Force hard reload to clear all caches including auth config cache
-      setTimeout(() => {
-        window.location.href = window.location.href
-      }, 800)
+      reloadSoon()
     } catch (err) {
       toast({
         title: 'Reset failed',

@@ -137,6 +137,12 @@ const bulkUpsertSiteConfigs = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(result);
 });
 
+const restoreSiteConfigSnapshot = catchAsync(async (req, res) => {
+  const filter = pick(req.body, ['keys', 'categories', 'secret']);
+  const result = await siteConfigService.restoreSiteConfigFromSnapshot(filter, req.user.id);
+  res.status(httpStatus.OK).send(result);
+});
+
 // SSO providers public endpoint
 const getPublicSSOProviders = catchAsync(async (req, res) => {
   const providers = await ssoService.getEnabledSSOProviders();
@@ -171,6 +177,7 @@ module.exports = {
   deleteSiteConfig,
   deleteSiteConfigByKey,
   bulkUpsertSiteConfigs,
+  restoreSiteConfigSnapshot,
   getPublicSSOProviders,
   sendTestEmail,
   // global.css helpers

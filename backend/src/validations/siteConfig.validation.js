@@ -146,6 +146,16 @@ const getConfigsByScope = {
   }),
 };
 
+const restoreSiteConfigSnapshot = {
+  body: Joi.object()
+    .keys({
+      keys: Joi.array().items(Joi.string().trim()),
+      categories: Joi.array().items(Joi.string().trim()),
+      secret: Joi.boolean(),
+    })
+    .or('keys', 'categories', 'secret'),
+};
+
 module.exports = {
   createSiteConfig,
   getSiteConfigs,
@@ -158,4 +168,5 @@ module.exports = {
   getSiteConfigsByKeys,
   bulkUpsertSiteConfigs,
   getConfigsByScope,
+  restoreSiteConfigSnapshot,
 };

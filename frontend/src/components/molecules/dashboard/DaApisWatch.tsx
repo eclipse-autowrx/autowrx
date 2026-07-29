@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import React, { FC, useState } from 'react'
+import React, { FC, useMemo, useState } from 'react'
 import useRuntimeStore from '@/stores/runtimeStore'
 import { shallow } from 'zustand/shallow'
 import { Input } from '@/components/atoms/input'
@@ -47,11 +47,15 @@ const ApiInput = React.forwardRef<HTMLInputElement, InputProps>(
 
 export interface DaApisWatchProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
+    usedAPIs?: string[]
     requestWriteSignalValue?: (obj: any) => void
 }
 
 
-const DaApisWatch: FC<DaApisWatchProps> = ({requestWriteSignalValue}) => {
+const DaApisWatch: FC<DaApisWatchProps> = ({
+  usedAPIs = [],
+  requestWriteSignalValue,
+}) => {
 
     const [apisValue] = useRuntimeStore(
         (state) => [
@@ -60,8 +64,24 @@ const DaApisWatch: FC<DaApisWatchProps> = ({requestWriteSignalValue}) => {
         shallow,
     )
 
+    const displayApis = useMemo(() => {
+      if (usedAPIs.length > 0) return usedAPIs
+      if (apisValue && typeof apisValue === 'object' && !Array.isArray(apisValue)) {
+        return Object.keys(apisValue)
+      }
+      return []
+    }, [usedAPIs, apisValue])
+
+    if (displayApis.length === 0) {
+      return (
+        <div className="w-full mt-2 px-1 text-xs text-muted-foreground">
+          No signals used in code.
+        </div>
+      )
+    }
+
     return <div className="w-full mt-2">
-        { apisValue && Object.keys(apisValue).map((key: string) => <div key={key} className={`px-1 flex items-center border mb-1`}
+        { displayApis.map((key: string) => <div key={key} className={`px-1 flex items-center border mb-1`}
             style={{
                 borderColor: 'hsl(215, 16%, 47%)',
                 color: 'hsl(0, 0%, 100%)',
@@ -71,7 +91,7 @@ const DaApisWatch: FC<DaApisWatchProps> = ({requestWriteSignalValue}) => {
             <div className='w-16 px-1 py-0.5 text-right border rounded text-xs' style={{
                 borderColor: 'hsl(215, 16%, 47%)',
                 color: 'hsl(0, 0%, 100%)',
-            }}>{String(apisValue[key]) || 'null'}</div>
+            }}>{apisValue?.[key] != null ? String(apisValue[key]) : 'null'}</div>
             <ApiInput onEnter={(value:string) => {
                 // console.log("onEntered", value)
                 let sendValue = null
