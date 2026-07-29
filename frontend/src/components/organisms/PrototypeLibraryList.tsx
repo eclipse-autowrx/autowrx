@@ -11,7 +11,7 @@ import { Prototype } from '@/types/model.type'
 import useListModelPrototypes from '@/hooks/useListModelPrototypes'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { useParams, useNavigate } from 'react-router-dom'
-import { DaPrototypeItem } from '../molecules/DaPrototypeItem'
+import { DaPrototypeCard } from '../molecules/DaPrototypeCard'
 import DaErrorDisplay from '../molecules/DaErrorDisplay'
 import DaSkeletonGrid from '../molecules/DaSkeletonGrid'
 import { getPrototypeLastViewed } from '@/utils/prototypeLastViewed'
@@ -148,8 +148,8 @@ const PrototypeLibraryList = ({
     <div className="flex flex-col w-full h-full">
       <div className="flex flex-col h-full">
         {filteredPrototypes && filteredPrototypes.length > 0 ? (
-          <div className="w-full grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredPrototypes.map((prototype, index) => (
+          <div className="w-full grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
+            {filteredPrototypes.map((prototype) => (
               <div
                 key={prototype.id}
                 onClick={() =>
@@ -159,7 +159,12 @@ const PrototypeLibraryList = ({
                 }
                 className="flex w-full cursor-pointer mb-2 prototype-grid-item-wrapper"
               >
-                <DaPrototypeItem prototype={prototype} />
+                <DaPrototypeCard
+                  prototype={prototype}
+                  existingPrototypeNames={fetchedPrototypes
+                    ?.filter((p) => p.id !== prototype.id)
+                    .map((p) => p.name)}
+                />
               </div>
             ))}
           </div>

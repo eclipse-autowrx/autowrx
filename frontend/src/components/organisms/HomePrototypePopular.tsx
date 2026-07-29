@@ -15,7 +15,7 @@ import { TbChevronDown, TbChevronRight } from 'react-icons/tb'
 import { Button } from '../atoms/button'
 import DaDialog from '../molecules/DaDialog'
 import useAuthStore from '@/stores/authStore'
-import { DaPrototypeItem } from '../molecules/DaPrototypeItem'
+import { DaPrototypeCard } from '../molecules/DaPrototypeCard'
 import DaSkeletonGrid from '../molecules/DaSkeletonGrid'
 import { useAuthConfigs } from '@/hooks/useAuthConfigs'
 
@@ -111,7 +111,7 @@ const HomePrototypePopular = ({
                 onClick={() => handlePrototypeClick(prototype)}
                 className="cursor-pointer"
               >
-                <DaPrototypeItem prototype={prototype} />
+                <DaPrototypeCard prototype={prototype} variant="home" />
               </div>
             ))}
         </div>
