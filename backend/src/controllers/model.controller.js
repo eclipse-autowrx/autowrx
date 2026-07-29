@@ -16,6 +16,7 @@ const logger = require('../config/logger');
 const ModelTemplate = require('../models/modelTemplate.model');
 const { Model } = require('../models');
 const config = require('../config/config');
+const { maskUserEmail } = require('../utils/maskEmail');
 
 const listAllModels = catchAsync(async (req, res) => {
   const options = pick(req.query, ['fields']);
@@ -240,8 +241,12 @@ const getModel = catchAsync(async (req, res) => {
       role: 'model_member',
       ref: req.params.id,
     });
-    finalResult.contributors = contributors;
-    finalResult.members = members;
+    finalResult.contributors = contributors.map(maskUserEmail);
+    finalResult.members = members.map(maskUserEmail);
+
+    if (finalResult.created_by) {
+      finalResult.created_by = maskUserEmail(finalResult.created_by);
+    }
   }
   res.send(finalResult);
 });
