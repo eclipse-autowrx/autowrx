@@ -354,7 +354,7 @@ const PublicConfigSection: React.FC = () => {
                   Navigation Bar Actions
                 </h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Configure custom action buttons with icons and links for the navigation bar
+                  Configure custom action buttons for the left and right sides of the navigation bar
                 </p>
               </div>
               <div className="p-6">
