@@ -243,7 +243,7 @@ export default function ProjectTemplateEditor({
 
           <div className="space-y-2">
             <Label>Dashboard Config</Label>
-            <div className="min-h-[280px]">
+            <div className="min-h-[400px] flex flex-col">
               <DaDashboardEditor
                 entireWidgetConfig={form.widget_config}
                 editable={true}

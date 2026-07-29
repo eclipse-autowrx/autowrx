@@ -60,7 +60,7 @@ export default function ProjectTemplateMetadataFields({
       <Label>Visibility</Label>
       <DaSelect
         value={visibility}
-        onValueChange={(v) => onVisibilityChange(v as 'public' | 'private')}
+        onValueChange={(v) => onVisibilityChange?.(v as 'public' | 'private')}
         className="h-9 text-sm"
       >
         <DaSelectItem value="public">public</DaSelectItem>
