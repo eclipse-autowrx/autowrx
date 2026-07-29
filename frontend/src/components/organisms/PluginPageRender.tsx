@@ -359,7 +359,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
   const handleFetchSignalMapping = useCallback((kitName: string): Promise<string> => {
     return new Promise((resolve, reject) => {
       const socket = io(KIT_SERVER_URL)
-      const kitId = kitName.toLowerCase()
+      const kitId = kitName
       let settled = false
 
       const finish = (fn: () => void) => {
@@ -375,11 +375,11 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
 
       socket.on('connect', () => {
         socket.emit('register_client', { username: 'plugin', user_id: 'plugin', domain: 'domain' })
-        socket.emit('messageToKit', { cmd: 'read_file', to_kit_id: kitId, data: SIGNAL_CONFIG_PATH })
+        socket.emit('messageToKit', { cmd: 'read-file', to_kit_id: kitId, data: SIGNAL_CONFIG_PATH })
       })
 
       socket.on('messageToKit-kitReply', (payload: any) => {
-        if (payload?.cmd === 'read_file') {
+        if (payload?.cmd === 'read-file') {
           clearTimeout(timeout)
           finish(() => resolve(payload.data?.content || ''))
         }
@@ -395,7 +395,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
   const handleFetchVss = useCallback((kitName: string): Promise<string> => {
     return new Promise((resolve, reject) => {
       const socket = io(KIT_SERVER_URL)
-      const kitId = kitName.toLowerCase()
+      const kitId = kitName
       let settled = false
 
       const finish = (fn: () => void) => {
@@ -411,11 +411,11 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
 
       socket.on('connect', () => {
         socket.emit('register_client', { username: 'plugin', user_id: 'plugin', domain: 'domain' })
-        socket.emit('messageToKit', { cmd: 'read_file', to_kit_id: kitId, data: VSS_PATH })
+        socket.emit('messageToKit', { cmd: 'read-file', to_kit_id: kitId, data: VSS_PATH })
       })
 
       socket.on('messageToKit-kitReply', (payload: any) => {
-        if (payload?.cmd === 'read_file') {
+        if (payload?.cmd === 'read-file') {
           clearTimeout(timeout)
           finish(() => resolve(payload.data?.content || ''))
         }
@@ -431,7 +431,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
   const handleReplaceVss = useCallback((kitName: string, vssContent: string): Promise<void> => {
     return new Promise((resolve, reject) => {
       const socket = io(KIT_SERVER_URL)
-      const kitId = kitName.toLowerCase()
+      const kitId = kitName
       let settled = false
 
       const finish = (fn: () => void) => {
@@ -444,7 +444,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
       socket.on('connect', () => {
         socket.emit('register_client', { username: 'plugin', user_id: 'plugin', domain: 'domain' })
         socket.emit('messageToKit', {
-          cmd: 'write_file',
+          cmd: 'write-file',
           to_kit_id: kitId,
           data: { path: VSS_PATH, content: vssContent },
         })
@@ -469,7 +469,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
 
     return new Promise((resolve, reject) => {
       const socket = io(KIT_SERVER_URL)
-      const kitId = kitName.toLowerCase()
+      const kitId = kitName
       let settled = false
 
       const finish = (fn: () => void) => {
@@ -485,7 +485,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
 
           // 1. Write signal mapping
           socket.emit('messageToKit', {
-            cmd: 'write_file',
+            cmd: 'write-file',
             to_kit_id: kitId,
             data: { path: SIGNAL_CONFIG_PATH, content: fileContent },
           })
@@ -495,7 +495,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
           const vssJson = JSON.stringify(vssData)
 
           socket.emit('messageToKit', {
-            cmd: 'write_file',
+            cmd: 'write-file',
             to_kit_id: kitId,
             data: { path: VSS_PATH, content: vssJson },
           })
