@@ -19,7 +19,7 @@ import {
 } from 'chart.js'
 import ChartDataLabels from 'chartjs-plugin-datalabels'
 import useCurrentModel from '@/hooks/useCurrentModel'
-import useListModelPrototypes from '@/hooks/useListModelPrototypes'
+import { useListModelPrototypes } from '@/hooks/usePrototypeQueries'
 import { listPrototypeFeedback } from '@/services/feedback.service'
 import { Spinner } from '../atoms/spinner'
 import { getCSSVariable } from '@/lib/utils'

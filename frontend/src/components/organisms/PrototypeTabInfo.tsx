@@ -36,7 +36,7 @@ import { updatePrototypeService, deletePrototypeService } from '@/services/proto
 import { uploadFileService } from '@/services/upload.service'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { useNavigate } from 'react-router-dom'
-import useListModelPrototypes from '@/hooks/useListModelPrototypes'
+import { useListModelPrototypes } from '@/hooks/usePrototypeQueries'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
