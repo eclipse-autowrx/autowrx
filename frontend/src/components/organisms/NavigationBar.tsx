@@ -36,7 +36,7 @@ import { IoIosHelpBuoy } from 'react-icons/io'
 import config from '@/configs/config'
 import LearningIntegration from './LearningIntegration'
 
-import { useState, useEffect, useMemo, type CSSProperties } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 
 // import useLastAccessedModel from '@/hooks/useLastAccessedModel'
 import { useSiteConfig } from '@/utils/siteConfig'
@@ -82,7 +82,6 @@ const NavigationBar = ({ }) => {
   const [learningMode, setIsLearningMode] = useState(false)
   const siteTitle = useSiteConfig('SITE_TITLE', 'AutoWRX')
   const logoUrl = useSiteConfig('SITE_LOGO_WIDE', '/imgs/logo-wide.png')
-  const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
   const enableLearningMode = useSiteConfig('ENABLE_LEARNING_MODE', false)
   const navBarActions = useSiteConfig('NAV_BAR_ACTIONS', [])
   const { left: leftNavBarActions, right: rightNavBarActions } = useMemo(
@@ -111,11 +110,6 @@ const NavigationBar = ({ }) => {
     return []
   }, [isAuthorized, allowNonAdminAddonConfig])
 
-  const headerBackground = gradientHeader
-    ? 'linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%)'
-    : '#ffffff'
-  const headerTextColor = gradientHeader ? 'var(--primary-foreground)' : undefined
-
   useEffect(() => {
     if (siteTitle) {
       document.title = siteTitle
@@ -134,9 +128,7 @@ const NavigationBar = ({ }) => {
           trigger={
             <button
               type="button"
-              className={`h-9 w-9 flex items-center justify-center cursor-pointer rounded-md transition-colors ${
-                gradientHeader ? 'hover:bg-white/20' : 'hover:bg-[#dbe4ee]'
-              }`}
+              className="da-primary-nav-action h-9 w-9 flex items-center justify-center cursor-pointer rounded-md transition-colors"
               title={action.placeholder || action.label || 'Search'}
             >
               {action.icon ? (
@@ -165,7 +157,7 @@ const NavigationBar = ({ }) => {
         href={action.url}
         target={openTarget}
         {...(openTarget === '_blank' ? { rel: 'noopener noreferrer' } : {})}
-        className="flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium"
+        className="da-primary-nav-action flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium transition-colors"
         title={action.label}
       >
         {action.icon && (
@@ -184,18 +176,13 @@ const NavigationBar = ({ }) => {
   }
 
   return (
-    <header
-      className={`flex items-center w-full py-1.5 px-4 ${gradientHeader ? '' : 'border-2'}`}
-      style={{
-        background: headerBackground,
-        color: headerTextColor,
-      }}
-    >
+    <header className="da-primary-nav-bar flex items-center w-full py-1.5 px-4 bg-background border-2">
       <Link to="/" className="shrink-0">
         <img
           src={logoUrl}
           alt="Logo"
-          style={{ height: '28px', filter: gradientHeader ? 'brightness(0) invert(1)' : undefined }}
+          className="da-primary-nav-logo"
+          style={{ height: '28px' }}
         />
       </Link>
 
@@ -258,8 +245,7 @@ const NavigationBar = ({ }) => {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="hover:bg-[var(--header-hover-bg)]"
-                  style={{ '--header-hover-bg': '#dbe4ee' } as CSSProperties}
+                  className="da-primary-nav-action"
                 >
                   <Wrench />
                   {isAuthorized ? 'Admin Tools' : 'Tools'}

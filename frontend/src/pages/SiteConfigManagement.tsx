@@ -243,15 +243,6 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
       'When enabled, hides Custom API Schema / API Set management and all model/prototype UI for custom API sets.',
     category: 'model_prototype',
   },
-  {
-    key: 'GRADIENT_HEADER',
-    scope: 'site',
-    value: false,
-    secret: false,
-    valueType: 'boolean',
-    description:
-      'Apply a primary-to-secondary gradient to the main header and secondary navigation bar.',
-  },
 ]
 
 export const PREDEFINED_GENAI_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(

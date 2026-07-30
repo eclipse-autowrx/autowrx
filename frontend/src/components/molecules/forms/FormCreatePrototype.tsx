@@ -13,7 +13,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { TbCircleCheckFilled, TbLoader } from 'react-icons/tb'
 import { createPrototypeService } from '@/services/prototype.service'
 import { useToast } from '../toaster/use-toast'
-import useListModelPrototypes from '@/hooks/useListModelPrototypes'
+import { useListModelPrototypes } from '@/hooks/usePrototypeQueries'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { isAxiosError } from 'axios'
 import { addLog } from '@/services/log.service'
@@ -36,7 +36,7 @@ import { CVI } from '@/data/CVI'
 import { createModelService, listModelsLite } from '@/services/model.service'
 import { cn } from '@/lib/utils'
 import default_journey from '@/data/default_journey'
-import { getConfig, useSiteConfig } from '@/utils/siteConfig'
+import { getConfig } from '@/utils/siteConfig'
 import { listProjectTemplates } from '@/services/projectTemplate.service'
 import {
   getDefaultDashboardCfg,
@@ -81,7 +81,6 @@ const FormCreatePrototype = ({
   const [error, setError] = useState<string>('')
   const [data, setData] = useState(initialState)
   const [disabled, setDisabled] = disabledState ?? useState(false)
-  const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
 
   const { data: currentModel } = useCurrentModel()
   const { data: contributionModels, isLoading: isFetchingModelContribution } =
@@ -446,7 +445,7 @@ const FormCreatePrototype = ({
         disabled={disabled}
         type="submit"
         data-id="btn-create-prototype"
-        className={cn('mt-8 w-full', hideCreateButton && 'hidden', gradientHeader && 'bg-gradient-to-r from-primary to-secondary border-0')}
+        className={cn('mt-8 w-full da-form-create-prototype-submit', hideCreateButton && 'hidden')}
       >
         {loading && <TbLoader className="mr-2 animate-spin text-lg" />}
         {buttonText ?? 'Create Prototype'}

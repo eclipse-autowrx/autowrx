@@ -70,7 +70,6 @@ const processWidgetItems = (widgetItems: any[], usedApiNames: string[]) => {
 const DaDashboard = () => {
   const { data: model } = useCurrentModel()
   const logoUrl = useSiteConfig('SITE_LOGO_WIDE', '/imgs/logo-wide.png')
-  const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
   const [
     prototype,
     setActivePrototype,
@@ -324,28 +323,16 @@ const DaDashboard = () => {
     <div className="w-full h-full relative border bg-white">
       <div
         className={cn(
-          'absolute z-10 left-0 px-2 top-0 flex gap-1 w-full py-1 shadow-xl items-center',
-          showPrototypeDashboardFullScreen && 'h-[56px]',
-          showPrototypeDashboardFullScreen && gradientHeader ? '' : 'bg-white',
+          'da-dashboard-toolbar absolute z-10 left-0 px-2 top-0 flex gap-1 w-full py-1 shadow-xl items-center bg-white',
+          showPrototypeDashboardFullScreen && 'da-dashboard-fullscreen-toolbar h-[56px]',
         )}
-        style={
-          showPrototypeDashboardFullScreen && gradientHeader
-            ? {
-                background: 'linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%)',
-                color: 'var(--primary-foreground)',
-              }
-            : undefined
-        }
       >
         {showPrototypeDashboardFullScreen && (
           <Link to="/" className="w-fit h-[56px] flex items-center px-2">
             <DaImage
               src={logoUrl}
-              className="object-contain"
-              style={{
-                height: '28px',
-                filter: gradientHeader ? 'brightness(0) invert(1)' : undefined,
-              }}
+              className="da-dashboard-fullscreen-logo object-contain"
+              style={{ height: '28px' }}
             />
           </Link>
         )}

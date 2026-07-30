@@ -24,6 +24,66 @@ The foundation of the system is the `global.css` file. This file is controlled b
 }
 
 ```
+
+### Regional background hooks
+
+Layouts and main pages expose stable `da-*` hook classes for instance-level `global.css` overrides. Components keep their Tailwind `bg-*` defaults; hooks are selectors only.
+
+`global.css` is loaded in `index.html` before the app bundle (which includes Tailwind utilities). When overriding Tailwind `bg-*` classes, use `!important` in instance `global.css`.
+
+| Hook class | Component / region |
+|---|---|
+| `da-root-layout` | `RootLayout` outer shell |
+| `da-root-layout-main` | `RootLayout` scrollable outlet |
+| `da-root-layout-footer` | `RootLayout` branding footer |
+| `da-primary-nav-bar` | `NavigationBar` header |
+| `da-primary-nav-logo` | Logo in `NavigationBar` |
+| `da-secondary-nav-bar` | `RootLayout` breadcrumb bar |
+| `da-model-detail-layout` | `ModelDetailLayout` outer shell |
+| `da-model-detail-tab-bar` | `ModelDetailLayout` tab strip |
+| `da-model-detail-content-frame` | `ModelDetailLayout` content frame |
+| `da-model-detail-content` | `ModelDetailLayout` inner panel |
+| `da-page-model-list` | `PageModelList` root |
+| `da-page-model-list-tab-bar` | `PageModelList` tab strip |
+| `da-page-model-list-frame` | `PageModelList` outer frame |
+| `da-page-model-list-content` | `PageModelList` inner card |
+| `da-page-prototype-library` | `PagePrototypeLibrary` root |
+| `da-page-model-detail` | `PageModelDetail` root |
+| `da-page-prototype-detail` | `PagePrototypeDetail` root |
+| `da-page-prototype-detail-tab-bar` | `PagePrototypeDetail` tab strip |
+| `da-page-new-prototype-detail` | `PageNewPrototypeDetail` root |
+| `da-page-new-prototype-detail-tab-bar` | `PageNewPrototypeDetail` tab strip |
+| `da-page-vehicle-api` | `PageVehicleApi` root |
+| `da-page-vehicle-api-tab-bar` | `PageVehicleApi` tab strip |
+| `da-page-home` | `PageHome` root |
+| `da-dashboard-fullscreen-toolbar` | Fullscreen toolbar in `DaDashboard` |
+| `da-dashboard-fullscreen-logo` | Logo in fullscreen toolbar |
+| `da-form-create-model-submit` | Create Model submit button |
+| `da-form-create-prototype-submit` | Create Prototype submit button |
+
+**Example instance override (gradient header):**
+
+```css
+.da-primary-nav-bar {
+  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%) !important;
+  color: var(--primary-foreground);
+  border: none !important;
+}
+
+.da-primary-nav-logo {
+  filter: brightness(0) invert(1);
+}
+
+.da-secondary-nav-bar {
+  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%) !important;
+  color: var(--primary-foreground);
+}
+
+.da-page-model-list-frame {
+  background-color: #f0f4f8 !important;
+}
+```
+
 #### core.css
 ```css
 .text-primary {

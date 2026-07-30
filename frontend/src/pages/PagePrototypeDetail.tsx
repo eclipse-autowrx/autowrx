@@ -404,7 +404,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
   }
 
   return prototype ? (
-    <div className="flex w-full h-full relative">
+    <div className="flex w-full h-full relative da-page-prototype-detail">
       {/* Left sidebar plugin - full height, outside tab area */}
       {sidebarPlugin && (
         <PrototypeSidebar
@@ -416,7 +416,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
 
       {/* Right side: tab bar + content */}
       <div className="flex flex-col flex-1 h-full min-w-0">
-        <div className="flex min-h-[52px] border-b border-border bg-background">
+        <div className="flex min-h-[52px] border-b border-border bg-background da-page-prototype-detail-tab-bar">
           {sidebarPlugin && (
             <Button
               variant="ghost"

@@ -730,10 +730,10 @@ const PageVehicleApi = () => {
   }
 
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="w-full h-full flex flex-col da-page-vehicle-api">
       {/* Tab Bar */}
       {customApiSetsEnabled && (
-        <div className="flex min-h-[52px] border-b border-muted-foreground/50 bg-background shrink-0">
+        <div className="flex min-h-[52px] border-b border-muted-foreground/50 bg-background da-page-vehicle-api-tab-bar shrink-0">
           <div className="flex w-fit">
             <ModelApiTabs
               customApiSetIds={validSetIds}

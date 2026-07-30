@@ -11,7 +11,6 @@ const { Prototype } = require('../models');
 const ApiError = require('../utils/ApiError');
 const permissionService = require('./permission.service');
 const { PERMISSIONS } = require('../config/roles');
-const { stateTypes } = require('../config/enums');
 const { default: axios, isAxiosError } = require('axios');
 const config = require('../config/config');
 const logger = require('../config/logger');
@@ -327,7 +326,7 @@ const listPopularPrototypes = async () => {
   ).map((model) => String(model._id));
   return Prototype.find({
     model_id: { $in: publicModelIds },
-    state: stateTypes.RELEASED,
+    state: 'Released',
   })
     .sort({ executed_turns: -1 })
     .limit(8)
