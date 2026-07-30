@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginAsAdmin, saveScreenshot, ADMIN, API_URL } from './helpers';
+import { loginAsAdmin, saveScreenshot, searchPrototypeLibrary, ADMIN, API_URL } from './helpers';
 
 const PROTO_NAME = `AgentProto_${Date.now()}`;
 
@@ -49,15 +49,13 @@ test.describe('Prototypes - CRUD', () => {
   test('CREATE: go to new prototype page', async ({ page }) => {
     await loginAsAdmin(page);
 
-    await page.goto('/new-prototype');
+    const modelId = await goToFirstModelLibrary(page);
+    await page.goto(`/new-prototype?model_id=${modelId}`);
     await saveScreenshot(page, 'proto-new-page');
 
     const nameInput = page.locator('[data-id="prototype-name-input"]');
     await expect(nameInput).toBeVisible({ timeout: 15000 });
-    await expect.poll(
-      () => new URL(page.url()).searchParams.get('model_id'),
-      { timeout: 15000 },
-    ).toBeTruthy();
+    expect(new URL(page.url()).searchParams.get('model_id')).toBe(modelId);
     await nameInput.fill(`NewPage_${Date.now()}`);
 
     await page.getByRole('button', { name: 'Confirm' }).click();
@@ -114,13 +112,9 @@ test.describe('Prototypes - CRUD', () => {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(3000);
     console.log('Library URL:', page.url());
-    // Search for the prototype  
-    const searchInput = page.locator('input[placeholder="Search"]').first();
-    await expect(searchInput).toBeVisible({ timeout: 10000 });
-    await searchInput.click();
-    await searchInput.fill(protoName);
+    await searchPrototypeLibrary(page, protoName);
     console.log('Searched for:', protoName);
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     await saveScreenshot(page, 'proto-library-read');
 
     // Prototype should appear in the list
@@ -209,10 +203,8 @@ test.describe('Prototypes - CRUD', () => {
     // Go to library, find prototype
     await page.goto(`/model/${modelId}/library/list`);
     await page.waitForTimeout(2000);
-    const searchBox4 = page.locator('input[placeholder="Search"]').first();
-    await searchBox4.click();
-    await searchBox4.fill(deleteName);
-    await page.waitForTimeout(2000);
+    await searchPrototypeLibrary(page, deleteName);
+    await page.waitForTimeout(1000);
 
     const protoCard = page.locator(`[data-id^="prototype-item-"]:has-text("${deleteName}")`).first();
     await expect(protoCard).toBeVisible({ timeout: 30000 });
