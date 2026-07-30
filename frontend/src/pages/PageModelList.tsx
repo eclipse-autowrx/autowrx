@@ -465,8 +465,8 @@ const PageModelList = () => {
   }
 
   return (
-    <div className="flex flex-col w-full h-full relative">
-      <div className="sticky top-0 flex min-h-[52px] border-b border-muted-foreground/50 bg-background z-50">
+    <div className="flex flex-col w-full h-full relative da-page-model-list">
+      <div className="sticky top-0 flex min-h-[52px] border-b border-muted-foreground/50 bg-background da-page-model-list-tab-bar z-50">
         {isLoading && totalResults === 0 ? (
           <div className="flex items-center h-full space-x-6 px-4">
             {tabItems.map((_, index) => (
@@ -489,10 +489,10 @@ const PageModelList = () => {
         )}
       </div>
 
-      <div className="flex w-full h-[calc(100%-52px)] items-start bg-slate-200 p-2">
+      <div className="flex w-full h-[calc(100%-52px)] items-start bg-slate-200 da-page-model-list-frame p-2">
         <div
           ref={scrollContainerRef}
-          className="flex flex-col w-full h-full bg-background rounded-lg overflow-y-auto"
+          className="flex flex-col w-full h-full bg-background da-page-model-list-content rounded-lg overflow-y-auto"
         >
           <div className="flex flex-col w-full h-full container px-4 pb-6">
             {error && (

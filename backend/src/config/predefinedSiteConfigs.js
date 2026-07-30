@@ -219,14 +219,6 @@ const PREDEFINED_SITE_CONFIGS = [
     category: 'model_prototype',
   },
   {
-    key: 'GRADIENT_HEADER',
-    scope: 'site',
-    value: false,
-    secret: false,
-    valueType: 'boolean',
-    description: 'Apply a primary-to-secondary gradient to the main header.',
-  },
-  {
     key: 'PUBLIC_VIEWING',
     scope: 'site',
     value: true,

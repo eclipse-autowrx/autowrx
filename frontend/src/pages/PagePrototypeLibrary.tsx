@@ -163,7 +163,7 @@ const PagePrototypeLibrary = () => {
   }
 
   return (
-    <div className="flex flex-col w-full h-full rounded-md overflow-y-auto bg-background">
+    <div className="flex flex-col w-full h-full rounded-md overflow-y-auto bg-background da-page-prototype-library">
       <div className="flex flex-col w-full h-full px-6 lg:container">
         <div className="flex w-full items-center">
           {user ? (

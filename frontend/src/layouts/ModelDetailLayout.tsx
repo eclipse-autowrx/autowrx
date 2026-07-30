@@ -237,9 +237,9 @@ const ModelDetailLayout = () => {
   }
 
   return (
-    <div className="flex flex-col w-full h-full rounded-md bg-muted">
+    <div className="flex flex-col w-full h-full rounded-md bg-muted da-model-detail-layout">
       <div
-        className="flex min-h-[52px] border-b border-muted-foreground/50 bg-background"
+        className="flex min-h-[52px] border-b border-muted-foreground/50 bg-background da-model-detail-tab-bar"
       >
         <div className="flex w-fit">
           {model ? (
@@ -315,9 +315,9 @@ const ModelDetailLayout = () => {
         )}
       </div>
 
-      <div className="p-2 h-[calc(100%-52px)] flex flex-col">
+      <div className="p-2 h-[calc(100%-52px)] flex flex-col da-model-detail-content-frame">
         {isLoading ? (
-          <div className="flex w-full h-full bg-background rounded-lg items-center justify-center">
+          <div className="flex w-full h-full bg-background da-model-detail-content rounded-lg items-center justify-center">
             <div className="flex flex-col items-center gap-4">
               <Spinner size={32} />
               <p className="text-base text-muted-foreground">
@@ -326,7 +326,7 @@ const ModelDetailLayout = () => {
             </div>
           </div>
         ) : (
-          <div className="w-full h-full bg-background rounded-lg">
+          <div className="w-full h-full bg-background da-model-detail-content rounded-lg">
             <Outlet />
           </div>
         )}
