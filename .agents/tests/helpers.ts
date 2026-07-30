@@ -51,6 +51,73 @@ export async function searchPrototypeLibrary(page: Page, query: string) {
   await page.waitForTimeout(1000);
 }
 
+const SORT_OPTIONS = /Newest|Oldest|Name A-Z|Name Z-A|Last view|First view|Rating/;
+
+export async function clearPrototypeLibrarySort(page: Page) {
+  await page.evaluate(() => localStorage.removeItem('prototypeLibrary-selectedFilter'));
+}
+
+export async function selectPrototypeLibrarySort(page: Page, option: string) {
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+
+  const sortButton = page.getByRole('button', { name: SORT_OPTIONS }).first();
+  await expect(sortButton).toBeVisible({ timeout: 10000 });
+  await sortButton.scrollIntoViewIfNeeded();
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await sortButton.click();
+    const optionLabel = page.locator('ul').locator('label').filter({
+      has: page.getByText(option, { exact: true }),
+    });
+    if (await optionLabel.isVisible().catch(() => false)) {
+      await optionLabel.click();
+      await page.waitForTimeout(500);
+      return;
+    }
+    await page.waitForTimeout(300);
+  }
+
+  throw new Error(`Could not select sort option: ${option}`);
+}
+
+export async function getVisiblePrototypeNames(page: Page): Promise<string[]> {
+  const names = await page.locator('.prototype-grid-item-name').allTextContents();
+  return names.map((name) => name.trim()).filter(Boolean);
+}
+
+export async function createTestPrototype(page: Page, name: string, modelId?: string) {
+  if (!modelId) {
+    await page.goto('/model');
+    await page.waitForTimeout(3000);
+    const firstModel = page.locator('a[href*="/model/"]').first();
+    await expect(firstModel).toBeVisible({ timeout: 20000 });
+    const href = await firstModel.getAttribute('href');
+    modelId = href?.split('/model/')[1]?.split('/')[0];
+    await page.goto(`/model/${modelId}/library/list`);
+    await page.waitForTimeout(4000);
+  } else {
+    await page.goto(`/model/${modelId}/library/list`);
+    await page.waitForTimeout(2000);
+  }
+
+  await page.locator('[data-id="btn-create-new-prototype"]').click();
+  await page.waitForTimeout(1500);
+
+  const nameInput = page.locator('[data-id="prototype-name-input"]').first();
+  await expect(nameInput).toBeVisible({ timeout: 15000 });
+  await nameInput.fill(name);
+  await page.waitForTimeout(300);
+
+  const submitBtn = page.locator(
+    'button:has-text("Confirm"), button:has-text("Create Prototype"), [data-id="btn-create-prototype"]'
+  ).last();
+  await submitBtn.click();
+  await page.waitForTimeout(3000);
+
+  return { modelId: modelId! };
+}
+
 export async function prepareRuntimePanelForLayoutCheck(page: Page) {
   const panel = page.locator('[data-id="runtime-control-panel"]').first();
   if (!(await panel.isVisible().catch(() => false))) return;

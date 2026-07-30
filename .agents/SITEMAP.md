@@ -78,7 +78,7 @@
 | Rename prototype | Via API (context menu requires site config) | ✅ `prototype.spec.ts` |
 | Delete prototype | Via API, card removed from UI | ✅ `prototype.spec.ts` |
 | Search / filter | Filter prototypes by name | ✅ `prototype-extended.spec.ts` |
-| Sort prototypes | Sort by date/name | ❌ |
+| Sort prototypes | Sort by date/name | ✅ `prototype-extended.spec.ts` |
 | Prototype image cover | Thumbnail display | ❌ |
 
 ---
