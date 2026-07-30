@@ -8,6 +8,8 @@ import {
   selectPrototypeLibrarySort,
   getVisiblePrototypeNames,
   createTestPrototype,
+  goToPrototypeOverview,
+  setPrototypeStateViaUI,
 } from './helpers';
 
 // Helper: navigate to first model's prototype library, return modelId
@@ -106,6 +108,24 @@ test.describe('Prototype Extended', () => {
     console.log('Name Z-A order:', names);
 
     await saveScreenshot(page, 'proto-library-sort');
+  });
+
+  test('change prototype status to Released via UI', async ({ page }) => {
+    const timestamp = Date.now();
+    const protoName = `StatusRelease_${timestamp}`;
+
+    const { modelId, prototypeId } = await createTestPrototype(page, protoName);
+    await goToPrototypeOverview(page, modelId, prototypeId);
+
+    await expect(page.getByText('Developing', { exact: true }).first()).toBeVisible({ timeout: 10000 });
+
+    await setPrototypeStateViaUI(page, 'Released', modelId, prototypeId);
+
+    await page.reload();
+    await page.waitForTimeout(3000);
+
+    await expect(page.getByText('Released', { exact: true }).first()).toBeVisible({ timeout: 10000 });
+    await saveScreenshot(page, 'proto-status-released');
   });
 
   test('prototype feedback tab loads', async ({ page }) => {

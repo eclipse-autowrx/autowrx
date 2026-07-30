@@ -275,6 +275,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                       onClick={() => setIsEditing(true)}
                       variant="outline"
                       size="sm"
+                      data-id="btn-edit-prototype-info"
                     >
                       <TbEdit className="w-4 h-4" /> Edit
                     </Button>
@@ -458,7 +459,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
                       value={localPrototype.state || 'development'}
                       onValueChange={(value) => handleChange('state', value)}
                     >
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger className="w-full" data-id="prototype-status-select">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>

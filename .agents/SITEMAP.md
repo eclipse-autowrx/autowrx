@@ -17,6 +17,7 @@
 | Wrong password error | Shows error toast | ✅ `auth.spec.ts` |
 | Logout | Avatar menu → Logout | ✅ `auth.spec.ts` |
 | Popular prototypes | Showcase of popular items | ✅ `home-sections.spec.ts` |
+| Popular prototype eligibility | Shown when public model + Released; hidden otherwise | ✅ `home-prototypes.spec.ts` |
 | Recent prototypes | Showcase of recent items | ✅ `home-sections.spec.ts` |
 | Feature list section | Platform feature highlights | ❌ |
 | Layout (logged out) | Navbar, footer, responsive | ✅ `layout.spec.ts` |
@@ -107,6 +108,7 @@
 | Dashboard tab layout | Dashboard area renders | ⚠️ `prototype-tabs.spec.ts` — "Add Runtime" button zero-size bug detected |
 | Journey tab layout | Journey content renders | ✅ `prototype-tabs.spec.ts` |
 | Sequential tab navigation | Navigate all tabs in order | ✅ `prototype-tabs.spec.ts` |
+| Change prototype status | Overview → Edit → Status Released | ✅ `prototype-extended.spec.ts` |
 | Run prototype | Execute SDV code | ❌ |
 | Add widget to dashboard | Drag/drop or add widget | ❌ |
 | Share prototype | Share link / permissions | ✅ `prototype-extended.spec.ts` (no share btn visible for admin) |

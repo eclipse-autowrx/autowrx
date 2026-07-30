@@ -1,4 +1,4 @@
-import { Page, expect } from '@playwright/test';
+import { Locator, Page, expect } from '@playwright/test';
 
 export const ADMIN = {
   email: process.env.ADMIN_EMAIL!,
@@ -86,6 +86,141 @@ export async function getVisiblePrototypeNames(page: Page): Promise<string[]> {
   return names.map((name) => name.trim()).filter(Boolean);
 }
 
+export async function getAuthToken(page: Page): Promise<string> {
+  const loginRes = await page.request.post(`${API_URL}/v2/auth/login`, {
+    data: { email: ADMIN.email, password: ADMIN.password },
+  });
+  const loginData = await loginRes.json();
+  const token = loginData?.tokens?.access?.token;
+  if (!token) {
+    throw new Error(`Failed to get auth token: ${loginRes.status()}`);
+  }
+  return token;
+}
+
+export async function createTestModelViaApi(
+  page: Page,
+  name: string,
+  visibility: 'public' | 'private',
+): Promise<string> {
+  const token = await getAuthToken(page);
+  const res = await page.request.post(`${API_URL}/v2/models`, {
+    data: {
+      name,
+      main_api: 'Vehicle',
+      visibility,
+    },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to create model: ${res.status()} ${await res.text()}`);
+  }
+  const data = await res.json();
+  if (typeof data === 'string') {
+    return data;
+  }
+  const modelId = data?.id || data?._id;
+  if (!modelId) {
+    throw new Error(`Create model response missing id: ${JSON.stringify(data)}`);
+  }
+  return String(modelId);
+}
+
+export async function setModelVisibilityViaApi(
+  page: Page,
+  modelId: string,
+  visibility: 'public' | 'private',
+) {
+  const token = await getAuthToken(page);
+  const res = await page.request.patch(`${API_URL}/v2/models/${modelId}`, {
+    data: { visibility },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to update model visibility: ${res.status()} ${await res.text()}`);
+  }
+}
+
+export function getPrototypeIdFromUrl(url: string): string {
+  const match = url.match(/\/prototype\/([^/?]+)/);
+  if (!match?.[1]) {
+    throw new Error(`Could not parse prototype id from URL: ${url}`);
+  }
+  return match[1];
+}
+
+export async function goToPrototypeOverview(page: Page, modelId: string, prototypeId: string) {
+  await page.goto(`/model/${modelId}/library/prototype/${prototypeId}/view`);
+  await page.waitForTimeout(3000);
+}
+
+export async function setPrototypeStateViaApi(
+  page: Page,
+  prototypeId: string,
+  state: 'Released' | 'development',
+) {
+  const token = await getAuthToken(page);
+  const res = await page.request.patch(`${API_URL}/v2/prototypes/${prototypeId}`, {
+    data: { state },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to update prototype state: ${res.status()} ${await res.text()}`);
+  }
+}
+
+export async function setPrototypeStateViaUI(
+  page: Page,
+  state: 'Released' | 'development',
+  modelId?: string,
+  prototypeId?: string,
+) {
+  if (modelId && prototypeId) {
+    await goToPrototypeOverview(page, modelId, prototypeId);
+  }
+
+  const editBtn = page.locator('[data-id="btn-edit-prototype-info"]');
+  await expect(editBtn).toBeVisible({ timeout: 15000 });
+  await editBtn.scrollIntoViewIfNeeded();
+  await editBtn.click();
+  await expect(page.getByRole('button', { name: 'Save' })).toBeVisible({ timeout: 15000 });
+
+  const statusTrigger = page.locator('[data-id="prototype-status-select"]');
+  await expect(statusTrigger).toBeVisible({ timeout: 10000 });
+  await statusTrigger.click();
+
+  const optionLabel = state === 'Released' ? 'Released' : 'Developing';
+  await page.getByRole('option', { name: optionLabel, exact: true }).click();
+  await page.waitForTimeout(300);
+
+  const saveBtn = page.getByRole('button', { name: 'Save' }).first();
+  await saveBtn.click();
+  await expect(page.getByRole('button', { name: 'Save' })).toBeHidden({ timeout: 15000 });
+  await page.waitForTimeout(1000);
+}
+
+export function getPopularSection(page: Page): Locator {
+  return page
+    .locator('.da-page-home')
+    .locator('h2', { hasText: 'Popular Prototypes' })
+    .locator('xpath=ancestor::div[contains(@class,"container")][1]');
+}
+
+export async function expectPrototypeInPopular(page: Page, name: string, visible: boolean) {
+  await page.goto('/');
+  await page.waitForTimeout(4000);
+
+  const section = getPopularSection(page);
+  const card = section.locator('.prototype-grid-item-name', { hasText: name });
+
+  if (visible) {
+    await expect(section).toBeVisible({ timeout: 10000 });
+    await expect(card).toBeVisible({ timeout: 15000 });
+  } else {
+    await expect(card).toHaveCount(0, { timeout: 10000 });
+  }
+}
+
 export async function createTestPrototype(page: Page, name: string, modelId?: string) {
   if (!modelId) {
     await page.goto('/model');
@@ -113,9 +248,11 @@ export async function createTestPrototype(page: Page, name: string, modelId?: st
     'button:has-text("Confirm"), button:has-text("Create Prototype"), [data-id="btn-create-prototype"]'
   ).last();
   await submitBtn.click();
-  await page.waitForTimeout(3000);
+  await page.waitForURL(/\/prototype\//, { timeout: 30000 });
+  await page.waitForTimeout(2000);
 
-  return { modelId: modelId! };
+  const prototypeId = getPrototypeIdFromUrl(page.url());
+  return { modelId: modelId!, prototypeId, protoName: name };
 }
 
 export async function prepareRuntimePanelForLayoutCheck(page: Page) {
