@@ -175,6 +175,8 @@
 | Admin access (logged in) | Admin can access `/admin` | ✅ `admin.spec.ts` |
 | Unauthenticated access blocked | Redirect / deny for guests | ✅ `admin.spec.ts` |
 | Site config form | Settings form renders | ✅ `admin.spec.ts` |
+| Navigation bar actions editor | Configure left/right navbar links and search | ✅ `nav-bar-actions.spec.ts` |
+| Navigation bar actions render | Custom links/search appear from NAV_BAR_ACTIONS | ✅ `nav-bar-actions.spec.ts` |
 | User list loads | Shows users table | ✅ `admin.spec.ts` |
 | Create new user | Add user form | ✅ `admin-extended.spec.ts` (fill + cancel) |
 | Edit user role | Change user permissions | ❌ |

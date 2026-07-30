@@ -22,6 +22,16 @@ export const TEST_USER = {
 
 export const LIBRARY_SEARCH_SELECTOR = 'input[placeholder="Search prototypes"]';
 
+export type NavBarActionConfig = {
+  type?: 'link' | 'search';
+  label: string;
+  icon: string;
+  url: string;
+  placeholder?: string;
+  position?: 'left' | 'right';
+  openTarget?: '_blank' | '_self';
+};
+
 export async function loginAs(page: Page, email: string, password: string) {
   await page.goto('/');
   await page.waitForTimeout(1500);
@@ -373,6 +383,64 @@ export async function prepareRuntimePanelForLayoutCheck(page: Page) {
   if (!(await panel.isVisible().catch(() => false))) return;
 
   await expandRuntimePanel(page);
+}
+
+export async function getNavBarActionsViaApi(page: Page): Promise<NavBarActionConfig[]> {
+  const token = await getAuthToken(page);
+  const res = await page.request.get(`${API_URL}/v2/site-config/key/NAV_BAR_ACTIONS`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    return [];
+  }
+  const data = await res.json();
+  return Array.isArray(data?.value) ? data.value : [];
+}
+
+export async function setNavBarActionsViaApi(page: Page, actions: NavBarActionConfig[]) {
+  const token = await getAuthToken(page);
+  const res = await page.request.patch(`${API_URL}/v2/site-config/key/NAV_BAR_ACTIONS`, {
+    data: { value: actions },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to set NAV_BAR_ACTIONS: ${res.status()} ${await res.text()}`);
+  }
+}
+
+export function getNavBar(page: Page): Locator {
+  return page.locator('.da-primary-nav-bar');
+}
+
+export function getNavBarCustomLinks(page: Page): Locator {
+  return getNavBar(page).locator('a.da-primary-nav-action');
+}
+
+export function getNavBarCustomSearchButtons(page: Page): Locator {
+  return getNavBar(page).locator('button.da-primary-nav-action').filter({
+    hasNotText: /Admin Tools|^Tools$/,
+  });
+}
+
+export async function openSiteConfigNavBarActions(page: Page) {
+  await page.goto('/admin/site-config?section=public');
+  await page.waitForTimeout(3000);
+  await expect(page.getByRole('heading', { name: 'Navigation Bar Actions' })).toBeVisible({
+    timeout: 15000,
+  });
+}
+
+export async function reloadForNavBarConfig(page: Page) {
+  await page.goto('/');
+  await page.waitForLoadState('domcontentloaded');
+  await page.reload();
+  await page.waitForTimeout(2500);
+}
+
+export function getNavBarActionsEditorSection(page: Page, side: 'Left Actions' | 'Right Actions') {
+  return page.locator('div.space-y-4').filter({
+    has: page.getByText(side, { exact: true }),
+  });
 }
 
 export async function saveScreenshot(page: Page, name: string) {
