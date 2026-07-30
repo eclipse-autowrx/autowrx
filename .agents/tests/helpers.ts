@@ -7,6 +7,13 @@ export const ADMIN = {
 
 export const API_URL = process.env.API_URL || process.env.BASE_URL?.replace(':3210', ':3200') || '';
 
+export const RUNTIME_SERVER_URL =
+  process.env.RUNTIME_SERVER_URL || 'http://localhost:3090';
+
+export const RUNTIME_SERVER_CONFIG =
+  process.env.RUNTIME_SERVER_CONFIG ||
+  '{"transports":["websocket"],"reconnectionAttempts":5}';
+
 export const TEST_USER = {
   email: 'testuser@autowrx.test',
   password: 'TestPass123!',
@@ -255,18 +262,117 @@ export async function createTestPrototype(page: Page, name: string, modelId?: st
   return { modelId: modelId!, prototypeId, protoName: name };
 }
 
-export async function prepareRuntimePanelForLayoutCheck(page: Page) {
-  const panel = page.locator('[data-id="runtime-control-panel"]').first();
-  if (!(await panel.isVisible().catch(() => false))) return;
+export async function configureRuntimeServerForTests(page: Page) {
+  const token = await getAuthToken(page);
+  const headers = { Authorization: `Bearer ${token}` };
 
-  const addRuntimeBtn = page.locator('[data-id="btn-add-runtime"]').first();
-  const isExpanded = await addRuntimeBtn.isVisible().catch(() => false);
+  const urlRes = await page.request.patch(`${API_URL}/v2/site-config/key/RUNTIME_SERVER_URL`, {
+    data: { value: RUNTIME_SERVER_URL },
+    headers,
+  });
+  if (!urlRes.ok()) {
+    throw new Error(
+      `Failed to set RUNTIME_SERVER_URL: ${urlRes.status()} ${await urlRes.text()}`,
+    );
+  }
+
+  const configRes = await page.request.patch(`${API_URL}/v2/site-config/key/RUNTIME_SERVER_CONFIG`, {
+    data: { value: RUNTIME_SERVER_CONFIG },
+    headers,
+  });
+  if (!configRes.ok()) {
+    throw new Error(
+      `Failed to set RUNTIME_SERVER_CONFIG: ${configRes.status()} ${await configRes.text()}`,
+    );
+  }
+}
+
+export async function setPrototypeCodeViaApi(page: Page, prototypeId: string, code: string) {
+  const token = await getAuthToken(page);
+  const res = await page.request.patch(`${API_URL}/v2/prototypes/${prototypeId}`, {
+    data: { code },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to update prototype code: ${res.status()} ${await res.text()}`);
+  }
+}
+
+export async function goToPrototypeCodeTab(page: Page, modelId: string, prototypeId: string) {
+  await page.goto(`/model/${modelId}/library/prototype/${prototypeId}/code`);
+  await page.waitForTimeout(4000);
+}
+
+function getRuntimePanel(page: Page) {
+  return page.locator('[data-id="runtime-control-panel"]').first();
+}
+
+export async function expandRuntimePanel(page: Page) {
+  const panel = getRuntimePanel(page);
+  await expect(panel).toBeVisible({ timeout: 15000 });
+
+  const outputTab = page.locator('[data-id="btn-runtime-control-tab-output"]');
+  const isExpanded = await outputTab.isVisible().catch(() => false);
 
   if (!isExpanded) {
     await page.locator('[data-id="btn-expand-runtime-control"]').first().click();
     await page.waitForTimeout(500);
-    await expect(addRuntimeBtn).toBeVisible({ timeout: 5000 });
+    await expect(outputTab).toBeVisible({ timeout: 10000 });
   }
+}
+
+export async function waitForRuntimeReady(page: Page, timeoutMs = 30000) {
+  await expandRuntimePanel(page);
+
+  const runtimeSelect = getRuntimePanel(page).locator('select[aria-label="deploy-select"]');
+  await expect(runtimeSelect).toBeVisible({ timeout: 10000 });
+
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const options = await runtimeSelect.locator('option').allTextContents();
+    const hasOnlineRuntime = options.some(
+      (text) => text.trim() && !text.includes('No runtime available'),
+    );
+    const runBtn = page.locator('[data-id="btn-run-prototype"]');
+    const isRunEnabled = await runBtn.isEnabled().catch(() => false);
+
+    if (hasOnlineRuntime && isRunEnabled) {
+      return;
+    }
+
+    await page.waitForTimeout(1000);
+  }
+
+  const options = await runtimeSelect.locator('option').allTextContents();
+  throw new Error(
+    `No online runtime ready after ${timeoutMs}ms. ` +
+      `Runtime options: ${options.join(', ') || '(none)'}. ` +
+      `Ensure kit-manager is running at ${RUNTIME_SERVER_URL}`,
+  );
+}
+
+export async function runPrototype(page: Page) {
+  const runBtn = page.locator('[data-id="btn-run-prototype"]');
+  await expect(runBtn).toBeEnabled({ timeout: 10000 });
+  await runBtn.click();
+}
+
+export async function expectRuntimeLogContains(
+  page: Page,
+  text: string,
+  timeoutMs = 60000,
+) {
+  await expandRuntimePanel(page);
+  const logPanel = page.locator('[data-id="current-log"]');
+  await expect(logPanel).toBeVisible({ timeout: 10000 });
+  await expect(logPanel).toContainText(text, { timeout: timeoutMs });
+}
+
+export async function prepareRuntimePanelForLayoutCheck(page: Page) {
+  const panel = getRuntimePanel(page);
+  if (!(await panel.isVisible().catch(() => false))) return;
+
+  await expandRuntimePanel(page);
 }
 
 export async function saveScreenshot(page: Page, name: string) {

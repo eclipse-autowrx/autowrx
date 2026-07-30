@@ -109,7 +109,7 @@
 | Journey tab layout | Journey content renders | ✅ `prototype-tabs.spec.ts` |
 | Sequential tab navigation | Navigate all tabs in order | ✅ `prototype-tabs.spec.ts` |
 | Change prototype status | Overview → Edit → Status Released | ✅ `prototype-extended.spec.ts` |
-| Run prototype | Execute SDV code | ❌ |
+| Run prototype | Execute SDV code | ✅ `prototype-runtime.spec.ts` |
 | Add widget to dashboard | Drag/drop or add widget | ❌ |
 | Share prototype | Share link / permissions | ✅ `prototype-extended.spec.ts` (no share btn visible for admin) |
 | Deploy prototype | Deploy to staging | ❌ |
