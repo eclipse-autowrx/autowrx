@@ -739,6 +739,185 @@ export async function expectPluginDetailLoaded(
   }
 }
 
+export async function getSiteConfigJson<T>(page: Page, key: string): Promise<T | null> {
+  const token = await getAuthToken(page);
+  const res = await page.request.get(`${API_URL}/v2/site-config/key/${key}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    return null;
+  }
+  const data = await res.json();
+  return (data?.value ?? null) as T | null;
+}
+
+export async function setSiteConfigJson(page: Page, key: string, value: unknown) {
+  const token = await getAuthToken(page);
+  const res = await page.request.patch(`${API_URL}/v2/site-config/key/${key}`, {
+    data: { value },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to set site config "${key}": ${res.status()} ${await res.text()}`);
+  }
+}
+
+export async function setModelReleasedViaApi(page: Page, modelId: string) {
+  const token = await getAuthToken(page);
+  const res = await page.request.patch(`${API_URL}/v2/models/${modelId}`, {
+    data: { visibility: 'public', state: 'released' },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to release model: ${res.status()} ${await res.text()}`);
+  }
+}
+
+export async function createPublicReleasedModelViaApi(page: Page, name: string): Promise<string> {
+  const modelId = await createTestModelViaApi(page, name, 'public');
+  await setModelReleasedViaApi(page, modelId);
+  return modelId;
+}
+
+export async function goToVehicleApiTab(page: Page, modelId: string) {
+  await page.goto(`/model/${modelId}/api`);
+  await page.waitForTimeout(3000);
+  await expect(page.locator('.da-page-vehicle-api')).toBeVisible({ timeout: 15000 });
+}
+
+export async function goToPrototypeDashboard(page: Page, modelId: string, prototypeId: string) {
+  await page.goto(`/model/${modelId}/library/prototype/${prototypeId}/dashboard`);
+  await page.waitForTimeout(4000);
+}
+
+export async function goToPrototypeJourneyTab(page: Page, modelId: string, prototypeId: string) {
+  await page.goto(`/model/${modelId}/library/prototype/${prototypeId}/journey`);
+  await page.waitForTimeout(3000);
+}
+
+export async function configureGlobalSearchNavAction(page: Page, placeholder = 'Search') {
+  await setNavBarActionsViaApi(page, [
+    {
+      type: 'search',
+      label: '',
+      url: '',
+      placeholder,
+      position: 'right',
+      icon: '',
+    },
+  ]);
+  await reloadForNavBarConfig(page);
+}
+
+export async function openGlobalSearchDialog(page: Page) {
+  const searchBtn = getNavBarCustomSearchButtons(page).first();
+  await expect(searchBtn).toBeVisible({ timeout: 10000 });
+  await searchBtn.click();
+  await expect(page.getByPlaceholder('Search Model or Prototype')).toBeVisible({
+    timeout: 10000,
+  });
+}
+
+export type CreatedTestUser = {
+  id: string;
+  email: string;
+  name: string;
+};
+
+export async function createTestUserViaApi(
+  page: Page,
+  opts?: { email?: string; password?: string; name?: string },
+): Promise<CreatedTestUser> {
+  const token = await getAuthToken(page);
+  const email = opts?.email || `e2e${Date.now()}@example.com`;
+  const password = opts?.password || TEST_USER.password;
+  const name = opts?.name || TEST_USER.name;
+  const res = await page.request.post(`${API_URL}/v2/users`, {
+    data: { email, password, name },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to create user: ${res.status()} ${await res.text()}`);
+  }
+  const data = await res.json();
+  const id = data?.id || data?._id;
+  if (!id) {
+    throw new Error(`Create user response missing id: ${JSON.stringify(data)}`);
+  }
+  return { id: String(id), email, name };
+}
+
+export async function deleteTestUserViaApi(page: Page, userId: string) {
+  const token = await getAuthToken(page);
+  const res = await page.request.delete(`${API_URL}/v2/users/${userId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok() && res.status() !== 404) {
+    throw new Error(`Failed to delete user: ${res.status()} ${await res.text()}`);
+  }
+}
+
+export type FeatureRole = {
+  id: string;
+  name: string;
+};
+
+export async function fetchFeatureRolesViaApi(page: Page): Promise<FeatureRole[]> {
+  const token = await getAuthToken(page);
+  const res = await page.request.get(`${API_URL}/v2/permissions/roles`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to fetch feature roles: ${res.status()} ${await res.text()}`);
+  }
+  const data = await res.json();
+  return (Array.isArray(data) ? data : []).filter((f: { not_feature?: boolean }) => !f.not_feature);
+}
+
+export async function assignRoleToUserViaApi(page: Page, userId: string, roleId: string) {
+  const token = await getAuthToken(page);
+  const res = await page.request.post(`${API_URL}/v2/permissions`, {
+    data: { user: userId, role: roleId },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to assign role: ${res.status()} ${await res.text()}`);
+  }
+}
+
+export async function removeRoleFromUserViaApi(page: Page, userId: string, roleId: string) {
+  const token = await getAuthToken(page);
+  const res = await page.request.delete(`${API_URL}/v2/permissions`, {
+    params: { user: userId, role: roleId },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok() && res.status() !== 404) {
+    throw new Error(`Failed to remove role: ${res.status()} ${await res.text()}`);
+  }
+}
+
+export async function deleteAssetViaApi(page: Page, assetId: string) {
+  const token = await getAuthToken(page);
+  const res = await page.request.delete(`${API_URL}/v2/assets/${assetId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok() && res.status() !== 404) {
+    throw new Error(`Failed to delete asset: ${res.status()} ${await res.text()}`);
+  }
+}
+
+export async function findMyPluginByNameViaApi(page: Page, name: string) {
+  const token = await getAuthToken(page);
+  const res = await page.request.get(`${API_URL}/v2/system/plugin/mine?limit=100&page=1`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    return null;
+  }
+  const data = await res.json();
+  return (data?.results || []).find((p: { name: string }) => p.name === name) || null;
+}
+
 export async function checkLayoutAnomalies(page: Page, testName: string) {
   const overlapping = await page.evaluate(() => {
     const panel = document.querySelector('[data-id="runtime-control-panel"]');

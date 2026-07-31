@@ -2,7 +2,6 @@ import { test, expect } from '@playwright/test';
 import { loginAsAdmin, saveScreenshot, checkLayoutAnomalies } from './helpers';
 
 test.describe('My Assets Page', () => {
-
   test.beforeEach(async ({ page }) => {
     await loginAsAdmin(page);
   });
@@ -73,6 +72,38 @@ test.describe('My Assets Page', () => {
 
     // Page should remain functional
     expect(page.url()).toContain('/my-assets');
+  });
+
+  test('9: create and delete runtime asset', async ({ page }) => {
+    const assetName = `E2E_Runtime_${Date.now()}`;
+
+    await page.goto('/my-assets');
+    await page.waitForTimeout(3000);
+
+    await page.getByRole('button', { name: 'Create New Asset' }).click();
+    await page.waitForTimeout(500);
+
+    const dialog = page.locator('[role="dialog"]').filter({ hasText: 'Edit Asset' });
+    await expect(dialog).toBeVisible({ timeout: 10000 });
+
+    await dialog.locator('input').first().fill(assetName);
+
+    const saveBtn = dialog.getByRole('button', { name: 'Save' });
+    await saveBtn.click();
+    await page.waitForTimeout(2000);
+
+    await expect(page.getByText(assetName)).toBeVisible({ timeout: 15000 });
+
+    const assetRow = page.locator('div.flex.w-full.items-center').filter({ hasText: assetName });
+    await assetRow.locator('svg').last().click();
+    await page.waitForTimeout(500);
+
+    await page.getByRole('button', { name: 'Remove' }).click();
+    await page.waitForTimeout(2000);
+
+    await expect(page.getByText(assetName)).toHaveCount(0, { timeout: 10000 });
+
+    await saveScreenshot(page, 'my-assets-create-delete');
   });
 
 });
