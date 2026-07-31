@@ -51,7 +51,7 @@
 | Overview | `/model/:id/` | Model info, description | ✅ `vehicle-models.spec.ts` |
 | Vehicle API | `/model/:id/api` | Browse vehicle signal APIs | ❌ |
 | Prototype Library | `/model/:id/library/list` | List of prototypes for this model | ✅ `vehicle-models.spec.ts` |
-| Plugin | `/model/:id/plugin` | Model-level plugins | ❌ |
+| Plugin | `/model/:id/plugin` | Model-level plugins | ✅ `plugin-management.spec.ts` |
 
 ### Features
 
@@ -63,6 +63,8 @@
 | Delete model | Confirm dialog → delete | ✅ `vehicle-models.spec.ts` |
 | Model image | Thumbnail / cover image | ❌ |
 | Model description | Edit model description | ❌ |
+| Add plugin tab to model | Attach admin plugin via + button | ✅ `plugin-management.spec.ts` |
+| Model plugin detail page | Plugin renders on `/model/:id/plugin` | ✅ `plugin-management.spec.ts` |
 
 ---
 
@@ -96,7 +98,7 @@
 | Customer Journey | `/journey` | Journey mapping / use case flow | ✅ `prototype-tabs.spec.ts` |
 | SDV Code | `/code` | Code editor for vehicle app logic | ✅ `prototype-tabs.spec.ts` |
 | Dashboard | `/dashboard` | Widget-based dashboard builder | ✅ `prototype-tabs.spec.ts` |
-| Custom tabs | (plugin-based) | Added by model template / plugins | ❌ |
+| Custom tabs | (plugin-based) | Added by model template / plugins | ✅ `plugin-management.spec.ts` |
 
 ### Features
 
@@ -114,7 +116,8 @@
 | Share prototype | Share link / permissions | ✅ `prototype-extended.spec.ts` (no share btn visible for admin) |
 | Deploy prototype | Deploy to staging | ❌ |
 | Feedback tab | Submit / view feedback | ✅ `prototype-extended.spec.ts` |
-| Prototype plugins | Custom plugin tabs | ❌ |
+| Prototype plugins | Custom plugin tabs | ✅ `plugin-management.spec.ts` |
+| Prototype plugin detail page | Plugin renders on `/plug?plugid=` | ✅ `plugin-management.spec.ts` |
 
 ---
 
@@ -181,7 +184,8 @@
 | Create new user | Add user form | ✅ `admin-extended.spec.ts` (fill + cancel) |
 | Edit user role | Change user permissions | ❌ |
 | Plugin list | Shows installed plugins | ✅ `admin.spec.ts` |
-| Install plugin | Add new plugin | ❌ |
+| Install plugin (external URL) | Add plugin via admin UI with external URL | ✅ `plugin-management.spec.ts` |
+| Install plugin (ZIP upload) | Add plugin via admin UI with ZIP upload | ✅ `plugin-management.spec.ts` |
 
 ---
 

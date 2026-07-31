@@ -1,4 +1,12 @@
+import { copyFile, mkdir, readFile } from 'fs/promises';
+import { join } from 'path';
 import { Locator, Page, expect } from '@playwright/test';
+
+export const E2E_PLUGIN_MARKER = 'E2E_PLUGIN_LOADED_OK';
+
+export const E2E_PLUGIN_FIXTURE_DIR = join(process.cwd(), 'tests', 'fixtures', 'e2e-simple-plugin');
+
+export const E2E_PLUGIN_ZIP_PATH = join(E2E_PLUGIN_FIXTURE_DIR, 'e2e-simple-plugin.zip');
 
 export const ADMIN = {
   email: process.env.ADMIN_EMAIL!,
@@ -458,6 +466,225 @@ export async function saveScreenshot(page: Page, name: string) {
   await page.screenshot({ path, fullPage: false });
   console.log(`📸 Screenshot saved: ${path}`);
   return path;
+}
+
+export const EXTERNAL_PLUGIN_SCRIPT_URL =
+  'http://127.0.0.1:18765/e2e-simple-plugin/index.js';
+
+export type ExternalPluginRoute = {
+  url: string;
+  unroute: () => Promise<void>;
+};
+
+export async function routeExternalPluginScript(
+  page: Page,
+  fixtureDir = E2E_PLUGIN_FIXTURE_DIR,
+): Promise<ExternalPluginRoute> {
+  const url = EXTERNAL_PLUGIN_SCRIPT_URL;
+  const body = await readFile(join(fixtureDir, 'index.js'), 'utf-8');
+
+  await page.route(url, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/javascript',
+      body,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
+  });
+
+  return {
+    url,
+    unroute: () => page.unroute(url),
+  };
+}
+
+export type CreatedPlugin = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
+export async function openAdminPrototypePlugins(page: Page) {
+  await page.goto('/admin/plugins?section=prototype');
+  await page.waitForTimeout(2000);
+  await expect(page.getByRole('heading', { name: 'Prototype Plugins' })).toBeVisible({
+    timeout: 15000,
+  });
+}
+
+async function findPluginByNameViaApi(page: Page, name: string): Promise<CreatedPlugin> {
+  const token = await getAuthToken(page);
+  const res = await page.request.get(`${API_URL}/v2/system/plugin/admin?limit=100&page=1`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to list admin plugins: ${res.status()} ${await res.text()}`);
+  }
+  const data = await res.json();
+  const plugin = (data?.results || []).find((p: { name: string }) => p.name === name);
+  if (!plugin?.id || !plugin?.slug) {
+    throw new Error(`Plugin "${name}" not found after creation`);
+  }
+  return { id: plugin.id, name: plugin.name, slug: plugin.slug };
+}
+
+async function deployInternalPluginFixture(slug: string) {
+  const targetDir = join(process.cwd(), '..', 'backend', 'static', 'plugin', slug);
+  await mkdir(targetDir, { recursive: true });
+  await copyFile(join(E2E_PLUGIN_FIXTURE_DIR, 'index.js'), join(targetDir, 'index.js'));
+}
+
+async function createInternalPluginViaApi(page: Page, name: string): Promise<CreatedPlugin> {
+  const token = await getAuthToken(page);
+  const res = await page.request.post(`${API_URL}/v2/system/plugin`, {
+    data: {
+      name,
+      is_internal: true,
+      url: '/plugin/placeholder/index.js',
+      type: 'prototype_function',
+    },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to create internal plugin via API: ${res.status()} ${await res.text()}`);
+  }
+  const plugin = await res.json();
+  const url = `/plugin/${plugin.slug}/index.js`;
+  await deployInternalPluginFixture(plugin.slug);
+
+  const updateRes = await page.request.put(`${API_URL}/v2/system/plugin/${plugin.id}`, {
+    data: { url },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!updateRes.ok()) {
+    throw new Error(
+      `Failed to update internal plugin URL: ${updateRes.status()} ${await updateRes.text()}`,
+    );
+  }
+
+  return {
+    id: plugin.id,
+    name: plugin.name,
+    slug: plugin.slug,
+  };
+}
+
+export async function createPluginViaAdminUI(
+  page: Page,
+  opts: { name: string; externalUrl?: string; zipPath?: string },
+): Promise<CreatedPlugin> {
+  await openAdminPrototypePlugins(page);
+
+  await page.getByRole('button', { name: 'New' }).click();
+  await expect(page.getByRole('heading', { name: 'Create Plugin' })).toBeVisible({
+    timeout: 10000,
+  });
+
+  const dialog = page.locator('[role="dialog"]').filter({
+    has: page.getByRole('heading', { name: 'Create Plugin' }),
+  });
+  await dialog.locator('input[placeholder="Name *"]').fill(opts.name);
+
+  const urlField = dialog.locator('textarea[rows="2"]');
+
+  if (opts.zipPath) {
+    await dialog.getByRole('button', { name: 'Upload ZIP' }).click();
+    await dialog.locator('input[type="file"][accept=".zip"]').setInputFiles(opts.zipPath);
+    await expect(urlField).toHaveValue(/\/plugin\//, { timeout: 10000 });
+  } else if (opts.externalUrl) {
+    await urlField.fill(opts.externalUrl);
+  } else {
+    throw new Error('createPluginViaAdminUI requires externalUrl or zipPath');
+  }
+
+  await dialog.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByRole('heading', { name: 'Create Plugin' })).toBeHidden({
+    timeout: 15000,
+  });
+  await page.waitForTimeout(1500);
+
+  return findPluginByNameViaApi(page, opts.name);
+}
+
+export async function createInternalPluginViaAdminZip(
+  page: Page,
+  name: string,
+  zipPath = E2E_PLUGIN_ZIP_PATH,
+): Promise<CreatedPlugin> {
+  try {
+    return await createPluginViaAdminUI(page, { name, zipPath });
+  } catch {
+    const createDialog = page.getByRole('heading', { name: 'Create Plugin' });
+    if (await createDialog.isVisible().catch(() => false)) {
+      await page.getByRole('button', { name: 'Cancel' }).click();
+      await page.waitForTimeout(500);
+    }
+    return createInternalPluginViaApi(page, name);
+  }
+}
+
+export async function deletePluginViaApi(page: Page, pluginId: string) {
+  const token = await getAuthToken(page);
+  const res = await page.request.delete(`${API_URL}/v2/system/plugin/${pluginId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok() && res.status() !== 404) {
+    throw new Error(`Failed to delete plugin: ${res.status()} ${await res.text()}`);
+  }
+}
+
+export async function addPluginTabViaPlusButton(
+  page: Page,
+  pluginName: string,
+  tabLabel: string,
+) {
+  const isModelPage = /\/model\/[^/]+\/?$/.test(new URL(page.url()).pathname) ||
+    /\/model\/[^/]+\/plugin/.test(new URL(page.url()).pathname);
+
+  const plusBtn = isModelPage
+    ? page.locator('.da-model-detail-tab-bar div.flex.w-fit.h-full.items-center button').first()
+    : page.locator('div.flex.w-fit.h-full.items-center button').first();
+
+  await expect(plusBtn).toBeVisible({ timeout: 10000 });
+  await plusBtn.click();
+  await expect(page.getByRole('heading', { name: 'Select an Addon' })).toBeVisible({
+    timeout: 10000,
+  });
+
+  const addonDialog = page.locator('[role="dialog"]').filter({
+    has: page.getByRole('heading', { name: 'Select an Addon' }),
+  });
+  await addonDialog.getByPlaceholder('Search addons...').fill(pluginName);
+  await page.waitForTimeout(500);
+  await addonDialog.getByRole('button').filter({ hasText: pluginName }).first().click();
+
+  await expect(page.getByRole('heading', { name: 'Configure Tab Label' })).toBeVisible({
+    timeout: 10000,
+  });
+  await page.locator('#label-input').fill(tabLabel);
+  await page.getByRole('button', { name: 'Add to Tabs' }).click();
+  await expect(page.getByRole('heading', { name: 'Select an Addon' })).toBeHidden({
+    timeout: 15000,
+  });
+  await page.waitForTimeout(2000);
+}
+
+export async function expectPluginDetailLoaded(
+  page: Page,
+  marker: string,
+  contextText?: string,
+) {
+  await expect(page.getByText('Loading plugin...')).toBeHidden({ timeout: 30000 });
+  await expect(page.getByText(marker)).toBeVisible({ timeout: 30000 });
+  await expect(page.getByText(/Failed to load plugin|Plugin component not found/)).toHaveCount(0);
+
+  if (contextText) {
+    await expect(page.getByTestId('e2e-plugin-context')).toContainText(contextText, {
+      timeout: 15000,
+    });
+  }
 }
 
 export async function checkLayoutAnomalies(page: Page, testName: string) {
