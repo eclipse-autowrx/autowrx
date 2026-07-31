@@ -159,16 +159,16 @@ export async function openPublicSiteConfig(page: Page) {
 
 export function getPublicConfigRow(page: Page, key: string): Locator {
   return page
-    .locator('div.bg-background.rounded-lg')
-    .filter({ has: page.locator('p', { hasText: key }) })
+    .locator('div.bg-background.rounded-lg.p-2')
+    .filter({ has: page.getByText(key, { exact: true }) })
     .first();
 }
 
 export async function editPublicConfigValueViaUI(page: Page, key: string, value: string) {
   const row = getPublicConfigRow(page, key);
   await expect(row).toBeVisible({ timeout: 15000 });
-  await row.locator('.bg-muted').first().click();
-  const input = row.locator('input[type="text"]').first();
+  await row.locator('.bg-muted.cursor-pointer').click();
+  const input = row.locator('input[data-slot="input"]').first();
   await expect(input).toBeVisible({ timeout: 10000 });
   await input.fill(value);
   await row.getByRole('button', { name: 'Save' }).click();
