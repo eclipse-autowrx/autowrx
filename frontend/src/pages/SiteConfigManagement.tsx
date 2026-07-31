@@ -233,6 +233,16 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
       'Allow non-admin model owners to add/manage addon tabs on model and prototype detail pages. Admin users can always configure addon tabs regardless of this setting.',
     category: 'model_prototype',
   },
+  {
+    key: 'DISABLE_CUSTOM_API_SETS',
+    scope: 'site',
+    value: false,
+    secret: false,
+    valueType: 'boolean',
+    description:
+      'When enabled, hides Custom API Schema / API Set management and all model/prototype UI for custom API sets.',
+    category: 'model_prototype',
+  },
 ]
 
 export const PREDEFINED_GENAI_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(
