@@ -9,6 +9,7 @@
     "test:prototype": "playwright test tests/prototype.spec.ts",
     "test:admin": "playwright test tests/admin.spec.ts",
     "test:layout": "playwright test tests/layout.spec.ts",
+    "test:site-config": "playwright test tests/site-config-restore-default.spec.ts",
     "test:smoke": "playwright test tests/auth.spec.ts tests/layout.spec.ts"
   },
   "devDependencies": {

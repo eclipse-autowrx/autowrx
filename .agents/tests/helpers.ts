@@ -123,6 +123,58 @@ export async function getAuthToken(page: Page): Promise<string> {
   return token;
 }
 
+export async function getAdminToken(page: Page): Promise<string> {
+  return getAuthToken(page);
+}
+
+export async function getSiteConfigValue(page: Page, key: string): Promise<string> {
+  const token = await getAuthToken(page);
+  const res = await page.request.get(`${API_URL}/v2/site-config/key/${key}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to get site config "${key}": ${res.status()} ${await res.text()}`);
+  }
+  const data = await res.json();
+  return String(data?.value ?? '');
+}
+
+export async function updateSiteConfigValue(page: Page, key: string, value: string): Promise<void> {
+  const token = await getAuthToken(page);
+  const res = await page.request.patch(`${API_URL}/v2/site-config/key/${key}`, {
+    data: { value },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to update site config "${key}": ${res.status()} ${await res.text()}`);
+  }
+}
+
+export async function openPublicSiteConfig(page: Page) {
+  await page.goto('/admin/site-config?section=public');
+  await expect(page.getByRole('heading', { name: 'Public Configurations' })).toBeVisible({
+    timeout: 15000,
+  });
+}
+
+export function getPublicConfigRow(page: Page, key: string): Locator {
+  return page
+    .locator('div.bg-background.rounded-lg')
+    .filter({ has: page.locator('p', { hasText: key }) })
+    .first();
+}
+
+export async function editPublicConfigValueViaUI(page: Page, key: string, value: string) {
+  const row = getPublicConfigRow(page, key);
+  await expect(row).toBeVisible({ timeout: 15000 });
+  await row.locator('.bg-muted').first().click();
+  const input = row.locator('input[type="text"]').first();
+  await expect(input).toBeVisible({ timeout: 10000 });
+  await input.fill(value);
+  await row.getByRole('button', { name: 'Save' }).click();
+  await page.waitForTimeout(1000);
+}
+
 export async function createTestModelViaApi(
   page: Page,
   name: string,
