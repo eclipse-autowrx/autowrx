@@ -382,7 +382,14 @@ export async function prepareRuntimePanelForLayoutCheck(page: Page) {
   const panel = getRuntimePanel(page);
   if (!(await panel.isVisible().catch(() => false))) return;
 
-  await expandRuntimePanel(page);
+  const addRuntimeBtn = page.locator('[data-id="btn-add-runtime"]').first();
+  const isExpanded = await addRuntimeBtn.isVisible().catch(() => false);
+
+  if (!isExpanded) {
+    await page.locator('[data-id="btn-expand-runtime-control"]').first().click();
+    await page.waitForTimeout(500);
+    await expect(addRuntimeBtn).toBeVisible({ timeout: 5000 });
+  }
 }
 
 export async function getNavBarActionsViaApi(page: Page): Promise<NavBarActionConfig[]> {

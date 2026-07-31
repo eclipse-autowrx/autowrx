@@ -56,6 +56,7 @@ const ModelDetailLayout = () => {
   const { data: fetchedPrototypes } = useListModelPrototypes(
     model ? model.id : '',
   )
+  const [activeModelApis] = useModelStore((state) => [state.activeModelApis])
 
   const { setLastAccessedModel } = useLastAccessedModel()
 
@@ -81,6 +82,10 @@ const ModelDetailLayout = () => {
   const allowNonAdminAddonConfig = useSiteConfig(
     'ALLOW_NON_ADMIN_ADDON_CONFIG',
     true,
+  )
+  const disableCustomApiSets = useSiteConfig(
+    'DISABLE_CUSTOM_API_SETS',
+    false,
   )
 
   // Update store when model is fetched
@@ -178,12 +183,18 @@ const ModelDetailLayout = () => {
   const canManageModelUI = (isModelOwner || hasWritePermission) && !!allowNonAdminAddonConfig
 
   const numberOfPrototypes = fetchedPrototypes?.length || 0
+  const numberOfApis = activeModelApis?.length || 0
 
   // Count API sets: 1 for COVESA + number of custom_api_sets
   const customApiSetCount = (model?.custom_api_sets || []).length
-  const totalApiSetCount = 1 + customApiSetCount // 1 for COVESA
-  // Hide count if 0 or 1
-  const vehicleApiCount = totalApiSetCount > 1 ? totalApiSetCount : null
+  const totalApiSetCount = 1 + customApiSetCount
+  const vehicleApiCount = disableCustomApiSets
+    ? numberOfApis > 0
+      ? numberOfApis
+      : null
+    : totalApiSetCount > 1
+      ? totalApiSetCount
+      : null
 
   const tabCounts = { vehicleApiCount, numberOfPrototypes }
 
