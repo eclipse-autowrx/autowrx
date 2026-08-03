@@ -13,6 +13,8 @@ export const TEST_USER = {
   name: 'Test User',
 };
 
+export const LIBRARY_SEARCH_SELECTOR = 'input[placeholder="Search prototypes"]';
+
 export async function loginAs(page: Page, email: string, password: string) {
   await page.goto('/');
   await page.waitForTimeout(1500);
@@ -42,10 +44,31 @@ export async function logout(page: Page) {
   await page.waitForTimeout(1500);
 }
 
-export async function saveScreenshot(page: Page, name: string) {
-  // Wait for network to be idle and any animations to settle before capturing
-  await page.waitForLoadState('networkidle').catch(() => {});
+export async function searchPrototypeLibrary(page: Page, query: string) {
+  const searchInput = page.locator(LIBRARY_SEARCH_SELECTOR).first();
+  await expect(searchInput).toBeVisible({ timeout: 10000 });
+  await searchInput.fill(query);
   await page.waitForTimeout(1000);
+}
+
+export async function prepareRuntimePanelForLayoutCheck(page: Page) {
+  const panel = page.locator('[data-id="runtime-control-panel"]').first();
+  if (!(await panel.isVisible().catch(() => false))) return;
+
+  const addRuntimeBtn = page.locator('[data-id="btn-add-runtime"]').first();
+  const isExpanded = await addRuntimeBtn.isVisible().catch(() => false);
+
+  if (!isExpanded) {
+    await page.locator('[data-id="btn-expand-runtime-control"]').first().click();
+    await page.waitForTimeout(500);
+    await expect(addRuntimeBtn).toBeVisible({ timeout: 5000 });
+  }
+}
+
+export async function saveScreenshot(page: Page, name: string) {
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(500);
   const path = `tests/screenshots/${name}-${Date.now()}.png`;
   await page.screenshot({ path, fullPage: false });
   console.log(`📸 Screenshot saved: ${path}`);
@@ -53,18 +76,25 @@ export async function saveScreenshot(page: Page, name: string) {
 }
 
 export async function checkLayoutAnomalies(page: Page, testName: string) {
-  // Check for common layout issues (skip hidden inputs — they're intentionally zero-size)
   const overlapping = await page.evaluate(() => {
+    const panel = document.querySelector('[data-id="runtime-control-panel"]');
+    const panelRect = panel?.getBoundingClientRect();
+    const isPanelCollapsed = panelRect ? panelRect.width <= 60 : false;
+
     const elements = document.querySelectorAll('button, a, input:not([type="hidden"])');
-    let issues: string[] = [];
-    elements.forEach(el => {
+    const issues: string[] = [];
+    elements.forEach((el) => {
       const input = el as HTMLInputElement;
       if (input.type === 'hidden') return;
+
+      if (isPanelCollapsed && panel?.contains(el)) return;
+
       const style = window.getComputedStyle(el);
       if (style.display === 'none' || style.visibility === 'hidden') return;
+
       const rect = el.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) {
-        issues.push(`Zero-size visible element: ${el.tagName} "${el.textContent?.slice(0,30)}"`);
+        issues.push(`Zero-size visible element: ${el.tagName} "${el.textContent?.slice(0, 30)}"`);
       }
     });
     return issues;

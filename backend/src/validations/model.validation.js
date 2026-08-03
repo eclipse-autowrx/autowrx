@@ -14,7 +14,8 @@ const createModel = {
   body: Joi.object().keys({
     extend: Joi.any(),
     custom_apis: Joi.string().custom(jsonString),
-    api_version: Joi.string(),
+    // null = custom model (no COVESA base); omit field or pass null
+    api_version: Joi.string().allow(null),
     api_data_url: Joi.string(),
     cvi: Joi.string().custom(jsonString),
     extended_apis: Joi.array().items(Joi.any()),
@@ -78,7 +79,7 @@ const updateModel = {
     .keys({
       extend: Joi.any(),
       custom_apis: Joi.string().custom(jsonString),
-      api_version: Joi.string(),
+      api_version: Joi.string().allow(null),
       cvi: Joi.string().custom(jsonString),
       main_api: Joi.string().max(255),
       model_home_image_file: Joi.string().allow(''),

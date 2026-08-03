@@ -21,6 +21,7 @@ import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import { useQueryClient } from '@tanstack/react-query'
 import { useToast } from '@/components/molecules/toaster/use-toast'
+import { useSiteConfig } from '@/utils/siteConfig'
 
 // Default V2C API list from JSON files (Swagger-compatible structure)
 const DEFAULT_V2C = [
@@ -643,6 +644,7 @@ const PageVehicleApi = () => {
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const [isPickerOpen, setIsPickerOpen] = useState(false)
+  const customApiSetsEnabled = !useSiteConfig('DISABLE_CUSTOM_API_SETS', false)
 
   const { data: model, refetch: refetchModel } = useCurrentModel()
   const [hasWritePermission] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model_id])
@@ -656,6 +658,18 @@ const PageVehicleApi = () => {
   // Otherwise, show plugin instance tab
   const isCovesaTab = !instance_id || instance_id === 'covesa'
 
+  // Redirect away from custom API set routes when the feature is disabled
+  useEffect(() => {
+    if (
+      !customApiSetsEnabled &&
+      instance_id &&
+      instance_id !== 'covesa' &&
+      model_id
+    ) {
+      navigate(`/model/${model_id}/api`, { replace: true })
+    }
+  }, [customApiSetsEnabled, instance_id, model_id, navigate])
+
   // Get custom_api_sets from model and normalize to strings
   const customApiSetIds = (model?.custom_api_sets || []).map((id: any) => {
     if (typeof id === 'string') return id
@@ -664,10 +678,12 @@ const PageVehicleApi = () => {
   }).filter((id: any): id is string => !!id && typeof id === 'string')
   
   // Filter out 'covesa' from set IDs if it somehow got added
-  const validSetIds = customApiSetIds.filter(id => id !== 'covesa')
+  const validSetIds = customApiSetsEnabled
+    ? customApiSetIds.filter(id => id !== 'covesa')
+    : []
 
   const handleAddInstance = async (instanceId: string) => {
-    if (!model) return
+    if (!model || !customApiSetsEnabled) return
 
     try {
       // Add set to model.custom_api_sets
@@ -714,23 +730,25 @@ const PageVehicleApi = () => {
   }
 
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="w-full h-full flex flex-col da-page-vehicle-api">
       {/* Tab Bar */}
-      <div className="flex min-h-[52px] border-b border-muted-foreground/50 bg-background shrink-0">
-        <div className="flex w-fit">
-          <ModelApiTabs
-            customApiSetIds={validSetIds}
-            onAddInstance={() => setIsPickerOpen(true)}
-            isModelOwner={hasWritePermission}
-            covesaApiCount={covesaApiCount}
-          />
+      {customApiSetsEnabled && (
+        <div className="flex min-h-[52px] border-b border-muted-foreground/50 bg-background da-page-vehicle-api-tab-bar shrink-0">
+          <div className="flex w-fit">
+            <ModelApiTabs
+              customApiSetIds={validSetIds}
+              onAddInstance={() => setIsPickerOpen(true)}
+              isModelOwner={hasWritePermission}
+              covesaApiCount={covesaApiCount}
+            />
+          </div>
+          <div className="grow"></div>
         </div>
-        <div className="grow"></div>
-      </div>
+      )}
 
       {/* Content Area */}
       <div className="flex-1 min-h-0 overflow-hidden">
-        {isCovesaTab ? (
+        {isCovesaTab || !customApiSetsEnabled ? (
           <ViewApiCovesa />
         ) : instance_id ? (
           <ViewCustomApiSet key={instance_id} instanceId={instance_id} />
@@ -740,7 +758,7 @@ const PageVehicleApi = () => {
       </div>
 
       {/* Instance Picker Dialog */}
-      {hasWritePermission && (
+      {hasWritePermission && customApiSetsEnabled && (
         <CustomApiSetPicker
           open={isPickerOpen}
           onClose={() => setIsPickerOpen(false)}

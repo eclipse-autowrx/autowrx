@@ -4,11 +4,18 @@
 const httpStatus = require('http-status');
 const pick = require('../utils/pick');
 const catchAsync = require('../utils/catchAsync');
-const { projectTemplateService } = require('../services');
+const { projectTemplateService, permissionService } = require('../services');
+const { PERMISSIONS } = require('../config/roles');
+
+const isAdminUser = async (req) =>
+  req.user && (await permissionService.hasPermission(req.user.id, PERMISSIONS.ADMIN));
 
 const list = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['name']);
+  const filter = pick(req.query, ['name', 'visibility']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
+  if (!(await isAdminUser(req))) {
+    filter.visibility = 'public';
+  }
   const result = await projectTemplateService.query(filter, options);
   res.send(result);
 });
@@ -16,6 +23,9 @@ const list = catchAsync(async (req, res) => {
 const getById = catchAsync(async (req, res) => {
   const doc = await projectTemplateService.getById(req.params.id);
   if (!doc) return res.status(httpStatus.NOT_FOUND).send({ message: 'Not found' });
+  if (doc.visibility === 'private' && !(await isAdminUser(req))) {
+    return res.status(httpStatus.NOT_FOUND).send({ message: 'Not found' });
+  }
   res.send(doc);
 });
 

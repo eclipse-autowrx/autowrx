@@ -51,6 +51,7 @@ import { listModelsLite } from '@/services/model.service'
 import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
 import { useDefaultModelImage } from '@/utils/siteConfig'
 import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
+import { useToast } from '@/components/molecules/toaster/use-toast'
 
 const getCreatedById = (createdBy: any): string =>
   typeof createdBy === 'object' ? createdBy?.id ?? '' : createdBy ?? ''
@@ -157,6 +158,7 @@ const DaStateControl: React.FC<{
 
 const PageModelDetail = () => {
   const [model] = useModelStore((state) => [state.model as Model])
+  const { toast } = useToast()
   const [imageError, setImageError] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -249,7 +251,7 @@ const PageModelDetail = () => {
 
   if (!model || !model.id) {
     return (
-      <div className="h-full w-full p-4 bg-background rounded-lg flex items-center justify-center">
+      <div className="h-full w-full p-4 bg-background da-page-model-detail rounded-lg flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Spinner size={32} />
           <p className="text-base text-muted-foreground">Loading model...</p>
@@ -259,7 +261,7 @@ const PageModelDetail = () => {
   }
 
   return (
-    <div className="flex flex-col bg-background p-4 h-full rounded-md overflow-auto">
+    <div className="flex flex-col bg-background da-page-model-detail p-4 h-full rounded-md overflow-auto">
       <div className="flex h-fit pb-3">
         <div className="flex w-full justify-between items-center">
           <div className="flex items-center">
@@ -341,6 +343,12 @@ const PageModelDetail = () => {
                   await downloadModelZip(model)
                 } catch (e) {
                   console.error(e)
+                  toast({
+                    title: 'Export failed',
+                    description:
+                      'Could not export this model. Please try again.',
+                    variant: 'destructive',
+                  })
                 }
                 setIsExporting(false)
               }}

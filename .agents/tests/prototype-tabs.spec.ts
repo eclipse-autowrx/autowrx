@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginAsAdmin, saveScreenshot, checkLayoutAnomalies } from './helpers';
+import { loginAsAdmin, saveScreenshot, checkLayoutAnomalies, prepareRuntimePanelForLayoutCheck } from './helpers';
 
 // Helper: get first available prototype URL
 async function getFirstPrototypeUrl(page: any): Promise<{ modelId: string; protoId: string } | null> {
@@ -75,11 +75,13 @@ test.describe('Prototype Tabs - Layout Check', () => {
 
     await page.goto(`/model/${modelId}/library/prototype/${protoId}/dashboard`);
     await page.waitForTimeout(6000);
+    await prepareRuntimePanelForLayoutCheck(page);
     await saveScreenshot(page, 'tab-dashboard');
 
     const anomalies = await checkLayoutAnomalies(page, 'tab-dashboard');
     if (anomalies.length > 0) console.warn('⚠️ Dashboard tab anomalies:', anomalies);
 
+    await expect(page.locator('[data-id="tab-dashboard"]').first()).toBeVisible({ timeout: 5000 });
     const url = page.url();
     expect(url).toContain('/dashboard');
     console.log('✅ Dashboard tab loaded');
@@ -117,9 +119,14 @@ test.describe('Prototype Tabs - Layout Check', () => {
       { name: 'Customer Journey',  route: `${BASE}/journey`,   dataId: 'tab-journey' },
     ];
 
+    const tabsWithRuntimePanel = new Set(['tab-overview', 'tab-code', 'tab-dashboard']);
+
     for (const tab of tabs) {
       await page.goto(tab.route);
       await page.waitForTimeout(5000);
+      if (tabsWithRuntimePanel.has(tab.dataId)) {
+        await prepareRuntimePanelForLayoutCheck(page);
+      }
       await saveScreenshot(page, `tab-sequential-${tab.dataId}`);
 
       const anomalies = await checkLayoutAnomalies(page, tab.dataId);

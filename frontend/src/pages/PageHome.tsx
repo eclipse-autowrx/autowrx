@@ -57,7 +57,7 @@ const PageHome = () => {
   }
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-12 da-page-home">
       {homeElements.map((element, index) => {
         const Component = getHomeComponent(element.type) as any
         if (!Component) return null

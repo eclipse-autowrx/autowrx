@@ -49,7 +49,7 @@ import DaDialog from './DaDialog'
 import { Button } from '../atoms/button'
 import { Input } from '../atoms/input'
 import useCurrentModel from '@/hooks/useCurrentModel'
-import useListModelPrototypes from '@/hooks/useListModelPrototypes'
+import { useListModelPrototypes } from '@/hooks/usePrototypeQueries'
 import PrototypeTabStaging from '@/components/organisms/PrototypeTabStaging'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 

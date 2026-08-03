@@ -39,6 +39,7 @@ import DaMockManager from './DaMockManager'
 import PrototypeVarsWatch from './PrototypeVarsWatch'
 import DaRemoteCompileRust from '../remote-compiler/DaRemoteCompileRust'
 import { useSystemUI } from '@/hooks/useSystemUI'
+import { useUsedVehicleApis } from '@/hooks/useUsedVehicleApis'
 
 const AlwaysScrollToBottom = () => {
   const elementRef = useRef<HTMLDivElement>(null)
@@ -57,8 +58,8 @@ interface DaRuntimeControlProps {
 
 const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
   const { data: currentUser } = useSelfProfileQuery()
-  const [prototype, activeModelApis] = useModelStore(
-    (state) => [state.prototype as Prototype, state.activeModelApis],
+  const [prototype] = useModelStore(
+    (state) => [state.prototype as Prototype],
     shallow,
   )
   const { data: model } = useCurrentModel()
@@ -101,7 +102,11 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
   const [mockSignals, setMockSignals] = useState<any[]>([])
   const [curRuntimeInfo, setCurRuntimeInfo] = useState<any>(null)
   const [code, setCode] = useState<string>('')
-  const [usedApis, setUsedApis] = useState<any[]>([])
+  const usedApiObjects = useUsedVehicleApis(code)
+  const usedApis = useMemo(
+    () => usedApiObjects.map((api) => api.name),
+    [usedApiObjects],
+  )
   const [requestContent, setRequestContent] = useState<string>('')
   const [requestMode, setRequestMode] = useState<string>('')
   const [showRtDialog, setShowRtDialog] = useState<boolean>(false)
@@ -109,6 +114,7 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
   const [listenerOnRt, setListenerOnRt] = useState<any[]>([])
   const [isAdvantageMode, setIsAdvantageMode] = useState<number>(-5)
   const rustCompilerRef = useRef<any>()
+  
 
   useEffect(() => {
     localStorage.setItem('customKitServer', customKitServer.trim())
@@ -147,26 +153,6 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
       setCode('')
     }
   }, [prototype?.code, prototype?.id])
-
-  useEffect(() => {
-    if (!code || !activeModelApis || activeModelApis.length === 0) {
-      setUsedApis([])
-      return
-    }
-    let dashboardCfg = prototype?.widget_config || ''
-    let apis: any[] = []
-    activeModelApis.forEach((item: any) => {
-      if (item.shortName) {
-        if (
-          code.includes(item.shortName) ||
-          dashboardCfg.includes(item.shortName)
-        ) {
-          apis.push(item.name)
-        }
-      }
-    })
-    setUsedApis(apis)
-  }, [code, activeModelApis, prototype?.widget_config])
 
   const handleRun = () => {
     setIsRunning(true)
@@ -732,6 +718,7 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
 
             {activeTab === 'apis' && (
               <DaApisWatch
+                usedAPIs={usedApis}
                 requestWriteSignalValue={(obj: any) => {
                   writeSignalValue(obj)
                 }}

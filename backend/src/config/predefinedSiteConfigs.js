@@ -219,12 +219,14 @@ const PREDEFINED_SITE_CONFIGS = [
     category: 'model_prototype',
   },
   {
-    key: 'GRADIENT_HEADER',
+    key: 'DISABLE_CUSTOM_API_SETS',
     scope: 'site',
     value: false,
     secret: false,
     valueType: 'boolean',
-    description: 'Apply a primary-to-secondary gradient to the main header.',
+    description:
+      'When enabled, hides Custom API Schema / API Set management and all model/prototype UI for custom API sets.',
+    category: 'model_prototype',
   },
   {
     key: 'PUBLIC_VIEWING',

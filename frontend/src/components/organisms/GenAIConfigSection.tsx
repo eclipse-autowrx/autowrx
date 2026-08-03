@@ -22,8 +22,8 @@ import { pushSiteConfigEdit } from '@/utils/siteConfigHistory'
 import type { SiteConfigEditEntry } from '@/utils/siteConfigHistory'
 
 import {
-  deleteConfigsById,
   reloadSoon,
+  restoreConfigsFromSnapshot,
   upsertConfigFromHistory,
 } from '@/utils/siteConfigAdmin'
 
@@ -97,7 +97,7 @@ const GenAIConfigSection: React.FC = () => {
   const handleFactoryReset = async () => {
     if (
       !window.confirm(
-        'Restore all GenAI configs to default values? This will reset ProtoPilot / GenAI settings to their defaults.',
+        'Restore all GenAI configs to the deployment snapshot? This will reset ProtoPilot / GenAI settings to their deployed values.',
       )
     ) {
       return
@@ -106,34 +106,12 @@ const GenAIConfigSection: React.FC = () => {
     try {
       setIsLoading(true)
 
-      const predefinedGenAIConfigs = PREDEFINED_SITE_CONFIGS.filter(
-        (config) => config.category === 'genai',
-      )
-
-      // Delete all GenAI configs
-      const allConfigs = await configManagementService.getConfigs({
-        secret: false,
-        scope: 'site',
-        category: 'genai',
-        limit: 100,
-      })
-
-      const { failed } = await deleteConfigsById(allConfigs.results || [])
-      failed.forEach((f) =>
-        console.warn('Failed to delete GenAI config', f.key, f.reason),
-      )
-
-      // Recreate defaults
-      if (predefinedGenAIConfigs.length > 0) {
-        await configManagementService.bulkUpsertConfigs({
-          configs: predefinedGenAIConfigs,
-        })
-      }
+      await restoreConfigsFromSnapshot({ categories: ['genai'] })
 
       toast({
         title: 'Restored',
         description:
-          'GenAI configs restored to default values. Reloading page...',
+          'GenAI configs restored from deployment snapshot. Reloading page...',
       })
 
       reloadSoon()

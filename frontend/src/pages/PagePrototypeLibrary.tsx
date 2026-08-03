@@ -22,7 +22,7 @@ import { Spinner } from '@/components/atoms/spinner'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import useCurrentModel from '@/hooks/useCurrentModel'
-import useListModelPrototypes from '@/hooks/useListModelPrototypes'
+import { useListModelPrototypes } from '@/hooks/usePrototypeQueries'
 import { createPrototypeService } from '@/services/prototype.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { zipToPrototype } from '@/lib/zipUtils'
@@ -163,7 +163,7 @@ const PagePrototypeLibrary = () => {
   }
 
   return (
-    <div className="flex flex-col w-full h-full rounded-md overflow-y-auto bg-background">
+    <div className="flex flex-col w-full h-full rounded-md overflow-y-auto bg-background da-page-prototype-library">
       <div className="flex flex-col w-full h-full px-6 lg:container">
         <div className="flex w-full items-center">
           {user ? (

@@ -7,7 +7,6 @@
 // SPDX-License-Identifier: MIT
 
 import { Button } from '@/components/atoms/button'
-import { cn } from '@/lib/utils'
 import { Input } from '@/components/atoms/input'
 import { Label } from '@/components/atoms/label'
 import {
@@ -34,7 +33,7 @@ import useListVSSVersions from '@/hooks/useListVSSVersions'
 import DaFileUploadButton from '@/components/atoms/DaFileUploadButton'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { listModelTemplates } from '@/services/modelTemplate.service'
-import { getConfig, useSiteConfig } from '@/utils/siteConfig'
+import { getConfig } from '@/utils/siteConfig'
 
 const getCreatedById = (createdBy: any): string =>
   typeof createdBy === 'object' ? createdBy?.id ?? '' : createdBy ?? ''
@@ -67,7 +66,6 @@ const FormCreateModel = () => {
   const { toast } = useToast()
 
   const { data: currentUser } = useSelfProfileQuery()
-  const gradientHeader = useSiteConfig('GRADIENT_HEADER', false)
 
   const ownedModelNames = useMemo(
     () =>
@@ -318,7 +316,7 @@ const FormCreateModel = () => {
       <Button
         disabled={loading || uploading || !data.name.trim() || isDuplicateName}
         type="submit"
-        className={cn('mt-8 w-full', gradientHeader && 'bg-gradient-to-r from-primary to-secondary border-0')}
+        className="mt-8 w-full da-form-create-model-submit"
         data-id="form-create-model-btn-submit"
       >
         {loading && <TbLoader className="mr-2 animate-spin text-lg" />}
