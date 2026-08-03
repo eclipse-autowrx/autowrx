@@ -71,4 +71,4 @@ The only place a component is loaded dynamically from a **remote URL** is the
 plugin loader, `organisms/PluginPageRender.tsx`, which injects a plugin bundle
 as a `<script>` tag and polls for its registration. See
 [../../architecture/plugin-system.md](../../architecture/plugin-system.md) and
-[../../guides/plugin/02-architecture.md](../../guides/plugin/02-architecture.md).
+[../../guides/plugin/README.md](../../guides/plugin/README.md).
