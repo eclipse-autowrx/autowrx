@@ -66,6 +66,11 @@ workerSrc: ["'self'", "blob:", "*"],
 
 ## Adding New CDN Sources
 
+> ℹ️ The shipped policy already allows `*` for script/style/connect/font/img
+> sources, so adding a specific CDN origin is only relevant **once the policy
+> is tightened** away from the wildcard. The examples below assume such a
+> restrictive policy.
+
 If you need to add another CDN (e.g., Google Fonts, other libraries), update the relevant directives in `backend/src/app.js`:
 
 ### Example: Adding Google Fonts

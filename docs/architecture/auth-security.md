@@ -179,7 +179,7 @@ back to the `STRICT_AUTH` env — `STRICT_AUTH=false` opens all flags,
 - **CORS** (`config/config.js`) — `origin` is a function validating each request
   against a **regex allowlist** built from `CORS_ORIGINS` (auto-prefixed
   `http`/`https`); `credentials: true` for the cross-site refresh cookie. Matches
-  [CORS_CONFIGURATION.md](../reference/cors.md).
+  [CORS configuration](../reference/cors.md).
 - **Helmet / CSP** — set in `app.js` for both dev and prod. **⚠️ Reality check:**
   the shipped CSP is effectively **wildcard-open** (`defaultSrc ['*']`,
   `scriptSrc [... '*']`, `connectSrc ['*']`); only `objectSrc: 'none'` is
