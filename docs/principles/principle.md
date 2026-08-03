@@ -43,7 +43,7 @@ function HomePage() {
 
 **CORRECT - Page as a simple composer:**
 ```tsx
-// src/pages/HomePage.js
+// src/pages/PageHome.tsx  (component names below are illustrative)
 import { PageLayout } from '../layouts';
 import { Banner, PopularPrototypeList } from '../organisms';
 
@@ -131,11 +131,11 @@ This means a component should be responsible for one piece of functionality. As 
 ### (O) Open/Closed Principle (OCP)
 > Software entities should be open for extension, but closed for modification.
 
-Our **Dynamic Component Architecture** is a prime example of this. The core rendering logic never needs to be modified. To add new functionality, you simply create and register a new component.
+Config-driven pages illustrate this. The home page, for example, reads a `CFG_HOME_CONTENT` site config and maps each element's `type` to a real component through a fixed lookup table (`frontend/src/utils/homeComponentMap.ts`). The renderer itself never changes — to add a new element type you add one entry to the map plus one component file. For fully dynamic, runtime extension (without rebuilding the app), plugins are loaded from a URL by `PluginPageRender.tsx` (see the [Plugin guide](../guides/plugin/README.md)); there is no central runtime component registry.
 
 **INCORRECT - Modifying the core renderer:**
 ```jsx
-// To add a new component, you MUST edit this file.
+// To add a new element type, you MUST edit this switch.
 function renderComponent(type, props) {
   switch (type) {
     case 'banner': return <Banner {...props} />;
@@ -147,20 +147,21 @@ function renderComponent(type, props) {
 }
 ```
 
-**CORRECT - Extending via a registry:**
-```jsx
-// The renderer is never modified. It's closed for modification.
-function renderComponentByTypeName(type, props) {
-  const Component = ComponentRegistry.get(type)?.component;
-  return Component ? <Component {...props} /> : null;
+**CORRECT - Extending via a lookup map:**
+```tsx
+// The renderer is never modified — it looks the type up in a map you extend.
+// (This is exactly how frontend/src/utils/homeComponentMap.ts works.)
+import type { ComponentType } from 'react'
+
+const componentMap: Record<string, ComponentType<any>> = {
+  'hero': Banner,
+  'new-feature': NewFeature,   // add a type + its component; nothing else changes
 }
 
-// To add a new component, you create a new file and register it.
-// The system is open for extension.
-// in NewFeature.js
-import { ComponentRegistry } from '../lib/ComponentRegistry';
-const NewFeature = (props) => <div>...</div>;
-ComponentRegistry.register('new-feature', NewFeature);
+function renderComponent(type, props) {
+  const Component = componentMap[type]
+  return Component ? <Component {...props} /> : null
+}
 ```
 
 ### (L) Liskov Substitution Principle (LSP)
@@ -241,7 +242,7 @@ const UserAvatar = ({ avatarUrl, name }) => (
 ### (D) Dependency Inversion Principle (DIP)
 > High-level modules should not depend on low-level modules. Both should depend on abstractions.
 
-In our architecture, a high-level module like a `Page` should not directly depend on the concrete implementation of low-level components like `Banner` or `ProductList`. Instead, it should depend on an abstraction—in our case, the `renderComponentByTypeName` function and the Component Registry.
+In our architecture, a high-level module like a `Page` should not directly depend on the concrete implementation of low-level components like `Banner` or `ProductList`. Instead, it should depend on an abstraction — in our case, the `type` → component lookup map (e.g. `frontend/src/utils/homeComponentMap.ts`) rather than importing concrete components directly.
 
 **INCORRECT - High-level page depends directly on low-level components:**
 ```tsx
@@ -265,14 +266,17 @@ function HomePage({ config }) {
 **CORRECT - Page depends on an abstraction:**
 ```tsx
 // This page has no direct knowledge of Banner, ProductList, etc.
-// It only depends on the rendering abstraction.
-import { renderComponentByTypeName } from '../lib/renderComponentByTypeName';
+// It only depends on the type -> component map (an abstraction).
+import { homeComponentMap } from '@/utils/homeComponentMap';
 
-// The page is now decoupled and driven by data, not code.
-function HomePage({ config }) {
+// The page is now decoupled and driven by config data, not by concrete imports.
+function PageHome({ config }) {
   return (
     <main>
-      {config.rows.map(row => renderComponentByTypeName(row.type, row))}
+      {config.rows.map(row => {
+        const Component = homeComponentMap[row.type]
+        return Component ? <Component key={row.type} {...row} /> : null
+      })}
     </main>
   );
 }
