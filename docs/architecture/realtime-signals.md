@@ -44,8 +44,7 @@ flowchart LR
 
 - **Server URL** — the `kitServerUrl` prop, resolved by callers from the
   `RUNTIME_SERVER_URL` site config → `config.runtime.url`
-  (`https://kit.digitalauto.tech`), overridable by a user's `customKitServer`
-  (localStorage). Extra options come from `RUNTIME_SERVER_CONFIG`.
+  (`https://kit.digitalauto.tech`). Extra options come from `RUNTIME_SERVER_CONFIG`.
 - **Connect / register** — on connect it emits `register_client` `{ username,
   user_id, domain }` (and `unregister_client` on cleanup), then
   `messageToKit { cmd: 'list-all-kits' }` to discover kits.
@@ -111,7 +110,6 @@ connector(s) and drives execution:
   `stop-app` to widget iframes.
 - Tabs: Terminal (logs), Signals Watch (`DaApisWatch`), Vars Watch, Mock Services
   (`DaMockManager`).
-- A config dialog lets the user point at a custom kit server.
 
 ---
 
