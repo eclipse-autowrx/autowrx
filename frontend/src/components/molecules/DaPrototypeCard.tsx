@@ -16,22 +16,20 @@ import { Prototype } from '@/types/model.type'
 import { HiStar } from 'react-icons/hi'
 import {
   TbCloudDown,
-  TbCode,
   TbDotsVertical,
   TbDownload,
   TbEdit,
-  TbGauge,
   TbLoader,
   TbPhotoEdit,
   TbTerminal2,
   TbTrashX,
 } from 'react-icons/tb'
 import { Avatar, AvatarFallback, AvatarImage } from '../atoms/avatar'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import DaTooltip from './DaTooltip'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import useCanEditPrototype from '@/hooks/useCanEditPrototype'
-import { useSiteConfig, useDefaultPrototypeImage } from '@/utils/siteConfig'
+import { useDefaultPrototypeImage } from '@/utils/siteConfig'
 import {
   ContextMenu,
   ContextMenuContent,
@@ -80,7 +78,6 @@ export const DaPrototypeCard = ({
   showStats = true,
 }: DaPrototypeCardProps) => {
   const { data: user } = useSelfProfileQuery()
-  const enableContextMenu = useSiteConfig('PROTOTYPE_ITEM_MENU_CONTEXT', false)
   const defaultPrototypeImage = useDefaultPrototypeImage()
   const queryClient = useQueryClient()
   const deletePrototype = useMutation({
@@ -310,35 +307,6 @@ export const DaPrototypeCard = ({
                     </div>
                   )}
                   <div className="grow" />
-                  {user && !isOwner && !enableContextMenu && (
-                    <div className="flex w-fit justify-end items-center gap-2 ml-2">
-                      <DaTooltip tooltipMessage="View Code" tooltipDelay={300}>
-                        <Link
-                          to={`/model/${prototype.model_id}/library/prototype/${prototype.id}/code`}
-                          className="flex"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="p-1 rounded-full bg-white opacity-80 hover:opacity-100">
-                            <TbCode className="size-4 text-foreground" />
-                          </div>
-                        </Link>
-                      </DaTooltip>
-                      <DaTooltip
-                        tooltipMessage="View Dashboard"
-                        tooltipDelay={300}
-                      >
-                        <Link
-                          to={`/model/${prototype.model_id}/library/prototype/${prototype.id}/dashboard`}
-                          className="flex"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="p-1 rounded-full bg-white opacity-80 hover:opacity-100">
-                            <TbGauge className="size-4 text-foreground" />
-                          </div>
-                        </Link>
-                      </DaTooltip>
-                    </div>
-                  )}
                 </div>
               </div>
             </>
@@ -444,7 +412,7 @@ export const DaPrototypeCard = ({
         }
       }}
     >
-      {enableContextMenu && isOwner ? (
+      {isOwner ? (
         <ContextMenu>
           <ContextMenuTrigger asChild>{cardContent}</ContextMenuTrigger>
           <ContextMenuContent
@@ -459,7 +427,7 @@ export const DaPrototypeCard = ({
             )}
           </ContextMenuContent>
         </ContextMenu>
-      ) : enableContextMenu ? (
+      ) : (
         <div
           onContextMenu={(e) => {
             e.preventDefault()
@@ -472,8 +440,6 @@ export const DaPrototypeCard = ({
         >
           {cardContent}
         </div>
-      ) : (
-        cardContent
       )}
 
       <DaDialog
