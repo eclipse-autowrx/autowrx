@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginAsAdmin, saveScreenshot, checkLayoutAnomalies, prepareRuntimePanelForLayoutCheck } from './helpers';
+import { loginAsAdmin, saveScreenshot, checkLayoutAnomalies, prepareRuntimePanelForLayoutCheck, waitForPrototypeTabs } from './helpers';
 
 // Helper: get first available prototype URL
 async function getFirstPrototypeUrl(page: any): Promise<{ modelId: string; protoId: string } | null> {
@@ -145,7 +145,7 @@ test.describe('Prototype Tabs - Layout Check', () => {
     const { modelId, protoId } = ids;
 
     await page.goto(`/model/${modelId}/library/prototype/${protoId}/view`);
-    await page.waitForTimeout(5000);
+    await waitForPrototypeTabs(page);
     await saveScreenshot(page, 'tab-bar-overview');
 
     // Check tab bar has at least the main tabs

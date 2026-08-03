@@ -5,6 +5,7 @@ import {
   createTestModelViaApi,
   createTestPrototype,
   setPrototypeStateViaUI,
+  boostPrototypePopularity,
   expectPrototypeInPopular,
 } from './helpers';
 
@@ -21,6 +22,7 @@ test.describe('Home Popular Prototypes', () => {
     const modelId = await createTestModelViaApi(page, modelName, 'public');
     const { prototypeId } = await createTestPrototype(page, protoName, modelId);
     await setPrototypeStateViaUI(page, 'Released', modelId, prototypeId);
+    await boostPrototypePopularity(page, prototypeId);
 
     await expectPrototypeInPopular(page, protoName, true);
     await saveScreenshot(page, 'home-popular-visible');

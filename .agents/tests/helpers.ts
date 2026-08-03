@@ -283,18 +283,47 @@ export function getPopularSection(page: Page): Locator {
     .locator('xpath=ancestor::div[contains(@class,"container")][1]');
 }
 
+export async function boostPrototypePopularity(page: Page, prototypeId: string, turns = 10) {
+  const token = await getAuthToken(page);
+  for (let i = 0; i < turns; i++) {
+    const res = await page.request.post(`${API_URL}/v2/prototypes/${prototypeId}/execute-code`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok()) {
+      throw new Error(`Failed to boost prototype popularity: ${res.status()} ${await res.text()}`);
+    }
+  }
+}
+
+export async function waitForPrototypeTabs(page: Page) {
+  await expect(page.getByText('Loading prototype...')).toBeHidden({ timeout: 20000 });
+  await expect(page.locator('[data-id="tab-code"]').first()).toBeVisible({ timeout: 15000 });
+}
+
 export async function expectPrototypeInPopular(page: Page, name: string, visible: boolean) {
   await page.goto('/');
-  await page.waitForTimeout(4000);
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
 
   const section = getPopularSection(page);
-  const card = section.locator('.prototype-grid-item-name', { hasText: name });
+  const findCard = () => section.locator('.prototype-grid-item-name', { hasText: name });
 
   if (visible) {
     await expect(section).toBeVisible({ timeout: 10000 });
+
+    let card = findCard();
+    if ((await card.count()) === 0) {
+      const showMore = page.getByRole('button', { name: /Show More/i });
+      if (await showMore.isVisible().catch(() => false)) {
+        await showMore.click();
+        await page.waitForTimeout(500);
+        card = findCard();
+      }
+    }
+
     await expect(card).toBeVisible({ timeout: 15000 });
   } else {
-    await expect(card).toHaveCount(0, { timeout: 10000 });
+    await expect(findCard()).toHaveCount(0, { timeout: 10000 });
   }
 }
 
