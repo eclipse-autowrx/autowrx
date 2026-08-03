@@ -96,25 +96,22 @@ The platform uses a global state management solution accessible by all component
 - **Plugin components** are loaded dynamically from a URL by `PluginPageRender.tsx` and run in the host page. They do **not** touch host stores directly — they interact with the platform only through the optional `PluginAPI` passed as `props.api`.
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│                                                          │
-│                         GlobalState                      │
-│                                                          │
-└────────────▲─────────────▲────────────────────▲──────────┘
-             │             │                    │
-             │             │                    │
-   ┌─────────▼────────┐    │          ┌──────────▼──────────┐
-   │  Core component   │    │          │  Plugin component   │
-   │  (compiled in)    │    │          │  (loaded via <script>)│
-   └───────────────┬──┘    │          └──────────┬──────────┘
-                   │       │                     │ props.api only
-                   │       │                     │
-                 ┌─┴───────▼──────┐              │
-                 │ ChildComponent │              ▼
-                 └────────────────┘  ┌────────────────────┐
-                                     │     PluginAPI       │
-                                     └────────────────────┘
+                   GlobalState (Zustand + React Query)
+                   ▲                ▲
+                   │ direct         │ mediated — plugins never
+                   │                │ touch stores directly
+                   │                │
+   ┌───────────────┴──────┐   ┌─────┴────────────────┐
+   │  Core component       │   │  Plugin component     │
+   │  (compiled into app)  │   │  (loaded from a URL   │
+   │                       │   │   by PluginPageRender) │
+   └───────────┬──────────┘   └───────────┬──────────┘
+               │                            │ props.api only
+               ▼                            ▼
+          ChildComponent                PluginAPI
 ```
+
+Core components read/write shared stores directly; plugin components interact with the platform only through the `PluginAPI` the host passes them.
 
 ## Builtin components
 

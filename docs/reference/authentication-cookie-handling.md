@@ -325,7 +325,8 @@ logOut: () => void
 The `QueryProvider` handles automatic token refresh:
 
 ```typescript
-// providers/QueryProvider.tsx (condensed)
+// providers/QueryProvider.tsx (condensed; inside the QueryProvider component,
+// where setAccess/logOut come from useAuthStore and queryClient is created via useState)
 const refreshAxios = axios.create({ baseURL: `${config.serverBaseUrl}/${config.serverVersion}`, withCredentials: true })
 let isRefreshing = false
 
