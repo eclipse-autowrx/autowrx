@@ -2,42 +2,42 @@
 
 > ℹ️ This describes the **current** implementation. AutoWRX does **not** use a
 > central component registry; pages compose real components directly, and the
-> home page is config-driven through a small `switch`.
+> home page is config-driven through a small type→component map.
 
 ## Home page: config-driven rendering
 
 `frontend/src/pages/PageHome.tsx` reads a site config (`CFG_HOME_CONTENT`) — an
 ordered list of element descriptors — and maps each element's `type` to a real
-component with a `switch`:
+component via `getHomeComponent` from `frontend/src/utils/homeComponentMap.ts`
+(a `Record<string, ComponentType>`, not a runtime registry):
 
 ```typescript
-const getComponent = (elementType: string) => {
-  switch (elementType) {
-    case 'hero':         return HomeHeroSection
-    case 'feature-list': return HomeFeatureList
-    case 'button-list':  return HomeButtonList
-    case 'news':         return HomeNews
-    case 'recent':       return HomePrototypeRecent
-    case 'popular':      return HomePrototypePopular
-    case 'partner-list': return HomePartners
-    case 'home-footer':  return HomeFooterSection
-    default:             return null
-  }
+// frontend/src/utils/homeComponentMap.ts
+const homeComponentMap: Record<string, React.ComponentType<any>> = {
+  'hero':          HomeHeroSection,
+  'feature-list':  HomeFeatureList,
+  'button-list':   HomeButtonList,
+  'news':          HomeNews,
+  'recent':        HomePrototypeRecent,
+  'popular':       HomePrototypePopular,
+  'partner-list':  HomePartners,
+  'home-footer':   HomeFooterSection,
 }
 
+export const getHomeComponent = (elementType: string) => homeComponentMap[elementType] ?? null
+```
+
+`PageHome` loads the config asynchronously (with an `isLoading` state) and renders each element:
+
+```typescript
 const PageHome = () => {
   const [homeElements, setHomeElements] = useState<any[]>([])
-  useEffect(() => {
-    configManagementService
-      .getPublicConfig('CFG_HOME_CONTENT', 'site')
-      .then((res) => { if (res.value && Array.isArray(res.value)) setHomeElements(res.value) })
-  }, [])
+  // ... loads CFG_HOME_CONTENT via configManagementService.getPublicConfig(...)
   return (
     <div className="space-y-12">
       {homeElements.map((element, index) => {
-        const Component = getComponent(element.type) as any
-        if (!Component) return null
-        return <Component key={index} {...element} />
+        const Component = getHomeComponent(element.type)
+        return Component ? <Component key={index} {...element} /> : null
       })}
     </div>
   )
@@ -46,7 +46,7 @@ const PageHome = () => {
 
 So the "dynamic" part is **data-driven ordering and selection of real
 components** — not a runtime registry. To add a home section you add a component
-and a `case` in `getComponent`.
+and an entry in `homeComponentMap`.
 
 ## Route-level code splitting
 

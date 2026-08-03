@@ -3,58 +3,66 @@
 ## Overview
 The application uses Helmet.js to set Content Security Policy headers that control which resources can be loaded by the browser. This helps prevent XSS attacks and other security vulnerabilities.
 
-> ⚠️ **The shipped CSP is more permissive than documented below.** The current
+> ⚠️ **The shipped CSP is more permissive than Helmet's defaults.** The current
 > `backend/src/app.js` sets an effectively **wildcard** policy in both dev and
 > production (`defaultSrc ['*']`, `scriptSrc`/`connectSrc` including `'*'`). The
-> directives in this file describe the *intended/target* policy, not what is
-> live. See [../architecture/auth-security.md](../architecture/auth-security.md)
-> (§6) for what is actually shipped.
+> values documented below are what is actually shipped; a more restrictive,
+> per-origin policy is a future target, not the current state. See
+> [../architecture/auth-security.md](../architecture/auth-security.md) (§6).
 
 ## Location
-CSP configuration is in `backend/src/app.js` (lines 43-79)
+CSP configuration is in `backend/src/app.js` (lines 44-83)
 
-## Recent Fix
-Added support for Monaco Editor CDN (`cdn.jsdelivr.net`) to resolve:
-```
-Refused to load the script 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/loader.js' because it violates the following Content Security Policy directive
-```
+## Shipped configuration
 
-## Current Configuration
+`app.js` sets an effectively **wildcard** policy in both dev and production — not the restrictive policy Helmet defaults to. The only restrictive directive is `objectSrc: ['none']`. This is a known gap (see [../architecture/auth-security.md](../architecture/auth-security.md) §6); the per-origin allowlists (and the historical `cdn.jsdelivr.net` Monaco entry) that appeared in older revisions of this doc describe a **target policy, not what is shipped**.
 
-### Development Environment
-More permissive to allow local development with Vite:
+### Development (lines 44-63)
 ```javascript
-scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "http://localhost:3210", "https://localhost:3210"]
-styleSrc: ["'self'", "'unsafe-inline'", "http://localhost:3210", "https://localhost:3210", "https:"]
-connectSrc: ["'self'", "ws:", "wss:", "http://localhost:3210", "https://localhost:3210"]
+defaultSrc: ["*"],
+scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "*"],
+scriptSrcElem: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "*"],
+styleSrc: ["'self'", "'unsafe-inline'", "*"],
+imgSrc: ["*", "data:", "blob:"],
+connectSrc: ["*", "ws:", "wss:"],
+fontSrc: ["*", "data:"],
+objectSrc: ["'none'"],
+mediaSrc: ["*"],
+frameSrc: ["*"],
+workerSrc: ["'self'", "blob:", "*"],
+upgradeInsecureRequests: null,   // disabled in dev
 ```
 
-### Production Environment
-More restrictive, but allows CDN resources:
+### Production (lines 64-83)
 ```javascript
-scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net"]
-scriptSrcElem: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net"]
-styleSrc: ["'self'", "'unsafe-inline'", "https:", "https://cdn.jsdelivr.net"]
-connectSrc: ["'self'", "https://cdn.jsdelivr.net"]
-fontSrc: ["'self'", "https:", "data:", "https://cdn.jsdelivr.net"]
-workerSrc: ["'self'", "blob:", "https://cdn.jsdelivr.net"]
+defaultSrc: ["*"],
+scriptSrc: ["'unsafe-inline'", "'unsafe-eval'", "*"],
+scriptSrcElem: ["'unsafe-inline'", "'unsafe-eval'", "*"],
+styleSrc: ["'unsafe-inline'", "*"],
+imgSrc: ["*", "data:", "blob:"],
+connectSrc: ["*"],
+fontSrc: ["*", "data:"],
+objectSrc: ["'none'"],
+mediaSrc: ["*"],
+frameSrc: ["*"],
+workerSrc: ["'self'", "blob:", "*"],
 ```
 
 ## CSP Directives Explained
 
-| Directive | Purpose | Current Values |
+| Directive | Purpose | Shipped value |
 |-----------|---------|----------------|
-| `defaultSrc` | Fallback for other directives | `'self'` only |
-| `scriptSrc` | JavaScript sources | Self, inline, eval, CDN |
-| `scriptSrcElem` | `<script>` element sources | Self, inline, eval, CDN |
-| `styleSrc` | CSS sources | Self, inline, HTTPS, CDN |
-| `imgSrc` | Image sources | Self, data URIs, HTTPS |
-| `connectSrc` | XHR, fetch, WebSocket sources | Self, CDN |
-| `fontSrc` | Font sources | Self, HTTPS, data URIs, CDN |
-| `workerSrc` | Web Worker sources | Self, blob, CDN |
-| `objectSrc` | `<object>`, `<embed>` sources | None (blocked) |
-| `mediaSrc` | Audio/Video sources | Self only |
-| `frameSrc` | iframe sources | Self only |
+| `defaultSrc` | Fallback for other directives | `*` |
+| `scriptSrc` | JavaScript sources | `'self'` (dev), inline, eval, `*` |
+| `scriptSrcElem` | `<script>` element sources | `'self'` (dev), inline, eval, `*` |
+| `styleSrc` | CSS sources | `'self'` (dev), inline, `*` |
+| `imgSrc` | Image sources | `*`, `data:`, `blob:` |
+| `connectSrc` | XHR, fetch, WebSocket sources | `*`, `ws:`, `wss:` (dev) |
+| `fontSrc` | Font sources | `*`, `data:` |
+| `workerSrc` | Web Worker sources | `'self'`, `blob:`, `*` |
+| `objectSrc` | `<object>`, `<embed>` sources | `'none'` (blocked) |
+| `mediaSrc` | Audio/Video sources | `*` |
+| `frameSrc` | iframe sources | `*` |
 
 ## Adding New CDN Sources
 
@@ -156,20 +164,19 @@ CSP violations appear in the browser console with clear error messages showing:
 
 ## Restart After Changes
 ```bash
-# Backend restart required
-cd backend
-npm restart
+# Backend restart required (dev)
+cd backend && yarn dev
 
 # Or with PM2
 pm2 restart autowrx
 
 # Or with Docker
-docker-compose restart backend
+docker compose -f ../instance-setup/docker-compose.prod.yml --env-file ../instance-setup/.env.prod restart autowrx
 ```
 
 ## Related Files
-- Configuration: `backend/src/app.js` (lines 43-79)
-- CORS Configuration: See `CORS_CONFIGURATION.md`
+- Configuration: `backend/src/app.js` (lines 44-83)
+- CORS Configuration: See [./cors.md](./cors.md)
 
 ## Additional Resources
 - [MDN CSP Guide](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP)
