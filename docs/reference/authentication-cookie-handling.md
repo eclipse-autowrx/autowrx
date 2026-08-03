@@ -260,17 +260,20 @@ serverAxios.interceptors.response.use(
       !originalRequest.url?.includes('/auth/logout')
     ) {
       originalRequest._retry = true
-      // Uses a separate axios instance (no interceptors) to avoid recursion
-      const refreshAxios = axios.create({ baseURL: serverAxios.defaults.baseURL, withCredentials: true })
-      const response = await refreshAxios.post('/auth/refresh-tokens', {})
-      const newToken = response.data.access.token
-      useAuthStore.getState().setAccess(response.data.access)
-      originalRequest.headers.Authorization = `Bearer ${newToken}`
-      return serverAxios(originalRequest) // retry the original request
+      try {
+        // Uses a separate axios instance (no interceptors) to avoid recursion
+        const refreshAxios = axios.create({ baseURL: serverAxios.defaults.baseURL, withCredentials: true })
+        const response = await refreshAxios.post('/auth/refresh-tokens', {})
+        const newToken = response.data.access.token
+        useAuthStore.getState().setAccess(response.data.access)
+        originalRequest.headers.Authorization = `Bearer ${newToken}`
+        return serverAxios(originalRequest) // retry the original request
+      } catch (refreshError) {
+        useAuthStore.getState().logOut()   // refresh failed → clear auth state
+        return Promise.reject(refreshError)
+      }
     }
-    // Refresh failed (or not a refreshable 401) → log out
-    if (error.response?.status === 401) useAuthStore.getState().logOut()
-    return Promise.reject(error)
+    return Promise.reject(error) // non-refreshable 401 (e.g. wrong password) is just rejected
   },
 )
 ```

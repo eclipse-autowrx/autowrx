@@ -266,15 +266,15 @@ function HomePage({ config }) {
 **CORRECT - Page depends on an abstraction:**
 ```tsx
 // This page has no direct knowledge of Banner, ProductList, etc.
-// It only depends on the type -> component map (an abstraction).
-import { homeComponentMap } from '@/utils/homeComponentMap';
+// It only depends on the type -> component lookup (an abstraction).
+import { getHomeComponent } from '@/utils/homeComponentMap';
 
 // The page is now decoupled and driven by config data, not by concrete imports.
 function PageHome({ config }) {
   return (
     <main>
       {config.rows.map(row => {
-        const Component = homeComponentMap[row.type]
+        const Component = getHomeComponent(row.type)
         return Component ? <Component key={row.type} {...row} /> : null
       })}
     </main>
