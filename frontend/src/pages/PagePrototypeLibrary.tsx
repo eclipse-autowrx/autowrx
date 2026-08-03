@@ -13,36 +13,26 @@ import { useParams } from 'react-router-dom'
 import {
   TbChartScatter,
   TbListDetails,
-  TbFileImport,
   TbPlus,
   TbSearch,
 } from 'react-icons/tb'
 import { Button } from '@/components/atoms/button'
-import { Spinner } from '@/components/atoms/spinner'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
-import useCurrentModel from '@/hooks/useCurrentModel'
-import { useListModelPrototypes } from '@/hooks/usePrototypeQueries'
-import { createPrototypeService } from '@/services/prototype.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
-import { zipToPrototype } from '@/lib/zipUtils'
-import { Prototype } from '@/types/model.type'
 import DaDialog from '@/components/molecules/DaDialog'
 import { useNavigate } from 'react-router-dom'
 import DaFilter from '@/components/atoms/DaFilter'
 import { Input } from '@/components/atoms/input'
 import { Skeleton } from '@/components/atoms/skeleton'
 import { cn } from '@/lib/utils'
-import CustomDialog from '@/components/molecules/CustomDialog'
-import DaFileUpload from '@/components/atoms/DaFileUpload'
 import FormCreatePrototype from '@/components/molecules/forms/FormCreatePrototype'
+import FormImportPrototype from '@/components/molecules/forms/FormImportPrototype'
 import { useSiteConfig } from '@/utils/siteConfig'
 
 const PagePrototypeLibrary = () => {
   const [activeTab, setActiveTab] = useState<'list' | 'portfolio'>('list')
-  const { data: model } = useCurrentModel()
   const { model_id, tab } = useParams<{ model_id: string; tab?: string }>()
-  const { refetch } = useListModelPrototypes(model ? model.id : '')
   const { data: user } = useSelfProfileQuery()
   // Prototype "create/import" requires write permission on the parent model
   const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model_id])
@@ -55,14 +45,6 @@ const PagePrototypeLibrary = () => {
     ),
   )
   const [searchInput, setSearchInput] = useState('')
-  const [isOpenImportDialog, setIsOpenImportDialog] = useState(false)
-
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [prototypeName, setPrototypeName] = useState<string>('')
-  const [extractedPrototype, setExtractedPrototype] =
-    useState<Partial<Prototype> | null>(null)
-  const [importError, setImportError] = useState<string | null>(null)
-  const [isImporting, setIsImporting] = useState(false)
 
   useEffect(() => {
     if (tab) {
@@ -85,81 +67,6 @@ const PagePrototypeLibrary = () => {
       'prototypeLibrary-selectedFilter',
       JSON.stringify(option),
     )
-  }
-
-  const handleFileChange = async (file: File) => {
-    setSelectedFile(file)
-    setImportError(null)
-    try {
-      const prototype = await zipToPrototype(model?.id || '', file)
-      if (prototype && prototype.name) {
-        setExtractedPrototype(prototype)
-        setPrototypeName(prototype.name)
-      } else {
-        setImportError('Invalid zip file. Could not extract prototype data.')
-        setExtractedPrototype(null)
-        setPrototypeName('')
-      }
-    } catch (error) {
-      setImportError('Error processing the zip file.')
-      setExtractedPrototype(null)
-      setPrototypeName('')
-    }
-  }
-
-  const handleClearFile = () => {
-    setSelectedFile(null)
-    setExtractedPrototype(null)
-    setPrototypeName('')
-    setImportError(null)
-  }
-
-  const handleConfirmImport = async () => {
-    if (
-      !selectedFile ||
-      !model ||
-      !prototypeName.trim() ||
-      !extractedPrototype
-    ) {
-      setImportError('Please select a valid file and provide a prototype name.')
-      return
-    }
-
-    setIsImporting(true)
-    setImportError(null)
-
-    try {
-      const prototypePayload: Partial<Prototype> = {
-        state: extractedPrototype.state || 'development',
-        apis: { VSS: [], VSC: [] },
-        code: extractedPrototype.code || '',
-        widget_config: extractedPrototype.widget_config || '{}',
-        description: extractedPrototype.description,
-        tags: extractedPrototype.tags || [],
-        image_file: extractedPrototype.image_file,
-        model_id: model.id,
-        name: prototypeName,
-        complexity_level: extractedPrototype.complexity_level || '3',
-        customer_journey: extractedPrototype.customer_journey || '{}',
-        portfolio: extractedPrototype.portfolio || {},
-      }
-
-      await createPrototypeService(prototypePayload)
-      await refetch()
-      setIsOpenImportDialog(false)
-      setSelectedFile(null)
-      setExtractedPrototype(null)
-      setPrototypeName('')
-    } catch (error: any) {
-      if (error.response?.data?.message) {
-        setImportError(error.response.data.message)
-      } else {
-        setImportError('Failed to import prototype')
-      }
-      console.error('Import error:', error)
-    } finally {
-      setIsImporting(false)
-    }
   }
 
   return (
@@ -227,15 +134,7 @@ const PagePrototypeLibrary = () => {
                     isAuthorized && 'opacity-100 pointer-events-auto',
                   )}
                 >
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex"
-                    onClick={() => setIsOpenImportDialog(true)}
-                  >
-                    <TbFileImport className="w-5 h-5" />
-                    Import Prototype
-                  </Button>
+                  <FormImportPrototype />
                   {enableNewPrototypePage ? (
                     <Button
                       data-id="btn-create-new-prototype"
@@ -291,79 +190,6 @@ const PagePrototypeLibrary = () => {
           {activeTab === 'portfolio' && <PrototypeLibraryPortfolio />}
         </div>
       </div>
-
-      <CustomDialog
-        open={isOpenImportDialog}
-        onOpenChange={(open) => {
-          setIsOpenImportDialog(open)
-          if (!open) {
-            setSelectedFile(null)
-            setExtractedPrototype(null)
-            setPrototypeName('')
-            setImportError(null)
-          }
-        }}
-        dialogTitle="Import Prototype"
-        description="Upload a zip file containing the prototype."
-        className="h-fit xl:h-fit overflow-hidden"
-      >
-        <div className="flex flex-col space-y-4">
-          <DaFileUpload
-            accept=".zip"
-            label="Select or Drop Zip File"
-            isImage={false}
-            validate={async (file) => {
-              const maxFileSize = 10 * 1024 * 1024
-              if (!file.name.endsWith('.zip')) {
-                return 'Only .zip files are allowed.'
-              }
-              if (file.size > maxFileSize) {
-                return 'File size must be less than 10 MB.'
-              }
-              await handleFileChange(file)
-              return null
-            }}
-            onFileUpload={(url) => {
-              if (url === '') {
-                handleClearFile()
-              }
-            }}
-          />
-          {extractedPrototype && (
-            <Input
-              value={prototypeName}
-              onChange={(e) => setPrototypeName(e.target.value)}
-              placeholder={
-                extractedPrototype ? extractedPrototype.name : 'Prototype Name'
-              }
-              className="w-full"
-            />
-          )}
-          {importError && (
-            <div className="text-red-500 text-sm">{importError}</div>
-          )}
-          <Button
-            variant="default"
-            size="sm"
-            disabled={
-              !selectedFile ||
-              !prototypeName.trim() ||
-              isImporting ||
-              !extractedPrototype
-            }
-            onClick={handleConfirmImport}
-          >
-            {isImporting ? (
-              <div className="flex items-center">
-                <Spinner className="mr-2 size-4" />
-                Importing...
-              </div>
-            ) : (
-              'Import'
-            )}
-          </Button>
-        </div>
-      </CustomDialog>
     </div>
   )
 }
