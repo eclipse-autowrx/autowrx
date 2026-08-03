@@ -312,12 +312,15 @@ type AuthState = {
   access?: Token | null
   user: any
   openLoginDialog: boolean
+  authBootstrapped: boolean
 }
 
 // Actions
 setAccess: (access: Token) => void
-setUser: (user: any, access: Token) => void
+setUser: (user: any, access: any) => void
 logOut: () => void
+setOpenLoginDialog: (isOpen: boolean) => void
+setAuthBootstrapped: (bootstrapped: boolean) => void
 ```
 
 ### 3. Token Refresh Integration
@@ -449,6 +452,8 @@ JWT_SECRET=your-secret-key
 JWT_COOKIE_NAME=token
 JWT_ACCESS_EXPIRATION_MINUTES=30
 JWT_REFRESH_EXPIRATION_DAYS=30
+JWT_RESET_PASSWORD_EXPIRATION_MINUTES=10   # legacy token reset
+JWT_VERIFY_EMAIL_EXPIRATION_MINUTES=10
 JWT_COOKIE_DOMAIN=your-domain.com  # Production only
 ```
 
