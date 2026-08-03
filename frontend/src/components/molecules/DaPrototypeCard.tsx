@@ -54,11 +54,11 @@ import DaConfirmPopup from './DaConfirmPopup'
 import DaDialog from './DaDialog'
 import { Button } from '../atoms/button'
 import { Input } from '../atoms/input'
-import useListModelPrototypes from '@/hooks/useListModelPrototypes'
 import PrototypeTabStaging from '@/components/organisms/PrototypeTabStaging'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import { Skeleton } from '../atoms/skeleton'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useListModelPrototypes } from '@/hooks/usePrototypeQueries'
 
 export interface DaPrototypeCardProps {
   prototype: Prototype

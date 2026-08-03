@@ -36,9 +36,15 @@ export const useRecentPrototypes = (enabled = true) =>
     enabled,
   })
 
-export const useListModelPrototypes = (model_id: string) =>
-  useQuery({
-    queryKey: prototypeQueryKeys.model(model_id),
+export const useListModelPrototypes = (
+  model_id: string,
+  options?: { enabled?: boolean },
+) => {
+  const enabled = options?.enabled ?? !!model_id
+
+  return useQuery({
+    queryKey: ['listModelPrototypes', model_id],
     queryFn: () => listModelPrototypes(model_id),
-    enabled: !!model_id,
+    enabled: enabled && !!model_id,
   })
+}
