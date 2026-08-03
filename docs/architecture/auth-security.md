@@ -78,7 +78,9 @@ There are **two independent** refresh mechanisms, each with its own
 2. **React-Query `QueryCache.onError`** (`providers/QueryProvider.tsx`) —
    refreshes and invalidates the query.
 
-Both skip the `/auth/*` endpoints and call `logOut()` on refresh failure.
+The axios interceptor skips only `/auth/refresh-tokens`, `/auth/login`, and
+`/auth/logout` (to avoid refresh loops); the QueryCache path does not URL-skip.
+Both call `logOut()` on refresh failure.
 The bootstrap sequence: `App` renders → `useSelfProfile` is disabled until
 `authBootstrapped && access` → the refresh flow populates the store → self-profile
 loads.
