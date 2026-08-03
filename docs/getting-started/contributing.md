@@ -85,7 +85,7 @@ Address feedback by pushing follow-up commits.
 ## Releases & deployment
 
 Cutting releases and deploying are **maintainer/team** actions — see
-[Internal Onboarding → Releases](./internal/README.md#releases). In short:
+[Internal Onboarding → Releases](./internal/README.md#2-container-images--releases). In short:
 releases are **date-tagged** (`vYYYY.MM.DD`); pushing the tag builds and
 publishes the Docker image and a GitHub Release.
 

@@ -52,7 +52,9 @@ predefined site configs and project templates, and listens on **:3200**. You
 should see `Connected to MongoDB` and `Listening to port 3200`.
 
 > `STRICT_AUTH=false` opens the auth feature flags (public viewing,
-> self-registration) so you can browse without friction while developing. See
+> self-registration) so you can browse without friction while developing. It is
+> a valid env var but is **not included in `backend/.env.example`**, so add it
+> to your `backend/.env` manually if you want it. See
 > [Auth & Security](../architecture/auth-security.md#5-site-auth-configs-feature-gates).
 
 ## 4. Frontend → http://localhost:3210
