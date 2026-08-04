@@ -56,5 +56,5 @@ This document describes the server middlewares, their purpose, configuration, in
 ### Notes
 
 - All thrown errors use `ApiError` and will be handled by the error pipeline.
-- For optional auth, routes should pass `auth({ optional: true })` when public read is allowed under `strictAuth=false`.
+- For optional auth, routes pass `auth({ optional: (req) => req.authConfig.PUBLIC_VIEWING })` so public read is allowed when the `PUBLIC_VIEWING` site auth config is enabled (the `STRICT_AUTH` env var is only the fallback when the DB config has no value).
 

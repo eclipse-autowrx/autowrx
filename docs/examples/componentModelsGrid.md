@@ -18,7 +18,7 @@ import { Link } from 'react-router-dom'
 import { TbAffiliate, TbCode, TbUsers } from 'react-icons/tb'
 import { cn } from '@/lib/utils'
 
-type DaModelItemProps = { model: ModelLite; className?: string }
+type DaModelItemProps = { model: Partial<ModelLite>; className?: string }
 
 const DaModelItem = React.memo(({ model, className }: DaModelItemProps) => {
   // ...fetches stats, then renders an image + name + contributor count
@@ -43,4 +43,5 @@ export default DaModelItem
 ```
 
 `DaModelItem` is used by the models list page
-([pageModels.md](./pageModels.md)) and by `HomePrototypeRecent`/`Popular`.
+([pageModels.md](./pageModels.md)). (The home page's recent/popular prototype
+sections use `DaPrototypeItem`, not `DaModelItem`.)
