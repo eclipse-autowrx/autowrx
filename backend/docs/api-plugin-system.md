@@ -94,11 +94,13 @@ An instance of a schema (collection `customapisets`):
 
 ## Permission Model
 
-- **CustomApiSchema**: Create/Update/Delete = admin only; Read = public.
-- **CustomApiSet**:
-  - System scope — Create: admin; Read: all; Update/Delete: admin.
-  - User scope — Create: any authenticated user; Read/Update/Delete: creator only.
-- **Model integration** — requires write permission on the model and access to the set (system scope or owner).
+- **CustomApiSchema**: Create/Update/Delete = admin only (`auth()` + `checkPermission(ADMIN)`); Read = public.
+- **CustomApiSet** (the routes apply `auth()` for writes; optional `PUBLIC_VIEWING` for reads):
+  - Create — any authenticated user, for either scope (there is **no admin gate** for system-scope creation; `owner` is set to the creator).
+  - Read — system scope = public (all users, including unauthenticated); user scope = owner only.
+  - Update / Delete — user scope = owner only; system scope = any authenticated user (no admin gate — the service only enforces ownership for user-scoped sets).
+  - Item operations (add/update/remove item) = the authenticated user.
+- **Model integration** — linking a set via `PATCH /v2/models/{id}` requires `WRITE_MODEL` on the model, plus read access to the set (system scope or owner).
 
 ## Storage Strategy
 

@@ -1,6 +1,6 @@
 ## Custom API Schema Endpoints (/v2/system/custom-api-schema)
 
-Admin-defined schemas for custom API sets (Tree / List / Graph). Each schema defines the structure that `CustomApiSet` instances conform to. Also mounted at the compat alias `/v2/custom-api-schema`.
+Admin-defined schemas for custom API sets (Tree / List / Graph). Each schema defines the structure that `CustomApiSet` instances conform to. The route is mounted at both `/v2/system/custom-api-schema` (used by the frontend) and the bare `/v2/custom-api-schema`.
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
