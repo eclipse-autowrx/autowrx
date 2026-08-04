@@ -8,18 +8,7 @@ configured. See [Dynamic / config-driven UI](../reference/component-design/dynam
 **File:** `frontend/src/pages/PageHome.tsx`
 
 ```typescript
-const getComponent = (elementType: string) => {
-  switch (elementType) {
-    case 'hero':         return HomeHeroSection
-    case 'feature-list': return HomeFeatureList
-    case 'news':         return HomeNews
-    case 'recent':       return HomePrototypeRecent
-    case 'popular':      return HomePrototypePopular
-    case 'partner-list': return HomePartners
-    case 'home-footer':  return HomeFooterSection
-    default:             return null
-  }
-}
+import { getHomeComponent } from '@/utils/homeComponentMap'
 
 const PageHome = () => {
   const [homeElements, setHomeElements] = useState<any[]>([])
@@ -31,7 +20,7 @@ const PageHome = () => {
   return (
     <div className="space-y-12">
       {homeElements.map((element, index) => {
-        const Component = getComponent(element.type) as any
+        const Component = getHomeComponent(element.type)   // type → real component map
         if (!Component) return null
         return <Component key={index} {...element} />
       })}
@@ -39,6 +28,8 @@ const PageHome = () => {
   )
 }
 ```
+
+`getHomeComponent` (in `frontend/src/utils/homeComponentMap.ts`) is a `Record<string, ComponentType>` lookup — `hero`, `feature-list`, `button-list`, `news`, `recent`, `popular`, `partner-list`, `home-footer`. To add a section you add a component and one entry in that map; `PageHome` itself never changes.
 
 The page does not know ahead of time which sections exist — it maps the
 configured `type` to a real component and spreads the element's props into it.

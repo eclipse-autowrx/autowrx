@@ -77,7 +77,7 @@
 
 /v2/auth/register:
   post:
-    summary: Register a new user (strictAuth=false)
+    summary: Register a new user (gated by the SELF_REGISTRATION site auth config)
     requestBody:
       required: true
       content:

@@ -11,8 +11,8 @@
 - Search: `search.md`
 - Permissions/Roles: `permissions.md`
 - Change Logs: `change-logs.md`
-- Plugin APIs: `plugin-api.md`
-- Plugin API Instances: `plugin-api-instance.md`
+- Custom API Schemas: `custom-api-schema.md`
+- Custom API Sets: `custom-api-set.md`
 // Inventory removed
 - Proxies
 

@@ -21,7 +21,7 @@ Create `.env` in `backend/` with at least:
 
 ```bash
 NODE_ENV=development
-PORT=8080
+PORT=3200
 MONGODB_URL=mongodb://localhost:27017/autowrx
 JWT_SECRET=dev_secret_change_me
 JWT_COOKIE_NAME=token
@@ -50,7 +50,7 @@ Option B) Local MongoDB installation (ensure it listens on 27017).
 npm run dev
 ```
 
-Dev server starts at `http://localhost:8080`.
+Dev server starts at `http://localhost:3200`.
 
 ### 5) Seed admin (optional)
 
@@ -64,7 +64,7 @@ ADMIN_PASSWORD=password1
 ### 6) Test with collections
 
 - Import Postman/Hoppscotch collections from `backend/docs/endpoint-postman-json/`.
-- Set variables: `baseUrl=http://localhost:8080`, `accessToken` after login.
+- Set variables: `baseUrl=http://localhost:3200`, `accessToken` after login.
 
 ### 7) Common issues
 
