@@ -5,13 +5,15 @@
 | POST | /authenticate | Required | Validate bearer access token; returns user. |
 | POST | /authorize | None | Internal authorization check (do not expose publicly). |
 | GET | /github/callback | None | GitHub OAuth callback. |
-| POST | /sso | None | Microsoft SSO exchange; issues tokens. |
-| POST | /register | None (only when strictAuth=false) | Register a new user. |
+| GET | /github-sso/start | None | Start GitHub SSO flow. |
+| GET | /github-sso/callback | None | GitHub SSO callback. |
+| POST | /sso | None | SSO login with `{ providerId, idToken }` (OpenID ID token); issues tokens. |
+| POST | /register | None (gated by the `SELF_REGISTRATION` site auth config; 403 when disabled) | Register a new user. |
 | POST | /login | None | Login with email/password; sets refresh cookie; returns access token + user. |
 | POST | /logout | None | Logout and clear refresh cookie. |
 | POST | /refresh-tokens | None | Refresh access/refresh tokens using refresh cookie. |
 | POST | /forgot-password | None | Initiate password reset email. |
-| POST | /reset-password | None | Reset password using token. |
+| POST | /reset-password | None | Reset password — primary: `{ email, code, password }`; legacy: `?token` + `{ password }`. |
 | POST | /send-verification-email | Required | Send email verification to current user. |
 | POST | /verify-email | None | Verify email using token. |
 
@@ -56,15 +58,18 @@
 
 /v2/auth/sso:
   post:
-    summary: Microsoft SSO login
+    summary: SSO login with an OpenID ID token
     requestBody:
       required: true
       content:
         application/json:
           schema:
             type: object
+            required: [providerId, idToken]
             properties:
-              msAccessToken:
+              providerId:
+                type: string
+              idToken:
                 type: string
     responses:
       '200':
@@ -124,18 +129,25 @@
                 type: string
                 format: email
     responses:
-      '204':
-        description: Email sent
+      '200':
+        description: Reset code sent
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
 
 /v2/auth/reset-password:
   post:
-    summary: Reset password with token
+    summary: Reset password (code-based primary, token-based legacy)
     parameters:
       - in: query
         name: token
+        description: Legacy reset token (prefer the code-based body below).
         schema:
           type: string
-        required: true
     requestBody:
       required: true
       content:
@@ -143,6 +155,13 @@
           schema:
             type: object
             properties:
+              email:
+                type: string
+                format: email
+                description: Required for the code-based flow.
+              code:
+                type: string
+                description: 6-digit reset code (primary flow).
               password:
                 type: string
     responses:

@@ -57,7 +57,7 @@ BrowserRouter → ErrorBoundary → QueryProvider → ToastContainer → App
 a few heavy pages (`PageModelList`, `PageVehicleApi`) are `lazy()`-loaded with a
 `retry()` helper (`lib/retry.ts`).
 
-**Three layout shells** (`layouts/`):
+**Layout files** (`layouts/`) — three route shells plus an error fallback:
 
 - **`RootLayout.tsx`** — the global shell for nearly every route. On mount it
   **bootstraps auth** with a silent `POST /auth/refresh-tokens` (sets
@@ -68,7 +68,9 @@ a few heavy pages (`PageModelList`, `PageVehicleApi`) are `lazy()`-loaded with a
   Vehicle API / Prototype Library tab bar plus custom model tabs and addon
   management. Loads the model via `useCurrentModel` and pushes it into
   `modelStore`.
-- **`ErrorFallback.tsx`** — error-boundary fallback.
+- **`NewPrototypeLayout.tsx`** — the new-prototype editor shell.
+- **`ErrorFallback.tsx`** — the error-boundary fallback component (used as
+  `ErrorBoundary`'s `FallbackComponent` in `main.tsx`, not a route shell).
 
 **Route tree** (all under `/` → `RootLayout`, except `*` → `PageNotFound`):
 
@@ -113,8 +115,8 @@ refresh** (`POST /auth/refresh-tokens`, guarded by `isRefreshing`), then
 re-validates queries or calls `logOut()`. Defaults: `staleTime: 30s`, no retry
 on 401.
 
-~31 hooks in `hooks/` wrap services in `useQuery`/`useMutation` — e.g.
-`useSelfProfile` (`enabled: authBootstrapped && !!accessToken`),
+~34 hooks in `hooks/` wrap services in `useQuery`/`useMutation` — e.g.
+`useSelfProfileQuery` (in `useSelfProfile.ts`; `enabled: authBootstrapped && !!accessToken`),
 `useCurrentModel`, `useGetPrototype`, `useListAllModel`, `usePermissionHook`,
 `useAuthConfigs`.
 
@@ -136,13 +138,16 @@ instance `serverAxios`:
   `Authorization: Bearer <token>` from `authStore`.
 - A **response interceptor** that mirrors the Query 401-refresh: on 401 it
   refreshes once (single-flight `isRefreshing` + `failedQueue` to replay pending
-  requests), skipping the `/auth/*` endpoints; on failure it logs out.
+  requests), skipping only `/auth/refresh-tokens`, `/auth/login`, and
+  `/auth/logout` (other `/auth/*` routes are not skipped); on failure it logs out.
 
 Each domain has a thin service module of plain functions: `model.service`,
 `prototype.service`, `plugin.service`, `auth.service`, `user.service`,
 `asset.service`, `permission.service`, `extendedApis.service` (wishlist APIs),
-`customApiSet.service`, `configManagement.service`, the `*Template.service`
-family, `search`, `upload`, `discussion`, `feedback`, `sso`, `github`, `log`.
+`customApiSet.service` + `customApiSchema.service`, `configManagement.service`,
+the `*Template.service` family, `api.service`, `convert_code.service`,
+`webStudio.service`, `widget.service`, `search`, `upload`, `discussion`,
+`feedback`, `sso`, `github`, `log`.
 
 ---
 
@@ -182,7 +187,8 @@ The full plugin story — backend records, integration methods, lifecycle — is
 - **Design tokens** in an `@theme inline` block map semantic variables
   (`--color-background`, `--color-primary`, `--color-secondary`, `--color-muted`,
   `--color-border`, …) plus the digital.auto palette (`--color-da-primary-*`,
-  gray scale). Colors are **OKLCH**.
+  gray scale). The shadcn semantic tokens are **OKLCH**; the `--color-da-*`
+  digital.auto palette is **HSL**.
 - Dark mode via `@custom-variant dark (&:is(.dark *))`.
 - Base font **Manrope** (plus the `non.geist` font package); a second
   `functional.css` is imported in `main.tsx`.

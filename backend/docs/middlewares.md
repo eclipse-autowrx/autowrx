@@ -41,6 +41,7 @@ This document describes the server middlewares, their purpose, configuration, in
   - Max: 20 requests per window
   - `skipSuccessfulRequests: true`
 - Typical use: wrap auth/login endpoints to mitigate brute-force attempts.
+- ⚠️ **Not currently applied:** `authLimiter` is defined and exported but is not wired into any route in `src/routes/` or `src/app.js`, so auth endpoints are effectively unrate-limited today. This is a known gap (see `docs/architecture/auth-security.md` §7).
 
 ### error (Error conversion and handling)
 

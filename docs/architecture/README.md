@@ -153,7 +153,7 @@ inside core pages based on configuration. The full treatment is in
 ### Related existing references
 
 - [Custom API System](../guides/custom-api-system.md)
-- [Plugin guide (6 parts)](../guides/plugin/README.md)
+- [Plugin guide](../guides/plugin/README.md)
 - [Authentication cookie handling](../reference/authentication-cookie-handling.md)
 - [CORS](../reference/cors.md) · [CSP](../reference/csp.md)
 - [Backend: DB collections](../../backend/docs/db-collections.md)

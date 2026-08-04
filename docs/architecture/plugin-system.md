@@ -7,8 +7,8 @@ plugins, and the end-to-end lifecycle. It is code-verified — where the intent
 docs and the code diverge, the code is authoritative.
 
 For the philosophy see [core-vs-plugin.md](../principles/core-vs-plugin.md) and
-[concept.md](../principles/concept.md); for a plugin author's guide see the 6-part
-[docs/plugin/](../guides/plugin/README.md).
+[concept.md](../principles/concept.md); for a plugin author's guide see the
+[Plugin Development guide](../guides/plugin/README.md).
 
 ---
 
@@ -55,7 +55,7 @@ you must be the creator **or** an admin.
 `PUT /:id`, `DELETE /:id`, and `POST /upload/:slug` (multipart) for internal zips.
 
 **Internal-zip flow** (`plugin.controller.uploadInternalPlugin`): the zip is
-extracted to `backend/src/static/plugin/<slug>/`, an entry file is auto-detected
+extracted to `backend/static/plugin/<slug>/`, an entry file is auto-detected
 (prefers `index.js`, then `index.html`), and the public `url` becomes
 `/plugin/<slug>/<entry>` with `is_internal: true`.
 *(Note: the admin gate on this route is currently commented out.)*
@@ -95,7 +95,6 @@ sequenceDiagram
    loader disambiguates with module-level maps (`pluginRegistrations` per
    `plugin_id`, `urlToPluginId`) and **caches registrations across unmounts** so
    switching tabs doesn't re-inject. Poll: up to **15 s**, 100 ms interval.
-   *(The `docs/plugin/02-architecture.md` "5 s / 50 attempts" figure is stale.)*
 5. **Render** — use `registration.components.Page`, or wrap an imperative
    `mount(el, props)` / `unmount(el)` API in a React component.
 

@@ -10,19 +10,25 @@ The foundation of the system is the `global.css` file. This file is controlled b
 -   **Content:** Primarily consists of CSS Custom Properties (variables) for colors, fonts, spacing, etc.
 -   **Extensibility:** Administrators can modify these variables through the admin panel to apply a new theme to the entire platform instantly.
 
-#### global.css 
+#### global.css
 ```css
+/* Served at /static/global.css (backend/static/global.css).
+   Values use the OKLCH color space; admins can override them via the UI. */
 :root {
-  /* Core Colors */
-  --var-color-primary: #e74266;
-  --var-color-secondary: #3498db;
-  --var-color-text: #333333;
-
-  /* Base Layout */
-  --var-border-radius: 0.5rem;
-  --var-border-width: 2px;
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.4199 0.0374 257.28);
+  --primary: oklch(0.35 0.08 230);
+  --primary-foreground: oklch(0.984 0.003 247.858);
+  --secondary: oklch(0.7626 0.1532 115.73);
+  --secondary-foreground: oklch(0.129 0.042 264.695);
+  --muted: oklch(0.968 0.007 247.896);
+  --muted-foreground: oklch(0.554 0.046 257.417);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.929 0.013 255.508);
+  --input: oklch(0.929 0.013 255.508);
+  --ring: oklch(0.704 0.04 256.788);
 }
-
 ```
 
 ### Regional background hooks
@@ -84,19 +90,9 @@ Layouts and main pages expose stable `da-*` hook classes for instance-level `glo
 }
 ```
 
-#### core.css
-```css
-.text-primary {
-  color: var(--var-color-primary);
-}
+#### Theme utilities (no separate `core.css`)
 
-.border-primary {
-  border-color: var(--var-color-primary);
-  border-width: var(--var-border-width);
-  border-style: solid;
-}
-
-```
+There is no hand-written `core.css` of utility classes. `text-primary`, `border-primary`, `bg-background`, etc. are **Tailwind v4 utilities generated from the `@theme inline` block** in `frontend/src/index.css`, which maps the `global.css` tokens to Tailwind's color scale, e.g. `--color-primary: var(--primary)`. So `text-primary` resolves to `color: var(--primary)` at build time — use these utilities in components instead of re-deriving them.
 
 
 ## 2. Plugin & Component Styles
@@ -109,14 +105,14 @@ Components **must** use the CSS variables provided by `global.css` for any style
 
 **CORRECT:**
 ```tsx
-// Consuming a core variable in a React component
-<button className="text-[var(--da-color-primary)] border-[var(--var-border-width)]">
+// Consuming a digital.auto palette token directly (defined in frontend/src/index.css @theme inline)
+<button className="text-[var(--color-da-primary-500)]">
   Click Me
 </button>
 ```
-**CORRECT:**
+**CORRECT (preferred):**
 ```tsx
-// Consuming a core variable in a React component
+// Using the Tailwind v4 utility generated from the @theme inline mapping (text-primary -> var(--primary))
 <button className="text-primary border-primary">
   Click Me
 </button>

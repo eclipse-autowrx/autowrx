@@ -52,37 +52,33 @@ The following list breaks down the platform's features into `Core` and `[Plugin]
 
 ## Project Structure
 ```
-- public
-- src
-    . routes.tsx
-    - components
-        - atoms
-        - molecules
-        - organisms 
-    - hooks
-    - layouts
-    - lib
-    - pages                             <= contain all pages serve for routes.tsx
-    - services??
-    - stores                            <= global state
-    . App.tsx
-    . main.tsx
-    . index.html
-. .env
-. docker-compose.yml
-. Dockerfile
-. Dockerfile.dev
+autowrx/                            # monorepo root
+- frontend/                         # Vite + React 18 SPA
+    - src/
+        - components/{atoms,molecules,organisms}
+        - pages  layouts  hooks  services  stores  providers
+        - configs  types  const  data  lib  utils
+        - configs/routes.tsx        # route table
+- backend/                          # Express 4 + Mongoose 8 API
+    - src/
+        - routes/v2/{user-management,vehicle-data,content,system}
+        - controllers  services  models  validations  middlewares
+        - config  utils  decorators  typedefs  scripts
+    - static/                       # served at /static (global.css, plugin/, builtin-widgets/, images/)
+    - Dockerfile
+- instance-setup/                   # production Docker Compose + env sample + up.sh/down.sh
+- dev-stage/  scripts/  docs/  .github/workflows/
 ```
 
 
 ## Builtin Page
 ```
-- /                                 HomePage
-- /privacy                          PrivacyPage
-- /user/profile                     UserProfilePage
-- /my-assets                        UserAssetPage
-- /admin/manage-users               UserManagerPage
-- /admin/site-config                SiteConfigPage
+- /                                 PageHome
+- /profile                          PageUserProfile
+- /privacy-policy                   PagePrivacyPolicy
+- /my-assets                        PageMyAssets
+- /admin/manage-users               PageManageUsers
+- /admin/site-config                SiteConfigManagement
 - /model                            PageModelList
 - /model/:model_id                  PageModelDetail
 - /model/:model_id/library          PagePrototypeLibrary

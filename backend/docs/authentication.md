@@ -11,11 +11,11 @@ This document explains how authentication works in the backend: token model, coo
 - Refresh token
   - Type: JWT stored server-side in `Token` collection and sent to client in an HTTP-only cookie
   - Cookie name: `JWT_COOKIE_NAME` (default `token`)
-  - Cookie options: `secure: true`, `httpOnly: true`, `sameSite: 'None'`, optional `domain`
+  - Cookie options: `httpOnly: true` always; `secure` and `sameSite` flip by env — production: `secure: true`, `sameSite: 'None'`; development: `secure: false`, `sameSite: 'Lax'`. `domain` (`JWT_COOKIE_DOMAIN`) is set in production only.
   - Lifetime: `JWT_REFRESH_EXPIRATION_DAYS`
 - Other tokens
-  - Reset password: short-lived JWT; stored and later invalidated
-  - Verify email: short-lived JWT; stored and later invalidated
+  - Reset password: primary flow is a 6-digit **code** (not a JWT) stored in `Token`, expiring in **60 minutes** and used via `email` + `code`. A legacy JWT token path (`generateResetPasswordToken`, `JWT_RESET_PASSWORD_EXPIRATION_MINUTES`, default 10 min) via `?token` is retained for backward compatibility.
+  - Verify email: short-lived JWT (`JWT_VERIFY_EMAIL_EXPIRATION_MINUTES`, default 10 min); stored and later invalidated.
 
 #### Access token vs. Refresh token (where they appear and how to use)
 
@@ -46,7 +46,7 @@ In short: **access token = short‑lived bearer in response body; refresh token 
 
 ### Auth Endpoints
 
-- File: `src/routes/v2/auth.route.js`
+- File: `src/routes/v2/user-management/auth.route.js`
 - Authenticate: `POST /v2/auth/authenticate` — requires bearer; returns `{ user }` from middleware.
 - Authorize (internal): `POST /v2/auth/authorize` — internal permission checks, not public.
 - Register (if `SELF_REGISTRATION` enabled): `POST /v2/auth/register` — creates user, sets refresh cookie, returns `{ user, tokens }` (without refresh token body).
@@ -55,14 +55,15 @@ In short: **access token = short‑lived bearer in response body; refresh token 
 - Refresh: `POST /v2/auth/refresh-tokens` — rotates refresh token, sets new cookie, returns new access token.
 - Forgot/Reset password: issues and validates reset tokens.
 - Email verification: issues verify token and validates it.
-- SSO: `POST /v2/auth/sso` — exchanges Microsoft access token for user profile, creates/updates user, issues tokens and sets refresh cookie.
+- SSO: `POST /v2/auth/sso` — accepts `{ providerId, idToken }` (an OpenID ID token, not a Microsoft access token), validates the provider via `sso.service`, decodes the ID token with `parseIdToken`, creates/updates the user, issues tokens and sets the refresh cookie. (`callMsGraph` is deprecated.) Also: GitHub SSO via `GET /v2/auth/github-sso/start` and `GET /v2/auth/github-sso/callback`.
 
 ### Token Service
 
 - File: `src/services/token.service.js`
 - `generateAuthTokens(user)`: returns `{ access: { token, expires }, refresh: { token, expires } }` and persists refresh token.
 - `verifyToken(token, type)`: verifies signature and looks up persisted token by type and user.
-- `generateResetPasswordToken(email)`, `generateVerifyEmailToken(user)`: issue and persist single-use tokens.
+- `generateResetPasswordCode(email)`: primary reset flow — issues a 6-digit code (60 min) stored in `Token`.
+- `generateResetPasswordToken(email)` (legacy), `generateVerifyEmailToken(user)`: issue and persist single-use JWT tokens.
 
 ### Auth Service
 
@@ -70,7 +71,8 @@ In short: **access token = short‑lived bearer in response body; refresh token 
 - `loginUserWithEmailAndPassword(email, password)`; rejects SSO-only accounts for password login.
 - `logout(refreshToken)`: removes persisted refresh token.
 - `refreshAuth(refreshToken)`: verifies, deletes old, issues new pair via token service.
-- `resetPassword(token, newPassword)`: validates token and updates password.
+- `resetPassword(token, newPassword)` (legacy): validates a reset JWT and updates password.
+- `resetPasswordWithCode(email, code, newPassword)`: primary code-based reset.
 - `verifyEmail(token)`: validates token and marks email verified.
 
 ### Configuration
@@ -78,6 +80,7 @@ In short: **access token = short‑lived bearer in response body; refresh token 
 - File: `src/config/config.js`
 - Important env vars:
   - `JWT_SECRET`, `JWT_ACCESS_EXPIRATION_MINUTES`, `JWT_REFRESH_EXPIRATION_DAYS`
+  - `JWT_RESET_PASSWORD_EXPIRATION_MINUTES` (default 10), `JWT_VERIFY_EMAIL_EXPIRATION_MINUTES` (default 10)
   - `JWT_COOKIE_NAME`, `JWT_COOKIE_DOMAIN`
   - `AUTH_URL` — optional external auth service used by `auth` middleware.
 - Authentication settings (self-registration, public viewing, etc.) are configured via Site Configuration in the database, not environment variables.
@@ -105,7 +108,7 @@ Client
   |
   | POST /v2/auth/login { email, password }
   v
-Express Router (/src/routes/v2/auth.route.js)
+Express Router (/src/routes/v2/user-management/auth.route.js)
   |
   | validate(authValidation.login)
   v
@@ -149,13 +152,14 @@ tokens:
     _id: string (ObjectId)
     token: string (JWT value)
     user: string (ObjectId -> users._id)
-    type: string (enum: access, refresh, resetPassword, verifyEmail)
+    type: string (enum: refresh, resetPassword, verifyEmail — access tokens are never persisted)
     expires: date
     blacklisted: boolean (default: false)
     createdAt: date
     updatedAt: date
   notes:
     - Only refresh/reset/verify tokens are persisted; access tokens are not stored
+    - The reset-password `token` value may be a 6-digit code (primary) or a JWT (legacy)
 
 roles:  # authorization (used by permissions endpoints)
   fields:
@@ -253,11 +257,11 @@ SSO (Microsoft)
 ```
 Client
   |
-  | POST /v2/auth/sso { msAccessToken }
+  | POST /v2/auth/sso { providerId, idToken }
   v
 auth.controller.sso
   |
-  | authService.callMsGraph -> Microsoft Graph
+  | ssoService.getSSOProviderById | authService.parseIdToken(idToken, providerId)
   | userService.getUserByEmail | create/update
   | tokenService.generateAuthTokens
   | set refresh cookie

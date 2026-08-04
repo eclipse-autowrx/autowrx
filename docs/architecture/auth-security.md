@@ -14,7 +14,8 @@ the gap is flagged.
 |---|---|---|---|
 | **Access** | Frontend **memory** (`authStore.access`), sent as `Authorization: Bearer` | 30 min (production); in **dev** the unit is overridden to *days*, so it is 30 days | No |
 | **Refresh** | **HttpOnly cookie** (`JWT_COOKIE_NAME`, default `token`) | 30 days | Yes — `tokens` collection |
-| Reset-password / verify-email | — | 10 min | Yes — `tokens` collection |
+| Reset-password (primary, code) | `tokens` collection (6-digit code) | 60 min (hardcoded) | Yes |
+| Reset-password (legacy, token) / verify-email | `tokens` collection (JWT) | 10 min (`JWT_RESET_PASSWORD_EXPIRATION_MINUTES` / `JWT_VERIFY_EMAIL_EXPIRATION_MINUTES`) | Yes |
 
 The `Token` model (`models/token.model.js`) stores only refresh / reset / verify
 types; **access tokens are never stored**. There is no TTL index — expiry is
@@ -78,7 +79,9 @@ There are **two independent** refresh mechanisms, each with its own
 2. **React-Query `QueryCache.onError`** (`providers/QueryProvider.tsx`) —
    refreshes and invalidates the query.
 
-Both skip the `/auth/*` endpoints and call `logOut()` on refresh failure.
+The axios interceptor skips only `/auth/refresh-tokens`, `/auth/login`, and
+`/auth/logout` (to avoid refresh loops); the QueryCache path does not URL-skip.
+Both call `logOut()` on refresh failure.
 The bootstrap sequence: `App` renders → `useSelfProfile` is disabled until
 `authBootstrapped && access` → the refresh flow populates the store → self-profile
 loads.
@@ -177,7 +180,7 @@ back to the `STRICT_AUTH` env — `STRICT_AUTH=false` opens all flags,
 - **CORS** (`config/config.js`) — `origin` is a function validating each request
   against a **regex allowlist** built from `CORS_ORIGINS` (auto-prefixed
   `http`/`https`); `credentials: true` for the cross-site refresh cookie. Matches
-  [CORS_CONFIGURATION.md](../reference/cors.md).
+  [CORS configuration](../reference/cors.md).
 - **Helmet / CSP** — set in `app.js` for both dev and prod. **⚠️ Reality check:**
   the shipped CSP is effectively **wildcard-open** (`defaultSrc ['*']`,
   `scriptSrc [... '*']`, `connectSrc ['*']`); only `objectSrc: 'none'` is

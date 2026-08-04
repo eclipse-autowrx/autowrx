@@ -47,8 +47,9 @@ flowchart LR
   (`https://kit.digitalauto.tech`), overridable by a user's `customKitServer`
   (localStorage). Extra options come from `RUNTIME_SERVER_CONFIG`.
 - **Connect / register** — on connect it emits `register_client` `{ username,
-  user_id, domain }` (and `unregister_client` on cleanup), then
-  `messageToKit { cmd: 'list-all-kits' }` to discover kits.
+  user_id, domain }` (currently with placeholder values `'test'`/`'test'`/
+  `'domain'` in the code, not live user data; and `unregister_client` on
+  cleanup), then `messageToKit { cmd: 'list-all-kits' }` to discover kits.
 
 ### Protocol (all multiplexed over `messageToKit` / `messageToKit-kitReply`)
 

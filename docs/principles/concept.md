@@ -11,28 +11,19 @@ The foundational principle of our platform is the separation between a stable, l
 -   **The Core:** The core application provides only essential, universal functionality (e.g., user authentication, basic page rendering). Its primary job is to be a stable foundation for plugins to build upon.
 -   **Plugins:** Most features, especially those that are vendor-specific or cater to specialized workflows, are designed as optional plugins. This keeps the base platform lean and allows for immense flexibility and customization.
 
-Plugins can be integrated in two ways:
-1.  **NPM Package Installation:** The standard method for production, allowing for version management and build-time optimization.
-2.  **Dynamic URL Loading:** A flexible method for development and testing, where a plugin can be loaded on-the-fly from a remote JavaScript file.
+Plugins integrate through **Dynamic URL Loading**: the host fetches the plugin's JavaScript bundle from a URL (an external CDN or an internal zip served by the backend), executes it, and the bundle registers its component on `window.DAPlugins['page-plugin']`. This is the only integration path implemented today. (Installing plugins as npm packages at build time is a documented aspiration, not a supported path.)
 
 ---
 
 ## 2. Dynamic Component Architecture
 
-The technical implementation of our plugin philosophy on the frontend is the **Dynamic Component Architecture**. This system is what allows plugin-provided UI components to be seamlessly and dynamically rendered within the core application, making the entire UI configuration-driven.
+The technical implementation of our plugin philosophy on the frontend is the **plugin loader**. There is **no central component registry**: the core application composes real React components directly, and the only truly dynamic path is the plugin loader, `organisms/PluginPageRender.tsx`, which injects a plugin's bundle as a `<script>` tag and polls for its registration on `window.DAPlugins['page-plugin']`. (Some config-driven pages, like the home page, map a site-config element `type` to a real component via a `switch` — this is a fixed mapping in code, not a runtime registry.) See [dynamic-components.md](../reference/component-design/dynamic-components.md) for details.
 
-It is built on three key ideas:
+A plugin component follows a simple contract instead of a schema-based registry:
+-   It is rendered by the host with props `{ data, editable, config, api }`.
+-   It interacts with the platform exclusively through the optional `PluginAPI` methods on `props.api` — a deliberately narrow surface with no direct access to stores, routing, auth tokens, or the filesystem.
 
-### A. The Component Registry
-Instead of a monolithic function that knows about all possible components, we use a **Registry Pattern**. This is a central `ComponentRegistry` object where each plugin can register its own components using a unique `type` name. The core application's renderer simply asks the registry for the component associated with a given type. This keeps the core decoupled and extensible.
-
-### B. Standardized Component API & Schema
-For a component to be compatible with the system, it must follow a strict contract:
--   It must accept two props: `option` (for styling/configuration) and `data` (for content).
--   It must provide a **schema** that defines the expected shape of its `option` and `data` props. This schema is crucial for validation, auto-generating admin forms, and enabling reliable AI-powered layout generation.
-
-### C. Asynchronous (Lazy) Loading
-To ensure the platform remains performant, components are not loaded until they are actually needed. By using `React.lazy()`, the code for a plugin's components is only fetched from the server when a page configuration calls for it to be rendered.
+Loading is asynchronous: a plugin's bundle is only fetched and executed when a tab referencing the plugin is opened, and registrations are cached per plugin slug so re-opening a tab doesn't re-inject the script.
 
 ---
 

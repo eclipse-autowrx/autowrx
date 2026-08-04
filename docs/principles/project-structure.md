@@ -25,7 +25,7 @@ backend also serves the built frontend, so the two ship as one image.
         - static/                  # served statically
             - global.css           # main stylesheet (admin-editable via site config)
             - frontend-dist/       # built frontend (output of `frontend/` build)
-            - builtin-widgets/  images/  plugin/  uploads/
+            - builtin-widgets/  images/  plugin/  # uploads/ & frontend-dist/ are created at runtime/build
         - Dockerfile  Dockerfile.dev  ecosystem.config.json  jest.config.js
         - package.json  yarn.lock
     - frontend/                    # React 18 + Vite + TypeScript SPA (dev :3210)

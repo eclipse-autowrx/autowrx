@@ -42,7 +42,7 @@ erDiagram
     User ||--o{ UserRole : "user"
     Role ||--o{ UserRole : "role"
     Model ||--o{ Prototype : "model_id"
-    Model ||--|| Api : "cvi (computed)"
+    Model ||--|| Api : "cvi (computed) (1:1 app-enforced; no unique index)"
     Model ||--o{ ExtendedApi : "model (wishlist APIs)"
     Model }o--o{ CustomApiSet : "custom_api_sets"
     Model }o--o| ModelTemplate : "model_template_id"
@@ -94,6 +94,7 @@ The authorization logic that reads these is documented in
 | **Feedback** (`feedback.model.js`) | `feedbacks` | `avg_score`, `score{easy_to_use,need_address,relevance}`, `interviewee{…}` → `created_by`, `model_id` |
 | **ChangeLog** (`changeLog.model.js`) | `changelogs` | Audit trail (`action` CREATE/UPDATE/DELETE, `changes`, `ref`); written by the `captureChange` plugin. This is a **capped** collection (see the startup cap script). |
 | **SiteConfig** (`siteConfig.model.js`) | `siteconfigs` | `key`, `scope` (site/user/model/prototype/api), `target_id`, `value`, `secret`, `category`; unique `(key, scope, target_id)`. Backs `PUBLIC_VIEWING`, theming, feature flags |
+| **SiteConfigSnapshot** / **SiteConfigSnapshotMeta** | `siteconfigsnapshots` / `siteconfigsnapshotmetas` | Backing store for SiteConfig audit/restore (snapshots + metadata); exported from `models/index.js` alongside `SiteConfig` |
 | **Plugin** (`plugin.model.js`) | `plugins` | `name`, `slug` (unique), `url`, `is_internal`, `config`, `type` (`prototype_function`/`deploy`) |
 | **ModelTemplate** / **DashboardTemplate** / **ProjectTemplate** | `modeltemplates` / `dashboardtemplates` / `projecttemplates` | Reusable model/dashboard/project scaffolds; `visibility`, template-specific config/`widget_config`/`data` |
 | **CustomApiSchema** (`customApiSchema.model.js`) | `customapischemas` | Defines a custom API *shape*: `code` (unique), `type` (tree/list/graph), `schema`, `relationships[]` |

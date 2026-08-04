@@ -206,8 +206,8 @@ const generateAuthTokens = async (user) => {
 
 ### Local Development Test
 
-1. **Start backend**: `cd backend && npm run dev`
-2. **Start frontend**: `cd frontend && npm run dev`
+1. **Start backend**: `cd backend && yarn dev`
+2. **Start frontend**: `cd frontend && yarn dev`
 3. **Login**: Use valid credentials
 4. **Verify**: Check browser cookies for `token` cookie
 5. **Page reload**: Should maintain authentication state
@@ -234,24 +234,46 @@ import axios from 'axios'
 
 export const serverAxios = axios.create({
   baseURL: `${config.serverBaseUrl}/${config.serverVersion}`,
-  withCredentials: true,  // Important: Enables cookie sending
+  withCredentials: true,  // Important: sends the refresh cookie
 })
 
-// HTTP Request Interceptor - Automatically adds access token to headers
-serverAxios.interceptors.request.use(
-  (config) => {
-    // Get current access token from auth store
-    const token = useAuthStore.getState().access?.token
-    
-    if (token) {
-      // Automatically attach token to Authorization header
-      config.headers.Authorization = `Bearer ${token}`
+// Request interceptor: attach the current access token to every request
+serverAxios.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().access?.token
+  if (token) config.headers.Authorization = `Bearer ${token}`
+  return config
+})
+
+// Response interceptor: on a 401, refresh the token once and retry queued requests.
+// (Condensed — the full implementation in base.ts also single-flights with an
+// `isRefreshing` flag and a `failedQueue` of requests waiting for the refresh.)
+serverAxios.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      !originalRequest.url?.includes('/auth/refresh-tokens') &&
+      !originalRequest.url?.includes('/auth/login') &&
+      !originalRequest.url?.includes('/auth/logout')
+    ) {
+      originalRequest._retry = true
+      try {
+        // Uses a separate axios instance (no interceptors) to avoid recursion
+        const refreshAxios = axios.create({ baseURL: serverAxios.defaults.baseURL, withCredentials: true })
+        const response = await refreshAxios.post('/auth/refresh-tokens', {})
+        const newToken = response.data.access.token
+        useAuthStore.getState().setAccess(response.data.access)
+        originalRequest.headers.Authorization = `Bearer ${newToken}`
+        return serverAxios(originalRequest) // retry the original request
+      } catch (refreshError) {
+        useAuthStore.getState().logOut()   // refresh failed → clear auth state
+        return Promise.reject(refreshError)
+      }
     }
-    
-    return config
-  },
-  (error) => {
-    return Promise.reject(error)
+    return Promise.reject(error) // non-refreshable 401 (e.g. wrong password) is just rejected
   },
 )
 ```
@@ -290,12 +312,15 @@ type AuthState = {
   access?: Token | null
   user: any
   openLoginDialog: boolean
+  authBootstrapped: boolean
 }
 
 // Actions
 setAccess: (access: Token) => void
-setUser: (user: any, access: Token) => void
+setUser: (user: any, access: any) => void
 logOut: () => void
+setOpenLoginDialog: (isOpen: boolean) => void
+setAuthBootstrapped: (bootstrapped: boolean) => void
 ```
 
 ### 3. Token Refresh Integration
@@ -303,20 +328,32 @@ logOut: () => void
 The `QueryProvider` handles automatic token refresh:
 
 ```typescript
-// providers/QueryProvider.tsx
-const refreshAuthToken = useCallback(async () => {
-  const response = await serverAxios.post<AuthToken>('/auth/refresh-tokens')
-  setAccess(response.data.access)
-}, [setAccess])
+// providers/QueryProvider.tsx (condensed; inside the QueryProvider component,
+// where setAccess/logOut come from useAuthStore and queryClient is created via useState)
+const refreshAxios = axios.create({ baseURL: `${config.serverBaseUrl}/${config.serverVersion}`, withCredentials: true })
+let isRefreshing = false
 
-// Automatic refresh on 401 errors
-queryCache: new QueryCache({
-  onError: async (error, query) => {
-    if (isAxiosError(error) && error?.response?.status === 401) {
-      await refreshAuthToken()
-      queryClient.invalidateQueries({ queryKey: query.queryKey })
-    }
-  },
+const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: async (error, query) => {
+      if (isAxiosError(error) && error?.response?.status === 401) {
+        if (isRefreshing) return
+        isRefreshing = true
+        try {
+          const res = await refreshAxios.post('/auth/refresh-tokens', {})
+          if (res.data?.access?.token) {
+            setAccess(res.data.access)
+            query.invalidate()
+          }
+        } catch {
+          logOut()
+        } finally {
+          isRefreshing = false
+        }
+      }
+    },
+  }),
+  defaultOptions: { queries: { staleTime: 30000, retry: (n, err) => err?.response?.status !== 401 && n <= 1 } },
 })
 ```
 
@@ -415,6 +452,8 @@ JWT_SECRET=your-secret-key
 JWT_COOKIE_NAME=token
 JWT_ACCESS_EXPIRATION_MINUTES=30
 JWT_REFRESH_EXPIRATION_DAYS=30
+JWT_RESET_PASSWORD_EXPIRATION_MINUTES=10   # legacy token reset
+JWT_VERIFY_EMAIL_EXPIRATION_MINUTES=10
 JWT_COOKIE_DOMAIN=your-domain.com  # Production only
 ```
 
