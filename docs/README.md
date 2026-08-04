@@ -79,9 +79,8 @@ Configuration and technical reference.
 - [CSP Configuration](./reference/csp.md)
 - [Feature Breakdown](./reference/feature-breakdown.md)
 
-### Feature Catalog
-- [**Feature Catalog**](./features/README.md) — a code-grounded catalog of all platform features & capabilities
-  - [Auth, Users & Permissions](./features/auth-users-permissions.md) · [Models & Vehicle APIs](./features/models-vehicle-apis.md) · [Prototypes & Code](./features/prototypes-code.md) · [Dashboards, Widgets & Runtime](./features/dashboards-widgets-runtime.md) · [Custom APIs](./features/custom-apis.md) · [Assets & Sharing](./features/assets-sharing.md) · [Plugins](./features/plugins.md) · [Site Config & Theming](./features/site-config-theming.md) · [Templates](./features/templates.md) · [Integrations & System](./features/integrations-system.md)
+### Capability Catalog
+- [**Capability Catalog (draft)**](./capabilities/DRAFT.md) — proposed cluster grouping (in progress)
 
 ---
 
