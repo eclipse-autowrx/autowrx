@@ -3,9 +3,9 @@
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | POST | / | Required | Create extended API. |
-| GET | / | Optional (strictAuth=false) | List extended APIs. |
-| GET | /by-api-and-model | Optional (strictAuth=false) | Get by API name and model. |
-| GET | /:id | Optional (strictAuth=false) | Get extended API by ID. |
+| GET | / | Optional (when PUBLIC_VIEWING enabled) | List extended APIs. |
+| GET | /by-api-and-model | Optional (when PUBLIC_VIEWING enabled) | Get by API name and model. |
+| GET | /:id | Optional (when PUBLIC_VIEWING enabled) | Get extended API by ID. |
 | PATCH | /:id | Required | Update extended API. |
 | DELETE | /:id | Required | Delete extended API. |
 
@@ -71,9 +71,36 @@ ExtendedApi:
 ```yaml
 /v2/extendedApis:
   get:
-    summary: List extended APIs
+    summary: List extended APIs (requires model)
     security:
-      - bearerAuth: []
+      - bearerAuth: []   # optional under PUBLIC_VIEWING
+    parameters:
+      - in: query
+        name: model
+        required: true
+        schema:
+          type: string
+        description: Model ID — the caller must have access (403 otherwise).
+      - in: query
+        name: apiName
+        schema:
+          type: string
+      - in: query
+        name: skeleton
+        schema:
+          type: string
+      - in: query
+        name: sortBy
+        schema:
+          type: string
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      - in: query
+        name: page
+        schema:
+          type: integer
     responses:
       '200':
         description: Extended API list
@@ -99,10 +126,12 @@ ExtendedApi:
     parameters:
       - in: query
         name: apiName
+        required: true
         schema:
           type: string
       - in: query
-        name: modelId
+        name: model
+        required: true
         schema:
           type: string
     responses:

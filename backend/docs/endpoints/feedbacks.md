@@ -3,7 +3,7 @@
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | POST | / | Required | Create feedback. |
-| GET | / | Optional (strictAuth=false) | List feedbacks. |
+| GET | / | Optional (when PUBLIC_VIEWING enabled) | List feedbacks. |
 | PATCH | /:id | Required | Update feedback. |
 | DELETE | /:id | Required | Delete feedback. |
 
