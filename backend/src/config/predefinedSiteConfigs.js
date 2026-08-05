@@ -220,6 +220,16 @@ const PREDEFINED_SITE_CONFIGS = [
     category: 'model_prototype',
   },
   {
+    key: 'HIDE_VEHICLE_MODELS_PAGE',
+    scope: 'site',
+    value: false,
+    secret: false,
+    valueType: 'boolean',
+    description:
+      'Hide the /model (Vehicle Models) list page. When enabled: visiting /model redirects to Home, the "Vehicle Models" breadcrumb item is removed, and any home buttons whose URL is /model are hidden. Model detail pages (/model/:id) remain accessible.',
+    category: 'model_prototype',
+  },
+  {
     key: 'PUBLIC_VIEWING',
     scope: 'site',
     value: true,

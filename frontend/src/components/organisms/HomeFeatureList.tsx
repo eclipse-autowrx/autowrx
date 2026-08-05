@@ -8,6 +8,7 @@
 
 import { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useSiteConfig } from '@/utils/siteConfig'
 import { DaCardIntroBig } from '../molecules/DaCardIntroBigAlt'
 import { Button } from '@/components/atoms/button'
 
@@ -55,6 +56,7 @@ type HomeFeatureListProps = {
 
 const HomeFeatureList = ({ items }: HomeFeatureListProps) => {
   const navigate = useNavigate()
+  const hideVehicleModelsPage = useSiteConfig('HIDE_VEHICLE_MODELS_PAGE', false)
 
   const handleButtonClick = (url: string) => {
     // Check if URL is external (starts with http:// or https://)
@@ -72,16 +74,20 @@ const HomeFeatureList = ({ items }: HomeFeatureListProps) => {
   return (
     <div className="container flex w-full flex-col justify-center">
       <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-3">
-        {items?.map((card, index) => (
+        {items?.map((card, index) => {
+          const visibleButtons = card.buttons?.filter(
+            (button) => !(hideVehicleModelsPage && button.url === '/model'),
+          )
+          return (
           <div key={index} className="flex w-full items-center justify-center">
             <DaCardIntroBig
               key={index}
               title={card.title || ''}
               content={card.description || ''}
             >
-              {card.buttons && card.buttons.length > 0 && (
+              {visibleButtons && visibleButtons.length > 0 && (
                 <div className="flex flex-wrap gap-4">
-                  {card.buttons.map((button, btnIndex) => (
+                  {visibleButtons.map((button, btnIndex) => (
                     <Button
                       key={btnIndex}
                       variant={button.variant || "default"}
@@ -118,7 +124,8 @@ const HomeFeatureList = ({ items }: HomeFeatureListProps) => {
               {card.children}
             </DaCardIntroBig>
           </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

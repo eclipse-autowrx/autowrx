@@ -49,7 +49,7 @@ import { addLog } from '@/services/log.service'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { listModelsLite } from '@/services/model.service'
 import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
-import { useDefaultModelImage } from '@/utils/siteConfig'
+import { useDefaultModelImage, useSiteConfig } from '@/utils/siteConfig'
 import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
 import { useToast } from '@/components/molecules/toaster/use-toast'
 
@@ -173,6 +173,7 @@ const PageModelDetail = () => {
   const queryClient = useQueryClient()
   const [isAuthorized] = usePermissionHook([PERMISSIONS.WRITE_MODEL, model?.id])
   const [confirmPopupOpen, setConfirmPopupOpen] = useState(false)
+  const hideVehicleModelsPage = useSiteConfig('HIDE_VEHICLE_MODELS_PAGE', false)
 
   const { data: currentUser } = useSelfProfileQuery()
 
@@ -241,7 +242,7 @@ const PageModelDetail = () => {
         ref_id: model.id,
         ref_type: 'model',
       })
-      window.location.href = '/model'
+      window.location.href = hideVehicleModelsPage ? '/' : '/model'
     } catch (error) {
       console.error('Failed to delete model:', error)
     } finally {

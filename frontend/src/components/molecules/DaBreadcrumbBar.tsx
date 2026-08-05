@@ -17,6 +17,7 @@ import {
 } from '@/components/atoms/DaBreadcrumb'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
+import { useSiteConfig } from '@/utils/siteConfig'
 
 const breadcrumbNames: { [key: string]: string } = {
   home: 'Home',
@@ -32,6 +33,7 @@ const DaBreadcrumbBar = () => {
   const { data: model } = useCurrentModel()
   const { data: prototype } = useCurrentPrototype()
   const location = useLocation()
+  const hideVehicleModelsPage = useSiteConfig('HIDE_VEHICLE_MODELS_PAGE', false)
   const [breadcrumbs, setBreadcrumbs] = useState<JSX.Element[]>([])
 
   const generateBreadcrumbItem = (
@@ -70,7 +72,10 @@ const DaBreadcrumbBar = () => {
 
     const isNewPrototypeRoute = pathnames[0] === 'new-prototype'
 
-    if (pathnames[0] === 'model' || isNewPrototypeRoute) {
+    if (
+      (pathnames[0] === 'model' || isNewPrototypeRoute) &&
+      !hideVehicleModelsPage
+    ) {
       paths.push({
         path: '/model',
         name: breadcrumbNames['model'],
@@ -194,7 +199,7 @@ const DaBreadcrumbBar = () => {
       )
     })
     setBreadcrumbs(breadcrumbList)
-  }, [location.pathname, model, prototype])
+  }, [location.pathname, model, prototype, hideVehicleModelsPage])
 
   return (
     <div className="flex h-[52px] w-full justify-between">

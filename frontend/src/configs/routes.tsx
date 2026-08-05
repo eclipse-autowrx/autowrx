@@ -7,9 +7,11 @@
 // SPDX-License-Identifier: MIT
 
 import { lazy } from 'react'
+import { Navigate } from 'react-router-dom'
 import RootLayout from '@/layouts/RootLayout'
 import SuspenseProvider from '@/providers/SuspenseProvider'
 import { RouteConfig } from '@/types/common.type.ts'
+import { useSiteConfig } from '@/utils/siteConfig'
 import PageUserProfile from '@/pages/PageUserProfile.tsx'
 import PageMyAssets from '@/pages/PageMyAssets.tsx'
 import PageHealth from '@/pages/PageHealth.tsx'
@@ -100,6 +102,12 @@ const PageVehicleApi = lazy(() => retry(() => import('@/pages/PageVehicleApi')))
 // const PageInventoryItemList = lazy(() =>
 //   retry(() => import('@/pages/PageInventoryItemList')),
 // )
+
+const PageModelListGuarded = () => {
+  const hidden = useSiteConfig('HIDE_VEHICLE_MODELS_PAGE', false)
+  if (hidden) return <Navigate to="/" replace />
+  return <PageModelList />
+}
 
 const routesConfig: RouteConfig[] = [
   {
@@ -343,7 +351,7 @@ const routesConfig: RouteConfig[] = [
             index: true,
             element: (
               <SuspenseProvider>
-                <PageModelList />
+                <PageModelListGuarded />
               </SuspenseProvider>
             ),
           },

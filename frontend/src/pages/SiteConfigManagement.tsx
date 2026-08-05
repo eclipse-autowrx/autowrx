@@ -233,6 +233,16 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
       'When enabled, hides Custom API Schema / API Set management and all model/prototype UI for custom API sets.',
     category: 'model_prototype',
   },
+  {
+    key: 'HIDE_VEHICLE_MODELS_PAGE',
+    scope: 'site',
+    value: false,
+    secret: false,
+    valueType: 'boolean',
+    description:
+      'Hide the /model (Vehicle Models) list page. When enabled: visiting /model redirects to Home, the "Vehicle Models" breadcrumb item is removed, and any home buttons whose URL is /model are hidden. Model detail pages (/model/:id) remain accessible.',
+    category: 'model_prototype',
+  },
 ]
 
 export const PREDEFINED_GENAI_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(

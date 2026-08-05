@@ -9,6 +9,7 @@
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useSiteConfig } from '@/utils/siteConfig'
 import DaDialog from '../molecules/DaDialog'
 import { DaActionCard } from '../molecules/DaActionCard'
 import { FaCar } from 'react-icons/fa'
@@ -31,6 +32,7 @@ type HomeButtonListProps = {
 const HomeButtonList = ({ items, requiredLogin }: HomeButtonListProps) => {
   const navigate = useNavigate()
   const { data: user } = useSelfProfileQuery()
+  const hideVehicleModelsPage = useSiteConfig('HIDE_VEHICLE_MODELS_PAGE', false)
 
   const meetConditions = useMemo(() => {
     let result = true
@@ -42,11 +44,19 @@ const HomeButtonList = ({ items, requiredLogin }: HomeButtonListProps) => {
     return result
   }, [requiredLogin, user])
 
+  const visibleItems = useMemo(
+    () =>
+      items?.filter(
+        (button) => !(hideVehicleModelsPage && button.url === '/model'),
+      ),
+    [items, hideVehicleModelsPage],
+  )
+
   return (
     meetConditions && (
       <div className="container pb-6 flex w-full flex-col justify-center">
         <div className="grid w-full grid-cols-2 grid-rows-2 xl:grid-cols-4 xl:grid-rows-1 gap-1.52">
-          {items?.map((button, index) => {
+          {visibleItems?.map((button, index) => {
             if (button.type === 'new-model')
               return (
                 <DaDialog
