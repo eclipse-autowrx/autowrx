@@ -91,7 +91,15 @@ const logout = catchAsync(async (req, res) => {
 });
 
 const refreshTokens = catchAsync(async (req, res) => {
-  const tokens = await authService.refreshAuth(req.cookies[config.jwt.cookie.name]);
+  const refreshCookie = req.cookies[config.jwt.cookie.name];
+  logger.debug(
+    'Refresh tokens request: path=%s hasRefreshCookie=%s cookieName=%s origin=%s',
+    req.originalUrl,
+    Boolean(refreshCookie),
+    config.jwt.cookie.name,
+    req.get('origin') || '(none)'
+  );
+  const tokens = await authService.refreshAuth(refreshCookie);
   res.cookie(config.jwt.cookie.name, tokens.refresh.token, {
     expires: tokens.refresh.expires,
     ...config.jwt.cookie.options,

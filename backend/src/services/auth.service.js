@@ -89,17 +89,21 @@ const logout = async (refreshToken) => {
  */
 const refreshAuth = async (refreshToken) => {
   if (!refreshToken) {
+    logger.debug('Refresh auth failed: refresh cookie missing (cookieName=%s)', config.jwt.cookie.name);
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate');
   }
   try {
     const refreshTokenDoc = await tokenService.verifyToken(refreshToken, tokenTypes.REFRESH);
     const user = await userService.getUserById(refreshTokenDoc.user);
     if (!user) {
+      logger.debug('Refresh auth failed: user not found for token userId=%s', refreshTokenDoc.user);
       throw new Error();
     }
     await refreshTokenDoc.deleteOne();
+    logger.debug('Refresh auth succeeded: userId=%s', user.id || user._id);
     return tokenService.generateAuthTokens(user);
   } catch (error) {
+    logger.debug('Refresh auth failed: %s', error?.message || error);
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate');
   }
 };
