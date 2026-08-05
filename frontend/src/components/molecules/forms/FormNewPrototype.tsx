@@ -566,7 +566,7 @@ const FormNewPrototype = ({
             {(isLoadingTemplates || templateOptions.length > 0) &&
                 (isLoadingTemplates ? (
                     <div className="mt-4">
-                        <DaText variant="regular-medium">Project Template *</DaText>
+                        <DaText variant="regular-medium">Prototype Template *</DaText>
                         <div className="flex h-10 border px-2 rounded-md shadow-sm mt-2 items-center">
                             <TbLoader className="size-4 animate-spin mr-2" /> Loading
                             templates...
@@ -576,7 +576,7 @@ const FormNewPrototype = ({
                     <DaSelect
                         value={selectedTemplateId}
                         onValueChange={setSelectedTemplateId}
-                        label="Project Template *"
+                        label="Prototype Template *"
                         wrapperClassName="mt-4"
                         dataId="project-template-select"
                         className="w-full"

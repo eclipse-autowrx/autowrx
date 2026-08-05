@@ -65,7 +65,7 @@ export default function ProjectTemplateManager() {
   return (
     <div className="p-6">
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Project Templates</h1>
+        <h1 className="text-xl font-semibold">Prototype Templates</h1>
         <Button
           onClick={() => {
             setEditId(undefined)
@@ -154,7 +154,7 @@ export default function ProjectTemplateManager() {
           <div className="col-span-full text-center py-12">
             <TbFileCode className="size-12 mx-auto text-muted-foreground mb-2" />
             <p className="text-sm text-muted-foreground">
-              No project templates yet
+              No prototype templates yet
             </p>
           </div>
         )}
@@ -171,8 +171,8 @@ export default function ProjectTemplateManager() {
       />
 
       <DaConfirmPopup
-        title="Delete Project Template"
-        label="This will permanently delete the project template. This action cannot be undone."
+        title="Delete Prototype Template"
+        label="This will permanently delete the prototype template. This action cannot be undone."
         state={[openConfirm, setOpenConfirm]}
         onConfirm={() => {
           if (deleteId) del.mutate(deleteId)

@@ -147,7 +147,7 @@ export default function ProjectTemplateEditor({
       }}
       className="w-[95vw] sm:w-[90vw] max-w-[1200px] h-[90vh] max-h-[calc(100dvh-2rem)]"
       contentContainerClassName="min-h-0"
-      dialogTitle={isEdit ? 'Edit Project Template' : 'Create Project Template'}
+      dialogTitle={isEdit ? 'Edit Prototype Template' : 'Create Prototype Template'}
       footer={
         <>
           <Button variant="outline" onClick={resetAndClose}>

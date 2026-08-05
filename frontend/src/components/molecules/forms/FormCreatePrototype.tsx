@@ -416,7 +416,7 @@ const FormCreatePrototype = ({
 
       {(isLoadingTemplates || templateOptions.length > 0) && (
         <div className="flex flex-col mt-4">
-          <Label className="mb-2">Project Template *</Label>
+          <Label className="mb-2">Prototype Template *</Label>
           {isLoadingTemplates ? (
             <p className="flex items-center text-sm text-muted-foreground h-9">
               <Spinner className="mr-1 h-4 w-4" />
