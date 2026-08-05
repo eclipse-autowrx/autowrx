@@ -12,6 +12,9 @@ const config = require('../config/config');
 const { default: axios, isAxiosError } = require('axios');
 const passport = require('passport');
 const logger = require('../config/logger');
+const platformAuthService = require('../services/platformAuth.service');
+
+let authUrlDeprecationWarned = false;
 /**
  *
  * @param {Object} user
@@ -33,8 +36,14 @@ const auth =
   async (req, res, next) => {
     try {
       let user;
-      // If auth service url is provided, use it to authenticate the user
-      if (config.services.auth.url) {
+      if (config.auth.provider === 'platform') {
+        user = await platformAuthService.resolveUser(req);
+        user = sanitizeUser(user?.toJSON ? user.toJSON() : user);
+      } else if (config.services.auth.url) {
+        if (!authUrlDeprecationWarned) {
+          logger.warn('AUTH_URL is deprecated; use AUTH_PROVIDER=platform with AUTH_PLATFORM_HEADERS instead');
+          authUrlDeprecationWarned = true;
+        }
         const forwardHeaders = { ...req.headers };
         delete forwardHeaders['content-length'];
         delete forwardHeaders['keep-alive'];
