@@ -9,7 +9,7 @@ User-owned resources (cloud runtimes, hardware kits, GenAI configs) and the shar
 - **Description:** Create/list/get/update/delete assets of types enabled by `USER_ASSET_TYPES` (default `CLOUD_RUNTIME`, `HARDWARE_KIT`, `GENAI-PYTHON`) with arbitrary `data`.
 - **Who uses it / value:** End users (manage their runtimes/kits/GenAI configs); admins (oversight).
 - **Acceptance criteria:**
-  - `GET /v2/assets` (auth) → `200` the user's assets (+ shared with them); `POST` (auth) → `201` create; `GET /v2/assets/:id` (auth + `READ_ASSET`) → `200`; `PATCH` (auth + `WRITE_ASSET`) → `200` (empty body); `DELETE` (auth + `WRITE_ASSET`) → `200`.
+  - `GET /v2/assets` (auth) → `200` the user's assets (+ shared with them); `POST` (auth) → `200` create; `GET /v2/assets/:id` (auth + `READ_ASSET`) → `200`; `PATCH` (auth + `WRITE_ASSET`) → `200` (empty body); `DELETE` (auth + `WRITE_ASSET`) → `200`.
   - Asset types restricted to `USER_ASSET_TYPES`.
 - **Quality control:** Create a `CLOUD_RUNTIME` asset → appears in My Assets; edit → persists; delete → gone; access another user's asset without sharing → `403`.
 - **Security:** All routes auth; get/update/delete gated by `READ_ASSET`/`WRITE_ASSET` permission on the asset; types gated by `USER_ASSET_TYPES`.

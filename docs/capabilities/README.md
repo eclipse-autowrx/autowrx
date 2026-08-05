@@ -26,7 +26,7 @@ A code-grounded catalog of what AutoWRX does, organized into **clusters** of rel
 | Assets & Sharing | user assets CRUD, admin all-assets, My Assets, asset sharing, model contributors, access invitation, user lookup | [assets-sharing.md](./assets-sharing.md) |
 | Plugins | plugin registry/CRUD, internal upload/hosting, loader, preloading, sample plugins, addon/custom-tab editor, My Plugins + admin management | [plugins.md](./plugins.md) |
 | Site Config & Theming | site config CRUD, public read, admin management, global CSS, home config, branding, auth flags, SSO/email config, snapshots/restore, privacy | [site-config-theming.md](./site-config-theming.md) |
-| Integrations & Platform | SDV ProtoPilot/GenAI, GitHub OAuth, email, learning mode, web studio, search, discussions, feedback, health, file upload, change logs/audit, static/SPA, VSS static, CORS/CSP, Socket.IO, log/cache | [integrations-platform.md](./integrations-platform.md) |
+| Integrations & Platform | SDV ProtoPilot/GenAI, GitHub OAuth, email, web studio, search, discussions, feedback, health, file upload, change logs/audit, static/SPA, VSS static, CORS/CSP, Socket.IO, log/cache | [integrations-platform.md](./integrations-platform.md) |
 
 ## Cross-cutting model
 
@@ -43,7 +43,6 @@ A code-grounded catalog of what AutoWRX does, organized into **clusters** of rel
 | `UNLIMITED_MODEL` | `unlimitedModel` |
 | `READ_ASSET` / `WRITE_ASSET` | `readAsset` / `writeAsset` |
 | `DEPLOY_HARDWARE` | `deployHardware` |
-| `LEARNING_MODE` | `learningMode` |
 
 A second Casbin-based RBAC (v2) is wired through the internal `POST /v2/auth/authorize` endpoint but v1 remains the primary path for resource checks.
 
@@ -68,7 +67,6 @@ AutoWRX is highly configurable via site-config keys (managed in **Admin → Site
 | `SHOW_SDV_PROTOPILOT_BUTTON` | `true` | Show the GenAI SDV code-generation button on the Code tab. |
 | `SHOW_CODE_API_PANEL` | `true` | Show the Vehicle API panel on the Code tab. |
 | `SHOW_CODE_DIFF` | `false` | Show code diff after AI/plugin generation. |
-| `ENABLE_LEARNING_MODE` | `false` | Show the learning-mode toggle (embeds `LEARNING_MODE_URL`). |
 | `USER_ASSET_TYPES` | `['CLOUD_RUNTIME','HARDWARE_KIT','GENAI-PYTHON']` | Asset types available on My Assets. |
 | `RUNTIME_SERVER_URL` | `https://kit.digitalauto.tech` | Hardware-kit / runtime server the frontend connects to. |
 

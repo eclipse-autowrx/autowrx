@@ -23,7 +23,7 @@ The vehicle-model domain and its layout. Backend: `routes/v2/vehicle-data/model.
 - **Description:** View/edit a model's name, home image, vehicle properties, visibility (public/private), state (draft/released/blocked), contributors; export the model as ZIP; download the computed VSS JSON; delete.
 - **Who uses it / value:** Model owners (maintain models); contributors (collaborate); consumers (export/download).
 - **Acceptance criteria:**
-  - `GET /v2/models/:id` (optional auth) → `200` model (authorized users get `contributors`/`members` injected). `PATCH /v2/models/:id` → `200` (requires `WRITE_MODEL`). `DELETE /v2/models/:id` → `200` (requires `WRITE_MODEL`).
+  - `GET /v2/models/:id` (optional auth) → `200` model (authorized users get `contributors`/`members` injected). `PATCH /v2/models/:id` → `200` (requires `WRITE_MODEL`). `DELETE /v2/models/:id` → `204` (requires `WRITE_MODEL`).
   - Export ZIP / download computed VSS from the UI actions.
   - No `WRITE_MODEL` → `403` on edit/delete.
 - **Quality control:** Edit visibility to private → signed-out users can't see it; change state to released → appears publicly; export → valid ZIP; delete → gone from list.

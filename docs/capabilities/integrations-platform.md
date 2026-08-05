@@ -46,16 +46,6 @@ External integrations, search/content, and platform/system capabilities.
 - **Security:** Secrets encrypted at rest; admin-only config.
 - **Data protection:** Recipient email + content sent to the provider; reset codes are one-time.
 
-## Learning mode
-
-- **Description:** Embeds a learning iframe (`LEARNING_MODE_URL`) with host↔iframe automation messaging.
-- **Who uses it / value:** Learners (embedded learning content).
-- **Acceptance criteria:**
-  - Toggle shown when `ENABLE_LEARNING_MODE=true` + signed-in; embeds `LEARNING_MODE_URL`; automation messages exchanged.
-- **Quality control:** Enable the flag + sign in → learning toggle appears → iframe loads.
-- **Security:** Sign-in required; iframe is third-party content (sandbox per browser).
-- **Data protection:** `LEARNING_MODE_URL` only; messages exchanged with the iframe.
-
 ## Web Studio widget creation
 
 - **Description:** Create/embed a widget via the external bewebstudio service.
