@@ -93,7 +93,7 @@ External integrations, search/content, and platform/system capabilities.
 - **Description:** Consolidated status of MongoDB, JWT sign/verify, auth login, upload dir, runtime server, SSO reachability.
 - **Who uses it / value:** DevOps/monitoring.
 - **Acceptance criteria:**
-  - `GET /v2/health` (public) → `200` `ok`/`degraded`/`error` with per-service messages; page `/health` shows badges.
+  - `GET /v2/health` (public) → `200` for `ok`/`degraded`, `503` for `error`, with per-service messages; page `/health` shows badges.
 - **Quality control:** Hit `/v2/health` → status + per-service messages; stop Mongo → degraded.
 - **Security:** Public.
 - **Data protection:** Status info only (no secrets).

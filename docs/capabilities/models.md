@@ -9,8 +9,8 @@ The vehicle-model domain and its layout. Backend: `routes/v2/vehicle-data/model.
 - **Description:** Browse models in three sections (My Models, My Contributions, Public); create a model; import a model from a ZIP archive.
 - **Who uses it / value:** End users (discover models); model owners (create/import); the wider community (public discovery when `PUBLIC_VIEWING`).
 - **Acceptance criteria:**
-  - `GET /v2/models` (optional auth via `PUBLIC_VIEWING`) → `200` paginated list with query filters (`name`, `visibility`, `state`, `tenant_id`, `vehicle_category`, `main_api`, `created_by`, `is_contributor`, `include_stats`, `sortBy`, `page`, `limit`, `fields`).
-  - `GET /v2/models/all` → expanded/unpaginated aggregation of owned + contributed + public-released models (for authorized users).
+  - `GET /v2/models` (optional auth via `PUBLIC_VIEWING`) → `200` paginated list with query filters (`name`, `visibility`, `state`, `tenant_id`, `vehicle_category`, `main_api`, `id`, `created_by`, `is_contributor`, `include_stats`, `sortBy`, `page`, `limit`, `fields`).
+  - `GET /v2/models/all` → expanded/unpaginated aggregation of owned + contributed + public-released models (optional auth via `PUBLIC_VIEWING`; owned/contributed only populated for authenticated users).
   - `POST /v2/models` (auth) → `201` new model. `POST /v2/models/stats` (optional auth) → `200 { statsById: { [modelId]: {...} } }` for the body `ids`.
   - Import from ZIP (`zipUtils.ts`) creates a model from the archive contents.
   - Signed-out with `PUBLIC_VIEWING=false` → `401` on list.

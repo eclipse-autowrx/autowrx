@@ -9,8 +9,8 @@ Authentication, identity, and authorization. Backend: `routes/v2/user-management
 - **Description:** Email+password login issuing a short-lived JWT access token (returned in the response body) and a long-lived refresh token set as an `httpOnly` cookie; refresh rotates the cookie and returns a new access token; logout revokes the refresh token and clears the cookie.
 - **Who uses it / value:** All end users (sign in); every downstream capability depends on a valid session. DevOps rely on it for access control.
 - **Acceptance criteria:**
-  - `POST /v2/auth/login {email,password}` → `200` with `{ user, tokens }` where `tokens` contains only `access` (refresh is **not** in the body); sets the `token` cookie (httpOnly; `Secure`+`SameSite=None` in prod, `Lax` in dev; `domain` only in prod). Invalid credentials → `401`. SSO-only account (no password) → `403`.
-  - `POST /v2/auth/refresh-tokens` with the cookie → `200` `{ tokens: { access } }` + rotated cookie. Missing/expired/revoked cookie → `401`.
+  - `POST /v2/auth/login {email,password}` → `200` with `{ user, tokens }` where `tokens` contains only `access` (refresh is **not** in the body); sets the `token` cookie (httpOnly; `Secure`+`SameSite=None` in prod, `Lax` in dev; `domain` only in prod). Invalid credentials → `401`. SSO-only account (no password) → `401` (the password-mismatch path; an SSO-only user has no password to match).
+  - `POST /v2/auth/refresh-tokens` with the cookie → `200` `{ access }` + rotated cookie. Missing/expired/revoked cookie → `401`.
   - `POST /v2/auth/logout` with the cookie → `204`, refresh token document deleted, cookie cleared.
   - 401s on `/auth/refresh-tokens`, `/auth/login`, `/auth/logout` are **not** retried (no refresh loop); other 401s trigger a single-flight refresh + queued-request replay, then `logOut()` on refresh failure.
 - **Quality control:** Sign in via UI → confirm `token` cookie present and `authStore.access` populated → reload keeps session; wrong password → error toast; let access token expire → silent refresh keeps session; logout → cookie gone, protected routes redirect to sign-in.
@@ -70,7 +70,7 @@ Authentication, identity, and authorization. Backend: `routes/v2/user-management
 - **Description:** Admin CRUD over users; public listing gated by `PUBLIC_VIEWING`; emails masked in responses.
 - **Who uses it / value:** Admins (provision/manage users); end users (discoverable profiles when `PUBLIC_VIEWING`).
 - **Acceptance criteria:**
-  - `GET /v2/users` (optional auth via `PUBLIC_VIEWING`) → `200` paginated list (emails masked). `POST /v2/users` → `201` (admin). `GET/PATCH/DELETE /v2/users/:userId` → `200`/`200`/`204` (admin).
+  - `GET /v2/users` (optional auth via `PUBLIC_VIEWING`) → `200` paginated list (emails masked). `POST /v2/users` → `201` (admin). `GET /v2/users/:userId` (optional auth via `PUBLIC_VIEWING`) → `200`; `PATCH/DELETE /v2/users/:userId` (admin) → `200`/`204`.
   - Non-admin write → `403`. `includeFullDetails` query requires admin.
 - **Quality control:** As admin, create/list/update/delete a user → works; as non-admin, writes → `403`; with `PUBLIC_VIEWING=false` and signed-out, list → `401`.
 - **Security:** Writes require `MANAGE_USERS`. Read of `includeFullDetails` admin-gated.
@@ -94,7 +94,7 @@ Authentication, identity, and authorization. Backend: `routes/v2/user-management
 - **Description:** Second-generation authorization using Casbin + mongoose adapter with `owner/writer/reader` grouping policies and `enforce(sub, act, obj)` via the internal authorize endpoint.
 - **Who uses it / value:** Integrators building programmatic auth checks; future migration target.
 - **Acceptance criteria:**
-  - `POST /v2/auth/authorize {permissionQuery}` (auth) → boolean enforce result.
+  - `POST /v2/auth/authorize` (internal; no auth barrier on the route) → `200 { message: 'Authorized' }` on success, `403` on denial.
   - `hasPermissionV2` / `assignRoleToUserV2` available in `permission.service`.
 - **Quality control:** Call `/authorize` with a permitted subject/action/object → `true`; with a denied one → `false`.
 - **Security:** Auth required; policy assignment is admin. **Partial** — v1 remains the primary path for most resource checks.

@@ -77,7 +77,7 @@ The signal/API layer over models: VSS/COVESA, extended (wishlist) signals, and t
 - **Description:** Instances of a Custom API Schema, attachable to a model (`model.custom_api_sets`); scope system (public) / user (owner-only); item-level add/update/remove with validation.
 - **Who uses it / value:** End users/admins (create per-model API sets); model consumers (view custom APIs alongside COVESA).
 - **Acceptance criteria:**
-  - `GET /v2/custom-api-sets` (optional auth via `PUBLIC_VIEWING`) → `200` (system sets public, user sets owner-only); `POST` (auth) → `201`; `GET/PATCH/DELETE /:id` (auth + ownership) → `200`/`200`/`204`.
+  - `GET /v2/custom-api-sets` (optional auth via `PUBLIC_VIEWING`) → `200` (system sets public, user sets owner-only); `POST` (auth) → `201`; `GET /:id` (optional auth via `PUBLIC_VIEWING`) → `200`; `PATCH/DELETE /:id` (auth + ownership) → `200`/`204`.
   - `POST /:id/items {item:{…}}` → `200`; `PATCH/DELETE /:id/items/:itemId` → `200`.
   - UI hidden when `DISABLE_CUSTOM_API_SETS=true`; adding a set to a model requires `WRITE_MODEL`.
   - Create validates `data` against the referenced schema (`customApiSchemaService.validateApiData`).
