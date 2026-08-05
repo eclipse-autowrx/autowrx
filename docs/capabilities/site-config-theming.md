@@ -30,10 +30,9 @@ The configuration layer driving most behavior, branding, and feature toggles. Ba
 - **Description:** Admin-managed stylesheet served at `/static/global.css`; get/update/restore-default.
 - **Who uses it / value:** Admins (brand the site); end users (themed UI); plugins (consume CSS variables).
 - **Acceptance criteria:**
-  - `GET /v2/site-config/global-css` (public, served statically); `PUT /v2/site-config/global-css` (admin) → `200`; `POST /v2/site-config/global-css/restore-default` (admin) → restores the shipped default.
-  - `global.css` loaded in `index.html` before the app bundle.
+  - The stylesheet is served publicly at `/static/global.css` (loaded in `index.html`); the admin endpoints `GET /v2/site-config/global-css` (auth + `MANAGE_USERS`) → `200`, `PUT /v2/site-config/global-css` (auth + `MANAGE_USERS`) → `200`, and `POST /v2/site-config/global-css/restore-default` (auth + `MANAGE_USERS`) → restores the shipped default.
 - **Quality control:** Edit `:root` tokens (e.g. `--primary`) → UI re-themes live; restore-default → reverts.
-- **Security:** GET public; PUT/restore `MANAGE_USERS`. CSS can contain selectors only (no script); instance overrides use `!important` guidance.
+- **Security:** All three `/v2/site-config/global-css` endpoints require auth + `MANAGE_USERS`; the stylesheet itself is public at `/static/global.css`. CSS can contain selectors only (no script); instance overrides use `!important` guidance.
 - **Data protection:** Stylesheet text only; no PII.
 
 ## Home config editor
