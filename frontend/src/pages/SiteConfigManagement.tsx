@@ -233,6 +233,16 @@ export const PREDEFINED_SITE_CONFIGS: any[] = [
       'When enabled, hides Custom API Schema / API Set management and all model/prototype UI for custom API sets.',
     category: 'model_prototype',
   },
+  {
+    key: 'VSS_PLUGINS',
+    scope: 'site',
+    value: [{ label: 'A2L Importer', plugin: 'a2l-importer' }],
+    secret: false,
+    valueType: 'array',
+    description:
+      'Plugin tabs to show on the Vehicle API (COVESA VSS) page. Each entry needs a "label" (tab display name) and "plugin" (plugin slug). Example: [{"label":"A2L Importer","plugin":"a2l-importer"}]. Only plugins that are installed will appear.',
+    category: 'model_prototype',
+  },
 ]
 
 export const PREDEFINED_GENAI_CONFIG_KEYS: string[] = PREDEFINED_SITE_CONFIGS.filter(
