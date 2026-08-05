@@ -12,6 +12,7 @@ import HomeFeatureList from '@/components/organisms/HomeFeatureList'
 import HomeButtonList from '@/components/organisms/HomeButtonList'
 import HomePrototypeRecent from '@/components/organisms/HomePrototypeRecent'
 import HomePrototypePopular from '@/components/organisms/HomePrototypePopular'
+import HomePrototypeList from '@/components/organisms/HomePrototypeList'
 import HomeNews from '@/components/organisms/HomeNews'
 import HomeFooterSection from '@/components/organisms/HomeFooterSection'
 
@@ -22,6 +23,7 @@ const homeComponentMap: Record<string, React.ComponentType<any>> = {
   'news': HomeNews,
   'recent': HomePrototypeRecent,
   'popular': HomePrototypePopular,
+  'prototype-list': HomePrototypeList,
   'partner-list': HomePartners,
   'home-footer': HomeFooterSection,
 }
@@ -40,6 +42,7 @@ export const getBlockTypeLabel = (type: string): string => {
     'news': 'News',
     'recent': 'Recent prototypes',
     'popular': 'Popular prototypes',
+    'prototype-list': 'All prototypes',
     'partner-list': 'Partners',
     'home-footer': 'Footer',
   }

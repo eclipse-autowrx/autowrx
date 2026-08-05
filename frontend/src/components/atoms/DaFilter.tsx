@@ -20,6 +20,7 @@ interface DaFilterProps {
   singleSelect?: boolean
   defaultValue?: string[]
   label?: string
+  disabled?: boolean
 }
 
 const DaFilter = ({
@@ -30,6 +31,7 @@ const DaFilter = ({
   singleSelect = false,
   defaultValue,
   label,
+  disabled = false,
 }: DaFilterProps) => {
   const [selectedOptions, setSelectedOptions] = useState<string[]>(() => {
     const allOptions = Object.values(categories).flat()
@@ -103,6 +105,7 @@ const DaFilter = ({
         className={cn('mr-2 shadow-xs', className)}
         variant="outline"
         onClick={toggleDropdownVisibility}
+        disabled={disabled}
       >
         <TbSortDescending className="size-4" /> {label || 'Filter'}
       </Button>

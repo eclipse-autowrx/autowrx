@@ -45,6 +45,7 @@ import {
   DropdownMenuTrigger,
 } from '../atoms/dropdown-menu'
 import { updatePrototypeService, deletePrototypeService } from '@/services/prototype.service'
+import { invalidatePrototypeListQueries } from '@/hooks/usePrototypeQueries'
 import { uploadFileService } from '@/services/upload.service'
 import { downloadPrototypeZip } from '@/lib/zipUtils'
 import DaImportFile from '../atoms/DaImportFile'
@@ -82,9 +83,7 @@ export const DaPrototypeCard = ({
   const queryClient = useQueryClient()
   const deletePrototype = useMutation({
     mutationFn: (id: string) => deletePrototypeService(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['listModelPrototypes'] })
-    },
+    onSuccess: () => invalidatePrototypeListQueries(queryClient),
   })
   const navigate = useNavigate()
   const { toast } = useToast()

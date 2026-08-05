@@ -14,7 +14,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { DaPrototypeCard } from '../molecules/DaPrototypeCard'
 import DaErrorDisplay from '../molecules/DaErrorDisplay'
 import DaSkeletonGrid from '../molecules/DaSkeletonGrid'
-import { getPrototypeLastViewed } from '@/utils/prototypeLastViewed'
+import { sortPrototypesByViewed } from '@/utils/prototypeSort'
 
 interface PrototypeLibraryListProps {
   selectedFilters?: string[]
@@ -55,52 +55,42 @@ const PrototypeLibraryList = ({
 
   useEffect(() => {
     if (!fetchedPrototypes) return
-    const lastViewed = getPrototypeLastViewed()
+
+    const filtered = fetchedPrototypes.filter((prototype) => {
+      if (!searchInput) return true
+      return prototype.name.toLowerCase().includes(searchInput.toLowerCase())
+    })
+
+    if (selectedFilters?.includes('Last view')) {
+      setFilteredPrototypes(sortPrototypesByViewed(filtered, 'last-viewed'))
+      return
+    }
+    if (selectedFilters?.includes('First view')) {
+      setFilteredPrototypes(sortPrototypesByViewed(filtered, 'first-viewed'))
+      return
+    }
+
     const compareNames = (a: Prototype, b: Prototype) =>
       a.name.localeCompare(b.name)
 
     setFilteredPrototypes(
-      fetchedPrototypes
-        .filter((prototype) => {
-          if (!searchInput) return true
-          return prototype.name
-            .toLowerCase()
-            .includes(searchInput.toLowerCase())
-        })
-        .sort((a: Prototype, b: Prototype) => {
-          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
-          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      [...filtered].sort((a: Prototype, b: Prototype) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
 
-          if (selectedFilters?.includes('Newest')) {
-            return dateB - dateA
-          } else if (selectedFilters?.includes('Oldest')) {
-            return dateA - dateB
-          } else if (
-            selectedFilters?.includes('Last view') ||
-            selectedFilters?.includes('First view')
-          ) {
-            const lastViewedA = lastViewed[a.id]
-            const lastViewedB = lastViewed[b.id]
-            const hasViewedA = lastViewedA !== undefined
-            const hasViewedB = lastViewedB !== undefined
-
-            if (!hasViewedA && !hasViewedB) return compareNames(a, b)
-            if (!hasViewedA) return 1
-            if (!hasViewedB) return -1
-
-            const timestampDifference = selectedFilters.includes('Last view')
-              ? lastViewedB - lastViewedA
-              : lastViewedA - lastViewedB
-            return timestampDifference || compareNames(a, b)
-          } else if (selectedFilters?.includes('Name A-Z')) {
-            return compareNames(a, b)
-          } else if (selectedFilters?.includes('Name Z-A')) {
-            return compareNames(b, a)
-          } else if (selectedFilters?.includes('Rating')) {
-            return (b.avg_score ?? 0) - (a.avg_score ?? 0)
-          }
-          return 0
-        }),
+        if (selectedFilters?.includes('Newest')) {
+          return dateB - dateA
+        } else if (selectedFilters?.includes('Oldest')) {
+          return dateA - dateB
+        } else if (selectedFilters?.includes('Name A-Z')) {
+          return compareNames(a, b)
+        } else if (selectedFilters?.includes('Name Z-A')) {
+          return compareNames(b, a)
+        } else if (selectedFilters?.includes('Rating')) {
+          return (b.avg_score ?? 0) - (a.avg_score ?? 0)
+        }
+        return 0
+      }),
     )
   }, [searchInput, selectedFilters, fetchedPrototypes])
 
