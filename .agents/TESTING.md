@@ -37,6 +37,7 @@ npx playwright test --headed
 | `tests/vehicle-models.spec.ts` | Create/Read/Update/Delete vehicle models |
 | `tests/prototype.spec.ts` | Create/Read/Update/Delete prototypes |
 | `tests/admin.spec.ts` | Admin panel: user management, site config |
+| `tests/site-config-restore-default.spec.ts` | Public config restore default (accept + cancel) |
 | `tests/layout.spec.ts` | Layout, responsive, visual snapshots |
 
 ## Environment

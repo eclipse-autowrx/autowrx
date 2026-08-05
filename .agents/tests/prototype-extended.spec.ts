@@ -1,5 +1,16 @@
 import { test, expect } from '@playwright/test';
-import { loginAsAdmin, saveScreenshot, checkLayoutAnomalies, API_URL } from './helpers';
+import {
+  loginAsAdmin,
+  saveScreenshot,
+  checkLayoutAnomalies,
+  searchPrototypeLibrary,
+  clearPrototypeLibrarySort,
+  selectPrototypeLibrarySort,
+  getVisiblePrototypeNames,
+  createTestPrototype,
+  goToPrototypeOverview,
+  setPrototypeStateViaUI,
+} from './helpers';
 
 // Helper: navigate to first model's prototype library, return modelId
 async function goToFirstModelLibrary(page: any): Promise<string> {
@@ -65,6 +76,56 @@ test.describe('Prototype Extended', () => {
 
     // Page should have library content
     expect(page.url()).toContain('/library');
+  });
+
+  test('prototype library sorts by name A-Z and Z-A', async ({ page }) => {
+    await clearPrototypeLibrarySort(page);
+
+    const timestamp = Date.now();
+    const sortSuffix = `Sort_${timestamp}`;
+    const nameA = `AAA_${sortSuffix}`;
+    const nameZ = `ZZZ_${sortSuffix}`;
+
+    const { modelId } = await createTestPrototype(page, nameA);
+    await createTestPrototype(page, nameZ, modelId);
+
+    await page.goto(`/model/${modelId}/library/list`);
+    await page.waitForTimeout(3000);
+    await searchPrototypeLibrary(page, sortSuffix);
+
+    await selectPrototypeLibrarySort(page, 'Name A-Z');
+    let names = await getVisiblePrototypeNames(page);
+    expect(names.length).toBeGreaterThanOrEqual(2);
+    expect(names[0]).toContain('AAA_');
+    expect(names[1]).toContain('ZZZ_');
+    console.log('Name A-Z order:', names);
+
+    await selectPrototypeLibrarySort(page, 'Name Z-A');
+    names = await getVisiblePrototypeNames(page);
+    expect(names.length).toBeGreaterThanOrEqual(2);
+    expect(names[0]).toContain('ZZZ_');
+    expect(names[1]).toContain('AAA_');
+    console.log('Name Z-A order:', names);
+
+    await saveScreenshot(page, 'proto-library-sort');
+  });
+
+  test('change prototype status to Released via UI', async ({ page }) => {
+    const timestamp = Date.now();
+    const protoName = `StatusRelease_${timestamp}`;
+
+    const { modelId, prototypeId } = await createTestPrototype(page, protoName);
+    await goToPrototypeOverview(page, modelId, prototypeId);
+
+    await expect(page.getByText('Developing', { exact: true }).first()).toBeVisible({ timeout: 10000 });
+
+    await setPrototypeStateViaUI(page, 'Released', modelId, prototypeId);
+
+    await page.reload();
+    await page.waitForTimeout(3000);
+
+    await expect(page.getByText('Released', { exact: true }).first()).toBeVisible({ timeout: 10000 });
+    await saveScreenshot(page, 'proto-status-released');
   });
 
   test('prototype feedback tab loads', async ({ page }) => {

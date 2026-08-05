@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginAsAdmin, saveScreenshot } from './helpers';
+import { loginAsAdmin, saveScreenshot, createPublicReleasedModelViaApi, getAuthToken, API_URL } from './helpers';
 
 // Test model name — unique per run
 const MODEL_NAME = `AgentTest_${Date.now()}`;
@@ -179,4 +179,45 @@ test.describe('Vehicle Models - CRUD', () => {
     expect(page.url()).toMatch(/\/model($|\?|\/(?!.*\/))/);
   });
 
+});
+
+test.describe('Vehicle Models - Guest Search', () => {
+  test('6: logged-out user can search public models', async ({ browser }) => {
+    const adminContext = await browser.newContext();
+    const adminPage = await adminContext.newPage();
+    await loginAsAdmin(adminPage);
+
+    const modelName = `E2E_GuestSearch_${Date.now()}`;
+    const modelId = await createPublicReleasedModelViaApi(adminPage, modelName);
+    await adminContext.close();
+
+    const guestContext = await browser.newContext();
+    const guestPage = await guestContext.newPage();
+    await guestPage.goto('/model');
+    await guestPage.waitForTimeout(4000);
+
+    const searchInput = guestPage.locator('[data-id="model-search-input"]');
+    await expect(searchInput).toBeVisible({ timeout: 15000 });
+    await searchInput.fill(modelName);
+    await guestPage.waitForTimeout(1000);
+
+    await expect(guestPage.getByText(modelName)).toBeVisible({ timeout: 10000 });
+
+    const decoyName = `E2E_NoMatch_${Date.now()}`;
+    await searchInput.fill(decoyName);
+    await guestPage.waitForTimeout(1000);
+    await expect(guestPage.getByText(modelName)).toHaveCount(0, { timeout: 5000 });
+
+    await saveScreenshot(guestPage, 'guest-model-search');
+    await guestContext.close();
+
+    const cleanupContext = await browser.newContext();
+    const cleanupPage = await cleanupContext.newPage();
+    await loginAsAdmin(cleanupPage);
+    const token = await getAuthToken(cleanupPage);
+    await cleanupPage.request.delete(`${API_URL}/v2/models/${modelId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    await cleanupContext.close();
+  });
 });
