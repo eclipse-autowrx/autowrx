@@ -133,8 +133,8 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
       }
     })
 
-    const [apisValue, setActiveApis, setTraceVars, setAppLog] = useRuntimeStore(
-      (state) => [state.apisValue, state.setActiveApis, state.setTraceVars, state.setAppLog],
+    const [apisValue, setActiveApis, setTraceVars, setAppLog, setIsAppRunning] = useRuntimeStore(
+      (state) => [state.apisValue, state.setActiveApis, state.setTraceVars, state.setAppLog, state.setIsAppRunning],
       shallow,
     )
 
@@ -556,6 +556,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
           if (onNewLog) {
             onNewLog(`Exit code ${payload.code}\r\n`)
           }
+          setIsAppRunning(false)
           if (onAppRunningStateChanged) {
             onAppRunningStateChanged(false)
           }
@@ -701,6 +702,7 @@ const DaRuntimeConnector = forwardRef<any, KitConnectProps>(
         }
       }
 
+      setIsAppRunning(newRunningState)
       if (onAppRunningStateChanged) {
         onAppRunningStateChanged(newRunningState)
       }
