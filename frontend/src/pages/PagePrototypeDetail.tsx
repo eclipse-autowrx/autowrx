@@ -422,7 +422,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
               variant="ghost"
               size="icon"
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="h-[52px] w-12 rounded-none hover:bg-accent shrink-0"
+              className="da-prototype-sidebar-toggle h-[52px] w-12 !rounded-none shrink-0"
               title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               <TbLayoutSidebar className="w-5 h-5" />
