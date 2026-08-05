@@ -13,7 +13,10 @@ import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { TbCircleCheckFilled, TbLoader } from 'react-icons/tb'
 import { createPrototypeService } from '@/services/prototype.service'
 import { useToast } from '../toaster/use-toast'
-import { useListModelPrototypes } from '@/hooks/usePrototypeQueries'
+import {
+  invalidatePrototypeListQueries,
+  useListModelPrototypes,
+} from '@/hooks/usePrototypeQueries'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { isAxiosError } from 'axios'
 import { addLog } from '@/services/log.service'
@@ -30,7 +33,7 @@ import {
   SelectValue,
 } from '@/components/atoms/select'
 import { Model, ModelLite, ModelCreate } from '@/types/model.type'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Spinner } from '@/components/atoms/spinner'
 import { CVI } from '@/data/CVI'
 import { createModelService, listModelsLite } from '@/services/model.service'
@@ -86,10 +89,11 @@ const FormCreatePrototype = ({
   const { data: contributionModels, isLoading: isFetchingModelContribution } =
     useListModelContribution()
   const [localModel, setLocalModel] = useState<ModelLite>()
-  const { refetch, data: existingPrototypes } = useListModelPrototypes(
+  const { data: existingPrototypes } = useListModelPrototypes(
     localModel?.id || '',
   )
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { toast } = useToast()
 
   const { data: currentUser } = useSelfProfileQuery()
@@ -258,8 +262,7 @@ const FormCreatePrototype = ({
       // Reset form data
       setData(initialState)
 
-      // Refetch data
-      await refetch()
+      await invalidatePrototypeListQueries(queryClient)
     } catch (error) {
       if (isAxiosError(error)) {
         setError(error.response?.data?.message || 'Something went wrong')

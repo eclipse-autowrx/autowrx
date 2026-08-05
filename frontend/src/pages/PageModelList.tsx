@@ -36,6 +36,7 @@ import { useAuthConfigs } from '@/hooks/useAuthConfigs'
 import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
 import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
 import { isAxiosError } from 'axios'
+import { invalidatePrototypeListQueries } from '@/hooks/usePrototypeQueries'
 
 type ModelTab = 'myModel' | 'myContribution' | 'public'
 
@@ -265,6 +266,7 @@ const PageModelList = () => {
               return createPrototypeService(newPrototype)
             }),
           )
+          await invalidatePrototypeListQueries(queryClient)
         }
 
         await refetch()

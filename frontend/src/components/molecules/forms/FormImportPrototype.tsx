@@ -16,7 +16,10 @@ import DaDuplicateNameHint from '@/components/atoms/DaDuplicateNameHint'
 import CustomDialog from '@/components/molecules/CustomDialog'
 import { useToast } from '../toaster/use-toast'
 import useCurrentModel from '@/hooks/useCurrentModel'
-import { useListModelPrototypes } from '@/hooks/usePrototypeQueries'
+import {
+  invalidatePrototypeListQueries,
+  useListModelPrototypes,
+} from '@/hooks/usePrototypeQueries'
 import useDuplicateNameCheck from '@/hooks/useDuplicateNameCheck'
 import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import { buildPrototypeImportPayload, zipToPrototype } from '@/lib/zipUtils'
@@ -24,14 +27,16 @@ import { addLog } from '@/services/log.service'
 import { createPrototypeService } from '@/services/prototype.service'
 import { Prototype } from '@/types/model.type'
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 
 const FormImportPrototype = () => {
   const { data: model } = useCurrentModel()
-  const { data: modelPrototypes, refetch } = useListModelPrototypes(
+  const { data: modelPrototypes } = useListModelPrototypes(
     model ? model.id : '',
   )
   const { data: currentUser } = useSelfProfileQuery()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { toast } = useToast()
 
   const [isOpenImportDialog, setIsOpenImportDialog] = useState(false)
@@ -165,7 +170,7 @@ const FormImportPrototype = () => {
       setExtractedPrototype(null)
       setPrototypeName('')
 
-      await refetch()
+      await invalidatePrototypeListQueries(queryClient)
     } catch (error: any) {
       if (error.response?.data?.message) {
         setImportError(error.response.data.message)
