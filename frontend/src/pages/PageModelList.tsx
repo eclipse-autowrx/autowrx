@@ -14,7 +14,7 @@ import { TbLoader, TbPackageExport, TbRefresh, TbSearch } from 'react-icons/tb'
 import DaDialog from '@/components/molecules/DaDialog'
 import FormCreateModel from '@/components/molecules/forms/FormCreateModel'
 import DaImportFile from '@/components/atoms/DaImportFile'
-import { zipToModel } from '@/lib/zipUtils'
+import { buildPrototypeImportPayload, zipToModel } from '@/lib/zipUtils'
 import { createModelService } from '@/services/model.service'
 import { createPrototypeService } from '@/services/prototype.service'
 import { uploadFileService } from '@/services/upload.service'
@@ -211,6 +211,9 @@ const PageModelList = () => {
           model_files: importedModel.model.model_files || {},
           name: modelName,
           visibility: 'private',
+          ...(importedModel.model.custom_template != null && {
+            custom_template: importedModel.model.custom_template,
+          }),
         }
 
         if (apiVersion == null) {
@@ -255,20 +258,10 @@ const PageModelList = () => {
         if (importedModel.prototypes?.length > 0) {
           await Promise.all(
             importedModel.prototypes.map(async (proto: Partial<Prototype>) => {
-              const newPrototype: Partial<Prototype> = {
-                state: proto.state || 'development',
-                apis: { VSS: [], VSC: [] },
-                code: proto.code || '',
-                widget_config: proto.widget_config || '{}',
-                description: proto.description,
-                tags: proto.tags || [],
-                image_file: proto.image_file,
-                model_id: createdModelId,
-                name: proto.name,
-                complexity_level: proto.complexity_level || '3',
-                customer_journey: proto.customer_journey || '{}',
-                portfolio: proto.portfolio || {},
-              }
+              const newPrototype = buildPrototypeImportPayload(
+                proto,
+                createdModelId,
+              )
               return createPrototypeService(newPrototype)
             }),
           )

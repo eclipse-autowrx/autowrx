@@ -168,6 +168,7 @@ export type ModelCreate = {
   extended_apis?: any[]
   api_data_url?: string
   model_template_id?: string | null
+  custom_template?: any
 }
 
 export type VehicleApi = {
