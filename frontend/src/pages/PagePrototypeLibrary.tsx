@@ -87,7 +87,7 @@ const PagePrototypeLibrary = () => {
                   <Input
                     type="text"
                     placeholder="Search prototypes"
-                    className="w-full h-8 pl-10 text-sm shadow"
+                    className="w-full h-8 pl-10 text-sm shadow bg-white"
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                   />
