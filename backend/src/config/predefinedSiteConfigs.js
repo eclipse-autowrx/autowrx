@@ -191,15 +191,6 @@ const PREDEFINED_SITE_CONFIGS = [
     category: 'genai',
   },
   {
-    key: 'PROTOTYPE_ITEM_MENU_CONTEXT',
-    scope: 'site',
-    value: false,
-    secret: false,
-    valueType: 'boolean',
-    description: 'Enable or disable the context menu on prototype items.',
-    category: 'model_prototype',
-  },
-  {
     key: 'ENABLE_NEW_PROTOTYPE_PAGE',
     scope: 'site',
     value: false,
