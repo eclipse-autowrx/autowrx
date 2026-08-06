@@ -128,7 +128,7 @@ const NavigationBar = ({ }) => {
           trigger={
             <button
               type="button"
-              className="da-primary-nav-action h-9 w-9 flex items-center justify-center cursor-pointer rounded-md transition-colors"
+              className="da-primary-nav-action h-9 w-9 flex items-center justify-center cursor-pointer rounded-md transition-colors hover:bg-muted dark:hover:bg-muted/50"
               title={action.placeholder || action.label || 'Search'}
             >
               {action.icon ? (
@@ -157,7 +157,7 @@ const NavigationBar = ({ }) => {
         href={action.url}
         target={openTarget}
         {...(openTarget === '_blank' ? { rel: 'noopener noreferrer' } : {})}
-        className="da-primary-nav-action flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium transition-colors"
+        className="da-primary-nav-action flex items-center gap-0 px-1 py-1 rounded-md text-sm font-medium transition-colors hover:bg-muted dark:hover:bg-muted/50"
         title={action.label}
       >
         {action.icon && (
