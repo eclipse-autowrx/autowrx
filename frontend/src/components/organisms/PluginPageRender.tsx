@@ -522,6 +522,24 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
     })
   }, [model_id, KIT_SERVER_URL])
 
+  const handleSetActiveTab = useCallback(
+    (targetTab: string, targetPluginSlug?: string) => {
+      if (!onSetActiveTab) return
+
+      if (model_id && prototype_id) {
+        const prototypeDetailPath = `/model/${model_id}/library/prototype/${prototype_id}`
+        const pathname = window.location.pathname
+        const isOnPrototypeDetail = pathname.startsWith(prototypeDetailPath)
+        const isOnNewPrototypeFlow = pathname === '/new-prototype' || pathname.startsWith('/new-prototype/')
+
+        if (!isOnPrototypeDetail && !isOnNewPrototypeFlow) return
+      }
+
+      onSetActiveTab(targetTab, targetPluginSlug)
+    },
+    [onSetActiveTab, model_id, prototype_id],
+  )
+
   const pluginAPI: PluginAPI = {
     // Model & Prototype updates
     updateModel: model_id ? handleUpdateModel : undefined,
@@ -538,7 +556,7 @@ const PluginPageRender: React.FC<PluginPageRenderProps> = ({ plugin_id, data, on
     getRuntimeApiValues: handleGetRuntimeApiValues,
 
     // Navigation
-    setActiveTab: onSetActiveTab,
+    setActiveTab: onSetActiveTab ? handleSetActiveTab : undefined,
 
     // Wishlist API operations
     createWishlistApi: handleCreateWishlistApi,

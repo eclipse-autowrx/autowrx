@@ -18,6 +18,7 @@ interface DaTabItemProps {
   onClick?: React.MouseEventHandler<HTMLDivElement>
   dataId?: string
   customTextColor?: string
+  className?: string
 }
 
 const DaTabItem: FC<DaTabItemProps> = ({
@@ -28,6 +29,7 @@ const DaTabItem: FC<DaTabItemProps> = ({
   onClick,
   dataId,
   customTextColor,
+  className,
 }) => {
   const hasCustomColor = !!customTextColor
   const inner = (
@@ -37,6 +39,7 @@ const DaTabItem: FC<DaTabItemProps> = ({
       className={cn(
         `flex h-full text-sm font-semibold items-center justify-center min-w-20 cursor-pointer hover:opacity-80 border-b-2 border-transparent `,
         small ? 'py-0.5 px-2' : 'py-1 px-4',
+        className,
         hasCustomColor
           ? active
             ? 'border-b-2'
