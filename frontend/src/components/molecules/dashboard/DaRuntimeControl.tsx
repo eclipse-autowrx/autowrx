@@ -9,8 +9,9 @@
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/atoms/button'
 import { Input } from '@/components/atoms/input'
-import { TbPlayerPlayFilled, TbPlayerStopFilled } from 'react-icons/tb'
+import { TbPlayerPlayFilled, TbPlayerStopFilled, TbSettings } from 'react-icons/tb'
 import { FaAnglesLeft, FaAnglesRight } from 'react-icons/fa6'
+import { SlOptionsVertical } from 'react-icons/sl'
 import { cn } from '@/lib/utils'
 import useModelStore from '@/stores/modelStore'
 import { Prototype } from '@/types/model.type'
@@ -86,8 +87,17 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
   const [activeRtId, setActiveRtId] = useState<string | undefined>('')
   const [log, setLog] = useState<string>('')
   const runTimeRef = useRef<any>()
+  const runTimeRef1 = useRef<any>()
 
   const [activeTab, setActiveTab] = useState<string>('output')
+  const [customKitServer, setCustomKitServer] = useState<string>(
+    localStorage.getItem('customKitServer') || '',
+  )
+  const [tmpCustomKitServer, setTmpCustomKitServer] = useState<string>(
+    localStorage.getItem('customKitServer') || '',
+  )
+  const [showConfigDialog, setShowConfigDialog] = useState<boolean>(false)
+  const [runtimeMenuOpen, setRuntimeMenuOpen] = useState(false)
   const [useRuntime, setUseRuntime] = useState<boolean>(true)
   const [mockSignals, setMockSignals] = useState<any[]>([])
   const [curRuntimeInfo, setCurRuntimeInfo] = useState<any>(null)
@@ -105,6 +115,10 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
   const [isAdvantageMode, setIsAdvantageMode] = useState<number>(-5)
   const rustCompilerRef = useRef<any>()
   
+
+  useEffect(() => {
+    localStorage.setItem('customKitServer', customKitServer.trim())
+  }, [customKitServer])
 
   useEffect(() => {
     setCurRuntimeInfo(null)
@@ -152,7 +166,12 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
         }
         break
       default:
-        runTimeRef.current?.runApp(code || '', prototype?.name || 'App name')
+        if (runTimeRef.current) {
+          runTimeRef.current?.runApp(code || '', prototype?.name || 'App name')
+        }
+        if (runTimeRef1.current) {
+          runTimeRef1.current?.runApp(code || '', prototype?.name || 'App name')
+        }
     }
 
     notifyWidgetIframes({
@@ -176,7 +195,12 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
     switch (prototype?.language) {
       case 'rust':
       default:
-        runTimeRef.current?.stopApp()
+        if (runTimeRef.current) {
+          runTimeRef.current?.stopApp()
+        }
+        if (runTimeRef1.current) {
+          runTimeRef1.current?.stopApp()
+        }
         break
     }
     notifyWidgetIframes({
@@ -195,12 +219,22 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
 
   const writeSignalValue = (obj: any) => {
     if (!obj) return
-    runTimeRef.current?.writeSignalsValue(obj)
+    if (runTimeRef.current) {
+      runTimeRef.current?.writeSignalsValue(obj)
+    }
+    if (runTimeRef1.current) {
+      runTimeRef1.current?.writeSignalsValue(obj)
+    }
   }
 
   const writeVarsValue = (obj: any) => {
     if (!obj) return
-    runTimeRef.current?.writeVarsValue(obj)
+    if (runTimeRef.current) {
+      runTimeRef.current?.writeVarsValue(obj)
+    }
+    if (runTimeRef1.current) {
+      runTimeRef1.current?.writeVarsValue(obj)
+    }
   }
 
   const notifyWidgetIframes = (data: any) => {
@@ -312,6 +346,54 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
         />
       </DaDialog>
 
+      {/* Runtime Server Config Dialog */}
+      <DaDialog
+        open={showConfigDialog}
+        onOpenChange={setShowConfigDialog}
+        trigger={<span></span>}
+        className="w-[600px] max-w-[90vw]"
+        showCloseButton={false}
+        dialogTitle="Configure Runtime Server"
+        footer={
+          <>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setTmpCustomKitServer(customKitServer)
+                setShowConfigDialog(false)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                const newServer = tmpCustomKitServer.trim()
+                localStorage.setItem('customKitServer', newServer)
+                setCustomKitServer(newServer)
+                setShowConfigDialog(false)
+                scheduleRuntimeReconnect(100)
+              }}
+            >
+              Save
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Runtime server URL: leave empty to use default server
+          </p>
+          <Input
+            className="w-full text-primary"
+            value={tmpCustomKitServer}
+            onChange={(e) => {
+              setTmpCustomKitServer(e.target.value)
+            }}
+            placeholder="Custom server URL"
+          />
+        </div>
+      </DaDialog>
+
       {/* Runtime Controls Header */}
       <div className={cn('px-1 flex items-center', !isExpand && 'hidden')}>
         {useRuntime && (
@@ -322,23 +404,43 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
             >
               Runtime:
             </label>
-            <DaRuntimeConnector
-              targetPrefix="runtime-"
-              kitServerUrl={runtimeServerUrl}
-              socketIoConfig={runtimeServerConfig}
-              ref={runTimeRef}
-              usedAPIs={usedApis}
-              hideLabel={true}
-              onActiveRtChanged={(rtId: string | undefined) =>
-                setActiveRtId(rtId)
-              }
-              onLoadedMockSignals={setMockSignals}
-              onNewLog={appendLog}
-              onAppRunningStateChanged={(state: boolean) => {
-                setIsRunning(state)
-              }}
-              onRuntimeInfoReceived={setCurRuntimeInfo}
-            />
+            {customKitServer && customKitServer.trim().length > 0 ? (
+              <DaRuntimeConnector
+                targetPrefix="runtime-"
+                kitServerUrl={customKitServer}
+                socketIoConfig={runtimeServerConfig}
+                ref={runTimeRef}
+                usedAPIs={usedApis}
+                hideLabel={true}
+                onActiveRtChanged={(rtId: string | undefined) =>
+                  setActiveRtId(rtId)
+                }
+                onLoadedMockSignals={setMockSignals}
+                onNewLog={appendLog}
+                onAppRunningStateChanged={(state: boolean) => {
+                  setIsRunning(state)
+                }}
+                onRuntimeInfoReceived={setCurRuntimeInfo}
+              />
+            ) : (
+              <DaRuntimeConnector
+                targetPrefix="runtime-"
+                kitServerUrl={runtimeServerUrl}
+                socketIoConfig={runtimeServerConfig}
+                ref={runTimeRef1}
+                usedAPIs={usedApis}
+                hideLabel={true}
+                onActiveRtChanged={(rtId: string | undefined) =>
+                  setActiveRtId(rtId)
+                }
+                onLoadedMockSignals={setMockSignals}
+                onNewLog={appendLog}
+                onAppRunningStateChanged={(state: boolean) => {
+                  setIsRunning(state)
+                }}
+                onRuntimeInfoReceived={setCurRuntimeInfo}
+              />
+            )}
           </>
         )}
         <div className="pl-2">
@@ -354,6 +456,31 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
             Add Runtime
           </Button>
         </div>
+        <div className="grow" />
+        <DropdownMenu open={runtimeMenuOpen} onOpenChange={setRuntimeMenuOpen}>
+          <DropdownMenuTrigger asChild>
+            <div
+              className="cursor-pointer hover:bg-slate-500 p-2 rounded"
+              style={{ color: 'hsl(0, 0%, 100%)' }}
+            >
+              <SlOptionsVertical size={20} />
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() => {
+                setRuntimeMenuOpen(false)
+                setTmpCustomKitServer(customKitServer)
+                setShowConfigDialog(true)
+              }}
+            >
+              <div className="flex w-full items-center justify-between gap-2">
+                <TbSettings className="w-5 h-5" />
+                <span>Config Runtime Server</span>
+              </div>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Play/Stop Controls */}
@@ -411,7 +538,12 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
                 appendLog(log)
                 if (isDone) {
                   if (status === 'compile-done' && appName) {
-                    runTimeRef.current?.runBinApp(appName)
+                    if (runTimeRef.current) {
+                      runTimeRef.current?.runBinApp(appName)
+                    }
+                    if (runTimeRef1.current) {
+                      runTimeRef1.current?.runBinApp(appName)
+                    }
                   }
                 }
               }}
@@ -468,7 +600,16 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
                           }`}
                         onClick={() => {
                           if (!requestContent.trim()) return
-                          runTimeRef.current?.requestInstallLib(requestContent)
+                          if (runTimeRef.current) {
+                            runTimeRef.current?.requestInstallLib(
+                              requestContent,
+                            )
+                          }
+                          if (runTimeRef1.current) {
+                            runTimeRef1.current?.requestInstallLib(
+                              requestContent,
+                            )
+                          }
                           setRequestMode('')
                           setRequestContent('')
                         }}
@@ -501,7 +642,12 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
                             onClick={() => {
-                              runTimeRef.current?.listPythonLibs()
+                              if (runTimeRef.current) {
+                                runTimeRef.current?.listPythonLibs()
+                              }
+                              if (runTimeRef1.current) {
+                                runTimeRef1.current?.listPythonLibs()
+                              }
                             }}
                           >
                             <div className="flex w-full items-center">
@@ -524,7 +670,12 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
                             onClick={async () => {
                               if (!model) return
                               const vssJson = await getComputedAPIs(model.id)
-                              runTimeRef.current?.builldVehicleModel(vssJson)
+                              if (runTimeRef.current) {
+                                runTimeRef.current?.builldVehicleModel(vssJson)
+                              }
+                              if (runTimeRef1.current) {
+                                runTimeRef1.current?.builldVehicleModel(vssJson)
+                              }
                             }}
                           >
                             <div className="flex w-full items-center">
@@ -534,7 +685,12 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
 
                           <DropdownMenuItem
                             onClick={() => {
-                              runTimeRef.current?.revertToDefaultVehicleModel()
+                              if (runTimeRef.current) {
+                                runTimeRef.current?.revertToDefaultVehicleModel()
+                              }
+                              if (runTimeRef1.current) {
+                                runTimeRef1.current?.revertToDefaultVehicleModel()
+                              }
                             }}
                           >
                             <div className="flex w-full items-center">
@@ -616,10 +772,20 @@ const DaRuntimeControl: FC<DaRuntimeControlProps> = ({ className }) => {
               <DaMockManager
                 mockSignals={mockSignals}
                 loadMockSignalsFromRt={() => {
-                  runTimeRef.current?.loadMockSignals()
+                  if (runTimeRef.current) {
+                    runTimeRef.current?.loadMockSignals()
+                  }
+                  if (runTimeRef1.current) {
+                    runTimeRef1.current?.loadMockSignals()
+                  }
                 }}
                 sendMockSignalsToRt={(signals: any[]) => {
-                  runTimeRef.current?.setMockSignals(signals)
+                  if (runTimeRef.current) {
+                    runTimeRef.current?.setMockSignals(signals)
+                  }
+                  if (runTimeRef1.current) {
+                    runTimeRef1.current?.setMockSignals(signals)
+                  }
                 }}
               />
             )}
