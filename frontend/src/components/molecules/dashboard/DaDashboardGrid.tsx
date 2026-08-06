@@ -23,6 +23,7 @@ interface PropsWidgetItem {
   apisValue: any
   appLog?: string
   vssTree?: any
+  isAppRunning?: boolean
 }
 
 const WidgetItem: FC<PropsWidgetItem> = ({
@@ -30,6 +31,7 @@ const WidgetItem: FC<PropsWidgetItem> = ({
   apisValue,
   appLog,
   vssTree,
+  isAppRunning,
 }) => {
   const [rSpan, setRSpan] = useState<number>(0)
   const [cSpan, setCSpan] = useState<number>(0)
@@ -108,6 +110,18 @@ const WidgetItem: FC<PropsWidgetItem> = ({
     sendVssTreeToWidget(vssTree)
   }, [vssTree, iframeLoaded])
 
+  // Send app running state to widget whenever it changes
+  useEffect(() => {
+    if (!iframeLoaded) return
+    frameElement?.current?.contentWindow?.postMessage(
+      JSON.stringify({
+        cmd: 'app-running-state',
+        isRunning: !!isAppRunning,
+      }),
+      '*',
+    )
+  }, [isAppRunning, iframeLoaded])
+
   if (!widgetConfig)
     return (
       <div
@@ -157,10 +171,11 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
   // Memoize VSS tree to prevent unnecessary re-renders with large data
   const memoizedVssTree = useMemo(() => cvi, [cvi])
 
-  const [apisValue, traceVars, appLog] = useRuntimeStore((state) => [
+  const [apisValue, traceVars, appLog, isAppRunning] = useRuntimeStore((state) => [
     state.apisValue,
     state.traceVars,
     state.appLog,
+    state.isAppRunning,
   ])
 
   const [allVars, setAllVars] = useState<any>({})
@@ -246,6 +261,7 @@ const DaDashboardGrid: FC<DaDashboardGridProps> = ({ widgetItems }) => {
                   apisValue={allVars}
                   appLog={appLog}
                   vssTree={memoizedVssTree}
+                  isAppRunning={isAppRunning}
                 />
               )
             } else if (widgetIndex === -1) {
