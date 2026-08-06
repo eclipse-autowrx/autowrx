@@ -15,6 +15,7 @@ import HomePrototypePopular from '@/components/organisms/HomePrototypePopular'
 import HomePrototypeList from '@/components/organisms/HomePrototypeList'
 import HomeNews from '@/components/organisms/HomeNews'
 import HomeFooterSection from '@/components/organisms/HomeFooterSection'
+import HomeModelList from '@/components/organisms/HomeModelList'
 
 const homeComponentMap: Record<string, React.ComponentType<any>> = {
   'hero': HomeHeroSection,
@@ -26,6 +27,7 @@ const homeComponentMap: Record<string, React.ComponentType<any>> = {
   'prototype-list': HomePrototypeList,
   'partner-list': HomePartners,
   'home-footer': HomeFooterSection,
+  'model-list': HomeModelList,
 }
 
 export const getHomeComponent = (
@@ -45,6 +47,7 @@ export const getBlockTypeLabel = (type: string): string => {
     'prototype-list': 'All prototypes',
     'partner-list': 'Partners',
     'home-footer': 'Footer',
+    'model-list': 'Vehicle models',
   }
   return labels[type] ?? type
 }

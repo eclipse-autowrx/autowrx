@@ -44,6 +44,7 @@ import useSelfProfileQuery from '@/hooks/useSelfProfile'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
 import { useSiteConfig } from '@/utils/siteConfig'
+import { recordModelView } from '@/utils/modelLastViewed'
 
 const ModelDetailLayout = () => {
   const { data: fetchedModel, isLoading: isModelLoading } = useCurrentModel()
@@ -97,6 +98,7 @@ const ModelDetailLayout = () => {
 
   useEffect(() => {
     if (model) {
+      recordModelView(model.id)
       setLastAccessedModel(model.id)
     }
   }, [model])
