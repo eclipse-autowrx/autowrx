@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useState, useEffect, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Prototype } from '../../types/model.type'
 import { DaImage } from '../atoms/DaImage'
 import { Button } from '../atoms/button'
@@ -36,7 +37,10 @@ import { updatePrototypeService, deletePrototypeService } from '@/services/proto
 import { uploadFileService } from '@/services/upload.service'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import { useNavigate } from 'react-router-dom'
-import { useListModelPrototypes } from '@/hooks/usePrototypeQueries'
+import {
+  invalidatePrototypeListQueries,
+  useListModelPrototypes,
+} from '@/hooks/usePrototypeQueries'
 import useCurrentPrototype from '@/hooks/useCurrentPrototype'
 import usePermissionHook from '@/hooks/usePermissionHook'
 import { PERMISSIONS } from '@/data/permission'
@@ -63,6 +67,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
   const [isEditing, setIsEditing] = useState(false)
   const [localPrototype, setLocalPrototype] = useState(prototype)
   const defaultPrototypeImage = useDefaultPrototypeImage()
+  const queryClient = useQueryClient()
   const { data: model } = useCurrentModel()
   const { data: modelPrototypes, refetch: refetchModelPrototypes } = useListModelPrototypes(
     model?.id || '',
@@ -201,7 +206,7 @@ const PrototypeTabInfo: React.FC<PrototypeTabInfoProps> = ({
     try {
       setIsDeleting(true)
       await deletePrototypeService(prototype.id)
-      await refetchModelPrototypes()
+      await invalidatePrototypeListQueries(queryClient)
       navigate(`/model/${model?.id}/library`)
     } catch (error) {
       console.error('Failed to delete prototype:', error)

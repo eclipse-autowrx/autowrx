@@ -13,7 +13,6 @@ import { DaInput } from '@/components/atoms/DaInput'
 import { DaSelect, DaSelectItem } from '@/components/atoms/DaSelect'
 import { DaText } from '@/components/atoms/DaText'
 import { Label } from '@/components/atoms/label'
-import { Spinner } from '@/components/atoms/spinner'
 import {
     Select,
     SelectContent,
@@ -24,7 +23,7 @@ import {
 import { useToast } from '@/components/molecules/toaster/use-toast'
 import default_journey from '@/data/default_journey'
 import { listProjectTemplates } from '@/services/projectTemplate.service'
-import { useListModelPrototypes } from '@/hooks/usePrototypeQueries'
+import { useListModelPrototypes, invalidatePrototypeListQueries } from '@/hooks/usePrototypeQueries'
 import useCurrentModel from '@/hooks/useCurrentModel'
 import {
     getDefaultDashboardCfg,
@@ -39,7 +38,7 @@ import { createModelService, listModelsLite } from '@/services/model.service'
 import { listModelTemplates } from '@/services/modelTemplate.service'
 import { createPrototypeService } from '@/services/prototype.service'
 import { ModelLite, Prototype } from '@/types/model.type'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { TbLoader } from 'react-icons/tb'
@@ -74,6 +73,7 @@ const FormNewPrototype = ({
     onSuccess,
 }: FormNewPrototypeProps) => {
     const navigate = useNavigate()
+    const queryClient = useQueryClient()
     const [searchParams] = useSearchParams()
     const { toast } = useToast()
     const { data: currentUser, isLoading: isCurrentUserLoading } = useSelfProfileQuery()
@@ -319,6 +319,8 @@ const FormNewPrototype = ({
                 duration: 3000,
             })
 
+            await invalidatePrototypeListQueries(queryClient)
+
             if (onSuccess) {
                 onSuccess(modelId, response.id, prototypeName.trim())
             } else {
@@ -548,6 +550,7 @@ const FormNewPrototype = ({
                 label="Prototype Name"
                 className="mt-4"
                 data-id="prototype-name-input"
+                labelClassName="font-medium"
             />
             {isDuplicatePrototypeName && (
                 <DaDuplicateNameHint
@@ -560,33 +563,31 @@ const FormNewPrototype = ({
                 />
             )}
 
-            {(isLoadingTemplates || templateOptions.length > 0) && (
-                <div className="flex flex-col mt-4">
-                    <Label className="mb-2">Project Template *</Label>
-                    {isLoadingTemplates ? (
-                        <p className="flex items-center text-sm text-muted-foreground h-9">
-                            <Spinner className="mr-1 h-4 w-4" />
-                            Loading templates...
-                        </p>
-                    ) : (
-                        <Select
-                            value={selectedTemplateId}
-                            onValueChange={setSelectedTemplateId}
-                        >
-                            <SelectTrigger data-id="project-template-select" className="w-full">
-                                <SelectValue placeholder="Select a template" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {templateOptions.map((t) => (
-                                    <SelectItem key={t.id} value={t.id}>
-                                        {t.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    )}
-                </div>
-            )}
+            {(isLoadingTemplates || templateOptions.length > 0) &&
+                (isLoadingTemplates ? (
+                    <div className="mt-4">
+                        <DaText variant="regular-medium">Prototype Template *</DaText>
+                        <div className="flex h-10 border px-2 rounded-md shadow-sm mt-2 items-center">
+                            <TbLoader className="size-4 animate-spin mr-2" /> Loading
+                            templates...
+                        </div>
+                    </div>
+                ) : (
+                    <DaSelect
+                        value={selectedTemplateId}
+                        onValueChange={setSelectedTemplateId}
+                        label="Prototype Template *"
+                        wrapperClassName="mt-4"
+                        dataId="project-template-select"
+                        className="w-full"
+                    >
+                        {templateOptions.map((t) => (
+                            <DaSelectItem key={t.id} value={t.id}>
+                                {t.name}
+                            </DaSelectItem>
+                        ))}
+                    </DaSelect>
+                ))}
 
             <div className="mt-4 select-none">
                 <DaCheckbox

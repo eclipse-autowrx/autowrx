@@ -488,7 +488,7 @@ const HomeConfigSection: React.FC = () => {
                             const Component = getHomeComponent(element?.type)
                             if (!Component) return null
                             const blockId = `block-${index}-${element?.type ?? 'unknown'}`
-                            const isPlaceholderBlock = element?.type === 'recent' || element?.type === 'popular'
+                            const isPlaceholderBlock = element?.type === 'recent' || element?.type === 'popular' || element?.type === 'prototype-list'
                             return (
                               <Draggable key={blockId} draggableId={blockId} index={index}>
                                 {(provided, snapshot) => (

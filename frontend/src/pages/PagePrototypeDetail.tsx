@@ -277,7 +277,7 @@ const PagePrototypeDetail: FC<ViewPrototypeProps> = ({}) => {
         data,
       })
       invalidateProjectTemplateQueries(queryClient)
-      toast.success('Project template saved')
+      toast.success('Prototype template saved')
       setOpenSaveProjectTemplate(false)
       setProjectTemplateName('')
       setProjectTemplateDescription('')

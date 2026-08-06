@@ -217,7 +217,7 @@ export const EMPTY_PROJECT_TEMPLATE_FORM: ProjectTemplateFormState = {
 }
 
 export const DUPLICATE_TEMPLATE_NAME_MESSAGE =
-  'A project template with this name already exists'
+  'A prototype template with this name already exists'
 
 export function getProjectTemplateErrorMessage(
   error: unknown,

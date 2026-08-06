@@ -7,6 +7,7 @@
 // SPDX-License-Identifier: MIT
 
 import React, { useState, useEffect, useRef } from 'react'
+import { DismissableLayerBranch } from '@radix-ui/react-dismissable-layer'
 import {
   Dialog,
   DialogContent,
@@ -68,6 +69,37 @@ const DaDialog = ({
 
   const canClose = showCloseButton
 
+  const isSelectOpen = () =>
+    !!document.querySelector('[data-radix-select-content][data-state="open"]')
+
+  const dismissOpenSelects = () => {
+    if (!isSelectOpen()) return
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+    )
+  }
+
+  const closeDialog = () => {
+    dismissOpenSelects()
+    handleOpenChange(false)
+  }
+
+  const closeButtonClassName =
+    'pointer-events-auto text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:outline-none'
+
+  const renderCloseButton = (className: string) => (
+    <DismissableLayerBranch>
+      <button
+        className={cn(closeButtonClassName, className)}
+        onClick={closeDialog}
+        aria-label="Close"
+        type="button"
+      >
+        <TbX className="w-5 h-5" />
+      </button>
+    </DismissableLayerBranch>
+  )
+
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       {trigger && (
@@ -96,6 +128,7 @@ const DaDialog = ({
           if (preventOutsideClose) e.preventDefault()
         }}
         onEscapeKeyDown={(e) => {
+          if (isSelectOpen()) return
           if (preventOutsideClose) e.preventDefault()
         }}
         aria-describedby={undefined}
@@ -111,30 +144,14 @@ const DaDialog = ({
                 <p className="text-sm text-muted-foreground leading-snug">{description}</p>
               )}
             </div>
-            {canClose && (
-              <button
-                className="shrink-0 text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:outline-none"
-                onClick={() => handleOpenChange(false)}
-                aria-label="Close"
-                type="button"
-              >
-                <TbX className="w-5 h-5" />
-              </button>
-            )}
+            {canClose &&
+              renderCloseButton('relative z-[60] shrink-0')}
           </div>
         ) : (
           // Untitled dialog (e.g. self-titled forms): float the close button in the
           // corner with no header bar so it doesn't add an empty title row.
-          canClose && (
-            <button
-              className="absolute right-4 top-4 z-10 text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:outline-none"
-              onClick={() => handleOpenChange(false)}
-              aria-label="Close"
-              type="button"
-            >
-              <TbX className="w-5 h-5" />
-            </button>
-          )
+          canClose &&
+          renderCloseButton('absolute right-4 top-4 z-[60]')
         )}
 
         <div
