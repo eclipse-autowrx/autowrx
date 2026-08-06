@@ -79,6 +79,10 @@ Configuration and technical reference.
 - [CSP Configuration](./reference/csp.md)
 - [Feature Breakdown](./reference/feature-breakdown.md)
 
+### Capability Catalog
+- [**Capability Catalog**](./capabilities/README.md) — code-grounded catalog of all platform capabilities (clustered, with description / who-uses / acceptance / QC / security / data-protection per capability)
+  - [Identity & Access](./capabilities/identity-access.md) · [Models](./capabilities/models.md) · [Vehicle APIs](./capabilities/vehicle-apis.md) · [Prototypes & Code](./capabilities/prototypes-code.md) · [Dashboards & Widgets](./capabilities/dashboards-widgets.md) · [Runtime & Hardware Kits](./capabilities/runtime-hardware-kits.md) · [Assets & Sharing](./capabilities/assets-sharing.md) · [Plugins](./capabilities/plugins.md) · [Site Config & Theming](./capabilities/site-config-theming.md) · [Integrations & Platform](./capabilities/integrations-platform.md)
+
 ---
 
 ## 🧩 Examples
