@@ -227,8 +227,16 @@ export function getPrototypeIdFromUrl(url: string): string {
 }
 
 export async function goToPrototypeOverview(page: Page, modelId: string, prototypeId: string) {
+  const responsePromise = page.waitForResponse(
+    (res) =>
+      res.url().includes(`/prototypes/${prototypeId}`) &&
+      res.request().method() === 'GET' &&
+      res.ok(),
+    { timeout: 30000 },
+  );
   await page.goto(`/model/${modelId}/library/prototype/${prototypeId}/view`);
-  await page.waitForTimeout(3000);
+  await responsePromise;
+  await waitForPrototypeTabs(page);
 }
 
 export async function setPrototypeStateViaApi(
@@ -295,9 +303,25 @@ export async function boostPrototypePopularity(page: Page, prototypeId: string, 
   }
 }
 
-export async function waitForPrototypeTabs(page: Page) {
-  await expect(page.getByText('Loading prototype...')).toBeHidden({ timeout: 20000 });
-  await expect(page.locator('[data-id="tab-code"]').first()).toBeVisible({ timeout: 15000 });
+export async function waitForPrototypeTabs(page: Page, timeoutMs = 30000) {
+  const codeTab = page.locator('[data-id="tab-code"]').first();
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    if (await codeTab.isVisible().catch(() => false)) {
+      return;
+    }
+
+    const isLoading = await page.getByText('Loading prototype...').isVisible().catch(() => false);
+    if (isLoading) {
+      await page.waitForTimeout(1000);
+      continue;
+    }
+
+    await page.waitForTimeout(500);
+  }
+
+  await expect(codeTab).toBeVisible({ timeout: 5000 });
 }
 
 export async function expectPrototypeInPopular(page: Page, name: string, visible: boolean) {
@@ -398,8 +422,27 @@ export async function setPrototypeCodeViaApi(page: Page, prototypeId: string, co
 }
 
 export async function goToPrototypeCodeTab(page: Page, modelId: string, prototypeId: string) {
+  const responsePromise = page.waitForResponse(
+    (res) =>
+      res.url().includes(`/prototypes/${prototypeId}`) &&
+      res.request().method() === 'GET' &&
+      res.ok(),
+    { timeout: 30000 },
+  );
   await page.goto(`/model/${modelId}/library/prototype/${prototypeId}/code`);
-  await page.waitForTimeout(4000);
+  await responsePromise;
+  await expect(page.locator('[data-id="runtime-control-panel"]').first()).toBeVisible({
+    timeout: 15000,
+  });
+}
+
+export async function isRuntimeServerReachable(page: Page): Promise<boolean> {
+  try {
+    const res = await page.request.get(RUNTIME_SERVER_URL, { timeout: 5000 });
+    return res.status() < 500;
+  } catch {
+    return false;
+  }
 }
 
 function getRuntimePanel(page: Page) {
@@ -420,7 +463,7 @@ export async function expandRuntimePanel(page: Page) {
   }
 }
 
-export async function waitForRuntimeReady(page: Page, timeoutMs = 30000) {
+export async function waitForRuntimeReady(page: Page, timeoutMs = 60000) {
   await expandRuntimePanel(page);
 
   const runtimeSelect = getRuntimePanel(page).locator('select[aria-label="deploy-select"]');

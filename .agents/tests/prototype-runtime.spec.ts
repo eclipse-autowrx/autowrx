@@ -9,11 +9,16 @@ import {
   waitForRuntimeReady,
   runPrototype,
   expectRuntimeLogContains,
+  isRuntimeServerReachable,
+  RUNTIME_SERVER_URL,
 } from './helpers';
 
 test.describe('Prototype Runtime', () => {
   test('run prototype code and show output in runtime terminal', async ({ page }) => {
     test.setTimeout(120000);
+
+    const reachable = await isRuntimeServerReachable(page);
+    test.skip(!reachable, `kit-manager not reachable at ${RUNTIME_SERVER_URL}`);
 
     const timestamp = Date.now();
     const protoName = `RuntimeRun_${timestamp}`;
@@ -26,8 +31,6 @@ test.describe('Prototype Runtime', () => {
     await setPrototypeCodeViaApi(page, prototypeId, `print("${outputMarker}")\n`);
 
     await goToPrototypeCodeTab(page, modelId, prototypeId);
-    await page.reload();
-    await page.waitForTimeout(4000);
 
     await waitForRuntimeReady(page);
     await runPrototype(page);
