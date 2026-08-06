@@ -6,12 +6,45 @@
 //
 // SPDX-License-Identifier: MIT
 
+import { useState, useEffect } from 'react'
 import { configManagementService } from '../services/configManagement.service'
 
 // Cache for site configs to avoid repeated API calls
 let configCache = new Map<string, any>()
 let cacheExpiry: number | null = null
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+
+const parseConfigValue = (raw: any, defaultVal: any): any => {
+  if (raw === null || raw === undefined || raw === '') {
+    return defaultVal
+  }
+  if (Array.isArray(defaultVal)) {
+    if (Array.isArray(raw)) return raw
+    if (typeof raw === 'string') {
+      try {
+        const parsed = JSON.parse(raw)
+        if (Array.isArray(parsed)) return parsed
+      } catch {
+        // not valid JSON, fall through
+      }
+    }
+    return defaultVal
+  }
+  if (typeof defaultVal === 'boolean') {
+    if (raw === true || raw === false) {
+      return raw
+    }
+    if (typeof raw === 'string') {
+      const normalized = raw.trim().toLowerCase()
+      if (normalized === 'true' || normalized === '1') return true
+      if (normalized === 'false' || normalized === '0') return false
+    }
+    if (typeof raw === 'number') {
+      return raw === 1
+    }
+  }
+  return raw
+}
 
 // Default fallback values for site configs
 const DEFAULT_SITE_CONFIGS: Record<string, any> = {
@@ -25,6 +58,7 @@ const DEFAULT_SITE_CONFIGS: Record<string, any> = {
   DISABLE_CUSTOM_API_SETS: false,
   GENAI_SDV_APP_ENDPOINT:
     'https://workflow.digital.auto/webhook/c0ba14bc-c6a3-4319-ad0a-ad89b1460b36',
+  VSS_PLUGINS: [{ label: 'A2L Importer', plugin: 'a2l-importer' }],
 }
 
 /**
@@ -247,48 +281,27 @@ export const useSiteConfig = (
   scope: string = 'site',
   target_id?: string,
 ) => {
-  const [value, setValue] = useState<any>(fallback ?? DEFAULT_SITE_CONFIGS[key])
+  const defaultVal = fallback ?? DEFAULT_SITE_CONFIGS[key]
+  const [value, setValue] = useState<any>(() =>
+    parseConfigValue(getConfigSync(key, defaultVal), defaultVal),
+  )
 
   useEffect(() => {
     const loadConfig = async () => {
       try {
-        const result = await getConfig(
-          key,
-          scope,
-          target_id,
-          fallback ?? DEFAULT_SITE_CONFIGS[key],
-        )
-        // Treat null/undefined/empty string as missing -> use fallback/default
-        const raw =
-          result !== null && result !== undefined && result !== ''
-            ? result
-            : (fallback ?? DEFAULT_SITE_CONFIGS[key])
-
-        // Coerce booleans when the consumer expects a boolean fallback.
-        // The config API may return string values like "true"/"false".
-        let next = raw
-        if (typeof (fallback ?? DEFAULT_SITE_CONFIGS[key]) === 'boolean') {
-          if (raw === true || raw === false) {
-            next = raw
-          } else if (typeof raw === 'string') {
-            const normalized = raw.trim().toLowerCase()
-            if (normalized === 'true') next = true
-            else if (normalized === 'false') next = false
-            else if (normalized === '1') next = true
-            else if (normalized === '0') next = false
-          } else if (typeof raw === 'number') {
-            next = raw === 1
-          }
-        }
-        setValue(next)
+        const result = await getConfig(key, scope, target_id, defaultVal)
+        const next = parseConfigValue(result, defaultVal)
+        setValue((prev: any) => (Object.is(prev, next) ? prev : next))
       } catch {
-        setValue(fallback ?? DEFAULT_SITE_CONFIGS[key])
+        setValue((prev: any) =>
+          Object.is(prev, defaultVal) ? prev : defaultVal,
+        )
       }
     }
 
     loadConfig()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, scope, target_id]) // Removed 'fallback' from deps - it's just a default value, not a fetch trigger
+  }, [key, scope, target_id])
 
   return value
 }
@@ -301,6 +314,3 @@ export const useDefaultPrototypeImage = () =>
     'DEFAULT_PROTOTYPE_IMAGE',
     DEFAULT_SITE_CONFIGS.DEFAULT_PROTOTYPE_IMAGE,
   )
-
-// Import React hooks (you might need to adjust the import based on your React version)
-import { useState, useEffect } from 'react'
