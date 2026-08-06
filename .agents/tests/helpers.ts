@@ -810,8 +810,8 @@ export async function createPublicReleasedModelViaApi(page: Page, name: string):
 
 export async function goToVehicleApiTab(page: Page, modelId: string) {
   await page.goto(`/model/${modelId}/api`);
-  await page.waitForTimeout(3000);
   await expect(page.locator('.da-page-vehicle-api')).toBeVisible({ timeout: 15000 });
+  await expect(page.locator('[data-id="search-signal-input"]')).toBeVisible({ timeout: 20000 });
 }
 
 export async function goToPrototypeDashboard(page: Page, modelId: string, prototypeId: string) {
