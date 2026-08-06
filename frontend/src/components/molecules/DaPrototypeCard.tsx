@@ -91,7 +91,21 @@ export const DaPrototypeCard = ({
   const canEditPrototype = useCanEditPrototype(prototype)
   const isOwner = canEditPrototype
   const isPrototypeOwner = canEditPrototype
-  const isDeployDisabled = !prototype.code || !prototype.code.trim()
+  const isDeployDisabled =
+    !canEditPrototype || !prototype.code || !prototype.code.trim()
+
+  const deployTooltipMessage = useMemo(() => {
+    if (!user) return 'Sign in to deploy'
+    if (!canEditPrototype) return 'You do not have permission to deploy'
+    if (!prototype.code?.trim()) return 'Add code to deploy'
+    return 'Deploy'
+  }, [user, canEditPrototype, prototype.code])
+
+  const menuTooltipMessage = useMemo(() => {
+    if (!user) return 'Sign in to manage prototype'
+    if (!canEditPrototype) return 'You do not have permission to edit this prototype'
+    return 'Menu'
+  }, [user, canEditPrototype])
 
   const [renameOpen, setRenameOpen] = useState(false)
   const [newName, setNewName] = useState('')
@@ -336,9 +350,7 @@ export const DaPrototypeCard = ({
                 </div>
               )}
               <DaTooltip
-                tooltipMessage={
-                  isDeployDisabled ? 'Add code to deploy' : 'Deploy'
-                }
+                tooltipMessage={deployTooltipMessage}
                 tooltipDelay={300}
               >
                 <span className="inline-flex">
@@ -359,22 +371,25 @@ export const DaPrototypeCard = ({
                 </span>
               </DaTooltip>
               <DropdownMenu open={dotsMenuOpen} onOpenChange={setDotsMenuOpen}>
-                <DropdownMenuTrigger asChild disabled={!isPrototypeOwner}>
-                  <button
-                    title="Menu"
-                    type="button"
-                    tabIndex={-1}
-                    disabled={!isPrototypeOwner}
-                    onClick={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                    }}
-                    className="p-1 rounded-md shrink-0 cursor-pointer text-muted-foreground border border-transparent hover:border-[#7B838B] active:bg-gray-300 transition-all duration-150 focus-visible:outline-none disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
-                    aria-label="Prototype actions"
-                  >
-                    <TbDotsVertical className="size-4" />
-                  </button>
-                </DropdownMenuTrigger>
+                <DaTooltip tooltipMessage={menuTooltipMessage} tooltipDelay={300}>
+                  <span className="inline-flex">
+                    <DropdownMenuTrigger asChild disabled={!isPrototypeOwner}>
+                      <button
+                        type="button"
+                        tabIndex={-1}
+                        disabled={!isPrototypeOwner}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                        }}
+                        className="p-1 rounded-md shrink-0 cursor-pointer text-muted-foreground border border-transparent hover:border-[#7B838B] active:bg-gray-300 transition-all duration-150 focus-visible:outline-none disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
+                        aria-label="Prototype actions"
+                      >
+                        <TbDotsVertical className="size-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                  </span>
+                </DaTooltip>
                 <DropdownMenuContent
                   className="w-52"
                   align="end"
