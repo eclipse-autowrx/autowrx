@@ -48,6 +48,9 @@ const QueryProvider = ({ children }: QueryProviderProps) => {
                 if (res.data?.access?.token) {
                   setAccess(res.data.access)
                   query.invalidate()
+                } else if (res.data?.user) {
+                  useAuthStore.getState().setUser(res.data.user, null)
+                  query.invalidate()
                 }
               } catch {
                 logOut()

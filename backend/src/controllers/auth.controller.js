@@ -13,6 +13,8 @@ const config = require('../config/config');
 const ApiError = require('../utils/ApiError');
 const logger = require('../config/logger');
 const pick = require('../utils/pick');
+const platformAuthService = require('../services/platformAuth.service');
+const { sanitizeUser } = require('../middlewares/auth');
 
 const authenticate = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).json({
@@ -91,14 +93,12 @@ const logout = catchAsync(async (req, res) => {
 });
 
 const refreshTokens = catchAsync(async (req, res) => {
+  if (config.auth.provider === 'platform') {
+    const user = await platformAuthService.resolveUser(req);
+    return res.send({ user: sanitizeUser(user?.toJSON ? user.toJSON() : user) });
+  }
+
   const refreshCookie = req.cookies[config.jwt.cookie.name];
-  logger.debug(
-    'Refresh tokens request: path=%s hasRefreshCookie=%s cookieName=%s origin=%s',
-    req.originalUrl,
-    Boolean(refreshCookie),
-    config.jwt.cookie.name,
-    req.get('origin') || '(none)'
-  );
   const tokens = await authService.refreshAuth(refreshCookie);
   res.cookie(config.jwt.cookie.name, tokens.refresh.token, {
     expires: tokens.refresh.expires,

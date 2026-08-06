@@ -72,6 +72,7 @@ serverAxios.interceptors.response.use(
       error.response?.status === 401 &&
       originalRequest &&
       !originalRequest._retry &&
+      useAuthStore.getState().access?.token &&
       !originalRequest.url?.includes('/auth/refresh-tokens') &&
       !originalRequest.url?.includes('/auth/login') &&
       !originalRequest.url?.includes('/auth/logout')

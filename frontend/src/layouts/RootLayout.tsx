@@ -62,10 +62,11 @@ const RootLayout = () => {
   // }, [isChatShowed])
 
   const bootstrappingRef = useRef(false)
-  const [authBootstrapped, setAuthBootstrapped, setAccess] = useAuthStore((state) => [
+  const [authBootstrapped, setAuthBootstrapped, setAccess, setUser] = useAuthStore((state) => [
     state.authBootstrapped,
     state.setAuthBootstrapped,
     state.setAccess,
+    state.setUser,
   ])
 
   useEffect(() => {
@@ -84,8 +85,11 @@ const RootLayout = () => {
       .post('/auth/refresh-tokens', {})
       .then((res) => {
         const access = res?.data?.access
+        const user = res?.data?.user
         if (access?.token) {
           setAccess(access)
+        } else if (user) {
+          setUser(user, null)
         }
       })
       .catch(() => {
@@ -95,7 +99,7 @@ const RootLayout = () => {
         setAuthBootstrapped(true)
         bootstrappingRef.current = false
       })
-  }, [authBootstrapped, setAccess, setAuthBootstrapped])
+  }, [authBootstrapped, setAccess, setAuthBootstrapped, setUser])
   const privacyPolicyUrl = useSiteConfig('PRIVACY_POLICY_URL', '')
 
   const pathsWithoutBreadcrumb = useMemo(
