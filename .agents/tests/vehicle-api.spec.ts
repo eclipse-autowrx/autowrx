@@ -18,7 +18,7 @@ test.describe('Vehicle API', () => {
   test('1: signal list loads on Vehicle API tab', async ({ page }) => {
     await goToVehicleApiTab(page, modelId);
 
-    await expect(page.locator('.da-page-vehicle-api-tab-bar')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'List View' })).toBeVisible();
     const signals = page.locator('.signal-list-item-name');
     await expect(signals.first()).toBeVisible({ timeout: 20000 });
     expect(await signals.count()).toBeGreaterThan(0);

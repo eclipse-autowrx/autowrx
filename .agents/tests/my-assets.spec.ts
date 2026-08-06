@@ -78,28 +78,31 @@ test.describe('My Assets Page', () => {
     const assetName = `E2E_Runtime_${Date.now()}`;
 
     await page.goto('/my-assets');
-    await page.waitForTimeout(3000);
+    await expect(page.getByRole('heading', { name: 'My Assets' })).toBeVisible({ timeout: 15000 });
 
     await page.getByRole('button', { name: 'Create New Asset' }).click();
-    await page.waitForTimeout(500);
 
-    const dialog = page.locator('[role="dialog"]').filter({ hasText: 'Edit Asset' });
+    const dialog = page.locator('[role="dialog"]').filter({
+      has: page.getByRole('heading', { name: 'Create New Asset' }),
+    });
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
     await dialog.locator('input').first().fill(assetName);
-
-    const saveBtn = dialog.getByRole('button', { name: 'Save' });
-    await saveBtn.click();
-    await page.waitForTimeout(2000);
+    await dialog.getByRole('button', { name: 'Save' }).click();
+    await expect(dialog).toBeHidden({ timeout: 15000 });
 
     await expect(page.getByText(assetName)).toBeVisible({ timeout: 15000 });
 
-    const assetRow = page.locator('div.flex.w-full.items-center').filter({ hasText: assetName });
-    await assetRow.locator('svg').last().click();
-    await page.waitForTimeout(500);
+    const assetRow = page
+      .locator('div.flex.w-full.items-center.text-md')
+      .filter({ hasText: assetName });
+    await assetRow.locator('.flex.space-x-4 .text-red-500').click();
 
-    await page.getByRole('button', { name: 'Remove' }).click();
-    await page.waitForTimeout(2000);
+    const confirmDialog = page.locator('[role="dialog"]').filter({
+      has: page.getByRole('heading', { name: 'Remove asset' }),
+    });
+    await expect(confirmDialog).toBeVisible({ timeout: 10000 });
+    await confirmDialog.getByRole('button', { name: 'Remove' }).click();
 
     await expect(page.getByText(assetName)).toHaveCount(0, { timeout: 10000 });
 
