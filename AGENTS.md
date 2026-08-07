@@ -40,6 +40,9 @@ Indexed in [`agentic/skills/README.md`](./agentic/skills/README.md). The core fl
 - [`docs-update`](./agentic/skills/docs-update.md) — keep map/capabilities in sync with code.
 - [`learn-and-update`](./agentic/skills/learn-and-update.md) — capture best practices/trends/lessons.
 
+**Also available** (load when the task fits) — full list in [`agentic/skills/README.md`](./agentic/skills/README.md):
+[`debug`](./agentic/skills/debug.md), [`find-race-conditions`](./agentic/skills/find-race-conditions.md), [`add-endpoint`](./agentic/skills/add-endpoint.md), [`add-frontend-feature`](./agentic/skills/add-frontend-feature.md), [`db-schema-change`](./agentic/skills/db-schema-change.md), [`realtime-event`](./agentic/skills/realtime-event.md), [`add-test`](./agentic/skills/add-test.md), [`performance-review`](./agentic/skills/performance-review.md), [`dependency-upgrade`](./agentic/skills/dependency-upgrade.md), [`troubleshoot-deploy`](./agentic/skills/troubleshoot-deploy.md), [`coder-workspace`](./agentic/skills/coder-workspace.md), [`plugin-authoring`](./agentic/skills/plugin-authoring.md), [`secrets-incident`](./agentic/skills/secrets-incident.md).
+
 ## Quick commands
 
 ```bash
