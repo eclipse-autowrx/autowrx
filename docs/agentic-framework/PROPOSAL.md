@@ -1,7 +1,7 @@
 # Proposal: Vendor-Neutral Agentic Coding Framework for AutoWRX
 
 > Issue: #612 · Branch: `feat/612-agentic-coding-framework`
-> Status: **Proposal — awaiting review.** No implementation yet.
+> Status: **Implemented (full framework, all layers).** Canonical content lives in `agentic/` at repo root (chosen over `.agent/` to avoid colliding with the existing `.agents/` E2E suite). The framework **wires into** existing repo knowledge (`docs/architecture/`, `docs/capabilities/`, `.agents/SITEMAP.md`, `docs/getting-started/`, `docs/principles/`) rather than duplicating it. Entry points: `AGENTS.md` + `CLAUDE.md`. See [`agentic/README.md`](../../agentic/README.md). The decisions below were resolved as: dir `agentic/`; reuse `docs/capabilities/` as the map; committed map + CI drift check; learning included with manual trigger; full scope (no phasing).
 
 ## 1. Problem
 
