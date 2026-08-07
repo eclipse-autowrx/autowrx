@@ -17,7 +17,7 @@
    - Frontend: atomic design (`components/{atoms,molecules,organisms}`, `pages/`, `layouts/`, `stores/`, `hooks/`). State in Zustand `stores/`; permissions via `hooks/usePermissionHook.ts`; routes in `configs/routes.tsx`. Don't put page logic in atoms.
    - Match surrounding style; no drive-by reformatting outside the change's scope.
 5. **Run tests.** Run [`./run-tests.md`](./run-tests.md) — backend Jest for affected code, Playwright for affected flows. Don't declare done if tests fail.
-6. **Self-review.** Run [`./code-review.md`](./code-review.md) on your diff. If the change touches auth/data/runtime/plugins, also run [`./security-review.md`](./security-review.md).
+6. **Self-review.** Run [`./code-review.md`](./code-review.md) on your diff. If the change touches auth/data/runtime/plugins, also run [`./security-review.md`](./security-review.md). If it adds/modifies `.js`/`.ts`/`.tsx` or dependencies, also run [`./license-check.md`](./license-check.md).
 7. **Keep docs in sync.** If code structure or a capability changed, run [`./docs-update.md`](./docs-update.md) (update `agentic/map/`, `docs/capabilities/`, `.agents/SITEMAP.md` as needed).
 8. **Commit & PR (only when asked).** Run [`./commit-and-pr.md`](./commit-and-pr.md): `git commit -s` with your own ECA-signed identity, PR targets `main`, body = **What / Why / How verified**. CI runs only the ECA check, so state explicitly how tests were verified locally.
 

@@ -27,7 +27,7 @@
    cd frontend && npm run lint && npm run tsc
    ```
    Then [`./run-tests.md`](./run-tests.md) for affected suites. Fix your own lint errors; don't disable rules silently.
-4. **Sensitive change?** If the diff touches auth, tokens, file operations, runtime execution, or plugins, also run [`./security-review.md`](./security-review.md) before commit.
+4. **Sensitive change?** If the diff touches auth, tokens, file operations, runtime execution, or plugins, also run [`./security-review.md`](./security-review.md) before commit. If it adds/modifies `.js`/`.ts`/`.tsx` or dependencies, also run [`./license-check.md`](./license-check.md) (Eclipse/MIT header + no incompatible-license code).
 5. **Docs in sync?** If structure/capabilities changed, run [`./docs-update.md`](./docs-update.md) so `agentic/map/` and `docs/capabilities/` stay code-grounded.
 
 ## Guardrails

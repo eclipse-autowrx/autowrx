@@ -34,6 +34,7 @@ Indexed in [`agentic/skills/README.md`](./agentic/skills/README.md). The core fl
 - [`run-tests`](./agentic/skills/run-tests.md) — Jest (backend) + Playwright (`.agents/`).
 - [`code-review`](./agentic/skills/code-review.md) — self-review before commit.
 - [`security-review`](./agentic/skills/security-review.md) — for auth/data/runtime/plugin changes.
+- [`license-check`](./agentic/skills/license-check.md) — Eclipse/MIT headers + no incompatible-license code (for new/changed `.js`/`.ts`/`.tsx` or deps).
 - [`commit-and-pr`](./agentic/skills/commit-and-pr.md) — ECA, sign-off, PR template.
 - [`deploy`](./agentic/skills/deploy.md) — `instance-setup/` Docker Compose.
 - [`docs-update`](./agentic/skills/docs-update.md) — keep map/capabilities in sync with code.
