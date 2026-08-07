@@ -8,7 +8,7 @@ A **repo-resident, vendor-neutral** framework that lets any AI coding agent — 
 
 ```
 AGENTS.md                       vendor-neutral entry point (read by every tool)
-CLAUDE.md                       Claude Code adapter (@imports AGENTS.md)
+CLAUDE.md                       Claude Code adapter (imports AGENTS.md via `@path`)
 agentic/
   README.md                     this file
   RULES.md                      hard rules (must / must-not)
@@ -61,7 +61,7 @@ This framework **points to** existing repo knowledge rather than copying it:
 ## Vendor neutrality
 
 Canonical content lives in `agentic/`. Tool-specific entry files are thin adapters:
-- **Claude Code** → `CLAUDE.md` uses `@import` to pull in `AGENTS.md` / `agentic/*`.
+- **Claude Code** → `CLAUDE.md` uses `@path` imports (e.g. `@AGENTS.md`, `@agentic/RULES.md`) to pull in the canonical files.
 - **opencode / openclaw / others** → read `AGENTS.md` natively (agents.md spec).
 - **Skills** are plain markdown loaded on demand — every tool can read them. To get native Skill-tool invocation in Claude Code, see `SETUP.md` (symlink `agentic/skills/*` into `.claude/skills/`).
 

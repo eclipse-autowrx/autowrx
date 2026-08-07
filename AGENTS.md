@@ -68,5 +68,5 @@ cd instance-setup && ./up.sh                       # docker compose up -d (needs
 
 ## Adapters
 
-- **Claude Code:** [`CLAUDE.md`](./CLAUDE.md) `@import`s this file. See [`agentic/SETUP.md`](./agentic/SETUP.md) to enable native skill invocation.
+- **Claude Code:** [`CLAUDE.md`](./CLAUDE.md) imports this file via `@path` (e.g. `@AGENTS.md`). See [`agentic/SETUP.md`](./agentic/SETUP.md) to enable native skill invocation.
 - **opencode / openclaw / others:** you're reading the canonical entry. Point your tool at `AGENTS.md`.

@@ -5,7 +5,7 @@ Key choices and their rationale, kept short. Date each entry; supersede, don't s
 ## 2026-08-07 — Agentic framework is repo-resident and vendor-neutral
 
 - **Context:** multiple AI coding tools (Claude Code, opencode, openclaw) work in this repo.
-- **Decision:** canonical rules/memory/skills/map live in `agentic/`; tool-specific entry files (`CLAUDE.md`, `AGENTS.md`) are thin adapters that `@import` canonical content.
+- **Decision:** canonical rules/memory/skills/map live in `agentic/`; tool-specific entry files (`CLAUDE.md`, `AGENTS.md`) are thin adapters that import canonical content (Claude Code via `@path`).
 - **Rationale:** avoids drift between tools; one place to update rules.
 - **Consequences:** never duplicate rules into an adapter; update `agentic/*` and let adapters pull through.
 

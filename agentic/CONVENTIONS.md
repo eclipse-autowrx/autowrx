@@ -44,7 +44,7 @@ Style and structure conventions for this repo. Load always (imported by `AGENTS.
 
 ## Agent config (this framework)
 
-- Canonical content in `agentic/`. Tool-specific adapters (e.g. `CLAUDE.md`) stay thin and `@import` canonical files — don't duplicate rules into adapters.
+- Canonical content in `agentic/`. Tool-specific adapters (e.g. `CLAUDE.md`) stay thin and import canonical files via `@path` (e.g. `@AGENTS.md`) — don't duplicate rules into adapters.
 - Memory: one fact per file under `agentic/memory/` + a one-line index entry in `MEMORY.md`.
 - Skills: one procedure per file; each has *When to use · Steps · Guardrails · Exit criteria*. Keep them concise.
 

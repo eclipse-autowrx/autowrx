@@ -4,7 +4,7 @@ The framework is vendor-neutral; each tool just needs to find `AGENTS.md` (and o
 
 ## Claude Code
 
-`CLAUDE.md` already `@import`s `AGENTS.md` + rules, so rules load automatically when Claude Code opens this repo.
+`CLAUDE.md` already imports `AGENTS.md` + rules via Claude Code's `@path` syntax (e.g. `@AGENTS.md`), so rules load automatically when Claude Code opens this repo.
 
 ### Native skill invocation (optional but recommended)
 
@@ -15,6 +15,7 @@ Claude Code's Skill tool only sees skills in `.claude/skills/`. `.claude/` is gi
 mkdir -p .claude/skills
 for s in agentic/skills/*.md; do
   name=$(basename "$s" .md)
+  [ "$name" = "README" ] && continue   # index, not a skill
   ln -sf "../../agentic/skills/$name.md" ".claude/skills/$name.md"
 done
 ```

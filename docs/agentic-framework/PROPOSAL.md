@@ -60,7 +60,7 @@ Everything under `.agent/` is **canonical and vendor-neutral**. Tool-specific en
 
 ```
 AGENTS.md                      # vendor-neutral entry (agents.md spec); imports .agent/*
-CLAUDE.md                      # Claude Code entry; @imports .agent/* (Claude Code supports @import)
+CLAUDE.md                      # Claude Code entry; imports agentic/* via @path (Claude Code supports @path imports)
 .agent/
   RULES.md                     # hard rules (must / must-not)
   CONVENTIONS.md               # naming, structure, commit, PR style
@@ -97,7 +97,7 @@ CLAUDE.md                      # Claude Code entry; @imports .agent/* (Claude Co
 
 | Artifact | Canonical | Claude Code | opencode | openclaw / other |
 |---|---|---|---|---|
-| Entry rules | `AGENTS.md` | `CLAUDE.md` `@import`s it | reads `AGENTS.md` natively | reads `AGENTS.md` (agents.md spec) |
+| Entry rules | `AGENTS.md` | `CLAUDE.md` imports it via `@path` | reads `AGENTS.md` natively | reads `AGENTS.md` (agents.md spec) |
 | Rules/conventions | `.agent/RULES.md`, `CONVENTIONS.md` | imported via `CLAUDE.md` | imported via `AGENTS.md` | imported via `AGENTS.md` |
 | Skills | `.agent/skills/*.md` | `.claude/skills/` → symlink/point to `.agent/skills` | opencode skills dir → same | read from `.agent/skills` |
 | Memory | `.agent/memory/*.md` + index | `CLAUDE.md` instructs load on start | `AGENTS.md` instructs load | same |
@@ -152,7 +152,7 @@ Deploy and learn-and-update are separate flows triggered on demand or on a sched
 
 ## 11. Migration path (phased)
 
-1. **Phase 1 — Skeleton (this issue, small PR):** add `AGENTS.md` + `CLAUDE.md` adapter + `.agent/` structure with `RULES.md`, `CONVENTIONS.md`, `skills/README.md`, and seed `map/TREE.md` + `memory/MEMORY.md`. Wire Claude Code via `@import`. No behavior change yet beyond consistent loading.
+1. **Phase 1 — Skeleton (this issue, small PR):** add `AGENTS.md` + `CLAUDE.md` adapter + `.agent/` structure with `RULES.md`, `CONVENTIONS.md`, `skills/README.md`, and seed `map/TREE.md` + `memory/MEMORY.md`. Wire Claude Code via `@path` imports. No behavior change yet beyond consistent loading.
 2. **Phase 2 — Skills:** author the core skills (understand-the-repo, implement-feature, run-tests, code-review, commit-and-pr, deploy). Migrate existing `/security-review` and `/run`-style skills into `.agent/skills`.
 3. **Phase 3 — Memory & map population:** fill memory + map from the now-merged `docs/capabilities/` catalog (single source reused). Add a CI drift check for the map.
 4. **Phase 4 — Learning loop:** add `learn-and-update` + session-lessons capture.

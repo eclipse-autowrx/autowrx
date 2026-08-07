@@ -1,10 +1,10 @@
 # CLAUDE.md — AutoWRX (Claude Code adapter)
 
-This is a thin adapter. The canonical agent rules live in vendor-neutral files and are imported below. Do not duplicate rules here.
+This is a thin adapter. The canonical agent rules live in vendor-neutral files and are imported below (Claude Code `@path` syntax — they expand at launch). Do not duplicate rules here.
 
-@import ./AGENTS.md
-@import ./agentic/RULES.md
-@import ./agentic/CONVENTIONS.md
+@AGENTS.md
+@agentic/RULES.md
+@agentic/CONVENTIONS.md
 
 ## Claude Code specifics
 

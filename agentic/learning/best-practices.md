@@ -6,7 +6,7 @@ Starting points for this stack — refine as we learn. Each entry has a `Last re
 
 - Last reviewed: 2026-08-07
 - Source: https://agents.md
-- Keep `AGENTS.md` as the canonical always-loaded file; tool adapters (`CLAUDE.md`) `@import` it rather than duplicating rules.
+- Keep `AGENTS.md` as the canonical always-loaded file; tool adapters (`CLAUDE.md`) import it via `@path` rather than duplicating rules.
 - One procedure per skill file; skills are load-on-demand, not preloaded.
 
 ## Express thin-controller / service layer
