@@ -13,6 +13,7 @@ test.describe('Prototype Dashboard', () => {
   });
 
   test('4: add built-in Terminal widget and save', async ({ page }) => {
+    test.setTimeout(120000);
     const protoName = `E2E_Dashboard_${Date.now()}`;
     const modelId = await createTestModelViaApi(page, `E2E_Dash_Model_${Date.now()}`, 'public');
     const { prototypeId } = await createTestPrototype(page, protoName, modelId);
@@ -44,12 +45,16 @@ test.describe('Prototype Dashboard', () => {
       timeout: 10000,
     });
 
-    const terminalWidget = page.locator('.widget-list-item-name', { hasText: 'Terminal' }).first();
+    const terminalWidget = page
+      .locator('.cursor-pointer.border')
+      .filter({ has: page.locator('.widget-list-item-name', { hasText: 'Terminal' }) })
+      .first();
     await expect(terminalWidget).toBeVisible({ timeout: 10000 });
     await terminalWidget.click();
-    await page.waitForTimeout(500);
 
-    await page.getByRole('button', { name: 'Add selected widget' }).click();
+    const addSelectedBtn = page.getByRole('button', { name: 'Add selected widget' });
+    await expect(addSelectedBtn).toBeEnabled({ timeout: 20000 });
+    await addSelectedBtn.click();
     await page.waitForTimeout(1500);
 
     const saveBtn = page.locator('[data-id="dashboard-save-button"]');

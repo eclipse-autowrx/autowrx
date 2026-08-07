@@ -7,6 +7,8 @@ import {
   setSiteConfigJson,
 } from './helpers';
 
+test.describe.configure({ mode: 'serial' });
+
 test.describe('Home Page Sections', () => {
   let originalHomeContent: unknown = null;
 
