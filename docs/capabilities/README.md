@@ -6,12 +6,14 @@ A code-grounded catalog of what AutoWRX does, organized into **clusters** of rel
 
 ## Capability sections (every capability has these)
 
+Each capability is an `## Capability` heading; the six sections below are `### Section` headers, each followed by a paragraph (or a bullet list under Acceptance criteria). Every cluster file also opens with a mermaid diagram of the cluster's overall flow, and capabilities include a per-capability mermaid diagram where a request flow or state transition is worth illustrating.
+
 - **Description** — what it is and does.
 - **Who uses it / who gets value** — the roles that use or benefit (end user, model owner, admin, DevOps/integrator, plugin author, …).
 - **Acceptance criteria** — how it works fully, how to verify it, and the acceptable behavior (incl. error/edge cases).
 - **Quality control** — how to test it (manual steps / API checks).
-- **Security** — auth, permissions, sandboxing, attack surface.
-- **Data protection** — what data is stored/sent, secrets, retention, privacy.
+- **Security** — auth, permissions, sandboxing, attack surface, followed by a **Risks:** bullet list stating concretely what could be lost or how the capability could be attacked.
+- **Data protection** — what data is stored/sent, secrets, retention, privacy, followed by a **Risks:** bullet list stating concretely the risk of losing user data or exposing it.
 
 ## Clusters
 
