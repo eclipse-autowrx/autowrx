@@ -115,7 +115,7 @@ Each skill is a markdown playbook: *when to use · steps · guardrails · exit c
 - **run-tests** — how tests are run here (frontend/backend), what passing looks like, how to interpret failures.
 - **code-review** — self-review checklist before commit (reuse, simplification, correctness, altitude).
 - **security-review** — security review of the diff (the repo already has a `/security-review` skill — fold it in).
-- **commit-and-pr** — commit author = `NhanLuongBGSV`, conventional messages, PR template, ECA note.
+- **commit-and-pr** — commit with the contributor's own ECA-signed identity, conventional messages, PR template, ECA note.
 - **deploy** — instance-setup flow (`instance-setup/up.sh`, docker-compose.prod.yml), env requirements.
 - **docs-update** — keep `docs/capabilities/*` and `.agent/map/*` in sync with code changes.
 - **learn-and-update** — periodically research current best practices/trends on the web, capture dated+sourced notes in `.agent/learning/`, and propose updates to skills/memory via PR.

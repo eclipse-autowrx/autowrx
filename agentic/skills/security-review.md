@@ -2,7 +2,7 @@
 > Review the current diff for security regressions before commit/PR.
 
 ## When to use
-Run this whenever the change touches any of: **auth, tokens, cookies, permissions/RBAC, file operations (path traversal), `child_process`/exec/runtime, plugins (unsandboxed), secrets/config, CORS/CSP, uploads, or user/personal data.** Pair it with `./code-review.md` (which covers general quality); this skill is the security-focused pass. This repo also ships a Claude Code `/security-review` slash-command skill — that command runs the same kind of pass interactively; align with it and don't contradict its findings.
+Run this whenever the change touches any of: **auth, tokens, cookies, permissions/RBAC, file operations (path traversal), `child_process`/exec/runtime, plugins (unsandboxed), secrets/config, CORS/CSP, uploads, or user/personal data.** Pair it with `./code-review.md` (which covers general quality); this skill is the security-focused pass. Claude Code also has a **built-in** `/security-review` slash command (harness-provided, available in any repo) that runs a similar pass interactively — align with it and don't contradict its findings.
 
 ## Steps
 1. **Get the diff:** `git diff main...HEAD` (and `git diff` for unstaged). Identify every new/changed route, middleware, service, model, and config flag.
@@ -22,4 +22,4 @@ Run this whenever the change touches any of: **auth, tokens, cookies, permission
 - This is a review, not a harden-everything pass. Flag out-of-scope pre-existing issues separately; only fix what the current diff introduced or broke unless asked.
 
 ## Exit criteria
-Return a short findings list, each with severity + `file:line` + one-line mitigation, or explicitly **"clean"** with the capability docs you checked listed. If you ran the repo's `/security-review` skill too, note whether its findings match. Do not commit or push — hand the list to the caller (this skill is review-only; commit via `./commit-and-pr.md`).
+Return a short findings list, each with severity + `file:line` + one-line mitigation, or explicitly **"clean"** with the capability docs you checked listed. If you also ran Claude Code's built-in `/security-review`, note whether its findings match. Do not commit or push — hand the list to the caller (this skill is review-only; commit via `./commit-and-pr.md`).

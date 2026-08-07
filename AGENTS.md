@@ -10,7 +10,7 @@ AutoWRX is a cloud-based rapid-prototyping environment for software-defined vehi
 - **Conventions:** [`agentic/CONVENTIONS.md`](./agentic/CONVENTIONS.md)
 
 Key rules in one line:
-- Commit identity: `NhanLuongBGSV` / `nhan.luongnguyen@vn.bosch.com`, **ECA signed**, `git commit -s`.
+- Commit with **your own ECA-signed identity** — every contributor uses their own GitHub/email account (the one they signed the ECA with). `git commit -s`.
 - Never commit on `main`. PRs target `main`. Never commit secrets (`.env*`).
 - Don't push/deploy unless explicitly asked. Run tests before declaring done. Self-review every diff.
 

@@ -4,7 +4,7 @@ Hard rules for any agent working in this repo. Load always (imported by `AGENTS.
 
 ## Git & contributions
 
-- **ECA is mandatory.** Every commit author must have signed the [Eclipse Contributor Agreement](https://www.eclipse.org/legal/eca/) and commit with that email. For this repo: `NhanLuongBGSV` / `nhan.luongnguyen@vn.bosch.com`. Do **not** use any other identity.
+- **ECA is mandatory.** Every commit author must have signed the [Eclipse Contributor Agreement](https://www.eclipse.org/legal/eca/) and commit with the **email they signed the ECA with**. Each contributor uses their own ECA-signed identity — do not assume a specific name/email repo-wide.
 - **Sign off commits:** `git commit -s` (adds `Signed-off-by:`).
 - **Never commit on `main`.** Branch off `main` first; PRs target `main`.
 - **Never force-push to shared branches.** Rebase your own feature branch only.
