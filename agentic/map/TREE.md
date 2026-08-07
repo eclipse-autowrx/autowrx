@@ -19,7 +19,7 @@ backend/src/                 Node/Express + MongoDB backend
     system/                  files, plugins, search, genai, site mgmt, templates
   services/                  business logic (called by controllers)
   scripts/                   one-off / scheduled jobs
-  typedefs/                  shared TS-style type defs
+  typedefs/                  shared JSDoc @typedef definitions
   utils/                     helpers
   validations/               request schema validators
 

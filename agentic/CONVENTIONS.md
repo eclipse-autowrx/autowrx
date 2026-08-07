@@ -5,7 +5,7 @@ Style and structure conventions for this repo. Load always (imported by `AGENTS.
 ## Branches & commits
 
 - **Branch naming:** `<type>/<short-descriptive>` or `<type>/<issue>-<slug>`. Types: `feat`, `docs`, `fix`, `chore`, `refactor`. Examples: `feat/612-agentic-coding-framework`, `docs/capabilities-improvements`, `fix/project-editor-move-guard`.
-- **Commit message:** imperative summary ≤ ~72 chars; body explains the *why*. End with `Signed-off-by:` (via `git commit -s`) and, for agent-made commits, `Co-Authored-By: Claude <noreply@anthropic.com>`.
+- **Commit message:** imperative summary ≤ ~72 chars; body explains the *why*. End with `Signed-off-by:` (via `git commit -s`) and, for agent-made commits, an attribution trailer — `Co-Authored-By: Claude <noreply@anthropic.com>` when running as Claude Code, or the tool's equivalent; omit if the tool has no such convention.
 - **One logical change per commit** where practical; squashing is done at PR merge, not in commits.
 
 ## PRs
