@@ -10,7 +10,7 @@ const httpStatus = require('http-status');
 const fs = require('fs');
 const fsp = require('fs/promises');
 const path = require('path');
-const { spawn } = require('child_process');
+const yauzl = require('yauzl');
 const catchAsync = require('../utils/catchAsync');
 const { pluginService } = require('../services');
 const pick = require('../utils/pick');
@@ -76,8 +76,7 @@ const updatePlugin = catchAsync(async (req, res) => {
     updated_by: req.user.id,
   };
   const isAdmin =
-    (Array.isArray(req.user.roles) && req.user.roles.includes('admin')) ||
-    (await pluginService.isAdminUser(req.user.id));
+    (Array.isArray(req.user.roles) && req.user.roles.includes('admin')) || (await pluginService.isAdminUser(req.user.id));
   const actor = {
     id: req.user.id,
     isAdmin,
@@ -126,24 +125,102 @@ async function findEntryFile(rootDir, candidates = ['index.js', 'index.html']) {
 }
 /* eslint-enable no-await-in-loop, no-continue, no-restricted-syntax */
 
+/**
+ * Safely extract a zip archive into a target directory.
+ * Rejects path traversal (../, absolute paths) and symlink entries
+ * to prevent arbitrary file write/read (CWE-22, CWE-59).
+ */
+async function safeExtractZip(zipPath, targetDir) {
+  const resolvedTarget = path.resolve(targetDir);
+  return new Promise((resolve, reject) => {
+    yauzl.open(zipPath, { lazyEntries: true, autoClose: true }, (err, zipfile) => {
+      if (err) return reject(err);
+
+      zipfile.readEntry();
+      zipfile.on('entry', (entry) => {
+        // Reject absolute paths and path traversal in entry names
+        if (path.isAbsolute(entry.fileName) || entry.fileName.includes('..')) {
+          return reject(new ApiError(httpStatus.BAD_REQUEST, `Unsafe zip entry: ${entry.fileName}`));
+        }
+
+        const entryPath = path.resolve(resolvedTarget, entry.fileName);
+        // Containment check: resolved entry must be within target directory
+        if (entryPath !== resolvedTarget && !entryPath.startsWith(resolvedTarget + path.sep)) {
+          return reject(new ApiError(httpStatus.BAD_REQUEST, `Unsafe zip entry: ${entry.fileName}`));
+        }
+
+        // Unix file mode: reject symlinks and non-regular files
+        // eslint-disable-next-line no-bitwise
+        const mode = (entry.externalFileAttributes >>> 16) & 0o170000;
+        if (mode === 0o120000) {
+          return reject(new ApiError(httpStatus.BAD_REQUEST, `Symlink entries are not allowed: ${entry.fileName}`));
+        }
+
+        if (/\/$/.test(entry.fileName)) {
+          // Directory entry
+          fsp
+            .mkdir(entryPath, { recursive: true })
+            .then(() => zipfile.readEntry())
+            .catch(reject);
+        } else {
+          // File entry — ensure parent directory exists
+          fsp
+            .mkdir(path.dirname(entryPath), { recursive: true })
+            .then(() => {
+              zipfile.openReadStream(entry, (readErr, readStream) => {
+                if (readErr) return reject(readErr);
+                const writeStream = fs.createWriteStream(entryPath);
+                writeStream.on('error', reject);
+                writeStream.on('close', () => zipfile.readEntry());
+                readStream.pipe(writeStream);
+              });
+            })
+            .catch(reject);
+        }
+      });
+      zipfile.on('end', resolve);
+      zipfile.on('error', reject);
+    });
+  });
+}
+
 const uploadInternalPlugin = catchAsync(async (req, res) => {
   const { slug } = req.params;
   if (!req.file) throw new ApiError(httpStatus.BAD_REQUEST, 'No file uploaded');
 
+  const actor = {
+    id: req.user.id,
+    isAdmin:
+      (Array.isArray(req.user.roles) && req.user.roles.includes('admin')) || (await pluginService.isAdminUser(req.user.id)),
+  };
+
+  // Authorization: if a plugin with this slug already exists, verify
+  // ownership BEFORE extracting any files (CWE-862).
+  const existing = await pluginService.getPluginBySlug(slug);
+  if (existing) {
+    const isOwner = String(existing.created_by) === String(actor.id);
+    if (!isOwner && !actor.isAdmin) {
+      throw new ApiError(
+        httpStatus.FORBIDDEN,
+        'This plugin name is already used by another account. Please choose a different name and upload again.',
+      );
+    }
+  }
+
   // Ensure base plugin directory exists
   await ensureDir(PLUGIN_DIR);
   const pluginPath = path.join(PLUGIN_DIR, slug);
+
+  // Defense-in-depth: verify resolved path stays within PLUGIN_DIR (CWE-22)
+  const resolvedPluginPath = path.resolve(pluginPath);
+  if (resolvedPluginPath !== PLUGIN_DIR && !resolvedPluginPath.startsWith(PLUGIN_DIR + path.sep)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid plugin slug');
+  }
+
   await ensureDir(pluginPath);
 
-  // Extract zip to target dir using system unzip (no extra npm deps)
-  await new Promise((resolve, reject) => {
-    const unzip = spawn('unzip', ['-o', req.file.path, '-d', pluginPath]);
-    unzip.on('error', reject);
-    unzip.on('close', (code) => {
-      if (code === 0) resolve();
-      else reject(new Error(`unzip exited with code ${code}`));
-    });
-  });
+  // Safely extract zip (rejects symlinks and path traversal — CWE-22, CWE-59)
+  await safeExtractZip(req.file.path, pluginPath);
 
   // Remove uploaded temp file
   try {
@@ -164,23 +241,7 @@ const uploadInternalPlugin = catchAsync(async (req, res) => {
   const safeRel = entryRel.replace(/^\/+/, '');
   const pluginUrl = `/plugin/${slug}/${safeRel}`.replace(/\\/g, '/');
 
-  const actor = {
-    id: req.user.id,
-    isAdmin:
-      (Array.isArray(req.user.roles) && req.user.roles.includes('admin')) ||
-      (await pluginService.isAdminUser(req.user.id)),
-  };
-
-  const existing = await pluginService.getPluginBySlug(slug);
-
   if (existing) {
-    const isOwner = String(existing.created_by) === String(actor.id);
-    if (!isOwner && !actor.isAdmin) {
-      throw new ApiError(
-        httpStatus.FORBIDDEN,
-        'This plugin name is already used by another account. Please choose a different name and upload again.'
-      );
-    }
     // Plugin already exists — update its URL in place
     const plugin = await pluginService.upsertPluginBySlug(slug, {
       is_internal: true,
@@ -199,8 +260,7 @@ const uploadInternalPlugin = catchAsync(async (req, res) => {
 
 const removePlugin = catchAsync(async (req, res) => {
   const isAdmin =
-    (Array.isArray(req.user.roles) && req.user.roles.includes('admin')) ||
-    (await pluginService.isAdminUser(req.user.id));
+    (Array.isArray(req.user.roles) && req.user.roles.includes('admin')) || (await pluginService.isAdminUser(req.user.id));
   const actor = {
     id: req.user.id,
     isAdmin,
