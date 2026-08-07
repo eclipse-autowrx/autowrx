@@ -59,6 +59,7 @@ frontend/.env.*
 !backend/.env.example
 !frontend/.env.example
 !instance-setup/.env.prod.sample
+!dev-stage/.env.dev-stage.sample
 
 ### Package managers (do not ignore lockfiles)
 .pnpm-store/
