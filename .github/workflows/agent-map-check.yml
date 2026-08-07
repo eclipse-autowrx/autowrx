@@ -24,6 +24,6 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Verify agentic framework links
         run: bash scripts/check-agent-map.sh
