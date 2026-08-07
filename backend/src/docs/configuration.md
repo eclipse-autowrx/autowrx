@@ -30,6 +30,9 @@
 | `config.jwt.verifyEmailExpirationMinutes`   | Minutes until email verification tokens expire                        | `10`             |
 | `config.jwt.cookie.name`                    | Name of the JWT cookie                                                | `'token'`        |
 | `config.jwt.cookie.options`                 | Cookie configuration options                                          | Secure HTTP-only |
+| `config.auth.provider`                      | Authentication provider: `'jwt'` or `'platform'`                        | `'jwt'`          |
+| `config.auth.platform.name`                 | Provider name stored on `user.provider` for platform auth              | `'Platform'`     |
+| `config.auth.platform.headers`              | Map of identity field to request header name for platform auth          | `{}`             |
 
 ## Service URLs
 
@@ -40,7 +43,7 @@
 | `config.services.log.port`          | Logging service port                      | `9600`      |
 | `config.services.log.url`           | Logging service URL                       | `undefined` |
 | `config.services.cache.url`         | Cache service URL                         | `undefined` |
-| `config.services.auth.url`          | Authentication service URL                | `undefined` |
+| `config.services.auth.url`          | Authentication service URL (deprecated) | `undefined` |
 | `config.services.email.url`         | Custom email service URL                  | `undefined` |
 | `config.services.email.apiKey`      | API key for default email service (Brevo) | `undefined` |
 | `config.services.email.endpointUrl` | Endpoint URL for default email service    | `undefined` |
