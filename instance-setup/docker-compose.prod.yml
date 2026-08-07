@@ -35,9 +35,8 @@ services:
       GENAI_URL: ${GENAI_URL:-}
       KIT_SERVER_URL: ${KIT_SERVER_URL:-}
     volumes:
-      - '${UPLOAD_PATH_HOST:-./data/upload}:/usr/src/playground-be/static/uploads'
-      - '${PLUGIN_PATH_HOST:-./data/plugin}:/usr/src/playground-be/static/plugin'
-      - '${GLOBAL_CSS_PATH_HOST:-./data/global.css}:/usr/src/playground-be/static/global.css'
+      - './data/upload:/usr/src/playground-be/static/uploads'
+      - './data/plugin:/usr/src/playground-be/static/plugin'
     depends_on:
       autowrx-db:
         condition: service_healthy
