@@ -1,5 +1,6 @@
-import { copyFile, mkdir, readFile } from 'fs/promises';
+import { copyFile, mkdir, readFile, rm } from 'fs/promises';
 import { join } from 'path';
+import { tmpdir } from 'os';
 import { Locator, Page, expect } from '@playwright/test';
 
 export const E2E_PLUGIN_MARKER = 'E2E_PLUGIN_LOADED_OK';
@@ -44,6 +45,13 @@ export async function loginAs(page: Page, email: string, password: string) {
   await page.goto('/');
   await page.waitForTimeout(1500);
 
+  const userProfile = page.locator('img[alt="User profile"]').first();
+  if (await userProfile.isVisible().catch(() => false)) {
+    await logout(page);
+    await page.goto('/');
+    await page.waitForTimeout(1500);
+  }
+
   // Open login modal
   const signInBtn = page.locator('button:has-text("Sign In"), a:has-text("Sign In")').first();
   await signInBtn.click();
@@ -53,7 +61,8 @@ export async function loginAs(page: Page, email: string, password: string) {
   await page.locator('input[type="password"]').first().fill(password);
   // Press Enter to submit (more reliable than clicking button with overlay)
   await page.locator('input[type="password"]').first().press('Enter');
-  await page.waitForTimeout(2500);
+  await expect(page.locator('img[alt="User profile"]').first()).toBeVisible({ timeout: 15000 });
+  await page.waitForTimeout(1000);
 }
 
 export async function loginAsAdmin(page: Page) {
@@ -112,13 +121,21 @@ export async function getVisiblePrototypeNames(page: Page): Promise<string[]> {
 }
 
 export async function getAuthToken(page: Page): Promise<string> {
+  return getTokenForUser(page, ADMIN.email, ADMIN.password);
+}
+
+export async function getTokenForUser(
+  page: Page,
+  email: string,
+  password: string,
+): Promise<string> {
   const loginRes = await page.request.post(`${API_URL}/v2/auth/login`, {
-    data: { email: ADMIN.email, password: ADMIN.password },
+    data: { email, password },
   });
   const loginData = await loginRes.json();
   const token = loginData?.tokens?.access?.token;
   if (!token) {
-    throw new Error(`Failed to get auth token: ${loginRes.status()}`);
+    throw new Error(`Failed to get auth token for ${email}: ${loginRes.status()}`);
   }
   return token;
 }
@@ -179,8 +196,11 @@ export async function createTestModelViaApi(
   page: Page,
   name: string,
   visibility: 'public' | 'private',
+  auth?: { email: string; password: string },
 ): Promise<string> {
-  const token = await getAuthToken(page);
+  const token = auth
+    ? await getTokenForUser(page, auth.email, auth.password)
+    : await getAuthToken(page);
   const res = await page.request.post(`${API_URL}/v2/models`, {
     data: {
       name,
@@ -266,8 +286,7 @@ export async function setPrototypeStateViaUI(
 
   const editBtn = page.locator('[data-id="btn-edit-prototype-info"]');
   await expect(editBtn).toBeVisible({ timeout: 15000 });
-  await editBtn.scrollIntoViewIfNeeded();
-  await editBtn.click();
+  await editBtn.click({ force: true });
   await expect(page.getByRole('button', { name: 'Save' })).toBeVisible({ timeout: 15000 });
 
   const statusTrigger = page.locator('[data-id="prototype-status-select"]');
@@ -291,7 +310,7 @@ export function getPopularSection(page: Page): Locator {
     .locator('xpath=ancestor::div[contains(@class,"container")][1]');
 }
 
-export async function boostPrototypePopularity(page: Page, prototypeId: string, turns = 10) {
+export async function boostPrototypePopularity(page: Page, prototypeId: string, turns = 100) {
   const token = await getAuthToken(page);
   for (let i = 0; i < turns; i++) {
     const res = await page.request.post(`${API_URL}/v2/prototypes/${prototypeId}/execute-code`, {
@@ -322,6 +341,30 @@ export async function waitForPrototypeTabs(page: Page, timeoutMs = 30000) {
   }
 
   await expect(codeTab).toBeVisible({ timeout: 5000 });
+}
+
+export async function waitForPrototypeInPopularApi(
+  page: Page,
+  protoName: string,
+  timeoutMs = 60000,
+): Promise<void> {
+  const token = await getAuthToken(page);
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    const res = await page.request.get(`${API_URL}/v2/prototypes/popular`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok()) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.some((p: { name?: string }) => p.name === protoName)) {
+        return;
+      }
+    }
+    await page.waitForTimeout(1000);
+  }
+
+  throw new Error(`Prototype "${protoName}" did not appear in popular API within ${timeoutMs}ms`);
 }
 
 export async function expectPrototypeInPopular(page: Page, name: string, visible: boolean) {
@@ -968,6 +1011,44 @@ export async function removeRoleFromUserViaApi(page: Page, userId: string, roleI
   }
 }
 
+export async function addModelPermissionViaApi(
+  page: Page,
+  modelId: string,
+  userId: string,
+  role: 'model_contributor' | 'model_member',
+  auth?: { email: string; password: string },
+): Promise<void> {
+  const token = auth
+    ? await getTokenForUser(page, auth.email, auth.password)
+    : await getAuthToken(page);
+  const res = await page.request.post(`${API_URL}/v2/models/${modelId}/permissions`, {
+    data: { role, userId },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to add model permission: ${res.status()} ${await res.text()}`);
+  }
+}
+
+export async function removeModelPermissionViaApi(
+  page: Page,
+  modelId: string,
+  userId: string,
+  role: 'model_contributor' | 'model_member',
+  auth?: { email: string; password: string },
+): Promise<void> {
+  const token = auth
+    ? await getTokenForUser(page, auth.email, auth.password)
+    : await getAuthToken(page);
+  const res = await page.request.delete(`${API_URL}/v2/models/${modelId}/permissions`, {
+    params: { userId, role },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok() && res.status() !== 404) {
+    throw new Error(`Failed to remove model permission: ${res.status()} ${await res.text()}`);
+  }
+}
+
 export async function deleteAssetViaApi(page: Page, assetId: string) {
   const token = await getAuthToken(page);
   const res = await page.request.delete(`${API_URL}/v2/assets/${assetId}`, {
@@ -990,11 +1071,530 @@ export async function findMyPluginByNameViaApi(page: Page, name: string) {
   return (data?.results || []).find((p: { name: string }) => p.name === name) || null;
 }
 
+export async function configureHomePopularSection(
+  page: Page,
+  title = 'Popular Prototypes',
+): Promise<void> {
+  await setSiteConfigJson(page, 'CFG_HOME_CONTENT', [{ type: 'popular', title }]);
+}
+
+export async function configureHomeModelListSection(
+  page: Page,
+  title = 'Vehicle Models',
+): Promise<void> {
+  await setSiteConfigJson(page, 'CFG_HOME_CONTENT', [{ type: 'model-list', title }]);
+}
+
+export async function configureHomePrototypeListSection(
+  page: Page,
+  title = 'All Prototypes',
+): Promise<void> {
+  await setSiteConfigJson(page, 'CFG_HOME_CONTENT', [{ type: 'prototype-list', title }]);
+}
+
+export function getHomePrototypeListSection(page: Page, title = 'All Prototypes'): Locator {
+  return page
+    .locator('.da-page-home')
+    .locator('h2', { hasText: title })
+    .locator('xpath=ancestor::div[contains(@class,"container")][1]');
+}
+
+export async function gotoHomePrototypeList(page: Page, title = 'All Prototypes'): Promise<void> {
+  const responsePromise = page
+    .waitForResponse(
+      (res) =>
+        res.url().includes('/prototypes') &&
+        res.request().method() === 'GET' &&
+        res.ok(),
+      { timeout: 20000 },
+    )
+    .catch(() => null);
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: title })).toBeVisible({ timeout: 20000 });
+  await responsePromise;
+  await page.waitForTimeout(500);
+}
+
+export async function selectHomePrototypeCategory(
+  page: Page,
+  label: 'All' | 'My Prototypes',
+): Promise<void> {
+  const section = getHomePrototypeListSection(page);
+  const responsePromise = page
+    .waitForResponse(
+      (res) =>
+        res.url().includes('/prototypes') &&
+        res.request().method() === 'GET' &&
+        res.ok(),
+      { timeout: 20000 },
+    )
+    .catch(() => null);
+  await section.getByRole('button', { name: label, exact: true }).click();
+  await responsePromise;
+  await page.waitForTimeout(500);
+}
+
+export async function selectHomePrototypeSort(
+  page: Page,
+  option: string,
+  title = 'All Prototypes',
+): Promise<void> {
+  const section = getHomePrototypeListSection(page, title);
+  const sortButton = section.getByRole('button', {
+    name: /Newest|Oldest|Name A-Z|Name Z-A|Last Viewed|First Viewed/,
+  });
+  await sortButton.click();
+  await page
+    .locator('ul')
+    .locator('label')
+    .filter({ has: page.getByText(option, { exact: true }) })
+    .click();
+  await page.waitForTimeout(1000);
+}
+
+export async function getVisibleHomePrototypeNames(
+  page: Page,
+  title = 'All Prototypes',
+): Promise<string[]> {
+  const section = getHomePrototypeListSection(page, title);
+  const names = await section.locator('.prototype-grid-item-name').allTextContents();
+  return names.map((n) => n.trim()).filter(Boolean);
+}
+
+export const HOME_PROTOTYPE_SORT_OPTIONS = [
+  { label: 'Newest', param: 'newest' },
+  { label: 'Oldest', param: 'oldest' },
+  { label: 'Name A-Z', param: 'name-az' },
+  { label: 'Name Z-A', param: 'name-za' },
+  { label: 'Last Viewed', param: 'last-viewed' },
+  { label: 'First Viewed', param: 'first-viewed' },
+] as const;
+
+export async function setPrototypeLastViewedMap(
+  page: Page,
+  entries: Record<string, number>,
+): Promise<void> {
+  await page.evaluate((map) => {
+    localStorage.setItem('prototype_last_viewed', JSON.stringify(map));
+  }, entries);
+}
+
+export async function assertHomePrototypeOrder(
+  page: Page,
+  firstName: string,
+  secondName: string,
+  title = 'All Prototypes',
+): Promise<void> {
+  await ensureHomePrototypeVisible(page, firstName, title);
+  await ensureHomePrototypeVisible(page, secondName, title);
+  const names = await getVisibleHomePrototypeNames(page, title);
+  expect(names.indexOf(firstName)).toBeGreaterThanOrEqual(0);
+  expect(names.indexOf(secondName)).toBeGreaterThanOrEqual(0);
+  expect(names.indexOf(firstName)).toBeLessThan(names.indexOf(secondName));
+}
+
+export async function gotoHomeModelList(page: Page, title = 'Vehicle Models'): Promise<void> {
+  const responsePromise = page
+    .waitForResponse(
+      (res) =>
+        (res.url().includes('/models') || res.url().includes('/model')) &&
+        res.request().method() === 'GET' &&
+        res.ok(),
+      { timeout: 20000 },
+    )
+    .catch(() => null);
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: title })).toBeVisible({ timeout: 20000 });
+  await responsePromise;
+  await page.waitForTimeout(500);
+}
+
+export function getHomeModelListSection(page: Page, title = 'Vehicle Models'): Locator {
+  return page
+    .locator('.da-page-home')
+    .locator('h2', { hasText: title })
+    .locator('xpath=ancestor::div[contains(@class,"container")][1]');
+}
+
+export async function selectHomeModelCategory(
+  page: Page,
+  label: 'All' | 'My Models' | 'My Contributions' | 'Public',
+  title = 'Vehicle Models',
+): Promise<void> {
+  const section = getHomeModelListSection(page, title);
+  const desktopBtn = section.getByRole('button', { name: label, exact: true });
+  if (await desktopBtn.isVisible().catch(() => false)) {
+    await desktopBtn.click();
+  } else {
+    await section.getByRole('button').filter({ hasText: /All|My Models|My Contributions|Public/ }).first().click();
+    await page.getByRole('menuitem', { name: label }).click();
+  }
+  await page.waitForTimeout(1500);
+}
+
+export async function selectHomeModelSort(
+  page: Page,
+  option: string,
+  title = 'Vehicle Models',
+): Promise<void> {
+  const section = getHomeModelListSection(page, title);
+  await section
+    .getByRole('button', { name: /Last viewed|First viewed|Newest|Oldest|Name A-Z|Name Z-A/ })
+    .click();
+  await page.getByRole('menuitem', { name: option }).click();
+  await page.waitForTimeout(1500);
+}
+
+export async function getVisibleHomeModelNames(
+  page: Page,
+  title = 'Vehicle Models',
+): Promise<string[]> {
+  const section = getHomeModelListSection(page, title);
+  const names = await section.locator('h3.font-semibold').allTextContents();
+  return names.map((n) => n.trim()).filter(Boolean);
+}
+
+export const HOME_MODEL_SORT_OPTIONS = [
+  { label: 'Last viewed', param: 'last-viewed' },
+  { label: 'First viewed', param: 'first-viewed' },
+  { label: 'Newest', param: 'newest' },
+  { label: 'Oldest', param: 'oldest' },
+  { label: 'Name A-Z', param: 'name-az' },
+  { label: 'Name Z-A', param: 'name-za' },
+] as const;
+
+export async function setModelLastViewedMap(
+  page: Page,
+  entries: Record<string, number>,
+): Promise<void> {
+  await page.evaluate((map) => {
+    localStorage.setItem('model_last_viewed', JSON.stringify(map));
+  }, entries);
+}
+
+export async function assertHomeModelOrder(
+  page: Page,
+  firstName: string,
+  secondName: string,
+  title = 'Vehicle Models',
+): Promise<void> {
+  await ensureHomeModelVisible(page, firstName, title);
+  await ensureHomeModelVisible(page, secondName, title);
+  const names = await getVisibleHomeModelNames(page, title);
+  expect(names.indexOf(firstName)).toBeGreaterThanOrEqual(0);
+  expect(names.indexOf(secondName)).toBeGreaterThanOrEqual(0);
+  expect(names.indexOf(firstName)).toBeLessThan(names.indexOf(secondName));
+}
+
+export async function ensureHomeModelVisible(
+  page: Page,
+  modelName: string,
+  title = 'Vehicle Models',
+): Promise<void> {
+  const section = getHomeModelListSection(page, title);
+  const card = section.locator(`[aria-label="${modelName}"]`);
+
+  for (let i = 0; i < 15; i++) {
+    if (await card.isVisible().catch(() => false)) {
+      return;
+    }
+    const loadMore = section.getByRole('button', { name: /Load More Models/i });
+    if (!(await loadMore.isVisible().catch(() => false))) {
+      break;
+    }
+    await loadMore.click();
+    await page.waitForTimeout(500);
+  }
+
+  await expect(card).toBeVisible({ timeout: 10000 });
+}
+
+export async function ensureHomePrototypeVisible(
+  page: Page,
+  protoName: string,
+  title = 'All Prototypes',
+): Promise<void> {
+  const section = getHomePrototypeListSection(page, title);
+  const card = section.locator(`[data-id^="prototype-item-"]:has-text("${protoName}")`).first();
+
+  for (let i = 0; i < 20; i++) {
+    if (await card.isVisible().catch(() => false)) {
+      return;
+    }
+    const rightBtn = section.locator('div.relative > button').last();
+    if (!(await rightBtn.isEnabled().catch(() => false))) {
+      break;
+    }
+    await rightBtn.click();
+    await page.waitForTimeout(500);
+  }
+
+  await expect(card).toBeVisible({ timeout: 10000 });
+}
+
+export async function waitForModelInHomeList(
+  page: Page,
+  modelName: string,
+  title = 'Vehicle Models',
+): Promise<void> {
+  await gotoHomeModelList(page, title);
+  await selectHomeModelCategory(page, 'My Models', title);
+  const section = getHomeModelListSection(page, title);
+  await expect(section.locator(`[aria-label="${modelName}"]`)).toBeVisible({ timeout: 20000 });
+}
+
+export async function waitForPrototypeInHomeList(
+  page: Page,
+  protoName: string,
+  title = 'All Prototypes',
+): Promise<void> {
+  await gotoHomePrototypeList(page, title);
+  await selectHomePrototypeCategory(page, 'My Prototypes');
+  const section = getHomePrototypeListSection(page, title);
+  await expect(
+    section.locator(`[data-id^="prototype-item-"]:has-text("${protoName}")`).first(),
+  ).toBeVisible({ timeout: 20000 });
+}
+
+export async function renameModelViaHomeContextMenu(
+  page: Page,
+  oldName: string,
+  newName: string,
+  title = 'Vehicle Models',
+): Promise<void> {
+  const section = getHomeModelListSection(page, title);
+  await openModelContextMenu(page, oldName, section);
+  await page.getByRole('menuitem', { name: 'Rename' }).click();
+  const dialog = page.getByRole('dialog').filter({
+    has: page.getByRole('heading', { name: 'Rename Model' }),
+  });
+  await expect(dialog).toBeVisible({ timeout: 10000 });
+  await dialog.locator('input').fill(newName);
+  await dialog.getByRole('button', { name: 'Save' }).click();
+  await page.waitForTimeout(2000);
+}
+
+export function getModelCard(page: Page, modelName: string, section?: Locator): Locator {
+  const root = section ?? page;
+  return root.locator(`[aria-label="${modelName}"]`).first();
+}
+
+export function getPrototypeCard(page: Page, protoName: string): Locator {
+  return page.locator(`[data-id^="prototype-item-"]:has-text("${protoName}")`).first();
+}
+
+export async function openModelContextMenu(
+  page: Page,
+  modelName: string,
+  section?: Locator,
+): Promise<void> {
+  const card = getModelCard(page, modelName, section);
+  await expect(card).toBeVisible({ timeout: 20000 });
+  await card.scrollIntoViewIfNeeded();
+  await card.click({ button: 'right', force: true });
+  await expect(page.getByRole('menuitem').first()).toBeVisible({ timeout: 10000 });
+}
+
+export async function openPrototypeContextMenu(page: Page, protoName: string): Promise<void> {
+  const card = getPrototypeCard(page, protoName);
+  await expect(card).toBeVisible({ timeout: 20000 });
+  await card.scrollIntoViewIfNeeded();
+  await card.click({ button: 'right', force: true });
+  await expect(page.getByRole('menuitem').first()).toBeVisible({ timeout: 10000 });
+}
+
+export async function downloadViaContextMenuItem(
+  page: Page,
+  menuLabel: string,
+): Promise<string> {
+  const downloadDir = join(tmpdir(), `autowrx-e2e-${Date.now()}`);
+  await mkdir(downloadDir, { recursive: true });
+
+  const [download] = await Promise.all([
+    page.waitForEvent('download', { timeout: 60000 }),
+    page.getByRole('menuitem', { name: menuLabel }).click(),
+  ]);
+
+  const suggestedName = download.suggestedFilename();
+  const savePath = join(downloadDir, suggestedName);
+  await download.saveAs(savePath);
+  return savePath;
+}
+
+export async function confirmNameDialog(page: Page, name: string): Promise<void> {
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible({ timeout: 10000 });
+  const input = dialog.locator('input[data-slot="input"], input').first();
+  await input.fill(name);
+  await dialog.getByRole('button', { name: 'Confirm' }).click();
+  await page.waitForTimeout(2000);
+}
+
+export async function deleteModelViaApi(page: Page, modelId: string): Promise<void> {
+  const token = await getAuthToken(page);
+  const res = await page.request.delete(`${API_URL}/v2/models/${modelId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok() && res.status() !== 404) {
+    throw new Error(`Failed to delete model: ${res.status()} ${await res.text()}`);
+  }
+}
+
+export async function deletePrototypeViaApi(page: Page, prototypeId: string): Promise<void> {
+  const token = await getAuthToken(page);
+  const res = await page.request.delete(`${API_URL}/v2/prototypes/${prototypeId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok() && res.status() !== 404) {
+    throw new Error(`Failed to delete prototype: ${res.status()} ${await res.text()}`);
+  }
+}
+
+export async function importModelZipOnHome(page: Page, zipPath: string): Promise<void> {
+  const fileChooserPromise = page.waitForEvent('filechooser');
+  const section = getHomeModelListSection(page);
+  await section.getByRole('button', { name: /Import Model/i }).click();
+  const fileChooser = await fileChooserPromise;
+  await fileChooser.setFiles(zipPath);
+  await page.waitForURL(/\/model\/.+/, { timeout: 120000 });
+}
+
+export async function importPrototypeZip(
+  page: Page,
+  zipPath: string,
+  protoName?: string,
+  modelId?: string,
+): Promise<void> {
+  const importButton = page.getByRole('button', { name: /Import Prototype/i }).first();
+  await expect(importButton).toBeVisible({ timeout: 15000 });
+
+  const fileChooserPromise = page.waitForEvent('filechooser');
+  await importButton.click();
+  const fileChooser = await fileChooserPromise;
+  await fileChooser.setFiles(zipPath);
+
+  const dialog = page.getByRole('dialog', { name: /Import Prototype/i });
+  await expect(dialog).toBeVisible({ timeout: 30000 });
+  await expect(dialog.getByRole('button', { name: 'Import' })).toBeEnabled({ timeout: 60000 });
+
+  if (protoName) {
+    const nameInput = dialog.locator('input').first();
+    await expect(nameInput).toBeVisible({ timeout: 15000 });
+    await nameInput.fill(protoName);
+  }
+
+  await dialog.getByRole('button', { name: 'Import' }).click();
+  await page.waitForURL(/\/library\/prototype\//, { timeout: 120000 }).catch(() => {});
+  await expect(dialog).toBeHidden({ timeout: 120000 });
+
+  if (modelId) {
+    await page.goto(`/model/${modelId}/library/list`);
+    await page.waitForTimeout(2000);
+  }
+}
+
+export async function removeTempDownloadDir(dirPath: string): Promise<void> {
+  try {
+    await rm(dirPath, { recursive: true, force: true });
+  } catch {
+    // Best-effort cleanup for temp download directories.
+  }
+}
+
+export const DEFAULT_MODEL_IMAGE = '/imgs/default-model-image.png';
+export const DEFAULT_PROTOTYPE_IMAGE = '/imgs/default_prototype_cover.jpg';
+
+export async function setModelImageViaApi(
+  page: Page,
+  modelId: string,
+  imageUrl: string,
+): Promise<void> {
+  const token = await getAuthToken(page);
+  const res = await page.request.patch(`${API_URL}/v2/models/${modelId}`, {
+    data: { model_home_image_file: imageUrl },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to set model image: ${res.status()} ${await res.text()}`);
+  }
+}
+
+export async function setPrototypeImageViaApi(
+  page: Page,
+  prototypeId: string,
+  imageUrl: string,
+): Promise<void> {
+  const token = await getAuthToken(page);
+  const res = await page.request.patch(`${API_URL}/v2/prototypes/${prototypeId}`, {
+    data: { image_file: imageUrl },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok()) {
+    throw new Error(`Failed to set prototype image: ${res.status()} ${await res.text()}`);
+  }
+}
+
+export async function routeBrokenImageUrls(
+  page: Page,
+  pattern = 'e2e-broken-image',
+): Promise<() => Promise<void>> {
+  const handler = async (route: { request: () => { url: () => string }; abort: (errorCode?: string) => Promise<void>; continue: () => Promise<void> }) => {
+    if (route.request().url().includes(pattern)) {
+      await route.abort('failed');
+      return;
+    }
+    await route.continue();
+  };
+  await page.route('**/*', handler);
+  return () => page.unroute('**/*', handler);
+}
+
+export async function expectCardImageFallback(
+  card: Locator,
+  expectedFallbackSrc: string,
+): Promise<void> {
+  const img = card.locator('img').first();
+  await expect(img).toHaveAttribute('data-fallback-applied', 'true', { timeout: 15000 });
+  await expect(img).toHaveAttribute(
+    'src',
+    new RegExp(expectedFallbackSrc.replace(/\//g, '\\/')),
+  );
+}
+
 export async function checkLayoutAnomalies(page: Page, testName: string) {
   const overlapping = await page.evaluate(() => {
     const panel = document.querySelector('[data-id="runtime-control-panel"]');
     const panelRect = panel?.getBoundingClientRect();
     const isPanelCollapsed = panelRect ? panelRect.width <= 60 : false;
+
+    const isEffectivelyHidden = (el: Element): boolean => {
+      if (el.closest('[aria-hidden="true"]')) return true;
+
+      let node: Element | null = el;
+      while (node) {
+        const style = window.getComputedStyle(node);
+        if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
+          return true;
+        }
+        if (
+          node !== el &&
+          node.getAttribute('data-state') === 'closed' &&
+          ['menu', 'dialog', 'listbox', 'tooltip'].includes(node.getAttribute('role') || '')
+        ) {
+          return true;
+        }
+        node = node.parentElement;
+      }
+
+      const rects = el.getClientRects();
+      if (rects.length === 0) return true;
+
+      let area = 0;
+      for (const rect of rects) {
+        area += rect.width * rect.height;
+      }
+      return area === 0;
+    };
 
     const elements = document.querySelectorAll('button, a, input:not([type="hidden"])');
     const issues: string[] = [];
@@ -1003,13 +1603,12 @@ export async function checkLayoutAnomalies(page: Page, testName: string) {
       if (input.type === 'hidden') return;
 
       if (isPanelCollapsed && panel?.contains(el)) return;
-
-      const style = window.getComputedStyle(el);
-      if (style.display === 'none' || style.visibility === 'hidden') return;
+      if (isEffectivelyHidden(el)) return;
 
       const rect = el.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) {
-        issues.push(`Zero-size visible element: ${el.tagName} "${el.textContent?.slice(0, 30)}"`);
+        const label = el.getAttribute('aria-label') || el.textContent?.trim().slice(0, 30) || '';
+        issues.push(`Zero-size visible element: ${el.tagName} "${label}"`);
       }
     });
     return issues;
